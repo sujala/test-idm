@@ -57,6 +57,9 @@ public class CloudClient {
         DefaultHttpClient client = getHttpClient();
         setHttpHeaders(httpHeaders, request);
 
+        // ToDo: Fix when returning 301 - errors in build of ResponseBuilder
+        //client.getParams().setParameter(ClientPNames.HANDLE_REDIRECTS, false);
+
         String responseBody = null;
         int statusCode = 500;
         HttpResponse response = null;
@@ -65,6 +68,8 @@ public class CloudClient {
             statusCode = response.getStatusLine().getStatusCode();
             if (response.getEntity() != null) {
                 responseBody = convertStreamToString(response.getEntity().getContent());
+                if (responseBody.equals(""))
+                    responseBody = null;
             }
         } catch (IOException e) {
             responseBody = e.getMessage();

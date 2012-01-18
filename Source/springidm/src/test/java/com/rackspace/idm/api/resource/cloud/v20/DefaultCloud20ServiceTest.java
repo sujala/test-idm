@@ -530,7 +530,7 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void addRoleToUserOnTenant_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.addRolesToUserOnTenant(null,authToken,null,null,null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+        verify(spy).checkXAUTHTOKEN(authToken, false, null);
     }
 
     @Test
