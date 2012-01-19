@@ -326,7 +326,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     public void verifyIdmSuperAdminAccess(String authHeader) {
-        if(this.authorizeIdmSuperAdmin(scopeAccessService.getScopeAccessByAccessToken(authHeader))){
+        if(!this.authorizeIdmSuperAdmin(scopeAccessService.getScopeAccessByAccessToken(authHeader))){
             throw new ForbiddenException("Access denied");
         }
     }
