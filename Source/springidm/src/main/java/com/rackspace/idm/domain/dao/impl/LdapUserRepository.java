@@ -918,8 +918,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             .getAttributeValueBytes(ATTR_PASSWORD_SECRET_A)));
         user.setLastname(cryptHelper.decrypt(resultEntry
             .getAttributeValueBytes(ATTR_SN)));
-        user.setTimeZoneObj(DateTimeZone.forID(resultEntry
-            .getAttributeValue(ATTR_TIME_ZONE)));
+        user.setTimeZoneObj(DateTimeZone.forID(resultEntry.getAttributeValue(ATTR_TIME_ZONE)));
+        user.setDomainId(resultEntry.getAttributeValue(ATTR_DOMAIN_ID));
 
         String ecryptedPwd = cryptHelper.decrypt(resultEntry
             .getAttributeValueBytes(ATTR_CLEAR_PASSWORD));

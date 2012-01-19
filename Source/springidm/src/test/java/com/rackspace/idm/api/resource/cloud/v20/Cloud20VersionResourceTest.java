@@ -67,12 +67,11 @@ public class Cloud20VersionResourceTest extends AbstractAroundClassJerseyTest {
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
     }
 
-    //call gets forwarded and cloud auth returns 200 with an empty tenant list
     @Test
-    public void getTenants_badToken_returns200() throws Exception {
+    public void getTenants_badToken_returns401() throws Exception {
         WebResource resource = resource().path("cloud/v2.0/tenants");
         ClientResponse clientResponse = resource.header("X-Auth-Token", "bad").accept(MediaType.APPLICATION_XML_TYPE).get(ClientResponse.class);
-        assertThat("response code", clientResponse.getStatus(), equalTo(200));
+        assertThat("response code", clientResponse.getStatus(), equalTo(401));
     }
 
     private String getAuthToken(String username, String password) {

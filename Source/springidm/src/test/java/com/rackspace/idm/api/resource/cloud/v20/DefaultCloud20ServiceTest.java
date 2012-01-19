@@ -620,9 +620,10 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void deleteUser_differentDomain_throwsForbiddenException() throws Exception {
+    public void deleteUser_userAdmin_differentDomain_throwsForbiddenException() throws Exception {
         when(userService.getUserById("dude")).thenReturn(new User());
         when(userService.getUserByAuthToken(authToken)).thenReturn(user);
+        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
         Response.ResponseBuilder responseBuilder = spy.deleteUser(null, authToken, "dude");
         assertThat("response code", responseBuilder.build().getStatus(),equalTo(403));
     }

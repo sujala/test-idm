@@ -331,16 +331,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     void setDomainId(ScopeAccess scopeAccessByAccessToken, User userDO) {
         if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
-            //is userAdmin
             User caller = getUser(scopeAccessByAccessToken);
-            if (caller.getDomainId() == null) {
-                userDO.setDomainId(caller.getId());
-            } else {
-                userDO.setDomainId(caller.getDomainId());
-            }
-        } else {
-            //is admin or service user
-            userDO.setDomainId(userDO.getId());
+            //is userAdmin
+            userDO.setDomainId(caller.getDomainId());
         }
     }
 
@@ -647,8 +640,10 @@ public class DefaultCloud20Service implements Cloud20Service {
             checkXAUTHTOKEN(authToken, false, null);
             User user = checkAndGetUser(userId);
             //is same domain?
-            User caller = userService.getUserByAuthToken(authToken);
-            verifyDomain(user, caller);
+            if (authorizationService.authorizeCloudUserAdmin(scopeAccessService.getScopeAccessByAccessToken(authToken))) {
+                User caller = userService.getUserByAuthToken(authToken);
+                verifyDomain(user, caller);
+            }
 
             userService.softDeleteUser(user);
             return Response.noContent();
@@ -1446,8 +1441,12 @@ public class DefaultCloud20Service implements Cloud20Service {
             checkXAUTHTOKEN(authToken, false, null);
 
             User retrievedUser = checkAndGetUser(userId);
-            User caller = userService.getUserByAuthToken(authToken);
-            verifyDomain(retrievedUser, caller);
+
+            //if user admin, verify domain
+            if(authorizationService.authorizeCloudUserAdmin(scopeAccessService.getScopeAccessByAccessToken(authToken))){
+                User caller = userService.getUserByAuthToken(authToken);
+                verifyDomain(retrievedUser, caller);
+            }
 
 
             User userDO = this.userConverterCloudV20.toUserDO(user);

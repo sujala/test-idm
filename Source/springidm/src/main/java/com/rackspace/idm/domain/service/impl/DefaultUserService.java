@@ -77,6 +77,9 @@ public class DefaultUserService implements UserService {
         
         user.setEnabled(true);
         user.setId(this.userDao.getNextUserId());
+        if(user.getDomainId()==null){
+            user.setDomainId(user.getId());
+        }
         
         userDao.addUser(user);
         logger.info("Added User: {}", user);
