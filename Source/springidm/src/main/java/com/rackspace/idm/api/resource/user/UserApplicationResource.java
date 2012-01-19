@@ -72,8 +72,7 @@ public class UserApplicationResource extends ParentResource {
         // Rackspace Clients can add their own applications to a user
         // Specific Clients can add their own applications to a user
         // Customer IdM can add any service to user
-        //TODO: Implement authorization rules
-        //authorizationService.authorizeToken(token, uriInfo);
+        authorizationService.verifyIdmSuperAdminAccess(authHeader);
         Application application = this.applicationService.loadApplication(applicationId);
         User user = this.userService.loadUser(userId);
 
@@ -108,14 +107,12 @@ public class UserApplicationResource extends ParentResource {
 
         getLogger().info("Removing application {} from user {}", applicationId, userId);
 
-        ScopeAccess token = this.scopeAccessService
-            .getAccessTokenByAuthHeader(authHeader);
         // Rackers can add any service to a user
         // Rackspace Clients can add their own service to a user
         // Specific Clients can add their own service to a user
         // Customer IdM can add any service to user
-        //TODO: Implement authorization rules
-        //authorizationService.authorizeToken(token, uriInfo);
+        authorizationService.verifyIdmSuperAdminAccess(authHeader);
+
         Application application = this.applicationService.loadApplication(applicationId);
         User user = this.userService.loadUser(userId);
 

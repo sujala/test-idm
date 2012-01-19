@@ -16,6 +16,8 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.exception.ForbiddenException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
@@ -40,24 +42,25 @@ public class UsersResource extends ParentResource {
     private final UserConverter userConverter;
     private final AuthorizationService authorizationService;
 
+
     @Autowired(required = true)
     public UsersResource(
     	UserResource userResource,UserService userService,
         InputValidator inputValidator, UserConverter userConverter,
         AuthorizationService authorizationService) {
-    	
+
     	super(inputValidator);
-    	
+
     	this.userResource = userResource;
         this.userService = userService;
         this.userConverter = userConverter;
         this.authorizationService = authorizationService;
     }
-    
+
     /**
      * Gets users
-     * 
-     * 
+     *
+     *
      * @param authHeader HTTP Authorization header for authenticating the caller.
      * @param user New User
      */
@@ -68,13 +71,10 @@ public class UsersResource extends ParentResource {
         @QueryParam("offset") Integer offset,
         @QueryParam("limit") Integer limit,
         @HeaderParam("X-Auth-Token") String authHeader) {
-    	
-        //TODO: Implement authorization rules. Also implement filter rules,
-    	//if user does not have privileged roles, limit list to the users
-    	//this customer has access to
-        //authorizationService.authorizeToken(token, uriInfo);
-    	
-    	FilterParam[] filters = null;
+
+        authorizationService.verifyIdmSuperAdminAccess(authHeader);
+
+        FilterParam[] filters = null;
     	if (!StringUtils.isBlank(username)) {
     		filters = new FilterParam[] { new FilterParam(FilterParamName.USERNAME, username)};
     	}
@@ -96,7 +96,7 @@ public class UsersResource extends ParentResource {
         @HeaderParam("X-Auth-Token") String authHeader,
         com.rackspace.api.idm.v1.User holder) {
 
-
+        authorizationService.verifyIdmSuperAdminAccess(authHeader);
         com.rackspace.api.idm.v1.User jaxbUser = holder;
 
         User user = userConverter.toUserDO(jaxbUser);

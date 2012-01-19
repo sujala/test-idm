@@ -1,39 +1,20 @@
 package com.rackspace.idm.api.resource.user;
 
-import java.util.List;
-
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Request;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import com.rackspace.idm.api.converter.RolesConverter;
 import com.rackspace.idm.api.resource.ParentResource;
 import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
-import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.service.ApplicationService;
-import com.rackspace.idm.domain.service.AuthorizationService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.domain.service.TenantService;
-import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.validation.InputValidator;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import javax.ws.rs.*;
+import javax.ws.rs.core.*;
+import java.util.List;
 
 /**
  * User Application Roles Resource.
@@ -84,9 +65,7 @@ public class UserTenantsResource extends ParentResource {
         @QueryParam("applicationId") String applicationId,
         @QueryParam("tenantId") String tenantId) {
 
-        ScopeAccess token = this.scopeAccessService.getAccessTokenByAuthHeader(authHeader);
-        //TODO: Implement authorization rules
-        //authorizationService.authorizeToken(token, uriInfo);
+        authorizationService.verifyIdmSuperAdminAccess(authHeader);
 		FilterBuilder filterBuilder = createFilterBuilder();
 		filterBuilder.addFilter(FilterParamName.APPLICATION_ID, applicationId);
 		filterBuilder.addFilter(FilterParamName.TENANT_ID, tenantId);
@@ -120,9 +99,7 @@ public class UserTenantsResource extends ParentResource {
 			@PathParam("tenantId") String tenantId,
 			@PathParam("roleId") String roleId) {
 
-		ScopeAccess token = this.scopeAccessService.getAccessTokenByAuthHeader(authHeader);
-		// TODO: Implement authorization rules
-		// authorizationService.authorizeToken(token, uriInfo);
+        authorizationService.verifyIdmSuperAdminAccess(authHeader);
 
 		User user = userService.loadUser(userId);
 
@@ -155,10 +132,7 @@ public class UserTenantsResource extends ParentResource {
 			@PathParam("tenantId") String tenantId,
 			@PathParam("roleId") String roleId) {
 
-		ScopeAccess token = this.scopeAccessService
-				.getAccessTokenByAuthHeader(authHeader);
-		// TODO: Implement authorization rules
-		// authorizationService.authorizeToken(token, uriInfo);
+        authorizationService.verifyIdmSuperAdminAccess(authHeader);
 
 		User user = this.userService.loadUser(userId);
 

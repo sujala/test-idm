@@ -87,12 +87,7 @@ public class UserResource extends ParentResource {
 			@HeaderParam("X-Auth-Token") String authHeader,
 			@PathParam("userId") String userId) {
 
-		ScopeAccess token = this.scopeAccessService
-				.getAccessTokenByAuthHeader(authHeader);
-
-		// TODO: Implement authorization rules
-		// authorizationService.authorizeToken(token, uriInfo);
-        //authroizationService.authorize(token, Entity.create(userId), "1");
+        authorizationService.verifyIdmSuperAdminAccess(authHeader);
         
 		getLogger().debug("Getting User: {}", userId);
 		User user = this.userService.loadUser(userId);
@@ -119,9 +114,8 @@ public class UserResource extends ParentResource {
 
 		validateRequestBody(holder);
 
-		ScopeAccess token = this.scopeAccessService.getAccessTokenByAuthHeader(authHeader);
-		// TODO: Implement authorization rules
-		// authorizationService.authorizeToken(token, uriInfo);
+        authorizationService.verifyIdmSuperAdminAccess(authHeader);
+
 		
 		com.rackspace.api.idm.v1.User inputUser = holder.getEntity();
 		User updatedUser = userConverter.toUserDO(inputUser);
@@ -153,11 +147,7 @@ public class UserResource extends ParentResource {
 
 		getLogger().debug("Deleting User :{}", userId);
 
-		ScopeAccess token = this.scopeAccessService
-				.getAccessTokenByAuthHeader(authHeader);
-
-		// TODO: Implement authorization rules
-		// authorizationService.authorizeToken(token, uriInfo);
+        authorizationService.verifyIdmSuperAdminAccess(authHeader);
 
 		User user = this.userService.loadUser(userId);
 		

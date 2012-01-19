@@ -1,32 +1,17 @@
 package com.rackspace.idm.api.resource.user;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.PUT;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Request;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-
+import com.rackspace.idm.domain.entity.ClientRole;
+import com.rackspace.idm.domain.entity.TenantRole;
+import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.service.*;
+import com.rackspace.idm.exception.BadRequestException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.rackspace.idm.domain.entity.ClientRole;
-import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.TenantRole;
-import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.service.ApplicationService;
-import com.rackspace.idm.domain.service.AuthorizationService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.domain.service.TenantService;
-import com.rackspace.idm.domain.service.UserService;
-import com.rackspace.idm.exception.BadRequestException;
+import javax.ws.rs.*;
+import javax.ws.rs.core.*;
 
 /**
  * User Application Roles Resource.
@@ -75,10 +60,7 @@ public class UserGlobalRoleResource {
 			@PathParam("userId") String userId,
 			@PathParam("roleId") String roleId) {
 
-		ScopeAccess token = this.scopeAccessService
-				.getAccessTokenByAuthHeader(authHeader);
-		// TODO: Implement authorization rules
-		// authorizationService.authorizeToken(token, uriInfo);
+        authorizationService.verifyIdmSuperAdminAccess(authHeader);
 
 		// TODO: Refactor. This logic should be in the tenant role service
 		User user = this.userService.loadUser(userId);
@@ -117,10 +99,8 @@ public class UserGlobalRoleResource {
 			@PathParam("userId") String userId,
 			@PathParam("roleId") String roleId) {
 
-		ScopeAccess token = this.scopeAccessService
-				.getAccessTokenByAuthHeader(authHeader);
-		// TODO: Implement authorization rules
-		// authorizationService.authorizeToken(token, uriInfo);
+        authorizationService.verifyIdmSuperAdminAccess(authHeader);
+
 		User user = this.userService.loadUser(userId);
 		TenantRole tenantRole = this.tenantService.getTenantRoleForParentById(
 				user.getUniqueId(), roleId);

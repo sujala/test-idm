@@ -48,4 +48,8 @@ public interface AuthorizationService {
 
     boolean authorizeCloudUserAdmin(ScopeAccess scopeAccess);
 
+    boolean authorizeIdmSuperAdmin(ScopeAccess scopeAccess);
+
+    void verifyIdmSuperAdminAccess(String authToken);
+
 }

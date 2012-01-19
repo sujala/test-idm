@@ -68,14 +68,7 @@ public class UserApplicationsResource extends ParentResource {
 
         getLogger().debug("Getting applications for user {}", userId);
 
-        ScopeAccess token = this.scopeAccessService
-            .getAccessTokenByAuthHeader(authHeader);
-        // Rackers can add any service to a user
-        // Rackspace Clients can add their own service to a user
-        // Specific Clients can add their own service to a user
-        // Customer IdM can add any service to user
-        //TODO: Implement authorization rules
-        //authorizationService.authorizeToken(token, uriInfo);
+        authorizationService.verifyIdmSuperAdminAccess(authHeader);
 
         User user = this.userService.loadUser(userId);
         Applications applications = this.userService.getUserApplications(user);

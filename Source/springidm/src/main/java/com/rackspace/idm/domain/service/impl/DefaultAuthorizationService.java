@@ -5,12 +5,14 @@ import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.AuthorizationService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.util.WadlTrie;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import javax.ws.rs.core.UriInfo;
@@ -25,10 +27,13 @@ public class DefaultAuthorizationService implements AuthorizationService {
     private final TenantDao tenantDao;
     private final WadlTrie wadlTrie;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
+    @Autowired
+    private ScopeAccessService scopeAccessService;
 
     private static String IDM_ADMIN_GROUP_DN = null;
     private static ClientRole CLOUD_ADMIN_ROLE = null;
     private static ClientRole CLOUD_USER_ADMIN_ROLE = null;
+    private static ClientRole IDM_SUPER_ADMIN_ROLE = null;
 
     public DefaultAuthorizationService(ScopeAccessDao scopeAccessDao,
         ApplicationDao clientDao, TenantDao tenantDao, WadlTrie wadlTrie,
@@ -145,6 +150,25 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
+    public boolean authorizeIdmSuperAdmin(ScopeAccess scopeAccess) {
+        logger.debug("Authorizing {} as idm super admin", scopeAccess);
+
+        if (scopeAccess == null || ((HasAccessToken) scopeAccess).isAccessTokenExpired(new DateTime())) {
+            return false;
+        }
+
+        if (IDM_SUPER_ADMIN_ROLE == null) {
+            ClientRole role = clientDao.getClientRoleByClientIdAndRoleName(getIdmClientId(), getIdmSuperAdminRole());
+            IDM_SUPER_ADMIN_ROLE = role;
+        }
+
+        boolean authorized = this.tenantDao.doesScopeAccessHaveTenantRole(scopeAccess, IDM_SUPER_ADMIN_ROLE);
+
+        logger.debug("Authorized {} as idm super admin - {}", scopeAccess, authorized);
+        return authorized;
+    }
+
+    @Override
     public boolean authorizeRacker(ScopeAccess scopeAccess) {
         logger.debug("Authorizing {} as racker", scopeAccess);
         boolean authorized = scopeAccess instanceof RackerScopeAccess;
@@ -251,18 +275,13 @@ public class DefaultAuthorizationService implements AuthorizationService {
         }
 
         if (IDM_ADMIN_GROUP_DN == null) {
-            ClientGroup group = this.clientDao.getClientGroup(
-                getRackspaceCustomerId(), getIdmClientId(),
-                getIdmAdminGroupName());
+            ClientGroup group = clientDao.getClientGroup(getRackspaceCustomerId(), getIdmClientId(), getIdmAdminGroupName());
             IDM_ADMIN_GROUP_DN = group.getUniqueId();
         }
 
         boolean authorized = false;
-
-        authorized = this.clientDao.isUserInClientGroup(username,
-            IDM_ADMIN_GROUP_DN) && customerId.equalsIgnoreCase(RCN);
-        logger.debug("Authorized {} as admin user - {}", scopeAccess,
-            authorized);
+        authorized = clientDao.isUserInClientGroup(username, IDM_ADMIN_GROUP_DN) && customerId.equalsIgnoreCase(RCN);
+        logger.debug("Authorized {} as admin user - {}", scopeAccess, authorized);
         return authorized;
     }
 
@@ -273,10 +292,8 @@ public class DefaultAuthorizationService implements AuthorizationService {
             return false;
         }
 
-        boolean authorized = getIdmClientId().equalsIgnoreCase(
-            scopeAccess.getClientId())
-            && getRackspaceCustomerId().equalsIgnoreCase(
-                scopeAccess.getClientRCN());
+        boolean authorized = getIdmClientId().equalsIgnoreCase(scopeAccess.getClientId())
+                && getRackspaceCustomerId().equalsIgnoreCase(scopeAccess.getClientRCN());
         logger.debug("Authorized {} as Idm - {}", scopeAccess, authorized);
         return authorized;
     }
@@ -306,6 +323,12 @@ public class DefaultAuthorizationService implements AuthorizationService {
         logger.debug("Authorized as Requestor({}) or Owner({})", isRequestor,
             isOwner);
         return (isRequestor || isOwner);
+    }
+
+    public void verifyIdmSuperAdminAccess(String authHeader) {
+        if(this.authorizeIdmSuperAdmin(scopeAccessService.getScopeAccessByAccessToken(authHeader))){
+            throw new ForbiddenException("Access denied");
+        }
     }
 
     @Override
@@ -340,5 +363,9 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     private String getCloudAuthUserAdminRole() {
         return config.getString("cloudAuth.userAdminRole");
+    }
+
+    private String getIdmSuperAdminRole() {
+        return config.getString("idm.superAdminRole");
     }
 }

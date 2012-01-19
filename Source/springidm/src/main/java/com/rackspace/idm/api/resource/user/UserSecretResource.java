@@ -56,7 +56,7 @@ public class UserSecretResource extends ParentResource {
         @HeaderParam("X-Auth-Token") String authToken,
         @PathParam("userId") String userId) {
 
-    	//authorizationService.authorize(authToken, Entity.createUserEntity(userId), new String[]{});
+        authorizationService.verifyIdmSuperAdminAccess(authToken);
     	
         getLogger().debug("Getting Secret Q&A for User: {}", userId);
         
@@ -85,9 +85,8 @@ public class UserSecretResource extends ParentResource {
         @PathParam("userId") String userId, 
         EntityHolder<com.rackspace.api.idm.v1.UserSecret> holder) {
         
-        //authorizationService.authorize(authToken, Entity.createUserEntity(userId), new String[]{});
-        
-    	validateRequestBody(holder);
+        authorizationService.verifyIdmSuperAdminAccess(authToken);
+        validateRequestBody(holder);
 
         getLogger().debug("Updating Secret Q&A for User: {}", userId);
         

@@ -1,36 +1,23 @@
 package com.rackspace.idm.api.resource.user;
 
-import java.util.List;
-
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Request;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
-
 import com.rackspace.idm.api.converter.RolesConverter;
 import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
-import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.UserService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
+
+import javax.ws.rs.*;
+import javax.ws.rs.core.*;
+import java.util.List;
 
 /**
  * User Application Roles Resource.
@@ -78,11 +65,7 @@ public class UserGlobalRolesResource {
 
         logger.debug("Getting global roles for User: {}", userId);
 
-        ScopeAccess token = this.scopeAccessService.getAccessTokenByAuthHeader(authHeader);
-        //TODO: Implement authorization rules
-        //authorizationService.authorizeToken(token, uriInfo);
-        // Racker's, Rackspace Clients, Specific Clients, Admins and User's are
-        // authorized
+        authorizationService.verifyIdmSuperAdminAccess(authHeader);
    
         User user = userService.loadUser(userId);
     	FilterParam[] filters = null;
