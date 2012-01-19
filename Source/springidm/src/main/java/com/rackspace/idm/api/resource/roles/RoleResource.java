@@ -67,10 +67,7 @@ public class RoleResource extends ParentResource {
 			@HeaderParam("X-Auth-Token") String authHeader,
 			@PathParam("roleId") String roleId) {
 
-		ScopeAccess token = this.scopeAccessService
-				.getAccessTokenByAuthHeader(authHeader);
-		// TODO: Implement authorization rules
-		// authorizationService.authorizeToken(token, uriInfo);
+		authorizationService.verifyIdmSuperAdminAccess(authHeader);
 
 		ClientRole clientRole = applicationService.getClientRoleById(roleId); 
 		
@@ -95,10 +92,7 @@ public class RoleResource extends ParentResource {
 			@HeaderParam("X-Auth-Token") String authHeader,
 			@PathParam("roleId") String roleId) {
 
-		ScopeAccess token = this.scopeAccessService
-				.getAccessTokenByAuthHeader(authHeader);
-		// TODO: Implement authorization rules
-		// authorizationService.authorizeToken(token, uriInfo);
+		authorizationService.verifyIdmSuperAdminAccess(authHeader);
 
 		ClientRole clientRole = applicationService.getClientRoleById(roleId); 
 		
@@ -125,12 +119,10 @@ public class RoleResource extends ParentResource {
 			@PathParam("roleId") String roleId,
 			EntityHolder<com.rackspace.api.idm.v1.Role> holder) {
 
-		validateRequestBody(holder);
-		
-		ScopeAccess token = this.scopeAccessService
-				.getAccessTokenByAuthHeader(authHeader);
-		// TODO: Implement authorization rules
-		// authorizationService.authorizeToken(token, uriInfo);
+        authorizationService.verifyIdmSuperAdminAccess(authHeader);
+
+        validateRequestBody(holder);
+
 		ClientRole updatedRole = rolesConverter.toClientRole(holder.getEntity());
 		ClientRole clientRole = applicationService.getClientRoleById(roleId); 
 		
