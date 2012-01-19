@@ -321,10 +321,12 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
 
         List<CloudBaseUrl> baseUrls = new ArrayList<CloudBaseUrl>();
 
-        for (String baseUrlId : tenant.getBaseUrlIds()) {
-            CloudBaseUrl baseUrl = this.getBaseUrlById(Integer.parseInt(baseUrlId));
-            if (baseUrl != null) {
-                baseUrls.add(baseUrl);
+        if (tenant.getBaseUrlIds() != null) {
+            for (String baseUrlId : tenant.getBaseUrlIds()) {
+                CloudBaseUrl baseUrl = this.getBaseUrlById(Integer.parseInt(baseUrlId));
+                if (baseUrl != null) {
+                    baseUrls.add(baseUrl);
+                }
             }
         }
 
