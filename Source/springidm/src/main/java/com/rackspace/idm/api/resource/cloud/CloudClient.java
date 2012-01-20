@@ -14,8 +14,6 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.*;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Set;
 
 /**
@@ -60,8 +58,8 @@ public class CloudClient {
         DefaultHttpClient client = getHttpClient();
         setHttpHeaders(httpHeaders, request);
 
-        // ToDo: Fix when returning 301 - errors in build of ResponseBuilder
-        //client.getParams().setParameter(ClientPNames.HANDLE_REDIRECTS, false);
+        // ToDo: Fix when returning 301 - errors in build of ResponseBuilder due to entity
+        client.getParams().setParameter(ClientPNames.HANDLE_REDIRECTS, false);
 
         String responseBody = null;
         int statusCode = 500;
@@ -98,21 +96,17 @@ public class CloudClient {
 
     private Response.ResponseBuilder handleRedirect(HttpResponse response){
         try{
-            String uri = "";
+            Response.ResponseBuilder builder = Response.status(Response.Status.MOVED_PERMANENTLY); //.header("Location", uri);
             for (Header header : response.getAllHeaders()) {
                 String key = header.getName();
-                if (key.equalsIgnoreCase("location")) {
-                    uri = header.getValue();
+                if (!key.equalsIgnoreCase("content-encoding") && !key.equalsIgnoreCase("content-length")) {
+                    builder.header(key, header.getValue());
                 }
             }
-            Response.ResponseBuilder builder = Response.seeOther(new URI(uri)).status(Response.Status.MOVED_PERMANENTLY);
-            // Add headers from original request
-            //for (Header header : request.getAllHeaders()) {
-            //    String key = header.getName();
-            //    builder = builder.header(key, header.getValue());
-            //}
+            //builder.entity(response.getEntity());
+            builder.header("response-source","cloud-auth");
             return builder;
-        }catch(URISyntaxException ex){
+        }catch(Exception ex){
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }

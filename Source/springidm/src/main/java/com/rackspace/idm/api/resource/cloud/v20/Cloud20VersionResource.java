@@ -125,7 +125,7 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @QueryParam("name") String name,
-            @QueryParam("marker") String marker,
+            @QueryParam("marker") int marker,
             @QueryParam("limit") int limit) throws IOException {
         if (StringUtils.isBlank(name)) {
             return getCloud20Service().listUsers(httpHeaders, authToken, marker, limit).build();

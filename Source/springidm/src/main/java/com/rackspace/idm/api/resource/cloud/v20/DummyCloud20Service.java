@@ -293,7 +293,7 @@ public class DummyCloud20Service implements Cloud20Service{
 
     @Override
     public ResponseBuilder listUsers(HttpHeaders httpHeaders, String authToken,
-        String marker, Integer limit) throws IOException {
+        Integer marker, Integer limit) throws IOException {
         return Response.status(Status.NOT_FOUND);
     }
 
