@@ -190,8 +190,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
 		}
 	}
 
-	private ScopeAccess getTokens(final Credentials trParam, final DateTime currentTime)
-			throws NotAuthenticatedException {
+	private ScopeAccess getTokens(final Credentials trParam, final DateTime currentTime) throws NotAuthenticatedException {
 
 		OAuthGrantType grantType = trParam.getOAuthGrantType();
 		if (StringUtils.isBlank(trParam.getClientId())) {
@@ -200,11 +199,9 @@ public class DefaultAuthenticationService implements AuthenticationService {
 			throw new BadRequestException(msg);
 		}
 
-		final ClientAuthenticationResult caResult = clientDao.authenticate(
-				trParam.getClientId(), trParam.getClientSecret());
+		final ClientAuthenticationResult caResult = clientDao.authenticate(trParam.getClientId(), trParam.getClientSecret());
 		if (!caResult.isAuthenticated()) {
-			final String message = "Bad Client credentials for "
-					+ trParam.getClientId();
+			final String message = "Bad Client credentials for " + trParam.getClientId();
 			logger.warn(message);
 			throw new NotAuthenticatedException(message);
 		}
@@ -218,15 +215,12 @@ public class DefaultAuthenticationService implements AuthenticationService {
 
 			final UserAuthenticationResult uaResult = authenticateRacker(trParam.getUsername(), trParam.getPassword());
 			if (!uaResult.isAuthenticated()) {
-				final String message = "Bad User credentials for "
-						+ trParam.getUsername();
+				final String message = "Bad User credentials for " + trParam.getUsername();
 				logger.warn(message);
 				throw new NotAuthenticatedException(message);
 			}
 
-			RackerScopeAccess scopeAccess = this
-					.getAndUpdateRackerScopeAccessForClientId((Racker)uaResult.getUser(), caResult
-							.getClient());
+			RackerScopeAccess scopeAccess = this.getAndUpdateRackerScopeAccessForClientId((Racker)uaResult.getUser(), caResult.getClient());
 			return scopeAccess;
 		}
 

@@ -153,6 +153,10 @@ public class DefaultAuthorizationService implements AuthorizationService {
     public boolean authorizeIdmSuperAdmin(ScopeAccess scopeAccess) {
         logger.debug("Authorizing {} as idm super admin", scopeAccess);
 
+        if(this.authorizeCustomerIdm(scopeAccess)){
+            return true;
+        }
+
         if (scopeAccess == null || ((HasAccessToken) scopeAccess).isAccessTokenExpired(new DateTime())) {
             return false;
         }
