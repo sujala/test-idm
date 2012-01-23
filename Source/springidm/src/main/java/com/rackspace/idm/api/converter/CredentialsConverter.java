@@ -8,7 +8,7 @@ public class CredentialsConverter {
 
     public CredentialsConverter() {
     }
-    
+
     public Credentials toCredentialsDO(com.rackspace.api.idm.v1.Credentials credentials) {
         Credentials credentialsDO = (credentials instanceof com.rackspace.api.idm.v1.RackerCredentials ? new RackerCredentials() : new AuthCredentials());
         credentialsDO.setClientId(credentials.getClientId());
@@ -17,8 +17,9 @@ public class CredentialsConverter {
         credentialsDO.setRefreshToken(credentials.getRefreshToken());
         credentialsDO.setUsername(credentials.getUsername());
         credentialsDO.setAuthorizationCode(credentials.getAuthorizationCode());
-        credentialsDO.setGrantType(credentials.getGrantType().value());
-        
+        if (credentials.getGrantType() != null) {
+            credentialsDO.setGrantType(credentials.getGrantType().value());
+        }
         return credentialsDO;
     }
 }
