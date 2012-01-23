@@ -1568,7 +1568,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (sa instanceof UserScopeAccess) {
                 UserScopeAccess usa = (UserScopeAccess) sa;
                 User user = this.userService.getUserById(usa.getUserRsId());
-                if (user == null) {
+                if (user == null || user.isDisabled()) {
                     throw new NotFoundException("User not found");
                 }
                 List<TenantRole> roles = this.tenantService.getTenantRolesForScopeAccess(usa);
