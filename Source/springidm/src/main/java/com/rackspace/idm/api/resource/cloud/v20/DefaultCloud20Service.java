@@ -1612,6 +1612,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             return notFoundExceptionResponse(ex.getMessage());
         } else if (ex instanceof ClientConflictException) {
             return tenantConflictExceptionResponse(ex.getMessage());
+        } else if (ex instanceof UserDisabledException){
+            return userDisabledExceptionResponse(ex.getMessage());
         } else {
             return serviceExceptionResponse();
         }
