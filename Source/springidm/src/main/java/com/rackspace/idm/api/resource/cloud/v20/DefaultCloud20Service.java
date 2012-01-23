@@ -1302,13 +1302,24 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     // KSADM Extension User methods
     @Override
-    public ResponseBuilder listUsers(HttpHeaders httpHeaders, String authToken, String marker, Integer limit) {
+    public ResponseBuilder listUsers(HttpHeaders httpHeaders, String authToken, Integer marker, Integer limit) {
 
         try {
-            checkXAUTHTOKEN(authToken, true, null);
+            checkXAUTHTOKEN(authToken, false, null);
+            ScopeAccess scopeAccessByAccessToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
+            User caller = getUser(scopeAccessByAccessToken);
+            Users users = null;
+            if(caller.getDomainId() != null) {
+                String domainId = caller.getDomainId();
+                FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParamName.DOMAIN_ID, domainId)};
+                users = this.userService.getAllUsers(filters, marker, limit);
+            }else{
+                users = this.userService.getAllUsers(null, marker, limit);
+            }
 
-            // TODO write me
-            return Response.status(Status.NOT_FOUND);
+            // TODO write me to return the Users not List<User>
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                    .createUsers(this.userConverterCloudV20.toUserList(users.getUsers())));
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }

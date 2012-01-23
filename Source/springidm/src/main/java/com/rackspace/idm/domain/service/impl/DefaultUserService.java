@@ -75,7 +75,7 @@ public class DefaultUserService implements UserService {
         }
         setPasswordIfNecessary(user);
         
-        user.setEnabled(true);
+        user.setEnabled(user.isEnabled());
         user.setId(this.userDao.getNextUserId());
         if(user.getDomainId()==null){
             user.setDomainId(user.getId());

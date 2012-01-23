@@ -185,4 +185,9 @@ public class DummyCloud11Service implements Cloud11Service {
 			throws IOException {
 		return Response.status(Status.NOT_FOUND);
 	}
+
+    @Override
+    public ResponseBuilder extensions(HttpHeaders httpHeaders) throws IOException {
+        return  Response.status(Status.NOT_FOUND);
+    }
 }

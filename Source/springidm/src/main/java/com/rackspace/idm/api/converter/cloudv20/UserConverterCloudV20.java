@@ -27,6 +27,7 @@ public class UserConverterCloudV20 {
         userDO.setUsername(user.getUsername());
         userDO.setEmail(user.getEmail());
         userDO.setDisplayName(user.getDisplayName());
+        userDO.setEnabled(user.isEnabled());
         return userDO;
     }
 

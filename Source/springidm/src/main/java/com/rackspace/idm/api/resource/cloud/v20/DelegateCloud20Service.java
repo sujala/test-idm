@@ -173,7 +173,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listUsers(HttpHeaders httpHeaders, String authToken, String marker, Integer limit) throws IOException {
+    public ResponseBuilder listUsers(HttpHeaders httpHeaders, String authToken, Integer marker, Integer limit) throws IOException {
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             // TODO: Implement routing to DefaultCloud20Service
             String request = getCloudAuthV20Url() + "users";

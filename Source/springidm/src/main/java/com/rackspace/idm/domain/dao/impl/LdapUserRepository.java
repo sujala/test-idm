@@ -426,6 +426,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                     searchBuilder.addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, filter.getStrValue());
                 } else if (filter.getParam() == FilterParamName.USERNAME) {
                     searchBuilder.addEqualAttribute(ATTR_UID, filter.getStrValue());
+                } else if (filter.getParam() == FilterParamName.DOMAIN_ID) {
+                    searchBuilder.addEqualAttribute(ATTR_DOMAIN_ID, filter.getStrValue());
                 }
             }
         }
@@ -919,6 +921,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         user.setLastname(cryptHelper.decrypt(resultEntry
             .getAttributeValueBytes(ATTR_SN)));
         user.setTimeZoneObj(DateTimeZone.forID(resultEntry.getAttributeValue(ATTR_TIME_ZONE)));
+        user.setDomainId(resultEntry.getAttributeValue(ATTR_DOMAIN_ID));
         user.setDomainId(resultEntry.getAttributeValue(ATTR_DOMAIN_ID));
 
         String ecryptedPwd = cryptHelper.decrypt(resultEntry
