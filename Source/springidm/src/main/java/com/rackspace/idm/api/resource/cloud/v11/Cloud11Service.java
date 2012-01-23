@@ -47,5 +47,8 @@ public interface Cloud11Service {
     // Migration Methods
     Response.ResponseBuilder migrate(HttpServletRequest request, String user, HttpHeaders httpHeaders, String body) throws IOException;
     Response.ResponseBuilder unmigrate(HttpServletRequest request, String user, HttpHeaders httpHeaders, String body) throws IOException;
-    Response.ResponseBuilder all(HttpServletRequest request, HttpHeaders httpHeaders, String body) throws IOException; 
+    Response.ResponseBuilder all(HttpServletRequest request, HttpHeaders httpHeaders, String body) throws IOException;
+
+    //extensions
+    Response.ResponseBuilder extensions(HttpHeaders httpHeaders) throws IOException;
 }

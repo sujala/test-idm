@@ -417,6 +417,14 @@ public class DelegateCloud11Service implements Cloud11Service {
         return cloudClient.delete(getCloudAuthV11Url().concat(path), httpHeaders);
     }
 
+    @Override
+    public Response.ResponseBuilder extensions(HttpHeaders httpHeaders) throws IOException {
+        if(isCloudAuthRoutingEnabled() && !isGASourceOfTruth()){
+            return cloudClient.get(getCloudAuthV11Url().concat("extensions"),httpHeaders);
+        }
+        return defaultCloud11Service.extensions(httpHeaders);
+    }
+
     private Cloud11Service getCloud11Service() {
         if (config.getBoolean("GAKeystoneDisabled")) {
             return dummyCloud11Service;

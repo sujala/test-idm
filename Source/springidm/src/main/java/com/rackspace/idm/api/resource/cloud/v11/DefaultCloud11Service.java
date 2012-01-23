@@ -764,6 +764,12 @@ public class DefaultCloud11Service implements Cloud11Service {
         }
     }
 
+    @Override
+    public ResponseBuilder extensions(HttpHeaders httpHeaders) throws IOException {
+        //TODO
+        throw new IOException("Not Implemented");
+    }
+
     // Migration Methods
     @Override
     public Response.ResponseBuilder all(HttpServletRequest request, HttpHeaders httpHeaders, String body) throws IOException {
