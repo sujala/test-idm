@@ -1,6 +1,5 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.JSONConstants;
@@ -1270,6 +1269,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String authToken, String userId) throws IOException {
         try {
+            // ToDo: Not implemented
+            return Response.status(501);
+            /*
             checkXAUTHTOKEN(authToken, true, null);
 
             if (StringUtils.isBlank(userId)) {
@@ -1295,6 +1297,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             Groups groups = this.userGroupService.getGroups(mossoId);
 
             return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtKsgrpV1Factory().createGroups(groups));
+            */
         } catch (Exception e) {
             return exceptionResponse(e);
         }

@@ -528,6 +528,9 @@ public class DefaultCloud11Service implements Cloud11Service {
     public Response.ResponseBuilder getUserGroups(HttpServletRequest request, String userID, HttpHeaders httpHeaders)
             throws IOException {
         try {
+            //ToDo: Not implemented
+            return Response.status(501);
+            /*
             authenticateCloudAdminUserForGetRequests(request);
 
             if (org.tuckey.web.filters.urlrewrite.utils.StringUtils.isBlank(userID)) {
@@ -546,7 +549,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             GroupsList groups = userGroupService.getGroupList(mossoId);
             return Response.ok(OBJ_FACTORY.createGroups(groups));
-
+        */
         } catch (NotFoundException e) {
             return cloudExceptionResponse.exceptionResponse(e);
         } catch (NotAuthorizedException e) {

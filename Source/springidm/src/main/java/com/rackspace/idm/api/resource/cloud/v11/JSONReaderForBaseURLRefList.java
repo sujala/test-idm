@@ -1,9 +1,13 @@
 package com.rackspace.idm.api.resource.cloud.v11;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Type;
+import com.rackspace.idm.JSONConstants;
+import com.rackspacecloud.docs.auth.api.v1.BaseURLRef;
+import com.rackspacecloud.docs.auth.api.v1.BaseURLRefList;
+import org.apache.commons.io.IOUtils;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.WebApplicationException;
@@ -11,16 +15,10 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyReader;
 import javax.ws.rs.ext.Provider;
-
-import org.apache.commons.io.IOUtils;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
-
-import com.rackspace.idm.JSONConstants;
-import com.rackspacecloud.docs.auth.api.v1.BaseURLRef;
-import com.rackspacecloud.docs.auth.api.v1.BaseURLRefList;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
@@ -54,25 +52,14 @@ public class JSONReaderForBaseURLRefList implements
             JSONObject outer = (JSONObject) parser.parse(jsonBody);
 
             if (outer.containsKey(JSONConstants.BASE_URL_REFS)) {
-                JSONObject obj3;
+                JSONArray array = (JSONArray) parser.parse(outer.get(JSONConstants.BASE_URL_REFS).toString());
 
-                obj3 = (JSONObject) parser.parse(outer.get(
-                    JSONConstants.BASE_URL_REFS).toString());
-
-                if (obj3.containsKey(JSONConstants.BASE_URL_REF)) {
-                    JSONArray array = (JSONArray) obj3
-                        .get(JSONConstants.BASE_URL_REF);
-
-                    for (Object object : array) {
-                        if (object != null) {
-                            BaseURLRef ref = JSONReaderForBaseUrlRef
-                                .getBaseURLRefFromJSONStringWithoutWrapper(object
-                                    .toString());
-                            refs.getBaseURLRef().add(ref);
-                        }
+                for (Object object : array) {
+                    if (object != null) {
+                        BaseURLRef ref = JSONReaderForBaseUrlRef.getBaseURLRefFromJSONStringWithoutWrapper(object.toString());
+                        refs.getBaseURLRef().add(ref);
                     }
                 }
-
             }
         } catch (ParseException e) {
             // TODO Auto-generated catch block
