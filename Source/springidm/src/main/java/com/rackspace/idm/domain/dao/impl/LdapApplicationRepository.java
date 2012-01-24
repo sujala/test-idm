@@ -1070,10 +1070,11 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         Audit audit = Audit.log(role);
         try {
             conn = getAppConnPool().getConnection();
-            final LDAPPersister<ClientRole> persister = LDAPPersister
-                    .getInstance(ClientRole.class);
-            List<Modification> modifications = persister.getModifications(role,
-                    true);
+            final LDAPPersister<ClientRole> persister = LDAPPersister.getInstance(ClientRole.class);
+            List<Modification> modifications = persister.getModifications(role, true);
+            if(modifications.size()<1){
+                return;
+            }
             audit.modify(modifications);
             persister.modify(role, conn, null, true);
             getLogger().debug("Updated Client Role: {}", role);
