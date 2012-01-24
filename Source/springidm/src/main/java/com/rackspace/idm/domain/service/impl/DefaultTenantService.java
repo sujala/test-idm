@@ -200,14 +200,11 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public TenantRole getTenantRoleForParentById(String parentUniqueId,
-        String id) {
+    public TenantRole getTenantRoleForParentById(String parentUniqueId, String id) {
         logger.debug("Getting Tenant Role {}", id);
-        TenantRole role = this.tenantDao.getTenantRoleForParentById(
-            parentUniqueId, id);
+        TenantRole role = this.tenantDao.getTenantRoleForParentById(parentUniqueId, id);
         if (role != null) {
-            ClientRole cRole = this.clientDao.getClientRoleById(role
-                .getRoleRsId());
+            ClientRole cRole = this.clientDao.getClientRoleById(role.getRoleRsId());
             role.setName(cRole.getName());
             role.setDescription(cRole.getDescription());
         }

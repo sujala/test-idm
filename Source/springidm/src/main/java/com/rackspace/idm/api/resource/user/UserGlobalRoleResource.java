@@ -93,18 +93,18 @@ public class UserGlobalRoleResource {
 	 *            roleId
 	 */
 	@DELETE
-	public Response deleteGlobalRoleFromUser(@Context Request request,
-			@Context UriInfo uriInfo,
+	public Response deleteGlobalRoleFromUser(
 			@HeaderParam("X-Auth-Token") String authHeader,
 			@PathParam("userId") String userId,
 			@PathParam("roleId") String roleId) {
 
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
 
-		User user = this.userService.loadUser(userId);
-		TenantRole tenantRole = this.tenantService.getTenantRoleForParentById(
-				user.getUniqueId(), roleId);
-
+		User user = userService.loadUser(userId);
+		TenantRole tenantRole = tenantService.getTenantRoleForParentById(user.getUniqueId(), roleId);
+        if(tenantRole==null){
+            return Response.status(Response.Status.NOT_FOUND).entity("role with id: " + roleId + " not found").build();
+        }
 		this.tenantService.deleteTenantRole(user.getUniqueId(), tenantRole);
 
 		return Response.noContent().build();
