@@ -91,7 +91,7 @@ public class Cloud20VersionResourceTest extends AbstractAroundClassJerseyTest {
                 .type(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML_TYPE)
                 .post(ClientResponse.class,
-                        "<auth xmlns=\"http://docs.openstack.org/identity/api/v2.0\"><passwordCredentials username=\"cmarin1\" password=\"Password1\"/></auth>");
+                        "<auth xmlns=\"http://docs.openstack.org/identity/api/v2.0\"><passwordCredentials username=\"cmarin2\" password=\"Password1\"/></auth>");
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
     }
 

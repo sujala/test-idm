@@ -1459,8 +1459,11 @@ public class DefaultCloud20Service implements Cloud20Service {
                 verifyDomain(retrievedUser, caller);
             }
 
-
             User userDO = this.userConverterCloudV20.toUserDO(user);
+
+            if(userDO.isDisabled()){
+                this.scopeAccessService.expireAllTokensForUser(retrievedUser.getUsername());
+            }
 
             retrievedUser.copyChanges(userDO);
 
@@ -1568,8 +1571,11 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (sa instanceof UserScopeAccess) {
                 UserScopeAccess usa = (UserScopeAccess) sa;
                 User user = this.userService.getUserById(usa.getUserRsId());
-                if (user == null || user.isDisabled()) {
+                if (user == null) {
                     throw new NotFoundException("User not found");
+                }
+                if(user.isDisabled()){
+                    throw new NotFoundException("Token not found.");
                 }
                 List<TenantRole> roles = this.tenantService.getTenantRolesForScopeAccess(usa);
                 if (roles != null && roles.size() > 0) {
