@@ -1079,7 +1079,7 @@
                 Add a new role.
             </xhtml:p>
             <xhtml:p>
-                Can also add application specific roles by specifying the application id in the request payload.
+                Adds a role to the specified application.
             </xhtml:p>
             <examples xmlns="http://docs.rackspace.com/api" title="Add Role Request">
                 <example href="../formattedsamples/addrole.xml" language="xml"/>
