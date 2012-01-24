@@ -62,11 +62,10 @@ public class UsersResource extends ParentResource {
      *
      *
      * @param authHeader HTTP Authorization header for authenticating the caller.
-     * @param user New User
+     * @param username 
      */
     @GET
-    public Response getUsers(@Context Request request,
-        @Context UriInfo uriInfo,
+    public Response getUsers(
         @QueryParam("username") String username,
         @QueryParam("offset") Integer offset,
         @QueryParam("limit") Integer limit,
