@@ -57,8 +57,6 @@ public class RoleResource extends ParentResource {
 	 * 
 	 * @param authHeader
 	 *            HTTP Authorization header for authenticating the caller.
-	 * @param userId
-	 *            userId
 	 * @param roleId
 	 *            roleId
 	 */
@@ -101,35 +99,5 @@ public class RoleResource extends ParentResource {
 		return Response.noContent().build();
 	}
 	
-	/**
-	 * Updates a role
-	 * 
-	 * 
-	 * @param authHeader
-	 *            HTTP Authorization header for authenticating the caller.
-	 * @param userId
-	 *            userId
-	 * @param roleId
-	 *            roleId
-	 * @param role
-	 */
-	@PUT
-	public Response updateRole(
-			@HeaderParam("X-Auth-Token") String authHeader,
-			@PathParam("roleId") String roleId,
-			EntityHolder<com.rackspace.api.idm.v1.Role> holder) {
 
-        authorizationService.verifyIdmSuperAdminAccess(authHeader);
-
-        validateRequestBody(holder);
-
-		ClientRole updatedRole = rolesConverter.toClientRole(holder.getEntity());
-		ClientRole clientRole = applicationService.getClientRoleById(roleId); 
-		
-		clientRole.copyChanges(updatedRole);
-		
-		applicationService.updateClientRole(clientRole);
-		
-		return Response.noContent().build();
-	}
 }
