@@ -91,8 +91,11 @@ public class RolesResource extends ParentResource {
      * @param role
      */
     @POST
-    public Response addRole(@HeaderParam("X-Auth-Token") String authHeader, com.rackspace.api.idm.v1.Role role) {
+    public Response addRole(@HeaderParam("X-Auth-Token") String authHeader, Role role) {
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
+        if(!isValidRole(role)){
+            return Response.status(Response.Status.BAD_REQUEST).entity("Role is not valid").build();
+        }
         ClientRole clientRole = rolesConverter.toClientRole(role);
         applicationService.addClientRole(clientRole);
         String locationUri = clientRole.getId();
@@ -112,6 +115,9 @@ public class RolesResource extends ParentResource {
             @PathParam("roleId") String roleId,
             Role role) {
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
+        if(!isValidRole(role)){
+            return Response.status(Response.Status.BAD_REQUEST).entity("Role is not valid").build();
+        }
         ClientRole updatedRole = rolesConverter.toClientRole(role);
         ClientRole clientRole = applicationService.getClientRoleById(roleId);
         clientRole.copyChanges(updatedRole);
@@ -132,7 +138,6 @@ public class RolesResource extends ParentResource {
 	public Response deleteRole(
 			@HeaderParam("X-Auth-Token") String authHeader,
 			@PathParam("roleId") String roleId) {
-
 		authorizationService.verifyIdmSuperAdminAccess(authHeader);
 		ClientRole clientRole = applicationService.getClientRoleById(roleId);
         if(clientRole==null){
@@ -142,4 +147,16 @@ public class RolesResource extends ParentResource {
 		return Response.noContent().build();
 	}
 
+    boolean isValidRole(Role role){
+        if(role==null){
+            return false;
+        }
+        if(role.getName()==null || role.getName().isEmpty()){
+            return false;
+        }
+        if(role.getApplicationId()==null || role.getApplicationId().isEmpty()){
+            return false;
+        }
+        return true;
+    }
 }
