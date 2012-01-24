@@ -8,7 +8,6 @@ import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.AuthorizationService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.validation.InputValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -30,23 +29,16 @@ import java.util.List;
 @Component
 public class RolesResource extends ParentResource {
 
-    private final ScopeAccessService scopeAccessService;
     private final ApplicationService applicationService;
     private final AuthorizationService authorizationService;
     private final RolesConverter rolesConverter;
-    private final RoleResource roleResource;
 
     @Autowired
-    public RolesResource(RolesConverter rolesConverter,
-                         AuthorizationService authorizationService,
-                         ApplicationService applicationService, ScopeAccessService scopeAccessService,
-                         RoleResource roleResource, InputValidator inputValidator) {
-
+    public RolesResource(RolesConverter rolesConverter, AuthorizationService authorizationService,
+                         ApplicationService applicationService, InputValidator inputValidator) {
         super(inputValidator);
         this.applicationService = applicationService;
-        this.scopeAccessService = scopeAccessService;
         this.authorizationService = authorizationService;
-        this.roleResource = roleResource;
         this.rolesConverter = rolesConverter;
     }
 
@@ -126,5 +118,28 @@ public class RolesResource extends ParentResource {
         applicationService.updateClientRole(clientRole);
         return Response.noContent().build();
     }
+
+    /**
+	 * Delete a role
+	 *
+	 * @param authHeader
+	 *            HTTP Authorization header for authenticating the caller.
+	 * @param roleId
+	 *            roleId
+	 */
+	@DELETE
+    @Path("{roleId}")
+	public Response deleteRole(
+			@HeaderParam("X-Auth-Token") String authHeader,
+			@PathParam("roleId") String roleId) {
+
+		authorizationService.verifyIdmSuperAdminAccess(authHeader);
+		ClientRole clientRole = applicationService.getClientRoleById(roleId);
+        if(clientRole==null){
+            Response.status(Response.Status.NOT_FOUND).entity("role with id: " + roleId + " not found");
+        }
+		applicationService.deleteClientRole(clientRole);
+		return Response.noContent().build();
+	}
 
 }
