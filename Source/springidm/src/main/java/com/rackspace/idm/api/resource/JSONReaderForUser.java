@@ -1,9 +1,11 @@
 package com.rackspace.idm.api.resource;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Type;
+import com.rackspace.api.idm.v1.User;
+import com.rackspace.idm.JSONConstants;
+import org.apache.commons.io.IOUtils;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.WebApplicationException;
@@ -11,14 +13,10 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyReader;
 import javax.ws.rs.ext.Provider;
-
-import org.apache.commons.io.IOUtils;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
-
-import com.rackspace.api.idm.v1.User;
-import com.rackspace.idm.JSONConstants;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
@@ -68,8 +66,7 @@ public class JSONReaderForUser implements MessageBodyReader<User> {
                 Object preflang = obj3.get(JSONConstants.PREF_LANGUAGE);
                 Object country = obj3.get(JSONConstants.COUNTRY);
                 Object timeZone = obj3.get(JSONConstants.TIME_ZONE);
-                Object passwordCredentials = obj3
-                    .get(JSONConstants.PASSWORD_CREDENTIALS);
+                Object passwordCredentials = obj3.get(JSONConstants.PASSWORD_CREDENTIALS);
                 Object secret = obj3.get(JSONConstants.SECRET);
                 Object enabled = obj3.get(JSONConstants.ENABLED);
 

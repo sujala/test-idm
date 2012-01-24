@@ -106,6 +106,7 @@ public class Cloud20VersionResourceTest extends AbstractAroundClassJerseyTest {
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
     }
 
+    @Ignore
     @Test
     public void listUserGroups_invalidAuthToken_returns401() throws Exception {
         String token = "invalid";
