@@ -630,8 +630,8 @@
                 Get a list of a user's delegated refresh tokens.
             </xhtml:p>
             <examples xmlns="http://docs.rackspace.com/api" title="Delegated Refresh Tokens Response">
-                <example href="../formattedsamples/delegatedtokens.xml" language="xml"/>
-                <example href="../formattedsamples/delegatedtokens.json" language="javascript"/>
+                <example href="../formattedsamples/delegatedTokens.xml" language="xml"/>
+                <example href="../formattedsamples/delegatedTokens.json" language="javascript"/>
             </examples>
         </doc>
         <response status="200">
@@ -648,8 +648,8 @@
                 Get a user's delegated refresh token.
             </xhtml:p>
             <examples xmlns="http://docs.rackspace.com/api" title="Delegated Refresh Token Response">
-                <example href="../formattedsamples/delegatedtoken.xml" language="xml"/>
-                <example href="../formattedsamples/delegatedtoken.json" language="javascript"/>
+                <example href="../formattedsamples/delegatedToken.xml" language="xml"/>
+                <example href="../formattedsamples/delegatedToken.json" language="javascript"/>
             </examples>
         </doc>
         <response status="200">
