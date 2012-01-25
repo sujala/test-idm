@@ -14,6 +14,7 @@ import javax.ws.rs.core.Variant;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
+import com.rackspace.idm.exception.*;
 import org.omg.CORBA.portable.ApplicationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,25 +41,6 @@ import com.rackspace.api.idm.v1.StalePasswordFault;
 import com.rackspace.api.idm.v1.UserDisabledFault;
 import com.rackspace.api.idm.v1.UsernameConflictFault;
 import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.BaseUrlConflictException;
-import com.rackspace.idm.exception.ClientConflictException;
-import com.rackspace.idm.exception.CloudAdminAuthorizationException;
-import com.rackspace.idm.exception.CustomerConflictException;
-import com.rackspace.idm.exception.DuplicateClientException;
-import com.rackspace.idm.exception.DuplicateClientGroupException;
-import com.rackspace.idm.exception.DuplicateUsernameException;
-import com.rackspace.idm.exception.ForbiddenException;
-import com.rackspace.idm.exception.IdmException;
-import com.rackspace.idm.exception.NotAuthenticatedException;
-import com.rackspace.idm.exception.NotAuthorizedException;
-import com.rackspace.idm.exception.NotFoundException;
-import com.rackspace.idm.exception.NotProvisionedException;
-import com.rackspace.idm.exception.PasswordSelfUpdateTooSoonException;
-import com.rackspace.idm.exception.PasswordValidationException;
-import com.rackspace.idm.exception.PermissionConflictException;
-import com.rackspace.idm.exception.StalePasswordException;
-import com.rackspace.idm.exception.UserDisabledException;
 import com.rackspacecloud.docs.auth.api.v1.AuthFault;
 
 @Component
@@ -126,6 +108,14 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
             fault.setMessage(e.getMessage());
             fault.setDetail(detail);
             return Response.ok(ga_of.createClientGroupConflict(fault)).status(Response.Status.CONFLICT).build();
+        }
+
+        if (e instanceof DuplicateException) {
+            ServiceFault fault = new ServiceFault();
+            fault.setCode(Response.Status.CONFLICT.getStatusCode());
+            fault.setMessage(e.getMessage());
+            fault.setDetail(detail);
+            return Response.status(Response.Status.CONFLICT).entity(rax_of.createServiceFault(fault)).build();
         }
 
         if (e instanceof CustomerConflictException) {

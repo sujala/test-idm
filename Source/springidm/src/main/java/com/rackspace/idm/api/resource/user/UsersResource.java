@@ -1,27 +1,5 @@
 package com.rackspace.idm.api.resource.user;
 
-import java.net.URI;
-
-import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Request;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.exception.ForbiddenException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
-
 import com.rackspace.idm.api.converter.UserConverter;
 import com.rackspace.idm.api.resource.ParentResource;
 import com.rackspace.idm.domain.entity.FilterParam;
@@ -31,6 +9,14 @@ import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.validation.InputValidator;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
+
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.*;
+import javax.ws.rs.core.*;
+import java.net.URI;
 
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})

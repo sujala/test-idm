@@ -618,23 +618,20 @@ public class DefaultApplicationService implements ApplicationService {
     @Override
     public void addClientRole(ClientRole role) {
         logger.info("Adding Client Role: {}", role);
-        Application client = this.clientDao.getClientByClientId(role.getClientId());
+        Application client = clientDao.getClientByClientId(role.getClientId());
         if (client == null) {
-            String errMsg = String.format("Client %s not found",
-                role.getClientId());
+            String errMsg = String.format("Client %s not found", role.getClientId());
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
-        ClientRole exists = this.clientDao.getClientRoleByClientIdAndRoleName(
-            role.getClientId(), role.getName());
+        ClientRole exists = clientDao.getClientRoleByClientIdAndRoleName(role.getClientId(), role.getName());
         if (exists != null) {
-            String errMsg = String.format("Role with name %s already exists",
-                role.getName());
+            String errMsg = String.format("Role with name %s already exists", role.getName());
             logger.warn(errMsg);
             throw new DuplicateException(errMsg);
         }
-        role.setId(this.clientDao.getNextRoleId());
-        this.clientDao.addClientRole(client.getUniqueId(), role);
+        role.setId(clientDao.getNextRoleId());
+        clientDao.addClientRole(client.getUniqueId(), role);
         logger.info("Added Client Role: {}", role);
     }
 
