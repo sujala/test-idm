@@ -1,35 +1,22 @@
 package com.rackspace.idm.api.resource.application;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Request;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import com.rackspace.api.idm.v1.ApplicationSecretCredentials;
 import com.rackspace.idm.api.converter.ApplicationConverter;
 import com.rackspace.idm.api.resource.ParentResource;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientSecret;
-import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.IdmException;
 import com.rackspace.idm.validation.InputValidator;
 import com.sun.jersey.core.provider.EntityHolder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 /**
  * Client application resource.
@@ -77,25 +64,19 @@ public class ApplicationResource extends ParentResource {
      * @param applicationId application ID
      */
     @GET
-    public Response getApplication(@Context Request request,
-        @Context UriInfo uriInfo,
+    public Response getApplication(
         @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("applicationId") String applicationId) {
+
+        authorizationService.verifyIdmSuperAdminAccess(authHeader);
     	
         getLogger().debug("Getting Application: {}", applicationId);
-
-        ScopeAccess token = this.scopeAccessService.getAccessTokenByAuthHeader(authHeader);
-        // Racker's, Rackspace Clients, Specific Clients, Admins and Users are
-        // authorized
-        //TODO: Implement authorization rules
-        //authorizationService.authorizeToken(token, uriInfo);
 
         Application application = this.applicationService.loadApplication(applicationId);
 
         getLogger().debug("Got Application: {}", application);
 
-        return Response.ok(applicationConverter
-            .toClientJaxbWithoutPermissionsOrCredentials(application)).build();
+        return Response.ok(applicationConverter.toClientJaxbWithoutPermissionsOrCredentials(application)).build();
     }
 
     /**
@@ -106,31 +87,26 @@ public class ApplicationResource extends ParentResource {
      * @param application Updated application
      */
     @PUT
-    public Response updateApplication(@Context Request request,
-        @Context UriInfo uriInfo,
+    public Response updateApplication(
         @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("applicationId") String applicationId,
-        EntityHolder<com.rackspace.api.idm.v1.Application> holder) {
+        EntityHolder<com.rackspace.api.idm.v1.Application> application) {
+
+        authorizationService.verifyIdmSuperAdminAccess(authHeader);
     	
-    	validateRequestBody(holder);
+    	validateRequestBody(application);
         
         getLogger().info("Updating application: {}", applicationId);
-
-        ScopeAccess token = this.scopeAccessService.getAccessTokenByAuthHeader(authHeader);
-        // Racker's, Specific Clients, Admins and IdM are authorized
-        //TODO: Implement authorization rules
-        //authorizationService.authorizeToken(token, uriInfo);
         
-        Application applicationWithUpdates = applicationConverter.toClientDO(holder.getEntity());
-        Application application = this.applicationService.loadApplication(applicationId);
-        application.copyChanges(applicationWithUpdates);
+        Application applicationWithUpdates = applicationConverter.toClientDO(application.getEntity());
+        Application applicationDO = this.applicationService.loadApplication(applicationId);
+        applicationDO.copyChanges(applicationWithUpdates);
 
-        this.applicationService.updateClient(application);
+        this.applicationService.updateClient(applicationDO);
         
         getLogger().info("Udpated application: {}", applicationId);
 
-        return Response.ok(applicationConverter
-            .toClientJaxbWithoutPermissionsOrCredentials(application)).build();
+        return Response.ok(applicationConverter.toClientJaxbWithoutPermissionsOrCredentials(applicationDO)).build();
     }
     
     /**
@@ -140,17 +116,13 @@ public class ApplicationResource extends ParentResource {
      * @param applicationId   application ID
      */
     @DELETE
-    public Response deleteApplication(@Context Request request,
-        @Context UriInfo uriInfo,
+    public Response deleteApplication(
         @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("applicationId") String applicationId) {
 
-        getLogger().info("Deleting Application: {}", applicationId);
+        authorizationService.verifyIdmSuperAdminAccess(authHeader);
 
-        ScopeAccess token = this.scopeAccessService.getAccessTokenByAuthHeader(authHeader);
-        // Only Specific Clients are authorized
-        //TODO: Implement authorization rules
-        //authorizationService.authorizeToken(token, uriInfo);
+        getLogger().info("Deleting Application: {}", applicationId);
 
         // Load the application to ensure that it exists first, before
         // attempting to delete it
@@ -173,17 +145,13 @@ public class ApplicationResource extends ParentResource {
      */
     @Path("secretcredentials")
     @POST
-    public Response resetApplicationSecretCredential(@Context Request request,
-        @Context UriInfo uriInfo,
+    public Response resetApplicationSecretCredential(
         @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("applicationId") String applicationId) {
 
-        try {
-        	  ScopeAccess token = this.scopeAccessService.getAccessTokenByAuthHeader(authHeader);
-              // Rackers, Admins and specific clients are authorized
-              // TODO: Implement authorization rules
-              // authorizationService.authorizeToken(token, uriInfo);
+        authorizationService.verifyIdmSuperAdminAccess(authHeader);
 
+        try {
               Application application = this.applicationService.loadApplication(applicationId);
               getLogger().debug("Got Application: {}", application);
               

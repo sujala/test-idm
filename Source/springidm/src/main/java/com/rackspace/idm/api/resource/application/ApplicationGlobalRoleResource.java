@@ -1,31 +1,21 @@
 package com.rackspace.idm.api.resource.application;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.PUT;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Request;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientRole;
-import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.exception.BadRequestException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 /**
  * User Application Roles Resource.
@@ -58,20 +48,16 @@ public class ApplicationGlobalRoleResource {
      * 
      * 
      * @param authHeader HTTP Authorization header for authenticating the caller.
-     * @param userId userId
+     * @param applicationId applicationId
      * @param roleId roleId
      */
     @PUT
-    public Response grantGlobalRoleToApplication(@Context Request request,
-        @Context UriInfo uriInfo,
+    public Response grantGlobalRoleToApplication(
         @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("applicationId") String applicationId,
         @PathParam("roleId") String roleId) {
 
-        ScopeAccess token = this.scopeAccessService
-            .getAccessTokenByAuthHeader(authHeader);
-        //TODO: Implement authorization rules
-        //authorizationService.authorizeToken(token, uriInfo);
+        authorizationService.verifyIdmSuperAdminAccess(authHeader);
         
 		// TODO: Refactor. This logic should be in the tenant role service
         Application application = this.applicationService.loadApplication(applicationId); 
@@ -100,16 +86,12 @@ public class ApplicationGlobalRoleResource {
      * @param roleId roleId
      */
     @DELETE
-    public Response deleteGlobalRoleFromUser(@Context Request request,
-        @Context UriInfo uriInfo,
+    public Response deleteGlobalRoleFromUser(
         @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("applicationId") String applicationId,
         @PathParam("roleId") String roleId) {
 
-        ScopeAccess token = this.scopeAccessService
-            .getAccessTokenByAuthHeader(authHeader);
-        //TODO: Implement authorization rules
-        //authorizationService.authorizeToken(token, uriInfo);
+        authorizationService.verifyIdmSuperAdminAccess(authHeader);
         
         Application application = this.applicationService.loadApplication(applicationId);              
 

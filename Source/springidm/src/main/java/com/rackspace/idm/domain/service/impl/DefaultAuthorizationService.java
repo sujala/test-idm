@@ -186,10 +186,8 @@ public class DefaultAuthorizationService implements AuthorizationService {
         if (!(scopeAccess instanceof ClientScopeAccess)) {
             return false;
         }
-        boolean authorized = scopeAccess.getClientRCN().equalsIgnoreCase(
-            this.getRackspaceCustomerId());
-        logger.debug("Authorized {} as rackspace client - {}", scopeAccess,
-            authorized);
+        boolean authorized = scopeAccess.getClientRCN().equalsIgnoreCase(this.getRackspaceCustomerId());
+        logger.debug("Authorized {} as rackspace client - {}", scopeAccess, authorized);
         return authorized;
     }
 

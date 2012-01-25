@@ -1,31 +1,19 @@
 package com.rackspace.idm.api.resource.customeridentityprofile;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Request;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import com.rackspace.idm.api.converter.CustomerConverter;
 import com.rackspace.idm.api.resource.ParentResource;
 import com.rackspace.idm.domain.entity.Customer;
-import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.CustomerService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.validation.InputValidator;
 import com.sun.jersey.core.provider.EntityHolder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 /**
  * A Rackspace Customer.
@@ -68,17 +56,13 @@ public class CustomerIdentityProfileResource extends ParentResource {
      * @param customerId RCN
      */
     @GET
-    public Response getCustomerIdentityProfile(@Context Request request, @Context UriInfo uriInfo,
+    public Response getCustomerIdentityProfile(
         @HeaderParam("X-Auth-Token") String authHeader, 
         @PathParam("customerId") String customerId) {
 
-        getLogger().debug("Getting Customer Identity Profile: {}", customerId);
+        authorizationService.verifyIdmSuperAdminAccess(authHeader);
 
-        ScopeAccess token = this.scopeAccessService
-        .getAccessTokenByAuthHeader(authHeader);
-        // Racker's, Rackspace Clients and Specific Clients are authorized
-        //TODO: Implement authorization rules
-        //authorizationService.authorizeToken(token, uriInfo);
+        getLogger().debug("Getting Customer Identity Profile: {}", customerId);
 
         Customer customer = this.customerService.loadCustomer(customerId);
 
@@ -93,18 +77,13 @@ public class CustomerIdentityProfileResource extends ParentResource {
      * @param customerId RCN
      */
     @DELETE
-    public Response deleteCustomerIdentityProfile(@Context Request request, 
-    	@Context UriInfo uriInfo,
+    public Response deleteCustomerIdentityProfile(
         @HeaderParam("X-Auth-Token") String authHeader, 
         @PathParam("customerId") String customerId) {
 
-        getLogger().info("Deleting Customer Identity Profile :{}", customerId);
+        authorizationService.verifyIdmSuperAdminAccess(authHeader);
 
-        ScopeAccess token = this.scopeAccessService
-        .getAccessTokenByAuthHeader(authHeader);
-        //Only Specific Clients are authorized
-        //TODO: Implement authorization rules
-        //authorizationService.authorizeToken(token, uriInfo);
+        getLogger().info("Deleting Customer Identity Profile :{}", customerId);
 
         // do this to ensure customer exists already
         this.customerService.loadCustomer(customerId);
@@ -122,22 +101,17 @@ public class CustomerIdentityProfileResource extends ParentResource {
      * @param customerId RCN
      */
     @PUT
-    public Response updateCusotmerIdentityProfile(@Context Request request,
-    	@Context UriInfo uriInfo,
+    public Response updateCusotmerIdentityProfile(
         @PathParam("customerId") String customerId, 
         @HeaderParam("X-Auth-Token") String authHeader,
         EntityHolder<com.rackspace.api.idm.v1.IdentityProfile> holder) {
+
+        authorizationService.verifyIdmSuperAdminAccess(authHeader);
     	
     	validateRequestBody(holder);
 
         com.rackspace.api.idm.v1.IdentityProfile inputCustomer = holder.getEntity();
         getLogger().debug("Getting Customer Identity Profile: {}", customerId);
-
-        ScopeAccess token = this.scopeAccessService
-        	.getAccessTokenByAuthHeader(authHeader);
-        // Racker's and Specific Clients are authorized
-        //TODO: Implement authorization rules
-        //authorizationService.authorizeToken(token, uriInfo);
         
         //TODO: all this should be in a copy command, refactor
         Customer customer = this.customerService.loadCustomer(customerId);

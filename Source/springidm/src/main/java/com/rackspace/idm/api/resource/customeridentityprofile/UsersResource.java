@@ -1,10 +1,6 @@
 package com.rackspace.idm.api.resource.customeridentityprofile;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
@@ -35,36 +31,37 @@ public class UsersResource extends ParentResource {
 
     @Autowired
     public UsersResource(
-        InputValidator inputValidator, UserConverter userConverter,
-        AuthorizationService authorizationService,
-        Configuration config, UserService userService) {
-    	
-    	super(inputValidator);
-    	
+            InputValidator inputValidator, UserConverter userConverter,
+            AuthorizationService authorizationService,
+            Configuration config, UserService userService) {
+
+        super(inputValidator);
+
         this.userConverter = userConverter;
         this.authorizationService = authorizationService;
         this.userService = userService;
     }
-    
+
     /**
      * Gets users that are bound to a specific customer
-     * 
-     * 
+     *
      * @param authHeader HTTP Authorization header for authenticating the caller.
      * @param customerId customer Id
      */
     @GET
-    public Response getUsers(@Context Request request,
-        @Context UriInfo uriInfo,
-        @PathParam("customerId") String customerId,
-        @QueryParam("offset") Integer offset,
-        @QueryParam("limit") Integer limit) {
-    	
-    	FilterParam[] filters = new FilterParam[] {new FilterParam(FilterParamName.RCN, customerId)};
-    	
-    	//TODO: Implement Authorization rules
-    	Users users = userService.getAllUsers(filters, (offset == null ? -1 : offset), (limit == null ? -1 : limit));
-    	
-    	return Response.ok(userConverter.toUserListJaxb(users)).build();
+    public Response getUsers(
+            @HeaderParam("X-Auth-Token") String authHeader,
+            @PathParam("customerId") String customerId,
+            @QueryParam("offset") Integer offset,
+            @QueryParam("limit") Integer limit) {
+
+        authorizationService.verifyIdmSuperAdminAccess(authHeader);
+
+        FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParamName.RCN, customerId)};
+
+        //TODO: Implement Authorization rules
+        Users users = userService.getAllUsers(filters, (offset == null ? -1 : offset), (limit == null ? -1 : limit));
+
+        return Response.ok(userConverter.toUserListJaxb(users)).build();
     }
 }

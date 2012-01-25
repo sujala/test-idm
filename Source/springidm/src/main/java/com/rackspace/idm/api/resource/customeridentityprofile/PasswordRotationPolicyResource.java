@@ -1,31 +1,21 @@
 package com.rackspace.idm.api.resource.customeridentityprofile;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.PUT;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Request;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import com.rackspace.idm.api.resource.ParentResource;
 import com.rackspace.idm.domain.entity.Customer;
-import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.CustomerService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.validation.InputValidator;
 import com.sun.jersey.core.provider.EntityHolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
@@ -54,18 +44,13 @@ public class PasswordRotationPolicyResource extends ParentResource {
      */
     @GET
     public Response getPasswordRotationPolicy(
-    		@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("X-Auth-Token") String authHeader, 
         @PathParam("customerId") String customerId) {
+
+        authorizationService.verifyIdmSuperAdminAccess(authHeader);
         
         logger.debug("Getting Customer's Password Rotation Policy: {}", customerId);
-        
-        ScopeAccess token = this.scopeAccessService
-        .getAccessTokenByAuthHeader(authHeader);
-        // Racker's and Rackspace Clients are authorized
-        //TODO: Implement authorization rules
-        //authorizationService.authorizeToken(token, uriInfo);
-	
+
         Customer customer = this.customerService.loadCustomer(customerId);
         
         //TODO: should probably put in some sort of converter
@@ -86,22 +71,16 @@ public class PasswordRotationPolicyResource extends ParentResource {
      */
     @PUT
     public Response updatePasswordRotationPolicy(
-    		@Context Request request, @Context UriInfo uriInfo,
         @HeaderParam("X-Auth-Token") String authHeader, 
         @PathParam("customerId") String customerId,
         EntityHolder<com.rackspace.api.idm.v1.PasswordRotationPolicy> holder) {
+
+        authorizationService.verifyIdmSuperAdminAccess(authHeader);
         
     	validateRequestBody(holder);
         logger.debug("Updating Customer's Password Rotation Policy: {}", customerId);
-        
-        ScopeAccess token = this.scopeAccessService
-        .getAccessTokenByAuthHeader(authHeader);
-        // Racker's and Rackspace Clients are authorized
-        //TODO: Implement authorization rules
-        //authorizationService.authorizeToken(token, uriInfo);
 
-        com.rackspace.api.idm.v1.PasswordRotationPolicy passwordRotationPolicy 
-	     = holder.getEntity();
+        com.rackspace.api.idm.v1.PasswordRotationPolicy passwordRotationPolicy = holder.getEntity();
 	
         //TODO: should probably put in some sort of converter
         Customer customer = this.customerService.loadCustomer(customerId);

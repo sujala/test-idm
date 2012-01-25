@@ -1,31 +1,10 @@
 package com.rackspace.idm.api.resource.application;
 
-import java.util.List;
-
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Request;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import com.rackspace.idm.api.converter.RolesConverter;
 import com.rackspace.idm.api.resource.ParentResource;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
-import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.AuthorizationService;
@@ -33,6 +12,13 @@ import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.validation.InputValidator;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import java.util.List;
 
 /**
  * User Application Roles Resource.
@@ -72,10 +58,7 @@ public class ApplicationTenantsResource extends ParentResource {
 			@QueryParam("applicationId") String provisionedApplicationId,
 			@QueryParam("tenantId") String tenantId) {
 
-		ScopeAccess token = this.scopeAccessService
-				.getAccessTokenByAuthHeader(authHeader);
-		// TODO: Implement authorization rules
-		// authorizationService.authorizeToken(token, uriInfo);
+		authorizationService.verifyIdmSuperAdminAccess(authHeader);
 		
 		FilterBuilder filterBuilder = createFilterBuilder();
 		filterBuilder.addFilter(FilterParamName.APPLICATION_ID, provisionedApplicationId);
@@ -83,8 +66,7 @@ public class ApplicationTenantsResource extends ParentResource {
 
 		Application application = applicationService.loadApplication(applicationId);
 
-		List<TenantRole> tenantRoles = 
-			tenantService.getTenantRolesForApplication(application, filterBuilder.getFilters());
+		List<TenantRole> tenantRoles = tenantService.getTenantRolesForApplication(application, filterBuilder.getFilters());
 
 		return Response.ok(rolesConverter.toRoleJaxbFromTenantRole(tenantRoles)).build();
 
@@ -96,8 +78,8 @@ public class ApplicationTenantsResource extends ParentResource {
 	 * 
 	 * @param authHeader
 	 *            HTTP Authorization header for authenticating the caller.
-	 * @param userId
-	 *            userId
+	 * @param applicationId
+	 *            applicationId
 	 * @param tenantId
 	 *            tenantId
 	 * @param roleId
@@ -105,17 +87,13 @@ public class ApplicationTenantsResource extends ParentResource {
 	 */
 	@PUT
 	@Path("{tenantId}/roles/{roleId}")
-	public Response grantTenantRoleToApplication(@Context Request request,
-			@Context UriInfo uriInfo,
+	public Response grantTenantRoleToApplication(
 			@HeaderParam("X-Auth-Token") String authHeader,
 			@PathParam("applicationId") String applicationId,
 			@PathParam("tenantId") String tenantId,
 			@PathParam("roleId") String roleId) {
 
-		ScopeAccess token = this.scopeAccessService
-				.getAccessTokenByAuthHeader(authHeader);
-		// TODO: Implement authorization rules
-		// authorizationService.authorizeToken(token, uriInfo);
+		authorizationService.verifyIdmSuperAdminAccess(authHeader);
 
 		Application client = this.applicationService.loadApplication(applicationId);
 
@@ -141,17 +119,13 @@ public class ApplicationTenantsResource extends ParentResource {
 	 */
 	@DELETE
 	@Path("{tenantId}/roles/{roleId}")
-	public Response deleteTenantRoleFromApplication(@Context Request request,
-			@Context UriInfo uriInfo,
+	public Response deleteTenantRoleFromApplication(
 			@HeaderParam("X-Auth-Token") String authHeader,
 			@PathParam("applicationId") String applicationId,
 			@PathParam("tenantId") String tenantId,
 			@PathParam("roleId") String roleId) {
 
-		ScopeAccess token = this.scopeAccessService
-				.getAccessTokenByAuthHeader(authHeader);
-		// TODO: Implement authorization rules
-		// authorizationService.authorizeToken(token, uriInfo);
+		authorizationService.verifyIdmSuperAdminAccess(authHeader);
 
 		Application application = applicationService.loadApplication(applicationId);
 

@@ -114,20 +114,19 @@ public class TokensResource extends ParentResource {
      */
     @GET
     @Path("{tokenString}")
-    public Response validateAccessToken(@Context Request request,
-                                        @Context UriInfo uriInfo,
+    public Response validateAccessToken(
                                         @HeaderParam("X-Auth-Token") String authHeader,
                                         @PathParam("tokenString") String tokenString) {
 
+
+        ScopeAccess scopeAccess = scopeAccessService.getAccessTokenByAuthHeader(authHeader);
+        boolean isRackspaceClient = authorizationService.authorizeRackspaceClient(scopeAccess);
+        //verify if caller is a rackspace client, idm client or super admin
+        if(!isRackspaceClient){
+            authorizationService.verifyIdmSuperAdminAccess(authHeader);
+        }
+
         logger.debug("Validating Access Token: {}", tokenString);
-
-        ScopeAccess authToken = this.scopeAccessService.getAccessTokenByAuthHeader(authHeader);
-        // Only Rackers, Rackspace Clients and Specific Clients are authorized
-        // Racker's, Rackspace Clients and Specific Clients are authorized
-        //TODO: Implement authorization rules
-        //authorizationService.authorizeToken(token, uriInfo);
-        //authorizationService.authorize(authHeader, null, null);
-
         AuthData authData = authenticationService.getAuthDataFromToken(tokenString);
 
         logger.debug("Validated Access Token: {}", tokenString);
@@ -143,15 +142,14 @@ public class TokensResource extends ParentResource {
      */
     @DELETE
     @Path("{tokenString}")
-    public Response revokeAccessToken(@Context Request request,
-                                      @Context UriInfo uriInfo,
+    public Response revokeAccessToken(
                                       @HeaderParam("X-Auth-Token") String authHeader,
                                       @PathParam("tokenString") String tokenString) {
 
+        authorizationService.verifyIdmSuperAdminAccess(authHeader);
+
         logger.debug("Revoking Token: {}", tokenString);
 
-        //TODO: investigate if we should use authorization to ensure user can make call
-        //rather than passing in the auth token header
         String authTokenString = authHeaderHelper.getTokenFromAuthHeader(authHeader);
         tokenService.revokeAccessToken(authTokenString, tokenString);
 
@@ -169,22 +167,18 @@ public class TokensResource extends ParentResource {
      */
     @GET
     @Path("{tokenString}/applications/{applicationId}")
-    public Response doesTokenHaveApplicationAccess(@Context Request request,
-                                                   @Context UriInfo uriInfo,
+    public Response doesTokenHaveApplicationAccess(
                                                    @HeaderParam("X-Auth-Token") String authHeader,
                                                    @PathParam("tokenString") String tokenString,
                                                    @PathParam("applicationId") String applicationId) {
 
-        logger.debug("Checking whether token {} has service {}", tokenString,
-                applicationId);
+        authorizationService.verifyIdmSuperAdminAccess(authHeader);
 
-        ScopeAccess token = this.scopeAccessService
-                .getAccessTokenByAuthHeader(authHeader);
-        //TODO: Implement authorization rules
-        //authorizationService.authorizeToken(token, uriInfo);
+        logger.debug("Checking whether token {} has service {}", tokenString,  applicationId);
 
-        boolean hasApplicationAccess =
-                tokenService.doesTokenHaveAccessToApplication(tokenString, applicationId);
+        ScopeAccess token = this.scopeAccessService.getAccessTokenByAuthHeader(authHeader);
+
+        boolean hasApplicationAccess = tokenService.doesTokenHaveAccessToApplication(tokenString, applicationId);
 
         if (!hasApplicationAccess) {
             String errorMsg = String.format("Token does not have access : %s", token);
@@ -205,23 +199,19 @@ public class TokensResource extends ParentResource {
      */
     @GET
     @Path("{tokenString}/applications/{applicationId}/roles/{roleId}")
-    public Response doesTokenHaveApplicationRole(@Context Request request,
-                                                 @Context UriInfo uriInfo,
+    public Response doesTokenHaveApplicationRole(
                                                  @HeaderParam("X-Auth-Token") String authHeader,
                                                  @PathParam("tokenString") String tokenString,
                                                  @PathParam("applicationId") String applicationId,
                                                  @PathParam("roleId") String roleId) {
 
-        //TODO: IMPLEMENT THIS API
+        authorizationService.verifyIdmSuperAdminAccess(authHeader);
 
         logger.debug("Checking whether token {} has application role {}", tokenString, roleId);
 
-        ScopeAccess token = this.scopeAccessService
-                .getAccessTokenByAuthHeader(authHeader);
-        //TODO: Implement authorization rules
-        //authorizationService.authorizeToken(token, uriInfo);
-        boolean hasApplicationRole =
-                this.tokenService.doesTokenHaveAplicationRole(tokenString, applicationId, roleId);
+        ScopeAccess token = this.scopeAccessService.getAccessTokenByAuthHeader(authHeader);
+
+        boolean hasApplicationRole = tokenService.doesTokenHaveAplicationRole(tokenString, applicationId, roleId);
 
         if (!hasApplicationRole) {
             String errorMsg = String.format("Token does not have access : %s", token);

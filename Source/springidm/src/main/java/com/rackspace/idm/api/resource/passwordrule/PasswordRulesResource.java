@@ -1,26 +1,20 @@
 package com.rackspace.idm.api.resource.passwordrule;
 
-import java.util.List;
-
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
+import com.rackspace.idm.api.converter.PasswordRulesConverter;
+import com.rackspace.idm.domain.entity.PasswordComplexityResult;
+import com.rackspace.idm.domain.entity.PasswordRule;
+import com.rackspace.idm.domain.service.AuthorizationService;
+import com.rackspace.idm.domain.service.PasswordComplexityService;
+import com.rackspace.idm.exception.BadRequestException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.rackspace.idm.api.converter.PasswordRulesConverter;
-import com.rackspace.idm.domain.entity.PasswordComplexityResult;
-import com.rackspace.idm.domain.entity.PasswordRule;
-import com.rackspace.idm.domain.service.PasswordComplexityService;
-import com.rackspace.idm.exception.BadRequestException;
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import java.util.List;
 
 /**
  * Password Complexity Rules
@@ -33,14 +27,17 @@ public class PasswordRulesResource {
 
     private final PasswordComplexityService passwordComplexityService;
     private final PasswordRulesConverter passwordRulesConverter;
+    private final AuthorizationService authorizationService;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
     public PasswordRulesResource(
         PasswordComplexityService passwordComplexityService,
-        PasswordRulesConverter passwordRulesConverter) {
+        PasswordRulesConverter passwordRulesConverter,
+        AuthorizationService authorizationService) {
         this.passwordComplexityService = passwordComplexityService;
         this.passwordRulesConverter = passwordRulesConverter;
+        this.authorizationService = authorizationService;
     }
 
     /**
@@ -58,7 +55,7 @@ public class PasswordRulesResource {
      */
     @GET
     public Response getRules(@HeaderParam("X-Auth-Token") String authHeader) {
-
+        authorizationService.verifyIdmSuperAdminAccess(authHeader);
         logger.debug("Getting password complexity rules");
         List<PasswordRule> rules = passwordComplexityService.getRules();
         logger.debug("Got password complexity rules: {}", rules);
@@ -84,7 +81,8 @@ public class PasswordRulesResource {
     @Path("/validation")
     public Response checkPassword(@HeaderParam("X-Auth-Token") String authHeader,
         com.rackspace.api.idm.v1.UserPassword password) {
-        
+
+        authorizationService.verifyIdmSuperAdminAccess(authHeader);
         if (password == null) {
             throw new BadRequestException("Password cannot be blank");
         }

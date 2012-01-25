@@ -1,28 +1,18 @@
 package com.rackspace.idm.api.resource.application;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.PUT;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Request;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import com.rackspace.idm.api.resource.ParentResource;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientScopeAccess;
-import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ApplicationService;
+import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.validation.InputValidator;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
@@ -51,20 +41,16 @@ public class ProvisionedApplicationResource extends ParentResource {
      * @param authHeader HTTP Authorization header for authenticating the caller.
      * @param applicationId applicationId
      * @param provisionedApplicationId provisionedApplicationId
-     * @param application New Application.
      */
     @PUT
-    public Response provisionApplicationForApplication(@Context Request request,
-        @Context UriInfo uriInfo,
+    public Response provisionApplicationForApplication(
         @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("applicationId") String applicationId,
         @PathParam("provisionedApplicationId") String provisionedApplicationId) {
 
-        getLogger().info("Provisioning application {} for application {}", provisionedApplicationId, applicationId);
+        authorizationService.verifyIdmSuperAdminAccess(authHeader);
 
-        ScopeAccess token = this.scopeAccessService.getAccessTokenByAuthHeader(authHeader);
-        //TODO: Implement authorization rules
-        //authorizationService.authorizeToken(token, uriInfo);
+        getLogger().info("Provisioning application {} for application {}", provisionedApplicationId, applicationId);
 
         Application application = this.applicationService.loadApplication(applicationId);
         Application provisionedApplication = this.applicationService.loadApplication(provisionedApplicationId);
@@ -88,23 +74,17 @@ public class ProvisionedApplicationResource extends ParentResource {
      * @param provisionedApplicationId provisionedApplicationId
      */
     @DELETE
-    public Response removeApplicationFromUser(@Context Request request,
-        @Context UriInfo uriInfo,
+    public Response removeApplicationFromUser(
         @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("applicationId") String applicationId,
         @PathParam("provisionedApplicationId") String provisionedApplicationId) {
 
+        authorizationService.verifyIdmSuperAdminAccess(authHeader);
+
         getLogger().info("Removing application {} from application {}", applicationId, provisionedApplicationId);
 
-        ScopeAccess token = this.scopeAccessService
-            .getAccessTokenByAuthHeader(authHeader);
-        // Rackers can add any service to a user
-        // Rackspace Clients can add their own service to a user
-        // Specific Clients can add their own service to a user
-        // Customer IdM can add any service to user
-        //TODO: Implement authorization rules
-        //authorizationService.authorizeToken(token, uriInfo);
         Application application = this.applicationService.loadApplication(applicationId);
+        
         Application provisionedApplication = this.applicationService.loadApplication(provisionedApplicationId);
 
         this.scopeAccessService.deleteScopeAccessesForParentByApplicationId(application.getUniqueId(), provisionedApplication.getClientId());

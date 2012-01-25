@@ -1,10 +1,6 @@
 package com.rackspace.idm.api.resource.customeridentityprofile;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
@@ -33,34 +29,33 @@ public class ApplicationsResource extends ParentResource {
 
     @Autowired
     public ApplicationsResource(
-        InputValidator inputValidator, ApplicationConverter applicationConverter,
-        AuthorizationService authorizationService, ApplicationService applicationService,
-        Configuration config) {
-    	
-    	super(inputValidator);
+            InputValidator inputValidator, ApplicationConverter applicationConverter,
+            AuthorizationService authorizationService, ApplicationService applicationService,
+            Configuration config) {
+
+        super(inputValidator);
         this.applicationConverter = applicationConverter;
         this.authorizationService = authorizationService;
         this.applicationService = applicationService;
     }
-    
+
     /**
      * Gets applications that are bound to a specific customer
-     * 
-     * 
+     *
      * @param authHeader HTTP Authorization header for authenticating the caller.
      * @param customerId customer Id
      */
     @GET
-    public Response getApplications(@Context Request request,
-        @Context UriInfo uriInfo,
-        @PathParam("customerId") String customerId,
-        @QueryParam("offset") Integer offset,
-        @QueryParam("limit") Integer limit) {
-    	
-    	//TODO: Implement authorization methods
-    	
-    	Applications applications = this.applicationService.getByCustomerId(customerId, (offset == null ? -1 : offset), (limit == null ? -1 : limit));
-    	
-    	return Response.ok(applicationConverter.toClientListJaxb(applications)).build();
+    public Response getApplications(
+            @HeaderParam("X-Auth-Token") String authHeader,
+            @PathParam("customerId") String customerId,
+            @QueryParam("offset") Integer offset,
+            @QueryParam("limit") Integer limit) {
+
+        authorizationService.verifyIdmSuperAdminAccess(authHeader);
+
+        Applications applications = this.applicationService.getByCustomerId(customerId, (offset == null ? -1 : offset), (limit == null ? -1 : limit));
+
+        return Response.ok(applicationConverter.toClientListJaxb(applications)).build();
     }
 }

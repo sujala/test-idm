@@ -69,20 +69,16 @@ public class ApplicationsResource extends ParentResource {
      * Gets applications
      * 
      * @param authHeader HTTP Authorization header for authenticating the caller.
-     * @param gets all the applications
+     * @param name application name
      */
     @GET
-    public Response getApplications(@Context Request request,
-        @Context UriInfo uriInfo,
+    public Response getApplications(
         @QueryParam("name") String name,
         @QueryParam("offset") Integer offset,
         @QueryParam("limit") Integer limit,
         @HeaderParam("X-Auth-Token") String authHeader) {
-    	
-    	ScopeAccess token = this.scopeAccessService.getAccessTokenByAuthHeader(authHeader);
-    	// Racker's, Specific Clients and Admins are authorized
-    	//TODO: Implement authorization rules
-    	//authorizationService.authorizeToken(token, uriInfo);
+
+        authorizationService.verifyIdmSuperAdminAccess(authHeader);
     	
     	FilterParam[] filters = null;
     	if (!StringUtils.isBlank(name)) {
@@ -103,17 +99,14 @@ public class ApplicationsResource extends ParentResource {
      * @param application
      */
     @POST
-    public Response addApplication(@Context Request request, @Context UriInfo uriInfo,
+    public Response addApplication(
         @HeaderParam("X-Auth-Token") String authHeader, 
         EntityHolder<com.rackspace.api.idm.v1.Application> holder) {
 
+        authorizationService.verifyIdmSuperAdminAccess(authHeader);
+
         try {
         	validateRequestBody(holder);
-        	
-            ScopeAccess token = this.scopeAccessService.getAccessTokenByAuthHeader(authHeader);
-            // Racker's, Specific Clients and Admins are authorized
-            //TODO: Implement authorization rules
-            //authorizationService.authorizeToken(token, uriInfo);
             
             Application applicationDO = applicationConverter.toClientDO(holder.getEntity());
             applicationDO.setDefaults();
