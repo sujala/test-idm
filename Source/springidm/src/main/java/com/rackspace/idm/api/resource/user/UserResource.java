@@ -1,31 +1,18 @@
 package com.rackspace.idm.api.resource.user;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Request;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import com.rackspace.idm.api.converter.UserConverter;
 import com.rackspace.idm.api.resource.ParentResource;
-import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.validation.InputValidator;
 import com.sun.jersey.core.provider.EntityHolder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import javax.ws.rs.*;
+import javax.ws.rs.core.*;
 
 /**
  * A User.
@@ -78,12 +65,11 @@ public class UserResource extends ParentResource {
 	 * 
 	 * @param authHeader
 	 *            HTTP Authorization header for authenticating the caller.
-	 * @param username
-	 *            username
+	 * @param userId
+	 *            userId
 	 */
 	@GET
-	public Response getUserById(@Context Request request,
-			@Context UriInfo uriInfo,
+	public Response getUserById(
 			@HeaderParam("X-Auth-Token") String authHeader,
 			@PathParam("userId") String userId) {
 
@@ -93,8 +79,7 @@ public class UserResource extends ParentResource {
 		User user = this.userService.loadUser(userId);
 		getLogger().debug("Got User :{}", user);
 
-		return Response.ok(userConverter
-            .toUserJaxbWithoutAnyAdditionalElements(user)).build();
+		return Response.ok(userConverter.toUserJaxbWithoutAnyAdditionalElements(user)).build();
 	}
 
 	/**
@@ -106,17 +91,15 @@ public class UserResource extends ParentResource {
 	 *            userId
 	 */
 	@PUT
-	public Response updateUser(@Context Request request,
-			@Context UriInfo uriInfo,
+	public Response updateUser(
 			@HeaderParam("X-Auth-Token") String authHeader,
 			@PathParam("userId") String userId,
 			EntityHolder<com.rackspace.api.idm.v1.User> holder) {
 
-		validateRequestBody(holder);
-
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
 
-		
+        validateRequestBody(holder);
+
 		com.rackspace.api.idm.v1.User inputUser = holder.getEntity();
 		User updatedUser = userConverter.toUserDO(inputUser);
 
@@ -140,14 +123,13 @@ public class UserResource extends ParentResource {
 	 * @param userId userId
 	 */
 	@DELETE
-	public Response deleteUser(@Context Request request,
-			@Context UriInfo uriInfo,
+	public Response deleteUser(
 			@HeaderParam("X-Auth-Token") String authHeader,
 			@PathParam("userId") String userId) {
 
-		getLogger().debug("Deleting User :{}", userId);
-
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
+
+        getLogger().debug("Deleting User :{}", userId);
 
 		User user = this.userService.loadUser(userId);
 		

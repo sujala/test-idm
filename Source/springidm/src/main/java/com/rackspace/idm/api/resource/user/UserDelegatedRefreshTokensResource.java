@@ -48,8 +48,7 @@ public class UserDelegatedRefreshTokensResource {
      * @param userId userId
      */
     @GET
-    public Response getTokens(@Context Request request,
-        @Context UriInfo uriInfo,
+    public Response getTokens(
         @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("userId") String userId) {
 
@@ -71,25 +70,23 @@ public class UserDelegatedRefreshTokensResource {
      */
     @GET
     @Path("{tokenString}")
-    public Response getTokenDetails(@Context Request request,
-        @Context UriInfo uriInfo,
+    public Response getTokenDetails(
         @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("userId") String userId,
         @PathParam("tokenString") String tokenString) {
 
+        authorizationService.verifyIdmSuperAdminAccess(authHeader);
+
         logger.debug("Validating Access Token: {}", tokenString);
 
-        authorizationService.verifyIdmSuperAdminAccess(authHeader);
-       
+
         User user = this.userService.loadUser(userId);
 
-        DelegatedClientScopeAccess delegatedScopeAccess = this.scopeAccessService
-            .getDelegatedScopeAccessByRefreshToken(user, tokenString);
+        DelegatedClientScopeAccess delegatedScopeAccess = scopeAccessService.getDelegatedScopeAccessByRefreshToken(user, tokenString);
 
         // Validate Token exists and is valid
         if (delegatedScopeAccess == null) {
-            String errorMsg = String
-                .format("Token not found : %s", tokenString);
+            String errorMsg = String.format("Token not found : %s", tokenString);
             logger.warn(errorMsg);
             throw new NotFoundException(errorMsg);
         }
@@ -110,15 +107,14 @@ public class UserDelegatedRefreshTokensResource {
      */
     @DELETE
     @Path("{tokenString}")
-    public Response deleteToken(@Context Request request,
-        @Context UriInfo uriInfo,
+    public Response deleteToken(
         @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("userId") String userId,
         @PathParam("tokenString") String tokenString) {
 
-        logger.debug("Validating Access Token: {}", tokenString);
-
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
+
+        logger.debug("Validating Access Token: {}", tokenString);
 
         User user = userService.loadUser(userId);
 

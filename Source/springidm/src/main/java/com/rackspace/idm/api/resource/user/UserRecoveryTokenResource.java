@@ -45,8 +45,7 @@ public class UserRecoveryTokenResource extends ParentResource {
      * @param userId   userId
      */
     @GET
-    public Response getPasswordResetToken(@Context Request request,
-        @Context UriInfo uriInfo,
+    public Response getPasswordResetToken(
         @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("userId") String userId) {
 

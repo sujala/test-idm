@@ -58,15 +58,15 @@ public class UserGlobalRolesResource {
      * @param userId userId
      */
     @GET
-    public Response getRoles(@Context Request request, @Context UriInfo uriInfo,
+    public Response getRoles(
         @HeaderParam("X-Auth-Token") String authHeader, 
         @PathParam("userId") String userId, 
         @QueryParam("applicationId") String applicationId) {
 
+        authorizationService.verifyIdmSuperAdminAccess(authHeader);
+
         logger.debug("Getting global roles for User: {}", userId);
 
-        authorizationService.verifyIdmSuperAdminAccess(authHeader);
-   
         User user = userService.loadUser(userId);
     	FilterParam[] filters = null;
     	if (!StringUtils.isBlank(applicationId)) {

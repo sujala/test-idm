@@ -1,20 +1,5 @@
 package com.rackspace.idm.api.resource.user;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.PUT;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Request;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import com.rackspace.idm.api.resource.ParentResource;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ScopeAccess;
@@ -25,6 +10,11 @@ import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.validation.InputValidator;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import javax.ws.rs.*;
+import javax.ws.rs.core.*;
 
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
@@ -56,23 +46,22 @@ public class UserApplicationResource extends ParentResource {
      * 
      * @param authHeader HTTP Authorization header for authenticating the caller.
      * @param userId userId
-     * @param application New Application.
+     * @param applicationId New Application id.
      */
     @PUT
-    public Response provisionApplicationForUser(@Context Request request,
-        @Context UriInfo uriInfo,
+    public Response provisionApplicationForUser(
         @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("userId") String userId,
         @PathParam("applicationId") String applicationId) {
 
-        getLogger().info("Provisioning application {} for user {}", applicationId, userId);
 
-        ScopeAccess token = this.scopeAccessService.getAccessTokenByAuthHeader(authHeader);
         // Rackers can add any applications to a user
         // Rackspace Clients can add their own applications to a user
         // Specific Clients can add their own applications to a user
         // Customer IdM can add any service to user
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
+        getLogger().info("Provisioning application {} for user {}", applicationId, userId);
+        ScopeAccess token = this.scopeAccessService.getAccessTokenByAuthHeader(authHeader);
         Application application = this.applicationService.loadApplication(applicationId);
         User user = this.userService.loadUser(userId);
 
@@ -99,19 +88,18 @@ public class UserApplicationResource extends ParentResource {
      * @param applicationId  Application Id
      */
     @DELETE
-    public Response removeApplicationFromUser(@Context Request request,
-        @Context UriInfo uriInfo,
+    public Response removeApplicationFromUser(
         @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("userId") String userId,
         @PathParam("applicationId") String applicationId) {
 
-        getLogger().info("Removing application {} from user {}", applicationId, userId);
 
         // Rackers can add any service to a user
         // Rackspace Clients can add their own service to a user
         // Specific Clients can add their own service to a user
         // Customer IdM can add any service to user
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
+        getLogger().info("Removing application {} from user {}", applicationId, userId);
 
         Application application = this.applicationService.loadApplication(applicationId);
         User user = this.userService.loadUser(userId);

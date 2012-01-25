@@ -1,22 +1,5 @@
 package com.rackspace.idm.api.resource.user;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Request;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import com.rackspace.idm.api.converter.PasswordConverter;
 import com.rackspace.idm.api.resource.ParentResource;
 import com.rackspace.idm.domain.entity.Password;
@@ -27,6 +10,11 @@ import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.validation.InputValidator;
 import com.sun.jersey.core.provider.EntityHolder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import javax.ws.rs.*;
+import javax.ws.rs.core.*;
 
 /**
  * User Password.
@@ -63,8 +51,7 @@ public class UserPasswordCredentialsResource extends ParentResource {
      * @param userId   userId
      */
     @GET
-    public Response getUserPassword(@Context Request request,
-        @Context UriInfo uriInfo,
+    public Response getUserPassword(
         @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("userId") String userId) {
 
@@ -85,22 +72,20 @@ public class UserPasswordCredentialsResource extends ParentResource {
      * @param userCredentials   The user's current password and new password.
      */
     @PUT
-    public Response setUserPassword(@Context Request request,
-        @Context UriInfo uriInfo,
+    public Response setUserPassword(
         @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("userId") String userId,
-        EntityHolder<com.rackspace.api.idm.v1.UserPasswordCredentials> holder) {
+        EntityHolder<com.rackspace.api.idm.v1.UserPasswordCredentials> userCredentials) {
+
+        authorizationService.verifyIdmSuperAdminAccess(authHeader);
         
-    	validateRequestBody(holder);
+    	validateRequestBody(userCredentials);
     	
         ScopeAccess token = this.scopeAccessService.getAccessTokenByAuthHeader(authHeader);
-
-        //TODO: Implement authorization rules
-        //authorizationService.authorizeToken(token, uriInfo);
         
         User user = this.userService.getUserById(userId);
         
-        com.rackspace.api.idm.v1.UserPasswordCredentials userCred = holder.getEntity();
+        com.rackspace.api.idm.v1.UserPasswordCredentials userCred = userCredentials.getEntity();
 
         user.setPassword(userCred.getNewPassword().getPassword());
         
@@ -116,16 +101,13 @@ public class UserPasswordCredentialsResource extends ParentResource {
      * @param userId   userId
      */
     @POST
-    public Response resetUserPassword(@Context Request request,
-        @Context UriInfo uriInfo,
+    public Response resetUserPassword(
         @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("userId") String userId) {
+
+        authorizationService.verifyIdmSuperAdminAccess(authHeader);
     	
         getLogger().debug("Reseting Password for User: {}", userId);
-
-        ScopeAccess token = scopeAccessService.getAccessTokenByAuthHeader(authHeader);
-        //TODO: Implement authorization rules
-        //authorizationService.authorizeToken(token, uriInfo);
 
         User user =  userService.loadUser(userId);
         Password password = userService.resetUserPassword(user);

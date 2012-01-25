@@ -1,21 +1,5 @@
 package com.rackspace.idm.api.resource.user;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.PUT;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Request;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-
-import org.apache.commons.lang.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import com.rackspace.idm.api.resource.ParentResource;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AuthorizationService;
@@ -23,6 +7,13 @@ import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.validation.InputValidator;
 import com.sun.jersey.core.provider.EntityHolder;
+import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 /**
  * A users secret question and answer
@@ -52,11 +43,11 @@ public class UserSecretResource extends ParentResource {
      * @param userId userId
      */
     @GET
-    public Response getUserSecret(@Context Request request, @Context UriInfo uriInfo,
-        @HeaderParam("X-Auth-Token") String authToken,
+    public Response getUserSecret(
+        @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("userId") String userId) {
 
-        authorizationService.verifyIdmSuperAdminAccess(authToken);
+        authorizationService.verifyIdmSuperAdminAccess(authHeader);
     	
         getLogger().debug("Getting Secret Q&A for User: {}", userId);
         
@@ -81,11 +72,11 @@ public class UserSecretResource extends ParentResource {
      */
     @PUT
     public Response setUserSecret(
-    	@HeaderParam("X-Auth-Token") String authToken, 
+    	@HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("userId") String userId, 
         EntityHolder<com.rackspace.api.idm.v1.UserSecret> holder) {
         
-        authorizationService.verifyIdmSuperAdminAccess(authToken);
+        authorizationService.verifyIdmSuperAdminAccess(authHeader);
         validateRequestBody(holder);
 
         getLogger().debug("Updating Secret Q&A for User: {}", userId);

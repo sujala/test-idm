@@ -76,23 +76,22 @@ public class UsersResource extends ParentResource {
      * @param user New User
      */
     @POST
-    public Response addUser(@Context Request reqRuest,
-        @Context UriInfo uriInfo,
+    public Response addUser(
         @HeaderParam("X-Auth-Token") String authHeader,
-        com.rackspace.api.idm.v1.User holder) {
+        com.rackspace.api.idm.v1.User user) {
 
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
-        com.rackspace.api.idm.v1.User jaxbUser = holder;
+        com.rackspace.api.idm.v1.User jaxbUser = user;
 
-        User user = userConverter.toUserDO(jaxbUser);
-        user.setDefaults();
-        validateDomainObject(user);
+        User userDO = userConverter.toUserDO(jaxbUser);
+        userDO.setDefaults();
+        validateDomainObject(userDO);
 
-        this.userService.addUser(user);
+        this.userService.addUser(userDO);
 
-        String locationUri = String.format("%s", user.getId());
+        String locationUri = String.format("%s", userDO.getId());
 
-        return Response.ok(userConverter.toUserJaxb(user)).location(URI.create(locationUri)).status(HttpServletResponse.SC_CREATED).build();
+        return Response.ok(userConverter.toUserJaxb(userDO)).location(URI.create(locationUri)).status(HttpServletResponse.SC_CREATED).build();
     }
 
     @Path("{userId}")
