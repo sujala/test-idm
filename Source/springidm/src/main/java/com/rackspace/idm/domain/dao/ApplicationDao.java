@@ -1,13 +1,8 @@
 package com.rackspace.idm.domain.dao;
 
-import java.util.List;
+import com.rackspace.idm.domain.entity.*;
 
-import com.rackspace.idm.domain.entity.Application;
-import com.rackspace.idm.domain.entity.Applications;
-import com.rackspace.idm.domain.entity.ClientAuthenticationResult;
-import com.rackspace.idm.domain.entity.ClientGroup;
-import com.rackspace.idm.domain.entity.ClientRole;
-import com.rackspace.idm.domain.entity.FilterParam;
+import java.util.List;
 
 public interface ApplicationDao {
 
@@ -44,7 +39,7 @@ public interface ApplicationDao {
 
     Applications getClientsByCustomerId(String customerId, int offset, int limit);
     
-    Applications getAllClients(FilterParam[] filters, int offset, int limit);
+    Applications getAllClients(List<FilterParam> filters, int offset, int limit);
     
     boolean isUserInClientGroup(String username, String groupDN);
     
@@ -64,7 +59,7 @@ public interface ApplicationDao {
     
     List<ClientRole> getClientRolesByClientId(String clientId);
     
-    List<ClientRole> getAllClientRoles(FilterParam[] filters);
+    List<ClientRole> getAllClientRoles(List<FilterParam> filters);
     
     void updateClientRole(ClientRole role);
     
