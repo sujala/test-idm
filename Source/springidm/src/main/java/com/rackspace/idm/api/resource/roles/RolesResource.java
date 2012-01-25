@@ -8,6 +8,7 @@ import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.AuthorizationService;
+import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.validation.InputValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -141,7 +142,7 @@ public class RolesResource extends ParentResource {
 		authorizationService.verifyIdmSuperAdminAccess(authHeader);
 		ClientRole clientRole = applicationService.getClientRoleById(roleId);
         if(clientRole==null){
-            Response.status(Response.Status.NOT_FOUND).entity("role with id: " + roleId + " not found");
+            throw new NotFoundException("role with id: " + roleId + " not found");
         }
 		applicationService.deleteClientRole(clientRole);
 		return Response.noContent().build();
