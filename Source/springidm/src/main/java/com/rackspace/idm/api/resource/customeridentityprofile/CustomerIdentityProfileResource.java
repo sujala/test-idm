@@ -101,7 +101,7 @@ public class CustomerIdentityProfileResource extends ParentResource {
      * @param customerId RCN
      */
     @PUT
-    public Response updateCusotmerIdentityProfile(
+    public Response updateCustomerIdentityProfile(
         @PathParam("customerId") String customerId, 
         @HeaderParam("X-Auth-Token") String authHeader,
         EntityHolder<com.rackspace.api.idm.v1.IdentityProfile> holder) {
@@ -116,7 +116,7 @@ public class CustomerIdentityProfileResource extends ParentResource {
         //TODO: all this should be in a copy command, refactor
         Customer customer = this.customerService.loadCustomer(customerId);
         customer.setEnabled(inputCustomer.isEnabled());
-
+        customerService.updateCustomer(customer);
         getLogger().debug("Successfully Updated Customer Identity Profile: {}", customer);
 
         return Response.noContent().build();

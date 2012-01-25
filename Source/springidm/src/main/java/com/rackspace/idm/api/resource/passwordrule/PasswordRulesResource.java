@@ -83,22 +83,16 @@ public class PasswordRulesResource {
         com.rackspace.api.idm.v1.UserPassword password) {
 
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
-        if (password == null) {
+        if (password == null || password.getPassword()==null) {
             throw new BadRequestException("Password cannot be blank");
         }
 
-        logger.debug("Checking password {} against password complexity rules",
-            password);
+        logger.debug("Checking password {} against password complexity rules", password);
 
-        PasswordComplexityResult result = passwordComplexityService
-            .checkPassword(password.getPassword());
+        PasswordComplexityResult result = passwordComplexityService.checkPassword(password.getPassword());
 
-        logger
-            .debug(
-                "Checked password {} against password complexity rules - isValid = {}",
-                result.isValidPassword());
+        logger.debug("Checked password {} against password complexity rules - isValid = {}", result.isValidPassword());
 
-        return Response.ok(passwordRulesConverter
-            .toPasswordValidationJaxb(result)).build();
+        return Response.ok(passwordRulesConverter.toPasswordValidationJaxb(result)).build();
     }
 }

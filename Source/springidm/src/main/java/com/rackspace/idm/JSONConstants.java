@@ -38,6 +38,7 @@ public class JSONConstants {
     public static final String NAST_CREDENTIALS = "nastCredentials";
     public static final String NAST_ID = "nastId";
     public static final String PASSWORD = "password";
+    public static final String USER_PASSWORD = "userPassword";
     public static final String PASSWORD_CREDENTIALS = "passwordCredentials";
     public static final String PUBLIC_URL = "publicURL";
     public static final String QUESTION = "question";
