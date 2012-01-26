@@ -432,7 +432,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
     }
 
     @Override
-    public Applications getAllClients(FilterParam[] filters, int offset, int limit) {
+    public Applications getAllClients(List<FilterParam> filters, int offset, int limit) {
         getLogger().debug("Getting all applications");
 
         LdapSearchBuilder searchBuilder = new LdapSearchBuilder();
@@ -1009,7 +1009,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
     }
 
     @Override
-    public List<ClientRole> getAllClientRoles(FilterParam[] filters) {
+    public List<ClientRole> getAllClientRoles(List<FilterParam> filters) {
         getLogger().debug("Getting all roles");
 
         LdapSearchBuilder searchBuilder = new LdapSearchBuilder();

@@ -1,6 +1,8 @@
 package com.rackspace.idm.api.resource.application;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Consumes;
@@ -79,10 +81,11 @@ public class ApplicationsResource extends ParentResource {
         @HeaderParam("X-Auth-Token") String authHeader) {
 
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
-    	
-    	FilterParam[] filters = null;
+
+        List<FilterParam> filters = null;
     	if (!StringUtils.isBlank(name)) {
-    		filters = new FilterParam[] { new FilterParam(FilterParamName.APPLICATION_NAME, name)};
+    		filters = new ArrayList<FilterParam>();
+            filters.add(new FilterParam(FilterParamName.APPLICATION_NAME, name));
     	}
     	
     	//TODO: Filter application list based on current user if exposing to public

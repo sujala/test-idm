@@ -1,10 +1,10 @@
 package com.rackspace.idm.api.resource.customeridentityprofile;
 
+import com.rackspace.api.idm.v1.ObjectFactory;
 import com.rackspace.idm.api.resource.ParentResource;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.CustomerService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.validation.InputValidator;
 import com.sun.jersey.core.provider.EntityHolder;
@@ -23,16 +23,15 @@ import javax.ws.rs.core.Response;
 public class PasswordRotationPolicyResource extends ParentResource {
     private final CustomerService customerService;
     private final AuthorizationService authorizationService;
-    private final ScopeAccessService scopeAccessService;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
+    private ObjectFactory objectFactory = new ObjectFactory();
 
     @Autowired
-    public PasswordRotationPolicyResource(CustomerService customerService, ScopeAccessService scopeAccessService, 
+    public PasswordRotationPolicyResource(CustomerService customerService,
         AuthorizationService authorizationService, InputValidator inputValidator) {
     	
     	super(inputValidator);
         this.customerService = customerService;
-        this.scopeAccessService = scopeAccessService;
         this.authorizationService = authorizationService;
     }
     
@@ -60,7 +59,7 @@ public class PasswordRotationPolicyResource extends ParentResource {
         jaxbPasswordRotationPolicy.setEnabled(customer.isEnabled());
         
         logger.debug("Updated password rotation policy for customer {}", customerId);
-        return Response.ok(jaxbPasswordRotationPolicy).build();
+        return Response.ok(objectFactory.createPasswordRotationPolicy(jaxbPasswordRotationPolicy)).build();
     }
     
     /**

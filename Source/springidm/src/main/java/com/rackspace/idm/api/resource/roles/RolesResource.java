@@ -81,7 +81,7 @@ public class RolesResource extends ParentResource {
             filters.add(new FilterParam(FilterParamName.ROLE_NAME, name));
         }
 
-        List<ClientRole> roles = applicationService.getAllClientRoles(filters.toArray(new FilterParam[]{}));
+        List<ClientRole> roles = applicationService.getAllClientRoles(filters);
 
         return Response.ok(rolesConverter.toRoleJaxbFromClientRole(roles)).build();
     }

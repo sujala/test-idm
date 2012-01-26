@@ -1,0 +1,10 @@
+.settings
+target
+target/*
+*.pyc
+*.iml
+
+.classpath
+*.ipr
+*.iws
+tags

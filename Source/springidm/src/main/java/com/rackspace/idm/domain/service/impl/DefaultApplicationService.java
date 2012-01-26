@@ -177,7 +177,7 @@ public class DefaultApplicationService implements ApplicationService {
     }
 
     @Override
-    public Applications getAllApplications(FilterParam[] filters, int offset, int limit) {
+    public Applications getAllApplications(List<FilterParam> filters, int offset, int limit) {
         return clientDao.getAllClients(filters, offset, limit);
     }
 
@@ -664,7 +664,7 @@ public class DefaultApplicationService implements ApplicationService {
     }
     
     @Override
-    public List<ClientRole> getAllClientRoles(FilterParam[] filters) {
+    public List<ClientRole> getAllClientRoles(List<FilterParam> filters) {
         logger.debug("Getting Client Roles");
         List<ClientRole> roles = this.clientDao.getAllClientRoles(filters);
         logger.debug("Got {} Client Roles", roles.size());
