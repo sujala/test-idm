@@ -1,5 +1,6 @@
-{
+{"methodNotAllowed":{
   "message": "Method Not Allowed",
   "details": "Error Details...",
   "code": 405
+  }
 }

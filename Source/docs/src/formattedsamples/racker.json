@@ -1,8 +1,9 @@
-{
+{"racker":{
   "roles": [
       {
         "name": "Admin",
       }
     ],
   "rackerId": "joe.racker"
+  }
 }

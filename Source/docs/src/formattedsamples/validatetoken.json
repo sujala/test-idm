@@ -1,4 +1,4 @@
-{
+{"auth": {
     "access_token": {
         "id": "ab48a9efdfedb23ty3494",
         "expires_in": "3600"
@@ -15,5 +15,5 @@
               { "name": "admin",
                 "tenantId": "cf_89983",
                 "applicationId": "billing"}]
-
+    }
 }

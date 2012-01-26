@@ -1,4 +1,4 @@
-{
+{"user":{
   "username": "jqsmith",
   "customerId": "RCN-000-000-000",
   "email": "john.smith@example.org",
@@ -12,4 +12,5 @@
   "status": "ACTIVE",
   "locked": false,
   "softDeleted": false
+  }
 }

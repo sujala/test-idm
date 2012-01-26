@@ -1,4 +1,5 @@
-{ "delegatedToken": [
+{ "delegatedTokens":{
+    "delegatedToken": [
    {
      "id": "309487987f0892397a9439875900b",
      "expires": "2010-11-02T03:32:15-05:00",
@@ -9,4 +10,5 @@
      "expires": "2010-11-02T03:32:15-05:00",
      "clientId": "af62785da123567"
    }]
+ }
 }

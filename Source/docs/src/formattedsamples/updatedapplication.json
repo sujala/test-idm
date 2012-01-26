@@ -1,4 +1,4 @@
-{ 
+{ "application":{
   "clientId": "ab4820dhcb39347",
   "customerId": "RCN-000-000-000",
   "name": "Test Application2",
@@ -7,4 +7,5 @@
   "status": "ACTIVE",
   "locked": false,
   "softDeleted": false
+  }
 }

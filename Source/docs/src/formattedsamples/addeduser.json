@@ -1,4 +1,4 @@
-{
+{"user":{
   "secret": {
     "secretQuestion": "What is your dogs name?",
     "secretAnswer": "Francis"
@@ -21,4 +21,5 @@
   "region": "SAT",
   "enabled": "true",
   "softDeleted": false
+  }
 }

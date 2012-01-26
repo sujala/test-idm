@@ -1,4 +1,4 @@
-{
+{"permissions":{
   "granted": {
     "permission": [
       {
@@ -13,4 +13,5 @@
       }
     ]
   }
+ }
 }

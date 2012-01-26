@@ -1,4 +1,4 @@
-{
+{"permissions":{
   "defined": {
     "permission": [
       {
@@ -13,4 +13,5 @@
       }
     ]
   }
+ }
 }

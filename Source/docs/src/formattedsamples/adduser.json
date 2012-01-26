@@ -1,4 +1,4 @@
-{
+{"user":{
   "secret": {
     "secretAnswer": "Francis",
     "secretQuestion": "What is your dogs name?"
@@ -18,4 +18,5 @@
   "displayName": "John Smith",
   "prefLanguage": "US_en",
   "region": "America/Chicago"
+  }
 }

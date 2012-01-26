@@ -1,4 +1,5 @@
-{"identityprofiles": [
+{"customeridentityprofiles":{
+    "identityprofiles": [
     {
       "customerId": "RCN-123-549-034",
       "enabled": true
@@ -8,4 +9,5 @@
       "enabled": true
     }
   ]
+ }
 }

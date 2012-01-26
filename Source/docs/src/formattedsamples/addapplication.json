@@ -1,5 +1,6 @@
-{ 
-  "customerId": "RCN-000-000-000",
+{ "application":
+  {"customerId": "RCN-000-000-000",
   "name": "Test Application2",
   "description": "Used for adding all applications in Rackspace"
+  }
 }
