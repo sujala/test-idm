@@ -50,10 +50,11 @@
 &lt;/serviceFault&gt;
 
 </pre></div></div><br class="example-break"/><div class="example"><a id="d7e137"/><p class="title"><strong>Example 2.9. JSON Fault Response</strong></p><div class="example-contents"><pre class="programlisting">
-{
+{"serviceFault":{
   "message": "Fault",
   "details": "Error Details...",
   "code": 500
+  }
 }
 
 </pre></div></div><br class="example-break"/><p>The error code is returned in the body of the response for convenience. The message
@@ -71,10 +72,11 @@
 &lt;/usernameConflict&gt;
 
 </pre></div></div><br class="example-break"/><div class="example"><a id="d7e145"/><p class="title"><strong>Example 2.11. JSON Username Conflict Fault</strong></p><div class="example-contents"><pre class="programlisting">
-{
+{"usernameConflict":{
   "message": "Conflict",
   "details": "Error Details...",
   "code": 409
+  }
 }
 
 </pre></div></div><br class="example-break"/><p> The following is a list of possible fault types along with their associated error
