@@ -1,4 +1,4 @@
-{  
+{  "application": {
   "secretCredentials": {
     "clientSecret": "3af738fbeiwu23"
   },
@@ -7,4 +7,5 @@
   "name": "Test Application2",
   "enabled": true,
   "softDeleted": false
+}
 }

@@ -1,4 +1,5 @@
-{"service": [
+{"serviceCatalog":{
+    "service": [
       {
       "endpoint": [      {
          "region": "DFW",
@@ -19,4 +20,5 @@
       }],
       "name": "cloudServers"
    }
-]}
+  ]}
+}

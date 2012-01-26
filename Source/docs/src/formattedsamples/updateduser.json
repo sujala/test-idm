@@ -1,4 +1,4 @@
-{
+{"user":{
   "username": "jqsmith",
   "customerId": "RCN-000-000-000",
   "customerInum": "@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE",
@@ -15,4 +15,5 @@
   "status": "ACTIVE",
   "locked": false,
   "softDeleted": false
+  }
 }

@@ -1,5 +1,6 @@
-{
+{"badRequest":{
   "message": "Bad Request!",
   "details": "Error Details...",
   "code": 400
+  }
 }

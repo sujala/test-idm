@@ -1,4 +1,4 @@
-{
+{"auth":{
   "accessToken": {
     "id": "ab48a9efdfedb23ty3494",
     "expiresIn": 3600
@@ -9,4 +9,5 @@
   "racker" : {
     "username": "john.so"
   }
+ }
 }

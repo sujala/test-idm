@@ -1,4 +1,4 @@
-{
+{"user":{
   "roles": [
       {
         "name": "Admin",
@@ -21,4 +21,5 @@
   "status": "ACTIVE",
   "locked": false,
   "softDeleted": false
+  }
 }

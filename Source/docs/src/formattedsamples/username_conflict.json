@@ -1,5 +1,6 @@
-{
+{"usernameConflict":{
   "message": "Conflict",
   "details": "Error Details...",
   "code": 409
+  }
 }

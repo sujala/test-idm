@@ -1,4 +1,4 @@
-{
+{"auth":{
   "accessToken": {
     "id": "ab48a9efdfedb23ty3494",
     "expiresIn": 3600
@@ -9,5 +9,6 @@
   "user" : {
     "clientId": "781hhh47kj34kj3434",
     "customerId": "RCN-000-000-000",
+  }
   }
 }

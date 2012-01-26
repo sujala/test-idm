@@ -1,4 +1,4 @@
-{
+{"roles ":{
   "role": [
     {
       "name": "network_admin",
@@ -16,4 +16,5 @@
       "applicationId": "billing"
     }
   ]
+ }
 }

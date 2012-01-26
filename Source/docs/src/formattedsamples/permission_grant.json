@@ -1,5 +1,6 @@
-{
+{"permission":{
   "permissionId": "addCustomer",
   "customerId": "RCN-000-000-000",
   "clientId": "IDM"
+  }
 }

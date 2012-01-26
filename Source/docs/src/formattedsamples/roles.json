@@ -1,4 +1,4 @@
-{
+{"roles":{
   "role": [
     {
       "name": "network_admin",
@@ -13,6 +13,7 @@
     {
       "name": "admin",
       "id": "56"
-    }
-  ]
+     }
+   ]
+ }
 }
