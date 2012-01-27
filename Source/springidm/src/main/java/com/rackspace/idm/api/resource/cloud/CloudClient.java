@@ -78,7 +78,8 @@ public class CloudClient {
 
         // Catch 301 - MOVED_PERMANENTLY
         if(statusCode == 301){
-            return handleRedirect(response);
+            //Quick Fix: not best way to pass the body
+            return handleRedirect(response, responseBody);
         }
 
         Response.ResponseBuilder responseBuilder = Response.status(statusCode).entity(responseBody);
@@ -94,7 +95,7 @@ public class CloudClient {
         return responseBuilder;
     }
 
-    private Response.ResponseBuilder handleRedirect(HttpResponse response){
+    private Response.ResponseBuilder handleRedirect(HttpResponse response, String responseBody){
         try{
             Response.ResponseBuilder builder = Response.status(Response.Status.MOVED_PERMANENTLY); //.header("Location", uri);
             for (Header header : response.getAllHeaders()) {
@@ -104,6 +105,9 @@ public class CloudClient {
                 }
             }
             //builder.entity(response.getEntity());
+            if (responseBody != null){
+                builder.entity(responseBody);
+            }
             builder.header("response-source","cloud-auth");
             return builder;
         }catch(Exception ex){
