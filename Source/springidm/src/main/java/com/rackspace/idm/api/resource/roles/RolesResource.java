@@ -8,6 +8,7 @@ import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.AuthorizationService;
+import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.validation.InputValidator;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -94,9 +95,7 @@ public class RolesResource extends ParentResource {
     @POST
     public Response addRole(@HeaderParam("X-Auth-Token") String authHeader, Role role) {
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
-        if(!isValidRole(role)){
-            return Response.status(Response.Status.BAD_REQUEST).entity("Role is not valid").build();
-        }
+        validateRole(role);
         ClientRole clientRole = rolesConverter.toClientRole(role);
         applicationService.addClientRole(clientRole);
         String locationUri = clientRole.getId();
@@ -116,9 +115,7 @@ public class RolesResource extends ParentResource {
             @PathParam("roleId") String roleId,
             Role role) {
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
-        if(!isValidRole(role)){
-            return Response.status(Response.Status.BAD_REQUEST).entity("Role is not valid").build();
-        }
+        validateRole(role);
         ClientRole updatedRole = rolesConverter.toClientRole(role);
         ClientRole clientRole = applicationService.getClientRoleById(roleId);
         clientRole.copyChanges(updatedRole);
@@ -148,16 +145,15 @@ public class RolesResource extends ParentResource {
 		return Response.noContent().build();
 	}
 
-    boolean isValidRole(Role role){
+    void validateRole(Role role){
         if(role==null){
-            return false;
+           throw new BadRequestException("Role cannot be null");
         }
         if(role.getName()==null || role.getName().isEmpty()){
-            return false;
+            throw new BadRequestException("Role name is not valid");
         }
         if(role.getApplicationId()==null || role.getApplicationId().isEmpty()){
-            return false;
+            throw new BadRequestException("Application id is not valid");
         }
-        return true;
     }
 }
