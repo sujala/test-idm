@@ -23,6 +23,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
+import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.*;
 
@@ -69,7 +70,7 @@ public class DefaultCloud20ServiceTest {
     private ClientRole clientRole;
     private Service service;
     private org.openstack.docs.identity.api.v2.Tenant tenantOS;
-    private org.openstack.docs.identity.api.v2.User userOS;
+    private UserForCreate userOS;
     private CloudBaseUrl cloudBaseUrl;
     private Application application;
     private String roleId = "roleId";
@@ -135,7 +136,7 @@ public class DefaultCloud20ServiceTest {
         tenantOS = new org.openstack.docs.identity.api.v2.Tenant();
         tenantOS.setId("tenantName");
         tenantOS.setName("tenantName");
-        userOS = new org.openstack.docs.identity.api.v2.User();
+        userOS = new UserForCreate();
         userOS.setId("userName");
         userOS.setUsername("username");
         userOS.setEmail("foo@bar.com");

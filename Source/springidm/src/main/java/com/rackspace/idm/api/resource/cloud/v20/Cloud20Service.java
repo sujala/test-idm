@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.exception.NotFoundException;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
+import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.*;
 
@@ -55,7 +56,7 @@ public interface Cloud20Service {
 
     ResponseBuilder listRolesForUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantsId, String userId) throws IOException;
 
-	ResponseBuilder addUser(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, User user) throws IOException, JAXBException;
+	ResponseBuilder addUser(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, UserForCreate user) throws IOException, JAXBException;
 
 	ResponseBuilder updateUser(HttpHeaders httpHeaders, String authToken, String userId, User user) throws IOException, JAXBException;
 

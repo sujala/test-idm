@@ -2,6 +2,7 @@ package com.rackspace.idm.api.converter.cloudv20;
 
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.domain.entity.TenantRole;
+import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.v2.User;
 import org.openstack.docs.identity.api.v2.UserForAuthenticateResponse;
 import org.openstack.docs.identity.api.v2.UserList;
@@ -28,6 +29,9 @@ public class UserConverterCloudV20 {
         userDO.setEmail(user.getEmail());
         userDO.setDisplayName(user.getDisplayName());
         userDO.setEnabled(user.isEnabled());
+        if(user instanceof UserForCreate){
+            userDO.setPassword(((UserForCreate) user).getPassword());
+        }
         return userDO;
     }
 

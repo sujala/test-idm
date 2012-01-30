@@ -8,6 +8,7 @@ import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.configuration.Configuration;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
+import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -197,7 +198,7 @@ public class Cloud20VersionResource {
     public Response addUser(
             @Context HttpHeaders httpHeaders,
             @Context UriInfo uriInfo,
-            @HeaderParam(X_AUTH_TOKEN) String authToken, User user) throws IOException, JAXBException {
+            @HeaderParam(X_AUTH_TOKEN) String authToken, UserForCreate user) throws IOException, JAXBException {
         return getCloud20Service().addUser(httpHeaders, uriInfo, authToken, user).build();
     }
 

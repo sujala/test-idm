@@ -19,6 +19,7 @@ import org.joda.time.DateTime;
 import org.openstack.docs.common.api.v1.Extension;
 import org.openstack.docs.common.api.v1.Extensions;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
+import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.*;
 import org.slf4j.Logger;
@@ -288,8 +289,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder addUser(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken,
-                                   org.openstack.docs.identity.api.v2.User user) {
+    public ResponseBuilder addUser(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, UserForCreate user) {
 
         try {
             checkXAUTHTOKEN(authToken, false, null);
@@ -298,10 +298,13 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             ScopeAccess scopeAccessByAccessToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
 
+            if(user.getPassword()!=null){
+                validatePassword(user.getPassword());
+            }
+
             User userDO = this.userConverterCloudV20.toUserDO(user);
 
             setDomainId(scopeAccessByAccessToken, userDO);
-
 
             userService.addUser(userDO);
 
