@@ -97,4 +97,5 @@ public class JSONConstants {
     public static final Object APPLICATION_ID = "applicationId";
     public static final Object NEW_PASSWORD = "newPassword";
     public static final Object CURRENT_PASSWORD = "currentPassword";
+    public static final String OS_KSADM_PASSWORD = "OS-KSADM:password";
 }
