@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v20;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
+import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.*;
 import org.springframework.stereotype.Component;
@@ -135,7 +136,7 @@ public class DummyCloud20Service implements Cloud20Service{
     }
 
     @Override
-    public ResponseBuilder addUser(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, User user)
+    public ResponseBuilder addUser(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, UserForCreate user)
         throws IOException {
         
         return Response.status(Status.NOT_FOUND);
