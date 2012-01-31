@@ -290,37 +290,51 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder addUser(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, UserForCreate user) {
-
         try {
             checkXAUTHTOKEN(authToken, false, null);
-
             validateUser(user);
-
             ScopeAccess scopeAccessByAccessToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
-
-            if(user.getPassword()!=null){
+            if (user.getPassword() != null) {
                 validatePassword(user.getPassword());
             }
-
             User userDO = this.userConverterCloudV20.toUserDO(user);
-
             setDomainId(scopeAccessByAccessToken, userDO);
-
             userService.addUser(userDO);
-
             if (authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken)) {
                 ClientRole roleId = clientService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserAdminRole());
                 this.addUserRole(httpHeaders, authToken, userDO.getId(), roleId.getId());
             }
-
-            return Response.created(
-                    uriInfo.getRequestUriBuilder().path(userDO.getId()).build())
+            return Response.created(uriInfo.getRequestUriBuilder().path(userDO.getId()).build())
                     .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(userDO)));
-
         } catch (DuplicateException de) {
             return userConflictExceptionResponse(de.getMessage());
         } catch (DuplicateUsernameException due) {
             return userConflictExceptionResponse(due.getMessage());
+        } catch (Exception ex) {
+            return exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public ResponseBuilder updateUser(HttpHeaders httpHeaders, String authToken, String userId, UserForCreate user) throws IOException {
+        try {
+            checkXAUTHTOKEN(authToken, false, null);
+             if (user.getPassword() != null) {
+                validatePassword(user.getPassword());
+            }
+            User retrievedUser = checkAndGetUser(userId);
+            //if user admin, verify domain
+            if (authorizationService.authorizeCloudUserAdmin(scopeAccessService.getScopeAccessByAccessToken(authToken))) {
+                User caller = userService.getUserByAuthToken(authToken);
+                verifyDomain(retrievedUser, caller);
+            }
+            User userDO = this.userConverterCloudV20.toUserDO(user);
+            if (userDO.isDisabled()) {
+                this.scopeAccessService.expireAllTokensForUser(retrievedUser.getUsername());
+            }
+            retrievedUser.copyChanges(userDO);
+            this.userService.updateUser(retrievedUser, false);
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(retrievedUser)));
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
@@ -1315,11 +1329,11 @@ public class DefaultCloud20Service implements Cloud20Service {
             ScopeAccess scopeAccessByAccessToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
             User caller = getUser(scopeAccessByAccessToken);
             Users users = null;
-            if(caller.getDomainId() != null) {
+            if (caller.getDomainId() != null) {
                 String domainId = caller.getDomainId();
                 FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParamName.DOMAIN_ID, domainId)};
                 users = this.userService.getAllUsers(filters, marker, limit);
-            }else{
+            } else {
                 users = this.userService.getAllUsers(null, marker, limit);
             }
 
@@ -1450,39 +1464,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
-    @Override
-    public ResponseBuilder updateUser(HttpHeaders httpHeaders, String authToken, String userId,
-                                      org.openstack.docs.identity.api.v2.User user) throws IOException {
-
-        try {
-            checkXAUTHTOKEN(authToken, false, null);
-
-            User retrievedUser = checkAndGetUser(userId);
-
-            //if user admin, verify domain
-            if(authorizationService.authorizeCloudUserAdmin(scopeAccessService.getScopeAccessByAccessToken(authToken))){
-                User caller = userService.getUserByAuthToken(authToken);
-                verifyDomain(retrievedUser, caller);
-            }
-
-            User userDO = this.userConverterCloudV20.toUserDO(user);
-
-            if(userDO.isDisabled()){
-                this.scopeAccessService.expireAllTokensForUser(retrievedUser.getUsername());
-            }
-
-            retrievedUser.copyChanges(userDO);
-
-            this.userService.updateUser(retrievedUser, false);
-
-            return Response.ok(
-                    OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(retrievedUser)));
-
-        } catch (Exception ex) {
-            return exceptionResponse(ex);
-        }
-    }
-
     void verifyDomain(User retrievedUser, User caller) {
         if (caller.getDomainId() == null || !caller.getDomainId().equals(retrievedUser.getDomainId())) {
             throw new ForbiddenException("Access is denied");
@@ -1580,7 +1561,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 if (user == null) {
                     throw new NotFoundException("User not found");
                 }
-                if(user.isDisabled()){
+                if (user.isDisabled()) {
                     throw new NotFoundException("Token not found.");
                 }
                 List<TenantRole> roles = this.tenantService.getTenantRolesForScopeAccess(usa);
@@ -1624,7 +1605,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             return notFoundExceptionResponse(ex.getMessage());
         } else if (ex instanceof ClientConflictException) {
             return tenantConflictExceptionResponse(ex.getMessage());
-        } else if (ex instanceof UserDisabledException){
+        } else if (ex instanceof UserDisabledException) {
             return userDisabledExceptionResponse(ex.getMessage());
         } else {
             return serviceExceptionResponse();

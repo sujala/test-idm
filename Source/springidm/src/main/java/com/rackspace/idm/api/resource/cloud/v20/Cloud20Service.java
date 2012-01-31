@@ -58,7 +58,7 @@ public interface Cloud20Service {
 
 	ResponseBuilder addUser(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, UserForCreate user) throws IOException, JAXBException;
 
-	ResponseBuilder updateUser(HttpHeaders httpHeaders, String authToken, String userId, User user) throws IOException, JAXBException;
+	ResponseBuilder updateUser(HttpHeaders httpHeaders, String authToken, String userId, UserForCreate user) throws IOException, JAXBException;
 
 	ResponseBuilder deleteUser(HttpHeaders httpHeaders, String authToken, String userId) throws IOException;
 

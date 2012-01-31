@@ -207,7 +207,7 @@ public class Cloud20VersionResource {
     public Response updateUser(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("userId") String userId, User user) throws IOException, JAXBException {
+            @PathParam("userId") String userId, UserForCreate user) throws IOException, JAXBException {
         return getCloud20Service().updateUser(httpHeaders, authToken, userId, user).build();
     }
 

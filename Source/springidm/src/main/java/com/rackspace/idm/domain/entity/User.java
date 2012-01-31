@@ -439,6 +439,9 @@ public class User implements Auditable {
         if (modifiedUser.getRegion() != null) {
             setRegion(modifiedUser.getRegion());
         }
+        if(modifiedUser.getPassword() != null){
+            setPassword(modifiedUser.getPassword());
+        }
     }
 
     @Override
