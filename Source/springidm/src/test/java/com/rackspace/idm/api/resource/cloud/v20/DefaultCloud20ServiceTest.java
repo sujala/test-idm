@@ -22,6 +22,7 @@ import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
@@ -33,6 +34,7 @@ import java.util.List;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.*;
 
@@ -566,6 +568,44 @@ public class DefaultCloud20ServiceTest {
     public void addUser_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.addUser(null, null, authToken, null);
         verify(spy).checkXAUTHTOKEN(authToken, false, null);
+    }
+
+    @Test
+    public void addUser_callerIsUserAdmin_setsMossoAndNastId() throws Exception {
+        ArgumentCaptor<User> argument = ArgumentCaptor.forClass(User.class);
+        User caller = new User();
+        caller.setMossoId(123);
+        caller.setNastId("nastId");
+        when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
+        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(new User());
+        doNothing().when(spy).setDomainId(any(ScopeAccess.class),any(User.class));
+        UserForCreate userForCreate = new UserForCreate();
+        userForCreate.setUsername("userforcreate");
+        userForCreate.setEmail("user@rackspace.com");
+        spy.addUser(null, null, authToken, userForCreate);
+        verify(userService).addUser(argument.capture());
+        assertThat("nast id", argument.getValue().getNastId(), equalTo("nastId"));
+        assertThat("mosso id", argument.getValue().getMossoId(), equalTo(123));
+    }
+
+    @Test
+    public void addUser_callerIsNotUserAdmin_doesNotSetMossoAndNastId() throws Exception {
+        ArgumentCaptor<User> argument = ArgumentCaptor.forClass(User.class);
+        User caller = new User();
+        caller.setMossoId(123);
+        caller.setNastId("nastId");
+        when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
+        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(new User());
+        doNothing().when(spy).setDomainId(any(ScopeAccess.class),any(User.class));
+        UserForCreate userForCreate = new UserForCreate();
+        userForCreate.setUsername("userforcreate");
+        userForCreate.setEmail("user@rackspace.com");
+        spy.addUser(null, null, authToken, userForCreate);
+        verify(userService).addUser(argument.capture());
+        assertThat("nast id", argument.getValue().getNastId(), not(equalTo("nastId")));
+        assertThat("mosso id", argument.getValue().getMossoId(), not(equalTo(123)));
     }
 
     @Test

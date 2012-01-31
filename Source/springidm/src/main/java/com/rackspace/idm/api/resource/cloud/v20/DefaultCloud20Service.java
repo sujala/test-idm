@@ -298,8 +298,17 @@ public class DefaultCloud20Service implements Cloud20Service {
                 validatePassword(user.getPassword());
             }
             User userDO = this.userConverterCloudV20.toUserDO(user);
+
+            //if caller is a user-admin, give user same mosso and nastId
+            if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
+                User caller = userService.getUserByAuthToken(authToken);
+                userDO.setMossoId(caller.getMossoId());
+                userDO.setNastId(caller.getNastId());
+            }
             setDomainId(scopeAccessByAccessToken, userDO);
             userService.addUser(userDO);
+
+            //If caller is an identity admin, give user user-admin role
             if (authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken)) {
                 ClientRole roleId = clientService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserAdminRole());
                 this.addUserRole(httpHeaders, authToken, userDO.getId(), roleId.getId());
