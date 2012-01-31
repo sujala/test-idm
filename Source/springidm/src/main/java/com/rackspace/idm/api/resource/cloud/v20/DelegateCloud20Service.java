@@ -390,7 +390,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder updateUser(HttpHeaders httpHeaders, String authToken, String userId, User user)
+    public ResponseBuilder updateUser(HttpHeaders httpHeaders, String authToken, String userId, UserForCreate user)
             throws IOException, JAXBException {
         if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
             String request = getCloudAuthV20Url() + "users/" + userId;

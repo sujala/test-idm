@@ -144,7 +144,7 @@ public class DummyCloud20Service implements Cloud20Service{
 
     @Override
     public ResponseBuilder updateUser(HttpHeaders httpHeaders, String authToken, String userId,
-        User user) throws IOException {
+        UserForCreate user) throws IOException {
         
         return Response.status(Status.NOT_FOUND);
     }
