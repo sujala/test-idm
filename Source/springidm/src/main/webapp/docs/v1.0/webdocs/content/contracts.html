@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=7"/>
 <title>2.2. Contracts</title><meta name="generator" content="DocBook XSL-NS Stylesheets V1.76.1"/><link rel="home" href="index.html" title="Global Auth API Developer Guide"/><link rel="up" href="General_API_Info.html" title="Chapter 2. General API Information"/><link rel="prev" href="request_response_types.html" title="2.1. Request/Response Types"/><link rel="next" href="faults.html" title="2.3. Faults"/><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><script type="text/javascript">
             //The id for tree cookie
-            var treeCookieId = "treeview-612";
+            var treeCookieId = "treeview-614";
             var language = "en";
             var w = new Object();
             //Localization
@@ -47,7 +47,7 @@
         versions are released, older versions will be marked as <code class="code">Deprecated</code>. Rackspace
         will work with developers and partners to ensure there is adequate time to migrate to the
         new version before deprecated versions are discontinued. 
-      </p><div class="example"><a id="d7e96"/><p class="title"><strong>Example 2.3. Request with URI versioning</strong></p><div class="example-contents"><pre class="literallayout">
+      </p><div class="example"><a id="d7e97"/><p class="title"><strong>Example 2.3. Request with URI versioning</strong></p><div class="example-contents"><pre class="literallayout">
           GET /v1.0/users HTTP/1.1
           Host: idm.api.rackspace.com
           Accept: application/xml
@@ -58,14 +58,14 @@
         root URL (i.e. with the version and everything to the
         right of it truncated) returned from the
         authentication system.  
-      </p><div class="example"><a id="d7e101"/><p class="title"><strong>Example 2.4. Service Profile Request</strong></p><div class="example-contents"><pre class="literallayout">
+      </p><div class="example"><a id="d7e102"/><p class="title"><strong>Example 2.4. Service Profile Request</strong></p><div class="example-contents"><pre class="literallayout">
           GET HTTP/1.1
           Host: idm.api.rackspace.com
           Accept: application/xml
 			</pre></div></div><br class="example-break"/><p>
                           This operation does not require a request body.</p><p>Normal Response Code(s):<span class="returnvalue">200</span></p><p>Error Response Code(s):<span class="errorcode">400</span>, <span class="errorcode">500</span>, <span class="errorcode">503</span></p><p>Your application can programmatically determine available API contract versions by
         performing a <span class="command"><strong>GET</strong></span> on the root URL
-        (https://idm.api.rackspace.com/).</p><div class="example"><a id="d7e113"/><p class="title"><strong>Example 2.5. Service Profile Response</strong></p><div class="example-contents"><pre class="programlisting">
+        (https://idm.api.rackspace.com/).</p><div class="example"><a id="d7e114"/><p class="title"><strong>Example 2.5. Service Profile Response</strong></p><div class="example-contents"><pre class="programlisting">
           &lt;service-profile
   xmlns="http://service-registry.api.rackspace.com/service-profile"
   xmlns:atom="http://www.w3.org/2005/Atom"
@@ -105,12 +105,12 @@
         contract version by performing a <span class="command"><strong>GET</strong></span> on the base
         version URL
         (e.g. https://idm.api.rackspace.com/v1.0).
-      </p><div class="example"><a id="d7e118"/><p class="title"><strong>Example 2.6. Service Contract Request</strong></p><div class="example-contents"><pre class="literallayout">
+      </p><div class="example"><a id="d7e119"/><p class="title"><strong>Example 2.6. Service Contract Request</strong></p><div class="example-contents"><pre class="literallayout">
           GET HTTP/1.1
           Host: idm.api.rackspace.com/v1.0
           Accept: application/xml
 			</pre></div></div><br class="example-break"/><p>
-                          This operation does not require a request body.</p><p>Normal Response Code(s):<span class="returnvalue">200</span></p><p>Error Response Code(s):<span class="errorcode">400</span>, <span class="errorcode">500</span>, <span class="errorcode">503</span></p><div class="example"><a id="d7e128"/><p class="title"><strong>Example 2.7. Service Contract Response</strong></p><div class="example-contents"><pre class="programlisting">
+                          This operation does not require a request body.</p><p>Normal Response Code(s):<span class="returnvalue">200</span></p><p>Error Response Code(s):<span class="errorcode">400</span>, <span class="errorcode">500</span>, <span class="errorcode">503</span></p><div class="example"><a id="d7e129"/><p class="title"><strong>Example 2.7. Service Contract Response</strong></p><div class="example-contents"><pre class="programlisting">
           &lt;contract xmlns="http://service-registry.api.rackspace.com/service-profile"
   xmlns:atom="http://www.w3.org/2005/Atom" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="https://service-registry.api.rackspace.com/service-profile ./../resources/xsd/service-profile-v2.0.xsd"

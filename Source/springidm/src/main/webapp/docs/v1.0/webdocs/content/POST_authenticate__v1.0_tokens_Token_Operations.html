@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=7"/>
 <title>3.1.1. Authenticate</title><meta name="generator" content="DocBook XSL-NS Stylesheets V1.76.1"/><link rel="home" href="index.html" title="Global Auth API Developer Guide"/><link rel="up" href="Token_Operations.html" title="3.1. Token Operations"/><link rel="prev" href="Token_Operations.html" title="3.1. Token Operations"/><link rel="next" href="GET_validateToken__v1.0_tokens__tokenId__Token_Operations.html" title="3.1.2. Validate Token"/><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><script type="text/javascript">
             //The id for tree cookie
-            var treeCookieId = "treeview-612";
+            var treeCookieId = "treeview-614";
             var language = "en";
             var w = new Object();
             //Localization
@@ -38,7 +38,7 @@
                                         <a accesskey="u" class="navLinkUp" onclick="_gaq.push(['_trackEvent', 'Header', 'upLink', 'click', 1]);" tabindex="5" href="Token_Operations.html">Up</a>
 				  |
                                     <a accesskey="n" class="navLinkNext" onclick="_gaq.push(['_trackEvent', 'Header', 'nextLink', 'click', 1]);" tabindex="5" href="GET_validateToken__v1.0_tokens__tokenId__Token_Operations.html">Next</a></td></tr></table></div></div><div id="toolbar" class="ui-tabs-nav ui-helper-reset ui-helper-clearfix ui-widget-header ui-corner-all"><div id="toolbar-left"><p class="breadcrumbs"><a href="http://docs.rackspace.com/api/">Rackspace Manuals</a><a href="index.html">Global Auth API Developer Guide
-   - API v1.0</a></p><a onclick="_gaq.push(['_trackEvent', 'Header', 'pdfDownload', 'click', 1]);" class="pdficon" href="../idmdevguide.pdf"><img src="../common/images/pdf.png"/></a></div></div><div id="content"><div class="statustext"> </div><div class="section" title="3.1.1. Authenticate"><div xmlns="" class="titlepage"><div><div><h3 xmlns="http://www.w3.org/1999/xhtml" class="title"><a id="POST_authenticate__v1.0_tokens_Token_Operations"/>3.1.1. Authenticate</h3></div></div></div><table rules="all" id="d7e678"><col width="10%"/><col width="40%"/><col width="50%"/><thead><tr><th align="center">Verb</th><th align="center">URI</th><th align="center">Description</th></tr></thead><tbody><tr><td><span class="command"><strong>POST</strong></span></td><td><code class="code">/v1.0/tokens</code></td><td>
+   - API v1.0</a></p><a onclick="_gaq.push(['_trackEvent', 'Header', 'pdfDownload', 'click', 1]);" class="pdficon" href="../idmdevguide.pdf"><img src="../common/images/pdf.png"/></a></div></div><div id="content"><div class="statustext"> </div><div class="section" title="3.1.1. Authenticate"><div xmlns="" class="titlepage"><div><div><h3 xmlns="http://www.w3.org/1999/xhtml" class="title"><a id="POST_authenticate__v1.0_tokens_Token_Operations"/>3.1.1. Authenticate</h3></div></div></div><table rules="all" id="d7e679"><col width="10%"/><col width="40%"/><col width="50%"/><thead><tr><th align="center">Verb</th><th align="center">URI</th><th align="center">Description</th></tr></thead><tbody><tr><td><span class="command"><strong>POST</strong></span></td><td><code class="code">/v1.0/tokens</code></td><td>
                 Authenticate a client and generate an access token.
             </td></tr></tbody></table><p>
                     Normal Response Code(s):
@@ -82,20 +82,20 @@
                 
                 
             
-            <div class="example"><a id="d7e706"/><p class="title"><strong>Example 3.1. Auth as Application Request: XML</strong></p><div class="example-contents"><pre class="programlisting">&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+            <div class="example"><a id="d7e707"/><p class="title"><strong>Example 3.1. Auth as Application Request: XML</strong></p><div class="example-contents"><pre class="programlisting">&lt;?xml version="1.0" encoding="UTF-8"?&gt;
 
 &lt;authCredentials 
     xmlns="http://idm.api.rackspace.com/v1.0"
     client_secret="0923899flewriudsb"
     client_id="8972348923400fdshasdf" 
     grant_type="CLIENT_CREDENTIALS" /&gt;
-    </pre></div></div><br class="example-break"/><div class="example"><a id="d7e709"/><p class="title"><strong>Example 3.2. Auth as Application Request: JSON</strong></p><div class="example-contents"><pre class="programlisting">{"authCredentials":{
+    </pre></div></div><br class="example-break"/><div class="example"><a id="d7e710"/><p class="title"><strong>Example 3.2. Auth as Application Request: JSON</strong></p><div class="example-contents"><pre class="programlisting">{"authCredentials":{
   "grant_type": "CLIENT_CREDENTIALS",
   "client_id": "8972348923400fdshasdf",
   "client_secret": "0923899flewriudsb"
   }
 }
-</pre></div></div><br class="example-break"/><div class="example"><a id="d7e712"/><p class="title"><strong>Example 3.3. Auth as Application Response: XML</strong></p><div class="example-contents"><pre class="programlisting">&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+</pre></div></div><br class="example-break"/><div class="example"><a id="d7e713"/><p class="title"><strong>Example 3.3. Auth as Application Response: XML</strong></p><div class="example-contents"><pre class="programlisting">&lt;?xml version="1.0" encoding="UTF-8"?&gt;
 
 &lt;auth xmlns="http://idm.api.rackspace.com/v1.0"&gt;
 	&lt;access_token 
@@ -107,7 +107,7 @@
 	    customerId="RCN-000-000-000"
 	    clientId="781hhh47kj34kj3434" /&gt;
 &lt;/auth&gt;
-</pre></div></div><br class="example-break"/><div class="example"><a id="d7e715"/><p class="title"><strong>Example 3.4. Auth as Application Response: JSON</strong></p><div class="example-contents"><pre class="programlisting">{"auth":{
+</pre></div></div><br class="example-break"/><div class="example"><a id="d7e716"/><p class="title"><strong>Example 3.4. Auth as Application Response: JSON</strong></p><div class="example-contents"><pre class="programlisting">{"auth":{
   "accessToken": {
     "id": "ab48a9efdfedb23ty3494",
     "expiresIn": 3600
@@ -121,7 +121,7 @@
   }
   }
 }
-</pre></div></div><br class="example-break"/><div class="example"><a id="d7e718"/><p class="title"><strong>Example 3.5. Auth as Customer Request: XML</strong></p><div class="example-contents"><pre class="programlisting">&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+</pre></div></div><br class="example-break"/><div class="example"><a id="d7e719"/><p class="title"><strong>Example 3.5. Auth as Customer Request: XML</strong></p><div class="example-contents"><pre class="programlisting">&lt;?xml version="1.0" encoding="UTF-8"?&gt;
 
 &lt;authCredentials 
     xmlns="http://idm.api.rackspace.com/v1.0"
@@ -130,7 +130,7 @@
     client_secret="0923899flewriudsb"
     client_id="8972348923400fdshasdf" 
     grant_type="PASSWORD" /&gt;
-    </pre></div></div><br class="example-break"/><div class="example"><a id="d7e721"/><p class="title"><strong>Example 3.6. Auth as Customer Request: JSON</strong></p><div class="example-contents"><pre class="programlisting">{"authCredentials":{
+    </pre></div></div><br class="example-break"/><div class="example"><a id="d7e722"/><p class="title"><strong>Example 3.6. Auth as Customer Request: JSON</strong></p><div class="example-contents"><pre class="programlisting">{"authCredentials":{
   "grant_type": "PASSWORD",
   "client_id": "8972348923400fdshasdf",
   "client_secret": "0923899flewriudsb",
@@ -138,7 +138,7 @@
   "password": "P@ssword1"
   }
 }
-</pre></div></div><br class="example-break"/><div class="example"><a id="d7e724"/><p class="title"><strong>Example 3.7. Auth as Customer Response: XML</strong></p><div class="example-contents"><pre class="programlisting">&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+</pre></div></div><br class="example-break"/><div class="example"><a id="d7e725"/><p class="title"><strong>Example 3.7. Auth as Customer Response: XML</strong></p><div class="example-contents"><pre class="programlisting">&lt;?xml version="1.0" encoding="UTF-8"?&gt;
 
 &lt;auth xmlns="http://idm.api.rackspace.com/v1.0"&gt;
 	&lt;access_token 
@@ -150,7 +150,7 @@
 	    customerId="RCN-000-000-000"
 	    username="jqsmith" /&gt;
 &lt;/auth&gt;
-</pre></div></div><br class="example-break"/><div class="example"><a id="d7e727"/><p class="title"><strong>Example 3.8. Auth as Customer Response: JSON</strong></p><div class="example-contents"><pre class="programlisting">{"auth":{
+</pre></div></div><br class="example-break"/><div class="example"><a id="d7e728"/><p class="title"><strong>Example 3.8. Auth as Customer Response: JSON</strong></p><div class="example-contents"><pre class="programlisting">{"auth":{
   "accessToken": {
     "id": "ab48a9efdfedb23ty3494",
     "expiresIn": 3600
@@ -164,7 +164,7 @@
   }
  }
 }
-</pre></div></div><br class="example-break"/><div class="example"><a id="d7e730"/><p class="title"><strong>Example 3.9. Auth as Racker Request: XML</strong></p><div class="example-contents"><pre class="programlisting">&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+</pre></div></div><br class="example-break"/><div class="example"><a id="d7e731"/><p class="title"><strong>Example 3.9. Auth as Racker Request: XML</strong></p><div class="example-contents"><pre class="programlisting">&lt;?xml version="1.0" encoding="UTF-8"?&gt;
 
 &lt;rackerCredentials 
     xmlns="http://idm.api.rackspace.com/v1.0"
@@ -174,7 +174,7 @@
     client_id="8972348923400fdshasdf" 
     grant_type="PASSWORD" /&gt;
     
-</pre></div></div><br class="example-break"/><div class="example"><a id="d7e733"/><p class="title"><strong>Example 3.10. Auth as Racker Request: JSON</strong></p><div class="example-contents"><pre class="programlisting">{"rackerCredentials":{
+</pre></div></div><br class="example-break"/><div class="example"><a id="d7e734"/><p class="title"><strong>Example 3.10. Auth as Racker Request: JSON</strong></p><div class="example-contents"><pre class="programlisting">{"rackerCredentials":{
   "grant_type": "PASSWORD",
   "client_id": "8972348923400fdshasdf",
   "client_secret": "0923899flewriudsb",
@@ -182,7 +182,7 @@
   "password": "password"
   }
 }
-</pre></div></div><br class="example-break"/><div class="example"><a id="d7e736"/><p class="title"><strong>Example 3.11. Auth as Racker Response: XML</strong></p><div class="example-contents"><pre class="programlisting">&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+</pre></div></div><br class="example-break"/><div class="example"><a id="d7e737"/><p class="title"><strong>Example 3.11. Auth as Racker Response: XML</strong></p><div class="example-contents"><pre class="programlisting">&lt;?xml version="1.0" encoding="UTF-8"?&gt;
 
 &lt;auth xmlns="http://idm.api.rackspace.com/v1.0"&gt;
 	&lt;access_token 
@@ -193,7 +193,7 @@
 	&lt;racker username="john.so/"&gt;
   
 &lt;/auth&gt;
-</pre></div></div><br class="example-break"/><div class="example"><a id="d7e739"/><p class="title"><strong>Example 3.12. Auth as Racker Response: JSON</strong></p><div class="example-contents"><pre class="programlisting">{"auth":{
+</pre></div></div><br class="example-break"/><div class="example"><a id="d7e740"/><p class="title"><strong>Example 3.12. Auth as Racker Response: JSON</strong></p><div class="example-contents"><pre class="programlisting">{"auth":{
   "accessToken": {
     "id": "ab48a9efdfedb23ty3494",
     "expiresIn": 3600

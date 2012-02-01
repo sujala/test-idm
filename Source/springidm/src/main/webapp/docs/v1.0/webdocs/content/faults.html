@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=7"/>
 <title>2.3. Faults</title><meta name="generator" content="DocBook XSL-NS Stylesheets V1.76.1"/><link rel="home" href="index.html" title="Global Auth API Developer Guide"/><link rel="up" href="General_API_Info.html" title="Chapter 2. General API Information"/><link rel="prev" href="contracts.html" title="2.2. Contracts"/><link rel="next" href="getting_started.html" title="2.4. Getting Started"/><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><script type="text/javascript">
             //The id for tree cookie
-            var treeCookieId = "treeview-612";
+            var treeCookieId = "treeview-614";
             var language = "en";
             var w = new Object();
             //Localization
@@ -40,7 +40,7 @@
                                     <a accesskey="n" class="navLinkNext" onclick="_gaq.push(['_trackEvent', 'Header', 'nextLink', 'click', 1]);" tabindex="5" href="getting_started.html">Next</a></td></tr></table></div></div><div id="toolbar" class="ui-tabs-nav ui-helper-reset ui-helper-clearfix ui-widget-header ui-corner-all"><div id="toolbar-left"><p class="breadcrumbs"><a href="http://docs.rackspace.com/api/">Rackspace Manuals</a><a href="index.html">Global Auth API Developer Guide
    - API v1.0</a></p><a onclick="_gaq.push(['_trackEvent', 'Header', 'pdfDownload', 'click', 1]);" class="pdficon" href="../idmdevguide.pdf"><img src="../common/images/pdf.png"/></a></div></div><div id="content"><div class="statustext"> </div><div class="section" title="2.3. Faults"><div xmlns="" class="titlepage"><div><div><h2 xmlns="http://www.w3.org/1999/xhtml" class="title" style="clear: both"><a id="faults"/>2.3. Faults</h2></div></div></div><p>When an error occurs the system will return an HTTP error response code denoting the
         type of error. The system will also return additional information about the fault in the
-        body of the response. </p><div class="example"><a id="d7e134"/><p class="title"><strong>Example 2.8. XML Fault Response</strong></p><div class="example-contents"><pre class="programlisting">
+        body of the response. </p><div class="example"><a id="d7e135"/><p class="title"><strong>Example 2.8. XML Fault Response</strong></p><div class="example-contents"><pre class="programlisting">
 &lt;?xml version="1.0" encoding="UTF-8"?&gt;
 
 &lt;serviceFault xmlns="http://common.api.rackspace.com/v1.0"
@@ -49,7 +49,7 @@
     &lt;details&gt;Error Details...&lt;/details&gt;
 &lt;/serviceFault&gt;
 
-</pre></div></div><br class="example-break"/><div class="example"><a id="d7e137"/><p class="title"><strong>Example 2.9. JSON Fault Response</strong></p><div class="example-contents"><pre class="programlisting">
+</pre></div></div><br class="example-break"/><div class="example"><a id="d7e138"/><p class="title"><strong>Example 2.9. JSON Fault Response</strong></p><div class="example-contents"><pre class="programlisting">
 {"serviceFault":{
   "message": "Fault",
   "details": "Error Details...",
@@ -62,7 +62,7 @@
         useful information for tracking down an error (e.g a stack trace). </p><p>The root element of the fault (serviceFault) may change depending on how important it is to explicitly
         identify a specific fault type for a service. E.g it might be important to a client to distinguish between usernameConflict
         and applicationConflict even though they both have an error code of 409.The following is an example of a 
-        usernameConflict error. </p><div class="example"><a id="d7e142"/><p class="title"><strong>Example 2.10. XML Username Conflict Fault</strong></p><div class="example-contents"><pre class="programlisting">
+        usernameConflict error. </p><div class="example"><a id="d7e143"/><p class="title"><strong>Example 2.10. XML Username Conflict Fault</strong></p><div class="example-contents"><pre class="programlisting">
 &lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;
 
 &lt;usernameConflict xmlns="http://idm.api.rackspace.com/v1.0"
@@ -71,7 +71,7 @@
     &lt;details&gt;Error Details...&lt;/details&gt;
 &lt;/usernameConflict&gt;
 
-</pre></div></div><br class="example-break"/><div class="example"><a id="d7e145"/><p class="title"><strong>Example 2.11. JSON Username Conflict Fault</strong></p><div class="example-contents"><pre class="programlisting">
+</pre></div></div><br class="example-break"/><div class="example"><a id="d7e146"/><p class="title"><strong>Example 2.11. JSON Username Conflict Fault</strong></p><div class="example-contents"><pre class="programlisting">
 {"usernameConflict":{
   "message": "Conflict",
   "details": "Error Details...",
@@ -80,7 +80,7 @@
 }
 
 </pre></div></div><br class="example-break"/><p> The following is a list of possible fault types along with their associated error
-        codes. </p><table rules="all" id="d7e149"><caption>Table 2.2. Fault Types</caption><thead><tr>
+        codes. </p><table rules="all" id="d7e150"><caption>Table 2.2. Fault Types</caption><thead><tr>
             <td>Fault Element</td>
             <td>Associated Error Code</td>
             <td>Expected in Most Requests</td>
