@@ -20,11 +20,12 @@
     <copyright>
       <year>2010</year>
       <year>2011</year>
+      <year>2012</year>
       <holder>Rackspace Hosting, Inc.</holder>
     </copyright>
     <releaseinfo>API v1.0</releaseinfo>
     <productname>Global Auth API</productname>
-    <pubdate>2011-09-27</pubdate>
+    <pubdate>2012-02-01</pubdate>
     <legalnotice role="apache2">
       <annotation>
         <remark>Copyright details are filled in by the template.</remark>
