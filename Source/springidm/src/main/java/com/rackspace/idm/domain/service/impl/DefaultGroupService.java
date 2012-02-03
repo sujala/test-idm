@@ -3,7 +3,6 @@ package com.rackspace.idm.domain.service.impl;
 import com.rackspace.cloud.servers.bean.LimitGroupType;
 import com.rackspace.idm.domain.dao.GroupDao;
 import com.rackspace.idm.domain.entity.Group;
-import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.service.GroupService;
 import com.rackspacecloud.docs.auth.api.v1.GroupsList;
 import org.apache.commons.lang.StringUtils;

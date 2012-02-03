@@ -309,8 +309,10 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
         } else if (searchResult.getEntryCount() == 1) {
             SearchResultEntry e = searchResult.getSearchEntries().get(0);
             String[] list = e.getAttributeValues(ATTR_GROUP_ID);
-            for(String id : list) {
-                groups.add(getGroupById(Integer.parseInt(id)));
+            if(list != null) {
+                for(String id : list) {
+                    groups.add(getGroupById(Integer.parseInt(id)));
+                }
             }
         } else if (searchResult.getEntryCount() > 1) {
             String errMsg = String.format("More than one entry was found for user - %s", userId);
