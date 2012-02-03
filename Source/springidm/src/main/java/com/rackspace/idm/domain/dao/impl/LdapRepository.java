@@ -1,35 +1,22 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import com.rackspace.idm.audit.Audit;
+import com.unboundid.ldap.sdk.*;
+import com.unboundid.ldap.sdk.controls.ServerSideSortRequestControl;
+import com.unboundid.ldap.sdk.controls.SortKey;
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
-import com.rackspace.idm.audit.Audit;
-import com.unboundid.ldap.sdk.Attribute;
-import com.unboundid.ldap.sdk.Control;
-import com.unboundid.ldap.sdk.Filter;
-import com.unboundid.ldap.sdk.LDAPConnection;
-import com.unboundid.ldap.sdk.LDAPConnectionPool;
-import com.unboundid.ldap.sdk.LDAPException;
-import com.unboundid.ldap.sdk.LDAPSearchException;
-import com.unboundid.ldap.sdk.Modification;
-import com.unboundid.ldap.sdk.ModificationType;
-import com.unboundid.ldap.sdk.ResultCode;
-import com.unboundid.ldap.sdk.SearchRequest;
-import com.unboundid.ldap.sdk.SearchResult;
-import com.unboundid.ldap.sdk.SearchResultEntry;
-import com.unboundid.ldap.sdk.SearchScope;
-import com.unboundid.ldap.sdk.controls.ServerSideSortRequestControl;
-import com.unboundid.ldap.sdk.controls.SortKey;
+import java.util.ArrayList;
+import java.util.List;
 
 public abstract class LdapRepository {
 
     // Definitions for LDAP Objectclasses
     public static final String OBJECTCLASS_BASEURL = "baseUrl";
+    public static final String OBJECTCLASS_CLOUDGROUP = "rsGroup";
     public static final String OBJECTCLASS_CLIENTGROUP = "clientGroup";
     public static final String OBJECTCLASS_CLIENT_ROLE = "clientRole";
     public static final String OBJECTCLASS_CLIENTPERMISSION = "clientPermission";
@@ -60,6 +47,8 @@ public abstract class LdapRepository {
 
     protected static final String OBJECTCLASS_TOP = "top";
 
+    protected static final String[] ATTR_GROUP_OBJECT_CLASS_VALUES = {
+        OBJECTCLASS_TOP, OBJECTCLASS_CLOUDGROUP};
     protected static final String[] ATTR_BASEURL_OBJECT_CLASS_VALUES = {
         OBJECTCLASS_TOP, OBJECTCLASS_BASEURL};
     protected static final String[] ATTR_CLIENT_GROUP_OBJECT_CLASS_VALUES = {
@@ -106,6 +95,8 @@ public abstract class LdapRepository {
     public static final String ATTR_GIVEN_NAME = "rsGivenName";
     public static final String ATTR_GRANTED_BY_DEFAULT = "grantedByDefault";
     public static final String ATTR_GROUP_TYPE = "groupType";
+    public static final String ATTR_GROUP_NAME = "name";
+    public static final String ATTR_GROUP_ID = "rsGroupId";
     public static final String ATTR_INTERNAL_URL = "internalUrl";
     public static final String ATTR_LANG = "preferredLanguage";
     public static final String ATTR_MAIL = "rsMail";
@@ -168,6 +159,7 @@ public abstract class LdapRepository {
     // Definitions for LDAP DNs
     protected static final String BASE_DN = "o=rackspace,dc=rackspace,dc=com";
     protected static final String BASEURL_BASE_DN = "ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com";
+    protected static final String GROUP_BASE_DN = "ou=groups,ou=cloud,o=rackspace,dc=rackspace,dc=com";
     protected static final String TENANT_BASE_DN = "ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com";
     protected static final String CLOUD_ADMIN_BASE_DN = "ou=adminUsers,ou=cloud,o=rackspace,dc=rackspace,dc=com";
     protected static final String CUSTOMERS_BASE_DN = "ou=customers,o=rackspace,dc=rackspace,dc=com";
@@ -252,21 +244,15 @@ public abstract class LdapRepository {
     }
 
     protected List<SearchResultEntry> getMultipleEntries(String baseDN,
-        SearchScope scope, Filter searchFilter, String sortAttribute,
-        String... attributes) {
+        SearchScope scope, Filter searchFilter, String sortAttribute, String... attributes) {
         SearchResult searchResult = null;
 
-        ServerSideSortRequestControl sortRequest = new ServerSideSortRequestControl(
-            new SortKey(sortAttribute));
+        ServerSideSortRequestControl sortRequest = new ServerSideSortRequestControl(new SortKey(sortAttribute));
 
         try {
-
-            SearchRequest request = new SearchRequest(baseDN, scope,
-                searchFilter, attributes);
-
+            SearchRequest request = new SearchRequest(baseDN, scope, searchFilter, attributes);
             request.setControls(new Control[]{sortRequest});
             searchResult = getAppConnPool().search(request);
-
         } catch (LDAPException ldapEx) {
             getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
             throw new IllegalStateException(ldapEx);
@@ -400,14 +386,14 @@ public abstract class LdapRepository {
     protected static final String NEXT_ROLE_ID = "nextRoleId";
     protected static final String NEXT_CLIENT_ID = "nextClientId";
     protected static final String NEXT_CUSTOMER_ID = "nextCustomerId";
-    
+    protected static final String NEXT_GROUP_ID = "nextGroupId";
+
     protected String getNextId(LDAPConnection conn, String type) {
         Filter filter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_NEXT_ID)
             .addEqualAttribute(ATTR_NAME, type).build();
         
-        SearchResultEntry entry = this.getSingleEntry(conn, NEXT_IDS_BASE_DN,
-            SearchScope.ONE, filter);
+        SearchResultEntry entry = this.getSingleEntry(conn, NEXT_IDS_BASE_DN, SearchScope.ONE, filter);
         
         long nextId = entry.getAttributeValueAsLong(ATTR_ID);
         

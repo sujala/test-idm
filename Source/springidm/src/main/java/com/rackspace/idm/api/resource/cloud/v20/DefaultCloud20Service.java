@@ -100,7 +100,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     private UserConverterCloudV20 userConverterCloudV20;
 
     @Autowired
-    private UserGroupService userGroupService;
+    private GroupService cloudGroupService;
 
     @Autowired
     private UserService userService;
@@ -1293,40 +1293,109 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String authToken, String userId) throws IOException {
+    public ResponseBuilder listGroups(HttpHeaders httpHeaders, String authToken, String marker, Integer limit) throws IOException {
         try {
-            // ToDo: Not implemented
-            return Response.status(501);
-            /*
             checkXAUTHTOKEN(authToken, true, null);
+            List<Group> groups = cloudGroupService.getGroups(marker, limit);
 
-            if (StringUtils.isBlank(userId)) {
-                String errMsg = "Expecting userId";
-                logger.warn(errMsg);
-                throw new BadRequestException(errMsg);
-            }
-            User user = this.userService.getUserById(userId);
-
-            if (user == null) {
-                String errMsg = String.format("User with id: '%s' was not found.", userId);
-                logger.warn(errMsg);
-                throw new NotFoundException(errMsg);
+            com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups cloudGroups = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups();
+            for(Group group : groups){
+                com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group cloudGroup = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group();
+                cloudGroup.setId(group.getGroupId().toString());
+                cloudGroup.setName(group.getName());
+                cloudGroup.setDescription(group.getDescription());
+                cloudGroups.getGroup().add(cloudGroup);
             }
 
-            Integer mossoId = user.getMossoId();
-            if (mossoId == null) {
-                String errMsg = "User missing mosso id";
-                logger.warn(errMsg);
-                throw new NotFoundException(errMsg);
-            }
-
-            Groups groups = this.userGroupService.getGroups(mossoId);
-
-            return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtKsgrpV1Factory().createGroups(groups));
-            */
+            return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtKsgrpV1Factory().createGroups(cloudGroups));
         } catch (Exception e) {
             return exceptionResponse(e);
         }
+    }
+
+    @Override
+    public ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String authToken, String userId) throws IOException {
+        try {
+            checkXAUTHTOKEN(authToken, true, null);
+            List<Group> groups = cloudGroupService.getGroupsForUser(userId);
+            com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups cloudGroups = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups();
+            for(Group group : groups) {
+                com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group cloudGroup = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group();
+                cloudGroup.setId(group.getGroupId().toString());
+                cloudGroup.setName(group.getName());
+                cloudGroup.setDescription(group.getDescription());
+                cloudGroups.getGroup().add(cloudGroup);
+            }
+            return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtKsgrpV1Factory().createGroups(cloudGroups));
+
+        } catch (Exception e) {
+            return exceptionResponse(e);
+        }
+    }
+
+    @Override
+    public ResponseBuilder getGroupById(HttpHeaders httpHeaders, String authToken, String groupId) throws IOException {
+        checkXAUTHTOKEN(authToken, true, null);
+        Group group = cloudGroupService.getGroupById(Integer.parseInt(groupId));
+
+        com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group cloudGroup = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group();
+        cloudGroup.setId(group.getGroupId().toString());
+        cloudGroup.setName(group.getName());
+        cloudGroup.setDescription(group.getDescription());
+        return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtKsgrpV1Factory().createGroup(cloudGroup));
+    }
+
+    @Override
+    public ResponseBuilder addGroup(HttpHeaders httpHeaders, String authToken,
+                                    com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group) throws IOException {
+        checkXAUTHTOKEN(authToken, true, null);
+        Group groupDO = new Group();
+        groupDO.setDescription(group.getDescription());
+        groupDO.setName(group.getName());
+        cloudGroupService.addGroup(groupDO);
+        return Response.ok();
+    }
+
+    @Override
+    public ResponseBuilder updateGroup(HttpHeaders httpHeaders, String authToken, String groupId,
+                                    com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group) throws IOException {
+        checkXAUTHTOKEN(authToken, true, null);
+        Group groupDO = new Group();
+        groupDO.setGroupId(Integer.parseInt(groupId));
+        groupDO.setDescription(group.getDescription());
+        groupDO.setName(group.getName());
+        cloudGroupService.updateGroup(groupDO);
+        return Response.ok();
+    }
+
+    @Override
+    public ResponseBuilder deleteGroup(HttpHeaders httpHeaders, String authToken, String groupId) throws IOException {
+        checkXAUTHTOKEN(authToken, true, null);
+        cloudGroupService.deleteGroup(groupId);
+        return Response.ok();
+    }
+
+    @Override
+    public ResponseBuilder addGroupToUser(HttpHeaders httpHeaders, String authToken, String groupId, String userId) throws IOException {
+        checkXAUTHTOKEN(authToken, true, null);
+        cloudGroupService.addGroupToUser(Integer.parseInt(groupId), userId);
+        return Response.ok();
+    }
+
+    @Override
+    public ResponseBuilder removeGroupFromUser(HttpHeaders httpHeaders, String authToken, String groupId, String userId) throws IOException {
+        checkXAUTHTOKEN(authToken, true, null);
+        cloudGroupService.deleteGroupFromUser(Integer.parseInt(groupId), userId);
+        return Response.ok();
+    }
+
+    @Override
+    public ResponseBuilder listUsersWithGroup(HttpHeaders httpHeaders, String authToken, String groupId, String marker, Integer limit) throws IOException {
+        FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParamName.GROUP_ID, groupId)};
+        int iMarker = 0;
+        int iLimit = 0;
+        Users users = userService.getAllUsers(filters, iMarker, iLimit);
+        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUsers(this.userConverterCloudV20.toUserList(users.getUsers())));
     }
 
     // KSADM Extension User methods
@@ -1413,8 +1482,8 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
-    public void setUserGroupService(UserGroupService userGroupService) {
-        this.userGroupService = userGroupService;
+    public void setUserGroupService(GroupService cloudGroupService) {
+        this.cloudGroupService = cloudGroupService;
     }
 
     public void setUserService(UserService userService) {

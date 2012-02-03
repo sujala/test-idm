@@ -39,6 +39,11 @@ public class RepositoryConfiguration {
         return new LdapCustomerRepository(connPools, appConfig);
     }
 
+    @Bean
+    public GroupDao ldapGroupRepository() {
+        return new LdapGroupRepository(connPools, appConfig);
+    }
+
    @Bean
     public AuthDao authenticationRepository() {
         return new LdapAuthRepository(authReposConnPool, appConfig);
