@@ -53,13 +53,13 @@ public class Cloud20VersionResource {
     }
 
     @GET
-    public Response getPublicCloud20VersionInfo(@Context HttpHeaders httpHeaders)
-        throws IOException {
-        // For the pubic profile, we're just forwarding to what cloud has. Once
-        // we become the
-        // source of truth, we should use the CloudContractDescriptorBuilder to
-        // render this.
-        return cloudClient.get(getCloudAuthV20Url(), httpHeaders).build();
+    public Response getCloud20VersionInfo() {
+       	String requestUri = uriInfo.getRequestUri().toASCIIString();
+        if(!requestUri.endsWith("/")){
+            requestUri = requestUri+"/";
+        }
+        final String responseXml = cloudContractDescriptionBuilder.buildVersion20Page(requestUri);
+        return Response.ok(responseXml).build();
     }
 
     public Response getInternalCloud20VersionInfo() {

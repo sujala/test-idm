@@ -56,13 +56,17 @@ public class CloudVersionsResource {
         this.cloudContractDescriptionBuilder = cloudContractDescriptionBuilder;
         this.cloudClient = cloudClient;
     }
-    
-    public Response getInternalCloudVersionsInfo() {
-    	final String responseXml = cloudContractDescriptionBuilder.buildInternalRootPage(uriInfo);
-    	return Response.ok(responseXml).build();
-    }
 
     @GET
+    public Response getInternalCloudVersionsInfo() {
+        String requestUri = uriInfo.getRequestUri().toASCIIString();
+        if(!requestUri.endsWith("/")){
+            requestUri = requestUri+"/";
+        }
+        final String responseXml = cloudContractDescriptionBuilder.buildInternalRootPage(requestUri);
+        return Response.ok(responseXml).build();
+    }
+
     public Response getPublicCloudVersionsInfo(@Context HttpHeaders httpHeaders) throws IOException {
     	return cloudClient.get(getCloudAuthBaseUrl(), httpHeaders).build();
     }

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<versions xmlns="http://docs.openstack.org/common/api/v1.0"
+          xmlns:atom="http://www.w3.org/2005/Atom">
+
+    <version id="v1.0"
+             status="DEPRECATED"
+             updated="2011-07-19T22:30:00Z">
+
+        <atom:link rel="self"
+                   href="${baseUrl}v1.0"/>
+    </version>
+
+    <version id="v1.1"
+             status="CURRENT"
+             updated="2012-01-19T22:30:00.25Z">
+
+        <atom:link rel="self"
+                   href="${baseUrl}v1.1/"/>
+
+        <atom:link rel="describedby"
+                   type="application/pdf"
+                   href="http://docs.rackspacecloud.com/auth/api/v1.1/auth-client-devguide-latest.pdf" />
+
+        <atom:link rel="describedby"
+                   type="application/vnd.sun.wadl+xml"
+                   href="http://docs.rackspacecloud.com/auth/api/v1.1/auth.wadl" />
+    </version>
+
+    <version id="v2.0"
+             status="BETA"
+             updated="2012-01-19T22:30:00.25Z">
+
+        <atom:link rel="self"
+                   href="${baseUrl}v2.0/"/>
+
+        <atom:link rel="describedby"
+                   type="application/pdf"
+                   href="http://docs.rackspacecloud.com/auth/api/v2.0/auth-client-devguide-latest.pdf" />
+
+        <atom:link rel="describedby"
+                   type="application/vnd.sun.wadl+xml"
+                   href="http://docs.rackspacecloud.com/auth/api/v2.0/auth.wadl" />
+    </version>
+
+</versions>

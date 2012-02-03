@@ -3,40 +3,49 @@
 <?xml-stylesheet type="text/xsl" href="/docs/xslt/contracts-page.xsl"?>
 
 <contracts
-	xmlns="http://service-registry.api.rackspace.com/service-profile"
-	xmlns:atom="http://www.w3.org/2005/Atom"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="https://service-registry.api.rackspace.com/service-profile ./../resources/xsd/service-profile-v2.0.xsd"
-  serviceInterface="Cloud Auth"> 
-    
-      <contract version="v1.0" status="CURRENT">        
+        xmlns="http://service-registry.api.rackspace.com/service-profile"
+        xmlns:atom="http://www.w3.org/2005/Atom"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="https://service-registry.api.rackspace.com/service-profile ./../resources/xsd/service-profile-v2.0.xsd"
+        serviceInterface="Cloud Auth">
+
+    <contract version="v1.0" status="CURRENT">
         <atom:link rel="self" href="${baseUrl}cloud/v1.0"/>
-       	<atom:link rel="documentation" href="http://docs.rackspace.com/servers/api/v1.0/cs-devguide/content/Authentication-d1e506.html#d6e202"/>
-      </contract>
-      
-      <contract version="v1.1" status="BETA">        
+        <atom:link rel="documentation"
+                   href="http://docs.rackspace.com/servers/api/v1.0/cs-devguide/content/Authentication-d1e506.html#d6e202"/>
+    </contract>
+
+    <contract version="v1.1" status="BETA">
         <media-types>
-        	<media-type base="application/xml" type="application/vnd.rackspace.cloudauth-v1.1+xml">
-            <atom:link rel="describedby" type="application/xml" href="http://docs.rackspacecloud.com/auth/api/v1.1/xsd/" />
-          </media-type>
+            <media-type base="application/xml" type="application/vnd.rackspace.cloudauth-v1.1+xml">
+                <atom:link rel="describedby" type="application/xml"
+                           href="http://docs.rackspacecloud.com/auth/api/v1.1/xsd/"/>
+            </media-type>
         </media-types>
-        
+
         <atom:link rel="self" href="${baseUrl}cloud/v1.1"/>
-        <atom:link rel="describedby" type="application/vnd.sun.wadl+xml" href="http://docs.rackspacecloud.com/auth/api/v1.1/admin.wadl" />
-        <atom:link rel="documentation" type="text/html" href="http://docs-beta.rackspace.com/auth/api/v1.1/auth-admin-devguide/content/index.html" title="Admin Developer Guide" />
-      </contract>
-      
-      <contract version="v2.0" status="CURRENT">        
+        <atom:link rel="describedby" type="application/vnd.sun.wadl+xml"
+                   href="http://docs.rackspacecloud.com/auth/api/v1.1/auth.wadl"/>
+        <atom:link rel="documentation" type="text/html"
+                   href="http://docs-beta.rackspace.com/auth/api/v1.1/idmdevguide/content/index.html"
+                   title="Admin Developer Guide"/>
+    </contract>
+
+    <contract version="v2.0" status="CURRENT">
         <media-types>
-          <media-type base="application/xml" type="application/vnd.rackspace.cloudauth-v1.1+xml">
-            <atom:link rel="describedby" type="application/xml" href="http://docs.rackspacecloud.com/auth/api/v2.0/xsd/" />
-          </media-type>
+            <media-type base="application/xml" type="application/vnd.rackspace.cloudauth-v1.1+xml">
+                <atom:link rel="describedby" type="application/xml"
+                           href="http://docs.rackspacecloud.com/auth/api/v2.0/common/xsd/"/>
+            </media-type>
         </media-types>
-        
+
         <atom:link rel="self" href="${baseUrl}cloud/v2.0"/>
-        <atom:link rel="describedby" type="application/vnd.sun.wadl+xml" href="http://docs.rackspacecloud.com/auth/api/v2.0/admin.wadl" />
-        <atom:link rel="documentation" type="text/html" href="http://docs-beta.rackspace.com/auth/api/v2.0/auth-admin-devguide/content/index.html" title="Admin Developer Guide" />
-      </contract>
+        <atom:link rel="describedby" type="application/vnd.sun.wadl+xml"
+                   href="http://docs.rackspacecloud.com/auth/api/v2.0/admin.wadl"/>
+        <atom:link rel="documentation" type="text/html"
+                   href="http://docs-beta.rackspace.com/auth/api/v2.0/auth-admin-devguide/content/index.html"
+                   title="Admin Developer Guide"/>
+    </contract>
 
 </contracts>
 

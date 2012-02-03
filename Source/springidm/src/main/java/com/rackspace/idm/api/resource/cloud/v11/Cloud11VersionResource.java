@@ -44,17 +44,21 @@ public class Cloud11VersionResource {
         this.cloudContractDescriptionBuilder = cloudContractDescriptionBuilder;
     }
 
-    @GET
     public Response getPublicCloud11VersionInfo(@Context HttpHeaders httpHeaders)
             throws IOException {
     	//For the pubic profile, we're just forwarding to what cloud has. Once we become the
     	//source of truth, we should use the CloudContractDescriptorBuilder to render this.
         return cloudClient.get(getCloudAuthV11Url(), httpHeaders).build();
     }
-    
-    public Response getInternalCloud11VersionInfo() {
-       	final String responseXml = cloudContractDescriptionBuilder.buildInternalVersionPage(CloudContractDescriptionBuilder.VERSION_1_1, uriInfo);
-    	return Response.ok(responseXml).build();
+
+    @GET
+    public Response getCloud11VersionInfo() {
+       	String requestUri = uriInfo.getRequestUri().toASCIIString();
+        if(!requestUri.endsWith("/")){
+            requestUri = requestUri+"/";
+        }
+        final String responseXml = cloudContractDescriptionBuilder.buildVersion11Page(requestUri);
+        return Response.ok(responseXml).build();
     }
 
     @POST

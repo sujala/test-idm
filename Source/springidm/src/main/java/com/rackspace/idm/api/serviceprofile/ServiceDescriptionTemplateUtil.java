@@ -52,4 +52,24 @@ public class ServiceDescriptionTemplateUtil {
 
 		return "";
 	}
+
+    public String build(final String pattern, String uri) {
+		try {
+			Map<String, String> root = new HashMap<String, String>();
+			root.put("baseUrl", uri);
+
+			Reader in = new StringReader(pattern);
+			Writer out = new StringWriter();
+
+			Template template = new Template("template", in, freemarkerConfig);
+			template.process(root, out);
+			out.flush();
+
+			return out.toString();
+		} catch (Throwable t) {
+			logger.error("Could not load template.", t);
+		}
+
+		return "";
+	}
 }

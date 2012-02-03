@@ -1,8 +1,8 @@
 package com.rackspace.idm.api.serviceprofile;
 
-import javax.ws.rs.core.UriInfo;
-
 import com.rackspace.idm.domain.dao.ApiDocDao;
+
+import javax.ws.rs.core.UriInfo;
 
 public abstract class AbstractContractDescriptionBuilder {
 
@@ -18,6 +18,10 @@ public abstract class AbstractContractDescriptionBuilder {
     public abstract String buildPublicVersionPage(final String versionid, final UriInfo uriInfo);
     
     protected String build(final String pattern, final UriInfo uriInfo) {
+    	return templateUtil.build(pattern, uriInfo);
+    }
+
+    protected String build(final String pattern, final String uriInfo) {
     	return templateUtil.build(pattern, uriInfo);
     }
     
