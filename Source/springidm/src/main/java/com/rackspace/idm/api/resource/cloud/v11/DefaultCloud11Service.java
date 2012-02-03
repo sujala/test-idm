@@ -14,6 +14,7 @@ import com.rackspace.idm.util.AuthHeaderHelper;
 import com.rackspace.idm.util.NastFacade;
 import com.rackspacecloud.docs.auth.api.v1.*;
 import com.rackspacecloud.docs.auth.api.v1.Credentials;
+import com.rackspacecloud.docs.auth.api.v1.Group;
 import com.rackspacecloud.docs.auth.api.v1.PasswordCredentials;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
@@ -525,31 +526,28 @@ public class DefaultCloud11Service implements Cloud11Service {
     }
 
     @Override
-    public Response.ResponseBuilder getUserGroups(HttpServletRequest request, String userID, HttpHeaders httpHeaders)
+    public Response.ResponseBuilder getUserGroups(HttpServletRequest request, String userName, HttpHeaders httpHeaders)
             throws IOException {
         try {
-            //ToDo: Not implemented
-            return Response.status(501);
-            /*
             authenticateCloudAdminUserForGetRequests(request);
 
-            if (org.tuckey.web.filters.urlrewrite.utils.StringUtils.isBlank(userID)) {
+            if (org.tuckey.web.filters.urlrewrite.utils.StringUtils.isBlank(userName)) {
                 String errMsg = "Expecting userId";
                 logger.warn(errMsg);
                 throw new BadRequestException(errMsg);
             }
-            User user = this.checkAndGetUser(userID);
-
-            Integer mossoId = user.getMossoId();
-            if (mossoId == null) {
-                String errMsg = "User missing mosso id";
-                logger.warn(errMsg);
-                throw new NotFoundException(errMsg);
+            User user = userService.getUser(userName); //this.checkAndGetUser(userID);
+            
+            List<com.rackspace.idm.domain.entity.Group> groups = userGroupService.getGroupsForUser(user.getId());
+            GroupsList groupList = new GroupsList();
+            for(com.rackspace.idm.domain.entity.Group group : groups){
+                Group g = new Group();
+                g.setId(group.getName()); // Name for v1.1
+                g.setDescription(group.getDescription());
+                groupList.getGroup().add(g);
             }
+            return Response.ok(OBJ_FACTORY.createGroups(groupList));
 
-            GroupsList groups = userGroupService.getGroupList(mossoId);
-            return Response.ok(OBJ_FACTORY.createGroups(groups));
-        */
         } catch (NotFoundException e) {
             return cloudExceptionResponse.exceptionResponse(e);
         } catch (NotAuthorizedException e) {
