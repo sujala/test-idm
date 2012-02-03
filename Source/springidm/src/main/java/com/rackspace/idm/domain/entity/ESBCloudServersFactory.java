@@ -2,7 +2,7 @@ package com.rackspace.idm.domain.entity;
 
 import com.rackspace.cloud.esb.support.ESBClientUtil;
 import com.rackspace.cloud.service.servers.CloudServers;
-import com.rackspace.idm.domain.service.UserGroupService;
+import com.rackspace.idm.domain.service.GroupService;
 import com.rackspace.idm.exception.ApiException;
 import org.apache.commons.configuration.Configuration;
 import org.apache.log4j.Logger;
@@ -23,7 +23,7 @@ public class ESBCloudServersFactory {
     @Autowired
     private Configuration config;
 
-    private static final Logger LOGGER = Logger.getLogger(UserGroupService.class);
+    private static final Logger LOGGER = Logger.getLogger(GroupService.class);
 
     public CloudServers getCSClient(String accountID) throws ApiException {
         try {

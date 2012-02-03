@@ -67,8 +67,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             throw new IllegalArgumentException(errmsg);
         }
 
-        String userDN = new LdapDnBuilder(USERS_BASE_DN).addAttribute(ATTR_ID,
-            user.getId()).build();
+        String userDN = new LdapDnBuilder(USERS_BASE_DN).addAttribute(ATTR_ID, user.getId()).build();
 
         user.setUniqueId(userDN);
 
@@ -428,6 +427,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                     searchBuilder.addEqualAttribute(ATTR_UID, filter.getStrValue());
                 } else if (filter.getParam() == FilterParamName.DOMAIN_ID) {
                     searchBuilder.addEqualAttribute(ATTR_DOMAIN_ID, filter.getStrValue());
+                } else if (filter.getParam() == FilterParamName.GROUP_ID) {
+                    searchBuilder.addEqualAttribute(ATTR_GROUP_ID, filter.getStrValue());
                 }
             }
         }
@@ -684,18 +685,15 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
 
         if (!StringUtils.isBlank(user.getDisplayName())) {
-            atts.add(new Attribute(ATTR_DISPLAY_NAME, cryptHelper.encrypt(user
-                .getDisplayName())));
+            atts.add(new Attribute(ATTR_DISPLAY_NAME, cryptHelper.encrypt(user.getDisplayName())));
         }
 
         if (!StringUtils.isBlank(user.getFirstname())) {
-            atts.add(new Attribute(ATTR_GIVEN_NAME, cryptHelper.encrypt(user
-                .getFirstname())));
+            atts.add(new Attribute(ATTR_GIVEN_NAME, cryptHelper.encrypt(user.getFirstname())));
         }
 
         if (!StringUtils.isBlank(user.getEmail())) {
-            atts.add(new Attribute(ATTR_MAIL, cryptHelper.encrypt(user
-                .getEmail())));
+            atts.add(new Attribute(ATTR_MAIL, cryptHelper.encrypt(user.getEmail())));
         }
 
         if (!StringUtils.isBlank(user.getMiddlename())) {
@@ -703,38 +701,31 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
 
         if (user.getLocale() != null) {
-            atts.add(new Attribute(ATTR_LANG, user.getPreferredLang()
-                .toString()));
+            atts.add(new Attribute(ATTR_LANG, user.getPreferredLang().toString()));
         }
 
         if (!StringUtils.isBlank(user.getCustomerId())) {
-            atts.add(new Attribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, user
-                .getCustomerId()));
+            atts.add(new Attribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, user.getCustomerId()));
         }
 
         if (!StringUtils.isBlank(user.getPersonId())) {
-            atts.add(new Attribute(ATTR_RACKSPACE_PERSON_NUMBER, user
-                .getPersonId()));
+            atts.add(new Attribute(ATTR_RACKSPACE_PERSON_NUMBER, user.getPersonId()));
         }
 
         if (!StringUtils.isBlank(user.getApiKey())) {
-            atts.add(new Attribute(ATTR_RACKSPACE_API_KEY, cryptHelper
-                .encrypt(user.getApiKey())));
+            atts.add(new Attribute(ATTR_RACKSPACE_API_KEY, cryptHelper.encrypt(user.getApiKey())));
         }
 
         if (!StringUtils.isBlank(user.getSecretAnswer())) {
-            atts.add(new Attribute(ATTR_PASSWORD_SECRET_A, cryptHelper
-                .encrypt(user.getSecretAnswer())));
+            atts.add(new Attribute(ATTR_PASSWORD_SECRET_A, cryptHelper.encrypt(user.getSecretAnswer())));
         }
 
         if (!StringUtils.isBlank(user.getSecretQuestion())) {
-            atts.add(new Attribute(ATTR_PASSWORD_SECRET_Q, cryptHelper
-                .encrypt(user.getSecretQuestion())));
+            atts.add(new Attribute(ATTR_PASSWORD_SECRET_Q, cryptHelper.encrypt(user.getSecretQuestion())));
         }
 
         if (!StringUtils.isBlank(user.getLastname())) {
-            atts.add(new Attribute(ATTR_SN, cryptHelper.encrypt(user
-                .getLastname())));
+            atts.add(new Attribute(ATTR_SN, cryptHelper.encrypt(user.getLastname())));
         }
 
         if (user.getTimeZoneObj() != null) {
@@ -744,14 +735,10 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         atts.add(new Attribute(ATTR_UID, user.getUsername()));
 
         if (!StringUtils.isBlank(user.getPasswordObj().getValue())) {
-            atts.add(new Attribute(ATTR_PASSWORD, user.getPasswordObj()
-                .getValue()));
-            atts.add(new Attribute(ATTR_CLEAR_PASSWORD, cryptHelper
-                .encrypt(user.getPassword())));
-            atts.add(new Attribute(ATTR_PASSWORD_SELF_UPDATED, Boolean.FALSE
-                .toString()));
-            atts.add(new Attribute(ATTR_PASSWORD_UPDATED_TIMESTAMP, StaticUtils
-                .encodeGeneralizedTime(new DateTime().toDate())));
+            atts.add(new Attribute(ATTR_PASSWORD, user.getPasswordObj().getValue()));
+            atts.add(new Attribute(ATTR_CLEAR_PASSWORD, cryptHelper.encrypt(user.getPassword())));
+            atts.add(new Attribute(ATTR_PASSWORD_SELF_UPDATED, Boolean.FALSE.toString()));
+            atts.add(new Attribute(ATTR_PASSWORD_UPDATED_TIMESTAMP, StaticUtils.encodeGeneralizedTime(new DateTime().toDate())));
         }
 
         if (!StringUtils.isBlank(user.getRegion())) {
@@ -784,8 +771,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         offset = offset < 0 ? this.getLdapPagingOffsetDefault() : offset;
         limit = limit <= 0 ? this.getLdapPagingLimitDefault() : limit;
-        limit = limit > this.getLdapPagingLimitMax() ? this
-            .getLdapPagingLimitMax() : limit;
+        limit = limit > this.getLdapPagingLimitMax() ? this.getLdapPagingLimitMax() : limit;
 
         int contentCount = 0;
 
@@ -794,19 +780,16 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         try {
 
             List<SearchResultEntry> entries = this.getMultipleEntries(
-                USERS_BASE_DN, SearchScope.SUB, searchFilter, ATTR_UID,
-                searchAttributes);
+                USERS_BASE_DN, SearchScope.SUB, searchFilter, ATTR_UID, searchAttributes);
 
             contentCount = entries.size();
 
             if (offset < contentCount) {
 
-                int toIndex = offset + limit > contentCount ? contentCount
-                    : offset + limit;
+                int toIndex = offset + limit > contentCount ? contentCount : offset + limit;
                 int fromIndex = offset;
 
-                List<SearchResultEntry> subList = entries.subList(fromIndex,
-                    toIndex);
+                List<SearchResultEntry> subList = entries.subList(fromIndex, toIndex);
 
                 for (SearchResultEntry entry : subList) {
                     userList.add(getUser(entry));
@@ -836,8 +819,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     private Attribute[] getRackerAddAtrributes(Racker racker) {
 
         List<Attribute> atts = new ArrayList<Attribute>();
-        atts.add(new Attribute(ATTR_OBJECT_CLASS,
-            ATTR_RACKER_OBJECT_CLASS_VALUES));
+        atts.add(new Attribute(ATTR_OBJECT_CLASS, ATTR_RACKER_OBJECT_CLASS_VALUES));
         atts.add(new Attribute(ATTR_RACKER_ID, racker.getRackerId()));
         getLogger().debug("Adding Racker attribute {}", racker.getRackerId());
         return atts.toArray(new Attribute[0]);
@@ -871,9 +853,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         User user = null;
         try {
 
-            SearchResultEntry entry = this.getSingleEntry(
-                SOFT_DELETED_USERS_BASE_DN, SearchScope.SUB, searchFilter,
-                searchAttributes);
+            SearchResultEntry entry = this.getSingleEntry(SOFT_DELETED_USERS_BASE_DN, SearchScope.SUB, searchFilter, searchAttributes);
 
             if (entry != null) {
                 user = getUser(entry);

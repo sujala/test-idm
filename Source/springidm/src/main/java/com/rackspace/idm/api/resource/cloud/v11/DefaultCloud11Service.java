@@ -61,7 +61,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     private NastFacade nastFacade;
 
     @Autowired
-    private UserGroupService userGroupService;
+    private GroupService userGroupService;
 
     @Autowired
     private CredentialUnmarshaller credentialUnmarshaller;

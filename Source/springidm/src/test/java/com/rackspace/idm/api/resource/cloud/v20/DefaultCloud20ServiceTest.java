@@ -50,7 +50,7 @@ public class DefaultCloud20ServiceTest {
     private DefaultCloud20Service spy;
     private Configuration config;
     private UserService userService;
-    private UserGroupService userGroupService;
+    private GroupService userGroupService;
     private JAXBObjectFactories jaxbObjectFactories;
     private ScopeAccessService scopeAccessService;
     private AuthorizationService authorizationService;
@@ -83,7 +83,7 @@ public class DefaultCloud20ServiceTest {
 
         //mocks
         userService = mock(UserService.class);
-        userGroupService = mock(UserGroupService.class);
+        userGroupService = mock(GroupService.class);
         jaxbObjectFactories = mock(JAXBObjectFactories.class);
         scopeAccessService = mock(ScopeAccessService.class);
         authorizationService = mock(AuthorizationService.class);
@@ -509,7 +509,7 @@ public class DefaultCloud20ServiceTest {
     public void listUserGroups_withValidUser_callsUserGroupService() throws Exception {
         when(userService.getUserById(userId)).thenReturn(user);
         spy.listUserGroups(null, authToken, userId);
-        verify(userGroupService).getGroups(user.getMossoId());
+        verify(userGroupService).getGroups("1",100);
     }
 
     @Test

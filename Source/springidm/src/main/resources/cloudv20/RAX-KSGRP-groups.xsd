@@ -23,7 +23,8 @@
     
     
     <element name="groups" type="RAX-KSGRP:Groups"/>
-    
+    <element name="group" type="RAX-KSGRP:Group"/>
+
     <complexType name="Groups">
         <sequence>
             <element name="group" type="RAX-KSGRP:Group" maxOccurs="100"/>

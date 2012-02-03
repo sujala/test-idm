@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.JSONConstants;
@@ -235,7 +236,7 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("userId") String userId) throws IOException {
-        return getCloud20Service().listUserGroups(httpHeaders,authToken, userId).build();
+        return getCloud20Service().listUserGroups(httpHeaders, authToken, userId).build();
     }
 
     @PUT
@@ -589,6 +590,92 @@ public class Cloud20VersionResource {
             @PathParam("userId") String userId, SecretQA secrets) throws IOException, JAXBException {
         return getCloud20Service().updateSecretQA(httpHeaders, authToken, userId, secrets).build();
     }
+
+    // ******************************************************* //
+    // RAX-GRPADM Extension //
+    // ******************************************************* //
+
+    @POST
+    @Path("/RAX-GRPADM/groups")
+    public Response addGroup(
+            @Context HttpHeaders httpHeaders,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            Group group) throws IOException {
+        return getCloud20Service().addGroup(httpHeaders, authToken, group).build();
+    }
+
+    @GET
+    @Path("/RAX-GRPADM/groups")
+    public Response getGroups(
+            @Context HttpHeaders httpHeaders,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @QueryParam("marker") String marker,
+            @QueryParam("limit") Integer limit) throws IOException {
+        return getCloud20Service().listGroups(httpHeaders, authToken, marker, limit).build();
+    }
+
+    @GET
+    @Path("/RAX-GRPADM/groups/{groupId}")
+    public Response getGroupById(
+            @Context HttpHeaders httpHeaders,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("groupId") String groupId) throws IOException {
+        return getCloud20Service().getGroupById(httpHeaders, authToken, groupId).build();
+    }
+
+    @PUT
+    @Path("/RAX-GRPADM/groups/{groupId}")
+    public Response addGroup(
+            @Context HttpHeaders httpHeaders,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("groupId") String groupId,
+            Group group) throws IOException {
+        return getCloud20Service().updateGroup(httpHeaders, authToken, groupId, group).build();
+    }
+
+    @DELETE
+    @Path("/RAX-GRPADM/groups/{groupId}")
+    public Response deleteGroupById(
+            @Context HttpHeaders httpHeaders,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("groupId") String groupId) throws IOException {
+        return getCloud20Service().deleteGroup(httpHeaders, authToken, groupId).build();
+    }
+
+    @GET
+    @Path("/RAX-GRPADM/groups/{groupId}/users")
+    public Response getUsersFromGroup(
+            @Context HttpHeaders httpHeaders,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("groupId") String groupId,
+            @QueryParam("marker") String marker,
+            @QueryParam("limit") Integer limit) throws IOException {
+        return getCloud20Service().listUsersWithGroup(httpHeaders, authToken, groupId, marker, limit).build();
+    }
+
+    @PUT
+    @Path("/RAX-GRPADM/groups/{groupId}/users/{userId}")
+    public Response putUserGroups(
+            @Context HttpHeaders httpHeaders,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("groupId") String groupId,
+            @PathParam("userId") String userId) throws IOException {
+        return getCloud20Service().addGroupToUser(httpHeaders, authToken, groupId, userId).build();
+    }
+
+    @DELETE
+    @Path("/RAX-GRPADM/groups/{groupId}/users/{userId}")
+    public Response deleteUserGroups(
+            @Context HttpHeaders httpHeaders,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("groupId") String groupId,
+            @PathParam("userId") String userId) throws IOException {
+        return getCloud20Service().removeGroupFromUser(httpHeaders, authToken, groupId, userId).build();
+    }
+
+    // ******************************************************* //
+    // ******************************************************* //
+
 
     @DELETE
     @Path("softDeleted/users/{userId}")

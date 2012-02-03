@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.exception.NotFoundException;
@@ -106,8 +107,6 @@ public interface Cloud20Service {
 
     ResponseBuilder listUsers(HttpHeaders httpHeaders, String authToken, Integer marker, Integer limit) throws IOException;
 
-    ResponseBuilder listUserGroups(HttpHeaders httpHeaders,String authToken, String userId) throws IOException;
-
     ResponseBuilder listEndpointTemplates(HttpHeaders httpHeaders,
         String authToken, String serviceId) throws IOException;
 
@@ -148,4 +147,22 @@ public interface Cloud20Service {
 
     ResponseBuilder listUserGlobalRolesByServiceId(HttpHeaders httpHeaders,
         String authToken, String userId, String serviceId) throws IOException;
+
+    ResponseBuilder listGroups(HttpHeaders httpHeaders, String authToken, String marker, Integer limit) throws IOException;
+
+    ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String authToken, String userId) throws IOException;
+
+    ResponseBuilder getGroupById(HttpHeaders httpHeaders, String authToken, String groupId) throws IOException;
+
+    ResponseBuilder addGroup(HttpHeaders httpHeaders, String authToken, Group group) throws IOException;
+
+    ResponseBuilder updateGroup(HttpHeaders httpHeaders, String authToken, String groupId, Group group) throws IOException;
+
+    ResponseBuilder deleteGroup(HttpHeaders httpHeaders, String authToken, String groupId) throws IOException;
+
+    ResponseBuilder addGroupToUser(HttpHeaders httpHeaders, String authToken, String groupId, String userId) throws IOException;
+
+    ResponseBuilder removeGroupFromUser(HttpHeaders httpHeaders, String authToken, String groupId, String userId) throws IOException;
+
+    ResponseBuilder listUsersWithGroup(HttpHeaders httpHeaders, String authToken, String groupId, String marker, Integer limit) throws IOException;
 }
