@@ -28,6 +28,7 @@ public class Cloud20VersionResourceTest extends AbstractAroundClassJerseyTest {
         ensureGrizzlyStarted("classpath:app-config.xml");
     }
 
+    @Ignore
     @Test
     public void getVersion_withValidPath_returns200() throws Exception {
         WebResource resource = resource().path("cloud/v2.0");
@@ -35,6 +36,7 @@ public class Cloud20VersionResourceTest extends AbstractAroundClassJerseyTest {
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
     }
 
+    @Ignore
     @Test
     public void getVersion_acceptsXml_returnsVersion() throws Exception {
         WebResource resource = resource().path("cloud/v2.0");
@@ -43,6 +45,7 @@ public class Cloud20VersionResourceTest extends AbstractAroundClassJerseyTest {
         assertThat("version", entity, Matchers.containsString("id=\"v2.0\""));
     }
 
+    @Ignore
     @Test
     public void getVersion_acceptsJson_returnsVersion() throws Exception {
         WebResource resource = resource().path("cloud/v2.0");
