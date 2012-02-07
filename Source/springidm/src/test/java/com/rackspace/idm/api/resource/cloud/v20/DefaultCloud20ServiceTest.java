@@ -10,10 +10,7 @@ import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
-import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.BaseUrlConflictException;
-import com.rackspace.idm.exception.ForbiddenException;
-import com.rackspace.idm.exception.NotAuthenticatedException;
+import com.rackspace.idm.exception.*;
 import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.Control;
 import com.unboundid.ldap.sdk.SearchResultEntry;
@@ -30,6 +27,7 @@ import org.openstack.docs.identity.api.v2.*;
 
 import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBElement;
+import java.util.Date;
 import java.util.List;
 
 import static org.hamcrest.Matchers.equalTo;
@@ -122,7 +120,9 @@ public class DefaultCloud20ServiceTest {
         tenantRole.setClientId("clientId");
         tenantRole.setUserId(userId);
         tenantRole.setRoleRsId("tenantRoleId");
-        ScopeAccess scopeAccess = new ScopeAccess();
+        UserScopeAccess userScopeAccess = new UserScopeAccess();
+        userScopeAccess.setAccessTokenString("access");
+        userScopeAccess.setAccessTokenExp(new Date(3000,1,1));
         tenant = new Tenant();
         tenant.setTenantId(tenantId);
         tenant.setBaseUrlIds(new String[]{});
@@ -151,8 +151,8 @@ public class DefaultCloud20ServiceTest {
         //stubbing
         when(jaxbObjectFactories.getRackspaceIdentityExtKsgrpV1Factory()).thenReturn(new ObjectFactory());
         when(jaxbObjectFactories.getOpenStackIdentityV2Factory()).thenReturn(new org.openstack.docs.identity.api.v2.ObjectFactory());
-        when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(scopeAccess);
-        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(true);
+        when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(userScopeAccess);
+        when(authorizationService.authorizeCloudIdentityAdmin(userScopeAccess)).thenReturn(true);
         when(endpointService.getBaseUrlById(101)).thenReturn(cloudBaseUrl);
         when(clientService.getById(role.getServiceId())).thenReturn(application);
         when(clientService.getById("clientId")).thenReturn(application);
@@ -302,8 +302,22 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void deleteRole_callsClientService_deleteClientRoleMethod() throws Exception {
+        doNothing().when(spy).checkXAuthToken(anyString(),anyString());
         spy.deleteRole(null, authToken, role.getId());
         verify(clientService).deleteClientRole(any(ClientRole.class));
+    }
+
+    @Test
+    public void deleteRole_serviceAdminCallerDoesNotHaveAccess_throwsForbiddenException() throws Exception {
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
+        Response.ResponseBuilder responseBuilder = spy.deleteRole(null, authToken, "roleId");
+        assertThat("code", responseBuilder.build().getStatus(), equalTo(403));
+    }
+
+    @Test
+    public void deleteRole_withNullRole_returns400() throws Exception {
+        Response.ResponseBuilder responseBuilder = spy.deleteRole(null, authToken, null);
+        assertThat("code", responseBuilder.build().getStatus(),equalTo(400));
     }
 
     @Test
@@ -452,6 +466,7 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void addRole_callsClientService_addClientRole() throws Exception {
+        doNothing().when(spy).checkXAuthToken(anyString(),anyString());
         spy.addRole(null, null, authToken, role);
         verify(clientService).addClientRole(any(ClientRole.class));
     }
@@ -509,7 +524,7 @@ public class DefaultCloud20ServiceTest {
     public void listUserGroups_withValidUser_callsUserGroupService() throws Exception {
         when(userService.getUserById(userId)).thenReturn(user);
         spy.listUserGroups(null, authToken, userId);
-        verify(userGroupService).getGroups("1",100);
+        verify(userGroupService).getGroups("1", 100);
     }
 
     @Test
@@ -542,8 +557,10 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void addRole_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
-        spy.addRole(null, null, authToken, null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+        Role role1 = new Role();
+        role1.setServiceId("id");
+        spy.addRole(null, null, authToken, role1);
+        verify(spy).checkXAuthToken(authToken, "id");
     }
 
     @Test
@@ -579,7 +596,7 @@ public class DefaultCloud20ServiceTest {
         when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(new User());
-        doNothing().when(spy).setDomainId(any(ScopeAccess.class),any(User.class));
+        doNothing().when(spy).setDomainId(any(ScopeAccess.class), any(User.class));
         UserForCreate userForCreate = new UserForCreate();
         userForCreate.setUsername("userforcreate");
         userForCreate.setEmail("user@rackspace.com");
@@ -598,7 +615,7 @@ public class DefaultCloud20ServiceTest {
         when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(false);
         when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(new User());
-        doNothing().when(spy).setDomainId(any(ScopeAccess.class),any(User.class));
+        doNothing().when(spy).setDomainId(any(ScopeAccess.class), any(User.class));
         UserForCreate userForCreate = new UserForCreate();
         userForCreate.setUsername("userforcreate");
         userForCreate.setEmail("user@rackspace.com");
@@ -640,8 +657,9 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void deleteRole_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
-        spy.deleteRole(null, authToken, null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+        doNothing().when(spy).checkXAuthToken(anyString(),anyString());
+        spy.deleteRole(null, authToken, roleId);
+        verify(spy).checkXAuthToken(anyString(), anyString());
     }
 
     @Test
@@ -674,7 +692,7 @@ public class DefaultCloud20ServiceTest {
         when(userService.getUserByAuthToken(authToken)).thenReturn(user);
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
         Response.ResponseBuilder responseBuilder = spy.deleteUser(null, authToken, "dude");
-        assertThat("response code", responseBuilder.build().getStatus(),equalTo(403));
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(403));
     }
 
     @Test
@@ -1034,5 +1052,56 @@ public class DefaultCloud20ServiceTest {
         when(scopeAccessByAccessToken.getLDAPEntry()).thenReturn(new SearchResultEntry("", attributes, new Control[]{}));
         defaultCloud20Service.setDomainId(scopeAccessByAccessToken, userDO);
         verify(userService).getUser("dude");
+    }
+
+    @Test(expected = NotAuthorizedException.class)
+    public void checkXAuthToken_withNullToken_throwsNotAuthorizedException() throws Exception {
+        defaultCloud20Service.checkXAuthToken(null, "clientid");
+    }
+
+    @Test(expected = NotAuthorizedException.class)
+    public void checkXAuthToken_withBlankToken_throwsNotAuthorizedException() throws Exception {
+        defaultCloud20Service.checkXAuthToken("", "clientid");
+    }
+
+    @Test
+    public void checkXAuthToken_identityAdminCaller_succeeds() throws Exception {
+        UserScopeAccess userScopeAccess = new UserScopeAccess();
+        userScopeAccess.setAccessTokenString("admin");
+        userScopeAccess.setAccessTokenExp(new Date(2099, 1, 1));
+        when(scopeAccessService.getScopeAccessByAccessToken("admin")).thenReturn(userScopeAccess);
+        when(authorizationService.authorizeCloudIdentityAdmin(userScopeAccess)).thenReturn(true);
+        defaultCloud20Service.checkXAuthToken("admin", "clientid");
+    }
+
+    @Test
+    public void checkXAuthToken_identityServiceAdminCaller_withRightClientId_succeeds() throws Exception {
+        UserScopeAccess userScopeAccess = new UserScopeAccess();
+        userScopeAccess.setClientId("clientid");
+        userScopeAccess.setAccessTokenString("admin");
+        userScopeAccess.setAccessTokenExp(new Date(2099, 1, 1));
+        when(scopeAccessService.getScopeAccessByAccessToken("admin")).thenReturn(userScopeAccess);
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
+        defaultCloud20Service.checkXAuthToken("admin", "clientid");
+    }
+
+    @Test(expected = ForbiddenException.class)
+    public void checkXAuthToken_identityServiceAdminCaller_withWrongClientId_throwsForbiddenException() throws Exception {
+        UserScopeAccess userScopeAccess = new UserScopeAccess();
+        userScopeAccess.setAccessTokenString("admin");
+        userScopeAccess.setAccessTokenExp(new Date(2099, 1, 1));
+        when(scopeAccessService.getScopeAccessByAccessToken("admin")).thenReturn(userScopeAccess);
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
+        defaultCloud20Service.checkXAuthToken("admin", "bad");
+    }
+
+    @Test(expected = ForbiddenException.class)
+    public void checkXAuthToken_userAdminCaller_throwsForbiddenException() throws Exception {
+        UserScopeAccess userScopeAccess = new UserScopeAccess();
+        userScopeAccess.setAccessTokenString("admin");
+        userScopeAccess.setAccessTokenExp(new Date(2099, 1, 1));
+        when(scopeAccessService.getScopeAccessByAccessToken("admin")).thenReturn(userScopeAccess);
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
+        defaultCloud20Service.checkXAuthToken("admin", "clientid");
     }
 }

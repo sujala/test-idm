@@ -151,13 +151,18 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder addRole(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Role role) {
 
         try {
-            checkXAUTHTOKEN(authToken, true, null);
-
             if (role == null) {
                 String errMsg = "role cannot be null";
                 logger.warn(errMsg);
                 throw new BadRequestException(errMsg);
             }
+            if (StringUtils.isBlank(role.getServiceId())) {
+                String errMsg = "Expecting serviceId";
+                logger.warn(errMsg);
+                throw new BadRequestException(errMsg);
+            }
+            checkXAuthToken(authToken, role.getServiceId());
+
 
             if (StringUtils.isBlank(role.getName())) {
                 String errMsg = "Expecting name";
@@ -165,11 +170,6 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException(errMsg);
             }
 
-            if (StringUtils.isBlank(role.getServiceId())) {
-                String errMsg = "Expecting serviceId";
-                logger.warn(errMsg);
-                throw new BadRequestException(errMsg);
-            }
 
             Application service = checkAndGetApplication(role.getServiceId());
 
@@ -307,12 +307,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
             setDomainId(scopeAccessByAccessToken, userDO);
             userService.addUser(userDO);
+            assignProperRole(httpHeaders, authToken, scopeAccessByAccessToken, userDO);
 
-            //If caller is an identity admin, give user user-admin role
-            if (authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken)) {
-                ClientRole roleId = clientService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserAdminRole());
-                this.addUserRole(httpHeaders, authToken, userDO.getId(), roleId.getId());
-            }
             return Response.created(uriInfo.getRequestUriBuilder().path(userDO.getId()).build())
                     .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(userDO)));
         } catch (DuplicateException de) {
@@ -324,11 +320,24 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
+    void assignProperRole(HttpHeaders httpHeaders, String authToken, ScopeAccess scopeAccessByAccessToken, User userDO) {
+        //If caller is an identity admin, give user service-admin role
+        if (authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken)) {
+            ClientRole roleId = clientService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthServiceAdminRole());
+            this.addUserRole(httpHeaders, authToken, userDO.getId(), roleId.getId());
+        }
+        //if caller is a service admin, give user user-admin role
+        if (authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken)) {
+            ClientRole roleId = clientService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserAdminRole());
+            this.addUserRole(httpHeaders, authToken, userDO.getId(), roleId.getId());
+        }
+    }
+
     @Override
     public ResponseBuilder updateUser(HttpHeaders httpHeaders, String authToken, String userId, UserForCreate user) throws IOException {
         try {
             checkXAUTHTOKEN(authToken, false, null);
-             if (user.getPassword() != null) {
+            if (user.getPassword() != null) {
                 validatePassword(user.getPassword());
             }
             User retrievedUser = checkAndGetUser(userId);
@@ -606,8 +615,11 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder deleteRole(HttpHeaders httpHeaders, String authToken, String roleId) {
         try {
-            checkXAUTHTOKEN(authToken, true, null);
+            if(roleId == null){
+                throw new BadRequestException("roleId cannot be null");
+            }
             ClientRole role = checkAndGetClientRole(roleId);
+            checkXAuthToken(authToken,role.getClientId());
             this.clientService.deleteClientRole(role);
             return Response.noContent();
         } catch (Exception ex) {
@@ -1299,7 +1311,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             List<Group> groups = cloudGroupService.getGroups(marker, limit);
 
             com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups cloudGroups = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups();
-            for(Group group : groups){
+            for (Group group : groups) {
                 com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group cloudGroup = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group();
                 cloudGroup.setId(group.getGroupId().toString());
                 cloudGroup.setName(group.getName());
@@ -1319,7 +1331,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             checkXAUTHTOKEN(authToken, true, null);
             List<Group> groups = cloudGroupService.getGroupsForUser(userId);
             com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups cloudGroups = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups();
-            for(Group group : groups) {
+            for (Group group : groups) {
                 com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group cloudGroup = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group();
                 cloudGroup.setId(group.getGroupId().toString());
                 cloudGroup.setName(group.getName());
@@ -1358,7 +1370,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder updateGroup(HttpHeaders httpHeaders, String authToken, String groupId,
-                                    com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group) throws IOException {
+                                       com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group) throws IOException {
         checkXAUTHTOKEN(authToken, true, null);
         Group groupDO = new Group();
         groupDO.setGroupId(Integer.parseInt(groupId));
@@ -1812,6 +1824,27 @@ public class DefaultCloud20Service implements Cloud20Service {
         return user;
     }
 
+    //method verifies that caller is an identity admin or a service admin with matching client id
+    void checkXAuthToken(String authToken, String clientId) {
+        if (StringUtils.isBlank(authToken)) {
+            throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
+        }
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        if (authScopeAccess == null || ((HasAccessToken) authScopeAccess).isAccessTokenExpired(new DateTime())) {
+            throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
+        }
+        if (authorizationService.authorizeCloudIdentityAdmin(authScopeAccess)) {
+            return;
+        } else if (authorizationService.authorizeCloudServiceAdmin(authScopeAccess)) {
+            if(authScopeAccess.getClientId()!=null && authScopeAccess.getClientId().equals(clientId)){
+                return;
+            }
+        }
+        String errMsg = "Access is denied";
+        logger.warn(errMsg);
+        throw new ForbiddenException(errMsg);
+    }
+
     void checkXAUTHTOKEN(String authToken, boolean identityOnly, String tenantId) {
         if (StringUtils.isBlank(authToken)) {
             throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
@@ -1894,6 +1927,10 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     private String getCloudAuthUserAdminRole() {
         return config.getString("cloudAuth.userAdminRole");
+    }
+
+    private String getCloudAuthServiceAdminRole() {
+        return config.getString("cloudAuth.serviceAdminRole");
     }
 
     private String getRackspaceCustomerId() {
