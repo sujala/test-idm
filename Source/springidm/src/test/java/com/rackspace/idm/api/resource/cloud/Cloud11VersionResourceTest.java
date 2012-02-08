@@ -64,7 +64,7 @@ public class Cloud11VersionResourceTest extends AbstractAroundClassJerseyTest {
         assertThat("cloudFilesCDN xml", entity, StringContains.containsString("<service name=\"cloudFilesCDN\"><endpoint"));
         assertThat("cloudFiles xml", entity, StringContains.containsString("<service name=\"cloudFiles\"><endpoint"));
         assertThat("cloudDNS xml", entity, StringContains.containsString("<service name=\"cloudDNS\"><endpoint"));
-        assertThat("cloudServers xml", entity, StringContains.containsString("<service name=\"cloudServers\"><endpoint"));
+        assertThat("cloudServers xml", entity, StringContains.containsString("<service name=\"cloudServers"));
         assertThat("auth ending tag", entity, StringContains.containsString("</auth>"));
     }
 

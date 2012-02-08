@@ -151,6 +151,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder addRole(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Role role) {
 
         try {
+            verifyServiceAdminLevelAccess(authToken);
             if (role == null) {
                 String errMsg = "role cannot be null";
                 logger.warn(errMsg);
@@ -161,7 +162,6 @@ public class DefaultCloud20Service implements Cloud20Service {
                 logger.warn(errMsg);
                 throw new BadRequestException(errMsg);
             }
-            checkXAuthToken(authToken, role.getServiceId());
 
 
             if (StringUtils.isBlank(role.getName())) {
@@ -615,11 +615,11 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder deleteRole(HttpHeaders httpHeaders, String authToken, String roleId) {
         try {
+            verifyServiceAdminLevelAccess(authToken);
             if(roleId == null){
                 throw new BadRequestException("roleId cannot be null");
             }
             ClientRole role = checkAndGetClientRole(roleId);
-            checkXAuthToken(authToken,role.getClientId());
             this.clientService.deleteClientRole(role);
             return Response.noContent();
         } catch (Exception ex) {
@@ -1637,7 +1637,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             throws IOException {
 
         try {
-            checkXAUTHTOKEN(authToken, true, null);
+            verifyServiceAdminLevelAccess(authToken);
 
             ScopeAccess sa = checkAndGetToken(tokenId);
 
@@ -1825,7 +1825,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     //method verifies that caller is an identity admin or a service admin with matching client id
-    void checkXAuthToken(String authToken, String clientId) {
+    void verifyServiceAdminLevelAccess(String authToken) {
         if (StringUtils.isBlank(authToken)) {
             throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
         }
@@ -1833,16 +1833,11 @@ public class DefaultCloud20Service implements Cloud20Service {
         if (authScopeAccess == null || ((HasAccessToken) authScopeAccess).isAccessTokenExpired(new DateTime())) {
             throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
         }
-        if (authorizationService.authorizeCloudIdentityAdmin(authScopeAccess)) {
-            return;
-        } else if (authorizationService.authorizeCloudServiceAdmin(authScopeAccess)) {
-            if(authScopeAccess.getClientId()!=null && authScopeAccess.getClientId().equals(clientId)){
-                return;
-            }
+        if (!authorizationService.authorizeCloudIdentityAdmin(authScopeAccess) ||authorizationService.authorizeCloudServiceAdmin(authScopeAccess)) {
+            String errMsg = "Access is denied";
+            logger.warn(errMsg);
+            throw new ForbiddenException(errMsg);
         }
-        String errMsg = "Access is denied";
-        logger.warn(errMsg);
-        throw new ForbiddenException(errMsg);
     }
 
     void checkXAUTHTOKEN(String authToken, boolean identityOnly, String tenantId) {

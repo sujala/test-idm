@@ -302,7 +302,7 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void deleteRole_callsClientService_deleteClientRoleMethod() throws Exception {
-        doNothing().when(spy).checkXAuthToken(anyString(),anyString());
+        doNothing().when(spy).verifyServiceAdminLevelAccess(anyString());
         spy.deleteRole(null, authToken, role.getId());
         verify(clientService).deleteClientRole(any(ClientRole.class));
     }
@@ -466,7 +466,7 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void addRole_callsClientService_addClientRole() throws Exception {
-        doNothing().when(spy).checkXAuthToken(anyString(),anyString());
+        doNothing().when(spy).verifyServiceAdminLevelAccess(anyString());
         spy.addRole(null, null, authToken, role);
         verify(clientService).addClientRole(any(ClientRole.class));
     }
@@ -560,7 +560,7 @@ public class DefaultCloud20ServiceTest {
         Role role1 = new Role();
         role1.setServiceId("id");
         spy.addRole(null, null, authToken, role1);
-        verify(spy).checkXAuthToken(authToken, "id");
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
@@ -657,9 +657,9 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void deleteRole_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
-        doNothing().when(spy).checkXAuthToken(anyString(),anyString());
+        doNothing().when(spy).verifyServiceAdminLevelAccess(anyString());
         spy.deleteRole(null, authToken, roleId);
-        verify(spy).checkXAuthToken(anyString(), anyString());
+        verify(spy).verifyServiceAdminLevelAccess(anyString());
     }
 
     @Test
@@ -1003,12 +1003,6 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void validateToken_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
-        spy.validateToken(null, authToken, null, null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
-    }
-
-    @Test
     public void validatePassword_ValidPassword_succeeds() throws Exception {
         defaultCloud20Service.validatePassword("Ab345678");
     }
@@ -1056,12 +1050,12 @@ public class DefaultCloud20ServiceTest {
 
     @Test(expected = NotAuthorizedException.class)
     public void checkXAuthToken_withNullToken_throwsNotAuthorizedException() throws Exception {
-        defaultCloud20Service.checkXAuthToken(null, "clientid");
+        defaultCloud20Service.verifyServiceAdminLevelAccess(null);
     }
 
     @Test(expected = NotAuthorizedException.class)
     public void checkXAuthToken_withBlankToken_throwsNotAuthorizedException() throws Exception {
-        defaultCloud20Service.checkXAuthToken("", "clientid");
+        defaultCloud20Service.verifyServiceAdminLevelAccess("");
     }
 
     @Test
@@ -1071,28 +1065,7 @@ public class DefaultCloud20ServiceTest {
         userScopeAccess.setAccessTokenExp(new Date(2099, 1, 1));
         when(scopeAccessService.getScopeAccessByAccessToken("admin")).thenReturn(userScopeAccess);
         when(authorizationService.authorizeCloudIdentityAdmin(userScopeAccess)).thenReturn(true);
-        defaultCloud20Service.checkXAuthToken("admin", "clientid");
-    }
-
-    @Test
-    public void checkXAuthToken_identityServiceAdminCaller_withRightClientId_succeeds() throws Exception {
-        UserScopeAccess userScopeAccess = new UserScopeAccess();
-        userScopeAccess.setClientId("clientid");
-        userScopeAccess.setAccessTokenString("admin");
-        userScopeAccess.setAccessTokenExp(new Date(2099, 1, 1));
-        when(scopeAccessService.getScopeAccessByAccessToken("admin")).thenReturn(userScopeAccess);
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
-        defaultCloud20Service.checkXAuthToken("admin", "clientid");
-    }
-
-    @Test(expected = ForbiddenException.class)
-    public void checkXAuthToken_identityServiceAdminCaller_withWrongClientId_throwsForbiddenException() throws Exception {
-        UserScopeAccess userScopeAccess = new UserScopeAccess();
-        userScopeAccess.setAccessTokenString("admin");
-        userScopeAccess.setAccessTokenExp(new Date(2099, 1, 1));
-        when(scopeAccessService.getScopeAccessByAccessToken("admin")).thenReturn(userScopeAccess);
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
-        defaultCloud20Service.checkXAuthToken("admin", "bad");
+        defaultCloud20Service.verifyServiceAdminLevelAccess("admin");
     }
 
     @Test(expected = ForbiddenException.class)
@@ -1102,6 +1075,12 @@ public class DefaultCloud20ServiceTest {
         userScopeAccess.setAccessTokenExp(new Date(2099, 1, 1));
         when(scopeAccessService.getScopeAccessByAccessToken("admin")).thenReturn(userScopeAccess);
         when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
-        defaultCloud20Service.checkXAuthToken("admin", "clientid");
+        defaultCloud20Service.verifyServiceAdminLevelAccess("admin");
+    }
+
+    @Test
+    public void validateToken_callsVerifyServiceAdminLevelAccess() throws Exception {
+        spy.validateToken(null,null,null,null);
+        verify(spy).verifyServiceAdminLevelAccess(null);
     }
 }
