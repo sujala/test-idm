@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<version xmlns="http://docs.openstack.org/common/api/v1.0"
+         xmlns:atom="http://www.w3.org/2005/Atom"
+         id="v1.1"
+         status="CURRENT"
+         updated="2012-01-19T22:30:00.25Z">
+
+    <atom:link rel="self"
+               href="${baseUrl}"/>
+
+    <atom:link rel="describedby"
+               type="application/pdf"
+               href="http://docs.rackspacecloud.com/auth/api/v1.1/auth-client-devguide-latest.pdf" />
+
+    <atom:link rel="describedby"
+               type="application/vnd.sun.wadl+xml"
+               href="http://docs.rackspacecloud.com/auth/api/v1.1/auth.wadl" />
+
+</version>

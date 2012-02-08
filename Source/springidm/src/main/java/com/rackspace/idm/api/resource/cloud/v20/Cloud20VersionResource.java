@@ -8,6 +8,7 @@ import com.rackspace.idm.api.resource.cloud.CloudClient;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.configuration.Configuration;
+import org.openstack.docs.common.api.v1.VersionChoice;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
@@ -18,8 +19,12 @@ import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
 import java.io.IOException;
+import java.io.StringReader;
 
 /**
  * Cloud Auth 2.0 API Versions
@@ -54,13 +59,13 @@ public class Cloud20VersionResource {
     }
 
     @GET
-    public Response getPublicCloud20VersionInfo(@Context HttpHeaders httpHeaders)
-        throws IOException {
-        // For the pubic profile, we're just forwarding to what cloud has. Once
-        // we become the
-        // source of truth, we should use the CloudContractDescriptorBuilder to
-        // render this.
-        return cloudClient.get(getCloudAuthV20Url(), httpHeaders).build();
+    public Response getCloud20VersionInfo() throws JAXBException {
+        String requestUri = uriInfo.getRequestUri().toASCIIString();
+        final String responseXml = cloudContractDescriptionBuilder.buildVersion20Page(requestUri);
+        JAXBContext context = JAXBContext.newInstance("org.openstack.docs.common.api.v1:org.w3._2005.atom");
+        Unmarshaller unmarshaller = context.createUnmarshaller();
+        JAXBElement<VersionChoice> versionChoice = (JAXBElement<VersionChoice>) unmarshaller.unmarshal(new StringReader(responseXml));
+        return Response.ok(versionChoice).build();
     }
 
     public Response getInternalCloud20VersionInfo() {

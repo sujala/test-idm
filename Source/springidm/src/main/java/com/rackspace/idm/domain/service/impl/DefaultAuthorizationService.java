@@ -32,6 +32,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     private static String IDM_ADMIN_GROUP_DN = null;
     private static ClientRole CLOUD_ADMIN_ROLE = null;
+    private static ClientRole CLOUD_SERVICE_ADMIN_ROLE = null;
     private static ClientRole CLOUD_USER_ADMIN_ROLE = null;
     private static ClientRole IDM_SUPER_ADMIN_ROLE = null;
 
@@ -127,6 +128,25 @@ public class DefaultAuthorizationService implements AuthorizationService {
         boolean authorized = this.tenantDao.doesScopeAccessHaveTenantRole(scopeAccess, CLOUD_ADMIN_ROLE);
 
         logger.debug("Authorized {} as cloud admin - {}", scopeAccess, authorized);
+        return authorized;
+    }
+
+    @Override
+    public boolean authorizeCloudServiceAdmin(ScopeAccess scopeAccess) {
+        logger.debug("Authorizing {} as cloud service admin", scopeAccess);
+
+        if (scopeAccess == null || ((HasAccessToken) scopeAccess).isAccessTokenExpired(new DateTime())) {
+            return false;
+        }
+
+        if (CLOUD_SERVICE_ADMIN_ROLE == null) {
+            ClientRole role = clientDao.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthServiceAdminRole());
+            CLOUD_SERVICE_ADMIN_ROLE = role;
+        }
+
+        boolean authorized = this.tenantDao.doesScopeAccessHaveTenantRole(scopeAccess, CLOUD_SERVICE_ADMIN_ROLE);
+
+        logger.debug("Authorized {} as cloud service admin - {}", scopeAccess, authorized);
         return authorized;
     }
 
@@ -361,6 +381,10 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     private String getCloudAuthIdentityAdminRole() {
         return config.getString("cloudAuth.adminRole");
+    }
+
+    private String getCloudAuthServiceAdminRole() {
+        return config.getString("cloudAuth.serviceAdminRole");
     }
 
     private String getCloudAuthUserAdminRole() {

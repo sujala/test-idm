@@ -4,6 +4,7 @@ import com.rackspace.idm.api.converter.cloudv11.AuthConverterCloudV11;
 import com.rackspace.idm.api.converter.cloudv11.EndpointConverterCloudV11;
 import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11;
 import com.rackspace.idm.api.resource.cloud.CloudExceptionResponse;
+import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.dao.impl.LdapCloudAdminRepository;
 import com.rackspace.idm.domain.entity.*;
@@ -19,6 +20,7 @@ import com.rackspacecloud.docs.auth.api.v1.PasswordCredentials;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
+import org.openstack.docs.common.api.v1.VersionChoice;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,6 +57,9 @@ public class DefaultCloud11Service implements Cloud11Service {
     private final LdapCloudAdminRepository ldapCloudAdminRepository;
     private final UserConverterCloudV11 userConverterCloudV11;
     private final UserService userService;
+
+    @Autowired
+    private CloudContractDescriptionBuilder cloudContractDescriptionBuilder;
 
     private final AuthHeaderHelper authHeaderHelper = new AuthHeaderHelper();
 
@@ -95,8 +100,16 @@ public class DefaultCloud11Service implements Cloud11Service {
         this.cloudExceptionResponse = cloudExceptionResponse;
     }
 
-    // Token Methods
+    public ResponseBuilder getVersion(UriInfo uriInfo) throws JAXBException {
+        String requestUri = uriInfo.getRequestUri().toASCIIString();
+        final String responseXml = cloudContractDescriptionBuilder.buildVersion11Page(requestUri);
+        JAXBContext context = JAXBContext.newInstance("org.openstack.docs.common.api.v1:org.w3._2005.atom");
+        Unmarshaller unmarshaller = context.createUnmarshaller();
+        JAXBElement<VersionChoice> versionChoice = (JAXBElement<VersionChoice>) unmarshaller.unmarshal(new StringReader(responseXml));
+        return Response.ok(versionChoice);
+    }
 
+    // Token Methods
     @Override
     public Response.ResponseBuilder revokeToken(HttpServletRequest request, String tokenId, HttpHeaders httpHeaders) throws IOException {
 
@@ -191,7 +204,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
         try {
             authenticateCloudAdminUser(request);
-            if (httpHeaders.getMediaType()!=null && httpHeaders.getMediaType().isCompatible(MediaType.APPLICATION_XML_TYPE)) {
+            if (httpHeaders.getMediaType() != null && httpHeaders.getMediaType().isCompatible(MediaType.APPLICATION_XML_TYPE)) {
                 return authenticateXML(response, httpHeaders, body, true);
             } else {
                 return authenticateJSON(response, httpHeaders, body, true);
@@ -537,10 +550,10 @@ public class DefaultCloud11Service implements Cloud11Service {
                 throw new BadRequestException(errMsg);
             }
             User user = userService.getUser(userName); //this.checkAndGetUser(userID);
-            
+
             List<com.rackspace.idm.domain.entity.Group> groups = userGroupService.getGroupsForUser(user.getId());
             GroupsList groupList = new GroupsList();
-            for(com.rackspace.idm.domain.entity.Group group : groups){
+            for (com.rackspace.idm.domain.entity.Group group : groups) {
                 Group g = new Group();
                 g.setId(group.getName()); // Name for v1.1
                 g.setDescription(group.getDescription());
@@ -631,7 +644,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         try {
             authenticateCloudAdminUser(request);
             userValidator.validate(user);
-            if(!user.getId().equals(userId) && !user.getId().equals("")){ //ToDO: Move to user validator?
+            if (!user.getId().equals(userId) && !user.getId().equals("")) { //ToDO: Move to user validator?
                 throw new BadRequestException("User Id does not match.");
             }
             User gaUser = userService.getUser(userId);
@@ -722,7 +735,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             }
 
             if (filteredBaseUrls.size() == 0) {
-                String errMsg = String.format("Service: '%s' not found.",serviceName);
+                String errMsg = String.format("Service: '%s' not found.", serviceName);
                 return cloudExceptionResponse.notFoundExceptionResponse(errMsg);
             }
             return Response.ok(OBJ_FACTORY.createBaseURLs(this.endpointConverterCloudV11.toBaseUrls(filteredBaseUrls)));

@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud;
 
 import java.io.IOException;
+import java.io.StringReader;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -11,8 +12,14 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
 
 import org.apache.commons.configuration.Configuration;
+import org.openstack.docs.common.api.v1.VersionChoice;
+import org.openstack.docs.common.api.v1.VersionChoiceList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,13 +63,20 @@ public class CloudVersionsResource {
         this.cloudContractDescriptionBuilder = cloudContractDescriptionBuilder;
         this.cloudClient = cloudClient;
     }
-    
-    public Response getInternalCloudVersionsInfo() {
-    	final String responseXml = cloudContractDescriptionBuilder.buildInternalRootPage(uriInfo);
-    	return Response.ok(responseXml).build();
-    }
 
     @GET
+    public Response getInternalCloudVersionsInfo() throws JAXBException {
+        String requestUri = uriInfo.getRequestUri().toASCIIString();
+        if(!requestUri.endsWith("/")){
+            requestUri = requestUri+"/";
+        }
+        final String responseXml = cloudContractDescriptionBuilder.buildInternalRootPage(requestUri);
+        JAXBContext context = JAXBContext.newInstance("org.openstack.docs.common.api.v1:org.w3._2005.atom");
+        Unmarshaller unmarshaller = context.createUnmarshaller();
+        JAXBElement<VersionChoiceList> versionChoice = (JAXBElement<VersionChoiceList>) unmarshaller.unmarshal(new StringReader(responseXml));
+        return Response.ok(versionChoice).build();
+    }
+
     public Response getPublicCloudVersionsInfo(@Context HttpHeaders httpHeaders) throws IOException {
     	return cloudClient.get(getCloudAuthBaseUrl(), httpHeaders).build();
     }
