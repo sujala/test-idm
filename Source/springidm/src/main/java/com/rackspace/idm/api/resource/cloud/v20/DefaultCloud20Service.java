@@ -10,6 +10,7 @@ import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
+import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
@@ -104,6 +105,12 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private CloudGroupBuilder cloudGroupBuilder;
+
+    @Autowired
+    private CloudKsGroupBuilder cloudKsGroupBuilder;
 
     private HashMap<String, JAXBElement<Extension>> extensionMap;
 
@@ -1358,14 +1365,15 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder addGroup(HttpHeaders httpHeaders, String authToken,
+    public ResponseBuilder addGroup(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken,
                                     com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group) throws IOException {
         checkXAUTHTOKEN(authToken, true, null);
-        Group groupDO = new Group();
-        groupDO.setDescription(group.getDescription());
-        groupDO.setName(group.getName());
+        Group groupDO = cloudGroupBuilder.build(group);
         cloudGroupService.addGroup(groupDO);
-        return Response.ok();
+        com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group groupKs = cloudKsGroupBuilder.build(groupDO);
+        return Response.created(uriInfo.getRequestUriBuilder().path(groupKs.getId()).build())
+                    .entity(OBJ_FACTORIES.getRackspaceIdentityExtKsgrpV1Factory().createGroup(groupKs));
+
     }
 
     @Override
@@ -2053,4 +2061,11 @@ public class DefaultCloud20Service implements Cloud20Service {
         this.userConverterCloudV20 = userConverterCloudV20;
     }
 
+    public void setCloudGroupBuilder(CloudGroupBuilder cloudGroupBuilder) {
+        this.cloudGroupBuilder = cloudGroupBuilder;
+    }
+
+    public void setCloudKsGroupBuilder(CloudKsGroupBuilder cloudKsGroupBuilder) {
+        this.cloudKsGroupBuilder = cloudKsGroupBuilder;
+    }
 }

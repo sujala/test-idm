@@ -310,7 +310,7 @@ public class DummyCloud20Service implements Cloud20Service{
     }
 
     @Override
-    public ResponseBuilder addGroup(HttpHeaders httpHeaders, String authToken, Group group) throws IOException {
+    public ResponseBuilder addGroup(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Group group) throws IOException {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 

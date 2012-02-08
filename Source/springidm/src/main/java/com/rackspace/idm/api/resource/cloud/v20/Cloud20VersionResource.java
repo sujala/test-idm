@@ -604,9 +604,10 @@ public class Cloud20VersionResource {
     @Path("/RAX-GRPADM/groups")
     public Response addGroup(
             @Context HttpHeaders httpHeaders,
+            @Context UriInfo uriInfo,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             Group group) throws IOException {
-        return getCloud20Service().addGroup(httpHeaders, authToken, group).build();
+        return getCloud20Service().addGroup(httpHeaders, uriInfo, authToken, group).build();
     }
 
     @GET

@@ -1,12 +1,13 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.ObjectFactory;
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.*;
 import com.rackspace.idm.api.converter.cloudv20.EndpointConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.TenantConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
@@ -24,8 +25,11 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.*;
+import org.openstack.docs.identity.api.v2.ObjectFactory;
 
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.JAXBElement;
 import java.util.Date;
 import java.util.List;
@@ -74,6 +78,9 @@ public class DefaultCloud20ServiceTest {
     private CloudBaseUrl cloudBaseUrl;
     private Application application;
     private String roleId = "roleId";
+    private com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group groupKs;
+    private Group group;
+    private UriInfo uriInfo;
 
     @Before
     public void setUp() throws Exception {
@@ -147,9 +154,18 @@ public class DefaultCloud20ServiceTest {
         cloudBaseUrl.setGlobal(false);
         application = new Application();
         application.setClientId("clientId");
+        group = new Group();
+        group.setName("Group1");
+        group.setDescription("Group Description");
+        group.setGroupId(1);
+        groupKs = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group();
+        groupKs.setId("1");
+        groupKs.setName("Group1");
+        groupKs.setDescription("Group Description");
+        uriInfo = mock(UriInfo.class);
 
         //stubbing
-        when(jaxbObjectFactories.getRackspaceIdentityExtKsgrpV1Factory()).thenReturn(new ObjectFactory());
+        when(jaxbObjectFactories.getRackspaceIdentityExtKsgrpV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.ObjectFactory());
         when(jaxbObjectFactories.getOpenStackIdentityV2Factory()).thenReturn(new org.openstack.docs.identity.api.v2.ObjectFactory());
         when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(userScopeAccess);
         when(authorizationService.authorizeCloudIdentityAdmin(userScopeAccess)).thenReturn(true);
@@ -1082,5 +1098,24 @@ public class DefaultCloud20ServiceTest {
     public void validateToken_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.validateToken(null,null,null,null);
         verify(spy).verifyServiceAdminLevelAccess(null);
+    }
+
+    @Test
+    public void addGroup_callsCloudGroupBuilder() throws Exception {
+        CloudGroupBuilder cloudGrpBuilder = mock(CloudGroupBuilder.class);
+        defaultCloud20Service.setCloudGroupBuilder(cloudGrpBuilder);
+    }
+
+    @Test
+    public void addGroup_validGroup_returns201() throws Exception{
+        CloudGroupBuilder cloudGroupBuilder = mock(CloudGroupBuilder.class);
+        CloudKsGroupBuilder cloudKsGroupBuilder = mock(CloudKsGroupBuilder.class);
+        when(cloudGroupBuilder.build(null)).thenReturn(group);
+        when(cloudKsGroupBuilder.build(org.mockito.Matchers.<Group>any())).thenReturn(groupKs);
+        when(uriInfo.getRequestUriBuilder()).thenReturn(UriBuilder.fromPath("path"));
+        defaultCloud20Service.setCloudGroupBuilder(cloudGroupBuilder);
+        defaultCloud20Service.setCloudKsGroupBuilder(cloudKsGroupBuilder);
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.addGroup(null ,uriInfo, authToken, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(201));
     }
 }
