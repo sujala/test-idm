@@ -1115,7 +1115,7 @@ public class DefaultCloud20ServiceTest {
         when(uriInfo.getRequestUriBuilder()).thenReturn(UriBuilder.fromPath("path"));
         defaultCloud20Service.setCloudGroupBuilder(cloudGroupBuilder);
         defaultCloud20Service.setCloudKsGroupBuilder(cloudKsGroupBuilder);
-        Response.ResponseBuilder responseBuilder = defaultCloud20Service.addGroup(null ,uriInfo, authToken, null);
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.addGroup(null ,uriInfo, authToken, groupKs);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(201));
     }
 }
