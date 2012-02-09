@@ -1369,6 +1369,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             return Response.created(uriInfo.getRequestUriBuilder().path(groupKs.getId()).build())
                     .entity(OBJ_FACTORIES.getRackspaceIdentityExtKsgrpV1Factory().createGroup(groupKs));
         }
+        catch (DuplicateException bre) {
+            return roleConflictExceptionResponse(bre.getMessage());
+        }
         catch (Exception e) {
             return exceptionResponse(e);
         }

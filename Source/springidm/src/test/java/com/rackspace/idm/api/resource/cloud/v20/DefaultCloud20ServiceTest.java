@@ -5,13 +5,16 @@ import com.rackspace.idm.api.converter.cloudv20.EndpointConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.TenantConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
+import com.rackspace.idm.domain.dao.GroupDao;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
+import com.rackspace.idm.domain.service.impl.DefaultGroupService;
 import com.rackspace.idm.exception.*;
+import com.sun.jersey.api.spring.Autowire;
 import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.Control;
 import com.unboundid.ldap.sdk.SearchResultEntry;
@@ -26,6 +29,7 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.*;
 import org.openstack.docs.identity.api.v2.ObjectFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
@@ -1117,5 +1121,22 @@ public class DefaultCloud20ServiceTest {
         defaultCloud20Service.setCloudKsGroupBuilder(cloudKsGroupBuilder);
         Response.ResponseBuilder responseBuilder = defaultCloud20Service.addGroup(null ,uriInfo, authToken, groupKs);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(201));
+    }
+
+    @Test
+    public void addGroup_duplicateGroup_returns409() throws Exception{
+        CloudGroupBuilder cloudGroupBuilder = mock(CloudGroupBuilder.class);
+        when(cloudGroupBuilder.build((com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group) any())).thenReturn(group);
+        doThrow(new DuplicateException()).when(userGroupService).addGroup(org.mockito.Matchers.<Group>any());
+        defaultCloud20Service.setCloudGroupBuilder(cloudGroupBuilder);
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.addGroup(null ,null, authToken, groupKs);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(409));
+    }
+
+    @Test
+    public void addGroup_emptyName_returns400() throws Exception{
+        groupKs.setName("");
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.addGroup(null ,null, authToken, groupKs);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
     }
 }

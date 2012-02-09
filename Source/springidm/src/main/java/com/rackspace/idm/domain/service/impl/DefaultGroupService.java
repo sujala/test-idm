@@ -4,6 +4,8 @@ import com.rackspace.cloud.servers.bean.LimitGroupType;
 import com.rackspace.idm.domain.dao.GroupDao;
 import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.service.GroupService;
+import com.rackspace.idm.exception.DuplicateException;
+import com.rackspace.idm.exception.NotFoundException;
 import com.rackspacecloud.docs.auth.api.v1.GroupsList;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -53,6 +55,13 @@ public class DefaultGroupService implements GroupService {
 
     @Override
     public void addGroup(Group group) {
+        logger.info("Adding Client Group: {}", group);
+        Group exists = groupDao.getGroupByName(group.getName());
+        if (exists != null) {
+            String errMsg = String.format("Group with name %s already exists", group.getName());
+            logger.warn(errMsg);
+            throw new DuplicateException(errMsg);
+        }
         group.setGroupId(Integer.parseInt(this.groupDao.getNextGroupId()));
         groupDao.addGroup(group);
     }
