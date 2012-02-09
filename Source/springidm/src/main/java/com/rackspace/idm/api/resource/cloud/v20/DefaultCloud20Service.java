@@ -1110,7 +1110,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder listEndpointsForToken(HttpHeaders httpHeaders, String authToken, String tokenId) throws IOException {
 
         try {
-            checkXAUTHTOKEN(authToken, true, null);
+            verifyServiceAdminLevelAccess(authToken);
 
             ScopeAccess sa = checkAndGetToken(tokenId);
 
@@ -1249,6 +1249,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder listTenants(HttpHeaders httpHeaders, String authToken, String marker, Integer limit)
             throws IOException {
         try {
+            verifyServiceAdminLevelAccess(authToken);
             List<Tenant> tenants = new ArrayList<Tenant>();
 
             ScopeAccess access = this.scopeAccessService.getAccessTokenByAuthHeader(authToken);
