@@ -16,6 +16,7 @@ public interface GroupDao {
     String getNextGroupId();
     List<Group> getGroups(String marker, Integer limit);
     Group getGroupById(int groupId);
+    Group getGroupByName(String groupName);
     void deleteGroup(int groupId);
     void addGroup(Group group);
     void updateGroup(Group group);

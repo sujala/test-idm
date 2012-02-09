@@ -1110,7 +1110,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder listEndpointsForToken(HttpHeaders httpHeaders, String authToken, String tokenId) throws IOException {
 
         try {
-            checkXAUTHTOKEN(authToken, true, null);
+            verifyServiceAdminLevelAccess(authToken);
 
             ScopeAccess sa = checkAndGetToken(tokenId);
 
@@ -1249,6 +1249,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder listTenants(HttpHeaders httpHeaders, String authToken, String marker, Integer limit)
             throws IOException {
         try {
+            verifyServiceAdminLevelAccess(authToken);
             List<Tenant> tenants = new ArrayList<Tenant>();
 
             ScopeAccess access = this.scopeAccessService.getAccessTokenByAuthHeader(authToken);
@@ -1368,6 +1369,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group groupKs = cloudKsGroupBuilder.build(groupDO);
             return Response.created(uriInfo.getRequestUriBuilder().path(groupKs.getId()).build())
                     .entity(OBJ_FACTORIES.getRackspaceIdentityExtKsgrpV1Factory().createGroup(groupKs));
+        }
+        catch (DuplicateException bre) {
+            return roleConflictExceptionResponse(bre.getMessage());
         }
         catch (Exception e) {
             return exceptionResponse(e);

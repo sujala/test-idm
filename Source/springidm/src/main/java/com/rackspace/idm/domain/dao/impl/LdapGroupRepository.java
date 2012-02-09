@@ -85,6 +85,35 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
     }
 
     @Override
+    public Group getGroupByName(String groupName){
+        getLogger().debug("Get group by Name {}", groupName);
+        Group group = null;
+        SearchResult searchResult = null;
+
+        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(ATTR_GROUP_NAME,groupName).build();
+
+        try{
+            searchResult = getAppConnPool().search(GROUP_BASE_DN, SearchScope.ONE, searchFilter);
+            getLogger().info("Got group by Name {}", groupName);
+        } catch(LDAPSearchException ldapEx){
+            getLogger().error("Error searching for group - {}", ldapEx);
+            throw new IllegalStateException(ldapEx);
+        }
+
+        if (searchResult.getEntryCount() == 1) {
+            SearchResultEntry e = searchResult.getSearchEntries().get(0);
+            group = getGroup(e);
+        } else if (searchResult.getEntryCount() > 1) {
+            String errMsg = String.format("More than one entry was found for group - %s", groupName);
+            getLogger().error(errMsg);
+            throw new IllegalStateException(errMsg);
+        }
+
+        getLogger().debug("Get group by Name {}", groupName);
+        return group;
+    }
+
+    @Override
     public void addGroup(Group group) {
 
         if (group == null) {
