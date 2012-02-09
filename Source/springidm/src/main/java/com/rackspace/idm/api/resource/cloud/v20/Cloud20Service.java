@@ -154,7 +154,7 @@ public interface Cloud20Service {
 
     ResponseBuilder getGroupById(HttpHeaders httpHeaders, String authToken, String groupId) throws IOException;
 
-    ResponseBuilder addGroup(HttpHeaders httpHeaders, String authToken, Group group) throws IOException;
+    ResponseBuilder addGroup(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Group group) throws IOException;
 
     ResponseBuilder updateGroup(HttpHeaders httpHeaders, String authToken, String groupId, Group group) throws IOException;
 

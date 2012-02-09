@@ -10,6 +10,7 @@ import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
+import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
@@ -104,6 +105,12 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private CloudGroupBuilder cloudGroupBuilder;
+
+    @Autowired
+    private CloudKsGroupBuilder cloudKsGroupBuilder;
 
     private HashMap<String, JAXBElement<Extension>> extensionMap;
 
@@ -506,6 +513,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     // Core Service Methods
+
     @Override
     public Response.ResponseBuilder authenticate(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest) throws IOException {
         try {
@@ -616,7 +624,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder deleteRole(HttpHeaders httpHeaders, String authToken, String roleId) {
         try {
             verifyServiceAdminLevelAccess(authToken);
-            if(roleId == null){
+            if (roleId == null) {
                 throw new BadRequestException("roleId cannot be null");
             }
             ClientRole role = checkAndGetClientRole(roleId);
@@ -1220,6 +1228,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     // KSADM Extension Role Methods
+
     @Override
     public ResponseBuilder listServices(HttpHeaders httpHeaders, String authToken, String marker, Integer limit) {
 
@@ -1313,10 +1322,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups cloudGroups = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups();
             for (Group group : groups) {
-                com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group cloudGroup = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group();
-                cloudGroup.setId(group.getGroupId().toString());
-                cloudGroup.setName(group.getName());
-                cloudGroup.setDescription(group.getDescription());
+                com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group cloudGroup = cloudKsGroupBuilder.build(group);
                 cloudGroups.getGroup().add(cloudGroup);
             }
 
@@ -1333,10 +1339,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             List<Group> groups = cloudGroupService.getGroupsForUser(userId);
             com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups cloudGroups = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups();
             for (Group group : groups) {
-                com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group cloudGroup = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group();
-                cloudGroup.setId(group.getGroupId().toString());
-                cloudGroup.setName(group.getName());
-                cloudGroup.setDescription(group.getDescription());
+                com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group cloudGroup = cloudKsGroupBuilder.build(group);
                 cloudGroups.getGroup().add(cloudGroup);
             }
             return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtKsgrpV1Factory().createGroups(cloudGroups));
@@ -1351,22 +1354,33 @@ public class DefaultCloud20Service implements Cloud20Service {
         checkXAUTHTOKEN(authToken, true, null);
         Group group = cloudGroupService.getGroupById(Integer.parseInt(groupId));
 
-        com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group cloudGroup = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group();
-        cloudGroup.setId(group.getGroupId().toString());
-        cloudGroup.setName(group.getName());
-        cloudGroup.setDescription(group.getDescription());
+        com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group cloudGroup = cloudKsGroupBuilder.build(group);
         return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtKsgrpV1Factory().createGroup(cloudGroup));
     }
 
     @Override
-    public ResponseBuilder addGroup(HttpHeaders httpHeaders, String authToken,
+    public ResponseBuilder addGroup(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken,
                                     com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group) throws IOException {
-        checkXAUTHTOKEN(authToken, true, null);
-        Group groupDO = new Group();
-        groupDO.setDescription(group.getDescription());
-        groupDO.setName(group.getName());
-        cloudGroupService.addGroup(groupDO);
-        return Response.ok();
+        try {
+            checkXAUTHTOKEN(authToken, true, null);
+            validateKsGroup(group);
+            Group groupDO = cloudGroupBuilder.build(group);
+            cloudGroupService.addGroup(groupDO);
+            com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group groupKs = cloudKsGroupBuilder.build(groupDO);
+            return Response.created(uriInfo.getRequestUriBuilder().path(groupKs.getId()).build())
+                    .entity(OBJ_FACTORIES.getRackspaceIdentityExtKsgrpV1Factory().createGroup(groupKs));
+        }
+        catch (Exception e) {
+            return exceptionResponse(e);
+        }
+
+
+    }
+
+    public void validateKsGroup(com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group) {
+        if (group.getName() == "" || group.getName() == null) {
+            throw new BadRequestException("Missing group name");
+        }
     }
 
     @Override
@@ -1385,7 +1399,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder deleteGroup(HttpHeaders httpHeaders, String authToken, String groupId) throws IOException {
         checkXAUTHTOKEN(authToken, true, null);
         cloudGroupService.deleteGroup(groupId);
-        return Response.ok();
+        return Response.noContent();
     }
 
     @Override
@@ -1412,6 +1426,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     // KSADM Extension User methods
+
     @Override
     public ResponseBuilder listUsers(HttpHeaders httpHeaders, String authToken, Integer marker, Integer limit) {
 
@@ -1633,6 +1648,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     // Core Admin Token Methods
+
     @Override
     public ResponseBuilder validateToken(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo)
             throws IOException {
@@ -1826,6 +1842,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     //method verifies that caller is an identity admin or a service admin with matching client id
+
     void verifyServiceAdminLevelAccess(String authToken) {
         if (StringUtils.isBlank(authToken)) {
             throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
@@ -1834,7 +1851,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         if (authScopeAccess == null || ((HasAccessToken) authScopeAccess).isAccessTokenExpired(new DateTime())) {
             throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
         }
-        if (!authorizationService.authorizeCloudIdentityAdmin(authScopeAccess) ||authorizationService.authorizeCloudServiceAdmin(authScopeAccess)) {
+        if (!authorizationService.authorizeCloudIdentityAdmin(authScopeAccess) || authorizationService.authorizeCloudServiceAdmin(authScopeAccess)) {
             String errMsg = "Access is denied";
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
@@ -1861,7 +1878,9 @@ public class DefaultCloud20Service implements Cloud20Service {
                 authorized = false; // until matched in the loop below
                 List<Tenant> adminTenants = this.tenantService.getTenantsForScopeAccessByTenantRoles(authScopeAccess);
                 for (Tenant tenant : adminTenants) {
-                    if (tenant.getTenantId().equals(tenantId)) { authorized = true; }
+                    if (tenant.getTenantId().equals(tenantId)) {
+                        authorized = true;
+                    }
                 }
             }
         }
@@ -2054,4 +2073,11 @@ public class DefaultCloud20Service implements Cloud20Service {
         this.userConverterCloudV20 = userConverterCloudV20;
     }
 
+    public void setCloudGroupBuilder(CloudGroupBuilder cloudGroupBuilder) {
+        this.cloudGroupBuilder = cloudGroupBuilder;
+    }
+
+    public void setCloudKsGroupBuilder(CloudKsGroupBuilder cloudKsGroupBuilder) {
+        this.cloudKsGroupBuilder = cloudKsGroupBuilder;
+    }
 }
