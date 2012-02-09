@@ -78,6 +78,10 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
             String errMsg = String.format("More than one entry was found for group - %s", groupId);
             getLogger().error(errMsg);
             throw new IllegalStateException(errMsg);
+        } else{
+            String errMsg = String.format("Group %s not found", groupId);
+            getLogger().error(errMsg);
+            throw new NotFoundException(errMsg);        
         }
 
         getLogger().debug("Get group by Id {}", groupId);
