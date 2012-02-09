@@ -786,12 +786,6 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void listEndpointsForToken_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
-        spy.listEndpointsForToken(null, authToken, null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
-    }
-
-    @Test
     public void listEndpointTemplates_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
         spy.listEndpointTemplates(null, authToken, null);
         verify(spy).checkXAUTHTOKEN(authToken, true, null);
@@ -1081,6 +1075,18 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void validateToken_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.validateToken(null,null,null,null);
+        verify(spy).verifyServiceAdminLevelAccess(null);
+    }
+
+    @Test
+    public void listTenants_callsVerifyServiceAdminLevelAccess() throws Exception {
+        spy.listTenants(null,null,null,null);
+        verify(spy).verifyServiceAdminLevelAccess(null);
+    }
+
+    @Test
+    public void listEndpointsForToken_callsVerifyServiceAdminLevelAccess() throws Exception {
+        spy.listEndpointsForToken(null,null,null);
         verify(spy).verifyServiceAdminLevelAccess(null);
     }
 }
