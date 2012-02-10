@@ -1408,7 +1408,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder addGroupToUser(HttpHeaders httpHeaders, String authToken, String groupId, String userId) throws IOException {
         checkXAUTHTOKEN(authToken, true, null);
         cloudGroupService.addGroupToUser(Integer.parseInt(groupId), userId);
-        return Response.ok();
+        return Response.noContent();
     }
 
     @Override
