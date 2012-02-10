@@ -1,13 +1,11 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.*;
 import com.rackspace.idm.api.converter.cloudv20.EndpointConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.TenantConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
@@ -25,7 +23,6 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.*;
-import org.openstack.docs.identity.api.v2.ObjectFactory;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
@@ -34,10 +31,9 @@ import javax.xml.bind.JAXBElement;
 import java.util.Date;
 import java.util.List;
 
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.instanceOf;
-import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.*;
 
 /**
@@ -211,9 +207,9 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void addUser_callsCheckXAUTHTOKEN_withFlagSetToFalse() throws Exception {
+    public void addUser_callsVerifyUserAdminLevelAccess() throws Exception {
         spy.addUser(null, null, authToken, userOS);
-        verify(spy).checkXAUTHTOKEN(authToken, false, null);
+        verify(spy).verifyUserAdminLevelAccess(authToken);
     }
 
     @Test
@@ -560,15 +556,15 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void addEndpoint_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void addEndpoint_callsverifyServiceAdminLevelAccess() throws Exception {
         spy.addEndpoint(null, authToken, null, null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void addEndpointTemplate_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void addEndpointTemplate_callsverifyServiceAdminLevelAccess() throws Exception {
         spy.addEndpointTemplate(null, null, authToken, null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
@@ -592,15 +588,9 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void addTenant_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void addTenant_callsverifyServiceAdminLevelAccess() throws Exception {
         spy.addTenant(null, null, authToken, null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
-    }
-
-    @Test
-    public void addUser_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
-        spy.addUser(null, null, authToken, null);
-        verify(spy).checkXAUTHTOKEN(authToken, false, null);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
@@ -642,33 +632,33 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void addUserCredential_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void addUserCredential_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.addUserCredential(null, authToken, null, null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void addUserRole_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void addUserRole_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.addUserRole(null, authToken, authToken, null);
-        verify(spy).checkXAUTHTOKEN(authToken, false, null);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void checkToken_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void checkToken_callsverifyServiceAdminLevelAccess() throws Exception {
         spy.checkToken(null, authToken, authToken, null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void deleteEndpoint_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void deleteEndpoint_callsverifyServiceAdminLevelAccess() throws Exception {
         spy.deleteEndpoint(null, authToken, authToken, null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void deleteEndpointTemplate_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void deleteEndpointTemplate_callsverifyServiceAdminLevelAccess() throws Exception {
         spy.deleteEndpointTemplate(null, authToken, null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
@@ -685,21 +675,21 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void deleteService_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void deleteService_callsverifyServiceAdminLevelAccess() throws Exception {
         spy.deleteService(null, authToken, null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void deleteTenant_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void deleteTenant_callsverifyServiceAdminLevelAccess() throws Exception {
         spy.deleteTenant(null, authToken, null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void deleteUser_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void deleteUser_callsVerifyUserAdminLevelAccess() throws Exception {
         spy.deleteUser(null, authToken, null);
-        verify(spy).checkXAUTHTOKEN(authToken, false, null);
+        verify(spy).verifyUserAdminLevelAccess(authToken);
     }
 
     @Test
@@ -712,87 +702,87 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void deleteUserCredential_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void deleteUserCredential_callsverifyServiceAdminLevelAccess() throws Exception {
         spy.deleteUserCredential(null, authToken, null, null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void deleteUserRole_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void deleteUserRole_callsverifyServiceAdminLevelAccess() throws Exception {
         spy.deleteUserRole(null, authToken, null, null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void getEndpoint_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void getEndpoint_callsverifyServiceAdminLevelAccess() throws Exception {
         spy.getEndpoint(null, authToken, null, null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void getEndpointTemplate_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void getEndpointTemplate_callsverifyServiceAdminLevelAccess() throws Exception {
         spy.getEndpointTemplate(null, authToken, null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void getRole_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void getRole_callsverifyServiceAdminLevelAccess() throws Exception {
         spy.getRole(null, authToken, null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void getSecretQA_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void getSecretQA_callsverifyServiceAdminLevelAccess() throws Exception {
         spy.getSecretQA(null, authToken, null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void getService_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void getService_callsverifyServiceAdminLevelAccess() throws Exception {
         spy.getService(null, authToken, null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void getTenantById_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void getTenantById_callsverifyServiceAdminLevelAccess() throws Exception {
         spy.getTenantById(null, authToken, null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void getTenantByName_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void getTenantByName_callsverifyServiceAdminLevelAccess() throws Exception {
         spy.getTenantByName(null, authToken, null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void getUserById_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void getUserById_callsverifyServiceAdminLevelAccess() throws Exception {
         spy.getUserById(null, authToken, null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void getUserByName_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void getUserByName_callsverifyServiceAdminLevelAccess() throws Exception {
         spy.getUserByName(null, authToken, null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void getUserCredential_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void getUserCredential_callsverifyServiceAdminLevelAccess() throws Exception {
         spy.getUserCredential(null, authToken, null, null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void getUserRole_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void getUserRole_callsverifyServiceAdminLevelAccess() throws Exception {
         spy.getUserRole(null, authToken, null, null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void listCredentials_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void listCredentials_callsverifyServiceAdminLevelAccess() throws Exception {
         spy.listCredentials(null, authToken, null, null, 0);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
@@ -802,15 +792,15 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void listEndpointTemplates_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void listEndpointTemplates_callsverifyServiceAdminLevelAccess() throws Exception {
         spy.listEndpointTemplates(null, authToken, null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void listRoles_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void listRoles_callsverifyServiceAdminLevelAccess() throws Exception {
         spy.listRoles(null, authToken, null, null, 0);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
@@ -826,21 +816,21 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void listServices_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void listServices_callsverifyServiceAdminLevelAccess() throws Exception {
         spy.listServices(null, authToken, null, null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void listUserGlobalRoles_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void listUserGlobalRoles_callsverifyServiceAdminLevelAccess() throws Exception {
         spy.listUserGlobalRoles(null, authToken, null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void listUserGlobalROlesByServiceId_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void listUserGlobalROlesByServiceId_callsverifyServiceAdminLevelAccess() throws Exception {
         spy.listUserGlobalRolesByServiceId(null, authToken, null, null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Ignore
@@ -851,9 +841,9 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void listUsers_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void listUsers_callsverifyServiceAdminLevelAccess() throws Exception {
         spy.listUsers(null, authToken, null, 0);
-        verify(spy).checkXAUTHTOKEN(authToken, false, null);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
@@ -869,27 +859,27 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void setUserEnabled_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void setUserEnabled_callsverifyServiceAdminLevelAccess() throws Exception {
         spy.setUserEnabled(null, authToken, null, null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void updateSecretQA_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void updateSecretQA_callsverifyServiceAdminLevelAccess() throws Exception {
         spy.updateSecretQA(null, authToken, null, null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void updateTenant_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void updateTenant_callsverifyServiceAdminLevelAccess() throws Exception {
         spy.updateTenant(null, authToken, null, null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void updateUser_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void updateUser_callsverifyUserAdminLevelAccess() throws Exception {
         spy.updateUser(null, authToken, null, null);
-        verify(spy).checkXAUTHTOKEN(authToken, false, null);
+        verify(spy).verifyUserAdminLevelAccess(authToken);
     }
 
     @Test(expected = BadRequestException.class)
@@ -1001,15 +991,15 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void updateUserApiKeyCredentials_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void updateUserApiKeyCredentials_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.updateUserApiKeyCredentials(null, authToken, null, null, null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void updateUserPasswordCredentials_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void updateUserPasswordCredentials_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.updateUserPasswordCredentials(null, authToken, null, null, null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
