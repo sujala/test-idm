@@ -1347,7 +1347,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder getGroupById(HttpHeaders httpHeaders, String authToken, String groupId) throws IOException {
         verifyServiceAdminLevelAccess(authToken);
         Group group = cloudGroupService.getGroupById(Integer.parseInt(groupId));
-
+        
         com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group cloudGroup = cloudKsGroupBuilder.build(group);
         return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtKsgrpV1Factory().createGroup(cloudGroup));
     }
@@ -1364,6 +1364,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             return Response.created(uriInfo.getRequestUriBuilder().path(groupKs.getId()).build())
                     .entity(OBJ_FACTORIES.getRackspaceIdentityExtKsgrpV1Factory().createGroup(groupKs));
         }
+        catch (DuplicateException bre) {
+            return roleConflictExceptionResponse(bre.getMessage());
+        }
         catch (Exception e) {
             return exceptionResponse(e);
         }
@@ -1372,7 +1375,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     public void validateKsGroup(com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group) {
-        if (group.getName() == "" || group.getName() == null) {
+        if (group.getName().isEmpty() || group.getName() == null) {
             throw new BadRequestException("Missing group name");
         }
     }
@@ -1381,12 +1384,11 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder updateGroup(HttpHeaders httpHeaders, String authToken, String groupId,
                                        com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group) throws IOException {
         verifyServiceAdminLevelAccess(authToken);
-        Group groupDO = new Group();
-        groupDO.setGroupId(Integer.parseInt(groupId));
-        groupDO.setDescription(group.getDescription());
-        groupDO.setName(group.getName());
+        group.setId(groupId);
+        Group groupDO = cloudGroupBuilder.build(group);
         cloudGroupService.updateGroup(groupDO);
-        return Response.ok();
+        com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group groupKs = cloudKsGroupBuilder.build(groupDO);
+        return Response.ok().entity(OBJ_FACTORIES.getRackspaceIdentityExtKsgrpV1Factory().createGroup(groupKs));
     }
 
     @Override
@@ -1400,7 +1402,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder addGroupToUser(HttpHeaders httpHeaders, String authToken, String groupId, String userId) throws IOException {
         verifyServiceAdminLevelAccess(authToken);
         cloudGroupService.addGroupToUser(Integer.parseInt(groupId), userId);
-        return Response.ok();
+        return Response.noContent();
     }
 
     @Override
