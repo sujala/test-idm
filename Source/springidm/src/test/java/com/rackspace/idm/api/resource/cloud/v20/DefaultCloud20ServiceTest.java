@@ -4,15 +4,12 @@ import com.rackspace.idm.api.converter.cloudv20.EndpointConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.TenantConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
-import com.rackspace.idm.domain.dao.GroupDao;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
-import com.rackspace.idm.domain.service.impl.DefaultGroupService;
 import com.rackspace.idm.exception.*;
-import com.sun.jersey.api.spring.Autowire;
 import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.Control;
 import com.unboundid.ldap.sdk.SearchResultEntry;
@@ -26,12 +23,12 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.*;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.JAXBElement;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -312,6 +309,8 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void deleteRoleFromUserOnTenant_callsTenantService_deleteTenantRoleMethod() throws Exception {
+        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doNothing().when(spy).verifyTokenHasTenantAccess(authToken,tenantId);
         spy.deleteRoleFromUserOnTenant(null, authToken, tenantId, userId, role.getId());
         verify(tenantService).deleteTenantRole(anyString(), any(TenantRole.class));
     }
@@ -333,7 +332,7 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void deleteRole_withNullRole_returns400() throws Exception {
         Response.ResponseBuilder responseBuilder = spy.deleteRole(null, authToken, null);
-        assertThat("code", responseBuilder.build().getStatus(),equalTo(400));
+        assertThat("code", responseBuilder.build().getStatus(), equalTo(400));
     }
 
     @Test
@@ -449,6 +448,8 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void addRolesToUserOnTenant_callsTenantService_addTenantRoleToUser() throws Exception {
+        doNothing().when(spy).verifyServiceAdminLevelAccess(anyString());
+        doNothing().when(spy).verifyTokenHasTenantAccess(authToken,tenantId);
         spy.addRolesToUserOnTenant(null, authToken, tenantId, userId, role.getId());
         verify(tenantService).addTenantRoleToUser(any(User.class), any(TenantRole.class));
     }
@@ -580,9 +581,9 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void addRoleToUserOnTenant_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void addRoleToUserOnTenant_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.addRolesToUserOnTenant(null, authToken, null, null, null);
-        verify(spy).checkXAUTHTOKEN(authToken, false, null);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
@@ -673,19 +674,19 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void deleteRoleFromUserOnTenant_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void deleteRoleFromUserOnTenant_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.deleteRoleFromUserOnTenant(null, authToken, tenantId, null, null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, tenantId);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void deleteService_callsverifyServiceAdminLevelAccess() throws Exception {
+    public void deleteService_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.deleteService(null, authToken, null);
         verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void deleteTenant_callsverifyServiceAdminLevelAccess() throws Exception {
+    public void deleteTenant_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.deleteTenant(null, authToken, null);
         verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
@@ -784,39 +785,39 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void listCredentials_callsverifyServiceAdminLevelAccess() throws Exception {
+    public void listCredentials_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.listCredentials(null, authToken, null, null, 0);
         verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void listEndpoints_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void listEndpoints_verifyServiceAdminLevelAccess() throws Exception {
         spy.listEndpoints(null, authToken, null);
-        verify(spy).checkXAUTHTOKEN(authToken, false, null);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void listEndpointTemplates_callsverifyServiceAdminLevelAccess() throws Exception {
+    public void listEndpointTemplates_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.listEndpointTemplates(null, authToken, null);
         verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void listRoles_callsverifyServiceAdminLevelAccess() throws Exception {
+    public void listRoles_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.listRoles(null, authToken, null, null, 0);
         verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void listRolesForTenant_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void listRolesForTenant_verifyServiceAdminLevelAccess() throws Exception {
         spy.listRolesForTenant(null, authToken, null, null, 0);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void listRolesForUserOnTenant_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void listRolesForUserOnTenant_verifyServiceAdminLevelAccess() throws Exception {
         spy.listRolesForUserOnTenant(null, authToken, null, null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
@@ -851,31 +852,31 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void listUsersForTenant_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void listUsersForTenant_CallsVerifyServiceAdminLevelAccess() throws Exception {
         spy.listUsersForTenant(null, authToken, null, null, 0);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void listUsersWithRoleForTenant_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void listUsersWithRoleForTenant_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.listUsersWithRoleForTenant(null, authToken, null, null, null, 0);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void setUserEnabled_callsverifyServiceAdminLevelAccess() throws Exception {
+    public void setUserEnabled_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.setUserEnabled(null, authToken, null, null);
         verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void updateSecretQA_callsverifyServiceAdminLevelAccess() throws Exception {
+    public void updateSecretQA_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.updateSecretQA(null, authToken, null, null);
         verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void updateTenant_callsverifyServiceAdminLevelAccess() throws Exception {
+    public void updateTenant_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.updateTenant(null, authToken, null, null);
         verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
@@ -1084,19 +1085,19 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void validateToken_callsVerifyServiceAdminLevelAccess() throws Exception {
-        spy.validateToken(null,null,null,null);
+        spy.validateToken(null, null, null, null);
         verify(spy).verifyServiceAdminLevelAccess(null);
     }
 
     @Test
     public void listTenants_callsVerifyServiceAdminLevelAccess() throws Exception {
-        spy.listTenants(null,null,null,null);
+        spy.listTenants(null, null, null, null);
         verify(spy).verifyServiceAdminLevelAccess(null);
     }
 
     @Test
     public void listEndpointsForToken_callsVerifyServiceAdminLevelAccess() throws Exception {
-        spy.listEndpointsForToken(null,null,null);
+        spy.listEndpointsForToken(null, null, null);
         verify(spy).verifyServiceAdminLevelAccess(null);
     }
 
@@ -1125,7 +1126,7 @@ public class DefaultCloud20ServiceTest {
         when(cloudGroupBuilder.build((com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group) any())).thenReturn(group);
         doThrow(new DuplicateException()).when(userGroupService).addGroup(org.mockito.Matchers.<Group>any());
         defaultCloud20Service.setCloudGroupBuilder(cloudGroupBuilder);
-        Response.ResponseBuilder responseBuilder = defaultCloud20Service.addGroup(null ,null, authToken, groupKs);
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.addGroup(null, null, authToken, groupKs);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(409));
     }
 
@@ -1134,5 +1135,32 @@ public class DefaultCloud20ServiceTest {
         groupKs.setName("");
         Response.ResponseBuilder responseBuilder = defaultCloud20Service.addGroup(null ,null, authToken, groupKs);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
+    public void verifyTokenHasTenantAccess_callsTenantService() throws Exception {
+        ArrayList<Tenant> list = new ArrayList<Tenant>();
+        Tenant tenant1 = new Tenant();
+        tenant1.setTenantId("1");
+        list.add(tenant1);
+        when(tenantService.getTenantsForScopeAccessByTenantRoles(any(ScopeAccess.class))).thenReturn(list);
+        defaultCloud20Service.verifyTokenHasTenantAccess(authToken,tenant1.getTenantId());
+        verify(tenantService).getTenantsForScopeAccessByTenantRoles(any(ScopeAccess.class));
+    }
+
+    @Test(expected = ForbiddenException.class)
+    public void verifyTokenHasTenantAccess_NoTenants_throwsException() throws Exception {
+        when(tenantService.getTenantsForScopeAccessByTenantRoles(any(ScopeAccess.class))).thenReturn(new ArrayList<Tenant>());
+        defaultCloud20Service.verifyTokenHasTenantAccess(authToken, null);
+    }
+
+    @Test
+    public void verifyTokenHasTenantAccess_WithMatchingTenant_succeeds() throws Exception {
+        ArrayList<Tenant> list = new ArrayList<Tenant>();
+        Tenant tenant1 = new Tenant();
+        tenant1.setTenantId("1");
+        list.add(tenant1);
+        when(tenantService.getTenantsForScopeAccessByTenantRoles(any(ScopeAccess.class))).thenReturn(list);
+        defaultCloud20Service.verifyTokenHasTenantAccess(authToken,tenant1.getTenantId());
     }
 }

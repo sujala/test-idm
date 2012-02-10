@@ -201,7 +201,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder addRolesToUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String userId, String roleId) {
 
         try {
-            checkXAUTHTOKEN(authToken, false, tenantId);
+            verifyServiceAdminLevelAccess(authToken);
+            verifyTokenHasTenantAccess(authToken,tenantId);
 
             Tenant tenant = checkAndGetTenant(tenantId);
 
@@ -640,7 +641,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder deleteRoleFromUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId,
                                                       String userId, String roleId) {
         try {
-            checkXAUTHTOKEN(authToken, true, tenantId);
+            verifyServiceAdminLevelAccess(authToken);
+            verifyTokenHasTenantAccess(authToken,tenantId);
             Tenant tenant = checkAndGetTenant(tenantId);
             User user = checkAndGetUser(userId);
             ClientRole role = checkAndGetClientRole(roleId);
@@ -1080,7 +1082,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder listEndpoints(HttpHeaders httpHeaders, String authToken, String tenantId) {
 
         try {
-            checkXAUTHTOKEN(authToken, false, tenantId);
+            verifyServiceAdminLevelAccess(authToken);
+            verifyTokenHasTenantAccess(authToken,tenantId);
 
             Tenant tenant = checkAndGetTenant(tenantId);
 
@@ -1186,7 +1189,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder listRolesForTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String marker, Integer limit) {
 
         try {
-            checkXAUTHTOKEN(authToken, true, tenantId);
+            verifyServiceAdminLevelAccess(authToken);
+            verifyTokenHasTenantAccess(authToken,tenantId);
 
             Tenant tenant = checkAndGetTenant(tenantId);
 
@@ -1205,7 +1209,8 @@ public class DefaultCloud20Service implements Cloud20Service {
                                                     String userId) throws IOException {
 
         try {
-            checkXAUTHTOKEN(authToken, true, tenantId);
+            verifyServiceAdminLevelAccess(authToken);
+            verifyTokenHasTenantAccess(authToken,tenantId);
 
             Tenant tenant = checkAndGetTenant(tenantId);
 
@@ -1293,7 +1298,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder listUserGlobalRolesByServiceId(HttpHeaders httpHeaders, String authToken, String userId,
                                                           String serviceId) throws IOException {
         try {
-            verifyServiceAdminLevelAccess(authToken);;
+            verifyServiceAdminLevelAccess(authToken);
 
             User user = checkAndGetUser(userId);
 
@@ -1347,7 +1352,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder getGroupById(HttpHeaders httpHeaders, String authToken, String groupId) throws IOException {
         verifyServiceAdminLevelAccess(authToken);
         Group group = cloudGroupService.getGroupById(Integer.parseInt(groupId));
-        
+
         com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group cloudGroup = cloudKsGroupBuilder.build(group);
         return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtKsgrpV1Factory().createGroup(cloudGroup));
     }
@@ -1363,11 +1368,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group groupKs = cloudKsGroupBuilder.build(groupDO);
             return Response.created(uriInfo.getRequestUriBuilder().path(groupKs.getId()).build())
                     .entity(OBJ_FACTORIES.getRackspaceIdentityExtKsgrpV1Factory().createGroup(groupKs));
-        }
-        catch (DuplicateException bre) {
+        } catch (DuplicateException bre) {
             return roleConflictExceptionResponse(bre.getMessage());
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             return exceptionResponse(e);
         }
 
@@ -1450,14 +1453,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder listUsersForTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String marker, Integer limit) {
 
         try {
-            checkXAUTHTOKEN(authToken, true, tenantId);
+            verifyServiceAdminLevelAccess(authToken);
+            verifyTokenHasTenantAccess(authToken,tenantId);
 
             Tenant tenant = checkAndGetTenant(tenantId);
 
             List<User> users = this.tenantService.getUsersForTenant(tenant.getTenantId());
 
-            return Response.ok(
-                    OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUsers(userConverterCloudV20.toUserList(users)));
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUsers(userConverterCloudV20.toUserList(users)));
 
         } catch (Exception ex) {
             return exceptionResponse(ex);
@@ -1469,7 +1472,8 @@ public class DefaultCloud20Service implements Cloud20Service {
                                                       String roleId, String marker, Integer limit) {
 
         try {
-            checkXAUTHTOKEN(authToken, true, tenantId);
+            verifyServiceAdminLevelAccess(authToken);
+            verifyTokenHasTenantAccess(authToken,tenantId);
 
             Tenant tenant = checkAndGetTenant(tenantId);
 
@@ -1904,6 +1908,22 @@ public class DefaultCloud20Service implements Cloud20Service {
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
+    }
+
+    void verifyTokenHasTenantAccess(String authToken, String tenantId) {
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        if (authScopeAccess == null || ((HasAccessToken) authScopeAccess).isAccessTokenExpired(new DateTime())) {
+            throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
+        }
+        List<Tenant> adminTenants = this.tenantService.getTenantsForScopeAccessByTenantRoles(authScopeAccess);
+        for (Tenant tenant : adminTenants) {
+            if (tenant.getTenantId().equals(tenantId)) {
+                return;
+            }
+        }
+        String errMsg = "Access is denied";
+        logger.warn(errMsg);
+        throw new ForbiddenException(errMsg);
     }
 
     private void stripEndpoints(List<OpenstackEndpoint> endpoints) {
