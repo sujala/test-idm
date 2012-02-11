@@ -56,12 +56,16 @@ public class JSONReaderForGroup implements MessageBodyReader<Group> {
 
                 Object name = obj3.get(JSONConstants.NAME);
                 Object desc = obj3.get(JSONConstants.DESCRIPTION);
+                Object id = obj3.get(JSONConstants.ID);
 
                 if (name != null) {
                     ip.setName(name.toString());
                 }
                 if (desc != null) {
                     ip.setDescription(desc.toString());
+                }
+                if (id != null){
+                    ip.setId(desc.toString());
                 }
             }
         } catch (ParseException e) {

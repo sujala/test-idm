@@ -1350,11 +1350,15 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getGroupById(HttpHeaders httpHeaders, String authToken, String groupId) throws IOException {
-        verifyServiceAdminLevelAccess(authToken);
-        Group group = cloudGroupService.getGroupById(Integer.parseInt(groupId));
-
-        com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group cloudGroup = cloudKsGroupBuilder.build(group);
-        return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtKsgrpV1Factory().createGroup(cloudGroup));
+        try {
+            verifyServiceAdminLevelAccess(authToken);
+            validateGroupId(groupId);
+            Group group = cloudGroupService.getGroupById(Integer.parseInt(groupId));
+            com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group cloudGroup = cloudKsGroupBuilder.build(group);
+            return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtKsgrpV1Factory().createGroup(cloudGroup));
+        } catch (Exception e) {
+            return exceptionResponse(e);
+        }
     }
 
     @Override
@@ -1378,50 +1382,106 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     public void validateKsGroup(com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group) {
-        if (group.getName().isEmpty() || group.getName() == null) {
+        String checkName = group.getName().trim();
+        if (group.getName() == null || checkName.isEmpty()) {
             throw new BadRequestException("Missing group name");
+        }
+        if (group.getName().length() > 200) {
+            throw new BadRequestException("Group name length cannot exceed 200 characters");
+        }
+        if (group.getDescription().length() > 1000) {
+            throw new BadRequestException("Group description length cannot exceed 1000 characters");
         }
     }
 
     @Override
     public ResponseBuilder updateGroup(HttpHeaders httpHeaders, String authToken, String groupId,
                                        com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group) throws IOException {
-        verifyServiceAdminLevelAccess(authToken);
-        group.setId(groupId);
-        Group groupDO = cloudGroupBuilder.build(group);
-        cloudGroupService.updateGroup(groupDO);
-        com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group groupKs = cloudKsGroupBuilder.build(groupDO);
-        return Response.ok().entity(OBJ_FACTORIES.getRackspaceIdentityExtKsgrpV1Factory().createGroup(groupKs));
+        try {
+            verifyServiceAdminLevelAccess(authToken);
+            validateKsGroup(group);
+            group.setId(groupId);
+            Group groupDO = cloudGroupBuilder.build(group);
+            cloudGroupService.updateGroup(groupDO);
+            com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group groupKs = cloudKsGroupBuilder.build(groupDO);
+            return Response.ok().entity(OBJ_FACTORIES.getRackspaceIdentityExtKsgrpV1Factory().createGroup(groupKs));
+        }
+        catch (DuplicateException bre) {
+            return roleConflictExceptionResponse(bre.getMessage());
+        }
+        catch (Exception e) {
+            return exceptionResponse(e);
+        }
     }
 
     @Override
     public ResponseBuilder deleteGroup(HttpHeaders httpHeaders, String authToken, String groupId) throws IOException {
-        verifyServiceAdminLevelAccess(authToken);
-        cloudGroupService.deleteGroup(groupId);
-        return Response.noContent();
+        try {
+            verifyServiceAdminLevelAccess(authToken);
+            validateGroupId(groupId);
+            cloudGroupService.deleteGroup(groupId);
+            return Response.noContent();
+        } catch (Exception e) {
+            return exceptionResponse(e);
+        }
+    }
+
+    public void validateGroupId(String groupId) {
+        Boolean valid = false;
+        if (groupId != null) {
+            String checkGroupId = groupId.trim();
+            try {
+                Integer.parseInt(checkGroupId);
+                valid = true;
+            } catch (Exception e) {
+                valid = false;
+            }
+        }
+        if (!valid) {
+            throw new BadRequestException("Invalid group id");
+        }
+
     }
 
     @Override
     public ResponseBuilder addGroupToUser(HttpHeaders httpHeaders, String authToken, String groupId, String userId) throws IOException {
-        verifyServiceAdminLevelAccess(authToken);
-        cloudGroupService.addGroupToUser(Integer.parseInt(groupId), userId);
-        return Response.noContent();
+        try {
+            verifyServiceAdminLevelAccess(authToken);
+            validateGroupId(groupId);
+            cloudGroupService.addGroupToUser(Integer.parseInt(groupId), userId);
+            return Response.noContent();
+        } catch (Exception e) {
+            return exceptionResponse(e);
+        }
     }
 
     @Override
     public ResponseBuilder removeGroupFromUser(HttpHeaders httpHeaders, String authToken, String groupId, String userId) throws IOException {
-        verifyServiceAdminLevelAccess(authToken);
-        cloudGroupService.deleteGroupFromUser(Integer.parseInt(groupId), userId);
-        return Response.ok();
+        try {
+            verifyServiceAdminLevelAccess(authToken);
+            validateGroupId(groupId);
+            if(userId == null || userId.trim().isEmpty()){
+                throw new BadRequestException("Invalid user id");
+            }
+            cloudGroupService.deleteGroupFromUser(Integer.parseInt(groupId), userId);
+            return Response.noContent();
+        } catch (Exception e) {
+            return exceptionResponse(e);
+        }
     }
 
     @Override
     public ResponseBuilder listUsersWithGroup(HttpHeaders httpHeaders, String authToken, String groupId, String marker, Integer limit) throws IOException {
-        FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParamName.GROUP_ID, groupId)};
-        int iMarker = 0;
-        int iLimit = 0;
-        Users users = userService.getAllUsers(filters, iMarker, iLimit);
-        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUsers(this.userConverterCloudV20.toUserList(users.getUsers())));
+        try {
+            FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParamName.GROUP_ID, groupId)};
+            int iMarker = 0;
+            int iLimit = 0;
+            validateGroupId(groupId);
+            Users users = userService.getAllUsers(filters, iMarker, iLimit);
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUsers(this.userConverterCloudV20.toUserList(users.getUsers())));
+        } catch (Exception e) {
+            return exceptionResponse(e);
+        }
     }
 
     // KSADM Extension User methods

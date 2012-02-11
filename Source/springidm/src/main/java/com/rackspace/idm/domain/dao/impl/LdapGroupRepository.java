@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.dao.impl;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.GroupDao;
 import com.rackspace.idm.domain.entity.Group;
+import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.CryptHelper;
 import com.unboundid.ldap.sdk.*;
@@ -228,7 +229,14 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
         }
 
         String userDN = new LdapDnBuilder(USERS_BASE_DN).addAttribute(ATTR_ID, userId).build();
-        List<Group> oldGroups = this.getGroupsForUser(userId);
+        List<Group> oldGroups;
+        try{
+            oldGroups = this.getGroupsForUser(userId);
+        }catch(Exception e){
+            getLogger().error("Error adding user {} to group - {}", userId, e);
+            String errMsg = String.format("User %s not found", userId);
+            throw new BadRequestException(errMsg);
+        }
 
         List<String> groups = new ArrayList<String>();
 
@@ -273,7 +281,14 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
         }
 
         String userDN = new LdapDnBuilder(USERS_BASE_DN).addAttribute(ATTR_ID, userId).build();
-        List<Group> oldGroups = this.getGroupsForUser(userId);
+        List<Group> oldGroups;
+        try{
+            oldGroups = this.getGroupsForUser(userId);
+        }catch(Exception e){
+            getLogger().error("Error deleting user {} from group - {}", userId, e);
+            String errMsg = String.format("User %s not found", userId);
+            throw new BadRequestException(errMsg);
+        }
 
         List<String> groups = new ArrayList<String>();
 

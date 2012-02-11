@@ -56,23 +56,35 @@ public class DefaultGroupService implements GroupService {
     @Override
     public void addGroup(Group group) {
         logger.info("Adding Client Group: {}", group);
-        Group exists = groupDao.getGroupByName(group.getName());
-        if (exists != null) {
-            String errMsg = String.format("Group with name %s already exists", group.getName());
-            logger.warn(errMsg);
-            throw new DuplicateException(errMsg);
-        }
+        verifyDuplicateGroup(group);
         group.setGroupId(Integer.parseInt(this.groupDao.getNextGroupId()));
         groupDao.addGroup(group);
     }
 
     @Override
     public void updateGroup(Group group) {
+        logger.info("Updating Client Group: {}", group);
+        verifyDuplicateGroup(group);
         groupDao.updateGroup(group);
+    }
+
+    private void verifyDuplicateGroup(Group group) {
+        Group exists = groupDao.getGroupByName(group.getName());
+        if (exists != null) {
+            String errMsg = String.format("Group with name %s already exists", group.getName());
+            logger.warn(errMsg);
+            throw new DuplicateException(errMsg);
+        }
     }
 
     @Override
     public void deleteGroup(String groupId) {
+        Group exists = groupDao.getGroupById(Integer.parseInt(groupId));
+        if (exists == null) {
+            String errMsg = String.format("Group %s not found", groupId);
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
         groupDao.deleteGroup(Integer.parseInt(groupId));
     }
 

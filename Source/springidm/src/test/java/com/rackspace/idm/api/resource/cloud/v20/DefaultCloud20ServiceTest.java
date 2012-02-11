@@ -1163,4 +1163,65 @@ public class DefaultCloud20ServiceTest {
         when(tenantService.getTenantsForScopeAccessByTenantRoles(any(ScopeAccess.class))).thenReturn(list);
         defaultCloud20Service.verifyTokenHasTenantAccess(authToken,tenant1.getTenantId());
     }
+
+    @Test
+    public void validateKsGroup_validGroup(){
+        defaultCloud20Service.validateKsGroup(groupKs);
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void validateKsGroup_invalidGroup_throwsBadRequest(){
+        groupKs.setName("");
+        defaultCloud20Service.validateKsGroup(groupKs);
+    }
+
+    @Test
+    public void validateKsGroup_invalidGroupLength_throwsBadRequestMessage(){
+        groupKs.setName("Invalidnamellllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll");
+        try{
+        defaultCloud20Service.validateKsGroup(groupKs);
+        }catch(Exception e){
+            assertThat("Exception",e.getMessage(),equalTo("Group name length cannot exceed 200 characters"));
+
+        }
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void validateKsGroup_invalidGroupLength_throwsBadRequest(){
+        groupKs.setName("Invalidnamellllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll");
+        defaultCloud20Service.validateKsGroup(groupKs);
+    }
+
+    @Test
+    public void validateGroupId_validGroupId(){
+        defaultCloud20Service.validateGroupId("1");
+    }
+
+    @Test
+    public void validateGroupId_validGroupIdwithSpaces(){
+        defaultCloud20Service.validateGroupId("  1   ");
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void validateGroupId_inValidGroupId(){
+        defaultCloud20Service.validateGroupId("a");
+    }
+
+    @Test
+    public void validateGroupId_inValidGroupId_throwBadRequest(){
+        try{
+        defaultCloud20Service.validateGroupId(" ");
+        }catch(Exception e){
+            assertThat("Exception",e.getMessage(),equalTo("Invalid group id"));
+        }
+    }
+
+    @Test
+    public void validateGroupId_inValidGroupIdWithSpaces_throwBadRequest(){
+        try{
+        defaultCloud20Service.validateGroupId(" a ");
+        }catch(Exception e){
+            assertThat("Exception",e.getMessage(),equalTo("Invalid group id"));
+        }
+    }
 }
