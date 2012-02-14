@@ -606,7 +606,7 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @Context UriInfo uriInfo,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            Group group) throws IOException {
+            Group group) throws IOException, JAXBException {
         return getCloud20Service().addGroup(httpHeaders, uriInfo, authToken, group).build();
     }
 
@@ -615,9 +615,13 @@ public class Cloud20VersionResource {
     public Response getGroups(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @QueryParam("name") String groupName,
             @QueryParam("marker") String marker,
             @QueryParam("limit") Integer limit) throws IOException {
-        return getCloud20Service().listGroups(httpHeaders, authToken, marker, limit).build();
+        if(groupName != null){
+            return getCloud20Service().getGroup(httpHeaders, authToken, groupName).build();
+        }
+        return getCloud20Service().listGroups(httpHeaders, authToken, groupName, marker, limit).build();
     }
 
     @GET
@@ -631,11 +635,11 @@ public class Cloud20VersionResource {
 
     @PUT
     @Path("/RAX-GRPADM/groups/{groupId}")
-    public Response addGroup(
+    public Response updateGroup(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("groupId") String groupId,
-            Group group) throws IOException {
+            Group group) throws IOException, JAXBException {
         return getCloud20Service().updateGroup(httpHeaders, authToken, groupId, group).build();
     }
 
