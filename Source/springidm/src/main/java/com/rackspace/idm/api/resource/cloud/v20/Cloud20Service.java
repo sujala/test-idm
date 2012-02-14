@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v20;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
+import com.rackspace.idm.api.serviceprofile.ServiceDescriptionTemplateUtil;
 import com.rackspace.idm.exception.NotFoundException;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
@@ -148,15 +149,15 @@ public interface Cloud20Service {
     ResponseBuilder listUserGlobalRolesByServiceId(HttpHeaders httpHeaders,
         String authToken, String userId, String serviceId) throws IOException;
 
-    ResponseBuilder listGroups(HttpHeaders httpHeaders, String authToken, String marker, Integer limit) throws IOException;
+    ResponseBuilder listGroups(HttpHeaders httpHeaders, String authToken, String marker, String s, Integer limit) throws IOException;
 
     ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String authToken, String userId) throws IOException;
 
     ResponseBuilder getGroupById(HttpHeaders httpHeaders, String authToken, String groupId) throws IOException;
 
-    ResponseBuilder addGroup(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Group group) throws IOException;
+    ResponseBuilder addGroup(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Group group) throws IOException, JAXBException;
 
-    ResponseBuilder updateGroup(HttpHeaders httpHeaders, String authToken, String groupId, Group group) throws IOException;
+    ResponseBuilder updateGroup(HttpHeaders httpHeaders, String authToken, String groupId, Group group) throws IOException, JAXBException;
 
     ResponseBuilder deleteGroup(HttpHeaders httpHeaders, String authToken, String groupId) throws IOException;
 
@@ -165,4 +166,7 @@ public interface Cloud20Service {
     ResponseBuilder removeGroupFromUser(HttpHeaders httpHeaders, String authToken, String groupId, String userId) throws IOException;
 
     ResponseBuilder listUsersWithGroup(HttpHeaders httpHeaders, String authToken, String groupId, String marker, Integer limit) throws IOException;
+
+    ResponseBuilder getGroup(HttpHeaders httpHeaders, String authToken, String groupName) throws IOException;
+
 }

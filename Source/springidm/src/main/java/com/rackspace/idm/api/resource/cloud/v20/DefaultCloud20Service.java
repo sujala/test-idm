@@ -202,7 +202,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         try {
             verifyServiceAdminLevelAccess(authToken);
-            verifyTokenHasTenantAccess(authToken,tenantId);
+            verifyTokenHasTenantAccess(authToken, tenantId);
 
             Tenant tenant = checkAndGetTenant(tenantId);
 
@@ -642,7 +642,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                                                       String userId, String roleId) {
         try {
             verifyServiceAdminLevelAccess(authToken);
-            verifyTokenHasTenantAccess(authToken,tenantId);
+            verifyTokenHasTenantAccess(authToken, tenantId);
             Tenant tenant = checkAndGetTenant(tenantId);
             User user = checkAndGetUser(userId);
             ClientRole role = checkAndGetClientRole(roleId);
@@ -1083,7 +1083,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         try {
             verifyServiceAdminLevelAccess(authToken);
-            verifyTokenHasTenantAccess(authToken,tenantId);
+            verifyTokenHasTenantAccess(authToken, tenantId);
 
             Tenant tenant = checkAndGetTenant(tenantId);
 
@@ -1190,7 +1190,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         try {
             verifyServiceAdminLevelAccess(authToken);
-            verifyTokenHasTenantAccess(authToken,tenantId);
+            verifyTokenHasTenantAccess(authToken, tenantId);
 
             Tenant tenant = checkAndGetTenant(tenantId);
 
@@ -1210,7 +1210,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         try {
             verifyServiceAdminLevelAccess(authToken);
-            verifyTokenHasTenantAccess(authToken,tenantId);
+            verifyTokenHasTenantAccess(authToken, tenantId);
 
             Tenant tenant = checkAndGetTenant(tenantId);
 
@@ -1314,12 +1314,13 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listGroups(HttpHeaders httpHeaders, String authToken, String marker, Integer limit) throws IOException {
+    public ResponseBuilder listGroups(HttpHeaders httpHeaders, String authToken, String groupName, String marker, Integer limit) throws IOException {
         try {
             verifyServiceAdminLevelAccess(authToken);
             List<Group> groups = cloudGroupService.getGroups(marker, limit);
 
             com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups cloudGroups = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups();
+
             for (Group group : groups) {
                 com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group cloudGroup = cloudKsGroupBuilder.build(group);
                 cloudGroups.getGroup().add(cloudGroup);
@@ -1330,6 +1331,20 @@ public class DefaultCloud20Service implements Cloud20Service {
             return exceptionResponse(e);
         }
     }
+
+    @Override
+    public ResponseBuilder getGroup(HttpHeaders httpHeaders, String authToken, String groupName) throws IOException {
+        try {
+            verifyServiceAdminLevelAccess(authToken);
+            Group group = cloudGroupService.getGroupByName(groupName);
+            com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group cloudGroup = cloudKsGroupBuilder.build(group);
+            return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtKsgrpV1Factory().createGroup(cloudGroup));
+        } catch (Exception e) {
+            return exceptionResponse(e);
+        }
+    }
+
+
 
     @Override
     public ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String authToken, String userId) throws IOException {
@@ -1400,6 +1415,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             verifyServiceAdminLevelAccess(authToken);
             validateKsGroup(group);
+            validateGroupId(groupId);
             group.setId(groupId);
             Group groupDO = cloudGroupBuilder.build(group);
             cloudGroupService.updateGroup(groupDO);
@@ -1460,7 +1476,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             verifyServiceAdminLevelAccess(authToken);
             validateGroupId(groupId);
-            if(userId == null || userId.trim().isEmpty()){
+            if (userId == null || userId.trim().isEmpty()) {
                 throw new BadRequestException("Invalid user id");
             }
             cloudGroupService.deleteGroupFromUser(Integer.parseInt(groupId), userId);
@@ -1473,6 +1489,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder listUsersWithGroup(HttpHeaders httpHeaders, String authToken, String groupId, String marker, Integer limit) throws IOException {
         try {
+            verifyServiceAdminLevelAccess(authToken);
             FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParamName.GROUP_ID, groupId)};
             int iMarker = 0;
             int iLimit = 0;
@@ -1514,7 +1531,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         try {
             verifyServiceAdminLevelAccess(authToken);
-            verifyTokenHasTenantAccess(authToken,tenantId);
+            verifyTokenHasTenantAccess(authToken, tenantId);
 
             Tenant tenant = checkAndGetTenant(tenantId);
 
@@ -1533,7 +1550,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         try {
             verifyServiceAdminLevelAccess(authToken);
-            verifyTokenHasTenantAccess(authToken,tenantId);
+            verifyTokenHasTenantAccess(authToken, tenantId);
 
             Tenant tenant = checkAndGetTenant(tenantId);
 

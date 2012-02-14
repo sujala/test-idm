@@ -340,6 +340,11 @@ public class DummyCloud20Service implements Cloud20Service{
     }
 
     @Override
+    public ResponseBuilder getGroup(HttpHeaders httpHeaders, String authToken, String groupName) throws IOException {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
     public ResponseBuilder listEndpointTemplates(HttpHeaders httpHeaders,
         String authToken, String serviceId) {
         return Response.status(Status.NOT_FOUND);
@@ -423,7 +428,7 @@ public class DummyCloud20Service implements Cloud20Service{
     }
 
     @Override
-    public ResponseBuilder listGroups(HttpHeaders httpHeaders, String authToken, String marker, Integer limit) throws IOException {
+    public ResponseBuilder listGroups(HttpHeaders httpHeaders, String authToken, String marker, String s, Integer limit) throws IOException {
         return Response.status(Status.NOT_FOUND);
     }
 
