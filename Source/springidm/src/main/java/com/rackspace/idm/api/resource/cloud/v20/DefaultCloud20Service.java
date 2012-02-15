@@ -1490,10 +1490,15 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder listUsersWithGroup(HttpHeaders httpHeaders, String authToken, String groupId, String marker, Integer limit) throws IOException {
         try {
             verifyServiceAdminLevelAccess(authToken);
+            validateGroupId(groupId);
             FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParamName.GROUP_ID, groupId)};
             int iMarker = 0;
             int iLimit = 0;
-            validateGroupId(groupId);
+            Group exist = cloudGroupService.getGroupById(Integer.parseInt(groupId));
+            if(exist == null){
+                String errorMsg = String.format("Group %s not found",groupId);
+                throw new NotFoundException(errorMsg);
+            }
             Users users = userService.getAllUsers(filters, iMarker, iLimit);
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUsers(this.userConverterCloudV20.toUserList(users.getUsers())));
         } catch (Exception e) {
