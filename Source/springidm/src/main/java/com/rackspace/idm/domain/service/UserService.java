@@ -25,7 +25,7 @@ public interface UserService {
     
     void deleteUser(String username);
 
-    Users getAllUsers(FilterParam[] filters, int offset, int limit);
+    Users getAllUsers(FilterParam[] filters, Integer offset, Integer limit);
     
     String generateApiKey();
     

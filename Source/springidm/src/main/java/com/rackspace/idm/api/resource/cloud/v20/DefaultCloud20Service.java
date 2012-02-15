@@ -932,15 +932,33 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder getUserById(HttpHeaders httpHeaders, String authToken, String userId) throws IOException {
 
         try {
-            verifyServiceAdminLevelAccess(authToken);
+            ScopeAccess scopeAccessByAccessToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
+            User caller = getUser(scopeAccessByAccessToken);
 
+            //if caller has default user role
+            if (authorizationService.authorizeCloudUser(scopeAccessByAccessToken)) {
+                if (caller.getId().equals(userId)) {
+                    return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                            .createUser(this.userConverterCloudV20.toUser(caller)));
+                } else {
+                    throw new ForbiddenException("Access is denied");
+                }
+            }
+
+            verifyUserAdminLevelAccess(authToken);
             User user = this.userService.getUserById(userId);
-
             if (user == null) {
                 String errMsg = String.format("User with id: '%s' was not found", userId);
                 logger.warn(errMsg);
                 throw new NotFoundException(errMsg);
             }
+            
+            if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
+                verifyDomain(user, caller);
+                return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                        .createUser(this.userConverterCloudV20.toUser(user)));
+            }
+
 
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
                     .createUser(this.userConverterCloudV20.toUser(user)));
@@ -1352,7 +1370,6 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
 
-
     @Override
     public ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String authToken, String userId) throws IOException {
         try {
@@ -1500,8 +1517,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             int iMarker = 0;
             int iLimit = 0;
             Group exist = cloudGroupService.getGroupById(Integer.parseInt(groupId));
-            if(exist == null){
-                String errorMsg = String.format("Group %s not found",groupId);
+            if (exist == null) {
+                String errorMsg = String.format("Group %s not found", groupId);
                 throw new NotFoundException(errorMsg);
             }
             Users users = userService.getAllUsers(filters, iMarker, iLimit);
@@ -1527,16 +1544,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
                         .createUsers(this.userConverterCloudV20.toUserList(users)));
             }
-            //if caller is user-admin
-            //TODO
-            if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
-                List<User> users = new ArrayList<User>();
-                users.add(caller);
-                return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                        .createUsers(this.userConverterCloudV20.toUserList(users)));
-            }
-
-            verifyServiceAdminLevelAccess(authToken);
+            verifyUserAdminLevelAccess(authToken);
             Users users;
             if (caller.getDomainId() != null) {
                 String domainId = caller.getDomainId();

@@ -225,7 +225,7 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public Users getAllUsers(FilterParam[] filters, int offset, int limit) {
+    public Users getAllUsers(FilterParam[] filters, Integer offset, Integer limit) {
         logger.debug("Getting All Users");
 
         Users users = this.userDao.getAllUsers(filters, offset, limit);
