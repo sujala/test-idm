@@ -955,10 +955,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             
             if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
                 verifyDomain(user, caller);
-                return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                        .createUser(this.userConverterCloudV20.toUser(user)));
             }
-
 
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
                     .createUser(this.userConverterCloudV20.toUser(user)));
@@ -993,14 +990,23 @@ public class DefaultCloud20Service implements Cloud20Service {
             throws IOException {
 
         try {
-            verifyServiceAdminLevelAccess(authToken);
+            verifyUserLevelAccess(authToken);
 
             if (!(credentialType.equals(JSONConstants.PASSWORD_CREDENTIALS)
                     || credentialType.equals(JSONConstants.APIKEY_CREDENTIALS))) {
                 throw new BadRequestException("unsupported credential type");
             }
-
             User user = this.userService.getUserById(userId);
+
+
+            ScopeAccess scopeAccessByAccessToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
+            if(authorizationService.authorizeCloudUser(scopeAccessByAccessToken) ||
+                    authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)){
+                User caller = getUser(scopeAccessByAccessToken);
+                if(!caller.getId().equals(userId)){
+                    throw new ForbiddenException("Access denied.");
+                }
+            }
 
             if (user == null) {
                 String errMsg = "Credential type RAX-KSKEY:apiKeyCredentials was not found for User with Id: " + userId;
@@ -1969,8 +1975,26 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
-    //method verifies that caller is an identity admin, service admin or user admin
+    //method verifies that caller has identity admin, service admin, user admin or user role access
+    void verifyUserLevelAccess(String authToken) {
+        if (StringUtils.isBlank(authToken)) {
+            throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
+        }
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        if (authScopeAccess == null || ((HasAccessToken) authScopeAccess).isAccessTokenExpired(new DateTime())) {
+            throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
+        }
+        if (!authorizationService.authorizeCloudIdentityAdmin(authScopeAccess)
+                && !authorizationService.authorizeCloudServiceAdmin(authScopeAccess)
+                && !authorizationService.authorizeCloudUserAdmin(authScopeAccess)
+                && !authorizationService.authorizeCloudUser(authScopeAccess)) {
+            String errMsg = "Access is denied";
+            logger.warn(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
+    }
 
+    //method verifies that caller is an identity admin, service admin or user admin
     void verifyUserAdminLevelAccess(String authToken) {
         if (StringUtils.isBlank(authToken)) {
             throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
