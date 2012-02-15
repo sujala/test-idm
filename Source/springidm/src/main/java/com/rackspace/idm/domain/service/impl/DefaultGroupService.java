@@ -2,7 +2,11 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.cloud.servers.bean.LimitGroupType;
 import com.rackspace.idm.domain.dao.GroupDao;
+import com.rackspace.idm.domain.dao.UserDao;
+import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.Group;
+import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.service.GroupService;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
@@ -10,6 +14,7 @@ import com.rackspacecloud.docs.auth.api.v1.GroupsList;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +27,9 @@ import java.util.List;
  */
 
 public class DefaultGroupService implements GroupService {
+
+    @Autowired
+    private DefaultUserService defaultUserService;
 
     private final GroupDao groupDao;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -116,6 +124,24 @@ public class DefaultGroupService implements GroupService {
     @Override
     public List<Group> getGroupsForUser(String userId) {
         return groupDao.getGroupsForUser(userId);
+    }
+
+    @Override
+    public Users getAllEnabledUsers(FilterParam[] filters, String offset, int limit){
+        logger.debug("Getting All Users");
+
+        Users users = defaultUserService.getAllUsers(filters, Integer.parseInt(offset), limit);
+        logger.debug("Got All Users {}", filters);
+        List<User> enabledUsers = new ArrayList<User>();
+        for(User user : users.getUsers()){
+            if(user.isEnabled()){
+                enabledUsers.add(user);
+            }
+        }
+
+        Users enabled = new Users();
+        enabled.setUsers(enabledUsers);
+        return enabled;
     }
 
     private List<Group> convertGroup(LimitGroupType limitGroupType) {

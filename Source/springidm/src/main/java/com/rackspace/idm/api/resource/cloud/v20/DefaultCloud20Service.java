@@ -1497,14 +1497,14 @@ public class DefaultCloud20Service implements Cloud20Service {
             verifyServiceAdminLevelAccess(authToken);
             validateGroupId(groupId);
             FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParamName.GROUP_ID, groupId)};
-            int iMarker = 0;
-            int iLimit = 0;
+            String iMarker = (marker != null) ? marker : "0";
+            int iLimit = (limit != null) ? limit : 0;
             Group exist = cloudGroupService.getGroupById(Integer.parseInt(groupId));
             if(exist == null){
                 String errorMsg = String.format("Group %s not found",groupId);
                 throw new NotFoundException(errorMsg);
             }
-            Users users = userService.getAllUsers(filters, iMarker, iLimit);
+            Users users = cloudGroupService.getAllEnabledUsers(filters, iMarker, iLimit);
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUsers(this.userConverterCloudV20.toUserList(users.getUsers())));
         } catch (Exception e) {
             return exceptionResponse(e);

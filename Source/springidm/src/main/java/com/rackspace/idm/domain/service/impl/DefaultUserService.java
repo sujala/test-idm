@@ -230,19 +230,9 @@ public class DefaultUserService implements UserService {
 
         Users users = this.userDao.getAllUsers(filters, offset, limit);
 
-        List<User> enabledUsers = new ArrayList<User>();
-        for(User user : users.getUsers()){
-            if(user.isEnabled()){
-                enabledUsers.add(user);
-            }
-        }
-
-        Users enabled = new Users();
-        enabled.setUsers(enabledUsers);
-
         logger.debug("Got All Users {}", filters);
 
-        return enabled;
+        return users;
     }
     
     @Override
