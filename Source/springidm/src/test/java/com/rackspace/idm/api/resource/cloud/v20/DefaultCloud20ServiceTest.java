@@ -749,37 +749,47 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void getTenantById_callsverifyServiceAdminLevelAccess() throws Exception {
+    public void getTenantById_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.getTenantById(null, authToken, null);
         verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void getTenantByName_callsverifyServiceAdminLevelAccess() throws Exception {
+    public void getTenantByName_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.getTenantByName(null, authToken, null);
         verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void getUserById_callsverifyServiceAdminLevelAccess() throws Exception {
+    public void getUserById_callerDoesNotHaveDefaultUserRole_callsVerifyUserAdminLevelAccess() throws Exception {
+        doReturn(new User()).when(spy).getUser(any(ScopeAccess.class));
         spy.getUserById(null, authToken, null);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(spy).verifyUserAdminLevelAccess(authToken);
     }
 
     @Test
-    public void getUserByName_callsverifyServiceAdminLevelAccess() throws Exception {
+    public void getUserById_callerHasUserAdminRole_callsVerifyDomain() throws Exception {
+        doReturn(new User()).when(spy).getUser(any(ScopeAccess.class));
+        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(this.userService.getUserById(any(String.class))).thenReturn(user);
+        spy.getUserById(null, authToken, null);
+        verify(spy).verifyDomain(any(User.class),any(User.class));
+    }
+
+    @Test
+    public void getUserByName_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.getUserByName(null, authToken, null);
         verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void getUserCredential_callsverifyServiceAdminLevelAccess() throws Exception {
+    public void getUserCredential_callsVerifyUserLevelAccess() throws Exception {
         spy.getUserCredential(null, authToken, null, null);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(spy).verifyUserLevelAccess(authToken);
     }
 
     @Test
-    public void getUserRole_callsverifyServiceAdminLevelAccess() throws Exception {
+    public void getUserRole_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.getUserRole(null, authToken, null, null);
         verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
@@ -846,23 +856,13 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void listUsers_callerIsNotDefaultUser_callsVerifyServiceAdminLevelAccess() throws Exception {
+    public void listUsers_callerIsNotDefaultUser_callsVerifyUserAdminLevelAccess() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(new User()).when(spy).getUser(any(ScopeAccess.class));
         when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(scopeAccess);
         when(authorizationService.authorizeCloudUser(any(ScopeAccess.class))).thenReturn(false);
         spy.listUsers(null, authToken, null, 0);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
-    }
-
-    @Test
-    public void listUsers_callerIsNotUserAdmin_callsVerifyServiceAdminLevelAccess() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        doReturn(new User()).when(spy).getUser(any(ScopeAccess.class));
-        when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(scopeAccess);
-        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(false);
-        spy.listUsers(null, authToken, null, 0);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(spy).verifyUserAdminLevelAccess(authToken);
     }
 
     @Test
@@ -1240,13 +1240,14 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void listUsers_callerIsUserAdmin_returns200() throws Exception {
+    public void listUsers_callerIsUserAdmin_callsGetAllUsers() throws Exception {
         UserScopeAccess scopeAccess = new UserScopeAccess();
+        doNothing().when(spy).verifyUserAdminLevelAccess(authToken);
         doReturn(new User()).when(spy).getUser(any(ScopeAccess.class));
         when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(scopeAccess);
         when(authorizationService.authorizeCloudUserAdmin(scopeAccess)).thenReturn(true);
-        Response.ResponseBuilder responseBuilder = spy.listUsers(null, authToken, null, null);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+        spy.listUsers(null, authToken, null, null);
+        verify(userService).getAllUsers(null,null,null);
     }
 
     @Test

@@ -932,14 +932,29 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder getUserById(HttpHeaders httpHeaders, String authToken, String userId) throws IOException {
 
         try {
-            verifyServiceAdminLevelAccess(authToken);
+            ScopeAccess scopeAccessByAccessToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
+            User caller = getUser(scopeAccessByAccessToken);
 
+            //if caller has default user role
+            if (authorizationService.authorizeCloudUser(scopeAccessByAccessToken)) {
+                if (caller.getId().equals(userId)) {
+                    return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                            .createUser(this.userConverterCloudV20.toUser(caller)));
+                } else {
+                    throw new ForbiddenException("Access is denied");
+                }
+            }
+
+            verifyUserAdminLevelAccess(authToken);
             User user = this.userService.getUserById(userId);
-
             if (user == null) {
                 String errMsg = String.format("User with id: '%s' was not found", userId);
                 logger.warn(errMsg);
                 throw new NotFoundException(errMsg);
+            }
+            
+            if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
+                verifyDomain(user, caller);
             }
 
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
@@ -975,14 +990,23 @@ public class DefaultCloud20Service implements Cloud20Service {
             throws IOException {
 
         try {
-            verifyServiceAdminLevelAccess(authToken);
+            verifyUserLevelAccess(authToken);
 
             if (!(credentialType.equals(JSONConstants.PASSWORD_CREDENTIALS)
                     || credentialType.equals(JSONConstants.APIKEY_CREDENTIALS))) {
                 throw new BadRequestException("unsupported credential type");
             }
-
             User user = this.userService.getUserById(userId);
+
+
+            ScopeAccess scopeAccessByAccessToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
+            if(authorizationService.authorizeCloudUser(scopeAccessByAccessToken) ||
+                    authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)){
+                User caller = getUser(scopeAccessByAccessToken);
+                if(!caller.getId().equals(userId)){
+                    throw new ForbiddenException("Access denied.");
+                }
+            }
 
             if (user == null) {
                 String errMsg = "Credential type RAX-KSKEY:apiKeyCredentials was not found for User with Id: " + userId;
@@ -1352,7 +1376,6 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
 
-
     @Override
     public ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String authToken, String userId) throws IOException {
         try {
@@ -1500,8 +1523,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             String iMarker = (marker != null) ? marker : "0";
             int iLimit = (limit != null) ? limit : 0;
             Group exist = cloudGroupService.getGroupById(Integer.parseInt(groupId));
-            if(exist == null){
-                String errorMsg = String.format("Group %s not found",groupId);
+            if (exist == null) {
+                String errorMsg = String.format("Group %s not found", groupId);
                 throw new NotFoundException(errorMsg);
             }
             Users users = cloudGroupService.getAllEnabledUsers(filters, iMarker, iLimit);
@@ -1527,16 +1550,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
                         .createUsers(this.userConverterCloudV20.toUserList(users)));
             }
-            //if caller is user-admin
-            //TODO
-            if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
-                List<User> users = new ArrayList<User>();
-                users.add(caller);
-                return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                        .createUsers(this.userConverterCloudV20.toUserList(users)));
-            }
-
-            verifyServiceAdminLevelAccess(authToken);
+            verifyUserAdminLevelAccess(authToken);
             Users users;
             if (caller.getDomainId() != null) {
                 String domainId = caller.getDomainId();
@@ -1961,8 +1975,26 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
-    //method verifies that caller is an identity admin, service admin or user admin
+    //method verifies that caller has identity admin, service admin, user admin or user role access
+    void verifyUserLevelAccess(String authToken) {
+        if (StringUtils.isBlank(authToken)) {
+            throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
+        }
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        if (authScopeAccess == null || ((HasAccessToken) authScopeAccess).isAccessTokenExpired(new DateTime())) {
+            throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
+        }
+        if (!authorizationService.authorizeCloudIdentityAdmin(authScopeAccess)
+                && !authorizationService.authorizeCloudServiceAdmin(authScopeAccess)
+                && !authorizationService.authorizeCloudUserAdmin(authScopeAccess)
+                && !authorizationService.authorizeCloudUser(authScopeAccess)) {
+            String errMsg = "Access is denied";
+            logger.warn(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
+    }
 
+    //method verifies that caller is an identity admin, service admin or user admin
     void verifyUserAdminLevelAccess(String authToken) {
         if (StringUtils.isBlank(authToken)) {
             throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
