@@ -176,4 +176,7 @@ public class DefaultGroupService implements GroupService {
         return groups;
     }
 
+    public void setDefaultUserService(DefaultUserService defaultUserService) {
+        this.defaultUserService = defaultUserService;
+    }
 }

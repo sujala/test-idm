@@ -1258,4 +1258,14 @@ public class DefaultCloud20ServiceTest {
         Response.ResponseBuilder responseBuilder = spy.listUsers(null, authToken, null, null);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
+
+    @Test
+    public void listGroupWithQueryParam_validName_returns200() throws Exception{
+        CloudKsGroupBuilder cloudKsGroupBuilder = mock(CloudKsGroupBuilder.class);
+        when(userGroupService.getGroupByName(org.mockito.Matchers.<String>anyObject())).thenReturn(group);
+        when(cloudKsGroupBuilder.build(org.mockito.Matchers.<Group>any())).thenReturn(groupKs);
+        defaultCloud20Service.setCloudKsGroupBuilder(cloudKsGroupBuilder);
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.getGroup(null,authToken,"group1");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
 }
