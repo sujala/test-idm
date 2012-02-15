@@ -33,6 +33,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
     private static String IDM_ADMIN_GROUP_DN = null;
     private static ClientRole CLOUD_ADMIN_ROLE = null;
     private static ClientRole CLOUD_SERVICE_ADMIN_ROLE = null;
+    private static ClientRole CLOUD_USER_ROLE = null;
     private static ClientRole CLOUD_USER_ADMIN_ROLE = null;
     private static ClientRole IDM_SUPER_ADMIN_ROLE = null;
 
@@ -170,6 +171,25 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
+    public boolean authorizeCloudUser(ScopeAccess scopeAccess) {
+        logger.debug("Authorizing {} as cloud user ", scopeAccess);
+
+        if (scopeAccess == null || ((HasAccessToken) scopeAccess).isAccessTokenExpired(new DateTime())) {
+            return false;
+        }
+
+        if (CLOUD_USER_ROLE == null) {
+            ClientRole role = clientDao.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserRole());
+            CLOUD_USER_ROLE = role;
+        }
+
+        boolean authorized = tenantDao.doesScopeAccessHaveTenantRole(scopeAccess, CLOUD_USER_ROLE);
+
+        logger.debug("Authorized {} as cloud user - {}", scopeAccess, authorized);
+        return authorized;
+    }
+
+    @Override
     public boolean authorizeIdmSuperAdmin(ScopeAccess scopeAccess) {
         logger.debug("Authorizing {} as idm super admin", scopeAccess);
 
@@ -257,8 +277,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
-    public boolean authorizeCustomerUser(ScopeAccess scopeAccess,
-        String customerId) {
+    public boolean authorizeCustomerUser(ScopeAccess scopeAccess, String customerId) {
         logger.debug("Authorizing {} as customer user", scopeAccess);
 
         boolean authorized = false;
@@ -271,8 +290,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
             authorized = dcsa.getUserRCN().equalsIgnoreCase(customerId);
         }
 
-        logger.debug("Authorized {} as customer user - {}", scopeAccess,
-            authorized);
+        logger.debug("Authorized {} as customer user - {}", scopeAccess,  authorized);
         return authorized;
     }
 
@@ -389,6 +407,10 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     private String getCloudAuthUserAdminRole() {
         return config.getString("cloudAuth.userAdminRole");
+    }
+
+    private String getCloudAuthUserRole() {
+        return config.getString("cloudAuth.userRole");
     }
 
     private String getIdmSuperAdminRole() {

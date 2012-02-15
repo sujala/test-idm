@@ -846,7 +846,21 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void listUsers_callsverifyServiceAdminLevelAccess() throws Exception {
+    public void listUsers_callerIsNotDefaultUser_callsVerifyServiceAdminLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(new User()).when(spy).getUser(any(ScopeAccess.class));
+        when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(scopeAccess);
+        when(authorizationService.authorizeCloudUser(any(ScopeAccess.class))).thenReturn(false);
+        spy.listUsers(null, authToken, null, 0);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
+    }
+
+    @Test
+    public void listUsers_callerIsNotUserAdmin_callsVerifyServiceAdminLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(new User()).when(spy).getUser(any(ScopeAccess.class));
+        when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(scopeAccess);
+        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(false);
         spy.listUsers(null, authToken, null, 0);
         verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
@@ -1223,5 +1237,25 @@ public class DefaultCloud20ServiceTest {
         }catch(Exception e){
             assertThat("Exception",e.getMessage(),equalTo("Invalid group id"));
         }
+    }
+
+    @Test
+    public void listUsers_callerIsUserAdmin_returns200() throws Exception {
+        UserScopeAccess scopeAccess = new UserScopeAccess();
+        doReturn(new User()).when(spy).getUser(any(ScopeAccess.class));
+        when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(scopeAccess);
+        when(authorizationService.authorizeCloudUserAdmin(scopeAccess)).thenReturn(true);
+        Response.ResponseBuilder responseBuilder = spy.listUsers(null, authToken, null, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void listUsers_callerIsDefaultUser_returns200() throws Exception {
+        UserScopeAccess scopeAccess = new UserScopeAccess();
+        doReturn(new User()).when(spy).getUser(any(ScopeAccess.class));
+        when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(scopeAccess);
+        when(authorizationService.authorizeCloudUser(scopeAccess)).thenReturn(true);
+        Response.ResponseBuilder responseBuilder = spy.listUsers(null, authToken, null, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 }

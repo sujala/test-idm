@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.rackspace.cloud.servers.bean.ListServiceTypes;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.JSONConstants;
@@ -202,7 +203,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         try {
             verifyServiceAdminLevelAccess(authToken);
-            verifyTokenHasTenantAccess(authToken,tenantId);
+            verifyTokenHasTenantAccess(authToken, tenantId);
 
             Tenant tenant = checkAndGetTenant(tenantId);
 
@@ -339,6 +340,12 @@ public class DefaultCloud20Service implements Cloud20Service {
             ClientRole roleId = clientService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserAdminRole());
             this.addUserRole(httpHeaders, authToken, userDO.getId(), roleId.getId());
         }
+        //if caller is a user admin, give user default role
+        if (authorizationService.authorizeCloudUser(scopeAccessByAccessToken)) {
+            ClientRole roleId = clientService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserRole());
+            this.addUserRole(httpHeaders, authToken, userDO.getId(), roleId.getId());
+        }
+
     }
 
     @Override
@@ -642,7 +649,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                                                       String userId, String roleId) {
         try {
             verifyServiceAdminLevelAccess(authToken);
-            verifyTokenHasTenantAccess(authToken,tenantId);
+            verifyTokenHasTenantAccess(authToken, tenantId);
             Tenant tenant = checkAndGetTenant(tenantId);
             User user = checkAndGetUser(userId);
             ClientRole role = checkAndGetClientRole(roleId);
@@ -1083,7 +1090,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         try {
             verifyServiceAdminLevelAccess(authToken);
-            verifyTokenHasTenantAccess(authToken,tenantId);
+            verifyTokenHasTenantAccess(authToken, tenantId);
 
             Tenant tenant = checkAndGetTenant(tenantId);
 
@@ -1190,7 +1197,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         try {
             verifyServiceAdminLevelAccess(authToken);
-            verifyTokenHasTenantAccess(authToken,tenantId);
+            verifyTokenHasTenantAccess(authToken, tenantId);
 
             Tenant tenant = checkAndGetTenant(tenantId);
 
@@ -1210,7 +1217,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         try {
             verifyServiceAdminLevelAccess(authToken);
-            verifyTokenHasTenantAccess(authToken,tenantId);
+            verifyTokenHasTenantAccess(authToken, tenantId);
 
             Tenant tenant = checkAndGetTenant(tenantId);
 
@@ -1405,11 +1412,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             cloudGroupService.updateGroup(groupDO);
             com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group groupKs = cloudKsGroupBuilder.build(groupDO);
             return Response.ok().entity(OBJ_FACTORIES.getRackspaceIdentityExtKsgrpV1Factory().createGroup(groupKs));
-        }
-        catch (DuplicateException bre) {
+        } catch (DuplicateException bre) {
             return roleConflictExceptionResponse(bre.getMessage());
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             return exceptionResponse(e);
         }
     }
@@ -1460,7 +1465,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             verifyServiceAdminLevelAccess(authToken);
             validateGroupId(groupId);
-            if(userId == null || userId.trim().isEmpty()){
+            if (userId == null || userId.trim().isEmpty()) {
                 throw new BadRequestException("Invalid user id");
             }
             cloudGroupService.deleteGroupFromUser(Integer.parseInt(groupId), userId);
@@ -1490,10 +1495,27 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder listUsers(HttpHeaders httpHeaders, String authToken, Integer marker, Integer limit) {
 
         try {
-            verifyServiceAdminLevelAccess(authToken);
             ScopeAccess scopeAccessByAccessToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
             User caller = getUser(scopeAccessByAccessToken);
-            Users users = null;
+
+            //if default user
+            if (authorizationService.authorizeCloudUser(scopeAccessByAccessToken)) {
+                List<User> users = new ArrayList<User>();
+                users.add(caller);
+                return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                        .createUsers(this.userConverterCloudV20.toUserList(users)));
+            }
+            //if caller is user-admin
+            //TODO
+            if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
+                List<User> users = new ArrayList<User>();
+                users.add(caller);
+                return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+                        .createUsers(this.userConverterCloudV20.toUserList(users)));
+            }
+
+            verifyServiceAdminLevelAccess(authToken);
+            Users users;
             if (caller.getDomainId() != null) {
                 String domainId = caller.getDomainId();
                 FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParamName.DOMAIN_ID, domainId)};
@@ -1514,7 +1536,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         try {
             verifyServiceAdminLevelAccess(authToken);
-            verifyTokenHasTenantAccess(authToken,tenantId);
+            verifyTokenHasTenantAccess(authToken, tenantId);
 
             Tenant tenant = checkAndGetTenant(tenantId);
 
@@ -1533,7 +1555,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         try {
             verifyServiceAdminLevelAccess(authToken);
-            verifyTokenHasTenantAccess(authToken,tenantId);
+            verifyTokenHasTenantAccess(authToken, tenantId);
 
             Tenant tenant = checkAndGetTenant(tenantId);
 
@@ -2036,6 +2058,10 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     private String getCloudAuthUserAdminRole() {
         return config.getString("cloudAuth.userAdminRole");
+    }
+
+    private String getCloudAuthUserRole() {
+        return config.getString("cloudAuth.userRole");
     }
 
     private String getCloudAuthServiceAdminRole() {
