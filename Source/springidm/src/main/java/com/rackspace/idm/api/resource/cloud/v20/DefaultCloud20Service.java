@@ -1321,12 +1321,13 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listGroups(HttpHeaders httpHeaders, String authToken, String marker, Integer limit) throws IOException {
+    public ResponseBuilder listGroups(HttpHeaders httpHeaders, String authToken, String groupName, String marker, Integer limit) throws IOException {
         try {
             verifyServiceAdminLevelAccess(authToken);
             List<Group> groups = cloudGroupService.getGroups(marker, limit);
 
             com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups cloudGroups = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups();
+
             for (Group group : groups) {
                 com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group cloudGroup = cloudKsGroupBuilder.build(group);
                 cloudGroups.getGroup().add(cloudGroup);
@@ -1337,6 +1338,20 @@ public class DefaultCloud20Service implements Cloud20Service {
             return exceptionResponse(e);
         }
     }
+
+    @Override
+    public ResponseBuilder getGroup(HttpHeaders httpHeaders, String authToken, String groupName) throws IOException {
+        try {
+            verifyServiceAdminLevelAccess(authToken);
+            Group group = cloudGroupService.getGroupByName(groupName);
+            com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group cloudGroup = cloudKsGroupBuilder.build(group);
+            return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtKsgrpV1Factory().createGroup(cloudGroup));
+        } catch (Exception e) {
+            return exceptionResponse(e);
+        }
+    }
+
+
 
     @Override
     public ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String authToken, String userId) throws IOException {
@@ -1407,6 +1422,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             verifyServiceAdminLevelAccess(authToken);
             validateKsGroup(group);
+            validateGroupId(groupId);
             group.setId(groupId);
             Group groupDO = cloudGroupBuilder.build(group);
             cloudGroupService.updateGroup(groupDO);
@@ -1478,10 +1494,16 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder listUsersWithGroup(HttpHeaders httpHeaders, String authToken, String groupId, String marker, Integer limit) throws IOException {
         try {
+            verifyServiceAdminLevelAccess(authToken);
+            validateGroupId(groupId);
             FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParamName.GROUP_ID, groupId)};
             int iMarker = 0;
             int iLimit = 0;
-            validateGroupId(groupId);
+            Group exist = cloudGroupService.getGroupById(Integer.parseInt(groupId));
+            if(exist == null){
+                String errorMsg = String.format("Group %s not found",groupId);
+                throw new NotFoundException(errorMsg);
+            }
             Users users = userService.getAllUsers(filters, iMarker, iLimit);
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUsers(this.userConverterCloudV20.toUserList(users.getUsers())));
         } catch (Exception e) {

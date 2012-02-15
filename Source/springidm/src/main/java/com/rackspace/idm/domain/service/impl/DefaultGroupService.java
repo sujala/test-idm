@@ -54,6 +54,18 @@ public class DefaultGroupService implements GroupService {
     }
 
     @Override
+    public Group getGroupByName(String groupName){
+        Group group = groupDao.getGroupByName(groupName);
+        if (group == null) {
+            String errMsg = String.format("Group %s not found", groupName);
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+
+        return group;
+    }
+
+    @Override
     public void addGroup(Group group) {
         logger.info("Adding Client Group: {}", group);
         verifyDuplicateGroup(group);
@@ -64,7 +76,10 @@ public class DefaultGroupService implements GroupService {
     @Override
     public void updateGroup(Group group) {
         logger.info("Updating Client Group: {}", group);
-        verifyDuplicateGroup(group);
+        Group groupDo = groupDao.getGroupById(group.getGroupId());
+        if(!groupDo.getName().equals(group.getName())){
+            verifyDuplicateGroup(group);
+        }
         groupDao.updateGroup(group);
     }
 

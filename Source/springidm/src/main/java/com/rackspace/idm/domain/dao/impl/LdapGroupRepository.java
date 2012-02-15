@@ -411,11 +411,11 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
     List<Modification> getModifications(Group gOld, Group gNew) {
         List<Modification> mods = new ArrayList<Modification>();
 
-        if (gNew.getName() != null && gNew.getName() != gOld.getName()) {
+        if (gNew.getName() != null && !gNew.getName().equals(gOld.getName())) {
             mods.add(new Modification(ModificationType.REPLACE, ATTR_GROUP_NAME, String.valueOf(gNew.getName())));
         }
 
-        if (gNew.getDescription() != null && gNew.getDescription() != gOld.getDescription()) {
+        if (gNew.getDescription() != null && !gNew.getDescription().equals(gOld.getDescription())) {
             mods.add(new Modification(ModificationType.REPLACE, ATTR_DESCRIPTION, String.valueOf(gNew.getDescription())));
         }
         return mods;

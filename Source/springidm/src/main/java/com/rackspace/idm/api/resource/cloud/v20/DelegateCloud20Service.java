@@ -2,7 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
-import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
+import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.*;
 import com.rackspace.idm.api.resource.cloud.CloudClient;
 import com.rackspace.idm.api.resource.cloud.CloudUserExtractor;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
@@ -14,6 +14,7 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.*;
+import org.openstack.docs.identity.api.v2.ObjectFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -73,6 +74,8 @@ public class DelegateCloud20Service implements Cloud20Service {
     private com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory objectFactoryRAXKSKEY = new com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory();
 
     private com.rackspace.docs.identity.api.ext.rax_ksqa.v1.ObjectFactory objectFactorySECRETQA = new com.rackspace.docs.identity.api.ext.rax_ksqa.v1.ObjectFactory();
+
+    private com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.ObjectFactory objectFactoryRAXGRP = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.ObjectFactory();
 
     @Override
     public Response.ResponseBuilder authenticate(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest)
@@ -199,37 +202,84 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getGroupById(HttpHeaders httpHeaders, String authToken, String groupId) throws IOException {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
+            String request = getCloudAuthV20Url() + "RAX-GRPADM/groups/" + groupId;
+            return cloudClient.get(request, httpHeaders);
+        }
+        return defaultCloud20Service.getGroupById(httpHeaders, authToken, groupId);
     }
 
     @Override
-    public ResponseBuilder addGroup(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Group group) throws IOException {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    public ResponseBuilder addGroup(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Group group) throws IOException, JAXBException {
+        if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
+            String request = getCloudAuthV20Url() + "RAX-GRPADM/groups";
+            String body = marshallObjectToString(objectFactoryRAXGRP.createGroup(group));
+            return cloudClient.post(request, httpHeaders, body);
+        }
+        return defaultCloud20Service.addGroup(httpHeaders, uriInfo, authToken, group);
     }
 
     @Override
-    public ResponseBuilder updateGroup(HttpHeaders httpHeaders, String authToken, String groupId, Group group) throws IOException {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    public ResponseBuilder updateGroup(HttpHeaders httpHeaders, String authToken, String groupId, Group group) throws IOException, JAXBException {
+        if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
+            String request = getCloudAuthV20Url() + "RAX-GRPADM/groups/" + groupId;
+            String body = marshallObjectToString(objectFactoryRAXGRP.createGroup(group));
+            return cloudClient.put(request, httpHeaders, body);
+        }
+        return defaultCloud20Service.updateGroup(httpHeaders,authToken, groupId, group);
     }
 
     @Override
     public ResponseBuilder deleteGroup(HttpHeaders httpHeaders, String authToken, String groupId) throws IOException {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
+            String request = getCloudAuthV20Url() + "RAX-GRPADM/groups/" + groupId;
+            return cloudClient.delete(request, httpHeaders);
+        }
+        return defaultCloud20Service.deleteGroup(httpHeaders,authToken, groupId);
     }
 
     @Override
     public ResponseBuilder addGroupToUser(HttpHeaders httpHeaders, String authToken, String groupId, String userId) throws IOException {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+         if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
+            String request = getCloudAuthV20Url() + "RAX-GRPADM/groups/" + groupId + "/users/" + userId;
+            return cloudClient.put(request, httpHeaders, null);
+        }
+        return defaultCloud20Service.addGroupToUser(httpHeaders, authToken, groupId, userId);
     }
 
     @Override
     public ResponseBuilder removeGroupFromUser(HttpHeaders httpHeaders, String authToken, String groupId, String userId) throws IOException {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
+            String request = getCloudAuthV20Url() + "RAX-GRPADM/groups/" + groupId + "/users/" + userId;
+            return cloudClient.delete(request, httpHeaders);
+        }
+        return defaultCloud20Service.removeGroupFromUser(httpHeaders, authToken, groupId, userId);
     }
 
     @Override
     public ResponseBuilder listUsersWithGroup(HttpHeaders httpHeaders, String authToken, String groupId, String marker, Integer limit) throws IOException {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
+            // TODO: Implement routing to DefaultCloud20Service
+            String request = getCloudAuthV20Url() + "/RAX-GRPADM/groups/" + groupId + "/users";
+            HashMap<String, Object> params = new HashMap<String, Object>();
+            params.put("marker", marker);
+            params.put("limit", limit);
+            request = appendQueryParams(request, params);
+            return cloudClient.get(request, httpHeaders);
+        }
+        return defaultCloud20Service.listUsersWithGroup(httpHeaders, authToken, groupId, marker, limit);
+    }
+
+    @Override
+    public ResponseBuilder getGroup(HttpHeaders httpHeaders, String authToken, String groupName) throws IOException {
+        if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
+            String request = getCloudAuthV20Url() + "RAX-GRPADM/groups";
+            HashMap<String, Object> params = new HashMap<String, Object>();
+            params.put("name", groupName);
+            request = appendQueryParams(request, params);
+            return cloudClient.get(request, httpHeaders);
+        }
+        return defaultCloud20Service.listGroups(httpHeaders, authToken, groupName, null, null);
     }
 
     @Override
@@ -276,8 +326,17 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listGroups(HttpHeaders httpHeaders, String authToken, String marker, Integer limit) throws IOException {
-        return null;
+    public ResponseBuilder listGroups(HttpHeaders httpHeaders, String authToken, String marker, String groupName, Integer limit) throws IOException {
+        if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
+            String request = getCloudAuthV20Url() + "RAX-GRPADM/groups";
+            HashMap<String, Object> params = new HashMap<String, Object>();
+            params.put("name", groupName);
+            params.put("marker", marker);
+            params.put("limit", limit);
+            request = appendQueryParams(request, params);
+            return cloudClient.get(request, httpHeaders);
+        }
+        return defaultCloud20Service.listGroups(httpHeaders, authToken, groupName, marker, limit);
     }
 
     @Override
