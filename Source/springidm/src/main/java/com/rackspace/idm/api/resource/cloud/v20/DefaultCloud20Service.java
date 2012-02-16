@@ -507,9 +507,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder addUserRole(HttpHeaders httpHeaders, String authToken, String userId, String roleId) {
 
         try {
-            verifyServiceAdminLevelAccess(authToken);
+            verifyUserAdminLevelAccess(authToken);
             User user = checkAndGetUser(userId);
             ClientRole cRole = checkAndGetClientRole(roleId);
+            ScopeAccess scopeAccessByAccessToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
+            if (!authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken)
+                    && config.getString("cloudAuth.adminRole").equals(cRole.getName())) {
+                throw new ForbiddenException("Access is denied");
+            }
             TenantRole role = new TenantRole();
             role.setClientId(cRole.getClientId());
             role.setName(cRole.getName());
@@ -756,7 +761,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder deleteUserRole(HttpHeaders httpHeaders, String authToken, String userId, String roleId) {
 
         try {
-            verifyServiceAdminLevelAccess(authToken);
+            verifyUserAdminLevelAccess(authToken);
+
             User user = checkAndGetUser(userId);
             List<TenantRole> globalRoles = this.tenantService.getGlobalRolesForUser(user);
             TenantRole role = null;
@@ -769,6 +775,11 @@ public class DefaultCloud20Service implements Cloud20Service {
                 String errMsg = String.format("Role %s not found for user %s", roleId, userId);
                 logger.warn(errMsg);
                 throw new NotFoundException(errMsg);
+            }
+            ScopeAccess scopeAccessByAccessToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
+            if (!authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken)
+                    && config.getString("cloudAuth.adminRole").equals(role.getName())) {
+                throw new ForbiddenException("Access is denied");
             }
             this.tenantService.deleteGlobalRole(role);
             return Response.noContent();
@@ -952,7 +963,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 logger.warn(errMsg);
                 throw new NotFoundException(errMsg);
             }
-            
+
             if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
                 verifyDomain(user, caller);
             }
@@ -1000,10 +1011,10 @@ public class DefaultCloud20Service implements Cloud20Service {
 
 
             ScopeAccess scopeAccessByAccessToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
-            if(authorizationService.authorizeCloudUser(scopeAccessByAccessToken) ||
-                    authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)){
+            if (authorizationService.authorizeCloudUser(scopeAccessByAccessToken) ||
+                    authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
                 User caller = getUser(scopeAccessByAccessToken);
-                if(!caller.getId().equals(userId)){
+                if (!caller.getId().equals(userId)) {
                     throw new ForbiddenException("Access denied.");
                 }
             }
@@ -1306,20 +1317,23 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder listUserGlobalRoles(HttpHeaders httpHeaders, String authToken, String userId) throws IOException {
 
         try {
-            verifyServiceAdminLevelAccess(authToken);
+            verifyUserLevelAccess(authToken);
 
             User user = this.userService.getUserById(userId);
-
             if (user == null) {
                 String errMsg = "No Roles found User with id: " + userId;
                 logger.warn(errMsg);
                 throw new NotFoundException(errMsg);
             }
+            ScopeAccess scopeAccessByAccessToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
+            User caller = getUser(scopeAccessByAccessToken);
+            if (!authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken)
+                    && !authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken)) {
+                verifyDomain(user, caller);
+            }
 
             List<TenantRole> roles = tenantService.getGlobalRolesForUser(user);
-
-            return Response.ok(
-                    OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListJaxb(roles)));
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListJaxb(roles)));
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
@@ -1867,7 +1881,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         return application;
     }
 
-    private ClientRole checkAndGetClientRole(String id) {
+    ClientRole checkAndGetClientRole(String id) {
         ClientRole cRole = this.clientService.getClientRoleById(id);
         if (cRole == null) {
             String errMsg = String.format("Role %s not found", id);
@@ -1922,7 +1936,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         return sa;
     }
 
-    private User checkAndGetUser(String id) {
+    User checkAndGetUser(String id) {
         User user = this.userService.getUserById(id);
 
         if (user == null) {

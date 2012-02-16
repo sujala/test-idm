@@ -592,13 +592,28 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void addUserRole_callsVerifyServiceAdminLevelAccess() throws Exception {
+    public void addUserRole_callsVerifyUserAdminLevelAccess() throws Exception {
         spy.addUserRole(null, authToken, authToken, null);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(spy).verifyUserAdminLevelAccess(authToken);
     }
 
     @Test
-    public void checkToken_callsverifyServiceAdminLevelAccess() throws Exception {
+    public void addUserRole_userNotIdentityAdminAndRoleIsIdentityAdmin_returns403() throws Exception {
+        doNothing().when(spy).verifyUserAdminLevelAccess(authToken);
+        ScopeAccess scopeAccess = new ScopeAccess();
+        when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(scopeAccess);
+        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(false);
+        when(config.getString("cloudAuth.adminRole")).thenReturn("admin");
+        ClientRole clientRole1 = new ClientRole();
+        clientRole1.setName("admin");
+        doReturn(clientRole1).when(spy).checkAndGetClientRole(roleId);
+        doReturn(new User()).when(spy).checkAndGetUser(null);
+        Response.ResponseBuilder responseBuilder = spy.addUserRole(null, authToken, null, roleId);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(403));
+    }
+
+    @Test
+    public void checkToken_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.checkToken(null, authToken, authToken, null);
         verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
@@ -656,25 +671,25 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void deleteUserCredential_callsverifyServiceAdminLevelAccess() throws Exception {
+    public void deleteUserCredential_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.deleteUserCredential(null, authToken, null, null);
         verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void deleteUserRole_callsverifyServiceAdminLevelAccess() throws Exception {
+    public void deleteUserRole_callsVerifyUserAdminLevelAccess() throws Exception {
         spy.deleteUserRole(null, authToken, null, null);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(spy).verifyUserAdminLevelAccess(authToken);
     }
 
     @Test
-    public void getEndpoint_callsverifyServiceAdminLevelAccess() throws Exception {
+    public void getEndpoint_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.getEndpoint(null, authToken, null, null);
         verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void getEndpointTemplate_callsverifyServiceAdminLevelAccess() throws Exception {
+    public void getEndpointTemplate_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.getEndpointTemplate(null, authToken, null);
         verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
@@ -786,9 +801,9 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void listUserGlobalRoles_callsVerifyServiceAdminLevelAccess() throws Exception {
+    public void listUserGlobalRoles_callsVerifyUserLevelAccess() throws Exception {
         spy.listUserGlobalRoles(null, authToken, null);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(spy).verifyUserLevelAccess(authToken);
     }
 
     @Test
