@@ -523,6 +523,9 @@ public class DefaultAuthenticationService implements AuthenticationService {
     
     private void validateCredentials(final Credentials trParam) {
     	ApiError error = null;
+        if(trParam.getGrantType() == null)
+            throw new BadRequestException("Invalid request: Missing or malformed parameter(s).");
+
     	switch (trParam.getOAuthGrantType()) {
 	    	case PASSWORD:
 	    		error = inputValidator.validate(trParam, Default.class, BasicCredentialsCheck.class);

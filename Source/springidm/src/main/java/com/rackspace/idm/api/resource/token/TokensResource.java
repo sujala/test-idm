@@ -13,6 +13,7 @@ import com.rackspace.idm.domain.service.AuthenticationService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TokenService;
+import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.rackspace.idm.validation.InputValidator;
@@ -26,7 +27,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.ws.rs.*;
-import javax.ws.rs.core.*;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.Unmarshaller;
@@ -83,21 +87,25 @@ public class TokensResource extends ParentResource {
         // Jersey will only marshal to the specific param type defined. Manually do the marshalling here.
 
         JAXBElement<? extends com.rackspace.api.idm.v1.Credentials> creds = null;
-        if (httpHeaders.getMediaType().isCompatible(MediaType.APPLICATION_JSON_TYPE)) {
-            JSONConfiguration jsonConfiguration = JSONConfiguration.natural().rootUnwrapping(false).build();
-            JSONJAXBContext context = new JSONJAXBContext(jsonConfiguration, "com.rackspace.api.idm.v1");
-            JSONUnmarshaller jsonUnmarshaller = context.createJSONUnmarshaller();
-            StringReader reader = new StringReader(credentials.getEntity());
-            if (credentials.getEntity().contains("\"rackerCredentials\":")) {
-                creds = jsonUnmarshaller.unmarshalJAXBElementFromJSON(reader, RackerCredentials.class);
-            }else{
-                creds = jsonUnmarshaller.unmarshalJAXBElementFromJSON(reader, AuthCredentials.class);
+        try {
+            if (httpHeaders.getMediaType().isCompatible(MediaType.APPLICATION_JSON_TYPE)) {
+                JSONConfiguration jsonConfiguration = JSONConfiguration.natural().rootUnwrapping(false).build();
+                JSONJAXBContext context = new JSONJAXBContext(jsonConfiguration, "com.rackspace.api.idm.v1");
+                JSONUnmarshaller jsonUnmarshaller = context.createJSONUnmarshaller();
+                StringReader reader = new StringReader(credentials.getEntity());
+                if (credentials.getEntity().contains("\"rackerCredentials\":")) {
+                    creds = jsonUnmarshaller.unmarshalJAXBElementFromJSON(reader, RackerCredentials.class);
+                }else{
+                    creds = jsonUnmarshaller.unmarshalJAXBElementFromJSON(reader, AuthCredentials.class);
+                }
+            } else {
+                JAXBContext context = JAXBContextResolver.get();
+                Unmarshaller unmarshaller = context.createUnmarshaller();
+                StringReader reader = new StringReader(credentials.getEntity());
+                creds = (JAXBElement<? extends com.rackspace.api.idm.v1.Credentials>) unmarshaller.unmarshal(reader);
             }
-        } else {
-            JAXBContext context = JAXBContextResolver.get();
-            Unmarshaller unmarshaller = context.createUnmarshaller();
-            StringReader reader = new StringReader(credentials.getEntity());
-            creds = (JAXBElement<? extends com.rackspace.api.idm.v1.Credentials>) unmarshaller.unmarshal(reader);
+        }catch(Exception ex){
+            throw new BadRequestException("Bad Request.");
         }
         Credentials credentialsDO = credentialsConverter.toCredentialsDO(creds.getValue());
 
