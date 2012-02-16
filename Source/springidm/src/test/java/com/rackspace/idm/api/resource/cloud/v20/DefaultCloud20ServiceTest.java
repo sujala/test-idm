@@ -16,7 +16,6 @@ import com.unboundid.ldap.sdk.SearchResultEntry;
 import org.apache.commons.configuration.Configuration;
 import org.hamcrest.Matchers;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
@@ -474,13 +473,6 @@ public class DefaultCloud20ServiceTest {
         verify(endpointService).addBaseUrl(baseUrl);
     }
 
-    @Ignore
-    @Test
-    public void getGroupList_callsUserService() throws Exception {
-        spy.listUserGroups(null, authToken, userId);
-        verify(userService).getUserById(userId);
-    }
-
     @Test
     public void addRole_callsClientService_addClientRole() throws Exception {
         doNothing().when(spy).verifyServiceAdminLevelAccess(anyString());
@@ -488,22 +480,6 @@ public class DefaultCloud20ServiceTest {
         verify(clientService).addClientRole(any(ClientRole.class));
     }
 
-    @Ignore
-    @Test
-    public void listUserGroups_withUserNotFound_returns404() throws Exception {
-        when(userService.getUserById(userId)).thenReturn(null);
-        Response.ResponseBuilder responseBuilder = spy.listUserGroups(null, authToken, userId);
-        assertThat("code", responseBuilder.build().getStatus(), equalTo(404));
-    }
-
-    @Ignore
-    @Test
-    public void listUserGroups_withNullUserPassedIn_returns400() throws Exception {
-        Response.ResponseBuilder responseBuilder = spy.listUserGroups(null, authToken, null);
-        assertThat("code", responseBuilder.build().getStatus(), equalTo(400));
-    }
-
-    @Ignore
     @Test
     public void listUserGroups_withValidUser_returns200() throws Exception {
         when(userService.getUserById(userId)).thenReturn(user);
@@ -511,7 +487,6 @@ public class DefaultCloud20ServiceTest {
         assertThat("code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
-    @Ignore
     @Test
     public void listUserGroups_withValidUser_returnsNonNullEntity() throws Exception {
         when(userService.getUserById(userId)).thenReturn(user);
@@ -519,29 +494,11 @@ public class DefaultCloud20ServiceTest {
         assertThat("code", responseBuilder.build().getEntity(), Matchers.<Object>notNullValue());
     }
 
-    @Ignore
     @Test
     public void listUserGroups_withValidUser_returnsAJaxbElement() throws Exception {
         when(userService.getUserById(userId)).thenReturn(user);
         Response.ResponseBuilder responseBuilder = spy.listUserGroups(null, authToken, userId);
         assertThat("code", responseBuilder.build().getEntity(), instanceOf(javax.xml.bind.JAXBElement.class));
-    }
-
-    @Ignore
-    @Test
-    public void listUserGroups_withValidUser_invalidMossoId_returns404() throws Exception {
-        user.setMossoId(null);
-        when(userService.getUserById(userId)).thenReturn(user);
-        Response.ResponseBuilder responseBuilder = spy.listUserGroups(null, authToken, userId);
-        assertThat("code", responseBuilder.build().getStatus(), equalTo(404));
-    }
-
-    @Ignore
-    @Test
-    public void listUserGroups_withValidUser_callsUserGroupService() throws Exception {
-        when(userService.getUserById(userId)).thenReturn(user);
-        spy.listUserGroups(null, authToken, userId);
-        verify(userGroupService).getGroups("1", 100);
     }
 
     @Test
@@ -552,22 +509,14 @@ public class DefaultCloud20ServiceTest {
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(401));
     }
 
-    @Ignore
-    public void listTenants_invalidToken_returnsEmptyList() throws Exception {
-        when(scopeAccessService.getAccessTokenByAuthHeader("bad")).thenReturn(null);
-        when(tenantConverterCloudV20.toTenantList(org.mockito.Matchers.<List<Tenant>>any())).thenReturn(null);
-        Response.ResponseBuilder responseBuilder = spy.listTenants(null, "bad", null, 1);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
-    }
-
     @Test
-    public void addEndpoint_callsverifyServiceAdminLevelAccess() throws Exception {
+    public void addEndpoint_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.addEndpoint(null, authToken, null, null);
         verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void addEndpointTemplate_callsverifyServiceAdminLevelAccess() throws Exception {
+    public void addEndpointTemplate_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.addEndpointTemplate(null, null, authToken, null);
         verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
@@ -837,22 +786,21 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void listUserGlobalRoles_callsverifyServiceAdminLevelAccess() throws Exception {
+    public void listUserGlobalRoles_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.listUserGlobalRoles(null, authToken, null);
         verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void listUserGlobalROlesByServiceId_callsverifyServiceAdminLevelAccess() throws Exception {
+    public void listUserGlobalROlesByServiceId_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.listUserGlobalRolesByServiceId(null, authToken, null, null);
         verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
-    @Ignore
     @Test
-    public void listUserGroups_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void listUserGroups_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.listUserGroups(null, authToken, null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
@@ -1104,9 +1052,9 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void listTenants_callsVerifyServiceAdminLevelAccess() throws Exception {
+    public void listTenants_callsUserLevelAccess() throws Exception {
         spy.listTenants(null, null, null, null);
-        verify(spy).verifyServiceAdminLevelAccess(null);
+        verify(spy).verifyUserLevelAccess(null);
     }
 
     @Test

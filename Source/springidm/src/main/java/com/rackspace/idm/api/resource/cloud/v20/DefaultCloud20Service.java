@@ -1279,7 +1279,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder listTenants(HttpHeaders httpHeaders, String authToken, String marker, Integer limit)
             throws IOException {
         try {
-            verifyServiceAdminLevelAccess(authToken);
+            verifyUserLevelAccess(authToken);
             List<Tenant> tenants = new ArrayList<Tenant>();
 
             ScopeAccess access = this.scopeAccessService.getAccessTokenByAuthHeader(authToken);
