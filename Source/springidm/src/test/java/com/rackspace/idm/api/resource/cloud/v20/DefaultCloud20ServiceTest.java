@@ -604,22 +604,22 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void deleteEndpoint_callsverifyServiceAdminLevelAccess() throws Exception {
+    public void deleteEndpoint_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.deleteEndpoint(null, authToken, authToken, null);
         verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void deleteEndpointTemplate_callsverifyServiceAdminLevelAccess() throws Exception {
+    public void deleteEndpointTemplate_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.deleteEndpointTemplate(null, authToken, null);
         verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
-    public void deleteRole_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+    public void deleteRole_callsVerifyIdentityAdminLevelAccess() throws Exception {
         doNothing().when(spy).verifyServiceAdminLevelAccess(anyString());
         spy.deleteRole(null, authToken, roleId);
-        verify(spy).verifyServiceAdminLevelAccess(anyString());
+        verify(spy).verifyIdentityAdminLevelAccess(anyString());
     }
 
     @Test

@@ -632,7 +632,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder deleteRole(HttpHeaders httpHeaders, String authToken, String roleId) {
         try {
-            verifyServiceAdminLevelAccess(authToken);
+            verifyIdentityAdminLevelAccess(authToken);
             if (roleId == null) {
                 throw new BadRequestException("roleId cannot be null");
             }
@@ -1958,8 +1958,23 @@ public class DefaultCloud20Service implements Cloud20Service {
         return user;
     }
 
-    //method verifies that caller is an identity admin or a service admin
+    //method verifies that caller has the identity admin
+    void verifyIdentityAdminLevelAccess(String authToken) {
+        if (StringUtils.isBlank(authToken)) {
+            throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
+        }
+        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        if (authScopeAccess == null || ((HasAccessToken) authScopeAccess).isAccessTokenExpired(new DateTime())) {
+            throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
+        }
+        if (!authorizationService.authorizeCloudIdentityAdmin(authScopeAccess)) {
+            String errMsg = "Access is denied";
+            logger.warn(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
+    }
 
+    //method verifies that caller is an identity admin or a service admin
     void verifyServiceAdminLevelAccess(String authToken) {
         if (StringUtils.isBlank(authToken)) {
             throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
