@@ -859,9 +859,9 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void updateUser_callsverifyUserAdminLevelAccess() throws Exception {
+    public void updateUser_callsVerifyUserLevelAccess() throws Exception {
         spy.updateUser(null, authToken, null, null);
-        verify(spy).verifyUserAdminLevelAccess(authToken);
+        verify(spy).verifyUserLevelAccess(authToken);
     }
 
     @Test(expected = BadRequestException.class)
