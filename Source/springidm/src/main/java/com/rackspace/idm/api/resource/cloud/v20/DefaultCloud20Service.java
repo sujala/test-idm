@@ -351,13 +351,21 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder updateUser(HttpHeaders httpHeaders, String authToken, String userId, UserForCreate user) throws IOException {
         try {
-            verifyUserAdminLevelAccess(authToken);
+            verifyUserLevelAccess(authToken);
             if (user.getPassword() != null) {
                 validatePassword(user.getPassword());
             }
             User retrievedUser = checkAndGetUser(userId);
+            ScopeAccess scopeAccessByAccessToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
+            //if caller is default user, usedId must match callers user id
+            if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
+                User caller = userService.getUserByAuthToken(authToken);
+                if(caller.getId()!=retrievedUser.getId()){
+                    throw new ForbiddenException("Access is denied");
+                }
+            }
             //if user admin, verify domain
-            if (authorizationService.authorizeCloudUserAdmin(scopeAccessService.getScopeAccessByAccessToken(authToken))) {
+            if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
                 User caller = userService.getUserByAuthToken(authToken);
                 verifyDomain(retrievedUser, caller);
             }
