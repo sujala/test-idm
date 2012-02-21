@@ -387,8 +387,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     void setDomainId(ScopeAccess scopeAccessByAccessToken, User userDO) {
-        if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)
-                || authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken)) {
+        if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
             User caller = getUser(scopeAccessByAccessToken);
             //is userAdmin
             userDO.setDomainId(caller.getDomainId());

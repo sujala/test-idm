@@ -1256,4 +1256,10 @@ public class DefaultCloud20ServiceTest {
         Response.ResponseBuilder responseBuilder = defaultCloud20Service.getGroup(null,authToken,"group1");
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
+
+    @Test
+    public void setDomainId_callsAuthorizeCloudUserAdmin() throws Exception {
+        defaultCloud20Service.setDomainId(null,null);
+        verify(authorizationService).authorizeCloudUserAdmin(null);
+    }
 }
