@@ -1682,7 +1682,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             this.userService.updateUser(user, false);
 
-            return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtKsqaV1Factory().createSecretQA(secrets));
+            return Response.ok();
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }

@@ -853,7 +853,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         if(isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)){
             String request = getCloudAuthV20Url() + "users/" + userId  + "/RAX-KSQA/secretqa";
             String body = marshallObjectToString(objectFactorySECRETQA.createSecretQA(secrets));
-            return cloudClient.post(request, httpHeaders, body);
+            return cloudClient.put(request, httpHeaders, body);
         }
         return defaultCloud20Service.updateSecretQA(httpHeaders, authToken, userId, secrets);
     }
