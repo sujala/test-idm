@@ -360,7 +360,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             //if caller is default user, usedId must match callers user id
             if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
                 User caller = userService.getUserByAuthToken(authToken);
-                if(caller.getId()!=retrievedUser.getId()){
+                if (caller.getId() != retrievedUser.getId()) {
                     throw new ForbiddenException("Access is denied");
                 }
             }
@@ -1573,13 +1573,16 @@ public class DefaultCloud20Service implements Cloud20Service {
                         .createUsers(this.userConverterCloudV20.toUserList(users)));
             }
             verifyUserAdminLevelAccess(authToken);
-            Users users;
-            if (caller.getDomainId() != null) {
-                String domainId = caller.getDomainId();
-                FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParamName.DOMAIN_ID, domainId)};
-                users = this.userService.getAllUsers(filters, marker, limit);
-            } else {
+            Users users = new Users();
+            if (authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken) ||
+                    authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken)) {
                 users = this.userService.getAllUsers(null, marker, limit);
+            } else {
+                if (caller.getDomainId() != null) {
+                    String domainId = caller.getDomainId();
+                    FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParamName.DOMAIN_ID, domainId)};
+                    users = this.userService.getAllUsers(filters, marker, limit);
+                }
             }
 
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()

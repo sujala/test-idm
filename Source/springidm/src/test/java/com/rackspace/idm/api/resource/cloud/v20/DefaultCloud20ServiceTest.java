@@ -1206,9 +1206,23 @@ public class DefaultCloud20ServiceTest {
     public void listUsers_callerIsUserAdmin_callsGetAllUsers() throws Exception {
         UserScopeAccess scopeAccess = new UserScopeAccess();
         doNothing().when(spy).verifyUserAdminLevelAccess(authToken);
-        doReturn(new User()).when(spy).getUser(any(ScopeAccess.class));
+        User user1 = new User();
+        user1.setDomainId("testDomain");
+        doReturn(user1).when(spy).getUser(any(ScopeAccess.class));
         when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(scopeAccess);
         when(authorizationService.authorizeCloudUserAdmin(scopeAccess)).thenReturn(true);
+        spy.listUsers(null, authToken, null, null);
+        verify(userService).getAllUsers(any(FilterParam[].class), any(Integer.class), any(Integer.class));
+    }
+
+    @Test
+    public void listUsers_callerIsServiceAdmin_callsGetAllUsers() throws Exception {
+        UserScopeAccess scopeAccess = new UserScopeAccess();
+        doNothing().when(spy).verifyUserAdminLevelAccess(authToken);
+        doReturn(new User()).when(spy).getUser(any(ScopeAccess.class));
+        when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(scopeAccess);
+        when(authorizationService.authorizeCloudUserAdmin(scopeAccess)).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(true);
         spy.listUsers(null, authToken, null, null);
         verify(userService).getAllUsers(null,null,null);
     }
