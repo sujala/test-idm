@@ -864,6 +864,16 @@ public class DefaultCloud20ServiceTest {
         verify(spy).verifyUserLevelAccess(authToken);
     }
 
+    @Test
+    public void updateUser_callsAuthorizeCloudUser() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doNothing().when(spy).verifyUserLevelAccess(authToken);
+        doReturn(new User()).when(spy).checkAndGetUser(anyString());
+        when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(scopeAccess);
+        spy.updateUser(null, authToken, null, new UserForCreate());
+        verify(authorizationService).authorizeCloudUser(scopeAccess);
+    }
+
     @Test(expected = BadRequestException.class)
     public void validateUser_missingUsername_throwsBadRequestException() throws Exception {
         defaultCloud20Service.validateUser(new org.openstack.docs.identity.api.v2.User());

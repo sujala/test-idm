@@ -358,7 +358,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             User retrievedUser = checkAndGetUser(userId);
             ScopeAccess scopeAccessByAccessToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
             //if caller is default user, usedId must match callers user id
-            if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
+            if (authorizationService.authorizeCloudUser(scopeAccessByAccessToken)) {
                 User caller = userService.getUserByAuthToken(authToken);
                 if (caller.getId() != retrievedUser.getId()) {
                     throw new ForbiddenException("Access is denied");
