@@ -360,7 +360,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             //if caller is default user, usedId must match callers user id
             if (authorizationService.authorizeCloudUser(scopeAccessByAccessToken)) {
                 User caller = userService.getUserByAuthToken(authToken);
-                if (caller.getId() != retrievedUser.getId()) {
+                if (!caller.getId().equals(retrievedUser.getId())) {
                     throw new ForbiddenException("Access is denied");
                 }
             }
@@ -542,6 +542,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             User user = null;
             UserScopeAccess usa = null;
+
             if (authenticationRequest.getToken() != null && !StringUtils.isBlank(authenticationRequest.getToken().getId())) {
                 ScopeAccess sa = scopeAccessService.getScopeAccessByAccessToken(authenticationRequest.getToken().getId());
                 if (sa == null || ((HasAccessToken) sa).isAccessTokenExpired(new DateTime()) || !(sa instanceof UserScopeAccess)) {

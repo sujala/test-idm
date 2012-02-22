@@ -6,6 +6,7 @@ import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.resource.cloud.CloudClient;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
+import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.configuration.Configuration;
 import org.openstack.docs.common.api.v1.VersionChoice;
@@ -82,6 +83,9 @@ public class Cloud20VersionResource {
     @Path("tokens")
     public Response authenticate(@Context HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest)
             throws IOException, JAXBException {
+        if(authenticationRequest.getCredential() == null)
+            throw new BadRequestException("Unable to parse Auth data. Please review XML or JSON formatting.");
+
         return getCloud20Service().authenticate(httpHeaders, authenticationRequest).build();
     }
 
@@ -205,6 +209,7 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @Context UriInfo uriInfo,
             @HeaderParam(X_AUTH_TOKEN) String authToken, UserForCreate user) throws IOException, JAXBException {
+
         return getCloud20Service().addUser(httpHeaders, uriInfo, authToken, user).build();
     }
 
