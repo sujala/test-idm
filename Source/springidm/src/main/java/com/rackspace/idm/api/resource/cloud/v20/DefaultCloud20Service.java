@@ -395,11 +395,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     void validateUser(org.openstack.docs.identity.api.v2.User user) {
-        if (StringUtils.isBlank(user.getUsername())) {
-            String errorMsg = "Expecting username";
-            logger.warn(errorMsg);
-            throw new BadRequestException(errorMsg);
-        }
+        String username = user.getUsername();
+        validateUsername(username);
         String email = user.getEmail();
         if (StringUtils.isBlank(email)) {
             String errorMsg = "Expecting valid email address";
@@ -414,14 +411,23 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     }
 
+    void validateUsername(String username) {
+        if (StringUtils.isBlank(username)) {
+            String errorMsg = "Expecting username";
+            logger.warn(errorMsg);
+            throw new BadRequestException(errorMsg);
+        }
+        if (username.contains(" ")) {
+            String errorMsg = "Username should not contain white spaces";
+            logger.warn(errorMsg);
+            throw new BadRequestException(errorMsg);
+        }
+    }
+
     void validatePasswordCredentials(PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername) {
         String username = passwordCredentialsRequiredUsername.getUsername();
         String password = passwordCredentialsRequiredUsername.getPassword();
-        if (StringUtils.isBlank(username)) {
-            String errMsg = "Expecting username";
-            logger.warn(errMsg);
-            throw new BadRequestException(errMsg);
-        }
+        validateUsername(username);
         if (StringUtils.isBlank(password)) {
             String errMsg = "Expecting password";
             logger.warn(errMsg);
@@ -452,11 +458,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     void validateApiKeyCredentials(ApiKeyCredentials apiKeyCredentials) {
         String username = apiKeyCredentials.getUsername();
         String apiKey = apiKeyCredentials.getApiKey();
-        if (StringUtils.isBlank(username)) {
-            String errMsg = "Expecting username";
-            logger.warn(errMsg);
-            throw new BadRequestException(errMsg);
-        }
+        validateUsername(username);
         if (StringUtils.isBlank(apiKey)) {
             String errMsg = "Expecting apiKey";
             logger.warn(errMsg);
@@ -1730,11 +1732,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException(errMsg);
             }
 
-            if (StringUtils.isBlank(creds.getUsername())) {
-                String errMsg = "Expecting username";
-                logger.warn(errMsg);
-                throw new BadRequestException(errMsg);
-            }
+            validateUsername(creds.getUsername());
             User credUser = this.userService.getUser(creds.getUsername());
 
             if (credUser == null) {
