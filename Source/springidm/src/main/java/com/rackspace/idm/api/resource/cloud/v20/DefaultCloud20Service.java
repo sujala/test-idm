@@ -341,7 +341,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             this.addUserRole(httpHeaders, authToken, userDO.getId(), roleId.getId());
         }
         //if caller is a user admin, give user default role
-        if (authorizationService.authorizeCloudUser(scopeAccessByAccessToken)) {
+        if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
             ClientRole roleId = clientService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserRole());
             this.addUserRole(httpHeaders, authToken, userDO.getId(), roleId.getId());
         }

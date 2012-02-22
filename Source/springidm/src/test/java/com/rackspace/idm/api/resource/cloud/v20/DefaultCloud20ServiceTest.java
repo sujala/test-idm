@@ -1262,4 +1262,22 @@ public class DefaultCloud20ServiceTest {
         defaultCloud20Service.setDomainId(null,null);
         verify(authorizationService).authorizeCloudUserAdmin(null);
     }
+
+    @Test
+    public void assignProperRole_callsAuthorizeCloudUserAdmin() throws Exception {
+        defaultCloud20Service.assignProperRole(null,authToken,null,null);
+        verify(authorizationService).authorizeCloudUserAdmin(null);
+    }
+
+    @Test
+    public void assignProperRole_callsAuthorizeCloudServiceAdmin() throws Exception {
+        defaultCloud20Service.assignProperRole(null,authToken,null,null);
+        verify(authorizationService).authorizeCloudServiceAdmin(null);
+    }
+
+    @Test
+    public void assignProperRole_callsAuthorizeCloudIdentityAdmin() throws Exception {
+        defaultCloud20Service.assignProperRole(null,authToken,null,null);
+        verify(authorizationService).authorizeCloudIdentityAdmin(null);
+    }
 }
