@@ -880,48 +880,33 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         user.setUniqueId(resultEntry.getDN());
         user.setUsername(resultEntry.getAttributeValue(ATTR_UID));
         user.setCountry(resultEntry.getAttributeValue(ATTR_C));
-        user.setDisplayName(cryptHelper.decrypt(resultEntry
-            .getAttributeValueBytes(ATTR_DISPLAY_NAME)));
-        user.setFirstname(cryptHelper.decrypt(resultEntry
-            .getAttributeValueBytes(ATTR_GIVEN_NAME)));
-        user.setEmail(cryptHelper.decrypt(resultEntry
-            .getAttributeValueBytes(ATTR_MAIL)));
+        user.setDisplayName(cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_DISPLAY_NAME)));
+        user.setFirstname(cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_GIVEN_NAME)));
+        user.setEmail(cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_MAIL)));
         user.setMiddlename(resultEntry.getAttributeValue(ATTR_MIDDLE_NAME));
         user.setPreferredLang(resultEntry.getAttributeValue(ATTR_LANG));
-        user.setCustomerId(resultEntry
-            .getAttributeValue(ATTR_RACKSPACE_CUSTOMER_NUMBER));
-        user.setPersonId(resultEntry
-            .getAttributeValue(ATTR_RACKSPACE_PERSON_NUMBER));
-        user.setApiKey(cryptHelper.decrypt(resultEntry
-            .getAttributeValueBytes(ATTR_RACKSPACE_API_KEY)));
-        user.setSecretQuestion(cryptHelper.decrypt(resultEntry
-            .getAttributeValueBytes(ATTR_PASSWORD_SECRET_Q)));
-        user.setSecretAnswer(cryptHelper.decrypt(resultEntry
-            .getAttributeValueBytes(ATTR_PASSWORD_SECRET_A)));
-        user.setLastname(cryptHelper.decrypt(resultEntry
-            .getAttributeValueBytes(ATTR_SN)));
+        user.setCustomerId(resultEntry.getAttributeValue(ATTR_RACKSPACE_CUSTOMER_NUMBER));
+        user.setPersonId(resultEntry.getAttributeValue(ATTR_RACKSPACE_PERSON_NUMBER));
+        user.setApiKey(cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_RACKSPACE_API_KEY)));
+        user.setSecretQuestion(cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_PASSWORD_SECRET_Q)));
+        user.setSecretAnswer(cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_PASSWORD_SECRET_A)));
+        user.setLastname(cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_SN)));
         user.setTimeZoneObj(DateTimeZone.forID(resultEntry.getAttributeValue(ATTR_TIME_ZONE)));
         user.setDomainId(resultEntry.getAttributeValue(ATTR_DOMAIN_ID));
         user.setDomainId(resultEntry.getAttributeValue(ATTR_DOMAIN_ID));
 
-        String ecryptedPwd = cryptHelper.decrypt(resultEntry
-            .getAttributeValueBytes(ATTR_CLEAR_PASSWORD));
-        Date lastUpdates = resultEntry
-            .getAttributeValueAsDate(ATTR_PASSWORD_UPDATED_TIMESTAMP);
-        boolean wasSelfUpdated = resultEntry
-            .getAttributeValueAsBoolean(ATTR_PASSWORD_SELF_UPDATED);
+        String ecryptedPwd = cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_CLEAR_PASSWORD));
+        Date lastUpdates = resultEntry.getAttributeValueAsDate(ATTR_PASSWORD_UPDATED_TIMESTAMP);
+        boolean wasSelfUpdated = resultEntry.getAttributeValueAsBoolean(ATTR_PASSWORD_SELF_UPDATED);
         DateTime lasteUpdated = new DateTime(lastUpdates);
-        Password pwd = Password.existingInstance(ecryptedPwd, lasteUpdated,
-            wasSelfUpdated);
+        Password pwd = Password.existingInstance(ecryptedPwd, lasteUpdated, wasSelfUpdated);
         user.setPasswordObj(pwd);
 
         user.setRegion(resultEntry.getAttributeValue(ATTR_RACKSPACE_REGION));
 
-        String softDeletedTimestamp = resultEntry
-            .getAttributeValue(ATTR_SOFT_DELETED_DATE);
+        String softDeletedTimestamp = resultEntry.getAttributeValue(ATTR_SOFT_DELETED_DATE);
         if (softDeletedTimestamp != null) {
-            user.setSoftDeletedTimestamp(new DateTime(resultEntry
-                .getAttributeValueAsDate(ATTR_SOFT_DELETED_DATE)));
+            user.setSoftDeletedTimestamp(new DateTime(resultEntry.getAttributeValueAsDate(ATTR_SOFT_DELETED_DATE)));
         }
 
         user.setEnabled(resultEntry.getAttributeValueAsBoolean(ATTR_ENABLED));
