@@ -1262,4 +1262,52 @@ public class DefaultCloud20ServiceTest {
         defaultCloud20Service.setDomainId(null,null);
         verify(authorizationService).authorizeCloudUserAdmin(null);
     }
+
+    @Test
+    public void assignProperRole_callsAuthorizeCloudUserAdmin() throws Exception {
+        defaultCloud20Service.assignProperRole(null,authToken,null,null);
+        verify(authorizationService).authorizeCloudUserAdmin(null);
+    }
+
+    @Test
+    public void assignProperRole_callsAuthorizeCloudServiceAdmin() throws Exception {
+        defaultCloud20Service.assignProperRole(null,authToken,null,null);
+        verify(authorizationService).authorizeCloudServiceAdmin(null);
+    }
+
+    @Test
+    public void assignProperRole_callsAuthorizeCloudIdentityAdmin() throws Exception {
+        defaultCloud20Service.assignProperRole(null,authToken,null,null);
+        verify(authorizationService).authorizeCloudIdentityAdmin(null);
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void validateUsername_withEmptyString_throwBadRequestException() throws Exception {
+        defaultCloud20Service.validateUsername("");
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void validateUsername_withNullString_throwBadRequestException() throws Exception {
+        defaultCloud20Service.validateUsername(null);
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void validateUsername_withWhiteSpaceContainingString_throwBadRequestException() throws Exception {
+        defaultCloud20Service.validateUsername("first last");
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void validateUsername_withWhiteSpaceContainingString2_throwBadRequestException() throws Exception {
+        defaultCloud20Service.validateUsername(" firstlast");
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void validateUsername_withWhiteSpaceContainingString3_throwBadRequestException() throws Exception {
+        defaultCloud20Service.validateUsername("firstlast ");
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void validateUsername_withTabContainingString_throwBadRequestException() throws Exception {
+        defaultCloud20Service.validateUsername("first   last");
+    }
 }

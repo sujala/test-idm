@@ -1,33 +1,19 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.domain.dao.TenantDao;
+import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
+import com.rackspace.idm.exception.DuplicateException;
+import com.rackspace.idm.exception.NotFoundException;
+import com.unboundid.ldap.sdk.*;
+import com.unboundid.ldap.sdk.persist.LDAPPersistException;
+import com.unboundid.ldap.sdk.persist.LDAPPersister;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 
-import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.domain.dao.TenantDao;
-import com.rackspace.idm.domain.entity.Application;
-import com.rackspace.idm.domain.entity.ClientRole;
-import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
-import com.rackspace.idm.domain.entity.FilterParam;
-import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
-import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.Tenant;
-import com.rackspace.idm.domain.entity.TenantRole;
-import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.exception.DuplicateException;
-import com.rackspace.idm.exception.NotFoundException;
-import com.unboundid.ldap.sdk.Filter;
-import com.unboundid.ldap.sdk.LDAPConnection;
-import com.unboundid.ldap.sdk.LDAPException;
-import com.unboundid.ldap.sdk.Modification;
-import com.unboundid.ldap.sdk.ResultCode;
-import com.unboundid.ldap.sdk.SearchResultEntry;
-import com.unboundid.ldap.sdk.SearchScope;
-import com.unboundid.ldap.sdk.persist.LDAPPersistException;
-import com.unboundid.ldap.sdk.persist.LDAPPersister;
+import java.util.ArrayList;
+import java.util.List;
 
 public class LdapTenantRepository extends LdapRepository implements TenantDao {
 
@@ -269,8 +255,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
     }
 
     @Override
-    public TenantRole getTenantRoleForParentById(String parentUniqueId,
-        String id) {
+    public TenantRole getTenantRoleForParentById(String parentUniqueId, String id) {
         if (StringUtils.isBlank(parentUniqueId)) {
             String errmsg = "ParentUniqueId cannot be blank";
             getLogger().error(errmsg);
@@ -568,8 +553,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
     }
 
     @Override
-    public boolean doesScopeAccessHaveTenantRole(ScopeAccess scopeAccess,
-        ClientRole role) {
+    public boolean doesScopeAccessHaveTenantRole(ScopeAccess scopeAccess, ClientRole role) {
         getLogger().debug("Does Scope Access Have Tenant Role");
 
         String parentDn = null;
@@ -583,8 +567,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
             throw new IllegalStateException();
         }
 
-        TenantRole exists = this.getTenantRoleForParentById(parentDn,
-            role.getId());
+        TenantRole exists = this.getTenantRoleForParentById(parentDn, role.getId());
 
         boolean hasRole = exists != null;
         getLogger().debug("Does Scope Access Have Tenant Role: {}", hasRole);

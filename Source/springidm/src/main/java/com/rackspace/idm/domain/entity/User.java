@@ -157,9 +157,6 @@ public class User implements Auditable {
     }
 
     public String getDisplayName() {
-        if (StringUtils.isBlank(displayName)) {
-            return (name.getFirstname() + " " + name.getLastname()).trim();
-        }
         return displayName;
     }
 
