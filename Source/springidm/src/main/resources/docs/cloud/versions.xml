@@ -8,7 +8,7 @@
              updated="2011-07-19T22:30:00Z">
 
         <atom:link rel="self"
-                   href="${baseUrl}v1.0"/>
+                   href="https://identity.api.rackspacecloud.com/v1.0"/>
     </version>
 
     <version id="v1.1"
@@ -16,7 +16,7 @@
              updated="2012-01-19T22:30:00.25Z">
 
         <atom:link rel="self"
-                   href="${baseUrl}v1.1/"/>
+                   href="https://identity.api.rackspacecloud.com/v1.1/"/>
 
         <atom:link rel="describedby"
                    type="application/pdf"
@@ -32,7 +32,7 @@
              updated="2012-01-19T22:30:00.25Z">
 
         <atom:link rel="self"
-                   href="${baseUrl}v2.0/"/>
+                   href="https://identity.api.rackspacecloud.com/v2.0/"/>
 
         <atom:link rel="describedby"
                    type="application/pdf"
