@@ -7,7 +7,7 @@
          updated="2012-01-21T11:33:21-06:00">
 
     <atom:link rel="self"
-                href="${baseUrl}"/>
+                href="https://identity.api.rackspacecloud.com/v2.0"/>
 
     <atom:link rel="describedby"
                type="application/pdf"

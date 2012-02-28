@@ -1,34 +1,27 @@
 package com.rackspace.idm.api.resource.cloud;
 
-import java.io.IOException;
-import java.io.StringReader;
-
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
-
+import com.rackspace.idm.api.resource.cloud.v10.Cloud10VersionResource;
+import com.rackspace.idm.api.resource.cloud.v11.Cloud11VersionResource;
+import com.rackspace.idm.api.resource.cloud.v20.Cloud20VersionResource;
+import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import org.apache.commons.configuration.Configuration;
-import org.openstack.docs.common.api.v1.VersionChoice;
 import org.openstack.docs.common.api.v1.VersionChoiceList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.rackspace.idm.api.resource.cloud.v10.Cloud10VersionResource;
-import com.rackspace.idm.api.resource.cloud.v11.Cloud11VersionResource;
-import com.rackspace.idm.api.resource.cloud.v20.Cloud20VersionResource;
-import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.*;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
+import java.io.IOException;
+import java.io.StringReader;
 
 /**
  * Cloud Auth API Versions
@@ -66,11 +59,7 @@ public class CloudVersionsResource {
 
     @GET
     public Response getInternalCloudVersionsInfo() throws JAXBException {
-        String requestUri = uriInfo.getRequestUri().toASCIIString();
-        if(!requestUri.endsWith("/")){
-            requestUri = requestUri+"/";
-        }
-        final String responseXml = cloudContractDescriptionBuilder.buildInternalRootPage(requestUri);
+        final String responseXml = cloudContractDescriptionBuilder.buildInternalRootPage();
         JAXBContext context = JAXBContext.newInstance("org.openstack.docs.common.api.v1:org.w3._2005.atom");
         Unmarshaller unmarshaller = context.createUnmarshaller();
         JAXBElement<VersionChoiceList> versionChoice = (JAXBElement<VersionChoiceList>) unmarshaller.unmarshal(new StringReader(responseXml));
