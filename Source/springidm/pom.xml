@@ -24,17 +24,17 @@
     </properties>
 
     <dependencies>
-        <dependency>
-            <groupId>com.rackspace.cloud.servers</groupId>
-            <artifactId>cloud-servers-client</artifactId>
-            <version>1.1.5.4</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.geronimo.specs</groupId>
-                    <artifactId>geronimo-servlet_2.5_spec</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>com.rackspace.cloud.servers</groupId>-->
+            <!--<artifactId>cloud-servers-client</artifactId>-->
+            <!--<version>1.1.5.4</version>-->
+            <!--<exclusions>-->
+                <!--<exclusion>-->
+                    <!--<groupId>org.apache.geronimo.specs</groupId>-->
+                    <!--<artifactId>geronimo-servlet_2.5_spec</artifactId>-->
+                <!--</exclusion>-->
+            <!--</exclusions>-->
+        <!--</dependency>-->
         <dependency>
             <groupId>commons-httpclient</groupId>
             <artifactId>commons-httpclient</artifactId>
@@ -364,8 +364,8 @@
     <distributionManagement>
         <repository>
             <id>nexus</id>
-            <name>Nexus Staging Repo</name>
-            <url>http://build3.sat1.core.rackspace.com:8091/nexus/content/repositories/releases</url>
+            <name>Nexus Dev Repo</name>
+            <url>http://d-build1.iad2.corp.rackspace.com:8100/nexus/content/repositories/releases</url>
         </repository>
     </distributionManagement>
 
@@ -948,16 +948,16 @@
         <!--<name>mosso</name>-->
         <!--<url>http://maven.mosso.com/content/groups/everything/</url>-->
         <!--</repository>-->
-        <repository>
-            <id>build3-groups</id>
-            <name>build3-groups</name>
-            <url>http://build3.sat1.core.rackspace.com:8091/nexus/content/groups/public/</url>
-        </repository>
-        <repository>
-            <id>build3-third-party</id>
-            <name>build3-third-party</name>
-            <url>http://build3.sat1.core.rackspace.com:8091/nexus/content/repositories/thirdparty</url>
-        </repository>
+        <!--<repository>-->
+            <!--<id>build3-groups</id>-->
+            <!--<name>build3-groups</name>-->
+            <!--<url>http://build3.sat1.core.rackspace.com:8091/nexus/content/groups/public/</url>-->
+        <!--</repository>-->
+        <!--<repository>-->
+            <!--<id>build3-third-party</id>-->
+            <!--<name>build3-third-party</name>-->
+            <!--<url>http://build3.sat1.core.rackspace.com:8091/nexus/content/repositories/thirdparty</url>-->
+        <!--</repository>-->
     </repositories>
     <pluginRepositories>
         <!-- SoapUI -->

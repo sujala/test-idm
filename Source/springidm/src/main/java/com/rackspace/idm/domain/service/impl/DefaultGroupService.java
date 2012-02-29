@@ -1,8 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
-import com.rackspace.cloud.servers.bean.LimitGroupType;
 import com.rackspace.idm.domain.dao.GroupDao;
-import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.entity.User;
@@ -10,8 +8,6 @@ import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.service.GroupService;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
-import com.rackspacecloud.docs.auth.api.v1.GroupsList;
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -142,38 +138,6 @@ public class DefaultGroupService implements GroupService {
         Users enabled = new Users();
         enabled.setUsers(enabledUsers);
         return enabled;
-    }
-
-    private List<Group> convertGroup(LimitGroupType limitGroupType) {
-
-        List<Group> groups = new ArrayList<Group>();
-        Group group = new Group();
-
-        group.setGroupId(Integer.parseInt(limitGroupType.getName()));
-
-        final String groupDescription = limitGroupType.getDescription();
-        if (StringUtils.isNotEmpty(groupDescription)) {
-            group.setDescription(limitGroupType.getDescription());
-        }
-
-        groups.add(group);
-        return groups;
-    }
-
-    private GroupsList convertGroupToGroupList(LimitGroupType limitGroupType) {
-
-        GroupsList groups = new GroupsList();
-        com.rackspacecloud.docs.auth.api.v1.Group group = new com.rackspacecloud.docs.auth.api.v1.Group();
-
-        group.setId(limitGroupType.getName());
-
-        final String groupDescription = limitGroupType.getDescription();
-        if (StringUtils.isNotEmpty(groupDescription)) {
-            group.setDescription(limitGroupType.getDescription());
-        }
-
-        groups.getGroup().add(group);
-        return groups;
     }
 
     public void setDefaultUserService(DefaultUserService defaultUserService) {
