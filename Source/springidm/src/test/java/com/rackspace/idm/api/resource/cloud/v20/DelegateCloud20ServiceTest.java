@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.idm.api.resource.cloud.CloudClient;
 import com.rackspace.idm.api.resource.cloud.CloudUserExtractor;
+import com.rackspace.idm.domain.service.TokenService;
 import com.rackspace.idm.domain.service.UserService;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
@@ -36,6 +37,7 @@ public class DelegateCloud20ServiceTest {
     DelegateCloud20Service delegateCloud20Service;
     DefaultCloud20Service defaultCloud20Service = mock(DefaultCloud20Service.class);
     UserService userService = mock(UserService.class);
+    TokenService tokenService = mock(TokenService.class);
     CloudClient cloudClient = mock(CloudClient.class);
     CloudUserExtractor cloudUserExtractor = mock(CloudUserExtractor.class);
     HttpHeaders httpHeaders = mock(HttpHeaders.class);
@@ -67,6 +69,7 @@ public class DelegateCloud20ServiceTest {
         delegateCloud20Service.setCloudClient(cloudClient);
         delegateCloud20Service.setDefaultCloud20Service(defaultCloud20Service);
         delegateCloud20Service.setUserService(userService);
+        delegateCloud20Service.setTokenService(tokenService);
         delegateCloud20Service.setCloudUserExtractor(cloudUserExtractor);
         when(config.getString("cloudAuth20url")).thenReturn(url);
         when(config.getBoolean("GAKeystoneDisabled")).thenReturn(disabled);
@@ -246,33 +249,33 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
-    public void validateToken_RoutingFalseAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+    public void validateToken_RoutingFalseAndTokenDoesNotExist_callsDefaultService() throws Exception {
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
-        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        when(tokenService.doesTokenHaveAccessToApplication(null,null)).thenReturn(false);
         delegateCloud20Service.validateToken(null, null, null, null);
         verify(defaultCloud20Service).validateToken(null, null, null, null);
     }
 
     @Test
-    public void validateToken_RoutingFalseAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+    public void validateToken_RoutingFalseAndTokenDoesExist_callsDefaultService() throws Exception {
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
-        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        when(tokenService.doesTokenHaveAccessToApplication(null,null)).thenReturn(true);
         delegateCloud20Service.validateToken(null, null, null, null);
         verify(defaultCloud20Service).validateToken(null, null, null, null);
     }
 
     @Test
-    public void validateToken_RoutingTrueAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+    public void validateToken_RoutingTrueAndTokenDoesNotExist_callsDefaultService() throws Exception {
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
-        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        when(tokenService.doesTokenHaveAccessToApplication(null,null)).thenReturn(false);
         delegateCloud20Service.validateToken(null, null, "1", null);
         verify(cloudClient).get(url + "tokens/1", null);
     }
 
     @Test
-    public void validateToken_RoutingTrueAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+    public void validateToken_RoutingTrueAndTokenDoesExist_callsDefaultService() throws Exception {
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
-        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        when(tokenService.doesTokenHaveAccessToApplication(null,null)).thenReturn(true);
         delegateCloud20Service.validateToken(null, null, null, null);
         verify(defaultCloud20Service).validateToken(null, null, null, null);
     }
@@ -1924,5 +1927,13 @@ public class DelegateCloud20ServiceTest {
         when(userService.userExistsById(userId)).thenReturn(true);
         delegateCloud20Service.addRolesToUserOnTenant(null,null,tenantId,userId,roleId);
         verify(defaultCloud20Service).addRolesToUserOnTenant(null,null,tenantId,userId,roleId);
+    }
+
+    @Test
+    public void validateToken_callsTokenService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getString("cloudAuth.clientId")).thenReturn("clientid");
+        delegateCloud20Service.validateToken(null,null,"id",null);
+        verify(tokenService).doesTokenHaveAccessToApplication("id","clientid");
     }
 }
