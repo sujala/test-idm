@@ -85,9 +85,6 @@ public class Cloud20VersionResource {
     @Path("tokens")
     public Response authenticate(@Context HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest)
             throws IOException, JAXBException {
-        if(authenticationRequest.getCredential() == null)
-            throw new BadRequestException("Unable to parse Auth data. Please review XML or JSON formatting.");
-
         return getCloud20Service().authenticate(httpHeaders, authenticationRequest).build();
     }
 
