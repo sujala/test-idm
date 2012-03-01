@@ -542,8 +542,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             User user = null;
             UserScopeAccess usa = null;
 
-            if(authenticationRequest.getCredential() == null && authenticationRequest.getToken() == null)
-                throw new BadRequestException("Unable to parse Auth data. Please review XML or JSON formatting.");
+//            if(authenticationRequest.getCredential() == null && authenticationRequest.getToken() == null)
+//                throw new BadRequestException("Unable to parse Auth data. Please review XML or JSON formatting.");
 
             if (authenticationRequest.getToken() != null && !StringUtils.isBlank(authenticationRequest.getToken().getId())) {
                 ScopeAccess sa = scopeAccessService.getScopeAccessByAccessToken(authenticationRequest.getToken().getId());
@@ -956,6 +956,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         try {
             ScopeAccess scopeAccessByAccessToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
+            if (scopeAccessByAccessToken == null || ((HasAccessToken) scopeAccessByAccessToken).isAccessTokenExpired(new DateTime())) {
+                throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
+            }
             User caller = getUser(scopeAccessByAccessToken);
 
             //if caller has default user role
