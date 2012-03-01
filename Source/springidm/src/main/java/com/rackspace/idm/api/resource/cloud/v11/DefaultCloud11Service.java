@@ -101,8 +101,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     }
 
     public ResponseBuilder getVersion(UriInfo uriInfo) throws JAXBException {
-        String requestUri = uriInfo.getRequestUri().toASCIIString();
-        final String responseXml = cloudContractDescriptionBuilder.buildVersion11Page(requestUri);
+        final String responseXml = cloudContractDescriptionBuilder.buildVersion11Page();
         JAXBContext context = JAXBContext.newInstance("org.openstack.docs.common.api.v1:org.w3._2005.atom");
         Unmarshaller unmarshaller = context.createUnmarshaller();
         JAXBElement<VersionChoice> versionChoice = (JAXBElement<VersionChoice>) unmarshaller.unmarshal(new StringReader(responseXml));

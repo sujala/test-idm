@@ -189,7 +189,13 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
             String jsonText = JSONValue.toJSONString(getGroups(groups));
             outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
 
-        } else if (object.getDeclaredType().isAssignableFrom(CredentialListType.class)) {
+        } else if (object.getDeclaredType().isAssignableFrom(Group.class)) {
+            Group group = (Group) object.getValue();
+            String jsonText = JSONValue.toJSONString(getGroup(group));
+            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
+
+        }
+        else if (object.getDeclaredType().isAssignableFrom(CredentialListType.class)) {
 
             JSONObject outer = new JSONObject();
             JSONArray list = new JSONArray();

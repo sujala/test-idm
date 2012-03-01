@@ -7,6 +7,7 @@ import com.rackspace.idm.api.resource.cloud.CloudClient;
 import com.rackspace.idm.api.resource.cloud.CloudUserExtractor;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.domain.service.TokenService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.configuration.Configuration;
@@ -50,6 +51,9 @@ public class DelegateCloud20Service implements Cloud20Service {
     private UserService userService;
 
     @Autowired
+    private TokenService tokenService;
+
+    @Autowired
     private ScopeAccessService scopeAccessService;
 
     @Autowired
@@ -83,7 +87,7 @@ public class DelegateCloud20Service implements Cloud20Service {
 
         //Get "user" from LDAP
         com.rackspace.idm.domain.entity.User user = cloudUserExtractor.getUserByV20CredentialType(authenticationRequest);
-        
+
          //Get Cloud Auth response
         String body = marshallObjectToString(objectFactory.createAuth(authenticationRequest));
         Response.ResponseBuilder serviceResponse = cloudClient.post(getCloudAuthV20Url() + "tokens", httpHeaders, body);
@@ -123,7 +127,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder validateToken(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo)
             throws IOException {
-        if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
+        if (isCloudAuthRoutingEnabled() && !tokenService.doesTokenHaveAccessToApplication(tokenId,getCloudAuthClientId())) {
             String request = getCloudAuthV20Url() + "tokens/" + tokenId;
             HashMap<String, Object> params = new HashMap<String, Object>();
             params.put("belongsTo", belongsTo);
@@ -885,7 +889,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             return null;
         }
     }
-    
+
     public void setCloudClient(CloudClient cloudClient) {
         this.cloudClient = cloudClient;
     }
@@ -951,5 +955,13 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     private String getCloudAuthClientId() {
         return config.getString("cloudAuth.clientId");
+    }
+
+    public TokenService getTokenService() {
+        return tokenService;
+    }
+
+    public void setTokenService(TokenService tokenService) {
+        this.tokenService = tokenService;
     }
 }

@@ -1310,4 +1310,13 @@ public class DefaultCloud20ServiceTest {
     public void validateUsername_withTabContainingString_throwBadRequestException() throws Exception {
         defaultCloud20Service.validateUsername("first   last");
     }
+
+    @Test
+    public void authenticate_withNullCredentials_noValidTokenId_throwBadRequestException() throws Exception{
+        AuthenticationRequest authenticationRequest = mock(AuthenticationRequest.class);
+        when(authenticationRequest.getCredential()).thenReturn(null);
+        when(authenticationRequest.getToken()).thenReturn(null);
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.authenticate(null,authenticationRequest);
+        assertThat("exception class",responseBuilder.build().getStatus(),equalTo(400));
+    }
 }

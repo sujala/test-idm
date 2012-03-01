@@ -14,6 +14,8 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
@@ -26,6 +28,7 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import java.io.IOException;
 import java.io.StringReader;
+import java.net.URI;
 
 /**
  * Cloud Auth 2.0 API Versions
@@ -61,8 +64,7 @@ public class Cloud20VersionResource {
 
     @GET
     public Response getCloud20VersionInfo() throws JAXBException {
-        String requestUri = uriInfo.getRequestUri().toASCIIString();
-        final String responseXml = cloudContractDescriptionBuilder.buildVersion20Page(requestUri);
+        String responseXml = cloudContractDescriptionBuilder.buildVersion20Page();
         JAXBContext context = JAXBContext.newInstance("org.openstack.docs.common.api.v1:org.w3._2005.atom");
         Unmarshaller unmarshaller = context.createUnmarshaller();
         JAXBElement<VersionChoice> versionChoice = (JAXBElement<VersionChoice>) unmarshaller.unmarshal(new StringReader(responseXml));
@@ -83,9 +85,6 @@ public class Cloud20VersionResource {
     @Path("tokens")
     public Response authenticate(@Context HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest)
             throws IOException, JAXBException {
-        if(authenticationRequest.getCredential() == null)
-            throw new BadRequestException("Unable to parse Auth data. Please review XML or JSON formatting.");
-
         return getCloud20Service().authenticate(httpHeaders, authenticationRequest).build();
     }
 

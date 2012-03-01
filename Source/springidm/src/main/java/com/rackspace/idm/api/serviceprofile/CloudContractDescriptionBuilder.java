@@ -19,19 +19,16 @@ public class CloudContractDescriptionBuilder extends AbstractContractDescription
 		super(apiDocDao, templateUtil);
 	}
    
-    public String buildInternalRootPage(String uri) {
-    	String content = getFileContent("/docs/cloud/versions.xml");
-    	return build(content, uri);
+    public String buildInternalRootPage() {
+    	return getFileContent("/docs/cloud/versions.xml");
     }
 
-    public String buildVersion11Page(String uri) {
-    	String content = getFileContent("/docs/cloud/v1.1/version11.xml");
-    	return build(content, uri);
+    public String buildVersion11Page() {
+    	return  getFileContent("/docs/cloud/v1.1/version11.xml");
     }
 
-    public String buildVersion20Page(String uri) {
-    	String content = getFileContent("/docs/cloud/v2.0/version20.xml");
-    	return build(content, uri);
+    public String buildVersion20Page() {
+    	return getFileContent("/docs/cloud/v2.0/version20.xml");
     }
 
     public String buildPublicRootPage(final UriInfo uriInfo) {
