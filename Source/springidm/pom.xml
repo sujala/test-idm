@@ -24,17 +24,19 @@
     </properties>
 
     <dependencies>
-        <!--<dependency>-->
-            <!--<groupId>com.rackspace.cloud.servers</groupId>-->
-            <!--<artifactId>cloud-servers-client</artifactId>-->
-            <!--<version>1.1.5.4</version>-->
-            <!--<exclusions>-->
-                <!--<exclusion>-->
-                    <!--<groupId>org.apache.geronimo.specs</groupId>-->
-                    <!--<artifactId>geronimo-servlet_2.5_spec</artifactId>-->
-                <!--</exclusion>-->
-            <!--</exclusions>-->
-        <!--</dependency>-->
+
+        <dependency>
+            <groupId>com.rsa</groupId>
+            <artifactId>authapi</artifactId>
+            <type>jar</type>
+            <version>1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.rsa</groupId>
+            <artifactId>cryptoj</artifactId>
+            <type>jar</type>
+            <version>1.0</version>
+        </dependency>
         <dependency>
             <groupId>commons-httpclient</groupId>
             <artifactId>commons-httpclient</artifactId>
@@ -943,21 +945,6 @@
             <name>eviwareRepository</name>
             <url>http://www.eviware.com/repository/maven2</url>
         </repository>
-        <!--<repository>-->
-        <!--<id>mosso</id>-->
-        <!--<name>mosso</name>-->
-        <!--<url>http://maven.mosso.com/content/groups/everything/</url>-->
-        <!--</repository>-->
-        <!--<repository>-->
-            <!--<id>build3-groups</id>-->
-            <!--<name>build3-groups</name>-->
-            <!--<url>http://build3.sat1.core.rackspace.com:8091/nexus/content/groups/public/</url>-->
-        <!--</repository>-->
-        <!--<repository>-->
-            <!--<id>build3-third-party</id>-->
-            <!--<name>build3-third-party</name>-->
-            <!--<url>http://build3.sat1.core.rackspace.com:8091/nexus/content/repositories/thirdparty</url>-->
-        <!--</repository>-->
     </repositories>
     <pluginRepositories>
         <!-- SoapUI -->

@@ -95,6 +95,8 @@ public class TokensResource extends ParentResource {
                 StringReader reader = new StringReader(credentials.getEntity());
                 if (credentials.getEntity().contains("\"rackerCredentials\":")) {
                     creds = jsonUnmarshaller.unmarshalJAXBElementFromJSON(reader, RackerCredentials.class);
+                }else if (credentials.getEntity().contains("\"rsaCredentials\":")){
+                    creds = jsonUnmarshaller.unmarshalJAXBElementFromJSON(reader, AuthCredentials.class);
                 }else{
                     creds = jsonUnmarshaller.unmarshalJAXBElementFromJSON(reader, AuthCredentials.class);
                 }

@@ -83,6 +83,8 @@
 	
 	<element name="rackerCredentials" type="idm:RackerCredentials" />
 
+    <element name="rsaCredentials" type="idm:RSACredentials"/>
+
 	<element name="token" type="idm:Token">
 		<annotation>
 			<xsd:documentation xml:lang="EN"
@@ -366,6 +368,12 @@
 	</complexType>
 	
 	<complexType name="RackerCredentials">
+		<complexContent>
+			<extension base="idm:Credentials"></extension>
+		</complexContent>
+	</complexType>
+
+    <complexType name="RSACredentials">
 		<complexContent>
 			<extension base="idm:Credentials"></extension>
 		</complexContent>
