@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest;
+import com.rackspace.idm.exception.BadRequestException;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import org.hamcrest.Matchers;
@@ -8,11 +9,14 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.openstack.docs.identity.api.v2.AuthenticateResponse;
+import org.openstack.docs.identity.api.v2.AuthenticationRequest;
 
 import javax.ws.rs.core.MediaType;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Created by IntelliJ IDEA.
@@ -156,5 +160,29 @@ public class Cloud20VersionResourceTest extends AbstractAroundClassJerseyTest {
         WebResource resource = resource().path("cloud/v2.0/OS-KSCATALOG/endpointTemplates");
         ClientResponse clientResponse = resource.get(ClientResponse.class);
         assertThat("response code", clientResponse.getStatus(), equalTo(404));
+    }
+
+    @Test
+    public void authenticate_badJson_returns400() throws Exception {
+        WebResource resource = resource().path("cloud/v2.0/tokens");
+
+        ClientResponse clientResponse = resource
+                .type(MediaType.APPLICATION_JSON_TYPE)
+                .accept(MediaType.APPLICATION_JSON_TYPE)
+                .post(ClientResponse.class,
+                        "{" + "\"auth\":{" + "\"passwordCredentials\":{" + "\"username\":\"cmarin2\",\"password\":\"Password1\"},\"tenantId\":\"1234\" }");
+        assertThat("response code", clientResponse.getStatus(), equalTo(400));
+    }
+
+    @Test
+    public void authenticate_badJsonNoPw_returns400() throws Exception {
+        WebResource resource = resource().path("cloud/v2.0/tokens");
+
+        ClientResponse clientResponse = resource
+                .type(MediaType.APPLICATION_JSON_TYPE)
+                .accept(MediaType.APPLICATION_JSON_TYPE)
+                .post(ClientResponse.class,
+                        "{" + "\"auth\":{" + "\"passwordCredentials\":{" + "\"username\":\"cmarin2\"},\"tenantId\":\"1234\" }}");
+        assertThat("response code", clientResponse.getStatus(), equalTo(400));
     }
 }
