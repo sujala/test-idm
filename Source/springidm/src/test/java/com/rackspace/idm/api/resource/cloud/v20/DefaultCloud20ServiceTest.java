@@ -532,7 +532,7 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void addRoleToUserOnTenant_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.addRolesToUserOnTenant(null, authToken, null, null, null);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(spy).verifyUserAdminLevelAccess(authToken);
     }
 
     @Test
@@ -640,7 +640,7 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void deleteRoleFromUserOnTenant_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.deleteRoleFromUserOnTenant(null, authToken, tenantId, null, null);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(spy).verifyUserAdminLevelAccess(authToken);
     }
 
     @Test
@@ -831,13 +831,13 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void listUsersForTenant_CallsVerifyServiceAdminLevelAccess() throws Exception {
         spy.listUsersForTenant(null, authToken, null, null, 0);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(spy).verifyUserAdminLevelAccess(authToken);
     }
 
     @Test
     public void listUsersWithRoleForTenant_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.listUsersWithRoleForTenant(null, authToken, null, null, null, 0);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(spy).verifyUserAdminLevelAccess(authToken);
     }
 
     @Test
@@ -1131,6 +1131,8 @@ public class DefaultCloud20ServiceTest {
         tenant1.setTenantId("1");
         list.add(tenant1);
         when(tenantService.getTenantsForScopeAccessByTenantRoles(any(ScopeAccess.class))).thenReturn(list);
+        when(authorizationService.authorizeCloudIdentityAdmin((ScopeAccess) anyObject())).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin((ScopeAccess) anyObject())).thenReturn(false);
         defaultCloud20Service.verifyTokenHasTenantAccess(authToken,tenant1.getTenantId());
         verify(tenantService).getTenantsForScopeAccessByTenantRoles(any(ScopeAccess.class));
     }
@@ -1138,6 +1140,8 @@ public class DefaultCloud20ServiceTest {
     @Test(expected = ForbiddenException.class)
     public void verifyTokenHasTenantAccess_NoTenants_throwsException() throws Exception {
         when(tenantService.getTenantsForScopeAccessByTenantRoles(any(ScopeAccess.class))).thenReturn(new ArrayList<Tenant>());
+        when(authorizationService.authorizeCloudIdentityAdmin((ScopeAccess) anyObject())).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin((ScopeAccess) anyObject())).thenReturn(false);
         defaultCloud20Service.verifyTokenHasTenantAccess(authToken, null);
     }
 
