@@ -311,7 +311,7 @@
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
-            <version>4.1.1</version>
+            <version>4.1.2</version>
         </dependency>
         <dependency>
             <groupId>org.hamcrest</groupId>
@@ -367,7 +367,7 @@
         <repository>
             <id>nexus</id>
             <name>Nexus Dev Repo</name>
-            <url>http://d-build1.iad2.corp.rackspace.com:8100/nexus/content/repositories/releases</url>
+            <url>http://d-build1.iad2.corp.rackspace.com:8100/nexus/content/repositories/releases/</url>
         </repository>
     </distributionManagement>
 
@@ -902,6 +902,16 @@
 
     <repositories>
         <repository>
+            <id>nexus</id>
+            <name>Nexus Dev Repo</name>
+            <url>http://d-build1.iad2.corp.rackspace.com:8100/nexus/content/repositories/releases</url>
+        </repository>
+        <repository>
+            <id>thirdParty</id>
+            <name>Nexus Dev Repo</name>
+            <url>http://d-build1.iad2.corp.rackspace.com:8100/nexus/content/repositories/thirdparty/</url>
+        </repository>
+        <repository>
             <id>maven2-repository.java.net</id>
             <name>Java.net Repository for Maven</name>
             <url>http://download.java.net/maven/2/</url>
@@ -972,7 +982,7 @@
 
     <ciManagement>
         <system>Hudson</system>
-        <url>http://10.6.115.191:8080/</url>
+        <url>http://10.6.115.143:8080/</url>
     </ciManagement>
 
     <organization>
