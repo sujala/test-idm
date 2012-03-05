@@ -4,9 +4,11 @@ import com.rackspace.idm.api.converter.UserConverter;
 import com.rackspace.idm.api.resource.ParentResource;
 import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.service.AuthorizationService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.validation.InputValidator;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,13 +29,13 @@ public class UsersResource extends ParentResource {
     private final UserService userService;
     private final UserConverter userConverter;
     private final AuthorizationService authorizationService;
-
+    private final ScopeAccessService scopeAccessService;
 
     @Autowired(required = true)
     public UsersResource(
     	UserResource userResource,UserService userService,
         InputValidator inputValidator, UserConverter userConverter,
-        AuthorizationService authorizationService) {
+        AuthorizationService authorizationService, ScopeAccessService scopeAccessService) {
 
     	super(inputValidator);
 
@@ -41,6 +43,7 @@ public class UsersResource extends ParentResource {
         this.userService = userService;
         this.userConverter = userConverter;
         this.authorizationService = authorizationService;
+        this.scopeAccessService = scopeAccessService;
     }
 
     /**
@@ -80,7 +83,13 @@ public class UsersResource extends ParentResource {
         @HeaderParam("X-Auth-Token") String authHeader,
         com.rackspace.api.idm.v1.User user) {
 
-        authorizationService.verifyIdmSuperAdminAccess(authHeader);
+        ScopeAccess scopeAccess = scopeAccessService.getAccessTokenByAuthHeader(authHeader);
+        boolean isApplication = authorizationService.authorizeRackspaceClient(scopeAccess);
+        //verify if caller is a rackspace client, idm client or super admin
+        if(!isApplication){
+            authorizationService.verifyIdmSuperAdminAccess(authHeader);
+        }
+
         com.rackspace.api.idm.v1.User jaxbUser = user;
 
         User userDO = userConverter.toUserDO(jaxbUser);

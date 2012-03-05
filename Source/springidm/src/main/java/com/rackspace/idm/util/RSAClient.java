@@ -2,6 +2,8 @@ package com.rackspace.idm.util;
 
 import com.rsa.authagent.authapi.AuthSession;
 import com.rsa.authagent.authapi.AuthSessionFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 /**
@@ -14,6 +16,8 @@ import org.springframework.stereotype.Component;
 public class RSAClient {
 
     private AuthSessionFactory api;
+
+    private static Logger logger = LoggerFactory.getLogger(RSAClient.class);
 
     public boolean authenticate(String userID, String passCode) {
         try {
@@ -28,6 +32,7 @@ public class RSAClient {
             api.shutdown();
             return false;
         } catch (Exception e) {
+            logger.info("error authentication racker with rsa credentials: {}", e.getMessage());
             return false;
         }
     }

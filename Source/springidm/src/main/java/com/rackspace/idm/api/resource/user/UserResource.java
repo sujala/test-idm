@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.user;
 
 import com.rackspace.idm.api.converter.UserConverter;
 import com.rackspace.idm.api.resource.ParentResource;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
@@ -73,7 +74,12 @@ public class UserResource extends ParentResource {
 			@HeaderParam("X-Auth-Token") String authHeader,
 			@PathParam("userId") String userId) {
 
-        authorizationService.verifyIdmSuperAdminAccess(authHeader);
+        ScopeAccess scopeAccess = scopeAccessService.getAccessTokenByAuthHeader(authHeader);
+        boolean isApplication = authorizationService.authorizeRackspaceClient(scopeAccess);
+        //verify if caller is a rackspace client, idm client or super admin
+        if(!isApplication){
+            authorizationService.verifyIdmSuperAdminAccess(authHeader);
+        }
         
 		getLogger().debug("Getting User: {}", userId);
 		User user = this.userService.loadUser(userId);
@@ -96,7 +102,12 @@ public class UserResource extends ParentResource {
 			@PathParam("userId") String userId,
 			EntityHolder<com.rackspace.api.idm.v1.User> holder) {
 
-        authorizationService.verifyIdmSuperAdminAccess(authHeader);
+        ScopeAccess scopeAccess = scopeAccessService.getAccessTokenByAuthHeader(authHeader);
+        boolean isApplication = authorizationService.authorizeRackspaceClient(scopeAccess);
+        //verify if caller is a rackspace client, idm client or super admin
+        if(!isApplication){
+            authorizationService.verifyIdmSuperAdminAccess(authHeader);
+        }
 
         validateRequestBody(holder);
 
@@ -127,7 +138,12 @@ public class UserResource extends ParentResource {
 			@HeaderParam("X-Auth-Token") String authHeader,
 			@PathParam("userId") String userId) {
 
-        authorizationService.verifyIdmSuperAdminAccess(authHeader);
+        ScopeAccess scopeAccess = scopeAccessService.getAccessTokenByAuthHeader(authHeader);
+        boolean isApplication = authorizationService.authorizeRackspaceClient(scopeAccess);
+        //verify if caller is a rackspace client, idm client or super admin
+        if(!isApplication){
+            authorizationService.verifyIdmSuperAdminAccess(authHeader);
+        }
 
         getLogger().debug("Deleting User :{}", userId);
 
