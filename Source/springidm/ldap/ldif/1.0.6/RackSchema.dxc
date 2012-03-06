@@ -1,0 +1,863 @@
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.1) = {
+	name = middleName
+	ldap-names = middleName
+	syntax = CaseIgnoreString
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.2) = {
+	name = rsRegion
+	ldap-names = rsRegion
+	equality = caseIgnoreMatch
+	syntax = directoryString
+	description = "The region for a user"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.3) = {
+	name = softDeleted
+	ldap-names = softDeleted
+	syntax = boolean
+	description = "record soft deleted"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.5) = {
+	name = rsApiKey
+	ldap-names = rsApiKey
+	syntax = octetString
+	description = "An API Key for a user"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.6) = {
+	name = clientId
+	ldap-names = clientId
+	equality = caseIgnoreMatch
+	syntax = directoryString
+	description = "An API Key for a user"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.8) = {
+	name = groupType
+	ldap-names = groupType
+	equality = caseIgnoreMatch
+	syntax = directoryString
+	description = "groupType"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.9) = {
+	name = permissionType
+	ldap-names = permissionType
+	equality = caseIgnoreMatch
+	syntax = directoryString
+	description = "permissionType"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.12) = {
+	name = blob
+	ldap-names = blob
+	equality = caseIgnoreMatch
+	syntax = directoryString
+	description = "blob"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.13) = {
+	name = timeZone
+	ldap-names = timeZone
+	equality = caseIgnoreMatch
+	syntax = directoryString
+	description = "Property of a User indicating the time zone"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.14) = {
+	name = tokenRequestor
+	ldap-names = tokenRequestor
+	equality = caseIgnoreMatch
+	syntax = directoryString
+	description = "The XRI of the token requestor"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.15) = {
+	name = tokenOwner
+	ldap-names = tokenOwner
+	equality = caseIgnoreMatch
+	syntax = directoryString
+	description = "The token owner"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.16) = {
+	name = secretQuestion
+	ldap-names = secretQuestion
+	syntax = octetString
+	description = "Users secret question used to reset password"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.17) = {
+	name = secretAnswer
+	ldap-names = secretAnswer
+	syntax = octetString
+	description = "Users secret answer used to reset password"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.18) = {
+	name = clearPassword
+	ldap-names = clearPassword
+	syntax = octetString
+	description = "Clear text password"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.19) = {
+	name = RCN
+	ldap-names = RCN
+	equality = caseIgnoreMatch
+	syntax = directoryString
+	description = "Property of an rackspaceUser denoting the Customer Id the the User is associated with"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.20) = {
+	name = RPN
+	ldap-names = RPN
+	equality = caseIgnoreMatch
+	syntax = directoryString
+	description = "Property of an rackspaceUser denoting the Person Id the the User is associated with"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.21) = {
+	name = permission
+	ldap-names = permission
+	equality = caseIgnoreMatch
+	syntax = directoryString
+	description = "A list of permissions"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.22) = {
+	name = expiration
+	ldap-names = expiration
+	equality = generalizedTimeMatch
+	syntax = generalizedTime
+	single-valued
+	description = "UTC Time of Token Expiration"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.23) = {
+	name = rsMossoId
+	ldap-names = rsMossoId
+	syntax = integer
+	description = "MossoId"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.24) = {
+	name = rsNastId
+	ldap-names = rsNastId
+	equality = caseIgnoreMatch
+	syntax = directoryString
+	description = "NastId"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.25) = {
+	name = baseUrlId
+	ldap-names = baseUrlId
+    equality = caseIgnoreMatch
+    syntax = directoryString
+	description = "baseUrlId"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.26) = {
+	name = baseUrlType
+	ldap-names = baseUrlType
+	equality = caseIgnoreMatch
+	syntax = directoryString
+	description = "baseUrlType"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.27) = {
+	name = service
+	ldap-names = service
+	equality = caseIgnoreMatch
+	syntax = directoryString
+	description = "service"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.28) = {
+	name = publicUrl
+	ldap-names = publicUrl
+	equality = caseIgnoreMatch
+	syntax = directoryString
+	description = "publicUrl"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.29) = {
+	name = internalUrl
+	ldap-names = internalUrl
+	equality = caseIgnoreMatch
+	syntax = directoryString
+	description = "internalUrl"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.30) = {
+	name = rsAdminUrl
+	ldap-names = rsAdminUrl
+	equality = caseIgnoreMatch
+	syntax = directoryString
+	description = "adminUrl"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.31) = {
+	name = def
+	ldap-names = def
+	syntax = boolean
+	description = "def"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.32) = {
+	name = softDeletedTimestamp
+	ldap-names = softDeletedTimestamp
+	equality = caseIgnoreMatch
+	syntax = directoryString
+	description = "softDeletedTimeStamp"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.33) = {
+	name = endpoint
+	ldap-names = endpoint
+	equality = caseIgnoreMatch
+	syntax = directoryString
+	description = "endpoint"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.34) = {
+	name = rsMail
+	ldap-names = rsMail
+	syntax = octetString
+	description = "encrypted email"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.35) = {
+        name = rsDisplayName
+        ldap-names = rsDisplayName
+        syntax = octetString
+        description = "encrypted display name"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.36) = {
+        name = rsGivenName
+        ldap-names = rsGivenName
+        syntax = octetString
+        description = "encrypted given name"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.37) = {
+        name = rsSn
+        ldap-names = rsSn
+        syntax = octetString
+        description = "encrypted dsurname"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.38) = {
+        name = passwordUpdatedTimestamp
+        ldap-names = passwordUpdatedTimestamp
+        equality = generalizedTimeMatch
+	    syntax = generalizedTime
+        description = "The last time the password was changed"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.39) = {
+        name = passwordSelfUpdated
+        ldap-names = passwordSelfUpdated
+        syntax = boolean
+        description = "Did the user change his/her own password last time?"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.40) = {
+        name = passwordRotationEnabled
+        ldap-names = passwordRotationEnabled
+        syntax = boolean
+        description = "Is the password rotation policy enabled for this customer?"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.41) = {
+        name = passwordRotationDuration
+        ldap-names = passwordRotationDuration
+        syntax = integer
+        description = "Password rotation duration in days"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.42) = {
+    name = accessToken
+    ldap-names = accessToken
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "An Oauth Access Token"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.43) = {
+    name = refreshToken
+    ldap-names = refreshToken
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "An Oauth Refresh Token"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.44) = {
+        name = accessTokenExp
+        ldap-names = accessTokenExp
+        equality = generalizedTimeMatch
+        syntax = generalizedTime
+        description = "Expiration Time for an Access Token"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.45) = {
+        name = refreshTokenExp
+        ldap-names = refreshTokenExp
+        equality = generalizedTimeMatch
+        syntax = generalizedTime
+        description = "Expiration Time for a Refresh Token"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.46) = {
+    name = tokenScope
+    ldap-names = tokenScope
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "An Oauth Token Scope"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.47) = {
+    name = rsTitle
+    ldap-names = rsTitle
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "A Human Readable Permission Title"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.48) = {
+    name = resourceGroup
+    ldap-names = resourceGroup
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "A permission resource group"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.49) = {
+        name = grantedByDefault
+        ldap-names = grantedByDefault
+        syntax = boolean
+        description = "Is this permission granted to a user by default?"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.50) = {
+        name = enabled
+        ldap-names = enabled
+        syntax = boolean
+        description = "Is this object enabled?"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.51) = {
+    name = clientRCN
+    ldap-names = clientRCN
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "A client RCN"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.52) = {
+    name = userRCN
+    ldap-names = userRCN
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "A user RCN"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.53) = {
+    name = rackerId
+    ldap-names = rackerId
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "A rackers username"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.54) = {
+    name = rsGroupDN
+    ldap-names = rsGroupDN
+    syntax = distinguishedName
+    description = "Group the user belongs to"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.55) = {
+    name = authCode
+    ldap-names = authCode
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "An OAuth authorization code"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.56) = {
+        name = authCodeExp
+        ldap-names = authCodeExp
+        equality = generalizedTimeMatch
+        syntax = generalizedTime
+        description = "Expiration Time for an Authorization Code"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.57) = {
+        name = callbackUrl
+        ldap-names = callbackUrl
+        equality = caseIgnoreMatch
+        syntax = directoryString
+        description = "A client callback URL"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.58) = {
+    name = rsSecureId
+    ldap-names = rsSecureId
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "A private id for a user"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.59) = {
+    name = tenantId
+    ldap-names = tenantId
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "An id for a tenant"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.60) = {
+    name = tenantDisplayName
+    ldap-names = tenantDisplayName
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "A Tenant Display Name"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.61) = {
+    name = versionInfo
+    ldap-names = versionInfo
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "Version Info URL"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.62) = {
+    name = versionList
+    ldap-names = versionList
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "Version List URL"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.63) = {
+    name = versionId
+    ldap-names = versionId
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "Version ID"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.64) = {
+        name = rsGlobal
+        ldap-names = rsGlobal
+        syntax = boolean
+        description = "Is this object global?"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.65) = {
+    name = rsId
+    ldap-names = rsId
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "a unique ID"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.66) = {
+    name = openStackType
+    ldap-names = openStackType
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "The OpenStack-registered type"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.67) = {
+    name = userRsId
+    ldap-names = userRsId
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "The rsId for a user"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.68) = {
+    name = roleRsId
+    ldap-names = roleRsId
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "The rsId for a role"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.69) = {
+    name = tenantRsId
+    ldap-names = tenantRsId
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "The rsId for a tenant"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.70) = {
+	name = rsDomainId
+	ldap-names = rsDomainId
+	equality = caseIgnoreMatch
+	syntax = directoryString
+	description = "The associated rsDomainId"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.71) = {
+	name = rsGroupId
+	ldap-names = rsGroupId
+	equality = caseIgnoreMatch
+	syntax = directoryString
+	description = "The associated rsGroupId the user belongs to."
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
+	name = rsPerson
+	ldap-names = rsPerson
+	subclass-of top
+	kind = structural
+	must-contain
+		rsId
+	may-contain
+		c,
+		rsDisplayName,
+		rsGivenName,
+		rsMail,
+		middleName,
+		permission,
+		preferredLanguage,
+		RCN,
+		RPN,
+		rsApiKey,
+		rsMossoId,
+		rsNastId,
+		secretQuestion,
+		secretAnswer,
+		clearPassword,
+		rsSn,
+		timeZone,
+		uid,
+		userPassword,
+		rsRegion,
+		softDeleted,
+		softDeletedTimestamp,
+		endpoint,
+		passwordUpdatedTimestamp,
+		passwordSelfUpdated,
+		rsGroupDN,
+		rsSecureId,
+		enabled,
+		rsDomainId,
+		rsGroupId
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.2) = {
+	name = rsOrganization
+	ldap-names = rsOrganization
+	subclass-of top
+	kind = structural
+	must-contain
+		rsId
+	may-contain
+		RCN,
+		enabled,
+		softDeleted,
+		passwordRotationEnabled,
+        passwordRotationDuration
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.3) = {
+	name = rsApplication
+	ldap-names = rsApplication
+	subclass-of top
+	kind = structural
+	must-contain
+		cn,
+		clientId,
+		userPassword
+	may-contain
+	    callbackUrl,
+	    clearPassword,
+	    openStackType,
+	    description,
+		enabled,
+		permission,
+		RCN,
+		softDeleted,
+		title,
+		tokenScope
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.6) = {
+	name = clientPermission
+	ldap-names = clientPermission
+	subclass-of top
+	kind = structural
+	must-contain
+		cn,
+		clientId,
+		RCN
+	may-contain
+	    blob,
+		permissionType,
+		title,
+		description,
+		grantedByDefault,
+		enabled,
+		resourceGroup
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.7) = {
+	name = baseUrl
+	ldap-names = baseUrl
+	subclass-of top
+	kind = structural
+    must-contain
+        rsId,
+        publicUrl
+    may-contain
+        baseUrlType,
+        cn,
+        def,
+        openStackType,
+        rsGlobal,
+        service,
+        rsRegion,
+        internalUrl,
+        rsAdminUrl,
+        enabled,
+        versionId,
+        versionInfo,
+        versionList 
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.8) = {
+    name = clientGroup
+    ldap-names = clientGroup
+    subclass-of groupOfNames
+    kind = structural
+    must-contain
+        cn,
+        clientId,
+        RCN
+    may-contain
+        c,
+        displayName,
+        permission,
+        groupType
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.9) = {
+    name = scopeAccess
+    ldap-names = scopeAccess
+    subclass-of top
+    kind = structural
+    must-contain
+        clientId
+    may-contain
+        clientRCN
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.10) = {
+    name = rsRacker
+    ldap-names = rsRacker
+    subclass-of top
+    kind = structural
+    must-contain
+        rackerId
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.11) = {
+    name = clientScopeAccess
+    ldap-names = clientScopeAccess
+    subclass-of scopeAccess
+    kind = structural
+    may-contain
+        accessToken,
+        accessTokenExp
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.12) = {
+    name = passwordResetScopeAccess
+    ldap-names = passwordResetScopeAccess
+    subclass-of scopeAccess
+    kind = structural
+    must-contain
+        userRsId
+    may-contain
+        uid,
+    	userRCN,
+        accessToken,
+        accessTokenExp
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.13) = {
+    name = rackerScopeAccess
+    ldap-names = rackerScopeAccess
+    subclass-of scopeAccess
+    kind = structural
+    must-contain
+        rackerId
+    may-contain
+        accessToken,
+        accessTokenExp,
+        refreshToken,
+        refreshTokenExp
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.14) = {
+    name = userScopeAccess
+    ldap-names = userScopeAccess
+    subclass-of scopeAccess
+    kind = structural
+    must-contain
+        userRsId
+    may-contain
+        uid,
+        userRCN,
+        accessToken,
+        accessTokenExp,
+        refreshToken,
+        refreshTokenExp
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.15) = {
+    name = rsPermission
+    ldap-names = rsPermission
+    subclass-of top
+    kind = structural
+    must-contain
+        cn,
+        clientId,
+        RCN
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.16) = {
+    name = grantedPermission
+    ldap-names = grantedPermission
+    subclass-of rsPermission
+    kind = structural
+    may-contain
+        resourceGroup
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.17) = {
+    name = definedPermission
+    ldap-names = definedPermission
+    subclass-of rsPermission
+    kind = structural
+    may-contain
+        blob,
+        permissionType,
+        title,
+        description,
+        grantedByDefault,
+        enabled
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.18) = {
+    name = delegatedPermission
+    ldap-names = delegatedPermission
+    subclass-of rsPermission
+    kind = structural
+    may-contain
+        resourceGroup
+};
+
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.19) = {
+    name = delegatedClientScopeAccess
+    ldap-names = delegatedClientScopeAccess
+    subclass-of scopeAccess
+    kind = structural
+    must-contain
+        userRsId
+    may-contain
+        uid,
+     	userRCN,
+        accessToken,
+        accessTokenExp,
+        authCode,
+        authCodeExp,
+        refreshToken,
+        refreshTokenExp
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.20) = {
+    name = rsContainer
+    ldap-names = rsContainer
+    subclass-of top
+    kind = structural
+    must-contain
+        cn
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.21) = {
+    name = tenant
+    ldap-names = tenant
+    subclass-of top
+    kind = structural
+    must-contain
+        rsId,
+        cn,
+        enabled
+    may-contain
+    	description,
+        tenantDisplayName,
+        baseUrlId
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.22) = {
+    name = tenantRole
+    ldap-names = tenantRole
+    subclass-of top
+    kind = structural
+    must-contain
+        clientId,
+        roleRsId
+    may-contain
+        userRsId,
+    	tenantRsId
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.23) = {
+	name = clientRole
+	ldap-names = clientRole
+	subclass-of top
+    kind = structural
+    must-contain
+        rsId,
+        cn,
+        clientId
+    may-contain
+        description
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.24) = {
+    name = rsNextId
+    ldap-names = rsNextId
+    subclass-of top
+    kind = structural
+    must-contain
+        cn,
+        rsId
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.25) = {
+    name = rsGroup
+    ldap-names = rsGroup
+    subclass-of top
+    kind = structural
+    must-contain
+        rsId,
+        name
+    may-contain
+        description
+};
+
+

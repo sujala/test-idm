@@ -1,0 +1,84 @@
+##Schema modifications
+##---------------------------------------------------------
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.70) = {
+	name = rsDomainId
+	ldap-names = rsDomainId
+	equality = caseIgnoreMatch
+	syntax = directoryString
+	description = "The associated rsDomainId"
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
+	name = rsPerson
+	ldap-names = rsPerson
+	subclass-of top
+	kind = structural
+	must-contain
+		rsId
+	may-contain
+		c,
+		rsDisplayName,
+		rsGivenName,
+		rsMail,
+		middleName,
+		permission,
+		preferredLanguage,
+		RCN,
+		RPN,
+		rsApiKey,
+		rsMossoId,
+		rsNastId,
+		secretQuestion,
+		secretAnswer,
+		clearPassword,
+		rsSn,
+		timeZone,
+		uid,
+		userPassword,
+		rsRegion,
+		softDeleted,
+		softDeletedTimestamp,
+		endpoint,
+		passwordUpdatedTimestamp,
+		passwordSelfUpdated,
+		rsGroupDN,
+		rsSecureId,
+		enabled,
+		rsDomainId
+};
+
+
+
+
+##ldif changes
+##-----------------------------------------------------------
+
+##Update
+##--------------------------------------------------------------------------------------------------------
+dn: rsId=2,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientRole
+rsId: 2
+cn: identity:user-admin
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+description: A Role that allows a user to have user admin access to Auth Service methods
+
+
+##Insert
+##--------------------------------------------------------------------------------------------------------
+dn: rsId=7,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientRole
+rsId: 7
+cn: identity:default
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+description: A Role that allows a user access to Auth Service methods
+
+dn: rsId=8,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientRole
+rsId: 8
+cn: identity:service-admin
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+description: A Role that allows a service admin access to Auth Service methods

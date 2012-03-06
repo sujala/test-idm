@@ -1,0 +1,11 @@
+schema set object-class (1.3.6.1.4.1.20988.2.2.25) = {
+    name = rsGroup
+    ldap-names = rsGroup
+    subclass-of top
+    kind = structural
+    must-contain
+        rsId,
+        name
+    may-contain
+        description
+};
