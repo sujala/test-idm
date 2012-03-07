@@ -140,13 +140,11 @@ public class CloudClient {
         Set<String> keys = httpHeaders.getRequestHeaders().keySet();
         request.setHeaders(new Header[]{});
         for (String key : keys) {
-            if (!key.equalsIgnoreCase(HttpHeaders.CONTENT_LENGTH)) {
+            if (!key.equalsIgnoreCase(HttpHeaders.CONTENT_LENGTH) && !key.equals(HttpHeaders.HOST)) {
                 if (key.equalsIgnoreCase(HttpHeaders.CONTENT_TYPE)) {
-                    request.setHeader(HttpHeaders.CONTENT_TYPE,
-                            MediaType.APPLICATION_XML);
+                    request.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML);
                 } else {
-                    request.setHeader(key, httpHeaders.getRequestHeaders()
-                            .getFirst(key));
+                    request.setHeader(key, httpHeaders.getRequestHeaders().getFirst(key));
                 }
             }
         }

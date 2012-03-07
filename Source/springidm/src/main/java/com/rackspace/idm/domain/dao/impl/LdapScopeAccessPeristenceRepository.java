@@ -245,8 +245,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
     }
 
     @Override
-    public ScopeAccess getDirectScopeAccessForParentByClientId(
-        String parentUniqueId, String clientId) {
+    public ScopeAccess getDirectScopeAccessForParentByClientId(String parentUniqueId, String clientId) {
         getLogger().debug("Find ScopeAccess for Parent: {} by ClientId: {}", parentUniqueId, clientId);
         LDAPConnection conn = null;
 

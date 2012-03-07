@@ -428,16 +428,11 @@ public class DefaultAuthenticationService implements AuthenticationService {
         return scopeAccess;
     }
 
-    RackerScopeAccess getAndUpdateRackerScopeAccessForClientId(
-            Racker racker, Application client) {
+    RackerScopeAccess getAndUpdateRackerScopeAccessForClientId(Racker racker, Application client) {
 
-        logger.debug(
-                "Get and Update ScopeAccess for Racker: {} and ClientId: {}",
-                racker.getRackerId(), client.getClientId());
+        logger.debug("Get and Update ScopeAccess for Racker: {} and ClientId: {}", racker.getRackerId(), client.getClientId());
 
-        RackerScopeAccess scopeAccess = this.scopeAccessService
-                .getRackerScopeAccessForClientId(racker.getUniqueId(), client
-                        .getClientId());
+        RackerScopeAccess scopeAccess = scopeAccessService.getRackerScopeAccessForClientId(racker.getUniqueId(), client.getClientId());
 
         if (scopeAccess == null) {
             // Auto-Provision Scope Access Objects for Rackers

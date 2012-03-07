@@ -511,13 +511,10 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public RackerScopeAccess getRackerScopeAccessForClientId(
-        String rackerUniqueId, String clientId) {
+    public RackerScopeAccess getRackerScopeAccessForClientId( String rackerUniqueId, String clientId) {
         logger.debug("Getting Racker ScopeAccess by clientId", clientId);
-        final RackerScopeAccess scopeAccess = (RackerScopeAccess) this.scopeAccessDao
-            .getDirectScopeAccessForParentByClientId(rackerUniqueId, clientId);
-        logger.debug("Got Racker ScopeAccess {} by clientId {}", scopeAccess,
-            clientId);
+        final RackerScopeAccess scopeAccess = (RackerScopeAccess) scopeAccessDao.getDirectScopeAccessForParentByClientId(rackerUniqueId, clientId);
+        logger.debug("Got Racker ScopeAccess {} by clientId {}", scopeAccess, clientId);
         return scopeAccess;
     }
 
