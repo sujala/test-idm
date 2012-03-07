@@ -59,6 +59,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         } else {
             try {
                 parentUniqueId = token.getLDAPEntry().getParentDNString();
+                if(parentUniqueId.contains("IMPERSONATED")) parentUniqueId = parentUniqueId.replace("IMPERSONATED", "DIRECT"); // ToDo: Change this!
             } catch (LDAPException e) {
                 // noop
             }
@@ -106,6 +107,23 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         logger.info("Adding scopeAccess {}", scopeAccess);
         ScopeAccess newScopeAccess = this.scopeAccessDao
             .addDelegateScopeAccess(parentUniqueId, scopeAccess);
+        logger.info("Added scopeAccess {}", scopeAccess);
+        return newScopeAccess;
+    }
+
+    @Override
+    public UserScopeAccess addImpersonatedScopeAccess(User user, String clientId, String impersonatorToken) {
+        UserScopeAccess scopeAccess = new UserScopeAccess();
+        scopeAccess.setUserRsId(user.getId());
+        scopeAccess.setUsername(user.getUsername());
+        scopeAccess.setClientId(clientId);
+        scopeAccess.setClientRCN("RACKSPACE"); // ToDo: validate
+        scopeAccess.setImpersonatorToken(impersonatorToken);
+        scopeAccess.setAccessTokenString(this.generateToken());
+        scopeAccess.setAccessTokenExp(new DateTime().plusSeconds(getDefaultCloudAuthTokenExpirationSeconds()).toDate());
+
+        logger.info("Adding scopeAccess {}", scopeAccess);
+        UserScopeAccess newScopeAccess = (UserScopeAccess)this.scopeAccessDao.addImpersonatedScopeAccess(user.getUniqueId(), scopeAccess);
         logger.info("Added scopeAccess {}", scopeAccess);
         return newScopeAccess;
     }
@@ -608,8 +626,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public UserScopeAccess getUserScopeAccessForClientId(String userUniqueId,
-        String clientId) {
+    public UserScopeAccess getUserScopeAccessForClientId(String userUniqueId, String clientId) {
         logger.debug("Getting User ScopeAccess by clientId {}", clientId);
         final UserScopeAccess scopeAccess = (UserScopeAccess) this.scopeAccessDao
             .getDirectScopeAccessForParentByClientId(userUniqueId, clientId);
@@ -916,10 +933,8 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 	    }
 	}
 
-	private UserScopeAccess checkAndGetUserScopeAccess(String clientId,
-        User user) {
-        final UserScopeAccess scopeAccess = this.getUserScopeAccessForClientId(
-            user.getUniqueId(), clientId);
+	private UserScopeAccess checkAndGetUserScopeAccess(String clientId, User user) {
+        final UserScopeAccess scopeAccess = this.getUserScopeAccessForClientId(user.getUniqueId(), clientId);
 
         if (scopeAccess == null) {
             String errMsg = "Scope access not found.";

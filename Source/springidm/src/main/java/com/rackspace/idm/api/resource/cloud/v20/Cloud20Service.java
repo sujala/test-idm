@@ -3,7 +3,6 @@ package com.rackspace.idm.api.resource.cloud.v20;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
-import com.rackspace.idm.api.serviceprofile.ServiceDescriptionTemplateUtil;
 import com.rackspace.idm.exception.NotFoundException;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
@@ -169,4 +168,5 @@ public interface Cloud20Service {
 
     ResponseBuilder getGroup(HttpHeaders httpHeaders, String authToken, String groupName) throws IOException;
 
+    ResponseBuilder impersonate(HttpHeaders httpHeaders, String authToken, String username) throws IOException;
 }

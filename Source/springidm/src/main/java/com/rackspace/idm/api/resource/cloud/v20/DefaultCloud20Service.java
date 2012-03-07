@@ -41,6 +41,7 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
+import javax.xml.namespace.QName;
 import javax.xml.transform.stream.StreamSource;
 import java.io.IOException;
 import java.io.InputStream;
@@ -1404,6 +1405,29 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
+    @Override
+    public ResponseBuilder impersonate(HttpHeaders httpHeaders, String authToken, String username) throws IOException {
+        //verify access to impersonate
+        // ToDo: MUST DO !!!!
+
+        User user = checkAndGetUserByName(username);
+        if (user == null)
+            throw new NotFoundException("User not found.");
+
+        ScopeAccess usa = scopeAccessService.addImpersonatedScopeAccess(user, getCloudAuthClientId(), authToken);
+        
+        List<TenantRole> roles = tenantService.getTenantRolesForScopeAccess(usa);
+        List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
+
+        // Remove Admin URLs if non admin token
+        if (!this.authorizationService.authorizeCloudIdentityAdmin(usa)) {
+            stripEndpoints(endpoints);
+        }
+
+        AuthenticateResponse auth = authConverterCloudV20.toAuthenticationResponse(user, usa, roles, endpoints);
+        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createAccess(auth));
+    }
+
 
     @Override
     public ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String authToken, String userId) throws IOException {
@@ -1828,6 +1852,11 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
             }
 
+            UserScopeAccess usa = (UserScopeAccess)sa;
+            if(usa.getImpersonatorToken() != null)
+                access.getToken().getOtherAttributes().put(new QName("impersonatedBy"), usa.getImpersonatorToken());
+                //access.getOtherAttributes().put(new QName("impersonatedBy"), usa.getImpersonatorToken());
+            
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createAccess(access));
 
         } catch (Exception ex) {

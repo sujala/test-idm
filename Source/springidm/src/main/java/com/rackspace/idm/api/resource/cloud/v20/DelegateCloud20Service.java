@@ -127,7 +127,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder validateToken(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo)
             throws IOException {
-        if (isCloudAuthRoutingEnabled() && !tokenService.doesTokenHaveAccessToApplication(tokenId,getCloudAuthClientId())) {
+        if (isCloudAuthRoutingEnabled() && !tokenService.doesTokenHaveAccessToApplication(tokenId, getCloudAuthClientId())) {
             String request = getCloudAuthV20Url() + "tokens/" + tokenId;
             HashMap<String, Object> params = new HashMap<String, Object>();
             params.put("belongsTo", belongsTo);
@@ -230,7 +230,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             String body = marshallObjectToString(objectFactoryRAXGRP.createGroup(group));
             return cloudClient.put(request, httpHeaders, body);
         }
-        return defaultCloud20Service.updateGroup(httpHeaders,authToken, groupId, group);
+        return defaultCloud20Service.updateGroup(httpHeaders, authToken, groupId, group);
     }
 
     @Override
@@ -239,7 +239,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             String request = getCloudAuthV20Url() + "RAX-GRPADM/groups/" + groupId;
             return cloudClient.delete(request, httpHeaders);
         }
-        return defaultCloud20Service.deleteGroup(httpHeaders,authToken, groupId);
+        return defaultCloud20Service.deleteGroup(httpHeaders, authToken, groupId);
     }
 
     @Override
@@ -284,6 +284,11 @@ public class DelegateCloud20Service implements Cloud20Service {
             return cloudClient.get(request, httpHeaders);
         }
         return defaultCloud20Service.listGroups(httpHeaders, authToken, groupName, null, null);
+    }
+
+    @Override
+    public ResponseBuilder impersonate(HttpHeaders httpHeaders, String authToken, String username) throws IOException {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override

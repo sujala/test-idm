@@ -46,6 +46,30 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
     }
 
     @Override
+    public ScopeAccess addImpersonatedScopeAccess(String parentUniqueId, ScopeAccess scopeAccess) {
+        getLogger().info("Adding Impersonated ScopeAccess: {}", scopeAccess);
+        Audit audit = Audit.log(scopeAccess).add();
+        LDAPConnection conn = null;
+        try {
+            conn = getAppConnPool().getConnection();
+            SearchResultEntry entry = getContainer(conn, parentUniqueId, CONTAINER_IMPERSONATED);
+            if (entry == null) {
+                addContianer(conn, parentUniqueId, CONTAINER_IMPERSONATED);
+                entry = getContainer(conn, parentUniqueId, CONTAINER_IMPERSONATED);
+            }
+            audit.succeed();
+            getLogger().info("Added Impersonated ScopeAccess: {}", scopeAccess);
+            return addScopeAccess(conn, entry.getDN(), scopeAccess);
+        } catch (final LDAPException e) {
+            getLogger().error("Error adding scope acccess object", e);
+            audit.fail();
+            throw new IllegalStateException(e);
+        } finally {
+            getAppConnPool().releaseConnection(conn);
+        }
+    }
+
+    @Override
     public ScopeAccess addDirectScopeAccess(String parentUniqueId,
         ScopeAccess scopeAccess) {
         getLogger().info("Adding Delegate ScopeAccess: {}", scopeAccess);
@@ -411,8 +435,8 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
         } catch (final LDAPException e) {
             getLogger()
                 .error(
-                    "Error reading ScopeAccess by RefreshToken: "
-                        + refreshToken, e);
+                        "Error reading ScopeAccess by RefreshToken: "
+                                + refreshToken, e);
             throw new IllegalStateException(e);
         } finally {
             getAppConnPool().releaseConnection(conn);

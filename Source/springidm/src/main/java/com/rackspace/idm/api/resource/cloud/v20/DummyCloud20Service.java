@@ -345,6 +345,11 @@ public class DummyCloud20Service implements Cloud20Service{
     }
 
     @Override
+    public ResponseBuilder impersonate(HttpHeaders httpHeaders, String authToken, String username) throws IOException {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
     public ResponseBuilder listEndpointTemplates(HttpHeaders httpHeaders,
         String authToken, String serviceId) {
         return Response.status(Status.NOT_FOUND);
