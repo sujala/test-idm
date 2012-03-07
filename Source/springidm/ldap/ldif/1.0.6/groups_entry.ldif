@@ -1,0 +1,6 @@
+dn: rsId=1,ou=groups,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsGroup
+objectClass: top
+rsId: 1
+name: Default
+description: default group

@@ -1,0 +1,4 @@
+dn: ou=groups,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: groups

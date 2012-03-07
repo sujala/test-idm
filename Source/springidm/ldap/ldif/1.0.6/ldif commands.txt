@@ -1,0 +1,6 @@
+
+1) Update Schema with new rsGroup Object
+2) execute groups.ldiff
+3) execute groups_entry.ldiff
+4) execute nextGroupIds.ldif
+

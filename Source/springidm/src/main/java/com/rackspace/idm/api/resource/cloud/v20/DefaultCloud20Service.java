@@ -201,7 +201,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder addRolesToUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String userId, String roleId) {
 
         try {
-            verifyServiceAdminLevelAccess(authToken);
+            verifyUserAdminLevelAccess(authToken);
             verifyTokenHasTenantAccess(authToken, tenantId);
 
             Tenant tenant = checkAndGetTenant(tenantId);
@@ -665,7 +665,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder deleteRoleFromUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId,
                                                       String userId, String roleId) {
         try {
-            verifyServiceAdminLevelAccess(authToken);
+            verifyUserAdminLevelAccess(authToken);
             verifyTokenHasTenantAccess(authToken, tenantId);
             Tenant tenant = checkAndGetTenant(tenantId);
             User user = checkAndGetUser(userId);
@@ -1603,7 +1603,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder listUsersForTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String marker, Integer limit) {
 
         try {
-            verifyServiceAdminLevelAccess(authToken);
+            verifyUserAdminLevelAccess(authToken);
             verifyTokenHasTenantAccess(authToken, tenantId);
 
             Tenant tenant = checkAndGetTenant(tenantId);
@@ -1622,7 +1622,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                                                       String roleId, String marker, Integer limit) {
 
         try {
-            verifyServiceAdminLevelAccess(authToken);
+            verifyUserAdminLevelAccess(authToken);
             verifyTokenHasTenantAccess(authToken, tenantId);
 
             Tenant tenant = checkAndGetTenant(tenantId);
@@ -2094,6 +2094,11 @@ public class DefaultCloud20Service implements Cloud20Service {
         if (authScopeAccess == null || ((HasAccessToken) authScopeAccess).isAccessTokenExpired(new DateTime())) {
             throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
         }
+
+        if (authorizationService.authorizeCloudIdentityAdmin(authScopeAccess) || authorizationService.authorizeCloudServiceAdmin(authScopeAccess)) {
+            return;
+        }
+
         List<Tenant> adminTenants = this.tenantService.getTenantsForScopeAccessByTenantRoles(authScopeAccess);
         for (Tenant tenant : adminTenants) {
             if (tenant.getTenantId().equals(tenantId)) {
