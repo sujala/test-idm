@@ -15,6 +15,8 @@ public interface ScopeAccessService {
     ScopeAccess addDirectScopeAccess(String parentUniqueId, ScopeAccess scopeAccess);
     
     ScopeAccess addDelegateScopeAccess(String parentUniqueId, ScopeAccess scopeAccess);
+
+    ScopeAccess addImpersonatedScopeAccess(User user, String clientId, String impersonatorToken);
     
     ScopeAccess addScopeAccess(String parentUniqueId, ScopeAccess scopeAccess);
 

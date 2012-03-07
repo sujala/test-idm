@@ -32,6 +32,7 @@ import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
+import javax.xml.namespace.QName;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.annotation.Annotation;
@@ -369,6 +370,12 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
         JSONObject tokenInner = new JSONObject();
         tokenInner.put(JSONConstants.ID, token.getId());
         tokenInner.put(JSONConstants.EXPIRES, token.getExpires().toString());
+
+        // Check for impersonation only?
+        for (QName key : token.getOtherAttributes().keySet()) {
+            tokenInner.put(key.toString(), token.getOtherAttributes().get(key));
+        }
+
         return tokenInner;
     }
 

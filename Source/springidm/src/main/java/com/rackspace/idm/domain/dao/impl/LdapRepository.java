@@ -151,7 +151,8 @@ public abstract class LdapRepository {
     public static final String ATTR_VERSION_LIST = "versionList";
     public static final String ATTR_GLOBAL = "rsGlobal";
     public static final String ATTR_OPENSTACK_TYPE = "openstackType";
-    
+    public static final String ATTR_IMPERSONATOR_TOKEN = "impersonatorToken";
+
     public static final String ATTR_TENANT_RS_ID = "tenantRsId";
     public static final String ATTR_ROLE_RS_ID = "roleRsId";
     public static final String ATTR_USER_RS_ID = "userRsId";
@@ -174,6 +175,7 @@ public abstract class LdapRepository {
     // Definitions for Contatiner Names
     protected static final String CONTAINER_DIRECT = "DIRECT TOKENS";
     protected static final String CONTAINER_DELEGATE = "DELEGATE TOKENS";
+    protected static final String CONTAINER_IMPERSONATED = "IMPERSONATED TOKENS";
     protected static final String CONTAINER_ROLES = "CLIENT ROLES";
 
     // Search Attributes

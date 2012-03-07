@@ -6,7 +6,6 @@ import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.resource.cloud.CloudClient;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
-import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.configuration.Configuration;
 import org.openstack.docs.common.api.v1.VersionChoice;
@@ -14,8 +13,6 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
@@ -28,7 +25,6 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import java.io.IOException;
 import java.io.StringReader;
-import java.net.URI;
 
 /**
  * Cloud Auth 2.0 API Versions
@@ -115,6 +111,15 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("tokenId") String tokenId) throws IOException {
         return getCloud20Service().listEndpointsForToken(httpHeaders, authToken, tokenId).build();
+    }
+
+    @POST
+    @Path("impersonate/{username}")
+    public Response impersonate(
+            @Context HttpHeaders httpHeaders,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("username") String username) throws IOException {
+        return getCloud20Service().impersonate(httpHeaders, authToken, username).build();
     }
 
     @GET

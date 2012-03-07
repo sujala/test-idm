@@ -1,13 +1,8 @@
 package com.rackspace.idm.domain.dao;
 
-import java.util.List;
+import com.rackspace.idm.domain.entity.*;
 
-import com.rackspace.idm.domain.entity.DefinedPermission;
-import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
-import com.rackspace.idm.domain.entity.DelegatedPermission;
-import com.rackspace.idm.domain.entity.GrantedPermission;
-import com.rackspace.idm.domain.entity.Permission;
-import com.rackspace.idm.domain.entity.ScopeAccess;
+import java.util.List;
 
 public interface ScopeAccessDao {
     
@@ -15,6 +10,8 @@ public interface ScopeAccessDao {
     
     ScopeAccess addDelegateScopeAccess(String parentUniqueId, ScopeAccess scopeAccess);
     
+    ScopeAccess addImpersonatedScopeAccess(String parentUniqueId, ScopeAccess scopeAccess);
+
     ScopeAccess addDirectScopeAccess(String parentUniqueId, ScopeAccess scopeAccess);
 
     DefinedPermission definePermission(String scopeAccessUniqueId,

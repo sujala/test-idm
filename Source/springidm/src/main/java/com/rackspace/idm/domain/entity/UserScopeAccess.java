@@ -1,17 +1,12 @@
 package com.rackspace.idm.domain.entity;
 
-import java.util.Date;
-
+import com.rackspace.idm.domain.dao.impl.LdapRepository;
+import com.unboundid.ldap.sdk.ReadOnlyEntry;
+import com.unboundid.ldap.sdk.persist.*;
 import org.joda.time.DateTime;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
-import com.rackspace.idm.domain.dao.impl.LdapRepository;
-import com.unboundid.ldap.sdk.ReadOnlyEntry;
-import com.unboundid.ldap.sdk.persist.FilterUsage;
-import com.unboundid.ldap.sdk.persist.LDAPEntryField;
-import com.unboundid.ldap.sdk.persist.LDAPField;
-import com.unboundid.ldap.sdk.persist.LDAPGetter;
-import com.unboundid.ldap.sdk.persist.LDAPObject;
+import java.util.Date;
 
 @LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_USERSCOPEACCESS,requestAllAttributes=true)
 public class UserScopeAccess extends ScopeAccess implements HasAccessToken, HasRefreshToken {
@@ -39,6 +34,9 @@ public class UserScopeAccess extends ScopeAccess implements HasAccessToken, HasR
 
     @LDAPField(attribute=LdapRepository.ATTR_USER_RCN, objectClass=LdapRepository.OBJECTCLASS_USERSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String userRCN;
+
+    @LDAPField(attribute=LdapRepository.ATTR_IMPERSONATOR_TOKEN, objectClass=LdapRepository.OBJECTCLASS_USERSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
+    private String impersonatorToken;
 
     @Override
     @LDAPGetter(attribute=LdapRepository.ATTR_CLIENT_ID, inRDN=true, filterUsage=FilterUsage.ALWAYS_ALLOWED)
@@ -158,6 +156,14 @@ public class UserScopeAccess extends ScopeAccess implements HasAccessToken, HasR
 
     public String getUserRsId() {
         return userRsId;
+    }
+
+    public String getImpersonatorToken() {
+        return impersonatorToken;
+    }
+
+    public void setImpersonatorToken(String impersonatorToken) {
+        this.impersonatorToken = impersonatorToken;
     }
 
 }
