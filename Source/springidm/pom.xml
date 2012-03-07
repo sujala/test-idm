@@ -392,10 +392,14 @@
                                     <outputDirectory>${basedir}/target/config/DEV</outputDirectory>
                                     <resources>
                                         <resource>
+                                            <filtering>true</filtering>
                                             <directory>${basedir}/src/main/config</directory>
                                             <includes>
                                                 <include>base.idm.properties</include>
                                                 <include>log4j.xml</include>
+                                                <include>rsa_api.properties</include>
+                                                <include>sdconf.rec</include>
+                                                <include>securid</include>
                                             </includes>
                                         </resource>
                                         <resource>
@@ -418,6 +422,9 @@
                                             <includes>
                                                 <include>base.idm.properties</include>
                                                 <include>log4j.xml</include>
+                                                <include>rsa_api.properties</include>
+                                                <include>sdconf.rec</include>
+                                                <include>securid</include>
                                             </includes>
                                         </resource>
                                         <resource>
@@ -440,6 +447,9 @@
                                             <includes>
                                                 <include>base.idm.properties</include>
                                                 <include>log4j.xml</include>
+                                                <include>rsa_api.properties</include>
+                                                <include>sdconf.rec</include>
+                                                <include>securid</include>
                                             </includes>
                                         </resource>
                                         <resource>
@@ -462,6 +472,9 @@
                                             <includes>
                                                 <include>base.idm.properties</include>
                                                 <include>log4j.xml</include>
+                                                <include>rsa_api.properties</include>
+                                                <include>sdconf.rec</include>
+                                                <include>securid</include>
                                             </includes>
                                         </resource>
                                         <resource>
@@ -484,6 +497,9 @@
                                             <includes>
                                                 <include>base.idm.properties</include>
                                                 <include>log4j.xml</include>
+                                                <include>rsa_api.properties</include>
+                                                <include>sdconf.rec</include>
+                                                <include>securid</include>
                                             </includes>
                                         </resource>
                                         <resource>
@@ -506,6 +522,9 @@
                                             <includes>
                                                 <include>base.idm.properties</include>
                                                 <include>log4j.xml</include>
+                                                <include>rsa_api.properties</include>
+                                                <include>sdconf.rec</include>
+                                                <include>securid</include>
                                             </includes>
                                         </resource>
                                         <resource>
@@ -528,6 +547,9 @@
                                             <includes>
                                                 <include>base.idm.properties</include>
                                                 <include>log4j.xml</include>
+                                                <include>rsa_api.properties</include>
+                                                <include>sdconf.rec</include>
+                                                <include>securid</include>
                                             </includes>
                                         </resource>
                                         <resource>
@@ -550,6 +572,9 @@
                                             <includes>
                                                 <include>base.idm.properties</include>
                                                 <include>log4j.xml</include>
+                                                <include>rsa_api.properties</include>
+                                                <include>sdconf.rec</include>
+                                                <include>securid</include>
                                             </includes>
                                         </resource>
                                         <resource>
@@ -572,6 +597,9 @@
                                             <includes>
                                                 <include>base.idm.properties</include>
                                                 <include>log4j.xml</include>
+                                                <include>rsa_api.properties</include>
+                                                <include>sdconf.rec</include>
+                                                <include>securid</include>
                                             </includes>
                                         </resource>
                                         <resource>
@@ -595,6 +623,9 @@
                                             <includes>
                                                 <include>base.idm.properties</include>
                                                 <include>log4j.xml</include>
+                                                <include>rsa_api.properties</include>
+                                                <include>sdconf.rec</include>
+                                                <include>securid</include>
                                             </includes>
                                         </resource>
                                         <resource>
@@ -617,6 +648,9 @@
                                             <includes>
                                                 <include>base.idm.properties</include>
                                                 <include>log4j.xml</include>
+                                                <include>rsa_api.properties</include>
+                                                <include>sdconf.rec</include>
+                                                <include>securid</include>
                                             </includes>
                                         </resource>
                                         <resource>
@@ -640,6 +674,9 @@
                                             <includes>
                                                 <include>base.idm.properties</include>
                                                 <include>log4j.xml</include>
+                                                <include>rsa_api.properties</include>
+                                                <include>sdconf.rec</include>
+                                                <include>securid</include>
                                             </includes>
                                         </resource>
                                         <resource>
@@ -662,6 +699,9 @@
                                             <includes>
                                                 <include>base.idm.properties</include>
                                                 <include>log4j.xml</include>
+                                                <include>rsa_api.properties</include>
+                                                <include>sdconf.rec</include>
+                                                <include>securid</include>
                                             </includes>
                                         </resource>
                                         <resource>
@@ -685,6 +725,9 @@
                                             <includes>
                                                 <include>base.idm.properties</include>
                                                 <include>log4j.xml</include>
+                                                <include>rsa_api.properties</include>
+                                                <include>sdconf.rec</include>
+                                                <include>securid</include>
                                             </includes>
                                         </resource>
                                         <resource>
@@ -707,6 +750,9 @@
                                             <includes>
                                                 <include>base.idm.properties</include>
                                                 <include>log4j.xml</include>
+                                                <include>rsa_api.properties</include>
+                                                <include>sdconf.rec</include>
+                                                <include>securid</include>
                                             </includes>
                                         </resource>
                                         <resource>
@@ -730,6 +776,9 @@
                                             <includes>
                                                 <include>base.idm.properties</include>
                                                 <include>log4j.xml</include>
+                                                <include>rsa_api.properties</include>
+                                                <include>sdconf.rec</include>
+                                                <include>securid</include>
                                             </includes>
                                         </resource>
                                         <resource>
@@ -752,6 +801,9 @@
                                             <includes>
                                                 <include>base.idm.properties</include>
                                                 <include>log4j.xml</include>
+                                                <include>rsa_api.properties</include>
+                                                <include>sdconf.rec</include>
+                                                <include>securid</include>
                                             </includes>
                                         </resource>
                                         <resource>

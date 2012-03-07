@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.token;
 
 import com.rackspace.api.idm.v1.AuthCredentials;
+import com.rackspace.api.idm.v1.RSACredentials;
 import com.rackspace.api.idm.v1.RackerCredentials;
 import com.rackspace.idm.api.converter.AuthConverter;
 import com.rackspace.idm.api.converter.CredentialsConverter;
@@ -96,7 +97,7 @@ public class TokensResource extends ParentResource {
                 if (credentials.getEntity().contains("\"rackerCredentials\":")) {
                     creds = jsonUnmarshaller.unmarshalJAXBElementFromJSON(reader, RackerCredentials.class);
                 }else if (credentials.getEntity().contains("\"rsaCredentials\":")){
-                    creds = jsonUnmarshaller.unmarshalJAXBElementFromJSON(reader, AuthCredentials.class);
+                    creds = jsonUnmarshaller.unmarshalJAXBElementFromJSON(reader, RSACredentials.class);
                 }else{
                     creds = jsonUnmarshaller.unmarshalJAXBElementFromJSON(reader, AuthCredentials.class);
                 }

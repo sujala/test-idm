@@ -21,7 +21,8 @@ public class RSAClient {
 
     public boolean authenticate(String userID, String passCode) {
         try {
-            api = AuthSessionFactory.getInstance();
+            String path = System.getProperty("idm.properties.location")+ "/rsa_api.properties";
+            api = AuthSessionFactory.getInstance(path );
             AuthSession authSession = api.createUserSession();
             authSession.lock(userID);
             int status = authSession.check(userID, passCode);
