@@ -287,9 +287,8 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
                     sfault.setCode(500);
                     sfault.setMessage(wae.getMessage());
                     sfault.setDetail(detail);
-
-                    return Response.ok(rax_of.createServiceFault(sfault))
-                        .status(500).build();
+                    logger.error(e.getMessage());
+                    return Response.ok(rax_of.createServiceFault(sfault)).status(500).build();
                 case 503:
                     ServiceUnavailableFault sufault = new ServiceUnavailableFault();
                     sufault.setCode(503);
@@ -311,9 +310,8 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
             }
         }
 
-        logger.error(e.getCause() == null ? e.getMessage() : e.getCause()
-            .getMessage());
-
+        logger.error(e.getCause() == null ? e.getMessage() : e.getCause().getMessage());
+        logger.error(e.getMessage());
         ServiceFault sfault = new ServiceFault();
         sfault.setCode(500);
         sfault.setMessage("Server Error");

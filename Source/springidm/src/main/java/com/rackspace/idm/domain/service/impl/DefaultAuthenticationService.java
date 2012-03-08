@@ -236,7 +236,11 @@ public class DefaultAuthenticationService implements AuthenticationService {
                 logger.warn(message);
                 throw new NotAuthenticatedException(message);
             }
-            RackerScopeAccess scopeAccess = this.getAndUpdateRackerScopeAccessForClientId((Racker) userDao.getUserByUsername(trParam.getUsername()), caResult.getClient());
+            User userByUsername = userDao.getUserByUsername(trParam.getUsername());
+            if(userByUsername==null){
+                throw new NotFoundException("Racker not found in directory");
+            }
+            RackerScopeAccess scopeAccess = this.getAndUpdateRackerScopeAccessForClientId((Racker) userByUsername, caResult.getClient());
             return scopeAccess;
         }
 
@@ -440,11 +444,8 @@ public class DefaultAuthenticationService implements AuthenticationService {
             scopeAccess.setRackerId(racker.getRackerId());
             scopeAccess.setClientId(client.getClientId());
             scopeAccess.setClientRCN(client.getRCN());
-            logger.debug(
-                    "Creating ScopeAccess for Racker: {} and ClientId: {}",
-                    racker.getRackerId(), client.getClientId());
-            scopeAccess = (RackerScopeAccess) this.scopeAccessService
-                    .addDirectScopeAccess(racker.getUniqueId(), scopeAccess);
+            logger.debug("Creating ScopeAccess for Racker: {} and ClientId: {}", racker.getRackerId(), client.getClientId());
+            scopeAccess = (RackerScopeAccess) scopeAccessService.addDirectScopeAccess(racker.getUniqueId(), scopeAccess);
         }
 
         DateTime current = new DateTime();
@@ -455,8 +456,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
 
         if (accessExpiration.isBefore(current)) {
             scopeAccess.setAccessTokenString(this.generateToken());
-            scopeAccess.setAccessTokenExp(current.plusSeconds(
-                    this.getDefaultTokenExpirationSeconds()).toDate());
+            scopeAccess.setAccessTokenExp(current.plusSeconds(this.getDefaultTokenExpirationSeconds()).toDate());
         }
 
         DateTime refreshExpiration = scopeAccess.getRefreshTokenExp() == null ? new DateTime()
@@ -468,17 +468,14 @@ public class DefaultAuthenticationService implements AuthenticationService {
             scopeAccess.setRefreshTokenExp(current.plusYears(100).toDate());
         }
 
-        logger.debug("Updating Expirations for Racker: {} and ClientId: {}",
-                racker.getRackerId(), client.getClientId());
+        logger.debug("Updating Expirations for Racker: {} and ClientId: {}", racker.getRackerId(), client.getClientId());
         this.scopeAccessService.updateScopeAccess(scopeAccess);
 
-        logger.debug("Returning ScopeAccess: {} Expiration {}", scopeAccess
-                .getAccessTokenString(), scopeAccess.getAccessTokenExp());
+        logger.debug("Returning ScopeAccess: {} Expiration {}", scopeAccess.getAccessTokenString(), scopeAccess.getAccessTokenExp());
         return scopeAccess;
     }
 
-    private UserAuthenticationResult authenticate(String username,
-                                                  String password) {
+    private UserAuthenticationResult authenticate(String username, String password) {
         logger.debug("Authenticating User: {}", username);
 
         UserAuthenticationResult result = userDao.authenticate(username,
