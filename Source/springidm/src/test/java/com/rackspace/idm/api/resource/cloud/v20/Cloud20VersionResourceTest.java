@@ -1,7 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest;
-import com.rackspace.idm.exception.BadRequestException;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import org.hamcrest.Matchers;
@@ -9,14 +8,11 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.openstack.docs.identity.api.v2.AuthenticateResponse;
-import org.openstack.docs.identity.api.v2.AuthenticationRequest;
 
 import javax.ws.rs.core.MediaType;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * Created by IntelliJ IDEA.
@@ -146,6 +142,7 @@ public class Cloud20VersionResourceTest extends AbstractAroundClassJerseyTest {
     }
 
     //This functionality is not implemented in cloud auth
+    @Ignore
     @Test
     public void listEndpointTemplates_returns404() throws Exception {
         String token = getAuthToken("cmarin2", "Password1");
@@ -155,6 +152,7 @@ public class Cloud20VersionResourceTest extends AbstractAroundClassJerseyTest {
     }
 
     //call gets forwarded to cloud and it is not implemented in cloud
+    @Ignore
     @Test
     public void listEndpointTemplates_withMissingCredentials_returns404() throws Exception {
         WebResource resource = resource().path("cloud/v2.0/OS-KSCATALOG/endpointTemplates");

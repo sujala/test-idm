@@ -1,20 +1,10 @@
 package com.rackspace.idm.api.error;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.ResourceBundle;
-
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Variant;
-import javax.ws.rs.ext.ExceptionMapper;
-import javax.ws.rs.ext.Provider;
-
+import com.rackspace.api.common.fault.v1.*;
+import com.rackspace.api.idm.v1.*;
+import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.exception.*;
+import com.rackspacecloud.docs.auth.api.v1.AuthFault;
 import org.omg.CORBA.portable.ApplicationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,26 +12,14 @@ import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.rackspace.api.common.fault.v1.BadRequestFault;
-import com.rackspace.api.common.fault.v1.ForbiddenFault;
-import com.rackspace.api.common.fault.v1.ItemNotFoundFault;
-import com.rackspace.api.common.fault.v1.MethodNotAllowedFault;
-import com.rackspace.api.common.fault.v1.ServiceFault;
-import com.rackspace.api.common.fault.v1.ServiceUnavailableFault;
-import com.rackspace.api.common.fault.v1.UnauthorizedFault;
-import com.rackspace.api.idm.v1.ApplicationNameConflictFault;
-import com.rackspace.api.idm.v1.BaseUrlIdConflictFault;
-import com.rackspace.api.idm.v1.ClientGroupConflictFault;
-import com.rackspace.api.idm.v1.CustomerIdConflictFault;
-import com.rackspace.api.idm.v1.NotProvisionedFault;
-import com.rackspace.api.idm.v1.PasswordSelfUpdateTooSoonFault;
-import com.rackspace.api.idm.v1.PasswordValidationFault;
-import com.rackspace.api.idm.v1.PermisionIdConflictFault;
-import com.rackspace.api.idm.v1.StalePasswordFault;
-import com.rackspace.api.idm.v1.UserDisabledFault;
-import com.rackspace.api.idm.v1.UsernameConflictFault;
-import com.rackspace.idm.audit.Audit;
-import com.rackspacecloud.docs.auth.api.v1.AuthFault;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.*;
+import javax.ws.rs.ext.ExceptionMapper;
+import javax.ws.rs.ext.Provider;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.ResourceBundle;
 
 @Component
 @Provider
