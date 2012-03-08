@@ -218,29 +218,24 @@ public class DefaultAuthenticationService implements AuthenticationService {
                 throw new BadRequestException(msg);
             }
 
-            final UserAuthenticationResult uaResult = authenticateRacker(trParam.getUsername(), trParam.getPassword());
+            final UserAuthenticationResult uaResult = authenticateRacker(trParam.getUsername(), trParam.getPassword(),false);
             if (!uaResult.isAuthenticated()) {
                 final String message = "Bad User credentials for " + trParam.getUsername();
                 logger.warn(message);
                 throw new NotAuthenticatedException(message);
             }
-
             RackerScopeAccess scopeAccess = this.getAndUpdateRackerScopeAccessForClientId((Racker) uaResult.getUser(), caResult.getClient());
             return scopeAccess;
         }
 
         if (trParam instanceof RSACredentials) {
-            boolean authenticated = rsaClient.authenticate(trParam.getUsername(), trParam.getPassword());
-            if (!authenticated) {
+            final UserAuthenticationResult uaResult = authenticateRacker(trParam.getUsername(), trParam.getPassword(),true);
+            if (!uaResult.isAuthenticated()) {
                 final String message = "Bad RSA credentials for " + trParam.getUsername();
                 logger.warn(message);
                 throw new NotAuthenticatedException(message);
             }
-            User userByUsername = userDao.getUserByUsername(trParam.getUsername());
-            if(userByUsername==null){
-                throw new NotFoundException("Racker not found in directory");
-            }
-            RackerScopeAccess scopeAccess = this.getAndUpdateRackerScopeAccessForClientId((Racker) userByUsername, caResult.getClient());
+            RackerScopeAccess scopeAccess = this.getAndUpdateRackerScopeAccessForClientId((Racker) uaResult.getUser(), caResult.getClient());
             return scopeAccess;
         }
 
@@ -485,14 +480,18 @@ public class DefaultAuthenticationService implements AuthenticationService {
         return result;
     }
 
-    private UserAuthenticationResult authenticateRacker(String username, String password) {
+    UserAuthenticationResult authenticateRacker(String username, String password, boolean usesRSAAuth) {
         logger.debug("Authenticating Racker: {}", username);
 
         if (!isTrustedServer()) {
             throw new ForbiddenException();
         }
-
-        boolean authenticated = authDao.authenticate(username, password);
+        boolean authenticated;
+        if (usesRSAAuth) {
+            authenticated = rsaClient.authenticate(username, password);
+        } else {
+            authenticated = authDao.authenticate(username, password);
+        }
         logger.debug("Authenticated Racker {} : {}", username, authenticated);
 
         Racker racker = userDao.getRackerByRackerId(username);
@@ -567,7 +566,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
         return config.getInt("token.expirationSeconds");
     }
 
-    private boolean isTrustedServer() {
+    boolean isTrustedServer() {
         return config.getBoolean("ldap.server.trusted", false);
     }
 
