@@ -1,0 +1,15 @@
+{
+       "RAX-GA:impersonator":{
+            "id":"567",
+            "name":"impersonator.joe",
+            "roles":[{
+                       "id":"123",
+                       "name":"Racker"
+                     },
+                     {
+                        "id":"234",
+                        "name":"object-store:admin",
+                     }                
+           ]
+       }
+}

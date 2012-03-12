@@ -7,11 +7,12 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<name>docs</name>
-	<url>http://maven.apache.org</url> 
+	<url>http://maven.apache.org</url>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-	    <doctools.version>1.0.6-SNAPSHOT</doctools.version>
+		<doctools.version>1.0.6-SNAPSHOT</doctools.version>
+		<build.samples.automatically>true</build.samples.automatically>
 	</properties>
 
 	<dependencies>
@@ -36,174 +37,342 @@
 			<artifactId>jettison</artifactId>
 			<version>1.1</version>
 		</dependency>
-	    <!-- We need Saxon 9 and clouddocs-maven-plugin here to normalize wadls -->
-	    <dependency>
-	        <groupId>net.sourceforge.saxon</groupId>
-	        <artifactId>saxon</artifactId>
-	        <version>9.1.0.8</version>
-	    </dependency>
-	    <dependency>
-	        <groupId>com.rackspace.cloud.api</groupId>
-	        <artifactId>clouddocs-maven-plugin</artifactId>
-	        <version>${doctools.version}</version>
-	    </dependency>
+		<!--  Gson: Java to Json conversion -->
+		<dependency>
+			<groupId>com.google.code.gson</groupId>
+			<artifactId>gson</artifactId>
+			<version>2.1</version>
+			<scope>compile</scope>
+		</dependency>
+		<!--
+			We need Saxon 9 and clouddocs-maven-plugin here to normalize wadls
+		-->
+		<dependency>
+			<groupId>net.sourceforge.saxon</groupId>
+			<artifactId>saxon</artifactId>
+			<version>9.1.0.8</version>
+		</dependency>
+		<dependency>
+			<groupId>com.rackspace.cloud.api</groupId>
+			<artifactId>clouddocs-maven-plugin</artifactId>
+			<version>${doctools.version}</version>
+		</dependency>
 	</dependencies>
-    
-    <build>
-        <resources>
-            <resource>
-                <directory>target/docbkx/pdf</directory>
-                <excludes>
-                    <exclude>**/*.fo</exclude>
-                </excludes>
-            </resource>
-        </resources>
-        <plugins>
-            <!-- Unpack the wadl normalization xslts -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>unpack-shared-resources</id>
-                        <goals>
-                            <goal>unpack-dependencies</goal>
-                        </goals>
-                        <phase>generate-sources</phase>
-                        <configuration>
-                            <outputDirectory>${project.build.directory}/generated-resources</outputDirectory>
-                            <includeGroupIds>com.rackspace.cloud.api</includeGroupIds>
-                            <includeArtifactIds>clouddocs-maven-plugin</includeArtifactIds>
-                            <excludeTransitive>true</excludeTransitive>
-                            <includes>**/normalizeWadl/*.xsl</includes>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            
-            <!-- Normalize the wadl -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <version>1.5</version>
-                <executions>
-                    <execution>
-                        <id>ant</id>
-                        <phase>generate-sources</phase>
-                        <configuration>
-                            <target>
-                                <!-- You can source the wadl from a remote location, e.g service registry. You could also normalize multiple wadls at the same time -->
-                                <java
-                                    jar="${net.sourceforge.saxon:saxon:jar}"
-                                    fork="true">
-                                    <arg value="-u"/>
-                                    <arg value="-s:src/wadl/idm.wadl"/>
-                                    <arg value="-xsl:${project.build.directory}/generated-resources/cloud/normalizeWadl/normalizeWadl.xsl"/>
-                                    <arg value="-o:${project.build.directory}/generated-resources/xml/xslt/idm.wadl"/>
-                                </java>
-                            </target>
-                        </configuration>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            
-            <!-- Create the pdf documentation as well as the web documentation -->
-            <plugin>
-                <groupId>com.rackspace.cloud.api</groupId>
-                <artifactId>clouddocs-maven-plugin</artifactId>
-                <version>${doctools.version}</version>
-                <executions>
-                    <execution>
-                        <id>generate-pdf-documenation</id>
-                        <goals>
-                            <goal>generate-pdf</goal>
-                        </goals>
-                        <phase>generate-sources</phase>
-                        <configuration>
-                            <highlightSource>false</highlightSource>
-                        </configuration>
-                    </execution>
-                    
-                    <execution>
-                        <id>generate-web-documenation</id>
-                        <goals>
-                            <goal>generate-webhelp</goal>
-                        </goals>
-                        <phase>generate-sources</phase>
-                        <configuration>
-                            <!-- These parameters only apply to webhelp -->
-                            <enableDisqus>0</enableDisqus>
-                            <disqusShortname>os-identitydevguide</disqusShortname>
-                            <enableGoogleAnalytics>1</enableGoogleAnalytics>
-                            <googleAnalyticsId>UA-17511903-6</googleAnalyticsId>
-                            <generateToc>
-                                appendix  toc,title
-                                article/appendix  nop
-                                article   toc,title
-                                book      title,figure,table,example,equation
-                                chapter   toc,title
-                                part      toc,title
-                                preface   toc,title
-                                qandadiv  toc
-                                qandaset  toc
-                                reference toc,title
-                                set       toc,title
+
+	<build>
+		<resources>
+			<resource>
+				<directory>target/docbkx/pdf</directory>
+				<excludes>
+					<exclude>**/*.fo</exclude>
+				</excludes>
+			</resource>
+		</resources>
+
+
+		<plugins>
+			<!-- Compile the schema and generate the pojos -->
+			<plugin>
+				<groupId>org.jvnet.jaxb2.maven2</groupId>
+				<artifactId>maven-jaxb2-plugin</artifactId>
+				<configuration>
+					<extension>true</extension>
+					<strict>false</strict>
+				</configuration>
+
+				<executions>
+					<execution>
+						<id>generate-keystone-schema-objects</id>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<phase>initialize</phase>
+						<configuration>
+							<schemaDirectory>src/xsd/keystone</schemaDirectory>
+							<bindingDirectory>src/xsd/keystone</bindingDirectory>
+							<generateDirectory>target/generated-schema-objects/keystone</generateDirectory>
+							<forceRegenerate>true</forceRegenerate>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+			<!-- Compile the sample creation classes at the initialize phase -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>2.3.2</version>
+				<configuration>
+					<source>1.6</source>
+					<target>1.6</target>
+				</configuration>
+				<executions>
+					<execution>
+						<id>compile</id>
+						<goals>
+							<goal>compile</goal>
+						</goals>
+						<phase>initialize</phase>
+					</execution>
+				</executions>
+			</plugin>
+
+			<!-- Create the samples -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<version>1.1.1</version>
+				<executions>
+					<execution>
+						<id>create-samples</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>java</goal>
+						</goals>
+						<configuration>
+							<mainClass>com.rackspace.idm.documentation.samples.SampleCreator</mainClass>
+							<arguments>
+								<argument>${build.samples.automatically}</argument>
+							</arguments>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+			<!-- Unpack the wadl normalization xslts -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>unpack-shared-resources</id>
+						<goals>
+							<goal>unpack-dependencies</goal>
+						</goals>
+						<phase>generate-sources</phase>
+						<configuration>
+							<outputDirectory>${project.build.directory}/generated-resources</outputDirectory>
+							<includeGroupIds>com.rackspace.cloud.api</includeGroupIds>
+							<includeArtifactIds>clouddocs-maven-plugin</includeArtifactIds>
+							<excludeTransitive>true</excludeTransitive>
+							<includes>**/normalizeWadl/*.xsl</includes>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+			<!-- Normalize the wadl -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<version>1.5</version>
+				<executions>
+					<execution>
+						<id>ant</id>
+						<phase>generate-sources</phase>
+						<configuration>
+							<target>
+								<!--
+									You can source the wadl from a remote location, e.g service
+									registry. You could also normalize multiple wadls at the same
+									time
+								-->
+								<java jar="${net.sourceforge.saxon:saxon:jar}" fork="true">
+									<arg value="-u" />
+									<arg value="-s:src/wadl/idm.wadl" />
+									<arg
+										value="-xsl:${project.build.directory}/generated-resources/cloud/normalizeWadl/normalizeWadl.xsl" />
+									<arg
+										value="-o:${project.build.directory}/generated-resources/xml/xslt/idm.wadl" />
+								</java>
+								<java jar="${net.sourceforge.saxon:saxon:jar}" fork="true">
+									<arg value="-u" />
+									<arg value="-s:src/wadl/keystone/RAX-GA.wadl" />
+									<arg
+										value="-xsl:${project.build.directory}/generated-resources/cloud/normalizeWadl/normalizeWadl.xsl" />
+									<arg
+										value="-o:${project.build.directory}/generated-resources/xml/xslt/RAX-GA.wadl" />
+								</java>
+							</target>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+			<!-- Create the pdf and web documentation -->
+			<plugin>
+				<groupId>com.rackspace.cloud.api</groupId>
+				<artifactId>clouddocs-maven-plugin</artifactId>
+				<version>${doctools.version}</version>
+				<executions>
+					<!-- ============================================ -->
+					<!-- 	Create the global auth documentation 	  -->
+					<!-- ============================================ -->
+					<execution>
+						<id>generate-pdf-documentation</id>
+						<goals>
+							<goal>generate-pdf</goal>
+						</goals>
+						<phase>generate-sources</phase>
+						<configuration>
+							<highlightSource>false</highlightSource>
+							<sourceDirectory>src/docbkx</sourceDirectory>
+							<includes>
+								idmdevguide.xml
+                    		</includes>
+						</configuration>
+					</execution>
+					<execution>
+						<id>generate-web-documentation</id>
+						<goals>
+							<goal>generate-webhelp</goal>
+						</goals>
+						<phase>generate-sources</phase>
+						<configuration>
+							<!-- These parameters only apply to webhelp -->
+							<enableDisqus>0</enableDisqus>
+							<disqusShortname>os-identitydevguide</disqusShortname>
+							<enableGoogleAnalytics>1</enableGoogleAnalytics>
+							<googleAnalyticsId>UA-17511903-6</googleAnalyticsId>
+							<generateToc>
+								appendix toc,title
+								article/appendix nop
+								article
+								toc,title
+								book title,figure,table,example,equation
+								chapter
+								toc,title
+								part toc,title
+								preface toc,title
+								qandadiv toc
+								qandaset toc
+								reference toc,title
+								set toc,title
                             </generateToc>
-                            <postProcess>
-                                <!-- Copies the figures to the correct location for webhelp -->
-                                <copy todir="${basedir}/target/docbkx/webhelp/idmdevguide/figures">
-                                    <fileset dir="${basedir}/src/img">
-                                        <include name="**/*.svg" />
-                                    </fileset>
-                                </copy>
-                                
-                                <!--Moves PDF to the needed placement -->
-                                <move failonerror="false"
-                                    file="${basedir}/target/docbkx/pdf/idmdevguide.pdf"
-                                    tofile="${basedir}/target/docbkx/webhelp/idmdevguide/idmdevguide.pdf"/>
-                                
-                            </postProcess>
-                        </configuration>
-                    </execution>
-                </executions>
-                
-                <configuration>
-                    <!-- These parameters apply to pdf and webhelp -->
-                    <xincludeSupported>true</xincludeSupported>
-                    <sourceDirectory>src/docbkx</sourceDirectory>
-                    <includes>
-                         idmdevguide.xml
+							<postProcess>
+								<!-- Copies the figures to the correct location for webhelp -->
+								<copy todir="${basedir}/target/docbkx/webhelp/idmdevguide/figures">
+									<fileset dir="${basedir}/src/img">
+										<include name="**/*.svg" />
+									</fileset>
+								</copy>
+
+								<!--Moves PDF to the needed placement -->
+								<move failonerror="false" file="${basedir}/target/docbkx/pdf/idmdevguide.pdf"
+									tofile="${basedir}/target/docbkx/webhelp/idmdevguide/idmdevguide.pdf" />
+
+							</postProcess>
+							<sourceDirectory>src/docbkx</sourceDirectory>
+							<includes>
+								idmdevguide.xml
+                    		</includes>
+						</configuration>
+					</execution>
+					
+					<!-- ================================================ -->
+					<!--   Create the keystone extensions documentation   -->
+					<!-- ================================================ -->
+					<execution>
+						<id>generate-keystone-pdf-documentation</id>
+						<goals>
+							<goal>generate-pdf</goal>
+						</goals>
+						<phase>generate-sources</phase>
+						<configuration>
+							<highlightSource>false</highlightSource>
+							<sourceDirectory>src/docbkx/keystone</sourceDirectory>
+							<includes>
+								RAX-GA.xml
+                    		</includes>
+						</configuration>
+					</execution>
+					<execution>
+						<id>generate-keystone-web-documentation</id>
+						<goals>
+							<goal>generate-webhelp</goal>
+						</goals>
+						<phase>generate-sources</phase>
+						<configuration>
+							<!-- These parameters only apply to webhelp -->
+							<enableDisqus>0</enableDisqus>
+							<disqusShortname>os-identitydevguide</disqusShortname>
+							<enableGoogleAnalytics>1</enableGoogleAnalytics>
+							<googleAnalyticsId>UA-17511903-6</googleAnalyticsId>
+							<generateToc>
+								appendix toc,title
+								article/appendix nop
+								article
+								toc,title
+								book title,figure,table,example,equation
+								chapter
+								toc,title
+								part toc,title
+								preface toc,title
+								qandadiv toc
+								qandaset toc
+								reference toc,title
+								set toc,title
+                            </generateToc>
+							<postProcess>
+								<!-- Copies the figures to the correct location for webhelp -->
+								<copy todir="${basedir}/target/docbkx/webhelp/RAX-GA/figures">
+									<fileset dir="${basedir}/src/img">
+										<include name="**/*.svg" />
+									</fileset>
+								</copy>
+
+								<!--Moves PDF to the needed placement -->
+								<move failonerror="false" file="${basedir}/target/docbkx/pdf/RAX-GA.pdf"
+									tofile="${basedir}/target/docbkx/webhelp/RAX-GA/RAX-GA.pdf" />
+
+							</postProcess>
+							<sourceDirectory>src/docbkx/keystone</sourceDirectory>
+							<includes>
+								RAX-GA.xml
+                    		</includes>
+						</configuration>
+					</execution>
+				</executions>
+
+				<configuration>
+					<!-- These parameters apply to pdf and webhelp -->
+					<xincludeSupported>true</xincludeSupported>
+					<sourceDirectory>src/docbkx/keystone</sourceDirectory>
+					<includes>
+						RAX-GA.xml
                     </includes>
-                    <profileSecurity>reviewer</profileSecurity>
-                    <branding>rackspace</branding>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
-    
-    <profiles>                                                                                              
-        <profile>                                                                                           
-            <id>Rackspace Research Repositories</id>                                                        
-            <activation>                                                                                    
-                <activeByDefault>true</activeByDefault>                                                     
-            </activation>                                                                                   
-            <repositories>                                                                                  
-                <repository>                                                                                
-                    <id>rackspace-research</id>                                                             
-                    <name>Rackspace Research Repository</name>                                              
-                    <url>http://maven.research.rackspacecloud.com/content/groups/public/</url>              
-                </repository>                                                                               
-            </repositories>                                                                                 
-            <pluginRepositories>                                                                            
-                <pluginRepository>                                                                          
-                    <id>rackspace-research</id>                                                             
-                    <name>Rackspace Research Repository</name>                                              
-                    <url>http://maven.research.rackspacecloud.com/content/groups/public/</url>              
-                </pluginRepository>                                                                         
-            </pluginRepositories>                                                                           
-        </profile> 
-    </profiles>
+					<profileSecurity>reviewer</profileSecurity>
+					<branding>rackspace</branding>
+				</configuration>
+			</plugin>
+
+
+		</plugins>
+	</build>
+
+	<profiles>
+		<profile>
+			<id>Rackspace Research Repositories</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<repositories>
+				<repository>
+					<id>rackspace-research</id>
+					<name>Rackspace Research Repository</name>
+					<url>http://maven.research.rackspacecloud.com/content/groups/public/</url>
+				</repository>
+			</repositories>
+			<pluginRepositories>
+				<pluginRepository>
+					<id>rackspace-research</id>
+					<name>Rackspace Research Repository</name>
+					<url>http://maven.research.rackspacecloud.com/content/groups/public/</url>
+				</pluginRepository>
+			</pluginRepositories>
+		</profile>
+	</profiles>
 </project>

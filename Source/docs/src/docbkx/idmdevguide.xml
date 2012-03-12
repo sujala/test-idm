@@ -68,8 +68,6 @@
         <wadl:resource href="idm.wadl#userSecret" />
         <wadl:resource href="idm.wadl#userPasswordCredentials" />
         <wadl:resource href="idm.wadl#userPasswordRecoveryToken" />
-        <wadl:resource href="idm.wadl#userDelegatedRefreshTokens" />
-        <wadl:resource href="idm.wadl#delegatedRefreshToken" />
         <wadl:resource href="idm.wadl#userApplications" />
         <wadl:resource href="idm.wadl#userApplication" />
         <wadl:resource href="idm.wadl#userTenantsRoles" />

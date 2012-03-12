@@ -87,16 +87,6 @@
                             </resource>
                         </resource>
                         
-                        <resource id="userDelegatedRefreshTokens" path="delegatedrefreshtokens">
-                            <method href="#getDelegatedRefreshTokens" />
-                            
-                            <resource id="delegatedRefreshToken" path="{tokenId}">
-                                <param name="tokenId" style="template" type="xsd:string" required="true"/>
-                                <method href="#getDelegatedRefreshToken" />
-                                <method href="#deleteDelegatedRefreshToken" />
-                            </resource>
-                        </resource>
-                        
                         <resource id="userApplications" path="applications">
                             <method href="#getUserApplications" />
                             
@@ -519,7 +509,7 @@
     </method>
     
     <method name="GET" id="getUserSecret">
-        <doc xml:lang="EN" title="Get User Secret">
+        <doc xml:lang="EN" title="Get User Secret Q/A">
             <xhtml:p class="shortdesc">
                 Get a user's secret question and answer.
             </xhtml:p>
@@ -537,7 +527,7 @@
     </method>
     
     <method name="PUT" id="setUserSecret">
-        <doc xml:lang="EN" title="Set User Secret">
+        <doc xml:lang="EN" title="Set User Secret Q/A">
             <xhtml:p class="shortdesc">
                 Sets a user's secret question and answer.
             </xhtml:p>
