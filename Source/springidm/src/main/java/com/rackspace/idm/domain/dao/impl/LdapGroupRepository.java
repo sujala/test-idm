@@ -221,30 +221,34 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
     @Override
     public void addGroupToUser(int groupId, String userId) {
         getLogger().debug("Adding group {} to user {}", groupId, userId);
-        Group group = this.getGroupById(groupId);
-        if (group == null) {
-            String errMsg = String.format("Group %s not found", groupId);
-            getLogger().error(errMsg);
-            throw new NotFoundException(errMsg);
+        Group group;
+        List<String> groups = new ArrayList<String>();
+
+        try{
+            group = this.getGroupById(groupId);
+            groups.add(group.getGroupId().toString());
+        }catch (Exception e){
+            if (e instanceof NotFoundException) {
+                String errMsg = String.format("Group %s not found", groupId);
+                getLogger().error(errMsg);
+                throw new NotFoundException(errMsg);
+            }
         }
 
         String userDN = new LdapDnBuilder(USERS_BASE_DN).addAttribute(ATTR_ID, userId).build();
         List<Group> oldGroups;
         try{
             oldGroups = this.getGroupsForUser(userId);
+
+            for (Group s : oldGroups) {
+                groups.add(s.getGroupId().toString());
+            }
+
         }catch(Exception e){
             getLogger().error("Error adding user {} to group - {}", userId, e);
             String errMsg = String.format("User %s not found", userId);
             throw new BadRequestException(errMsg);
         }
-
-        List<String> groups = new ArrayList<String>();
-
-        for (Group s : oldGroups) {
-            groups.add(s.getGroupId().toString());
-        }
-
-        groups.add(group.getGroupId().toString());
 
         List<Modification> mods = new ArrayList<Modification>();
 
@@ -358,8 +362,18 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
             SearchResultEntry e = searchResult.getSearchEntries().get(0);
             String[] list = e.getAttributeValues(ATTR_GROUP_ID);
             if(list != null) {
+                List<String> noGroup = new ArrayList<String>();
                 for(String id : list) {
-                    groups.add(getGroupById(Integer.parseInt(id)));
+                    try{
+                        Group groupById = getGroupById(Integer.parseInt(id));
+                        groups.add(groupById);
+                    }catch (NotFoundException ex){
+                        Group missingGroup = new Group();
+                        missingGroup.setGroupId(Integer.parseInt(id));
+                        groups.add(missingGroup);
+                        getLogger().error("User "+ userId+" had a reference to non-existant group "+id, ex);
+
+                    }
                 }
             }
         } else if (searchResult.getEntryCount() > 1) {
