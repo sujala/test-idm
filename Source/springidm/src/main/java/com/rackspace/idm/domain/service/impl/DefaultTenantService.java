@@ -238,7 +238,8 @@ public class DefaultTenantService implements TenantService {
             if (scopeAccess instanceof DelegatedClientScopeAccess) {
                 parentDn = scopeAccess.getUniqueId();
             } else {
-                parentDn = scopeAccess.getLDAPEntry().getParentDNString();
+                parentDn = scopeAccess.getLDAPEntry().getParentDN().getParentString();
+                //parentDn = scopeAccess.getLDAPEntry().getParentDNString();
                 if(parentDn.contains("IMPERSONATED")) parentDn = parentDn.replace("IMPERSONATED", "DIRECT"); // ToDo: Change this!
             }
         } catch (Exception ex) {

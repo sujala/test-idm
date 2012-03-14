@@ -58,7 +58,8 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             parentUniqueId = token.getUniqueId();
         } else {
             try {
-                parentUniqueId = token.getLDAPEntry().getParentDNString();
+                parentUniqueId = token.getLDAPEntry().getParentDN().getParentString();
+                //parentUniqueId = token.getLDAPEntry().getParentDNString();
                 if(parentUniqueId.contains("IMPERSONATED")) parentUniqueId = parentUniqueId.replace("IMPERSONATED", "DIRECT"); // ToDo: Change this!
             } catch (LDAPException e) {
                 // noop
@@ -122,8 +123,10 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         scopeAccess.setAccessTokenString(this.generateToken());
         scopeAccess.setAccessTokenExp(new DateTime().plusSeconds(getDefaultCloudAuthTokenExpirationSeconds()).toDate());
 
+        String dn = "cn=" + clientId + "," + user.getUniqueId();
+        
         logger.info("Adding scopeAccess {}", scopeAccess);
-        UserScopeAccess newScopeAccess = (UserScopeAccess)this.scopeAccessDao.addImpersonatedScopeAccess(user.getUniqueId(), scopeAccess);
+        UserScopeAccess newScopeAccess = (UserScopeAccess)this.scopeAccessDao.addImpersonatedScopeAccess(dn, scopeAccess);
         logger.info("Added scopeAccess {}", scopeAccess);
         return newScopeAccess;
     }

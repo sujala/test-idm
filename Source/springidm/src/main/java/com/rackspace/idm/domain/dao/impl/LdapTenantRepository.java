@@ -312,11 +312,10 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
     @Override
     public List<TenantRole> getTenantRolesForUser(User user) {
         getLogger().debug("Getting tenantRoles");
-        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(
-            ATTR_OBJECT_CLASS, OBJECTCLASS_TENANT_ROLE).build();
+        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TENANT_ROLE).build();
 
-        String dn = new LdapDnBuilder(user.getUniqueId()).addAttribute(
-            ATTR_NAME, CONTAINER_DIRECT).build();
+        //String dn = new LdapDnBuilder(user.getUniqueId()).addAttribute(ATTR_NAME, CONTAINER_ROLES).build();
+        String dn = new LdapDnBuilder(user.getUniqueId()).build();
 
         List<TenantRole> roles = new ArrayList<TenantRole>();
         try {
@@ -561,7 +560,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
             if (scopeAccess instanceof DelegatedClientScopeAccess) {
                 parentDn = scopeAccess.getUniqueId();
             } else {
-                parentDn = scopeAccess.getLDAPEntry().getParentDNString();
+                parentDn = scopeAccess.getLDAPEntry().getParentDN().getParentString();
             }
         } catch (Exception ex) {
             throw new IllegalStateException();
