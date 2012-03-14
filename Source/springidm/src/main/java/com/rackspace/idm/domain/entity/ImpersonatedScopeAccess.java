@@ -8,34 +8,38 @@ import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import java.util.Date;
 
-@LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_USERSCOPEACCESS,requestAllAttributes=true)
-public class UserScopeAccess extends ScopeAccess implements HasAccessToken, HasRefreshToken {
+/**
+ * Created by IntelliJ IDEA.
+ * User: matt.colton
+ * Date: 3/14/12
+ * Time: 12:14 PM
+ * To change this template use File | Settings | File Templates.
+ */
+@LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS,requestAllAttributes=true)
+public class ImpersonatedScopeAccess extends ScopeAccess implements HasAccessToken {
 
     @LDAPEntryField()
     private ReadOnlyEntry ldapEntry;
 
-    @LDAPField(attribute=LdapRepository.ATTR_ACCESS_TOKEN, objectClass=LdapRepository.OBJECTCLASS_USERSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
+    @LDAPField(attribute= LdapRepository.ATTR_ACCESS_TOKEN, objectClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS, inRDN=false, filterUsage= FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String accessTokenString;
 
-    @LDAPField(attribute=LdapRepository.ATTR_ACCESS_TOKEN_EXP, objectClass=LdapRepository.OBJECTCLASS_USERSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
+    @LDAPField(attribute=LdapRepository.ATTR_ACCESS_TOKEN_EXP, objectClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private Date accessTokenExp;
 
-    @LDAPField(attribute=LdapRepository.ATTR_REFRESH_TOKEN, objectClass=LdapRepository.OBJECTCLASS_USERSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
-    private String refreshTokenString;
-
-    @LDAPField(attribute=LdapRepository.ATTR_REFRESH_TOKEN_EXP, objectClass=LdapRepository.OBJECTCLASS_USERSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
-    private Date refreshTokenExp;
-
-    @LDAPField(attribute=LdapRepository.ATTR_UID, objectClass=LdapRepository.OBJECTCLASS_USERSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=true)
+    @LDAPField(attribute=LdapRepository.ATTR_UID, objectClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=true)
     private String username;
 
-    @LDAPField(attribute=LdapRepository.ATTR_USER_RS_ID, objectClass=LdapRepository.OBJECTCLASS_USERSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
+    @LDAPField(attribute=LdapRepository.ATTR_USER_RS_ID, objectClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String userRsId;
 
-    @LDAPField(attribute=LdapRepository.ATTR_USER_RCN, objectClass=LdapRepository.OBJECTCLASS_USERSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
+    @LDAPField(attribute=LdapRepository.ATTR_USER_RCN, objectClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String userRCN;
 
-    @LDAPField(attribute=LdapRepository.ATTR_IMPERSONATOR_TOKEN, objectClass=LdapRepository.OBJECTCLASS_USERSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
+    @LDAPField(attribute=LdapRepository.ATTR_IMPERSONATOR_ID, objectClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
+    private String impersonatorId;
+
+    @LDAPField(attribute=LdapRepository.ATTR_IMPERSONATOR_TOKEN, objectClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String impersonatorToken;
 
     @Override
@@ -55,26 +59,6 @@ public class UserScopeAccess extends ScopeAccess implements HasAccessToken, HasR
     }
 
     private DateTime userPasswordExpirationDate;
-    
-    @Override
-    public String getRefreshTokenString() {
-        return refreshTokenString;
-    }
-
-    @Override
-    public void setRefreshTokenString(String refreshTokenString) {
-        this.refreshTokenString = refreshTokenString;
-    }
-
-    @Override
-    public Date getRefreshTokenExp() {
-        return refreshTokenExp;
-    }
-
-    @Override
-    public void setRefreshTokenExp(Date refreshTokenExp) {
-        this.refreshTokenExp = refreshTokenExp;
-    }
 
     public String getUsername() {
         return username;
@@ -113,11 +97,6 @@ public class UserScopeAccess extends ScopeAccess implements HasAccessToken, HasR
     }
 
     @Override
-    public void setRefreshTokenExpired() {
-        this.refreshTokenExp = new DateTime().minusDays(1).toDate();
-    }
-
-    @Override
     public void setAccessTokenExpired() {
         this.accessTokenExp = new DateTime().minusDays(1).toDate();
     }
@@ -130,18 +109,11 @@ public class UserScopeAccess extends ScopeAccess implements HasAccessToken, HasR
         this.userPasswordExpirationDate = userPasswordExpirationDate;
     }
 
-	@Override
+    @Override
     public boolean isAccessTokenExpired(DateTime time) {
         return StringUtils.isBlank(this.accessTokenString)
         || this.accessTokenExp == null
         || new DateTime(this.accessTokenExp).isBefore(time);
-    }
-
-    @Override
-    public boolean isRefreshTokenExpired(DateTime time) {
-        return StringUtils.isBlank(this.refreshTokenString)
-        || this.refreshTokenExp == null
-        || new DateTime(this.refreshTokenExp).isBefore(time);
     }
 
     @Override
@@ -158,4 +130,19 @@ public class UserScopeAccess extends ScopeAccess implements HasAccessToken, HasR
         return userRsId;
     }
 
+    public String getImpersonatorId() {
+        return impersonatorId;
+    }
+
+    public void setImpersonatorId(String impersonatorId) {
+        this.impersonatorId = impersonatorId;
+    }
+
+    public String getImpersonatorToken() {
+        return impersonatorToken;
+    }
+
+    public void setImpersonatorToken(String impersonatorToken) {
+        this.impersonatorToken = impersonatorToken;
+    }
 }

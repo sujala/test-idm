@@ -10,7 +10,7 @@ public interface ScopeAccessDao {
     
     ScopeAccess addDelegateScopeAccess(String parentUniqueId, ScopeAccess scopeAccess);
     
-    ScopeAccess addImpersonatedScopeAccess(String parentUniqueId, ScopeAccess scopeAccess);
+    ScopeAccess addImpersonatedScopeAccess(String parentUniqueId, String clientId, ScopeAccess scopeAccess);
 
     ScopeAccess addDirectScopeAccess(String parentUniqueId, ScopeAccess scopeAccess);
 

@@ -36,6 +36,7 @@ public abstract class LdapRepository {
     public static final String OBJECTCLASS_USERSCOPEACCESS = "userScopeAccess";
     public static final String OBJECTCLASS_CLIENTSCOPEACCESS = "clientScopeAccess";
     public static final String OBJECTCLASS_DELEGATEDCLIENTSCOPEACCESS = "delegatedClientScopeAccess";
+    public static final String OBJECTCLASS_IMPERSONATEDSCOPEACCESS = "impersonatedScopeAccess";
     public static final String OBJECTCLASS_PASSWORDRESETSCOPEACCESS = "passwordResetScopeAccess";
     public static final String OBJECTCLASS_RACKERSCOPEACCESS = "rackerScopeAccess";
     public static final String OBJECTCLASS_RACKSPACE_CONTAINER = "rsContainer";
@@ -151,6 +152,7 @@ public abstract class LdapRepository {
     public static final String ATTR_VERSION_LIST = "versionList";
     public static final String ATTR_GLOBAL = "rsGlobal";
     public static final String ATTR_OPENSTACK_TYPE = "openstackType";
+    public static final String ATTR_IMPERSONATOR_ID = "impersonatorId";
     public static final String ATTR_IMPERSONATOR_TOKEN = "impersonatorToken";
 
     public static final String ATTR_TENANT_RS_ID = "tenantRsId";

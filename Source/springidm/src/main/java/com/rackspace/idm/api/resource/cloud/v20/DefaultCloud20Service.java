@@ -10,7 +10,6 @@ import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
-import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
@@ -41,7 +40,6 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
-import javax.xml.namespace.QName;
 import javax.xml.transform.stream.StreamSource;
 import java.io.IOException;
 import java.io.InputStream;
@@ -1853,10 +1851,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             UserScopeAccess usa = (UserScopeAccess)sa;
-            if(usa.getImpersonatorToken() != null)
-                access.getToken().getOtherAttributes().put(new QName("impersonatedBy"), usa.getImpersonatorToken());
-                //access.getOtherAttributes().put(new QName("impersonatedBy"), usa.getImpersonatorToken());
-            
+            //if(usa.getImpersonatorToken() != null)
+                //access.getToken().getOtherAttributes().put(new QName("impersonatedBy"), usa.getImpersonatorToken());
+                
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createAccess(access));
 
         } catch (Exception ex) {

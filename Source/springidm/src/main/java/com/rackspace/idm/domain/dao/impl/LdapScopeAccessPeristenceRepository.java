@@ -46,16 +46,18 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
     }
 
     @Override
-    public ScopeAccess addImpersonatedScopeAccess(String parentUniqueId, ScopeAccess scopeAccess) {
+    public ScopeAccess addImpersonatedScopeAccess(String parentUniqueId, String clientId, ScopeAccess scopeAccess) {
         getLogger().info("Adding Impersonated ScopeAccess: {}", scopeAccess);
         Audit audit = Audit.log(scopeAccess).add();
         LDAPConnection conn = null;
+
+        String dn = new LdapDnBuilder(parentUniqueId).addAttribute(ATTR_NAME, clientId).build();
         try {
             conn = getAppConnPool().getConnection();
-            SearchResultEntry entry = getContainer(conn, parentUniqueId, CONTAINER_IMPERSONATED);
+            SearchResultEntry entry = getContainer(conn, dn, CONTAINER_IMPERSONATED);
             if (entry == null) {
-                addContianer(conn, parentUniqueId, CONTAINER_IMPERSONATED);
-                entry = getContainer(conn, parentUniqueId, CONTAINER_IMPERSONATED);
+                addContianer(conn, dn, CONTAINER_IMPERSONATED);
+                entry = getContainer(conn, dn, CONTAINER_IMPERSONATED);
             }
             audit.succeed();
             getLogger().info("Added Impersonated ScopeAccess: {}", scopeAccess);
@@ -273,7 +275,8 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
         getLogger().debug("Find ScopeAccess for Parent: {} by ClientId: {}", parentUniqueId, clientId);
         LDAPConnection conn = null;
 
-        String dn = new LdapDnBuilder(parentUniqueId).addAttribute(ATTR_NAME, CONTAINER_DIRECT).build();
+        //String dn = new LdapDnBuilder(parentUniqueId).addAttribute(ATTR_NAME, CONTAINER_DIRECT).build();
+        String dn = new LdapDnBuilder(parentUniqueId).addAttribute(ATTR_NAME, CONTAINER_DIRECT).addAttribute(ATTR_NAME, clientId).build();
 
         try {
             conn = getAppConnPool().getConnection();

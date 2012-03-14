@@ -113,20 +113,19 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public UserScopeAccess addImpersonatedScopeAccess(User user, String clientId, String impersonatorToken) {
-        UserScopeAccess scopeAccess = new UserScopeAccess();
+    public ImpersonatedScopeAccess addImpersonatedScopeAccess(User user, String clientId, String impersonatorToken) {
+        ImpersonatedScopeAccess scopeAccess = new ImpersonatedScopeAccess();
         scopeAccess.setUserRsId(user.getId());
         scopeAccess.setUsername(user.getUsername());
         scopeAccess.setClientId(clientId);
         scopeAccess.setClientRCN("RACKSPACE"); // ToDo: validate
+        scopeAccess.setImpersonatorId("anothertest");
         scopeAccess.setImpersonatorToken(impersonatorToken);
         scopeAccess.setAccessTokenString(this.generateToken());
         scopeAccess.setAccessTokenExp(new DateTime().plusSeconds(getDefaultCloudAuthTokenExpirationSeconds()).toDate());
-
-        String dn = "cn=" + clientId + "," + user.getUniqueId();
         
         logger.info("Adding scopeAccess {}", scopeAccess);
-        UserScopeAccess newScopeAccess = (UserScopeAccess)this.scopeAccessDao.addImpersonatedScopeAccess(dn, scopeAccess);
+        ImpersonatedScopeAccess newScopeAccess = (ImpersonatedScopeAccess)this.scopeAccessDao.addImpersonatedScopeAccess(user.getUniqueId(), clientId, scopeAccess);
         logger.info("Added scopeAccess {}", scopeAccess);
         return newScopeAccess;
     }
