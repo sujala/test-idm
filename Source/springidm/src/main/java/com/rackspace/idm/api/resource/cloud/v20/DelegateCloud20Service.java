@@ -127,7 +127,15 @@ public class DelegateCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder validateToken(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo)
             throws IOException {
-        if (isCloudAuthRoutingEnabled() && !tokenService.doesTokenHaveAccessToApplication(tokenId, getCloudAuthClientId())) {
+        boolean tokenExists;
+        //Quick Fix
+        try{
+            tokenExists = tokenService.doesTokenHaveAccessToApplication(tokenId, getCloudAuthClientId());
+        }
+        catch (NotFoundException ex){
+            tokenExists = false;
+        }
+        if (isCloudAuthRoutingEnabled() && !tokenExists) {
             String request = getCloudAuthV20Url() + "tokens/" + tokenId;
             HashMap<String, Object> params = new HashMap<String, Object>();
             params.put("belongsTo", belongsTo);

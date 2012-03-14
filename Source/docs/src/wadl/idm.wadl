@@ -302,6 +302,10 @@
                 <example href="../formattedsamples/racker_auth_credentials.xml" language="xml"/>
                 <example href="../formattedsamples/racker_auth_credentials.json" language="javascript"/>
             </examples>
+            <examples xmlns="http://docs.rackspace.com/api" title="Auth as Racker with RSA token Request">
+	        <example href="../formattedsamples/racker_rsa_credentials.xml" language="xml"/>
+	        <example href="../formattedsamples/racker_rsa_credentials.json" language="javascript"/>
+            </examples>
             <examples xmlns="http://docs.rackspace.com/api" title="Auth as Racker Response">
                 <example href="../formattedsamples/racker_auth.xml" language="xml"/>
                 <example href="../formattedsamples/racker_auth.json" language="javascript"/>
