@@ -24,12 +24,14 @@
     </grammars>
 
     <resources base="http://localhost:8080">
-        <resource id="RAX-GA" path="/RAX-GA">
-            <resource id="impersonation-tokens" path="impersonation-tokens">
-                <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
-                    <doc>A valid authentication token of the impersonator</doc>
-                </param>
-                <method href="#impersonateUser"/>
+        <resource id="version" path="/v2.0">
+            <resource id="RAX-GA" path="RAX-GA">
+                <resource id="impersonation-tokens" path="impersonation-tokens">
+                    <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
+                        <doc>A valid authentication token of the impersonator</doc>
+                    </param>
+                    <method href="#impersonateUser"/>
+                </resource>
             </resource>
         </resource>
     </resources>
