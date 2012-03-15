@@ -4,6 +4,7 @@ import com.rackspace.idm.api.converter.RolesConverter;
 import com.rackspace.idm.api.resource.ParentResource;
 import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
+import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
@@ -47,7 +48,7 @@ public class UserTenantsResource extends ParentResource {
 		this.rolesConverter = rolesConverter;
 		this.applicationService = applicationService;
 	}
-	
+
     /**
      * Gets all the roles on a tenant that this user has
      * 

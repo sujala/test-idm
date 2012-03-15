@@ -19,6 +19,8 @@ import com.rackspace.idm.api.resource.cloud.CloudVersionsResource;
 import com.rackspace.idm.api.resource.customeridentityprofile.CustomerIdenityProfilesResource;
 import com.rackspace.idm.api.resource.passwordrule.PasswordRulesResource;
 import com.rackspace.idm.api.resource.roles.RolesResource;
+
+import com.rackspace.idm.api.resource.tenant.TenantsResource;
 import com.rackspace.idm.api.resource.token.TokensResource;
 import com.rackspace.idm.api.resource.user.UsersResource;
 import com.rackspace.idm.api.serviceprofile.CanonicalContractDescriptionBuilder;
@@ -41,6 +43,7 @@ public class Version10Resource {
     private final TokensResource tokenResource;
     private final ApplicationsResource applicationsResource;
     private final CanonicalContractDescriptionBuilder canonicalContractDescriptionBuilder;
+    private final TenantsResource tenantsResource;
 
     @Context
     private UriInfo uriInfo;
@@ -52,7 +55,8 @@ public class Version10Resource {
         CloudVersionsResource cloudVersionsResource, ApiDocService apiDocService,
         Configuration config,
         CanonicalContractDescriptionBuilder canonicalContractDescriptionBuilder,
-        ApplicationsResource applicationsResource) {
+        ApplicationsResource applicationsResource,
+        TenantsResource tenantsResource) {
         this.usersResource = usersResource;
         this.customerIdentityProfilesResource = customersResource;
         this.passwordRulesResource = passwordRulesResource;
@@ -61,6 +65,7 @@ public class Version10Resource {
         this.applicationsResource = applicationsResource;
         this.rolesResource = rolesResource;
         this.apiDocService = apiDocService;
+        this.tenantsResource = tenantsResource;
     }
 
     /**
@@ -112,6 +117,11 @@ public class Version10Resource {
     @Path("tokens")
     public TokensResource getTokenResource() {
         return tokenResource;
+    }
+
+    @Path("tenants")
+    public TenantsResource getTenantResource() {
+        return tenantsResource;
     }
     
     @Path("applications")
