@@ -358,8 +358,8 @@ public abstract class LdapRepository {
         }
     }
 
-    protected void addContianer(LDAPConnection conn, String parentUniqueId,
-        String name) {
+    protected void addContainer(LDAPConnection conn, String parentUniqueId,
+                                String name) {
         Audit audit = Audit.log("Adding ScopeAccess_Container").add();
         List<Attribute> atts = new ArrayList<Attribute>();
         atts.add(new Attribute(ATTR_OBJECT_CLASS,

@@ -1405,14 +1405,28 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder impersonate(HttpHeaders httpHeaders, String authToken, String username) throws IOException {
-        //verify access to impersonate
-        // ToDo: MUST DO !!!!
+        verifyServiceAdminLevelAccess(authToken);
 
+        String impersonatorName = null;
+        ScopeAccess sa = checkAndGetToken(authToken);
+        if (sa instanceof UserScopeAccess) {
+            UserScopeAccess usa = (UserScopeAccess) sa;
+            User impersonator = this.userService.getUserById(usa.getUserRsId());
+            impersonatorName = impersonator.getUsername();
+        }
+        else if(sa instanceof RackerScopeAccess) {
+            RackerScopeAccess rsa = (RackerScopeAccess)sa;
+            Racker racker = this.userService.getRackerByRackerId(rsa.getRackerId());
+            impersonatorName = racker.getUsername();
+        }
+        if(impersonatorName == null)
+            throw new NotAuthorizedException("User does not have access");
+            
         User user = checkAndGetUserByName(username);
         if (user == null)
             throw new NotFoundException("User not found.");
 
-        ScopeAccess usa = scopeAccessService.addImpersonatedScopeAccess(user, getCloudAuthClientId(), authToken);
+        ScopeAccess usa = scopeAccessService.addImpersonatedScopeAccess(user, getCloudAuthClientId(), impersonatorName, authToken);
         
         List<TenantRole> roles = tenantService.getTenantRolesForScopeAccess(usa);
         List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);

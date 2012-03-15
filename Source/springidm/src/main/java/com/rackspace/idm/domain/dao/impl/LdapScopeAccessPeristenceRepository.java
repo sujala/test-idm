@@ -21,8 +21,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
     }
 
     @Override
-    public ScopeAccess addDelegateScopeAccess(String parentUniqueId,
-        ScopeAccess scopeAccess) {
+    public ScopeAccess addDelegateScopeAccess(String parentUniqueId, ScopeAccess scopeAccess) {
         getLogger().info("Adding Delegate ScopeAccess: {}", scopeAccess);
         Audit audit = Audit.log(scopeAccess).add();
         LDAPConnection conn = null;
@@ -30,7 +29,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
             conn = getAppConnPool().getConnection();
             SearchResultEntry entry = getContainer(conn, parentUniqueId, CONTAINER_DELEGATE);
             if (entry == null) {
-                addContianer(conn, parentUniqueId, CONTAINER_DELEGATE);
+                addContainer(conn, parentUniqueId, CONTAINER_DELEGATE);
                 entry = getContainer(conn, parentUniqueId, CONTAINER_DELEGATE);
             }
             audit.succeed();
@@ -46,17 +45,17 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
     }
 
     @Override
-    public ScopeAccess addImpersonatedScopeAccess(String parentUniqueId, String clientId, ScopeAccess scopeAccess) {
+    public ScopeAccess addImpersonatedScopeAccess(String parentUniqueId, ScopeAccess scopeAccess) {
         getLogger().info("Adding Impersonated ScopeAccess: {}", scopeAccess);
         Audit audit = Audit.log(scopeAccess).add();
         LDAPConnection conn = null;
 
-        String dn = new LdapDnBuilder(parentUniqueId).addAttribute(ATTR_NAME, clientId).build();
+        String dn = new LdapDnBuilder(parentUniqueId).addAttribute(ATTR_NAME, scopeAccess.getClientId()).build();
         try {
             conn = getAppConnPool().getConnection();
             SearchResultEntry entry = getContainer(conn, dn, CONTAINER_IMPERSONATED);
             if (entry == null) {
-                addContianer(conn, dn, CONTAINER_IMPERSONATED);
+                addContainer(conn, dn, CONTAINER_IMPERSONATED);
                 entry = getContainer(conn, dn, CONTAINER_IMPERSONATED);
             }
             audit.succeed();
@@ -72,17 +71,17 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
     }
 
     @Override
-    public ScopeAccess addDirectScopeAccess(String parentUniqueId,
-        ScopeAccess scopeAccess) {
+    public ScopeAccess addDirectScopeAccess(String parentUniqueId, ScopeAccess scopeAccess) {
         getLogger().info("Adding Delegate ScopeAccess: {}", scopeAccess);
         Audit audit = Audit.log(scopeAccess).add();
         LDAPConnection conn = null;
         try {
             conn = getAppConnPool().getConnection();
-            SearchResultEntry entry = getContainer(conn, parentUniqueId, CONTAINER_DIRECT);
+            String dn = new LdapDnBuilder(parentUniqueId).addAttribute(ATTR_NAME, scopeAccess.getClientId()).build();
+            SearchResultEntry entry = getContainer(conn, dn, CONTAINER_DIRECT);
             if (entry == null) {
-                addContianer(conn, parentUniqueId, CONTAINER_DIRECT);
-                entry = getContainer(conn, parentUniqueId, CONTAINER_DIRECT);
+                addContainer(conn, dn, CONTAINER_DIRECT);
+                entry = getContainer(conn, dn, CONTAINER_DIRECT);
             }
             audit.succeed();
             getLogger().info("Added Delegate ScopeAccess: {}", scopeAccess);
@@ -188,8 +187,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
     }
 
     @Override
-    public boolean doesAccessTokenHavePermission(ScopeAccess token,
-        Permission permission) {
+    public boolean doesAccessTokenHavePermission(ScopeAccess token, Permission permission) {
         getLogger().debug("Checking Permission: {}", permission);
         LDAPConnection conn = null;
 
@@ -213,8 +211,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
     }
 
     @Override
-    public boolean doesParentHaveScopeAccess(String parentUniqueId,
-        ScopeAccess scopeAccess) {
+    public boolean doesParentHaveScopeAccess(String parentUniqueId, ScopeAccess scopeAccess) {
         LDAPConnection conn = null;
 
         ScopeAccess sa = new ScopeAccess();
@@ -237,8 +234,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
     }
 
     @Override
-    public ScopeAccess getDelegateScopeAccessForParentByClientId(
-        String parentUniqueId, String clientId) {
+    public ScopeAccess getDelegateScopeAccessForParentByClientId(String parentUniqueId, String clientId) {
         getLogger().debug("Find ScopeAccess for Parent: {} by ClientId: {}", parentUniqueId, clientId);
         LDAPConnection conn = null;
 
@@ -388,8 +384,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
     }
 
     @Override
-    public DelegatedClientScopeAccess getScopeAccessByAuthorizationCode(
-        String authorizationCode) {
+    public DelegatedClientScopeAccess getScopeAccessByAuthorizationCode(String authorizationCode) {
         getLogger().debug("Find ScopeAccess by Authorization Code: {}",
             authorizationCode);
         LDAPConnection conn = null;
@@ -448,10 +443,8 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
     }
 
     @Override
-    public ScopeAccess getScopeAccessByUsernameAndClientId(String username,
-        String clientId) {
-        getLogger().debug("Find ScopeAccess by Username: {} and ClientId: {}",
-            username, clientId);
+    public ScopeAccess getScopeAccessByUsernameAndClientId(String username, String clientId) {
+        getLogger().debug("Find ScopeAccess by Username: {} and ClientId: {}", username, clientId);
         LDAPConnection conn = null;
         try {
             conn = getAppConnPool().getConnection();
@@ -478,8 +471,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
     }
 
     @Override
-    public List<DelegatedClientScopeAccess> getDelegatedClientScopeAccessByUsername(
-        String username) {
+    public List<DelegatedClientScopeAccess> getDelegatedClientScopeAccessByUsername(String username) {
         getLogger().debug("Find ScopeAccess by Username: {}", username);
         LDAPConnection conn = null;
         List<DelegatedClientScopeAccess> scopeAccessList = null;

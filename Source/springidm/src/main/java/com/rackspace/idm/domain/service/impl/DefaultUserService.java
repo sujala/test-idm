@@ -92,7 +92,7 @@ public class DefaultUserService implements UserService {
         usa.setUserRCN(user.getCustomerId());
         usa.setClientId(getIdmClientId());
         usa.setClientRCN(getRackspaceCustomerId());
-        
+
         this.scopeAccessDao.addDirectScopeAccess(user.getUniqueId(), usa);
         
       //Every user by default has the cloud auth application provisioned for them

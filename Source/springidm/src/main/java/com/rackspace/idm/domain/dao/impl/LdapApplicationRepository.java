@@ -909,7 +909,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
             SearchResultEntry entry = getContainer(conn, clientUniqueId,
                     CONTAINER_ROLES);
             if (entry == null) {
-                addContianer(conn, clientUniqueId, CONTAINER_ROLES);
+                addContainer(conn, clientUniqueId, CONTAINER_ROLES);
                 entry = getContainer(conn, clientUniqueId, CONTAINER_ROLES);
             }
 
