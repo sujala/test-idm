@@ -225,9 +225,15 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         LDAPConnection conn = null;
         try {
             conn = getAppConnPool().getConnection();
-            final LDAPPersister<TenantRole> persister = LDAPPersister
-                .getInstance(TenantRole.class);
-            persister.add(role, conn, parentUniqueId);
+
+            SearchResultEntry entry = getContainer(conn, parentUniqueId, CONTAINER_ROLES);
+            if (entry == null) {
+                addContainer(conn, parentUniqueId, CONTAINER_ROLES);
+                entry = getContainer(conn, parentUniqueId, CONTAINER_ROLES);
+            }
+
+            final LDAPPersister<TenantRole> persister = LDAPPersister.getInstance(TenantRole.class);
+            persister.add(role, conn, entry.getDN());
             audit.succeed();
             getLogger().info("Added TenantRole: {}", role);
         } catch (final LDAPException e) {

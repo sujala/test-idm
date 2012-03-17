@@ -906,15 +906,13 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         try {
             conn = getAppConnPool().getConnection();
 
-            SearchResultEntry entry = getContainer(conn, clientUniqueId,
-                    CONTAINER_ROLES);
+            SearchResultEntry entry = getContainer(conn, clientUniqueId, CONTAINER_ROLES);
             if (entry == null) {
                 addContainer(conn, clientUniqueId, CONTAINER_ROLES);
                 entry = getContainer(conn, clientUniqueId, CONTAINER_ROLES);
             }
 
-            final LDAPPersister<ClientRole> persister = LDAPPersister
-                    .getInstance(ClientRole.class);
+            final LDAPPersister<ClientRole> persister = LDAPPersister.getInstance(ClientRole.class);
             persister.add(role, conn, entry.getDN());
             audit.succeed();
             getLogger().info("Added Client Role: {}", role);

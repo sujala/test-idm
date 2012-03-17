@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.rackspace.docs.identity.api.ext.rax_ga.v1.ImpersonationRequest;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
@@ -168,5 +169,5 @@ public interface Cloud20Service {
 
     ResponseBuilder getGroup(HttpHeaders httpHeaders, String authToken, String groupName) throws IOException;
 
-    ResponseBuilder impersonate(HttpHeaders httpHeaders, String authToken, String username) throws IOException;
+    ResponseBuilder impersonate(HttpHeaders httpHeaders, String authToken, ImpersonationRequest impersonationRequest) throws IOException;
 }

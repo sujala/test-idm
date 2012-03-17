@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.rackspace.docs.identity.api.ext.rax_ga.v1.ImpersonationRequest;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.JSONConstants;
@@ -1404,7 +1405,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder impersonate(HttpHeaders httpHeaders, String authToken, String username) throws IOException {
+    public ResponseBuilder impersonate(HttpHeaders httpHeaders, String authToken, ImpersonationRequest impersonationRequest) throws IOException {
         verifyServiceAdminLevelAccess(authToken);
 
         String impersonatorName = null;
@@ -1421,7 +1422,8 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
         if(impersonatorName == null)
             throw new NotAuthorizedException("User does not have access");
-            
+
+        String username = impersonationRequest.getUser().getUsername();
         User user = checkAndGetUserByName(username);
         if (user == null)
             throw new NotFoundException("User not found.");
@@ -1843,16 +1845,27 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             access.setToken(this.tokenConverterCloudV20.toToken(sa));
 
-            if (sa instanceof UserScopeAccess) {
-                UserScopeAccess usa = (UserScopeAccess) sa;
-                User user = this.userService.getUserById(usa.getUserRsId());
+            if (sa instanceof UserScopeAccess || sa instanceof ImpersonatedScopeAccess) {
+                String userId = "";
+                if(sa instanceof UserScopeAccess) {
+                    UserScopeAccess usa = (UserScopeAccess) sa;
+                    userId = usa.getUserRsId();
+                }
+                else if(sa instanceof ImpersonatedScopeAccess) {
+                    ImpersonatedScopeAccess isa = (ImpersonatedScopeAccess) sa;
+                    userId = isa.getUserRsId();
+                }
+
+                User user = this.userService.getUserById(userId);
                 if (user == null) {
                     throw new NotFoundException("User not found");
                 }
                 if (user.isDisabled()) {
                     throw new NotFoundException("Token not found.");
                 }
-                List<TenantRole> roles = this.tenantService.getTenantRolesForScopeAccess(usa);
+                
+                
+                List<TenantRole> roles = this.tenantService.getTenantRolesForScopeAccess(sa);
                 if (roles != null && roles.size() > 0) {
                     access.setUser(this.userConverterCloudV20.toUserForAuthenticateResponse(user, roles));
                 }
@@ -1864,10 +1877,6 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
             }
 
-            UserScopeAccess usa = (UserScopeAccess)sa;
-            //if(usa.getImpersonatorToken() != null)
-                //access.getToken().getOtherAttributes().put(new QName("impersonatedBy"), usa.getImpersonatorToken());
-                
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createAccess(access));
 
         } catch (Exception ex) {

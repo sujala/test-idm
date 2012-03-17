@@ -77,15 +77,24 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
         LDAPConnection conn = null;
         try {
             conn = getAppConnPool().getConnection();
-            String dn = new LdapDnBuilder(parentUniqueId).addAttribute(ATTR_NAME, scopeAccess.getClientId()).build();
-            SearchResultEntry entry = getContainer(conn, dn, CONTAINER_DIRECT);
-            if (entry == null) {
-                addContainer(conn, dn, CONTAINER_DIRECT);
-                entry = getContainer(conn, dn, CONTAINER_DIRECT);
+
+            //Client ID Container
+            SearchResultEntry centry = getContainer(conn, parentUniqueId, scopeAccess.getClientId());
+            if (centry == null) {
+                addContainer(conn, parentUniqueId, scopeAccess.getClientId());
+                centry = getContainer(conn, parentUniqueId, scopeAccess.getClientId());
             }
+
+            //Direct Tokens Container
+            SearchResultEntry dentry = getContainer(conn, centry.getDN(), CONTAINER_DIRECT);
+            if (dentry == null) {
+                addContainer(conn, centry.getDN(), CONTAINER_DIRECT);
+                dentry = getContainer(conn, centry.getDN(), CONTAINER_DIRECT);
+            }
+
             audit.succeed();
             getLogger().info("Added Delegate ScopeAccess: {}", scopeAccess);
-            return addScopeAccess(conn, entry.getDN(), scopeAccess);
+            return addScopeAccess(conn, dentry.getDN(), scopeAccess);
         } catch (final LDAPException e) {
             getLogger().error("Error adding scope acccess object", e);
             audit.fail();
@@ -271,7 +280,6 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
         getLogger().debug("Find ScopeAccess for Parent: {} by ClientId: {}", parentUniqueId, clientId);
         LDAPConnection conn = null;
 
-        //String dn = new LdapDnBuilder(parentUniqueId).addAttribute(ATTR_NAME, CONTAINER_DIRECT).build();
         String dn = new LdapDnBuilder(parentUniqueId).addAttribute(ATTR_NAME, CONTAINER_DIRECT).addAttribute(ATTR_NAME, clientId).build();
 
         try {
@@ -761,31 +769,20 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
     private ScopeAccess decodeScopeAccess(
         final SearchResultEntry searchResultEntry) throws LDAPPersistException {
         ScopeAccess object = null;
-        if (searchResultEntry.getAttribute(ATTR_OBJECT_CLASS).hasValue(
-            OBJECTCLASS_USERSCOPEACCESS)) {
-            object = LDAPPersister.getInstance(UserScopeAccess.class).decode(
-                searchResultEntry);
-        } else if (searchResultEntry.getAttribute(ATTR_OBJECT_CLASS).hasValue(
-            OBJECTCLASS_CLIENTSCOPEACCESS)) {
-            object = LDAPPersister.getInstance(ClientScopeAccess.class).decode(
-                searchResultEntry);
-        } else if (searchResultEntry.getAttribute(ATTR_OBJECT_CLASS).hasValue(
-            OBJECTCLASS_PASSWORDRESETSCOPEACCESS)) {
-            object = LDAPPersister.getInstance(PasswordResetScopeAccess.class)
-                .decode(searchResultEntry);
-        } else if (searchResultEntry.getAttribute(ATTR_OBJECT_CLASS).hasValue(
-            OBJECTCLASS_RACKERSCOPEACCESS)) {
-            object = LDAPPersister.getInstance(RackerScopeAccess.class).decode(
-                searchResultEntry);
-        } else if (searchResultEntry.getAttribute(ATTR_OBJECT_CLASS).hasValue(
-            OBJECTCLASS_DELEGATEDCLIENTSCOPEACCESS)) {
-            object = LDAPPersister
-                .getInstance(DelegatedClientScopeAccess.class).decode(
-                    searchResultEntry);
-        } else if (searchResultEntry.getAttribute(ATTR_OBJECT_CLASS).hasValue(
-            OBJECTCLASS_SCOPEACCESS)) {
-            object = LDAPPersister.getInstance(ScopeAccess.class).decode(
-                searchResultEntry);
+        if (searchResultEntry.getAttribute(ATTR_OBJECT_CLASS).hasValue(OBJECTCLASS_USERSCOPEACCESS)) {
+            object = LDAPPersister.getInstance(UserScopeAccess.class).decode(searchResultEntry);
+        } else if (searchResultEntry.getAttribute(ATTR_OBJECT_CLASS).hasValue(OBJECTCLASS_CLIENTSCOPEACCESS)) {
+            object = LDAPPersister.getInstance(ClientScopeAccess.class).decode(searchResultEntry);
+        } else if (searchResultEntry.getAttribute(ATTR_OBJECT_CLASS).hasValue(OBJECTCLASS_PASSWORDRESETSCOPEACCESS)) {
+            object = LDAPPersister.getInstance(PasswordResetScopeAccess.class).decode(searchResultEntry);
+        } else if (searchResultEntry.getAttribute(ATTR_OBJECT_CLASS).hasValue(OBJECTCLASS_RACKERSCOPEACCESS)) {
+            object = LDAPPersister.getInstance(RackerScopeAccess.class).decode(searchResultEntry);
+        } else if (searchResultEntry.getAttribute(ATTR_OBJECT_CLASS).hasValue(OBJECTCLASS_DELEGATEDCLIENTSCOPEACCESS)) {
+            object = LDAPPersister.getInstance(DelegatedClientScopeAccess.class).decode(searchResultEntry);
+        } else if (searchResultEntry.getAttribute(ATTR_OBJECT_CLASS).hasValue(OBJECTCLASS_IMPERSONATEDSCOPEACCESS)) {
+            object = LDAPPersister.getInstance(ImpersonatedScopeAccess.class).decode(searchResultEntry);
+        } else if (searchResultEntry.getAttribute(ATTR_OBJECT_CLASS).hasValue(OBJECTCLASS_SCOPEACCESS)) {
+            object = LDAPPersister.getInstance(ScopeAccess.class).decode(searchResultEntry);
         }
         return object;
     }
@@ -793,8 +790,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
     private Filter getFilterForPermission(Permission permission) {
 
         try {
-            LDAPPersister persister = LDAPPersister.getInstance(permission
-                .getClass());
+            LDAPPersister persister = LDAPPersister.getInstance(permission.getClass());
             return persister.getObjectHandler().createFilter(permission);
         } catch (Exception e) {
             return Filter.createEqualityFilter(ATTR_OBJECT_CLASS,
