@@ -98,4 +98,5 @@ public class JSONConstants {
     public static final Object NEW_PASSWORD = "newPassword";
     public static final Object CURRENT_PASSWORD = "currentPassword";
     public static final Object OS_KSADM_PASSWORD = "OS-KSADM:password";
+    public static final Object IMPERSONATION = "RAX-GA:impersonation";
 }

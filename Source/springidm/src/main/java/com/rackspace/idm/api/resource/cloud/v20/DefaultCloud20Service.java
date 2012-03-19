@@ -1429,7 +1429,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         ScopeAccess usa = scopeAccessService.addImpersonatedScopeAccess(user, getCloudAuthClientId(), impersonatorName, authToken);
         
-        List<TenantRole> roles = tenantService.getTenantRolesForScopeAccess(usa);
+        //List<TenantRole> roles = tenantService.getTenantRolesForScopeAccess(usa);
         List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
 
         // Remove Admin URLs if non admin token

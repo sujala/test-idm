@@ -104,8 +104,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             throw new IllegalArgumentException(errMsg);
         }
         logger.info("Adding scopeAccess {}", scopeAccess);
-        ScopeAccess newScopeAccess = this.scopeAccessDao
-            .addDelegateScopeAccess(parentUniqueId, scopeAccess);
+        ScopeAccess newScopeAccess = this.scopeAccessDao.addDelegateScopeAccess(parentUniqueId, scopeAccess);
         logger.info("Added scopeAccess {}", scopeAccess);
         return newScopeAccess;
     }
