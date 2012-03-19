@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_ga.v1.ImpersonationRequest;
+import com.rackspace.docs.identity.api.ext.rax_ga.v1.ImpersonationResponse;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.JSONConstants;
@@ -1438,8 +1439,10 @@ public class DefaultCloud20Service implements Cloud20Service {
             stripEndpoints(endpoints);
         }
 
-        AuthenticateResponse auth = authConverterCloudV20.toAuthenticationResponse(user, usa, roles, endpoints);
-        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createAccess(auth));
+        //AuthenticateResponse auth = authConverterCloudV20.toAuthenticationResponse(user, usa, roles, endpoints);
+        //return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createAccess(auth));
+        ImpersonationResponse auth = authConverterCloudV20.toImpersonationResponse(usa);
+        return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtRaxgaV1Factory().createAccess(auth));
     }
 
 

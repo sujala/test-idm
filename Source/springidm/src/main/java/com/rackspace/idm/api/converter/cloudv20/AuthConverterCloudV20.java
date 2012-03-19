@@ -2,6 +2,7 @@ package com.rackspace.idm.api.converter.cloudv20;
 
 import java.util.List;
 
+import com.rackspace.docs.identity.api.ext.rax_ga.v1.ImpersonationResponse;
 import org.openstack.docs.identity.api.v2.AuthenticateResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -34,6 +35,12 @@ public class AuthConverterCloudV20 {
         auth.setUser(this.userConverterCloudV20.toUserForAuthenticateResponse(user, roles));
         auth.setServiceCatalog(this.endpointConverterCloudV20.toServiceCatalog(endpoints));
         
+        return auth;
+    }
+
+    public ImpersonationResponse toImpersonationResponse(ScopeAccess scopeAccess) {
+        ImpersonationResponse auth = OBJ_FACTORIES.getRackspaceIdentityExtRaxgaV1Factory().createImpersonationResponse();
+        auth.setToken(this.tokenConverterCloudV20.toToken(scopeAccess));
         return auth;
     }
 }
