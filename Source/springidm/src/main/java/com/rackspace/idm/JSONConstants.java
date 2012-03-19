@@ -79,6 +79,7 @@ public class JSONConstants {
     public static final Object ROLE = "role";
     public static final Object ROLES = "roles";
     public static final Object SERVICE_ID = "serviceId";
+    public static final Object SCOPE_ID = "scopeId";
     public static final Object V1_DEFAULT = "v1Default";
     public static final Object USER_TYPE = "userType";
     public static final Object SERVICE_NAME = "serviceName";
