@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.rackspace.api.idm.v1.RackerCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.*;
@@ -10,6 +11,9 @@ import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TokenService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.NotFoundException;
+import com.sun.jersey.api.json.JSONConfiguration;
+import com.sun.jersey.api.json.JSONJAXBContext;
+import com.sun.jersey.api.json.JSONUnmarshaller;
 import org.apache.commons.configuration.Configuration;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
@@ -41,6 +45,7 @@ import java.util.HashMap;
  */
 @Component
 public class DelegateCloud20Service implements Cloud20Service {
+
     @Autowired
     private CloudClient cloudClient;
 
@@ -88,25 +93,23 @@ public class DelegateCloud20Service implements Cloud20Service {
         //Get "user" from LDAP
         com.rackspace.idm.domain.entity.User user = cloudUserExtractor.getUserByV20CredentialType(authenticationRequest);
 
-         //Get Cloud Auth response
+        //Get Cloud Auth response
         String body = marshallObjectToString(objectFactory.createAuth(authenticationRequest));
         Response.ResponseBuilder serviceResponse = cloudClient.post(getCloudAuthV20Url() + "tokens", httpHeaders, body);
         Response dummyResponse = serviceResponse.clone().build();
-         //If SUCCESS and "user" is not null, store token to "user" and return cloud response
+        //If SUCCESS and "user" is not null, store token to "user" and return cloud response
         int status = dummyResponse.getStatus();
         if (status == HttpServletResponse.SC_OK && user != null) {
-
             AuthenticateResponse authenticateResponse = getAuthFromResponse(dummyResponse.getEntity().toString());
-            if(authenticateResponse != null) {
+            if (authenticateResponse != null) {
                 String token = authenticateResponse.getToken().getId();
                 Date expires = authenticateResponse.getToken().getExpires().toGregorianCalendar().getTime();
                 scopeAccessService.updateUserScopeAccessTokenForClientIdByUser(user, getCloudAuthClientId(), token, expires);
             }
             return serviceResponse;
-        }else if(user == null){ //If "user" is null return cloud response
+        } else if (user == null) { //If "user" is null return cloud response
             return serviceResponse;
-        }
-        else { //If we get this far, return Default Service Response
+        } else { //If we get this far, return Default Service Response
             return getCloud20Service().authenticate(httpHeaders, authenticationRequest);
         }
 
@@ -129,10 +132,9 @@ public class DelegateCloud20Service implements Cloud20Service {
             throws IOException {
         boolean tokenExists;
         //Quick Fix
-        try{
+        try {
             tokenExists = tokenService.doesTokenHaveAccessToApplication(tokenId, getCloudAuthClientId());
-        }
-        catch (NotFoundException ex){
+        } catch (NotFoundException ex) {
             tokenExists = false;
         }
         if (isCloudAuthRoutingEnabled() && !tokenExists) {
@@ -252,7 +254,7 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder addGroupToUser(HttpHeaders httpHeaders, String authToken, String groupId, String userId) throws IOException {
-         if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
+        if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
             String request = getCloudAuthV20Url() + "RAX-GRPADM/groups/" + groupId + "/users/" + userId;
             return cloudClient.put(request, httpHeaders, null);
         }
@@ -531,10 +533,9 @@ public class DelegateCloud20Service implements Cloud20Service {
         Response.ResponseBuilder serviceResponse = getCloud20Service().deleteUserFromSoftDeleted(httpHeaders, authToken, userId);
         // We have to clone the ResponseBuilder from above because once we build
         // it below its gone.
-        if(config.getBoolean("allowSoftDeleteDeletion")){
+        if (config.getBoolean("allowSoftDeleteDeletion")) {
             return defaultCloud20Service.deleteUserFromSoftDeleted(httpHeaders, authToken, userId);
-        }
-        else{
+        } else {
             throw new NotFoundException("Not found");
         }
 //        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
@@ -661,7 +662,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder addRolesToUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String userId, String roleId)
             throws IOException {
-        if(isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)){
+        if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
             String request = getCloudAuthV20Url() + "tenants/" + tenantId + "/users/" + userId + "/roles/OS-KSADM/" + roleId;
             return cloudClient.put(request, httpHeaders, null);
         }
@@ -857,7 +858,7 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getSecretQA(HttpHeaders httpHeaders, String authToken, String userId) throws IOException {
-        if(isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)){
+        if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
             String request = getCloudAuthV20Url() + "users/" + userId + "/RAX-KSQA/secretqa";
             return cloudClient.get(request, httpHeaders);
         }
@@ -867,8 +868,8 @@ public class DelegateCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder updateSecretQA(HttpHeaders httpHeaders, String authToken, String userId, SecretQA secrets)
             throws IOException, JAXBException {
-        if(isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)){
-            String request = getCloudAuthV20Url() + "users/" + userId  + "/RAX-KSQA/secretqa";
+        if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
+            String request = getCloudAuthV20Url() + "users/" + userId + "/RAX-KSQA/secretqa";
             String body = marshallObjectToString(objectFactorySECRETQA.createSecretQA(secrets));
             return cloudClient.put(request, httpHeaders, body);
         }
@@ -891,14 +892,25 @@ public class DelegateCloud20Service implements Cloud20Service {
         return request + result;
     }
 
+    //TODO change way we check for media type
     private AuthenticateResponse getAuthFromResponse(String entity) {
         try {
-            JAXBContext jc = JAXBContext.newInstance(AuthenticateResponse.class);
-            Unmarshaller unmarshaller = jc.createUnmarshaller();
-            StreamSource xml = new StreamSource(new StringReader(entity));
-            JAXBElement ob = unmarshaller.unmarshal(xml, AuthenticateResponse.class);
-            return (AuthenticateResponse)ob.getValue();
-        } catch(Exception ex) {
+            if (entity.trim().startsWith("{")) {
+                JSONConfiguration jsonConfiguration = JSONConfiguration.natural().rootUnwrapping(false).build();
+                JSONJAXBContext context = new JSONJAXBContext(jsonConfiguration, "org.openstack.docs.identity.api.v2");
+                JSONUnmarshaller jsonUnmarshaller = context.createJSONUnmarshaller();
+                StreamSource xml = new StreamSource(new StringReader(entity));
+                JAXBElement ob = jsonUnmarshaller.unmarshalJAXBElementFromJSON(new StringReader(entity), AuthenticateResponse.class);
+                return (AuthenticateResponse) ob.getValue();
+            } else {
+                JAXBContext jc = JAXBContext.newInstance(AuthenticateResponse.class);
+                Unmarshaller unmarshaller = jc.createUnmarshaller();
+                StreamSource xml = new StreamSource(new StringReader(entity));
+                JAXBElement ob = unmarshaller.unmarshal(xml, AuthenticateResponse.class);
+                return (AuthenticateResponse) ob.getValue();
+
+            }
+        } catch (Exception ex) {
             return null;
         }
     }
