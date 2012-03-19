@@ -36,6 +36,7 @@ public abstract class LdapRepository {
     public static final String OBJECTCLASS_USERSCOPEACCESS = "userScopeAccess";
     public static final String OBJECTCLASS_CLIENTSCOPEACCESS = "clientScopeAccess";
     public static final String OBJECTCLASS_DELEGATEDCLIENTSCOPEACCESS = "delegatedClientScopeAccess";
+    public static final String OBJECTCLASS_IMPERSONATEDSCOPEACCESS = "impersonatedScopeAccess";
     public static final String OBJECTCLASS_PASSWORDRESETSCOPEACCESS = "passwordResetScopeAccess";
     public static final String OBJECTCLASS_RACKERSCOPEACCESS = "rackerScopeAccess";
     public static final String OBJECTCLASS_RACKSPACE_CONTAINER = "rsContainer";
@@ -151,6 +152,7 @@ public abstract class LdapRepository {
     public static final String ATTR_VERSION_LIST = "versionList";
     public static final String ATTR_GLOBAL = "rsGlobal";
     public static final String ATTR_OPENSTACK_TYPE = "openstackType";
+    public static final String ATTR_IMPERSONATOR_ID = "impersonatorId";
     public static final String ATTR_IMPERSONATOR_TOKEN = "impersonatorToken";
     public static final String ATTR_SCOPE_ID = "scopeId";
 
@@ -357,29 +359,23 @@ public abstract class LdapRepository {
         }
     }
 
-    protected void addContianer(LDAPConnection conn, String parentUniqueId,
-        String name) {
+    protected void addContainer(LDAPConnection conn, String parentUniqueId, String name) {
         Audit audit = Audit.log("Adding ScopeAccess_Container").add();
         List<Attribute> atts = new ArrayList<Attribute>();
-        atts.add(new Attribute(ATTR_OBJECT_CLASS,
-            OBJECTCLASS_RACKSPACE_CONTAINER));
+        atts.add(new Attribute(ATTR_OBJECT_CLASS,OBJECTCLASS_RACKSPACE_CONTAINER));
         atts.add(new Attribute(ATTR_NAME, name));
         Attribute[] attributes = atts.toArray(new Attribute[0]);
-        String dn = new LdapDnBuilder(parentUniqueId).addAttribute(ATTR_NAME,
-            name).build();
+        String dn = new LdapDnBuilder(parentUniqueId).addAttribute(ATTR_NAME,name).build();
         this.addEntry(conn, dn, attributes, audit);
         audit.succeed();
     }
 
-    protected SearchResultEntry getContainer(LDAPConnection conn,
-        String parentUniqueId, String name) {
+    protected SearchResultEntry getContainer(LDAPConnection conn, String parentUniqueId, String name) {
         Filter filter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_OBJECT_CLASS,
-                OBJECTCLASS_RACKSPACE_CONTAINER)
-            .addEqualAttribute(ATTR_NAME, name).build();
+                .addEqualAttribute(ATTR_OBJECT_CLASS,OBJECTCLASS_RACKSPACE_CONTAINER)
+                .addEqualAttribute(ATTR_NAME, name).build();
 
-        SearchResultEntry entry = this.getSingleEntry(conn, parentUniqueId,
-            SearchScope.ONE, filter);
+        SearchResultEntry entry = this.getSingleEntry(conn, parentUniqueId,SearchScope.ONE, filter);
 
         return entry;
     }

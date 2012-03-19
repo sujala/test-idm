@@ -68,4 +68,6 @@ public interface UserDao {
     User getSoftDeletedUserByUsername(String username);
 
     void unSoftDeleteUser(User user);
+
+    public String addApplicationContainerToUser(User user, String clientId);
 }

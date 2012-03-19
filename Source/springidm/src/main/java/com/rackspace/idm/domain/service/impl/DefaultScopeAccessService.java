@@ -58,8 +58,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             parentUniqueId = token.getUniqueId();
         } else {
             try {
-                parentUniqueId = token.getLDAPEntry().getParentDNString();
-                if(parentUniqueId.contains("IMPERSONATED")) parentUniqueId = parentUniqueId.replace("IMPERSONATED", "DIRECT"); // ToDo: Change this!
+                parentUniqueId = token.getLDAPEntry().getParentDN().getParent().getParentString();
             } catch (LDAPException e) {
                 // noop
             }
@@ -112,18 +111,20 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public UserScopeAccess addImpersonatedScopeAccess(User user, String clientId, String impersonatorToken) {
-        UserScopeAccess scopeAccess = new UserScopeAccess();
+    public ImpersonatedScopeAccess addImpersonatedScopeAccess(User user, String clientId, String impersonatorName, String impersonatorToken) {
+        
+        ImpersonatedScopeAccess scopeAccess = new ImpersonatedScopeAccess();
         scopeAccess.setUserRsId(user.getId());
         scopeAccess.setUsername(user.getUsername());
         scopeAccess.setClientId(clientId);
-        scopeAccess.setClientRCN("RACKSPACE"); // ToDo: validate
+        scopeAccess.setClientRCN(user.getCustomerId());
+        scopeAccess.setImpersonatorId(impersonatorName);
         scopeAccess.setImpersonatorToken(impersonatorToken);
         scopeAccess.setAccessTokenString(this.generateToken());
-        scopeAccess.setAccessTokenExp(new DateTime().plusSeconds(getDefaultCloudAuthTokenExpirationSeconds()).toDate());
-
+        scopeAccess.setAccessTokenExp(new DateTime().plusSeconds(getDefaultImpersonatedTokenExpirationSeconds()).toDate());
+        
         logger.info("Adding scopeAccess {}", scopeAccess);
-        UserScopeAccess newScopeAccess = (UserScopeAccess)this.scopeAccessDao.addImpersonatedScopeAccess(user.getUniqueId(), scopeAccess);
+        ImpersonatedScopeAccess newScopeAccess = (ImpersonatedScopeAccess)this.scopeAccessDao.addImpersonatedScopeAccess(user.getUniqueId(), scopeAccess);
         logger.info("Added scopeAccess {}", scopeAccess);
         return newScopeAccess;
     }
@@ -985,6 +986,10 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     private int getDefaultTokenExpirationSeconds() {
         return config.getInt("token.expirationSeconds");
+    }
+
+    private int getDefaultImpersonatedTokenExpirationSeconds() {
+        return config.getInt("token.impersonatedExpirationSeconds");
     }
 
     private int getPagingLimit() {

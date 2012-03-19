@@ -129,7 +129,7 @@ public class DefaultTenantService implements TenantService {
 
         String dn = null;
         try {
-            dn = sa.getLDAPEntry().getParentDNString();
+            dn = sa.getLDAPEntry().getParentDN().getParent().getParentString();
         } catch (Exception ex) {
             throw new IllegalStateException();
         }
@@ -238,8 +238,7 @@ public class DefaultTenantService implements TenantService {
             if (scopeAccess instanceof DelegatedClientScopeAccess) {
                 parentDn = scopeAccess.getUniqueId();
             } else {
-                parentDn = scopeAccess.getLDAPEntry().getParentDNString();
-                if(parentDn.contains("IMPERSONATED")) parentDn = parentDn.replace("IMPERSONATED", "DIRECT"); // ToDo: Change this!
+                parentDn = scopeAccess.getLDAPEntry().getParentDN().getParent().getParentString();
             }
         } catch (Exception ex) {
             throw new IllegalStateException();
@@ -296,19 +295,8 @@ public class DefaultTenantService implements TenantService {
             throw new NotFoundException(errMsg);
         }
 
-        UserScopeAccess sa = (UserScopeAccess) this.scopeAccessDao.getDirectScopeAccessForParentByClientId(user.getUniqueId(), role.getClientId());
-
-        if (sa == null) {
-            sa = new UserScopeAccess();
-            sa.setClientId(client.getClientId());
-            sa.setClientRCN(client.getRCN());
-            sa.setUsername(user.getUsername());
-            sa.setUserRCN(user.getCustomerId());
-            sa.setUserRsId(user.getId());
-            sa = (UserScopeAccess) this.scopeAccessDao.addDirectScopeAccess(user.getUniqueId(), sa);
-        }
-
-        addTenantRole(sa.getUniqueId(), role);
+        String parentUniqueId = this.userDao.addApplicationContainerToUser(user, role.getClientId());
+        addTenantRole(parentUniqueId, role);
 
         logger.info("Adding tenantRole {} to user {}", role, user);
     }
@@ -360,8 +348,7 @@ public class DefaultTenantService implements TenantService {
     public List<TenantRole> getGlobalRolesForUser(User user,
         FilterParam[] filters) {
         logger.debug("Getting Global Roles");
-        List<TenantRole> roles = this.tenantDao.getTenantRolesForUser(user,
-            filters);
+        List<TenantRole> roles = this.tenantDao.getTenantRolesForUser(user, filters);
 
         return getGlobalRoles(roles);
     }

@@ -1,5 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.rackspace.docs.identity.api.ext.rax_ga.v1.ImpersonationRequest;
+import com.rackspace.docs.identity.api.ext.rax_ga.v1.ImpersonationResponse;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.JSONConstants;
@@ -10,7 +12,6 @@ import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
-import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
@@ -41,7 +42,6 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
-import javax.xml.namespace.QName;
 import javax.xml.transform.stream.StreamSource;
 import java.io.IOException;
 import java.io.InputStream;
@@ -1363,11 +1363,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             User user = checkAndGetUser(userId);
 
-            List<TenantRole> roles =
-                    tenantService.getGlobalRolesForUser(user, new FilterParam[]{new FilterParam(FilterParamName.APPLICATION_ID, serviceId)});
+            List<TenantRole> roles = tenantService.getGlobalRolesForUser(user, new FilterParam[]{new FilterParam(FilterParamName.APPLICATION_ID, serviceId)});
 
-            return Response.ok(
-                    OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListJaxb(roles)));
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListJaxb(roles)));
 
         } catch (Exception ex) {
             return exceptionResponse(ex);
@@ -1406,15 +1404,30 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder impersonate(HttpHeaders httpHeaders, String authToken, String username) throws IOException {
-        //verify access to impersonate
-        // ToDo: MUST DO !!!!
+    public ResponseBuilder impersonate(HttpHeaders httpHeaders, String authToken, ImpersonationRequest impersonationRequest) throws IOException {
+        verifyServiceAdminLevelAccess(authToken);
 
+        String impersonatorName = null;
+        ScopeAccess sa = checkAndGetToken(authToken);
+        if (sa instanceof UserScopeAccess) {
+            UserScopeAccess usa = (UserScopeAccess) sa;
+            User impersonator = this.userService.getUserById(usa.getUserRsId());
+            impersonatorName = impersonator.getUsername();
+        }
+        else if(sa instanceof RackerScopeAccess) {
+            RackerScopeAccess rsa = (RackerScopeAccess)sa;
+            Racker racker = this.userService.getRackerByRackerId(rsa.getRackerId());
+            impersonatorName = racker.getUsername();
+        }
+        if(impersonatorName == null)
+            throw new NotAuthorizedException("User does not have access");
+
+        String username = impersonationRequest.getUser().getUsername();
         User user = checkAndGetUserByName(username);
         if (user == null)
             throw new NotFoundException("User not found.");
 
-        ScopeAccess usa = scopeAccessService.addImpersonatedScopeAccess(user, getCloudAuthClientId(), authToken);
+        ScopeAccess usa = scopeAccessService.addImpersonatedScopeAccess(user, getCloudAuthClientId(), impersonatorName, authToken);
         
         List<TenantRole> roles = tenantService.getTenantRolesForScopeAccess(usa);
         List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
@@ -1424,8 +1437,10 @@ public class DefaultCloud20Service implements Cloud20Service {
             stripEndpoints(endpoints);
         }
 
-        AuthenticateResponse auth = authConverterCloudV20.toAuthenticationResponse(user, usa, roles, endpoints);
-        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createAccess(auth));
+        //AuthenticateResponse auth = authConverterCloudV20.toAuthenticationResponse(user, usa, roles, endpoints);
+        //return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createAccess(auth));
+        ImpersonationResponse auth = authConverterCloudV20.toImpersonationResponse(usa);
+        return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtRaxgaV1Factory().createAccess(auth));
     }
 
 
@@ -1831,16 +1846,27 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             access.setToken(this.tokenConverterCloudV20.toToken(sa));
 
-            if (sa instanceof UserScopeAccess) {
-                UserScopeAccess usa = (UserScopeAccess) sa;
-                User user = this.userService.getUserById(usa.getUserRsId());
+            if (sa instanceof UserScopeAccess || sa instanceof ImpersonatedScopeAccess) {
+                String userId = "";
+                if(sa instanceof UserScopeAccess) {
+                    UserScopeAccess usa = (UserScopeAccess) sa;
+                    userId = usa.getUserRsId();
+                }
+                else if(sa instanceof ImpersonatedScopeAccess) {
+                    ImpersonatedScopeAccess isa = (ImpersonatedScopeAccess) sa;
+                    userId = isa.getUserRsId();
+                }
+
+                User user = this.userService.getUserById(userId);
                 if (user == null) {
                     throw new NotFoundException("User not found");
                 }
                 if (user.isDisabled()) {
                     throw new NotFoundException("Token not found.");
                 }
-                List<TenantRole> roles = this.tenantService.getTenantRolesForScopeAccess(usa);
+                
+                
+                List<TenantRole> roles = this.tenantService.getTenantRolesForScopeAccess(sa);
                 if (roles != null && roles.size() > 0) {
                     access.setUser(this.userConverterCloudV20.toUserForAuthenticateResponse(user, roles));
                 }
@@ -1852,11 +1878,6 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
             }
 
-            UserScopeAccess usa = (UserScopeAccess)sa;
-            if(usa.getImpersonatorToken() != null)
-                access.getToken().getOtherAttributes().put(new QName("impersonatedBy"), usa.getImpersonatorToken());
-                //access.getOtherAttributes().put(new QName("impersonatedBy"), usa.getImpersonatorToken());
-            
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createAccess(access));
 
         } catch (Exception ex) {

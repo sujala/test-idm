@@ -158,12 +158,4 @@ public class UserScopeAccess extends ScopeAccess implements HasAccessToken, HasR
         return userRsId;
     }
 
-    public String getImpersonatorToken() {
-        return impersonatorToken;
-    }
-
-    public void setImpersonatorToken(String impersonatorToken) {
-        this.impersonatorToken = impersonatorToken;
-    }
-
 }

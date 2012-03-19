@@ -4,12 +4,10 @@ import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
-import com.rackspace.idm.exception.NotFoundException;
-import com.rackspace.idm.exception.PasswordSelfUpdateTooSoonException;
-import com.rackspace.idm.exception.StalePasswordException;
-import com.rackspace.idm.exception.UserDisabledException;
+import com.rackspace.idm.exception.*;
 import com.rackspace.idm.util.CryptHelper;
 import com.unboundid.ldap.sdk.*;
+import com.unboundid.ldap.sdk.persist.LDAPPersister;
 import com.unboundid.util.StaticUtils;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
@@ -572,6 +570,24 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().info("Removed users from clientGroup {}", group);
     }
 
+    @Override
+    public String addApplicationContainerToUser(User user, String clientId) {
+        LDAPConnection conn = null;
+        try {
+            conn = getAppConnPool().getConnection();
+            SearchResultEntry entry = getContainer(conn, user.getUniqueId(), clientId);
+            if (entry == null) {
+                addContainer(conn, user.getUniqueId(), clientId);
+                entry = getContainer(conn, user.getUniqueId(), clientId);
+            }
+            return entry.getDN();
+        } catch (final LDAPException e) {
+            throw new IllegalStateException(e);
+        } finally {
+            getAppConnPool().releaseConnection(conn);
+        }
+    }
+    
     private void throwIfEmptyOldUser(User oldUser, User user)
         throws IllegalArgumentException {
         if (oldUser == null) {
