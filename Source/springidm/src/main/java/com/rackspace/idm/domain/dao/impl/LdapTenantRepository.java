@@ -400,8 +400,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
             }
         }
 
-        String dn = new LdapDnBuilder(uniqueParentClientId).addAttribute(
-            ATTR_NAME, CONTAINER_DIRECT).build();
+        String dn = new LdapDnBuilder(uniqueParentClientId).build();
 
         Filter searchFilter = searchBuilder.build();
         List<TenantRole> roles = new ArrayList<TenantRole>();
