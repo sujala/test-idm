@@ -22,6 +22,8 @@ import javax.xml.transform.stream.StreamSource;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Date;
 import java.util.HashMap;
 
@@ -80,7 +82,7 @@ public class DelegateCloud11Service implements Cloud11Service {
 
     @Override
     public Response.ResponseBuilder authenticate(HttpServletRequest request, HttpServletResponse response,
-                                                 HttpHeaders httpHeaders, String body) throws IOException, JAXBException {
+                                                 HttpHeaders httpHeaders, String body) throws IOException, JAXBException, URISyntaxException {
 
          //Get "user" from LDAP
         JAXBElement<? extends Credentials> cred = extractCredentials(httpHeaders, body);
@@ -95,6 +97,9 @@ public class DelegateCloud11Service implements Cloud11Service {
         Response dummyResponse = serviceResponse.clone().build();
          //If SUCCESS and "user" is not null, store token to "user" and return cloud response
         int status = dummyResponse.getStatus();
+        if (status == 302){
+            serviceResponse.location(new URI(config.getString("ga.endpoint")+"cloud/v1.1/auth-admin"));
+        }
         if (status == HttpServletResponse.SC_OK && user != null) {
             AuthData authResult = getAuthFromResponse(dummyResponse.getEntity().toString());
             if(authResult != null) {
