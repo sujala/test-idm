@@ -1,0 +1,5 @@
+dn: cn=nextTenantId,ou=nextIds,o=rackspace,dc=rackspace,dc=com
+objectClass:top
+objectClass:rsNextId
+cn: nextTenantId
+rsId: 10000

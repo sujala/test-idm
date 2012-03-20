@@ -1,0 +1,7 @@
+
+1) Update Schema with RackSchema.dxc
+2) execute groups.ldiff
+3) execute groups_entry.ldiff
+4) execute nextGroupIds.ldif
+5) execute nextTenantIds.ldif
+
