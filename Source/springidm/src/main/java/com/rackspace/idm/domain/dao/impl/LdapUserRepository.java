@@ -469,21 +469,29 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return user == null;
     }
 
+    public void updateUserById(User user, boolean hasSelfUpdatedPassword){
+        getLogger().info("Updating user to {}", user);
+        throwIfEmptyUsername(user);
+        User oldUser = getUserById(user.getId());
+        updateUser(user, oldUser, hasSelfUpdatedPassword);
+    }
+
     @Override
     public void updateUser(User user, boolean hasSelfUpdatedPassword) {
         getLogger().info("Updating user to {}", user);
-
         throwIfEmptyUsername(user);
-
         User oldUser = getUserByUsername(user.getUsername());
-        getLogger().debug("Found existing user {}", oldUser);
-        throwIfEmptyOldUser(oldUser, user);
+        updateUser(user, oldUser, hasSelfUpdatedPassword);
+    }
 
-        Audit audit = Audit.log(user);
+    void updateUser(User newUser, User oldUser, boolean hasSelfUpdatedPassword) {
+        getLogger().debug("Found existing user {}", oldUser);
+        throwIfEmptyOldUser(oldUser, newUser);
+
+        Audit audit = Audit.log(newUser);
 
         try {
-            List<Modification> mods = getModifications(oldUser, user,
-                hasSelfUpdatedPassword);
+            List<Modification> mods = getModifications(oldUser, newUser, hasSelfUpdatedPassword);
             audit.modify(mods);
 
             if (mods.size() < 1) {
@@ -493,8 +501,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             getAppConnPool().modify(oldUser.getUniqueId(), mods);
         } catch (LDAPException ldapEx) {
             throwIfStalePassword(ldapEx, audit);
-
-            getLogger().error("Error updating user {} - {}", user.getUsername(), ldapEx);
+            getLogger().error("Error updating user {} - {}", newUser.getUsername(), ldapEx);
             audit.fail("Error updating user");
             throw new IllegalStateException(ldapEx);
         } catch (GeneralSecurityException e) {
@@ -508,10 +515,9 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
 
         // Now that its in LDAP we'll set the password to existing type
-        user.setPasswordObj(user.getPasswordObj().toExisting());
-
+        newUser.setPasswordObj(newUser.getPasswordObj().toExisting());
         audit.succeed();
-        getLogger().info("Updated user - {}", user);
+        getLogger().info("Updated user - {}", newUser);
     }
 
     @Override

@@ -62,7 +62,7 @@ public interface UserService {
     void setUserPassword(String userId, PasswordCredentials userCred, ScopeAccess token);
 
     void updateUser(User user, boolean hasSelfUpdatedPassword);
-
+    void updateUserById(User user, boolean hasSelfUpdatedPassword);
     Password resetUserPassword(User user);
 
 //    DateTime getUserPasswordExpirationDate(String userName);

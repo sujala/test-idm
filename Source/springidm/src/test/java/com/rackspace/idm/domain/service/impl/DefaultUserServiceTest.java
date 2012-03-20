@@ -65,4 +65,13 @@ public class DefaultUserServiceTest {
         defaultUserService.userExistsByUsername("id");
         verify(userDao).getUserByUsername("id");
     }
+
+    @Test
+    public void updateUserById_callsUserDaoUpdateByUd() throws Exception {
+        User user = new User();
+        user.setUsername("user");
+        user.setId("id");
+        defaultUserService.updateUserById(user, false );
+        verify(userDao).updateUserById(user,false);
+    }
 }

@@ -865,6 +865,12 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void updateUser_calls_userService_updateUserById() throws Exception {
+        spy.updateUser(null,authToken,userId,userOS);
+        verify(userService).updateUserById(any(User.class),anyBoolean());
+    }
+
+    @Test
     public void updateUser_callsAuthorizeCloudUser() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         doNothing().when(spy).verifyUserLevelAccess(authToken);
