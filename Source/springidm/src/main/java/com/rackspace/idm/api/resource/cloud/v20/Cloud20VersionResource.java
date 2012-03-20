@@ -113,15 +113,6 @@ public class Cloud20VersionResource {
         return getCloud20Service().listEndpointsForToken(httpHeaders, authToken, tokenId).build();
     }
 
-    @POST
-    @Path("impersonate/{username}")
-    public Response impersonate(
-            @Context HttpHeaders httpHeaders,
-            @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("username") String username) throws IOException {
-        return getCloud20Service().impersonate(httpHeaders, authToken, username).build();
-    }
-
     @GET
     @Path("extensions")
     public Response listExtensions(@Context HttpHeaders httpHeaders) throws IOException {
