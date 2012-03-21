@@ -114,7 +114,9 @@ public class JSONWriterForVersion implements MessageBodyWriter<JAXBElement<Versi
     @Override
     public void writeTo(JAXBElement<VersionChoice> jaxbElement, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType,
                         MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
-        String jsonText = JSONValue.toJSONString(getVersionChoice(jaxbElement));
-        entityStream.write(jsonText.getBytes(JSONConstants.UTF_8));
+        if (jaxbElement.getDeclaredType().isAssignableFrom(VersionChoice.class)) {
+            String jsonText = JSONValue.toJSONString(getVersionChoice(jaxbElement));
+            entityStream.write(jsonText.getBytes(JSONConstants.UTF_8));
+        }
     }
 }
