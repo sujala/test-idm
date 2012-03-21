@@ -103,7 +103,7 @@ public class JSONWriterForVersion implements MessageBodyWriter<JAXBElement<Versi
 
     @Override
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return type == VersionChoice.class;
+        return type == JAXBElement.class;
     }
 
     @Override
