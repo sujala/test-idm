@@ -17,6 +17,8 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.openstack.docs.common.api.v1.Extension;
 import org.openstack.docs.common.api.v1.Extensions;
+import org.openstack.docs.common.api.v1.MediaTypeList;
+import org.openstack.docs.common.api.v1.VersionChoice;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.ServiceList;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
@@ -32,6 +34,7 @@ import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
+import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.namespace.QName;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -68,7 +71,13 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
             String jsonText = JSONValue.toJSONString(getExtension(extension));
             outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
 
-        } else if (object.getDeclaredType().isAssignableFrom(Extensions.class)) {
+        }else  if (object.getDeclaredType().isAssignableFrom(VersionChoice.class)) {
+            VersionChoice versionChoice = (VersionChoice) object.getValue();
+            String jsonText = JSONValue.toJSONString(getVersionChoice(versionChoice));
+            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
+        }
+
+        else if (object.getDeclaredType().isAssignableFrom(Extensions.class)) {
             Extensions extensions = (Extensions) object.getValue();
             String jsonText = JSONValue.toJSONString(getExtensionList(extensions));
             outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
@@ -312,6 +321,72 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
                 e.printStackTrace();
             }
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static JSONArray getLinks(List<Object> any) {
+        JSONArray linkArray = new JSONArray();
+        for (Object o : any) {
+            if (o instanceof JAXBElement) {
+                Object elmType = ((JAXBElement<Object>) o).getValue();
+                if (elmType instanceof Link) {
+                    Link l = (Link) elmType;
+                    JSONObject jlink = new JSONObject();
+                    if (l.getRel() != null) {
+                        jlink.put("rel", l.getRel().value());
+                    }
+                    if (l.getType() != null) {
+                        jlink.put("type", l.getType());
+                    }
+                    jlink.put("href", l.getHref());
+                    linkArray.add(jlink);
+                }
+            }
+        }
+        return linkArray;
+    }
+
+    private JSONObject getVersionChoice(VersionChoice versionChoice) {
+
+        JSONObject outer = new JSONObject();
+        JSONObject inner = new JSONObject();
+
+        outer.put("version", inner);
+
+        inner.put("id", versionChoice.getId());
+        if (versionChoice.getStatus() != null) {
+            inner.put("status", versionChoice.getStatus().toString());
+        }
+
+        XMLGregorianCalendar updated = versionChoice.getUpdated();
+
+        if (updated != null) {
+            inner.put("updated", updated.toXMLFormat());
+        }
+
+        if (!versionChoice.getAny().isEmpty()) {
+            JSONArray linkArray = getLinks(versionChoice.getAny());
+            if (!linkArray.isEmpty()) {
+                inner.put("links", linkArray);
+            }
+        }
+
+
+        MediaTypeList mtl = versionChoice.getMediaTypes();
+        if (mtl != null && !mtl.getMediaType().isEmpty()) {
+            JSONArray typeArray = new JSONArray();
+            for (org.openstack.docs.common.api.v1.MediaType mt : versionChoice.getMediaTypes().getMediaType()) {
+                JSONObject jtype = new JSONObject();
+                jtype.put("base", mt.getBase());
+                jtype.put("type", mt.getType());
+                typeArray.add(jtype);
+            }
+            JSONObject type_values = new JSONObject();
+            type_values.put("values", typeArray);
+            inner.put("media-types", type_values);
+        }
+        return outer;
+
     }
 
     @SuppressWarnings("unchecked")
