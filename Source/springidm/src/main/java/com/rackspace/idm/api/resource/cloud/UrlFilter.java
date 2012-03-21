@@ -4,6 +4,10 @@ import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+
 import org.apache.cxf.common.util.UrlUtils;
 
 /**
@@ -27,6 +31,15 @@ public class UrlFilter implements Filter {
         final String decodeUri = UrlUtils.urlDecode(uri);
         final String pathInfo = req.getPathInfo();
         final String decodePathInfo = UrlUtils.urlDecode(pathInfo);
+        Map<String,String[]> map = req.getParameterMap();
+        final Map decodeMap = new HashMap();
+        Iterator iterator = map.entrySet().iterator();
+        while(iterator.hasNext()){
+            Map.Entry mapEntry = (Map.Entry)iterator.next();
+            String[] values = (String[])mapEntry.getValue();
+            String decode = UrlUtils.urlDecode(values[0]);
+            decodeMap.put(mapEntry.getKey(),decode);
+        }
 
         final HttpServletRequestWrapper newReq = new HttpServletRequestWrapper(req){
             public String getRequestURI(){
@@ -34,6 +47,9 @@ public class UrlFilter implements Filter {
             }
             public String getPathInfo(){
                 return decodePathInfo;
+            }
+            public Map getParameterMap(){
+                return decodeMap;
             }
         };
 
