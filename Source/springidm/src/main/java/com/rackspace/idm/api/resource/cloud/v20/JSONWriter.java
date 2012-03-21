@@ -252,7 +252,8 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
             AuthenticateResponse authenticateResponse = (AuthenticateResponse)object.getValue();
             access.put(JSONConstants.TOKEN, getToken(authenticateResponse.getToken()));
             access.put(JSONConstants.SERVICECATALOG, getServiceCatalog(authenticateResponse.getServiceCatalog()));
-            access.put(JSONConstants.USER, getTokenUser(authenticateResponse.getUser()));
+            if(authenticateResponse.getUser() != null)
+                access.put(JSONConstants.USER, getTokenUser(authenticateResponse.getUser()));
             outer.put(JSONConstants.ACCESS, access);
 
             String jsonText = JSONValue.toJSONString(outer);

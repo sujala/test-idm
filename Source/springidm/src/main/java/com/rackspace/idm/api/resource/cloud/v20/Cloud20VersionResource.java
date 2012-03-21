@@ -120,9 +120,9 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             ImpersonationRequest impersonationRequest) throws IOException {
-        return getCloud20Service().impersonate(httpHeaders, authToken, impersonationRequest).build();
+        return defaultCloud20Service.impersonate(httpHeaders, authToken, impersonationRequest).build();
     }
-
+    
     @GET
     @Path("extensions")
     public Response listExtensions(@Context HttpHeaders httpHeaders) throws IOException {

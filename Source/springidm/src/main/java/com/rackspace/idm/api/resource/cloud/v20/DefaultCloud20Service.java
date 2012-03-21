@@ -113,6 +113,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Autowired
     private CloudKsGroupBuilder cloudKsGroupBuilder;
 
+    @Autowired
+    private DelegateCloud20Service delegateCloud20Service;
+
     private HashMap<String, JAXBElement<Extension>> extensionMap;
 
     private JAXBElement<Extensions> currentExtensions;
@@ -374,7 +377,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 this.scopeAccessService.expireAllTokensForUser(retrievedUser.getUsername());
             }
             retrievedUser.copyChanges(userDO);
-            this.userService.updateUser(retrievedUser, false);
+            userService.updateUserById(retrievedUser, false);
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(retrievedUser)));
         } catch (Exception ex) {
             return exceptionResponse(ex);
@@ -1407,38 +1410,40 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder impersonate(HttpHeaders httpHeaders, String authToken, ImpersonationRequest impersonationRequest) throws IOException {
         verifyServiceAdminLevelAccess(authToken);
 
-        String impersonatorName = null;
-        ScopeAccess sa = checkAndGetToken(authToken);
-        if (sa instanceof UserScopeAccess) {
-            UserScopeAccess usa = (UserScopeAccess) sa;
-            User impersonator = this.userService.getUserById(usa.getUserRsId());
-            impersonatorName = impersonator.getUsername();
-        }
-        else if(sa instanceof RackerScopeAccess) {
-            RackerScopeAccess rsa = (RackerScopeAccess)sa;
-            Racker racker = this.userService.getRackerByRackerId(rsa.getRackerId());
-            impersonatorName = racker.getUsername();
-        }
-        if(impersonatorName == null)
-            throw new NotAuthorizedException("User does not have access");
+        String impersonatingToken = "";
+        String impersonatingUsername = "";
 
         String username = impersonationRequest.getUser().getUsername();
         User user = checkAndGetUserByName(username);
-        if (user == null)
-            throw new NotFoundException("User not found.");
-
-        ScopeAccess usa = scopeAccessService.addImpersonatedScopeAccess(user, getCloudAuthClientId(), impersonatorName, authToken);
-        
-        //List<TenantRole> roles = tenantService.getTenantRolesForScopeAccess(usa);
-        List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
-
-        // Remove Admin URLs if non admin token
-        if (!this.authorizationService.authorizeCloudIdentityAdmin(usa)) {
-            stripEndpoints(endpoints);
+        if (user == null) {
+            // Get from cloud.
+            impersonatingToken = "";
+            impersonatingUsername = user.getUsername();
+        }
+        else{
+            UserScopeAccess impAccess = (UserScopeAccess)scopeAccessService.getDirectScopeAccessForParentByClientId(user.getUniqueId(), getCloudAuthClientId());
+            impersonatingToken = impAccess.getAccessTokenString();
+            impersonatingUsername = user.getUsername();
         }
 
-        //AuthenticateResponse auth = authConverterCloudV20.toAuthenticationResponse(user, usa, roles, endpoints);
-        //return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createAccess(auth));
+        if(impersonatingToken == "" || impersonatingUsername == "")
+            throw new BadRequestException("Invalid user");
+
+        ScopeAccess sa = checkAndGetToken(authToken);
+        ScopeAccess usa;
+        if (sa instanceof UserScopeAccess) {
+            UserScopeAccess userSa = (UserScopeAccess) sa;
+            User impersonator = this.userService.getUserById(userSa.getUserRsId());
+            usa = scopeAccessService.addImpersonatedScopeAccess(impersonator, getCloudAuthClientId(), impersonatingUsername, impersonatingToken);
+        }
+        else if(sa instanceof RackerScopeAccess) {
+            RackerScopeAccess rackerSa = (RackerScopeAccess)sa;
+            Racker racker = this.userService.getRackerByRackerId(rackerSa.getRackerId());
+            usa = scopeAccessService.addImpersonatedScopeAccess(racker, getCloudAuthClientId(), impersonatingUsername, impersonatingToken);
+        }
+        else
+            throw new NotAuthorizedException("User does not have access");
+
         ImpersonationResponse auth = authConverterCloudV20.toImpersonationResponse(usa);
         return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtRaxgaV1Factory().createAccess(auth));
     }
@@ -1797,8 +1802,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             user.setApiKey(creds.getApiKey());
             this.userService.updateUser(user, false);
 
-            return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtKskeyV1Factory()
-                    .createApiKeyCredentials(creds));
+            return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtKskeyV1Factory().createApiKeyCredentials(creds));
 
         } catch (Exception ex) {
             return exceptionResponse(ex);
@@ -1847,25 +1851,26 @@ public class DefaultCloud20Service implements Cloud20Service {
             access.setToken(this.tokenConverterCloudV20.toToken(sa));
 
             if (sa instanceof UserScopeAccess || sa instanceof ImpersonatedScopeAccess) {
-                String userId = "";
+                String username = "";
+                User impersonator = null;
                 if(sa instanceof UserScopeAccess) {
                     UserScopeAccess usa = (UserScopeAccess) sa;
-                    userId = usa.getUserRsId();
+                    username = usa.getUsername();
                 }
                 else if(sa instanceof ImpersonatedScopeAccess) {
                     ImpersonatedScopeAccess isa = (ImpersonatedScopeAccess) sa;
-                    userId = isa.getUserRsId();
+                    username = isa.getImpersonatingUsername();
+                    impersonator = userService.getUser(isa.getUsername());
                 }
 
-                User user = this.userService.getUserById(userId);
+                User user = this.userService.getUser(username);
                 if (user == null) {
                     throw new NotFoundException("User not found");
                 }
                 if (user.isDisabled()) {
                     throw new NotFoundException("Token not found.");
                 }
-                
-                
+
                 List<TenantRole> roles = this.tenantService.getTenantRolesForScopeAccess(sa);
                 if (roles != null && roles.size() > 0) {
                     access.setUser(this.userConverterCloudV20.toUserForAuthenticateResponse(user, roles));
@@ -1875,6 +1880,18 @@ public class DefaultCloud20Service implements Cloud20Service {
                     String errMsg = String.format("Token doesn't belong to Tenant with Id/Name: '%s'", belongsTo);
                     logger.warn(errMsg);
                     throw new NotFoundException(errMsg);
+                }
+
+                if(sa instanceof ImpersonatedScopeAccess && impersonator != null) {
+                    ImpersonationResponse impersonationResponse = new ImpersonationResponse();
+                    impersonationResponse.setToken(access.getToken());
+                    impersonationResponse.setUser(access.getUser());
+
+                    // Get impersonator
+                    List<TenantRole> impRoles = this.tenantService.getTenantRolesForUser(impersonator, null);
+                    if (impRoles != null && impRoles.size() > 0) {
+                        impersonationResponse.setImpersonator(this.userConverterCloudV20.toUserForAuthenticateResponse(impersonator, roles));
+                    }
                 }
             }
 

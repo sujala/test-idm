@@ -439,6 +439,9 @@ public class User implements Auditable {
         if(modifiedUser.getPassword() != null){
             setPassword(modifiedUser.getPassword());
         }
+        if(modifiedUser.getUsername() != null){
+            setUsername(modifiedUser.getUsername());
+        }
     }
 
     @Override

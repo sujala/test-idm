@@ -13,11 +13,12 @@
         xmlns:xsdxt="http://docs.rackspacecloud.com/xsd-ext/v1.0"
         targetNamespace="http://docs.rackspace.com/identity/api/ext/RAX-GA/v1.0">
 
-    <import namespace="http://docs.openstack.org/identity/api/v2.0" schemaLocation="api.xsd" />
+    <import namespace="http://docs.openstack.org/identity/api/v2.0" schemaLocation="token.xsd" />
+    <import namespace="http://docs.openstack.org/identity/api/v2.0" schemaLocation="user.xsd" />
 
     <element name="impersonation" type="RAX-GA:ImpersonationRequest" />
     <element name="access" type="RAX-GA:ImpersonationResponse" />
-    <element name="impersonator" type="identity:User" />
+    <element name="impersonator" type="identity:UserForAuthenticateResponse" />
 
     <!-- Complex Types -->
     <complexType name="ImpersonationRequest">
@@ -38,6 +39,20 @@
                 <annotation>
                     <xsd:documentation>
                         <p>A token representing the impersonated user.</p>
+                    </xsd:documentation>
+                </annotation>
+            </element>
+            <element name="user" type="identity:UserForAuthenticateResponse">
+                <annotation>
+                    <xsd:documentation>
+                        <p>The user being impersonated.</p>
+                    </xsd:documentation>
+                </annotation>
+            </element>
+            <element name="impersonator" type="identity:UserForAuthenticateResponse">
+                <annotation>
+                    <xsd:documentation>
+                        <p>The user impersonating.</p>
                     </xsd:documentation>
                 </annotation>
             </element>

@@ -1,19 +1,17 @@
 package com.rackspace.idm.api.converter.cloudv20;
 
-import java.util.Date;
-import java.util.GregorianCalendar;
-
-import javax.xml.datatype.DatatypeConfigurationException;
-import javax.xml.datatype.DatatypeFactory;
-import javax.xml.datatype.XMLGregorianCalendar;
-
+import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
+import com.rackspace.idm.domain.entity.HasAccessToken;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import org.openstack.docs.identity.api.v2.Token;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
-import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.HasAccessToken;
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.XMLGregorianCalendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 
 @Component
 public class TokenConverterCloudV20 {

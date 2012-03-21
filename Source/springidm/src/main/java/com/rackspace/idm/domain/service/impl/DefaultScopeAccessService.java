@@ -110,15 +110,14 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public ImpersonatedScopeAccess addImpersonatedScopeAccess(User user, String clientId, String impersonatorName, String impersonatorToken) {
-        
+    public ImpersonatedScopeAccess addImpersonatedScopeAccess(User user, String clientId, String impersonatingUsername, String impersonatingToken) {
         ImpersonatedScopeAccess scopeAccess = new ImpersonatedScopeAccess();
         scopeAccess.setUserRsId(user.getId());
         scopeAccess.setUsername(user.getUsername());
         scopeAccess.setClientId(clientId);
         scopeAccess.setClientRCN(user.getCustomerId());
-        scopeAccess.setImpersonatorId(impersonatorName);
-        scopeAccess.setImpersonatorToken(impersonatorToken);
+        scopeAccess.setImpersonatingUsername(impersonatingUsername);
+        scopeAccess.setImpersonatingToken(impersonatingToken);
         scopeAccess.setAccessTokenString(this.generateToken());
         scopeAccess.setAccessTokenExp(new DateTime().plusSeconds(getDefaultImpersonatedTokenExpirationSeconds()).toDate());
         

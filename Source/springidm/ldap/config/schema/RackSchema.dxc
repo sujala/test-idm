@@ -517,14 +517,22 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.71) = {
 };
 
 schema set attribute (1.3.6.1.4.1.20988.2.1.72) = {
+	name = impersonatorId
+	ldap-names = impersonatorId
+	equality = caseIgnoreMatch
+	syntax = directoryString
+	description = "The associated Id of a user impersonating another."
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.73) = {
 	name = impersonatorToken
 	ldap-names = impersonatorToken
 	equality = caseIgnoreMatch
 	syntax = directoryString
-	description = "The associated Token of the user impersonating another user."
+	description = "The associated token of a user impersonating another."
 };
 
-schema set attribute (1.3.6.1.4.1.20988.2.1.73) = {
+schema set attribute (1.3.6.1.4.1.20988.2.1.74) = {
 	name = scopeId
 	ldap-names = scopeId
 	equality = caseIgnoreMatch

@@ -565,7 +565,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
             if (scopeAccess instanceof DelegatedClientScopeAccess) {
                 parentDn = scopeAccess.getUniqueId();
             } else {
-                parentDn = scopeAccess.getLDAPEntry().getParentDN().getParentString();
+                parentDn = scopeAccess.getLDAPEntry().getParentDNString();
             }
         } catch (Exception ex) {
             throw new IllegalStateException();

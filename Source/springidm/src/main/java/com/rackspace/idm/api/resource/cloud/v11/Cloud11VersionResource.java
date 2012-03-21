@@ -14,6 +14,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
+import java.net.URISyntaxException;
 
 /**
  * Cloud Auth 1.1 API Versions
@@ -58,7 +59,7 @@ public class Cloud11VersionResource {
     @POST
     @Path("auth")
     public Response authenticate(@Context HttpServletRequest request, @Context HttpServletResponse response, @Context HttpHeaders httpHeaders, String body)
-            throws IOException, JAXBException {
+            throws IOException, JAXBException, URISyntaxException {
         return getCloud11Service().authenticate(request, response, httpHeaders, body).build();
     }
 

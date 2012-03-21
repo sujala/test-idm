@@ -1,34 +1,21 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import java.security.GeneralSecurityException;
-import java.util.List;
-import java.util.Locale;
-
+import com.rackspace.idm.domain.config.LdapConfiguration;
+import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.exception.PasswordSelfUpdateTooSoonException;
+import com.unboundid.ldap.sdk.Modification;
+import com.unboundid.ldap.sdk.ModificationType;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
 
-import com.rackspace.idm.domain.config.LdapConfiguration;
-import com.rackspace.idm.domain.entity.Password;
-import com.rackspace.idm.domain.entity.Racker;
-import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.UserAuthenticationResult;
-import com.rackspace.idm.domain.entity.UserCredential;
-import com.rackspace.idm.domain.entity.UserHumanName;
-import com.rackspace.idm.domain.entity.UserLocale;
-import com.rackspace.idm.domain.entity.Users;
-import com.rackspace.idm.exception.PasswordSelfUpdateTooSoonException;
-import com.unboundid.ldap.sdk.Modification;
-import com.unboundid.ldap.sdk.ModificationType;
+import java.security.GeneralSecurityException;
+import java.util.List;
+import java.util.Locale;
 
 public class LdapUserRepositoryTest {
 

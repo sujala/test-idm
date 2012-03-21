@@ -35,9 +35,6 @@ public class UserScopeAccess extends ScopeAccess implements HasAccessToken, HasR
     @LDAPField(attribute=LdapRepository.ATTR_USER_RCN, objectClass=LdapRepository.OBJECTCLASS_USERSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String userRCN;
 
-    @LDAPField(attribute=LdapRepository.ATTR_IMPERSONATOR_TOKEN, objectClass=LdapRepository.OBJECTCLASS_USERSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
-    private String impersonatorToken;
-
     @Override
     @LDAPGetter(attribute=LdapRepository.ATTR_CLIENT_ID, inRDN=true, filterUsage=FilterUsage.ALWAYS_ALLOWED)
     public String getClientId() {

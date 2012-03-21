@@ -24,6 +24,12 @@
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>org.apache.cxf</groupId>
+            <artifactId>cxf-api</artifactId>
+            <version>2.5.2</version>
+        </dependency>
+                    
 
         <dependency>
             <groupId>com.rsa</groupId>

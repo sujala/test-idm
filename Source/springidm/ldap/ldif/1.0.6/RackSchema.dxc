@@ -517,19 +517,27 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.71) = {
 };
 
 schema set attribute (1.3.6.1.4.1.20988.2.1.72) = {
-	name = impersonatorId
-	ldap-names = impersonatorId
+	name = impersonatingUsername
+	ldap-names = impersonatingUsername
 	equality = caseIgnoreMatch
 	syntax = directoryString
-	description = "The associated Id of a user impersonating another."
+	description = "The associated Id of a user being impersonated."
 };
 
 schema set attribute (1.3.6.1.4.1.20988.2.1.73) = {
-	name = impersonatorToken
-	ldap-names = impersonatorToken
+	name = impersonatingToken
+	ldap-names = impersonatingToken
 	equality = caseIgnoreMatch
 	syntax = directoryString
-	description = "The associated token of a user impersonating another."
+	description = "The associated token of a user being impersonated."
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.74) = {
+	name = scopeId
+	ldap-names = scopeId
+	equality = caseIgnoreMatch
+	syntax = directoryString
+	description = "scopeId"
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
@@ -825,7 +833,8 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.21) = {
     may-contain
     	description,
         tenantDisplayName,
-        baseUrlId
+        baseUrlId,
+        scopeId
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.22) = {
@@ -883,13 +892,11 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.26) = {
     kind = structural
     must-contain
         userRsId,
-        impersonatorId
+        impersonatingUsername
     may-contain
         uid,
         userRCN,
         accessToken,
         accessTokenExp,
-        refreshToken,
-        refreshTokenExp,
-        impersonatorToken
+        impersonatingToken
 };

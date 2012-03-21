@@ -50,7 +50,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
         Audit audit = Audit.log(scopeAccess).add();
         LDAPConnection conn = null;
 
-        String dn = new LdapDnBuilder(parentUniqueId).addAttribute(ATTR_NAME, scopeAccess.getClientId()).build();
+        String dn = new LdapDnBuilder(parentUniqueId).build();
         try {
             conn = getAppConnPool().getConnection();
             SearchResultEntry entry = getContainer(conn, dn, CONTAINER_IMPERSONATED);
@@ -77,24 +77,15 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
         LDAPConnection conn = null;
         try {
             conn = getAppConnPool().getConnection();
-
-            //Client ID Container
-            SearchResultEntry centry = getContainer(conn, parentUniqueId, scopeAccess.getClientId());
-            if (centry == null) {
-                addContainer(conn, parentUniqueId, scopeAccess.getClientId());
-                centry = getContainer(conn, parentUniqueId, scopeAccess.getClientId());
-            }
-
-            //Direct Tokens Container
-            SearchResultEntry dentry = getContainer(conn, centry.getDN(), CONTAINER_DIRECT);
-            if (dentry == null) {
-                addContainer(conn, centry.getDN(), CONTAINER_DIRECT);
-                dentry = getContainer(conn, centry.getDN(), CONTAINER_DIRECT);
+            SearchResultEntry entry = getContainer(conn, parentUniqueId, CONTAINER_DIRECT);
+            if (entry == null) {
+                addContainer(conn, parentUniqueId, CONTAINER_DIRECT);
+                entry = getContainer(conn, parentUniqueId, CONTAINER_DIRECT);
             }
 
             audit.succeed();
             getLogger().info("Added Delegate ScopeAccess: {}", scopeAccess);
-            return addScopeAccess(conn, dentry.getDN(), scopeAccess);
+            return addScopeAccess(conn, entry.getDN(), scopeAccess);
         } catch (final LDAPException e) {
             getLogger().error("Error adding scope acccess object", e);
             audit.fail();
@@ -280,7 +271,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
         getLogger().debug("Find ScopeAccess for Parent: {} by ClientId: {}", parentUniqueId, clientId);
         LDAPConnection conn = null;
 
-        String dn = new LdapDnBuilder(parentUniqueId).addAttribute(ATTR_NAME, CONTAINER_DIRECT).addAttribute(ATTR_NAME, clientId).build();
+        String dn = new LdapDnBuilder(parentUniqueId).addAttribute(ATTR_NAME, CONTAINER_DIRECT).build();
 
         try {
             conn = getAppConnPool().getConnection();

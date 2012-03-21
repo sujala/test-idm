@@ -219,8 +219,7 @@ public class DefaultTenantService implements TenantService {
             .getTenantRolesByParent(parentUniqueId);
         for (TenantRole role : roles) {
             if (role != null) {
-                ClientRole cRole = this.clientDao.getClientRoleById(role
-                    .getRoleRsId());
+                ClientRole cRole = this.clientDao.getClientRoleById(role.getRoleRsId());
                 role.setName(cRole.getName());
                 role.setDescription(cRole.getDescription());
             }
@@ -238,7 +237,7 @@ public class DefaultTenantService implements TenantService {
             if (scopeAccess instanceof DelegatedClientScopeAccess) {
                 parentDn = scopeAccess.getUniqueId();
             } else {
-                parentDn = scopeAccess.getLDAPEntry().getParentDN().getParent().getParentString();
+                parentDn = scopeAccess.getLDAPEntry().getParentDN().getParentString();
             }
         } catch (Exception ex) {
             throw new IllegalStateException();
