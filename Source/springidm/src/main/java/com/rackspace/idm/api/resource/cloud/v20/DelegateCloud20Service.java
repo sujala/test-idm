@@ -274,7 +274,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     public ResponseBuilder listUsersWithGroup(HttpHeaders httpHeaders, String authToken, String groupId, String marker, Integer limit) throws IOException {
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             // TODO: Implement routing to DefaultCloud20Service
-            String request = getCloudAuthV20Url() + "/RAX-GRPADM/groups/" + groupId + "/users";
+            String request = getCloudAuthV20Url() + "RAX-GRPADM/groups/" + groupId + "/users";
             HashMap<String, Object> params = new HashMap<String, Object>();
             params.put("marker", marker);
             params.put("limit", limit);

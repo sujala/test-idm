@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource;
 
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.idm.JSONConstants;
+import com.rackspace.idm.exception.BadRequestException;
 import org.apache.commons.io.IOUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -69,8 +70,7 @@ public class JSONReaderForGroup implements MessageBodyReader<Group> {
                 }
             }
         } catch (ParseException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            throw new BadRequestException("Unable to parse data in request body.");
         }
 
         return ip;
