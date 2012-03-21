@@ -42,7 +42,7 @@
     </filter>
     <filter-mapping>
         <filter-name>UrlFilter</filter-name>
-        <url-pattern>/*</url-pattern>
+        <url-pattern>/cloud/*</url-pattern>
     </filter-mapping>
 
 	<listener>

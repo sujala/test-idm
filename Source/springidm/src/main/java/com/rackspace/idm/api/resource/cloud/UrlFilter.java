@@ -31,29 +31,37 @@ public class UrlFilter implements Filter {
         final String decodeUri = UrlUtils.urlDecode(uri);
         final String pathInfo = req.getPathInfo();
         final String decodePathInfo = UrlUtils.urlDecode(pathInfo);
-        Map<String,String[]> map = req.getParameterMap();
         final Map decodeMap = new HashMap();
-        Iterator iterator = map.entrySet().iterator();
-        while(iterator.hasNext()){
-            Map.Entry mapEntry = (Map.Entry)iterator.next();
-            String[] values = (String[])mapEntry.getValue();
-            String decode = UrlUtils.urlDecode(values[0]);
-            decodeMap.put(mapEntry.getKey(),decode);
+        final Map<String, String[]> map = req.getParameterMap();
+        if (!map.isEmpty()) {
+            Iterator iterator = map.entrySet().iterator();
+            while (iterator.hasNext()) {
+                Map.Entry mapEntry = (Map.Entry) iterator.next();
+                String[] values = (String[]) mapEntry.getValue();
+                String decode = UrlUtils.urlDecode(values[0]);
+                decodeMap.put(mapEntry.getKey(), decode);
+            }
         }
 
-        final HttpServletRequestWrapper newReq = new HttpServletRequestWrapper(req){
-            public String getRequestURI(){
+        final HttpServletRequestWrapper newReq = new HttpServletRequestWrapper(req) {
+            public String getRequestURI() {
                 return decodeUri;
             }
-            public String getPathInfo(){
+
+            public String getPathInfo() {
                 return decodePathInfo;
             }
-            public Map getParameterMap(){
-                return decodeMap;
+
+            public Map getParameterMap() {
+                if (!map.isEmpty()) {
+                    return decodeMap;
+                } else {
+                    return req.getParameterMap();
+                }
+
             }
         };
-
-        chain.doFilter(newReq,response);
+        chain.doFilter(newReq, response);
     }
 
     @Override
