@@ -115,11 +115,11 @@ public class UserResource extends ParentResource {
 		User updatedUser = userConverter.toUserDO(inputUser);
 
 		getLogger().debug("Updating User: {}", inputUser.getUsername());
-		User user = this.userService.loadUser(userId);
+		User user = userService.loadUser(userId);
 		user.copyChanges(updatedUser);
 		validateDomainObject(user);
 
-		this.userService.updateUser(user, false);
+		userService.updateUserById(user, false);
 		
 		getLogger().debug("Updated User: {}", user);
 		
