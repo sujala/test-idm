@@ -4,6 +4,10 @@ import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+
 import org.apache.cxf.common.util.UrlUtils;
 
 /**
@@ -27,17 +31,37 @@ public class UrlFilter implements Filter {
         final String decodeUri = UrlUtils.urlDecode(uri);
         final String pathInfo = req.getPathInfo();
         final String decodePathInfo = UrlUtils.urlDecode(pathInfo);
+        final Map decodeMap = new HashMap();
+        final Map<String, String[]> map = req.getParameterMap();
+        if (!map.isEmpty()) {
+            Iterator iterator = map.entrySet().iterator();
+            while (iterator.hasNext()) {
+                Map.Entry mapEntry = (Map.Entry) iterator.next();
+                String[] values = (String[]) mapEntry.getValue();
+                String decode = UrlUtils.urlDecode(values[0]);
+                decodeMap.put(mapEntry.getKey(), decode);
+            }
+        }
 
-        final HttpServletRequestWrapper newReq = new HttpServletRequestWrapper(req){
-            public String getRequestURI(){
+        final HttpServletRequestWrapper newReq = new HttpServletRequestWrapper(req) {
+            public String getRequestURI() {
                 return decodeUri;
             }
-            public String getPathInfo(){
+
+            public String getPathInfo() {
                 return decodePathInfo;
             }
-        };
 
-        chain.doFilter(newReq,response);
+            public Map getParameterMap() {
+                if (!map.isEmpty()) {
+                    return decodeMap;
+                } else {
+                    return req.getParameterMap();
+                }
+
+            }
+        };
+        chain.doFilter(newReq, response);
     }
 
     @Override

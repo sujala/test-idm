@@ -4,12 +4,14 @@ import com.rackspace.docs.identity.api.ext.rax_ga.v1.ImpersonationRequest;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
+import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.resource.cloud.CloudClient;
 import com.rackspace.idm.api.resource.cloud.CloudUserExtractor;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TokenService;
 import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.api.json.JSONJAXBContext;
@@ -33,6 +35,7 @@ import javax.xml.transform.stream.StreamSource;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.net.URLEncoder;
 import java.util.Date;
 import java.util.HashMap;
 
@@ -885,13 +888,21 @@ public class DelegateCloud20Service implements Cloud20Service {
                 } else {
                     result += "&";
                 }
-                result += key + "=" + value.toString();
+                String encodeValue;
+                try {
+                    encodeValue = URLEncoder.encode(value.toString(), JSONConstants.UTF_8);
+                }
+                catch (Exception e) {
+                    throw new BadRequestException("Unable to encode query params.");
+                }
+                result += key + "=" + encodeValue;
             }
         }
         return request + result;
     }
 
     //TODO change way we check for media type
+
     private AuthenticateResponse getAuthFromResponse(String entity) {
         try {
             if (entity.trim().startsWith("{")) {

@@ -1892,6 +1892,8 @@ public class DefaultCloud20Service implements Cloud20Service {
                     if (impRoles != null && impRoles.size() > 0) {
                         impersonationResponse.setImpersonator(this.userConverterCloudV20.toUserForAuthenticateResponse(impersonator, roles));
                     }
+                    return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtRaxgaV1Factory().createAccess(impersonationResponse));
+
                 }
             }
 

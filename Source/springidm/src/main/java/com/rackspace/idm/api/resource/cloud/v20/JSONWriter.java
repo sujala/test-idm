@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.rackspace.docs.identity.api.ext.rax_ga.v1.ImpersonationResponse;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
@@ -261,6 +262,19 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
             AuthenticateResponse authenticateResponse = (AuthenticateResponse)object.getValue();
             access.put(JSONConstants.TOKEN, getToken(authenticateResponse.getToken()));
             access.put(JSONConstants.SERVICECATALOG, getServiceCatalog(authenticateResponse.getServiceCatalog()));
+            if(authenticateResponse.getUser() != null)
+                access.put(JSONConstants.USER, getTokenUser(authenticateResponse.getUser()));
+            outer.put(JSONConstants.ACCESS, access);
+
+            String jsonText = JSONValue.toJSONString(outer);
+            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
+
+        } else if (object.getDeclaredType().isAssignableFrom(ImpersonationResponse.class)) {
+            JSONObject outer = new JSONObject();
+            JSONObject access = new JSONObject();
+            ImpersonationResponse authenticateResponse = (ImpersonationResponse)object.getValue();
+            access.put(JSONConstants.TOKEN, getToken(authenticateResponse.getToken()));
+            access.put(JSONConstants.IMPERSONATOR, getTokenUser(authenticateResponse.getImpersonator()));
             if(authenticateResponse.getUser() != null)
                 access.put(JSONConstants.USER, getTokenUser(authenticateResponse.getUser()));
             outer.put(JSONConstants.ACCESS, access);
