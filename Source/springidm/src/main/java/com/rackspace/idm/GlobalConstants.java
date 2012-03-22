@@ -14,4 +14,6 @@ public final class GlobalConstants {
 
     public static final String USER_PREFERRED_LANG_DEFAULT = "en_US";
     public static final String USER_TIME_ZONE_DEFAULT = "America/Chicago";
+
+    public static final String DEFAULT_TENANT_SCOPEID = "cloud";
 }

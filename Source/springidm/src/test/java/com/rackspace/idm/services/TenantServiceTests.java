@@ -18,6 +18,8 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.rackspace.idm.GlobalConstants;
+
 public class TenantServiceTests {
 
     private TenantDao mockTenantDao;
@@ -51,7 +53,7 @@ public class TenantServiceTests {
     @Test
     public void shouldAddTenant() {
         Tenant tenant = getTestTenant();
-        EasyMock.expect(mockTenantDao.getTenantByName(tenantName)).andReturn(null);
+        EasyMock.expect(mockTenantDao.getTenant(tenantName, GlobalConstants.DEFAULT_TENANT_SCOPEID)).andReturn(null);
         mockTenantDao.addTenant(tenant);
         EasyMock.replay(mockTenantDao);
         tenantService.addTenant(tenant);
@@ -64,9 +66,9 @@ public class TenantServiceTests {
         roles.add(getTestSingleTenantRole());
         EasyMock.expect(mockTenantDao.getAllTenantRolesForTenant(tenantId1)).andReturn(roles);
         mockTenantDao.deleteTenantRole(getTestSingleTenantRole());
-        mockTenantDao.deleteTenant(tenantId1);
+        mockTenantDao.deleteTenant(tenantId1, GlobalConstants.DEFAULT_TENANT_SCOPEID);
         EasyMock.replay(mockTenantDao);
-        tenantService.deleteTenant(tenantId1);
+        tenantService.deleteTenant(tenantId1, GlobalConstants.DEFAULT_TENANT_SCOPEID);
         EasyMock.verify(mockTenantDao);
     }
     
@@ -76,18 +78,18 @@ public class TenantServiceTests {
         roles.add(getTestMultipleTenantRole());
         EasyMock.expect(mockTenantDao.getAllTenantRolesForTenant(tenantId1)).andReturn(roles);
         mockTenantDao.updateTenantRole(EasyMock.anyObject(TenantRole.class));
-        mockTenantDao.deleteTenant(tenantId1);
+        mockTenantDao.deleteTenant(tenantId1, GlobalConstants.DEFAULT_TENANT_SCOPEID);
         EasyMock.replay(mockTenantDao);
-        tenantService.deleteTenant(tenantId1);
+        tenantService.deleteTenant(tenantId1, GlobalConstants.DEFAULT_TENANT_SCOPEID);
         EasyMock.verify(mockTenantDao);
     }
 
     @Test
     public void shouldGetTenant() {
         Tenant tenant = getTestTenant();
-        EasyMock.expect(mockTenantDao.getTenant(tenantId1)).andReturn(tenant);
+        EasyMock.expect(mockTenantDao.getTenant(tenantId1, GlobalConstants.DEFAULT_TENANT_SCOPEID)).andReturn(tenant);
         EasyMock.replay(mockTenantDao);
-        Tenant returned = tenantService.getTenant(tenantId1);
+        Tenant returned = tenantService.getTenant(tenantId1, GlobalConstants.DEFAULT_TENANT_SCOPEID);
         Assert.assertNotNull(returned);
         EasyMock.verify(mockTenantDao);
     }
@@ -249,7 +251,7 @@ public class TenantServiceTests {
         List<TenantRole> roles = new ArrayList<TenantRole>();
         roles.add(role);
         EasyMock.expect(mockTenantDao.getTenantRolesByParent(null)).andReturn(roles);
-        EasyMock.expect(mockTenantDao.getTenant(tenantId1)).andReturn(tenant);
+        EasyMock.expect(mockTenantDao.getTenant(tenantId1, GlobalConstants.DEFAULT_TENANT_SCOPEID)).andReturn(tenant);
         EasyMock.replay(mockTenantDao);
         List<Tenant> tenants = tenantService.getTenantsForParentByTenantRoles(null);
         Assert.assertTrue(tenants.size() == 1);
@@ -261,6 +263,7 @@ public class TenantServiceTests {
         tenant.setDescription(description);
         tenant.setEnabled(true);
         tenant.setName(tenantName);
+        tenant.setScopeId(GlobalConstants.DEFAULT_TENANT_SCOPEID);
         tenant.setTenantId(tenantName);
         return tenant;
     }

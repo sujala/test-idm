@@ -55,13 +55,13 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
     }
 
     @Override
-    public void deleteTenant(String tenantId) {
+    public void deleteTenant(String tenantId, String scopeId) {
         if (StringUtils.isBlank(tenantId)) {
             getLogger().error("Null or Empty tenantId parameter");
             throw new IllegalArgumentException(
                 "Null or Empty tenantId parameter.");
         }
-        Tenant tenant = getTenant(tenantId);
+        Tenant tenant = getTenant(tenantId, scopeId);
         if (tenant == null) {
             String errMsg = String.format("Tenant %s not found", tenantId);
             getLogger().warn(errMsg);
@@ -76,8 +76,8 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
     }
 
     @Override
-    public Tenant getTenant(String tenantId) {
-        getLogger().debug("Doing search for tenantId " + tenantId);
+    public Tenant getTenant(String tenantId, String scopeId) {
+        getLogger().debug("Doing search for tenantId " + tenantId + " with scopeId " + scopeId);
         if (StringUtils.isBlank(tenantId)) {
             getLogger().error("Null or Empty tenantId parameter");
             throw new IllegalArgumentException(
@@ -86,6 +86,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
 
         Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_ID, tenantId)
+            .addEqualAttribute(ATTR_SCOPE_ID, scopeId)
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TENANT).build();
 
         Tenant tenant = null;

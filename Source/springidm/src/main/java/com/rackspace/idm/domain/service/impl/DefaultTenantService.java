@@ -16,6 +16,8 @@ import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.rackspace.idm.GlobalConstants;
+
 public class DefaultTenantService implements TenantService {
 
     private final TenantDao tenantDao;
@@ -35,7 +37,7 @@ public class DefaultTenantService implements TenantService {
     @Override
     public void addTenant(Tenant tenant) {
         logger.info("Adding Tenant {}", tenant);
-        Tenant exists = this.tenantDao.getTenantByName(tenant.getName());
+        Tenant exists = this.tenantDao.getTenant(tenant.getName(), tenant.getScopeId());
         if (exists != null) {
             String errMsg = String.format("Tenant with name %s already exists",
                 tenant.getName());
@@ -47,7 +49,7 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public void deleteTenant(String tenantId) {
+    public void deleteTenant(String tenantId, String scopeId) {
         logger.info("Deleting Tenant {}", tenantId);
         
         // Delete all tenant roles for this tenant
@@ -62,15 +64,15 @@ public class DefaultTenantService implements TenantService {
         }
         
         // Then delete the tenant
-        this.tenantDao.deleteTenant(tenantId);
+        this.tenantDao.deleteTenant(tenantId, scopeId);
         
         logger.info("Added Tenant {}", tenantId);
     }
 
     @Override
-    public Tenant getTenant(String tenantId) {
+    public Tenant getTenant(String tenantId, String scopeId) {
         logger.info("Getting Tenant {}", tenantId);
-        Tenant tenant = this.tenantDao.getTenant(tenantId);
+        Tenant tenant = this.tenantDao.getTenant(tenantId, scopeId);
         logger.info("Got Tenant {}", tenant);
         return tenant;
     }
@@ -114,7 +116,7 @@ public class DefaultTenantService implements TenantService {
             }
         }
         for (String tenantId : tenantIds) {
-            Tenant tenant = this.getTenant(tenantId);
+            Tenant tenant = this.getTenant(tenantId, GlobalConstants.DEFAULT_TENANT_SCOPEID);
             if (tenant != null && tenant.isEnabled()) {
                 tenants.add(tenant);
             }

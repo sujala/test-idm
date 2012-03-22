@@ -7,6 +7,8 @@ import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotFoundException;
+
+import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.unboundid.ldap.sdk.LDAPException;
 import org.apache.commons.configuration.Configuration;
@@ -77,7 +79,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         for (TenantRole role : roles) {
             if (role.getTenantIds() != null) {
                 for (String tenantId : role.getTenantIds()) {
-                    Tenant tenant = this.tenantDao.getTenant(tenantId);
+                    Tenant tenant = this.tenantDao.getTenant(tenantId, GlobalConstants.DEFAULT_TENANT_SCOPEID);
                     if (tenant != null) {
                         tenants.add(tenant);
                     }

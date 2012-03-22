@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
+import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.converter.cloudv20.*;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
@@ -700,7 +701,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             verifyServiceAdminLevelAccess(authToken);
             Tenant tenant = checkAndGetTenant(tenantId);
-            tenantService.deleteTenant(tenant.getTenantId());
+            tenantService.deleteTenant(tenant.getTenantId(), GlobalConstants.DEFAULT_TENANT_SCOPEID);
             return Response.noContent();
         } catch (Exception ex) {
             return exceptionResponse(ex);
@@ -1957,7 +1958,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     Tenant checkAndGetTenant(String tenantId) {
-        Tenant tenant = this.tenantService.getTenant(tenantId);
+        Tenant tenant = this.tenantService.getTenant(tenantId, GlobalConstants.DEFAULT_TENANT_SCOPEID);
 
         if (tenant == null) {
             String errMsg = String.format("Tenant with id/name: '%s' was not found.", tenantId);
