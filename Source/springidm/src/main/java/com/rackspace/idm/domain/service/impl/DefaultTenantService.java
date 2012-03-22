@@ -294,8 +294,19 @@ public class DefaultTenantService implements TenantService {
             throw new NotFoundException(errMsg);
         }
 
-        String parentUniqueId = this.userDao.addApplicationContainerToUser(user, role.getClientId());
-        addTenantRole(parentUniqueId, role);
+        UserScopeAccess sa = (UserScopeAccess) this.scopeAccessDao.getDirectScopeAccessForParentByClientId(user.getUniqueId(), role.getClientId());
+
+        if (sa == null) {
+            sa = new UserScopeAccess();
+            sa.setClientId(client.getClientId());
+            sa.setClientRCN(client.getRCN());
+            sa.setUsername(user.getUsername());
+            sa.setUserRCN(user.getCustomerId());
+            sa.setUserRsId(user.getId());
+            sa = (UserScopeAccess) this.scopeAccessDao.addDirectScopeAccess(user.getUniqueId(), sa);
+        }
+
+        addTenantRole(sa.getUniqueId(), role);
 
         logger.info("Adding tenantRole {} to user {}", role, user);
     }
