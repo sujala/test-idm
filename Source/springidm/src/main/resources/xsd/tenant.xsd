@@ -132,6 +132,6 @@
     			</xsd:documentation>
     		</annotation>
     	</attribute>
-    	<attribute name="scopeId" type="string"></attribute>
+    	<attribute name="scopeId" type="string" use="required"/>
     </complexType>
 </schema>
