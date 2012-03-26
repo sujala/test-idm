@@ -267,6 +267,39 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
     }
 
     @Override
+    public ScopeAccess getImpersonatedScopeAccessForParentByClientId(String parentUniqueId, String username) {
+        getLogger().debug("Find ScopeAccess for Parent: {} by impersonating username: {}", parentUniqueId, username);
+        LDAPConnection conn = null;
+
+        String dn = new LdapDnBuilder(parentUniqueId).addAttribute(ATTR_NAME, CONTAINER_IMPERSONATED).build();
+
+        try {
+            conn = getAppConnPool().getConnection();
+            final Filter filter = new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_SCOPEACCESS)
+                .addEqualAttribute(ATTR_IMPERSONATING_USERNAME, username).build();
+            final SearchResult searchResult = conn.search(dn, SearchScope.SUB, filter);
+
+            final List<SearchResultEntry> searchEntries = searchResult.getSearchEntries();
+            getLogger().debug(
+                "Found {} ScopeAccess(s) for Parent: {} by impersonating username: {}",
+                new Object[]{searchEntries.size(), parentUniqueId, username});
+            for (final SearchResultEntry searchResultEntry : searchEntries) {
+                return decodeScopeAccess(searchResultEntry);
+            }
+        } catch (final LDAPException e) {
+            if (e.getResultCode() == ResultCode.NO_SUCH_OBJECT) {
+                return null;
+            }
+            getLogger().error("Error reading scope access by clientId", e);
+            throw new IllegalStateException(e);
+        } finally {
+            getAppConnPool().releaseConnection(conn);
+        }
+        return null;
+    }
+
+    @Override
     public ScopeAccess getDirectScopeAccessForParentByClientId(String parentUniqueId, String clientId) {
         getLogger().debug("Find ScopeAccess for Parent: {} by ClientId: {}", parentUniqueId, clientId);
         LDAPConnection conn = null;

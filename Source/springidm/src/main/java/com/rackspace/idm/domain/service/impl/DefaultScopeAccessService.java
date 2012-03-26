@@ -7,6 +7,8 @@ import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotFoundException;
+
+import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.unboundid.ldap.sdk.LDAPException;
 import org.apache.commons.configuration.Configuration;
@@ -76,7 +78,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         for (TenantRole role : roles) {
             if (role.getTenantIds() != null) {
                 for (String tenantId : role.getTenantIds()) {
-                    Tenant tenant = this.tenantDao.getTenant(tenantId);
+                    Tenant tenant = this.tenantDao.getTenant(tenantId, GlobalConstants.DEFAULT_TENANT_SCOPEID);
                     if (tenant != null) {
                         tenants.add(tenant);
                     }
@@ -111,20 +113,34 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     @Override
     public ImpersonatedScopeAccess addImpersonatedScopeAccess(User user, String clientId, String impersonatingUsername, String impersonatingToken) {
-        ImpersonatedScopeAccess scopeAccess = new ImpersonatedScopeAccess();
-        scopeAccess.setUserRsId(user.getId());
-        scopeAccess.setUsername(user.getUsername());
-        scopeAccess.setClientId(clientId);
-        scopeAccess.setClientRCN(user.getCustomerId());
-        scopeAccess.setImpersonatingUsername(impersonatingUsername);
-        scopeAccess.setImpersonatingToken(impersonatingToken);
-        scopeAccess.setAccessTokenString(this.generateToken());
-        scopeAccess.setAccessTokenExp(new DateTime().plusSeconds(getDefaultImpersonatedTokenExpirationSeconds()).toDate());
-        
-        logger.info("Adding scopeAccess {}", scopeAccess);
-        ImpersonatedScopeAccess newScopeAccess = (ImpersonatedScopeAccess)this.scopeAccessDao.addImpersonatedScopeAccess(user.getUniqueId(), scopeAccess);
-        logger.info("Added scopeAccess {}", scopeAccess);
-        return newScopeAccess;
+
+        ScopeAccess existingAccess = this.scopeAccessDao.getImpersonatedScopeAccessForParentByClientId(user.getUniqueId(), impersonatingUsername);
+        if(existingAccess == null) {
+            ImpersonatedScopeAccess scopeAccess = new ImpersonatedScopeAccess();
+            scopeAccess.setUsername(user.getUsername());
+            if(user instanceof Racker)
+                scopeAccess.setRackerId(((Racker) user).getRackerId());
+            scopeAccess.setClientId(clientId);
+            scopeAccess.setImpersonatingUsername(impersonatingUsername);
+            scopeAccess.setImpersonatingToken(impersonatingToken);
+            scopeAccess.setAccessTokenString(this.generateToken());
+            scopeAccess.setAccessTokenExp(new DateTime().plusSeconds(getDefaultImpersonatedTokenExpirationSeconds()).toDate());
+
+            logger.info("Adding scopeAccess {}", scopeAccess);
+            ImpersonatedScopeAccess newScopeAccess = (ImpersonatedScopeAccess)this.scopeAccessDao.addImpersonatedScopeAccess(user.getUniqueId(), scopeAccess);
+            logger.info("Added scopeAccess {}", scopeAccess);
+
+            return newScopeAccess;
+        }
+        else {
+            ImpersonatedScopeAccess scopeAccess = (ImpersonatedScopeAccess)existingAccess;
+            if (!scopeAccess.isAccessTokenExpired(new DateTime()))
+                return scopeAccess;
+            scopeAccess.setAccessTokenString(this.generateToken());
+            scopeAccess.setAccessTokenExp(new DateTime().plusSeconds(getDefaultImpersonatedTokenExpirationSeconds()).toDate());
+            this.scopeAccessDao.updateScopeAccess(scopeAccess);
+            return scopeAccess;
+        }
     }
 
     @Override

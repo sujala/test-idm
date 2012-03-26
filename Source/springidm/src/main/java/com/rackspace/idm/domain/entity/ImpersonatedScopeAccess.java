@@ -27,14 +27,11 @@ public class ImpersonatedScopeAccess extends ScopeAccess implements HasAccessTok
     @LDAPField(attribute=LdapRepository.ATTR_ACCESS_TOKEN_EXP, objectClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private Date accessTokenExp;
 
+    @LDAPField(attribute=LdapRepository.ATTR_RACKER_ID, objectClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
+    private String rackerId;
+
     @LDAPField(attribute=LdapRepository.ATTR_UID, objectClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String username;
-
-    @LDAPField(attribute=LdapRepository.ATTR_USER_RS_ID, objectClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
-    private String userRsId;
-
-    @LDAPField(attribute=LdapRepository.ATTR_USER_RCN, objectClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
-    private String userRCN;
 
     @LDAPField(attribute=LdapRepository.ATTR_IMPERSONATING_USERNAME, objectClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS, inRDN=true, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String impersonatingUsername;
@@ -66,14 +63,6 @@ public class ImpersonatedScopeAccess extends ScopeAccess implements HasAccessTok
 
     public void setUsername(String username) {
         this.username = username;
-    }
-
-    public String getUserRCN() {
-        return userRCN;
-    }
-
-    public void setUserRCN(String userRCN) {
-        this.userRCN = userRCN;
     }
 
     @Override
@@ -118,16 +107,16 @@ public class ImpersonatedScopeAccess extends ScopeAccess implements HasAccessTok
 
     @Override
     public String getAuditContext() {
-        final String format = "User(username=%s,customerId=%s)";
-        return String.format(format, this.getUsername(), this.getUserRCN());
+        final String format = "User(username=%s,impersonating=%s)";
+        return String.format(format, this.getUsername(), this.getImpersonatingUsername());
     }
 
-    public void setUserRsId(String userRsId) {
-        this.userRsId = userRsId;
+    public String getRackerId() {
+        return rackerId;
     }
 
-    public String getUserRsId() {
-        return userRsId;
+    public void setRackerId(String rackerId) {
+        this.rackerId = rackerId;
     }
 
     public String getImpersonatingUsername() {

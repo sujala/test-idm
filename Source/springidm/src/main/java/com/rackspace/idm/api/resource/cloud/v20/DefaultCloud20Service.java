@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_ga.v1.ImpersonationRequest;
 import com.rackspace.docs.identity.api.ext.rax_ga.v1.ImpersonationResponse;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
+import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.converter.cloudv20.*;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
@@ -703,7 +704,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             verifyServiceAdminLevelAccess(authToken);
             Tenant tenant = checkAndGetTenant(tenantId);
-            tenantService.deleteTenant(tenant.getTenantId());
+            tenantService.deleteTenant(tenant.getTenantId(), GlobalConstants.DEFAULT_TENANT_SCOPEID);
             return Response.noContent();
         } catch (Exception ex) {
             return exceptionResponse(ex);
@@ -1418,7 +1419,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         if (user == null) {
             // Get from cloud.
             impersonatingToken = "";
-            impersonatingUsername = user.getUsername();
+            impersonatingUsername = "";
         }
         else{
             UserScopeAccess impAccess = (UserScopeAccess)scopeAccessService.getDirectScopeAccessForParentByClientId(user.getUniqueId(), getCloudAuthClientId());
@@ -1842,6 +1843,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             throws IOException {
 
         try {
+            //TODO: This token can be a Racker, Service or User of Proper Level
             verifyServiceAdminLevelAccess(authToken);
 
             ScopeAccess sa = checkAndGetToken(tokenId);
@@ -1852,6 +1854,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             if (sa instanceof UserScopeAccess || sa instanceof ImpersonatedScopeAccess) {
                 String username = "";
+                String impersonatedToken = "";
                 User impersonator = null;
                 if(sa instanceof UserScopeAccess) {
                     UserScopeAccess usa = (UserScopeAccess) sa;
@@ -1860,7 +1863,15 @@ public class DefaultCloud20Service implements Cloud20Service {
                 else if(sa instanceof ImpersonatedScopeAccess) {
                     ImpersonatedScopeAccess isa = (ImpersonatedScopeAccess) sa;
                     username = isa.getImpersonatingUsername();
-                    impersonator = userService.getUser(isa.getUsername());
+                    impersonatedToken = isa.getImpersonatingToken();
+
+                    if(isa.getRackerId() != null) {
+                        impersonator = userService.getRackerByRackerId(isa.getRackerId());
+                        impersonator.setId(isa.getRackerId());
+                        impersonator.setUsername(isa.getRackerId());
+                    }
+                    else
+                        impersonator = userService.getUser(isa.getUsername());
                 }
 
                 User user = this.userService.getUser(username);
@@ -1871,7 +1882,8 @@ public class DefaultCloud20Service implements Cloud20Service {
                     throw new NotFoundException("Token not found.");
                 }
 
-                List<TenantRole> roles = this.tenantService.getTenantRolesForScopeAccess(sa);
+                UserScopeAccess impersanotedScopeAccess = (UserScopeAccess)this.scopeAccessService.getScopeAccessByAccessToken(impersonatedToken);
+                List<TenantRole> roles = this.tenantService.getTenantRolesForScopeAccess(impersanotedScopeAccess);
                 if (roles != null && roles.size() > 0) {
                     access.setUser(this.userConverterCloudV20.toUserForAuthenticateResponse(user, roles));
                 }
@@ -1887,11 +1899,11 @@ public class DefaultCloud20Service implements Cloud20Service {
                     impersonationResponse.setToken(access.getToken());
                     impersonationResponse.setUser(access.getUser());
 
-                    // Get impersonator
-                    List<TenantRole> impRoles = this.tenantService.getTenantRolesForUser(impersonator, null);
-                    if (impRoles != null && impRoles.size() > 0) {
+                    // Get impersonator global roles
+                    List<TenantRole> impRoles = this.tenantService.getGlobalRolesForUser(impersonator, null);
+                    //if (impRoles != null && impRoles.size() > 0) {
                         impersonationResponse.setImpersonator(this.userConverterCloudV20.toUserForAuthenticateResponse(impersonator, roles));
-                    }
+                    //}
                     return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtRaxgaV1Factory().createAccess(impersonationResponse));
 
                 }
@@ -1997,7 +2009,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     Tenant checkAndGetTenant(String tenantId) {
-        Tenant tenant = this.tenantService.getTenant(tenantId);
+        Tenant tenant = this.tenantService.getTenant(tenantId, GlobalConstants.DEFAULT_TENANT_SCOPEID);
 
         if (tenant == null) {
             String errMsg = String.format("Tenant with id/name: '%s' was not found.", tenantId);

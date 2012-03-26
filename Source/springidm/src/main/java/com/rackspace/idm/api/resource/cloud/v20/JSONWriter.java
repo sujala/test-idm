@@ -36,7 +36,6 @@ import javax.ws.rs.ext.Provider;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.XMLGregorianCalendar;
-import javax.xml.namespace.QName;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.annotation.Annotation;
@@ -274,7 +273,8 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
             JSONObject access = new JSONObject();
             ImpersonationResponse authenticateResponse = (ImpersonationResponse)object.getValue();
             access.put(JSONConstants.TOKEN, getToken(authenticateResponse.getToken()));
-            access.put(JSONConstants.IMPERSONATOR, getTokenUser(authenticateResponse.getImpersonator()));
+            if(authenticateResponse.getImpersonator() != null)
+                access.put(JSONConstants.IMPERSONATOR, getTokenUser(authenticateResponse.getImpersonator()));
             if(authenticateResponse.getUser() != null)
                 access.put(JSONConstants.USER, getTokenUser(authenticateResponse.getUser()));
             outer.put(JSONConstants.ACCESS, access);
@@ -460,11 +460,6 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
         JSONObject tokenInner = new JSONObject();
         tokenInner.put(JSONConstants.ID, token.getId());
         tokenInner.put(JSONConstants.EXPIRES, token.getExpires().toString());
-
-        // Check for impersonation only?
-        for (QName key : token.getOtherAttributes().keySet()) {
-            tokenInner.put(key.toString(), token.getOtherAttributes().get(key));
-        }
 
         return tokenInner;
     }

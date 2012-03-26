@@ -885,17 +885,17 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.25) = {
         description
 };
 
-  schema set object-class (1.3.6.1.4.1.20988.2.2.26) = {
-      name = impersonatedScopeAccess
-      ldap-names = impersonatedScopeAccess
-      subclass-of scopeAccess
-      kind = structural
-      must-contain
-          impersonatingUsername
-      may-contain
-          uid,
-          accessToken,
-          accessTokenExp,
-          impersonatingToken
-  };
-
+schema set object-class (1.3.6.1.4.1.20988.2.2.26) = {
+    name = impersonatedScopeAccess
+    ldap-names = impersonatedScopeAccess
+    subclass-of scopeAccess
+    kind = structural
+    must-contain
+        impersonatingUsername
+    may-contain
+        uid,
+        rackerId,
+        accessToken,
+        accessTokenExp,
+        impersonatingToken
+};

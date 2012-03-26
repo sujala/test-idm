@@ -8,12 +8,14 @@ import javax.ws.rs.core.MediaType;
 
 import javax.ws.rs.core.Response;
 
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Path;
 import javax.ws.rs.POST;
 import javax.ws.rs.Produces;
+import javax.ws.rs.PUT;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 
@@ -76,31 +78,61 @@ public class TenantsResource extends ParentResource {
         tenant.setId(tenant.getName());
         tenantService.addTenant(tenantConverter.toTenantDO(tenant));
 
-        com.rackspace.idm.domain.entity.Tenant tenantObject = tenantService.getTenantByName(tenant.getName());
+        com.rackspace.idm.domain.entity.Tenant tenantObject = tenantService.getTenant(tenant.getName(), tenant.getScopeId());
 
         return Response.ok(objectFactory.createTenant(tenantConverter.toTenant(tenantObject))).build();
     }
 
     @GET
-    @Path("{tenantId}")
+    @Path("{tenantId}/scope/{scopeId}")
     public Response getTenant(
         @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("userId") String userId,
         @QueryParam("applicationId") String applicationId,
-        @PathParam("tenantId") String tenantId) {
+        @PathParam("tenantId") String tenantId,
+        @PathParam("scopeId") String scopeId) {
 
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
 
         com.rackspace.idm.domain.entity.Tenant tenant;
 
-        tenant = tenantService.getTenantByName(tenantId);
+        tenant = tenantService.getTenant(tenantId, scopeId);
 
         if(tenant == null) {
-            String errMsg = String.format("Tenant with id/name: '%s' was not found.", tenantId);
+            String errMsg = String.format("Tenant with id/name: '%s' and scopeid: %s was not found.", tenantId, scopeId);
             logger.warn(errMsg);
             throw new WebApplicationException(new NotFoundException(errMsg), 404);
         }
 
         return Response.ok(objectFactory.createTenant(tenantConverter.toTenant(tenant))).build();
     }
+
+    @DELETE
+    @Path("{tenantId}/scope/{scopeId}")
+    public Response deleteTenant(
+        @HeaderParam("X-Auth-Token") String authHeader,
+        @PathParam("userId") String userId,
+        @QueryParam("applicationId") String applicationId,
+        @PathParam("tenantId") String tenantId,
+        @PathParam("scopeId") String scopeId) {
+
+        tenantService.deleteTenant(tenantId, scopeId);
+
+        return Response.noContent().build();
+    }
+
+    @PUT
+    @Path("{tenantId}/scope/{scopeId}")
+    public Response updateTenant(
+        @HeaderParam("X-Auth-Token") String authHeader,
+        @PathParam("userId") String userId,
+        @QueryParam("applicationId") String applicationId,
+        Tenant tenant) {
+
+        tenantService.updateTenant(tenantConverter.toTenantDO(tenant));
+        com.rackspace.idm.domain.entity.Tenant tenantObject = tenantService.getTenant(tenant.getName(), tenant.getScopeId());
+
+        return Response.ok(objectFactory.createTenant(tenantConverter.toTenant(tenantObject))).build();
+    }
+
 }

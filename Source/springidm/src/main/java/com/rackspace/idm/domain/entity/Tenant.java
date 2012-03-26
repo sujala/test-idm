@@ -43,7 +43,7 @@ public class Tenant implements Auditable {
     @LDAPField(attribute = LdapRepository.ATTR_BASEURL_ID, objectClass = LdapRepository.OBJECTCLASS_TENANT, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String[] baseUrlIds;
 
-    @LDAPField(attribute = LdapRepository.ATTR_SCOPE_ID, objectClass = LdapRepository.OBJECTCLASS_TENANT, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
+    @LDAPField(attribute = LdapRepository.ATTR_SCOPE_ID, objectClass = LdapRepository.OBJECTCLASS_TENANT, inRDN = true, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String scopeId;
 
     public ReadOnlyEntry getLDAPEntry() {
