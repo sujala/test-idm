@@ -113,7 +113,6 @@ public class DefaultCloud11Service implements Cloud11Service {
     public Response.ResponseBuilder revokeToken(HttpServletRequest request, String tokenId, HttpHeaders httpHeaders) throws IOException {
 
         try {
-
             authenticateCloudAdminUser(request);
 
             ScopeAccess sa = this.scopeAccessService.getScopeAccessByAccessToken(tokenId);

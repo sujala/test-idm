@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v11;
 import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11;
 import com.rackspace.idm.api.resource.cloud.CloudExceptionResponse;
 import com.rackspace.idm.domain.dao.impl.LdapCloudAdminRepository;
+import com.rackspace.idm.domain.entity.RackerScopeAccess;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.service.AuthorizationService;
@@ -14,12 +15,17 @@ import com.rackspace.idm.util.NastFacade;
 import com.rackspacecloud.docs.auth.api.v1.*;
 import com.sun.jersey.api.uri.UriBuilderImpl;
 import org.apache.commons.configuration.Configuration;
+import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
 import org.mortbay.jetty.HttpHeaders;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.MediaType;
@@ -27,6 +33,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
+import java.io.IOException;
 import java.net.URI;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -39,6 +46,8 @@ import static org.mockito.Mockito.*;
  * Date: 10/18/11
  * Time: 6:19 PM
  */
+@RunWith(PowerMockRunner.class)
+@PrepareForTest(DefaultCloud11Service.class)
 public class DefaultCloud11ServiceTest {
 
     AuthorizationService authorizationService;
@@ -93,7 +102,6 @@ public class DefaultCloud11ServiceTest {
         defaultCloud11Service.setAuthorizationService(authorizationService);
         spy = spy(defaultCloud11Service);
     }
-
 
 
     @Test
@@ -270,6 +278,54 @@ public class DefaultCloud11ServiceTest {
     }
 
     @Test
+    public void revokeToken_scopeAccessServiceReturnsNull_returnsNotFoundResponse() throws Exception, IOException {
+        when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(null);
+        DefaultCloud11Service spy1 = PowerMockito.spy(defaultCloud11Service);
+        PowerMockito.doNothing().when(spy1, "authenticateCloudAdminUser", request);
+        Response.ResponseBuilder returnedResponse = spy1.revokeToken(request, "test", null);
+        assertThat("notFoundResponseReturned", returnedResponse.build().getStatus(), equalTo(404));
+    }
+
+    @Test
+    public void revokeToken_scopeAccessServiceReturnsNonUserAccess_returnsNotFoundResponse() throws Exception, IOException {
+        when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(new RackerScopeAccess());
+        DefaultCloud11Service tempSpy = PowerMockito.spy(defaultCloud11Service);
+        PowerMockito.doNothing().when(tempSpy, "authenticateCloudAdminUser", request);
+        Response.ResponseBuilder returnedResponse = tempSpy.revokeToken(request, "test", null);
+        assertThat("notFoundResponseReturned", returnedResponse.build().getStatus(), equalTo(404));
+    }
+
+    @Test
+    public void revokeToken_scopeAccessServiceReturnsExpiredToken_returnsNotFoundResponse() throws Exception, IOException {
+        DefaultCloud11Service tempSpy = PowerMockito.spy(defaultCloud11Service);
+        PowerMockito.doNothing().when(tempSpy, "authenticateCloudAdminUser", request);
+        UserScopeAccess userScopeAccessMock = mock(UserScopeAccess.class);
+        when(userScopeAccessMock.isAccessTokenExpired(Matchers.<DateTime>anyObject())).thenReturn(true);
+        when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(userScopeAccessMock);
+        Response.ResponseBuilder returnedResponse = tempSpy.revokeToken(request, "test", null);
+        assertThat("notFoundResponseReturned", returnedResponse.build().getStatus(), equalTo(404));
+    }
+
+    @Test
+    public void revokeToken_userScopeAccess_setAccessTokenExpired() throws Exception {
+        DefaultCloud11Service tempSpy = PowerMockito.spy(defaultCloud11Service);
+        PowerMockito.doNothing().when(tempSpy, "authenticateCloudAdminUser", request);
+        UserScopeAccess userScopeAccessMock = mock(UserScopeAccess.class);
+        when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(userScopeAccessMock);
+        tempSpy.revokeToken(request, "test", null);
+        verify(userScopeAccessMock).setAccessTokenExpired();
+    }
+    @Test
+    public void revokeToken_userScopeAccess_updateScopeAccess() throws Exception {
+        DefaultCloud11Service tempSpy = PowerMockito.spy(defaultCloud11Service);
+        PowerMockito.doNothing().when(tempSpy, "authenticateCloudAdminUser", request);
+        UserScopeAccess userScopeAccessMock = mock(UserScopeAccess.class);
+        when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(userScopeAccessMock);
+        tempSpy.revokeToken(request, "test", null);
+        verify(scopeAccessService).updateScopeAccess(userScopeAccessMock);
+    }
+
+    @Test
     public void validateToken_isAdminCall_callAuthenticateCloudAdminUserForGetRequest() throws Exception {
         spy.validateToken(request, null, null, null, null);
         verify(spy).authenticateCloudAdminUserForGetRequests(request);
@@ -344,7 +400,7 @@ public class DefaultCloud11ServiceTest {
     @Test
     public void updateUser_callsValidateUser() throws Exception {
         when(authorizationService.authorizeCloudIdentityAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
-        spy.updateUser(request,null,null,null);
+        spy.updateUser(request, null, null, null);
         verify(userValidator).validate(null);
     }
 
@@ -422,7 +478,7 @@ public class DefaultCloud11ServiceTest {
         when(authorizationService.authorizeCloudIdentityAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
         when(httpHeaders.getMediaType()).thenReturn(new MediaType());
         String credentials = "<passwordCredentials password=\"123\" username=\"IValidUser\" xmlns=\"http://docs.rackspacecloud.com/auth/api/v1.1\"/>";
-        Response.ResponseBuilder responseBuilder = spy.adminAuthenticate(request, null,httpHeaders , credentials);
+        Response.ResponseBuilder responseBuilder = spy.adminAuthenticate(request, null, httpHeaders, credentials);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(401));
     }
 }
