@@ -4,6 +4,7 @@ import com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -42,6 +43,7 @@ public class Cloud10VersionResourceTest extends AbstractAroundClassJerseyTest {
     }
 
     @Test
+    @Ignore
     public void getVersion_withValidCloudOnly_returns204() throws Exception {
         WebResource resource = resource().path("cloud/v1.0");
         ClientResponse clientResponse = resource.header("X-Auth-User", "cmarin1")

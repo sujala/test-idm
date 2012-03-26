@@ -55,6 +55,7 @@ public class Cloud11VersionResourceTest extends AbstractAroundClassJerseyTest {
     }
 
     @Test
+    @Ignore
     public void authenticate_withValidUser_returns200() {
         WebResource resource = resource().path("cloud/v1.1/auth");
         ClientResponse clientResponse = resource
