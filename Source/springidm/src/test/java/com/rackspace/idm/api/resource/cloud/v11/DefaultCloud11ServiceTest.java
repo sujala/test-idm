@@ -47,7 +47,6 @@ import static org.mockito.Mockito.*;
  * Time: 6:19 PM
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest(DefaultCloud11Service.class)
 public class DefaultCloud11ServiceTest {
 
     AuthorizationService authorizationService;
@@ -286,6 +285,7 @@ public class DefaultCloud11ServiceTest {
         assertThat("notFoundResponseReturned", returnedResponse.build().getStatus(), equalTo(404));
     }
 
+    @PrepareForTest(DefaultCloud11Service.class)
     @Test
     public void revokeToken_scopeAccessServiceReturnsNonUserAccess_returnsNotFoundResponse() throws Exception, IOException {
         when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(new RackerScopeAccess());
@@ -295,6 +295,7 @@ public class DefaultCloud11ServiceTest {
         assertThat("notFoundResponseReturned", returnedResponse.build().getStatus(), equalTo(404));
     }
 
+    @PrepareForTest(DefaultCloud11Service.class)
     @Test
     public void revokeToken_scopeAccessServiceReturnsExpiredToken_returnsNotFoundResponse() throws Exception, IOException {
         DefaultCloud11Service tempSpy = PowerMockito.spy(defaultCloud11Service);
@@ -306,6 +307,7 @@ public class DefaultCloud11ServiceTest {
         assertThat("notFoundResponseReturned", returnedResponse.build().getStatus(), equalTo(404));
     }
 
+    @PrepareForTest(DefaultCloud11Service.class)
     @Test
     public void revokeToken_userScopeAccess_setAccessTokenExpired() throws Exception {
         DefaultCloud11Service tempSpy = PowerMockito.spy(defaultCloud11Service);
@@ -315,6 +317,8 @@ public class DefaultCloud11ServiceTest {
         tempSpy.revokeToken(request, "test", null);
         verify(userScopeAccessMock).setAccessTokenExpired();
     }
+
+    @PrepareForTest(DefaultCloud11Service.class)
     @Test
     public void revokeToken_userScopeAccess_updateScopeAccess() throws Exception {
         DefaultCloud11Service tempSpy = PowerMockito.spy(defaultCloud11Service);
