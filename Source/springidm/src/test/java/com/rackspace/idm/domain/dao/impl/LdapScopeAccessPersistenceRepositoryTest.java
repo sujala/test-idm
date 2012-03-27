@@ -1,35 +1,21 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import static org.junit.Assert.fail;
+import com.rackspace.idm.domain.config.LdapConfiguration;
+import com.rackspace.idm.domain.dao.ScopeAccessDao;
+import com.rackspace.idm.domain.entity.*;
+import com.unboundid.ldap.listener.InMemoryDirectoryServer;
+import com.unboundid.ldap.listener.InMemoryDirectoryServerConfig;
+import com.unboundid.ldap.sdk.LDAPConnection;
+import junit.framework.Assert;
+import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.PropertiesConfiguration;
+import org.junit.*;
 
 import java.util.Date;
 import java.util.List;
 
-import junit.framework.Assert;
-
-import org.apache.commons.configuration.Configuration;
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.commons.configuration.PropertiesConfiguration;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import com.rackspace.idm.domain.config.LdapConfiguration;
-import com.rackspace.idm.domain.dao.ScopeAccessDao;
-import com.rackspace.idm.domain.entity.Application;
-import com.rackspace.idm.domain.entity.ClientScopeAccess;
-import com.rackspace.idm.domain.entity.ClientSecret;
-import com.rackspace.idm.domain.entity.ClientStatus;
-import com.rackspace.idm.domain.entity.Customer;
-import com.rackspace.idm.domain.entity.DefinedPermission;
-import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
-import com.rackspace.idm.domain.entity.GrantedPermission;
-import com.rackspace.idm.domain.entity.PasswordResetScopeAccess;
-import com.rackspace.idm.domain.entity.Permission;
-import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.UserScopeAccess;
+import static org.junit.Assert.fail;
 
 public class LdapScopeAccessPersistenceRepositoryTest {
     private LdapCustomerRepository customerRepo;
@@ -57,12 +43,12 @@ public class LdapScopeAccessPersistenceRepositoryTest {
     
     String userId = "userId";
 
-    Application                         client       = null;
-    Application                         client2      = null;
-    Customer                       customer     = null;
+    Application client = null;
+    Application client2 = null;
+    Customer customer = null;
     
-    String                          id = "XXXX";
-    String                          id2 = "YYYY";
+    String id = "XXXX";
+    String id2 = "YYYY";
 
 
     @BeforeClass
@@ -86,6 +72,15 @@ public class LdapScopeAccessPersistenceRepositoryTest {
 
     @Before
     public void setUp() throws Exception {
+
+        InMemoryDirectoryServerConfig config = new InMemoryDirectoryServerConfig("dc=example,dc=com");
+        config.addAdditionalBindCredentials("cn=admin", "qwerty");
+        InMemoryDirectoryServer server = new InMemoryDirectoryServer(config);
+        server.importFromLDIF(true, "/tmp/test.ldif");
+        server.startListening();
+        LDAPConnection conn = server.getConnection();
+        //******************************************************
+
         connPools = getConnPools();
         repo = getSaRepo(connPools);
         customerRepo = getCustomerRepo(connPools);
@@ -604,6 +599,72 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         po = (GrantedPermission) repo.getPermissionByParentAndPermission(sa.getUniqueId(), p);
         Assert.assertNotNull(po);
         Assert.assertNotNull(po.getResourceGroups());
+    }
+
+    @Test
+    public void testScopeAccess_Success() {
+        ScopeAccess sa = new ScopeAccess();
+        sa.setClientId(client.getClientId());
+        sa.setClientRCN(client.getName());
+        ScopeAccess scopeAccess = repo.addScopeAccess(client.getUniqueId(), sa);
+
+        Assert.assertEquals(sa.getClientId(), scopeAccess.getClientId());
+    }
+
+    @Test
+    public void testAddDelegatedScopeAccess_Success() {
+        DelegatedClientScopeAccess sa = new DelegatedClientScopeAccess();
+        sa.setClientId(client.getClientId());
+        sa.setClientRCN(client.getName());
+        sa.setAccessTokenString(accessToken);
+        sa.setAccessTokenExp(new Date());
+        sa.setRefreshTokenString(refreshToken);
+        sa.setRefreshTokenExp(new Date());
+        sa.setAuthCode("authcode");
+        sa.setAuthCodeExp(new Date());
+        sa.setUserRsId(client.getName());
+        ScopeAccess scopeAccess = repo.addDelegateScopeAccess(client.getUniqueId(), sa);
+
+        Assert.assertEquals(sa.getClientId(), scopeAccess.getClientId());
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testAddDelegatedScopeAccess_nullClientID_throwsLDapException() {
+        DelegatedClientScopeAccess sa = new DelegatedClientScopeAccess();
+        sa.setClientId(null);
+        sa.setClientRCN(client.getName());
+        sa.setAccessTokenString(accessToken);
+        sa.setAccessTokenExp(new Date());
+        sa.setRefreshTokenString(refreshToken);
+        sa.setRefreshTokenExp(new Date());
+        sa.setAuthCode("authcode");
+        sa.setAuthCodeExp(new Date());
+        sa.setUserRsId(client.getName());
+        ScopeAccess scopeAccess = repo.addDelegateScopeAccess(client.getUniqueId(), sa);
+    }
+
+    @Test
+    public void testAddImpersonatedScopeAccess_Success() {
+        ImpersonatedScopeAccess sa = new ImpersonatedScopeAccess();
+        sa.setClientId(client.getClientId());
+        sa.setImpersonatingToken("1234567890");
+        sa.setImpersonatingUsername("impersonateme");
+        sa.setAccessTokenString(accessToken);
+        sa.setAccessTokenExp(new Date());
+        ScopeAccess scopeAccess = repo.addImpersonatedScopeAccess(client.getUniqueId(), sa);
+
+        Assert.assertEquals(sa.getClientId(), scopeAccess.getClientId());
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testAddImpersonatedScopeAccess_nullUsername_throwsLDapException() {
+        ImpersonatedScopeAccess sa = new ImpersonatedScopeAccess();
+        sa.setClientId(client.getClientId());
+        sa.setImpersonatingToken("1234567890");
+        sa.setImpersonatingUsername(null);
+        sa.setAccessTokenString(accessToken);
+        sa.setAccessTokenExp(new Date());
+        ScopeAccess scopeAccess = repo.addImpersonatedScopeAccess(client.getUniqueId(), sa);
     }
 
     private static LdapApplicationRepository getClientRepo(LdapConnectionPools connPools) {
