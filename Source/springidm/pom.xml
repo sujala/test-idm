@@ -21,6 +21,8 @@
         <!-- Default location for project properties file -->
         <idm.properties.location>${basedir}/target/config/DEV</idm.properties.location>
 
+        <!--PowerMockito Properties-->
+        <powermock.version>1.4.11</powermock.version>
     </properties>
 
     <dependencies>
@@ -29,7 +31,7 @@
             <artifactId>cxf-api</artifactId>
             <version>2.5.2</version>
         </dependency>
-                    
+
 
         <dependency>
             <groupId>com.rsa</groupId>
@@ -174,6 +176,19 @@
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.8.1</version>
+            <scope>test</scope>
+        </dependency>
+        <!--PowerMockito Dependencies-->
+        <dependency>
+            <groupId>org.powermock</groupId>
+            <artifactId>powermock-module-junit4</artifactId>
+            <version>${powermock.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.powermock</groupId>
+            <artifactId>powermock-api-mockito</artifactId>
+            <version>${powermock.version}</version>
             <scope>test</scope>
         </dependency>
 
