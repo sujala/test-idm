@@ -11,7 +11,6 @@ import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 
-import com.rackspace.idm.GlobalConstants;
 import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.Control;
 import com.unboundid.ldap.sdk.SearchResultEntry;
@@ -172,7 +171,7 @@ public class DefaultCloud20ServiceTest {
         when(clientService.getById("clientId")).thenReturn(application);
         when(clientService.getClientRoleById(role.getId())).thenReturn(clientRole);
         when(clientService.getClientRoleById(tenantRole.getRoleRsId())).thenReturn(clientRole);
-        when(tenantService.getTenant(tenantId, GlobalConstants.DEFAULT_TENANT_SCOPEID)).thenReturn(tenant);
+        when(tenantService.getTenant(tenantId)).thenReturn(tenant);
         when(userService.getUserById(userId)).thenReturn(user);
         when(config.getString("rackspace.customerId")).thenReturn(null);
         when(userConverterCloudV20.toUserDO(userOS)).thenReturn(user);

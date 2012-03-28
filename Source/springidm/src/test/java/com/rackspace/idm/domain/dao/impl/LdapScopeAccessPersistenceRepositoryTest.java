@@ -73,14 +73,6 @@ public class LdapScopeAccessPersistenceRepositoryTest {
     @Before
     public void setUp() throws Exception {
 
-        InMemoryDirectoryServerConfig config = new InMemoryDirectoryServerConfig("dc=example,dc=com");
-        config.addAdditionalBindCredentials("cn=admin", "qwerty");
-        InMemoryDirectoryServer server = new InMemoryDirectoryServer(config);
-        server.importFromLDIF(true, "/tmp/test.ldif");
-        server.startListening();
-        LDAPConnection conn = server.getConnection();
-        //******************************************************
-
         connPools = getConnPools();
         repo = getSaRepo(connPools);
         customerRepo = getCustomerRepo(connPools);

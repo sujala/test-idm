@@ -16,7 +16,6 @@ import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.rackspace.idm.GlobalConstants;
 
 public class DefaultTenantService implements TenantService {
 
@@ -37,7 +36,7 @@ public class DefaultTenantService implements TenantService {
     @Override
     public void addTenant(Tenant tenant) {
         logger.info("Adding Tenant {}", tenant);
-        Tenant exists = this.tenantDao.getTenant(tenant.getName(), tenant.getScopeId());
+        Tenant exists = this.tenantDao.getTenant(tenant.getName());
         if (exists != null) {
             String errMsg = String.format("Tenant with name %s already exists",
                 tenant.getName());
@@ -49,7 +48,7 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public void deleteTenant(String tenantId, String scopeId) {
+    public void deleteTenant(String tenantId) {
         logger.info("Deleting Tenant {}", tenantId);
         
         // Delete all tenant roles for this tenant
@@ -64,15 +63,15 @@ public class DefaultTenantService implements TenantService {
         }
         
         // Then delete the tenant
-        this.tenantDao.deleteTenant(tenantId, scopeId);
+        this.tenantDao.deleteTenant(tenantId);
         
         logger.info("Added Tenant {}", tenantId);
     }
 
     @Override
-    public Tenant getTenant(String tenantId, String scopeId) {
+    public Tenant getTenant(String tenantId) {
         logger.info("Getting Tenant {}", tenantId);
-        Tenant tenant = this.tenantDao.getTenant(tenantId, scopeId);
+        Tenant tenant = this.tenantDao.getTenant(tenantId);
         logger.info("Got Tenant {}", tenant);
         return tenant;
     }
@@ -116,7 +115,7 @@ public class DefaultTenantService implements TenantService {
             }
         }
         for (String tenantId : tenantIds) {
-            Tenant tenant = this.getTenant(tenantId, GlobalConstants.DEFAULT_TENANT_SCOPEID);
+            Tenant tenant = this.getTenant(tenantId);
             if (tenant != null && tenant.isEnabled()) {
                 tenants.add(tenant);
             }

@@ -40,6 +40,7 @@ import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.TenantService;
 
+import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.validation.InputValidator;
 
@@ -66,40 +67,64 @@ public class TenantsResource extends ParentResource {
 	}
 
     @POST
-    @Path("")
+    @Path("{tenantId}")
     public Response createTenant(
         @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("userId") String userId,
         @QueryParam("applicationId") String applicationId,
+        @PathParam("tenantId") String tenantId,
         Tenant tenant) {
 
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
-        // Our implmentation has the id and the name the same
-        tenant.setId(tenant.getName());
+
+        validateTenantId(tenantId);
+
+        tenant.setId(tenantId);
+        tenant.setName(tenantId);
         tenantService.addTenant(tenantConverter.toTenantDO(tenant));
 
-        com.rackspace.idm.domain.entity.Tenant tenantObject = tenantService.getTenant(tenant.getName(), tenant.getScopeId());
+        com.rackspace.idm.domain.entity.Tenant tenantObject = tenantService.getTenant(tenant.getName());
 
         return Response.ok(objectFactory.createTenant(tenantConverter.toTenant(tenantObject))).build();
     }
 
-    @GET
-    @Path("{tenantId}/scope/{scopeId}")
+    private void validateTenantId(String tenantId) {
+        if(tenantId != null) {
+            int index = tenantId.indexOf(":");
+
+            String namespace = null;
+            String id = null;
+
+            if (index != -1) {
+                namespace = tenantId.substring(0, index);
+                id = tenantId.substring(index + 1);
+            }
+
+            if (namespace == null || namespace.length() == 0 ||
+                id == null || id.length() == 0) {
+
+                String errMsg = String.format("Invalid Tenant id/name: '%s'.", tenantId);
+                throw new WebApplicationException(new BadRequestException(errMsg), 404);
+            }
+        }
+	}
+
+	@GET
+    @Path("{tenantId}")
     public Response getTenant(
         @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("userId") String userId,
         @QueryParam("applicationId") String applicationId,
-        @PathParam("tenantId") String tenantId,
-        @PathParam("scopeId") String scopeId) {
+        @PathParam("tenantId") String tenantId) {
 
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
 
         com.rackspace.idm.domain.entity.Tenant tenant;
 
-        tenant = tenantService.getTenant(tenantId, scopeId);
+        tenant = tenantService.getTenant(tenantId);
 
         if(tenant == null) {
-            String errMsg = String.format("Tenant with id/name: '%s' and scopeid: %s was not found.", tenantId, scopeId);
+            String errMsg = String.format("Tenant with id/name: '%s' was not found.", tenantId);
             logger.warn(errMsg);
             throw new WebApplicationException(new NotFoundException(errMsg), 404);
         }
@@ -108,29 +133,32 @@ public class TenantsResource extends ParentResource {
     }
 
     @DELETE
-    @Path("{tenantId}/scope/{scopeId}")
+    @Path("{tenantId}")
     public Response deleteTenant(
         @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("userId") String userId,
         @QueryParam("applicationId") String applicationId,
-        @PathParam("tenantId") String tenantId,
-        @PathParam("scopeId") String scopeId) {
+        @PathParam("tenantId") String tenantId) {
 
-        tenantService.deleteTenant(tenantId, scopeId);
+        tenantService.deleteTenant(tenantId);
 
         return Response.noContent().build();
     }
 
     @PUT
-    @Path("{tenantId}/scope/{scopeId}")
+    @Path("{tenantId}")
     public Response updateTenant(
         @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("userId") String userId,
         @QueryParam("applicationId") String applicationId,
+        @PathParam("tenantId") String tenantId,
         Tenant tenant) {
 
+        tenant.setId(tenantId);
+        tenant.setName(tenantId);
+
         tenantService.updateTenant(tenantConverter.toTenantDO(tenant));
-        com.rackspace.idm.domain.entity.Tenant tenantObject = tenantService.getTenant(tenant.getName(), tenant.getScopeId());
+        com.rackspace.idm.domain.entity.Tenant tenantObject = tenantService.getTenant(tenant.getName());
 
         return Response.ok(objectFactory.createTenant(tenantConverter.toTenant(tenantObject))).build();
     }

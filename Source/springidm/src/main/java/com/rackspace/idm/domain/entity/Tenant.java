@@ -43,9 +43,6 @@ public class Tenant implements Auditable {
     @LDAPField(attribute = LdapRepository.ATTR_BASEURL_ID, objectClass = LdapRepository.OBJECTCLASS_TENANT, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String[] baseUrlIds;
 
-    @LDAPField(attribute = LdapRepository.ATTR_SCOPE_ID, objectClass = LdapRepository.OBJECTCLASS_TENANT, inRDN = true, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
-    private String scopeId;
-
     public ReadOnlyEntry getLDAPEntry() {
         return ldapEntry;
     }
@@ -114,14 +111,6 @@ public class Tenant implements Auditable {
         this.baseUrlIds = baseUrlIds;
     }
 
-    public String getScopeId() {
-        return this.scopeId;
-    }
-
-    public void setScopeId(String scopeId) {
-        this.scopeId = scopeId;
-    }
-
     public void addBaseUrlId(String baseUrlId) {
         List<String> baseUrls = new ArrayList<String>();
         if (baseUrlIds != null) {
@@ -174,10 +163,6 @@ public class Tenant implements Auditable {
 
         if (modifiedTenant.isEnabled() != null) {
             setEnabled(modifiedTenant.isEnabled());
-        }
-
-        if(modifiedTenant.getScopeId() != null) {
-            setScopeId(modifiedTenant.getScopeId());
         }
     }
 

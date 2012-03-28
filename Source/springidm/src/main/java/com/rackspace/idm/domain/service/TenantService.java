@@ -13,8 +13,8 @@ import com.rackspace.idm.domain.entity.User;
 public interface TenantService {
 
     void addTenant(Tenant tenant);
-    void deleteTenant(String tenantId, String scopeId);
-    Tenant getTenant(String tenantId, String scopeId);
+    void deleteTenant(String tenantId);
+    Tenant getTenant(String tenantId);
     Tenant getTenantByName(String name);
     List<Tenant> getTenants();
     

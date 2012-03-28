@@ -61,7 +61,7 @@ public class LdapTenantRepositoryTest {
         repo = getRepo(connPools);
         //cleanup before test
         try{
-            repo.deleteTenant(tenantId, GlobalConstants.DEFAULT_TENANT_SCOPEID);
+            repo.deleteTenant(tenantId);
         }catch (Exception e){
             System.out.println("failed to delete tenant");
         }
@@ -75,10 +75,10 @@ public class LdapTenantRepositoryTest {
     @Test
     public void shouldAddGetDeleteTenant() {
         this.repo.addTenant(getTestTenant());
-        Tenant tenant = this.repo.getTenant(tenantId, GlobalConstants.DEFAULT_TENANT_SCOPEID);
+        Tenant tenant = this.repo.getTenant(tenantId);
         List<Tenant> tenants = this.repo.getTenants();
-        this.repo.deleteTenant(tenantId, GlobalConstants.DEFAULT_TENANT_SCOPEID);
-        Tenant notThere = this.repo.getTenant(tenantId, GlobalConstants.DEFAULT_TENANT_SCOPEID);
+        this.repo.deleteTenant(tenantId);
+        Tenant notThere = this.repo.getTenant(tenantId);
         Assert.assertNotNull(tenant);
         Assert.assertEquals(tenantId, tenant.getTenantId());
         Assert.assertEquals(description, tenant.getDescription());
@@ -97,7 +97,7 @@ public class LdapTenantRepositoryTest {
         } catch (DuplicateException ex) {
             duplicate = true;
         }
-        this.repo.deleteTenant(tenantId, GlobalConstants.DEFAULT_TENANT_SCOPEID);
+        this.repo.deleteTenant(tenantId);
         Assert.assertTrue(duplicate);
     }
     
@@ -108,12 +108,12 @@ public class LdapTenantRepositoryTest {
     
     @Test(expected = IllegalArgumentException.class)
     public void shouldNotDeleteNullTenantId() {
-        this.repo.deleteTenant(null, GlobalConstants.DEFAULT_TENANT_SCOPEID);
+        this.repo.deleteTenant(null);
     }
     
     @Test(expected = NotFoundException.class)
     public void shouldNotDeleteNonExistentTenant() {
-        this.repo.deleteTenant(tenantId, GlobalConstants.DEFAULT_TENANT_SCOPEID);
+        this.repo.deleteTenant(tenantId);
     }
     
     @Test
@@ -124,8 +124,8 @@ public class LdapTenantRepositoryTest {
         tenant.setEnabled(false);
         tenant.setName("Modified Name");
         this.repo.updateTenant(tenant);
-        Tenant check = this.repo.getTenant(tenantId, GlobalConstants.DEFAULT_TENANT_SCOPEID);
-        this.repo.deleteTenant(tenantId, GlobalConstants.DEFAULT_TENANT_SCOPEID);
+        Tenant check = this.repo.getTenant(tenantId);
+        this.repo.deleteTenant(tenantId);
         Assert.assertEquals(tenant.getTenantId(), check.getTenantId());
         Assert.assertEquals(tenant.getDescription(), check.getDescription());
         Assert.assertEquals(tenant.getName(), check.getName());
@@ -195,7 +195,6 @@ public class LdapTenantRepositoryTest {
         tenant.setEnabled(enabled);
         tenant.setName(name);
         tenant.setDisplayName(displayName);
-        tenant.setScopeId(GlobalConstants.DEFAULT_TENANT_SCOPEID);
         tenant.setTenantId(tenantId);
         return tenant;
     }

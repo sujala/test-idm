@@ -37,7 +37,6 @@ public class TenantConverter {
         jaxbTenant.setEnabled(tenant.isEnabled());
         jaxbTenant.setId(tenant.getTenantId());
         jaxbTenant.setName(tenant.getName());
-        jaxbTenant.setScopeId(tenant.getScopeId());
 
         if (tenant.getCreated() != null) {
             GregorianCalendar gc = new GregorianCalendar();
@@ -90,7 +89,6 @@ public class TenantConverter {
         tenant.setEnabled(jaxbTenant.isEnabled());
         tenant.setName(jaxbTenant.getName());
         tenant.setTenantId(jaxbTenant.getId());
-        tenant.setScopeId(jaxbTenant.getScopeId());
         
         return tenant;
     }

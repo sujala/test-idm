@@ -62,7 +62,6 @@ public class JSONReaderForTenant implements MessageBodyReader<Tenant> {
                 Object enabled = obj3.get(JSONConstants.ENABLED);
                 Object description = obj3.get(JSONConstants.DESCRIPTION);
                 Object displayname = obj3.get(JSONConstants.DISPLAY_NAME_CLOUD);
-                Object scopeId = obj3.get(JSONConstants.SCOPE_ID);
                 
                 if (id != null) {
                     tenant.setId(id.toString());
@@ -78,9 +77,6 @@ public class JSONReaderForTenant implements MessageBodyReader<Tenant> {
                 }
                 if (displayname != null) {
                     tenant.setDisplayName(displayname.toString());
-                }
-                if (scopeId != null) {
-                    tenant.setScopeId(scopeId.toString());
                 }
             }
         } catch (ParseException e) {
