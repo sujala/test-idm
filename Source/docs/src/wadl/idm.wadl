@@ -17,7 +17,8 @@
     xmlns:sp="http://service-registry.api.rackspace.com/service-profile"
     xmlns:idm="http://idm.api.rackspace.com/v1.0"
     xmlns:fault="http://fault.common.api.rackspace.com/v1.0"
-    xmlns:xhtml="http://www.w3.org/1999/xhtml">
+    xmlns:xhtml="http://www.w3.org/1999/xhtml"
+    xmlns:xsdxt="http://docs.rackspacecloud.com/xsd-ext/v1.0">
     
     <grammars>
         <include href="../xsd/idmapi.xsd"/>
@@ -282,42 +283,60 @@
                 There are various ways to authenticate in the global auth system. You can authenticate as a Racker, an application on behalf of a 
                 customer, or an application directly. Examples below show the different authentication mechanisms.
             </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Auth as Application Request">
-                <example href="../formattedsamples/application_auth_credentials.xml" language="xml"/>
-                <example href="../formattedsamples/application_auth_credentials.json" language="javascript"/>
-            </examples>
-            <examples xmlns="http://docs.rackspace.com/api" title="Auth as Application Response">
-                <example href="../formattedsamples/application_auth.xml" language="xml"/>
-                <example href="../formattedsamples/application_auth.json" language="javascript"/>
-            </examples>
-            <examples xmlns="http://docs.rackspace.com/api" title="Auth as Customer Request">
-                <example href="../formattedsamples/auth_credentials.xml" language="xml"/>
-                <example href="../formattedsamples/auth_credentials.json" language="javascript"/>
-            </examples>
-            <examples xmlns="http://docs.rackspace.com/api" title="Auth as Customer Response">
-                <example href="../formattedsamples/auth.xml" language="xml"/>
-                <example href="../formattedsamples/auth.json" language="javascript"/>
-            </examples>
-            <examples xmlns="http://docs.rackspace.com/api" title="Auth as Racker Request">
-                <example href="../formattedsamples/racker_auth_credentials.xml" language="xml"/>
-                <example href="../formattedsamples/racker_auth_credentials.json" language="javascript"/>
-            </examples>
-            <examples xmlns="http://docs.rackspace.com/api" title="Auth as Racker with RSA token Request">
-	        <example href="../formattedsamples/racker_rsa_credentials.xml" language="xml"/>
-	        <example href="../formattedsamples/racker_rsa_credentials.json" language="javascript"/>
-            </examples>
-            <examples xmlns="http://docs.rackspace.com/api" title="Auth as Racker Response">
-                <example href="../formattedsamples/racker_auth.xml" language="xml"/>
-                <example href="../formattedsamples/racker_auth.json" language="javascript"/>
-            </examples>
         </doc>
         <request>
-            <representation mediaType="application/xml" element="idm:authCredentials"/>
-            <representation mediaType="application/json"/>
+            <representation mediaType="application/xml" element="idm:authCredentials">
+                <doc xml:lang="EN" title="Auth as Application Request XML">
+                    <xsdxt:code href="../formattedsamples/application_auth_credentials.xml" />
+                </doc>
+                <doc xml:lang="EN" title="Auth as Customer Request XML">
+                    <xsdxt:code href="../formattedsamples/auth_credentials.xml" />
+                </doc>
+                <doc xml:lang="EN" title="Auth as Racker Request XML">
+                    <xsdxt:code href="../formattedsamples/racker_auth_credentials.xml" />
+                </doc>
+                <doc xml:lang="EN" title="Auth as Racker with RSA Token Request XML">
+                    <xsdxt:code href="../formattedsamples/racker_rsa_credentials.xml" />
+                </doc>
+            </representation>
+            <representation mediaType="application/json">
+                <doc xml:lang="EN" title="Auth as Application Request JSON">
+                    <xsdxt:code href="../formattedsamples/application_auth_credentials.json" />
+                </doc>
+                <doc xml:lang="EN" title="Auth as Customer Request JSON">
+                    <xsdxt:code href="../formattedsamples/auth_credentials.json" />
+                </doc>
+                <doc xml:lang="EN" title="Auth as Racker Request JSON">
+                    <xsdxt:code href="../formattedsamples/racker_auth_credentials.json" />
+                </doc>
+                <doc xml:lang="EN" title="Auth as Racker with RSA Token Request JSON">
+                    <xsdxt:code href="../formattedsamples/racker_rsa_credentials.json" />
+                </doc>
+            </representation>
         </request>
         <response status="200 203">
-            <representation mediaType="application/xml" element="idm:auth"/>
-            <representation mediaType="application/json"/>
+            <representation mediaType="application/xml" element="idm:auth">
+                <doc xml:lang="EN" title="Auth as Application Response XML">
+                    <xsdxt:code href="../formattedsamples/application_auth.xml" />
+                </doc>
+                <doc xml:lang="EN" title="Auth as Customer Response XML">
+                    <xsdxt:code href="../formattedsamples/auth.xml" />
+                </doc>
+                <doc xml:lang="EN" title="Auth as Racker Response XML">
+                    <xsdxt:code href="../formattedsamples/racker_auth.xml" />
+                </doc>
+            </representation>
+            <representation mediaType="application/json">
+                <doc xml:lang="EN" title="Auth as Application Response JSON">
+                    <xsdxt:code href="../formattedsamples/application_auth.json" />
+                </doc>
+                <doc xml:lang="EN" title="Auth as Customer Response JSON">
+                    <xsdxt:code href="../formattedsamples/auth.json" />
+                </doc>
+                <doc xml:lang="EN" title="Auth as Racker Response JSON">
+                    <xsdxt:code href="../formattedsamples/racker_auth.json" />
+                </doc>
+            </representation>
         </response>
         <response status="403 ">
             <representation mediaType="application/xml" element="idm:userDisabled"/>

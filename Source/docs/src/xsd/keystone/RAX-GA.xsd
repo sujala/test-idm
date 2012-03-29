@@ -17,7 +17,7 @@
   
   <element name="impersonation" type="RAX-GA:ImpersonationRequest" />
   <element name="access" type="RAX-GA:ImpersonationResponse" />
-  <element name="impersonator" type="identity:User" />
+  <element name="impersonator" type="identity:UserForAuthenticateResponse" />
   
   <!-- Complex Types -->
   <complexType name="ImpersonationRequest">
