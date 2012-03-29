@@ -3,9 +3,6 @@ package com.rackspace.idm.domain.dao.impl;
 import com.rackspace.idm.domain.config.LdapConfiguration;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.entity.*;
-import com.unboundid.ldap.listener.InMemoryDirectoryServer;
-import com.unboundid.ldap.listener.InMemoryDirectoryServerConfig;
-import com.unboundid.ldap.sdk.LDAPConnection;
 import junit.framework.Assert;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
@@ -72,7 +69,6 @@ public class LdapScopeAccessPersistenceRepositoryTest {
 
     @Before
     public void setUp() throws Exception {
-
         connPools = getConnPools();
         repo = getSaRepo(connPools);
         customerRepo = getCustomerRepo(connPools);
