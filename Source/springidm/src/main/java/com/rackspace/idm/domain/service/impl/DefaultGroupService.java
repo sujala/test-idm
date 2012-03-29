@@ -6,6 +6,7 @@ import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.service.GroupService;
+import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import org.slf4j.Logger;
@@ -58,7 +59,7 @@ public class DefaultGroupService implements GroupService {
     }
 
     @Override
-    public Group getGroupByName(String groupName){
+    public Group getGroupByName(String groupName) {
         Group group = groupDao.getGroupByName(groupName);
         if (group == null) {
             String errMsg = String.format("Group %s not found", groupName);
@@ -81,7 +82,7 @@ public class DefaultGroupService implements GroupService {
     public void updateGroup(Group group) {
         logger.info("Updating Client Group: {}", group);
         Group groupDo = groupDao.getGroupById(group.getGroupId());
-        if(!groupDo.getName().equals(group.getName())){
+        if (!groupDo.getName().equals(group.getName())) {
             verifyDuplicateGroup(group);
         }
         groupDao.updateGroup(group);
@@ -98,11 +99,26 @@ public class DefaultGroupService implements GroupService {
 
     @Override
     public void deleteGroup(String groupId) {
-        Group exists = groupDao.getGroupById(Integer.parseInt(groupId));
+        int grpId = Integer.parseInt(groupId);
+        Group exists = groupDao.getGroupById(grpId);
         if (exists == null) {
             String errMsg = String.format("Group %s not found", groupId);
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
+        }
+        FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParam.FilterParamName.GROUP_ID, groupId)};
+        //index and offset and will need to change when pagination is done.
+        Users users = defaultUserService.getAllUsers(filters, 0, 0);
+        if (users.getUsers().size() != 0) {
+            for (User user : users.getUsers()) {
+                if (user.isEnabled()) {
+                    throw new BadRequestException("Cannot delete a group with users in it.");
+                }
+            }
+
+            for (User user : users.getUsers()) {
+                deleteGroupFromUser(grpId,user.getId());
+            }
         }
         groupDao.deleteGroup(Integer.parseInt(groupId));
     }
@@ -123,14 +139,14 @@ public class DefaultGroupService implements GroupService {
     }
 
     @Override
-    public Users getAllEnabledUsers(FilterParam[] filters, String offset, int limit){
-        logger.debug("Getting All Users");
+    public Users getAllEnabledUsers(FilterParam[] filters, String offset, int limit) {
+        logger.debug("Getting Enabled All Users");
 
         Users users = defaultUserService.getAllUsers(filters, Integer.parseInt(offset), limit);
         logger.debug("Got All Users {}", filters);
         List<User> enabledUsers = new ArrayList<User>();
-        for(User user : users.getUsers()){
-            if(user.isEnabled()){
+        for (User user : users.getUsers()) {
+            if (user.isEnabled()) {
                 enabledUsers.add(user);
             }
         }
