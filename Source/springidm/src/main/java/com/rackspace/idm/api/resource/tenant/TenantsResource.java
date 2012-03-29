@@ -78,36 +78,14 @@ public class TenantsResource extends ParentResource {
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
 
         validateTenantId(tenantId);
+        updateTenantFields(tenant, tenantId);
 
-        tenant.setId(tenantId);
-        tenant.setName(tenantId);
         tenantService.addTenant(tenantConverter.toTenantDO(tenant));
 
         com.rackspace.idm.domain.entity.Tenant tenantObject = tenantService.getTenant(tenant.getName());
 
         return Response.ok(objectFactory.createTenant(tenantConverter.toTenant(tenantObject))).build();
     }
-
-    private void validateTenantId(String tenantId) {
-        if(tenantId != null) {
-            int index = tenantId.indexOf(":");
-
-            String namespace = null;
-            String id = null;
-
-            if (index != -1) {
-                namespace = tenantId.substring(0, index);
-                id = tenantId.substring(index + 1);
-            }
-
-            if (namespace == null || namespace.length() == 0 ||
-                id == null || id.length() == 0) {
-
-                String errMsg = String.format("Invalid Tenant id/name: '%s'.", tenantId);
-                throw new WebApplicationException(new BadRequestException(errMsg), 404);
-            }
-        }
-	}
 
 	@GET
     @Path("{tenantId}")
@@ -154,8 +132,7 @@ public class TenantsResource extends ParentResource {
         @PathParam("tenantId") String tenantId,
         Tenant tenant) {
 
-        tenant.setId(tenantId);
-        tenant.setName(tenantId);
+        updateTenantFields(tenant, tenantId);
 
         tenantService.updateTenant(tenantConverter.toTenantDO(tenant));
         com.rackspace.idm.domain.entity.Tenant tenantObject = tenantService.getTenant(tenant.getName());
@@ -163,4 +140,37 @@ public class TenantsResource extends ParentResource {
         return Response.ok(objectFactory.createTenant(tenantConverter.toTenant(tenantObject))).build();
     }
 
+    private void validateTenantId(String tenantId) {
+        if(tenantId != null) {
+            int index = tenantId.indexOf(":");
+
+            String namespace = null;
+            String id = null;
+
+            if (index != -1) {
+                namespace = tenantId.substring(0, index);
+                id = tenantId.substring(index + 1);
+            }
+
+            if (namespace == null || namespace.length() == 0 ||
+                id == null || id.length() == 0) {
+
+                String errMsg = String.format("Invalid Tenant id/name: '%s'.", tenantId);
+                throw new WebApplicationException(new BadRequestException(errMsg), 404);
+            }
+        }
+	}
+
+    private void updateTenantFields(Tenant tenant, String tenantId) {
+        tenant.setId(tenantId);
+        tenant.setName(tenantId);
+
+        if (tenant.getDescription() != null && tenant.getDescription().length() == 0) {
+            tenant.setDescription(null);
+        }
+
+        if (tenant.getDisplayName() != null && tenant.getDisplayName().length() == 0) {
+            tenant.setDisplayName(null);
+        }
+    }
 }
