@@ -1,0 +1,8 @@
+dn: rsId=9,cn=CLIENT ROLES,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientRole
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+cn: Racker
+rsId: 9
+description: Defines a user as being a Racker
+

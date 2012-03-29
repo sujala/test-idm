@@ -1,25 +1,26 @@
 package com.rackspace.idm.api.filter;
 
-import java.util.UUID;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.Context;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
-import org.springframework.beans.BeansException;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
-import org.springframework.stereotype.Component;
-
 import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.AuthenticationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.sun.jersey.spi.container.ContainerRequest;
 import com.sun.jersey.spi.container.ContainerRequestFilter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
+import org.springframework.stereotype.Component;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.Context;
+import java.util.UUID;
 
 /**
  * @author john.eo Apply token-based authentication to all calls except the
@@ -35,6 +36,8 @@ public class AuthenticationFilter implements ContainerRequestFilter,
     private HttpServletRequest req;
 
     private ApplicationContext springCtx;
+
+    @Autowired
     private ScopeAccessService scopeAccessService;
 
     public AuthenticationFilter() {
@@ -64,8 +67,24 @@ public class AuthenticationFilter implements ContainerRequestFilter,
             return request;
         }
 
-        // Skip token authentication for cloud resources
+        // Skip token authentication for cloud resources, but check for impersonation
         if (path.startsWith("cloud")) {
+
+            // Return if call is authentication or validation
+            if(path.startsWith("cloud/v2.0/tokens") && !path.contains("endpoints"))
+                return request;
+
+            final String authHeader = request.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER);
+            if (authHeader != null) {
+                //check for impersonation
+                ScopeAccess sa = scopeAccessService.getScopeAccessByAccessToken(authHeader);
+                if(sa instanceof ImpersonatedScopeAccess){
+                    // Log
+                    String newToken = ((ImpersonatedScopeAccess) sa).getImpersonatingToken();
+                    request.getRequestHeaders().putSingle(AuthenticationService.AUTH_TOKEN_HEADER.toLowerCase(), newToken);
+                    logger.info("Impersonating token {} with token {} ", authHeader, newToken);
+                }
+            }
             return request;
         }
 
