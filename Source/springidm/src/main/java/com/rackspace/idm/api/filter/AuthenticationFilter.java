@@ -77,10 +77,10 @@ public class AuthenticationFilter implements ContainerRequestFilter,
             if(path.startsWith("cloud/v2.0/tokens") && !path.contains("endpoints"))
                 return request;
 
-            final String authHeader = request.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER);
-            if (authHeader != null) {
+            final String authToken = request.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER);
+            if (authToken != null) {
                 //check for impersonation
-                ScopeAccess sa = scopeAccessService.getScopeAccessByAccessToken(authHeader);
+                ScopeAccess sa = scopeAccessService.getScopeAccessByAccessToken(authToken);
                 if(sa instanceof ImpersonatedScopeAccess){
                     // Check Expiration of impersonated token
                     if (((HasAccessToken) sa).isAccessTokenExpired(new DateTime())) {
@@ -89,7 +89,7 @@ public class AuthenticationFilter implements ContainerRequestFilter,
                     // Swap token out and Log
                     String newToken = ((ImpersonatedScopeAccess) sa).getImpersonatingToken();
                     request.getRequestHeaders().putSingle(AuthenticationService.AUTH_TOKEN_HEADER.toLowerCase(), newToken);
-                    logger.info("Impersonating token {} with token {} ", authHeader, newToken);
+                    logger.info("Impersonating token {} with token {} ", authToken, newToken);
                 }
             }
             return request;

@@ -1,30 +1,18 @@
 package com.rackspace.idm.domain.service.impl;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import com.rackspace.idm.domain.dao.UserDao;
+import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
+import com.rackspace.idm.domain.service.*;
+import com.rackspace.idm.exception.ForbiddenException;
+import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.validation.InputValidator;
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.rackspace.idm.domain.dao.UserDao;
-import com.rackspace.idm.domain.entity.Application;
-import com.rackspace.idm.domain.entity.Applications;
-import com.rackspace.idm.domain.entity.FilterParam;
-import com.rackspace.idm.domain.entity.HasAccessToken;
-import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.TenantRole;
-import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.Users;
-import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
-import com.rackspace.idm.domain.service.ApplicationService;
-import com.rackspace.idm.domain.service.AuthorizationService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.domain.service.TenantService;
-import com.rackspace.idm.domain.service.TokenService;
-import com.rackspace.idm.exception.ForbiddenException;
-import com.rackspace.idm.exception.NotFoundException;
-import com.rackspace.idm.validation.InputValidator;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DefaultTokenService implements TokenService {
     private final AuthorizationService authorizationService;
@@ -59,13 +47,16 @@ public class DefaultTokenService implements TokenService {
     public ScopeAccess getAccessTokenByAuthHeader(final String authHeader) {
         return this.scopeAccessService.getAccessTokenByAuthHeader(authHeader);
     }
+
+    public ScopeAccess getAccessTokenByToken(String token) {
+        return this.scopeAccessService.getScopeAccessByAccessToken(token);
+    }
     
 	@Override
 	public boolean doesTokenHaveAccessToApplication(String token,
 			String applicationId) {
 		ScopeAccess scopeAccessToken = this.scopeAccessService
 				.loadScopeAccessByAccessToken(token);
-
 		return this.scopeAccessService.doesAccessTokenHaveService(
 				scopeAccessToken, applicationId);
 	}

@@ -1,13 +1,13 @@
 package com.rackspace.idm.services;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.ws.rs.core.PathSegment;
-import javax.ws.rs.core.UriInfo;
-
+import com.rackspace.idm.domain.dao.ApplicationDao;
+import com.rackspace.idm.domain.dao.ScopeAccessDao;
+import com.rackspace.idm.domain.dao.TenantDao;
+import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.service.AuthorizationService;
+import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService;
+import com.rackspace.idm.util.WadlTrie;
 import junit.framework.Assert;
-
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
@@ -15,20 +15,17 @@ import org.easymock.EasyMock;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Matchers;
 
-import com.rackspace.idm.domain.dao.ApplicationDao;
-import com.rackspace.idm.domain.dao.ScopeAccessDao;
-import com.rackspace.idm.domain.dao.TenantDao;
-import com.rackspace.idm.domain.entity.Application;
-import com.rackspace.idm.domain.entity.ClientGroup;
-import com.rackspace.idm.domain.entity.ClientScopeAccess;
-import com.rackspace.idm.domain.entity.Permission;
-import com.rackspace.idm.domain.entity.RackerScopeAccess;
-import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.UserScopeAccess;
-import com.rackspace.idm.domain.service.AuthorizationService;
-import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService;
-import com.rackspace.idm.util.WadlTrie;
+import javax.ws.rs.core.PathSegment;
+import javax.ws.rs.core.UriInfo;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import static org.powermock.api.mockito.PowerMockito.doReturn;
+import static org.powermock.api.mockito.PowerMockito.mock;
+import static org.powermock.api.mockito.PowerMockito.when;
 
 public class AuthorizationServiceTests {
     TenantDao mockTenantDao;
@@ -95,7 +92,7 @@ public class AuthorizationServiceTests {
 
     @Before
     public void setUp() throws Exception {
-        mockTenantDao = EasyMock.createMock(TenantDao.class);
+        mockTenantDao = mock(TenantDao.class);
         mockClientDao = EasyMock.createMock(ApplicationDao.class);
         mockScopeAccessDao = EasyMock.createMock(ScopeAccessDao.class);
         mockWadlTrie = EasyMock.createMock(WadlTrie.class);
@@ -114,6 +111,9 @@ public class AuthorizationServiceTests {
 
     @Test
     public void shouldReturnTrueForRacker() {
+        doReturn(true).when(mockTenantDao).doesScopeAccessHaveTenantRole(Matchers.<RackerScopeAccess>anyObject(), Matchers.<ClientRole>anyObject());
+        trustedToken.setAccessTokenExp(new Date(10000000000000L));
+        trustedToken.setAccessTokenString("bob");
         boolean authorized = service.authorizeRacker(trustedToken);
         Assert.assertTrue(authorized);
     }

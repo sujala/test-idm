@@ -21,6 +21,7 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.namespace.QName;
+import java.util.HashMap;
 
 import static org.mockito.Mockito.*;
 
@@ -254,7 +255,7 @@ public class DelegateCloud11ServiceTest {
     public void addBaseUrl_whenUseCloudAuthDisabled_doesNotCallClient() throws Exception {
         when(config.getBoolean("useCloudAuth")).thenReturn(false);
         delegateCloud11Service.addBaseURL(null, null, baseUrl);
-        verify(cloudClient, times(0)).post(url + "baseURLs", null, "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><foo default=\"true\" id=\"1\" xmlns:ns14=\"http://fault.common.api.rackspace.com/v1.0\" xmlns:ns9=\"http://docs.openstack.org/identity/api/ext/OS-KSEC2/v1.0\" xmlns:ns5=\"http://docs.openstack.org/common/api/v1.0\" xmlns:ns12=\"http://docs.openstack.org/identity/api/ext/OS-KSCATALOG/v1.0\" xmlns:ns6=\"http://docs.openstack.org/compute/api/v1.1\" xmlns:ns13=\"http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0\" xmlns:ns7=\"http://docs.openstack.org/identity/api/v2.0\" xmlns:ns10=\"http://docs.rackspace.com/identity/api/ext/RAX-KSGRP/v1.0\" xmlns:ns8=\"http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0\" xmlns:ns11=\"http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0\" xmlns:ns2=\"http://www.w3.org/2005/Atom\" xmlns:ns4=\"http://docs.rackspacecloud.com/auth/api/v1.1\" xmlns:ns3=\"http://idm.api.rackspace.com/v1.0\"/>");
+        verify(cloudClient, times(0)).post(url + "baseURLs", new HashMap<String,String>(), "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><foo default=\"true\" id=\"1\" xmlns:ns14=\"http://fault.common.api.rackspace.com/v1.0\" xmlns:ns9=\"http://docs.openstack.org/identity/api/ext/OS-KSEC2/v1.0\" xmlns:ns5=\"http://docs.openstack.org/common/api/v1.0\" xmlns:ns12=\"http://docs.openstack.org/identity/api/ext/OS-KSCATALOG/v1.0\" xmlns:ns6=\"http://docs.openstack.org/compute/api/v1.1\" xmlns:ns13=\"http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0\" xmlns:ns7=\"http://docs.openstack.org/identity/api/v2.0\" xmlns:ns10=\"http://docs.rackspace.com/identity/api/ext/RAX-KSGRP/v1.0\" xmlns:ns8=\"http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0\" xmlns:ns11=\"http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0\" xmlns:ns2=\"http://www.w3.org/2005/Atom\" xmlns:ns4=\"http://docs.rackspacecloud.com/auth/api/v1.1\" xmlns:ns3=\"http://idm.api.rackspace.com/v1.0\"/>");
     }
 
     @Test
@@ -481,8 +482,9 @@ public class DelegateCloud11ServiceTest {
     public void getUserEnabled_RoutingTrueAndUserExistsFalse_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(ldapUserRepository.getUserByUsername(userId)).thenReturn(null);
-        delegateCloud11Service.getUserEnabled(null, userId, null);
-        verify(cloudClient).get(url + "users/" + userId + "/enabled", null);
+        javax.ws.rs.core.HttpHeaders mockHeaders = mock(javax.ws.rs.core.HttpHeaders.class);
+        delegateCloud11Service.getUserEnabled(null, userId, mockHeaders);
+        verify(cloudClient).get(url + "users/" + userId + "/enabled", mockHeaders);
     }
 
     @Test
@@ -513,8 +515,9 @@ public class DelegateCloud11ServiceTest {
     public void getServiceCatalog_routingTrue_gaSourceOfTruthFalse_callsClient() throws Exception {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(DelegateCloud11Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
-        delegateCloud11Service.getServiceCatalog(null, userId, null);
-        verify(cloudClient).get(url + "users/" + userId + "/serviceCatalog", null);
+        javax.ws.rs.core.HttpHeaders mockHeaders = mock(javax.ws.rs.core.HttpHeaders.class);
+        delegateCloud11Service.getServiceCatalog(null, userId, mockHeaders);
+        verify(cloudClient).get(url + "users/" + userId + "/serviceCatalog", mockHeaders);
     }
 
     @Test
@@ -818,8 +821,9 @@ public class DelegateCloud11ServiceTest {
     public void getBaseURLId_routingTrue_gaSourceOfTruthFalse_callsClient() throws Exception {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(DelegateCloud11Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
-        delegateCloud11Service.getBaseURLId(null, 0, null, null);
-        verify(cloudClient).get(url + "baseURLs/" + 0, null);
+        javax.ws.rs.core.HttpHeaders mockHeaders = mock(javax.ws.rs.core.HttpHeaders.class);
+        delegateCloud11Service.getBaseURLId(null, 0, null, mockHeaders);
+        verify(cloudClient).get(url + "baseURLs/" + 0, mockHeaders);
     }
 
     @Test
@@ -850,8 +854,9 @@ public class DelegateCloud11ServiceTest {
     public void getEnabledBaseURL_routingTrue_gaSourceOfTruthFalse_callsClient() throws Exception {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(DelegateCloud11Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
-        delegateCloud11Service.getEnabledBaseURL(null, null, null);
-        verify(cloudClient).get(url + "baseURLs/enabled", null);
+        javax.ws.rs.core.HttpHeaders mockHeaders = mock(javax.ws.rs.core.HttpHeaders.class);
+        delegateCloud11Service.getEnabledBaseURL(null, null, mockHeaders);
+        verify(cloudClient).get(url + "baseURLs/enabled", mockHeaders);
     }
 
     @Test
@@ -882,8 +887,9 @@ public class DelegateCloud11ServiceTest {
     public void getBaseURLs_routingTrue_gaSourceOfTruthFalse_callsClient() throws Exception {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(DelegateCloud11Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
-        delegateCloud11Service.getBaseURLs(null, "serviceFoo", null);
-        verify(cloudClient).get(url + "baseURLs?serviceName=serviceFoo", null);
+        javax.ws.rs.core.HttpHeaders mockHeaders = mock(javax.ws.rs.core.HttpHeaders.class);
+        delegateCloud11Service.getBaseURLs(null, "serviceFoo", mockHeaders);
+        verify(cloudClient).get(url + "baseURLs?serviceName=serviceFoo", mockHeaders);
     }
 
     @Test

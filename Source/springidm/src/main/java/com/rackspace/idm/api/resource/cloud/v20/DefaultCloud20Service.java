@@ -1423,22 +1423,24 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder impersonate(HttpHeaders httpHeaders, String authToken, ImpersonationRequest impersonationRequest) throws IOException {
-        verifyServiceAdminLevelAccess(authToken);
+    public ResponseBuilder impersonate(HttpHeaders httpHeaders, String authToken, ImpersonationRequest impersonationRequest) throws IOException, JAXBException {
+        //verifyServiceAdminLevelAccess(authToken);
+        verifyRackerAccess(authToken);
 
         String impersonatingToken = "";
-        String impersonatingUsername = "";
-
-        String username = impersonationRequest.getUser().getUsername();
-        User user = checkAndGetUserByName(username);
+        User user;
+        String impersonatingUsername = impersonationRequest.getUser().getUsername();
+        try{
+            user = checkAndGetUserByName(impersonatingUsername);
+        } catch (NotFoundException ex){
+            user = null;
+        }
         if (user == null) {
             // Get from cloud.
-            impersonatingToken = "";
-            impersonatingUsername = "";
+            impersonatingToken = delegateCloud20Service.impersonateUser(impersonatingUsername,config.getString("ga.userName"), config.getString("ga.apiKey"));
         } else {
             UserScopeAccess impAccess = (UserScopeAccess) scopeAccessService.getDirectScopeAccessForParentByClientId(user.getUniqueId(), getCloudAuthClientId());
             impersonatingToken = impAccess.getAccessTokenString();
-            impersonatingUsername = user.getUsername();
         }
 
         if (impersonatingToken == "" || impersonatingUsername == "")
@@ -1460,7 +1462,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         ImpersonationResponse auth = authConverterCloudV20.toImpersonationResponse(usa);
         return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtRaxgaV1Factory().createAccess(auth));
     }
-
 
     @Override
     public ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String authToken, String userId) throws IOException {
@@ -2113,6 +2114,21 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
         if (!authorizationService.authorizeCloudIdentityAdmin(authScopeAccess) && !authorizationService.authorizeCloudServiceAdmin(authScopeAccess)) {
             String errMsg = "Access is denied";
+            logger.warn(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
+    }
+
+    void verifyRackerAccess(String authToken) {
+        if (StringUtils.isBlank(authToken)) {
+            throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
+        }
+        ScopeAccess rackerScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
+        if (rackerScopeAccess == null || ((HasAccessToken) rackerScopeAccess).isAccessTokenExpired(new DateTime())) {
+            throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
+        }
+        if (!authorizationService.authorizeRacker(rackerScopeAccess)) {
+            String errMsg = "Access is denied not a Racker";
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }

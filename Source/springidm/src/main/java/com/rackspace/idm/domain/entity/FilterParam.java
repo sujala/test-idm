@@ -14,7 +14,7 @@ public class FilterParam {
 	}
 	
 	public enum FilterParamName {
-		USERNAME, RCN, APPLICATION_ID, TENANT_ID, ROLE_NAME, APPLICATION_NAME, DOMAIN_ID, GROUP_ID
+		USERNAME, RCN, APPLICATION_ID, TENANT_ID, ROLE_NAME, APPLICATION_NAME, DOMAIN_ID, GROUP_ID, CN
 	}
 
 	public FilterParamName getParam() {

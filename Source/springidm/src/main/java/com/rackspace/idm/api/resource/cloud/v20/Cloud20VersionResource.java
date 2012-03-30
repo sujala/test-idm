@@ -119,7 +119,7 @@ public class Cloud20VersionResource {
     public Response impersonate(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            ImpersonationRequest impersonationRequest) throws IOException {
+            ImpersonationRequest impersonationRequest) throws IOException, JAXBException {
         return defaultCloud20Service.impersonate(httpHeaders, authToken, impersonationRequest).build();
     }
     
@@ -693,9 +693,6 @@ public class Cloud20VersionResource {
         return getCloud20Service().removeGroupFromUser(httpHeaders, authToken, groupId, userId).build();
     }
 
-    // ******************************************************* //
-    // ******************************************************* //
-
 
     @DELETE
     @Path("softDeleted/users/{userId}")
@@ -710,6 +707,12 @@ public class Cloud20VersionResource {
             throw new NotFoundException("Not Found");
         }
     }
+//    @POST
+//    @Path("impersonate")
+//    public String impersonate(@Context HttpHeaders httpHeaders) throws JAXBException, IOException {
+//        String userToken = delegateCloud20Service.impersonateUser("cmarin1",config.getString("ga.userName"), config.getString("ga.apiKey"));
+//        return userToken;
+//    }
 
     private Cloud20Service getCloud20Service() {
         if (config.getBoolean("useCloudAuth")) {
@@ -719,3 +722,6 @@ public class Cloud20VersionResource {
         }
     }
 }
+
+
+

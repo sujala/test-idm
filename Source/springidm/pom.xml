@@ -20,12 +20,27 @@
 
         <!-- Default location for project properties file -->
         <idm.properties.location>${basedir}/target/config/DEV</idm.properties.location>
+        <powermock.version>1.4.11</powermock.version>
 
         <!--PowerMockito Properties-->
         <powermock.version>1.4.11</powermock.version>
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>org.powermock</groupId>
+            <artifactId>powermock-module-junit4</artifactId>
+            <version>${powermock.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.powermock</groupId>
+            <artifactId>powermock-api-mockito</artifactId>
+            <version>${powermock.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+
         <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-api</artifactId>

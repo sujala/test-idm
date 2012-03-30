@@ -36,6 +36,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
     private static ClientRole CLOUD_USER_ROLE = null;
     private static ClientRole CLOUD_USER_ADMIN_ROLE = null;
     private static ClientRole IDM_SUPER_ADMIN_ROLE = null;
+    private static ClientRole RACKER_ROLE = null ;
 
     public DefaultAuthorizationService(ScopeAccessDao scopeAccessDao,
         ApplicationDao clientDao, TenantDao tenantDao, WadlTrie wadlTrie,
@@ -132,6 +133,27 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return authorized;
     }
 
+    public boolean authorizeRacker(ScopeAccess scopeAccess){
+        logger.debug("Authorizing {} as a Racker", scopeAccess);
+        if (!(scopeAccess instanceof RackerScopeAccess)){
+            return false;
+        }
+        if (scopeAccess == null || ((HasAccessToken) scopeAccess).isAccessTokenExpired(new DateTime())) {
+            return false;
+        }
+
+        if (RACKER_ROLE == null) {
+            ClientRole role = clientDao.getClientRoleByClientIdAndRoleName(config.getString("idm.clientId"), "Racker");
+            RACKER_ROLE = role;
+        }
+
+        boolean authorized = this.tenantDao.doesScopeAccessHaveTenantRole(scopeAccess, RACKER_ROLE);
+
+        logger.debug("Authorized {} as Racker - {}", scopeAccess, authorized);
+        return authorized;
+    }
+
+
     @Override
     public boolean authorizeCloudServiceAdmin(ScopeAccess scopeAccess) {
         logger.debug("Authorizing {} as cloud service admin", scopeAccess);
@@ -209,14 +231,6 @@ public class DefaultAuthorizationService implements AuthorizationService {
         boolean authorized = this.tenantDao.doesScopeAccessHaveTenantRole(scopeAccess, IDM_SUPER_ADMIN_ROLE);
 
         logger.debug("Authorized {} as idm super admin - {}", scopeAccess, authorized);
-        return authorized;
-    }
-
-    @Override
-    public boolean authorizeRacker(ScopeAccess scopeAccess) {
-        logger.debug("Authorizing {} as racker", scopeAccess);
-        boolean authorized = scopeAccess instanceof RackerScopeAccess;
-        logger.debug("Authorized {} as racker - {}", scopeAccess, authorized);
         return authorized;
     }
 

@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.api.converter.TenantRoleConverter;
 import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.AuthDao;
@@ -39,6 +40,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
     private final UserDao userDao;
     private final CustomerDao customerDao;
     private final InputValidator inputValidator;
+    private final TenantRoleConverter tenantRoleConverter;
 
     @Autowired
     private RSAClient rsaClient;
@@ -50,7 +52,8 @@ public class DefaultAuthenticationService implements AuthenticationService {
                                         ScopeAccessService scopeAccessService,
                                         ApplicationDao clientDao,
                                         Configuration config, UserDao userDao,
-                                        CustomerDao customerDao, InputValidator inputValidator) {
+                                        CustomerDao customerDao, InputValidator inputValidator,
+                                        TenantRoleConverter tenantRoleConverter) {
         this.authDao = authDao;
         this.tenantService = tenantService;
         this.scopeAccessService = scopeAccessService;
@@ -59,6 +62,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
         this.userDao = userDao;
         this.customerDao = customerDao;
         this.inputValidator = inputValidator;
+        this.tenantRoleConverter = tenantRoleConverter;
     }
 
     @Override
@@ -218,18 +222,19 @@ public class DefaultAuthenticationService implements AuthenticationService {
                 throw new BadRequestException(msg);
             }
 
-            final UserAuthenticationResult uaResult = authenticateRacker(trParam.getUsername(), trParam.getPassword(),false);
+            final UserAuthenticationResult uaResult = authenticateRacker(trParam.getUsername(), trParam.getPassword(), false);
             if (!uaResult.isAuthenticated()) {
                 final String message = "Bad User credentials for " + trParam.getUsername();
                 logger.warn(message);
                 throw new NotAuthenticatedException(message);
             }
+
             RackerScopeAccess scopeAccess = this.getAndUpdateRackerScopeAccessForClientId((Racker) uaResult.getUser(), caResult.getClient());
             return scopeAccess;
         }
 
         if (trParam instanceof RSACredentials) {
-            final UserAuthenticationResult uaResult = authenticateRacker(trParam.getUsername(), trParam.getPassword(),true);
+            final UserAuthenticationResult uaResult = authenticateRacker(trParam.getUsername(), trParam.getPassword(), true);
             if (!uaResult.isAuthenticated()) {
                 final String message = "Bad RSA credentials for " + trParam.getUsername();
                 logger.warn(message);
@@ -432,7 +437,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
         logger.debug("Get and Update ScopeAccess for Racker: {} and ClientId: {}", racker.getRackerId(), client.getClientId());
 
         RackerScopeAccess scopeAccess = scopeAccessService.getRackerScopeAccessForClientId(racker.getUniqueId(), client.getClientId());
-
+        this.validateRackerHasRackerRole(racker, scopeAccess, client);
         if (scopeAccess == null) {
             // Auto-Provision Scope Access Objects for Rackers
             scopeAccess = new RackerScopeAccess();
@@ -468,6 +473,25 @@ public class DefaultAuthenticationService implements AuthenticationService {
 
         logger.debug("Returning ScopeAccess: {} Expiration {}", scopeAccess.getAccessTokenString(), scopeAccess.getAccessTokenExp());
         return scopeAccess;
+    }
+
+    private void validateRackerHasRackerRole(Racker racker, RackerScopeAccess scopeAccess, Application client) {
+        List<TenantRole> tenantRolesForScopeAccess = tenantService.getTenantRolesForScopeAccess(scopeAccess);
+        boolean hasRackerRole = false;
+        for (TenantRole tenantRole : tenantRolesForScopeAccess) {
+            if (tenantRole.getName().equals("Racker")) {
+                hasRackerRole = true;
+            }
+        }
+        if (!hasRackerRole) {
+            List<ClientRole> clientRoles = clientDao.getClientRolesByClientId(client.getClientId());
+            for(ClientRole clientRole : clientRoles){
+                if(clientRole.getName().equals("Racker")){
+                    TenantRole tenantRole = tenantRoleConverter.fromClientRole(clientRole, racker.getId(), null);
+                    tenantService.addTenantRoleToUser(racker, tenantRole);
+                }
+            }
+        }
     }
 
     private UserAuthenticationResult authenticate(String username, String password) {

@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.config;
 
+import com.rackspace.idm.api.converter.TenantRoleConverter;
 import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.domain.service.impl.*;
@@ -54,6 +55,8 @@ public class ServiceConfiguration {
     private InputValidator inputValidator;
     @Autowired
     private TenantDao tenantDao;
+    @Autowired
+    private TenantRoleConverter tenantRoleConverter;
 
     public ServiceConfiguration() {
     }
@@ -158,7 +161,7 @@ public class ServiceConfiguration {
     @Bean
     public AuthenticationService authenticationService() {
     	return new DefaultAuthenticationService(tokenService(), authDao, tenantService(), scopeAccessService(),
-    			clientDao, config, userRepo, customerDao, inputValidator);
+    			clientDao, config, userRepo, customerDao, inputValidator, tenantRoleConverter);
     }
 
     @Bean

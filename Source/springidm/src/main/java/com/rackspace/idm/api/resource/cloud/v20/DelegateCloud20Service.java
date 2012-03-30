@@ -11,6 +11,7 @@ import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TokenService;
 import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.exception.ApiException;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.sun.jersey.api.json.JSONConfiguration;
@@ -102,7 +103,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         //If SUCCESS and "user" is not null, store token to "user" and return cloud response
         int status = dummyResponse.getStatus();
         if (status == HttpServletResponse.SC_OK && user != null) {
-            AuthenticateResponse authenticateResponse = getAuthFromResponse(dummyResponse.getEntity().toString());
+            AuthenticateResponse authenticateResponse = (AuthenticateResponse) unmarshallResponse(dummyResponse.getEntity().toString(), AuthenticateResponse.class);
             if (authenticateResponse != null) {
                 String token = authenticateResponse.getToken().getId();
                 Date expires = authenticateResponse.getToken().getExpires().toGregorianCalendar().getTime();
@@ -891,8 +892,7 @@ public class DelegateCloud20Service implements Cloud20Service {
                 String encodeValue;
                 try {
                     encodeValue = URLEncoder.encode(value.toString(), JSONConstants.UTF_8);
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     throw new BadRequestException("Unable to encode query params.");
                 }
                 result += key + "=" + encodeValue;
@@ -903,21 +903,27 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     //TODO change way we check for media type
 
-    private AuthenticateResponse getAuthFromResponse(String entity) {
+//    private AuthenticateResponse getAuthFromResponse(String entity) {
+//        return (AuthenticateResponse) unmarshallResponse(entity, AuthenticateResponse.class);
+//
+//    }
+
+    private Object unmarshallResponse(String entity, Class<?> objectClass) {
         try {
             if (entity.trim().startsWith("{")) {
+                //TODO: HANDLE JAXBElement for user
                 JSONConfiguration jsonConfiguration = JSONConfiguration.natural().rootUnwrapping(false).build();
                 JSONJAXBContext context = new JSONJAXBContext(jsonConfiguration, "org.openstack.docs.identity.api.v2");
                 JSONUnmarshaller jsonUnmarshaller = context.createJSONUnmarshaller();
                 StreamSource xml = new StreamSource(new StringReader(entity));
-                JAXBElement ob = jsonUnmarshaller.unmarshalJAXBElementFromJSON(new StringReader(entity), AuthenticateResponse.class);
-                return (AuthenticateResponse) ob.getValue();
+                JAXBElement ob = jsonUnmarshaller.unmarshalJAXBElementFromJSON(new StringReader(entity), objectClass);
+                return ob.getValue();
             } else {
-                JAXBContext jc = JAXBContext.newInstance(AuthenticateResponse.class);
+                JAXBContext jc = JAXBContext.newInstance(objectClass);
                 Unmarshaller unmarshaller = jc.createUnmarshaller();
                 StreamSource xml = new StreamSource(new StringReader(entity));
-                JAXBElement ob = unmarshaller.unmarshal(xml, AuthenticateResponse.class);
-                return (AuthenticateResponse) ob.getValue();
+                JAXBElement ob = unmarshaller.unmarshal(xml, objectClass);
+                return ob.getValue();
 
             }
         } catch (Exception ex) {
@@ -948,7 +954,12 @@ public class DelegateCloud20Service implements Cloud20Service {
     private String marshallObjectToString(Object jaxbObject) throws JAXBException {
         StringWriter sw = new StringWriter();
         Marshaller marshaller = JAXBContextResolver.get().createMarshaller();
-        marshaller.marshal(jaxbObject, sw);
+        try {
+            marshaller.marshal(jaxbObject, sw);
+        } catch (Exception e) {
+            JAXBException k = new JAXBException(e.getMessage());
+            throw k;
+        }
         return sw.toString();
     }
 
@@ -998,5 +1009,58 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     public void setTokenService(TokenService tokenService) {
         this.tokenService = tokenService;
+    }
+
+    public AuthenticateResponse getXAuthToken(String userName, String apiKey) throws JAXBException, IOException {
+        ApiKeyCredentials apiKeyCredentials = new ApiKeyCredentials();
+        apiKeyCredentials.setUsername(userName);
+        apiKeyCredentials.setApiKey(apiKey);
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        authenticationRequest.setCredential(objectFactoryRAXKSKEY.createApiKeyCredentials(apiKeyCredentials));
+        String body = marshallObjectToString(objectFactory.createAuth(authenticationRequest));
+        HashMap<String, String> headers = new HashMap<String, String>();
+        headers.put("Content-Type", "application/xml");
+        headers.put("Accept", "application/xml");
+        Response authResponse = cloudClient.post(getCloudAuthV20Url() + "tokens", headers, body).build();
+        if (authResponse.getStatus() != 200 && authResponse.getStatus() != 203) {
+            throw new ApiException(authResponse.getStatus(), "", "");
+        }
+        return (AuthenticateResponse) unmarshallResponse(authResponse.getEntity().toString(), AuthenticateResponse.class);
+    }
+
+    public ApiKeyCredentials getUserApiCredentials(String userId, String xAuthToken) throws IOException {
+        HashMap<String, String> headers = new HashMap<String, String>();
+        headers.put("Content-Type", "application/xml");
+        headers.put("X-Auth-Token", xAuthToken);
+        headers.put("Accept", "application/xml");
+        Response credsResponse = cloudClient.get(getCloudAuthV20Url() + "users/" + userId + "/OS-KSADM/credentials/RAX-KSKEY:apiKeyCredentials", headers).build();
+        if (credsResponse.getStatus() != 200 && credsResponse.getStatus() != 203) {
+            throw new ApiException(credsResponse.getStatus(), "", "");
+        }
+        return (ApiKeyCredentials) unmarshallResponse(credsResponse.getEntity().toString(), ApiKeyCredentials.class);
+    }
+
+    public User getUserByName(String userName, String xAuthToken) throws IOException {
+        HashMap<String, String> headers = new HashMap<String, String>();
+        headers.put("Content-Type", "application/xml");
+        headers.put("X-Auth-Token", xAuthToken);
+        headers.put("Accept", "application/xml");
+        Response userResponse = cloudClient.get(getCloudAuthV20Url() + "users" + "?name=" + userName, headers).build();
+        if (userResponse.getStatus() != 200 && userResponse.getStatus() != 203) {
+            throw new ApiException(userResponse.getStatus(), "", "");
+        }
+        return (User) unmarshallResponse(userResponse.getEntity().toString(), User.class);
+    }
+
+    public String impersonateUser(String userName, String impersonatorName, String impersonatorKey) throws JAXBException, IOException {
+        String impersonatorXAuthToken = getXAuthToken(impersonatorName, impersonatorKey)
+                .getToken()
+                .getId();
+        User user = getUserByName(userName, impersonatorXAuthToken);
+        String userApiKey = getUserApiCredentials(user.getId(), impersonatorXAuthToken).getApiKey();
+        String userXAuthToken = getXAuthToken(userName, userApiKey)
+                .getToken()
+                .getId();
+        return userXAuthToken;
     }
 }

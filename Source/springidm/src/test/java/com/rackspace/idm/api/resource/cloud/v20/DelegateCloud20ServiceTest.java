@@ -60,6 +60,7 @@ public class DelegateCloud20ServiceTest {
     private Role role = new Role();
     private Service service = new Service();
     private String username = "username";
+    DelegateCloud20Service spy;
 
     @Before
     public void setUp() throws IOException, JAXBException {
@@ -75,6 +76,7 @@ public class DelegateCloud20ServiceTest {
         when(config.getBoolean("GAKeystoneDisabled")).thenReturn(disabled);
         delegateCloud20Service.setConfig(config);
         when(cloudClient.post(anyString(), Matchers.<HttpHeaders>any(), anyString())).thenReturn(Response.ok());
+        spy = spy(delegateCloud20Service);
     }
 
     @Test
@@ -134,8 +136,9 @@ public class DelegateCloud20ServiceTest {
     @Test
     public void listExtensions_useCloudAuthIsTrue_callsCloudClient() throws Exception {
         when(config.getBoolean("useCloudAuth")).thenReturn(true);
-        delegateCloud20Service.listExtensions(null);
-        verify(cloudClient).get(url + "extensions", null);
+        HttpHeaders mockHeaders = mock(HttpHeaders.class);
+        delegateCloud20Service.listExtensions(mockHeaders);
+        verify(cloudClient).get(url + "extensions", mockHeaders);
     }
 
     @Test
@@ -149,7 +152,7 @@ public class DelegateCloud20ServiceTest {
     public void listExtensions_useCloudAuthIsFalse_callsCloudClient() throws Exception {
         when(config.getBoolean("useCloudAuth")).thenReturn(false);
         delegateCloud20Service.listExtensions(null);
-        verify(cloudClient, times(0)).get(url, null);
+        verify(cloudClient, times(0)).get(url,  new HashMap<String,String>());
     }
 
     @Test
@@ -172,8 +175,9 @@ public class DelegateCloud20ServiceTest {
     public void listTenants_RoutingTrueAndGASourceOfTruthFalse_callsClient() throws Exception {
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
-        delegateCloud20Service.listTenants(null, null, null, null);
-        verify(cloudClient).get(url + "tenants", null);
+        HttpHeaders mockHeaders = mock(HttpHeaders.class);
+        delegateCloud20Service.listTenants(mockHeaders, null, null, null);
+        verify(cloudClient).get(url + "tenants",  mockHeaders);
     }
 
     @Test
@@ -204,8 +208,9 @@ public class DelegateCloud20ServiceTest {
     public void getTenantByName_RoutingTrueAndGASourceOfTruthFalse_callsClient() throws Exception {
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
-        delegateCloud20Service.getTenantByName(null, null, "myName");
-        verify(cloudClient).get(url + "tenants?name=myName", null);
+        HttpHeaders mockHeaders = mock(HttpHeaders.class);
+        delegateCloud20Service.getTenantByName(mockHeaders, null, "myName");
+        verify(cloudClient).get(url + "tenants?name=myName",  mockHeaders);
     }
 
     @Test
@@ -236,8 +241,9 @@ public class DelegateCloud20ServiceTest {
     public void getTenantById_RoutingTrueAndGASourceOfTruthFalse_callsClient() throws Exception {
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
-        delegateCloud20Service.getTenantById(null, null, "myId");
-        verify(cloudClient).get(url + "tenants/myId", null);
+        HttpHeaders mockHeaders = mock(HttpHeaders.class);
+        delegateCloud20Service.getTenantById(mockHeaders, null, "myId");
+        verify(cloudClient).get(url + "tenants/myId",mockHeaders);
     }
 
     @Test
@@ -268,8 +274,9 @@ public class DelegateCloud20ServiceTest {
     public void validateToken_RoutingTrueAndTokenDoesNotExist_callsDefaultService() throws Exception {
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(tokenService.doesTokenHaveAccessToApplication(null,null)).thenReturn(false);
-        delegateCloud20Service.validateToken(null, null, "1", null);
-        verify(cloudClient).get(url + "tokens/1", null);
+        HttpHeaders mockHeaders = mock(HttpHeaders.class);
+        delegateCloud20Service.validateToken(mockHeaders, null, "1", null);
+        verify(cloudClient).get(url + "tokens/1",mockHeaders);
     }
 
     @Test
@@ -300,8 +307,9 @@ public class DelegateCloud20ServiceTest {
     public void listEndpointsForToken_RoutingTrueAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
-        delegateCloud20Service.listEndpointsForToken(null, null, "1");
-        verify(cloudClient).get(url + "tokens/1/endpoints", null);
+        HttpHeaders mockHeaders = mock(HttpHeaders.class);
+        delegateCloud20Service.listEndpointsForToken(mockHeaders, null, "1");
+        verify(cloudClient).get(url + "tokens/1/endpoints",  mockHeaders);
     }
 
     @Test
@@ -332,8 +340,9 @@ public class DelegateCloud20ServiceTest {
     public void listExtensions_RoutingTrueAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
-        delegateCloud20Service.listExtensions(null);
-        verify(cloudClient).get(url + "extensions", null);
+        HttpHeaders mockHeaders = mock(HttpHeaders.class);
+        delegateCloud20Service.listExtensions(mockHeaders);
+        verify(cloudClient).get(url + "extensions", mockHeaders);
     }
 
     @Test
@@ -364,8 +373,9 @@ public class DelegateCloud20ServiceTest {
     public void listRoles_RoutingTrueAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
-        delegateCloud20Service.listRoles(null, null, null, null, null);
-        verify(cloudClient).get(url + "OS-KSADM/roles", null);
+        HttpHeaders mockHeaders = mock(HttpHeaders.class);
+        delegateCloud20Service.listRoles(mockHeaders, null, null, null, null);
+        verify(cloudClient).get(url + "OS-KSADM/roles",  mockHeaders);
     }
 
     @Test
@@ -428,8 +438,9 @@ public class DelegateCloud20ServiceTest {
     public void getRole_RoutingTrueAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
-        delegateCloud20Service.getRole(null, null, "1");
-        verify(cloudClient).get(url + "OS-KSADM/roles/1", null);
+        HttpHeaders mockHeaders = mock(HttpHeaders.class);
+        delegateCloud20Service.getRole(mockHeaders, null, "1");
+        verify(cloudClient).get(url + "OS-KSADM/roles/1",  mockHeaders);
     }
 
     @Test
@@ -556,8 +567,9 @@ public class DelegateCloud20ServiceTest {
     public void listUsersForTenant_RoutingTrueAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
-        delegateCloud20Service.listUsersForTenant(null, null, "1", null, null);
-        verify(cloudClient).get(url + "tenants/1/users", null);
+        HttpHeaders mockHeaders = mock(HttpHeaders.class);
+        delegateCloud20Service.listUsersForTenant(mockHeaders, null, "1", null, null);
+        verify(cloudClient).get(url + "tenants/1/users",  mockHeaders);
     }
 
     @Test
@@ -588,8 +600,9 @@ public class DelegateCloud20ServiceTest {
     public void listUsersWithRoleForTenant_RoutingTrueAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
-        delegateCloud20Service.listUsersWithRoleForTenant(null, null, "1", "2", null, null);
-        verify(cloudClient).get(url + "tenants/1/users?roleId=2", null);
+        HttpHeaders mockHeaders = mock(HttpHeaders.class);
+        delegateCloud20Service.listUsersWithRoleForTenant(mockHeaders, null, "1", "2", null, null);
+        verify(cloudClient).get(url + "tenants/1/users?roleId=2", mockHeaders);
     }
 
     @Test
@@ -652,8 +665,9 @@ public class DelegateCloud20ServiceTest {
     public void listRolesForTenant_RoutingTrueAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
-        delegateCloud20Service.listRolesForTenant(null, null, "1", null, null);
-        verify(cloudClient).get(url + "tenants/1/OS-KSADM/roles", null);
+        HttpHeaders mockHeaders = mock(HttpHeaders.class);
+        delegateCloud20Service.listRolesForTenant(mockHeaders, null, "1", null, null);
+        verify(cloudClient).get(url + "tenants/1/OS-KSADM/roles", mockHeaders);
     }
 
     @Test
@@ -684,8 +698,9 @@ public class DelegateCloud20ServiceTest {
     public void listServices_RoutingTrueAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
-        delegateCloud20Service.listServices(null, null, null, null);
-        verify(cloudClient).get(url + "OS-KSADM/services", null);
+        HttpHeaders mockHeaders = mock(HttpHeaders.class);
+        delegateCloud20Service.listServices(mockHeaders, null, null, null);
+        verify(cloudClient).get(url + "OS-KSADM/services",  mockHeaders);
     }
 
     @Test
@@ -748,8 +763,9 @@ public class DelegateCloud20ServiceTest {
     public void getService_RoutingTrueAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
-        delegateCloud20Service.getService(null, null, "1");
-        verify(cloudClient).get(url + "OS-KSADM/services/1", null);
+        HttpHeaders mockHeaders = mock(HttpHeaders.class);
+        delegateCloud20Service.getService(mockHeaders, null, "1");
+        verify(cloudClient).get(url + "OS-KSADM/services/1",  mockHeaders);
     }
 
     @Test
@@ -812,8 +828,9 @@ public class DelegateCloud20ServiceTest {
     public void getEndpointTemplate_RoutingTrueAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
-        delegateCloud20Service.getEndpointTemplate(null, null, "1");
-        verify(cloudClient).get(url + "OS-KSCATALOG/endpointTemplates/1", null);
+        HttpHeaders mockHeaders = mock(HttpHeaders.class);
+        delegateCloud20Service.getEndpointTemplate(mockHeaders, null, "1");
+        verify(cloudClient).get(url + "OS-KSCATALOG/endpointTemplates/1",  mockHeaders);
     }
 
     @Test
@@ -876,8 +893,9 @@ public class DelegateCloud20ServiceTest {
     public void listEndpoints_RoutingTrueAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
-        delegateCloud20Service.listEndpoints(null, null, "1");
-        verify(cloudClient).get(url + "tenants/1/OS-KSCATALOG/endpoints", null);
+        HttpHeaders mockHeaders = mock(HttpHeaders.class);
+        delegateCloud20Service.listEndpoints(mockHeaders, null, "1");
+        verify(cloudClient).get(url + "tenants/1/OS-KSCATALOG/endpoints",  mockHeaders);
     }
 
     @Test
@@ -908,8 +926,9 @@ public class DelegateCloud20ServiceTest {
     public void checkToken_RoutingTrueAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
-        delegateCloud20Service.checkToken(null, null , "1", null);
-        verify(cloudClient).get(url + "tokens/1", null);
+        HttpHeaders mockHeaders = mock(HttpHeaders.class);
+        delegateCloud20Service.checkToken(mockHeaders, null , "1", null);
+        verify(cloudClient).get(url + "tokens/1",  mockHeaders);
     }
 
     @Test
@@ -940,8 +959,9 @@ public class DelegateCloud20ServiceTest {
     public void getExtension_RoutingTrueAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
-        delegateCloud20Service.getExtension(null, "RAX-KSKEY");
-        verify(cloudClient).get(url + "extensions/RAX-KSKEY", null);
+        HttpHeaders mockHeaders = mock(HttpHeaders.class);
+        delegateCloud20Service.getExtension(mockHeaders, "RAX-KSKEY");
+        verify(cloudClient).get(url + "extensions/RAX-KSKEY",  mockHeaders);
     }
 
     @Test
@@ -972,8 +992,9 @@ public class DelegateCloud20ServiceTest {
     public void getEndpoint_RoutingTrueAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
-        delegateCloud20Service.getEndpoint(null, null, "1", "2");
-        verify(cloudClient).get(url + "tenants/2/OS-KSCATALOG/endpoints/1", null);
+        HttpHeaders mockHeaders = mock(HttpHeaders.class);
+        delegateCloud20Service.getEndpoint(mockHeaders, null, "1", "2");
+        verify(cloudClient).get(url + "tenants/2/OS-KSCATALOG/endpoints/1",  mockHeaders);
     }
 
     @Test
@@ -1051,15 +1072,16 @@ public class DelegateCloud20ServiceTest {
     @Test
     public void listTenants_useCloudAuthIsTrue_callsCloudClient() throws Exception {
         when(config.getBoolean("useCloudAuth")).thenReturn(true);
-        delegateCloud20Service.listTenants(null, "token", null, null);
-        verify(cloudClient).get(url + "tenants", null);
+        HttpHeaders mockHeaders = mock(HttpHeaders.class);
+        delegateCloud20Service.listTenants(mockHeaders, "token", null, null);
+        verify(cloudClient).get(url + "tenants",  mockHeaders);
     }
 
     @Test
     public void listTenants_useCloudAuthIsFalse_doesntCallCloudClient() throws Exception {
         when(config.getBoolean("useCloudAuth")).thenReturn(false);
         delegateCloud20Service.listTenants(null, "token", null, null);
-        verify(cloudClient, times(0)).get(url + "tenants", null);
+        verify(cloudClient, times(0)).get(url + "tenants",  new HashMap<String,String>());
     }
 
     @Test
@@ -1116,15 +1138,17 @@ public class DelegateCloud20ServiceTest {
     @Test
     public void getExtensions_whenUseCloudAuthEnabled_callsClient() throws Exception {
         when(config.getBoolean("useCloudAuth")).thenReturn(true);
-        delegateCloud20Service.listExtensions(null);
-        verify(cloudClient).get(url + "extensions", null);
+        HttpHeaders mockHeaders = mock(HttpHeaders.class);
+        delegateCloud20Service.listExtensions(mockHeaders);
+        verify(cloudClient).get(url + "extensions", mockHeaders);
     }
 
     @Test
     public void getExtensions_whenUseCloudAuthDisabled_doesNotCallClient() throws Exception {
         when(config.getBoolean("useCloudAuth")).thenReturn(false);
-        delegateCloud20Service.listExtensions(null);
-        verify(cloudClient, times(0)).get(url + "extensions", null);
+        HttpHeaders mockHeaders = mock(HttpHeaders.class);
+        delegateCloud20Service.listExtensions(mockHeaders);
+        verify(cloudClient, times(0)).get(url + "extensions",  mockHeaders);
     }
 
     @Test
@@ -1147,8 +1171,9 @@ public class DelegateCloud20ServiceTest {
     public void getUserById_RoutingFalse_UserExistsInGaTrue_callsClient() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(userService.userExistsById(userId)).thenReturn(false);
-        delegateCloud20Service.getUserById(null, null, userId);
-        verify(cloudClient).get(url + "users/" + userId, null);
+        HttpHeaders mockHeaders = mock(HttpHeaders.class);
+        delegateCloud20Service.getUserById(mockHeaders, null, userId);
+        verify(cloudClient).get(url + "users/" + userId, mockHeaders);
     }
 
     @Test
@@ -1179,8 +1204,9 @@ public class DelegateCloud20ServiceTest {
     public void listEndpointTemplates_RoutingFalse_GANotSourceOFTruth_callsClient() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
-        delegateCloud20Service.listEndpointTemplates(null, null, serviceId);
-        verify(cloudClient).get(url + "OS-KSCATALOG/endpointTemplates?serviceId=serviceId", null);
+        HttpHeaders mockHeaders = mock(HttpHeaders.class);
+        delegateCloud20Service.listEndpointTemplates(mockHeaders, null, serviceId);
+        verify(cloudClient).get(url + "OS-KSCATALOG/endpointTemplates?serviceId=serviceId",  mockHeaders);
     }
 
     @Test
@@ -1243,8 +1269,9 @@ public class DelegateCloud20ServiceTest {
     public void listUserGroups_RoutingTrue_UserExistsFalse_callsClient() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(userService.userExistsById(userId)).thenReturn(false);
-        delegateCloud20Service.listUserGroups(null, null, userId);
-        verify(cloudClient).get(url + "users/" + userId + "/RAX-KSGRP", null);
+        HttpHeaders mockHeaders = mock(HttpHeaders.class);
+        delegateCloud20Service.listUserGroups(mockHeaders, null, userId);
+        verify(cloudClient).get(url + "users/" + userId + "/RAX-KSGRP", mockHeaders);
     }
 
     @Test
@@ -1275,8 +1302,9 @@ public class DelegateCloud20ServiceTest {
     public void getUserByName_RoutingTrue_UserExistsFalse_callsClient() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(userService.userExistsByUsername(userId)).thenReturn(false);
-        delegateCloud20Service.getUserByName(null, null, username);
-        verify(cloudClient).get(url + "users?name=" + username, null);
+        HttpHeaders mockHeaders = mock(HttpHeaders.class);
+        delegateCloud20Service.getUserByName(mockHeaders, null, username);
+        verify(cloudClient).get(url + "users?name=" + username, mockHeaders);
     }
 
     @Test
@@ -1307,8 +1335,9 @@ public class DelegateCloud20ServiceTest {
     public void listUserGlobalRoles_RoutingTrue_UserExistsFalse_callsClient() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(userService.userExistsById(userId)).thenReturn(false);
-        delegateCloud20Service.listUserGlobalRoles(null, null, userId);
-        verify(cloudClient).get(url + "users/" + userId + "/roles", null);
+        HttpHeaders mockHeaders = mock(HttpHeaders.class);
+        delegateCloud20Service.listUserGlobalRoles(mockHeaders, null, userId);
+        verify(cloudClient).get(url + "users/" + userId + "/roles", mockHeaders);
     }
 
     @Test
@@ -1339,8 +1368,9 @@ public class DelegateCloud20ServiceTest {
     public void listUserGlobalRolesByServiceId_RoutingTrue_UserExistsFalse_callsClient() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(userService.userExistsById(userId)).thenReturn(false);
-        delegateCloud20Service.listUserGlobalRolesByServiceId(null, null, userId, serviceId);
-        verify(cloudClient).get(url + "users/" + userId + "/roles?serviceId="+serviceId, null);
+        HttpHeaders mockHeaders = mock(HttpHeaders.class);
+        delegateCloud20Service.listUserGlobalRolesByServiceId(mockHeaders, null, userId, serviceId);
+        verify(cloudClient).get(url + "users/" + userId + "/roles?serviceId="+serviceId,mockHeaders);
     }
 
     @Test
@@ -1405,8 +1435,9 @@ public class DelegateCloud20ServiceTest {
     public void listCredentials_RoutingTrue_userExistsFalse_callsClient() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(userService.userExistsById(userId)).thenReturn(false);
-        delegateCloud20Service.listCredentials(null,null,userId,null,null);
-        verify(cloudClient).get(url + "users/" + userId + "/OS-KSADM/credentials", null);
+        HttpHeaders mockHeaders = mock(HttpHeaders.class);
+        delegateCloud20Service.listCredentials(mockHeaders,null,userId,null,null);
+        verify(cloudClient).get(url + "users/" + userId + "/OS-KSADM/credentials",mockHeaders);
     }
 
     @Test
@@ -1469,8 +1500,9 @@ public class DelegateCloud20ServiceTest {
     public void listUsers_RoutingTrue_gaSourceOfTruthFalse_callsClient() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
-        delegateCloud20Service.listUsers(null,null,null,null);
-        verify(cloudClient).get(url + "users", null);
+        HttpHeaders mockHeaders = mock(HttpHeaders.class);
+        delegateCloud20Service.listUsers(mockHeaders,null,null,null);
+        verify(cloudClient).get(url + "users",  mockHeaders);
     }
 
     @Test
@@ -1533,8 +1565,9 @@ public class DelegateCloud20ServiceTest {
     public void getUserCredential_RoutingTrue_UserExistsFalse_callsClient() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(userService.userExistsById(userId)).thenReturn(false);
-        delegateCloud20Service.getUserCredential(null,null,userId,"type");
-        verify(cloudClient).get(url + "users/" + userId + "/OS-KSADM/credentials/type", null);
+        HttpHeaders mockHeaders = mock(HttpHeaders.class);
+        delegateCloud20Service.getUserCredential(mockHeaders,null,userId,"type");
+        verify(cloudClient).get(url + "users/" + userId + "/OS-KSADM/credentials/type", mockHeaders);
     }
 
     @Test
@@ -1597,8 +1630,9 @@ public class DelegateCloud20ServiceTest {
     public void listRolesForUserOnTenant_RoutingTrue_UserExistsFalse_callClient() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(userService.userExistsById(userId)).thenReturn(false);
-        delegateCloud20Service.listRolesForUserOnTenant(null,null,tenantId,userId);
-        verify(cloudClient).get(url + "tenants/" + tenantId + "/users/" + userId + "/roles", null);
+        HttpHeaders mockHeaders = mock(HttpHeaders.class);
+        delegateCloud20Service.listRolesForUserOnTenant(mockHeaders,null,tenantId,userId);
+        verify(cloudClient).get(url + "tenants/" + tenantId + "/users/" + userId + "/roles",  mockHeaders);
     }
 
     @Test
@@ -1936,4 +1970,5 @@ public class DelegateCloud20ServiceTest {
         delegateCloud20Service.validateToken(null,null,"id",null);
         verify(tokenService).doesTokenHaveAccessToApplication("id","clientid");
     }
+
 }

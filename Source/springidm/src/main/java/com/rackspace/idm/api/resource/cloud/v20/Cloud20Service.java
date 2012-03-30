@@ -169,5 +169,5 @@ public interface Cloud20Service {
 
     ResponseBuilder getGroup(HttpHeaders httpHeaders, String authToken, String groupName) throws IOException;
 
-    ResponseBuilder impersonate(HttpHeaders httpHeaders, String authToken, ImpersonationRequest impersonationRequest) throws IOException;
+    ResponseBuilder impersonate(HttpHeaders httpHeaders, String authToken, ImpersonationRequest impersonationRequest) throws IOException, JAXBException;
 }

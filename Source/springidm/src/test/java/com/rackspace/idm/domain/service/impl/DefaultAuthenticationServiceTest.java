@@ -22,7 +22,7 @@ public class DefaultAuthenticationServiceTest {
     UserDao userDao = mock(UserDao.class);
 
     private Configuration config = mock(Configuration.class);
-    DefaultAuthenticationService defaultAuthenticationService = new DefaultAuthenticationService(null,null,null,null,applicationDao,config,userDao,null,null);
+    DefaultAuthenticationService defaultAuthenticationService = new DefaultAuthenticationService(null,null,null,null,applicationDao,config,userDao,null,null, null);
     DefaultAuthenticationService spy;
     RSAClient rsaClient = mock(RSAClient.class);
 

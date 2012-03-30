@@ -14,6 +14,7 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.*;
+import java.util.HashMap;
 import java.util.Set;
 
 /**
@@ -31,33 +32,49 @@ public class CloudClient {
     public Response.ResponseBuilder get(String url, HttpHeaders httpHeaders)
             throws IOException {
         HttpGet request = new HttpGet(url);
-        return executeRequest(request, httpHeaders);
+        setHttpHeaders(httpHeaders, request);
+        return executeRequest(request);
+    }
+    public Response.ResponseBuilder get(String url, HashMap headers)
+            throws IOException {
+        HttpGet request = new HttpGet(url);
+        setHeaders(headers, request);
+        return executeRequest(request);
     }
 
     public Response.ResponseBuilder delete(String url, HttpHeaders httpHeaders)
             throws IOException {
         HttpDelete request = new HttpDelete(url);
-        return executeRequest(request, httpHeaders);
+        setHttpHeaders(httpHeaders, request);
+        return executeRequest(request);
     }
 
     public Response.ResponseBuilder put(String url, HttpHeaders httpHeaders,
                                         String body) throws IOException {
         HttpPut request = new HttpPut(url);
         request.setEntity(getHttpEntity(body));
-        return executeRequest(request, httpHeaders);
+        setHttpHeaders(httpHeaders, request);
+        return executeRequest(request);
     }
 
     public Response.ResponseBuilder post(String url, HttpHeaders httpHeaders,
                                          String body) throws IOException {
         HttpPost request = new HttpPost(url);
         request.setEntity(getHttpEntity(body));
-        return executeRequest(request, httpHeaders);
+        setHttpHeaders(httpHeaders, request);
+        return executeRequest(request);
     }
 
-    private Response.ResponseBuilder executeRequest(HttpRequestBase request, HttpHeaders httpHeaders) {
-        DefaultHttpClient client = getHttpClient();
-        setHttpHeaders(httpHeaders, request);
+    public Response.ResponseBuilder post(String url, HashMap<String, String> headers, String body) throws IOException {
+        HttpPost request = new HttpPost(url);
+        request.setEntity(getHttpEntity(body));
+        setHeaders(headers, request);
+        return executeRequest(request);
+    }
 
+
+    private Response.ResponseBuilder executeRequest(HttpRequestBase request) {
+        DefaultHttpClient client = getHttpClient();
         // ToDo: Fix when returning 301 - errors in build of ResponseBuilder due to entity
         client.getParams().setParameter(ClientPNames.HANDLE_REDIRECTS, false);
 
@@ -135,6 +152,13 @@ public class CloudClient {
 
         return client;
     }
+    private void setHeaders(HashMap<String, String> headers, HttpRequestBase request) {
+        if (!headers.isEmpty()){
+            for (String header: headers.keySet()){
+                request.addHeader(header, headers.get(header).toString());
+            }
+        }
+    }
 
     private void setHttpHeaders(HttpHeaders httpHeaders, HttpRequestBase request) {
         Set<String> keys = httpHeaders.getRequestHeaders().keySet();
@@ -161,4 +185,6 @@ public class CloudClient {
         is.close();
         return sb.toString();
     }
+
+
 }

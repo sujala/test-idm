@@ -16,7 +16,6 @@ import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class DefaultTenantService implements TenantService {
 
     private final TenantDao tenantDao;
@@ -241,6 +240,7 @@ public class DefaultTenantService implements TenantService {
                 parentDn = scopeAccess.getLDAPEntry().getParentDNString();
             }
         } catch (Exception ex) {
+            System.out.println(ex.getMessage());
             throw new IllegalStateException();
         }
 
@@ -295,16 +295,16 @@ public class DefaultTenantService implements TenantService {
             throw new NotFoundException(errMsg);
         }
 
-        UserScopeAccess sa = (UserScopeAccess) this.scopeAccessDao.getDirectScopeAccessForParentByClientId(user.getUniqueId(), role.getClientId());
+        ScopeAccess sa =  this.scopeAccessDao.getDirectScopeAccessForParentByClientId(user.getUniqueId(), role.getClientId());
 
         if (sa == null) {
-            sa = new UserScopeAccess();
-            sa.setClientId(client.getClientId());
-            sa.setClientRCN(client.getRCN());
-            sa.setUsername(user.getUsername());
-            sa.setUserRCN(user.getCustomerId());
-            sa.setUserRsId(user.getId());
-            sa = (UserScopeAccess) this.scopeAccessDao.addDirectScopeAccess(user.getUniqueId(), sa);
+            UserScopeAccess usa = new UserScopeAccess();
+            usa.setClientId(client.getClientId());
+            usa.setClientRCN(client.getRCN());
+            usa.setUsername(user.getUsername());
+            usa.setUserRCN(user.getCustomerId());
+            usa.setUserRsId(user.getId());
+            sa = this.scopeAccessDao.addDirectScopeAccess(user.getUniqueId(), sa);
         }
 
         addTenantRole(sa.getUniqueId(), role);
@@ -409,8 +409,7 @@ public class DefaultTenantService implements TenantService {
     public List<TenantRole> getTenantRolesForApplication(
         Application application, FilterParam[] filters) {
         logger.debug("Getting Tenant Roles");
-        List<TenantRole> roles = this.tenantDao.getTenantRolesForApplication(
-            application, filters);
+        List<TenantRole> roles = this.tenantDao.getTenantRolesForApplication(application, filters);
 
         return getTenantOnlyRoles(roles);
     }
@@ -539,4 +538,5 @@ public class DefaultTenantService implements TenantService {
         return users;
 
     }
+
 }
