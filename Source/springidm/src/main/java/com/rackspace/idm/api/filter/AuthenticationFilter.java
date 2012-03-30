@@ -1,14 +1,17 @@
 package com.rackspace.idm.api.filter;
 
 import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.domain.entity.HasAccessToken;
 import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.AuthenticationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.NotAuthenticatedException;
+import com.rackspace.idm.exception.NotAuthorizedException;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.sun.jersey.spi.container.ContainerRequest;
 import com.sun.jersey.spi.container.ContainerRequestFilter;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -79,7 +82,11 @@ public class AuthenticationFilter implements ContainerRequestFilter,
                 //check for impersonation
                 ScopeAccess sa = scopeAccessService.getScopeAccessByAccessToken(authHeader);
                 if(sa instanceof ImpersonatedScopeAccess){
-                    // Log
+                    // Check Expiration of impersonated token
+                    if (((HasAccessToken) sa).isAccessTokenExpired(new DateTime())) {
+                        throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
+                    }
+                    // Swap token out and Log
                     String newToken = ((ImpersonatedScopeAccess) sa).getImpersonatingToken();
                     request.getRequestHeaders().putSingle(AuthenticationService.AUTH_TOKEN_HEADER.toLowerCase(), newToken);
                     logger.info("Impersonating token {} with token {} ", authHeader, newToken);

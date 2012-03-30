@@ -59,8 +59,7 @@ public class LdapConfiguration {
         int[] ports = new int[0];
         boolean isSSL = false;
 
-        logger.info("Creating LDAP client pool for servers {} ", 
-          ArrayUtils.toString(serverList));
+        logger.info("Creating LDAP client pool for servers {} ", ArrayUtils.toString(serverList));
         for(String server : serverList) {
             // split on space and comma
             String[] configAddresses = (String[]) server.split("[ ,]+");
