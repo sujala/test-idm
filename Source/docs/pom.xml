@@ -82,6 +82,25 @@
 							<sampleOutputDirectory>src/formattedsamples/keystone</sampleOutputDirectory>
 						</configuration>
 					</execution>
+					
+					<execution>
+						<id>generate-foundation-samples</id>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<phase>generate-sources</phase>
+						<configuration>
+							<schemaDirectory>src/xsd</schemaDirectory>
+							<schemaExcludes>
+								<schemaExclude>keystone</schemaExclude>
+							</schemaExcludes>
+							<sampleConfigurationDirectory>src/sampleconfigurations</sampleConfigurationDirectory>
+							<sampleExcludes>
+								<sampleExclude>keystone</sampleExclude>
+							</sampleExcludes>
+							<sampleOutputDirectory>src/new_formattedsamples</sampleOutputDirectory>
+						</configuration>
+					</execution> 
 				</executions>
 			</plugin>
 

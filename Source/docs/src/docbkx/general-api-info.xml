@@ -84,12 +84,12 @@
 </programlisting>
       </example>
       <example>
-        <title>XML Response with Headers</title>
+        <title>JSON Response with Headers</title>
         <programlisting language="xml">
 <xi:include href="../formattedsamples/sampleresponseheader.json" parse="text"/>
 </programlisting>
         <programlisting language="xml">
-<xi:include href="../formattedsamples/auth.xml" parse="text"/>
+<xi:include href="../formattedsamples/auth.json" parse="text"/>
 </programlisting>
       </example>
     </section>
@@ -98,7 +98,7 @@
       <title>Contracts</title>
       <para>
         The Global Auth API uses a URI versioning scheme. The first element of the path contains the
-        target version identifier (e.g. https://idm.api.rackspace.com/v1.0/...) All requests (except
+        target version identifier (e.g. https://rackidentity.api.rackspacecloud.com/v1.0/...) All requests (except
         to query for contract version - see below) must contain a target version. Any features or
         functionality changes that would necessitate a break in API-compatibility will require a new
         version, which will result in the URI version being updated accordingly. When new API
@@ -108,12 +108,9 @@
       </para>
       <example>
         <title>Request with URI versioning</title>
-        <literallayout class="monospaced">
-          GET /v1.0/users HTTP/1.1
-          Host: idm.api.rackspace.com
-          Accept: application/xml
-          Authorization: ab48a9efdfedb23ty3494
-	</literallayout>
+        <programlisting language="xml">
+        <xi:include href="../formattedsamples/samplerequestheader.xml" parse="text"/>
+        </programlisting>
       </example>
       
       <para>
@@ -127,7 +124,7 @@
         <title>Service Profile Request</title>
         <literallayout class="monospaced">
           GET HTTP/1.1
-          Host: idm.api.rackspace.com
+          Host: rackidentity.api.rackspacecloud.com
           Accept: application/xml
 			</literallayout>
       </example>
@@ -136,7 +133,7 @@
       <simpara>&ERROR_CODES;<errorcode>400</errorcode>, <errorcode>500</errorcode>, <errorcode>503</errorcode></simpara>
       <simpara>Your application can programmatically determine available API contract versions by
         performing a <command>GET</command> on the root URL
-        (https://idm.api.rackspace.com/).</simpara>
+        (https://rackidentity.api.rackspacecloud.com/).</simpara>
 
       <example>
         <title>Service Profile Response</title>
@@ -149,13 +146,13 @@
         You can also obtain additional information about a
         contract version by performing a &GET; on the base
         version URL
-        (e.g. https://idm.api.rackspace.com/v1.0).
+        (e.g. https://rackidentity.api.rackspacecloud.com/v1.0).
       </para>
       <example>
         <title>Service Contract Request</title>
         <literallayout class="monospaced">
           GET HTTP/1.1
-          Host: idm.api.rackspace.com/v1.0
+          Host: rackidentity.api.rackspacecloud.com/v1.0
           Accept: application/xml
 			</literallayout>
       </example>
@@ -324,7 +321,7 @@
       <example>
         <title>Authorization Header Request Format</title>
         <programlisting language="xml">
-        <xi:include href="../formattedsamples/sampleauthrequestheader.xml" parse="text"/>
+          <xi:include href="../formattedsamples/samplerequestheader.xml" parse="text"/>
         </programlisting>
       </example>
     </section>

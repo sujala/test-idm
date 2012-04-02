@@ -1,13 +1,14 @@
-{"auth":{
-  "accessToken": {
-    "id": "ab48a9efdfedb23ty3494",
-    "expiresIn": 3600
-  },
-  "refreshToken": {
-    "id": "8792gdfskjbadf98y234r"
-  },
-  "racker" : {
-    "username": "john.so"
-  }
- }
+{
+   "auth":{
+       "accessToken": {
+           "id": "ab48a9efdfedb23ty3494",
+           "expiresIn": 3600
+       },
+       "refreshToken": {
+           "id": "8792gdfskjbadf98y234r"
+       },
+       "racker" : {
+           "username": "racker.sso"
+       }
+   }
 }

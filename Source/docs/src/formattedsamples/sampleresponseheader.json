@@ -1,5 +1,5 @@
 HTTP/1.1 200 OKAY
 Date: Mon, 12 Nov 2010 15:55:01 GMT
-Server: Apache
-Content-Length:
-Content-Type: application/xml; charset=UTF-8
+Server: Glassfish
+Content-Length: 478374373
+Content-Type: application/json; charset=UTF-8

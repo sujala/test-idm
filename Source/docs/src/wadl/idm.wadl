@@ -286,54 +286,54 @@
         </doc>
         <request>
             <representation mediaType="application/xml" element="idm:authCredentials">
-                <doc xml:lang="EN" title="Auth as Application Request XML">
+                <doc xml:lang="EN" title="Auth as Application Request: XML">
                     <xsdxt:code href="../formattedsamples/application_auth_credentials.xml" />
                 </doc>
-                <doc xml:lang="EN" title="Auth as Customer Request XML">
+                <doc xml:lang="EN" title="Auth as Customer Request: XML">
                     <xsdxt:code href="../formattedsamples/auth_credentials.xml" />
                 </doc>
-                <doc xml:lang="EN" title="Auth as Racker Request XML">
+                <doc xml:lang="EN" title="Auth as Racker Request: XML">
                     <xsdxt:code href="../formattedsamples/racker_auth_credentials.xml" />
                 </doc>
-                <doc xml:lang="EN" title="Auth as Racker with RSA Token Request XML">
+                <doc xml:lang="EN" title="Auth as Racker with RSA Token Request: XML">
                     <xsdxt:code href="../formattedsamples/racker_rsa_credentials.xml" />
                 </doc>
             </representation>
             <representation mediaType="application/json">
-                <doc xml:lang="EN" title="Auth as Application Request JSON">
+                <doc xml:lang="EN" title="Auth as Application Request: JSON">
                     <xsdxt:code href="../formattedsamples/application_auth_credentials.json" />
                 </doc>
-                <doc xml:lang="EN" title="Auth as Customer Request JSON">
+                <doc xml:lang="EN" title="Auth as Customer Request: JSON">
                     <xsdxt:code href="../formattedsamples/auth_credentials.json" />
                 </doc>
-                <doc xml:lang="EN" title="Auth as Racker Request JSON">
+                <doc xml:lang="EN" title="Auth as Racker Request: JSON">
                     <xsdxt:code href="../formattedsamples/racker_auth_credentials.json" />
                 </doc>
-                <doc xml:lang="EN" title="Auth as Racker with RSA Token Request JSON">
+                <doc xml:lang="EN" title="Auth as Racker with RSA Token Request: JSON">
                     <xsdxt:code href="../formattedsamples/racker_rsa_credentials.json" />
                 </doc>
             </representation>
         </request>
         <response status="200 203">
             <representation mediaType="application/xml" element="idm:auth">
-                <doc xml:lang="EN" title="Auth as Application Response XML">
+                <doc xml:lang="EN" title="Auth as Application Response: XML">
                     <xsdxt:code href="../formattedsamples/application_auth.xml" />
                 </doc>
-                <doc xml:lang="EN" title="Auth as Customer Response XML">
+                <doc xml:lang="EN" title="Auth as Customer Response: XML">
                     <xsdxt:code href="../formattedsamples/auth.xml" />
                 </doc>
-                <doc xml:lang="EN" title="Auth as Racker Response XML">
+                <doc xml:lang="EN" title="Auth as Racker Response: XML">
                     <xsdxt:code href="../formattedsamples/racker_auth.xml" />
                 </doc>
             </representation>
             <representation mediaType="application/json">
-                <doc xml:lang="EN" title="Auth as Application Response JSON">
+                <doc xml:lang="EN" title="Auth as Application Response: JSON">
                     <xsdxt:code href="../formattedsamples/application_auth.json" />
                 </doc>
-                <doc xml:lang="EN" title="Auth as Customer Response JSON">
+                <doc xml:lang="EN" title="Auth as Customer Response: JSON">
                     <xsdxt:code href="../formattedsamples/auth.json" />
                 </doc>
-                <doc xml:lang="EN" title="Auth as Racker Response JSON">
+                <doc xml:lang="EN" title="Auth as Racker Response: JSON">
                     <xsdxt:code href="../formattedsamples/racker_auth.json" />
                 </doc>
             </representation>
@@ -351,14 +351,18 @@
             <xhtml:p class="shortdesc">
                 Check that a token is valid and return the token details.
             </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Validate Token Response">
-                <example href="../formattedsamples/validatetoken.xml" language="xml"/>
-                <example href="../formattedsamples/validatetoken.json" language="javascript"/>
-            </examples>
         </doc>
         <response status="200 203">
-            <representation mediaType="application/xml" element="idm:auth"/>
-            <representation mediaType="application/json"/>
+            <representation mediaType="application/xml" element="idm:auth">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/validatetoken.xml" />
+                </doc>
+            </representation>
+            <representation mediaType="application/json">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/validatetoken.json" />
+                </doc>
+            </representation>
         </response>
         <response status="403">
             <representation mediaType="application/xml" element="idm:userDisabled"/>
@@ -411,10 +415,6 @@
             <xhtml:p class="shortdesc">
                 Gets a list of users.
             </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Get Users Response">
-                <example href="../formattedsamples/users.xml" language="xml"/>
-                <example href="../formattedsamples/users.json" language="javascript"/>
-            </examples>
         </doc>
         <request>
             <param name="username" style="query" type="xsd:string">
@@ -428,8 +428,16 @@
             </param> 
         </request>
         <response status="200">
-            <representation mediaType="application/xml" element="idm:users"/>
-            <representation mediaType="application/json"/>
+            <representation mediaType="application/xml" element="idm:users">
+                <doc xml:lang="EN" >
+                    <xsdxt:code href="../formattedsamples/users.xml" />
+                </doc>
+            </representation>
+            <representation mediaType="application/json">
+                <doc xml:lang="EN" >
+                    <xsdxt:code href="../formattedsamples/users.json" />
+                </doc>
+            </representation>
         </response>
         &commonFaults;
         &getFaults;
@@ -445,25 +453,33 @@
                 the API will generate a random password for the user. The prefLanguage attribute defaults 
                 to "US_en" and the timeZone attribute defaults to "America/Chicago".
             </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Add User Request">
-                <example href="../formattedsamples/adduser.xml" language="xml"/>
-                <example href="../formattedsamples/adduser.json" language="javascript"/>
-            </examples>
-            <examples xmlns="http://docs.rackspace.com/api" title="Add User Response">
-                <example href="../formattedsamples/addeduser.xml" language="xml"/>
-                <example href="../formattedsamples/addeduser.json" language="javascript"/>
-            </examples>
         </doc>
         <request>
-            <representation mediaType="application/xml" element="idm:user"/>
-            <representation mediaType="application/json"/>
+            <representation mediaType="application/xml" element="idm:user">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/adduser.xml" />
+                </doc>
+            </representation>
+            <representation mediaType="application/json">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/adduser.xml" />
+                </doc>
+            </representation>
         </request>
         <response status="200">
             <param name="Location" style="header" type="xsd:string" required="true">
                 <doc>Location to the uri of the newly created resource</doc>
             </param>
-            <representation mediaType="application/xml" element="idm:user"/>
-            <representation mediaType="application/json"/>
+            <representation mediaType="application/xml" element="idm:user">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/addeduser.xml" />
+                </doc>
+            </representation>
+            <representation mediaType="application/json">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/addeduser.json" />
+                </doc>
+            </representation>
         </response>
         <response status="400">
             <representation mediaType="application/xml" element="idm:passwordValidationFault"/>
@@ -481,14 +497,18 @@
             <xhtml:p class="shortdesc">
                 Get a user.
             </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Get User Response">
-                <example href="../formattedsamples/getuser.xml" language="xml"/>
-                <example href="../formattedsamples/getuser.json" language="javascript"/>
-            </examples>
         </doc>
         <response status="200">
-            <representation mediaType="application/xml" element="idm:user"/>
-            <representation mediaType="application/json"/>
+            <representation mediaType="application/xml" element="idm:user">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/getuser.xml" />
+                </doc>
+            </representation>
+            <representation mediaType="application/json">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/getuser.json" />
+                </doc>
+            </representation>
         </response>
         &commonFaults;
         &getFaults;
@@ -499,22 +519,30 @@
             <xhtml:p class="shortdesc">
                 Update a user.
             </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Update User Request">
-                <example href="../formattedsamples/updateuser.xml" language="xml"/>
-                <example href="../formattedsamples/updateuser.json" language="javascript"/>
-            </examples>
-            <examples xmlns="http://docs.rackspace.com/api" title="Update User Response">
-                <example href="../formattedsamples/updateduser.xml" language="xml"/>
-                <example href="../formattedsamples/updateduser.json" language="javascript"/>
-            </examples>
         </doc>
         <request>
-            <representation mediaType="application/xml" element="idm:user"/>
-            <representation mediaType="application/json"/>
+            <representation mediaType="application/xml" element="idm:user">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/updateuser.xml" />
+                </doc>
+            </representation>
+            <representation mediaType="application/json">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/updateuser.json" />
+                </doc>
+            </representation>
         </request>
         <response status="200">
-            <representation mediaType="application/xml" element="idm:user"/>
-            <representation mediaType="application/json"/>
+            <representation mediaType="application/xml" element="idm:user">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/updateduser.xml" />
+                </doc>
+            </representation>
+            <representation mediaType="application/json">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/updateduser.json" />
+                </doc>
+            </representation>
         </response>
         &commonFaults;
         &getFaults;
@@ -536,14 +564,18 @@
             <xhtml:p class="shortdesc">
                 Get a user's secret question and answer.
             </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Get User Secret Response">
-                <example href="../formattedsamples/user_secret.xml" language="xml"/>
-                <example href="../formattedsamples/user_secret.json" language="javascript"/>
-            </examples>
         </doc>
         <response status="200">
-            <representation mediaType="application/xml" element="idm:userSecret"/>
-            <representation mediaType="application/json"/>
+            <representation mediaType="application/xml" element="idm:userSecret">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/user_secret.xml" />
+                </doc>
+            </representation>
+            <representation mediaType="application/json">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/user_secret.json" />
+                </doc>
+            </representation>
         </response>
         &commonFaults;
         &getFaults;
@@ -554,14 +586,18 @@
             <xhtml:p class="shortdesc">
                 Sets a user's secret question and answer.
             </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Set User Secret Request">
-                <example href="../formattedsamples/user_secret.xml" language="xml"/>
-                <example href="../formattedsamples/user_secret.json" language="javascript"/>
-            </examples>
         </doc>
         <request>
-            <representation mediaType="application/xml" element="idm:userSecret"/>
-            <representation mediaType="application/json"/>
+            <representation mediaType="application/xml" element="idm:userSecret">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/user_secret.xml" />
+                </doc>
+            </representation>
+            <representation mediaType="application/json">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/user_secret.json" />
+                </doc>
+            </representation>
         </request>
         <response status="204" />
         &commonFaults;
@@ -573,14 +609,18 @@
             <xhtml:p class="shortdesc">
                 Get a user's password credentials.
             </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Get Password Credentials Response">
-                <example href="../formattedsamples/user_credentials.xml" language="xml"/>
-                <example href="../formattedsamples/user_credentials.json" language="javascript"/>
-            </examples>
         </doc>
         <response status="200">
-            <representation mediaType="application/xml" element="idm:passwordCredentials"/>
-            <representation mediaType="application/json"/>
+            <representation mediaType="application/xml" element="idm:passwordCredentials">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/user_credentials.xml" />
+                </doc>
+            </representation>
+            <representation mediaType="application/json">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/user_credentials.json" />
+                </doc>     
+            </representation>
         </response>
         &commonFaults;
         &getFaults;
@@ -591,14 +631,18 @@
             <xhtml:p class="shortdesc">
                 Sets a user's password credentials.
             </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Set User Credential Request">
-                <example href="../formattedsamples/set_user_credentials.xml" language="xml"/>
-                <example href="../formattedsamples/set_user_credentials.json" language="javascript"/>
-            </examples>
         </doc>
         <request>
-            <representation mediaType="application/xml" element="idm:passwordCredentials"/>
-            <representation mediaType="application/json"/>
+            <representation mediaType="application/xml" element="idm:passwordCredentials">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/set_user_credentials.xml" />
+                </doc>
+            </representation>
+            <representation mediaType="application/json">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/set_user_credentials.json" />
+                </doc>
+            </representation>
         </request>
         <response status="204" />
         &commonFaults;
@@ -612,8 +656,16 @@
             </xhtml:p>
         </doc>
         <response status="200">
-            <representation mediaType="application/xml" element="idm:passwordCredentials"/>
-            <representation mediaType="application/json"/>
+            <representation mediaType="application/xml" element="idm:passwordCredentials">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/user_credentials.xml" />
+                </doc>
+            </representation>
+            <representation mediaType="application/json">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/user_credentials.json" />
+                </doc>
+            </representation>
         </response>
         &commonFaults;
         &getFaults;
@@ -624,62 +676,19 @@
             <xhtml:p class="shortdesc">
                 Get a token that can be used to reset a user's password credentials.
             </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Get Credentials Recovery Token Response">
-                <example href="../formattedsamples/token.xml" language="xml"/>
-                <example href="../formattedsamples/token.json" language="javascript"/>
-            </examples>
         </doc>
         <response status="200">
-            <representation mediaType="application/xml" element="idm:token"/>
-            <representation mediaType="application/json"/>
+            <representation mediaType="application/xml" element="idm:token">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/token.xml" />
+                </doc>
+            </representation>
+            <representation mediaType="application/json">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/token.json" />
+                </doc>
+            </representation>
         </response>
-        &commonFaults;
-        &getFaults;
-    </method>
-    
-    <method name="GET" id="getDelegatedRefreshTokens">
-        <doc xml:lang="EN" title="Get a List of delegated refresh Tokens for a User">
-            <xhtml:p class="shortdesc">
-                Get a list of a user's delegated refresh tokens.
-            </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Delegated Refresh Tokens Response">
-                <example href="../formattedsamples/delegatedTokens.xml" language="xml"/>
-                <example href="../formattedsamples/delegatedTokens.json" language="javascript"/>
-            </examples>
-        </doc>
-        <response status="200">
-            <representation mediaType="application/xml" element="idm:delegatedTokens"/>
-            <representation mediaType="application/json"/>
-        </response>
-        &commonFaults;
-        &getFaults;
-    </method>
-    
-    <method name="GET" id="getDelegatedRefreshToken">
-        <doc xml:lang="EN" title="Get a Delegated Refresh Token for a User">
-            <xhtml:p class="shortdesc">
-                Get a user's delegated refresh token.
-            </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Delegated Refresh Token Response">
-                <example href="../formattedsamples/delegatedToken.xml" language="xml"/>
-                <example href="../formattedsamples/delegatedToken.json" language="javascript"/>
-            </examples>
-        </doc>
-        <response status="200">
-            <representation mediaType="application/xml" element="idm:delegatedToken"/>
-            <representation mediaType="application/json"/>
-        </response>
-        &commonFaults;
-        &getFaults;
-    </method>
-    
-    <method name="DELETE" id="deleteDelegatedRefreshToken">
-        <doc xml:lang="EN" title="Delete a Delegated Refresh Token for a User">
-            <xhtml:p class="shortdesc">
-                Deletes a user's delegated refresh token.
-            </xhtml:p>
-        </doc>
-        <response status="204" />
         &commonFaults;
         &getFaults;
     </method>
@@ -689,14 +698,18 @@
             <xhtml:p class="shortdesc">
                 Get the applications that have been provisioned for a user.
             </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Get User Applications Response">
-                <example href="../formattedsamples/applications.xml" language="xml"/>
-                <example href="../formattedsamples/applications.json" language="javascript"/>
-            </examples>
         </doc>
         <response status="200">
-            <representation mediaType="application/xml" element="idm:applications"/>
-            <representation mediaType="application/json"/>
+            <representation mediaType="application/xml" element="idm:applications">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/applications.xml" />
+                </doc>
+            </representation>
+            <representation mediaType="application/json">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/applications.json" />
+                </doc>               
+            </representation>
         </response>
         &commonFaults;
         &getFaults;
@@ -729,10 +742,6 @@
             <xhtml:p class="shortdesc">
                 Get a list of user's roles on all tenants.
             </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Get User Tenant Roles Response">
-                <example href="../formattedsamples/tenantroles.xml" language="xml"/>
-                <example href="../formattedsamples/tenantroles.json" language="javascript"/>
-            </examples>
         </doc>
         <request>
             <param name="applicationId" style="query" type="xsd:string" required="false">
@@ -743,8 +752,16 @@
             </param>
         </request>
         <response status="200">
-            <representation mediaType="application/xml" element="idm:roles"/>
-            <representation mediaType="application/json"/>
+            <representation mediaType="application/xml" element="idm:roles">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/tenantroles.xml" />
+                </doc>
+            </representation>
+            <representation mediaType="application/json">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/tenantroles.json" />
+                </doc>
+            </representation>
         </response>
         &commonFaults;
         &getFaults;
@@ -775,10 +792,6 @@
             <xhtml:p class="shortdesc">
                 Get a list of user's global roles.
             </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Get User Roles Response">
-                <example href="../formattedsamples/roles.xml" language="xml"/>
-                <example href="../formattedsamples/roles.json" language="javascript"/>
-            </examples>
         </doc>
         <request>
             <param name="applicationId" style="query" type="xsd:string" required="false">
@@ -786,8 +799,16 @@
             </param>
         </request>
         <response status="200">
-            <representation mediaType="application/xml" element="idm:roles"/>
-            <representation mediaType="application/json"/>
+            <representation mediaType="application/xml" element="idm:roles">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/roles.xml" />
+                </doc>
+            </representation>
+            <representation mediaType="application/json">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/roles.json" />
+                </doc>
+            </representation>
         </response>
         &commonFaults;
         &getFaults;
@@ -823,10 +844,6 @@
             <xhtml:p class="shortdesc">
                 Gets a list of applications.
             </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Get Applications Response">
-                <example href="../formattedsamples/applications.xml" language="xml"/>
-                <example href="../formattedsamples/applications.json" language="javascript"/>
-            </examples>
         </doc>
         <request>
             <param name="name" style="query" type="xsd:string">
@@ -840,8 +857,16 @@
             </param>
         </request>
         <response status="200">
-            <representation mediaType="application/xml" element="idm:applications"/>
-            <representation mediaType="application/json"/>
+            <representation mediaType="application/xml" element="idm:applications">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/applications.xml" />
+                </doc>
+            </representation>
+            <representation mediaType="application/json">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/applications.json" />
+                </doc>
+            </representation>
         </response>
         &commonFaults;
         &getFaults;
@@ -852,25 +877,33 @@
             <xhtml:p class="shortdesc">
                 Add an application.
             </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Add Application Request">
-                <example href="../formattedsamples/addapplication.xml" language="xml"/>
-                <example href="../formattedsamples/addapplication.json" language="javascript"/>
-            </examples>
-            <examples xmlns="http://docs.rackspace.com/api" title="Add Application Request">
-                <example href="../formattedsamples/addedapplication.xml" language="xml"/>
-                <example href="../formattedsamples/addedapplication.json" language="javascript"/>
-            </examples>
         </doc>
         <request>
-            <representation mediaType="application/xml" element="idm:application"/>
-            <representation mediaType="application/json"/>
+            <representation mediaType="application/xml" element="idm:application">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/addapplication.xml" />
+                </doc>
+            </representation>
+            <representation mediaType="application/json">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/addapplication.json" />
+                </doc>
+            </representation>
         </request>
         <response status="200">
             <param name="Location" style="header" type="xsd:string" required="true">
                 <doc>Location to the uri of the newly created resource</doc>
             </param>
-            <representation mediaType="application/xml" element="idm:application"/>
-            <representation mediaType="application/json"/>
+            <representation mediaType="application/xml" element="idm:application">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/addedapplication.xml" />
+                </doc>
+            </representation>
+            <representation mediaType="application/json">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/addedapplication.json" />
+                </doc>
+            </representation>
         </response>
         <response status="409">
             <representation mediaType="application/xml" element="idm:applicationNameConflict"/>
@@ -884,14 +917,18 @@
             <xhtml:p class="shortdesc">
                 Get an application.
             </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Get Application Response">
-                <example href="../formattedsamples/application.xml" language="xml"/>
-                <example href="../formattedsamples/application.json" language="javascript"/>
-            </examples>
         </doc>
         <response status="200">
-            <representation mediaType="application/xml" element="idm:application"/>
-            <representation mediaType="application/json"/>
+            <representation mediaType="application/xml" element="idm:application">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/application.xml" />
+                </doc>
+            </representation>
+            <representation mediaType="application/json">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/application.json" />
+                </doc>
+            </representation>
         </response>
         &commonFaults;
         &getFaults;
@@ -902,22 +939,30 @@
             <xhtml:p class="shortdesc">
                 Update an application.
             </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Update Application Request">
-                <example href="../formattedsamples/updateapplication.xml" language="xml"/>
-                <example href="../formattedsamples/updateapplication.json" language="javascript"/>
-            </examples>
-            <examples xmlns="http://docs.rackspace.com/api" title="Update Application Response">
-                <example href="../formattedsamples/updatedapplication.xml" language="xml"/>
-                <example href="../formattedsamples/updatedapplication.json" language="javascript"/>
-            </examples>
         </doc>
         <request>
-            <representation mediaType="application/xml" element="idm:application"/>
-            <representation mediaType="application/json"/>
+            <representation mediaType="application/xml" element="idm:application">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/updateapplication.xml" />
+                </doc>
+            </representation>
+            <representation mediaType="application/json">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/updateapplication.json" />
+                </doc>
+            </representation>
         </request>
         <response status="200">
-            <representation mediaType="application/xml" element="idm:application"/>
-            <representation mediaType="application/json"/>
+            <representation mediaType="application/xml" element="idm:application">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/updatedapplication.xml" />
+                </doc>
+            </representation>
+            <representation mediaType="application/json">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/updatedapplication.json" />
+                </doc>
+            </representation>
         </response>
         &commonFaults;
         &getFaults;
@@ -939,14 +984,18 @@
             <xhtml:p class="shortdesc">
                 Reset application secret.
             </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Reset Application Secret Response">
-                <example href="../formattedsamples/application_credentials.xml" language="xml"/>
-                <example href="../formattedsamples/application_credentials.json" language="javascript"/>
-            </examples>
         </doc>
         <response status="200">
-            <representation mediaType="application/xml" element="idm:secretCredentials"/>
-            <representation mediaType="application/json"/>
+            <representation mediaType="application/xml" element="idm:secretCredentials">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/application_credentials.xml" />
+                </doc>
+            </representation>
+            <representation mediaType="application/json">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/application_credentials.json" />
+                </doc>
+            </representation>
         </response>
         &commonFaults;
         &getFaults;
@@ -957,14 +1006,18 @@
             <xhtml:p class="shortdesc">
                 Get all applications that have been provisioned for this application..
             </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Get Provisioned Applications Response">
-                <example href="../formattedsamples/applications.xml" language="xml"/>
-                <example href="../formattedsamples/applications.json" language="javascript"/>
-            </examples>
         </doc>
         <response status="200">
-            <representation mediaType="application/xml" element="idm:applications"/>
-            <representation mediaType="application/json"/>
+            <representation mediaType="application/xml" element="idm:applications">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/applications.xml" />
+                </doc>
+            </representation>
+            <representation mediaType="application/json">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/applications.json" />
+                </doc>
+            </representation>
         </response>
         &commonFaults;
         &getFaults;
@@ -997,10 +1050,6 @@
             <xhtml:p class="shortdesc">
                 Get a list of applications's roles on all tenants.
             </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Get Application Tenant Roles Response">
-                <example href="../formattedsamples/tenantroles.xml" language="xml"/>
-                <example href="../formattedsamples/tenantroles.json" language="javascript"/>
-            </examples>
         </doc>
         <request>
             <param name="applicationId" style="query" type="xsd:string" required="false">
@@ -1011,8 +1060,16 @@
             </param>
         </request>
         <response status="200">
-            <representation mediaType="application/xml" element="idm:roles"/>
-            <representation mediaType="application/json"/>
+            <representation mediaType="application/xml" element="idm:roles">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/tenantroles.xml" />
+                </doc>
+            </representation>
+            <representation mediaType="application/json">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/tenantroles.json" />
+                </doc>
+            </representation>
         </response>
         &commonFaults;
         &getFaults;
@@ -1043,19 +1100,23 @@
             <xhtml:p class="shortdesc">
                 Get a list of aplications's global roles.
             </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Get Application Roles Response">
-                <example href="../formattedsamples/roles.xml" language="xml"/>
-                <example href="../formattedsamples/roles.json" language="javascript"/>
-            </examples>
         </doc>
         <request>
-            <param name="applicationId" style="query" type="xsd:string" required="false">
-                <doc>Filter list of aplication roles by applicationId</doc>
+            <param name="roleApplicationId" style="query" type="xsd:string" required="false">
+                <doc>Allows you filter application specific roles</doc>
             </param>
         </request>
         <response status="200">
-            <representation mediaType="application/xml" element="idm:roles"/>
-            <representation mediaType="application/json"/>
+            <representation mediaType="application/xml" element="idm:roles">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/roles.xml" />
+                </doc>
+            </representation>
+            <representation mediaType="application/json">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/roles.json" />
+                </doc>
+            </representation>
         </response>
         &commonFaults;
         &getFaults;
@@ -1091,17 +1152,18 @@
             <xhtml:p class="shortdesc">
                 Add a new role.
             </xhtml:p>
-            <xhtml:p>
-                Adds a role to the specified application.
-            </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Add Role Request">
-                <example href="../formattedsamples/addrole.xml" language="xml"/>
-                <example href="../formattedsamples/addrole.json" language="javascript"/>
-            </examples>
         </doc>
         <request>
-            <representation mediaType="application/xml" element="idm:role"/>
-            <representation mediaType="application/json"/>
+            <representation mediaType="application/xml" element="idm:role">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/addrole.xml" />
+                </doc>
+            </representation>
+            <representation mediaType="application/json">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/addrole.json" />
+                </doc>
+            </representation>
         </request>
         <response status="201">
             <param name="Location" style="header" type="xsd:string" required="true">
@@ -1116,10 +1178,6 @@
             <xhtml:p class="shortdesc">
                 Get all roles.
             </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Get Roles Response">
-                <example href="../formattedsamples/roles.xml" language="xml"/>
-                <example href="../formattedsamples/roles.json" language="javascript"/>
-            </examples>
         </doc>
         <request>
             <param name="name" style="query" type="xsd:string" required="false">
@@ -1130,8 +1188,16 @@
             </param>
         </request>
         <response status="200">
-            <representation mediaType="application/xml" element="idm:roles"/>
-            <representation mediaType="application/json"/>
+            <representation mediaType="application/xml" element="idm:roles">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/roles.xml" />
+                </doc>
+            </representation>
+            <representation mediaType="application/json">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/roles.json" />
+                </doc>
+            </representation>
         </response>
         &commonFaults;
         &getFaults;
@@ -1142,14 +1208,18 @@
             <xhtml:p class="shortdesc">
                 Get a Role
             </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Get Role Response">
-                <example href="../formattedsamples/role.xml" language="xml"/>
-                <example href="../formattedsamples/role.json" language="javascript"/>
-            </examples>
         </doc>
         <response status="200">
-            <representation mediaType="application/xml" element="idm:role"/>
-            <representation mediaType="application/json"/>
+            <representation mediaType="application/xml" element="idm:role">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/role.xml" />
+                </doc>
+            </representation>
+            <representation mediaType="application/json">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/role.json" />
+                </doc>
+            </representation>
         </response>
         &commonFaults;
         &getFaults;
@@ -1160,14 +1230,18 @@
             <xhtml:p class="shortdesc">
                 Modify an existing role.
             </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Update Role Request">
-                <example href="../formattedsamples/addrole.xml" language="xml"/>
-                <example href="../formattedsamples/addrole.json" language="javascript"/>
-            </examples>
         </doc>
         <request>
-            <representation mediaType="application/xml" element="idm:role"/>
-            <representation mediaType="application/json"/>
+            <representation mediaType="application/xml" element="idm:role">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/addrole.xml" />
+                </doc>
+            </representation>
+            <representation mediaType="application/json">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/addrole.json" />
+                </doc>              
+            </representation>
         </request>
         <response status="204" />
         &commonFaults;
@@ -1189,14 +1263,18 @@
             <xhtml:p class="shortdesc">
                 Adds a customer's identity profile.
             </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Customer Identity Profile Add Request">
-                <example href="../formattedsamples/addidentityprofile.xml" language="xml"/>
-                <example href="../formattedsamples/addidentityprofile.json" language="javascript"/>
-            </examples>
         </doc>
         <request>
-            <representation mediaType="application/xml" element="idm:customerIdentityProfile"/>
-            <representation mediaType="application/json"/>
+            <representation mediaType="application/xml" element="idm:customerIdentityProfile">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/addidentityprofile.xml" />
+                </doc>
+            </representation>
+            <representation mediaType="application/json">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/addidentityprofile.json" />
+                </doc>
+            </representation>
         </request>
         <response status="201">
             <param name="Location" style="header" type="xsd:string" required="true">
@@ -1215,14 +1293,18 @@
             <xhtml:p class="shortdesc">
                 Gets a customer's identity profile.
             </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Get Customer Identity Profile Response">
-                <example href="../formattedsamples/identityprofile.xml" language="xml"/>
-                <example href="../formattedsamples/identityprofile.json" language="javascript"/>
-            </examples>
         </doc>
         <response status="200">
-            <representation mediaType="application/xml" element="idm:customerIdentityProfile"/>
-            <representation mediaType="application/json"/>
+            <representation mediaType="application/xml" element="idm:customerIdentityProfile">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/identityprofile.xml" />
+                </doc>
+            </representation>
+            <representation mediaType="application/json">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/identityprofile.json" />
+                </doc>
+            </representation>
         </response>
         &commonFaults;
         &getFaults;
@@ -1244,14 +1326,18 @@
             <xhtml:p class="shortdesc">
                 Updates a customer's identity profile.
             </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Customer Identity Profile Update Request">
-                <example href="../formattedsamples/identityprofile.xml" language="xml"/>
-                <example href="../formattedsamples/identityprofile.json" language="javascript"/>
-            </examples>
         </doc>
         <request>
-            <representation mediaType="application/xml" element="idm:customerIdentityProfile"/>
-            <representation mediaType="application/json"/>
+            <representation mediaType="application/xml" element="idm:customerIdentityProfile">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/identityprofile.xml" />
+                </doc>
+            </representation>
+            <representation mediaType="application/json">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/identityprofile.json" />
+                </doc>
+            </representation>
         </request>
         <response status="204" />
         &commonFaults;
@@ -1282,14 +1368,18 @@
             <xhtml:p class="shortdesc">
                 Gets the password rotation policy for a customer.
             </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Password Rotation Policy Response">
-                <example href="../formattedsamples/passwordrotation.xml" language="xml"/>
-                <example href="../formattedsamples/passwordrotation.json" language="javascript"/>
-            </examples>
         </doc>
         <response status="200">
-            <representation mediaType="application/xml" element="idm:passwordRotationPolicy"/>
-            <representation mediaType="application/json"/>
+            <representation mediaType="application/xml" element="idm:passwordRotationPolicy">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/passwordrotation.xml" />
+                </doc>
+            </representation>
+            <representation mediaType="application/json">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/passwordrotation.json" />
+                </doc>
+            </representation>
         </response>
         &commonFaults;
         &getFaults;
@@ -1300,10 +1390,6 @@
             <xhtml:p class="shortdesc">
                 Gets a list of users that this customer owns.
             </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Get Users Response">
-                <example href="../formattedsamples/users.xml" language="xml"/>
-                <example href="../formattedsamples/users.json" language="javascript"/>
-            </examples>
         </doc>
         <request>
             <param name="offset" style="query" type="xsd:int">
@@ -1314,8 +1400,16 @@
             </param> 
         </request>
         <response status="200">
-            <representation mediaType="application/xml" element="idm:users"/>
-            <representation mediaType="application/json"/>
+            <representation mediaType="application/xml" element="idm:users">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/users.xml" />
+                </doc>
+            </representation>
+            <representation mediaType="application/json">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/users.json" />
+                </doc>
+            </representation>
         </response>
         &commonFaults;
         &getFaults;
@@ -1326,10 +1420,6 @@
             <xhtml:p class="shortdesc">
                 Gets a list of applications that this customer owns.
             </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Get Applications Response">
-                <example href="../formattedsamples/applications.xml" language="xml"/>
-                <example href="../formattedsamples/applications.json" language="javascript"/>
-            </examples>
         </doc>
         <request>
             <param name="offset" style="query" type="xsd:int">
@@ -1340,8 +1430,16 @@
             </param> 
         </request>
         <response status="200">
-            <representation mediaType="application/xml" element="idm:applications"/>
-            <representation mediaType="application/json"/>
+            <representation mediaType="application/xml" element="idm:applications">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/applications.xml" />
+                </doc>
+            </representation>
+            <representation mediaType="application/json">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/applications.json" />
+                </doc>               
+            </representation>
         </response>
         &commonFaults;
         &getFaults;
@@ -1353,14 +1451,18 @@
             <xhtml:p class="shortdesc">
                 Get password rules.
             </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Get Password Rules Response">
-                <example href="../formattedsamples/password_rule_results.xml" language="xml"/>
-                <example href="../formattedsamples/password_rule_results.json" language="javascript"/>
-            </examples>
         </doc>
         <response status="200">
-            <representation mediaType="application/xml" element="idm:passwordRuleResults"/>
-            <representation mediaType="application/json"/>
+            <representation mediaType="application/xml" element="idm:passwordRuleResults">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/password_rule_results.xml" />
+                </doc>
+            </representation>
+            <representation mediaType="application/json">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/password_rule_results.json" />
+                </doc>
+            </representation>
         </response>
         &commonFaults;
         &getFaults;
@@ -1371,22 +1473,30 @@
             <xhtml:p class="shortdesc">
                Validate password to ensure it conforms to password rules.
             </xhtml:p>
-            <examples xmlns="http://docs.rackspace.com/api" title="Password Validation Request">
-                <example href="../formattedsamples/user_password.xml" language="xml"/>
-                <example href="../formattedsamples/user_password.json" language="javascript"/>
-            </examples>
-            <examples xmlns="http://docs.rackspace.com/api" title="Password Validation Response">
-                <example href="../formattedsamples/password_validation.xml" language="xml"/>
-                <example href="../formattedsamples/password_validation.json" language="javascript"/>
-            </examples>
         </doc>
         <request>
-            <representation mediaType="application/xml" element="idm:userPassword"/>
-            <representation mediaType="application/json"/>
+            <representation mediaType="application/xml" element="idm:userPassword">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/user_password.xml" />
+                </doc>
+            </representation>
+            <representation mediaType="application/json">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/user_password.json" />
+                </doc>
+            </representation>
         </request>
         <response status="200" >
-            <representation mediaType="application/xml" element="idm:customerIdentityProfile"/>
-            <representation mediaType="application/json"/>
+            <representation mediaType="application/xml" element="idm:passwordValidation">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/password_validation.xml" />
+                </doc>
+            </representation>
+            <representation mediaType="application/json">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/password_validation.json" />
+                </doc>        
+            </representation>
         </response>
         &commonFaults;
         &getFaults;

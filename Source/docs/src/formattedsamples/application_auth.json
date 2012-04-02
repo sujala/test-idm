@@ -1,14 +1,15 @@
-{"auth":{
-  "accessToken": {
-    "id": "ab48a9efdfedb23ty3494",
-    "expiresIn": 3600
-  },
-  "refreshToken": {
-    "id": "8792gdfskjbadf98y234r"
-  },
-  "user" : {
-    "clientId": "781hhh47kj34kj3434",
-    "customerId": "RCN-000-000-000",
-  }
-  }
+{
+   "auth":{
+  	"accessToken": {
+    	    "id": "ab48a9efdfedb23ty3494",
+    	    "expiresIn": 3600
+ 	},
+  	"refreshToken": {
+            "id": "8792gdfskjbadf98y234r"
+        },
+  	"user" : {
+    	     "clientId": "8972348923400fdshasdf",
+             "customerId": "RCN-000-000-000",
+        }
+   } 
 }

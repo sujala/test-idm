@@ -7,10 +7,10 @@
   id="000"
   name="Customer Idm"
   canonical-name="idm"
-  dns-zone="idm.api.rackspace.com"
+  dns-zone="rackidentity.api.rackspacecloud.com"
   service-model="Utility">
   
-    <atom:link rel="self" href="https://idm.api.rackspace.com" />
+    <atom:link rel="self" href="https://rackidentity.api.rackspacecloud.com" />
     
     <short-description>Allows users access Rackspace resources and systems.</short-description>
     
@@ -26,8 +26,8 @@
         </media-type>
       </media-types>
       
-      <atom:link rel="self" href="${baseUrl}v1.0"/>
-      <atom:link rel="describedby" type="application/vnd.sun.wadl+xml" href="${baseUrl}v1.0/application.wadl" title="Wadl" />
-      <atom:link rel="documentation" href="${baseUrl}docs/v1.0/developerguide.pdf" title="Developer Guide"/>
+      <atom:link rel="self" href="https://rackidentity.api.rackspacecloud.com/v1.0"/>
+      <atom:link rel="describedby" type="application/vnd.sun.wadl+xml" href="https://rackidentity.api.rackspacecloud.com/v1.0/application.wadl" title="Wadl" />
+      <atom:link rel="documentation" href="https://rackidentity.api.rackspacecloud.com/docs/v1.0/developerguide.pdf" title="Developer Guide"/>
    </contract>
 </service-profile>
