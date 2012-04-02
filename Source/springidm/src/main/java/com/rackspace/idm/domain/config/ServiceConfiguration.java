@@ -111,12 +111,11 @@ public class ServiceConfiguration {
         return new WadlTrie();
     }
 
-    @Bean
-    public InputValidator inputValidator() {
-        final Validator validator = Validation.buildDefaultValidatorFactory()
-            .getValidator();
-        return new InputValidator(validator);
-    }
+//    @Bean
+//    public InputValidator inputValidator() {
+//        final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
+//        return new InputValidator(validator);
+//    }
 
     @Bean
     public PasswordComplexityService passwordComplexityService() {

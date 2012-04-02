@@ -1,19 +1,17 @@
 package com.rackspace.idm.api.resource;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
-
 import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.validation.InputValidator;
 import com.sun.jersey.core.provider.EntityHolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ParentResource {
 
@@ -21,7 +19,6 @@ public class ParentResource {
     
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     
-    @Autowired
     public ParentResource(InputValidator inputValidator) {
     	this.inputValidator = inputValidator;
     }

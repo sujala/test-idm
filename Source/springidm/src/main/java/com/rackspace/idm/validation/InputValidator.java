@@ -1,18 +1,20 @@
 package com.rackspace.idm.validation;
 
-import java.util.Set;
+import com.rackspace.idm.api.error.ApiError;
+import org.springframework.stereotype.Component;
 
 import javax.validation.ConstraintViolation;
+import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.ws.rs.core.Response;
+import java.util.Set;
 
-import com.rackspace.idm.api.error.ApiError;
-
+@Component
 public class InputValidator {
     private Validator validator;
 
-    public InputValidator(Validator validator) {
-        this.validator = validator;
+    public InputValidator() {
+        this.validator = Validation.buildDefaultValidatorFactory().getValidator();
     }
 
     public <T> ApiError validate(T paramObj, Class<?>... validationGroup) {
