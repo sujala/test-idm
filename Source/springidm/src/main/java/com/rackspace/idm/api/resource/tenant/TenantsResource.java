@@ -67,18 +67,17 @@ public class TenantsResource extends ParentResource {
 	}
 
     @POST
-    @Path("{tenantId}")
+    @Path("")
     public Response createTenant(
         @HeaderParam("X-Auth-Token") String authHeader,
         @PathParam("userId") String userId,
         @QueryParam("applicationId") String applicationId,
-        @PathParam("tenantId") String tenantId,
         Tenant tenant) {
 
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
 
-        validateTenantId(tenantId);
-        updateTenantFields(tenant, tenantId);
+        validateTenantId(tenant.getId());
+        updateTenantFields(tenant, tenant.getId());
 
         tenantService.addTenant(tenantConverter.toTenantDO(tenant));
 
@@ -158,6 +157,9 @@ public class TenantsResource extends ParentResource {
                 String errMsg = String.format("Invalid Tenant id/name: '%s'.", tenantId);
                 throw new WebApplicationException(new BadRequestException(errMsg), 404);
             }
+        } else {
+            String errMsg = String.format("Invalid Tenant id/name: '%s'.", tenantId);
+            throw new WebApplicationException(new BadRequestException(errMsg), 404);
         }
 	}
 
