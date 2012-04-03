@@ -40,8 +40,9 @@ public class UserConverterCloudV20 {
         
         jaxbUser.setId(user.getId());
         jaxbUser.setName(user.getUsername());
-        jaxbUser.setRoles(this.roleConverterCloudV20.toRoleListJaxb(roles));
-        
+        if(roles != null){
+            jaxbUser.setRoles(this.roleConverterCloudV20.toRoleListJaxb(roles));
+        }
         return jaxbUser;
     }
     

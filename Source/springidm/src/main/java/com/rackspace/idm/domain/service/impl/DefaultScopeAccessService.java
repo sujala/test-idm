@@ -133,10 +133,11 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         }
         else {
             ImpersonatedScopeAccess scopeAccess = (ImpersonatedScopeAccess)existingAccess;
-            if (!scopeAccess.isAccessTokenExpired(new DateTime()))
+            if (!scopeAccess.isAccessTokenExpired(new DateTime()) && scopeAccess.getImpersonatingToken() == impersonatingToken)
                 return scopeAccess;
             scopeAccess.setAccessTokenString(this.generateToken());
             scopeAccess.setAccessTokenExp(new DateTime().plusSeconds(getDefaultImpersonatedTokenExpirationSeconds()).toDate());
+            scopeAccess.setImpersonatingToken(impersonatingToken);
             this.scopeAccessDao.updateScopeAccess(scopeAccess);
             return scopeAccess;
         }
@@ -553,6 +554,9 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public ScopeAccess getScopeAccessByAccessToken(String accessToken) {
         logger.debug("Getting ScopeAccess by Access Token {}", accessToken);
+        if (accessToken == null){
+            throw new NotFoundException("Invalid accessToken; Token cannot be null");
+        }
         final ScopeAccess scopeAccess = this.scopeAccessDao.getScopeAccessByAccessToken(accessToken);
         logger.debug("Got ScopeAccess {} by Access Token {}", scopeAccess, accessToken);
         return scopeAccess;

@@ -413,9 +413,11 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
         }
         JSONArray roleInner = new JSONArray();
         userInner.put(JSONConstants.ROLES, roleInner);
-        RoleList roleList = user.getRoles();
-        for (Role role : roleList.getRole()){
-            roleInner.add(getRole(role));
+        if(user.getRoles() != null){
+            RoleList roleList = user.getRoles();
+            for (Role role : roleList.getRole()){
+                roleInner.add(getRole(role));
+            }
         }
         return userInner;
     }

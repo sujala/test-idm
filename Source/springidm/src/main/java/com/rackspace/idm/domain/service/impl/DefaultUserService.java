@@ -577,6 +577,37 @@ public class DefaultUserService implements UserService {
             }
         }
     }
+    @Override
+    public User getUserByScopeAccess(ScopeAccess scopeAccess) throws Exception{
+        User user = null;
+        if (scopeAccess instanceof RackerScopeAccess) {
+            RackerScopeAccess rackerScopeAccess = (RackerScopeAccess) scopeAccess;
+            user = getRackerByRackerId((rackerScopeAccess.getRackerId()));
+        } else if (scopeAccess instanceof ImpersonatedScopeAccess) {
+            ImpersonatedScopeAccess impersonatedScopeAccess = (ImpersonatedScopeAccess) scopeAccess;
+            if (impersonatedScopeAccess.getRackerId() != null) {
+                Racker impersonatingRacker = getRackerByRackerId(impersonatedScopeAccess.getRackerId());
+                impersonatingRacker.setId(impersonatingRacker.getRackerId());
+                impersonatingRacker.setUsername(impersonatingRacker.getUsername());
+                user = impersonatingRacker;
+                user.setEnabled(true);
+            } else {
+                user = getUser(impersonatedScopeAccess.getUsername());
+            }
+        } else if (scopeAccess instanceof UserScopeAccess) {
+             UserScopeAccess userScopeAccess = (UserScopeAccess) scopeAccess;
+            user = getUser(userScopeAccess.getUsername());
+        }else{
+            throw new Exception("Invalid getUserByScopeAccess, scopeAccess cannot provide information to get a user");
+        }
+        if(user == null){
+            throw  new NotFoundException("User not found with scopeAccess: " + scopeAccess.toString());
+        }
+        if (user.isDisabled()) {
+            throw new NotFoundException("Token not found.");
+        }
+        return user;
+    }
 
     private boolean isPasswordRulesEnforced() {
         return config.getBoolean("password.rules.enforced", true);

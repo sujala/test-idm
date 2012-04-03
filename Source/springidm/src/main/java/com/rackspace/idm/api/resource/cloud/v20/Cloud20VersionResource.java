@@ -91,7 +91,7 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("tokenId") String tokenId,
-            @QueryParam("belongsTo") String belongsTo) throws IOException {
+            @QueryParam("belongsTo") String belongsTo) throws Exception, JAXBException {
         return getCloud20Service().validateToken(httpHeaders, authToken, tokenId, belongsTo).build();
     }
 
@@ -101,7 +101,7 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("tokenId") String tokenId,
-            @QueryParam("belongsTo") String belongsTo) throws IOException {
+            @QueryParam("belongsTo") String belongsTo) throws Exception, JAXBException {
         return getCloud20Service().validateToken(httpHeaders, authToken, tokenId, belongsTo).build();
     }
 

@@ -57,6 +57,8 @@ public interface UserService {
     
     User loadUser(String userId);
 
+    User getUserByScopeAccess(ScopeAccess scopeAccess)throws Exception;
+
     boolean isUsernameUnique(String username);
     
     void setUserPassword(String userId, PasswordCredentials userCred, ScopeAccess token);

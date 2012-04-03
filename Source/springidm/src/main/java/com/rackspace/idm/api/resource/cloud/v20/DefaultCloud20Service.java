@@ -1430,14 +1430,14 @@ public class DefaultCloud20Service implements Cloud20Service {
         String impersonatingToken = "";
         User user;
         String impersonatingUsername = impersonationRequest.getUser().getUsername();
-        try{
+        try {
             user = checkAndGetUserByName(impersonatingUsername);
-        } catch (NotFoundException ex){
+        } catch (NotFoundException ex) {
             user = null;
         }
         if (user == null) {
             // Get from cloud.
-            impersonatingToken = delegateCloud20Service.impersonateUser(impersonatingUsername,config.getString("ga.userName"), config.getString("ga.apiKey"));
+            impersonatingToken = delegateCloud20Service.impersonateUser(impersonatingUsername, config.getString("ga.userName"), config.getString("ga.apiKey"));
         } else {
             UserScopeAccess impAccess = (UserScopeAccess) scopeAccessService.getDirectScopeAccessForParentByClientId(user.getUniqueId(), getCloudAuthClientId());
             impersonatingToken = impAccess.getAccessTokenString();
@@ -1850,11 +1850,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     // Core Admin Token Methods
-
     @Override
     public ResponseBuilder validateToken(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo)
             throws IOException {
-
         try {
             //TODO: This token can be a Racker, Service or User of Proper Level
             verifyServiceAdminLevelAccess(authToken);
@@ -1869,66 +1867,53 @@ public class DefaultCloud20Service implements Cloud20Service {
                 String username = "";
                 String impersonatedToken = "";
                 User impersonator = null;
+                User user = null;
                 List<TenantRole> roles = null;
                 if (sa instanceof UserScopeAccess) {
                     UserScopeAccess usa = (UserScopeAccess) sa;
-                    username = usa.getUsername();
-                    
-                    roles = this.tenantService.getTenantRolesForScopeAccess(usa);
-
+                    user = userService.getUserByScopeAccess(usa);
+                    roles = getRolesForScopeAccess(sa);
+                    validateBelongsTo(belongsTo, roles);
+                    access.setUser(userConverterCloudV20.toUserForAuthenticateResponse(user, roles));
                 } else if (sa instanceof ImpersonatedScopeAccess) {
                     ImpersonatedScopeAccess isa = (ImpersonatedScopeAccess) sa;
-                    username = isa.getImpersonatingUsername();
-                    impersonatedToken = isa.getImpersonatingToken();
-
-                    roles = this.tenantService.getTenantRolesForScopeAccess(isa);
-
-                    if (isa.getRackerId() != null) {
-                        impersonator = userService.getRackerByRackerId(isa.getRackerId());
-                        impersonator.setId(isa.getRackerId());
-                        impersonator.setUsername(isa.getRackerId());
-                    } else
-                        impersonator = userService.getUser(isa.getUsername());
-                }
-
-                User user = this.userService.getUser(username);
-                if (user == null) {
-                    throw new NotFoundException("User not found");
-                }
-                if (user.isDisabled()) {
-                    throw new NotFoundException("Token not found.");
-                }
-
-
-                if (roles != null && roles.size() > 0) {
-                    access.setUser(this.userConverterCloudV20.toUserForAuthenticateResponse(user, roles));
-                }
-
-                if (!belongsTo(belongsTo, roles)) {
-                    String errMsg = String.format("Token doesn't belong to Tenant with Id/Name: '%s'", belongsTo);
-                    logger.warn(errMsg);
-                    throw new NotFoundException(errMsg);
-                }
-
-                if (sa instanceof ImpersonatedScopeAccess && impersonator != null) {
+                    impersonator = userService.getUserByScopeAccess(isa);
+                    user = userService.getUser(isa.getImpersonatingUsername());
+                    roles = tenantService.getTenantRolesForUser(user, null);
+                    validateBelongsTo(belongsTo, roles);
                     ImpersonationResponse impersonationResponse = new ImpersonationResponse();
-                    impersonationResponse.setToken(access.getToken());
-                    impersonationResponse.setUser(access.getUser());
-
-                    // Get impersonator global roles
+                    impersonationResponse.setToken(tokenConverterCloudV20.toToken(isa));
+                    impersonationResponse.setUser(userConverterCloudV20.toUserForAuthenticateResponse(user, roles));
                     List<TenantRole> impRoles = this.tenantService.getGlobalRolesForUser(impersonator, null);
-                    //if (impRoles != null && impRoles.size() > 0) {
-                    impersonationResponse.setImpersonator(this.userConverterCloudV20.toUserForAuthenticateResponse(impersonator, roles));
-                    //}
+                    impersonationResponse.setImpersonator(this.userConverterCloudV20.toUserForAuthenticateResponse(impersonator, impRoles));
                     return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtRaxgaV1Factory().createAccess(impersonationResponse));
-
                 }
+
+
             }
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createAccess(access));
 
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
+    }
+
+    private void validateBelongsTo(String belongsTo, List<TenantRole> roles) {
+        if (!belongsTo(belongsTo, roles)) {
+            String errMsg = String.format("Token doesn't belong to Tenant with Id/Name: '%s'", belongsTo);
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+    }
+
+    public List<TenantRole> getRolesForScopeAccess(ScopeAccess scopeAccess) {
+        List<TenantRole> roles = null;
+        if (scopeAccess instanceof UserScopeAccess) {
+            roles = this.tenantService.getTenantRolesForScopeAccess(scopeAccess);
+        } else if (scopeAccess instanceof ImpersonatedScopeAccess) {
+            roles = this.tenantService.getTenantRolesForScopeAccess(scopeAccess);
+        }
+        return roles;
     }
 
     private Response.ResponseBuilder badRequestExceptionResponse(String message) {
@@ -1955,10 +1940,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             return tenantConflictExceptionResponse(ex.getMessage());
         } else if (ex instanceof UserDisabledException) {
             return userDisabledExceptionResponse(ex.getMessage());
-        } else if( ex instanceof StalePasswordException){
+        } else if (ex instanceof StalePasswordException) {
             return badRequestExceptionResponse(ex.getMessage());
-        }
-        else {
+        } else {
             return serviceExceptionResponse();
         }
     }

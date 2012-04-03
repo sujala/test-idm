@@ -1,14 +1,22 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_ga.v1.ImpersonationRequest;
+import com.rackspace.docs.identity.api.ext.rax_ga.v1.ImpersonationResponse;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.JSONConstants;
+import com.rackspace.idm.api.converter.cloudv20.TokenConverterCloudV20;
+import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
 import com.rackspace.idm.api.resource.cloud.CloudClient;
 import com.rackspace.idm.api.resource.cloud.CloudUserExtractor;
+import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
+import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess;
+import com.rackspace.idm.domain.entity.ScopeAccess;
+import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.TokenService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.ApiException;
@@ -39,6 +47,7 @@ import java.io.StringWriter;
 import java.net.URLEncoder;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -62,10 +71,22 @@ public class DelegateCloud20Service implements Cloud20Service {
     private TokenService tokenService;
 
     @Autowired
+    private TenantService tenantService;
+
+    @Autowired
     private ScopeAccessService scopeAccessService;
 
     @Autowired
     private DefaultCloud20Service defaultCloud20Service;
+
+    @Autowired
+    private UserConverterCloudV20 userConverterCloudV20;
+
+    @Autowired
+    private TokenConverterCloudV20 tokenConverterCloudV20;
+
+    @Autowired
+    private JAXBObjectFactories OBJ_FACTORIES;
 
     @Autowired
     private DummyCloud20Service dummyCloud20Service;
@@ -132,22 +153,40 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder validateToken(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo)
-            throws IOException {
-        boolean tokenExists;
-        //Quick Fix
-        try {
-            tokenExists = tokenService.doesTokenHaveAccessToApplication(tokenId, getCloudAuthClientId());
-        } catch (NotFoundException ex) {
-            tokenExists = false;
-        }
-        if (isCloudAuthRoutingEnabled() && !tokenExists) {
+            throws Exception, JAXBException {
+        ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByAccessToken(tokenId);
+        if (isCloudAuthRoutingEnabled() && scopeAccess == null) {
             String request = getCloudAuthV20Url() + "tokens/" + tokenId;
             HashMap<String, Object> params = new HashMap<String, Object>();
             params.put("belongsTo", belongsTo);
             request = appendQueryParams(request, params);
             return cloudClient.get(request, httpHeaders);
         }
+        if (scopeAccess instanceof ImpersonatedScopeAccess) {
+            ImpersonatedScopeAccess impersonatedScopeAccess = (ImpersonatedScopeAccess) scopeAccess;
+            ScopeAccess impersonatedUserScopeAccess = scopeAccessService.getScopeAccessByAccessToken(impersonatedScopeAccess.getImpersonatingToken());
+            if (impersonatedUserScopeAccess == null) {
+                return validateImpersonatedTokenFromCloud(httpHeaders, impersonatedScopeAccess.getImpersonatingToken(), belongsTo, impersonatedScopeAccess);
+            } else {
+                return defaultCloud20Service.validateToken(httpHeaders, authToken, tokenId, belongsTo);
+            }
+        }
         return defaultCloud20Service.validateToken(httpHeaders, authToken, tokenId, belongsTo);
+    }
+
+    private ResponseBuilder validateImpersonatedTokenFromCloud(HttpHeaders httpHeaders, String impersonatedCloudToken, String belongsTo, ImpersonatedScopeAccess impersonatedScopeAccess) throws Exception, JAXBException {
+        String gaXAuthToken = getXAuthToken(config.getString("ga.userName"), config.getString("ga.apiKey")).getToken().getId();
+        httpHeaders.getRequestHeaders().get("x-auth-token").set(0, gaXAuthToken);
+        httpHeaders.getRequestHeaders().get("accept").set(0, "application/xml");
+        Response cloudValidateResponse = checkToken(httpHeaders, gaXAuthToken, impersonatedCloudToken, belongsTo).build();
+        AuthenticateResponse validateResponse = (AuthenticateResponse) unmarshallResponse(cloudValidateResponse.getEntity().toString(), AuthenticateResponse.class);
+        ImpersonationResponse impersonationResponse = new ImpersonationResponse();
+        impersonationResponse.setUser(validateResponse.getUser());
+        impersonationResponse.setToken(validateResponse.getToken());
+        com.rackspace.idm.domain.entity.User impersonator = userService.getUserByScopeAccess(impersonatedScopeAccess);
+        List<TenantRole> impRoles = tenantService.getGlobalRolesForUser(impersonator, null);
+        impersonationResponse.setImpersonator(this.userConverterCloudV20.toUserForAuthenticateResponse(impersonator, impRoles));
+        return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtRaxgaV1Factory().createAccess(impersonationResponse));
     }
 
     @Override
