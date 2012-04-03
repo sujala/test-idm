@@ -62,6 +62,7 @@ public class Cloud20VersionResourceTest extends AbstractAroundClassJerseyTest {
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
     }
 
+    @Ignore
     @Test
     public void getTenants_admin__returns200() throws Exception {
         String token = getAuthToken("cmarin2", "Password1");

@@ -2,10 +2,10 @@ package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_ga.v1.ImpersonationRequest;
 import com.rackspace.idm.JSONConstants;
+import com.rackspace.idm.exception.BadRequestException;
 import org.apache.commons.io.IOUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 import org.openstack.docs.identity.api.v2.User;
 
 import javax.ws.rs.Consumes;
@@ -64,9 +64,10 @@ public class JSONReaderForImpersonation  implements MessageBodyReader<Impersonat
                 }
                 request.setUser(user);
             }
-        } catch (ParseException e) {
+        } catch (Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
+            throw new BadRequestException("Invalid request body");
         }
 
         return request;

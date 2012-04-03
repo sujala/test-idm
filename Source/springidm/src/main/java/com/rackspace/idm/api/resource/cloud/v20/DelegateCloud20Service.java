@@ -1079,7 +1079,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         return (ApiKeyCredentials) unmarshallResponse(credsResponse.getEntity().toString(), ApiKeyCredentials.class);
     }
 
-    public User getUserByName(String userName, String xAuthToken) throws IOException {
+    public User getCloudUserByName(String userName, String xAuthToken) throws IOException {
         HashMap<String, String> headers = new HashMap<String, String>();
         headers.put("Content-Type", "application/xml");
         headers.put("X-Auth-Token", xAuthToken);
@@ -1091,15 +1091,42 @@ public class DelegateCloud20Service implements Cloud20Service {
         return (User) unmarshallResponse(userResponse.getEntity().toString(), User.class);
     }
 
+    public RoleList getGlobalRolesForCloudUser(String userId, String xAuthToken) throws IOException {
+        HashMap<String, String> headers = new HashMap<String, String>();
+        headers.put("Content-Type", "application/xml");
+        headers.put("X-Auth-Token", xAuthToken);
+        headers.put("Accept", "application/xml");
+        Response userResponse = cloudClient.get(getCloudAuthV20Url() + "users/" + userId + "/roles", headers).build();
+        if (userResponse.getStatus() != 200 && userResponse.getStatus() != 203) {
+            throw new ApiException(userResponse.getStatus(), "", "");
+        }
+        return (RoleList) unmarshallResponse(userResponse.getEntity().toString(), RoleList.class);
+    }
+
+
     public String impersonateUser(String userName, String impersonatorName, String impersonatorKey) throws JAXBException, IOException {
         String impersonatorXAuthToken = getXAuthToken(impersonatorName, impersonatorKey)
                 .getToken()
                 .getId();
-        User user = getUserByName(userName, impersonatorXAuthToken);
+        User user = getCloudUserByName(userName, impersonatorXAuthToken);
+        RoleList globalRolesForCloudUser = getGlobalRolesForCloudUser(user.getId(), impersonatorXAuthToken);
+        if (!isValidCloudImpersonatee(globalRolesForCloudUser)){
+            throw new BadRequestException("User cannot be impersontated; No valid impersonation roles");
+        }
         String userApiKey = getUserApiCredentials(user.getId(), impersonatorXAuthToken).getApiKey();
         String userXAuthToken = getXAuthToken(userName, userApiKey)
                 .getToken()
                 .getId();
         return userXAuthToken;
+    }
+
+    public boolean isValidCloudImpersonatee(RoleList userRoles) {
+        for (Role role : userRoles.getRole()) {
+            String name = role.getName();
+            if (name.equals("identity:default") || name.equals("identity:user-admin")) {
+                return true;
+            }
+        }
+        return false;
     }
 }

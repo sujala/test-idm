@@ -1426,25 +1426,26 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder impersonate(HttpHeaders httpHeaders, String authToken, ImpersonationRequest impersonationRequest) throws IOException, JAXBException {
         //verifyServiceAdminLevelAccess(authToken);
         verifyRackerAccess(authToken);
+        validateImpersonationRequest(impersonationRequest);
 
         String impersonatingToken = "";
-        User user;
         String impersonatingUsername = impersonationRequest.getUser().getUsername();
-        try {
-            user = checkAndGetUserByName(impersonatingUsername);
-        } catch (NotFoundException ex) {
-            user = null;
-        }
+
+        User user = userService.getUser(impersonatingUsername);
         if (user == null) {
             // Get from cloud.
             impersonatingToken = delegateCloud20Service.impersonateUser(impersonatingUsername, config.getString("ga.userName"), config.getString("ga.apiKey"));
         } else {
+            if (!isValidImpersonatee(user)) {
+                throw new BadRequestException("User cannot be impersontated; No valid impersonation roles assigned");
+            }
             UserScopeAccess impAccess = (UserScopeAccess) scopeAccessService.getDirectScopeAccessForParentByClientId(user.getUniqueId(), getCloudAuthClientId());
             impersonatingToken = impAccess.getAccessTokenString();
         }
 
-        if (impersonatingToken == "" || impersonatingUsername == "")
+        if (impersonatingToken == "" || impersonatingUsername == "") {
             throw new BadRequestException("Invalid user");
+        }
 
         ScopeAccess sa = checkAndGetToken(authToken);
         ScopeAccess usa;
@@ -1461,6 +1462,28 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         ImpersonationResponse auth = authConverterCloudV20.toImpersonationResponse(usa);
         return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtRaxgaV1Factory().createAccess(auth));
+    }
+
+    private void validateImpersonationRequest(ImpersonationRequest impersonationRequest) {
+        if (impersonationRequest.getUser() == null){
+            throw new BadRequestException("User cannot be null for impersonation request");
+        }else if (impersonationRequest.getUser().getUsername() == null){
+            throw new BadRequestException("Username cannot be null for impersonation request");
+        }else if(impersonationRequest.getUser().getUsername().isEmpty() || StringUtils.isBlank(impersonationRequest.getUser().getUsername())){
+            throw new BadRequestException("Username cannot be empty or blank");
+        }
+
+    }
+
+    public boolean isValidImpersonatee(User user) {
+        List<TenantRole> tenantRolesForUser = tenantService.getGlobalRolesForUser(user, null);
+        for (TenantRole role : tenantRolesForUser) {
+            String name = role.getName();
+            if (name.equals("identity:default") || name.equals("identity:user-admin")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
@@ -2112,7 +2135,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
         }
         if (!authorizationService.authorizeRacker(rackerScopeAccess)) {
-            String errMsg = "Access is denied not a Racker";
+            String errMsg = "Access is denied";
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
