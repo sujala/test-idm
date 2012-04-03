@@ -5,7 +5,9 @@ import com.rackspace.idm.domain.dao.CustomerDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientGroup;
+import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import org.junit.Before;
 import org.junit.Test;
@@ -90,5 +92,30 @@ public class DefaultApplicationServiceTest {
         when(userDao.getUserByUsername("username")).thenReturn(new User());
         when(customerDao.getCustomerByCustomerId("customerId")).thenReturn(null);
         service.removeUserFromClientGroup("username", clientGroup);
+    }
+
+    @Test
+    public void updateClient_callsClientDao_updateClient() throws Exception {
+        Application client = new Application();
+        service.updateClient(client);
+        verify(clientDao).updateClient(client);
+    }
+
+    @Test(expected = NotFoundException.class)
+    public void addClientRole_throwsNotFoundException_whenClientIsNotFound() throws Exception {
+        ClientRole role = new ClientRole();
+        role.setClientId("clientId");
+        when(clientDao.getClientByClientId("clientId")).thenReturn(null);
+        service.addClientRole(role);
+    }
+
+    @Test(expected = DuplicateException.class)
+    public void addClientRole_throwsDuplicateException_whenRoleIsNotFound() throws Exception {
+        ClientRole role = new ClientRole();
+        role.setClientId("clientId");
+        role.setName("role");
+        when(clientDao.getClientByClientId("clientId")).thenReturn(new Application());
+        when(clientDao.getClientRoleByClientIdAndRoleName("clientId","role")).thenReturn(new ClientRole());
+        service.addClientRole(role);
     }
 }
