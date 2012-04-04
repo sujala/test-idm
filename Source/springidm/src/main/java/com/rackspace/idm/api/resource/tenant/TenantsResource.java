@@ -90,7 +90,7 @@ public class TenantsResource extends ParentResource {
 
         com.rackspace.idm.domain.entity.Tenant tenantObject = tenantService.getTenant(tenant.getName());
 
-        return Response.ok(objectFactory.createTenant(tenantConverter.toTenant(tenantObject))).build();
+        return Response.ok(objectFactory.createTenant(tenantConverter.toTenant(tenantObject))).status(HttpServletResponse.SC_CREATED).build();
     }
 
 	@GET
