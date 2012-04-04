@@ -131,11 +131,7 @@ public class TokensResource extends ParentResource {
 
 
         ScopeAccess scopeAccess = scopeAccessService.getAccessTokenByAuthHeader(authHeader);
-        boolean isRackspaceClient = authorizationService.authorizeRackspaceClient(scopeAccess);
-        //verify if caller is a rackspace client, idm client or super admin
-        if(!isRackspaceClient){
-            authorizationService.verifyIdmSuperAdminAccess(authHeader);
-        }
+        authorizationService.authorizeIdmSuperAdminOrRackspaceClient(scopeAccess);
 
         logger.debug("Validating Access Token: {}", tokenString);
         AuthData authData = authenticationService.getAuthDataFromToken(tokenString);

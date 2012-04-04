@@ -37,7 +37,10 @@ import com.rackspace.idm.api.resource.ParentResource;
 
 import com.rackspace.idm.audit.Audit;
 
+import com.rackspace.idm.domain.entity.ScopeAccess;
+
 import com.rackspace.idm.domain.service.AuthorizationService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TenantService;
 
 import com.rackspace.idm.exception.BadRequestException;
@@ -50,6 +53,7 @@ import com.rackspace.idm.validation.InputValidator;
 public class TenantsResource extends ParentResource {
 
 	private final AuthorizationService authorizationService;
+    private final ScopeAccessService scopeAccessService;
     private final TenantService tenantService;
     private final TenantConverter tenantConverter;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -58,12 +62,14 @@ public class TenantsResource extends ParentResource {
     @Autowired
 	public TenantsResource(InputValidator inputValidator,
         AuthorizationService authorizationService,
+        ScopeAccessService scopeAccessService,
         TenantService tenantService,
         TenantConverter tenantConverter) {
 		super(inputValidator);
         this.authorizationService = authorizationService;
         this.tenantService = tenantService;
         this.tenantConverter = tenantConverter;
+        this.scopeAccessService = scopeAccessService;
 	}
 
     @POST
@@ -74,7 +80,8 @@ public class TenantsResource extends ParentResource {
         @QueryParam("applicationId") String applicationId,
         Tenant tenant) {
 
-        authorizationService.verifyIdmSuperAdminAccess(authHeader);
+        ScopeAccess scopeAccess = scopeAccessService.getAccessTokenByAuthHeader(authHeader);
+        authorizationService.authorizeIdmSuperAdminOrRackspaceClient(scopeAccess);
 
         validateTenantId(tenant.getId());
         updateTenantFields(tenant, tenant.getId());
@@ -94,7 +101,9 @@ public class TenantsResource extends ParentResource {
         @QueryParam("applicationId") String applicationId,
         @PathParam("tenantId") String tenantId) {
 
-        authorizationService.verifyIdmSuperAdminAccess(authHeader);
+
+        ScopeAccess scopeAccess = scopeAccessService.getAccessTokenByAuthHeader(authHeader);
+        authorizationService.authorizeIdmSuperAdminOrRackspaceClient(scopeAccess);
 
         com.rackspace.idm.domain.entity.Tenant tenant;
 
@@ -117,6 +126,9 @@ public class TenantsResource extends ParentResource {
         @QueryParam("applicationId") String applicationId,
         @PathParam("tenantId") String tenantId) {
 
+        ScopeAccess scopeAccess = scopeAccessService.getAccessTokenByAuthHeader(authHeader);
+        authorizationService.authorizeIdmSuperAdminOrRackspaceClient(scopeAccess);
+
         tenantService.deleteTenant(tenantId);
 
         return Response.noContent().build();
@@ -130,6 +142,9 @@ public class TenantsResource extends ParentResource {
         @QueryParam("applicationId") String applicationId,
         @PathParam("tenantId") String tenantId,
         Tenant tenant) {
+
+        ScopeAccess scopeAccess = scopeAccessService.getAccessTokenByAuthHeader(authHeader);
+        authorizationService.authorizeIdmSuperAdminOrRackspaceClient(scopeAccess);
 
         updateTenantFields(tenant, tenantId);
         com.rackspace.idm.domain.entity.Tenant tenantObject = checkAndGetTenant(tenantId);

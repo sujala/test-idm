@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.user;
 
 import com.rackspace.idm.domain.entity.ClientRole;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
@@ -130,7 +131,8 @@ public class UserGlobalRoleResource {
 			@PathParam("tenantId") String tenantId,
 			@PathParam("roleId") String roleId) {
 
-        authorizationService.verifyIdmSuperAdminAccess(authHeader);
+        ScopeAccess scopeAccess = scopeAccessService.getAccessTokenByAuthHeader(authHeader);
+        authorizationService.authorizeIdmSuperAdminOrRackspaceClient(scopeAccess);
 
 		User user = userService.loadUser(userId);
 
@@ -162,7 +164,8 @@ public class UserGlobalRoleResource {
 			@PathParam("tenantId") String tenantId,
 			@PathParam("roleId") String roleId) {
 
-        authorizationService.verifyIdmSuperAdminAccess(authHeader);
+        ScopeAccess scopeAccess = scopeAccessService.getAccessTokenByAuthHeader(authHeader);
+        authorizationService.authorizeIdmSuperAdminOrRackspaceClient(scopeAccess);
 
 		User user = this.userService.loadUser(userId);
 

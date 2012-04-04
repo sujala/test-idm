@@ -60,7 +60,8 @@ public class UsersResource extends ParentResource {
         @QueryParam("limit") Integer limit,
         @HeaderParam("X-Auth-Token") String authHeader) {
 
-        authorizationService.verifyIdmSuperAdminAccess(authHeader);
+        ScopeAccess scopeAccess = scopeAccessService.getAccessTokenByAuthHeader(authHeader);
+        authorizationService.authorizeIdmSuperAdminOrRackspaceClient(scopeAccess);
 
         FilterParam[] filters = null;
     	if (!StringUtils.isBlank(username)) {
@@ -84,11 +85,7 @@ public class UsersResource extends ParentResource {
         com.rackspace.api.idm.v1.User user) {
 
         ScopeAccess scopeAccess = scopeAccessService.getAccessTokenByAuthHeader(authHeader);
-        boolean isApplication = authorizationService.authorizeRackspaceClient(scopeAccess);
-        //verify if caller is a rackspace client, idm client or super admin
-        if(!isApplication){
-            authorizationService.verifyIdmSuperAdminAccess(authHeader);
-        }
+        authorizationService.authorizeIdmSuperAdminOrRackspaceClient(scopeAccess);
 
         com.rackspace.api.idm.v1.User jaxbUser = user;
 

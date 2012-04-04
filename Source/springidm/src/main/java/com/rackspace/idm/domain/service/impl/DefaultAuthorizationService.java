@@ -4,6 +4,7 @@ import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.ForbiddenException;
@@ -173,6 +174,21 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return authorized;
     }
 
+
+    @Override
+    public void authorizeIdmSuperAdminOrRackspaceClient(ScopeAccess scopeAccess) {
+        boolean isRackspaceClient = authorizeRackspaceClient(scopeAccess);
+        boolean isIdmSuperAdmin = false;
+        //verify if caller is a rackspace client, idm client or super admin
+        if(!isRackspaceClient){
+            isIdmSuperAdmin = authorizeIdmSuperAdmin(scopeAccess);
+        }
+
+        if(!isRackspaceClient && ! isIdmSuperAdmin) {
+            throw new ForbiddenException("Access denied");
+        }
+    }
+ 
     @Override
     public boolean authorizeCloudUserAdmin(ScopeAccess scopeAccess) {
         logger.debug("Authorizing {} as cloud user admin", scopeAccess);
