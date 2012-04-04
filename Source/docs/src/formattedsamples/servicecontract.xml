@@ -7,11 +7,11 @@
    <media-types>
      <media-type base="application/xml" type="application/vnd.rackspace.idm-v1.0+xml">
        <atom:link rel="describedby" type="application/xml"
-          href="https://idm.api.rackspace.com/v1.0/docs/xsd/idmapi.xsd" />
+          href="https://rackidentity.api.rackspacecloud.com/v1/docs/xsd/idmapi.xsd" />
      </media-type>
   </media-types>
 
-  <atom:link rel="self" href="https://idm.api.rackspace.com/v1.0" />
-  <atom:link rel="describedby" type="application/vnd.sun.wadl+xml" href="https://idm.api.rackspace.com/v1.0/application.wadl" />
-  <atom:link rel="documentation" href="https://idm.api.rackspace.com/docs/v1.0/developerguide.pdf" />
+  <atom:link rel="self" href="https://rackidentity.api.rackspacecloud.com/v1" />
+  <atom:link rel="describedby" type="application/vnd.sun.wadl+xml" href="https://rackidentity.api.rackspacecloud.com/v1/application.wadl" />
+  <atom:link rel="documentation" href="https://rackidentity.api.rackspacecloud.com/docs/v1/developerguide.pdf" />
 </contract>

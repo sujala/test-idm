@@ -19,15 +19,15 @@
       It also allows clients manage identities and delegate access to resources.
     </detailed-description>
     
-    <contract version="v1.0" status="BETA">
+    <contract version="v1" status="BETA">
       <media-types>
         <media-type base="application/xml" type="application/vnd.rackspace.idm-v1.0+xml">
-          <atom:link rel="describedby" type="application/xml" href="${baseUrl}v1.0/docs/xsd/idmapi.xsd" />
+          <atom:link rel="describedby" type="application/xml" href="https://rackidentity.api.rackspacecloud.com/v1/docs/xsd/idmapi.xsd" />
         </media-type>
       </media-types>
       
       <atom:link rel="self" href="https://rackidentity.api.rackspacecloud.com/v1.0"/>
-      <atom:link rel="describedby" type="application/vnd.sun.wadl+xml" href="https://rackidentity.api.rackspacecloud.com/v1.0/application.wadl" title="Wadl" />
-      <atom:link rel="documentation" href="https://rackidentity.api.rackspacecloud.com/docs/v1.0/developerguide.pdf" title="Developer Guide"/>
+      <atom:link rel="describedby" type="application/vnd.sun.wadl+xml" href="https://rackidentity.api.rackspacecloud.com/v1/application.wadl" title="Wadl" />
+      <atom:link rel="documentation" href="https://rackidentity.api.rackspacecloud.com/docs/v1/developerguide.pdf" title="Developer Guide"/>
    </contract>
 </service-profile>

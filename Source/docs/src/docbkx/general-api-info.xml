@@ -98,7 +98,7 @@
       <title>Contracts</title>
       <para>
         The Global Auth API uses a URI versioning scheme. The first element of the path contains the
-        target version identifier (e.g. https://rackidentity.api.rackspacecloud.com/v1.0/...) All requests (except
+        target version identifier (e.g. https://rackidentity.api.rackspacecloud.com/v1/...) All requests (except
         to query for contract version - see below) must contain a target version. Any features or
         functionality changes that would necessitate a break in API-compatibility will require a new
         version, which will result in the URI version being updated accordingly. When new API
@@ -146,13 +146,13 @@
         You can also obtain additional information about a
         contract version by performing a &GET; on the base
         version URL
-        (e.g. https://rackidentity.api.rackspacecloud.com/v1.0).
+        (e.g. https://rackidentity.api.rackspacecloud.com/v1).
       </para>
       <example>
         <title>Service Contract Request</title>
         <literallayout class="monospaced">
           GET HTTP/1.1
-          Host: rackidentity.api.rackspacecloud.com/v1.0
+          Host: rackidentity.api.rackspacecloud.com/v1
           Accept: application/xml
 			</literallayout>
       </example>

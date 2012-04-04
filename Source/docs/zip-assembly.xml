@@ -10,7 +10,7 @@
 	</formats>
 	<fileSets>
 		<fileSet>
-			<directory>${project.basedir}/src/wadl</directory>
+			<directory>${project.basedir}/src/wadl/normalized</directory>
 			<outputDirectory>api</outputDirectory>
 			<includes>
 				<include>*.wadl</include>

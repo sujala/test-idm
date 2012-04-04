@@ -33,7 +33,7 @@
         <resource id="serviceProfile" path="/">
             <method href="#getServiceProfile" /> 
             
-            <resource id="version" path="v1.0">
+            <resource id="version" path="v1">
                 <method href="#getVersionInfo" /> 
                 
                 <resource id="tokens" path="tokens">
@@ -105,19 +105,19 @@
                                 <param name="roleId" style="template" type="xsd:string" required="true"/>
                                 <method href="#addUserGlobalRole" />
                                 <method href="#deleteUserGlobalRole" />
+                                
+                                <resource id="userTenantRole" path="tenants/{tenantId}">
+                                    <param name="tenantId" style="template" type="xsd:string" required="true"/>
+                                    <param name="roleId" style="template" type="xsd:string" required="true"/>
+                                    <method href="#addUserTenantRole" />
+                                    <method href="#deleteUserTenantRole" />
+                                </resource>
                             </resource>
                         </resource>
                         
                         <resource id="userTenants" path="tenants">
                             <resource id="userTenantsRoles" path="roles">
                                 <method href="#getUserTenantsRoles" />
-                            </resource>
-                            
-                            <resource id="userTenantRole" path="{tenantId}/roles/{roleId}">
-                                <param name="tenantId" style="template" type="xsd:string" required="true"/>
-                                <param name="roleId" style="template" type="xsd:string" required="true"/>
-                                <method href="#addUserTenantRole" />
-                                <method href="#deleteUserTenantRole" />
                             </resource>
                         </resource>
                     </resource>
@@ -164,19 +164,19 @@
                                 <param name="roleId" style="template" type="xsd:string" required="true"/>
                                 <method href="#addApplicationGlobalRole" />
                                 <method href="#deleteApplicationGlobalRole" />
+                                
+                                <resource id="applicationTenantRole" path="tenants/{tenantId}">
+                                    <param name="tenantId" style="template" type="xsd:string" required="true"/>
+                                    <param name="roleId" style="template" type="xsd:string" required="true"/>
+                                    <method href="#addApplicationTenantRole" />
+                                    <method href="#deleteApplicationTenantRole" />
+                                </resource>
                             </resource>
                         </resource>
                         
                         <resource id="applicationTenants" path="tenants">
                             <resource id="applicationTenantsRoles" path="roles">
                                 <method href="#getApplicationTenantsRoles" />
-                            </resource>
-                            
-                            <resource id="applicationTenantRole" path="{tenantId}/roles/{roleId}">
-                                <param name="tenantId" style="template" type="xsd:string" required="true"/>
-                                <param name="roleId" style="template" type="xsd:string" required="true"/>
-                                <method href="#addApplicationTenantRole" />
-                                <method href="#deleteApplicationTenantRole" />
                             </resource>
                         </resource>
                     </resource>
@@ -240,6 +240,21 @@
                     
                     <resource id="passwordValidation" path="validation">
                         <method href="#validatePassword" />
+                    </resource>
+                </resource>
+                
+                <!-- tenant resources -->
+                <resource id="tenants" path="tenants">
+                    <param name="X-Auth-Token" style="header" type="xsd:string" required="true">
+                        <doc>You need a valid token for access.</doc>
+                    </param>
+                    
+                    <method href="#createTenant" />
+                    
+                    <resource id="tenant" path="{tenantId}">
+                        <method href="#getTenant" />
+                        <method href="#updateTenant" />
+                        <method href="#deleteTenant" />
                     </resource>
                 </resource>
             </resource>
@@ -778,9 +793,9 @@
     </method>
     
     <method name="DELETE" id="deleteUserTenantRole">
-        <doc xml:lang="EN" title="Revoke a User Role on Tenant">
+        <doc xml:lang="EN" title="Remove User's Tenant Role">
             <xhtml:p class="shortdesc">
-                Revoke a user's role on a tenant.
+                Remove User's Tenant Role.
             </xhtml:p>
         </doc>
         <response status="204" />
@@ -1086,9 +1101,9 @@
     </method>
     
     <method name="DELETE" id="deleteApplicationTenantRole">
-        <doc xml:lang="EN" title="Revoke an Application Role on Tenant">
+        <doc xml:lang="EN" title="Remove Application's Tenant Role">
             <xhtml:p class="shortdesc">
-                Revoke an application's role on a tenant.
+                Remove an application's role on a tenant.
             </xhtml:p>
         </doc>
         <response status="204" />
@@ -1500,5 +1515,86 @@
         </response>
         &commonFaults;
         &getFaults;
+    </method>
+    
+    <!-- Tenant Methods -->
+    <method name="POST" id="createTenant">
+        <doc xml:lang="EN" title="Add a Tenant">
+            <xhtml:p class="shortdesc">
+                Add a new Tenant.
+            </xhtml:p>
+        </doc>
+        <request>
+            <representation mediaType="application/xml" element="idm:tenant">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/Tenant.xml" />
+                </doc>
+            </representation>
+            <representation mediaType="application/json">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/Tenant.json" />
+                </doc>
+            </representation>
+        </request>
+        <response status="201">
+            <param name="Location" style="header" type="xsd:string" required="true">
+                <doc>Location to the uri of the newly created Tenant</doc>
+            </param>
+        </response>
+        &commonFaults;
+    </method>
+    
+    <method name="GET" id="getTenant">
+        <doc xml:lang="EN" title="Get Tenant">
+            <xhtml:p class="shortdesc">
+                Get a Tenant
+            </xhtml:p>
+        </doc>
+        <response status="200">
+            <representation mediaType="application/xml" element="idm:tenant">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/Tenant.xml" />
+                </doc>
+            </representation>
+            <representation mediaType="application/json">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/Tenant.json" />
+                </doc>
+            </representation>
+        </response>
+        &commonFaults;
+        &getFaults;
+    </method>
+    
+    <method name="PUT" id="updateTenant">
+        <doc xml:lang="EN" title="Modify a Tenant">
+            <xhtml:p class="shortdesc">
+                Modify an existing Tenant.
+            </xhtml:p>
+        </doc>
+        <request>
+            <representation mediaType="application/xml" element="idm:tenant">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/Tenant.xml" />
+                </doc>
+            </representation>
+            <representation mediaType="application/json">
+                <doc xml:lang="EN">
+                    <xsdxt:code href="../formattedsamples/Tenant.json" />
+                </doc>              
+            </representation>
+        </request>
+        <response status="204" />
+        &commonFaults;
+    </method>
+    
+    <method name="DELETE" id="deleteTenant">
+        <doc xml:lang="EN" title="Delete a Tenant">
+            <xhtml:p class="shortdesc">
+                Delete an existing Tenant.
+            </xhtml:p>
+        </doc>
+        <response status="204" />
+        &commonFaults;
     </method>
 </application>

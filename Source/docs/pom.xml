@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.rackspace.idm</groupId>
-	<artifactId>docs</artifactId>
+	<artifactId>idm</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<name>docs</name>
@@ -71,19 +71,6 @@
 				<version>0.0.1-SNAPSHOT</version>
 				<executions>
 					<execution>
-						<id>generate-keystone-samples</id>
-						<goals>
-							<goal>generate</goal>
-						</goals>
-						<phase>generate-sources</phase>
-						<configuration>
-							<schemaDirectory>src/xsd/keystone</schemaDirectory>
-							<sampleConfigurationDirectory>src/sampleconfigurations/keystone</sampleConfigurationDirectory>
-							<sampleOutputDirectory>src/formattedsamples/keystone</sampleOutputDirectory>
-						</configuration>
-					</execution>
-					
-					<execution>
 						<id>generate-foundation-samples</id>
 						<goals>
 							<goal>generate</goal>
@@ -98,9 +85,24 @@
 							<sampleExcludes>
 								<sampleExclude>keystone</sampleExclude>
 							</sampleExcludes>
-							<sampleOutputDirectory>src/new_formattedsamples</sampleOutputDirectory>
+							<sampleOutputDirectory>src/formattedsamples</sampleOutputDirectory>
+							<includeJsonRootWrapperElement>true</includeJsonRootWrapperElement>
 						</configuration>
 					</execution> 
+					
+					<execution>
+						<id>generate-keystone-samples</id>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<phase>generate-sources</phase>
+						<configuration>
+							<schemaDirectory>src/xsd/keystone</schemaDirectory>
+							<sampleConfigurationDirectory>src/sampleconfigurations/keystone</sampleConfigurationDirectory>
+							<sampleOutputDirectory>src/formattedsamples/keystone</sampleOutputDirectory>
+							<includeJsonRootWrapperElement>true</includeJsonRootWrapperElement>
+						</configuration>
+					</execution>
 				</executions>
 			</plugin>
 

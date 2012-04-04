@@ -6,9 +6,6 @@
 <schema elementFormDefault="qualified" attributeFormDefault="unqualified"
     xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.w3.org/2001/XMLSchema"
     xmlns:idm="http://idm.api.rackspace.com/v1.0" xmlns:xsdxt="http://docs.rackspacecloud.com/xsd-ext/v1.0"
-    xmlns:jaxb="http://java.sun.com/xml/ns/jaxb" jaxb:version="2.1"
-    xmlns:xjc="http://java.sun.com/xml/ns/jaxb/xjc"
-    jaxb:extensionBindingPrefixes="xjc"
     targetNamespace="http://idm.api.rackspace.com/v1.0">
 	<annotation>
 		<xsd:appinfo xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
@@ -22,13 +19,6 @@
 			<xsdxt:link rev="index" href="password.xsd" />
 			<xsdxt:link rev="index" href="passwordRotationPolicy.xsd" />
 			<xsdxt:link rev="index" href="fault.xsd" />
-			   
-            <!--           
-                JAXB vendor extension to avoid having to use JAXBElement wrapper
-            -->
-            <jaxb:globalBindings>
-                <xjc:simple />
-            </jaxb:globalBindings>
 		</xsd:appinfo>
 		<xsd:documentation xml:lang="EN"
 			xmlns="http://www.w3.org/1999/xhtml">

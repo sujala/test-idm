@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ns4:tenant xmlns:ns2="http://www.w3.org/2005/Atom" xmlns:ns3="http://fault.common.api.rackspace.com/v1.0" xmlns:ns4="http://idm.api.rackspace.com/v1.0" display-name="EA Star Wars" name="star_wars" id="hybrid:45389">
+    <description>Used to managed the Star Wars games</description>
+</ns4:tenant>
