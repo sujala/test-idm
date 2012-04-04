@@ -102,4 +102,84 @@ public class ApplicationGlobalRoleResource {
         return Response.noContent().build();
     }
 
-   }
+	/**
+	 * Grant a role to an application on a tenant.
+	 * 
+	 * 
+	 * @param authHeader
+	 *            HTTP Authorization header for authenticating the caller.
+	 * @param applicationId
+	 *            applicationId
+	 * @param tenantId
+	 *            tenantId
+	 * @param roleId
+	 *            roleId
+	 */
+	@PUT
+	@Path("tenants/{tenantId}")
+	public Response grantTenantRoleToApplication(
+			@HeaderParam("X-Auth-Token") String authHeader,
+			@PathParam("applicationId") String applicationId,
+			@PathParam("tenantId") String tenantId,
+			@PathParam("roleId") String roleId) {
+
+		authorizationService.verifyIdmSuperAdminAccess(authHeader);
+
+		Application client = this.applicationService.loadApplication(applicationId);
+
+		TenantRole tenantRole = createTenantRole(tenantId, roleId);
+		
+		this.tenantService.addTenantRoleToClient(client, tenantRole);
+
+		return Response.noContent().build();
+	}
+
+	/**
+	 * Revoke a role on a tenant from an application.
+	 * 
+	 * 
+	 * @param authHeader
+	 *            HTTP Authorization header for authenticating the caller.
+	 * @param applicationId
+	 *            applicationId
+	 * @param tenantId
+	 *            tenantId
+	 * @param roleId
+	 *            roleId
+	 */
+	@DELETE
+	@Path("tenants/{tenantId}")
+	public Response deleteTenantRoleFromApplication(
+			@HeaderParam("X-Auth-Token") String authHeader,
+			@PathParam("applicationId") String applicationId,
+			@PathParam("tenantId") String tenantId,
+			@PathParam("roleId") String roleId) {
+
+		authorizationService.verifyIdmSuperAdminAccess(authHeader);
+
+		Application application = applicationService.loadApplication(applicationId);
+
+		TenantRole tenantRole = createTenantRole(tenantId, roleId);
+		
+		this.tenantService.deleteTenantRole(application.getUniqueId(), tenantRole);
+
+		return Response.noContent().build();
+	}
+
+	private TenantRole createTenantRole(String tenantId, String roleId) {
+		ClientRole role = applicationService.getClientRoleById(roleId);
+        if (role == null) {
+            String errMsg = String.format("Role %s not found", roleId);
+            logger.warn(errMsg);
+            throw new BadRequestException(errMsg);
+        }
+
+        TenantRole tenantRole = new TenantRole();
+        tenantRole.setClientId(role.getClientId());
+        tenantRole.setRoleRsId(role.getId());
+        tenantRole.setName(role.getName());
+        tenantRole.setTenantIds(new String[]{tenantId});
+        
+        return tenantRole;
+	}
+}
