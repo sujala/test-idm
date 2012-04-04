@@ -88,9 +88,9 @@ public class RootResource {
         return "google";
     }
 
-    @Path("{versionId: v[1-9].[0-9]}")
+    @Path("{versionId: v[1-9](.[0-9])?}")
     public Version10Resource getVersionResource(@PathParam("versionId") String versionId) {
-        if (versionId.equalsIgnoreCase("v1.0")) {
+        if (versionId.equalsIgnoreCase("v1.0") || versionId.equalsIgnoreCase("v1")) {
             return versionResource;
         }
         

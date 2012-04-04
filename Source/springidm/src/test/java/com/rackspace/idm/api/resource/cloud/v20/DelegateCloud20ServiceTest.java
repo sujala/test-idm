@@ -3,31 +3,29 @@ package com.rackspace.idm.api.resource.cloud.v20;
 import com.rackspace.idm.api.resource.cloud.CloudClient;
 import com.rackspace.idm.api.resource.cloud.CloudUserExtractor;
 import com.rackspace.idm.domain.entity.ScopeAccess;
+import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.TokenService;
 import com.rackspace.idm.domain.service.UserService;
-import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Matchers;
-import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.v2.AuthenticationRequest;
-import org.openstack.docs.identity.api.v2.Role;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
 import java.io.IOException;
 import java.util.HashMap;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.mock;
 
 /**
  * Created by IntelliJ IDEA.
@@ -44,26 +42,17 @@ public class DelegateCloud20ServiceTest {
     TokenService tokenService = mock(TokenService.class);
     CloudClient cloudClient = mock(CloudClient.class);
     ScopeAccessService scopeAccessService = mock(ScopeAccessService.class);
+    TenantService tenantService = mock(TenantService.class);
     CloudUserExtractor cloudUserExtractor = mock(CloudUserExtractor.class);
     HttpHeaders httpHeaders = mock(HttpHeaders.class);
-    Marshaller marshaller = mock(Marshaller.class);
     private final Configuration config = mock(Configuration.class);
     AuthenticationRequest authenticationRequest = mock(AuthenticationRequest.class);
     String url = "http://url.com/";
     Boolean disabled = true;
-    String body = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><ns12:endpointTemplate xsi:nil=\"true\" xmlns:ns14=\"http://fault.common.api.rackspace.com/v1.0\" xmlns:ns9=\"http://docs.openstack.org/identity/api/ext/OS-KSEC2/v1.0\" xmlns:ns5=\"http://docs.openstack.org/common/api/v1.0\" xmlns:ns12=\"http://docs.openstack.org/identity/api/ext/OS-KSCATALOG/v1.0\" xmlns:ns6=\"http://docs.openstack.org/compute/api/v1.1\" xmlns:ns13=\"http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0\" xmlns:ns7=\"http://docs.openstack.org/identity/api/v2.0\" xmlns:ns10=\"http://docs.rackspace.com/identity/api/ext/RAX-KSGRP/v1.0\" xmlns:ns8=\"http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0\" xmlns:ns11=\"http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0\" xmlns:ns2=\"http://www.w3.org/2005/Atom\" xmlns:ns4=\"http://docs.rackspacecloud.com/auth/api/v1.1\" xmlns:ns3=\"http://idm.api.rackspace.com/v1.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"/>";
-    String bodyPassword = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><ns7:passwordCredentials xsi:nil=\"true\" xmlns:ns14=\"http://fault.common.api.rackspace.com/v1.0\" xmlns:ns9=\"http://docs.openstack.org/identity/api/ext/OS-KSEC2/v1.0\" xmlns:ns5=\"http://docs.openstack.org/common/api/v1.0\" xmlns:ns12=\"http://docs.openstack.org/identity/api/ext/OS-KSCATALOG/v1.0\" xmlns:ns6=\"http://docs.openstack.org/compute/api/v1.1\" xmlns:ns13=\"http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0\" xmlns:ns7=\"http://docs.openstack.org/identity/api/v2.0\" xmlns:ns10=\"http://docs.rackspace.com/identity/api/ext/RAX-KSGRP/v1.0\" xmlns:ns8=\"http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0\" xmlns:ns11=\"http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0\" xmlns:ns2=\"http://www.w3.org/2005/Atom\" xmlns:ns4=\"http://docs.rackspacecloud.com/auth/api/v1.1\" xmlns:ns3=\"http://idm.api.rackspace.com/v1.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"/>";
-    String bodyApiCredentials = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><ns8:apiKeyCredentials xsi:nil=\"true\" xmlns:ns14=\"http://fault.common.api.rackspace.com/v1.0\" xmlns:ns9=\"http://docs.openstack.org/identity/api/ext/OS-KSEC2/v1.0\" xmlns:ns5=\"http://docs.openstack.org/common/api/v1.0\" xmlns:ns12=\"http://docs.openstack.org/identity/api/ext/OS-KSCATALOG/v1.0\" xmlns:ns6=\"http://docs.openstack.org/compute/api/v1.1\" xmlns:ns13=\"http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0\" xmlns:ns7=\"http://docs.openstack.org/identity/api/v2.0\" xmlns:ns10=\"http://docs.rackspace.com/identity/api/ext/RAX-KSGRP/v1.0\" xmlns:ns8=\"http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0\" xmlns:ns11=\"http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0\" xmlns:ns2=\"http://www.w3.org/2005/Atom\" xmlns:ns4=\"http://docs.rackspacecloud.com/auth/api/v1.1\" xmlns:ns3=\"http://idm.api.rackspace.com/v1.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"/>";
-    String bodyUser = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><ns7:user xsi:nil=\"true\" xmlns:ns14=\"http://fault.common.api.rackspace.com/v1.0\" xmlns:ns9=\"http://docs.openstack.org/identity/api/ext/OS-KSEC2/v1.0\" xmlns:ns5=\"http://docs.openstack.org/common/api/v1.0\" xmlns:ns12=\"http://docs.openstack.org/identity/api/ext/OS-KSCATALOG/v1.0\" xmlns:ns6=\"http://docs.openstack.org/compute/api/v1.1\" xmlns:ns13=\"http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0\" xmlns:ns7=\"http://docs.openstack.org/identity/api/v2.0\" xmlns:ns10=\"http://docs.rackspace.com/identity/api/ext/RAX-KSGRP/v1.0\" xmlns:ns8=\"http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0\" xmlns:ns11=\"http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0\" xmlns:ns2=\"http://www.w3.org/2005/Atom\" xmlns:ns4=\"http://docs.rackspacecloud.com/auth/api/v1.1\" xmlns:ns3=\"http://idm.api.rackspace.com/v1.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"/>";
-    String bodyTenant = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><ns7:tenant xsi:nil=\"true\" xmlns:ns14=\"http://fault.common.api.rackspace.com/v1.0\" xmlns:ns9=\"http://docs.openstack.org/identity/api/ext/OS-KSEC2/v1.0\" xmlns:ns5=\"http://docs.openstack.org/common/api/v1.0\" xmlns:ns12=\"http://docs.openstack.org/identity/api/ext/OS-KSCATALOG/v1.0\" xmlns:ns6=\"http://docs.openstack.org/compute/api/v1.1\" xmlns:ns13=\"http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0\" xmlns:ns7=\"http://docs.openstack.org/identity/api/v2.0\" xmlns:ns10=\"http://docs.rackspace.com/identity/api/ext/RAX-KSGRP/v1.0\" xmlns:ns8=\"http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0\" xmlns:ns11=\"http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0\" xmlns:ns2=\"http://www.w3.org/2005/Atom\" xmlns:ns4=\"http://docs.rackspacecloud.com/auth/api/v1.1\" xmlns:ns3=\"http://idm.api.rackspace.com/v1.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"/>";
-    private String bodyRole = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><ns7:role xmlns:ns14=\"http://fault.common.api.rackspace.com/v1.0\" xmlns:ns9=\"http://docs.openstack.org/identity/api/ext/OS-KSEC2/v1.0\" xmlns:ns5=\"http://docs.openstack.org/common/api/v1.0\" xmlns:ns12=\"http://docs.openstack.org/identity/api/ext/OS-KSCATALOG/v1.0\" xmlns:ns6=\"http://docs.openstack.org/compute/api/v1.1\" xmlns:ns13=\"http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0\" xmlns:ns7=\"http://docs.openstack.org/identity/api/v2.0\" xmlns:ns10=\"http://docs.rackspace.com/identity/api/ext/RAX-KSGRP/v1.0\" xmlns:ns8=\"http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0\" xmlns:ns11=\"http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0\" xmlns:ns2=\"http://www.w3.org/2005/Atom\" xmlns:ns4=\"http://docs.rackspacecloud.com/auth/api/v1.1\" xmlns:ns3=\"http://idm.api.rackspace.com/v1.0\"/>";
-    private String bodyService = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><ns11:service xmlns:ns14=\"http://fault.common.api.rackspace.com/v1.0\" xmlns:ns9=\"http://docs.openstack.org/identity/api/ext/OS-KSEC2/v1.0\" xmlns:ns5=\"http://docs.openstack.org/common/api/v1.0\" xmlns:ns12=\"http://docs.openstack.org/identity/api/ext/OS-KSCATALOG/v1.0\" xmlns:ns6=\"http://docs.openstack.org/compute/api/v1.1\" xmlns:ns13=\"http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0\" xmlns:ns7=\"http://docs.openstack.org/identity/api/v2.0\" xmlns:ns10=\"http://docs.rackspace.com/identity/api/ext/RAX-KSGRP/v1.0\" xmlns:ns8=\"http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0\" xmlns:ns11=\"http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0\" xmlns:ns2=\"http://www.w3.org/2005/Atom\" xmlns:ns4=\"http://docs.rackspacecloud.com/auth/api/v1.1\" xmlns:ns3=\"http://idm.api.rackspace.com/v1.0\"/>";
     private String roleId = "roleId";
     private String userId = "userId";
     private String tenantId = "tenantId";
     private String serviceId = "serviceId";
-    private Role role = new Role();
-    private Service service = new Service();
     private String username = "username";
     DelegateCloud20Service spy;
 
@@ -78,6 +67,7 @@ public class DelegateCloud20ServiceTest {
         delegateCloud20Service.setTokenService(tokenService);
         delegateCloud20Service.setCloudUserExtractor(cloudUserExtractor);
         delegateCloud20Service.setScopeAccessService(scopeAccessService);
+        delegateCloud20Service.setTenantService(tenantService);
         when(config.getString("cloudAuth20url")).thenReturn(url);
         when(config.getBoolean("GAKeystoneDisabled")).thenReturn(disabled);
         delegateCloud20Service.setConfig(config);
@@ -250,14 +240,6 @@ public class DelegateCloud20ServiceTest {
         HttpHeaders mockHeaders = mock(HttpHeaders.class);
         delegateCloud20Service.getTenantById(mockHeaders, null, "myId");
         verify(cloudClient).get(url + "tenants/myId", mockHeaders);
-    }
-
-    @Test
-    public void getTenantById_RoutingTrueAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
-        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
-        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
-        delegateCloud20Service.getTenantById(null, null, null);
-        verify(defaultCloud20Service).getTenantById(null, null, null);
     }
 
     @Test
@@ -1971,4 +1953,24 @@ public class DelegateCloud20ServiceTest {
         verify(defaultCloud20Service).addRolesToUserOnTenant(null, null, tenantId, userId, roleId);
     }
 
+    @Test
+    public void getTenantById_callsTenantService_getTenantById() throws Exception {
+        delegateCloud20Service.getTenantById(null, null, "tenantId");
+        verify(tenantService).getTenant(tenantId);
+    }
+
+    @Test
+    public void getTenantById_TenantService_getTenantByIdReturnsTenant_callsDefaultService() throws Exception {
+        when(tenantService.getTenant("tenantId")).thenReturn(new Tenant());
+        delegateCloud20Service.getTenantById(null, null, "tenantId");
+        verify(defaultCloud20Service).getTenantById(null,null,"tenantId");
+    }
+
+    @Test
+    public void getTenantById_TenantService_getTenantByIdReturnsNull_callsCloudClient() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(tenantService.getTenant("tenantId")).thenReturn(null);
+        delegateCloud20Service.getTenantById(null, null, "tenantId");
+        verify(cloudClient).get(anyString(), any(HttpHeaders.class));
+    }
 }
