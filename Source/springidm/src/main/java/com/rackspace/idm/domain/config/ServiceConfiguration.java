@@ -103,19 +103,13 @@ public class ServiceConfiguration {
 
     @Bean
     public GroupService cloudGroupService() {
-        return new DefaultGroupService(groupDao);
+        return new DefaultGroupService(groupDao,userService());
     }
     
     @Bean
     public WadlTrie wadlTrie() {
         return new WadlTrie();
     }
-
-//    @Bean
-//    public InputValidator inputValidator() {
-//        final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
-//        return new InputValidator(validator);
-//    }
 
     @Bean
     public PasswordComplexityService passwordComplexityService() {
