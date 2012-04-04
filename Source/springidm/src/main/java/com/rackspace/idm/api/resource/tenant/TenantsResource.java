@@ -132,9 +132,14 @@ public class TenantsResource extends ParentResource {
         Tenant tenant) {
 
         updateTenantFields(tenant, tenantId);
+        com.rackspace.idm.domain.entity.Tenant tenantObject = checkAndGetTenant(tenantId);
 
-        tenantService.updateTenant(tenantConverter.toTenantDO(tenant));
-        com.rackspace.idm.domain.entity.Tenant tenantObject = tenantService.getTenant(tenant.getName());
+        tenantObject.setDescription(tenant.getDescription());
+        tenantObject.setDisplayName(tenant.getDisplayName());
+        tenantObject.setEnabled(tenant.isEnabled());
+
+        tenantService.updateTenant(tenantObject);
+        tenantObject = tenantService.getTenant(tenant.getName());
 
         return Response.ok(objectFactory.createTenant(tenantConverter.toTenant(tenantObject))).build();
     }
@@ -174,5 +179,16 @@ public class TenantsResource extends ParentResource {
         if (tenant.getDisplayName() != null && tenant.getDisplayName().length() == 0) {
             tenant.setDisplayName(null);
         }
+    }
+
+    com.rackspace.idm.domain.entity.Tenant checkAndGetTenant(String tenantId) {
+        com.rackspace.idm.domain.entity.Tenant tenant = this.tenantService.getTenant(tenantId);
+
+        if (tenant == null) {
+            String errMsg = String.format("Tenant with id/name: '%s' was not found.", tenantId);
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+        return tenant;
     }
 }
