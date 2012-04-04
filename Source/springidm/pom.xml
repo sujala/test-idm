@@ -419,26 +419,6 @@
                         <artifactId>maven-resources-plugin</artifactId>
                         <executions>
                             <execution>
-                                <id>copy-rsa-files</id>
-                                <phase>validate</phase>
-                                <goals>
-                                    <goal>copy-resources</goal>
-                                </goals>
-                                <configuration>
-                                    <outputDirectory>${basedir}/target/config</outputDirectory>
-                                    <resources>
-                                        <resource>
-                                            <filtering>true</filtering>
-                                            <directory>${basedir}/src/main/config</directory>
-                                            <includes>
-                                                <include>sdconf.rec</include>
-                                                <include>securid</include>
-                                            </includes>
-                                        </resource>
-                                    </resources>
-                                </configuration>
-                            </execution>
-                            <execution>
                                 <id>copy-dev-resources</id>
                                 <phase>validate</phase>
                                 <goals>
