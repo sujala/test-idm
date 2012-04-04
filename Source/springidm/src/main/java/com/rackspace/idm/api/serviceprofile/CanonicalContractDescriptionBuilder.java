@@ -1,17 +1,16 @@
 package com.rackspace.idm.api.serviceprofile;
 
-import javax.ws.rs.core.UriInfo;
-
+import com.rackspace.idm.domain.dao.ApiDocDao;
+import com.rackspace.idm.exception.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.rackspace.idm.domain.dao.ApiDocDao;
-import com.rackspace.idm.exception.NotFoundException;
+import javax.ws.rs.core.UriInfo;
 
 @Component
 public class CanonicalContractDescriptionBuilder extends AbstractContractDescriptionBuilder {
 
-	public static final String VERSION_1_0 = "v1.0";
+	public static final String VERSION_1_0 = "v1";
 	
     @Autowired
 	public CanonicalContractDescriptionBuilder(ApiDocDao apiDocDao, ServiceDescriptionTemplateUtil templateUtil) {
@@ -19,7 +18,7 @@ public class CanonicalContractDescriptionBuilder extends AbstractContractDescrip
 	}
    
     public String buildInternalVersionPage(final String versionId, final UriInfo uriInfo) {
-    	if (VERSION_1_0.equals(versionId)) {
+    	if (VERSION_1_0.startsWith(versionId)) {
     		String content = getFileContent("/docs/v1.0/InternalVersionPage.xml");
     		return build(content, uriInfo);
     	}
