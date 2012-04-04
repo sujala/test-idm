@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.domain.dao.GroupDao;
 import com.rackspace.idm.domain.entity.Group;
+import com.rackspace.idm.domain.service.UserService;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -20,11 +21,12 @@ import static org.junit.Assert.assertThat;
 public class DefaultUserGroupServiceTest {
 
     private DefaultGroupService defaultUserGroupService;
-    GroupDao groupDao;
+    private UserService userService;
+    private GroupDao groupDao;
 
     @Before
     public void setUp() throws Exception {
-        defaultUserGroupService = new DefaultGroupService(groupDao);
+        defaultUserGroupService = new DefaultGroupService(groupDao,userService);
     }
 
     @Ignore

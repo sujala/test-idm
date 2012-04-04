@@ -1,17 +1,14 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.domain.dao.GroupDao;
-import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.Users;
-import junit.framework.TestCase;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Filter;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -38,8 +35,8 @@ public class DefaultGroupServiceTest{
     @Before
     public void setup(){
         groupDao = mock(GroupDao.class);
-        defaultGroupService = new DefaultGroupService(groupDao);
         defaultUserService = mock(DefaultUserService.class);
+        defaultGroupService = new DefaultGroupService(groupDao,defaultUserService);
         user1.setDisplayName("user1");
         user1.setUsername("user1");
         user1.setEnabled(true);
