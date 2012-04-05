@@ -43,6 +43,8 @@ public interface UserDao {
 
     User getUserByMossoId(int mossoId);
 
+    Users getUsersByMossoId(int mossoId);
+
     User getUserByNastId(String nastId);
 
     User getUserByRPN(String rpn);

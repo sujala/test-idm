@@ -29,9 +29,11 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     // NOTE: This is pretty fragile way of handling the specific error, so we
     // need to look into more reliable way of detecting this error.
     private static final String STALE_PASSWORD_MESSAGE = "Password match in history";
+    private final Configuration config;
 
     public LdapUserRepository(LdapConnectionPools connPools, Configuration config) {
         super(connPools, config);
+        this.config = config;
     }
 
     @Override
@@ -326,6 +328,22 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().debug("Found User - {}", user);
 
         return user;
+    }
+
+    @Override
+    public Users getUsersByMossoId(int mossoId) {
+        getLogger().debug("Doing search for nastId " + mossoId);
+
+        Filter searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_MOSSO_ID, String.valueOf(mossoId))
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+            .build();
+
+        Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES,getLdapPagingOffsetDefault(),getLdapPagingLimitDefault());
+
+        getLogger().debug("Found User - {}", users);
+
+        return users;
     }
 
     @Override
@@ -1289,5 +1307,13 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             getAppConnPool().releaseConnection(conn);
         }
         getLogger().info("SoftDeleted user - {}", user.getUsername());
+    }
+
+    protected int getLdapPagingOffsetDefault() {
+        return config.getInt("ldap.paging.offset.default");
+    }
+
+    protected int getLdapPagingLimitDefault() {
+        return config.getInt("ldap.paging.limit.default");
     }
 }

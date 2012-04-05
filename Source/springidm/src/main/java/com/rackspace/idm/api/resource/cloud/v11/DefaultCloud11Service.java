@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import com.rackspace.idm.domain.dao.impl.LdapUserRepository;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -80,6 +81,12 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     @Autowired
     private CloudExceptionResponse cloudExceptionResponse;
+
+    @Autowired
+    private ApplicationService clientService;
+
+    @Autowired
+    private TenantService tenantService;
 
     @Autowired
     public DefaultCloud11Service(Configuration config,
@@ -274,7 +281,9 @@ public class DefaultCloud11Service implements Cloud11Service {
                 logger.warn(errorMsg);
                 throw new BadRequestException(errorMsg);
             }
-
+            if (user.getMossoId() != null) {
+                validateMossoId(user.getMossoId());
+            }
             if (user.getMossoId() == null) {
                 String errorMsg = "Expecting mossoId";
                 logger.warn(errorMsg);
@@ -289,6 +298,17 @@ public class DefaultCloud11Service implements Cloud11Service {
             userDO.setEnabled(true);
 
             this.userService.addUser(userDO);
+
+
+            //Add user-admin role
+            ClientRole roleId = clientService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserAdminRole());
+            ClientRole cRole = this.clientService.getClientRoleById(roleId.getId());
+
+            TenantRole role = new TenantRole();
+            role.setClientId(cRole.getClientId());
+            role.setName(cRole.getName());
+            role.setRoleRsId(cRole.getId());
+            this.tenantService.addTenantRoleToUser(userDO, role);
 
             if (user.getBaseURLRefs() != null && user.getBaseURLRefs().getBaseURLRef().size() > 0) {
                 // If BaseUrlRefs were sent in then we're going to add the new
@@ -311,6 +331,13 @@ public class DefaultCloud11Service implements Cloud11Service {
             return Response.created(uri).entity(OBJ_FACTORY.createUser(cloud11User));
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
+        }
+    }
+
+    private void validateMossoId(Integer mossoId) {
+        Users usersByMossoId = userService.getUsersByMossoId(mossoId);
+        if (usersByMossoId != null) {
+            throw new BadRequestException("User with Mosso Account ID: " + mossoId + " already exists.");
         }
     }
 
@@ -1028,5 +1055,9 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     public void setUserValidator(UserValidator userValidator) {
         this.userValidator = userValidator;
+    }
+
+    private String getCloudAuthUserAdminRole() {
+        return config.getString("cloudAuth.userAdminRole");
     }
 }

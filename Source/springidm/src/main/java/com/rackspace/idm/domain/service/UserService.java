@@ -26,7 +26,9 @@ public interface UserService {
     void deleteUser(String username);
 
     Users getAllUsers(FilterParam[] filters, Integer offset, Integer limit);
-    
+
+    Users getAllUsers(FilterParam[] filters);
+
     String generateApiKey();
     
     Racker getRackerByRackerId(String rackerId);
@@ -44,6 +46,8 @@ public interface UserService {
     User getUserByNastId(String natsId);
 
     User getUserByMossoId(int mossoId);
+
+    Users getUsersByMossoId(int mossoId);
     
     User getUserBySecureId(String secureId);
 

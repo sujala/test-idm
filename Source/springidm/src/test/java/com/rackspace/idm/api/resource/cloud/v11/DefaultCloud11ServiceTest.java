@@ -3,16 +3,14 @@ package com.rackspace.idm.api.resource.cloud.v11;
 import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11;
 import com.rackspace.idm.api.resource.cloud.CloudExceptionResponse;
 import com.rackspace.idm.domain.dao.impl.LdapCloudAdminRepository;
-import com.rackspace.idm.domain.entity.RackerScopeAccess;
-import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.UserScopeAccess;
-import com.rackspace.idm.domain.service.AuthorizationService;
-import com.rackspace.idm.domain.service.EndpointService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.util.NastFacade;
 import com.rackspacecloud.docs.auth.api.v1.*;
+import com.rackspacecloud.docs.auth.api.v1.Credentials;
+import com.rackspacecloud.docs.auth.api.v1.PasswordCredentials;
+import com.rackspacecloud.docs.auth.api.v1.User;
 import com.sun.jersey.api.uri.UriBuilderImpl;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
@@ -35,6 +33,8 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
@@ -60,6 +60,8 @@ public class DefaultCloud11ServiceTest {
     EndpointService endpointService;
     Configuration config;
     UriInfo uriInfo;
+    TenantService tenantService;
+    ApplicationService clientService;
     User user = new User();
     HttpServletRequest request;
     String token = "token";
@@ -81,6 +83,8 @@ public class DefaultCloud11ServiceTest {
         scopeAccessService = mock(ScopeAccessService.class);
         endpointService = mock(EndpointService.class);
         uriInfo = mock(UriInfo.class);
+        tenantService = mock(TenantService.class);
+        clientService = mock(ApplicationService.class);
         config = mock(Configuration.class);
         request = mock(HttpServletRequest.class);
         userValidator = mock(UserValidator.class);
@@ -94,7 +98,7 @@ public class DefaultCloud11ServiceTest {
         user1.setId("userId");
         when(userConverterCloudV11.toUserDO(user)).thenReturn(user1);
         when(config.getBoolean("nast.xmlrpc.enabled")).thenReturn(true);
-        defaultCloud11Service = new DefaultCloud11Service(config, scopeAccessService, endpointService, userService, null, userConverterCloudV11, null, ldapCloudAdminRepository, cloudExceptionResponse);
+        defaultCloud11Service = new DefaultCloud11Service(config, scopeAccessService, endpointService, userService, null, userConverterCloudV11, null, ldapCloudAdminRepository, cloudExceptionResponse, clientService, tenantService);
         nastFacade = mock(NastFacade.class);
         defaultCloud11Service.setNastFacade(nastFacade);
         defaultCloud11Service.setUserValidator(userValidator);
@@ -484,5 +488,47 @@ public class DefaultCloud11ServiceTest {
         String credentials = "<passwordCredentials password=\"123\" username=\"IValidUser\" xmlns=\"http://docs.rackspacecloud.com/auth/api/v1.1\"/>";
         Response.ResponseBuilder responseBuilder = spy.adminAuthenticate(request, null, httpHeaders, credentials);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(401));
+    }
+
+    @Test
+    public void createUser_validMossoId_callValidateMossoId() throws Exception{
+        user.setId("1");
+        user.setMossoId(123456);
+        when(authorizationService.authorizeCloudIdentityAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
+        spy.createUser(request,httpHeaders,uriInfo,user);
+        verify(spy).validateMossoId(123456);
+    }
+
+    @Test
+    public void createUser_MossoIdBelongsToAnotherUser_BadRequestException() throws Exception{
+        user.setMossoId(123456);
+        user.setId("test");
+        Users users = new Users();
+        com.rackspace.idm.domain.entity.User user1 = new com.rackspace.idm.domain.entity.User();
+        user1.setId("2");
+        user1.setUsername("tempUser");
+        user1.setMossoId(123456);
+        List<com.rackspace.idm.domain.entity.User> listUsers = new ArrayList<com.rackspace.idm.domain.entity.User>();
+        listUsers.add(user1);
+        users.setUsers(listUsers);
+        when(authorizationService.authorizeCloudIdentityAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
+        when(userService.getUsersByMossoId(123456)).thenReturn(users);
+        Response.ResponseBuilder responseBuilder = defaultCloud11Service.createUser(request,httpHeaders,uriInfo,user);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
+    public void createUser_VerifyUserAdminRoleIsAdded() throws Exception{
+        user.setId("1");
+        user.setMossoId(123456);
+        ClientRole clientRole = new ClientRole();
+        clientRole.setId("7");
+        clientRole.setName("identity:user-admin");
+        when(authorizationService.authorizeCloudIdentityAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
+        when(userService.getUsersByMossoId(123456)).thenReturn(null);
+        when(clientService.getClientRoleByClientIdAndRoleName(Matchers.<String>any(), Matchers.<String>any())).thenReturn(clientRole);
+        when(clientService.getClientRoleById(Matchers.<String>any())).thenReturn(clientRole);
+        defaultCloud11Service.createUser(request,httpHeaders,uriInfo,user);
+        verify(tenantService).addTenantRoleToUser(Matchers.<com.rackspace.idm.domain.entity.User>any(), Matchers.<TenantRole>any());
     }
 }
