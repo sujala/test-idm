@@ -95,7 +95,9 @@ public class DefaultCloud11Service implements Cloud11Service {
                                  UserConverterCloudV11 userConverterCloudV11,
                                  EndpointConverterCloudV11 endpointConverterCloudV11,
                                  LdapCloudAdminRepository ldapCloudAdminRepository,
-                                 CloudExceptionResponse cloudExceptionResponse) {
+                                 CloudExceptionResponse cloudExceptionResponse,
+                                 ApplicationService clientService,
+                                 TenantService tenantService) {
         this.config = config;
         this.scopeAccessService = scopeAccessService;
         this.endpointService = endpointService;
@@ -105,6 +107,8 @@ public class DefaultCloud11Service implements Cloud11Service {
         this.endpointConverterCloudV11 = endpointConverterCloudV11;
         this.ldapCloudAdminRepository = ldapCloudAdminRepository;
         this.cloudExceptionResponse = cloudExceptionResponse;
+        this.clientService = clientService;
+        this.tenantService = tenantService;
     }
 
     public ResponseBuilder getVersion(UriInfo uriInfo) throws JAXBException {
@@ -334,7 +338,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         }
     }
 
-    private void validateMossoId(Integer mossoId) {
+    public void validateMossoId(Integer mossoId) {
         Users usersByMossoId = userService.getUsersByMossoId(mossoId);
         if (usersByMossoId != null) {
             throw new BadRequestException("User with Mosso Account ID: " + mossoId + " already exists.");
