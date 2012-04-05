@@ -129,7 +129,7 @@ public class DefaultTenantService implements TenantService {
 
         String dn = null;
         try {
-            dn = sa.getLDAPEntry().getParentDN().getParent().getParentString();
+            dn = sa.getLDAPEntry().getParentDNString();
         } catch (Exception ex) {
             throw new IllegalStateException();
         }

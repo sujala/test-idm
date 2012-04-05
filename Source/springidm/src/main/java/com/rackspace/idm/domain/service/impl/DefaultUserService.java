@@ -70,9 +70,9 @@ public class DefaultUserService implements UserService {
 
         validateUserEmailAddress(user);
         validateUsername(user);
-        if (user.getMossoId() != null) {
-            validateMossoId(user.getMossoId());
-        }
+//        if (user.getMossoId() != null) {
+//            validateMossoId(user.getMossoId());
+//        }
         setPasswordIfNecessary(user);
 
         user.setEnabled(user.isEnabled());
@@ -236,6 +236,19 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
+    public Users getAllUsers(FilterParam[] filters) {
+        //TODO Paginiation
+        logger.debug("Getting All Users");
+
+        Users users = this.userDao.getAllUsers(filters, getLdapPagingOffsetDefault(), getLdapPagingLimitDefault());
+
+        logger.debug("Got All Users {}", filters);
+
+        return users;
+    }
+
+
+    @Override
     public Racker getRackerByRackerId(String rackerId) {
         logger.debug("Getting Racker: {}", rackerId);
         Racker racker = userDao.getRackerByRackerId(rackerId);
@@ -293,6 +306,13 @@ public class DefaultUserService implements UserService {
         return user;
     }
 
+    @Override
+    public Users getUsersByMossoId(int mossoId) {
+        logger.debug("Getting User: {}", mossoId);
+        Users users = userDao.getUsersByMossoId(mossoId);
+        logger.debug("Got User: {}", users);
+        return users;
+    }
 
     @Override
     public User getUserByNastId(String nastId) {
@@ -611,6 +631,14 @@ public class DefaultUserService implements UserService {
 
     private boolean isPasswordRulesEnforced() {
         return config.getBoolean("password.rules.enforced", true);
+    }
+
+    protected int getLdapPagingOffsetDefault() {
+        return config.getInt("ldap.paging.offset.default");
+    }
+
+    protected int getLdapPagingLimitDefault() {
+        return config.getInt("ldap.paging.limit.default");
     }
 
 }

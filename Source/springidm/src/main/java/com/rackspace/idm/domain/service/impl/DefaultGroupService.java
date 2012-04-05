@@ -106,7 +106,7 @@ public class DefaultGroupService implements GroupService {
         }
         FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParam.FilterParamName.GROUP_ID, groupId)};
         //index and offset and will need to change when pagination is done.
-        Users users = defaultUserService.getAllUsers(filters, 0, 0);
+        Users users = defaultUserService.getAllUsers(filters);
         if (users.getUsers().size() != 0) {
             for (User user : users.getUsers()) {
                 if (user.isEnabled()) {
