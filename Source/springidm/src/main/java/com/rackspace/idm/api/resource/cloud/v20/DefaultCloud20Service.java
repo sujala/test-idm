@@ -310,9 +310,19 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
             User userDO = this.userConverterCloudV20.toUserDO(user);
 
-            //if caller is a user-admin, give user same mosso and nastId
+            //if caller is a user-admin, give user same mosso and nastId and verifies that it has less then 100 subusers
             if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
+                //TODO Pagination index and
+                Users users = new Users();
                 User caller = userService.getUserByAuthToken(authToken);
+                String domainId = caller.getDomainId();
+                FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParamName.DOMAIN_ID, domainId)};
+                users = this.userService.getAllUsers(filters);
+                int numSubUsers =  config.getInt("numberOfSubUsers");
+                if(users.getUsers().size() > numSubUsers){
+                    String errMsg = String.format("User cannot create more than %d sub-accounts." ,numSubUsers );
+                    throw new BadRequestException(errMsg);
+                }
                 userDO.setMossoId(caller.getMossoId());
                 userDO.setNastId(caller.getNastId());
             }
@@ -594,7 +604,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                     if (tenantId.isEmpty()) {
                         throw new BadRequestException("Invalid tenantId, not allowed to be blank.");
                     }
-                    verifyTokenHasTenantAccess(auth.getToken().getId(), tenantId);
+                    verifyTokenHasTenantAccessForAuthenticate(auth.getToken().getId(), tenantId);
                 }
 
 
@@ -975,10 +985,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder getUserById(HttpHeaders httpHeaders, String authToken, String userId) throws IOException {
 
         try {
-            ScopeAccess scopeAccessByAccessToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
-            if (scopeAccessByAccessToken == null || ((HasAccessToken) scopeAccessByAccessToken).isAccessTokenExpired(new DateTime())) {
-                throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
-            }
+            ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
             User caller = getUser(scopeAccessByAccessToken);
 
             //if caller has default user role
@@ -2097,13 +2104,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     //method verifies that caller has the identity admin
 
     void verifyIdentityAdminLevelAccess(String authToken) {
-        if (StringUtils.isBlank(authToken)) {
-            throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
-        }
-        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
-        if (authScopeAccess == null || ((HasAccessToken) authScopeAccess).isAccessTokenExpired(new DateTime())) {
-            throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
-        }
+        ScopeAccess authScopeAccess = getScopeAccessForValidToken(authToken);
         if (!authorizationService.authorizeCloudIdentityAdmin(authScopeAccess)) {
             String errMsg = "Access is denied";
             logger.warn(errMsg);
@@ -2111,16 +2112,22 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
-    //method verifies that caller is an identity admin or a service admin
-
-    void verifyServiceAdminLevelAccess(String authToken) {
+    public ScopeAccess getScopeAccessForValidToken(String authToken) {
+        String errMsg = "No valid token provided. Please use the 'X-Auth-Token' header with a valid token.";
         if (StringUtils.isBlank(authToken)) {
-            throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
+            throw new NotAuthorizedException(errMsg);
         }
         ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
         if (authScopeAccess == null || ((HasAccessToken) authScopeAccess).isAccessTokenExpired(new DateTime())) {
-            throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
+            throw new NotAuthorizedException(errMsg);
         }
+        return authScopeAccess;
+    }
+
+    //method verifies that caller is an identity admin or a service admin
+
+    void verifyServiceAdminLevelAccess(String authToken) {
+        ScopeAccess authScopeAccess = getScopeAccessForValidToken(authToken);
         if (!authorizationService.authorizeCloudIdentityAdmin(authScopeAccess) && !authorizationService.authorizeCloudServiceAdmin(authScopeAccess)) {
             String errMsg = "Access is denied";
             logger.warn(errMsg);
@@ -2129,13 +2136,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     void verifyRackerAccess(String authToken) {
-        if (StringUtils.isBlank(authToken)) {
-            throw new ForbiddenException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
-        }
-        ScopeAccess rackerScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
-        if (rackerScopeAccess == null || ((HasAccessToken) rackerScopeAccess).isAccessTokenExpired(new DateTime())) {
-            throw new ForbiddenException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
-        }
+        ScopeAccess rackerScopeAccess = getScopeAccessForValidToken(authToken);
         if (!authorizationService.authorizeRacker(rackerScopeAccess)) {
             String errMsg = "Access is denied";
             logger.warn(errMsg);
@@ -2146,13 +2147,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     //method verifies that caller has identity admin, service admin, user admin or user role access
 
     void verifyUserLevelAccess(String authToken) {
-        if (StringUtils.isBlank(authToken)) {
-            throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
-        }
-        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
-        if (authScopeAccess == null || ((HasAccessToken) authScopeAccess).isAccessTokenExpired(new DateTime())) {
-            throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
-        }
+        ScopeAccess authScopeAccess = getScopeAccessForValidToken(authToken);
         if (!authorizationService.authorizeCloudIdentityAdmin(authScopeAccess)
                 && !authorizationService.authorizeCloudServiceAdmin(authScopeAccess)
                 && !authorizationService.authorizeCloudUserAdmin(authScopeAccess)
@@ -2166,13 +2161,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     //method verifies that caller is an identity admin, service admin or user admin
 
     void verifyUserAdminLevelAccess(String authToken) {
-        if (StringUtils.isBlank(authToken)) {
-            throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
-        }
-        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
-        if (authScopeAccess == null || ((HasAccessToken) authScopeAccess).isAccessTokenExpired(new DateTime())) {
-            throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
-        }
+        ScopeAccess authScopeAccess = getScopeAccessForValidToken(authToken);
         if (!authorizationService.authorizeCloudIdentityAdmin(authScopeAccess)
                 && !authorizationService.authorizeCloudServiceAdmin(authScopeAccess)
                 && !authorizationService.authorizeCloudUserAdmin(authScopeAccess)) {
@@ -2183,14 +2172,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     void checkXAUTHTOKEN(String authToken, boolean identityOnly, String tenantId) {
-        if (StringUtils.isBlank(authToken)) {
-            throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
-        }
-
-        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
-        if (authScopeAccess == null || ((HasAccessToken) authScopeAccess).isAccessTokenExpired(new DateTime())) {
-            throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
-        }
+        ScopeAccess authScopeAccess = getScopeAccessForValidToken(authToken);
 
         boolean authorized = false;
 
@@ -2217,15 +2199,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     void verifyTokenHasTenantAccess(String authToken, String tenantId) {
-        ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
-        if (authScopeAccess == null || ((HasAccessToken) authScopeAccess).isAccessTokenExpired(new DateTime())) {
-            throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
-        }
-
+        ScopeAccess authScopeAccess = getScopeAccessForValidToken(authToken);
         if (authorizationService.authorizeCloudIdentityAdmin(authScopeAccess) || authorizationService.authorizeCloudServiceAdmin(authScopeAccess)) {
             return;
         }
+        verifyTokenHasTenant(tenantId, authScopeAccess);
+    }
 
+    private void verifyTokenHasTenant(String tenantId, ScopeAccess authScopeAccess) {
         List<Tenant> adminTenants = this.tenantService.getTenantsForScopeAccessByTenantRoles(authScopeAccess);
         for (Tenant tenant : adminTenants) {
             if (tenant.getTenantId().equals(tenantId)) {
@@ -2235,6 +2216,11 @@ public class DefaultCloud20Service implements Cloud20Service {
         String errMsg = "Access is denied";
         logger.warn(errMsg);
         throw new ForbiddenException(errMsg);
+    }
+
+    void verifyTokenHasTenantAccessForAuthenticate(String authToken, String tenantId) {
+        ScopeAccess authScopeAccess = getScopeAccessForValidToken(authToken);
+        verifyTokenHasTenant(tenantId, authScopeAccess);
     }
 
     private void stripEndpoints(List<OpenstackEndpoint> endpoints) {
