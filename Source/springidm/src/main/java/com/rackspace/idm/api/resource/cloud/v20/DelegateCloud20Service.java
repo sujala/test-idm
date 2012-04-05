@@ -175,11 +175,11 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     private ResponseBuilder validateImpersonatedTokenFromCloud(HttpHeaders httpHeaders, String impersonatedCloudToken, String belongsTo, ImpersonatedScopeAccess impersonatedScopeAccess) throws Exception, JAXBException {
-        String gaXAuthToken = getXAuthToken(config.getString("ga.userName"), config.getString("ga.apiKey")).getToken().getId();
+        String gaXAuthToken = getXAuthToken_byPassword(config.getString("ga.userName"), config.getString("ga.password")).getToken().getId();
         httpHeaders.getRequestHeaders().get("x-auth-token").set(0, gaXAuthToken);
         httpHeaders.getRequestHeaders().get("accept").set(0, "application/xml");
         Response cloudValidateResponse = checkToken(httpHeaders, gaXAuthToken, impersonatedCloudToken, belongsTo).build();
-        if(cloudValidateResponse.getStatus() != 200 || cloudValidateResponse.getStatus() != 203){
+        if(cloudValidateResponse.getStatus() != 200 && cloudValidateResponse.getStatus() != 203){
             ResponseBuilder cloudResponseBuilder = Response.status(cloudValidateResponse.getStatus()).entity(cloudValidateResponse.getEntity()).header("response-source", "cloud-auth");
             return cloudResponseBuilder;
         }
@@ -1069,6 +1069,23 @@ public class DelegateCloud20Service implements Cloud20Service {
         return (AuthenticateResponse) unmarshallResponse(authResponse.getEntity().toString(), AuthenticateResponse.class);
     }
 
+    public AuthenticateResponse getXAuthToken_byPassword(String userName, String password) throws JAXBException, IOException {
+        PasswordCredentialsRequiredUsername passwordCredentials = new PasswordCredentialsRequiredUsername();
+        passwordCredentials.setUsername(userName);
+        passwordCredentials.setPassword(password);
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        authenticationRequest.setCredential(objectFactory.createPasswordCredentials(passwordCredentials));
+        String body = marshallObjectToString(objectFactory.createAuth(authenticationRequest));
+        HashMap<String, String> headers = new HashMap<String, String>();
+        headers.put("Content-Type", "application/xml");
+        headers.put("Accept", "application/xml");
+        Response authResponse = cloudClient.post(getCloudAuthV20Url() + "tokens", headers, body).build();
+        if (authResponse.getStatus() != 200 && authResponse.getStatus() != 203) {
+            throw new ApiException(authResponse.getStatus(), "", "");
+        }
+        return (AuthenticateResponse) unmarshallResponse(authResponse.getEntity().toString(), AuthenticateResponse.class);
+    }
+
     public ApiKeyCredentials getUserApiCredentials(String userId, String xAuthToken) throws IOException {
         HashMap<String, String> headers = new HashMap<String, String>();
         headers.put("Content-Type", "application/xml");
@@ -1106,8 +1123,8 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
 
-    public String impersonateUser(String userName, String impersonatorName, String impersonatorKey) throws JAXBException, IOException {
-        String impersonatorXAuthToken = getXAuthToken(impersonatorName, impersonatorKey)
+    public String impersonateUser(String userName, String impersonatorName, String impersonatorPassword) throws JAXBException, IOException {
+        String impersonatorXAuthToken = getXAuthToken_byPassword(impersonatorName, impersonatorPassword)
                 .getToken()
                 .getId();
         User user = getCloudUserByName(userName, impersonatorXAuthToken);

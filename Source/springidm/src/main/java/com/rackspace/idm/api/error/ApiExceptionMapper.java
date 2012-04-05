@@ -260,6 +260,13 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
                     variants.add(new Variant(MediaType.APPLICATION_JSON_TYPE,
                         Locale.getDefault(), "UTF-8"));
                     return Response.notAcceptable(variants).build();
+                case 415:
+                    UnsupportedMediaTypeFault unsupportedMediaTypeFault = new UnsupportedMediaTypeFault();
+                    unsupportedMediaTypeFault.setCode(415);
+                    unsupportedMediaTypeFault.setMessage(wae.getMessage());
+                    unsupportedMediaTypeFault.setDetail(detail);
+                    return Response.ok(rax_of.createUnsupportedMediaType(unsupportedMediaTypeFault))
+                            .status(415).build();
                 case 500:
                     ServiceFault sfault = new ServiceFault();
                     sfault.setCode(500);

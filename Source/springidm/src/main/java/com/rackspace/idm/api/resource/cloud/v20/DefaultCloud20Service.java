@@ -1434,8 +1434,10 @@ public class DefaultCloud20Service implements Cloud20Service {
         User user = userService.getUser(impersonatingUsername);
         if (user == null) {
             // Get from cloud.
-            impersonatingToken = delegateCloud20Service.impersonateUser(impersonatingUsername, config.getString("ga.userName"), config.getString("ga.apiKey"));
-        } else {
+            impersonatingToken = delegateCloud20Service.impersonateUser(impersonatingUsername, config.getString("ga.userName"), config.getString("ga.password"));
+        }else if(!user.isEnabled()){
+            throw new BadRequestException("User cannot be impersontated; User is not enabled");
+        }else {
             if (!isValidImpersonatee(user)) {
                 throw new BadRequestException("User cannot be impersontated; No valid impersonation roles assigned");
             }
@@ -2128,16 +2130,16 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     void verifyRackerAccess(String authToken) {
         if (StringUtils.isBlank(authToken)) {
-            throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
+            throw new ForbiddenException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
         }
         ScopeAccess rackerScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
         if (rackerScopeAccess == null || ((HasAccessToken) rackerScopeAccess).isAccessTokenExpired(new DateTime())) {
-            throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
+            throw new ForbiddenException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
         }
         if (!authorizationService.authorizeRacker(rackerScopeAccess)) {
             String errMsg = "Access is denied";
             logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
+            throw new NotAuthorizedException(errMsg);
         }
     }
 
