@@ -312,8 +312,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             //if caller is a user-admin, give user same mosso and nastId and verifies that it has less then 100 subusers
             if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
-                //TODO Pagination index and
-                Users users = new Users();
+                //TODO Pagination index and offset
+                Users users;
                 User caller = userService.getUserByAuthToken(authToken);
                 String domainId = caller.getDomainId();
                 FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParamName.DOMAIN_ID, domainId)};

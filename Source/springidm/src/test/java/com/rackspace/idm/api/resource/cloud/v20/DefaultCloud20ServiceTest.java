@@ -63,6 +63,7 @@ public class DefaultCloud20ServiceTest {
     private EndpointTemplate endpointTemplate;
     private String userId = "id";
     private User user;
+    private Users users;
     private Tenant tenant;
     private String tenantId = "tenantId";
     private CloudBaseUrl baseUrl;
@@ -554,9 +555,18 @@ public class DefaultCloud20ServiceTest {
         User caller = new User();
         caller.setMossoId(123);
         caller.setNastId("nastId");
+        users = mock(Users.class);
+        List<User> usersList = new ArrayList();
+        User tempUser = new User();
+        tempUser.setId("1");
+        tempUser.setUsername("tempUser");
+        usersList.add(tempUser);
+        users.setUsers(usersList);
         when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(new User());
+        when(userService.getAllUsers(org.mockito.Matchers.<FilterParam[]>any())).thenReturn(users);
+        when(config.getInt("numberOfSubUsers") ).thenReturn(100);
         doNothing().when(spy).setDomainId(any(ScopeAccess.class), any(User.class));
         UserForCreate userForCreate = new UserForCreate();
         userForCreate.setUsername("userforcreate");
