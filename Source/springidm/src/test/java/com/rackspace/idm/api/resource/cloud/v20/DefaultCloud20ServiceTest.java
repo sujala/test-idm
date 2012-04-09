@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.idm.api.converter.cloudv20.EndpointConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.TenantConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
@@ -16,9 +17,11 @@ import com.unboundid.ldap.sdk.Control;
 import com.unboundid.ldap.sdk.SearchResultEntry;
 import org.apache.commons.configuration.Configuration;
 import org.hamcrest.Matchers;
+import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.openstack.docs.common.api.v1.Extension;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
@@ -1330,5 +1333,86 @@ public class DefaultCloud20ServiceTest {
     @Test(expected = BadRequestException.class)
     public void validateUsername_withTabContainingString_throwBadRequestException() throws Exception {
         defaultCloud20Service.validateUsername("first   last");
+    }
+
+    @Test
+    public void validateApiKeyCredentials_validApiKey_noException() throws Exception {
+        ApiKeyCredentials apiKeyCredentials = new ApiKeyCredentials();
+        apiKeyCredentials.setApiKey("1234568790");
+        apiKeyCredentials.setUsername("test");
+        defaultCloud20Service.validateApiKeyCredentials(apiKeyCredentials);
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void validateApiKeyCredentials_validApiKey_BadRequestException() throws Exception {
+        ApiKeyCredentials apiKeyCredentials = new ApiKeyCredentials();
+        apiKeyCredentials.setApiKey("");
+        apiKeyCredentials.setUsername("test");
+        defaultCloud20Service.validateApiKeyCredentials(apiKeyCredentials);
+    }
+
+    @Test
+    public void deleteTenant_validTenantAdminAndServiceAdmin_return204() throws Exception{
+        UserScopeAccess scopeAccess = new UserScopeAccess();
+        //Current time plus 10 min
+        scopeAccess.setAccessTokenExp(new Date(System.currentTimeMillis() + 600000));
+        scopeAccess.setRefreshTokenExp(new Date(System.currentTimeMillis() + 600000));
+        scopeAccess.setAccessTokenString("token");
+        when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(scopeAccess);
+        when(authorizationService.authorizeCloudUserAdmin(scopeAccess)).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(true);
+        when(tenantService.getTenant(org.mockito.Matchers.<String>any())).thenReturn(tenant);
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.deleteTenant(null,authToken,"1");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(204));
+    }
+
+    @Test
+    public void deleteTenant_validTenantUserAdmin_return403() throws Exception{
+        UserScopeAccess scopeAccess = new UserScopeAccess();
+        //Current time plus 10 min
+        scopeAccess.setAccessTokenExp(new Date(System.currentTimeMillis() + 600000));
+        scopeAccess.setRefreshTokenExp(new Date(System.currentTimeMillis() + 600000));
+        scopeAccess.setAccessTokenString("token");
+        when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(scopeAccess);
+        when(authorizationService.authorizeCloudUserAdmin(scopeAccess)).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(false);
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.deleteTenant(null,authToken,"1");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(403));
+    }
+
+    @Test
+    public void deleteTenant_validTenantDefaultUser_return403() throws Exception{
+        UserScopeAccess scopeAccess = new UserScopeAccess();
+        //Current time plus 10 min
+        scopeAccess.setAccessTokenExp(new Date(System.currentTimeMillis() + 600000));
+        scopeAccess.setRefreshTokenExp(new Date(System.currentTimeMillis() + 600000));
+        scopeAccess.setAccessTokenString("token");
+        when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(scopeAccess);
+        when(authorizationService.authorizeCloudUserAdmin(scopeAccess)).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(false);
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.deleteTenant(null,authToken,"1");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(403));
+    }
+
+    @Test
+    public void getExtension_badAlias_throwsBadRequestException() throws Exception{
+        Response.ResponseBuilder responseBuilder =  defaultCloud20Service.getExtension(null,"");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
+    public void getExtension_ValidAlias_return200() throws Exception{
+        org.openstack.docs.common.api.v1.ObjectFactory objectFactory = new org.openstack.docs.common.api.v1.ObjectFactory();
+        when(jaxbObjectFactories.getOpenStackCommonV1Factory()).thenReturn(objectFactory);
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.getExtension(null,"RAX-KSKEY");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void getExtension_invalidAlias_return404() throws Exception{
+        org.openstack.docs.common.api.v1.ObjectFactory objectFactory = new org.openstack.docs.common.api.v1.ObjectFactory();
+        when(jaxbObjectFactories.getOpenStackCommonV1Factory()).thenReturn(objectFactory);
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.getExtension(null,"bad");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(404));
     }
 }
