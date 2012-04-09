@@ -25,8 +25,7 @@ import java.util.ResourceBundle;
 @Provider
 public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
     private final ResourceBundle faultMessageConfig;
-    private final Logger logger = LoggerFactory
-        .getLogger(ApiExceptionMapper.class);
+    private final Logger logger = LoggerFactory.getLogger(ApiExceptionMapper.class);
     private final com.rackspacecloud.docs.auth.api.v1.ObjectFactory cloud_of = new com.rackspacecloud.docs.auth.api.v1.ObjectFactory();
     private final com.rackspace.api.common.fault.v1.ObjectFactory rax_of = new com.rackspace.api.common.fault.v1.ObjectFactory();
     private final com.rackspace.api.idm.v1.ObjectFactory ga_of = new com.rackspace.api.idm.v1.ObjectFactory();
@@ -47,13 +46,10 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
             e = thrown.getCause();
         }
 
-        String detail = MDC.get(Audit.GUUID);
-
         if (e instanceof NotProvisionedException) {
             NotProvisionedFault fault = new NotProvisionedFault();
             fault.setCode(Response.Status.FORBIDDEN.getStatusCode());
             fault.setMessage(e.getMessage());
-            fault.setDetail(detail);
             return Response.ok(ga_of.createNotProvisioned(fault)).status(Response.Status.FORBIDDEN).build();
         }
 
@@ -61,7 +57,6 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
             BadRequestFault fault = new BadRequestFault();
             fault.setCode(Response.Status.BAD_REQUEST.getStatusCode());
             fault.setMessage(e.getMessage());
-            fault.setDetail(detail);
             return Response.ok(rax_of.createBadRequest(fault)).status(Response.Status.BAD_REQUEST).build();
         }
 
@@ -69,7 +64,6 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
             PermisionIdConflictFault fault = new PermisionIdConflictFault();
             fault.setCode(Response.Status.CONFLICT.getStatusCode());
             fault.setMessage(e.getMessage());
-            fault.setDetail(detail);
             return Response.ok(ga_of.createPermissionIdConflict(fault)).status(Response.Status.CONFLICT).build();
         }
 
@@ -77,14 +71,12 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
             BaseUrlIdConflictFault fault = new BaseUrlIdConflictFault();
             fault.setCode(Response.Status.CONFLICT.getStatusCode());
             fault.setMessage(e.getMessage());
-            fault.setDetail(detail);
             return Response.ok(ga_of.createBaseUrlIdConflict(fault)).status(Response.Status.CONFLICT).build();
         }
         if (e instanceof DuplicateClientGroupException) {
             ClientGroupConflictFault fault = new ClientGroupConflictFault();
             fault.setCode(Response.Status.CONFLICT.getStatusCode());
             fault.setMessage(e.getMessage());
-            fault.setDetail(detail);
             return Response.ok(ga_of.createClientGroupConflict(fault)).status(Response.Status.CONFLICT).build();
         }
 
@@ -92,7 +84,6 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
             ServiceFault fault = new ServiceFault();
             fault.setCode(Response.Status.CONFLICT.getStatusCode());
             fault.setMessage(e.getMessage());
-            fault.setDetail(detail);
             return Response.status(Response.Status.CONFLICT).entity(rax_of.createServiceFault(fault)).build();
         }
 
@@ -100,7 +91,6 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
             CustomerIdConflictFault fault = new CustomerIdConflictFault();
             fault.setCode(Response.Status.CONFLICT.getStatusCode());
             fault.setMessage(e.getMessage());
-            fault.setDetail(detail);
             return Response.ok(ga_of.createCustomerIdConflict(fault)).status(Response.Status.CONFLICT).build();
         }
 
@@ -108,7 +98,6 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
             UserDisabledFault fault = new UserDisabledFault();
             fault.setCode(Response.Status.FORBIDDEN.getStatusCode());
             fault.setMessage(e.getMessage());
-            fault.setDetail(detail);
             return Response.ok(ga_of.createUserDisabled(fault)).status(Response.Status.FORBIDDEN).build();
         }
 
@@ -116,7 +105,6 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
             PasswordValidationFault fault = new PasswordValidationFault();
             fault.setCode(Response.Status.BAD_REQUEST.getStatusCode());
             fault.setMessage(e.getMessage());
-            fault.setDetail(detail);
             return Response.ok(ga_of.createPasswordValidationFault(fault)).status(Response.Status.BAD_REQUEST).build();
         }
 
@@ -124,7 +112,6 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
             PasswordSelfUpdateTooSoonFault fault = new PasswordSelfUpdateTooSoonFault();
             fault.setCode(Response.Status.CONFLICT.getStatusCode());
             fault.setMessage(e.getMessage());
-            fault.setDetail(detail);
             return Response.ok(ga_of.createPasswordSelfUpdateTooSoonFault(fault)).status(Response.Status.CONFLICT).build();
         }
 
@@ -132,7 +119,6 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
             StalePasswordFault fault = new StalePasswordFault();
             fault.setCode(Response.Status.CONFLICT.getStatusCode());
             fault.setMessage(e.getMessage());
-            fault.setDetail(detail);
             return Response.ok(ga_of.createStalePasswordFault(fault)).status(Response.Status.CONFLICT).build();
         }
 
@@ -140,7 +126,6 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
             UnauthorizedFault fault = new UnauthorizedFault();
             fault.setCode(Response.Status.UNAUTHORIZED.getStatusCode());
             fault.setMessage(e.getMessage());
-            fault.setDetail(detail);
             return Response.ok(rax_of.createUnauthorized(fault)).status(Response.Status.UNAUTHORIZED).build();
         }
         
@@ -148,7 +133,6 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
             AuthFault afault = new AuthFault();
             afault.setCode(405);
             afault.setMessage(e.getMessage());
-            afault.setDetails(detail);
             return Response.ok(cloud_of.createAuthFault(afault)).status(405).build();
         }
         
@@ -156,7 +140,6 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
             ForbiddenFault fault = new ForbiddenFault();
             fault.setCode(Response.Status.FORBIDDEN.getStatusCode());
             fault.setMessage(e.getMessage());
-            fault.setDetail(detail);
             return Response.ok(rax_of.createForbidden(fault)).status(Response.Status.FORBIDDEN).build();
         }
 
@@ -164,14 +147,12 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
             ItemNotFoundFault fault = new ItemNotFoundFault();
             fault.setCode(Response.Status.NOT_FOUND.getStatusCode());
             fault.setMessage(e.getMessage());
-            fault.setDetail(detail);
             return Response.ok(rax_of.createItemNotFound(fault)).status(Response.Status.NOT_FOUND).build();
         }
         if (e instanceof com.sun.jersey.api.NotFoundException) {
             ItemNotFoundFault fault = new ItemNotFoundFault();
             fault.setCode(Response.Status.NOT_FOUND.getStatusCode());
             fault.setMessage("Resource Not Found");
-            fault.setDetail(detail);
             return Response.ok(rax_of.createItemNotFound(fault)).status(Response.Status.NOT_FOUND).build();
         }
 
@@ -179,7 +160,6 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
             UsernameConflictFault fault = new UsernameConflictFault();
             fault.setCode(Response.Status.CONFLICT.getStatusCode());
             fault.setMessage(e.getMessage());
-            fault.setDetail(detail);
             return Response.ok(ga_of.createUsernameConflict(fault)).status(Response.Status.CONFLICT).build();
         }
 
@@ -187,19 +167,16 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
             ApplicationNameConflictFault fault = new ApplicationNameConflictFault();
             fault.setCode(Response.Status.CONFLICT.getStatusCode());
             fault.setMessage(e.getMessage());
-            fault.setDetail(detail);
             return Response.ok(ga_of.createApplicationNameConflict(fault)).status(Response.Status.CONFLICT).build();
         }
-
         if (e instanceof IdmException) {
             ServiceFault fault = new ServiceFault();
             fault.setCode(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
-            fault.setDetail(detail);
+            logger.info(e.getMessage());
             return Response.ok(rax_of.createServiceFault(fault)).status(Response.Status.INTERNAL_SERVER_ERROR).build();
         }
         if (e instanceof WebApplicationException) {
             WebApplicationException wae = (WebApplicationException) e;
-
             Throwable cause = wae.getCause();
             if (cause != null) {
                 //
@@ -209,7 +186,6 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
                     BadRequestFault fault = new BadRequestFault();
                     fault.setCode(Response.Status.BAD_REQUEST.getStatusCode());
                     fault.setMessage(e.getMessage());
-                    fault.setDetail(detail);
                     return Response.ok(rax_of.createBadRequest(fault)).status(Response.Status.BAD_REQUEST).build();
                 }
             }
@@ -219,90 +195,60 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
                     BadRequestFault fault = new BadRequestFault();
                     fault.setCode(Response.Status.BAD_REQUEST.getStatusCode());
                     fault.setMessage(wae.getMessage());
-                    fault.setDetail(detail);
                     return Response.ok(rax_of.createBadRequest(fault)).status(Response.Status.BAD_REQUEST).build();
                 case 401:
                     UnauthorizedFault ufault = new UnauthorizedFault();
                     ufault.setCode(401);
                     ufault.setMessage(wae.getMessage());
-                    ufault.setDetail(detail);
-
-                    return Response.ok(rax_of.createUnauthorized(ufault))
-                        .status(401).build();
+                    return Response.ok(rax_of.createUnauthorized(ufault)).status(401).build();
                 case 403:
                     ForbiddenFault ffault = new ForbiddenFault();
                     ffault.setCode(403);
                     ffault.setMessage(wae.getMessage());
-                    ffault.setDetail(detail);
-
-                    return Response.ok(rax_of.createForbidden(ffault))
-                        .status(403).build();
+                    return Response.ok(rax_of.createForbidden(ffault)).status(403).build();
                 case 404:
                     ItemNotFoundFault ifault = new ItemNotFoundFault();
                     ifault.setCode(404);
                     ifault.setMessage(wae.getMessage());
-                    ifault.setDetail(detail);
-
-                    return Response.ok(rax_of.createItemNotFound(ifault))
-                        .status(404).build();
+                    return Response.ok(rax_of.createItemNotFound(ifault)).status(404).build();
                 case 405:
                     MethodNotAllowedFault mfault = new MethodNotAllowedFault();
                     mfault.setCode(405);
                     mfault.setMessage(wae.getMessage());
-                    mfault.setDetail(detail);
-
-                    return Response.ok(rax_of.createMethodNotAllowed(mfault))
-                        .status(405).build();
+                    return Response.ok(rax_of.createMethodNotAllowed(mfault)).status(405).build();
                 case 406:
                     List<Variant> variants = new ArrayList<Variant>();
-                    variants.add(new Variant(MediaType.APPLICATION_XML_TYPE,
-                        Locale.getDefault(), "UTF-8"));
-                    variants.add(new Variant(MediaType.APPLICATION_JSON_TYPE,
-                        Locale.getDefault(), "UTF-8"));
+                    variants.add(new Variant(MediaType.APPLICATION_XML_TYPE, Locale.getDefault(), "UTF-8"));
+                    variants.add(new Variant(MediaType.APPLICATION_JSON_TYPE, Locale.getDefault(), "UTF-8"));
                     return Response.notAcceptable(variants).build();
                 case 415:
                     UnsupportedMediaTypeFault unsupportedMediaTypeFault = new UnsupportedMediaTypeFault();
                     unsupportedMediaTypeFault.setCode(415);
                     unsupportedMediaTypeFault.setMessage(wae.getMessage());
-                    unsupportedMediaTypeFault.setDetail(detail);
-                    return Response.ok(rax_of.createUnsupportedMediaType(unsupportedMediaTypeFault))
-                            .status(415).build();
+                    return Response.ok(rax_of.createUnsupportedMediaType(unsupportedMediaTypeFault)).status(415).build();
                 case 500:
                     ServiceFault sfault = new ServiceFault();
                     sfault.setCode(500);
                     sfault.setMessage(wae.getMessage());
-                    sfault.setDetail(detail);
                     logger.error(e.getMessage());
                     return Response.ok(rax_of.createServiceFault(sfault)).status(500).build();
                 case 503:
                     ServiceUnavailableFault sufault = new ServiceUnavailableFault();
                     sufault.setCode(503);
                     sufault.setMessage(wae.getMessage());
-                    sufault.setDetail(detail);
-
-                    return Response
-                        .ok(rax_of.createServiceUnavailable(sufault))
-                        .status(503).build();
+                    return Response.ok(rax_of.createServiceUnavailable(sufault)).status(503).build();
                 default:
                     ServiceUnavailableFault sufault2 = new ServiceUnavailableFault();
                     sufault2.setCode(503);
                     sufault2.setMessage(wae.getMessage());
-                    sufault2.setDetail(detail);
-
-                    return Response
-                        .ok(rax_of.createServiceUnavailable(sufault2))
-                        .status(503).build();
+                    return Response.ok(rax_of.createServiceUnavailable(sufault2)).status(503).build();
             }
         }
-
         logger.error(e.getCause() == null ? e.getMessage() : e.getCause().getMessage());
         logger.error(e.getMessage());
         ServiceFault sfault = new ServiceFault();
         sfault.setCode(500);
         sfault.setMessage("Server Error");
-        sfault.setDetail(detail);
-
-        return Response.ok(rax_of.createServiceFault(sfault)).status(500)
-            .build();
+        return Response.ok(rax_of.createServiceFault(sfault)).status(500).build();
     }
 }
