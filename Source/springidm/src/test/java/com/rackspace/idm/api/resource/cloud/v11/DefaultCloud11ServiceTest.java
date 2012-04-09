@@ -252,8 +252,12 @@ public class DefaultCloud11ServiceTest {
 
     @Test
     public void createUser_callsNastFacade() throws Exception {
+        Users users = new Users();
+        List<com.rackspace.idm.domain.entity.User> listUser = new ArrayList();
+        users.setUsers(listUser);
         user.setId("userId");
         user.setMossoId(123);
+        when(userService.getUsersByMossoId(123)).thenReturn(users);
         when(authorizationService.authorizeCloudIdentityAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
         defaultCloud11Service.createUser(request, null, uriInfo, user);
         Mockito.verify(nastFacade).addNastUser(user);
@@ -519,13 +523,16 @@ public class DefaultCloud11ServiceTest {
 
     @Test
     public void createUser_VerifyUserAdminRoleIsAdded() throws Exception{
+        Users users = new Users();
+        List<com.rackspace.idm.domain.entity.User> listUser = new ArrayList();
+        users.setUsers(listUser);
         user.setId("1");
         user.setMossoId(123456);
         ClientRole clientRole = new ClientRole();
         clientRole.setId("7");
         clientRole.setName("identity:user-admin");
         when(authorizationService.authorizeCloudIdentityAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
-        when(userService.getUsersByMossoId(123456)).thenReturn(null);
+        when(userService.getUsersByMossoId(123456)).thenReturn(users);
         when(clientService.getClientRoleByClientIdAndRoleName(Matchers.<String>any(), Matchers.<String>any())).thenReturn(clientRole);
         when(clientService.getClientRoleById(Matchers.<String>any())).thenReturn(clientRole);
         defaultCloud11Service.createUser(request,httpHeaders,uriInfo,user);
