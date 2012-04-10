@@ -116,8 +116,12 @@ public class RolesResource extends ParentResource {
             Role role) {
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
         validateRole(role);
+        applicationService.loadApplication(role.getApplicationId());
         ClientRole updatedRole = rolesConverter.toClientRole(role);
         ClientRole clientRole = applicationService.getClientRoleById(roleId);
+        if(clientRole==null){
+            throw new NotFoundException("Role with id: " + roleId + " not found.");
+        }
         clientRole.copyChanges(updatedRole);
         applicationService.updateClientRole(clientRole);
         return Response.noContent().build();

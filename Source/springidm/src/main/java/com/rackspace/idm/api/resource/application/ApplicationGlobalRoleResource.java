@@ -8,6 +8,7 @@ import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -86,17 +87,23 @@ public class ApplicationGlobalRoleResource {
      * @param roleId roleId
      */
     @DELETE
-    public Response deleteGlobalRoleFromUser(
-        @HeaderParam("X-Auth-Token") String authHeader,
-        @PathParam("applicationId") String applicationId,
-        @PathParam("roleId") String roleId) {
+    public Response deleteGlobalRoleFromApplication(
+            @HeaderParam("X-Auth-Token") String authHeader,
+            @PathParam("applicationId") String applicationId,
+            @PathParam("roleId") String roleId) {
 
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
         
-        Application application = this.applicationService.loadApplication(applicationId);              
+        Application application = this.applicationService.loadApplication(applicationId);
+
+        if(application==null){
+            throw new BadRequestException("Application with id: " + applicationId + " not found.");
+        }
 
     	TenantRole tenantRole = this.tenantService.getTenantRoleForParentById(application.getUniqueId(), roleId);
-
+        if(tenantRole==null){
+            throw new NotFoundException("Role with id: " + roleId + " not found.");
+        }
 		this.tenantService.deleteTenantRole(application.getUniqueId(), tenantRole);
 
         return Response.noContent().build();
