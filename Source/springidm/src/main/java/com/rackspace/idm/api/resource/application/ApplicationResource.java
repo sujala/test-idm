@@ -8,6 +8,7 @@ import com.rackspace.idm.domain.entity.ClientSecret;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.IdmException;
 import com.rackspace.idm.validation.InputValidator;
 import com.sun.jersey.core.provider.EntityHolder;
@@ -99,6 +100,9 @@ public class ApplicationResource extends ParentResource {
         getLogger().info("Updating application: {}", applicationId);
         
         Application applicationWithUpdates = applicationConverter.toClientDO(application.getEntity());
+        if(applicationWithUpdates!=null && applicationWithUpdates.getClientId()!=applicationId){
+            throw new BadRequestException("Application id in uri and body do not match");
+        }
         Application applicationDO = this.applicationService.loadApplication(applicationId);
         applicationDO.copyChanges(applicationWithUpdates);
 
