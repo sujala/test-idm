@@ -340,7 +340,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     public void validateMossoId(Integer mossoId) {
         Users usersByMossoId = userService.getUsersByMossoId(mossoId);
-        if (usersByMossoId != null) {
+        if (usersByMossoId.getUsers().size() > 0) {
             throw new BadRequestException("User with Mosso Account ID: " + mossoId + " already exists.");
         }
     }
