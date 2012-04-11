@@ -8,6 +8,7 @@ import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.validation.InputValidator;
 import com.sun.jersey.core.provider.EntityHolder;
@@ -91,6 +92,10 @@ public class UserPasswordCredentialsResource extends ParentResource {
         }
 
         com.rackspace.api.idm.v1.UserPasswordCredentials userCred = userCredentials.getEntity();
+
+        if( !user.getPassword().equals(userCred.getCurrentPassword().getPassword())){
+            throw new BadRequestException("Invalid current password");
+        }
 
         user.setPassword(userCred.getNewPassword().getPassword());
         
