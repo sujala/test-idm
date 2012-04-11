@@ -8,13 +8,15 @@ import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.validation.InputValidator;
 import com.sun.jersey.core.provider.EntityHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.ws.rs.*;
-import javax.ws.rs.core.*;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 /**
  * User Password.
@@ -84,7 +86,10 @@ public class UserPasswordCredentialsResource extends ParentResource {
         ScopeAccess token = this.scopeAccessService.getAccessTokenByAuthHeader(authHeader);
         
         User user = this.userService.getUserById(userId);
-        
+        if (user == null){
+            throw new NotFoundException("User not found with id: " + userId);
+        }
+
         com.rackspace.api.idm.v1.UserPasswordCredentials userCred = userCredentials.getEntity();
 
         user.setPassword(userCred.getNewPassword().getPassword());
