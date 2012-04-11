@@ -114,6 +114,10 @@ public class UserResource extends ParentResource {
 		com.rackspace.api.idm.v1.User inputUser = holder.getEntity();
 		User updatedUser = userConverter.toUserDO(inputUser);
 
+        if(updatedUser.isDisabled()){
+            scopeAccessService.expireAllTokensForUser(updatedUser.getUsername());
+        }
+
 		getLogger().debug("Updating User: {}", inputUser.getUsername());
 		User user = userService.loadUser(userId);
 		user.copyChanges(updatedUser);
