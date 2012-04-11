@@ -1449,6 +1449,10 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException("User cannot be impersontated; No valid impersonation roles assigned");
             }
             UserScopeAccess impAccess = (UserScopeAccess) scopeAccessService.getDirectScopeAccessForParentByClientId(user.getUniqueId(), getCloudAuthClientId());
+
+            if (impAccess.isAccessTokenExpired(new DateTime())) {
+                scopeAccessService.updateExpiredUserScopeAccess(impAccess);
+            }
             impersonatingToken = impAccess.getAccessTokenString();
         }
 

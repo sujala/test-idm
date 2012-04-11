@@ -445,9 +445,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     public ScopeAccess getDirectScopeAccessForParentByClientId(
         String parentUniqueID, String clientId) {
         logger.debug("Getting by clientId {}", clientId);
-        ScopeAccess sa = this.scopeAccessDao
-            .getDirectScopeAccessForParentByClientId(parentUniqueID, clientId);
-
+        ScopeAccess sa = this.scopeAccessDao.getDirectScopeAccessForParentByClientId(parentUniqueID, clientId);
         logger.debug("Got by clientId {}", clientId);
         return sa;
     }
@@ -728,9 +726,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         final UserScopeAccess scopeAccess = checkAndGetUserScopeAccess(clientId, result.getUser());
 
         if (scopeAccess.isAccessTokenExpired(new DateTime())) {
-            scopeAccess.setAccessTokenString(this.generateToken());
-            scopeAccess.setAccessTokenExp(new DateTime().plusSeconds(getDefaultCloudAuthTokenExpirationSeconds()).toDate());
-            scopeAccessDao.updateScopeAccess(scopeAccess);
+            updateExpiredUserScopeAccess(scopeAccess);
         }
 
         logger.debug("Got User ScopeAccess {} by clientId {}", scopeAccess, clientId);
@@ -939,7 +935,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         this.scopeAccessDao.updateScopeAccess(scopeAccess);
         logger.info("Updated ScopeAccess {}", scopeAccess);
     }
-    
+
 
     @Override
 	public void deleteScopeAccessesForParentByApplicationId(
@@ -950,6 +946,16 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 	       deleteScopeAccess(sa);
 	    }
 	}
+
+    @Override
+    public UserScopeAccess updateExpiredUserScopeAccess(UserScopeAccess scopeAccess) {
+        if (scopeAccess.isAccessTokenExpired(new DateTime())) {
+            scopeAccess.setAccessTokenString(this.generateToken());
+            scopeAccess.setAccessTokenExp(new DateTime().plusSeconds(getDefaultCloudAuthTokenExpirationSeconds()).toDate());
+            scopeAccessDao.updateScopeAccess(scopeAccess);
+        }
+        return scopeAccess;
+    }
 
 	private UserScopeAccess checkAndGetUserScopeAccess(String clientId, User user) {
         final UserScopeAccess scopeAccess = this.getUserScopeAccessForClientId(user.getUniqueId(), clientId);
