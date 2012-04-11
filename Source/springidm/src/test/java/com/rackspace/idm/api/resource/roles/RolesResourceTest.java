@@ -61,6 +61,18 @@ public class RolesResourceTest {
         rolesResource.updateRole(null, "id", validRole());
     }
 
+    @Test(expected = NotFoundException.class)
+    public void getRole_invalidRole_throwsNotFoundException() throws Exception {
+        when(applicationService.getClientRoleById("id")).thenReturn(null);
+        rolesResource.getRole(null,"id");
+    }
+
+    @Test
+    public void getRole_callsApplicationService_getClientRoleById() throws Exception {
+        rolesResource.getRole(null,"id");
+        verify(applicationService).getClientRoleById("id");
+    }
+
     private Role validRole() {
         Role role = new Role();
         role.setName("roleName");

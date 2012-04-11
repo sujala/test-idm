@@ -56,6 +56,9 @@ public class RolesResource extends ParentResource {
     public Response getRole(@HeaderParam("X-Auth-Token") String authHeader, @PathParam("roleId") String roleId) {
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
         ClientRole clientRole = applicationService.getClientRoleById(roleId);
+        if(clientRole==null){
+            throw new NotFoundException("Role with id: "+ roleId + " not found.");
+        }
         JAXBElement<Role> jaxbRole = rolesConverter.toRoleJaxbFromClientRole(clientRole);
         return Response.ok(jaxbRole).build();
     }
