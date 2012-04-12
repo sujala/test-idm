@@ -1443,12 +1443,16 @@ public class DefaultCloud20Service implements Cloud20Service {
             // Get from cloud.
             impersonatingToken = delegateCloud20Service.impersonateUser(impersonatingUsername, config.getString("ga.userName"), config.getString("ga.password"));
         }else if(!user.isEnabled()){
-            throw new BadRequestException("User cannot be impersontated; User is not enabled");
+            throw new ForbiddenException("User cannot be impersontated; User is not enabled");
         }else {
             if (!isValidImpersonatee(user)) {
                 throw new BadRequestException("User cannot be impersontated; No valid impersonation roles assigned");
             }
             UserScopeAccess impAccess = (UserScopeAccess) scopeAccessService.getDirectScopeAccessForParentByClientId(user.getUniqueId(), getCloudAuthClientId());
+
+            if (impAccess.isAccessTokenExpired(new DateTime())) {
+                scopeAccessService.updateExpiredUserScopeAccess(impAccess);
+            }
             impersonatingToken = impAccess.getAccessTokenString();
         }
 
@@ -2140,7 +2144,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         if (!authorizationService.authorizeRacker(rackerScopeAccess)) {
             String errMsg = "Access is denied";
             logger.warn(errMsg);
-            throw new NotAuthorizedException(errMsg);
+            throw new ForbiddenException(errMsg);
         }
     }
 

@@ -1,35 +1,21 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import java.security.GeneralSecurityException;
-import java.util.List;
-import java.util.Locale;
-
+import com.rackspace.idm.domain.config.LdapConfiguration;
+import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.exception.DuplicateClientGroupException;
+import com.rackspace.idm.exception.DuplicateException;
+import com.rackspace.idm.exception.NotFoundException;
+import com.unboundid.ldap.sdk.Modification;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.joda.time.DateTimeZone;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 
-import com.rackspace.idm.domain.config.LdapConfiguration;
-import com.rackspace.idm.domain.entity.Application;
-import com.rackspace.idm.domain.entity.ClientAuthenticationResult;
-import com.rackspace.idm.domain.entity.ClientGroup;
-import com.rackspace.idm.domain.entity.ClientSecret;
-import com.rackspace.idm.domain.entity.ClientStatus;
-import com.rackspace.idm.domain.entity.Password;
-import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.UserCredential;
-import com.rackspace.idm.domain.entity.UserHumanName;
-import com.rackspace.idm.domain.entity.UserLocale;
-import com.rackspace.idm.exception.DuplicateClientGroupException;
-import com.rackspace.idm.exception.DuplicateException;
-import com.rackspace.idm.exception.NotFoundException;
-import com.unboundid.ldap.sdk.Modification;
+import java.security.GeneralSecurityException;
+import java.util.List;
+import java.util.Locale;
 
 public class LdapApplicationRepositoryTest {
 
@@ -204,7 +190,7 @@ public class LdapApplicationRepositoryTest {
      
     @Test
     public void shouldAuthenticateForCorrectCredentials() {
-        ClientAuthenticationResult authenticated = repo.authenticate("ABCDEF", "password");
+        ClientAuthenticationResult authenticated = repo.authenticate("18e7a7032733486cd32f472d7bd58f709ac0d221", "password1");
         Assert.assertTrue(authenticated.isAuthenticated());
     }
 

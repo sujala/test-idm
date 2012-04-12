@@ -99,6 +99,7 @@ public interface ScopeAccessService {
     boolean doesUserHavePermissionForClient(User user, Permission permission,
         Application client);
 
-    List<OpenstackEndpoint> getOpenstackEndpointsForScopeAccess(
-        ScopeAccess scopeAccess);
+    List<OpenstackEndpoint> getOpenstackEndpointsForScopeAccess(ScopeAccess scopeAccess);
+
+    UserScopeAccess updateExpiredUserScopeAccess(UserScopeAccess scopeAccess);
 }

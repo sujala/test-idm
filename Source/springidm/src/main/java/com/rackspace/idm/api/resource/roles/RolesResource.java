@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.roles;
 import com.rackspace.api.idm.v1.Role;
 import com.rackspace.idm.api.converter.RolesConverter;
 import com.rackspace.idm.api.resource.ParentResource;
+import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
@@ -55,6 +56,9 @@ public class RolesResource extends ParentResource {
     public Response getRole(@HeaderParam("X-Auth-Token") String authHeader, @PathParam("roleId") String roleId) {
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
         ClientRole clientRole = applicationService.getClientRoleById(roleId);
+        if(clientRole==null){
+            throw new NotFoundException("Role with id: "+ roleId + " not found.");
+        }
         JAXBElement<Role> jaxbRole = rolesConverter.toRoleJaxbFromClientRole(clientRole);
         return Response.ok(jaxbRole).build();
     }
@@ -116,8 +120,15 @@ public class RolesResource extends ParentResource {
             Role role) {
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
         validateRole(role);
+        Application application = applicationService.getById(role.getApplicationId());
+        if(application==null){
+            throw new BadRequestException("Application with id: " + role.getApplicationId() + " not found.");
+        }
         ClientRole updatedRole = rolesConverter.toClientRole(role);
         ClientRole clientRole = applicationService.getClientRoleById(roleId);
+        if(clientRole==null){
+            throw new NotFoundException("Role with id: " + roleId + " not found.");
+        }
         clientRole.copyChanges(updatedRole);
         applicationService.updateClientRole(clientRole);
         return Response.noContent().build();
