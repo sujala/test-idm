@@ -207,6 +207,9 @@ public class DefaultTenantService implements TenantService {
             ClientRole cRole = this.clientDao.getClientRoleById(role.getRoleRsId());
             role.setName(cRole.getName());
             role.setDescription(cRole.getDescription());
+        }else{
+            String errMsg = String.format("Role with id: %s not found.",id);
+            throw new NotFoundException(errMsg);
         }
         logger.debug("Got Tenant Role {}", role);
         return role;
