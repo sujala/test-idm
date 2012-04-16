@@ -55,7 +55,7 @@ public class UserGlobalRoleResource {
 	 *            roleId
 	 */
 	@PUT
-	public Response grantGlobalRoleTouser(
+	public Response grantGlobalRoleToUser(
 			@HeaderParam("X-Auth-Token") String authHeader,
 			@PathParam("userId") String userId,
 			@PathParam("roleId") String roleId) {
