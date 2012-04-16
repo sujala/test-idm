@@ -8,6 +8,7 @@ import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.validation.InputValidator;
 import com.rackspace.idm.validation.UserPasswordCredentialsValidator;
@@ -40,8 +41,8 @@ public class UserPasswordCredentialsResource extends ParentResource {
             PasswordConverter passwordConverter, UserRecoveryTokenResource recoveryTokenResource,
             AuthorizationService authorizationService,
             InputValidator inputValidator, UserPasswordCredentialsValidator userPasswordCredentialsValidator) {
-    	
-    	super(inputValidator);
+
+        super(inputValidator);
         this.scopeAccessService = scopeAccessService;
         this.userService = userService;
         this.passwordConverter = passwordConverter;
@@ -54,17 +55,17 @@ public class UserPasswordCredentialsResource extends ParentResource {
      * Gets the user's password.
      *
      * @param authHeader HTTP Authorization header for authenticating the caller.
-     * @param userId   userId
+     * @param userId     userId
      */
     @GET
     public Response getUserPassword(
-        @HeaderParam("X-Auth-Token") String authHeader,
-        @PathParam("userId") String userId) {
+            @HeaderParam("X-Auth-Token") String authHeader,
+            @PathParam("userId") String userId) {
 
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
 
         User user = this.userService.loadUser(userId);
-      
+
         Password password = user.getPasswordObj();
 
         return Response.ok(passwordConverter.toJaxb(password)).build();
@@ -73,51 +74,57 @@ public class UserPasswordCredentialsResource extends ParentResource {
     /**
      * Sets a user's password.
      *
-     * @param authHeader HTTP Authorization header for authenticating the caller.
-     * @param userId   userId
-     * @param userCredentials   The user's current password and new password.
+     * @param authHeader      HTTP Authorization header for authenticating the caller.
+     * @param userId          userId
+     * @param userCredentials The user's current password and new password.
      */
     @PUT
     public Response setUserPassword(
-        @HeaderParam("X-Auth-Token") String authHeader,
-        @PathParam("userId") String userId,
-        EntityHolder<com.rackspace.api.idm.v1.UserPasswordCredentials> userCredentials) {
+            @HeaderParam("X-Auth-Token") String authHeader,
+            @PathParam("userId") String userId,
+            EntityHolder<com.rackspace.api.idm.v1.UserPasswordCredentials> userCredentials) {
 
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
-        
-    	validateRequestBody(userCredentials);
-    	
+
+        validateRequestBody(userCredentials);
+
         ScopeAccess token = this.scopeAccessService.getAccessTokenByAuthHeader(authHeader);
-        
+
         User user = this.userService.getUserById(userId);
-        if (user == null){
+        if (user == null) {
             throw new NotFoundException("User not found with id: " + userId);
         }
 
         com.rackspace.api.idm.v1.UserPasswordCredentials userCred = userCredentials.getEntity();
-        userPasswordCredentialsValidator.validateCurrentPassword(userCred, user);
+        userPasswordCredentialsValidator.validateUserPasswordCredentials(userCred, user);
         user.setPassword(userCred.getNewPassword().getPassword());
-        this.userService.updateUser(user, false);
-
+        try {
+            this.userService.updateUser(user, false);
+        } catch (Exception e) {
+            if(e instanceof IllegalStateException){
+                throw new BadRequestException(e.getCause().getMessage());
+            }
+        }
         return Response.noContent().build();
+
     }
-    
+
     /**
      * Resets a user's password credentials.
      *
      * @param authHeader HTTP Authorization header for authenticating the caller.
-     * @param userId   userId
+     * @param userId     userId
      */
     @POST
     public Response resetUserPassword(
-        @HeaderParam("X-Auth-Token") String authHeader,
-        @PathParam("userId") String userId) {
+            @HeaderParam("X-Auth-Token") String authHeader,
+            @PathParam("userId") String userId) {
 
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
-    	
+
         getLogger().debug("Reseting Password for User: {}", userId);
 
-        User user =  userService.loadUser(userId);
+        User user = userService.loadUser(userId);
         Password password = userService.resetUserPassword(user);
 
         getLogger().debug("Updated password for user: {}", user);

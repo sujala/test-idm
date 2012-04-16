@@ -34,7 +34,7 @@ public class UserPasswordCredentialsValidatorTest {
         UserPassword mockCurrentPassword = mock(UserPassword.class);
         mockCurrentPassword.setPassword("testPassword");
         when(mockCreds.getCurrentPassword()).thenReturn(mockCurrentPassword);
-        userPasswordCredentialsValidator.validateCurrentPassword(mockCreds, user);
+        userPasswordCredentialsValidator.validateUserPasswordCredentials(mockCreds, user);
     }
 
     @Test(expected = BadRequestException.class)
@@ -53,5 +53,23 @@ public class UserPasswordCredentialsValidatorTest {
         mockCurrentPassword.setPassword(null);
         when(mockCreds.getCurrentPassword()).thenReturn(mockCurrentPassword);
         userPasswordCredentialsValidator.validateCurrentPassword(mockCreds);
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void validateNewPassword_withOutUserWithBlank_throwBadRequest() throws Exception {
+        UserPasswordCredentials mockCreds = mock(UserPasswordCredentials.class);
+        UserPassword mockCurrentPassword = mock(UserPassword.class);
+        mockCurrentPassword.setPassword("");
+        when(mockCreds.getNewPassword()).thenReturn(mockCurrentPassword);
+        userPasswordCredentialsValidator.validateNewPassword(mockCreds);
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void validateNewPassword_withOutUserWithNull_throwBadRequest() throws Exception {
+        UserPasswordCredentials mockCreds = mock(UserPasswordCredentials.class);
+        UserPassword mockCurrentPassword = mock(UserPassword.class);
+        mockCurrentPassword.setPassword(null);
+        when(mockCreds.getNewPassword()).thenReturn(mockCurrentPassword);
+        userPasswordCredentialsValidator.validateNewPassword(mockCreds);
     }
 }
