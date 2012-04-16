@@ -26,6 +26,7 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.*;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
@@ -46,6 +47,8 @@ import static org.mockito.Mockito.*;
  * Date: 10/12/11
  * Time: 3:58 PM
  */
+
+
 public class DefaultCloud20ServiceTest {
 
     private DefaultCloud20Service defaultCloud20Service;
@@ -82,6 +85,7 @@ public class DefaultCloud20ServiceTest {
     private com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group groupKs;
     private Group group;
     private UriInfo uriInfo;
+    private CloudKsGroupBuilder cloudKsGroupBuilder;
 
     @Before
     public void setUp() throws Exception {
@@ -100,6 +104,7 @@ public class DefaultCloud20ServiceTest {
         endpointService = mock(EndpointService.class);
         clientService = mock(ApplicationService.class);
         config = mock(Configuration.class);
+        cloudKsGroupBuilder = mock(CloudKsGroupBuilder.class);
 
         //setting mocks
         defaultCloud20Service.setUserService(userService);
@@ -114,6 +119,7 @@ public class DefaultCloud20ServiceTest {
         defaultCloud20Service.setEndpointService(endpointService);
         defaultCloud20Service.setClientService(clientService);
         defaultCloud20Service.setConfig(config);
+        defaultCloud20Service.setCloudKsGroupBuilder(cloudKsGroupBuilder);
 
         //fields
         user = new User();
@@ -1414,5 +1420,13 @@ public class DefaultCloud20ServiceTest {
         when(jaxbObjectFactories.getOpenStackCommonV1Factory()).thenReturn(objectFactory);
         Response.ResponseBuilder responseBuilder = defaultCloud20Service.getExtension(null,"bad");
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(404));
+    }
+
+    @Test
+    public void listUserGroups_noGroup_ReturnDefaultGroup() throws Exception{
+        when(userGroupService.getGroupById(config.getInt(org.mockito.Matchers.<String>any()))).thenReturn(group);
+        when(cloudKsGroupBuilder.build(org.mockito.Matchers.<Group>any())).thenReturn(groupKs);
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.listUserGroups(null,authToken,userId);
+        assertThat("Default Group added",((com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups)((JAXBElement)responseBuilder.build().getEntity()).getValue()).getGroup().get(0).getName(),equalTo("Group1"));
     }
 }

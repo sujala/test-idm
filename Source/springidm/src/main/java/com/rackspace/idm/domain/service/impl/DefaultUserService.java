@@ -274,6 +274,10 @@ public class DefaultUserService implements UserService {
     public User getUser(String username) {
         logger.debug("Getting User: {}", username);
         User user = userDao.getUserByUsername(username);
+        if(user == null){
+            String errMsg = String.format("User '%s' was not found.",username);
+            throw new NotFoundException(errMsg);
+        }
         logger.debug("Got User: {}", user);
         return user;
     }

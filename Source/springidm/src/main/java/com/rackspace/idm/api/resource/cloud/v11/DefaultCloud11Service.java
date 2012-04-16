@@ -89,6 +89,9 @@ public class DefaultCloud11Service implements Cloud11Service {
     private TenantService tenantService;
 
     @Autowired
+    private GroupService cloudGroupService;
+
+    @Autowired
     public DefaultCloud11Service(Configuration config,
                                  ScopeAccessService scopeAccessService, EndpointService endpointService,
                                  UserService userService, AuthConverterCloudV11 authConverterCloudV11,
@@ -581,6 +584,10 @@ public class DefaultCloud11Service implements Cloud11Service {
             User user = userService.getUser(userName); //this.checkAndGetUser(userID);
 
             List<com.rackspace.idm.domain.entity.Group> groups = userGroupService.getGroupsForUser(user.getId());
+            if(groups.size() == 0){
+                com.rackspace.idm.domain.entity.Group defGroup = cloudGroupService.getGroupById(config.getInt("defaultGroupId"));
+                groups.add(defGroup);
+            }
             GroupsList groupList = new GroupsList();
             for (com.rackspace.idm.domain.entity.Group group : groups) {
                 Group g = new Group();

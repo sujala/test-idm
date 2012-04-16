@@ -1504,6 +1504,10 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             verifyServiceAdminLevelAccess(authToken);
             List<Group> groups = cloudGroupService.getGroupsForUser(userId);
+            if(groups.size() == 0){
+                Group defGroup = cloudGroupService.getGroupById(config.getInt("defaultGroupId"));
+                groups.add(defGroup);
+            }
             com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups cloudGroups = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups();
             for (Group group : groups) {
                 com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group cloudGroup = cloudKsGroupBuilder.build(group);
