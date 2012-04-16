@@ -20,5 +20,18 @@ Solutions:
 	c. Include QA in all new feature discussions
 	
 2.
-	a.
+	a. get dedicated cloud auth users for all environments
+	b. get dedicated ga users for all environments
+
+3.
+	a. ci builds for all environments
+
+4.	
+	a. set up each environment with dedicated ldap server
 	
+5. 	a. create feature base modules
+
+6.	a. do not use wadl to create tests
+	b. research better tool
+	
+7. 	a. move repository test to ci build
