@@ -3,16 +3,18 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.rackspace.idm</groupId>
-	<artifactId>idm</artifactId>
+	<artifactId>globalauth-foundation</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<packaging>jar</packaging>
+	<packaging>pom</packaging>
 	<name>docs</name>
 	<url>http://maven.apache.org</url>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<doctools.version>1.0.6-SNAPSHOT</doctools.version>
+		<doctools.version>1.0.9</doctools.version>
 		<build.samples.automatically>true</build.samples.automatically>
+		<wadltools.version>1.0.1</wadltools.version>
+		<contract.repository.url>soauser@d-build1.iad2.corp.rackspace.com</contract.repository.url>
 	</properties>
 
 	<dependencies>
@@ -50,6 +52,11 @@
 			<artifactId>clouddocs-maven-plugin</artifactId>
 			<version>${doctools.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>com.rackspace.cloud.api</groupId>
+			<artifactId>wadl-tools</artifactId>
+			<version>${wadltools.version}</version>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -78,31 +85,11 @@
 						<phase>generate-sources</phase>
 						<configuration>
 							<schemaDirectory>src/xsd</schemaDirectory>
-							<schemaExcludes>
-								<schemaExclude>keystone</schemaExclude>
-							</schemaExcludes>
 							<sampleConfigurationDirectory>src/sampleconfigurations</sampleConfigurationDirectory>
-							<sampleExcludes>
-								<sampleExclude>keystone</sampleExclude>
-							</sampleExcludes>
 							<sampleOutputDirectory>src/formattedsamples</sampleOutputDirectory>
 							<includeJsonRootWrapperElement>true</includeJsonRootWrapperElement>
 						</configuration>
 					</execution> 
-					
-					<execution>
-						<id>generate-keystone-samples</id>
-						<goals>
-							<goal>generate</goal>
-						</goals>
-						<phase>generate-sources</phase>
-						<configuration>
-							<schemaDirectory>src/xsd/keystone</schemaDirectory>
-							<sampleConfigurationDirectory>src/sampleconfigurations/keystone</sampleConfigurationDirectory>
-							<sampleOutputDirectory>src/formattedsamples/keystone</sampleOutputDirectory>
-							<includeJsonRootWrapperElement>true</includeJsonRootWrapperElement>
-						</configuration>
-					</execution>
 				</executions>
 			</plugin>
 
@@ -149,48 +136,70 @@
 							<includes>**/normalizeWadl/*.xsl</includes>
 						</configuration>
 					</execution>
+					<execution>
+						<id>unpack-shared-resources-for-wadl-normalizer</id>
+						<goals>
+							<goal>unpack-dependencies</goal>
+						</goals>
+						<phase>generate-sources</phase>
+						<configuration>
+							<outputDirectory>${project.build.directory}/generated-resources/wadlnormalizer</outputDirectory>
+							<includeGroupIds>com.rackspace.cloud.api</includeGroupIds>
+							<includeArtifactIds>wadl-tools</includeArtifactIds>
+							<excludeTransitive>true</excludeTransitive>
+							<includes>**/xsl/*.xsl</includes>
+						</configuration>
+					</execution>
 				</executions>
 			</plugin>
 
-			<!-- Normalize the wadl -->
+			<!--
+				Normalize wadl using maven plugin. The normalized wadl will contain
+				complete wadl that can be deployed
+			-->
 			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-antrun-plugin</artifactId>
-				<version>1.5</version>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>xml-maven-plugin</artifactId>
 				<executions>
 					<execution>
-						<id>ant</id>
-						<phase>generate-sources</phase>
-						<configuration>
-							<target>
-								<!--
-									You can source the wadl from a remote location, e.g service
-									registry. You could also normalize multiple wadls at the same
-									time
-								-->
-								<java jar="${net.sourceforge.saxon:saxon:jar}" fork="true">
-									<arg value="-u" />
-									<arg value="-s:src/wadl/idm.wadl" />
-									<arg
-										value="-xsl:${project.build.directory}/generated-resources/cloud/normalizeWadl/normalizeWadl.xsl" />
-									<arg
-										value="-o:${project.build.directory}/generated-resources/xml/xslt/idm.wadl" />
-								</java>
-								<java jar="${net.sourceforge.saxon:saxon:jar}" fork="true">
-									<arg value="-u" />
-									<arg value="-s:src/wadl/keystone/RAX-GA.wadl" />
-									<arg
-										value="-xsl:${project.build.directory}/generated-resources/cloud/normalizeWadl/normalizeWadl.xsl" />
-									<arg
-										value="-o:${project.build.directory}/generated-resources/xml/xslt/RAX-GA.wadl" />
-								</java>
-							</target>
-						</configuration>
 						<goals>
-							<goal>run</goal>
+							<goal>transform</goal>
 						</goals>
+						<phase>generate-sources</phase>
 					</execution>
 				</executions>
+				<configuration>
+					<transformationSets>
+						<!-- normalization for wadl docbook generation -->
+						<transformationSet>
+							<dir>src/wadl</dir>
+							<includes>
+								<include>idm.wadl</include>
+							</includes>
+							<stylesheet>${project.build.directory}/generated-resources/cloud/normalizeWadl/normalizeWadl.xsl</stylesheet>
+						</transformationSet>
+						<!-- normalization for package distribution. this wadl can be used by soap ui, and referenced by developers -->
+						<transformationSet> 
+							<dir>src/wadl</dir> <includes>
+							<include>idm.wadl</include> </includes>
+							<stylesheet>${project.build.directory}/generated-resources/wadlnormalizer/xsl/normalizeWadl.xsl</stylesheet>
+							<outputDir>${project.build.directory}</outputDir> 
+							<parameters>
+								<parameter> 
+									<name>flattenXsds</name> 
+									<value>false</value>
+								</parameter> 
+							</parameters> 
+						</transformationSet>
+					</transformationSets>
+				</configuration>
+				<dependencies>
+					<dependency>
+						<groupId>net.sf.saxon</groupId>
+						<artifactId>saxon</artifactId>
+						<version>8.7</version>
+					</dependency>
+				</dependencies>
 			</plugin>
 
 			<!-- Create the pdf and web documentation -->
@@ -257,74 +266,6 @@
 									tofile="${basedir}/target/docbkx/webhelp/idmdevguide/idmdevguide.pdf" />
 
 							</postProcess>
-							<sourceDirectory>src/docbkx</sourceDirectory>
-							<includes>
-								idmdevguide.xml
-                    		</includes>
-						</configuration>
-					</execution>
-
-					<!-- ================================================ -->
-					<!--   Create the keystone extensions documentation   -->
-					<!-- ================================================ -->
-					<execution>
-						<id>generate-keystone-pdf-documentation</id>
-						<goals>
-							<goal>generate-pdf</goal>
-						</goals>
-						<phase>generate-sources</phase>
-						<configuration>
-							<highlightSource>false</highlightSource>
-							<sourceDirectory>src/docbkx/keystone</sourceDirectory>
-							<includes>
-								RAX-GA.xml
-                    		</includes>
-						</configuration>
-					</execution>
-					<execution>
-						<id>generate-keystone-web-documentation</id>
-						<goals>
-							<goal>generate-webhelp</goal>
-						</goals>
-						<phase>generate-sources</phase>
-						<configuration>
-							<!-- These parameters only apply to webhelp -->
-							<enableDisqus>0</enableDisqus>
-							<disqusShortname>os-identitydevguide</disqusShortname>
-							<enableGoogleAnalytics>1</enableGoogleAnalytics>
-							<googleAnalyticsId>UA-17511903-6</googleAnalyticsId>
-							<generateToc>
-								appendix toc,title
-								article/appendix nop
-								article
-								toc,title
-								book title,figure,table,example,equation
-								chapter
-								toc,title
-								part toc,title
-								preface toc,title
-								qandadiv toc
-								qandaset toc
-								reference toc,title
-								set toc,title
-                            </generateToc>
-							<postProcess>
-								<!-- Copies the figures to the correct location for webhelp -->
-								<copy todir="${basedir}/target/docbkx/webhelp/RAX-GA/figures">
-									<fileset dir="${basedir}/src/img">
-										<include name="**/*.svg" />
-									</fileset>
-								</copy>
-
-								<!--Moves PDF to the needed placement -->
-								<move failonerror="false" file="${basedir}/target/docbkx/pdf/RAX-GA.pdf"
-									tofile="${basedir}/target/docbkx/webhelp/RAX-GA/RAX-GA.pdf" />
-
-							</postProcess>
-							<sourceDirectory>src/docbkx/keystone</sourceDirectory>
-							<includes>
-								RAX-GA.xml
-                    		</includes>
 						</configuration>
 					</execution>
 				</executions>
@@ -332,16 +273,97 @@
 				<configuration>
 					<!-- These parameters apply to pdf and webhelp -->
 					<xincludeSupported>true</xincludeSupported>
-					<sourceDirectory>src/docbkx/keystone</sourceDirectory>
+					<sourceDirectory>src/docbkx</sourceDirectory>
 					<includes>
-						RAX-GA.xml
+						idmdevguide.xml
                     </includes>
 					<profileSecurity>reviewer</profileSecurity>
 					<branding>rackspace</branding>
 				</configuration>
 			</plugin>
+			
+			<!--
+				Package documentation in nice simple unit that can be deployed. This
+				contains xsd, wadl and site.
+			-->
+			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<version>2.3</version>
+				<configuration>
+					<descriptors>
+						<descriptor>zip-assembly.xml</descriptor>
+					</descriptors>
+					<finalName>${pom.artifactId}</finalName>
+				</configuration>
+				<executions>
+					<execution>
+						<id>make-zip-file</id>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 
+			<!--
+				TODO: Section should be moved to Jenkins continuous build server.
+				For now just leave it in POM file to get the project rolling
+				
+				1. mvn wagon:upload -Dwagon.fromDir=${project.build.directory} -Dwagon.includes=${pom.artifactId}-contract.zip
+				                    -Dwagon.url=scp://d–build1.iad2.corp.rackspace.com -Dwagon.toDir=/var/lib/servicecontracts/nginx15/html/snapshots/${pom.artifactId}
+				                    -Dwagon.serverId=service-contracts
+				2. ssh soauser@d-build1.iad2.corp.rackspace.com "cd /var/www/internal/foundations/snapshots/${pom.artifactId}; unzip -o ${pom.artifactId}-contract.zip"
+			-->
+			<!-- Upload the zip file to the remote location  -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>wagon-maven-plugin</artifactId>
+				<version>1.0-beta-3</version>
+				<executions>
+					<execution>
+						<id>upload-contract-to-repository</id>
+						<phase>install</phase>
+						<goals>
+							<goal>upload</goal>
+						</goals>
+						<configuration>
+							<fromDir>${project.build.directory}</fromDir>
+							<includes>${pom.artifactId}-contract.zip</includes>
+							<url>scp://${contract.repository.url}</url>
+							<toDir>/var/lib/servicecontracts/nginx15/html/snapshots/${pom.artifactId}</toDir>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 
+			<!--
+				Unzip zip file at remote location. This will work for clients that
+				have ssh on their local machine. Windows machines might have a
+				problem
+			-->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<version>1.2.1</version>
+				<executions>
+					<execution>
+						<id>unzip-deployable</id>
+						<phase>install</phase>
+						<goals>
+							<goal>exec</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<executable>ssh</executable>
+					<arguments>
+						<argument>${contract.repository.url}</argument>
+						<argument>cd /var/lib/servicecontracts/nginx15/html/snapshots/${pom.artifactId}; unzip -o ${pom.artifactId}-contract.zip</argument>
+					</arguments>
+				</configuration>
+			</plugin>
+			
 		</plugins>
 	</build>
 

@@ -1,5 +1,0 @@
-{"service_unavailable": {
-  "message": "The IdM Service is Unavailable at the moment.",
-  "details": "Error Details...",
-  "code": 503
-}}

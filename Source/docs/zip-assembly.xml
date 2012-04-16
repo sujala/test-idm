@@ -10,7 +10,7 @@
 	</formats>
 	<fileSets>
 		<fileSet>
-			<directory>${project.basedir}/src/wadl/normalized</directory>
+			<directory>${project.build.directory}</directory>
 			<outputDirectory>api</outputDirectory>
 			<includes>
 				<include>*.wadl</include>
@@ -19,9 +19,6 @@
 		<fileSet>
 			<directory>${project.basedir}/src/xsd</directory>
 			<outputDirectory>xsd</outputDirectory>
-			<excludes>
-				<exclude>keystone</exclude>
-			</excludes>
 		</fileSet>
 		<fileSet>
 			<directory>${project.build.directory}/docbkx/webhelp/idmdevguide</directory>
