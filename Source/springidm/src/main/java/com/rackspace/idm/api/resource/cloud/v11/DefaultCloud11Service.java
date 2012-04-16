@@ -582,6 +582,10 @@ public class DefaultCloud11Service implements Cloud11Service {
                 throw new BadRequestException(errMsg);
             }
             User user = userService.getUser(userName); //this.checkAndGetUser(userID);
+            if(user == null){
+                String errMsg = String.format("User '%s' was not found.",userName);
+                throw new NotFoundException(errMsg);
+            }
 
             List<com.rackspace.idm.domain.entity.Group> groups = userGroupService.getGroupsForUser(user.getId());
             if(groups.size() == 0){
