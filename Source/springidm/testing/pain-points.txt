@@ -24,14 +24,14 @@ Solutions:
 	b. get dedicated ga users for all environments
 
 3.
-	a. ci builds for all environments
+	a. ci builds for all environments ~ in progress
 
 4.	
-	a. set up each environment with dedicated ldap server
+	a. set up each environment with dedicated ldap server ~ in progress
 	
 5. 	a. create feature base modules
 
 6.	a. do not use wadl to create tests
 	b. research better tool
 	
-7. 	a. move repository test to ci build
+7. 	a. move repository test to ci build ~ in progress
