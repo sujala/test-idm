@@ -477,7 +477,7 @@
             </representation>
             <representation mediaType="application/json">
                 <doc xml:lang="EN">
-                    <xsdxt:code href="../formattedsamples/adduser.xml" />
+                    <xsdxt:code href="../formattedsamples/adduser.json" />
                 </doc>
             </representation>
         </request>
