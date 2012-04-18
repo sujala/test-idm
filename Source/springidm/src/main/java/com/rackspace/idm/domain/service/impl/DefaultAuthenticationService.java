@@ -437,7 +437,6 @@ public class DefaultAuthenticationService implements AuthenticationService {
         logger.debug("Get and Update ScopeAccess for Racker: {} and ClientId: {}", racker.getRackerId(), client.getClientId());
 
         RackerScopeAccess scopeAccess = scopeAccessService.getRackerScopeAccessForClientId(racker.getUniqueId(), client.getClientId());
-        this.validateRackerHasRackerRole(racker, scopeAccess, client);
         if (scopeAccess == null) {
             // Auto-Provision Scope Access Objects for Rackers
             scopeAccess = new RackerScopeAccess();
@@ -447,6 +446,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
             logger.debug("Creating ScopeAccess for Racker: {} and ClientId: {}", racker.getRackerId(), client.getClientId());
             scopeAccess = (RackerScopeAccess) scopeAccessService.addDirectScopeAccess(racker.getUniqueId(), scopeAccess);
         }
+        validateRackerHasRackerRole(racker, scopeAccess, client);
 
         DateTime current = new DateTime();
 
@@ -487,7 +487,10 @@ public class DefaultAuthenticationService implements AuthenticationService {
             List<ClientRole> clientRoles = clientDao.getClientRolesByClientId(client.getClientId());
             for(ClientRole clientRole : clientRoles){
                 if(clientRole.getName().equals("Racker")){
-                    TenantRole tenantRole = tenantRoleConverter.fromClientRole(clientRole, racker.getId(), null);
+                    TenantRole tenantRole = new TenantRole();
+                    tenantRole.setRoleRsId(clientRole.getId());
+                    tenantRole.setName(clientRole.getName());
+                    tenantRole.setClientId(clientRole.getClientId());
                     tenantService.addTenantRoleToUser(racker, tenantRole);
                 }
             }
