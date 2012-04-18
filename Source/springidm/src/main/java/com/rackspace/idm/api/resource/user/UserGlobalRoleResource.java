@@ -1,9 +1,6 @@
 package com.rackspace.idm.api.resource.user;
 
-import com.rackspace.idm.domain.entity.ClientRole;
-import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.TenantRole;
-import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.BadRequestException;
 import org.slf4j.Logger;
@@ -55,7 +52,7 @@ public class UserGlobalRoleResource {
 	 *            roleId
 	 */
 	@PUT
-	public Response grantGlobalRoleTouser(
+	public Response grantGlobalRoleToUser(
 			@HeaderParam("X-Auth-Token") String authHeader,
 			@PathParam("userId") String userId,
 			@PathParam("roleId") String roleId) {
@@ -102,9 +99,6 @@ public class UserGlobalRoleResource {
 
 		User user = userService.loadUser(userId);
 		TenantRole tenantRole = tenantService.getTenantRoleForParentById(user.getUniqueId(), roleId);
-        if(tenantRole==null){
-            return Response.status(Response.Status.NOT_FOUND).entity("role with id: " + roleId + " not found").build();
-        }
 		this.tenantService.deleteTenantRole(user.getUniqueId(), tenantRole);
 
 		return Response.noContent().build();
@@ -136,7 +130,13 @@ public class UserGlobalRoleResource {
 
 		User user = userService.loadUser(userId);
 
-		TenantRole tenantRole = createTenantRole(tenantId, roleId);
+        Tenant tenant = tenantService.getTenant(tenantId);
+
+        if(tenant==null){
+            throw new BadRequestException("Tenant with id: " + tenantId + " not found.");
+        }
+
+        TenantRole tenantRole = createTenantRole(tenantId, roleId);
 
 	    tenantService.addTenantRoleToUser(user, tenantRole);
 

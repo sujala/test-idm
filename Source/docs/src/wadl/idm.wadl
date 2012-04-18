@@ -307,11 +307,11 @@
                 <doc xml:lang="EN" title="Auth as Customer Request: XML">
                     <xsdxt:code href="../formattedsamples/auth_credentials.xml" />
                 </doc>
-                <doc xml:lang="EN" title="Auth as Racker Request: XML">
+                <doc xml:lang="EN" title="Auth as Racker with SSO Request: XML">
                     <xsdxt:code href="../formattedsamples/racker_auth_credentials.xml" />
                 </doc>
                 <doc xml:lang="EN" title="Auth as Racker with RSA Token Request: XML">
-                    <xsdxt:code href="../formattedsamples/racker_rsa_credentials.xml" />
+                    <xsdxt:code href="../formattedsamples/RackerRSACredentials.xml" />
                 </doc>
             </representation>
             <representation mediaType="application/json">
@@ -321,35 +321,35 @@
                 <doc xml:lang="EN" title="Auth as Customer Request: JSON">
                     <xsdxt:code href="../formattedsamples/auth_credentials.json" />
                 </doc>
-                <doc xml:lang="EN" title="Auth as Racker Request: JSON">
+                <doc xml:lang="EN" title="Auth as Racker with SSO Request: JSON">
                     <xsdxt:code href="../formattedsamples/racker_auth_credentials.json" />
                 </doc>
                 <doc xml:lang="EN" title="Auth as Racker with RSA Token Request: JSON">
-                    <xsdxt:code href="../formattedsamples/racker_rsa_credentials.json" />
+                    <xsdxt:code href="../formattedsamples/RackerRSACredentials.json" />
                 </doc>
             </representation>
         </request>
         <response status="200 203">
             <representation mediaType="application/xml" element="idm:auth">
                 <doc xml:lang="EN" title="Auth as Application Response: XML">
-                    <xsdxt:code href="../formattedsamples/application_auth.xml" />
+                    <xsdxt:code href="../formattedsamples/ApplicationAuthResponse.xml" />
                 </doc>
                 <doc xml:lang="EN" title="Auth as Customer Response: XML">
-                    <xsdxt:code href="../formattedsamples/auth.xml" />
+                    <xsdxt:code href="../formattedsamples/CustomerAuthResponse.xml" />
                 </doc>
                 <doc xml:lang="EN" title="Auth as Racker Response: XML">
-                    <xsdxt:code href="../formattedsamples/racker_auth.xml" />
+                    <xsdxt:code href="../formattedsamples/RackerAuthResponse.xml" />
                 </doc>
             </representation>
             <representation mediaType="application/json">
                 <doc xml:lang="EN" title="Auth as Application Response: JSON">
-                    <xsdxt:code href="../formattedsamples/application_auth.json" />
+                    <xsdxt:code href="../formattedsamples/ApplicationAuthResponse.json" />
                 </doc>
                 <doc xml:lang="EN" title="Auth as Customer Response: JSON">
-                    <xsdxt:code href="../formattedsamples/auth.json" />
+                    <xsdxt:code href="../formattedsamples/CustomerAuthResponse.json" />
                 </doc>
                 <doc xml:lang="EN" title="Auth as Racker Response: JSON">
-                    <xsdxt:code href="../formattedsamples/racker_auth.json" />
+                    <xsdxt:code href="../formattedsamples/RackerAuthResponse.json" />
                 </doc>
             </representation>
         </response>

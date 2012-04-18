@@ -397,6 +397,13 @@
             <artifactId>xmlrpc-client</artifactId>
             <version>3.0</version>
         </dependency>
+        
+        <!-- Radius client for rsa authentication -->
+       <dependency>
+            <groupId>org.tinyradius</groupId>
+            <artifactId>tinyradius</artifactId>
+            <version>1.0</version>
+        </dependency>
     </dependencies>
 
     <distributionManagement>
@@ -1179,9 +1186,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.7.2</version>
                 <configuration>
-                    <includes>
-                        <include>**/*Test*.java</include>
-                    </includes>
+                    <skip>true</skip>
                     <systemProperties>
                         <property>
                             <name>idm.properties.location</name>
@@ -1192,6 +1197,22 @@
                 </configuration>
 
                 <executions>
+                    <execution>
+                        <id>tests</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                        <configuration>
+                            <skip>false</skip>
+                            <excludes>
+                                <exclude>**/Ldap*.java</exclude>
+                            </excludes>
+                            <includes>
+                                <include>**/*Test*.java</include>
+                            </includes>
+                        </configuration>
+                    </execution>
                     <execution>
                         <id>integration-tests</id>
                         <phase>integration-test</phase>
@@ -1204,7 +1225,7 @@
                                 <exclude>none</exclude>
                             </excludes>
                             <includes>
-                                <include>**/integration/*Test.java</include>
+                                <include>**/*Test*.java</include>
                             </includes>
                         </configuration>
                     </execution>

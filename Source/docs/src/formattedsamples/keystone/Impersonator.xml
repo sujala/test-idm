@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<ns4:impersonator xmlns:ns2="http://www.w3.org/2005/Atom" xmlns:ns3="http://docs.openstack.org/identity/api/v2.0" xmlns:ns4="http://docs.rackspace.com/identity/api/ext/RAX-GA/v1.0" name="impersonator.joe" id="567">
-    <roles>
-        <role name="Racker" id="123"/>
-        <role name="object-store:admin" id="234"/>
-    </roles>
-</ns4:impersonator>

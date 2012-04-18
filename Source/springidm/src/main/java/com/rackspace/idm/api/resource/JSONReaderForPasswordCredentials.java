@@ -1,9 +1,11 @@
 package com.rackspace.idm.api.resource;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Type;
+import com.rackspace.api.idm.v1.UserPasswordCredentials;
+import com.rackspace.idm.JSONConstants;
+import org.apache.commons.io.IOUtils;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.WebApplicationException;
@@ -11,32 +13,28 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyReader;
 import javax.ws.rs.ext.Provider;
-
-import org.apache.commons.io.IOUtils;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
-
-import com.rackspace.api.idm.v1.UserPasswordCredentials;
-import com.rackspace.idm.JSONConstants;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
 public class JSONReaderForPasswordCredentials implements
-    MessageBodyReader<UserPasswordCredentials> {
+        MessageBodyReader<UserPasswordCredentials> {
 
     @Override
     public boolean isReadable(Class<?> type, Type genericType,
-        Annotation[] annotations, MediaType mediaType) {
+                              Annotation[] annotations, MediaType mediaType) {
         return type == UserPasswordCredentials.class;
     }
 
     @Override
     public UserPasswordCredentials readFrom(
-        Class<UserPasswordCredentials> type, Type genericType,
-        Annotation[] annotations, MediaType mediaType,
-        MultivaluedMap<String, String> httpHeaders, InputStream inputStream)
-        throws IOException, WebApplicationException {
+            Class<UserPasswordCredentials> type, Type genericType,
+            Annotation[] annotations, MediaType mediaType,
+            MultivaluedMap<String, String> httpHeaders, InputStream inputStream)
+            throws IOException, WebApplicationException {
 
         String jsonBody = IOUtils.toString(inputStream, JSONConstants.UTF_8);
 
@@ -46,7 +44,7 @@ public class JSONReaderForPasswordCredentials implements
     }
 
     public static UserPasswordCredentials getUserPasswordCredentialsFromJSONString(
-        String jsonBody) {
+            String jsonBody) {
         UserPasswordCredentials creds = new UserPasswordCredentials();
 
         try {
@@ -57,23 +55,31 @@ public class JSONReaderForPasswordCredentials implements
                 JSONObject obj3;
 
                 obj3 = (JSONObject) parser.parse(outer.get(
-                    JSONConstants.PASSWORD_CREDENTIALS).toString());
+                        JSONConstants.PASSWORD_CREDENTIALS).toString());
 
                 Object newPassword = obj3.get(JSONConstants.NEW_PASSWORD);
-                Object currentPassword = obj3
-                    .get(JSONConstants.CURRENT_PASSWORD);
+                Object currentPassword = obj3.get(JSONConstants.CURRENT_PASSWORD);
+                Object varifyCurrentPassword = obj3.get(JSONConstants.VERIFY_CURRENT_PASSWORD);
+
 
                 if (newPassword != null) {
                     creds
-                        .setNewPassword(JSONReaderForUserPassword
-                            .getUserPasswordFromJSONStringWithoutWrapper(newPassword
-                                .toString()));
+                            .setNewPassword(JSONReaderForUserPassword
+                                    .getUserPasswordFromJSONStringWithoutWrapper(newPassword
+                                            .toString()));
                 }
                 if (currentPassword != null) {
                     creds
-                        .setCurrentPassword(JSONReaderForUserPassword
-                            .getUserPasswordFromJSONStringWithoutWrapper(currentPassword
-                                .toString()));
+                            .setCurrentPassword(JSONReaderForUserPassword
+                                    .getUserPasswordFromJSONStringWithoutWrapper(currentPassword
+                                            .toString()));
+                }
+                if (varifyCurrentPassword != null) {
+                    if (varifyCurrentPassword.equals("false"))
+                        creds.setVerifyCurrentPassword(false);
+                    else {
+                        creds.setVerifyCurrentPassword(true);
+                    }
                 }
             }
         } catch (ParseException e) {

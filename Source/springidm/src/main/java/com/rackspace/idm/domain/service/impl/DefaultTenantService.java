@@ -207,6 +207,9 @@ public class DefaultTenantService implements TenantService {
             ClientRole cRole = this.clientDao.getClientRoleById(role.getRoleRsId());
             role.setName(cRole.getName());
             role.setDescription(cRole.getDescription());
+        }else{
+            String errMsg = String.format("Role with id: %s not found.",id);
+            throw new NotFoundException(errMsg);
         }
         logger.debug("Got Tenant Role {}", role);
         return role;
@@ -304,7 +307,7 @@ public class DefaultTenantService implements TenantService {
             usa.setUsername(user.getUsername());
             usa.setUserRCN(user.getCustomerId());
             usa.setUserRsId(user.getId());
-            sa = this.scopeAccessDao.addDirectScopeAccess(user.getUniqueId(), sa);
+            sa = this.scopeAccessDao.addDirectScopeAccess(user.getUniqueId(), usa);
         }
 
         addTenantRole(sa.getUniqueId(), role);
