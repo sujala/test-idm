@@ -82,6 +82,8 @@
 	</element>
 	
 	<element name="rackerCredentials" type="idm:RackerCredentials" />
+	
+	<element name="rsaCredentials" type="idm:RSACredentials"/>
 
 	<element name="token" type="idm:Token">
 		<annotation>
@@ -174,7 +176,7 @@
 			<annotation>
 				<xsd:documentation xml:lang="EN"
 					xmlns="http://www.w3.org/1999/xhtml">
-					<p>A number of seconds until the token expires.</p>
+					<p>The time the token expires.</p>
 				</xsd:documentation>
 			</annotation>
 		</attribute>
@@ -366,6 +368,12 @@
 	</complexType>
 	
 	<complexType name="RackerCredentials">
+		<complexContent>
+			<extension base="idm:Credentials"></extension>
+		</complexContent>
+	</complexType>
+	
+	<complexType name="RSACredentials">
 		<complexContent>
 			<extension base="idm:Credentials"></extension>
 		</complexContent>

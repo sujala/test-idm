@@ -1,0 +1,44 @@
+---
+RackerRSACredentials:
+    __type: http://idm.api.rackspace.com/v1.0/rsaCredentials
+    __overwrite_xml: false
+    __overwrite_json: false
+    password: rsaToken
+    username: racker.sso
+    client_id: 8972348923400fdshasdf
+    client_secret: 0923899flewriudsb
+    grant_type: PASSWORD
+
+---
+ApplicationAuthResponse:
+    __type: http://idm.api.rackspace.com/v1.0/auth 
+    access_token:
+        id: ec3b38d2251e46e2b235f5247bb94db9
+        expires: 2012-04-18T12:24:13
+    refresh_token:
+        id: fc3b38d2251e46e2b235fs2fdbb94dbT
+    application:
+        clientId: 8972348923400fdshasdf
+        customerId: RCN-123-456-999
+---
+CustomerAuthResponse:
+    __type: http://idm.api.rackspace.com/v1.0/auth 
+    access_token:
+        id: ec3b38d2251e46e2b235f5247bb94db9
+        expires: 2012-04-18T12:24:13
+    refresh_token:
+        id: fc3b38d2251e46e2b235fs2fdbb94dbT
+    user:
+        username: testuser
+        customerId: RCN-123-456-999
+---
+RackerAuthResponse:
+    __type: http://idm.api.rackspace.com/v1.0/auth 
+    access_token:
+        id: ec3b38d2251e46e2b235f5247bb94db9
+        expires: 2012-04-18T12:24:13
+    refresh_token:
+        id: fc3b38d2251e46e2b235fs2fdbb94dbT
+    racker:
+        username: racker.sso
+    
