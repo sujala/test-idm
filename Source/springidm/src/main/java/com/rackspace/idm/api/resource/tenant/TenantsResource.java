@@ -1,5 +1,7 @@
 package com.rackspace.idm.api.resource.tenant;
 
+import java.net.URI;
+
 import javax.servlet.http.HttpServletResponse;
 
 import javax.ws.rs.Consumes;
@@ -90,7 +92,9 @@ public class TenantsResource extends ParentResource {
 
         com.rackspace.idm.domain.entity.Tenant tenantObject = tenantService.getTenant(tenant.getName());
 
-        return Response.ok(objectFactory.createTenant(tenantConverter.toTenant(tenantObject))).status(HttpServletResponse.SC_CREATED).build();
+        String locationUri = String.format("%s", tenantObject.getTenantId());
+        
+        return Response.ok(objectFactory.createTenant(tenantConverter.toTenant(tenantObject))).location(URI.create(locationUri)).status(HttpServletResponse.SC_CREATED).build();
     }
 
 	@GET
