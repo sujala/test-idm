@@ -7,7 +7,7 @@ Pain points:
 5. big monolithic test scripts
 6. soap ui, not maintainable (is it the right tool?)
 7. Repository unit tests
-
+8. long deployments
 
 
 
@@ -35,3 +35,5 @@ Solutions:
 	b. research better tool
 	
 7. 	a. move repository test to ci build ~ in progress
+
+8.	a. combine smoke test for all versions

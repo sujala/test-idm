@@ -1,0 +1,53 @@
+staging:
+	identity-admin : 
+	
+	{
+	"user": {
+	"id": "10005956",
+	"username": "identityAdminStagingUser",
+	"email": "john.smith@example.org",
+	"firstName": "admin",
+	"lastName": "user",
+	"displayName": "identityAdminStagingUser",
+	"prefLanguage": "en_US",
+	"enabled": true,
+	"timeZone": "America/Chicago",
+	"passwordCredentials": {
+	"currentPassword": {
+	"password": "4bb2X6=1r1"
+	}
+	}
+	}
+	}
+	
+	
+	
+	
+
+
+
+jmeter continuous test staging:
+
+uk:
+extarnal endpoint:lon.staging.identity.api.rackspacecloud.com
+internal endpoint:lon.staging.rackidentity.api.rackpsacecloud.com
+user:auth password:auth123
+user:bobbuilder  api-key:0f97f489c848438090250d50c7e1ea88  password:Z7h9sLpP7
+user:cmarin1 api-key:7e4a5dda01d9f447695b5ff476a6788f
+
+us:
+external endpoint: staging.indentity.api.rackspacecloud.com
+internal endpoint: staging.rackidentity.api.rackspacecloud.com
+user:cmarin1 api-key:11111111222222223333333333 password:Password1
+user:auth password:auth123
+
+
+
+
+
+
+
+
+cloud auth staging
+service-admin: 
+user-admin: gatestuser1/Password1
