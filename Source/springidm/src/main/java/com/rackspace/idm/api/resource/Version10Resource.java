@@ -1,30 +1,25 @@
 package com.rackspace.idm.api.resource;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-
-import org.apache.commons.configuration.Configuration;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import com.rackspace.idm.api.resource.application.ApplicationsResource;
 import com.rackspace.idm.api.resource.cloud.CloudVersionsResource;
 import com.rackspace.idm.api.resource.customeridentityprofile.CustomerIdenityProfilesResource;
 import com.rackspace.idm.api.resource.passwordrule.PasswordRulesResource;
 import com.rackspace.idm.api.resource.roles.RolesResource;
-
 import com.rackspace.idm.api.resource.tenant.TenantsResource;
 import com.rackspace.idm.api.resource.token.TokensResource;
+import com.rackspace.idm.api.resource.user.RackerResource;
 import com.rackspace.idm.api.resource.user.UsersResource;
 import com.rackspace.idm.api.serviceprofile.CanonicalContractDescriptionBuilder;
 import com.rackspace.idm.domain.service.ApiDocService;
+import org.apache.commons.configuration.Configuration;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 /**
  * API Version
@@ -44,6 +39,7 @@ public class Version10Resource {
     private final ApplicationsResource applicationsResource;
     private final CanonicalContractDescriptionBuilder canonicalContractDescriptionBuilder;
     private final TenantsResource tenantsResource;
+    private final RackerResource rackerResource;
 
     @Context
     private UriInfo uriInfo;
@@ -56,7 +52,8 @@ public class Version10Resource {
         Configuration config,
         CanonicalContractDescriptionBuilder canonicalContractDescriptionBuilder,
         ApplicationsResource applicationsResource,
-        TenantsResource tenantsResource) {
+        TenantsResource tenantsResource,
+        RackerResource rackerResource) {
         this.usersResource = usersResource;
         this.customerIdentityProfilesResource = customersResource;
         this.passwordRulesResource = passwordRulesResource;
@@ -66,6 +63,7 @@ public class Version10Resource {
         this.rolesResource = rolesResource;
         this.apiDocService = apiDocService;
         this.tenantsResource = tenantsResource;
+        this.rackerResource = rackerResource;
     }
 
     /**
@@ -132,6 +130,11 @@ public class Version10Resource {
     @Path("roles")
     public RolesResource getRolesResource() {
         return rolesResource;
+    }
+
+    @Path("rackers")
+    public RackerResource getRackerResource() {
+        return rackerResource;
     }
 
     @GET
