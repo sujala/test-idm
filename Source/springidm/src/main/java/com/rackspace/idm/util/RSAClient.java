@@ -1,40 +1,34 @@
 package com.rackspace.idm.util;
 
-import com.rsa.authagent.authapi.AuthSession;
-import com.rsa.authagent.authapi.AuthSessionFactory;
+import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tinyradius.util.RadiusClient;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Hector
- * Date: 3/1/12
- * Time: 2:10 PM
+ * Created by IntelliJ IDEA. User: Hector Date: 3/1/12 Time: 2:10 PM
  */
 @Component
 public class RSAClient {
 
-    private AuthSessionFactory api;
+	private static Logger logger = LoggerFactory.getLogger(RSAClient.class);
 
-    private static Logger logger = LoggerFactory.getLogger(RSAClient.class);
-
-    public boolean authenticate(String userID, String passCode) {
-        try {
-            String path = System.getProperty("idm.properties.location")+ "/rsa_api.properties";
-            api = AuthSessionFactory.getInstance(path );
-            AuthSession authSession = api.createUserSession();
-            authSession.lock(userID);
-            int status = authSession.check(userID, passCode);
-            if (status == AuthSession.ACCESS_OK) {
-                return true;
-            }
-            authSession.close();
-            api.shutdown();
-            return false;
-        } catch (Exception e) {
-            logger.info("error authentication racker with rsa credentials: {}", e.getMessage());
-            return false;
-        }
-    }
+	@Autowired
+	private Configuration config;
+    
+	public boolean authenticate(String userID, String passCode) {
+		try {
+			String rsaHost = config.getString("rsa.host");
+			String rsaSecret = config.getString("rsa.sharedSecret");
+			logger.debug("rsa host: " + rsaHost);
+			
+			RadiusClient client = new RadiusClient(rsaHost, rsaSecret);
+			return client.authenticate(userID, passCode);
+		} catch (Throwable t) {
+			logger.info("error authentication racker with rsa credentials: {}", t.getMessage());
+			return false;
+		}
+	}
 }

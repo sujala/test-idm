@@ -89,7 +89,7 @@
 <xi:include href="../formattedsamples/sampleresponseheader.json" parse="text"/>
 </programlisting>
         <programlisting language="xml">
-<xi:include href="../formattedsamples/auth.json" parse="text"/>
+<xi:include href="../formattedsamples/CustomerAuthResponse.json" parse="text"/>
 </programlisting>
       </example>
     </section>

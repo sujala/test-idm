@@ -397,6 +397,13 @@
             <artifactId>xmlrpc-client</artifactId>
             <version>3.0</version>
         </dependency>
+        
+        <!-- Radius client for rsa authentication -->
+       <dependency>
+            <groupId>org.tinyradius</groupId>
+            <artifactId>tinyradius</artifactId>
+            <version>1.0</version>
+        </dependency>
     </dependencies>
 
     <distributionManagement>
