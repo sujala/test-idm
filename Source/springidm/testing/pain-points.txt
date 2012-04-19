@@ -30,7 +30,8 @@ Solutions:
 	a. set up each environment with dedicated ldap server ~ in progress
 	
 5. 	a. create feature base modules
-	b. create and delete users within module (TEST CASE) ~ in progress
+	b. fix delete from softDeleted call ~ DONE
+	c. create and delete users within module (TEST CASE) ~ in progress
 
 6.	a. do not use wadl to create tests
 	b. research better tool
