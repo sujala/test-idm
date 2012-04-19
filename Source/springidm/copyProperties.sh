@@ -6,5 +6,5 @@ then
 else
     HOST=$1
     ENV=$2
-    scp {./src/main/config/securid,./src/main/config/sdconf.rec,./src/main/config/rsa_api.properties,./src/main/config/$ENV/idm.properties,./src/main/config/base.idm.properties,./src/main/config/$ENV/idm.secrets.properties,./src/main/config/log4j.xml} gauth@$HOST:/home/gauth/config/
+    scp {./src/main/config/$ENV/idm.properties,./src/main/config/base.idm.properties,./src/main/config/$ENV/idm.secrets.properties,./src/main/config/log4j.xml} gauth@$HOST:/home/gauth/config/
 fi

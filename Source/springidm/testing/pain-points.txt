@@ -7,7 +7,7 @@ Pain points:
 5. big monolithic test scripts
 6. soap ui, not maintainable (is it the right tool?)
 7. Repository unit tests
-
+8. long deployments
 
 
 
@@ -30,8 +30,12 @@ Solutions:
 	a. set up each environment with dedicated ldap server ~ in progress
 	
 5. 	a. create feature base modules
+	b. fix delete from softDeleted call ~ DONE
+	c. create and delete users within module (TEST CASE) ~ in progress
 
 6.	a. do not use wadl to create tests
 	b. research better tool
 	
-7. 	a. move repository test to ci build ~ in progress
+7. 	a. move repository test to ci build ~ DONE
+
+8.	a. combine smoke test for all versions
