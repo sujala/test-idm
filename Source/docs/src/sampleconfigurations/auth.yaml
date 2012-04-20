@@ -2,7 +2,7 @@
 RackerRSACredentials:
     __type: http://idm.api.rackspace.com/v1.0/rsaCredentials
     __overwrite_xml: false
-    __overwrite_json: false
+    __overwrite_json: true
     password: rsaToken
     username: racker.sso
     client_id: 8972348923400fdshasdf

@@ -2,8 +2,8 @@
   "tenant": {
     "id": "hybrid:45389",
     "enabled": true,
+    "display-name": "EA Star Wars",
     "description": "Used to managed the Star Wars games",
-    "name": "star_wars",
-    "displayName": "EA Star Wars"
+    "name": "star_wars"
   }
 }
