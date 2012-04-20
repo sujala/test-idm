@@ -5,7 +5,7 @@ Pain points:
 3. test expectations change over time, as a result tests break.
 4. no dedicated qa/test environment
 5. big monolithic test scripts
-6. soap ui, not maintainable (is it the right tool?)
+6. soap ui, not maintainable, deletes body at will (is it the right tool?)
 7. Repository unit tests
 8. long deployments
 
