@@ -24,6 +24,8 @@
 
         <!--PowerMockito Properties-->
         <powermock.version>1.4.11</powermock.version>
+        <!--SoapUI Pro version-->
+        <soapui.version>4.0.2-SNAPSHOT</soapui.version>
     </properties>
 
     <dependencies>
@@ -317,14 +319,14 @@
         </dependency>
         <dependency>
             <groupId>eviware</groupId>
-            <artifactId>soapui-pro</artifactId>
-            <version>3.6.1</version>
+            <artifactId>soapui</artifactId>
+            <version>${soapui.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>eviware</groupId>
-            <artifactId>maven-soapui-pro-plugin</artifactId>
-            <version>3.6.1</version>
+            <artifactId>maven-soapui-plugin</artifactId>
+            <version>${soapui.version}</version>
             <scope>test</scope>
             <exclusions>
                 <exclusion>
@@ -397,9 +399,9 @@
             <artifactId>xmlrpc-client</artifactId>
             <version>3.0</version>
         </dependency>
-        
+
         <!-- Radius client for rsa authentication -->
-       <dependency>
+        <dependency>
             <groupId>org.tinyradius</groupId>
             <artifactId>tinyradius</artifactId>
             <version>1.0</version>
@@ -863,10 +865,10 @@
         </profile>
 
         <profile>
-            <id>soapui-localhost</id>
+            <id>soapui-dev</id>
             <activation>
                 <property>
-                    <name>soapui-localhost</name>
+                    <name>soapui-dev</name>
                 </property>
                 <activeByDefault>false</activeByDefault>
             </activation>
@@ -874,65 +876,19 @@
             <build>
                 <plugins>
                     <plugin>
-                        <artifactId>maven-resources-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>copy-resources</id>
-                                <phase>validate</phase>
-                                <goals>
-                                    <goal>copy-resources</goal>
-                                </goals>
-                                <configuration>
-                                    <outputDirectory>${basedir}/target/config/DEV</outputDirectory>
-                                    <resources>
-                                        <resource>
-                                            <directory>${basedir}/src/main/config</directory>
-                                            <includes>
-                                                <include>base.idm.properties</include>
-                                            </includes>
-                                        </resource>
-                                        <resource>
-                                            <directory>${basedir}/src/main/config/DEV</directory>
-                                        </resource>
-                                    </resources>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-failsafe-plugin</artifactId>
-                        <version>2.8</version>
-                        <configuration>
-                            <argLine>-javaagent:${jacoco.agent.path}=destfile=${jacoco.file.path}</argLine>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <id>integration-test</id>
-                                <goals>
-                                    <goal>integration-test</goal>
-                                </goals>
-                            </execution>
-                            <execution>
-                                <id>verify</id>
-                                <goals>
-                                    <goal>verify</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-
-                    <plugin>
                         <groupId>eviware</groupId>
-                        <artifactId>maven-soapui-pro-plugin</artifactId>
-                        <version>3.6.1</version>
+                        <artifactId>maven-soapui-plugin</artifactId>
+                        <version>${soapui.version}</version>
                         <configuration>
-                            <projectFile>soapui/idm-api-qa-soapui-project.xml</projectFile>
+                            <projectFile>soapui/soapUI/foundationAPI/FoundationAPI-DEV.xml</projectFile>
                             <junitReport>true</junitReport>
-                            <outputFolder>soapui/localhost-test-results</outputFolder>
-                            <testFailIgnore>true</testFailIgnore>
-                            <endpoint>http://localhost:8181</endpoint>
+                            <testSuite>FoundationAuth-GA TestSuite</testSuite>
+                            <testSuite>FoundationAuth-GA NegativeTestSuite</testSuite>
+                            <outputFolder>soapui/dev-test-results</outputFolder>
+                            <projectProperties>
+                                <property>endpoint=http://d-api1.cidm.iad2.corp.rackspace.com:4931</property>
+                                <property>endpointjson=http://d-api1.cidm.iad2.corp.rackspace.com</property>
+                            </projectProperties>
                         </configuration>
                         <executions>
                             <execution>
@@ -944,54 +900,8 @@
                             </execution>
                         </executions>
                     </plugin>
-
-                    <plugin>
-                        <groupId>org.mortbay.jetty</groupId>
-                        <artifactId>maven-jetty-plugin</artifactId>
-                        <configuration>
-                            <connectors>
-                                <connector implementation="org.mortbay.jetty.nio.SelectChannelConnector">
-                                    <port>8181</port>
-                                    <maxIdleTime>60000</maxIdleTime>
-                                </connector>
-                            </connectors>
-                            <stopPort>8081</stopPort>
-                            <stopKey>stop</stopKey>
-                            <contextPath>/v1.0</contextPath>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <id>start-jetty</id>
-                                <phase>pre-integration-test</phase>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                                <configuration>
-                                    <scanIntervalSeconds>0</scanIntervalSeconds>
-                                    <daemon>true</daemon>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>stop-jetty</id>
-                                <phase>post-integration-test</phase>
-                                <goals>
-                                    <goal>stop</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
                 </plugins>
             </build>
-
-            <reporting>
-                <plugins>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>cobertura-maven-plugin</artifactId>
-                        <version>2.4</version>
-                    </plugin>
-                </plugins>
-            </reporting>
         </profile>
     </profiles>
 
@@ -1374,17 +1284,6 @@
                             </properties>
                         </wadlGeneratorDescription>
                     </wadlGenerators>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>eviware</groupId>
-                <artifactId>maven-soapui-pro-plugin</artifactId>
-                <version>3.6.1</version>
-                <configuration>
-                    <projectFile>soapui/idm-api-qa-soapui-project.xml</projectFile>
-                    <junitReport>true</junitReport>
-                    <outputFolder>soapui/test-results</outputFolder>
                 </configuration>
             </plugin>
 
