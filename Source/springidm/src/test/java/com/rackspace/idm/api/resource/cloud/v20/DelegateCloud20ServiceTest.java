@@ -76,6 +76,27 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
+    public void listEndpointsForToken_callsScopeAccessService() throws Exception {
+        spy.listEndpointsForToken(null,null,"tokenId");
+        verify(scopeAccessService).getScopeAccessByAccessToken("tokenId");
+    }
+
+    @Test
+    public void listEndpointsForToken_tokenDoesNotExistInGA_andRoutingTrue_callsCloudClient() throws Exception {
+        when(scopeAccessService.getScopeAccessByAccessToken("tokenId")).thenReturn(null);
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        spy.listEndpointsForToken(null,null,"tokenId");
+        verify(cloudClient).get(anyString(),any(HttpHeaders.class));
+    }
+
+    @Test
+    public void listEndpointsForToken_tokenExistInGA_callsDefaultService() throws Exception {
+        when(scopeAccessService.getScopeAccessByAccessToken("tokenId")).thenReturn(new ScopeAccess());
+        spy.listEndpointsForToken(null,null,"tokenId");
+        verify(defaultCloud20Service).listEndpointsForToken(null,null,"tokenId");
+    }
+
+    @Test
     public void authenticate_returnsResponse() throws Exception {
         when(defaultCloud20Service.authenticate(httpHeaders, authenticationRequest)).thenReturn(Response.noContent());
         assertThat("response", delegateCloud20Service.authenticate(httpHeaders, authenticationRequest), instanceOf(Response.ResponseBuilder.class));
@@ -299,14 +320,6 @@ public class DelegateCloud20ServiceTest {
         HttpHeaders mockHeaders = mock(HttpHeaders.class);
         delegateCloud20Service.listEndpointsForToken(mockHeaders, null, "1");
         verify(cloudClient).get(url + "tokens/1/endpoints", mockHeaders);
-    }
-
-    @Test
-    public void listEndpointsForToken_RoutingTrueAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
-        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
-        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
-        delegateCloud20Service.listEndpointsForToken(null, null, null);
-        verify(defaultCloud20Service).listEndpointsForToken(null, null, null);
     }
 
     @Test
