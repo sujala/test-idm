@@ -62,7 +62,9 @@ public class UserPasswordCredentialsResource extends ParentResource {
             @HeaderParam("X-Auth-Token") String authHeader,
             @PathParam("userId") String userId) {
 
-        authorizationService.verifyIdmSuperAdminAccess(authHeader);
+
+        ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByAccessToken(authHeader);
+        authorizationService.authorizeIdmSuperAdminOrRackspaceClient(scopeAccess);
 
         User user = this.userService.loadUser(userId);
 
