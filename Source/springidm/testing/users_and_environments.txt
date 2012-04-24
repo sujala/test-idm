@@ -51,3 +51,24 @@ user:auth password:auth123
 cloud auth staging
 service-admin: 
 user-admin: gatestuser1/Password1
+
+
+global auth DEV
+
+
+shack application:
+{
+"application": {
+"clientId": "d9f7d876984d8ff89c74d2bbb58afea0dcc69921",
+"customerId": "RACKSPACE",
+"name": "shack",
+"enabled": true,
+"description": "Used for creating hybrid account users. MaaS support",
+"secretCredentials": {
+"clientSecret": "0204826bbe9280be129d394babd2012378e78f10"
+}
+}
+}
+
+
+
