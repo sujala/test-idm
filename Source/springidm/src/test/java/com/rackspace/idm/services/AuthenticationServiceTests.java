@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.mockito.Matchers.any;
 import static org.powermock.api.mockito.PowerMockito.mock;
 
 public class AuthenticationServiceTests {
@@ -89,6 +90,7 @@ public class AuthenticationServiceTests {
         appConfig.addProperty("token.expirationSeconds", expireInSeconds);
         appConfig.addProperty("rackspace.customerId", "RACKSPACE");
         appConfig.addProperty("ldap.server.trusted", "true");
+        appConfig.addProperty("idm.clientId", "TESTING");
 
         authenticationService = new DefaultAuthenticationService(
                 mockTokenService, mockAuthDao, mockTenantService,
@@ -357,14 +359,23 @@ public class AuthenticationServiceTests {
         EasyMock.expect(mockAuthDao.authenticate(authCredentials.getUsername(), userpass.getValue())).andReturn(true);
         EasyMock.expect(mockUserDao.getRackerByRackerId(authCredentials.getUsername())).andReturn(racker);
         EasyMock.expect(mockScopeAccessService.getRackerScopeAccessForClientId(racker.getUniqueId(), testClient.getClientId())).andReturn(getFakeRackerScopeAcces());
+
         TenantRole tenantRole = new TenantRole();
         tenantRole.setName("Racker");
+        tenantRole.setClientId(testClient.getClientId());
         List<TenantRole> testTenantRoles = new ArrayList<TenantRole>();
         testTenantRoles.add(tenantRole);
+        ClientRole clientRole = new ClientRole();
+        clientRole.setId("5");
+        clientRole.setName("Racker");
+        List<ClientRole> clientRoles = new ArrayList<ClientRole>();
+        clientRoles.add(clientRole);
         PowerMockito.when(mockTenantService.getTenantRolesForScopeAccess(Matchers.<ScopeAccess>anyObject())).thenReturn(testTenantRoles);
+        PowerMockito.doNothing().when(mockTenantService).addTenantRoleToUser(any(User.class),any(TenantRole.class));
+        EasyMock.expect(mockApplicationDao.getClientRolesByClientId("TESTING")).andReturn(clientRoles);
+
         mockScopeAccessService.updateScopeAccess(EasyMock.anyObject(ScopeAccess.class));
         EasyMock.replay(mockApplicationDao, mockUserDao, mockAuthDao, mockScopeAccessService);
-
         final AuthData authData = authSpy.authenticate(authCredentials);
 
         Assert.assertNotNull(authData.getAccessToken());
