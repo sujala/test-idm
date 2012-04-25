@@ -479,12 +479,12 @@ public class DefaultAuthenticationService implements AuthenticationService {
         List<TenantRole> tenantRolesForScopeAccess = tenantService.getTenantRolesForScopeAccess(scopeAccess);
         boolean hasRackerRole = false;
         for (TenantRole tenantRole : tenantRolesForScopeAccess) {
-            if (tenantRole.getName().equals("Racker")) {
+            if (tenantRole.getName().equals("Racker") && tenantRole.getClientId().equals(config.getString("idm.clientId"))) {
                 hasRackerRole = true;
             }
         }
         if (!hasRackerRole) {
-            List<ClientRole> clientRoles = clientDao.getClientRolesByClientId(client.getClientId());
+            List<ClientRole> clientRoles = clientDao.getClientRolesByClientId(config.getString("idm.clientId"));
             for(ClientRole clientRole : clientRoles){
                 if(clientRole.getName().equals("Racker")){
                     TenantRole tenantRole = new TenantRole();

@@ -301,13 +301,20 @@ public class DefaultTenantService implements TenantService {
         ScopeAccess sa =  this.scopeAccessDao.getDirectScopeAccessForParentByClientId(user.getUniqueId(), role.getClientId());
 
         if (sa == null) {
-            UserScopeAccess usa = new UserScopeAccess();
-            usa.setClientId(client.getClientId());
-            usa.setClientRCN(client.getRCN());
-            usa.setUsername(user.getUsername());
-            usa.setUserRCN(user.getCustomerId());
-            usa.setUserRsId(user.getId());
-            sa = this.scopeAccessDao.addDirectScopeAccess(user.getUniqueId(), usa);
+            if(user instanceof Racker){
+                RackerScopeAccess rsa = new RackerScopeAccess();
+                rsa.setRackerId(((Racker) user).getRackerId());
+                rsa.setClientId(role.getClientId());
+                sa = this.scopeAccessDao.addDirectScopeAccess(user.getUniqueId(), rsa);
+            }else{
+                UserScopeAccess usa = new UserScopeAccess();
+                usa.setClientId(client.getClientId());
+                usa.setClientRCN(client.getRCN());
+                usa.setUsername(user.getUsername());
+                usa.setUserRCN(user.getCustomerId());
+                usa.setUserRsId(user.getId());
+                sa = this.scopeAccessDao.addDirectScopeAccess(user.getUniqueId(), usa);
+            }
         }
 
         addTenantRole(sa.getUniqueId(), role);
