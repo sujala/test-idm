@@ -1,22 +1,14 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.apache.commons.configuration.Configuration;
-import org.apache.commons.lang.StringUtils;
-
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.CustomerDao;
 import com.rackspace.idm.domain.entity.Customer;
-import com.unboundid.ldap.sdk.Attribute;
-import com.unboundid.ldap.sdk.Filter;
-import com.unboundid.ldap.sdk.LDAPConnection;
-import com.unboundid.ldap.sdk.LDAPException;
-import com.unboundid.ldap.sdk.Modification;
-import com.unboundid.ldap.sdk.ModificationType;
-import com.unboundid.ldap.sdk.SearchResultEntry;
-import com.unboundid.ldap.sdk.SearchScope;
+import com.unboundid.ldap.sdk.*;
+import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.StringUtils;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class LdapCustomerRepository extends LdapRepository implements
     CustomerDao {
@@ -134,20 +126,18 @@ public class LdapCustomerRepository extends LdapRepository implements
         getLogger().debug("Doing search for customerId {}", customerId);
 
         if (StringUtils.isBlank(customerId)) {
-            String errMsg = "Null or Empty customerId paramter";
-            getLogger().error(errMsg);
-            throw new IllegalArgumentException(errMsg);
+            String errMsg = "Null or Empty customerId parameter";
+            getLogger().debug(errMsg);
+            return null;
         }
 
         Customer customer = null;
 
         Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
-            .addEqualAttribute(ATTR_OBJECT_CLASS,
-                OBJECTCLASS_RACKSPACEORGANIZATION).build();
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEORGANIZATION).build();
 
-        SearchResultEntry entry = this.getSingleEntry(CUSTOMERS_BASE_DN, SearchScope.ONE,
-            searchFilter);
+        SearchResultEntry entry = this.getSingleEntry(CUSTOMERS_BASE_DN, SearchScope.ONE, searchFilter);
 
         if (entry != null) {
             customer = getCustomer(entry);
