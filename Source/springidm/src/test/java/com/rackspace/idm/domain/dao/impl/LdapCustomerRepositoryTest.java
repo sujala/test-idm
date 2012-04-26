@@ -1,21 +1,15 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import java.util.List;
-
-import org.apache.commons.configuration.Configuration;
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.commons.configuration.PropertiesConfiguration;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
-
 import com.rackspace.idm.domain.config.LdapConfiguration;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.CustomerStatus;
 import com.unboundid.ldap.sdk.Modification;
+import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.PropertiesConfiguration;
+import org.junit.*;
+
+import java.util.List;
 
 public class LdapCustomerRepositoryTest {
 
@@ -78,13 +72,6 @@ public class LdapCustomerRepositoryTest {
 
     @Test
     public void shouldNotAcceptNullOrBlankCustomerId() {
-        try {
-            repo.getCustomerByCustomerId(null);
-            Assert.fail("Should have thrown an exception!");
-        } catch (IllegalArgumentException e) {
-            Assert.assertTrue(true);
-        }
-
         try {
             repo.getCustomerByCustomerId("     ");
             Assert.fail("Should have thrown an exception!");
