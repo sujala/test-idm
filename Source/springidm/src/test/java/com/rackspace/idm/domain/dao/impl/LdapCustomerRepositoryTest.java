@@ -73,13 +73,6 @@ public class LdapCustomerRepositoryTest {
     @Test
     public void shouldNotAcceptNullOrBlankCustomerId() {
         try {
-            repo.getCustomerByCustomerId("     ");
-            Assert.fail("Should have thrown an exception!");
-        } catch (IllegalArgumentException e) {
-            Assert.assertTrue(true);
-        }
-
-        try {
             repo.deleteCustomer("");
             Assert.fail("Should have thrown an exception!");
         } catch (IllegalArgumentException e) {
