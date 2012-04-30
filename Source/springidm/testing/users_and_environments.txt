@@ -20,6 +20,24 @@ staging:
 	}
 	}
 	
+	{
+	"user": {
+	"id": "10006538",
+	"username": "foundationMonit",
+	"email": "ryan.stewart@example.org",
+	"displayName": "foundationMonit",
+	"prefLanguage": "en_US",
+	"enabled": true,
+	"timeZone": "America/Chicago",
+	"passwordCredentials": {
+	"currentPassword": {
+	"password": "qwerty"
+	}
+	}
+	}
+	}
+
+	
 	
 	
 	

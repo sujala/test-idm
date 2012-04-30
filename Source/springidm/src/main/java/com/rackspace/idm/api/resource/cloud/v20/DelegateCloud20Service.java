@@ -1116,18 +1116,14 @@ public class DelegateCloud20Service implements Cloud20Service {
 
 
     public String impersonateUser(String userName, String impersonatorName, String impersonatorPassword) throws JAXBException, IOException {
-        String impersonatorXAuthToken = getXAuthToken_byPassword(impersonatorName, impersonatorPassword)
-                .getToken()
-                .getId();
+        String impersonatorXAuthToken = getXAuthToken_byPassword(impersonatorName, impersonatorPassword).getToken().getId();
         User user = getCloudUserByName(userName, impersonatorXAuthToken);
         RoleList globalRolesForCloudUser = getGlobalRolesForCloudUser(user.getId(), impersonatorXAuthToken);
         if (!isValidCloudImpersonatee(globalRolesForCloudUser)){
-            throw new BadRequestException("User cannot be impersontated; No valid impersonation roles");
+            throw new BadRequestException("User cannot be impersonated; No valid impersonation roles");
         }
         String userApiKey = getUserApiCredentials(user.getId(), impersonatorXAuthToken).getApiKey();
-        String userXAuthToken = getXAuthToken(userName, userApiKey)
-                .getToken()
-                .getId();
+        String userXAuthToken = getXAuthToken(userName, userApiKey).getToken().getId();
         return userXAuthToken;
     }
 
