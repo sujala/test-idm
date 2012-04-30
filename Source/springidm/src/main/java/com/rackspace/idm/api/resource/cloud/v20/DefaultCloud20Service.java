@@ -1432,7 +1432,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder impersonate(HttpHeaders httpHeaders, String authToken, ImpersonationRequest impersonationRequest) throws IOException, JAXBException {
         //verifyServiceAdminLevelAccess(authToken);
-        verifyRackerAccess(authToken);
+        verifyRackerOrServiceAdminAccess(authToken);
         validateImpersonationRequest(impersonationRequest);
 
         String impersonatingToken = "";
@@ -1440,13 +1440,14 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         User user = userService.getUser(impersonatingUsername);
         if (user == null) {
+            logger.info("Impersonation call - calling cloud auth to get user");
             // Get from cloud.
             impersonatingToken = delegateCloud20Service.impersonateUser(impersonatingUsername, config.getString("ga.userName"), config.getString("ga.password"));
         }else if(!user.isEnabled()){
-            throw new ForbiddenException("User cannot be impersontated; User is not enabled");
+            throw new ForbiddenException("User cannot be impersonated; User is not enabled");
         }else {
             if (!isValidImpersonatee(user)) {
-                throw new BadRequestException("User cannot be impersontated; No valid impersonation roles assigned");
+                throw new BadRequestException("User cannot be impersonated; No valid impersonation roles assigned");
             }
             UserScopeAccess impAccess = (UserScopeAccess) scopeAccessService.getDirectScopeAccessForParentByClientId(user.getUniqueId(), getCloudAuthClientId());
 
@@ -2143,9 +2144,9 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
-    void verifyRackerAccess(String authToken) {
-        ScopeAccess rackerScopeAccess = getScopeAccessForValidToken(authToken);
-        if (!authorizationService.authorizeRacker(rackerScopeAccess)) {
+    void verifyRackerOrServiceAdminAccess(String authToken) {
+        ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
+        if (!authorizationService.authorizeRacker(scopeAccess) && !authorizationService.authorizeCloudServiceAdmin(scopeAccess)) {
             String errMsg = "Access is denied";
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);

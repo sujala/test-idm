@@ -707,12 +707,6 @@ public class Cloud20VersionResource {
             throw new NotFoundException("Not Found");
         }
     }
-//    @POST
-//    @Path("impersonate")
-//    public String impersonate(@Context HttpHeaders httpHeaders) throws JAXBException, IOException {
-//        String userToken = delegateCloud20Service.impersonateUser("cmarin1",config.getString("ga.userName"), config.getString("ga.apiKey"));
-//        return userToken;
-//    }
 
     private Cloud20Service getCloud20Service() {
         if (config.getBoolean("useCloudAuth")) {
