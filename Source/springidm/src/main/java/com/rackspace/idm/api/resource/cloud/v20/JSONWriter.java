@@ -7,10 +7,7 @@ import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
-import com.rackspacecloud.docs.auth.api.v1.BaseURL;
-import com.rackspacecloud.docs.auth.api.v1.BaseURLList;
-import com.rackspacecloud.docs.auth.api.v1.BaseURLRef;
-import com.rackspacecloud.docs.auth.api.v1.BaseURLRefList;
+import com.rackspacecloud.docs.auth.api.v1.*;
 import com.sun.jersey.api.json.JSONJAXBContext;
 import com.sun.jersey.api.json.JSONMarshaller;
 import org.json.simple.JSONArray;
@@ -25,6 +22,10 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.ServiceList;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplateList;
 import org.openstack.docs.identity.api.v2.*;
+import org.openstack.docs.identity.api.v2.Endpoint;
+import org.openstack.docs.identity.api.v2.ServiceCatalog;
+import org.openstack.docs.identity.api.v2.Token;
+import org.openstack.docs.identity.api.v2.User;
 import org.w3._2005.atom.Link;
 
 import javax.ws.rs.Produces;
@@ -203,8 +204,13 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
             Group group = (Group) object.getValue();
             String jsonText = JSONValue.toJSONString(getGroup(group));
             outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
-
+        } else  if(object.getDeclaredType().isAssignableFrom(GroupsList.class)){
+            GroupsList groupsList = (GroupsList) object.getValue();
+            String jsonText = JSONValue.toJSONString(getGroupsList(groupsList));
+            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
         }
+
+
         else if (object.getDeclaredType().isAssignableFrom(CredentialListType.class)) {
 
             JSONObject outer = new JSONObject();
@@ -561,6 +567,18 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
         return outer;
     }
 
+    private JSONObject getGroupsList(GroupsList groupsList) {
+        JSONObject outer = new JSONObject();
+        JSONObject values = new JSONObject();
+        JSONArray list = new JSONArray();
+        outer.put(JSONConstants.GROUPSLIST, values);
+        for (com.rackspacecloud.docs.auth.api.v1.Group group : groupsList.getGroup()) {
+            list.add(get11Group(group));
+        }
+        values.put("values",list);
+        return outer;
+    }
+
     @SuppressWarnings("unchecked")
     private JSONObject getGroup(Group group) {
         JSONObject outer = new JSONObject();
@@ -573,6 +591,15 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
         JSONObject outer = new JSONObject();
         outer.put(JSONConstants.ID, group.getId());
         outer.put(JSONConstants.NAME, group.getName());
+        if(group.getDescription() != null){
+            outer.put(JSONConstants.DESCRIPTION, group.getDescription());
+        }
+        return outer;
+    }
+
+    private JSONObject get11Group(com.rackspacecloud.docs.auth.api.v1.Group group) {
+        JSONObject outer = new JSONObject();
+        outer.put(JSONConstants.ID, group.getId());
         if(group.getDescription() != null){
             outer.put(JSONConstants.DESCRIPTION, group.getDescription());
         }
