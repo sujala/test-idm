@@ -288,6 +288,12 @@ public class DefaultCloud11Service implements Cloud11Service {
                 logger.warn(errorMsg);
                 throw new BadRequestException(errorMsg);
             }
+
+            User existingUser = userService.getUser(user.getId());
+            if(existingUser!=null){
+                throw new DuplicateUsernameException("Username "+user.getId()+" already exists");
+            }
+
             if (user.getMossoId() != null) {
                 validateMossoId(user.getMossoId());
             }

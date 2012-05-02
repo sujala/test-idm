@@ -555,6 +555,48 @@ public class DefaultCloud11ServiceTest {
     }
 
     @Test
+    public void createUser_callUserService_getUser() throws Exception{
+        user.setId("username");
+        user.setMossoId(123456);
+        doNothing().when(spy).authenticateCloudAdminUser(request);
+        spy.createUser(request,httpHeaders,uriInfo,user);
+        verify(userService).getUser("username");
+    }
+
+    @Test
+    public void createUser_usernameAlreadyExists_correctMessage() throws Exception{
+        user.setId("username");
+        user.setMossoId(123456);
+        doNothing().when(spy).authenticateCloudAdminUser(request);
+        when(userService.getUser("username")).thenReturn(new com.rackspace.idm.domain.entity.User());
+        Response.ResponseBuilder responseBuilder = spy.createUser(request, httpHeaders, uriInfo, user);
+        UsernameConflictFault conflictFault =(UsernameConflictFault)((JAXBElement)responseBuilder.build().getEntity()).getValue();
+        assertThat("message", conflictFault.getMessage(), equalTo("Username username already exists"));
+    }
+
+    @Test
+    public void createUser_usernameAlreadyExists_correctCode409() throws Exception{
+        user.setId("username");
+        user.setMossoId(123456);
+        doNothing().when(spy).authenticateCloudAdminUser(request);
+        when(userService.getUser("username")).thenReturn(new com.rackspace.idm.domain.entity.User());
+        Response.ResponseBuilder responseBuilder = spy.createUser(request, httpHeaders, uriInfo, user);
+        UsernameConflictFault conflictFault =(UsernameConflictFault)((JAXBElement)responseBuilder.build().getEntity()).getValue();
+        assertThat("message", conflictFault.getCode(), equalTo(409));
+    }
+
+    @Test
+    public void createUser_usernameAlreadyExists_noDetails() throws Exception{
+        user.setId("username");
+        user.setMossoId(123456);
+        doNothing().when(spy).authenticateCloudAdminUser(request);
+        when(userService.getUser("username")).thenReturn(new com.rackspace.idm.domain.entity.User());
+        Response.ResponseBuilder responseBuilder = spy.createUser(request, httpHeaders, uriInfo, user);
+        UsernameConflictFault conflictFault =(UsernameConflictFault)((JAXBElement)responseBuilder.build().getEntity()).getValue();
+        assertThat("message", conflictFault.getDetails(), equalTo(null));
+    }
+
+    @Test
     public void createUser_MossoIdBelongsToAnotherUser_BadRequestException() throws Exception{
         user.setMossoId(123456);
         user.setId("test");
