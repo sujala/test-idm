@@ -8,6 +8,7 @@ then
 else
     HOST=$1
     ENV=$2
+    SSHPATH=$3
     scp $BASEDIR/src/main/config/$ENV/idm.properties gauth@$HOST:/home/gauth/config/
     scp $BASEDIR/src/main/config/base.idm.properties gauth@$HOST:/home/gauth/config/
     scp $BASEDIR/src/main/config/$ENV/idm.secrets.properties gauth@$HOST:/home/gauth/config/
