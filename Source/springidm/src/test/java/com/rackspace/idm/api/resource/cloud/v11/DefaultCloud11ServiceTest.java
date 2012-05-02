@@ -593,7 +593,7 @@ public class DefaultCloud11ServiceTest {
         when(userService.getUser("username")).thenReturn(new com.rackspace.idm.domain.entity.User());
         Response.ResponseBuilder responseBuilder = spy.createUser(request, httpHeaders, uriInfo, user);
         UsernameConflictFault conflictFault =(UsernameConflictFault)((JAXBElement)responseBuilder.build().getEntity()).getValue();
-        assertThat("message", conflictFault.getDetails(), equalTo(null));
+        assertThat("details", conflictFault.getDetails(), equalTo(null));
     }
 
     @Test
