@@ -6,6 +6,7 @@ import com.rackspace.idm.domain.dao.impl.LdapCloudAdminRepository;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.NotAuthorizedException;
 import com.rackspace.idm.util.NastFacade;
 import com.rackspacecloud.docs.auth.api.v1.*;
 import com.rackspacecloud.docs.auth.api.v1.Credentials;
@@ -104,6 +105,30 @@ public class DefaultCloud11ServiceTest {
         defaultCloud11Service.setUserValidator(userValidator);
         defaultCloud11Service.setAuthorizationService(authorizationService);
         spy = spy(defaultCloud11Service);
+    }
+
+    @Test
+    public void getUserGroups_notAuthorized_returnsCorrectErrorMessage() throws Exception {
+        doThrow(new NotAuthorizedException("You are not authorized to access this resource.")).when(spy).authenticateCloudAdminUserForGetRequests(request);
+        Response.ResponseBuilder responseBuilder = spy.getUserGroups(request, "testUser", httpHeaders);
+        UnauthorizedFault entity = (UnauthorizedFault)((JAXBElement)responseBuilder.build().getEntity()).getValue();
+        assertThat("message", entity.getMessage(), equalTo("You are not authorized to access this resource."));
+    }
+
+    @Test
+    public void getUserGroups_notAuthorized_returnsCorrectErrorCode() throws Exception {
+        doThrow(new NotAuthorizedException("You are not authorized to access this resource.")).when(spy).authenticateCloudAdminUserForGetRequests(request);
+        Response.ResponseBuilder responseBuilder = spy.getUserGroups(request, "testUser", httpHeaders);
+        UnauthorizedFault entity = (UnauthorizedFault)((JAXBElement)responseBuilder.build().getEntity()).getValue();
+        assertThat("code", entity.getCode(), equalTo(401));
+    }
+
+    @Test
+    public void getUserGroups_notAuthorized_entityDetailsShouldMatchCloudResponse() throws Exception {
+        doThrow(new NotAuthorizedException("You are not authorized to access this resource.")).when(spy).authenticateCloudAdminUserForGetRequests(request);
+        Response.ResponseBuilder responseBuilder = spy.getUserGroups(request, "testUser", httpHeaders);
+        UnauthorizedFault entity = (UnauthorizedFault)((JAXBElement)responseBuilder.build().getEntity()).getValue();
+        assertThat("code", entity.getDetails(), equalTo("AuthErrorHandler"));
     }
 
     @Test
