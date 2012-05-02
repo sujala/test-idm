@@ -74,6 +74,7 @@ user-admin: gatestuser1/Password1
 global auth DEV
 
 user-admin:cmarin2/Password1
+service-admin: 
 
 
 shack application:

@@ -106,6 +106,32 @@ public class DefaultCloud11ServiceTest {
         spy = spy(defaultCloud11Service);
     }
 
+    @Test
+    public void getUserGroups_withInvalidUser_returnsCorrectErrorMessage() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
+        when(userService.getUser("testUser")).thenReturn(null);
+        Response.ResponseBuilder responseBuilder = spy.getUserGroups(request, "testUser", httpHeaders);
+        ItemNotFoundFault entity = (ItemNotFoundFault)((JAXBElement)responseBuilder.build().getEntity()).getValue();
+        assertThat("message", entity.getMessage(), equalTo("User not found :testUser"));
+    }
+
+    @Test
+    public void getUserGroups_withInvalidUser_returnsCorrectErrorCode() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
+        when(userService.getUser("testUser")).thenReturn(null);
+        Response.ResponseBuilder responseBuilder = spy.getUserGroups(request, "testUser", httpHeaders);
+        ItemNotFoundFault entity = (ItemNotFoundFault)((JAXBElement)responseBuilder.build().getEntity()).getValue();
+        assertThat("code", entity.getCode(), equalTo(404));
+    }
+
+    @Test
+    public void getUserGroups_withInvalidUser_entityDetailsShouldBeNull() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
+        when(userService.getUser("testUser")).thenReturn(null);
+        Response.ResponseBuilder responseBuilder = spy.getUserGroups(request, "testUser", httpHeaders);
+        ItemNotFoundFault entity = (ItemNotFoundFault)((JAXBElement)responseBuilder.build().getEntity()).getValue();
+        assertThat("code", entity.getDetails(), equalTo(null));
+    }
 
     @Test
     public void authenticateResponse_withNastCredentials_withEmptyUsername_returns400() throws Exception {

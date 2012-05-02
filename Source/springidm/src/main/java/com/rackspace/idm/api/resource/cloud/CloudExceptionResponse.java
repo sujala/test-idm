@@ -79,7 +79,6 @@ public class CloudExceptionResponse extends WebApplicationException {
         ItemNotFoundFault fault = OBJ_FACTORY.createItemNotFoundFault();
         fault.setCode(HttpServletResponse.SC_NOT_FOUND);
         fault.setMessage(message);
-        fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_NOT_FOUND).entity(OBJ_FACTORY.createItemNotFound(fault));
     }
 
