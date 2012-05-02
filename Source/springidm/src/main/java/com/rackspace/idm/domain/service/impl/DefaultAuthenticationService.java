@@ -254,17 +254,14 @@ public class DefaultAuthenticationService implements AuthenticationService {
 
             final UserAuthenticationResult uaResult = authenticate(trParam.getUsername(), trParam.getPassword());
             if (!uaResult.isAuthenticated()) {
-                final String message = "Bad User credentials for "
-                        + trParam.getUsername();
+                final String message = "Bad User credentials for " + trParam.getUsername();
                 logger.warn(message);
                 throw new NotAuthenticatedException(message);
             }
 
             DateTime rotationDate = getUserPasswordExpirationDate(uaResult.getUser().getUsername());
             if (rotationDate != null && rotationDate.isBefore(currentTime)) {
-                PasswordResetScopeAccess prsa = this.scopeAccessService
-                        .getOrCreatePasswordResetScopeAccessForUser(uaResult
-                                .getUser());
+                PasswordResetScopeAccess prsa = this.scopeAccessService.getOrCreatePasswordResetScopeAccessForUser(uaResult.getUser());
                 prsa.setUserPasswordExpirationDate(rotationDate);
                 return prsa;
             }
@@ -305,21 +302,16 @@ public class DefaultAuthenticationService implements AuthenticationService {
         }
 
         if (CLIENT_CREDENTIALS == grantType) {
-            return this.getAndUpdateClientScopeAccessForClientId(caResult
-                    .getClient());
+            return this.getAndUpdateClientScopeAccessForClientId(caResult.getClient());
         }
 
         if (AUTHORIZATION_CODE == grantType) {
-
-            DelegatedClientScopeAccess scopeAccess = this.scopeAccessService
-                    .getScopeAccessByAuthCode(trParam.getAuthorizationCode());
+            DelegatedClientScopeAccess scopeAccess = scopeAccessService.getScopeAccessByAuthCode(trParam.getAuthorizationCode());
             if (scopeAccess == null
                     || scopeAccess.isAuthorizationCodeExpired(currentTime)
                     || !scopeAccess.getClientId().equalsIgnoreCase(
                     caResult.getClient().getClientId())) {
-                final String msg = String.format(
-                        "Unauthorized Authorization Code: %s", trParam
-                        .getAuthorizationCode());
+                final String msg = String.format("Unauthorized Authorization Code: %s", trParam.getAuthorizationCode());
                 logger.warn(msg);
                 throw new NotAuthenticatedException(msg);
             }
@@ -341,23 +333,20 @@ public class DefaultAuthenticationService implements AuthenticationService {
         throw new NotAuthenticatedException(message);
     }
 
-    private UserScopeAccess getAndUpdateUserScopeAccessForClientId(User user,
-                                                                   Application client) {
+    private UserScopeAccess getAndUpdateUserScopeAccessForClientId(User user, Application client) {
 
-        logger.debug(
-                "Get and Update ScopeAccess for User: {} and ClientId: {}",
-                user.getUsername(), client.getClientId());
+        logger.debug("Get and Update ScopeAccess for User: {} and ClientId: {}", user.getUsername(), client.getClientId());
 
-        UserScopeAccess scopeAccess = this.scopeAccessService
-                .getUserScopeAccessForClientId(user.getUniqueId(), client
-                        .getClientId());
+        UserScopeAccess scopeAccess = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), client.getClientId());
 
         if (scopeAccess == null) {
-            String errMsg = String.format(
-                    "User %s not provisioned for client %s",
-                    user.getUsername(), client.getClientId());
-            logger.warn(errMsg);
-            throw new NotProvisionedException(errMsg);
+            // Auto-Provision Scope Access Objects for Users
+            scopeAccess = new UserScopeAccess();
+            scopeAccess.setUsername(user.getUsername());
+            scopeAccess.setUserRsId(user.getId());
+            scopeAccess.setClientId(client.getClientId());
+            scopeAccess.setClientRCN(client.getRCN());
+            scopeAccess = (UserScopeAccess) scopeAccessService.addDirectScopeAccess(user.getUniqueId(), scopeAccess);
         }
 
         DateTime current = new DateTime();
@@ -368,8 +357,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
 
         if (accessExpiration.isBefore(current)) {
             scopeAccess.setAccessTokenString(this.generateToken());
-            scopeAccess.setAccessTokenExp(current.plusSeconds(
-                    this.getDefaultTokenExpirationSeconds()).toDate());
+            scopeAccess.setAccessTokenExp(current.plusSeconds(this.getDefaultTokenExpirationSeconds()).toDate());
         }
 
         DateTime refreshExpiration = scopeAccess.getRefreshTokenExp() == null ? new DateTime()
@@ -381,12 +369,10 @@ public class DefaultAuthenticationService implements AuthenticationService {
             scopeAccess.setRefreshTokenExp(current.plusYears(100).toDate());
         }
 
-        logger.debug("Updating Expirations for User: {} and ClientId: {}", user
-                .getUsername(), client.getClientId());
-        this.scopeAccessService.updateScopeAccess(scopeAccess);
+        logger.debug("Updating Expirations for User: {} and ClientId: {}", user.getUsername(), client.getClientId());
+        scopeAccessService.updateScopeAccess(scopeAccess);
 
-        logger.debug("Returning ScopeAccess: {} Expiration {}", scopeAccess
-                .getAccessTokenString(), scopeAccess.getAccessTokenExp());
+        logger.debug("Returning ScopeAccess: {} Expiration {}", scopeAccess.getAccessTokenString(), scopeAccess.getAccessTokenExp());
         return scopeAccess;
     }
 
@@ -485,8 +471,8 @@ public class DefaultAuthenticationService implements AuthenticationService {
         }
         if (!hasRackerRole) {
             List<ClientRole> clientRoles = clientDao.getClientRolesByClientId(config.getString("idm.clientId"));
-            for(ClientRole clientRole : clientRoles){
-                if(clientRole.getName().equals("Racker")){
+            for (ClientRole clientRole : clientRoles) {
+                if (clientRole.getName().equals("Racker")) {
                     TenantRole tenantRole = new TenantRole();
                     tenantRole.setRoleRsId(clientRole.getId());
                     tenantRole.setName(clientRole.getName());
