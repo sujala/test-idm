@@ -4,11 +4,10 @@ BASEDIR=$(dirname $(readlink -f $0))
 
 if [ $# -ne 2 ]
 then
-    echo "usage: copyPropertiesgcsh <host> <environment>"
+    echo "usage: copyProperties.sh <host> <environment>"
 else
     HOST=$1
     ENV=$2
-    SSHPATH=$3
     scp $BASEDIR/src/main/config/$ENV/idm.properties gauth@$HOST:/home/gauth/config/
     scp $BASEDIR/src/main/config/base.idm.properties gauth@$HOST:/home/gauth/config/
     scp $BASEDIR/src/main/config/$ENV/idm.secrets.properties gauth@$HOST:/home/gauth/config/
