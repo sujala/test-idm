@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" href="../xslt/schema.xslt"?>
+<?xml-stylesheet type="text/xsl" href="schema.xsl"?>
 
 <!-- (C) 2010 Rackspace Hosting, All Rights Reserved -->
 
@@ -31,16 +31,6 @@
 				xmlns="http://www.w3.org/1999/xhtml">
 				<p>A user's password credentials.</p>
 			</xsd:documentation>
-			<xsd:appinfo>
-				<xsdxt:samples>
-					<xsdxt:sample>
-						<xsdxt:code type="application/xml" href="../formattedsamples/user_credentials.xml" />
-					</xsdxt:sample>
-					<xsdxt:sample>
-						<xsdxt:code type="application/json" href="../formattedsamples/user_credentials.json" />
-					</xsdxt:sample>
-				</xsdxt:samples>
-			</xsd:appinfo>
 		</annotation>
 	</element>
 
@@ -50,16 +40,6 @@
 				xmlns="http://www.w3.org/1999/xhtml">
 				<p>A rackspace user's password.</p>
 			</xsd:documentation>
-			<xsd:appinfo>
-				<xsdxt:samples>
-					<xsdxt:sample>
-						<xsdxt:code type="application/xml" href="../formattedsamples/user_password.xml" />
-					</xsdxt:sample>
-					<xsdxt:sample>
-						<xsdxt:code type="application/json" href="../formattedsamples/user_password.json" />
-					</xsdxt:sample>
-				</xsdxt:samples>
-			</xsd:appinfo>
 		</annotation>
 	</element>
 
@@ -69,16 +49,6 @@
 				xmlns="http://www.w3.org/1999/xhtml">
 				<p>A rackspace user.</p>
 			</xsd:documentation>
-			<xsd:appinfo>
-				<xsdxt:samples>
-					<xsdxt:sample>
-						<xsdxt:code type="application/xml" href="../formattedsamples/user.xml" />
-					</xsdxt:sample>
-					<xsdxt:sample>
-						<xsdxt:code type="application/json" href="../formattedsamples/user.json" />
-					</xsdxt:sample>
-				</xsdxt:samples>
-			</xsd:appinfo>
 		</annotation>
 	</element>
 
@@ -88,16 +58,6 @@
 				xmlns="http://www.w3.org/1999/xhtml">
 				<p>A list of rackspace users.</p>
 			</xsd:documentation>
-			<xsd:appinfo>
-				<xsdxt:samples>
-					<xsdxt:sample>
-						<xsdxt:code type="application/xml" href="../formattedsamples/users.xml" />
-					</xsdxt:sample>
-					<xsdxt:sample>
-						<xsdxt:code type="application/json" href="../formattedsamples/users.json" />
-					</xsdxt:sample>
-				</xsdxt:samples>
-			</xsd:appinfo>
 		</annotation>
 	</element>
 
@@ -107,16 +67,6 @@
 				xmlns="http://www.w3.org/1999/xhtml">
 				<p>A rackspace user's secret question and answer.</p>
 			</xsd:documentation>
-			<xsd:appinfo>
-				<xsdxt:samples>
-					<xsdxt:sample>
-						<xsdxt:code type="application/xml" href="../formattedsamples/user_secret.xml" />
-					</xsdxt:sample>
-					<xsdxt:sample>
-						<xsdxt:code type="application/json" href="../formattedsamples/user_secret.json" />
-					</xsdxt:sample>
-				</xsdxt:samples>
-			</xsd:appinfo>
 		</annotation>
 	</element>
 
@@ -126,16 +76,6 @@
 				xmlns="http://www.w3.org/1999/xhtml">
 				<p>A rackspace employee</p>
 			</xsd:documentation>
-			<xsd:appinfo>
-				<xsdxt:samples>
-					<xsdxt:sample>
-						<xsdxt:code type="application/xml" href="../formattedsamples/racker.xml" />
-					</xsdxt:sample>
-					<xsdxt:sample>
-						<xsdxt:code type="application/json" href="../formattedsamples/racker.json" />
-					</xsdxt:sample>
-				</xsdxt:samples>
-			</xsd:appinfo>
 		</annotation>
 	</element>
 	

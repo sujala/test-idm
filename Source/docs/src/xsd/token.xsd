@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" href="../xslt/schema.xslt"?>
+<?xml-stylesheet type="text/xsl" href="schema.xsl"?>
 
 <!-- (C) 2010 Rackspace Hosting, All Rights Reserved -->
 
@@ -49,16 +49,6 @@
 					The data returned for a successful authentication.
 				</p>
 			</xsd:documentation>
-			<xsd:appinfo>
-				<xsdxt:samples>
-					<xsdxt:sample>
-						<xsdxt:code type="application/xml" href="../samples/auth.xml" />
-					</xsdxt:sample>
-					<xsdxt:sample>
-						<xsdxt:code type="application/json" href="../samples/auth.json" />
-					</xsdxt:sample>
-				</xsdxt:samples>
-			</xsd:appinfo>
 		</annotation>
 	</element>
 
@@ -68,16 +58,6 @@
 				xmlns="http://www.w3.org/1999/xhtml">
 				<p>The data required for authentication.</p>
 			</xsd:documentation>
-			<xsd:appinfo>
-				<xsdxt:samples>
-					<xsdxt:sample>
-						<xsdxt:code type="application/xml" href="../samples/auth_credentials.xml" />
-					</xsdxt:sample>
-					<xsdxt:sample>
-						<xsdxt:code type="application/json" href="../samples/auth_credentials.json" />
-					</xsdxt:sample>
-				</xsdxt:samples>
-			</xsd:appinfo>
 		</annotation>
 	</element>
 	
@@ -91,16 +71,6 @@
 				xmlns="http://www.w3.org/1999/xhtml">
 				<p>An authentication Token.</p>
 			</xsd:documentation>
-			<xsd:appinfo>
-				<xsdxt:samples>
-					<xsdxt:sample>
-						<xsdxt:code type="application/xml" href="../samples/token.xml" />
-					</xsdxt:sample>
-					<xsdxt:sample>
-						<xsdxt:code type="application/json" href="../samples/token.json" />
-					</xsdxt:sample>
-				</xsdxt:samples>
-			</xsd:appinfo>
 		</annotation>
 	</element>
 
@@ -110,16 +80,6 @@
 				xmlns="http://www.w3.org/1999/xhtml">
 				<p>A delegate Token.</p>
 			</xsd:documentation>
-			<xsd:appinfo>
-				<xsdxt:samples>
-					<xsdxt:sample>
-						<xsdxt:code type="application/xml" href="../samples/delegatedtoken.xml" />
-					</xsdxt:sample>
-					<xsdxt:sample>
-						<xsdxt:code type="application/json" href="../samples/delegatedtoken.json" />
-					</xsdxt:sample>
-				</xsdxt:samples>
-			</xsd:appinfo>
 		</annotation>
 	</element>
 
@@ -129,16 +89,6 @@
 				xmlns="http://www.w3.org/1999/xhtml">
 				<p>A list of tokens.</p>
 			</xsd:documentation>
-			<xsd:appinfo>
-				<xsdxt:samples>
-					<xsdxt:sample>
-						<xsdxt:code type="application/xml" href="../samples/delegatedtoken.xml" />
-					</xsdxt:sample>
-					<xsdxt:sample>
-						<xsdxt:code type="application/json" href="../samples/delegatedtoken.json" />
-					</xsdxt:sample>
-				</xsdxt:samples>
-			</xsd:appinfo>
 		</annotation>
 	</element>
 
@@ -148,16 +98,6 @@
 				xmlns="http://www.w3.org/1999/xhtml">
 				<p>A list of delegated tokens.</p>
 			</xsd:documentation>
-			<xsd:appinfo>
-				<xsdxt:samples>
-					<xsdxt:sample>
-						<xsdxt:code type="application/xml" href="../samples/delegatedtoken.xml" />
-					</xsdxt:sample>
-					<xsdxt:sample>
-						<xsdxt:code type="application/json" href="../samples/delegatedtoken.json" />
-					</xsdxt:sample>
-				</xsdxt:samples>
-			</xsd:appinfo>
 		</annotation>
 	</element>
 
@@ -411,14 +351,6 @@
 					<xsd:documentation xml:lang="EN"
 						xmlns="http://www.w3.org/1999/xhtml">
 						<p>The OAuth grant type refresh_token.</p>
-					</xsd:documentation>
-				</annotation>
-			</enumeration>
-			<enumeration value="RACKER">
-				<annotation>
-					<xsd:documentation xml:lang="EN"
-						xmlns="http://www.w3.org/1999/xhtml">
-						<p>This is an extended grant type. Enables us know if a racker is authenticating.</p>
 					</xsd:documentation>
 				</annotation>
 			</enumeration>

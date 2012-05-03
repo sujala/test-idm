@@ -97,7 +97,7 @@
         <wadl:resource href="idm.wadl#tenants" />
         <wadl:resource href="idm.wadl#tenant" />
       </wadl:resources>
-    </section>
+    </section> 
     
     <section xmlns="http://docbook.org/ns/docbook"
       xml:id="IdentityProfile_Operations"

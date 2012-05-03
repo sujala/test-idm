@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" href="../xslt/schema.xslt"?>
+<?xml-stylesheet type="text/xsl" href="schema.xsl"?>
 
 <!-- (C) 2010 Rackspace Hosting, All Rights Reserved -->
 
@@ -31,16 +31,6 @@
 					authenticate.
 				</p>
 			</xsd:documentation>
-			<xsd:appinfo>
-				<xsdxt:samples>
-					<xsdxt:sample>
-						<xsdxt:code type="application/xml" href="../formattedsamples/user_disabled.xml" />
-					</xsdxt:sample>
-					<xsdxt:sample>
-						<xsdxt:code type="application/json" href="../formattedsamples/user_disabled.json" />
-					</xsdxt:sample>
-				</xsdxt:samples>
-			</xsd:appinfo>
 		</annotation>
 	</element>
 
@@ -52,16 +42,6 @@
 					An authentication request requires a username.
              </p>
 			</xsd:documentation>
-			<xsd:appinfo>
-				<xsdxt:samples>
-					<xsdxt:sample>
-						<xsdxt:code type="application/xml" href="../formattedsamples/missing_username.xml" />
-					</xsdxt:sample>
-					<xsdxt:sample>
-						<xsdxt:code type="application/json" href="../formattedsamples/missing_username.json" />
-					</xsdxt:sample>
-				</xsdxt:samples>
-			</xsd:appinfo>
 		</annotation>
 	</element>
 
@@ -73,16 +53,6 @@
 					A user with that username already exists.
              </p>
 			</xsd:documentation>
-			<xsd:appinfo>
-				<xsdxt:samples>
-					<xsdxt:sample>
-						<xsdxt:code type="application/xml" href="../formattedsamples/username_conflict.xml" />
-					</xsdxt:sample>
-					<xsdxt:sample>
-						<xsdxt:code type="application/json" href="../formattedsamples/username_conflict.json" />
-					</xsdxt:sample>
-				</xsdxt:samples>
-			</xsd:appinfo>
 		</annotation>
 	</element>
 
@@ -105,16 +75,6 @@
 					A permisssion with that Id already exists.
              </p>
 			</xsd:documentation>
-			<xsd:appinfo>
-				<xsdxt:samples>
-					<xsdxt:sample>
-						<xsdxt:code type="application/xml" href="../formattedsamples/resourceId_conflict.xml" />
-					</xsdxt:sample>
-					<xsdxt:sample>
-						<xsdxt:code type="application/json" href="../formattedsamples/resourceId_conflict.json" />
-					</xsdxt:sample>
-				</xsdxt:samples>
-			</xsd:appinfo>
 		</annotation>
 	</element>
 
@@ -126,16 +86,6 @@
 					A user with that email address already exists.
              </p>
 			</xsd:documentation>
-			<xsd:appinfo>
-				<xsdxt:samples>
-					<xsdxt:sample>
-						<xsdxt:code type="application/xml" href="../formattedsamples/email_conflict.xml" />
-					</xsdxt:sample>
-					<xsdxt:sample>
-						<xsdxt:code type="application/json" href="../formattedsamples/email_conflict.json" />
-					</xsdxt:sample>
-				</xsdxt:samples>
-			</xsd:appinfo>
 		</annotation>
 	</element>
 
@@ -147,16 +97,6 @@
 					A customer with that customerId already exists.
              </p>
 			</xsd:documentation>
-			<xsd:appinfo>
-				<xsdxt:samples>
-					<xsdxt:sample>
-						<xsdxt:code type="application/xml" href="../formattedsamples/customer_conflict.xml" />
-					</xsdxt:sample>
-					<xsdxt:sample>
-						<xsdxt:code type="application/json" href="../formattedsamples/customer_conflict.json" />
-					</xsdxt:sample>
-				</xsdxt:samples>
-			</xsd:appinfo>
 		</annotation>
 	</element>
 
@@ -168,16 +108,6 @@
 					A baseUrl with that id already exists.
              </p>
 			</xsd:documentation>
-			<xsd:appinfo>
-				<xsdxt:samples>
-					<xsdxt:sample>
-						<xsdxt:code type="application/xml" href="../formattedsamples/baseurl_conflict.xml" />
-					</xsdxt:sample>
-					<xsdxt:sample>
-						<xsdxt:code type="application/json" href="../formattedsamples/baseurl_conflict.json" />
-					</xsdxt:sample>
-				</xsdxt:samples>
-			</xsd:appinfo>
 		</annotation>
 	</element>
 
@@ -189,16 +119,6 @@
 					A client group with that name already exists.
              </p>
 			</xsd:documentation>
-			<xsd:appinfo>
-				<xsdxt:samples>
-					<xsdxt:sample>
-						<xsdxt:code type="application/xml" href="../formattedsamples/clientgroup_conflict.xml" />
-					</xsdxt:sample>
-					<xsdxt:sample>
-						<xsdxt:code type="application/json" href="../formattedsamples/clientgroup_conflict.json" />
-					</xsdxt:sample>
-				</xsdxt:samples>
-			</xsd:appinfo>
 		</annotation>
 	</element>
 	
@@ -210,17 +130,6 @@
 					The password failed validation.
              </p>
 			</xsd:documentation>
-			<xsd:appinfo>
-				<xsdxt:samples>
-					<xsdxt:sample>
-						<xsdxt:code type="application/xml"
-							href="../formattedsamples/passwordvalidationfault.xml" />
-					</xsdxt:sample>
-					<xsdxt:sample>
-						<xsdxt:code type="application/json" href="../formattedsamples/passwordvalidationfault.json" />
-					</xsdxt:sample>
-				</xsdxt:samples>
-			</xsd:appinfo>
 		</annotation>
 	</element>
 
@@ -233,17 +142,6 @@
 					once in the 24-hour period since the last self-update.
              </p>
 			</xsd:documentation>
-			<xsd:appinfo>
-				<xsdxt:samples>
-					<xsdxt:sample>
-						<xsdxt:code type="application/xml"
-							href="../formattedsamples/passwordselfupdatetoosoonfault.xml" />
-					</xsdxt:sample>
-					<xsdxt:sample>
-						<xsdxt:code type="application/json" href="../formattedsamples/passwordselfupdatetoosoonfault.json" />
-					</xsdxt:sample>
-				</xsdxt:samples>
-			</xsd:appinfo>
 		</annotation>
 	</element>
 
@@ -255,16 +153,6 @@
 					The password failed validation.
              </p>
 			</xsd:documentation>
-			<xsd:appinfo>
-				<xsdxt:samples>
-					<xsdxt:sample>
-						<xsdxt:code type="application/xml" href="../formattedsamples/statlepasswordfault.xml" />
-					</xsdxt:sample>
-					<xsdxt:sample>
-						<xsdxt:code type="application/json" href="../formattedsamples/stalepasswordfault.json" />
-					</xsdxt:sample>
-				</xsdxt:samples>
-			</xsd:appinfo>
 		</annotation>
 	</element>
 
@@ -276,16 +164,6 @@
 					The user has not been provisioned for this service.
                 </p>
 			</xsd:documentation>
-			<xsd:appinfo>
-				<xsdxt:samples>
-					<xsdxt:sample>
-						<xsdxt:code type="application/xml" href="../formattedsamples/not_provisioned.xml" />
-					</xsdxt:sample>
-					<xsdxt:sample>
-						<xsdxt:code type="application/json" href="../formattedsamples/not_provisioned.json" />
-					</xsdxt:sample>
-				</xsdxt:samples>
-			</xsd:appinfo>
 		</annotation>
 	</element>
 

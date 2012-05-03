@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" href="../xslt/schema.xslt"?>
+<?xml-stylesheet type="text/xsl" href="schema.xsl"?>
 
 <!-- (C) 2010 Rackspace Hosting, All Rights Reserved -->
 
@@ -35,16 +35,6 @@
 			<xsd:documentation>
 				<p>A rackspace application.</p>
 			</xsd:documentation>
-			<xsd:appinfo>
-				<xsdxt:samples>
-					<xsdxt:sample>
-						<xsdxt:code type="application/xml" href="../formattedsamples/application.xml" />
-					</xsdxt:sample>
-					<xsdxt:sample>
-						<xsdxt:code type="application/json" href="../formattedsamples/application.json" />
-					</xsdxt:sample>
-				</xsdxt:samples>
-			</xsd:appinfo>
 		</annotation>
 	</element>
 
@@ -53,16 +43,6 @@
 			<xsd:documentation>
 				<p>A list of rackspace applications.</p>
 			</xsd:documentation>
-			<xsd:appinfo>
-				<xsdxt:samples>
-					<xsdxt:sample>
-						<xsdxt:code type="application/xml" href="../formattedsamples/applications.xml" />
-					</xsdxt:sample>
-					<xsdxt:sample>
-						<xsdxt:code type="application/json" href="../formattedsamples/applications.json" />
-					</xsdxt:sample>
-				</xsdxt:samples>
-			</xsd:appinfo>
 		</annotation>
 	</element>
 
@@ -71,16 +51,6 @@
 			<xsd:documentation>
 				<p>A rackspace applications's credentials.</p>
 			</xsd:documentation>
-			<xsd:appinfo>
-				<xsdxt:samples>
-					<xsdxt:sample>
-						<xsdxt:code type="application/xml" href="../formattedsamples/application_credentials.xml" />
-					</xsdxt:sample>
-					<xsdxt:sample>
-						<xsdxt:code type="application/json" href="../formattedsamples/application_credentials.json" />
-					</xsdxt:sample>
-				</xsdxt:samples>
-			</xsd:appinfo>
 		</annotation>
 	</element>
 
