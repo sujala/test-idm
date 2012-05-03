@@ -8,5 +8,5 @@ then
 else
     HOST=$1
     VER=$2
-    scp $BASEDIR/target/$VER.war gauth@$HOST:/opt/glassfish/glassfish/domains/gauth/autodeploy/
+    scp $BASEDIR/target/$VER.war gauth@$HOST:/opt/glassfish/glassfish/domains/gauth/autodeploy/idm.war
 fi
