@@ -1442,7 +1442,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         if (user == null) {
             logger.info("Impersonation call - calling cloud auth to get user");
             // Get from cloud.
-            impersonatingToken = delegateCloud20Service.impersonateUser(impersonatingUsername, config.getString("ga.userName"), config.getString("ga.password"));
+            impersonatingToken = delegateCloud20Service.impersonateUser(impersonatingUsername, config.getString("ga.username"), config.getString("ga.password"));
         }else if(!user.isEnabled()){
             throw new ForbiddenException("User cannot be impersonated; User is not enabled");
         }else {

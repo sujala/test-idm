@@ -98,7 +98,7 @@ public class Cloud10VersionResource {
 
         User user = this.userService.getUser(username);
 
-        if(useCloudAuth()) {
+        if(useCloudAuth() && !userService.isMigratedUser(user)) {
             Response cloudResponse = cloudClient.get(getCloudAuthV10Url(), httpHeaders).build();
             if (cloudResponse.getStatus() == 204 && user != null) {
                 String token = cloudResponse.getMetadata().getFirst("X-Auth-Token").toString();

@@ -78,4 +78,5 @@ public interface UserService {
     void softDeleteUser(User user);
     boolean userExistsById(String userId);
     boolean userExistsByUsername(String username);
+    boolean isMigratedUser(User user);
 }

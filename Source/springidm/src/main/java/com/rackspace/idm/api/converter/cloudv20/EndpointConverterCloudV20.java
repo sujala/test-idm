@@ -58,6 +58,7 @@ public class EndpointConverterCloudV20 {
                 endpoint.setPublicURL(baseUrl.getPublicUrl());
                 endpoint.setRegion(baseUrl.getRegion());
                 endpoint.setType(baseUrl.getOpenstackType());
+                endpoint.setTenantId(point.getTenantId());
                 if (!StringUtils.isBlank(version.getId())) {
                     endpoint.setVersion(version);
                 }

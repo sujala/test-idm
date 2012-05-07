@@ -432,7 +432,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
             logger.debug("Creating ScopeAccess for Racker: {} and ClientId: {}", racker.getRackerId(), client.getClientId());
             scopeAccess = (RackerScopeAccess) scopeAccessService.addDirectScopeAccess(racker.getUniqueId(), scopeAccess);
         }
-        validateRackerHasRackerRole(racker, scopeAccess, client);
+        this.validateRackerHasRackerRole(racker, scopeAccess, client);
 
         DateTime current = new DateTime();
 

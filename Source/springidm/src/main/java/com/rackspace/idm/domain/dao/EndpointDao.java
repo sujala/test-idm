@@ -27,4 +27,6 @@ public interface EndpointDao {
     void setBaseUrlEnabled(int baseUrlId, boolean enabled);
 
     OpenstackEndpoint getOpenstackEndpointsForTenant(Tenant tenant);
+
+    void updateCloudBaseUrl(CloudBaseUrl cloudBaseUrl);
 }

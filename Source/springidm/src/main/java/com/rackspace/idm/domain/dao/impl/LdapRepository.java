@@ -98,6 +98,8 @@ public abstract class LdapRepository {
     public static final String ATTR_GROUP_TYPE = "groupType";
     public static final String ATTR_GROUP_NAME = "name";
     public static final String ATTR_GROUP_ID = "rsGroupId";
+    public static final String ATTR_IN_MIGRATION = "inMigration";
+    public static final String ATTR_MIGRATION_DATE = "migrationDate";
     public static final String ATTR_INTERNAL_URL = "internalUrl";
     public static final String ATTR_LANG = "preferredLanguage";
     public static final String ATTR_MAIL = "rsMail";

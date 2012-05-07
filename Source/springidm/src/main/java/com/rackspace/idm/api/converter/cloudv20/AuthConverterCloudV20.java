@@ -1,17 +1,16 @@
 package com.rackspace.idm.api.converter.cloudv20;
 
-import java.util.List;
-
 import com.rackspace.docs.identity.api.ext.rax_ga.v1.ImpersonationResponse;
-import org.openstack.docs.identity.api.v2.AuthenticateResponse;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.domain.entity.OpenstackEndpoint;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.entity.User;
+import org.openstack.docs.identity.api.v2.AuthenticateResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Component
 public class AuthConverterCloudV20 {
@@ -31,7 +30,7 @@ public class AuthConverterCloudV20 {
     public AuthenticateResponse toAuthenticationResponse(User user, ScopeAccess scopeAccess, List<TenantRole> roles, List<OpenstackEndpoint> endpoints) {
         AuthenticateResponse auth = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createAuthenticateResponse();
         
-        auth.setToken(this.tokenConverterCloudV20.toToken(scopeAccess));  
+        auth.setToken(this.tokenConverterCloudV20.toToken(scopeAccess, roles));
         auth.setUser(this.userConverterCloudV20.toUserForAuthenticateResponse(user, roles));
         auth.setServiceCatalog(this.endpointConverterCloudV20.toServiceCatalog(endpoints));
         

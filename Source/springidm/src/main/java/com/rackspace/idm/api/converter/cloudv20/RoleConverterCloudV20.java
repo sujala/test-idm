@@ -17,8 +17,7 @@ public class RoleConverterCloudV20 {
     private JAXBObjectFactories OBJ_FACTORIES;
 
     public RoleList toRoleListJaxb(List<TenantRole> roles) {
-        RoleList jaxbRoles = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-            .createRoleList();
+        RoleList jaxbRoles = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRoleList();
 
         if (roles == null || roles.size() == 0) {
             return jaxbRoles;
@@ -27,22 +26,20 @@ public class RoleConverterCloudV20 {
 
             if (role.getTenantIds() != null && role.getTenantIds().length > 0) {
                 for (String tenantId : role.getTenantIds()) {
-                    Role jaxbRole = OBJ_FACTORIES
-                        .getOpenStackIdentityV2Factory().createRole();
+                    Role jaxbRole = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRole();
                     jaxbRole.setDescription(role.getDescription());
                     jaxbRole.setName(role.getName());
                     jaxbRole.setId(role.getRoleRsId());
-                    jaxbRole.setServiceId(role.getClientId());
+                    //jaxbRole.setServiceId(role.getClientId()); // ToDo: Removed from displaying for now.
                     jaxbRole.setTenantId(tenantId);
                     jaxbRoles.getRole().add(jaxbRole);
                 }
             } else {
-                Role jaxbRole = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                    .createRole();
+                Role jaxbRole = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRole();
                 jaxbRole.setDescription(role.getDescription());
                 jaxbRole.setName(role.getName());
                 jaxbRole.setId(role.getRoleRsId());
-                jaxbRole.setServiceId(role.getClientId());
+                //jaxbRole.setServiceId(role.getClientId()); // ToDo: Removed from displaying for now.
                 jaxbRoles.getRole().add(jaxbRole);
             }
         }
@@ -51,8 +48,7 @@ public class RoleConverterCloudV20 {
     }
 
     public RoleList toRoleListFromClientRoles(List<ClientRole> roles) {
-        RoleList jaxbRoles = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-            .createRoleList();
+        RoleList jaxbRoles = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRoleList();
         
         if (roles == null || roles.size() == 0) {
             return jaxbRoles;
@@ -63,7 +59,7 @@ public class RoleConverterCloudV20 {
             jaxbRole.setId(role.getId());
             jaxbRole.setName(role.getName());
             jaxbRole.setDescription(role.getDescription());
-            jaxbRole.setServiceId(role.getClientId());
+            //jaxbRole.setServiceId(role.getClientId()); // ToDo: Removed from displaying for now.
             jaxbRoles.getRole().add(jaxbRole);
         }
 
@@ -71,21 +67,19 @@ public class RoleConverterCloudV20 {
     }
 
     public Role toRole(com.rackspace.idm.domain.entity.TenantRole role) {
-        Role jaxbRole = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-            .createRole();
+        Role jaxbRole = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRole();
         jaxbRole.setDescription(role.getDescription());
         jaxbRole.setId(role.getRoleRsId());
-        jaxbRole.setServiceId(role.getClientId());
+        //jaxbRole.setServiceId(role.getClientId()); // ToDo: Removed from displaying for now.
         return jaxbRole;
     }
 
     public Role toRoleFromClientRole(
         com.rackspace.idm.domain.entity.ClientRole role) {
-        Role jaxbRole = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-            .createRole();
+        Role jaxbRole = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRole();
         jaxbRole.setDescription(role.getDescription());
         jaxbRole.setId(role.getId());
-        jaxbRole.setServiceId(role.getClientId());
+        //jaxbRole.setServiceId(role.getClientId()); // ToDo: Removed from displaying for now.
         return jaxbRole;
     }
 }

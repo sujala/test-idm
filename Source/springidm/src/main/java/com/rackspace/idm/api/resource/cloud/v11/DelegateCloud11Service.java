@@ -5,6 +5,7 @@ import com.rackspace.idm.api.resource.cloud.CloudUserExtractor;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository;
 import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.domain.service.impl.DefaultUserService;
 import com.rackspacecloud.docs.auth.api.v1.*;
 import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,6 +53,9 @@ public class DelegateCloud11Service implements Cloud11Service {
     private DefaultCloud11Service defaultCloud11Service;
 
     @Autowired
+    private DefaultUserService defaultUserService;
+
+    @Autowired
     private DummyCloud11Service dummyCloud11Service;
     private static com.rackspacecloud.docs.auth.api.v1.ObjectFactory OBJ_FACTORY = new com.rackspacecloud.docs.auth.api.v1.ObjectFactory();
 
@@ -87,6 +91,8 @@ public class DelegateCloud11Service implements Cloud11Service {
          //Get "user" from LDAP
         JAXBElement<? extends Credentials> cred = extractCredentials(httpHeaders, body);
         com.rackspace.idm.domain.entity.User user = cloudUserExtractor.getUserByCredentialType(cred);
+        if(defaultUserService.isMigratedUser(user))
+            return getCloud11Service().authenticate(request, response, httpHeaders, body);
 
          //Get Cloud Auth response
         String xmlBody = body;
@@ -563,6 +569,10 @@ public class DelegateCloud11Service implements Cloud11Service {
         this.cloudUserExtractor = cloudUserExtractor;
     }
 
+    public void setDefaultUserService(DefaultUserService defaultUserService) {
+        this.defaultUserService = defaultUserService;
+    }
+
     public void setScopeAccessService(ScopeAccessService scopeAccessService) {
         this.scopeAccessService = scopeAccessService;
     }
@@ -594,5 +604,5 @@ public class DelegateCloud11Service implements Cloud11Service {
     private String getCloudAuthClientId() {
         return config.getString("cloudAuth.clientId");
     }
-        
+
 }

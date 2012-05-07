@@ -75,11 +75,15 @@ public class DefaultUserService implements UserService {
 //        }
         setPasswordIfNecessary(user);
 
-        user.setEnabled(user.isEnabled());
-        user.setId(this.userDao.getNextUserId());
-        if (user.getDomainId() == null) {
+        if(user.isEnabled() == null)
+            user.setEnabled(user.isEnabled());
+
+        if(user.getId() == null)
+            user.setId(this.userDao.getNextUserId());
+        
+        if (user.getDomainId() == null)
             user.setDomainId(user.getId());
-        }
+
 
         userDao.addUser(user);
         logger.info("Added User: {}", user);
@@ -554,19 +558,33 @@ public class DefaultUserService implements UserService {
     @Override
     public boolean userExistsById(String userId) {
         com.rackspace.idm.domain.entity.User userById = userDao.getUserById(userId);
-        if (userById == null) {
+        if (userById == null)
             return false;
-        }
+        if (userById.getInMigration())
+            return false;
         return true;
     }
 
     @Override
     public boolean userExistsByUsername(String username) {
         com.rackspace.idm.domain.entity.User userByUsername = userDao.getUserByUsername(username);
-        if (userByUsername == null) {
+        if (userByUsername == null)
             return false;
-        }
+        if (userByUsername.getInMigration())
+            return false;
         return true;
+    }
+
+    @Override
+    public boolean isMigratedUser(User user) {
+        if(user == null)
+            return false;
+        else if(user.getInMigration() == null)
+            return false;
+        else if(!user.getInMigration())
+            return true;
+        else
+            return false;
     }
 
     private void setPasswordIfNecessary(User user) {
