@@ -116,6 +116,9 @@ public class DelegateCloud20Service implements Cloud20Service {
 
         //Get "user" from LDAP
         com.rackspace.idm.domain.entity.User user = cloudUserExtractor.getUserByV20CredentialType(authenticationRequest);
+        // ToDo: verify this is what we want to do with Migrated users.
+        if(userService.isMigratedUser(user))
+            return getCloud20Service().authenticate(httpHeaders, authenticationRequest);
 
         //Get Cloud Auth response
         String body = marshallObjectToString(objectFactory.createAuth(authenticationRequest));
@@ -175,7 +178,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     private ResponseBuilder validateImpersonatedTokenFromCloud(HttpHeaders httpHeaders, String impersonatedCloudToken, String belongsTo, ImpersonatedScopeAccess impersonatedScopeAccess) throws Exception, JAXBException {
-        String gaXAuthToken = getXAuthToken_byPassword(config.getString("ga.userName"), config.getString("ga.password")).getToken().getId();
+        String gaXAuthToken = getXAuthToken_byPassword(config.getString("ga.username"), config.getString("ga.password")).getToken().getId();
         httpHeaders.getRequestHeaders().get("x-auth-token").set(0, gaXAuthToken);
         httpHeaders.getRequestHeaders().get("accept").set(0, "application/xml");
         Response cloudValidateResponse = checkToken(httpHeaders, gaXAuthToken, impersonatedCloudToken, belongsTo).build();

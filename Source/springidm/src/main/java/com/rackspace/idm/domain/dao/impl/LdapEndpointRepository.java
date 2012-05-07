@@ -32,8 +32,7 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
 
         List<Attribute> atts = new ArrayList<Attribute>();
 
-        atts.add(new Attribute(ATTR_OBJECT_CLASS,
-                ATTR_BASEURL_OBJECT_CLASS_VALUES));
+        atts.add(new Attribute(ATTR_OBJECT_CLASS, ATTR_BASEURL_OBJECT_CLASS_VALUES));
 
         if (!StringUtils.isBlank(baseUrl.getAdminUrl())) {
             atts.add(new Attribute(ATTR_ADMIN_URL, baseUrl.getAdminUrl()));
@@ -74,8 +73,7 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
         }
 
         if (baseUrl.getEnabled() != null) {
-            atts.add(new Attribute(ATTR_ENABLED, baseUrl.getEnabled()
-                    .toString()));
+            atts.add(new Attribute(ATTR_ENABLED, baseUrl.getEnabled().toString()));
         }
 
         if (!StringUtils.isBlank(baseUrl.getOpenstackType())) {
@@ -99,8 +97,7 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
         }
 
 
-        String baseUrlDN = new LdapDnBuilder(BASEURL_BASE_DN).addAttribute(
-                ATTR_ID, String.valueOf(baseUrl.getBaseUrlId())).build();
+        String baseUrlDN = new LdapDnBuilder(BASEURL_BASE_DN).addAttribute(ATTR_ID, String.valueOf(baseUrl.getBaseUrlId())).build();
 
         LDAPResult result;
 
@@ -417,6 +414,35 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
         getLogger().debug("Set baseurl {} enabled {}", baseUrlId, enabled);
     }
 
+    @Override
+    public void updateCloudBaseUrl(CloudBaseUrl cloudBaseUrl) {
+        if (cloudBaseUrl == null || StringUtils.isBlank(cloudBaseUrl.getUniqueId())) {
+            String errmsg = "Null instance of BaseUrl was passed";
+            getLogger().error(errmsg);
+            throw new IllegalArgumentException(errmsg);
+        }
+        getLogger().debug("Updating BaseURL: {}", cloudBaseUrl);
+        LDAPConnection conn = null;
+        Audit audit = Audit.log(cloudBaseUrl);
+        try {
+            CloudBaseUrl oldBaseUrl = getBaseUrlById(cloudBaseUrl.getBaseUrlId());
+            conn = getAppConnPool().getConnection();
+            List<Modification> modifications = getModifications(oldBaseUrl, cloudBaseUrl);
+            audit.modify(modifications);
+            if (modifications.size() > 0) {
+                getAppConnPool().modify(oldBaseUrl.getUniqueId(), modifications);
+            }
+            getLogger().debug("Updated CloudBaseUrl: {}", cloudBaseUrl);
+            audit.succeed();
+        } catch (final LDAPException e) {
+            getLogger().error("Error updating CloudBaseUrl", e);
+            audit.fail();
+            throw new IllegalStateException(e);
+        } finally {
+            getAppConnPool().releaseConnection(conn);
+        }
+    }
+
     private CloudBaseUrl getBaseUrl(SearchResultEntry resultEntry) {
         getLogger().debug("Inside getBaseUrl");
         CloudBaseUrl baseUrl = new CloudBaseUrl();
@@ -495,5 +521,65 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
 
         getLogger().debug("Exiting getRawEndpointsForUser {}", username);
         return points;
+    }
+
+    List<Modification> getModifications(CloudBaseUrl gOld, CloudBaseUrl gNew) {
+        List<Modification> mods = new ArrayList<Modification>();
+
+        if (gNew.getDef() != null && !gNew.getDef().equals(gOld.getDef())) {
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_DEF, String.valueOf(gNew.getDef())));
+        }
+
+        if (gNew.getAdminUrl() != null && !gNew.getAdminUrl().equals(gOld.getAdminUrl())) {
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_ADMIN_URL, String.valueOf(gNew.getAdminUrl())));
+        }
+
+        if (gNew.getBaseUrlType() != null && !gNew.getBaseUrlType().equals(gOld.getBaseUrlType())) {
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_BASEURL_TYPE, String.valueOf(gNew.getBaseUrlType())));
+        }
+
+        if (gNew.getEnabled() != null && !gNew.getEnabled().equals(gOld.getEnabled())) {
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(gNew.getEnabled())));
+        }
+
+        if (gNew.getGlobal() != null && !gNew.getGlobal().equals(gOld.getGlobal())) {
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_GLOBAL, String.valueOf(gNew.getGlobal())));
+        }
+
+        if (gNew.getInternalUrl() != null && !gNew.getInternalUrl().equals(gOld.getInternalUrl())) {
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_INTERNAL_URL, String.valueOf(gNew.getInternalUrl())));
+        }
+
+        if (gNew.getPublicUrl() != null && !gNew.getPublicUrl().equals(gOld.getPublicUrl())) {
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_PUBLIC_URL, String.valueOf(gNew.getPublicUrl())));
+        }
+
+        if (gNew.getRegion() != null && !gNew.getRegion().equals(gOld.getRegion())) {
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_REGION, String.valueOf(gNew.getRegion())));
+        }
+
+        /*
+        if (gNew.getVersionId() != null && !gNew.getVersionId().equals(gOld.getVersionId())) {
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_VERSION_ID, String.valueOf(gNew.getVersionId())));
+        }
+
+        if (gNew.getVersionInfo() != null && !gNew.getVersionInfo().equals(gOld.getVersionInfo())) {
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_VERSION_INFO, String.valueOf(gNew.getVersionInfo())));
+        }
+
+        if (gNew.getVersionList() != null && !gNew.getVersionList().equals(gOld.getVersionList())) {
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_VERSION_LIST, String.valueOf(gNew.getVersionList())));
+        }
+        */
+        
+        if (gNew.getServiceName() != null && !gNew.getServiceName().equals(gOld.getServiceName())) {
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_SERVICE, String.valueOf(gNew.getServiceName())));
+        }
+
+        if (gNew.getOpenstackType() != null && !gNew.getOpenstackType().equals(gOld.getOpenstackType())) {
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_OPENSTACK_TYPE, String.valueOf(gNew.getOpenstackType())));
+        }
+
+        return mods;
     }
 }

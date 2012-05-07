@@ -1,18 +1,13 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import java.util.List;
-
+import com.rackspace.idm.domain.config.AuthRepositoryLdapConfiguration;
+import com.unboundid.ldap.sdk.LDAPConnectionPool;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
 
-import com.rackspace.idm.domain.config.AuthRepositoryLdapConfiguration;
-import com.unboundid.ldap.sdk.LDAPConnectionPool;
+import java.util.List;
 
 public class LdapAuthRepositoryTest {
     private LdapAuthRepository repo;

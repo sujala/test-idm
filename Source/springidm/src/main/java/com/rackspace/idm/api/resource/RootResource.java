@@ -28,6 +28,7 @@ public class RootResource {
 
     private final CloudVersionsResource cloudVersionsResource;
     private final Version10Resource versionResource;
+    private final MigrationResource migrationResource;
     private final ServiceProfileDescriptionBuilder serviceProfileDescriptionBuilder;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -35,10 +36,12 @@ public class RootResource {
     private UriInfo uriInfo;
     
     @Autowired
-    public RootResource(CloudVersionsResource cloudVersionsResource, Version10Resource versionResource, 
-    		Configuration config, ServiceProfileDescriptionBuilder serviceProfileDescriptionBuilder ) {
+    public RootResource(CloudVersionsResource cloudVersionsResource, Version10Resource versionResource,
+                        MigrationResource migrationResource, Configuration config,
+                        ServiceProfileDescriptionBuilder serviceProfileDescriptionBuilder ) {
         this.cloudVersionsResource = cloudVersionsResource;
         this.versionResource = versionResource;
+        this.migrationResource = migrationResource;
         this.serviceProfileDescriptionBuilder = serviceProfileDescriptionBuilder;
     }
 
@@ -80,6 +83,11 @@ public class RootResource {
     @Path("cloud")
     public CloudVersionsResource getCloudVersionsResource() {
         return cloudVersionsResource;
+    }
+
+    @Path("migration")
+    public MigrationResource getMigrationResource() {
+        return migrationResource;
     }
 
     @Path("google")

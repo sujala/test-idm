@@ -57,6 +57,10 @@ public class User implements Auditable {
 
     private String domainId = null;
 
+    private Boolean inMigration = null;
+
+    private DateTime migrationDate;
+
     public User() {
         // Needed by JAX-RS
     }
@@ -369,6 +373,22 @@ public class User implements Auditable {
 
     public void setUpdated(DateTime updated) {
         this.updated = updated;
+    }
+
+    public Boolean getInMigration() {
+        return inMigration;
+    }
+
+    public void setInMigration(Boolean inMigration) {
+        this.inMigration = inMigration;
+    }
+
+    public DateTime getMigrationDate() {
+        return migrationDate;
+    }
+
+    public void setMigrationDate(DateTime migrationDate) {
+        this.migrationDate = migrationDate;
     }
 
     public boolean isDisabled() {
