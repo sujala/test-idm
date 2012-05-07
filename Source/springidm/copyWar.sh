@@ -2,11 +2,11 @@
 
 BASEDIR=$(dirname $(readlink -f $0))
 
-if [ $# -ne 2 ]
+if [ $# -ne 1 ]
 then
-    echo "usage: copyProperties.sh <host> <war.version>"
+    echo "usage: copyWar.sh <host>"
 else
     HOST=$1
-    VER=$2
-    scp $BASEDIR/target/$VER.war gauth@$HOST:/opt/glassfish/glassfish/domains/gauth/autodeploy/idm.war
+    WAR=`find $BASEDIR | grep idm.*.war$`
+    scp $WAR gauth@$HOST:/opt/glassfish/glassfish/domains/gauth/autodeploy/idm.war
 fi
