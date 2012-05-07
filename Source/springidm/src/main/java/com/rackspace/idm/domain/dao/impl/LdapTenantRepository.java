@@ -34,15 +34,13 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         LDAPConnection conn = null;
         try {
             conn = getAppConnPool().getConnection();
-            final LDAPPersister<Tenant> persister = LDAPPersister
-                .getInstance(Tenant.class);
+            final LDAPPersister<Tenant> persister = LDAPPersister.getInstance(Tenant.class);
             persister.add(tenant, conn, TENANT_BASE_DN);
             audit.succeed();
             getLogger().info("Added Tenant: {}", tenant);
         } catch (final LDAPException e) {
             if (e.getResultCode() == ResultCode.ENTRY_ALREADY_EXISTS) {
-                String errMsg = String.format("Tenant %s already exists",
-                    tenant.getTenantId());
+                String errMsg = String.format("Tenant %s already exists", tenant.getTenantId());
                 getLogger().warn(errMsg);
                 throw new DuplicateException(errMsg);
             }
@@ -156,10 +154,8 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         Audit audit = Audit.log(tenant);
         try {
             conn = getAppConnPool().getConnection();
-            final LDAPPersister<Tenant> persister = LDAPPersister
-                .getInstance(Tenant.class);
-            List<Modification> modifications = persister.getModifications(
-                tenant, true);
+            final LDAPPersister<Tenant> persister = LDAPPersister.getInstance(Tenant.class);
+            List<Modification> modifications = persister.getModifications(tenant, true);
             audit.modify(modifications);
             if (modifications.size() > 0) {
                 persister.modify(tenant, conn, null, true);
@@ -378,8 +374,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         getLogger().debug("Getting tenantRoles");
 
         LdapSearchBuilder searchBuilder = new LdapSearchBuilder();
-        searchBuilder.addEqualAttribute(ATTR_OBJECT_CLASS,
-            OBJECTCLASS_TENANT_ROLE);
+        searchBuilder.addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TENANT_ROLE);
 
         if (filters != null) {
             for (FilterParam filter : filters) {
@@ -411,8 +406,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
 
     private List<TenantRole> getMultipleTenantRoles(String parentUniqueId,
         Filter searchFilter) throws LDAPPersistException {
-        List<SearchResultEntry> entries = this.getMultipleEntries(
-            parentUniqueId, SearchScope.SUB, searchFilter, ATTR_ID);
+        List<SearchResultEntry> entries = this.getMultipleEntries(parentUniqueId, SearchScope.SUB, searchFilter, ATTR_ID);
 
         List<TenantRole> roles = new ArrayList<TenantRole>();
         for (SearchResultEntry entry : entries) {
@@ -423,8 +417,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
 
     private TenantRole getSingleTenantRole(String parentUniqueId,
         Filter searchFilter) throws LDAPPersistException {
-        SearchResultEntry entry = this.getSingleEntry(parentUniqueId,
-            SearchScope.SUB, searchFilter);
+        SearchResultEntry entry = this.getSingleEntry(parentUniqueId, SearchScope.SUB, searchFilter);
         TenantRole role = getTenantRole(entry);
         return role;
     }
@@ -434,8 +427,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         if (entry == null) {
             return null;
         }
-        TenantRole role = LDAPPersister.getInstance(TenantRole.class).decode(
-            entry);
+        TenantRole role = LDAPPersister.getInstance(TenantRole.class).decode(entry);
         return role;
     }
 
@@ -451,10 +443,8 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         Audit audit = Audit.log(role);
         try {
             conn = getAppConnPool().getConnection();
-            final LDAPPersister<TenantRole> persister = LDAPPersister
-                .getInstance(TenantRole.class);
-            List<Modification> modifications = persister.getModifications(role,
-                true);
+            final LDAPPersister<TenantRole> persister = LDAPPersister.getInstance(TenantRole.class);
+            List<Modification> modifications = persister.getModifications(role, true);
             audit.modify(modifications);
             persister.modify(role, conn, null, true);
             getLogger().debug("Updated Tenant Role: {}", role);

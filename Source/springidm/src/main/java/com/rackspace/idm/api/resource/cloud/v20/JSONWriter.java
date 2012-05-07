@@ -468,8 +468,21 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
         JSONObject tokenInner = new JSONObject();
         tokenInner.put(JSONConstants.ID, token.getId());
         tokenInner.put(JSONConstants.EXPIRES, token.getExpires().toString());
-
+        if(token.getTenant() != null)
+            tokenInner.put(JSONConstants.TENANT, token.getTenant().getName());
         return tokenInner;
+    }
+
+    @SuppressWarnings("unchecked")
+    private JSONArray getTenants(List<TenantForAuthenticateResponse> tenants){
+        JSONArray tenantList = new JSONArray();
+        for(TenantForAuthenticateResponse tenant : tenants){
+            JSONObject tenantItem = new JSONObject();
+            tenantItem.put(JSONConstants.ID, tenant.getId());
+            tenantItem.put(JSONConstants.NAME, tenant.getName());
+            tenantList.add(tenantItem);
+        }
+        return tenantList;
     }
 
     @SuppressWarnings("unchecked")
@@ -552,6 +565,9 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
         }
         if(role.getServiceId() != null){
             outer.put(JSONConstants.SERVICE_ID, role.getServiceId());
+        }
+        if(role.getTenantId() != null){
+            outer.put(JSONConstants.TENANT_ID, role.getTenantId());
         }
         return outer;
     }
@@ -750,6 +766,9 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
         }
         if(endpoint.getType() != null){
             endpointItem.put(JSONConstants.TYPE, endpoint.getType());
+        }
+        if(endpoint.getTenantId() != null){
+            endpointItem.put(JSONConstants.TENANT_ID, endpoint.getTenantId());
         }
         if(endpoint.getInternalURL() != null){
             endpointItem.put(JSONConstants.INTERNAL_URL, endpoint.getInternalURL());

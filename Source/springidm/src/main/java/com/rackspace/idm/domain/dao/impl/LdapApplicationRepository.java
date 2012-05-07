@@ -267,8 +267,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
     }
 
     @Override
-    public Application getClientByCustomerIdAndClientId(String customerId,
-                                                        String clientId) {
+    public Application getClientByCustomerIdAndClientId(String customerId, String clientId) {
         getLogger().debug("Doing search for clientId {}", clientId);
 
         if (StringUtils.isBlank(clientId)) {

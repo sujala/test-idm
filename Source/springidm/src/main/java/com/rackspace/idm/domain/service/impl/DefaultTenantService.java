@@ -37,8 +37,7 @@ public class DefaultTenantService implements TenantService {
         logger.info("Adding Tenant {}", tenant);
         Tenant exists = this.tenantDao.getTenant(tenant.getName());
         if (exists != null) {
-            String errMsg = String.format("Tenant with name %s already exists",
-                tenant.getName());
+            String errMsg = String.format("Tenant with name %s already exists", tenant.getName());
             logger.warn(errMsg);
             throw new DuplicateException(errMsg);
         }
@@ -406,12 +405,16 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public List<TenantRole> getTenantRolesForUser(User user,
-        FilterParam[] filters) {
+    public List<TenantRole> getTenantRolesForUser(User user, FilterParam[] filters) {
         logger.debug("Getting Tenant Roles");
-        List<TenantRole> roles = this.tenantDao.getTenantRolesForUser(user,
-            filters);
-
+        List<TenantRole> roles = this.tenantDao.getTenantRolesForUser(user, filters);
+        for (TenantRole role : roles) {
+            if (role != null) {
+                ClientRole cRole = this.clientDao.getClientRoleById(role.getRoleRsId());
+                role.setName(cRole.getName());
+                role.setDescription(cRole.getDescription());
+            }
+        }
         return getTenantOnlyRoles(roles);
     }
 
@@ -512,6 +515,7 @@ public class DefaultTenantService implements TenantService {
                 newRole.setClientId(role.getClientId());
                 newRole.setRoleRsId(role.getRoleRsId());
                 newRole.setName(role.getName());
+                newRole.setDescription(role.getDescription());
                 newRole.setTenantIds(role.getTenantIds());
                 tenantRoles.add(newRole);
             }

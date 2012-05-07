@@ -5,6 +5,7 @@ import com.rackspace.idm.api.resource.cloud.v11.DefaultCloud11Service;
 import com.rackspace.idm.api.resource.cloud.v11.DelegateCloud11Service;
 import com.rackspace.idm.api.resource.cloud.v11.DummyCloud11Service;
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository;
+import com.rackspace.idm.domain.service.impl.DefaultUserService;
 import com.rackspacecloud.docs.auth.api.v1.*;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
@@ -49,6 +50,7 @@ public class DelegateCloud11ServiceTest {
     private String userId = "userId";
     private LdapUserRepository ldapUserRepository;
     private CloudUserExtractor cloudUserExtractor;
+    private DefaultUserService defaultUserService;
 
     private Response.ResponseBuilder okResponse;
     private Response.ResponseBuilder notFoundResponse;
@@ -58,12 +60,14 @@ public class DelegateCloud11ServiceTest {
         idmUser = mock(com.rackspace.idm.domain.entity.User.class);
         delegateCloud11Service = new DelegateCloud11Service();
         defaultCloud11Service = mock(DefaultCloud11Service.class);
+        defaultUserService = mock(DefaultUserService.class);
         credentialUnmarshaller = mock(CredentialUnmarshaller.class);
         cloudUserExtractor = mock(CloudUserExtractor.class);
         delegateCloud11Service.setCredentialUnmarshaller(credentialUnmarshaller);
         delegateCloud11Service.setDefaultCloud11Service(defaultCloud11Service);
         delegateCloud11Service.setDummyCloud11Service(dummyCloud11Service);
         delegateCloud11Service.setCloudUserExtractor(cloudUserExtractor);
+        delegateCloud11Service.setDefaultUserService(defaultUserService);
         OBJ_FACTORY = mock(com.rackspacecloud.docs.auth.api.v1.ObjectFactory.class);
         DelegateCloud11Service.setOBJ_FACTORY(OBJ_FACTORY);
         config = mock(Configuration.class);
@@ -123,6 +127,7 @@ public class DelegateCloud11ServiceTest {
         when(defaultCloud11Service.authenticate(null, null, httpHeaders, jsonBody)).thenReturn(Response.status(404));
         when(credentialUnmarshaller.unmarshallCredentialsFromJSON(jsonBody)).thenReturn(jaxbElement);
         when(cloudClient.post(eq(url + "auth"), Matchers.<javax.ws.rs.core.HttpHeaders>any(), anyString())).thenReturn(notFoundResponse);
+        when(defaultUserService.isMigratedUser(null)).thenReturn(false);
         delegateCloud11Service.authenticate(null, null, httpHeaders, jsonBody);
         verify(credentialUnmarshaller).unmarshallCredentialsFromJSON(jsonBody);
     }

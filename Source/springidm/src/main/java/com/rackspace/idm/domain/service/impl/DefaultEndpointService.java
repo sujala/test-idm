@@ -39,6 +39,13 @@ public class DefaultEndpointService implements EndpointService {
     }
 
     @Override
+    public void updateBaseUrl(CloudBaseUrl baseUrl) {
+        logger.debug("Updating base url");
+        endpointDao.updateCloudBaseUrl(baseUrl);
+        logger.debug("Done updating base url.");
+    }
+
+    @Override
     public void addBaseUrlToUser(int baseUrlId, boolean def, String username) {
         logger.debug("Adding baseurl {} to user {}", baseUrlId, username);
         this.endpointDao.addBaseUrlToUser(baseUrlId, def, username);

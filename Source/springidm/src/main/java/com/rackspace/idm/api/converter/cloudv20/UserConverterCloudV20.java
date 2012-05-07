@@ -73,7 +73,7 @@ public class UserConverterCloudV20 {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-        
+
         return jaxbUser;
     }
     

@@ -785,6 +785,11 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             atts.add(new Attribute(ATTR_DOMAIN_ID, user.getDomainId()));
         }
 
+        if(user.getInMigration() != null) {
+            atts.add(new Attribute(ATTR_IN_MIGRATION, String.valueOf(user.getInMigration())));
+            atts.add(new Attribute(ATTR_MIGRATION_DATE, StaticUtils.encodeGeneralizedTime(user.getMigrationDate().toDate())));
+        }
+
         Attribute[] attributes = atts.toArray(new Attribute[0]);
         getLogger().debug("Found {} attributes to add", attributes.length);
         return attributes;
@@ -917,7 +922,10 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         user.setLastname(cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_SN)));
         user.setTimeZoneObj(DateTimeZone.forID(resultEntry.getAttributeValue(ATTR_TIME_ZONE)));
         user.setDomainId(resultEntry.getAttributeValue(ATTR_DOMAIN_ID));
-        user.setDomainId(resultEntry.getAttributeValue(ATTR_DOMAIN_ID));
+
+        user.setInMigration(resultEntry.getAttributeValueAsBoolean(ATTR_IN_MIGRATION));
+        if(user.getInMigration() != null)
+            user.setMigrationDate(new DateTime(resultEntry.getAttributeValueAsDate(ATTR_MIGRATION_DATE)));
 
         String ecryptedPwd = cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_CLEAR_PASSWORD));
         Date lastUpdates = resultEntry.getAttributeValueAsDate(ATTR_PASSWORD_UPDATED_TIMESTAMP);
@@ -999,6 +1007,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         checkForEnabledStatusModification(uOld, uNew, mods);
         checkForNastIdModification(uOld, uNew, mods);
         checkForMossoIdModification(uOld, uNew, mods);
+        checkForMigrationStatusModification(uOld, uNew, mods);
 
         getLogger().debug("Found {} mods.", mods.size());
 
@@ -1193,6 +1202,12 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD_UPDATED_TIMESTAMP, StaticUtils.encodeGeneralizedTime(currentTime.toDate())));
             mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD, uNew.getPasswordObj().getValue()));
             mods.add(new Modification(ModificationType.REPLACE, ATTR_CLEAR_PASSWORD, cryptHelper.encrypt(uNew.getPasswordObj().getValue())));
+        }
+    }
+
+    private void checkForMigrationStatusModification(User uOld, User uNew, List<Modification> mods){
+        if(uNew.getInMigration() != null) {
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_IN_MIGRATION, String.valueOf(uNew.getInMigration())));
         }
     }
 
