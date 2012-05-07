@@ -9,12 +9,16 @@ import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.NotFoundException;
+import com.sun.jersey.api.ConflictException;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.ws.rs.core.Response;
+import javax.xml.datatype.DatatypeFactory;
+import java.util.Date;
+import java.util.GregorianCalendar;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
@@ -38,8 +42,12 @@ public class CloudMigrationServiceTest {
     private TenantService tenantService;
     private UserConverterCloudV20 userConverterCloudV20;
     private UserService userService;
+    private MigrationClient client = new MigrationClient();
+    private GregorianCalendar gc = new GregorianCalendar();
+    private static DatatypeFactory df = null;
 
     private User user;
+    private org.openstack.docs.identity.api.v2.User cloudUser;
 
     @Before
     public void setUp() throws Exception {
@@ -64,6 +72,7 @@ public class CloudMigrationServiceTest {
         cloudMigrationService.setTenantService(tenantService);
         cloudMigrationService.setUserConverterCloudV20(userConverterCloudV20);
         cloudMigrationService.setUserService(userService);
+        gc.setTimeInMillis(new Date().getTime());
 
         //fields
         user = new User();
@@ -77,7 +86,20 @@ public class CloudMigrationServiceTest {
         user.setDisplayName("name");
         user.setEmail("email@test.rackspacec.com");
 
+        df = DatatypeFactory.newInstance();
+        cloudUser = new org.openstack.docs.identity.api.v2.User();
+        cloudUser.setId("1");
+        cloudUser.setDisplayName("Migrate User");
+        cloudUser.setEmail("migrate@me.com");
+        cloudUser.setEnabled(true);
+        cloudUser.setUsername("migrateUser");
+        cloudUser.setCreated(df.newXMLGregorianCalendar(gc));
+        cloudUser.setUpdated(df.newXMLGregorianCalendar(gc));
+
         //stubbing
+        when(jaxbObjectFactories.getRackspaceIdentityExtKsgrpV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.ObjectFactory());
+        when(jaxbObjectFactories.getOpenStackIdentityV2Factory()).thenReturn(new org.openstack.docs.identity.api.v2.ObjectFactory());
+        when(config.getString("rackspace.customerId")).thenReturn(null);
 
         spy = spy(cloudMigrationService);
     }
@@ -88,7 +110,6 @@ public class CloudMigrationServiceTest {
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(404));
     }
 
-    @Ignore
     @Test
     public void getMigratedUser_returns_User() throws Exception {
         when(userService.getUser("cmarin3")).thenReturn(user);
@@ -96,6 +117,18 @@ public class CloudMigrationServiceTest {
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
-    
+    @Test(expected = ConflictException.class)
+    public void migrateUser_returns_ConflicException() throws Exception {
+        when(userService.userExistsByUsername(anyString())).thenReturn(true);
+        String userId = spy.migrateUserByUsername("conflictingUser", false);
+    }
+
+    @Ignore
+    @Test
+    public void migrateUser_returns() throws Exception {
+        when(userService.userExistsByUsername(anyString())).thenReturn(false);
+        when(client.getUser(anyString(), anyString())).thenReturn(cloudUser);
+        String userId = spy.migrateUserByUsername("migrateUser", false);
+    }
 
 }
