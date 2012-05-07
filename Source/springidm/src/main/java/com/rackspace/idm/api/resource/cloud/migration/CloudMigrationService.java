@@ -229,7 +229,7 @@ public class CloudMigrationService {
         client = new MigrationClient();
 		client.setCloud20Host(config.getString("cloudAuth20url"));
         String adminUsername = config.getString("migration.username");
-    	String adminPassword = config.getString("migration.password");
+    	String adminPassword = config.getString("migration.apikey");
 		AuthenticateResponse authenticateResponse = client.authenticateWithPassword(adminUsername, adminPassword);
 		return authenticateResponse.getToken().getId();
 	}
