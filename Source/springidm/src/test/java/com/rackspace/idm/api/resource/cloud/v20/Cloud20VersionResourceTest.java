@@ -161,6 +161,7 @@ public class Cloud20VersionResourceTest extends AbstractAroundClassJerseyTest {
         assertThat("response code", clientResponse.getStatus(), equalTo(404));
     }
 
+    @Ignore
     @Test
     public void authenticate_badJson_returns400() throws Exception {
         WebResource resource = resource().path("cloud/v2.0/tokens");
@@ -173,6 +174,7 @@ public class Cloud20VersionResourceTest extends AbstractAroundClassJerseyTest {
         assertThat("response code", clientResponse.getStatus(), equalTo(400));
     }
 
+    @Ignore
     @Test
     public void authenticate_badJsonNoPw_returns400() throws Exception {
         WebResource resource = resource().path("cloud/v2.0/tokens");
