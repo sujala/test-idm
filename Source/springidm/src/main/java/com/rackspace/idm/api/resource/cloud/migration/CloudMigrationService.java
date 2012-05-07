@@ -12,6 +12,7 @@ import com.rackspace.idm.api.resource.cloud.MigrationClient;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspacecloud.docs.auth.api.v1.BaseURL;
 import com.rackspacecloud.docs.auth.api.v1.BaseURLList;
@@ -226,12 +227,17 @@ public class CloudMigrationService {
     }
     
     private String getAdminToken() throws URISyntaxException, HttpException, IOException, JAXBException {
-        client = new MigrationClient();
-		client.setCloud20Host(config.getString("cloudAuth20url"));
-        String adminUsername = config.getString("migration.username");
-    	String adminPassword = config.getString("migration.apikey");
-		AuthenticateResponse authenticateResponse = client.authenticateWithPassword(adminUsername, adminPassword);
-		return authenticateResponse.getToken().getId();
+        try {
+            client = new MigrationClient();
+            client.setCloud20Host(config.getString("cloudAuth20url"));
+            String adminUsername = config.getString("migration.username");
+            String adminApiKey = config.getString("migration.apikey");
+            AuthenticateResponse authenticateResponse = client.authenticateWithApiKey(adminUsername, adminApiKey);
+            return authenticateResponse.getToken().getId();
+        }
+        catch(Exception ex) {
+            throw new NotAuthenticatedException("Admin credentials are invalid");
+        }
 	}
     
     private com.rackspace.idm.domain.entity.User addMigrationUser(User user, String apiKey, String password, SecretQA secretQA) {
