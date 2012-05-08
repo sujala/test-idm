@@ -8,6 +8,8 @@ import org.apache.http.client.protocol.RequestAcceptEncoding;
 import org.apache.http.client.protocol.ResponseContentEncoding;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.ws.rs.core.HttpHeaders;
@@ -26,6 +28,7 @@ import java.util.Set;
 @Component
 public class CloudClient {
 
+    final private Logger logger = LoggerFactory.getLogger(this.getClass());
     // Todo: create a property
     private boolean ignoreSSLCert = true;
 
@@ -35,6 +38,7 @@ public class CloudClient {
         setHttpHeaders(httpHeaders, request);
         return executeRequest(request);
     }
+
     public Response.ResponseBuilder get(String url, HashMap headers)
             throws IOException {
         HttpGet request = new HttpGet(url);
@@ -86,15 +90,14 @@ public class CloudClient {
             statusCode = response.getStatusLine().getStatusCode();
             if (response.getEntity() != null) {
                 responseBody = convertStreamToString(response.getEntity().getContent());
-                if (responseBody.equals(""))
-                    responseBody = null;
+                if (responseBody.equals("")) { responseBody = null; }
             }
         } catch (IOException e) {
             responseBody = e.getMessage();
         }
 
         // Catch 301 - MOVED_PERMANENTLY
-        if(statusCode == 301){
+        if (statusCode == 301) {
             //Quick Fix: not best way to pass the body
             return handleRedirect(response, responseBody);
         }
@@ -106,14 +109,15 @@ public class CloudClient {
                 responseBuilder = responseBuilder.header(key, header.getValue());
             }
         }
-//      if (statusCode == 500) {
-            responseBuilder.header("response-source","cloud-auth");
-//      }
+        if (statusCode == 500) {
+            logger.info("Cloud Auth returned a 500 status code.");
+        }
+        responseBuilder.header("response-source", "cloud-auth");
         return responseBuilder;
     }
 
-    private Response.ResponseBuilder handleRedirect(HttpResponse response, String responseBody){
-        try{
+    private Response.ResponseBuilder handleRedirect(HttpResponse response, String responseBody) {
+        try {
             Response.ResponseBuilder builder = Response.status(Response.Status.MOVED_PERMANENTLY); //.header("Location", uri);
             for (Header header : response.getAllHeaders()) {
                 String key = header.getName();
@@ -122,19 +126,18 @@ public class CloudClient {
                 }
             }
             //builder.entity(response.getEntity());
-            if (responseBody != null){
+            if (responseBody != null) {
                 builder.entity(responseBody);
             }
-            builder.header("response-source","cloud-auth");
+            builder.header("response-source", "cloud-auth");
             return builder;
-        }catch(Exception ex){
+        } catch (Exception ex) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
     private BasicHttpEntity getHttpEntity(String body) {
-        if (body == null)
-            return null;
+        if (body == null) { return null; }
         BasicHttpEntity entity = new BasicHttpEntity();
         ByteArrayInputStream bs = new ByteArrayInputStream(body.getBytes());
         entity.setContent(bs);
@@ -152,9 +155,10 @@ public class CloudClient {
 
         return client;
     }
+
     private void setHeaders(HashMap<String, String> headers, HttpRequestBase request) {
-        if (!headers.isEmpty()){
-            for (String header: headers.keySet()){
+        if (!headers.isEmpty()) {
+            for (String header : headers.keySet()) {
                 request.addHeader(header, headers.get(header).toString());
             }
         }
