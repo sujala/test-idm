@@ -290,12 +290,8 @@ public class DefaultCloud11Service implements Cloud11Service {
             }
 
             User existingUser = userService.getUser(user.getId());
-            if(existingUser!=null){
-                throw new DuplicateUsernameException("Username "+user.getId()+" already exists");
-            }
-
-            if (user.getMossoId() != null) {
-                validateMossoId(user.getMossoId());
+            if (existingUser != null) {
+                throw new DuplicateUsernameException("Username " + user.getId() + " already exists");
             }
             if (user.getMossoId() == null) {
                 String errorMsg = "Expecting mossoId";
@@ -303,9 +299,10 @@ public class DefaultCloud11Service implements Cloud11Service {
                 throw new BadRequestException(errorMsg);
             }
 
+            addMossoTenant(user);
+
             if (isNastEnabled()) {
-                String nastId = nastFacade.addNastUser(user);
-                user.setNastId(nastId);
+                addNastTenant(user);
             }
             User userDO = this.userConverterCloudV11.toUserDO(user);
             userDO.setEnabled(true);
@@ -344,6 +341,37 @@ public class DefaultCloud11Service implements Cloud11Service {
             return Response.created(uri).entity(OBJ_FACTORY.createUser(cloud11User));
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
+        }
+    }
+
+    void addNastTenant(com.rackspacecloud.docs.auth.api.v1.User user) {
+        String nastId = nastFacade.addNastUser(user);
+        user.setNastId(nastId);
+        if (nastId != null && !nastId.isEmpty()) {
+            Tenant tenant = new Tenant();
+            tenant.setName(nastId);
+            List<CloudBaseUrl> nastBaseUrls = endpointService.getBaseUrlsByBaseUrlType("NAST");
+            for (CloudBaseUrl baseUrl : nastBaseUrls) {
+                if (baseUrl.getDef()) {
+                    tenant.addBaseUrlId(baseUrl.getBaseUrlId().toString());
+                }
+            }
+            tenantService.addTenant(tenant);
+        }
+    }
+
+    void addMossoTenant(com.rackspacecloud.docs.auth.api.v1.User user) {
+        if (user.getMossoId() != null) {
+            validateMossoId(user.getMossoId());
+            Tenant tenant = new Tenant();
+            tenant.setName(user.getMossoId().toString());
+            List<CloudBaseUrl> nastBaseUrls = endpointService.getBaseUrlsByBaseUrlType("MOSSO");
+            for (CloudBaseUrl baseUrl : nastBaseUrls) {
+                if (baseUrl.getDef()) {
+                    tenant.addBaseUrlId(baseUrl.getBaseUrlId().toString());
+                }
+            }
+            tenantService.addTenant(tenant);
         }
     }
 
@@ -588,13 +616,13 @@ public class DefaultCloud11Service implements Cloud11Service {
                 throw new BadRequestException(errMsg);
             }
             User user = userService.getUser(userName); //this.checkAndGetUser(userID);
-            if(user == null){
-                String errMsg = String.format("User not found :%s",userName);
+            if (user == null) {
+                String errMsg = String.format("User not found :%s", userName);
                 throw new NotFoundException(errMsg);
             }
 
             List<com.rackspace.idm.domain.entity.Group> groups = userGroupService.getGroupsForUser(user.getId());
-            if(groups.size() == 0){
+            if (groups.size() == 0) {
                 com.rackspace.idm.domain.entity.Group defGroup = cloudGroupService.getGroupById(config.getInt("defaultGroupId"));
                 groups.add(defGroup);
             }

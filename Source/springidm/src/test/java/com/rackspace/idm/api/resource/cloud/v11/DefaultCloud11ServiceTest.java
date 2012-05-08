@@ -315,6 +315,63 @@ public class DefaultCloud11ServiceTest {
     }
 
     @Test
+    public void createUser_withMossoId_callsTenantService() throws Exception {
+        Users users = new Users();
+        List<com.rackspace.idm.domain.entity.User> listUser = new ArrayList();
+        users.setUsers(listUser);
+        user.setId("userId");
+        user.setMossoId(123);
+        when(userService.getUsersByMossoId(123)).thenReturn(users);
+        when(authorizationService.authorizeCloudIdentityAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
+        defaultCloud11Service.createUser(request, null, uriInfo, user);
+        Mockito.verify(tenantService).addTenant(any(Tenant.class));
+    }
+
+    @Test
+    public void createUser_withNastId_callsTenantService() throws Exception {
+        Users users = new Users();
+        List<com.rackspace.idm.domain.entity.User> listUser = new ArrayList();
+        users.setUsers(listUser);
+        user.setId("userId");
+        user.setNastId("nastId");
+        user.setMossoId(123);
+        when(userService.getUsersByMossoId(123)).thenReturn(users);
+        when(authorizationService.authorizeCloudIdentityAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
+        defaultCloud11Service.createUser(request, null, uriInfo, user);
+        Mockito.verify(tenantService).addTenant(any(Tenant.class));
+    }
+
+    @Test
+    public void createUser_withNastId_callsEndpointService_getBaseUrlsByBaseUrlType() throws Exception {
+        when(config.getBoolean("nast.xmlrpc.enabled")).thenReturn(true);
+        when(nastFacade.addNastUser(user)).thenReturn("nastId");
+        Users users = new Users();
+        List<com.rackspace.idm.domain.entity.User> listUser = new ArrayList();
+        users.setUsers(listUser);
+        user.setId("userId");
+        user.setNastId("nastId");
+        user.setMossoId(123);
+        when(userService.getUsersByMossoId(123)).thenReturn(users);
+        when(authorizationService.authorizeCloudIdentityAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
+        defaultCloud11Service.createUser(request, null, uriInfo, user);
+        Mockito.verify(endpointService).getBaseUrlsByBaseUrlType("NAST");
+    }
+
+    @Test
+    public void createUser_withMossoId_callsEndpointService_getBaseUrlsByBaseUrlType() throws Exception {
+        Users users = new Users();
+        List<com.rackspace.idm.domain.entity.User> listUser = new ArrayList();
+        users.setUsers(listUser);
+        user.setId("userId");
+        user.setNastId("nastId");
+        user.setMossoId(123);
+        when(userService.getUsersByMossoId(123)).thenReturn(users);
+        when(authorizationService.authorizeCloudIdentityAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
+        defaultCloud11Service.createUser(request, null, uriInfo, user);
+        Mockito.verify(endpointService).getBaseUrlsByBaseUrlType("MOSSO");
+    }
+
+    @Test
     public void authenticateResponse_usernameIsNull_returns400() throws Exception {
         JAXBElement<Credentials> cred = new JAXBElement<Credentials>(new QName(""), Credentials.class, new UserCredentials());
         Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(cred, null);
