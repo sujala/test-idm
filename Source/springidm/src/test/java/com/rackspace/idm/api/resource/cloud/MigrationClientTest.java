@@ -20,6 +20,7 @@ public class MigrationClientTest {
     private MigrationClient client;
     private String username;
     private String password;
+    private String password1;
     private String username2;
     private String username3;
     private String userId3;
@@ -29,6 +30,7 @@ public class MigrationClientTest {
         username = "auth";
         password = "auth123";
         username2 = "cmarin2";
+        password1 = "Password1";
         username3 = "carlostest3";
         userId3 = "175017";
 
@@ -51,6 +53,14 @@ public class MigrationClientTest {
         User user = client.getUser(token, username);
         
         assertThat("user", user, notNullValue());
+    }
+    
+    @Test
+    public void getUsers_validUserName_returnsUsers() throws URISyntaxException, HttpException, IOException, JAXBException {
+    	String token = getToken(username2, password1);
+        UserList users = client.getUsers(token);
+        
+        assertThat("users", users, notNullValue());
     }
     
     @Test
