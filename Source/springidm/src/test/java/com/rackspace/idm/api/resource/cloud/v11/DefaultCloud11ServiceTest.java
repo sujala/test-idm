@@ -358,6 +358,31 @@ public class DefaultCloud11ServiceTest {
     }
 
     @Test
+    public void addMossoTenant_callsEndpointService_getBaseUrlsByBaseUrlType() throws Exception {
+        User user1 = new User();
+        user1.setMossoId(123);
+        Users users = new Users();
+        List<com.rackspace.idm.domain.entity.User> listUser = new ArrayList();
+        users.setUsers(listUser);
+        user.setId("userId");
+        user.setNastId("nastId");
+        user.setMossoId(123);
+        when(userService.getUsersByMossoId(123)).thenReturn(users);
+        defaultCloud11Service.addMossoTenant(user1);
+        verify(endpointService).getBaseUrlsByBaseUrlType("MOSSO");
+    }
+
+    @Test
+    public void addNastTenant_callsEndpointService_getBaseUrlsByBaseUrlType() throws Exception {
+        User user1 = new User();
+        user1.setNastId("nastId");
+        when(nastFacade.addNastUser(user1)).thenReturn("nastId");
+        when(config.getBoolean("nast.xmlrpc.enabled")).thenReturn(true);
+        defaultCloud11Service.addNastTenant(user1);
+        verify(endpointService).getBaseUrlsByBaseUrlType("NAST");
+    }
+
+    @Test
     public void createUser_withMossoId_callsEndpointService_getBaseUrlsByBaseUrlType() throws Exception {
         Users users = new Users();
         List<com.rackspace.idm.domain.entity.User> listUser = new ArrayList();
