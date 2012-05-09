@@ -109,6 +109,17 @@ public class MigrationClient {
         ObjectMarshaller<User> unmarshaller = new ObjectMarshaller<User>();
         return unmarshaller.unmarshal(response, User.class);
     }
+    
+    public UserList getUsers(String token) throws URISyntaxException, HttpException, IOException, JAXBException {
+    	String response = client.url(cloud20Host + "users")
+    	    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML)
+    	    .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML)
+    	    .header(X_AUTH_TOKEN, token)
+    	    .get();
+    	
+    	ObjectMarshaller<UserList> unmarshaller = new ObjectMarshaller<UserList>();
+    	return unmarshaller.unmarshal(response, UserList.class);
+    }
 
     public SecretQA getSecretQA(String token, String userId) throws URISyntaxException, HttpException, IOException, JAXBException {
         String response = client.url(cloud20Host + "users/"+ userId +"/RAX-KSQA/secretqa")
