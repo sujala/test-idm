@@ -9,6 +9,8 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.hamcrest.Matchers.equalTo;
+import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.*;
 
 /**
@@ -60,5 +62,33 @@ public class DefaultEndpointServiceTest {
         when(endpointDao.getBaseUrls()).thenReturn(new ArrayList<CloudBaseUrl>());
         when(endpointDao.getBaseUrlsByService(service)).thenReturn(new ArrayList<CloudBaseUrl>());
         defaultEndpointService.removeBaseUrlFromUser(baseUrlId, user);
+    }
+
+    @Test
+    public void getBaseUrlsByBaseUrlType_noBaseUrls_returnsEmptyList() throws Exception {
+        when(endpointDao.getBaseUrls()).thenReturn(new ArrayList<CloudBaseUrl>());
+        List<CloudBaseUrl> baseUrlsByBaseUrlType = defaultEndpointService.getBaseUrlsByBaseUrlType("");
+        assertThat("list size", baseUrlsByBaseUrlType.size(), equalTo(0));
+    }
+
+    @Test
+    public void getBaseUrlsByBaseUrlType_nullBaseUrls_returnsEmptyList() throws Exception {
+        when(endpointDao.getBaseUrls()).thenReturn(null);
+        List<CloudBaseUrl> baseUrlsByBaseUrlType = defaultEndpointService.getBaseUrlsByBaseUrlType("");
+        assertThat("list size", baseUrlsByBaseUrlType.size(), equalTo(0));
+    }
+
+    @Test
+    public void getBaseUrlsByBaseUrlType_filtersByName() throws Exception {
+        ArrayList<CloudBaseUrl> cloudBaseUrls = new ArrayList<CloudBaseUrl>();
+        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
+        cloudBaseUrl.setBaseUrlType("MOSSO");
+        CloudBaseUrl cloudBaseUrl2 = new CloudBaseUrl();
+        cloudBaseUrl2.setBaseUrlType("NAST");
+        cloudBaseUrls.add(cloudBaseUrl);
+        cloudBaseUrls.add(cloudBaseUrl2);
+        when(endpointDao.getBaseUrls()).thenReturn(cloudBaseUrls);
+        List<CloudBaseUrl> baseUrlsByBaseUrlType = defaultEndpointService.getBaseUrlsByBaseUrlType("MOSSO");
+        assertThat("list size", baseUrlsByBaseUrlType.size(), equalTo(1));
     }
 }
