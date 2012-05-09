@@ -792,7 +792,7 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void listCredentials_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.listCredentials(null, authToken, null, null, 0);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(spy).verifyUserLevelAccess(authToken);
     }
 
     @Test
