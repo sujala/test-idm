@@ -6,10 +6,11 @@ import com.rackspace.idm.domain.dao.impl.LdapCloudAdminRepository;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotAuthorizedException;
 import com.rackspace.idm.util.NastFacade;
-import com.rackspacecloud.docs.auth.api.v1.*;
 import com.rackspacecloud.docs.auth.api.v1.Credentials;
+import com.rackspacecloud.docs.auth.api.v1.*;
 import com.rackspacecloud.docs.auth.api.v1.PasswordCredentials;
 import com.rackspacecloud.docs.auth.api.v1.User;
 import com.sun.jersey.api.uri.UriBuilderImpl;
@@ -370,6 +371,61 @@ public class DefaultCloud11ServiceTest {
         when(userService.getUsersByMossoId(123)).thenReturn(users);
         defaultCloud11Service.addMossoTenant(user1);
         verify(endpointService).getBaseUrlsByBaseUrlType("MOSSO");
+    }
+
+    @Test
+    public void addMossoTenant_callsTenantService() throws Exception {
+        User user1 = new User();
+        user1.setMossoId(123);
+        Users users = new Users();
+        List<com.rackspace.idm.domain.entity.User> listUser = new ArrayList();
+        users.setUsers(listUser);
+        user.setId("userId");
+        user.setNastId("nastId");
+        user.setMossoId(123);
+        when(userService.getUsersByMossoId(123)).thenReturn(users);
+        defaultCloud11Service.addMossoTenant(user1);
+        verify(tenantService).addTenant(any(Tenant.class));
+    }
+
+    @Test
+    public void addNastTenant_callsTenantService() throws Exception {
+        User user1 = new User();
+        user1.setMossoId(123);
+        Users users = new Users();
+        List<com.rackspace.idm.domain.entity.User> listUser = new ArrayList();
+        users.setUsers(listUser);
+        when(config.getBoolean("nast.xmlrpc.enabled")).thenReturn(true);
+        when(userService.getUsersByMossoId(123)).thenReturn(users);
+        when(nastFacade.addNastUser(user1)).thenReturn("nastId");
+        defaultCloud11Service.addNastTenant(user1);
+        verify(tenantService).addTenant(any(Tenant.class));
+    }
+
+    @Test
+    public void addNastTenant_tenantServiceThrowsDuplicateException_exceptionGetsCaught() throws Exception {
+        User user1 = new User();
+        user1.setMossoId(123);
+        Users users = new Users();
+        List<com.rackspace.idm.domain.entity.User> listUser = new ArrayList();
+        users.setUsers(listUser);
+        when(config.getBoolean("nast.xmlrpc.enabled")).thenReturn(true);
+        when(userService.getUsersByMossoId(123)).thenReturn(users);
+        when(nastFacade.addNastUser(user1)).thenReturn("nastId");
+        doThrow(new DuplicateException("test exception")).when(tenantService).addTenant(any(Tenant.class));
+        defaultCloud11Service.addNastTenant(user1);
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void addMossoTenant_tenantServiceThrowsDuplicateException_exceptionGetsCaught_throwsBadRequestException() throws Exception {
+        User user1 = new User();
+        user1.setMossoId(123);
+        Users users = new Users();
+        List<com.rackspace.idm.domain.entity.User> listUser = new ArrayList();
+        users.setUsers(listUser);
+        when(userService.getUsersByMossoId(123)).thenReturn(users);
+        doThrow(new DuplicateException("test exception")).when(tenantService).addTenant(any(Tenant.class));
+        defaultCloud11Service.addMossoTenant(user1);
     }
 
     @Test

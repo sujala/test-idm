@@ -33,10 +33,10 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
                 entry = getContainer(conn, parentUniqueId, CONTAINER_DELEGATE);
             }
             audit.succeed();
-            getLogger().info("Added Delegate ScopeAccess: {}", scopeAccess);
+            getLogger().debug("Added Delegate ScopeAccess: {}", scopeAccess);
             return addScopeAccess(conn, entry.getDN(), scopeAccess);
         } catch (final LDAPException e) {
-            getLogger().error("Error adding scope acccess object", e);
+            getLogger().error("Error adding scope access object", e);
             audit.fail();
             throw new IllegalStateException(e);
         } finally {
@@ -59,7 +59,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
                 entry = getContainer(conn, dn, CONTAINER_IMPERSONATED);
             }
             audit.succeed();
-            getLogger().info("Added Impersonated ScopeAccess: {}", scopeAccess);
+            getLogger().debug("Added Impersonated ScopeAccess: {}", scopeAccess);
             return addScopeAccess(conn, entry.getDN(), scopeAccess);
         } catch (final LDAPException e) {
             getLogger().error("Error adding scope acccess object", e);
@@ -84,7 +84,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
             }
 
             audit.succeed();
-            getLogger().info("Added Delegate ScopeAccess: {}", scopeAccess);
+            getLogger().debug("Added Delegate ScopeAccess: {}", scopeAccess);
             return addScopeAccess(conn, entry.getDN(), scopeAccess);
         } catch (final LDAPException e) {
             getLogger().error("Error adding scope acccess object", e);
@@ -103,7 +103,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
         LDAPConnection conn = null;
         try {
             conn = getAppConnPool().getConnection();
-            getLogger().info("Added Delegate ScopeAccess: {}", scopeAccess);
+            getLogger().debug("Added Delegate ScopeAccess: {}", scopeAccess);
             audit.succeed();
             return addScopeAccess(conn, parentUniqueId, scopeAccess);
         } catch (final LDAPException e) {
@@ -177,7 +177,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
 
     @Override
     public boolean deleteScopeAccess(ScopeAccess scopeAccess) {
-        getLogger().debug("Deleting ScopeAccess: {}", scopeAccess);
+        getLogger().info("Deleting ScopeAccess: {}", scopeAccess);
         final String dn = scopeAccess.getUniqueId();
         final Audit audit = Audit.log(scopeAccess.getAuditContext()).delete();
         deleteEntryAndSubtree(dn, audit);
