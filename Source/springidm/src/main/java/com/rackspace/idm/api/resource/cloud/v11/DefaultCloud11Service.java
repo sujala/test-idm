@@ -299,10 +299,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             }
 
             addMossoTenant(user);
-
-            if (isNastEnabled()) {
-                addNastTenant(user);
-            }
+            addNastTenant(user);
             User userDO = this.userConverterCloudV11.toUserDO(user);
             userDO.setEnabled(true);
 
@@ -344,7 +341,12 @@ public class DefaultCloud11Service implements Cloud11Service {
     }
 
     void addNastTenant(com.rackspacecloud.docs.auth.api.v1.User user) {
-        String nastId = nastFacade.addNastUser(user);
+        String nastId;
+        if (isNastEnabled()) {
+            nastId = nastFacade.addNastUser(user);
+        }else {
+            nastId = user.getNastId();
+        }
         user.setNastId(nastId);
         if (nastId != null && !nastId.isEmpty()) {
             Tenant tenant = new Tenant();
@@ -386,7 +388,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 tenantService.addTenant(tenant);
             } catch (DuplicateException e) {
                 logger.info("Tenant " + tenant.getName() + " already exists.");
-                throw new BadRequestException("User with Mosso Account ID: "+ tenant.getName() +" already exists.");
+                throw new BadRequestException("User with Mosso Account ID: " + tenant.getName() + " already exists.");
             }
         }
     }
