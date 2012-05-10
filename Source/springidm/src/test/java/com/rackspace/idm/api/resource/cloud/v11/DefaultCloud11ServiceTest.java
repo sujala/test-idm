@@ -164,7 +164,7 @@ public class DefaultCloud11ServiceTest {
         NastCredentials nastCredentials = new NastCredentials();
         nastCredentials.setNastId("");
         JAXBElement<NastCredentials> credentials = new JAXBElement<NastCredentials>(QName.valueOf("foo"), NastCredentials.class, nastCredentials);
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(credentials, null);
+        Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(credentials);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
     }
 
@@ -174,7 +174,7 @@ public class DefaultCloud11ServiceTest {
         passwordCredentials.setUsername("");
         JAXBElement<PasswordCredentials> credentials =
                 new JAXBElement<PasswordCredentials>(QName.valueOf("foo"), PasswordCredentials.class, passwordCredentials);
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(credentials, null);
+        Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(credentials);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
     }
 
@@ -183,7 +183,7 @@ public class DefaultCloud11ServiceTest {
         PasswordCredentials passwordCredentials = new PasswordCredentials();
         JAXBElement<PasswordCredentials> credentials =
                 new JAXBElement<PasswordCredentials>(QName.valueOf("foo"), PasswordCredentials.class, passwordCredentials);
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(credentials, null);
+        Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(credentials);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
     }
 
@@ -192,7 +192,7 @@ public class DefaultCloud11ServiceTest {
         UserCredentials userCredentials = new UserCredentials();
         JAXBElement<UserCredentials> credentials =
                 new JAXBElement<UserCredentials>(QName.valueOf("foo"), UserCredentials.class, userCredentials);
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(credentials, null);
+        Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(credentials);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
     }
 
@@ -202,7 +202,7 @@ public class DefaultCloud11ServiceTest {
         passwordCredentials.setPassword("");
         JAXBElement<PasswordCredentials> credentials =
                 new JAXBElement<PasswordCredentials>(QName.valueOf("foo"), PasswordCredentials.class, passwordCredentials);
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(credentials, null);
+        Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(credentials);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
     }
 
@@ -212,7 +212,7 @@ public class DefaultCloud11ServiceTest {
         userCredentials.setUsername("");
         JAXBElement<UserCredentials> credentials =
                 new JAXBElement<UserCredentials>(QName.valueOf("foo"), UserCredentials.class, userCredentials);
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(credentials, null);
+        Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(credentials);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
     }
 
@@ -222,7 +222,7 @@ public class DefaultCloud11ServiceTest {
         nastCredentials.setNastId("nastId");
         JAXBElement<NastCredentials> credentials =
                 new JAXBElement<NastCredentials>(QName.valueOf("foo"), NastCredentials.class, nastCredentials);
-        defaultCloud11Service.authenticateResponse(credentials, null);
+        defaultCloud11Service.authenticateResponse(credentials);
         verify(userService).getUserByNastId("nastId");
     }
 
@@ -233,7 +233,7 @@ public class DefaultCloud11ServiceTest {
         JAXBElement<NastCredentials> credentials =
                 new JAXBElement<NastCredentials>(QName.valueOf("foo"), NastCredentials.class, nastCredentials);
         when(userService.getUser(null)).thenReturn(new com.rackspace.idm.domain.entity.User());
-        defaultCloud11Service.authenticateResponse(credentials, null);
+        defaultCloud11Service.authenticateResponse(credentials);
         verify(scopeAccessService).getUserScopeAccessForClientIdByNastIdAndApiCredentials(anyString(), anyString(), anyString());
     }
 
@@ -241,7 +241,7 @@ public class DefaultCloud11ServiceTest {
     public void authenticateResponse_withMossoCredentials_callsUserService_getUserByMossoId() throws Exception {
         JAXBElement<MossoCredentials> credentials =
                 new JAXBElement<MossoCredentials>(QName.valueOf("foo"), MossoCredentials.class, new MossoCredentials());
-        defaultCloud11Service.authenticateResponse(credentials, null);
+        defaultCloud11Service.authenticateResponse(credentials);
         verify(userService).getUserByMossoId(anyInt());
     }
 
@@ -252,7 +252,7 @@ public class DefaultCloud11ServiceTest {
         JAXBElement<MossoCredentials> credentials =
                 new JAXBElement<MossoCredentials>(QName.valueOf("foo"), MossoCredentials.class, mossoCredentials);
         when(userService.getUser(null)).thenReturn(new com.rackspace.idm.domain.entity.User());
-        defaultCloud11Service.authenticateResponse(credentials, null);
+        defaultCloud11Service.authenticateResponse(credentials);
         verify(scopeAccessService).getUserScopeAccessForClientIdByMossoIdAndApiCredentials(anyInt(), anyString(), anyString());
     }
 
@@ -263,7 +263,7 @@ public class DefaultCloud11ServiceTest {
         userCredentials.setKey("key");
         JAXBElement<UserCredentials> credentials =
                 new JAXBElement<UserCredentials>(QName.valueOf("foo"), UserCredentials.class, userCredentials);
-        defaultCloud11Service.authenticateResponse(credentials, null);
+        defaultCloud11Service.authenticateResponse(credentials);
         verify(userService).getUser("username");
     }
 
@@ -275,7 +275,7 @@ public class DefaultCloud11ServiceTest {
         JAXBElement<UserCredentials> credentials =
                 new JAXBElement<UserCredentials>(QName.valueOf("foo"), UserCredentials.class, userCredentials);
         when(userService.getUser(null)).thenReturn(new com.rackspace.idm.domain.entity.User());
-        defaultCloud11Service.authenticateResponse(credentials, null);
+        defaultCloud11Service.authenticateResponse(credentials);
         verify(scopeAccessService).getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString());
     }
 
@@ -286,7 +286,7 @@ public class DefaultCloud11ServiceTest {
         passwordCredentials.setPassword("pass");
         JAXBElement<PasswordCredentials> credentials =
                 new JAXBElement<PasswordCredentials>(QName.valueOf("foo"), PasswordCredentials.class, passwordCredentials);
-        defaultCloud11Service.authenticateResponse(credentials, null);
+        defaultCloud11Service.authenticateResponse(credentials);
         verify(userService).getUser("username");
     }
 
@@ -298,7 +298,7 @@ public class DefaultCloud11ServiceTest {
         JAXBElement<PasswordCredentials> credentials =
                 new JAXBElement<PasswordCredentials>(QName.valueOf("foo"), PasswordCredentials.class, passwordCredentials);
         when(userService.getUser(null)).thenReturn(new com.rackspace.idm.domain.entity.User());
-        defaultCloud11Service.authenticateResponse(credentials, null);
+        defaultCloud11Service.authenticateResponse(credentials);
         verify(scopeAccessService).getUserScopeAccessForClientIdByUsernameAndPassword(anyString(), anyString(), anyString());
     }
 
@@ -475,7 +475,7 @@ public class DefaultCloud11ServiceTest {
     @Test
     public void authenticateResponse_usernameIsNull_returns400() throws Exception {
         JAXBElement<Credentials> cred = new JAXBElement<Credentials>(new QName(""), Credentials.class, new UserCredentials());
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(cred, null);
+        Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(cred);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
     }
 
@@ -491,6 +491,28 @@ public class DefaultCloud11ServiceTest {
     public void revokeToken_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
         spy.revokeToken(request, null, null);
         verify(spy).authenticateCloudAdminUser(request);
+    }
+
+    @Test
+    public void authenticateResponse_nastCredentials_usesRetrievedUsersUsername() throws Exception {
+        NastCredentials nastCredentials = new NastCredentials();
+        nastCredentials.setNastId("id");
+        nastCredentials.setKey("key");
+        JAXBElement<? extends Credentials> cred = new JAXBElement<Credentials>(QName.valueOf(""), Credentials.class, nastCredentials);
+        when(userService.getUserByNastId("id")).thenReturn(new com.rackspace.idm.domain.entity.User("nastUser"));
+        spy.authenticateResponse(cred);
+        verify(endpointService).getEndpointsForUser("nastUser");
+    }
+
+    @Test
+    public void authenticateResponse_mossoCredentials_usesRetrievedUsersUsername() throws Exception {
+        MossoCredentials mossoCredentials = new MossoCredentials();
+        mossoCredentials.setMossoId(123);
+        mossoCredentials.setKey("key");
+        JAXBElement<? extends Credentials> cred = new JAXBElement<Credentials>(QName.valueOf(""), Credentials.class, mossoCredentials);
+        when(userService.getUserByMossoId(123)).thenReturn(new com.rackspace.idm.domain.entity.User("mossoUser"));
+        spy.authenticateResponse(cred);
+        verify(endpointService).getEndpointsForUser("mossoUser");
     }
 
     @Test

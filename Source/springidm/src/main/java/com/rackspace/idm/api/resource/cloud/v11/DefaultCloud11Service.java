@@ -970,7 +970,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         if (isAdmin) {
             return adminAuthenticateResponse(cred, response);
         }
-        return authenticateResponse(cred, response);
+        return authenticateResponse(cred);
     }
 
     @SuppressWarnings("unchecked")
@@ -989,10 +989,10 @@ public class DefaultCloud11Service implements Cloud11Service {
         if (isAdmin) {
             return adminAuthenticateResponse(cred, response);
         }
-        return authenticateResponse(cred, response);
+        return authenticateResponse(cred);
     }
 
-    Response.ResponseBuilder authenticateResponse(JAXBElement<? extends Credentials> cred, HttpServletResponse response) throws IOException {
+    Response.ResponseBuilder authenticateResponse(JAXBElement<? extends Credentials> cred) throws IOException {
 
         try {
             Credentials value = cred.getValue();
@@ -1045,8 +1045,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 String errMsg = String.format("User %s not found", username);
                 throw new NotFoundException(errMsg);
             }
-
-            List<CloudEndpoint> endpoints = endpointService.getEndpointsForUser(username);
+            List<CloudEndpoint> endpoints = endpointService.getEndpointsForUser(user.getUsername());
             return Response.ok(OBJ_FACTORY.createAuth(this.authConverterCloudV11.toCloudv11AuthDataJaxb(usa, endpoints)));
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
