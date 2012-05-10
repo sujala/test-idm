@@ -155,7 +155,7 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
         LDAPResult result = null;
         try {
             result = getAppConnPool().modify(oldEndpoints.getUserDN(), mods);
-            getLogger().info("Added baseUlr {} to user {}", baseUrlId, username);
+            getLogger().debug("Added baseUlr {} to user {}", baseUrlId, username);
         } catch (LDAPException ldapEx) {
             getLogger().error("Error updating user {} endpoints - {}", username, ldapEx);
             throw new IllegalStateException(ldapEx);
@@ -208,7 +208,7 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
 
         try {
             searchResult = getAppConnPool().search(BASEURL_BASE_DN, SearchScope.ONE, searchFilter);
-            getLogger().info("Got baseurl by Id {}", baseUrlId);
+            getLogger().debug("Got baseurl by Id {}", baseUrlId);
         } catch (LDAPSearchException ldapEx) {
             getLogger().error("Error searching for baseUrl - {}", ldapEx);
             throw new IllegalStateException(ldapEx);
@@ -306,10 +306,10 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
                 point.setNastId(points.getNastId());
                 point.setV1preferred(def);
                 endpoints.add(point);
-                getLogger().info("Got Endpoints for User {}", username);
+                getLogger().debug("Got Endpoints for User {}", username);
             }
         }
-        getLogger().info("Got Endpoints for User {}", username);
+        getLogger().debug("Got Endpoints for User {}", username);
         return endpoints;
     }
 

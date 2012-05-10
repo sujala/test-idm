@@ -1136,10 +1136,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             throws IOException {
 
         try {
-            verifyServiceAdminLevelAccess(authToken);
-
+            verifyUserLevelAccess(authToken);
             User user = checkAndGetUser(userId);
-
+            verifySelf(authToken, user);
             CredentialListType creds = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createCredentialListType();
 
             if (!StringUtils.isBlank(user.getPassword())) {
@@ -1160,6 +1159,20 @@ public class DefaultCloud20Service implements Cloud20Service {
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
+    }
+
+    private boolean isAUserAdminOrDefaultUser(ScopeAccess requesterScopeAccess) {
+
+        List<TenantRole> tenantRolesForScopeAccess = tenantService.getTenantRolesForScopeAccess(requesterScopeAccess);
+        boolean hasRole = false;
+        for(TenantRole tenantRole : tenantRolesForScopeAccess)
+        {
+            String name = tenantRole.getName();
+            if (name.equals("identity:user-admin") || name.equals("identity:default")){
+                hasRole = true;
+            }
+        }
+        return hasRole;
     }
 
     @Override
@@ -2137,10 +2150,21 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     void verifyServiceAdminLevelAccess(String authToken) {
         ScopeAccess authScopeAccess = getScopeAccessForValidToken(authToken);
-        if (!authorizationService.authorizeCloudIdentityAdmin(authScopeAccess) && !authorizationService.authorizeCloudServiceAdmin(authScopeAccess)) {
+        if(!authorizationService.authorizeCloudIdentityAdmin(authScopeAccess) && !authorizationService.authorizeCloudServiceAdmin(authScopeAccess)) {
             String errMsg = "Access is denied";
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
+        }
+    }
+    void verifySelf(String authToken, User user) throws Exception {
+        ScopeAccess authTokenScopeAccess = getScopeAccessForValidToken(authToken);
+        if(isAUserAdminOrDefaultUser(authTokenScopeAccess)){
+            User requester = userService.getUserByScopeAccess(authTokenScopeAccess);
+            if (!((user.getUsername().equals(requester.getUsername()) && (user.getUniqueId().equals(requester.getUniqueId()))))){
+                String errMsg = "Access is denied";
+                logger.warn(errMsg);
+                throw new ForbiddenException(errMsg);
+            }
         }
     }
 

@@ -349,28 +349,45 @@ public class DefaultCloud11Service implements Cloud11Service {
         if (nastId != null && !nastId.isEmpty()) {
             Tenant tenant = new Tenant();
             tenant.setName(nastId);
+            tenant.setTenantId(nastId);
+            tenant.setDisplayName(nastId);
+            tenant.setEnabled(true);
+
             List<CloudBaseUrl> nastBaseUrls = endpointService.getBaseUrlsByBaseUrlType("NAST");
             for (CloudBaseUrl baseUrl : nastBaseUrls) {
                 if (baseUrl.getDef()) {
                     tenant.addBaseUrlId(baseUrl.getBaseUrlId().toString());
                 }
             }
-            tenantService.addTenant(tenant);
+            try {
+                tenantService.addTenant(tenant);
+            } catch (DuplicateException e) {
+                logger.info("Tenant " + tenant.getName() + " already exists.");
+            }
         }
     }
 
     void addMossoTenant(com.rackspacecloud.docs.auth.api.v1.User user) {
-        if (user.getMossoId() != null) {
-            validateMossoId(user.getMossoId());
+        Integer mossoId = user.getMossoId();
+        if (mossoId != null) {
+            validateMossoId(mossoId);
             Tenant tenant = new Tenant();
-            tenant.setName(user.getMossoId().toString());
+            tenant.setTenantId(mossoId.toString());
+            tenant.setName(mossoId.toString());
+            tenant.setDisplayName(mossoId.toString());
+            tenant.setEnabled(true);
             List<CloudBaseUrl> nastBaseUrls = endpointService.getBaseUrlsByBaseUrlType("MOSSO");
             for (CloudBaseUrl baseUrl : nastBaseUrls) {
                 if (baseUrl.getDef()) {
                     tenant.addBaseUrlId(baseUrl.getBaseUrlId().toString());
                 }
             }
-            tenantService.addTenant(tenant);
+            try {
+                tenantService.addTenant(tenant);
+            } catch (DuplicateException e) {
+                logger.info("Tenant " + tenant.getName() + " already exists.");
+                throw new BadRequestException("User with Mosso Account ID: "+ tenant.getName() +" already exists.");
+            }
         }
     }
 

@@ -1,9 +1,7 @@
 package com.rackspace.idm.api.resource.cloud;
 
-import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.exception.*;
 import com.rackspacecloud.docs.auth.api.v1.*;
-import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
@@ -43,6 +41,9 @@ public class CloudExceptionResponse extends WebApplicationException {
             return userDisabledExceptionResponse(ex.getMessage());
         }
         if (ex instanceof DuplicateUsernameException) {
+            return usernameConflictExceptionResponse(ex.getMessage());
+        }
+        if (ex instanceof DuplicateException) {
             return usernameConflictExceptionResponse(ex.getMessage());
         }
         if (ex instanceof NotAuthenticatedException) {
@@ -96,7 +97,6 @@ public class CloudExceptionResponse extends WebApplicationException {
     public Response.ResponseBuilder serviceExceptionResponse() {
         AuthFault fault = OBJ_FACTORY.createAuthFault();
         fault.setCode(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-        fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_INTERNAL_SERVER_ERROR).entity(OBJ_FACTORY.createAuthFault(fault));
     }
 
@@ -104,7 +104,6 @@ public class CloudExceptionResponse extends WebApplicationException {
         UserDisabledFault fault = OBJ_FACTORY.createUserDisabledFault();
         fault.setCode(HttpServletResponse.SC_FORBIDDEN);
         fault.setMessage(message);
-        fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_FORBIDDEN).entity(OBJ_FACTORY.createUserDisabled(fault));
     }
 
@@ -112,7 +111,6 @@ public class CloudExceptionResponse extends WebApplicationException {
         BadRequestFault fault = OBJ_FACTORY.createBadRequestFault();
         fault.setCode(HttpServletResponse.SC_UNAUTHORIZED);
         fault.setMessage(message);
-        fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_METHOD_NOT_ALLOWED).entity(OBJ_FACTORY.createBadRequest(fault));
     }
 
@@ -120,7 +118,6 @@ public class CloudExceptionResponse extends WebApplicationException {
         BadRequestFault fault = OBJ_FACTORY.createBadRequestFault();
         fault.setCode(HttpServletResponse.SC_BAD_REQUEST);
         fault.setMessage(message);
-        fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_BAD_REQUEST).entity(OBJ_FACTORY.createBadRequest(fault));
     }
 
