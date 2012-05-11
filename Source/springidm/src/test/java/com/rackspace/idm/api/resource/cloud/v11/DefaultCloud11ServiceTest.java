@@ -65,14 +65,12 @@ public class DefaultCloud11ServiceTest {
     TenantService tenantService;
     ApplicationService clientService;
     User user = new User();
+    com.rackspace.idm.domain.entity.User userDO = new com.rackspace.idm.domain.entity.User("userDO");
     HttpServletRequest request;
-    String token = "token";
     private ScopeAccessService scopeAccessService;
     javax.ws.rs.core.HttpHeaders httpHeaders;
-    UserScopeAccess usa = new UserScopeAccess();
     CloudExceptionResponse cloudExceptionResponse;
-    private Response.ResponseBuilder okResponse;
-    private Response.ResponseBuilder notFoundResponse;
+    Application application = new Application("id",null,"myApp", null, null);
 
     @Before
     public void setUp() throws Exception {
@@ -100,6 +98,13 @@ public class DefaultCloud11ServiceTest {
         user1.setId("userId");
         when(userConverterCloudV11.toUserDO(user)).thenReturn(user1);
         when(config.getBoolean("nast.xmlrpc.enabled")).thenReturn(true);
+        when(config.getString("serviceName.cloudServers")).thenReturn("cloudServers");
+        when(config.getString("serviceName.cloudFiles")).thenReturn("cloudFiles");
+        application.setOpenStackType("foo");
+        Application testService = new Application(null, null, "testService", null, null);
+        testService.setOpenStackType("foo");
+        when(clientService.getByName(any(String.class))).thenReturn(testService);
+        when(clientService.getClientRoleByClientIdAndRoleName(anyString(), anyString())).thenReturn(new ClientRole());
         defaultCloud11Service = new DefaultCloud11Service(config, scopeAccessService, endpointService, userService, null, userConverterCloudV11, null, ldapCloudAdminRepository, cloudExceptionResponse, clientService, tenantService);
         nastFacade = mock(NastFacade.class);
         defaultCloud11Service.setNastFacade(nastFacade);
@@ -164,7 +169,7 @@ public class DefaultCloud11ServiceTest {
         NastCredentials nastCredentials = new NastCredentials();
         nastCredentials.setNastId("");
         JAXBElement<NastCredentials> credentials = new JAXBElement<NastCredentials>(QName.valueOf("foo"), NastCredentials.class, nastCredentials);
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(credentials, null);
+        Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(credentials);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
     }
 
@@ -174,7 +179,7 @@ public class DefaultCloud11ServiceTest {
         passwordCredentials.setUsername("");
         JAXBElement<PasswordCredentials> credentials =
                 new JAXBElement<PasswordCredentials>(QName.valueOf("foo"), PasswordCredentials.class, passwordCredentials);
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(credentials, null);
+        Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(credentials);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
     }
 
@@ -183,7 +188,7 @@ public class DefaultCloud11ServiceTest {
         PasswordCredentials passwordCredentials = new PasswordCredentials();
         JAXBElement<PasswordCredentials> credentials =
                 new JAXBElement<PasswordCredentials>(QName.valueOf("foo"), PasswordCredentials.class, passwordCredentials);
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(credentials, null);
+        Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(credentials);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
     }
 
@@ -192,7 +197,7 @@ public class DefaultCloud11ServiceTest {
         UserCredentials userCredentials = new UserCredentials();
         JAXBElement<UserCredentials> credentials =
                 new JAXBElement<UserCredentials>(QName.valueOf("foo"), UserCredentials.class, userCredentials);
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(credentials, null);
+        Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(credentials);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
     }
 
@@ -202,7 +207,7 @@ public class DefaultCloud11ServiceTest {
         passwordCredentials.setPassword("");
         JAXBElement<PasswordCredentials> credentials =
                 new JAXBElement<PasswordCredentials>(QName.valueOf("foo"), PasswordCredentials.class, passwordCredentials);
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(credentials, null);
+        Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(credentials);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
     }
 
@@ -212,7 +217,7 @@ public class DefaultCloud11ServiceTest {
         userCredentials.setUsername("");
         JAXBElement<UserCredentials> credentials =
                 new JAXBElement<UserCredentials>(QName.valueOf("foo"), UserCredentials.class, userCredentials);
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(credentials, null);
+        Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(credentials);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
     }
 
@@ -222,7 +227,7 @@ public class DefaultCloud11ServiceTest {
         nastCredentials.setNastId("nastId");
         JAXBElement<NastCredentials> credentials =
                 new JAXBElement<NastCredentials>(QName.valueOf("foo"), NastCredentials.class, nastCredentials);
-        defaultCloud11Service.authenticateResponse(credentials, null);
+        defaultCloud11Service.authenticateResponse(credentials);
         verify(userService).getUserByNastId("nastId");
     }
 
@@ -233,7 +238,7 @@ public class DefaultCloud11ServiceTest {
         JAXBElement<NastCredentials> credentials =
                 new JAXBElement<NastCredentials>(QName.valueOf("foo"), NastCredentials.class, nastCredentials);
         when(userService.getUser(null)).thenReturn(new com.rackspace.idm.domain.entity.User());
-        defaultCloud11Service.authenticateResponse(credentials, null);
+        defaultCloud11Service.authenticateResponse(credentials);
         verify(scopeAccessService).getUserScopeAccessForClientIdByNastIdAndApiCredentials(anyString(), anyString(), anyString());
     }
 
@@ -241,7 +246,7 @@ public class DefaultCloud11ServiceTest {
     public void authenticateResponse_withMossoCredentials_callsUserService_getUserByMossoId() throws Exception {
         JAXBElement<MossoCredentials> credentials =
                 new JAXBElement<MossoCredentials>(QName.valueOf("foo"), MossoCredentials.class, new MossoCredentials());
-        defaultCloud11Service.authenticateResponse(credentials, null);
+        defaultCloud11Service.authenticateResponse(credentials);
         verify(userService).getUserByMossoId(anyInt());
     }
 
@@ -252,7 +257,7 @@ public class DefaultCloud11ServiceTest {
         JAXBElement<MossoCredentials> credentials =
                 new JAXBElement<MossoCredentials>(QName.valueOf("foo"), MossoCredentials.class, mossoCredentials);
         when(userService.getUser(null)).thenReturn(new com.rackspace.idm.domain.entity.User());
-        defaultCloud11Service.authenticateResponse(credentials, null);
+        defaultCloud11Service.authenticateResponse(credentials);
         verify(scopeAccessService).getUserScopeAccessForClientIdByMossoIdAndApiCredentials(anyInt(), anyString(), anyString());
     }
 
@@ -263,7 +268,7 @@ public class DefaultCloud11ServiceTest {
         userCredentials.setKey("key");
         JAXBElement<UserCredentials> credentials =
                 new JAXBElement<UserCredentials>(QName.valueOf("foo"), UserCredentials.class, userCredentials);
-        defaultCloud11Service.authenticateResponse(credentials, null);
+        defaultCloud11Service.authenticateResponse(credentials);
         verify(userService).getUser("username");
     }
 
@@ -275,7 +280,7 @@ public class DefaultCloud11ServiceTest {
         JAXBElement<UserCredentials> credentials =
                 new JAXBElement<UserCredentials>(QName.valueOf("foo"), UserCredentials.class, userCredentials);
         when(userService.getUser(null)).thenReturn(new com.rackspace.idm.domain.entity.User());
-        defaultCloud11Service.authenticateResponse(credentials, null);
+        defaultCloud11Service.authenticateResponse(credentials);
         verify(scopeAccessService).getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString());
     }
 
@@ -286,7 +291,7 @@ public class DefaultCloud11ServiceTest {
         passwordCredentials.setPassword("pass");
         JAXBElement<PasswordCredentials> credentials =
                 new JAXBElement<PasswordCredentials>(QName.valueOf("foo"), PasswordCredentials.class, passwordCredentials);
-        defaultCloud11Service.authenticateResponse(credentials, null);
+        defaultCloud11Service.authenticateResponse(credentials);
         verify(userService).getUser("username");
     }
 
@@ -298,52 +303,50 @@ public class DefaultCloud11ServiceTest {
         JAXBElement<PasswordCredentials> credentials =
                 new JAXBElement<PasswordCredentials>(QName.valueOf("foo"), PasswordCredentials.class, passwordCredentials);
         when(userService.getUser(null)).thenReturn(new com.rackspace.idm.domain.entity.User());
-        defaultCloud11Service.authenticateResponse(credentials, null);
+        defaultCloud11Service.authenticateResponse(credentials);
         verify(scopeAccessService).getUserScopeAccessForClientIdByUsernameAndPassword(anyString(), anyString(), anyString());
     }
 
     @Test
-    public void createUser_callsNastFacade() throws Exception {
+    public void addNastTenant_callsNastFacade() throws Exception {
         Users users = new Users();
         List<com.rackspace.idm.domain.entity.User> listUser = new ArrayList();
+        listUser.add(userDO);
         users.setUsers(listUser);
         user.setId("userId");
         user.setMossoId(123);
         when(userService.getUsersByMossoId(123)).thenReturn(users);
         when(authorizationService.authorizeCloudIdentityAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
-        defaultCloud11Service.createUser(request, null, uriInfo, user);
+        defaultCloud11Service.addNastTenant(user);
         Mockito.verify(nastFacade).addNastUser(user);
     }
 
     @Test
-    public void createUser_withMossoId_callsTenantService() throws Exception {
+    public void addMossoTenant_withMossoId_callsTenantService() throws Exception {
         Users users = new Users();
         List<com.rackspace.idm.domain.entity.User> listUser = new ArrayList();
+        listUser.add(userDO);
         users.setUsers(listUser);
         user.setId("userId");
         user.setMossoId(123);
         when(userService.getUsersByMossoId(123)).thenReturn(users);
         when(authorizationService.authorizeCloudIdentityAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
-        defaultCloud11Service.createUser(request, null, uriInfo, user);
-        Mockito.verify(tenantService).addTenant(any(Tenant.class));
+        defaultCloud11Service.addMossoTenant(user);
+        verify(tenantService).addTenant(any(Tenant.class));
     }
 
     @Test
-    public void createUser_withNastId_callsTenantService() throws Exception {
-        Users users = new Users();
-        List<com.rackspace.idm.domain.entity.User> listUser = new ArrayList();
-        users.setUsers(listUser);
+    public void addNastTenant_withNastId_callsTenantService() throws Exception {
+        when(config.getBoolean("nast.xmlrpc.enabled")).thenReturn(true);
+        when(nastFacade.addNastUser(user)).thenReturn("nastId");
         user.setId("userId");
         user.setNastId("nastId");
-        user.setMossoId(123);
-        when(userService.getUsersByMossoId(123)).thenReturn(users);
-        when(authorizationService.authorizeCloudIdentityAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
-        defaultCloud11Service.createUser(request, null, uriInfo, user);
-        Mockito.verify(tenantService).addTenant(any(Tenant.class));
+        defaultCloud11Service.addNastTenant(user);
+        verify(tenantService).addTenant(any(Tenant.class));
     }
 
     @Test
-    public void createUser_withNastId_callsEndpointService_getBaseUrlsByBaseUrlType() throws Exception {
+    public void addNastTenant_withNastId_callsEndpointService_getBaseUrlsByBaseUrlType() throws Exception {
         when(config.getBoolean("nast.xmlrpc.enabled")).thenReturn(true);
         when(nastFacade.addNastUser(user)).thenReturn("nastId");
         Users users = new Users();
@@ -354,8 +357,8 @@ public class DefaultCloud11ServiceTest {
         user.setMossoId(123);
         when(userService.getUsersByMossoId(123)).thenReturn(users);
         when(authorizationService.authorizeCloudIdentityAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
-        defaultCloud11Service.createUser(request, null, uriInfo, user);
-        Mockito.verify(endpointService).getBaseUrlsByBaseUrlType("NAST");
+        defaultCloud11Service.addNastTenant(user);
+        verify(endpointService).getBaseUrlsByBaseUrlType("NAST");
     }
 
     @Test
@@ -364,6 +367,7 @@ public class DefaultCloud11ServiceTest {
         user1.setMossoId(123);
         Users users = new Users();
         List<com.rackspace.idm.domain.entity.User> listUser = new ArrayList();
+        listUser.add(userDO);
         users.setUsers(listUser);
         user.setId("userId");
         user.setNastId("nastId");
@@ -379,6 +383,7 @@ public class DefaultCloud11ServiceTest {
         user1.setMossoId(123);
         Users users = new Users();
         List<com.rackspace.idm.domain.entity.User> listUser = new ArrayList();
+        listUser.add(userDO);
         users.setUsers(listUser);
         user.setId("userId");
         user.setNastId("nastId");
@@ -422,6 +427,7 @@ public class DefaultCloud11ServiceTest {
         user1.setMossoId(123);
         Users users = new Users();
         List<com.rackspace.idm.domain.entity.User> listUser = new ArrayList();
+        listUser.add(userDO);
         users.setUsers(listUser);
         when(userService.getUsersByMossoId(123)).thenReturn(users);
         doThrow(new DuplicateException("test exception")).when(tenantService).addTenant(any(Tenant.class));
@@ -449,7 +455,7 @@ public class DefaultCloud11ServiceTest {
     }
 
     @Test
-    public void addNastTenant_whenNastEnabled_DoesNotCallNastService() throws Exception {
+    public void addNastTenant_whenNastDisabled_DoesNotCallNastService() throws Exception {
         User user1 = new User();
         user1.setNastId("nastId");
         when(nastFacade.addNastUser(user1)).thenReturn("nastId");
@@ -459,23 +465,100 @@ public class DefaultCloud11ServiceTest {
     }
 
     @Test
-    public void createUser_withMossoId_callsEndpointService_getBaseUrlsByBaseUrlType() throws Exception {
+    public void addNastTenant_callsClientService_getClientRoleByClientIdAndRoleName() throws Exception {
+        User user1 = new User();
+        user1.setNastId("nastId");
+        when(nastFacade.addNastUser(user1)).thenReturn("nastId");
+        when(config.getBoolean("nast.xmlrpc.enabled")).thenReturn(true);
+        when(config.getString("serviceName.cloudFiles")).thenReturn("cloudFiles");
+        when(clientService.getByName("cloudFiles")).thenReturn(application);
+        defaultCloud11Service.addNastTenant(user1);
+        verify(clientService).getClientRoleByClientIdAndRoleName("id","foo:default");
+    }
+
+    @Test
+    public void addMossoTenant_callsClientService_getClientRoleByClientIdAndRoleName() throws Exception {
+        User user1 = new User();
+        user1.setMossoId(123);
         Users users = new Users();
         List<com.rackspace.idm.domain.entity.User> listUser = new ArrayList();
+        listUser.add(userDO);
+        users.setUsers(listUser);
+        when(userService.getUsersByMossoId(123)).thenReturn(users);
+        when(config.getString("serviceName.cloudServers")).thenReturn("cloudServers");
+        when(clientService.getByName("cloudServers")).thenReturn(application);
+        defaultCloud11Service.addMossoTenant(user1);
+        verify(clientService).getClientRoleByClientIdAndRoleName("id","foo:default");
+    }
+
+
+    @Test
+    public void addNastTenant_callsClientService_getClient() throws Exception {
+        User user1 = new User();
+        user1.setNastId("nastId");
+        when(nastFacade.addNastUser(user1)).thenReturn("nastId");
+        when(config.getBoolean("nast.xmlrpc.enabled")).thenReturn(true);
+        defaultCloud11Service.addNastTenant(user1);
+        verify(clientService).getByName("cloudFiles");
+    }
+
+    @Test
+    public void addMossoTenant_callsClientService_getClient() throws Exception {
+        User user1 = new User();
+        user1.setMossoId(123);
+        Users users = new Users();
+        List<com.rackspace.idm.domain.entity.User> listUser = new ArrayList();
+        listUser.add(userDO);
+        users.setUsers(listUser);
+        when(userService.getUsersByMossoId(123)).thenReturn(users);
+        when(config.getString("serviceName.cloudServers")).thenReturn("cloudServers");
+        when(clientService.getByName("cloudServers")).thenReturn(application);
+        defaultCloud11Service.addMossoTenant(user1);
+        verify(clientService).getByName("cloudServers");
+    }
+
+    @Test
+    public void addNastTenant_calls_tenantService_addTenantRoleToUser() throws Exception {
+        User user1 = new User();
+        user1.setNastId("nastId");
+        when(nastFacade.addNastUser(user1)).thenReturn("nastId");
+        when(config.getBoolean("nast.xmlrpc.enabled")).thenReturn(true);
+        defaultCloud11Service.addNastTenant(user1);
+        verify(tenantService).addTenantRoleToUser(any(com.rackspace.idm.domain.entity.User.class), any(TenantRole.class));
+    }
+
+    @Test
+    public void addMossoTenant_calls_tenantService_addTenantRoleToUser() throws Exception {
+        User user1 = new User();
+        user1.setMossoId(123);
+        Users users = new Users();
+        List<com.rackspace.idm.domain.entity.User> listUser = new ArrayList();
+        listUser.add(userDO);
+        users.setUsers(listUser);
+        when(userService.getUsersByMossoId(123)).thenReturn(users);
+        defaultCloud11Service.addMossoTenant(user1);
+        verify(tenantService).addTenantRoleToUser(any(com.rackspace.idm.domain.entity.User.class), any(TenantRole.class));
+    }
+
+    @Test
+    public void addMossoTenant_withMossoId_callsEndpointService_getBaseUrlsByBaseUrlType() throws Exception {
+        Users users = new Users();
+        List<com.rackspace.idm.domain.entity.User> listUser = new ArrayList();
+        listUser.add(userDO);
         users.setUsers(listUser);
         user.setId("userId");
         user.setNastId("nastId");
         user.setMossoId(123);
         when(userService.getUsersByMossoId(123)).thenReturn(users);
         when(authorizationService.authorizeCloudIdentityAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
-        defaultCloud11Service.createUser(request, null, uriInfo, user);
+        defaultCloud11Service.addMossoTenant(user);
         Mockito.verify(endpointService).getBaseUrlsByBaseUrlType("MOSSO");
     }
 
     @Test
     public void authenticateResponse_usernameIsNull_returns400() throws Exception {
         JAXBElement<Credentials> cred = new JAXBElement<Credentials>(new QName(""), Credentials.class, new UserCredentials());
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(cred, null);
+        Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(cred);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
     }
 
@@ -491,6 +574,28 @@ public class DefaultCloud11ServiceTest {
     public void revokeToken_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
         spy.revokeToken(request, null, null);
         verify(spy).authenticateCloudAdminUser(request);
+    }
+
+    @Test
+    public void authenticateResponse_nastCredentials_usesRetrievedUsersUsername() throws Exception {
+        NastCredentials nastCredentials = new NastCredentials();
+        nastCredentials.setNastId("id");
+        nastCredentials.setKey("key");
+        JAXBElement<? extends Credentials> cred = new JAXBElement<Credentials>(QName.valueOf(""), Credentials.class, nastCredentials);
+        when(userService.getUserByNastId("id")).thenReturn(new com.rackspace.idm.domain.entity.User("nastUser"));
+        spy.authenticateResponse(cred);
+        verify(endpointService).getEndpointsForUser("nastUser");
+    }
+
+    @Test
+    public void authenticateResponse_mossoCredentials_usesRetrievedUsersUsername() throws Exception {
+        MossoCredentials mossoCredentials = new MossoCredentials();
+        mossoCredentials.setMossoId(123);
+        mossoCredentials.setKey("key");
+        JAXBElement<? extends Credentials> cred = new JAXBElement<Credentials>(QName.valueOf(""), Credentials.class, mossoCredentials);
+        when(userService.getUserByMossoId(123)).thenReturn(new com.rackspace.idm.domain.entity.User("mossoUser"));
+        spy.authenticateResponse(cred);
+        verify(endpointService).getEndpointsForUser("mossoUser");
     }
 
     @Test
@@ -709,7 +814,7 @@ public class DefaultCloud11ServiceTest {
         user.setMossoId(123456);
         when(authorizationService.authorizeCloudIdentityAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
         spy.createUser(request,httpHeaders,uriInfo,user);
-        verify(spy).validateMossoId(123456);
+        verify(spy).validateMossoId(123456,"1");
     }
 
     @Test
@@ -755,24 +860,6 @@ public class DefaultCloud11ServiceTest {
     }
 
     @Test
-    public void createUser_MossoIdBelongsToAnotherUser_BadRequestException() throws Exception{
-        user.setMossoId(123456);
-        user.setId("test");
-        Users users = new Users();
-        com.rackspace.idm.domain.entity.User user1 = new com.rackspace.idm.domain.entity.User();
-        user1.setId("2");
-        user1.setUsername("tempUser");
-        user1.setMossoId(123456);
-        List<com.rackspace.idm.domain.entity.User> listUsers = new ArrayList<com.rackspace.idm.domain.entity.User>();
-        listUsers.add(user1);
-        users.setUsers(listUsers);
-        when(authorizationService.authorizeCloudIdentityAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
-        when(userService.getUsersByMossoId(123456)).thenReturn(users);
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.createUser(request,httpHeaders,uriInfo,user);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
-    }
-
-    @Test
     public void createUser_VerifyUserAdminRoleIsAdded() throws Exception{
         Users users = new Users();
         List<com.rackspace.idm.domain.entity.User> listUser = new ArrayList();
@@ -786,7 +873,9 @@ public class DefaultCloud11ServiceTest {
         when(userService.getUsersByMossoId(123456)).thenReturn(users);
         when(clientService.getClientRoleByClientIdAndRoleName(Matchers.<String>any(), Matchers.<String>any())).thenReturn(clientRole);
         when(clientService.getClientRoleById(Matchers.<String>any())).thenReturn(clientRole);
-        defaultCloud11Service.createUser(request,httpHeaders,uriInfo,user);
+        doNothing().when(spy).addMossoTenant(any(User.class));
+        doNothing().when(spy).addNastTenant(any(User.class));
+        spy.createUser(request,httpHeaders,uriInfo,user);
         verify(tenantService).addTenantRoleToUser(Matchers.<com.rackspace.idm.domain.entity.User>any(), Matchers.<TenantRole>any());
     }
 }

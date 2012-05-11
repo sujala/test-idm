@@ -280,7 +280,7 @@ public class DefaultTenantService implements TenantService {
     public void addTenantRoleToUser(User user, TenantRole role) {
         if (user == null || StringUtils.isBlank(user.getUniqueId())) {
             throw new IllegalArgumentException(
-                "User cannont be null and must have uniqueID");
+                "User cannot be null and must have uniqueID");
         }
 
         Application client = this.clientDao.getClientByClientId(role.getClientId());

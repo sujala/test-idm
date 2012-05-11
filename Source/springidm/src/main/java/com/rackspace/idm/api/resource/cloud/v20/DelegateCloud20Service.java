@@ -187,6 +187,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             return cloudResponseBuilder;
         }
         AuthenticateResponse validateResponse = (AuthenticateResponse) unmarshallResponse(cloudValidateResponse.getEntity().toString(), AuthenticateResponse.class);
+        validateResponse.getToken().setId(impersonatedScopeAccess.getAccessTokenString());
         ImpersonationResponse impersonationResponse = new ImpersonationResponse();
         impersonationResponse.setUser(validateResponse.getUser());
         impersonationResponse.setToken(validateResponse.getToken());
@@ -483,7 +484,7 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder listCredentials(HttpHeaders httpHeaders, String authToken, String userId, String marker, Integer limit)
-            throws IOException {
+            throws Exception {
         if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
             String request = getCloudAuthV20Url() + "users/" + userId + "/OS-KSADM/credentials";
             HashMap<String, Object> params = new HashMap<String, Object>();
