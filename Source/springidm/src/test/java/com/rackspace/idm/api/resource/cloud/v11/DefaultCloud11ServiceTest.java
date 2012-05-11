@@ -114,6 +114,24 @@ public class DefaultCloud11ServiceTest {
     }
 
     @Test
+    public void validateMossoId_calls_UserService_getUsersByMossoId() throws Exception {
+        defaultCloud11Service.validateMossoId(123);
+        verify(userService).getUserByMossoId(123);
+    }
+
+    @Test
+    public void validateMossoId_noUserExists_succeeds() throws Exception {
+        when(userService.getUserByMossoId(123)).thenReturn(null);
+        defaultCloud11Service.validateMossoId(123);
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void validateMossoId_UserExists_succeeds() throws Exception {
+        when(userService.getUserByMossoId(123)).thenReturn(new com.rackspace.idm.domain.entity.User());
+        defaultCloud11Service.validateMossoId(123);
+    }
+
+    @Test
     public void getUserGroups_notAuthorized_returnsCorrectErrorMessage() throws Exception {
         doThrow(new NotAuthorizedException("You are not authorized to access this resource.")).when(spy).authenticateCloudAdminUserForGetRequests(request);
         Response.ResponseBuilder responseBuilder = spy.getUserGroups(request, "testUser", httpHeaders);
@@ -814,16 +832,7 @@ public class DefaultCloud11ServiceTest {
         user.setMossoId(123456);
         when(authorizationService.authorizeCloudIdentityAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
         spy.createUser(request,httpHeaders,uriInfo,user);
-        verify(spy).validateMossoId(123456,"1");
-    }
-
-    @Test
-    public void createUser_callUserService_getUser() throws Exception{
-        user.setId("username");
-        user.setMossoId(123456);
-        doNothing().when(spy).authenticateCloudAdminUser(request);
-        spy.createUser(request,httpHeaders,uriInfo,user);
-        verify(userService).getUser("username");
+        verify(spy).validateMossoId(123456);
     }
 
     @Test
@@ -874,7 +883,7 @@ public class DefaultCloud11ServiceTest {
         when(clientService.getClientRoleByClientIdAndRoleName(Matchers.<String>any(), Matchers.<String>any())).thenReturn(clientRole);
         when(clientService.getClientRoleById(Matchers.<String>any())).thenReturn(clientRole);
         doNothing().when(spy).addMossoTenant(any(User.class));
-        doNothing().when(spy).addNastTenant(any(User.class));
+        doReturn("nastId").when(spy).addNastTenant(any(User.class));
         spy.createUser(request,httpHeaders,uriInfo,user);
         verify(tenantService).addTenantRoleToUser(Matchers.<com.rackspace.idm.domain.entity.User>any(), Matchers.<TenantRole>any());
     }

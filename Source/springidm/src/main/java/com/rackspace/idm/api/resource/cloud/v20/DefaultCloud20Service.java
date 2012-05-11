@@ -614,6 +614,13 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new NotAuthorizedException(errMsg);
             }
 
+            // ToDo: removing serviceId from response for now
+            if(auth.getUser().getRoles() != null) {
+                for(Role r : auth.getUser().getRoles().getRole()) {
+                    r.setServiceId(null);
+                }
+            }
+
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createAccess(auth));
         } catch (Exception ex) {
             return exceptionResponse(ex);
@@ -1966,6 +1973,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                     impersonationResponse.setToken(tokenConverterCloudV20.toToken(isa));
                     impersonationResponse.setUser(userConverterCloudV20.toUserForAuthenticateResponse(user, roles));
                     List<TenantRole> impRoles = this.tenantService.getGlobalRolesForUser(impersonator, null);
+
                     impersonationResponse.setImpersonator(this.userConverterCloudV20.toUserForAuthenticateResponse(impersonator, impRoles));
                     return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtRaxgaV1Factory().createAccess(impersonationResponse));
                 }
