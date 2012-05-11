@@ -1133,12 +1133,17 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder listCredentials(HttpHeaders httpHeaders, String authToken, String userId, String marker, Integer limit)
-            throws IOException {
+            throws Exception {
 
         try {
             verifyUserLevelAccess(authToken);
+            ScopeAccess callersScopeAccess = scopeAccessService.getScopeAccessByAccessToken(authToken);
             User user = checkAndGetUser(userId);
-            verifySelf(authToken, user);
+
+            if(isUserAdmin(callersScopeAccess, null) || isDefaultUser(callersScopeAccess, null))
+            {
+                verifySelf(authToken, user);
+            }
             CredentialListType creds = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createCredentialListType();
 
             if (!StringUtils.isBlank(user.getPassword())) {
@@ -1161,11 +1166,12 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
-    private boolean isAUserAdminOrDefaultUser(ScopeAccess requesterScopeAccess) {
-
-        List<TenantRole> tenantRolesForScopeAccess = tenantService.getTenantRolesForScopeAccess(requesterScopeAccess);
+    private boolean isUserAdmin(ScopeAccess requesterScopeAccess, List<TenantRole> tenantRoles) {
+        if(tenantRoles == null){
+            tenantRoles = tenantService.getTenantRolesForScopeAccess(requesterScopeAccess);
+        }
         boolean hasRole = false;
-        for(TenantRole tenantRole : tenantRolesForScopeAccess)
+        for(TenantRole tenantRole : tenantRoles)
         {
             String name = tenantRole.getName();
             if (name.equals("identity:user-admin") || name.equals("identity:default")){
@@ -1174,6 +1180,22 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
         return hasRole;
     }
+    private boolean isDefaultUser(ScopeAccess requesterScopeAccess, List<TenantRole> tenantRoles) {
+        if(tenantRoles == null){
+            List<TenantRole> tenantRolesForScopeAccess = tenantService.getTenantRolesForScopeAccess(requesterScopeAccess);
+        }
+        boolean hasRole = false;
+        for(TenantRole tenantRole : tenantRoles)
+        {
+            String name = tenantRole.getName();
+            if (name.equals("identity:default")){
+                hasRole = true;
+            }
+        }
+        return hasRole;
+    }
+
+
 
     @Override
     public ResponseBuilder listEndpoints(HttpHeaders httpHeaders, String authToken, String tenantId) {
@@ -1380,11 +1402,16 @@ public class DefaultCloud20Service implements Cloud20Service {
                 logger.warn(errMsg);
                 throw new NotFoundException(errMsg);
             }
-            ScopeAccess scopeAccessByAccessToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
-            User caller = getUser(scopeAccessByAccessToken);
-            if (!authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken)
-                    && !authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken)) {
-                verifyDomain(user, caller);
+            ScopeAccess callersScopeAccess = scopeAccessService.getScopeAccessByAccessToken(authToken);
+            User caller = getUser(callersScopeAccess);
+            List<TenantRole> callersTenantRoles = tenantService.getTenantRolesForScopeAccess(callersScopeAccess);
+            if (!authorizationService.authorizeCloudIdentityAdmin(callersScopeAccess)
+                    && !authorizationService.authorizeCloudServiceAdmin(callersScopeAccess)) {
+                if(isDefaultUser(callersScopeAccess,callersTenantRoles)){
+                    verifySelf(authToken, user);
+                }else{
+                    verifyDomain(user, caller);
+                }
             }
 
             List<TenantRole> roles = tenantService.getGlobalRolesForUser(user);
@@ -2158,13 +2185,17 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
     void verifySelf(String authToken, User user) throws Exception {
         ScopeAccess authTokenScopeAccess = getScopeAccessForValidToken(authToken);
-        if(isAUserAdminOrDefaultUser(authTokenScopeAccess)){
-            User requester = userService.getUserByScopeAccess(authTokenScopeAccess);
-            if (!((user.getUsername().equals(requester.getUsername()) && (user.getUniqueId().equals(requester.getUniqueId()))))){
+        User requester = userService.getUserByScopeAccess(authTokenScopeAccess);
+
+        String username = user.getUsername();
+        String uniqueId = user.getUniqueId();
+        String requesterUniqueId = requester.getUniqueId();
+        String requesterUsername = requester.getUsername();
+
+        if (!((username.equals(requesterUsername) && (uniqueId.equals(requesterUniqueId))))){
                 String errMsg = "Access is denied";
                 logger.warn(errMsg);
                 throw new ForbiddenException(errMsg);
-            }
         }
     }
 
