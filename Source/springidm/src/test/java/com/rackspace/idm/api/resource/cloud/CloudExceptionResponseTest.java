@@ -29,4 +29,11 @@ public class CloudExceptionResponseTest {
         Response.ResponseBuilder builder = cloudExceptionResponse.usernameConflictExceptionResponse("foo");
         assertThat("response code", builder.build().getStatus(), equalTo(409));
     }
+
+    @Test
+    public void methodNotAllowedExceptionResponse_returns405() throws Exception {
+        Response.ResponseBuilder responseBuilder = cloudExceptionResponse.methodNotAllowedExceptionResponse("foo");
+        assertThat("response code",responseBuilder.build().getStatus(), equalTo(405));
+
+    }
 }
