@@ -298,13 +298,12 @@ public class DefaultCloud11Service implements Cloud11Service {
                 throw new BadRequestException(errorMsg);
             }
 
-            addMossoTenant(user);
-            addNastTenant(user);
             User userDO = this.userConverterCloudV11.toUserDO(user);
             userDO.setEnabled(true);
 
-            this.userService.addUser(userDO);
-
+            userService.addUser(userDO);
+            addMossoTenant(user);
+            addNastTenant(user);
 
             //Add user-admin role
             ClientRole roleId = clientService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserAdminRole());
@@ -341,10 +340,11 @@ public class DefaultCloud11Service implements Cloud11Service {
     }
 
     void addNastTenant(com.rackspacecloud.docs.auth.api.v1.User user) {
+        //cloudFiles
         String nastId;
         if (isNastEnabled()) {
             nastId = nastFacade.addNastUser(user);
-        }else {
+        } else {
             nastId = user.getNastId();
         }
         user.setNastId(nastId);
@@ -366,13 +366,25 @@ public class DefaultCloud11Service implements Cloud11Service {
             } catch (DuplicateException e) {
                 logger.info("Tenant " + tenant.getName() + " already exists.");
             }
+            String serviceName = config.getString("serviceName.cloudFiles");
+            Application application = clientService.getByName(serviceName);
+            String defaultRoleName = application.getOpenStackType().concat(":default");
+            ClientRole clientRole = clientService.getClientRoleByClientIdAndRoleName(application.getClientId(), defaultRoleName);
+            TenantRole tenantRole = new TenantRole();
+            tenantRole.setClientId(clientRole.getClientId());
+            tenantRole.setName(clientRole.getName());
+            tenantRole.setRoleRsId(clientRole.getId());
+            tenantRole.setTenantIds(new String[]{tenant.getTenantId()});
+            User storedUser = userService.getUser(user.getId());
+            tenantService.addTenantRoleToUser(storedUser, tenantRole);
         }
     }
 
     void addMossoTenant(com.rackspacecloud.docs.auth.api.v1.User user) {
+        //cloudServers
         Integer mossoId = user.getMossoId();
         if (mossoId != null) {
-            validateMossoId(mossoId);
+            validateMossoId(mossoId, user.getId());
             Tenant tenant = new Tenant();
             tenant.setTenantId(mossoId.toString());
             tenant.setName(mossoId.toString());
@@ -390,12 +402,23 @@ public class DefaultCloud11Service implements Cloud11Service {
                 logger.info("Tenant " + tenant.getName() + " already exists.");
                 throw new BadRequestException("User with Mosso Account ID: " + tenant.getName() + " already exists.");
             }
+            String serviceName = config.getString("serviceName.cloudServers");
+            Application application = clientService.getByName(serviceName);
+            String defaultRoleName = application.getOpenStackType().concat(":default");
+            ClientRole clientRole = clientService.getClientRoleByClientIdAndRoleName(application.getClientId(), defaultRoleName);
+            TenantRole tenantRole = new TenantRole();
+            tenantRole.setClientId(clientRole.getClientId());
+            tenantRole.setName(clientRole.getName());
+            tenantRole.setRoleRsId(clientRole.getId());
+            tenantRole.setTenantIds(new String[]{tenant.getTenantId()});
+            User storedUser = userService.getUser(user.getId());
+            tenantService.addTenantRoleToUser(storedUser, tenantRole);
         }
     }
 
-    public void validateMossoId(Integer mossoId) {
+    public void validateMossoId(Integer mossoId, String username) {
         Users usersByMossoId = userService.getUsersByMossoId(mossoId);
-        if (usersByMossoId.getUsers().size() > 0) {
+        if (usersByMossoId.getUsers().size() != 1 &&  !usersByMossoId.getUsers().get(0).getUsername().equals(username)) {
             throw new BadRequestException("User with Mosso Account ID: " + mossoId + " already exists.");
         }
     }
