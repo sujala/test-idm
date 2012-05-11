@@ -301,9 +301,12 @@ public class DefaultCloud11Service implements Cloud11Service {
             User userDO = this.userConverterCloudV11.toUserDO(user);
             userDO.setEnabled(true);
 
+            validateMossoId(user.getMossoId());
             userService.addUser(userDO);
             addMossoTenant(user);
-            addNastTenant(user);
+            String nastId = addNastTenant(user);
+            userDO.setNastId(nastId);
+            userService.updateUser(userDO, false);
 
             //Add user-admin role
             ClientRole roleId = clientService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserAdminRole());
@@ -339,7 +342,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         }
     }
 
-    void addNastTenant(com.rackspacecloud.docs.auth.api.v1.User user) {
+    String addNastTenant(com.rackspacecloud.docs.auth.api.v1.User user) {
         //cloudFiles
         String nastId;
         if (isNastEnabled()) {
@@ -378,13 +381,13 @@ public class DefaultCloud11Service implements Cloud11Service {
             User storedUser = userService.getUser(user.getId());
             tenantService.addTenantRoleToUser(storedUser, tenantRole);
         }
+        return nastId;
     }
 
     void addMossoTenant(com.rackspacecloud.docs.auth.api.v1.User user) {
         //cloudServers
         Integer mossoId = user.getMossoId();
         if (mossoId != null) {
-            validateMossoId(mossoId, user.getId());
             Tenant tenant = new Tenant();
             tenant.setTenantId(mossoId.toString());
             tenant.setName(mossoId.toString());
@@ -416,9 +419,9 @@ public class DefaultCloud11Service implements Cloud11Service {
         }
     }
 
-    public void validateMossoId(Integer mossoId, String username) {
-        Users usersByMossoId = userService.getUsersByMossoId(mossoId);
-        if (usersByMossoId.getUsers().size() != 1 &&  !usersByMossoId.getUsers().get(0).getUsername().equals(username)) {
+    public void validateMossoId(Integer mossoId) {
+        User user = userService.getUserByMossoId(mossoId);
+        if (user != null) {
             throw new BadRequestException("User with Mosso Account ID: " + mossoId + " already exists.");
         }
     }
