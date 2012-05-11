@@ -439,19 +439,6 @@ public class DefaultCloud11ServiceTest {
         defaultCloud11Service.addNastTenant(user1);
     }
 
-    @Test(expected = BadRequestException.class)
-    public void addMossoTenant_tenantServiceThrowsDuplicateException_exceptionGetsCaught_throwsBadRequestException() throws Exception {
-        User user1 = new User();
-        user1.setMossoId(123);
-        Users users = new Users();
-        List<com.rackspace.idm.domain.entity.User> listUser = new ArrayList();
-        listUser.add(userDO);
-        users.setUsers(listUser);
-        when(userService.getUsersByMossoId(123)).thenReturn(users);
-        doThrow(new DuplicateException("test exception")).when(tenantService).addTenant(any(Tenant.class));
-        defaultCloud11Service.addMossoTenant(user1);
-    }
-
     @Test
     public void addNastTenant_callsEndpointService_getBaseUrlsByBaseUrlType() throws Exception {
         User user1 = new User();

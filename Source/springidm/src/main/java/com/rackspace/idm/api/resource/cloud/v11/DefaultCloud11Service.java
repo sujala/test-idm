@@ -403,7 +403,6 @@ public class DefaultCloud11Service implements Cloud11Service {
                 tenantService.addTenant(tenant);
             } catch (DuplicateException e) {
                 logger.info("Tenant " + tenant.getName() + " already exists.");
-                throw new BadRequestException("User with Mosso Account ID: " + tenant.getName() + " already exists.");
             }
             String serviceName = config.getString("serviceName.cloudServers");
             Application application = clientService.getByName(serviceName);
