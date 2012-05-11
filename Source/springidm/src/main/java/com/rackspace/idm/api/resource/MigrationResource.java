@@ -37,6 +37,18 @@ public class MigrationResource {
         this.tenantsResource = tenantsResource;
     }
 
+    @GET
+    @Path("cloud/users")
+    public Response getMigratedUsers() throws Exception {
+        return cloudMigrationService.getMigratedUserList().build();
+    }
+
+    @GET
+    @Path("cloud/users/pending")
+    public Response getInMigrationUsers() throws Exception {
+        return cloudMigrationService.getInMigrationUserList().build();
+    }
+
     @POST
     @Path("cloud/users/{username}")
     public Response migrateCloudUserByUsername(@PathParam("username") String username) throws Exception {

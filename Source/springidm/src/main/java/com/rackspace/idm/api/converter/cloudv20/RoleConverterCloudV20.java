@@ -30,7 +30,7 @@ public class RoleConverterCloudV20 {
                     jaxbRole.setDescription(role.getDescription());
                     jaxbRole.setName(role.getName());
                     jaxbRole.setId(role.getRoleRsId());
-                    //jaxbRole.setServiceId(role.getClientId()); // ToDo: Removed from displaying for now.
+                    jaxbRole.setServiceId(role.getClientId());
                     jaxbRole.setTenantId(tenantId);
                     jaxbRoles.getRole().add(jaxbRole);
                 }
@@ -39,7 +39,7 @@ public class RoleConverterCloudV20 {
                 jaxbRole.setDescription(role.getDescription());
                 jaxbRole.setName(role.getName());
                 jaxbRole.setId(role.getRoleRsId());
-                //jaxbRole.setServiceId(role.getClientId()); // ToDo: Removed from displaying for now.
+                jaxbRole.setServiceId(role.getClientId());
                 jaxbRoles.getRole().add(jaxbRole);
             }
         }
@@ -59,7 +59,7 @@ public class RoleConverterCloudV20 {
             jaxbRole.setId(role.getId());
             jaxbRole.setName(role.getName());
             jaxbRole.setDescription(role.getDescription());
-            //jaxbRole.setServiceId(role.getClientId()); // ToDo: Removed from displaying for now.
+            jaxbRole.setServiceId(role.getClientId());
             jaxbRoles.getRole().add(jaxbRole);
         }
 
