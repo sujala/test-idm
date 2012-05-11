@@ -300,7 +300,7 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("userId") String userId,
             @QueryParam("marker") String marker,
-            @QueryParam("limit") Integer limit) throws IOException {
+            @QueryParam("limit") Integer limit) throws Exception {
         return getCloud20Service().listCredentials(httpHeaders, authToken, userId, marker, limit).build();
     }
 
