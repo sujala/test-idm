@@ -447,6 +447,10 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                     searchBuilder.addEqualAttribute(ATTR_DOMAIN_ID, filter.getStrValue());
                 } else if (filter.getParam() == FilterParamName.GROUP_ID) {
                     searchBuilder.addEqualAttribute(ATTR_GROUP_ID, filter.getStrValue());
+                } else if (filter.getParam() == FilterParamName.IN_MIGRATION) {
+                    searchBuilder.addEqualAttribute(ATTR_IN_MIGRATION, "true");
+                } else if (filter.getParam() == FilterParamName.MIGRATED) {
+                    searchBuilder.addEqualAttribute(ATTR_IN_MIGRATION, "false");
                 }
             }
         }

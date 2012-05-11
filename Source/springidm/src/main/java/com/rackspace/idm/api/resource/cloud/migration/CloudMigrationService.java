@@ -92,6 +92,22 @@ public class CloudMigrationService {
         addOrUpdateEndpointTemplates(getAdminToken());
     }
 
+    public Response.ResponseBuilder getMigratedUserList() throws Exception {
+        FilterParam[] filters = new FilterParam[] { new FilterParam(FilterParam.FilterParamName.MIGRATED, null)};
+        com.rackspace.idm.domain.entity.Users users = userService.getAllUsers(filters);
+        if(users == null)
+            throw new NotFoundException("Users not found.");
+        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUsers(userConverterCloudV20.toUserList(users.getUsers())));
+    }
+
+    public Response.ResponseBuilder getInMigrationUserList() throws Exception {
+        FilterParam[] filters = new FilterParam[] { new FilterParam(FilterParam.FilterParamName.IN_MIGRATION, null)};
+        com.rackspace.idm.domain.entity.Users users = userService.getAllUsers(filters);
+        if(users == null)
+            throw new NotFoundException("Users not found.");
+        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUsers(userConverterCloudV20.toUserList(users.getUsers())));
+    }
+
     public Response.ResponseBuilder getMigratedUser(String username) throws Exception {
         com.rackspace.idm.domain.entity.User user = userService.getUser(username);
         if(user == null)

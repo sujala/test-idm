@@ -59,7 +59,7 @@ public class RoleConverterCloudV20 {
             jaxbRole.setId(role.getId());
             jaxbRole.setName(role.getName());
             jaxbRole.setDescription(role.getDescription());
-            //jaxbRole.setServiceId(role.getClientId()); // ToDo: Removed from displaying for now.
+            jaxbRole.setServiceId(role.getClientId());
             jaxbRoles.getRole().add(jaxbRole);
         }
 
