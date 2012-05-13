@@ -53,7 +53,7 @@ public class CloudExceptionResponse extends WebApplicationException {
             return badRequestExceptionResponse(ex.getMessage());
         }
         if (ex instanceof CloudAdminAuthorizationException) {
-            return methodNotAllowedExceptionRespone(ex.getMessage());
+            return methodNotAllowedExceptionResponse(ex.getMessage());
         }
         if (ex instanceof NotAuthorizedException) {
             return notAuthenticatedExceptionResponse(ex.getMessage());
@@ -107,11 +107,11 @@ public class CloudExceptionResponse extends WebApplicationException {
         return Response.status(HttpServletResponse.SC_FORBIDDEN).entity(OBJ_FACTORY.createUserDisabled(fault));
     }
 
-    public Response.ResponseBuilder methodNotAllowedExceptionRespone(String message) {
-        BadRequestFault fault = OBJ_FACTORY.createBadRequestFault();
-        fault.setCode(HttpServletResponse.SC_UNAUTHORIZED);
+    public Response.ResponseBuilder methodNotAllowedExceptionResponse(String message) {
+        AuthFault fault = OBJ_FACTORY.createAuthFault();
+        fault.setCode(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
         fault.setMessage(message);
-        return Response.status(HttpServletResponse.SC_METHOD_NOT_ALLOWED).entity(OBJ_FACTORY.createBadRequest(fault));
+        return Response.status(HttpServletResponse.SC_METHOD_NOT_ALLOWED).entity(OBJ_FACTORY.createAuthFault(fault));
     }
 
     public Response.ResponseBuilder badRequestExceptionResponse(String message) {
