@@ -1181,7 +1181,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         for(TenantRole tenantRole : tenantRoles)
         {
             String name = tenantRole.getName();
-            if (name.equals("identity:user-admin") || name.equals("identity:default")){
+            if (name.equals("identity:user-admin")){
                 hasRole = true;
             }
         }
@@ -1189,7 +1189,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
     private boolean isDefaultUser(ScopeAccess requesterScopeAccess, List<TenantRole> tenantRoles) {
         if(tenantRoles == null){
-            List<TenantRole> tenantRolesForScopeAccess = tenantService.getTenantRolesForScopeAccess(requesterScopeAccess);
+            tenantRoles = tenantService.getTenantRolesForScopeAccess(requesterScopeAccess);
         }
         boolean hasRole = false;
         for(TenantRole tenantRole : tenantRoles)
