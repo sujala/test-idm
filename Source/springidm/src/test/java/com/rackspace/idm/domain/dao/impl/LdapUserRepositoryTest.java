@@ -45,6 +45,15 @@ public class LdapUserRepositoryTest {
         pools.close();
     }
 
+    @Before
+    public void makeUserUserIsDelete(){
+        LdapUserRepository cleanUpRepo = getRepo(getConnPools());
+        User deleteme = cleanUpRepo.getUserByUsername("deleteme");
+        if (deleteme != null) {
+            cleanUpRepo.deleteUser("deleteme");
+        }
+    }
+
     private static LdapUserRepository getRepo(LdapConnectionPools connPools) {
         Configuration appConfig = null;
         try {
