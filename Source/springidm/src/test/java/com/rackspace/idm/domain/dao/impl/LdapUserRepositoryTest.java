@@ -47,11 +47,21 @@ public class LdapUserRepositoryTest {
 
     @Before
     public void makeUserUserIsDelete(){
-        LdapUserRepository cleanUpRepo = getRepo(getConnPools());
+        LdapConnectionPools pools = getConnPools();
+        LdapUserRepository cleanUpRepo = getRepo(pools);
         User deleteme = cleanUpRepo.getUserByUsername("deleteme");
         if (deleteme != null) {
             cleanUpRepo.deleteUser("deleteme");
         }
+                User deleteme2 = cleanUpRepo.getUserByUsername("delete.me");
+        if (deleteme2 != null) {
+            cleanUpRepo.deleteUser("delete.me");
+        }
+        User deleteme3 = cleanUpRepo.getUserByUsername("delete,me");
+        if (deleteme3 != null) {
+            cleanUpRepo.deleteUser("delete,me");
+        }
+        pools.close();
     }
 
     private static LdapUserRepository getRepo(LdapConnectionPools connPools) {
