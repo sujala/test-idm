@@ -30,6 +30,40 @@ public class DefaultUserServiceTest {
     }
 
     @Test
+    public void userExistsById_inMigration_returnsFalse() throws Exception {
+        User user = new User();
+        user.setInMigration(true);
+        when(userDao.getUserById("test")).thenReturn(user);
+        boolean exists = defaultUserService.userExistsById("test");
+        assertThat("exists", exists, equalTo(false));
+    }
+
+    @Test
+    public void userExistsById_inMigrationFalse_returnsTrue() throws Exception {
+        User user = new User();
+        user.setInMigration(false);
+        when(userDao.getUserById("test")).thenReturn(user);
+        boolean exists = defaultUserService.userExistsById("test");
+        assertThat("exists", exists, equalTo(true));
+    }
+
+    @Test
+    public void userExistsById_inMigrationIsNull_returnsTrue() throws Exception {
+        User user = new User();
+        user.setInMigration(null);
+        when(userDao.getUserById("test")).thenReturn(user);
+        boolean exists = defaultUserService.userExistsById("test");
+        assertThat("exists", exists, equalTo(true));
+    }
+
+    @Test
+    public void userExistsById_userIsNull_returnsFalse() throws Exception {
+        when(userDao.getUserById("test")).thenReturn(null);
+        boolean exists = defaultUserService.userExistsById("test");
+        assertThat("exists", exists, equalTo(false));
+    }
+
+    @Test
     public void userExistsByUsername_inMigration_returnsFalse() throws Exception {
         User user = new User();
         user.setInMigration(true);

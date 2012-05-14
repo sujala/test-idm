@@ -558,10 +558,18 @@ public class DefaultUserService implements UserService {
     @Override
     public boolean userExistsById(String userId) {
         com.rackspace.idm.domain.entity.User userById = userDao.getUserById(userId);
-        if (userById == null)
+        if (userById == null){
             return false;
-        if (userById.getInMigration())
+        }
+        if (userById.getInMigration()== null){
+            return true;
+        }
+        if(userById.getInMigration()){
             return false;
+        }
+        if(userById.getInMigration()==false){
+            return true;
+        }
         return true;
     }
 
