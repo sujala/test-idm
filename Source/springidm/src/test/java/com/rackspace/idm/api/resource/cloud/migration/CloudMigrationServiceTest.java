@@ -120,7 +120,7 @@ public class CloudMigrationServiceTest {
     @Test(expected = ConflictException.class)
     public void migrateUser_returns_ConflicException() throws Exception {
         when(userService.userExistsByUsername(anyString())).thenReturn(true);
-        String userId = spy.migrateUserByUsername("conflictingUser", false);
+        String userId = spy.migrateUserByUsername("conflictingUser", false, null);
     }
 
     @Ignore
@@ -128,7 +128,7 @@ public class CloudMigrationServiceTest {
     public void migrateUser_returns() throws Exception {
         when(userService.userExistsByUsername(anyString())).thenReturn(false);
         when(client.getUser(anyString(), anyString())).thenReturn(cloudUser);
-        String userId = spy.migrateUserByUsername("migrateUser", false);
+        String userId = spy.migrateUserByUsername("migrateUser", false, null);
     }
 
 }

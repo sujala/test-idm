@@ -52,7 +52,7 @@ public class MigrationResource {
     @POST
     @Path("cloud/users/{username}")
     public Response migrateCloudUserByUsername(@PathParam("username") String username) throws Exception {
-        String id = cloudMigrationService.migrateUserByUsername(username, true);
+        String id = cloudMigrationService.migrateUserByUsername(username, true, null);
         return Response.created(uriInfo.getRequestUriBuilder().path(id).build()).build();
     }
 
