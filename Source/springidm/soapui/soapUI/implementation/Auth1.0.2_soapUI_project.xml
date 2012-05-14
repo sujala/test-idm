@@ -14,19 +14,16 @@ declare namespace ns2='http://www.w3.org/2005/Atom';
 //ns1:Response[1]/ns1:versions[1]/ns1:version[1]/ns1:e[3]/ns1:link[1]/ns1:e[1]/ns1:href[1]</path><content>https://identity.api.rackspacecloud.com/v2.0/</content><allowWildcards>false</allowWildcards><ignoreNamspaceDifferences>false</ignoreNamspaceDifferences></con:configuration></con:assertion><con:assertion type="XPath Match" name="XPath Match id=v1.0"><con:configuration><path>declare namespace ns1='${#Project#endpointjson}/idm/cloud';
 //ns1:Response[1]/ns1:versions[1]/ns1:version[1]/ns1:e[1]/ns1:id[1]</path><content>v1.0</content><allowWildcards>false</allowWildcards><ignoreNamspaceDifferences>false</ignoreNamspaceDifferences></con:configuration></con:assertion><con:assertion type="XPath Match" name="XPath Match id=v1.1"><con:configuration><path>declare namespace ns1='${#Project#endpointjson}/idm/cloud';
 //ns1:Response[1]/ns1:versions[1]/ns1:version[1]/ns1:e[2]/ns1:id[1]</path><content>v1.1</content><allowWildcards>false</allowWildcards><ignoreNamspaceDifferences>false</ignoreNamspaceDifferences></con:configuration></con:assertion><con:assertion type="XPath Match" name="XPath Match"><con:configuration><path>declare namespace ns1='${#Project#endpointjson}/idm/cloud';
-//ns1:Response[1]/ns1:versions[1]/ns1:version[1]/ns1:e[3]/ns1:id[1]</path><content>v2.0</content><allowWildcards>false</allowWildcards><ignoreNamspaceDifferences>false</ignoreNamspaceDifferences></con:configuration></con:assertion><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters/></con:restRequest></con:config></con:testStep><con:testStep type="groovy" name="verify list of version and state"><con:settings/><con:config><script>def groovyUtils = new com.eviware.soapui.support.GroovyUtils(context);
+//ns1:Response[1]/ns1:versions[1]/ns1:version[1]/ns1:e[3]/ns1:id[1]</path><content>v2.0</content><allowWildcards>false</allowWildcards><ignoreNamspaceDifferences>false</ignoreNamspaceDifferences></con:configuration></con:assertion><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters/></con:restRequest></con:config></con:testStep><con:testStep type="groovy" name="verify list of version and state"><con:settings/><con:config><script>import net.sf.*;
+import net.sf.json.*;
+import net.sf.json.groovy.*;
+import net.sf.json.groovy.JsonSlurper;
+
+def groovyUtils = new com.eviware.soapui.support.GroovyUtils(context);
 def holder1 = groovyUtils.getXmlHolder("getVersion - xml#Response");
-def holder2 = groovyUtils.getXmlHolder("getVersion - json#ResponseAsXml");
-
-
-//xml
-//def response = context.expand( '${getVersion - xml#Response#declare namespace ns1=\'http://docs.openstack.org/common/api/v1.0\'; //ns1:versions[1]/ns1:version[1]/@id}' )
-
 List versionList = holder1.getNodeValues("declare namespace ns1=\'http://docs.openstack.org/common/api/v1.0\';//ns1:versions[1]/ns1:version/@id")
-
 log.info versionList
 log.info versionList.size()
-
 for(item in 0..versionList.size()-1)
 {
 	//log.info versionList[item]
@@ -36,26 +33,17 @@ for(item in 0..versionList.size()-1)
 	log.info "Xml: " +vers + " - " + status
 }
 
-//json
-//def responseAsXml = context.expand( '${getVersion - json#ResponseAsXml#declare namespace ns1=\'http://172.17.16.113/.json\'; //ns1:Response[1]/ns1:versions[1]/ns1:values[1]/ns1:e[1]/ns1:id[1]}' )
 
-List versionList2 = context.expand( '${getVersion - json#ResponseAsXml#declare namespace ns1=\'${#Project#endpointjson}/${#Project#path}\'; //ns1:Response[1]/ns1:versions[1]/ns1:values[1]/ns1:e/ns1:id}' )
-//List versionList2 = holder2.getNodeValues("//ns1:Response[1]/ns1:versions[1]/ns1:values[1]/ns1:e/ns1:id")
-log.info responseAsXml
-log.info versionList2
-log.info versionList2.size()
+def response = context.expand( '${getVersion - json#Response}' )
+def jsonRes = new JsonSlurper().parseText(response);
+def stat=jsonRes.'versions'.'version'.status;
+List len=jsonRes.'versions'.'version'.id;
+log.info len;
 
-for(item in 0..versionList2.size())
+for(i in 1..len.size()-1)
 {
-	//log.info versionList2[item]
-	def vers2 = versionList2[item]
-	testRunner.testCase.setPropertyValue("jversion", vers2)
-	def status2 = context.expand( '${getVersion - json#ResponseAsXml#declare namespace ns1=\'http://172.17.16.113/.json\'; //ns1:Response[1]/ns1:versions[1]/ns1:values[1]/ns1:e[ns1:id="${#TestCase#jversion}"]/ns1:status}' )
-	log.info "Json: " + vers2 + " - " + status2
+		log.info 'xml: '+len[i] + '-' + stat[i];
 }
-
-
-
 </script></con:config></con:testStep><con:properties><con:property><con:name>version</con:name><con:value xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">v2.0</con:value></con:property><con:property><con:name>jversion</con:name><con:value xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/></con:property></con:properties><con:reportParameters/></con:testCase><con:properties><con:property><con:name>username</con:name><con:value>cmarin1</con:value></con:property><con:property><con:name>key</con:name><con:value/></con:property></con:properties><con:reportParameters/></con:testSuite><con:testSuite name="Functional v1.0.2"><con:settings/><con:runType>SEQUENTIAL</con:runType><con:testCase failOnError="false" failTestCaseOnErrors="true" keepSession="false" maxResults="0" name="v1.0.2 calls" searchProperties="true" id="fd0aa298-a485-48f9-a1e7-7ecea04497c9" timeout="0" wsrmEnabled="false" wsrmVersion="1.0" wsrmAckTo="" amfAuthorisation="false" amfEndpoint="" amfLogin="" amfPassword=""><con:settings/><con:testStep type="restrequest" name="auth v1.0.2 - xml"><con:settings/><con:config service="getVersion" resourcePath="/${#Project#path}/v1.0/" methodName="auth v1.0.2" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><con:restRequest name="auth v1.0.2 - xml" mediaType="application/xml" accept="application/xml"><con:settings><con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment xmlns:con="http://eviware.com/soapui/config">
   &lt;con:entry key="X-Auth-Key" value="${#TestSuite#key}"/>
   &lt;con:entry key="X-Auth-User" value="${#TestSuite#username}"/>
@@ -137,4 +125,4 @@ log.info storageUrl
 context.testCase.setPropertyValue("X-Auth-Token", token)
 context.testCase.setPropertyValue("X-Storage-Url", storageUrl)
 context.testCase.setPropertyValue("X-Server-Management-Url", serverUrl)
-context.testCase.setPropertyValue("X-CDN-Management-Url", CDNUrl)</scriptText></con:configuration></con:assertion><con:assertion type="GroovyScriptAssertion"><con:configuration><scriptText>assert messageExchange.responseStatusCode == 401</scriptText></con:configuration></con:assertion><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters/></con:restRequest></con:config></con:testStep><con:properties><con:property><con:name>X-Auth-Token</con:name><con:value xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/></con:property><con:property><con:name>X-Storage-Url</con:name><con:value xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/></con:property><con:property><con:name>X-Server-Management-Url</con:name><con:value xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/></con:property><con:property><con:name>X-CDN-Management-Url</con:name><con:value xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/></con:property></con:properties><con:reportParameters/></con:testCase><con:properties><con:property><con:name>key</con:name><con:value>1234567890</con:value></con:property><con:property><con:name>username</con:name><con:value>mkovacs</con:value></con:property></con:properties><con:reportParameters/></con:testSuite><con:requirements/><con:properties><con:property><con:name>stagingEndpoint</con:name><con:value>http://10.6.115.105:8080</con:value></con:property><con:property><con:name>USstaginEndpoint</con:name><con:value>https://172.17.0.64</con:value></con:property><con:property><con:name>path</con:name><con:value>idm/cloud</con:value></con:property><con:property><con:name>endpointjson</con:name><con:value>http://10.6.115.105</con:value></con:property></con:properties><con:wssContainer/><con:databaseConnectionContainer/><con:reporting><con:reportTemplates/><con:xmlTemplates/><con:parameters/></con:reporting></con:soapui-project>
+context.testCase.setPropertyValue("X-CDN-Management-Url", CDNUrl)</scriptText></con:configuration></con:assertion><con:assertion type="GroovyScriptAssertion"><con:configuration><scriptText>assert messageExchange.responseStatusCode == 401</scriptText></con:configuration></con:assertion><con:jmsConfig JMSDeliveryMode="PERSISTENT"/><con:jmsPropertyConfig/><con:parameters/></con:restRequest></con:config></con:testStep><con:properties><con:property><con:name>X-Auth-Token</con:name><con:value xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/></con:property><con:property><con:name>X-Storage-Url</con:name><con:value xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/></con:property><con:property><con:name>X-Server-Management-Url</con:name><con:value xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/></con:property><con:property><con:name>X-CDN-Management-Url</con:name><con:value xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/></con:property></con:properties><con:reportParameters/></con:testCase><con:properties><con:property><con:name>key</con:name><con:value>1234567890</con:value></con:property><con:property><con:name>username</con:name><con:value>mkovacs</con:value></con:property></con:properties><con:reportParameters/></con:testSuite><con:requirements/><con:properties><con:property><con:name>stagingEndpoint</con:name><con:value>http://localhost:8080</con:value></con:property><con:property><con:name>USstaginEndpoint</con:name><con:value>https://172.17.0.64</con:value></con:property><con:property><con:name>path</con:name><con:value>idm/cloud</con:value></con:property><con:property><con:name>endpointjson</con:name><con:value>http://localhost</con:value></con:property></con:properties><con:wssContainer/><con:databaseConnectionContainer/><con:reporting><con:reportTemplates/><con:xmlTemplates/><con:parameters/></con:reporting></con:soapui-project>
