@@ -7,6 +7,7 @@ import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 
+import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -26,6 +27,40 @@ public class DefaultUserServiceTest {
     @Before
     public void setUp() throws Exception {
         defaultUserService = new DefaultUserService(userDao,null,null,null,null,null,null);
+    }
+
+    @Test
+    public void userExistsByUsername_inMigration_returnsFalse() throws Exception {
+        User user = new User();
+        user.setInMigration(true);
+        when(userDao.getUserByUsername("test")).thenReturn(user);
+        boolean exists = defaultUserService.userExistsByUsername("test");
+        assertThat("exists", exists, equalTo(false));
+    }
+
+    @Test
+    public void userExistsByUsername_inMigrationFalse_returnsTrue() throws Exception {
+        User user = new User();
+        user.setInMigration(false);
+        when(userDao.getUserByUsername("test")).thenReturn(user);
+        boolean exists = defaultUserService.userExistsByUsername("test");
+        assertThat("exists", exists, equalTo(true));
+    }
+
+    @Test
+    public void userExistsByUsername_inMigrationIsNull_returnsTrue() throws Exception {
+        User user = new User();
+        user.setInMigration(null);
+        when(userDao.getUserByUsername("test")).thenReturn(user);
+        boolean exists = defaultUserService.userExistsByUsername("test");
+        assertThat("exists", exists, equalTo(true));
+    }
+
+    @Test
+    public void userExistsByUsername_userIsNull_returnsFalse() throws Exception {
+        when(userDao.getUserByUsername("test")).thenReturn(null);
+        boolean exists = defaultUserService.userExistsByUsername("test");
+        assertThat("exists", exists, equalTo(false));
     }
 
     @Test
