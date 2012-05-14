@@ -1,5 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.migration;
 
+import org.openstack.docs.identity.api.v2.UserList;
+
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
@@ -133,7 +135,7 @@ public class CloudMigrationService {
         return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createEndpoints(list));
     }
 
-    public String migrateUserByUsername(String username, boolean enable) throws Exception {
+    public String migrateUserByUsername(String username, boolean enable, String domainId) throws Exception {
         client = new MigrationClient();
 		client.setCloud20Host(config.getString("cloudAuth20url"));
 
@@ -155,25 +157,9 @@ public class CloudMigrationService {
             CredentialListType credentialListType = client.getUserCredentials(adminToken, user.getId());
             credentialListType.getCredential();
 
-            String apiKey = "";
-            String password = "";
-
-            try {
-                List<JAXBElement<? extends CredentialType>> creds = credentialListType.getCredential();
-                for(JAXBElement<? extends CredentialType> cred : creds){
-                    if(cred.getDeclaredType().isAssignableFrom(ApiKeyCredentials.class)){
-                        ApiKeyCredentials apiKeyCredentials = (ApiKeyCredentials)cred.getValue();
-                        apiKey = apiKeyCredentials.getApiKey();
-                    }
-                    else if(cred.getDeclaredType().isAssignableFrom(PasswordCredentialsRequiredUsername.class)){
-                        PasswordCredentialsRequiredUsername passwordCredentials = (PasswordCredentialsRequiredUsername)cred.getValue();
-                        password = passwordCredentials.getPassword();
-                    }
-                }
-            } catch (Exception cex){
-                
-            }
-
+            String apiKey = getApiKey(credentialListType);
+            String password = getPassword(credentialListType);
+            
             if(password.equals(""))
                 password = Password.generateRandom(false).getValue();
 
@@ -185,22 +171,9 @@ public class CloudMigrationService {
                 user.setId(null);
 
             // CREATE NEW USER
-            com.rackspace.idm.domain.entity.User newUser = addMigrationUser(user, apiKey, password, secretQA);
+            com.rackspace.idm.domain.entity.User newUser = addMigrationUser(user, apiKey, password, secretQA, domainId);
 
-            AuthenticateResponse authenticateResponse;
-            try {
-                if(!apiKey.equals(""))
-                    authenticateResponse = client.authenticateWithApiKey(username, apiKey);
-                else if(!password.equals(""))
-                    authenticateResponse = client.authenticateWithPassword(username, password);
-                else {
-                    throw new BadRequestException("Failed migration with incomplete credential information.");
-                }
-            }
-            catch(Exception ex) {
-                unmigrateUserByUsername(username);
-                throw new BadRequestException("Failed migration with incomplete credential information.");
-            }
+            AuthenticateResponse authenticateResponse = authenticate(username, apiKey, password);
 
             UserForAuthenticateResponse cloudUser = authenticateResponse.getUser();
             String userToken = authenticateResponse.getToken().getId();
@@ -218,10 +191,91 @@ public class CloudMigrationService {
                 newUser.setInMigration(false);
                 userService.updateUserById(newUser, false);
             }
+
+            if (isUserAdmin(cloudUser)) {
+                UserList users = null;
+
+                try {
+                    users = client.getUsers(userToken);
+                } catch (JAXBException e) {
+                }
+
+                if (users != null) {
+                    for (User childUser : users.getUser()) {
+                        if (newUser.getUsername().equalsIgnoreCase(childUser.getUsername())) {
+                            continue;
+                        }
+                        migrateUserByUsername(childUser.getUsername(), enable, newUser.getDomainId());
+                    }
+                }
+            }
+
             return newUser.getId();
         }
         throw new UnauthorizedAccessException("Not Authorized.");
     }
+
+	private String getApiKey(CredentialListType credentialListType) {
+		String apiKey = "";
+		
+		try {
+		    List<JAXBElement<? extends CredentialType>> creds = credentialListType.getCredential();
+		    for(JAXBElement<? extends CredentialType> cred : creds){
+		        if(cred.getDeclaredType().isAssignableFrom(ApiKeyCredentials.class)){
+		            ApiKeyCredentials apiKeyCredentials = (ApiKeyCredentials)cred.getValue();
+		            apiKey = apiKeyCredentials.getApiKey();
+		        }
+		    }
+		} catch (Exception cex){
+		    
+		}
+		return apiKey;
+	}
+
+	private String getPassword(CredentialListType credentialListType) {
+		String password = "";
+
+		try {
+		    List<JAXBElement<? extends CredentialType>> creds = credentialListType.getCredential();
+		    for(JAXBElement<? extends CredentialType> cred : creds){
+		        if(cred.getDeclaredType().isAssignableFrom(PasswordCredentialsRequiredUsername.class)){
+		            PasswordCredentialsRequiredUsername passwordCredentials = (PasswordCredentialsRequiredUsername)cred.getValue();
+		            password = passwordCredentials.getPassword();
+		        }
+		    }
+		} catch (Exception cex){
+		    
+		}
+		return password;
+	}
+
+	private AuthenticateResponse authenticate(String username, String apiKey,
+			String password) throws Exception {
+		AuthenticateResponse authenticateResponse;
+		try {
+		    if(!apiKey.equals(""))
+		        authenticateResponse = client.authenticateWithApiKey(username, apiKey);
+		    else if(!password.equals(""))
+		        authenticateResponse = client.authenticateWithPassword(username, password);
+		    else {
+		        throw new BadRequestException("Failed migration with incomplete credential information.");
+		    }
+		}
+		catch(Exception ex) {
+		    unmigrateUserByUsername(username);
+		    throw new BadRequestException("Failed migration with incomplete credential information.");
+		}
+		return authenticateResponse;
+	}
+
+	private boolean isUserAdmin(UserForAuthenticateResponse cloudUser) {
+		for (Role role : cloudUser.getRoles().getRole()) {
+		    if ("identity:user-admin".equalsIgnoreCase(role.getName())) {
+		        return true;
+		    }
+		}
+		return false;
+	}
 
     public void setMigratedUserEnabledStatus(String username, boolean enable) {
         com.rackspace.idm.domain.entity.User user = userService.getUser(username);
@@ -239,6 +293,38 @@ public class CloudMigrationService {
             throw new NotFoundException("User not found.");
         if(user.getInMigration() == null) // Used so we do not delete a user who wasn't previously migrated.
             throw new NotFoundException("User not found.");
+
+        String adminToken = getAdminToken();
+        
+        CredentialListType credentialListType = client.getUserCredentials(adminToken, user.getId());
+        String apiKey = getApiKey(credentialListType);
+        String password = getPassword(credentialListType);
+        
+        AuthenticateResponse authenticateResponse = authenticate(username, apiKey, password);
+        UserForAuthenticateResponse cloudUser = authenticateResponse.getUser();
+        String userToken = authenticateResponse.getToken().getId();
+
+        if (isUserAdmin(cloudUser)) {
+            UserList users = null;
+
+            try {
+                users = client.getUsers(userToken);
+            } catch (JAXBException e) {
+            }
+
+            if (users != null) {
+                for (User childUser : users.getUser()) {
+                    if (user.getUsername().equalsIgnoreCase(childUser.getUsername())) {
+                        continue;
+                    }
+                    try {
+                        unmigrateUserByUsername(childUser.getUsername());
+                    } catch (Exception e) {
+                    }
+                }
+            }
+        }
+
         userService.deleteUser(username);
     }
     
@@ -256,7 +342,7 @@ public class CloudMigrationService {
         }
 	}
     
-    private com.rackspace.idm.domain.entity.User addMigrationUser(User user, String apiKey, String password, SecretQA secretQA) {
+    private com.rackspace.idm.domain.entity.User addMigrationUser(User user, String apiKey, String password, SecretQA secretQA, String domainId) {
         com.rackspace.idm.domain.entity.User newUser = new com.rackspace.idm.domain.entity.User();
         newUser.setId(user.getId());
         newUser.setUsername(user.getUsername());
@@ -279,6 +365,10 @@ public class CloudMigrationService {
 
         newUser.setInMigration(true);
         newUser.setMigrationDate(new DateTime());
+
+        if (domainId != null) {
+            newUser.setDomainId(domainId);
+        }
 
         userService.addUser(newUser);
         return newUser;
