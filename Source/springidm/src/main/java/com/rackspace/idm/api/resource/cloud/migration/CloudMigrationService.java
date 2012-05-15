@@ -121,7 +121,7 @@ public class CloudMigrationService {
         com.rackspace.idm.domain.entity.User user = userService.getUser(username);
         if(user == null)
             throw new NotFoundException("User not found.");
-        List<TenantRole> roles = tenantService.getTenantRolesForUser(user, null);
+        List<TenantRole> roles = tenantService.getGlobalRolesForUser(user);
         return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListJaxb(roles)));
     }
 
