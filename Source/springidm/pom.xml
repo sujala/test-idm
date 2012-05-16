@@ -942,6 +942,45 @@
                 </plugins>
             </build>
         </profile>
+        <profile>
+            <id>soapui-test</id>
+            <activation>
+                <property>
+                    <name>soapui-test</name>
+                </property>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>eviware</groupId>
+                        <artifactId>maven-soapui-plugin</artifactId>
+                        <version>${soapui.version}</version>
+                        <configuration>
+                            <projectFile>soapui/soapUI/foundationAPI/FoundationAPI-DEV.xml</projectFile>
+                            <junitReport>true</junitReport>
+                            <testSuite>FoundationAuth-GA TestSuite</testSuite>
+                            <testSuite>FoundationAuth-GA NegativeTestSuite</testSuite>
+                            <outputFolder>soapui/dev-test-results</outputFolder>
+                            <projectProperties>
+                                <property>endpoint=http://t-api1.cidm.iad2.corp.rackspace.com:4931</property>
+                                <property>endpointjson=http://t-api1.cidm.iad2.corp.rackspace.com</property>
+                            </projectProperties>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>soapui-test</id>
+                                <phase>integration-test</phase>
+                                <goals>
+                                    <goal>test</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 
     <repositories>
