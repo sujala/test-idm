@@ -73,6 +73,27 @@ public class RolesResourceTest {
         verify(applicationService).getClientRoleById("id");
     }
 
+    @Test(expected = BadRequestException.class)
+    public void validateRole_nullRoleName_throwsBadRequestException() throws Exception {
+        Role role = validRole();
+        role.setName(null);
+        rolesResource.validateRole(role);
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void validateRole_emptyStringRoleName_throwsBadRequestException() throws Exception {
+        Role role = validRole();
+        role.setName("");
+        rolesResource.validateRole(role);
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void validateRole_blankStringRoleName_throwsBadRequestException() throws Exception {
+        Role role = validRole();
+        role.setName(" ");
+        rolesResource.validateRole(role);
+    }
+
     private Role validRole() {
         Role role = new Role();
         role.setName("roleName");

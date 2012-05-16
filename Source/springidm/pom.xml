@@ -962,7 +962,7 @@
                             <junitReport>true</junitReport>
                             <testSuite>FoundationAuth-GA TestSuite</testSuite>
                             <testSuite>FoundationAuth-GA NegativeTestSuite</testSuite>
-                            <outputFolder>soapui/dev-test-results</outputFolder>
+                            <outputFolder>soapui/test-test-results</outputFolder>
                             <projectProperties>
                                 <property>endpoint=http://t-api1.cidm.iad2.corp.rackspace.com:4931</property>
                                 <property>endpointjson=http://t-api1.cidm.iad2.corp.rackspace.com</property>

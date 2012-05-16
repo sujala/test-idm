@@ -160,7 +160,7 @@ public class RolesResource extends ParentResource {
         if(role==null){
            throw new BadRequestException("Role cannot be null");
         }
-        if(role.getName()==null || role.getName().isEmpty()){
+        if(StringUtils.isBlank(role.getName())){
             throw new BadRequestException("Role name is not valid");
         }
         if(role.getApplicationId()==null || role.getApplicationId().isEmpty()){
