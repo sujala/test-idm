@@ -135,7 +135,7 @@ public class CloudMigrationService {
         return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createEndpoints(list));
     }
 
-    public String migrateUserByUsername(String username, boolean enable, String domainId) throws Exception {
+    public MigrateUserResponseType migrateUserByUsername(String username, boolean enable, String domainId) throws Exception {
         client = new MigrationClient();
 		client.setCloud20Host(config.getString("cloudAuth20url"));
 
@@ -158,7 +158,8 @@ public class CloudMigrationService {
             credentialListType.getCredential();
 
             String apiKey = getApiKey(credentialListType);
-            String password = getPassword(credentialListType);
+            String cloudPassword = getPassword(credentialListType);
+            String password = cloudPassword;
             
             if(password.equals(""))
                 password = Password.generateRandom(false).getValue();
@@ -182,7 +183,9 @@ public class CloudMigrationService {
             addUserGlobalRoles(newUser, cloudUser.getRoles());
 
             // Get Tenants
-            addTenantsForUserByToken(newUser, adminToken, userToken);
+            // Using Endpoints call to get both Tenants and Endpoint information
+            EndpointList endpoints = client.getEndpointsByToken(adminToken, userToken);
+            addTenantsForUserByToken(newUser, endpoints);
 
             // Groups
             addUserGroups(adminToken, user.getId(), legacyId);
@@ -197,7 +200,7 @@ public class CloudMigrationService {
 
                 try {
                     users = client.getUsers(userToken);
-                } catch (JAXBException e) {
+                } catch (Exception e) {
                 }
 
                 if (users != null) {
@@ -210,10 +213,57 @@ public class CloudMigrationService {
                 }
             }
 
-            return newUser.getId();
+            UserType userResponse = validateUser(user, credentialListType, apiKey, cloudPassword, secretQA, cloudUser, endpoints);
+            MigrateUserResponseType result = new MigrateUserResponseType();
+            result.getUsers().add(userResponse);
+
+            return result;
         }
         throw new UnauthorizedAccessException("Not Authorized.");
     }
+
+	private UserType validateUser(User user, CredentialListType credentialListType, String apiKey,
+			String password, SecretQA secretQA, UserForAuthenticateResponse cloudUser, EndpointList endpoints) {
+
+        UserType result = new UserType();
+        com.rackspace.idm.domain.entity.User newUser = userService.getUser(user.getUsername());
+
+        List<String> commentList = new ArrayList<String>();
+
+        result.setId(newUser.getId());
+        result.setUsername(newUser.getUsername());
+        result.setEmail(newUser.getEmail());
+        result.setApiKey(newUser.getApiKey());
+        result.setPassword(newUser.getPassword());
+        result.setSecretQuestion(newUser.getSecretQuestion());
+        result.setSecretAnswer(newUser.getSecretAnswer());
+
+        checkIfEqual(user.getId(), newUser.getId(), commentList, "id");
+        checkIfEqual(user.getEmail(), newUser.getEmail(), commentList, "email");
+        checkIfEqual(apiKey, newUser.getApiKey(), commentList, "apiKey");
+        checkIfEqual(password, newUser.getPassword(), commentList, "password");
+
+        if (secretQA != null) {
+            checkIfEqual(secretQA.getQuestion(), newUser.getSecretQuestion(), commentList, "secretQuestion");
+            checkIfEqual(secretQA.getAnswer(), newUser.getSecretAnswer(), commentList, "secretAnswer");
+        }
+
+        String comment = StringUtils.join(commentList, ",");
+
+        result.setComment(comment);
+        result.setValid(StringUtils.isBlank(comment));
+
+		return result;
+	}
+
+	private void checkIfEqual(String first, String second, List<String> commentList, String id) {
+		String defaultFirst = StringUtils.defaultString(first);
+        String defaultSecond = StringUtils.defaultString(second);
+        
+        if (!defaultFirst.equals(defaultSecond)) {
+            commentList.add(id + ":" + defaultFirst);
+        }
+	}
 
 	private String getApiKey(CredentialListType credentialListType) {
 		String apiKey = "";
@@ -309,7 +359,7 @@ public class CloudMigrationService {
 
             try {
                 users = client.getUsers(userToken);
-            } catch (JAXBException e) {
+            } catch (Exception e) {
             }
 
             if (users != null) {
@@ -403,12 +453,7 @@ public class CloudMigrationService {
         }
     }
 
-    private void addTenantsForUserByToken(com.rackspace.idm.domain.entity.User user, String adminToken, String token) throws Exception {
-        client = new MigrationClient();
-		client.setCloud20Host(config.getString("cloudAuth20url"));
-        client.setCloud11Host(config.getString("cloudAuth11url"));
-        // Using Endpoints call to get both Tenants and Endpoint information
-        EndpointList endpoints = client.getEndpointsByToken(adminToken, token);
+    private void addTenantsForUserByToken(com.rackspace.idm.domain.entity.User user, EndpointList endpoints) throws Exception {
         if(endpoints != null) {
             for (Endpoint endpoint : endpoints.getEndpoint()) {
                 // Add the Tenant if it doesn't exist.

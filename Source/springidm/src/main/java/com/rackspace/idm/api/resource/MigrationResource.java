@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource;
 
 import com.rackspace.idm.api.resource.cloud.migration.CloudMigrationService;
+import com.rackspace.idm.api.resource.cloud.migration.MigrateUserResponseType;
 import com.rackspace.idm.api.resource.tenant.TenantsResource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -52,8 +53,8 @@ public class MigrationResource {
     @POST
     @Path("cloud/users/{username}")
     public Response migrateCloudUserByUsername(@PathParam("username") String username) throws Exception {
-        String id = cloudMigrationService.migrateUserByUsername(username, true, null);
-        return Response.created(uriInfo.getRequestUriBuilder().path(id).build()).build();
+    	MigrateUserResponseType migrateUserResponseType = cloudMigrationService.migrateUserByUsername(username, true, null);
+    	return Response.status(Response.Status.OK).entity(migrateUserResponseType).build();
     }
 
     @PUT
