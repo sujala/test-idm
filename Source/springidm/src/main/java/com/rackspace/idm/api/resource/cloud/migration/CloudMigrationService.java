@@ -188,7 +188,8 @@ public class CloudMigrationService {
             addTenantsForUserByToken(newUser, endpoints);
 
             // Groups
-            addUserGroups(adminToken, user.getId(), legacyId);
+            Groups groups = client.getGroupsForUser(adminToken, legacyId);
+            addUserGroups(user.getId(), groups);
 
             if(enable){
                 newUser.setInMigration(false);
@@ -213,7 +214,7 @@ public class CloudMigrationService {
                 }
             }
 
-            UserType userResponse = validateUser(user, credentialListType, apiKey, cloudPassword, secretQA, cloudUser, endpoints);
+            UserType userResponse = validateUser(user, credentialListType, apiKey, cloudPassword, secretQA, cloudUser, groups, endpoints);
             MigrateUserResponseType result = new MigrateUserResponseType();
             result.getUsers().add(userResponse);
 
@@ -223,7 +224,7 @@ public class CloudMigrationService {
     }
 
 	private UserType validateUser(User user, CredentialListType credentialListType, String apiKey,
-			String password, SecretQA secretQA, UserForAuthenticateResponse cloudUser, EndpointList endpoints) {
+			String password, SecretQA secretQA, UserForAuthenticateResponse cloudUser, Groups groups, EndpointList endpoints) {
 
         UserType result = new UserType();
         com.rackspace.idm.domain.entity.User newUser = userService.getUser(user.getUsername());
@@ -253,7 +254,74 @@ public class CloudMigrationService {
         result.setComment(comment);
         result.setValid(StringUtils.isBlank(comment));
 
+        List<TenantRole> roles = tenantService.getGlobalRolesForUser(newUser);
+        validateRoles(roles, cloudUser.getRoles(), result);
+
+        List<com.rackspace.idm.domain.entity.Group> newGroups = cloudGroupService.getGroupsForUser(newUser.getId());
+        validateGroups(groups, newGroups, result);
+
 		return result;
+	}
+
+	private void validateGroups(Groups groups, List<com.rackspace.idm.domain.entity.Group> newGroups, UserType result) {
+		List<String> commentList;
+		
+		for (Group group : groups.getGroup()) {
+            commentList = new ArrayList<String>();
+
+            String newGroupName = null;
+            String newGroupId = null;
+
+            for (com.rackspace.idm.domain.entity.Group newGroup : newGroups) {
+                if (group.getName().equals(newGroup.getName())) {
+                    newGroupName = newGroup.getName();
+                    newGroupId = String.valueOf(newGroup.getGroupId());
+                    break;
+                }
+            }
+
+            checkIfEqual(group.getName(), newGroupName, commentList, "name");
+            checkIfEqual(group.getId(), newGroupId, commentList, "id");
+
+            GroupType groupResponse = new GroupType();
+            groupResponse.setName(group.getName());
+            groupResponse.setId(group.getId());
+
+            String comment = StringUtils.join(commentList, ",");
+            groupResponse.setComment(comment);
+            groupResponse.setValid(StringUtils.isBlank(comment));
+
+            result.getGroups().add(groupResponse);
+        }
+	}
+
+	private void validateRoles(List<TenantRole> roles, RoleList newRoles, UserType user) {
+		List<String> commentList;
+		
+        for(Role role : newRoles.getRole()) {
+            commentList = new ArrayList<String>();
+            String newRoleName = null;
+            String newRoleId = null;
+            for (TenantRole newRole : roles) {
+                if (role.getName().equals(newRole.getName())) {
+                    newRoleName = role.getName();
+                    newRoleId = role.getId();
+                    break;
+                }
+            }
+
+            checkIfEqual(role.getName(), newRoleName, commentList, "name");
+            checkIfEqual(role.getId(), newRoleId, commentList, "id");
+
+            RoleType roleResponse = new RoleType();
+            roleResponse.setName(role.getName());
+            roleResponse.setId(role.getId());
+            String comment = StringUtils.join(commentList, ",");
+            roleResponse.setComment(comment);
+            roleResponse.setValid(StringUtils.isBlank(comment));
+
+            user.getRoles().add(roleResponse);
+        }
 	}
 
 	private void checkIfEqual(String first, String second, List<String> commentList, String id) {
@@ -424,9 +492,8 @@ public class CloudMigrationService {
         return newUser;
     }
 
-    private void addUserGroups(String adminToken, String userId, String legacyId) throws Exception {
+    private void addUserGroups(String userId, Groups groups) throws Exception {
         try {
-            Groups groups = client.getGroupsForUser(adminToken, legacyId);
             for(Group group : groups.getGroup()){
                 cloudGroupService.addGroupToUser(Integer.parseInt(group.getId()), userId);
             }
@@ -605,16 +672,6 @@ public class CloudMigrationService {
                 return b;
         }
         return null;
-    }
-    
-    private void addUserGroups(String userId, Groups groups) throws Exception {
-        try {
-            for (Group group : groups.getGroup()) {
-                String xxx = group.getId();
-            }
-        } catch(Exception gex) {
-
-        }
     }
 
     public MigrationClient getClient() {
