@@ -54,4 +54,42 @@
 
     <aop:aspectj-autoproxy/>
 
+    <util:map id="osCommonNsPrefixMap"
+              key-type="java.lang.String"
+              value-type="java.lang.String">
+
+        <entry key="http://docs.openstack.org/common/api/v1.0">
+            <value/>
+        </entry>
+
+        <entry key="http://www.w3.org/2005/Atom">
+            <value>atom</value>
+        </entry>
+
+    </util:map>
+
+        <util:map id="userv11NsPrefixMap"
+
+              key-type="java.lang.String"
+
+              value-type="java.lang.String">
+
+        <entry key="http://docs.rackspacecloud.com/auth/api/v1.1">
+            <value/>
+        </entry>
+
+        <entry key="http://www.w3.org/2005/Atom">
+            <value>atom</value>
+        </entry>
+
+        <entry key="http://idm.api.rackspace.com/v1.0">
+            <value>rax-idmv10</value>
+        </entry>
+
+        <entry key="http://docs.openstack.org/common/api/v1.0">
+            <value>os-v10</value>
+        </entry>
+
+    </util:map>
+
 </beans>

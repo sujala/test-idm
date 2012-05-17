@@ -115,10 +115,10 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     public ResponseBuilder getVersion(UriInfo uriInfo) throws JAXBException {
         final String responseXml = cloudContractDescriptionBuilder.buildVersion11Page();
-        JAXBContext context = JAXBContext.newInstance("org.openstack.docs.common.api.v1:org.w3._2005.atom");
+        JAXBContext context = JAXBContext.newInstance(VersionChoice.class);
         Unmarshaller unmarshaller = context.createUnmarshaller();
         JAXBElement<VersionChoice> versionChoice = (JAXBElement<VersionChoice>) unmarshaller.unmarshal(new StringReader(responseXml));
-        return Response.ok(versionChoice);
+        return Response.ok(versionChoice.getValue());
     }
 
     // Token Methods
@@ -201,7 +201,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             String requestURL = request.getRequestURL().toString();
             String versionBaseUrl = requestURL.substring(0, requestURL.lastIndexOf("/token/") + 1);
-            return Response.ok(OBJ_FACTORY.createToken(this.authConverterCloudV11.toCloudV11TokenJaxb(usa, versionBaseUrl)));
+            return Response.ok(OBJ_FACTORY.createToken(this.authConverterCloudV11.toCloudV11TokenJaxb(usa, versionBaseUrl)).getValue());
 
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
@@ -336,7 +336,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             String id = userDO.getId();
             URI uri = uriInfo.getRequestUriBuilder().path(id).build();
             com.rackspacecloud.docs.auth.api.v1.User cloud11User = userConverterCloudV11.toCloudV11User(userDO, endpoints);
-            return Response.created(uri).entity(OBJ_FACTORY.createUser(cloud11User));
+            return Response.created(uri).entity(OBJ_FACTORY.createUser(cloud11User).getValue());
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }
