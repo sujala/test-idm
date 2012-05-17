@@ -129,11 +129,16 @@ public class CloudMigrationService {
         com.rackspace.idm.domain.entity.User user = userService.getUser(username);
         if(user == null)
             throw new NotFoundException("User not found.");
-        ScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), config.getString("cloudAuth.clientId"));
-        List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(sa);
-        EndpointList list = endpointConverterCloudV20.toEndpointList(endpoints);
+        EndpointList list = getEndpointsForUser(user.getUniqueId());
         return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createEndpoints(list));
     }
+
+	private EndpointList getEndpointsForUser(String userId) {
+		ScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(userId, config.getString("cloudAuth.clientId"));
+        List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(sa);
+        EndpointList list = endpointConverterCloudV20.toEndpointList(endpoints);
+		return list;
+	}
 
     public MigrateUserResponseType migrateUserByUsername(String username, boolean enable, String domainId) throws Exception {
         client = new MigrationClient();
@@ -260,10 +265,53 @@ public class CloudMigrationService {
         List<com.rackspace.idm.domain.entity.Group> newGroups = cloudGroupService.getGroupsForUser(newUser.getId());
         validateGroups(groups, newGroups, result);
 
+        EndpointList newEndpoints = getEndpointsForUser(newUser.getUniqueId());
+        validateEndpoints(endpoints, newEndpoints, result);
+
 		return result;
 	}
 
-	private void validateGroups(Groups groups, List<com.rackspace.idm.domain.entity.Group> newGroups, UserType result) {
+	private void validateEndpoints(EndpointList endpoints, EndpointList newEndpoints, UserType result) {
+		List<String> commentList;
+		
+		for (Endpoint endpoint : endpoints.getEndpoint()) {
+            commentList = new ArrayList<String>();
+
+            String newEndpointName = null;
+            String newEndpointType = null;
+            String newEndpointTenantId = null;
+            String newEndpointRegion = null;
+
+            for (Endpoint newEndpoint : newEndpoints.getEndpoint()) {
+                if (endpoint.getName().equals(newEndpoint.getName())) {
+                    newEndpointName = newEndpoint.getName();
+                    newEndpointType = newEndpoint.getType();
+                    newEndpointTenantId = newEndpoint.getTenantId();
+                    newEndpointRegion = newEndpoint.getRegion();
+                    break;
+                }
+            }
+
+            checkIfEqual(endpoint.getName(), newEndpointName, commentList, "name");
+            checkIfEqual(endpoint.getType(), newEndpointType, commentList, "type");
+            checkIfEqual(endpoint.getTenantId(), newEndpointTenantId, commentList, "id");
+            checkIfEqual(endpoint.getRegion(), newEndpointRegion, commentList, "region");
+
+            EndpointType endpointResponse = new EndpointType();
+            endpointResponse.setName(newEndpointName);
+            endpointResponse.setType(newEndpointType);
+            endpointResponse.setTenantId(newEndpointTenantId);
+            endpointResponse.setRegion(newEndpointRegion);
+
+            String comment = StringUtils.join(commentList, ",");
+            endpointResponse.setComment(comment);
+            endpointResponse.setValid(StringUtils.isBlank(comment));
+
+            result.getEndpoints().add(endpointResponse);
+        }
+	}
+
+	private void validateGroups(Groups groups, List<com.rackspace.idm.domain.entity.Group> newGroups, UserType user) {
 		List<String> commentList;
 		
 		for (Group group : groups.getGroup()) {
@@ -284,14 +332,14 @@ public class CloudMigrationService {
             checkIfEqual(group.getId(), newGroupId, commentList, "id");
 
             GroupType groupResponse = new GroupType();
-            groupResponse.setName(group.getName());
-            groupResponse.setId(group.getId());
+            groupResponse.setName(newGroupName);
+            groupResponse.setId(newGroupId);
 
             String comment = StringUtils.join(commentList, ",");
             groupResponse.setComment(comment);
             groupResponse.setValid(StringUtils.isBlank(comment));
 
-            result.getGroups().add(groupResponse);
+            user.getGroups().add(groupResponse);
         }
 	}
 
@@ -314,8 +362,8 @@ public class CloudMigrationService {
             checkIfEqual(role.getId(), newRoleId, commentList, "id");
 
             RoleType roleResponse = new RoleType();
-            roleResponse.setName(role.getName());
-            roleResponse.setId(role.getId());
+            roleResponse.setName(newRoleName);
+            roleResponse.setId(newRoleId);
             String comment = StringUtils.join(commentList, ",");
             roleResponse.setComment(comment);
             roleResponse.setValid(StringUtils.isBlank(comment));
@@ -324,12 +372,12 @@ public class CloudMigrationService {
         }
 	}
 
-	private void checkIfEqual(String first, String second, List<String> commentList, String id) {
-		String defaultFirst = StringUtils.defaultString(first);
-        String defaultSecond = StringUtils.defaultString(second);
+	private void checkIfEqual(String oldValue, String newValue, List<String> commentList, String id) {
+		String defaultOldValue = StringUtils.defaultString(oldValue);
+        String defaultNewValue = StringUtils.defaultString(newValue);
         
-        if (!defaultFirst.equals(defaultSecond)) {
-            commentList.add(id + ":" + defaultFirst);
+        if (!defaultOldValue.equals(defaultNewValue)) {
+            commentList.add(id + ":" + defaultOldValue);
         }
 	}
 
