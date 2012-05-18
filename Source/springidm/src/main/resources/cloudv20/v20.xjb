@@ -2,28 +2,7 @@
 <jaxb:bindings version="2.1" xmlns:jaxb="http://java.sun.com/xml/ns/jaxb"
                xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:annox="http://annox.dev.java.net"
                jaxb:extensionBindingPrefixes="annox">
-    <jaxb:bindings schemaLocation="credentials.xsd" node="/xs:schema">
-        <jaxb:bindings node="xs:complexType[@name='AuthenticationRequest']">
-            <annox:annotate>
-                <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="auth"/>
-            </annox:annotate>
-        </jaxb:bindings>
-        <jaxb:bindings node="xs:complexType[@name='CredentialType']">
-            <annox:annotate>
-                <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="credential"/>
-            </annox:annotate>
-        </jaxb:bindings>
-        <jaxb:bindings node="xs:complexType[@name='CredentialListType']">
-            <annox:annotate>
-                <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="credentials"/>
-            </annox:annotate>
-        </jaxb:bindings>
-        <jaxb:bindings node="xs:complexType[@name='PasswordCredentialsRequiredUsername']">
-            <annox:annotate>
-                <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="passwordCredentials"/>
-            </annox:annotate>
-        </jaxb:bindings>
-    </jaxb:bindings>
+
     <jaxb:bindings schemaLocation="endpoints.xsd" node="/xs:schema">
         <jaxb:bindings node="xs:complexType[@name='Endpoint']">
             <annox:annotate>

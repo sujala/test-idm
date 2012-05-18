@@ -1,4 +1,4 @@
-package com.rackspace.idm.domain.config.providers.cloudv11;
+package com.rackspace.idm.domain.config.providers.cloudv20;
 
 /**
  * Created by IntelliJ IDEA.
@@ -8,14 +8,12 @@ package com.rackspace.idm.domain.config.providers.cloudv11;
  * To change this template use File | Settings | File Templates.
  */
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import com.rackspace.idm.domain.config.providers.PackageClassDiscoverer;
+import com.sun.jersey.api.json.JSONConfiguration;
+import com.sun.jersey.api.json.JSONJAXBContext;
+import com.sun.xml.bind.marshaller.NamespacePrefixMapper;
+import org.apache.log4j.Logger;
+import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import javax.ws.rs.Produces;
@@ -27,13 +25,14 @@ import javax.ws.rs.ext.Provider;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
-
-import com.rackspace.idm.domain.config.providers.PackageClassDiscoverer;
-import org.apache.log4j.Logger;
-import org.springframework.stereotype.Component;
-import com.sun.jersey.api.json.JSONConfiguration;
-import com.sun.jersey.api.json.JSONJAXBContext;
-import com.sun.xml.bind.marshaller.NamespacePrefixMapper;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * This is a JAXBElement provider with awareness of atom links and other
@@ -44,12 +43,12 @@ import com.sun.xml.bind.marshaller.NamespacePrefixMapper;
 @Provider
 @Produces("application/xml")
 @Component
-public class Core11XMLWriter extends NamespacePrefixMapper implements
+public class Core20XMLWriter extends NamespacePrefixMapper implements
         MessageBodyWriter<Object> {
-    public static final Logger LOG = Logger.getLogger(Core11XMLWriter.class);
+    public static final Logger LOG = Logger.getLogger(Core20XMLWriter.class);
 
-    @Resource(name = "corev11NsPrefixMap")
-    private Map<String, String> corev11NsPrefixMap;
+    @Resource(name = "corev20NsPrefixMap")
+    private Map<String, String> corev20NsPrefixMap;
 
     private static Set<Class<?>> classes = new HashSet<Class<?>>();
 
@@ -62,11 +61,11 @@ public class Core11XMLWriter extends NamespacePrefixMapper implements
             JSONConfiguration jsonConfiguration = JSONConfiguration.natural().rootUnwrapping(false).build();
 
             jaxbContext = new JSONJAXBContext(jsonConfiguration,
-                    "com.rackspacecloud.docs.auth.api.v1" );
+                    "org.openstack.docs.identity.api.v2" );
 
 
             classes = PackageClassDiscoverer.findClassesIn(
-                    "com.rackspacecloud.docs.auth.api.v1");
+                    "org.openstack.docs.identity.api.v2");
 
         } catch (Exception e) {
             LOG.error("Error in static initializer.  - " + e.getMessage());
@@ -126,6 +125,6 @@ public class Core11XMLWriter extends NamespacePrefixMapper implements
 
     public String getPreferredPrefix(String namespaceUri, String suggestion,
                                      boolean requirePrefix) {
-        return corev11NsPrefixMap.get(namespaceUri);
+        return corev20NsPrefixMap.get(namespaceUri);
     }
 }

@@ -518,7 +518,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 user.setApiKey(userCredentials.getApiKey());
                 userService.updateUser(user, false);
             }
-            return Response.ok(credentials).status(Status.CREATED);
+            return Response.ok(credentials.getValue()).status(Status.CREATED);
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
@@ -621,7 +621,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
             }
 
-            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createAccess(auth));
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createAccess(auth).getValue());
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }

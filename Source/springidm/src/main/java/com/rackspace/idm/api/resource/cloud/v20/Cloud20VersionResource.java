@@ -62,10 +62,10 @@ public class Cloud20VersionResource {
     @GET
     public Response getCloud20VersionInfo() throws JAXBException {
         String responseXml = cloudContractDescriptionBuilder.buildVersion20Page();
-        JAXBContext context = JAXBContext.newInstance("org.openstack.docs.common.api.v1:org.w3._2005.atom");
+        JAXBContext context = JAXBContext.newInstance(VersionChoice.class);
         Unmarshaller unmarshaller = context.createUnmarshaller();
         JAXBElement<VersionChoice> versionChoice = (JAXBElement<VersionChoice>) unmarshaller.unmarshal(new StringReader(responseXml));
-        return Response.ok(versionChoice).build();
+        return Response.ok(versionChoice.getValue()).build();
     }
 
     public Response getInternalCloud20VersionInfo() {
