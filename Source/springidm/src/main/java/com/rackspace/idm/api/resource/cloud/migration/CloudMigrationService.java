@@ -129,13 +129,18 @@ public class CloudMigrationService {
         com.rackspace.idm.domain.entity.User user = userService.getUser(username);
         if(user == null)
             throw new NotFoundException("User not found.");
-        ScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), config.getString("cloudAuth.clientId"));
-        List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(sa);
-        EndpointList list = endpointConverterCloudV20.toEndpointList(endpoints);
+        EndpointList list = getEndpointsForUser(user.getUniqueId());
         return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createEndpoints(list));
     }
 
-    public String migrateUserByUsername(String username, boolean enable, String domainId) throws Exception {
+	private EndpointList getEndpointsForUser(String userId) {
+		ScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(userId, config.getString("cloudAuth.clientId"));
+        List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(sa);
+        EndpointList list = endpointConverterCloudV20.toEndpointList(endpoints);
+		return list;
+	}
+
+    public MigrateUserResponseType migrateUserByUsername(String username, boolean enable, String domainId) throws Exception {
         client = new MigrationClient();
 		client.setCloud20Host(config.getString("cloudAuth20url"));
 
@@ -158,7 +163,8 @@ public class CloudMigrationService {
             credentialListType.getCredential();
 
             String apiKey = getApiKey(credentialListType);
-            String password = getPassword(credentialListType);
+            String cloudPassword = getPassword(credentialListType);
+            String password = cloudPassword;
             
             if(password.equals(""))
                 password = Password.generateRandom(false).getValue();
@@ -182,22 +188,28 @@ public class CloudMigrationService {
             addUserGlobalRoles(newUser, cloudUser.getRoles());
 
             // Get Tenants
-            addTenantsForUserByToken(newUser, adminToken, userToken);
+            // Using Endpoints call to get both Tenants and Endpoint information
+            EndpointList endpoints = client.getEndpointsByToken(adminToken, userToken);
+            addTenantsForUserByToken(newUser, endpoints);
 
             // Groups
-            addUserGroups(adminToken, user.getId(), legacyId);
+            Groups groups = client.getGroupsForUser(adminToken, legacyId);
+            addUserGroups(user.getId(), groups);
 
             if(enable){
                 newUser.setInMigration(false);
                 userService.updateUserById(newUser, false);
             }
 
+            UserType userResponse = validateUser(user, credentialListType, apiKey, cloudPassword, secretQA, cloudUser, groups, endpoints);
+            MigrateUserResponseType result = new MigrateUserResponseType();
+
             if (isUserAdmin(cloudUser)) {
                 UserList users = null;
 
                 try {
                     users = client.getUsers(userToken);
-                } catch (JAXBException e) {
+                } catch (Exception e) {
                 }
 
                 if (users != null) {
@@ -205,15 +217,171 @@ public class CloudMigrationService {
                         if (newUser.getUsername().equalsIgnoreCase(childUser.getUsername())) {
                             continue;
                         }
-                        migrateUserByUsername(childUser.getUsername(), enable, newUser.getDomainId());
+                        MigrateUserResponseType childResponse = migrateUserByUsername(childUser.getUsername(), enable, newUser.getDomainId());
+                        result.getUsers().addAll(childResponse.getUsers());
                     }
                 }
             }
 
-            return newUser.getId();
+            result.getUsers().add(userResponse);
+
+            return result;
         }
         throw new UnauthorizedAccessException("Not Authorized.");
     }
+
+	private UserType validateUser(User user, CredentialListType credentialListType, String apiKey,
+			String password, SecretQA secretQA, UserForAuthenticateResponse cloudUser, Groups groups, EndpointList endpoints) {
+
+        UserType result = new UserType();
+        com.rackspace.idm.domain.entity.User newUser = userService.getUser(user.getUsername());
+
+        List<String> commentList = new ArrayList<String>();
+
+        result.setId(newUser.getId());
+        result.setUsername(newUser.getUsername());
+        result.setEmail(newUser.getEmail());
+        result.setApiKey(newUser.getApiKey());
+        result.setPassword(newUser.getPassword());
+        result.setSecretQuestion(newUser.getSecretQuestion());
+        result.setSecretAnswer(newUser.getSecretAnswer());
+
+        checkIfEqual(user.getId(), newUser.getId(), commentList, "id");
+        checkIfEqual(user.getEmail(), newUser.getEmail(), commentList, "email");
+        checkIfEqual(apiKey, newUser.getApiKey(), commentList, "apiKey");
+        checkIfEqual(password, newUser.getPassword(), commentList, "password");
+
+        if (secretQA != null) {
+            checkIfEqual(secretQA.getQuestion(), newUser.getSecretQuestion(), commentList, "secretQuestion");
+            checkIfEqual(secretQA.getAnswer(), newUser.getSecretAnswer(), commentList, "secretAnswer");
+        }
+
+        String comment = StringUtils.join(commentList, ",");
+
+        result.setComment(comment);
+        result.setValid(StringUtils.isBlank(comment));
+
+        List<TenantRole> roles = tenantService.getGlobalRolesForUser(newUser);
+        validateRoles(roles, cloudUser.getRoles(), result);
+
+        List<com.rackspace.idm.domain.entity.Group> newGroups = cloudGroupService.getGroupsForUser(newUser.getId());
+        validateGroups(groups, newGroups, result);
+
+        EndpointList newEndpoints = getEndpointsForUser(newUser.getUniqueId());
+        validateEndpoints(endpoints, newEndpoints, result);
+
+		return result;
+	}
+
+	private void validateEndpoints(EndpointList endpoints, EndpointList newEndpoints, UserType result) {
+		List<String> commentList;
+		
+		for (Endpoint endpoint : endpoints.getEndpoint()) {
+            commentList = new ArrayList<String>();
+
+            String newEndpointName = null;
+            String newEndpointType = null;
+            String newEndpointTenantId = null;
+            String newEndpointRegion = null;
+
+            for (Endpoint newEndpoint : newEndpoints.getEndpoint()) {
+                if (endpoint.getName().equals(newEndpoint.getName())) {
+                    newEndpointName = newEndpoint.getName();
+                    newEndpointType = newEndpoint.getType();
+                    newEndpointTenantId = newEndpoint.getTenantId();
+                    newEndpointRegion = newEndpoint.getRegion();
+                    break;
+                }
+            }
+
+            checkIfEqual(endpoint.getName(), newEndpointName, commentList, "name");
+            checkIfEqual(endpoint.getType(), newEndpointType, commentList, "type");
+            checkIfEqual(endpoint.getTenantId(), newEndpointTenantId, commentList, "id");
+            checkIfEqual(endpoint.getRegion(), newEndpointRegion, commentList, "region");
+
+            EndpointType endpointResponse = new EndpointType();
+            endpointResponse.setName(newEndpointName);
+            endpointResponse.setType(newEndpointType);
+            endpointResponse.setTenantId(newEndpointTenantId);
+            endpointResponse.setRegion(newEndpointRegion);
+
+            String comment = StringUtils.join(commentList, ",");
+            endpointResponse.setComment(comment);
+            endpointResponse.setValid(StringUtils.isBlank(comment));
+
+            result.getEndpoints().add(endpointResponse);
+        }
+	}
+
+	private void validateGroups(Groups groups, List<com.rackspace.idm.domain.entity.Group> newGroups, UserType user) {
+		List<String> commentList;
+		
+		for (Group group : groups.getGroup()) {
+            commentList = new ArrayList<String>();
+
+            String newGroupName = null;
+            String newGroupId = null;
+
+            for (com.rackspace.idm.domain.entity.Group newGroup : newGroups) {
+                if (group.getName().equals(newGroup.getName())) {
+                    newGroupName = newGroup.getName();
+                    newGroupId = String.valueOf(newGroup.getGroupId());
+                    break;
+                }
+            }
+
+            checkIfEqual(group.getName(), newGroupName, commentList, "name");
+            checkIfEqual(group.getId(), newGroupId, commentList, "id");
+
+            GroupType groupResponse = new GroupType();
+            groupResponse.setName(newGroupName);
+            groupResponse.setId(newGroupId);
+
+            String comment = StringUtils.join(commentList, ",");
+            groupResponse.setComment(comment);
+            groupResponse.setValid(StringUtils.isBlank(comment));
+
+            user.getGroups().add(groupResponse);
+        }
+	}
+
+	private void validateRoles(List<TenantRole> roles, RoleList newRoles, UserType user) {
+		List<String> commentList;
+		
+        for(Role role : newRoles.getRole()) {
+            commentList = new ArrayList<String>();
+            String newRoleName = null;
+            String newRoleId = null;
+            for (TenantRole newRole : roles) {
+                if (role.getName().equals(newRole.getName())) {
+                    newRoleName = role.getName();
+                    newRoleId = role.getId();
+                    break;
+                }
+            }
+
+            checkIfEqual(role.getName(), newRoleName, commentList, "name");
+            checkIfEqual(role.getId(), newRoleId, commentList, "id");
+
+            RoleType roleResponse = new RoleType();
+            roleResponse.setName(newRoleName);
+            roleResponse.setId(newRoleId);
+            String comment = StringUtils.join(commentList, ",");
+            roleResponse.setComment(comment);
+            roleResponse.setValid(StringUtils.isBlank(comment));
+
+            user.getRoles().add(roleResponse);
+        }
+	}
+
+	private void checkIfEqual(String oldValue, String newValue, List<String> commentList, String id) {
+		String defaultOldValue = StringUtils.defaultString(oldValue);
+        String defaultNewValue = StringUtils.defaultString(newValue);
+        
+        if (!defaultOldValue.equals(defaultNewValue)) {
+            commentList.add(id + ":" + defaultOldValue);
+        }
+	}
 
 	private String getApiKey(CredentialListType credentialListType) {
 		String apiKey = "";
@@ -309,7 +477,7 @@ public class CloudMigrationService {
 
             try {
                 users = client.getUsers(userToken);
-            } catch (JAXBException e) {
+            } catch (Exception e) {
             }
 
             if (users != null) {
@@ -374,9 +542,8 @@ public class CloudMigrationService {
         return newUser;
     }
 
-    private void addUserGroups(String adminToken, String userId, String legacyId) throws Exception {
+    private void addUserGroups(String userId, Groups groups) throws Exception {
         try {
-            Groups groups = client.getGroupsForUser(adminToken, legacyId);
             for(Group group : groups.getGroup()){
                 cloudGroupService.addGroupToUser(Integer.parseInt(group.getId()), userId);
             }
@@ -403,12 +570,7 @@ public class CloudMigrationService {
         }
     }
 
-    private void addTenantsForUserByToken(com.rackspace.idm.domain.entity.User user, String adminToken, String token) throws Exception {
-        client = new MigrationClient();
-		client.setCloud20Host(config.getString("cloudAuth20url"));
-        client.setCloud11Host(config.getString("cloudAuth11url"));
-        // Using Endpoints call to get both Tenants and Endpoint information
-        EndpointList endpoints = client.getEndpointsByToken(adminToken, token);
+    private void addTenantsForUserByToken(com.rackspace.idm.domain.entity.User user, EndpointList endpoints) throws Exception {
         if(endpoints != null) {
             for (Endpoint endpoint : endpoints.getEndpoint()) {
                 // Add the Tenant if it doesn't exist.
@@ -560,16 +722,6 @@ public class CloudMigrationService {
                 return b;
         }
         return null;
-    }
-    
-    private void addUserGroups(String userId, Groups groups) throws Exception {
-        try {
-            for (Group group : groups.getGroup()) {
-                String xxx = group.getId();
-            }
-        } catch(Exception gex) {
-
-        }
     }
 
     public MigrationClient getClient() {

@@ -53,25 +53,28 @@ import javax.xml.bind.annotation.XmlType;
     "email",
     "apiKey",
     "password",
-    "secretQA",
+    "secretQuestion",
+    "secretAnswer",
     "roles",
     "endpoints",
     "groups"
 })
 public class UserType {
 
-    @XmlElement(required = true)
+    @XmlElement
     protected String id;
-    @XmlElement(required = true)
+    @XmlElement
     protected String username;
-    @XmlElement(required = true)
+    @XmlElement
     protected String email;
-    @XmlElement(required = true)
+    @XmlElement
     protected String apiKey;
-    @XmlElement(required = true)
+    @XmlElement
     protected String password;
-    @XmlElement(required = true)
-    protected String secretQA;
+    @XmlElement
+    protected String secretQuestion;
+    @XmlElement
+    protected String secretAnswer;
     protected List<RoleType> roles;
     protected List<EndpointType> endpoints;
     protected List<GroupType> groups;
@@ -208,8 +211,8 @@ public class UserType {
      *     {@link String }
      *     
      */
-    public String getSecretQA() {
-        return secretQA;
+    public String getSecretQuestion() {
+        return secretQuestion;
     }
 
     /**
@@ -220,8 +223,26 @@ public class UserType {
      *     {@link String }
      *     
      */
-    public void setSecretQA(String value) {
-        this.secretQA = value;
+    public void setSecretQuestion(String value) {
+        this.secretQuestion = value;
+    }
+
+    /**
+     * Gets the secretAnwser for this instance.
+     *
+     * @return The secretAnwser.
+     */
+    public String getSecretAnswer() {
+        return this.secretAnswer;
+    }
+
+    /**
+     * Sets the secretAnwser for this instance.
+     *
+     * @param secretAnwser The secretAnwser.
+     */
+    public void setSecretAnswer(String secretAnswer) {
+        this.secretAnswer = secretAnswer;
     }
 
     /**
