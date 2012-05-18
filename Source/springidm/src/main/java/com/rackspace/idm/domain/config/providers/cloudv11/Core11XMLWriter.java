@@ -44,9 +44,9 @@ import com.sun.xml.bind.marshaller.NamespacePrefixMapper;
 @Provider
 @Produces("application/xml")
 @Component
-public class UserXMLWriter extends NamespacePrefixMapper implements
+public class Core11XMLWriter extends NamespacePrefixMapper implements
         MessageBodyWriter<Object> {
-    public static final Logger LOG = Logger.getLogger(UserXMLWriter.class);
+    public static final Logger LOG = Logger.getLogger(Core11XMLWriter.class);
 
     @Resource(name = "userv11NsPrefixMap")
     private Map<String, String> userv11NsPrefixMap;

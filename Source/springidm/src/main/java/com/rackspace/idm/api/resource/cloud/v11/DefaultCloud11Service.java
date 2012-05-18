@@ -572,7 +572,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(userId);
 
-            return Response.ok(OBJ_FACTORY.createUser(this.userConverterCloudV11.toCloudV11User(user, endpoints)));
+            return Response.ok(OBJ_FACTORY.createUser(this.userConverterCloudV11.toCloudV11User(user, endpoints)).getValue());
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }
@@ -855,7 +855,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 String errMsg = String.format("Service: '%s' not found.", serviceName);
                 return cloudExceptionResponse.notFoundExceptionResponse(errMsg);
             }
-            return Response.ok(OBJ_FACTORY.createBaseURLs(this.endpointConverterCloudV11.toBaseUrls(filteredBaseUrls)));
+            return Response.ok(OBJ_FACTORY.createBaseURLs(this.endpointConverterCloudV11.toBaseUrls(filteredBaseUrls)).getValue());
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }
