@@ -201,6 +201,9 @@ public class CloudMigrationService {
                 userService.updateUserById(newUser, false);
             }
 
+            UserType userResponse = validateUser(user, credentialListType, apiKey, cloudPassword, secretQA, cloudUser, groups, endpoints);
+            MigrateUserResponseType result = new MigrateUserResponseType();
+
             if (isUserAdmin(cloudUser)) {
                 UserList users = null;
 
@@ -214,13 +217,12 @@ public class CloudMigrationService {
                         if (newUser.getUsername().equalsIgnoreCase(childUser.getUsername())) {
                             continue;
                         }
-                        migrateUserByUsername(childUser.getUsername(), enable, newUser.getDomainId());
+                        MigrateUserResponseType childResponse = migrateUserByUsername(childUser.getUsername(), enable, newUser.getDomainId());
+                        result.getUsers().addAll(childResponse.getUsers());
                     }
                 }
             }
 
-            UserType userResponse = validateUser(user, credentialListType, apiKey, cloudPassword, secretQA, cloudUser, groups, endpoints);
-            MigrateUserResponseType result = new MigrateUserResponseType();
             result.getUsers().add(userResponse);
 
             return result;
