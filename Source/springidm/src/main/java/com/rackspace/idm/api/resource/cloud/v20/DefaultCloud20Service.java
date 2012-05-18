@@ -1029,7 +1029,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder getUserByName(HttpHeaders httpHeaders, String authToken, String name) throws IOException {
 
         try {
-            verifyServiceAdminLevelAccess(authToken);
+            verifyUserLevelAccess(authToken);
+            //verifyServiceAdminLevelAccess(authToken);
 
             User user = this.userService.getUser(name);
 
@@ -1039,6 +1040,16 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new NotFoundException(errMsg);
             }
 
+            ScopeAccess scopeAccessByAccessToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
+            if(isUserAdmin(scopeAccessByAccessToken, null))
+            {
+                User adminUser = userService.getUserByAuthToken(authToken);
+                verifyDomain(user,adminUser);
+            }
+            else if(isDefaultUser(scopeAccessByAccessToken, null))
+            {
+                verifySelf(authToken, user);
+            }
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(user)));
         } catch (Exception ex) {
             return exceptionResponse(ex);
