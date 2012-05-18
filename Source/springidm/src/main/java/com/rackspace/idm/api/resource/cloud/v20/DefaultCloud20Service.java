@@ -373,7 +373,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (authorizationService.authorizeCloudUser(scopeAccessByAccessToken)) {
                 User caller = userService.getUserByAuthToken(authToken);
                 if (!caller.getId().equals(retrievedUser.getId())) {
-                    throw new ForbiddenException("Access is denied");
+                    throw new ForbiddenException("Not authorized.");
                 }
             }
             //if user admin, verify domain
@@ -534,7 +534,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             ScopeAccess scopeAccessByAccessToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
             if (!authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken)
                     && config.getString("cloudAuth.adminRole").equals(cRole.getName())) {
-                throw new ForbiddenException("Access is denied");
+                throw new ForbiddenException("Not authorized.");
             }
             TenantRole role = new TenantRole();
             role.setClientId(cRole.getClientId());
@@ -828,7 +828,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             ScopeAccess scopeAccessByAccessToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
             if (!authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken)
                     && config.getString("cloudAuth.adminRole").equals(role.getName())) {
-                throw new ForbiddenException("Access is denied");
+                throw new ForbiddenException("Not authorized.");
             }
             this.tenantService.deleteGlobalRole(role);
             return Response.noContent();
@@ -1001,7 +1001,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                     return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
                             .createUser(this.userConverterCloudV20.toUser(caller)));
                 } else {
-                    throw new ForbiddenException("Access is denied");
+                    throw new ForbiddenException("Not authorized.");
                 }
             }
 
@@ -1381,7 +1381,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (access == null) { // ToDo: Send an empty list, it's what Cloud does.
                 //return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createTenants(
                 //        this.tenantConverterCloudV20.toTenantList(tenants)));
-                throw new NotAuthorizedException("Access is denied");
+                throw new NotAuthorizedException("Not authorized.");
             }
 
             ScopeAccess sa = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
@@ -1867,7 +1867,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     void verifyDomain(User retrievedUser, User caller) {
         if (caller.getDomainId() == null || !caller.getDomainId().equals(retrievedUser.getDomainId())) {
-            throw new ForbiddenException("Access is denied");
+            throw new ForbiddenException("Not authorized.");
         }
     }
 
@@ -2163,7 +2163,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     void verifyIdentityAdminLevelAccess(String authToken) {
         ScopeAccess authScopeAccess = getScopeAccessForValidToken(authToken);
         if (!authorizationService.authorizeCloudIdentityAdmin(authScopeAccess)) {
-            String errMsg = "Access is denied";
+            String errMsg = "Not authorized.";
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -2186,7 +2186,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     void verifyServiceAdminLevelAccess(String authToken) {
         ScopeAccess authScopeAccess = getScopeAccessForValidToken(authToken);
         if(!authorizationService.authorizeCloudIdentityAdmin(authScopeAccess) && !authorizationService.authorizeCloudServiceAdmin(authScopeAccess)) {
-            String errMsg = "Access is denied";
+            String errMsg = "Not authorized.";
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -2201,7 +2201,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         String requesterUsername = requester.getUsername();
 
         if (!((username.equals(requesterUsername) && (uniqueId.equals(requesterUniqueId))))){
-                String errMsg = "Access is denied";
+                String errMsg = "Not authorized.";
                 logger.warn(errMsg);
                 throw new ForbiddenException(errMsg);
         }
@@ -2210,7 +2210,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     void verifyRackerOrServiceAdminAccess(String authToken) {
         ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
         if (!authorizationService.authorizeRacker(scopeAccess) && !authorizationService.authorizeCloudServiceAdmin(scopeAccess)) {
-            String errMsg = "Access is denied";
+            String errMsg = "Not authorized.";
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -2224,7 +2224,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 && !authorizationService.authorizeCloudServiceAdmin(authScopeAccess)
                 && !authorizationService.authorizeCloudUserAdmin(authScopeAccess)
                 && !authorizationService.authorizeCloudUser(authScopeAccess)) {
-            String errMsg = "Access is denied";
+            String errMsg = "Not authorized.";
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -2237,7 +2237,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         if (!authorizationService.authorizeCloudIdentityAdmin(authScopeAccess)
                 && !authorizationService.authorizeCloudServiceAdmin(authScopeAccess)
                 && !authorizationService.authorizeCloudUserAdmin(authScopeAccess)) {
-            String errMsg = "Access is denied";
+            String errMsg = "Not authorized.";
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -2264,7 +2264,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
 
         if (!authorized) {
-            String errMsg = "Access is denied";
+            String errMsg = "Not authorized.";
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -2285,7 +2285,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 return;
             }
         }
-        String errMsg = "Access is denied";
+        String errMsg = "Not authorized.";
         logger.warn(errMsg);
         throw new ForbiddenException(errMsg);
     }
