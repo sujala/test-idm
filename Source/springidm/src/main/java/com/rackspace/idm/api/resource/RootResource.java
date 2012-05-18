@@ -32,6 +32,9 @@ public class RootResource {
     private final ServiceProfileDescriptionBuilder serviceProfileDescriptionBuilder;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    @Autowired
+    private Configuration config;
+
     @Context
     private UriInfo uriInfo;
     
@@ -90,10 +93,11 @@ public class RootResource {
         return migrationResource;
     }
 
-    @Path("google")
+    @Path("buildInfo")
     @GET
-    public String getGoogle() {
-        return "google";
+    @Produces(MediaType.TEXT_PLAIN)
+    public String getBuildInfo() {
+        return config.getString("version");
     }
 
     @Path("{versionId: v[1-9](\\.[0-9])?}")

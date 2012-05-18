@@ -772,12 +772,6 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void getUserByName_callsVerifyServiceAdminLevelAccess() throws Exception {
-        spy.getUserByName(null, authToken, null);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
-    }
-
-    @Test
     public void getUserCredential_callsVerifyUserLevelAccess() throws Exception {
         spy.getUserCredential(null, authToken, null, null);
         verify(spy).verifyUserLevelAccess(authToken);
