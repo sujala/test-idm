@@ -143,15 +143,10 @@
         </jaxb:bindings>
     </jaxb:bindings>
 
-    <jaxb:bindings schemaLocation="RAX-KSQA.xsd" node="/xs:schema">
+    <jaxb:bindings schemaLocation="RAX-KSQA-secretQA.xsd" node="/xs:schema">
         <jaxb:bindings node="xs:complexType[@name='SecretQA']">
             <annox:annotate>
                 <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="secretQA"/>
-            </annox:annotate>
-        </jaxb:bindings>
-        <jaxb:bindings node="xs:complexType[@name='SecretQAList']">
-            <annox:annotate>
-                <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="secretQAs"/>
             </annox:annotate>
         </jaxb:bindings>
     </jaxb:bindings>

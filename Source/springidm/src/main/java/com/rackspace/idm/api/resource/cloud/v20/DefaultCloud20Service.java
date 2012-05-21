@@ -961,7 +961,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             verifyServiceAdminLevelAccess(authToken);
             Tenant tenant = checkAndGetTenant(tenantsId);
-            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createTenant(tenantConverterCloudV20.toTenant(tenant)));
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createTenant(tenantConverterCloudV20.toTenant(tenant)).getValue());
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
@@ -981,7 +981,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                    .createTenant(this.tenantConverterCloudV20.toTenant(tenant)));
+                    .createTenant(this.tenantConverterCloudV20.toTenant(tenant)).getValue());
 
         } catch (Exception ex) {
             return exceptionResponse(ex);
