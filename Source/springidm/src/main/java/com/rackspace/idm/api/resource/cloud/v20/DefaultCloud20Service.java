@@ -584,8 +584,13 @@ public class DefaultCloud20Service implements Cloud20Service {
                 usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(username, key, getCloudAuthClientId());
             }
             List<TenantRole> roles = tenantService.getTenantRolesForScopeAccess(usa);
-            if (!belongsTo(authenticationRequest.getTenantId(), roles) && !belongsTo(authenticationRequest.getTenantName(), roles)) {
-                String errMsg = "User does not have access to tenant %s";
+            if (authenticationRequest.getTenantName()!=null && !tenantService.hasTenantAccess(usa,authenticationRequest.getTenantName())) {
+                String errMsg = "Token doesn't belong to Tenant with Id/Name: '"+ authenticationRequest.getTenantName() +"'";
+                logger.warn(errMsg);
+                throw new NotFoundException(errMsg);
+            }
+            if (authenticationRequest.getTenantId()!=null && !tenantService.hasTenantAccess(usa,authenticationRequest.getTenantId())) {
+                String errMsg = "Token doesn't belong to Tenant with Id/Name: '"+ authenticationRequest.getTenantId() +"'";
                 logger.warn(errMsg);
                 throw new NotFoundException(errMsg);
             }
@@ -937,7 +942,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             secrets.setAnswer(user.getSecretAnswer());
             secrets.setQuestion(user.getSecretQuestion());
-
+            secrets.setUsername(user.getUsername());
             return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtKsqaV1Factory().createSecretQA(secrets));
 
         } catch (Exception ex) {

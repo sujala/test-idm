@@ -136,6 +136,26 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
+    public boolean hasTenantAccess(ScopeAccess scopeAccess, String tenantId) {
+        if(scopeAccess==null){
+            return false;
+        }
+        if(StringUtils.isBlank(tenantId)){
+            return false;
+        }
+        List<Tenant> tenantList = getTenantsForScopeAccessByTenantRoles(scopeAccess);
+        for(Tenant tenant : tenantList){
+            if(tenant.getTenantId()!=null && tenant.getTenantId().equals(tenantId)){
+                return true;
+            }
+            if(tenant.getName()!=null && tenant.getName().equals(tenantId)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
     public void addTenantRole(String parentUniqueId, TenantRole role) {
         // Adding a tenantRole has multiple paths depending on whether
         // the user already has that role on not.
@@ -365,28 +385,21 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public List<TenantRole> getGlobalRolesForUser(User user,
-        FilterParam[] filters) {
+    public List<TenantRole> getGlobalRolesForUser(User user,  FilterParam[] filters) {
         logger.debug("Getting Global Roles");
         List<TenantRole> roles = this.tenantDao.getTenantRolesForUser(user, filters);
-
         return getGlobalRoles(roles);
     }
 
     @Override
-    public List<TenantRole> getGlobalRolesForApplication(
-        Application application, FilterParam[] filters) {
-        logger.debug("Getting Global Roles for application {}",
-            application.getName());
-        List<TenantRole> roles = this.tenantDao.getTenantRolesForApplication(
-            application, filters);
-
+    public List<TenantRole> getGlobalRolesForApplication(Application application, FilterParam[] filters) {
+        logger.debug("Getting Global Roles for application {}", application.getName());
+        List<TenantRole> roles = this.tenantDao.getTenantRolesForApplication(application, filters);
         return getGlobalRoles(roles);
     }
 
     @Override
-    public List<TenantRole> getTenantRolesForUserOnTenant(User user,
-        Tenant tenant) {
+    public List<TenantRole> getTenantRolesForUserOnTenant(User user, Tenant tenant) {
         logger.debug("Getting Tenant Roles");
         List<TenantRole> roles = this.tenantDao.getTenantRolesForUser(user);
         List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
