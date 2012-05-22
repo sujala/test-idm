@@ -355,7 +355,7 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
         }
 
         if (searchResult.getEntryCount() == 0) {
-            String errMsg = String.format("User %s not found.", userId);
+            String errMsg = String.format("User with id: %s was not found.", userId);
             getLogger().error(errMsg);
             throw new NotFoundException(errMsg);
         } else if (searchResult.getEntryCount() == 1) {
