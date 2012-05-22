@@ -131,7 +131,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             if (authenticateResponse != null) {
                 String token = authenticateResponse.getToken().getId();
                 Date expires = authenticateResponse.getToken().getExpires().toGregorianCalendar().getTime();
-                scopeAccessService.updateUserScopeAccessTokenForClientIdByUser(user, getCloudAuthClientId(), token, expires);
+                    scopeAccessService.updateUserScopeAccessTokenForClientIdByUser(user, getCloudAuthClientId(), token, expires);
             }
             return serviceResponse;
         } else if (user == null) { //If "user" is null return cloud response

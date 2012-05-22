@@ -9,6 +9,11 @@
                 <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="passwordCredentials"/>
             </annox:annotate>
         </jaxb:bindings>
+        <jaxb:bindings node="xs:complexType[@name='CredentialListType']">
+            <annox:annotate>
+                <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="credentials"/>
+            </annox:annotate>
+        </jaxb:bindings>
     </jaxb:bindings>
 
     <jaxb:bindings schemaLocation="endpoints.xsd" node="/xs:schema">

@@ -27,7 +27,8 @@ public class CredentialProvider implements MessageBodyReader<JAXBElement<? exten
 
     static {
         try {
-            jaxbContext = JAXBContext.newInstance("com.rackspacecloud.docs.auth.api.v1");
+            jaxbContext = JAXBContext.newInstance("com.rackspacecloud.docs.auth.api.v1:" +
+                                                  "org.openstack.docs.identity.api.v2");
         } catch (Exception e) {
             LOG.error("Couldn't create jaxbContext...");
         }
