@@ -134,7 +134,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             tenant.addBaseUrlId(String.valueOf(endpoint.getId()));
             this.tenantService.updateTenant(tenant);
             return Response.ok(
-                    OBJ_FACTORIES.getOpenStackIdentityV2Factory().createEndpoint(endpointConverterCloudV20.toEndpoint(baseUrl)));
+                    OBJ_FACTORIES.getOpenStackIdentityV2Factory().createEndpoint(endpointConverterCloudV20.toEndpoint(baseUrl)).getValue());
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
@@ -148,7 +148,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             this.endpointService.addBaseUrl(baseUrl);
             return Response.created(uriInfo.getRequestUriBuilder().path(String.valueOf(baseUrl.getBaseUrlId())).build())
                     .entity(OBJ_FACTORIES.getOpenStackIdentityExtKscatalogV1Factory()
-                            .createEndpointTemplate(this.endpointConverterCloudV20.toEndpointTemplate(baseUrl)));
+                            .createEndpointTemplate(this.endpointConverterCloudV20.toEndpointTemplate(baseUrl)).getValue());
         } catch (BaseUrlConflictException buce) {
             return endpointTemplateConflictException(buce.getMessage());
         } catch (DuplicateException dex) {
@@ -192,7 +192,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             clientService.addClientRole(clientRole);
 
             return Response.created(uriInfo.getRequestUriBuilder().path(clientRole.getId()).build())
-                    .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRole(roleConverterCloudV20.toRoleFromClientRole(clientRole)));
+                    .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRole(roleConverterCloudV20.toRoleFromClientRole(clientRole)).getValue());
 
         } catch (DuplicateException bre) {
             return roleConflictExceptionResponse(bre.getMessage());
@@ -260,7 +260,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             service.setId(client.getClientId());
             return Response.created(
                     uriInfo.getRequestUriBuilder().path(service.getId()).build())
-                    .entity(OBJ_FACTORIES.getOpenStackIdentityExtKsadmnV1Factory().createService(service));
+                    .entity(OBJ_FACTORIES.getOpenStackIdentityExtKsadmnV1Factory().createService(service).getValue());
 
         } catch (DuplicateException de) {
             return serviceConflictExceptionResponse(de.getMessage());
@@ -290,7 +290,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             return Response.created(uriInfo.getRequestUriBuilder().path(savedTenant.getTenantId()).build())
                     .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                            .createTenant(this.tenantConverterCloudV20.toTenant(savedTenant)));
+                            .createTenant(this.tenantConverterCloudV20.toTenant(savedTenant)).getValue());
 
         } catch (DuplicateException de) {
             return tenantConflictExceptionResponse(de.getMessage());
@@ -331,7 +331,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             assignProperRole(httpHeaders, authToken, scopeAccessByAccessToken, userDO);
 
             return Response.created(uriInfo.getRequestUriBuilder().path(userDO.getId()).build())
-                    .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(userDO)));
+                    .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(userDO)).getValue());
         } catch (DuplicateException de) {
             return userConflictExceptionResponse(de.getMessage());
         } catch (DuplicateUsernameException due) {
@@ -387,7 +387,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
             retrievedUser.copyChanges(userDO);
             userService.updateUserById(retrievedUser, false);
-            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(retrievedUser)));
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(retrievedUser)).getValue());
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
@@ -854,7 +854,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             CloudBaseUrl baseUrl = checkAndGetEndpointTemplate(endpointId);
 
             return Response.ok(
-                    OBJ_FACTORIES.getOpenStackIdentityV2Factory().createEndpoint(endpointConverterCloudV20.toEndpoint(baseUrl)));
+                    OBJ_FACTORIES.getOpenStackIdentityV2Factory().createEndpoint(endpointConverterCloudV20.toEndpoint(baseUrl)).getValue());
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
@@ -869,7 +869,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             CloudBaseUrl baseUrl = checkAndGetEndpointTemplate(endpointTemplateId);
 
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityExtKscatalogV1Factory()
-                    .createEndpointTemplate(this.endpointConverterCloudV20.toEndpointTemplate(baseUrl)));
+                    .createEndpointTemplate(this.endpointConverterCloudV20.toEndpointTemplate(baseUrl)).getValue());
 
         } catch (Exception ex) {
             return exceptionResponse(ex);
@@ -911,7 +911,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             return notFoundExceptionResponse("Extension with alias '" + normalizedAlias + "' is not available.");
         }
 
-        return Response.ok(extensionMap.get(normalizedAlias));
+        return Response.ok(extensionMap.get(normalizedAlias).getValue());
     }
 
     @Override
@@ -921,7 +921,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             verifyServiceAdminLevelAccess(authToken);
             ClientRole role = checkAndGetClientRole(roleId);
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                    .createRole(this.roleConverterCloudV20.toRoleFromClientRole(role)));
+                    .createRole(this.roleConverterCloudV20.toRoleFromClientRole(role)).getValue());
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
@@ -938,7 +938,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             secrets.setAnswer(user.getSecretAnswer());
             secrets.setQuestion(user.getSecretQuestion());
             secrets.setUsername(user.getUsername());
-            return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtKsqaV1Factory().createSecretQA(secrets));
+            return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtKsqaV1Factory().createSecretQA(secrets).getValue());
 
         } catch (Exception ex) {
             return exceptionResponse(ex);
@@ -950,7 +950,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             verifyServiceAdminLevelAccess(authToken);
             Application client = checkAndGetApplication(serviceId);
-            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityExtKsadmnV1Factory().createService(serviceConverterCloudV20.toService(client)));
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityExtKsadmnV1Factory().createService(serviceConverterCloudV20.toService(client)).getValue());
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
@@ -999,7 +999,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (authorizationService.authorizeCloudUser(scopeAccessByAccessToken)) {
                 if (caller.getId().equals(userId)) {
                     return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                            .createUser(this.userConverterCloudV20.toUser(caller)));
+                            .createUser(this.userConverterCloudV20.toUser(caller)).getValue());
                 } else {
                     throw new ForbiddenException("Not authorized.");
                 }
@@ -1018,7 +1018,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                    .createUser(this.userConverterCloudV20.toUser(user)));
+                    .createUser(this.userConverterCloudV20.toUser(user)).getValue());
 
         } catch (Exception ex) {
             return exceptionResponse(ex);
@@ -1050,7 +1050,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             {
                 verifySelf(authToken, user);
             }
-            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(user)));
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(user)).getValue());
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
@@ -1105,7 +1105,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 creds = OBJ_FACTORIES.getRackspaceIdentityExtKskeyV1Factory().createApiKeyCredentials(userCreds);
             }
 
-            return Response.ok(creds);
+            return Response.ok(creds.getValue());
 
         } catch (Exception ex) {
             return exceptionResponse(ex);
@@ -1142,7 +1142,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             role.setName(cRole.getName());
 
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                    .createRole(this.roleConverterCloudV20.toRole(role)));
+                    .createRole(this.roleConverterCloudV20.toRole(role)).getValue());
 
         } catch (Exception ex) {
             return exceptionResponse(ex);
@@ -1178,7 +1178,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 creds.getCredential().add(OBJ_FACTORIES.getRackspaceIdentityExtKskeyV1Factory().createApiKeyCredentials(userCreds));
             }
 
-            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createCredentials(creds));
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createCredentials(creds).getValue());
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
@@ -1233,7 +1233,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
             }
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                    .createEndpoints(this.endpointConverterCloudV20.toEndpointListFromBaseUrls(baseUrls)));
+                    .createEndpoints(this.endpointConverterCloudV20.toEndpointListFromBaseUrls(baseUrls)).getValue());
 
         } catch (Exception ex) {
             return exceptionResponse(ex);
@@ -1252,7 +1252,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             EndpointList list = endpointConverterCloudV20.toEndpointList(endpoints);
 
-            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createEndpoints(list));
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createEndpoints(list).getValue());
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
@@ -1275,7 +1275,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             return Response.ok(
                     OBJ_FACTORIES.getOpenStackIdentityExtKscatalogV1Factory()
-                            .createEndpointTemplates(endpointConverterCloudV20.toEndpointTemplateList(baseUrls)));
+                            .createEndpointTemplates(endpointConverterCloudV20.toEndpointTemplateList(baseUrls)).getValue());
 
         } catch (Exception ex) {
             return exceptionResponse(ex);
@@ -1294,7 +1294,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
                 currentExtensions = unmarshaller.unmarshal(ss, Extensions.class);
             }
-            return Response.ok(currentExtensions);
+            return Response.ok(currentExtensions.getValue());
         } catch (Exception e) {
             // Return 500 error. Is WEB-IN/extensions.xml malformed?
             return serviceExceptionResponse();
@@ -1316,7 +1316,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             return Response.ok(
-                    OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListFromClientRoles(roles)));
+                    OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListFromClientRoles(roles)).getValue());
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
@@ -1334,7 +1334,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             List<TenantRole> roles = this.tenantService.getTenantRolesForTenant(tenant.getTenantId());
 
             return Response.ok(
-                    OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListJaxb(roles)));
+                    OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListJaxb(roles)).getValue());
 
         } catch (Exception ex) {
             return exceptionResponse(ex);
@@ -1356,7 +1356,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             List<TenantRole> roles = this.tenantService.getTenantRolesForUserOnTenant(user, tenant);
 
             return Response.ok(
-                    OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListJaxb(roles)));
+                    OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListJaxb(roles)).getValue());
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
@@ -1374,7 +1374,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             List<Application> clients = this.clientService.getOpenStackServices();
 
             return Response.ok(
-                    OBJ_FACTORIES.getOpenStackIdentityExtKsadmnV1Factory().createServices(serviceConverterCloudV20.toServiceList(clients)));
+                    OBJ_FACTORIES.getOpenStackIdentityExtKsadmnV1Factory().createServices(serviceConverterCloudV20.toServiceList(clients)).getValue());
 
         } catch (Exception ex) {
             return exceptionResponse(ex);
@@ -1402,7 +1402,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             return Response.ok(
-                    OBJ_FACTORIES.getOpenStackIdentityV2Factory().createTenants(tenantConverterCloudV20.toTenantList(tenants)));
+                    OBJ_FACTORIES.getOpenStackIdentityV2Factory().createTenants(tenantConverterCloudV20.toTenantList(tenants)).getValue());
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
@@ -1433,7 +1433,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             List<TenantRole> roles = tenantService.getGlobalRolesForUser(user);
-            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListJaxb(roles)));
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListJaxb(roles)).getValue());
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
@@ -1449,7 +1449,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             List<TenantRole> roles = tenantService.getGlobalRolesForUser(user, new FilterParam[]{new FilterParam(FilterParamName.APPLICATION_ID, serviceId)});
 
-            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListJaxb(roles)));
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListJaxb(roles)).getValue());
 
         } catch (Exception ex) {
             return exceptionResponse(ex);
@@ -1469,7 +1469,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 cloudGroups.getGroup().add(cloudGroup);
             }
 
-            return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtKsgrpV1Factory().createGroups(cloudGroups));
+            return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtKsgrpV1Factory().createGroups(cloudGroups).getValue());
         } catch (Exception e) {
             return exceptionResponse(e);
         }
@@ -1481,7 +1481,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             verifyServiceAdminLevelAccess(authToken);
             Group group = cloudGroupService.getGroupByName(groupName);
             com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group cloudGroup = cloudKsGroupBuilder.build(group);
-            return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtKsgrpV1Factory().createGroup(cloudGroup));
+            return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtKsgrpV1Factory().createGroup(cloudGroup).getValue());
         } catch (Exception e) {
             return exceptionResponse(e);
         }
@@ -1533,7 +1533,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             throw new NotAuthorizedException("User does not have access");
 
         ImpersonationResponse auth = authConverterCloudV20.toImpersonationResponse(usa);
-        return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtRaxgaV1Factory().createAccess(auth));
+        return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtRaxgaV1Factory().createAccess(auth).getValue());
     }
 
     private void validateImpersonationRequest(ImpersonationRequest impersonationRequest) {
@@ -1572,7 +1572,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group cloudGroup = cloudKsGroupBuilder.build(group);
                 cloudGroups.getGroup().add(cloudGroup);
             }
-            return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtKsgrpV1Factory().createGroups(cloudGroups));
+            return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtKsgrpV1Factory().createGroups(cloudGroups).getValue());
 
         } catch (Exception e) {
             return exceptionResponse(e);
@@ -1586,7 +1586,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             validateGroupId(groupId);
             Group group = cloudGroupService.getGroupById(Integer.parseInt(groupId));
             com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group cloudGroup = cloudKsGroupBuilder.build(group);
-            return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtKsgrpV1Factory().createGroup(cloudGroup));
+            return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtKsgrpV1Factory().createGroup(cloudGroup).getValue());
         } catch (Exception e) {
             return exceptionResponse(e);
         }
@@ -1602,7 +1602,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             cloudGroupService.addGroup(groupDO);
             com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group groupKs = cloudKsGroupBuilder.build(groupDO);
             return Response.created(uriInfo.getRequestUriBuilder().path(groupKs.getId()).build())
-                    .entity(OBJ_FACTORIES.getRackspaceIdentityExtKsgrpV1Factory().createGroup(groupKs));
+                    .entity(OBJ_FACTORIES.getRackspaceIdentityExtKsgrpV1Factory().createGroup(groupKs).getValue());
         } catch (DuplicateException bre) {
             return roleConflictExceptionResponse(bre.getMessage());
         } catch (Exception e) {
@@ -1636,7 +1636,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             Group groupDO = cloudGroupBuilder.build(group);
             cloudGroupService.updateGroup(groupDO);
             com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group groupKs = cloudKsGroupBuilder.build(groupDO);
-            return Response.ok().entity(OBJ_FACTORIES.getRackspaceIdentityExtKsgrpV1Factory().createGroup(groupKs));
+            return Response.ok().entity(OBJ_FACTORIES.getRackspaceIdentityExtKsgrpV1Factory().createGroup(groupKs).getValue());
         } catch (DuplicateException bre) {
             return roleConflictExceptionResponse(bre.getMessage());
         } catch (Exception e) {
@@ -1714,7 +1714,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new NotFoundException(errorMsg);
             }
             Users users = cloudGroupService.getAllEnabledUsers(filters, iMarker, iLimit);
-            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUsers(this.userConverterCloudV20.toUserList(users.getUsers())));
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUsers(this.userConverterCloudV20.toUserList(users.getUsers())).getValue());
         } catch (Exception e) {
             return exceptionResponse(e);
         }
@@ -1734,7 +1734,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 List<User> users = new ArrayList<User>();
                 users.add(caller);
                 return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                        .createUsers(this.userConverterCloudV20.toUserList(users)));
+                        .createUsers(this.userConverterCloudV20.toUserList(users)).getValue());
             }
             verifyUserAdminLevelAccess(authToken);
             Users users = new Users();
@@ -1750,7 +1750,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                    .createUsers(this.userConverterCloudV20.toUserList(users.getUsers())));
+                    .createUsers(this.userConverterCloudV20.toUserList(users.getUsers())).getValue());
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
@@ -1767,7 +1767,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             List<User> users = this.tenantService.getUsersForTenant(tenant.getTenantId());
 
-            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUsers(userConverterCloudV20.toUserList(users)));
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUsers(userConverterCloudV20.toUserList(users)).getValue());
 
         } catch (Exception ex) {
             return exceptionResponse(ex);
@@ -1789,7 +1789,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             List<User> users = this.tenantService.getUsersWithTenantRole(tenant, role);
 
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                    .createUsers(this.userConverterCloudV20.toUserList(users)));
+                    .createUsers(this.userConverterCloudV20.toUserList(users)).getValue());
 
         } catch (Exception ex) {
             return exceptionResponse(ex);
@@ -1809,7 +1809,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             this.userService.updateUser(userDO, false);
 
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                    .createUser(this.userConverterCloudV20.toUser(userDO)));
+                    .createUser(this.userConverterCloudV20.toUser(userDO)).getValue());
 
         } catch (Exception ex) {
             return exceptionResponse(ex);
@@ -1869,7 +1869,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             this.tenantService.updateTenant(tenantDO);
 
             return Response.ok(
-                    OBJ_FACTORIES.getOpenStackIdentityV2Factory().createTenant(tenantConverterCloudV20.toTenant(tenantDO)));
+                    OBJ_FACTORIES.getOpenStackIdentityV2Factory().createTenant(tenantConverterCloudV20.toTenant(tenantDO)).getValue());
 
         } catch (Exception ex) {
             return exceptionResponse(ex);
@@ -1915,7 +1915,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             user.setApiKey(creds.getApiKey());
             this.userService.updateUser(user, false);
 
-            return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtKskeyV1Factory().createApiKeyCredentials(creds));
+            return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtKskeyV1Factory().createApiKeyCredentials(creds).getValue());
 
         } catch (Exception ex) {
             return exceptionResponse(ex);
@@ -1941,7 +1941,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             user.setPassword(creds.getPassword());
             this.userService.updateUser(user, false);
 
-            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createPasswordCredentials(creds));
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createPasswordCredentials(creds).getValue());
 
         } catch (Exception ex) {
             return exceptionResponse(ex);
@@ -1986,12 +1986,12 @@ public class DefaultCloud20Service implements Cloud20Service {
                     List<TenantRole> impRoles = this.tenantService.getGlobalRolesForUser(impersonator, null);
 
                     impersonationResponse.setImpersonator(this.userConverterCloudV20.toUserForAuthenticateResponse(impersonator, impRoles));
-                    return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtRaxgaV1Factory().createAccess(impersonationResponse));
+                    return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtRaxgaV1Factory().createAccess(impersonationResponse).getValue());
                 }
 
 
             }
-            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createAccess(access));
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createAccess(access).getValue());
 
         } catch (Exception ex) {
             return exceptionResponse(ex);

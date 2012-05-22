@@ -31,7 +31,7 @@ import javax.xml.namespace.QName;
  */
 public class JSONWriterTest {
 
-    private JSONWriter writer = new JSONWriter();
+    private JSONWriterObject writer = new JSONWriterObject();
     private XMLGregorianCalendar calendar;
 
     @Before
