@@ -269,7 +269,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             return Response
                     .status(Response.Status.CREATED)
                     .header("Location", uriInfo.getRequestUriBuilder().path(userId).build().toString())
-                    .entity(OBJ_FACTORY.createBaseURLRef(baseUrlRef));
+                    .entity(OBJ_FACTORY.createBaseURLRef(baseUrlRef).getValue());
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }
@@ -528,7 +528,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(userId);
 
-            return Response.ok(OBJ_FACTORY.createBaseURLRefs(this.endpointConverterCloudV11.toBaseUrlRefs(endpoints)));
+            return Response.ok(OBJ_FACTORY.createBaseURLRefs(this.endpointConverterCloudV11.toBaseUrlRefs(endpoints)).getValue());
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }
@@ -550,7 +550,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(userId);
 
-            return Response.ok(OBJ_FACTORY.createServiceCatalog(this.endpointConverterCloudV11.toServiceCatalog(endpoints)));
+            return Response.ok(OBJ_FACTORY.createServiceCatalog(this.endpointConverterCloudV11.toServiceCatalog(endpoints)).getValue());
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }
@@ -592,7 +592,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 throw new NotFoundException(errMsg);
             }
 
-            return Response.ok(OBJ_FACTORY.createUser(this.userConverterCloudV11.toCloudV11UserWithOnlyEnabled(user)));
+            return Response.ok(OBJ_FACTORY.createUser(this.userConverterCloudV11.toCloudV11UserWithOnlyEnabled(user)).getValue());
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }
@@ -676,7 +676,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 g.setDescription(group.getDescription());
                 groupList.getGroup().add(g);
             }
-            return Response.ok(OBJ_FACTORY.createGroups(groupList));
+            return Response.ok(OBJ_FACTORY.createGroups(groupList).getValue());
 
         } catch (NotFoundException e) {
             return cloudExceptionResponse.exceptionResponse(e);
@@ -700,7 +700,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 throw new NotFoundException(errMsg);
             }
 
-            return Response.ok(OBJ_FACTORY.createUser(this.userConverterCloudV11.toCloudV11UserWithOnlyKey(user)));
+            return Response.ok(OBJ_FACTORY.createUser(this.userConverterCloudV11.toCloudV11UserWithOnlyKey(user)).getValue());
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }
@@ -725,7 +725,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             this.userService.updateUser(gaUser, false);
 
-            return Response.ok(OBJ_FACTORY.createUser(this.userConverterCloudV11.toCloudV11UserWithOnlyEnabled(gaUser)));
+            return Response.ok(OBJ_FACTORY.createUser(this.userConverterCloudV11.toCloudV11UserWithOnlyEnabled(gaUser)).getValue());
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }
@@ -748,7 +748,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             gaUser.setApiKey(user.getKey());
             this.userService.updateUser(gaUser, false);
 
-            return Response.ok(OBJ_FACTORY.createUser(this.userConverterCloudV11.toCloudV11UserWithOnlyKey(gaUser)));
+            return Response.ok(OBJ_FACTORY.createUser(this.userConverterCloudV11.toCloudV11UserWithOnlyKey(gaUser)).getValue());
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }
@@ -800,7 +800,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(userId);
 
-            return Response.ok(OBJ_FACTORY.createUser(this.userConverterCloudV11.toCloudV11User(gaUser, endpoints)));
+            return Response.ok(OBJ_FACTORY.createUser(this.userConverterCloudV11.toCloudV11User(gaUser, endpoints)).getValue());
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }
@@ -825,7 +825,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 throw new NotFoundException(String.format("BaseUrlId %s not found", baseURLId));
             }
 
-            return Response.ok(OBJ_FACTORY.createBaseURL(this.endpointConverterCloudV11.toBaseUrl(baseUrl)));
+            return Response.ok(OBJ_FACTORY.createBaseURL(this.endpointConverterCloudV11.toBaseUrl(baseUrl)).getValue());
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }
@@ -840,7 +840,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             List<CloudBaseUrl> baseUrls = this.endpointService.getBaseUrls();
 
             if (StringUtils.isEmpty(serviceName)) {
-                return Response.ok(OBJ_FACTORY.createBaseURLs(this.endpointConverterCloudV11.toBaseUrls(baseUrls)));
+                return Response.ok(OBJ_FACTORY.createBaseURLs(this.endpointConverterCloudV11.toBaseUrls(baseUrls)).getValue());
             }
 
             List<CloudBaseUrl> filteredBaseUrls = new ArrayList<CloudBaseUrl>();
@@ -877,7 +877,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 }
             }
 
-            return Response.ok(OBJ_FACTORY.createBaseURLs(this.endpointConverterCloudV11.toBaseUrls(filteredBaseUrls)));
+            return Response.ok(OBJ_FACTORY.createBaseURLs(this.endpointConverterCloudV11.toBaseUrls(filteredBaseUrls)).getValue());
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }
@@ -977,7 +977,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(username, password, getCloudAuthClientId());
             }
             List<CloudEndpoint> endpoints = endpointService.getEndpointsForUser(user.getUsername());
-            return Response.ok(OBJ_FACTORY.createAuth(this.authConverterCloudV11.toCloudv11AuthDataJaxb(usa, endpoints)));
+            return Response.ok(OBJ_FACTORY.createAuth(this.authConverterCloudV11.toCloudv11AuthDataJaxb(usa, endpoints)).getValue());
         } catch (NotAuthenticatedException nae) {
             return cloudExceptionResponse.notAuthenticatedExceptionResponse(user.getUsername());
         } catch (Exception ex) {
@@ -1071,7 +1071,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 throw new NotFoundException(errMsg);
             }
             List<CloudEndpoint> endpoints = endpointService.getEndpointsForUser(user.getUsername());
-            return Response.ok(OBJ_FACTORY.createAuth(this.authConverterCloudV11.toCloudv11AuthDataJaxb(usa, endpoints)));
+            return Response.ok(OBJ_FACTORY.createAuth(this.authConverterCloudV11.toCloudv11AuthDataJaxb(usa, endpoints)).getValue());
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }

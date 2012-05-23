@@ -73,21 +73,21 @@ public class CloudExceptionResponse extends WebApplicationException {
         fault.setCode(HttpServletResponse.SC_UNAUTHORIZED);
         fault.setMessage(errMsg);
         fault.setDetails("AuthErrorHandler");
-        return Response.status(HttpServletResponse.SC_UNAUTHORIZED).entity(OBJ_FACTORY.createUnauthorized(fault));
+        return Response.status(HttpServletResponse.SC_UNAUTHORIZED).entity(OBJ_FACTORY.createUnauthorized(fault).getValue());
     }
 
     public Response.ResponseBuilder notFoundExceptionResponse(String message) {
         ItemNotFoundFault fault = OBJ_FACTORY.createItemNotFoundFault();
         fault.setCode(HttpServletResponse.SC_NOT_FOUND);
         fault.setMessage(message);
-        return Response.status(HttpServletResponse.SC_NOT_FOUND).entity(OBJ_FACTORY.createItemNotFound(fault));
+        return Response.status(HttpServletResponse.SC_NOT_FOUND).entity(OBJ_FACTORY.createItemNotFound(fault).getValue());
     }
 
     public Response.ResponseBuilder usernameConflictExceptionResponse(String message) {
         UsernameConflictFault fault = OBJ_FACTORY.createUsernameConflictFault();
         fault.setCode(HttpServletResponse.SC_CONFLICT);
         fault.setMessage(message);
-        return Response.status(HttpServletResponse.SC_CONFLICT).entity(OBJ_FACTORY.createUsernameConflict(fault));
+        return Response.status(HttpServletResponse.SC_CONFLICT).entity(OBJ_FACTORY.createUsernameConflict(fault).getValue());
     }
 
     public Response.ResponseBuilder redirect(HttpServletRequest request, String id) {
@@ -97,28 +97,28 @@ public class CloudExceptionResponse extends WebApplicationException {
     public Response.ResponseBuilder serviceExceptionResponse() {
         AuthFault fault = OBJ_FACTORY.createAuthFault();
         fault.setCode(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-        return Response.status(HttpServletResponse.SC_INTERNAL_SERVER_ERROR).entity(OBJ_FACTORY.createAuthFault(fault));
+        return Response.status(HttpServletResponse.SC_INTERNAL_SERVER_ERROR).entity(OBJ_FACTORY.createAuthFault(fault).getValue());
     }
 
     public Response.ResponseBuilder userDisabledExceptionResponse(String message) {
         UserDisabledFault fault = OBJ_FACTORY.createUserDisabledFault();
         fault.setCode(HttpServletResponse.SC_FORBIDDEN);
         fault.setMessage(message);
-        return Response.status(HttpServletResponse.SC_FORBIDDEN).entity(OBJ_FACTORY.createUserDisabled(fault));
+        return Response.status(HttpServletResponse.SC_FORBIDDEN).entity(OBJ_FACTORY.createUserDisabled(fault).getValue());
     }
 
     public Response.ResponseBuilder methodNotAllowedExceptionResponse(String message) {
         AuthFault fault = OBJ_FACTORY.createAuthFault();
         fault.setCode(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
         fault.setMessage(message);
-        return Response.status(HttpServletResponse.SC_METHOD_NOT_ALLOWED).entity(OBJ_FACTORY.createAuthFault(fault));
+        return Response.status(HttpServletResponse.SC_METHOD_NOT_ALLOWED).entity(OBJ_FACTORY.createAuthFault(fault).getValue());
     }
 
     public Response.ResponseBuilder badRequestExceptionResponse(String message) {
         BadRequestFault fault = OBJ_FACTORY.createBadRequestFault();
         fault.setCode(HttpServletResponse.SC_BAD_REQUEST);
         fault.setMessage(message);
-        return Response.status(HttpServletResponse.SC_BAD_REQUEST).entity(OBJ_FACTORY.createBadRequest(fault));
+        return Response.status(HttpServletResponse.SC_BAD_REQUEST).entity(OBJ_FACTORY.createBadRequest(fault).getValue());
     }
 
 }
