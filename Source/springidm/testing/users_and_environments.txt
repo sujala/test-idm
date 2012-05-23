@@ -36,6 +36,23 @@ staging:
 	}
 	}
 	}
+	
+	{
+	"user": {
+	"id": "10007050",
+	"username": "cloudMAAS",
+	"email": "ryan.stewart@rackspace.com",
+	"displayName": "cloudMAAS",
+	"prefLanguage": "en_US",
+	"enabled": true,
+	"timeZone": "America/Chicago",
+	"passwordCredentials": {
+	"currentPassword": {
+	"password": ""
+	}-
+	}-
+	}-
+}
 
 	
 	

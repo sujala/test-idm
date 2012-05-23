@@ -103,4 +103,12 @@ public class MigrationResource {
         cloudMigrationService.migrateBaseURLs();
         return Response.status(Response.Status.ACCEPTED).build();
     }
+
+    @POST
+    @Path("cloud/groups")
+    public Response migrateGroups() throws Exception {
+        cloudMigrationService.migrateGroups();
+        return Response.status(Response.Status.ACCEPTED).build();
+    }
+
 }
