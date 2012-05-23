@@ -1,4 +1,4 @@
-package com.rackspace.idm.domain.config.providers.cloudv11;
+package com.rackspace.idm.api.resource.cloud.v11;
 
 import com.rackspacecloud.docs.auth.api.v1.BaseURLRef;
 import com.rackspacecloud.docs.auth.api.v1.User;

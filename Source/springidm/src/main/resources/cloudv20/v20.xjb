@@ -4,6 +4,11 @@
                jaxb:extensionBindingPrefixes="annox">
 
     <jaxb:bindings schemaLocation="credentials.xsd" node="/xs:schema">
+        <jaxb:bindings node="xs:complexType[@name='AuthenticationRequest']">
+            <annox:annotate>
+                <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="auth"/>
+            </annox:annotate>
+        </jaxb:bindings>
         <jaxb:bindings node="xs:complexType[@name='PasswordCredentialsRequiredUsername']">
             <annox:annotate>
                 <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="passwordCredentials"/>
@@ -98,6 +103,11 @@
         <jaxb:bindings node="xs:complexType[@name='Service']">
             <annox:annotate>
                 <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="service"/>
+            </annox:annotate>
+        </jaxb:bindings>
+        <jaxb:bindings node="xs:complexType[@name='UserForCreate']">
+            <annox:annotate>
+                <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="user"/>
             </annox:annotate>
         </jaxb:bindings>
     </jaxb:bindings>
