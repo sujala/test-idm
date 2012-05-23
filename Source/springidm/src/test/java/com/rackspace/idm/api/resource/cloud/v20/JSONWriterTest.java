@@ -106,11 +106,12 @@ public class JSONWriterTest {
         SecretQA secretQA = new SecretQA();
         secretQA.setQuestion("why?");
         secretQA.setAnswer("because!");
+        secretQA.setUsername("username");
 
         final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-        JAXBElement jaxbElement = new JAXBElement<SecretQA>(QName.valueOf("foo"), SecretQA.class, secretQA);
+        JAXBElement jaxbElement = new JAXBElement<SecretQA>(QName.valueOf("RAX-KSQA:secretQA"), SecretQA.class, secretQA);
         writer.writeTo(jaxbElement, SecretQA.class, null, null, null, null, myOut);
-        Assert.assertEquals("{\"RAX-KSQA:secretQA\":{\"answer\":\"because!\",\"question\":\"why?\"}}", myOut.toString());
+        Assert.assertEquals("{\"RAX-KSQA:secretQA\":{\"answer\":\"because!\",\"question\":\"why?\",\"username\":\"username\"}}", myOut.toString());
     }
 
     @Test
