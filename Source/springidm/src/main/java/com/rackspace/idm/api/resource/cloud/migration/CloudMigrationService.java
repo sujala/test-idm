@@ -94,6 +94,10 @@ public class CloudMigrationService {
         addOrUpdateEndpointTemplates(getAdminToken());
     }
 
+    public void migrateGroups() throws Exception {
+        addOrUpdateGroups(getAdminToken());
+    }
+
     public Response.ResponseBuilder getMigratedUserList() throws Exception {
         FilterParam[] filters = new FilterParam[] { new FilterParam(FilterParam.FilterParamName.MIGRATED, null)};
         com.rackspace.idm.domain.entity.Users users = userService.getAllUsers(filters);
@@ -159,11 +163,18 @@ public class CloudMigrationService {
             }
             String legacyId = user.getId();
 
-            CredentialListType credentialListType = client.getUserCredentials(adminToken, user.getId());
-            credentialListType.getCredential();
-
-            String apiKey = getApiKey(credentialListType);
-            String cloudPassword = getPassword(credentialListType);
+            CredentialListType credentialListType = null;
+            String apiKey = "";
+            String cloudPassword = "";
+            try {
+                credentialListType = client.getUserCredentials(adminToken, user.getId());
+                credentialListType.getCredential();
+                apiKey = getApiKey(credentialListType);
+                cloudPassword = getPassword(credentialListType);
+            }
+            catch(Exception exCred) {
+                // User does not have crednetials
+            }
             String password = cloudPassword;
             
             if(password.equals(""))
@@ -635,6 +646,28 @@ public class CloudMigrationService {
         }
         catch(Exception ex) {
             return null;
+        }
+    }
+
+    private void addOrUpdateGroups(String adminToken) throws Exception {
+        client.setCloud20Host(config.getString("cloudAuth20url"));
+        Groups groups = client.getGroups(adminToken);
+        if(groups != null){
+            for(Group group : groups.getGroup()){
+                com.rackspace.idm.domain.entity.Group newGroup = new com.rackspace.idm.domain.entity.Group();
+                newGroup.setGroupId(Integer.parseInt(group.getId()));
+                newGroup.setName(group.getName());
+                newGroup.setDescription(group.getDescription());
+
+                try {
+                    com.rackspace.idm.domain.entity.Group oldGroup = cloudGroupService.getGroupById(Integer.parseInt(group.getId()));
+                    if(!newGroup.getName().equals(oldGroup.getName()) || !newGroup.getDescription().equals(oldGroup.getDescription()))
+                        cloudGroupService.updateGroup(newGroup);
+                }
+                catch (NotFoundException ex){
+                    cloudGroupService.insertGroup(newGroup);
+                }
+            }
         }
     }
 
