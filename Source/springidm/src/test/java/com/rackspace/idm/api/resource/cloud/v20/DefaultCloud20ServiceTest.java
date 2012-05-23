@@ -188,6 +188,38 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void authenticate_withTenantId_callsTenantService_hasTenantAccess() throws Exception {
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
+        tokenForAuthenticationRequest.setId("tokenId");
+        authenticationRequest.setToken(tokenForAuthenticationRequest);
+        authenticationRequest.setTenantId("tenantId");
+        UserScopeAccess scopeAccess = new UserScopeAccess();
+        scopeAccess.setAccessTokenExp(new Date(5000,1,1));
+        scopeAccess.setAccessTokenString("uuuuuuuuuu");
+        when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
+        doReturn(new User()).when(spy).checkAndGetUser(anyString());
+        spy.authenticate(null, authenticationRequest);
+        verify(tenantService).hasTenantAccess(org.mockito.Matchers.any(UserScopeAccess.class), eq("tenantId"));
+    }
+
+    @Test
+    public void authenticate_withTenantName_callsTenantService_hasTenantAccess() throws Exception {
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
+        tokenForAuthenticationRequest.setId("tokenId");
+        authenticationRequest.setToken(tokenForAuthenticationRequest);
+        authenticationRequest.setTenantName("tenantId");
+        UserScopeAccess scopeAccess = new UserScopeAccess();
+        scopeAccess.setAccessTokenExp(new Date(5000,1,1));
+        scopeAccess.setAccessTokenString("uuuuuuuuuu");
+        when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
+        doReturn(new User()).when(spy).checkAndGetUser(anyString());
+        spy.authenticate(null, authenticationRequest);
+        verify(tenantService).hasTenantAccess(org.mockito.Matchers.any(UserScopeAccess.class), eq("tenantId"));
+    }
+
+    @Test
     public void verifyRackerOrServiceAdminAccess_callsAuthorizationService_authorizeCloudServiceAdmin() throws Exception {
         when(authorizationService.authorizeRacker(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(false);
         when(authorizationService.authorizeCloudServiceAdmin(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(true);

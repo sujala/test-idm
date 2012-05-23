@@ -77,6 +77,12 @@ public class DefaultGroupService implements GroupService {
     }
 
     @Override
+    public void insertGroup(Group group) {
+        logger.info("Inserting Client Group: {}", group);
+        groupDao.addGroup(group);
+    }
+
+    @Override
     public void updateGroup(Group group) {
         logger.info("Updating Client Group: {}", group);
         Group groupDo = groupDao.getGroupById(group.getGroupId());
