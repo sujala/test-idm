@@ -20,6 +20,7 @@ public interface GroupService {
     Group getGroupById(Integer groupId);
     Group getGroupByName(String groupName);
     void addGroup(Group group);
+    void insertGroup(Group group);
     void updateGroup(Group group);
     void deleteGroup(String groupId);
     void addGroupToUser(int groupId, String userId);

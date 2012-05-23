@@ -164,8 +164,10 @@ public class MigrationClient {
             .header(X_AUTH_TOKEN, token)
             .get();
 
+        CredentialListType credentialListType = new CredentialListType();
         ObjectMarshaller<CredentialListType> unmarshaller = new ObjectMarshaller<CredentialListType>();
-        return unmarshaller.unmarshal(response, CredentialListType.class);
+        credentialListType = unmarshaller.unmarshal(response, CredentialListType.class);
+        return credentialListType;
     }
 
     public BaseURLList getBaseUrls(String username, String password) throws URISyntaxException, HttpException, IOException, JAXBException {
