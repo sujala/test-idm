@@ -12,6 +12,7 @@ import com.rackspacecloud.docs.auth.api.v1.*;
 import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.api.json.JSONJAXBContext;
 import com.sun.jersey.api.json.JSONMarshaller;
+import com.sun.org.apache.xerces.internal.dom.ElementNSImpl;
 import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -402,21 +403,16 @@ public class JSONWriterObject implements MessageBodyWriter<Object> {
     private static JSONArray getLinks(List<Object> any) {
         JSONArray linkArray = new JSONArray();
         for (Object o : any) {
-            if (o instanceof JAXBElement) {
-                Object elmType = ((JAXBElement<Object>) o).getValue();
-                if (elmType instanceof Link) {
-                    Link l = (Link) elmType;
-                    JSONObject jlink = new JSONObject();
-                    if (l.getRel() != null) {
-                        jlink.put("rel", l.getRel().value());
-                    }
-                    if (l.getType() != null) {
-                        jlink.put("type", l.getType());
-                    }
-                    jlink.put("href", l.getHref());
-                    linkArray.add(jlink);
-                }
+            ElementNSImpl link = (ElementNSImpl) o;
+            JSONObject jlink = new JSONObject();
+            if (link.getAttribute("rel") != null) {
+                jlink.put("rel", link.getAttribute("rel"));
             }
+            if (link.getAttribute("type") != null) {
+                jlink.put("type", link.getAttribute("type"));
+            }
+            jlink.put("href", link.getAttribute("href"));
+            linkArray.add(jlink);
         }
         return linkArray;
     }
