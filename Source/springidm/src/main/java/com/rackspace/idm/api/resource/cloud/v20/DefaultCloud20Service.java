@@ -1415,10 +1415,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder listUserGlobalRoles(HttpHeaders httpHeaders, String authToken, String userId) throws IOException {
-
         try {
             verifyUserLevelAccess(authToken);
-
             User user = this.userService.getUserById(userId);
             if (user == null) {
                 String errMsg = "No Roles found User with id: " + userId;
@@ -1427,16 +1425,15 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
             ScopeAccess callersScopeAccess = scopeAccessService.getScopeAccessByAccessToken(authToken);
             User caller = getUser(callersScopeAccess);
-            List<TenantRole> callersTenantRoles = tenantService.getTenantRolesForScopeAccess(callersScopeAccess);
             if (!authorizationService.authorizeCloudIdentityAdmin(callersScopeAccess)
                     && !authorizationService.authorizeCloudServiceAdmin(callersScopeAccess)) {
-                if(isDefaultUser(callersScopeAccess,callersTenantRoles)){
+                //is either a user-admin or default user
+                if(authorizationService.authorizeCloudUser(callersScopeAccess)){
                     verifySelf(authToken, user);
                 }else{
                     verifyDomain(user, caller);
                 }
             }
-
             List<TenantRole> roles = tenantService.getGlobalRolesForUser(user);
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListJaxb(roles)));
         } catch (Exception ex) {
@@ -2216,7 +2213,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         String requesterUniqueId = requester.getUniqueId();
         String requesterUsername = requester.getUsername();
 
-        if (!((username.equals(requesterUsername) && (uniqueId.equals(requesterUniqueId))))){
+        if (!((requesterUsername.equals(username) && (requesterUniqueId.equals(uniqueId))))){
                 String errMsg = "Not authorized.";
                 logger.warn(errMsg);
                 throw new ForbiddenException(errMsg);
