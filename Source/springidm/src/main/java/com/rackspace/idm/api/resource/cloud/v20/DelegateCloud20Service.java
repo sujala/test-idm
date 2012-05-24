@@ -411,7 +411,8 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder listTenants(HttpHeaders httpHeaders, String authToken, String marker, Integer limit) throws IOException {
-        if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
+        ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByAccessToken(authToken);
+        if (isCloudAuthRoutingEnabled() && scopeAccess == null) {
             String request = getCloudAuthV20Url() + "tenants";
             HashMap<String, Object> params = new HashMap<String, Object>();
             params.put("marker", marker);
