@@ -9,7 +9,6 @@ import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.config.providers.PackageClassDiscoverer;
 import com.rackspacecloud.docs.auth.api.v1.*;
-import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.api.json.JSONJAXBContext;
 import com.sun.jersey.api.json.JSONMarshaller;
 import com.sun.org.apache.xerces.internal.dom.ElementNSImpl;
@@ -100,40 +99,31 @@ public class JSONWriter implements MessageBodyWriter<Object> {
     }
 
     @Override
-    public long getSize(Object arg0, Class<?> arg1, Type arg2,
-        Annotation[] arg3, MediaType arg4) {
+    public long getSize(Object arg0, Class<?> arg1, Type arg2, Annotation[] arg3, MediaType arg4) {
         return -1;
     }
 
     @Override
-    public boolean isWriteable(Class<?> type, Type genericType,
-        Annotation[] annotations, MediaType mediaType) {
+    public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return isCorrectClass(genericType);
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public void writeTo(Object object, Class<?> type, Type genericType,
-        Annotation[] annotations, MediaType mediaType,
-        MultivaluedMap<String, Object> httpHeaders, OutputStream outputStream)
+    public void writeTo(Object object, Class<?> type, Type genericType, Annotation[] annotations,
+                        MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream outputStream)
         throws IOException, WebApplicationException {
-
+        String jsonText = "";
         if (object.getClass().equals(Extension.class)) {
             Extension extension = (Extension) object;
-            String jsonText = JSONValue.toJSONString(getExtension(extension));
-            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
-
+            jsonText = JSONValue.toJSONString(getExtension(extension));
         }else  if (object.getClass().equals(VersionChoice.class)) {
             VersionChoice versionChoice = (VersionChoice) object;
-            String jsonText = JSONValue.toJSONString(getVersionChoice(versionChoice));
-            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
+            jsonText = JSONValue.toJSONString(getVersionChoice(versionChoice));
         }
-
         else if (object.getClass().equals(Extensions.class)) {
             Extensions extensions = (Extensions) object;
-            String jsonText = JSONValue.toJSONString(getExtensionList(extensions));
-            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
-
+            jsonText = JSONValue.toJSONString(getExtensionList(extensions));
         } else if (object.getClass().equals(Tenants.class)) {
             JSONObject outer = new JSONObject();
             JSONArray list = new JSONArray();
@@ -142,13 +132,11 @@ public class JSONWriter implements MessageBodyWriter<Object> {
                 list.add(getTenantWithoutWrapper(tenant));
             }
             outer.put(JSONConstants.TENANTS, list);
-            String jsonText = JSONValue.toJSONString(outer);
-            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
+            jsonText = JSONValue.toJSONString(outer);
 
         } else if (object.getClass().equals(Service.class)) {
             Service service = (Service) object;
-            String jsonText = JSONValue.toJSONString(getService(service));
-            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
+            jsonText = JSONValue.toJSONString(getService(service));
 
         } else if (object.getClass().equals(ServiceList.class)) {
             JSONObject outer = new JSONObject();
@@ -158,38 +146,28 @@ public class JSONWriter implements MessageBodyWriter<Object> {
                 list.add(getServiceWithoutWrapper(service));
             }
             outer.put(JSONConstants.SERVICES, list);
-            String jsonText = JSONValue.toJSONString(outer);
-            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
-
+            jsonText = JSONValue.toJSONString(outer);
         } else if (object.getClass().equals(SecretQA.class)) {
 
             SecretQA secrets = (SecretQA) object;
-            String jsonText = JSONValue.toJSONString(getSecretQA(secrets));
-            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
-
+            jsonText = JSONValue.toJSONString(getSecretQA(secrets));
         } else if (object.getClass().equals(EndpointTemplate.class)) {
 
             EndpointTemplate template = (EndpointTemplate) object;
-            String jsonText = JSONValue.toJSONString(getEndpointTemplate(template));
-            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
-
+            jsonText = JSONValue.toJSONString(getEndpointTemplate(template));
         } else if (object.getClass().equals(Endpoint.class)) {
             JSONObject outer = new JSONObject();
             outer.put(JSONConstants.ENDPOINT, getEndpoint((Endpoint)object));
-            String jsonText = JSONValue.toJSONString(outer);
-            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
-
+            jsonText = JSONValue.toJSONString(outer);
         } else if (object.getClass().equals(EndpointList.class)) {
             JSONObject outerList = new JSONObject();
             JSONArray endpoints = new JSONArray();
             EndpointList endpointList = (EndpointList)object;
             outerList.put(JSONConstants.ENDPOINTS, endpoints);
-            for(Endpoint endpoint : endpointList.getEndpoint()){
+            for (Endpoint endpoint : endpointList.getEndpoint()) {
                 endpoints.add(getEndpoint(endpoint));
             }
-            String jsonText = JSONValue.toJSONString(outerList);
-            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
-
+            jsonText = JSONValue.toJSONString(outerList);
         } else if (object.getClass().equals(EndpointTemplateList.class)) {
             JSONObject endpointTemplate = new JSONObject();
             JSONArray endpoints = new JSONArray();
@@ -199,70 +177,61 @@ public class JSONWriter implements MessageBodyWriter<Object> {
                 JSONObject templateItem = new JSONObject();
                 templateItem.put(JSONConstants.ID, template.getId());
                 templateItem.put(JSONConstants.ENABLED, template.isEnabled());
-                if(template.getRegion() != null){
+                if (template.getRegion() != null) {
                     templateItem.put(JSONConstants.REGION, template.getRegion());
                 }
-                if(template.getPublicURL() != null){
+                if (template.getPublicURL() != null) {
                     templateItem.put(JSONConstants.PUBLIC_URL, template.getPublicURL());
                 }
-                if(template.getRegion() != null){
+                if (template.getRegion() != null) {
                     templateItem.put(JSONConstants.GLOBAL, template.isGlobal());
                 }
-                if(template.getName() != null){
+                if (template.getName() != null) {
                     templateItem.put(JSONConstants.NAME, template.getName());
                 }
-                if(template.getAdminURL() != null){
+                if (template.getAdminURL() != null) {
                     templateItem.put(JSONConstants.ADMIN_URL, template.getAdminURL());
                 }
-                if(template.getType() != null){
+                if (template.getType() != null) {
                     templateItem.put(JSONConstants.TYPE, template.getType());
                 }
-                if(template.getInternalURL() != null){
+                if (template.getInternalURL() != null) {
                     templateItem.put(JSONConstants.INTERNAL_URL, template.getInternalURL());
                 }
-                if(template.getVersion() != null){
+                if (template.getVersion() != null) {
                     templateItem.put(JSONConstants.VERSION_ID, template.getVersion().getId());
                     templateItem.put(JSONConstants.VERSION_INFO, template.getVersion().getInfo());
                     templateItem.put(JSONConstants.VERSION_LIST, template.getVersion().getList());
                 }
                 endpoints.add(templateItem);
             }
-            String jsonText = JSONValue.toJSONString(endpointTemplate);
-            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
-
+            jsonText = JSONValue.toJSONString(endpointTemplate);
         } else if (object.getClass().equals(
             CredentialType.class) || object.getClass().equals(ApiKeyCredentials.class)) {
-
             CredentialType cred = (CredentialType) object;
 
             if (cred instanceof ApiKeyCredentials) {
                 ApiKeyCredentials creds = (ApiKeyCredentials) cred;
-                String jsonText = JSONValue.toJSONString(getApiKeyCredentials(creds));
-                outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
+                jsonText = JSONValue.toJSONString(getApiKeyCredentials(creds));
+            } else if (cred instanceof SecretQA) {
+                SecretQA secrets = (SecretQA) object;
+                jsonText = JSONValue.toJSONString(getSecretQA(secrets));
             } else {
                 PasswordCredentialsRequiredUsername creds = (PasswordCredentialsRequiredUsername) cred;
-                String jsonText = JSONValue.toJSONString(getPasswordCredentials(creds));
-                outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
+                jsonText = JSONValue.toJSONString(getPasswordCredentials(creds));
             }
 
         } else if (object.getClass().equals(Groups.class)) {
             Groups groups = (Groups) object;
-            String jsonText = JSONValue.toJSONString(getGroups(groups));
-            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
-
+            jsonText = JSONValue.toJSONString(getGroups(groups));
         } else if (object.getClass().equals(Group.class)) {
             Group group = (Group) object;
-            String jsonText = JSONValue.toJSONString(getGroup(group));
-            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
+            jsonText = JSONValue.toJSONString(getGroup(group));
         } else  if(object.getClass().equals(GroupsList.class)){
             GroupsList groupsList = (GroupsList) object;
-            String jsonText = JSONValue.toJSONString(getGroupsList(groupsList));
-            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
+            jsonText = JSONValue.toJSONString(getGroupsList(groupsList));
         }
-
-
         else if (object.getClass().equals(CredentialListType.class)) {
-
             JSONObject outer = new JSONObject();
             JSONArray list = new JSONArray();
 
@@ -270,87 +239,67 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             outer.put(JSONConstants.CREDENTIALS, list);
 
             for (JAXBElement<? extends CredentialType> cred : credsList
-                .getCredential()) {
+                    .getCredential()) {
                 if (cred.getDeclaredType().isAssignableFrom(
-                    ApiKeyCredentials.class)) {
+                        ApiKeyCredentials.class)) {
                     list.add(getApiKeyCredentials((ApiKeyCredentials) cred.getValue()));
                 } else if (cred.getDeclaredType().isAssignableFrom(
-                    PasswordCredentialsRequiredUsername.class)) {
+                        PasswordCredentialsRequiredUsername.class)) {
                     list.add(getPasswordCredentials((PasswordCredentialsRequiredUsername) cred.getValue()));
                 }
             }
-
-            String jsonText = JSONValue.toJSONString(outer);
-            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
-
+            jsonText = JSONValue.toJSONString(outer);
         } else if (object.getClass().equals(RoleList.class)) {
             JSONObject outer = new JSONObject();
             JSONArray list = new JSONArray();
-
             RoleList roleList = (RoleList)object;
-
-            for (Role role : roleList.getRole()){
+            for (Role role : roleList.getRole()) {
                 list.add(getRole(role));
             }
             outer.put(JSONConstants.ROLES, list);
-
-            String jsonText = JSONValue.toJSONString(outer);
-            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
-
+            jsonText = JSONValue.toJSONString(outer);
         } else if (object.getClass().equals(UserList.class)) {
             JSONObject outer = new JSONObject();
             JSONArray list = new JSONArray();
-
             UserList userList = (UserList)object;
-
-            for (User user : userList.getUser()){
+            for (User user : userList.getUser()) {
                 list.add(getUser(user));
             }
             outer.put(JSONConstants.USERS, list);
-
-            String jsonText = JSONValue.toJSONString(outer);
-            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
-
+            jsonText = JSONValue.toJSONString(outer);
         } else if (object.getClass().equals(AuthenticateResponse.class)) {
             JSONObject outer = new JSONObject();
             JSONObject access = new JSONObject();
             AuthenticateResponse authenticateResponse = (AuthenticateResponse)object;
             access.put(JSONConstants.TOKEN, getToken(authenticateResponse.getToken()));
             access.put(JSONConstants.SERVICECATALOG, getServiceCatalog(authenticateResponse.getServiceCatalog()));
-            if(authenticateResponse.getUser() != null)
+            if (authenticateResponse.getUser() != null) {
                 access.put(JSONConstants.USER, getTokenUser(authenticateResponse.getUser()));
+            }
             outer.put(JSONConstants.ACCESS, access);
-
-            String jsonText = JSONValue.toJSONString(outer);
-            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
-
+            jsonText = JSONValue.toJSONString(outer);
         } else if (object.getClass().equals(ImpersonationResponse.class)) {
             JSONObject outer = new JSONObject();
             JSONObject access = new JSONObject();
             ImpersonationResponse authenticateResponse = (ImpersonationResponse)object;
             access.put(JSONConstants.TOKEN, getToken(authenticateResponse.getToken()));
-            if(authenticateResponse.getImpersonator() != null)
+            if (authenticateResponse.getImpersonator() != null) {
                 access.put(JSONConstants.IMPERSONATOR, getTokenUser(authenticateResponse.getImpersonator()));
-            if(authenticateResponse.getUser() != null)
+            }
+            if (authenticateResponse.getUser() != null) {
                 access.put(JSONConstants.USER, getTokenUser(authenticateResponse.getUser()));
+            }
             outer.put(JSONConstants.ACCESS, access);
-
-            String jsonText = JSONValue.toJSONString(outer);
-            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
-
+            jsonText = JSONValue.toJSONString(outer);
         } else if (object.getClass().equals(BaseURLList.class)) {
             JSONObject outer = new JSONObject();
             JSONArray list = new JSONArray();
-
             BaseURLList baseList = (BaseURLList)object;
             for (BaseURL url : baseList.getBaseURL()){
                 list.add(getBaseUrlList(url));
             }
             outer.put(JSONConstants.BASE_URLS, list);
-
-            String jsonText = JSONValue.toJSONString(outer);
-            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
-
+            jsonText = JSONValue.toJSONString(outer);
         // Version 1.1 specific
         } else if (object.getClass().equals(com.rackspacecloud.docs.auth.api.v1.User.class)) {
             com.rackspacecloud.docs.auth.api.v1.User user = (com.rackspacecloud.docs.auth.api.v1.User)object;
@@ -358,21 +307,21 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             JSONObject inner = new JSONObject();
             inner.put(JSONConstants.ID, user.getId());
             inner.put(JSONConstants.ENABLED, user.isEnabled());
-            if(user.getKey() != null){
+            if (user.getKey() != null) {
                 inner.put(JSONConstants.KEY, user.getKey());
             }
-            if(user.getMossoId() != null){
+            if (user.getMossoId() != null) {
                 inner.put(JSONConstants.MOSSO_ID, user.getMossoId());
             }
-            if(user.getNastId() != null){
+            if (user.getNastId() != null) {
                 inner.put(JSONConstants.NAST_ID, user.getNastId());
             }
             //inner.put(JSONConstants.CREATED, user.getCreated());
             //inner.put(JSONConstants.UPDATED, user.getUpdated());
             JSONArray baseUrls = new JSONArray();
             BaseURLRefList baseList = user.getBaseURLRefs();
-            if(baseList != null){
-                for (BaseURLRef url : baseList.getBaseURLRef()){
+            if (baseList != null) {
+                for (BaseURLRef url : baseList.getBaseURLRef()) {
                     JSONObject urlItem = new JSONObject();
                     urlItem.put(JSONConstants.ID, url.getId());
                     urlItem.put(JSONConstants.HREF, url.getHref());
@@ -382,9 +331,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             }
             inner.put(JSONConstants.BASE_URL_REFS, baseUrls);
             outer.put(JSONConstants.USER, inner);
-            String jsonText = JSONValue.toJSONString(outer);
-            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
-
+            jsonText = JSONValue.toJSONString(outer);
         } else {
             try {
                 getMarshaller().marshallToJSON(object, outputStream);
@@ -392,6 +339,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
                 e.printStackTrace();
             }
         }
+        outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
     }
 
     @SuppressWarnings("unchecked")
@@ -456,17 +404,17 @@ public class JSONWriter implements MessageBodyWriter<Object> {
     }
 
     @SuppressWarnings("unchecked")
-    private JSONObject getTokenUser(UserForAuthenticateResponse user){
+    private JSONObject getTokenUser(UserForAuthenticateResponse user) {
         JSONObject userInner = new JSONObject();
         userInner.put(JSONConstants.ID, user.getId());
-        if(user.getName() != null){
+        if (user.getName() != null) {
             userInner.put(JSONConstants.NAME, user.getName());
         }
         JSONArray roleInner = new JSONArray();
         userInner.put(JSONConstants.ROLES, roleInner);
-        if(user.getRoles() != null){
+        if (user.getRoles() != null) {
             RoleList roleList = user.getRoles();
-            for (Role role : roleList.getRole()){
+            for (Role role : roleList.getRole()) {
                 roleInner.add(getRole(role));
             }
         }
@@ -474,14 +422,14 @@ public class JSONWriter implements MessageBodyWriter<Object> {
     }
 
     @SuppressWarnings("unchecked")
-    private JSONObject getTenantWithoutWrapper(Tenant tenant){
+    private JSONObject getTenantWithoutWrapper(Tenant tenant) {
         JSONObject userInner = new JSONObject();
         userInner.put(JSONConstants.ID, tenant.getId());
         userInner.put(JSONConstants.ENABLED, tenant.isEnabled());
-        if(tenant.getName() != null){
+        if (tenant.getName() != null) {
             userInner.put(JSONConstants.NAME, tenant.getName());
         }
-        if(tenant.getDescription() != null){
+        if (tenant.getDescription() != null) {
             userInner.put(JSONConstants.DESCRIPTION, tenant.getDescription());
         }
         //userInner.put(JSONConstants.DISPLAY_NAME, tenant.getDisplayName());
@@ -490,16 +438,16 @@ public class JSONWriter implements MessageBodyWriter<Object> {
     }
 
     @SuppressWarnings("unchecked")
-    private JSONArray getServiceCatalog(ServiceCatalog serviceCatalog){
+    private JSONArray getServiceCatalog(ServiceCatalog serviceCatalog) {
         JSONArray serviceInner = new JSONArray();
-        if(serviceCatalog != null) {
-            for(ServiceForCatalog service : serviceCatalog.getService()){
+        if (serviceCatalog != null) {
+            for (ServiceForCatalog service : serviceCatalog.getService()) {
                 JSONObject catalogItem = new JSONObject();
                 catalogItem.put(JSONConstants.ENDPOINTS, getEndpointsForCatalog(service.getEndpoint()));
-                if(service.getName() != null){
+                if (service.getName() != null) {
                     catalogItem.put(JSONConstants.NAME, service.getName());
                 }
-                if(service.getType() != null){
+                if (service.getType() != null) {
                     catalogItem.put(JSONConstants.TYPE, service.getType());
                 }
                 serviceInner.add(catalogItem);
@@ -509,19 +457,18 @@ public class JSONWriter implements MessageBodyWriter<Object> {
     }
 
     @SuppressWarnings("unchecked")
-    private JSONObject getToken(Token token){
+    private JSONObject getToken(Token token) {
         JSONObject tokenInner = new JSONObject();
         tokenInner.put(JSONConstants.ID, token.getId());
         tokenInner.put(JSONConstants.EXPIRES, token.getExpires().toString());
-        if(token.getTenant() != null)
-            tokenInner.put(JSONConstants.TENANT, token.getTenant().getName());
+        if (token.getTenant() != null) { tokenInner.put(JSONConstants.TENANT, token.getTenant().getName()); }
         return tokenInner;
     }
 
     @SuppressWarnings("unchecked")
-    private JSONArray getTenants(List<TenantForAuthenticateResponse> tenants){
+    private JSONArray getTenants(List<TenantForAuthenticateResponse> tenants) {
         JSONArray tenantList = new JSONArray();
-        for(TenantForAuthenticateResponse tenant : tenants){
+        for (TenantForAuthenticateResponse tenant : tenants) {
             JSONObject tenantItem = new JSONObject();
             tenantItem.put(JSONConstants.ID, tenant.getId());
             tenantItem.put(JSONConstants.NAME, tenant.getName());
@@ -531,29 +478,29 @@ public class JSONWriter implements MessageBodyWriter<Object> {
     }
 
     @SuppressWarnings("unchecked")
-    private JSONArray getEndpointsForCatalog(List<EndpointForService> endpoints){
+    private JSONArray getEndpointsForCatalog(List<EndpointForService> endpoints) {
         JSONArray endpointList = new JSONArray();
-        for(EndpointForService endpoint : endpoints){
+        for (EndpointForService endpoint : endpoints) {
             JSONObject endpointItem = new JSONObject();
-            if(endpoint.getTenantId() != null){
+            if (endpoint.getTenantId() != null) {
                 endpointItem.put(JSONConstants.TENANT_ID, endpoint.getTenantId());
             }
-            if(endpoint.getPublicURL() != null){
+            if (endpoint.getPublicURL() != null) {
                 endpointItem.put(JSONConstants.PUBLIC_URL, endpoint.getPublicURL());
             }
-            if(endpoint.getInternalURL() != null){
+            if (endpoint.getInternalURL() != null) {
                 endpointItem.put(JSONConstants.INTERNAL_URL, endpoint.getInternalURL());
             }
-            if(endpoint.getRegion() != null){
+            if (endpoint.getRegion() != null) {
                 endpointItem.put(JSONConstants.REGION, endpoint.getRegion());
             }
-            if(endpoint.getVersion() != null){
+            if (endpoint.getVersion() != null) {
                 endpointItem.put(JSONConstants.VERSION_INFO, endpoint.getVersion().getInfo());
                 endpointItem.put(JSONConstants.VERSION_LIST, endpoint.getVersion().getList());
                 endpointItem.put(JSONConstants.VERSION_ID, endpoint.getVersion().getId());
             }
             endpointList.add(endpointItem);
-            }
+        }
         return endpointList;
     }
 
@@ -569,7 +516,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
 
     @SuppressWarnings("unchecked")
     private JSONObject getPasswordCredentials(
-        PasswordCredentialsRequiredUsername creds) {
+            PasswordCredentialsRequiredUsername creds) {
         JSONObject outer = new JSONObject();
         JSONObject inner = new JSONObject();
         outer.put(JSONConstants.PASSWORD_CREDENTIALS, inner);
@@ -602,16 +549,16 @@ public class JSONWriter implements MessageBodyWriter<Object> {
     private JSONObject getRole(Role role) {
         JSONObject outer = new JSONObject();
         outer.put(JSONConstants.ID, role.getId());
-        if(role.getDescription() != null){
+        if (role.getDescription() != null) {
             outer.put(JSONConstants.DESCRIPTION, role.getDescription());
         }
-        if(role.getName() != null){
+        if (role.getName() != null) {
             outer.put(JSONConstants.NAME, role.getName());
         }
-        if(role.getServiceId() != null){
+        if (role.getServiceId() != null) {
             outer.put(JSONConstants.SERVICE_ID, role.getServiceId());
         }
-        if(role.getTenantId() != null){
+        if (role.getTenantId() != null) {
             outer.put(JSONConstants.TENANT_ID, role.getTenantId());
         }
         return outer;
@@ -636,7 +583,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
         for (com.rackspacecloud.docs.auth.api.v1.Group group : groupsList.getGroup()) {
             list.add(get11Group(group));
         }
-        values.put("values",list);
+        values.put("values", list);
         return outer;
     }
 
@@ -652,7 +599,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
         JSONObject outer = new JSONObject();
         outer.put(JSONConstants.ID, group.getId());
         outer.put(JSONConstants.NAME, group.getName());
-        if(group.getDescription() != null){
+        if (group.getDescription() != null) {
             outer.put(JSONConstants.DESCRIPTION, group.getDescription());
         }
         return outer;
@@ -661,7 +608,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
     private JSONObject get11Group(com.rackspacecloud.docs.auth.api.v1.Group group) {
         JSONObject outer = new JSONObject();
         outer.put(JSONConstants.ID, group.getId());
-        if(group.getDescription() != null){
+        if (group.getDescription() != null) {
             outer.put(JSONConstants.DESCRIPTION, group.getDescription());
         }
         return outer;
@@ -680,7 +627,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
         outer.put(JSONConstants.ID, service.getId());
         outer.put(JSONConstants.NAME, service.getName());
         outer.put(JSONConstants.TYPE, service.getType());
-        if(service.getDescription() != null){
+        if (service.getDescription() != null) {
             outer.put(JSONConstants.DESCRIPTION, service.getDescription());
         }
         return outer;
@@ -706,25 +653,25 @@ public class JSONWriter implements MessageBodyWriter<Object> {
 
     @SuppressWarnings("unchecked")
     private JSONObject getEndpointTemplateWithoutWrapper(
-        EndpointTemplate template) {
+            EndpointTemplate template) {
         JSONObject outer = new JSONObject();
         outer.put(JSONConstants.ID, template.getId());
-        if(template.getAdminURL() != null){
+        if (template.getAdminURL() != null) {
             outer.put(JSONConstants.ADMIN_URL, template.getAdminURL());
         }
-        if(template.getInternalURL() != null){
+        if (template.getInternalURL() != null) {
             outer.put(JSONConstants.INTERNAL_URL, template.getInternalURL());
         }
-        if(template.getName() != null){
+        if (template.getName() != null) {
             outer.put(JSONConstants.NAME, template.getName());
         }
-        if(template.getPublicURL() != null){
+        if (template.getPublicURL() != null) {
             outer.put(JSONConstants.PUBLIC_URL, template.getPublicURL());
         }
-        if(template.getType() != null){
+        if (template.getType() != null) {
             outer.put(JSONConstants.TYPE, template.getType());
         }
-        if(template.getRegion() != null){
+        if (template.getRegion() != null) {
             outer.put(JSONConstants.REGION, template.getRegion());
         }
         outer.put(JSONConstants.GLOBAL, template.isGlobal());
@@ -751,23 +698,23 @@ public class JSONWriter implements MessageBodyWriter<Object> {
     }
 
     @SuppressWarnings("unchecked")
-    private JSONObject getBaseUrlList(BaseURL url){
+    private JSONObject getBaseUrlList(BaseURL url) {
         JSONObject baseURL = new JSONObject();
         baseURL.put(JSONConstants.ENABLED, url.isEnabled());
         baseURL.put(JSONConstants.DEFAULT, url.isDefault());
-        if(url.getInternalURL() != null){
-        baseURL.put(JSONConstants.INTERNAL_URL, url.getInternalURL());
+        if (url.getInternalURL() != null) {
+            baseURL.put(JSONConstants.INTERNAL_URL, url.getInternalURL());
         }
-        if(url.getPublicURL() != null){
+        if (url.getPublicURL() != null) {
             baseURL.put(JSONConstants.PUBLIC_URL, url.getPublicURL());
         }
-        if(url.getRegion() != null){
+        if (url.getRegion() != null) {
             baseURL.put(JSONConstants.REGION, url.getRegion());
         }
-        if(url.getServiceName() != null){
+        if (url.getServiceName() != null) {
             baseURL.put(JSONConstants.SERVICE_NAME, url.getServiceName());
         }
-        if(url.getUserType() != null){
+        if (url.getUserType() != null) {
             baseURL.put(JSONConstants.USER_TYPE, url.getUserType().name());
         }
         baseURL.put(JSONConstants.ID, url.getId());
@@ -794,31 +741,31 @@ public class JSONWriter implements MessageBodyWriter<Object> {
     }
 
     @SuppressWarnings("unchecked")
-    private JSONObject getEndpoint(Endpoint endpoint){
+    private JSONObject getEndpoint(Endpoint endpoint) {
         JSONObject endpointItem = new JSONObject();
         endpointItem.put(JSONConstants.ID, endpoint.getId());
-        if(endpoint.getRegion() != null){
+        if (endpoint.getRegion() != null) {
             endpointItem.put(JSONConstants.REGION, endpoint.getRegion());
         }
-        if(endpoint.getPublicURL() != null){
+        if (endpoint.getPublicURL() != null) {
             endpointItem.put(JSONConstants.PUBLIC_URL, endpoint.getPublicURL());
         }
-        if(endpoint.getName() != null){
+        if (endpoint.getName() != null) {
             endpointItem.put(JSONConstants.NAME, endpoint.getName());
         }
-        if(endpoint.getAdminURL() != null){
+        if (endpoint.getAdminURL() != null) {
             endpointItem.put(JSONConstants.ADMIN_URL, endpoint.getAdminURL());
         }
-        if(endpoint.getType() != null){
+        if (endpoint.getType() != null) {
             endpointItem.put(JSONConstants.TYPE, endpoint.getType());
         }
-        if(endpoint.getTenantId() != null){
+        if (endpoint.getTenantId() != null) {
             endpointItem.put(JSONConstants.TENANT_ID, endpoint.getTenantId());
         }
-        if(endpoint.getInternalURL() != null){
+        if (endpoint.getInternalURL() != null) {
             endpointItem.put(JSONConstants.INTERNAL_URL, endpoint.getInternalURL());
         }
-        if(endpoint.getVersion() != null){
+        if (endpoint.getVersion() != null) {
             endpointItem.put(JSONConstants.VERSION_ID, endpoint.getVersion().getId());
             endpointItem.put(JSONConstants.VERSION_INFO, endpoint.getVersion().getInfo());
             endpointItem.put(JSONConstants.VERSION_LIST, endpoint.getVersion().getList());
@@ -856,13 +803,13 @@ public class JSONWriter implements MessageBodyWriter<Object> {
     @SuppressWarnings("unchecked")
     private JSONObject getLinkWithoutWrapper(Link link) {
         JSONObject outer = new JSONObject();
-        if(link.getRel() != null){
+        if (link.getRel() != null) {
             outer.put(JSONConstants.REL, link.getRel().toString());
         }
-        if(link.getType() != null){
+        if (link.getType() != null) {
             outer.put(JSONConstants.TYPE, link.getType());
         }
-        if(link.getHref() != null){
+        if (link.getHref() != null) {
             outer.put(JSONConstants.HREF, link.getHref());
         }
         return outer;
