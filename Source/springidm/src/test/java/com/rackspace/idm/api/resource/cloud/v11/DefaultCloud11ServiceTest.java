@@ -19,13 +19,11 @@ import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
 import org.mortbay.jetty.HttpHeaders;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.MediaType;
@@ -48,7 +46,7 @@ import static org.mockito.Mockito.*;
  * Date: 10/18/11
  * Time: 6:19 PM
  */
-@RunWith(PowerMockRunner.class)
+//@RunWith(PowerMockRunner.class)
 public class DefaultCloud11ServiceTest {
 
     AuthorizationService authorizationService;
@@ -135,7 +133,7 @@ public class DefaultCloud11ServiceTest {
     public void getUserGroups_notAuthorized_returnsCorrectErrorMessage() throws Exception {
         doThrow(new NotAuthorizedException("You are not authorized to access this resource.")).when(spy).authenticateCloudAdminUserForGetRequests(request);
         Response.ResponseBuilder responseBuilder = spy.getUserGroups(request, "testUser", httpHeaders);
-        UnauthorizedFault entity = (UnauthorizedFault)((JAXBElement)responseBuilder.build().getEntity()).getValue();
+        UnauthorizedFault entity = (UnauthorizedFault) responseBuilder.build().getEntity();
         assertThat("message", entity.getMessage(), equalTo("You are not authorized to access this resource."));
     }
 
@@ -143,7 +141,7 @@ public class DefaultCloud11ServiceTest {
     public void getUserGroups_notAuthorized_returnsCorrectErrorCode() throws Exception {
         doThrow(new NotAuthorizedException("You are not authorized to access this resource.")).when(spy).authenticateCloudAdminUserForGetRequests(request);
         Response.ResponseBuilder responseBuilder = spy.getUserGroups(request, "testUser", httpHeaders);
-        UnauthorizedFault entity = (UnauthorizedFault)((JAXBElement)responseBuilder.build().getEntity()).getValue();
+        UnauthorizedFault entity = (UnauthorizedFault) responseBuilder.build().getEntity();
         assertThat("code", entity.getCode(), equalTo(401));
     }
 
@@ -151,7 +149,7 @@ public class DefaultCloud11ServiceTest {
     public void getUserGroups_notAuthorized_entityDetailsShouldMatchCloudResponse() throws Exception {
         doThrow(new NotAuthorizedException("You are not authorized to access this resource.")).when(spy).authenticateCloudAdminUserForGetRequests(request);
         Response.ResponseBuilder responseBuilder = spy.getUserGroups(request, "testUser", httpHeaders);
-        UnauthorizedFault entity = (UnauthorizedFault)((JAXBElement)responseBuilder.build().getEntity()).getValue();
+        UnauthorizedFault entity = (UnauthorizedFault) responseBuilder.build().getEntity();
         assertThat("code", entity.getDetails(), equalTo("AuthErrorHandler"));
     }
 
@@ -160,7 +158,7 @@ public class DefaultCloud11ServiceTest {
         doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
         when(userService.getUser("testUser")).thenReturn(null);
         Response.ResponseBuilder responseBuilder = spy.getUserGroups(request, "testUser", httpHeaders);
-        ItemNotFoundFault entity = (ItemNotFoundFault)((JAXBElement)responseBuilder.build().getEntity()).getValue();
+        ItemNotFoundFault entity = (ItemNotFoundFault)responseBuilder.build().getEntity();
         assertThat("message", entity.getMessage(), equalTo("User not found :testUser"));
     }
 
@@ -169,7 +167,7 @@ public class DefaultCloud11ServiceTest {
         doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
         when(userService.getUser("testUser")).thenReturn(null);
         Response.ResponseBuilder responseBuilder = spy.getUserGroups(request, "testUser", httpHeaders);
-        ItemNotFoundFault entity = (ItemNotFoundFault)((JAXBElement)responseBuilder.build().getEntity()).getValue();
+        ItemNotFoundFault entity = (ItemNotFoundFault)responseBuilder.build().getEntity();
         assertThat("code", entity.getCode(), equalTo(404));
     }
 
@@ -178,7 +176,7 @@ public class DefaultCloud11ServiceTest {
         doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
         when(userService.getUser("testUser")).thenReturn(null);
         Response.ResponseBuilder responseBuilder = spy.getUserGroups(request, "testUser", httpHeaders);
-        ItemNotFoundFault entity = (ItemNotFoundFault)((JAXBElement)responseBuilder.build().getEntity()).getValue();
+        ItemNotFoundFault entity = (ItemNotFoundFault)responseBuilder.build().getEntity();
         assertThat("code", entity.getDetails(), equalTo(null));
     }
 
@@ -829,7 +827,7 @@ public class DefaultCloud11ServiceTest {
         doNothing().when(spy).authenticateCloudAdminUser(request);
         when(userService.getUser("username")).thenReturn(new com.rackspace.idm.domain.entity.User());
         Response.ResponseBuilder responseBuilder = spy.createUser(request, httpHeaders, uriInfo, user);
-        UsernameConflictFault conflictFault =(UsernameConflictFault)((JAXBElement)responseBuilder.build().getEntity()).getValue();
+        UsernameConflictFault conflictFault =(UsernameConflictFault)responseBuilder.build().getEntity();
         assertThat("message", conflictFault.getMessage(), equalTo("Username username already exists"));
     }
 
@@ -840,7 +838,7 @@ public class DefaultCloud11ServiceTest {
         doNothing().when(spy).authenticateCloudAdminUser(request);
         when(userService.getUser("username")).thenReturn(new com.rackspace.idm.domain.entity.User());
         Response.ResponseBuilder responseBuilder = spy.createUser(request, httpHeaders, uriInfo, user);
-        UsernameConflictFault conflictFault =(UsernameConflictFault)((JAXBElement)responseBuilder.build().getEntity()).getValue();
+        UsernameConflictFault conflictFault =(UsernameConflictFault)responseBuilder.build().getEntity();
         assertThat("message", conflictFault.getCode(), equalTo(409));
     }
 
@@ -851,7 +849,7 @@ public class DefaultCloud11ServiceTest {
         doNothing().when(spy).authenticateCloudAdminUser(request);
         when(userService.getUser("username")).thenReturn(new com.rackspace.idm.domain.entity.User());
         Response.ResponseBuilder responseBuilder = spy.createUser(request, httpHeaders, uriInfo, user);
-        UsernameConflictFault conflictFault =(UsernameConflictFault)((JAXBElement)responseBuilder.build().getEntity()).getValue();
+        UsernameConflictFault conflictFault =(UsernameConflictFault)responseBuilder.build().getEntity();
         assertThat("details", conflictFault.getDetails(), equalTo(null));
     }
 
