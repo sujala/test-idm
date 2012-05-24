@@ -76,6 +76,22 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
+    public void listTenants_tokenDoesNotExistInGA_callsClient() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(scopeAccessService.getScopeAccessByAccessToken("token")).thenReturn(null);
+        spy.listTenants(null,"token",null,null);
+        verify(cloudClient).get(anyString(),any(HttpHeaders.class));
+    }
+
+    @Test
+    public void listTenants_tokenExistsInGA_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(scopeAccessService.getScopeAccessByAccessToken("token")).thenReturn(new ScopeAccess());
+        spy.listTenants(null,"token",null,null);
+        verify(scopeAccessService).getScopeAccessByAccessToken("token");
+    }
+
+    @Test
     public void listEndpointsForToken_callsScopeAccessService() throws Exception {
         spy.listEndpointsForToken(null,null,"tokenId");
         verify(scopeAccessService).getScopeAccessByAccessToken("tokenId");
@@ -195,14 +211,6 @@ public class DelegateCloud20ServiceTest {
         HttpHeaders mockHeaders = mock(HttpHeaders.class);
         delegateCloud20Service.listTenants(mockHeaders, null, null, null);
         verify(cloudClient).get(url + "tenants", mockHeaders);
-    }
-
-    @Test
-    public void listTenants_RoutingTrueAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
-        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
-        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
-        delegateCloud20Service.listTenants(null, null, null, null);
-        verify(defaultCloud20Service).listTenants(null, null, null, null);
     }
 
     @Test
