@@ -380,7 +380,6 @@ public class DefaultTenantService implements TenantService {
     public List<TenantRole> getGlobalRolesForUser(User user) {
         logger.debug("Getting Global Roles for user {}", user.getUsername());
         List<TenantRole> roles = this.tenantDao.getTenantRolesForUser(user);
-
         return getGlobalRoles(roles);
     }
 
