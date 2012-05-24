@@ -306,8 +306,8 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void userDisabledExceptionResponse_setsMessage() throws Exception {
         Response.ResponseBuilder responseBuilder = defaultCloud20Service.userDisabledExceptionResponse("userName");
-        JAXBElement<UserDisabledFault> jaxbElement = ((JAXBElement<UserDisabledFault>) (responseBuilder.build().getEntity()));
-        assertThat("message", jaxbElement.getValue().getMessage(), equalTo("userName"));
+        UserDisabledFault disabledFault = (UserDisabledFault) responseBuilder.build().getEntity();
+        assertThat("message", disabledFault.getMessage(), equalTo("userName"));
     }
 
     @Test
