@@ -166,5 +166,27 @@
 
     </util:map>
 
+    <util:map id="oskscatalogNsPrefixMap"
+
+              key-type="java.lang.String"
+
+              value-type="java.lang.String">
+
+        <entry key="http://docs.openstack.org/identity/api/ext/OS-KSCATALOG/v1.0">
+            <value/>
+        </entry>
+    </util:map>
+
+    <util:map id="raxksqaNsPrefixMap"
+
+              key-type="java.lang.String"
+
+              value-type="java.lang.String">
+
+        <entry key="http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0">
+            <value/>
+        </entry>
+    </util:map>
+
 
 </beans>

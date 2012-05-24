@@ -1,6 +1,8 @@
 package com.rackspace.idm.api.resource.cloud;
 
 import com.rackspace.idm.domain.config.providers.PackageClassDiscoverer;
+import com.rackspace.idm.exception.BadRequestException;
+import com.sun.jersey.core.provider.EntityHolder;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 
@@ -89,8 +91,11 @@ public class XMLReader implements MessageBodyReader<Object> {
 
     @Override
     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        Class genClass = (Class) genericType;
-        return classes.contains(genClass);
+        if (!type.equals(EntityHolder.class)) {
+            Class genClass = (Class) genericType;
+            return classes.contains(genClass);
+        }
+        return false;
     }
 
     @Override
@@ -100,7 +105,7 @@ public class XMLReader implements MessageBodyReader<Object> {
             IOUtils.copy(entityStream, writer);
             String en = writer.toString();
             Unmarshaller m = getContext().createUnmarshaller();
-            JAXBElement<?> unMarshal = m.unmarshal(new StreamSource(new StringReader(en)),(Class)genericType);
+            JAXBElement<?> unMarshal = m.unmarshal(new StreamSource(new StringReader(en)), (Class) genericType);
 
             return unMarshal.getValue();
         } catch (JAXBException e) {
