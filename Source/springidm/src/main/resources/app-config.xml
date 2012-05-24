@@ -137,6 +137,17 @@
 
               value-type="java.lang.String">
 
+        <entry key="http://docs.rackspace.com/identity/api/ext/RAX-KSGRP/v1.0">
+            <value/>
+        </entry>
+    </util:map>
+
+    <util:map id="raxgrpNsPrefixMap"
+
+              key-type="java.lang.String"
+
+              value-type="java.lang.String">
+
         <entry key="http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0">
             <value/>
         </entry>

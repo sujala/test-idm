@@ -2325,7 +2325,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         fault.setMessage(errMsg);
         fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_CONFLICT)
-                .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequest(fault));
+                .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequest(fault).getValue());
     }
 
     private Response.ResponseBuilder roleConflictExceptionResponse(String errMsg) {
@@ -2334,7 +2334,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         fault.setMessage(errMsg);
         fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_CONFLICT)
-                .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequest(fault));
+                .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequest(fault).getValue());
     }
 
     private Response.ResponseBuilder endpointTemplateConflictException(String errMsg) {
@@ -2343,7 +2343,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         fault.setMessage(errMsg);
         fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_CONFLICT)
-                .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequest(fault));
+                .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequest(fault).getValue());
     }
 
     private Response.ResponseBuilder forbiddenExceptionResponse(String errMsg) {
@@ -2352,7 +2352,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         fault.setMessage(errMsg);
         fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_FORBIDDEN)
-                .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createForbidden(fault));
+                .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createForbidden(fault).getValue());
     }
 
     private String getCloudAuthClientId() {
@@ -2409,7 +2409,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         fault.setMessage(message);
         fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_UNAUTHORIZED)
-                .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUnauthorized(fault));
+                .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUnauthorized(fault).getValue());
     }
 
     private Response.ResponseBuilder notFoundExceptionResponse(String message) {
@@ -2418,7 +2418,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         fault.setMessage(message);
         fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_NOT_FOUND)
-                .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createItemNotFound(fault));
+                .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createItemNotFound(fault).getValue());
     }
 
     private Response.ResponseBuilder serviceExceptionResponse() {
@@ -2426,7 +2426,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         fault.setCode(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_INTERNAL_SERVER_ERROR)
-                .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createIdentityFault(fault));
+                .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createIdentityFault(fault).getValue());
     }
 
     Response.ResponseBuilder tenantConflictExceptionResponse(String message) {
@@ -2435,7 +2435,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         fault.setMessage(message);
         fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_CONFLICT)
-                .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createTenantConflict(fault));
+                .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createTenantConflict(fault).getValue());
     }
 
     Response.ResponseBuilder userConflictExceptionResponse(String message) {
@@ -2444,7 +2444,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         fault.setMessage(message);
         fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_CONFLICT)
-                .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequest(fault));
+                .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequest(fault).getValue());
     }
 
     Response.ResponseBuilder userDisabledExceptionResponse(String message) {
@@ -2453,7 +2453,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         fault.setMessage(message);
         fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_FORBIDDEN).
-                entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUserDisabled(fault));
+                entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUserDisabled(fault).getValue());
     }
 
     public void setOBJ_FACTORIES(JAXBObjectFactories OBJ_FACTORIES) {
