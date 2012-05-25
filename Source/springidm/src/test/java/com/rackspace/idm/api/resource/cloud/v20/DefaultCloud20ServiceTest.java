@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v20;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.idm.api.converter.cloudv20.EndpointConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.TenantConverterCloudV20;
+import com.rackspace.idm.api.converter.cloudv20.TokenConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
@@ -60,6 +61,7 @@ public class DefaultCloud20ServiceTest {
     private ApplicationService clientService;
     private UserConverterCloudV20 userConverterCloudV20;
     private TenantConverterCloudV20 tenantConverterCloudV20;
+    private TokenConverterCloudV20 tokenConverterCloudV20;
     private EndpointConverterCloudV20 endpointConverterCloudV20;
     private String authToken = "token";
     private EndpointTemplate endpointTemplate;
@@ -95,6 +97,7 @@ public class DefaultCloud20ServiceTest {
         authorizationService = mock(AuthorizationService.class);
         userConverterCloudV20 = mock(UserConverterCloudV20.class);
         tenantConverterCloudV20 = mock(TenantConverterCloudV20.class);
+        tokenConverterCloudV20 = mock(TokenConverterCloudV20.class);
         endpointConverterCloudV20 = mock(EndpointConverterCloudV20.class);
         tenantService = mock(TenantService.class);
         endpointService = mock(EndpointService.class);
@@ -112,6 +115,7 @@ public class DefaultCloud20ServiceTest {
         defaultCloud20Service.setTenantConverterCloudV20(tenantConverterCloudV20);
         defaultCloud20Service.setEndpointConverterCloudV20(endpointConverterCloudV20);
         defaultCloud20Service.setTenantService(tenantService);
+        defaultCloud20Service.setTokenConverterCloudV20(tokenConverterCloudV20);
         defaultCloud20Service.setEndpointService(endpointService);
         defaultCloud20Service.setClientService(clientService);
         defaultCloud20Service.setConfig(config);
@@ -185,6 +189,48 @@ public class DefaultCloud20ServiceTest {
         spy = spy(defaultCloud20Service);
         doNothing().when(spy).checkXAUTHTOKEN(eq(authToken), anyBoolean(), any(String.class));
         doNothing().when(spy).checkXAUTHTOKEN(eq(authToken), anyBoolean(), eq(tenantId));
+    }
+
+    @Test
+    public void validateToken_whenRackerScopeAccess_callsUserConverter_toUserForAuthenticateResponse() throws Exception {
+        RackerScopeAccess rackerScopeAccess = new RackerScopeAccess();
+        rackerScopeAccess.setRackerId("rackerId");
+        when(scopeAccessService.getScopeAccessByAccessToken("rackerToken")).thenReturn(rackerScopeAccess);
+        Token token = new Token();
+        token.setId("rackerToken");
+        when(tokenConverterCloudV20.toToken(rackerScopeAccess)).thenReturn(token);
+        spy.validateToken(null, authToken, "rackerToken", null);
+        verify(userConverterCloudV20).toUserForAuthenticateResponse(org.mockito.Matchers.any(Racker.class), org.mockito.Matchers.any(List.class));
+    }
+
+    @Test
+    public void validateToken_whenRackerScopeAccess_callsTenantService_getTenantRolesForScopeAccess() throws Exception {
+        RackerScopeAccess rackerScopeAccess = new RackerScopeAccess();
+        rackerScopeAccess.setRackerId("rackerId");
+        when(scopeAccessService.getScopeAccessByAccessToken("rackerToken")).thenReturn(rackerScopeAccess);
+        Token token = new Token();
+        token.setId("rackerToken");
+        when(tokenConverterCloudV20.toToken(rackerScopeAccess)).thenReturn(token);
+        spy.validateToken(null, authToken, "rackerToken", null);
+        verify(tenantService).getTenantRolesForScopeAccess(rackerScopeAccess);
+    }
+
+    @Test
+    public void validateToken_whenRackerScopeAccess_callsUserService_getRackerByRackerId() throws Exception {
+        RackerScopeAccess rackerScopeAccess = new RackerScopeAccess();
+        rackerScopeAccess.setRackerId("rackerId");
+        when(scopeAccessService.getScopeAccessByAccessToken("rackerToken")).thenReturn(rackerScopeAccess);
+        Token token = new Token();
+        token.setId("rackerToken");
+        when(tokenConverterCloudV20.toToken(rackerScopeAccess)).thenReturn(token);
+        spy.validateToken(null, authToken, "rackerToken", null);
+        verify(userService).getRackerByRackerId("rackerId");
+    }
+
+    @Test
+    public void validateToken_callsScopeAccessService_getScopeAccessByAccessToken() throws Exception {
+        spy.validateToken(null, authToken, "rackerToken", null);
+        verify(scopeAccessService).getScopeAccessByAccessToken("rackerToken");
     }
 
     @Test
