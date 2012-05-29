@@ -8,6 +8,7 @@ import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.TokenService;
 import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.exception.BadRequestException;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Test;
@@ -275,16 +276,21 @@ public class DelegateCloud20ServiceTest {
     public void validateToken_RoutingFalseAndTokenDoesNotExist_callsDefaultService() throws Exception {
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(tokenService.doesTokenHaveAccessToApplication(null, null)).thenReturn(false);
-        delegateCloud20Service.validateToken(null, null, null, null);
-        verify(defaultCloud20Service).validateToken(null, null, null, null);
+        delegateCloud20Service.validateToken(null, "token", "token", null);
+        verify(defaultCloud20Service).validateToken(null, "token", "token", null);
     }
 
     @Test
     public void validateToken_RoutingFalseAndTokenDoesExist_callsDefaultService() throws Exception {
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(tokenService.doesTokenHaveAccessToApplication(null, null)).thenReturn(true);
-        delegateCloud20Service.validateToken(null, null, null, null);
-        verify(defaultCloud20Service).validateToken(null, null, null, null);
+        delegateCloud20Service.validateToken(null, "token", "token", null);
+        verify(defaultCloud20Service).validateToken(null, "token", "token", null);
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void validateToken_nullToken_throwsBadRequestException() throws Exception {
+        delegateCloud20Service.validateToken(null,null,null,null);
     }
 
     @Test

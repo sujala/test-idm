@@ -157,10 +157,12 @@ public class DelegateCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder validateToken(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo)
             throws Exception, JAXBException {
-
-        if(tokenId.trim().equals(""))
+        if(tokenId == null){
+            throw new BadRequestException("Token cannot be null.");
+        }
+        if(tokenId.trim().equals("")) {
             throw new BadRequestException("Token cannot be empty.");
-
+        }
         ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByAccessToken(tokenId);
         if (isCloudAuthRoutingEnabled() && scopeAccess == null) {
             String request = getCloudAuthV20Url() + "tokens/" + tokenId;
