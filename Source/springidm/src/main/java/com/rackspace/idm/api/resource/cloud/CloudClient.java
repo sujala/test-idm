@@ -105,15 +105,15 @@ public class CloudClient {
         Response.ResponseBuilder responseBuilder = Response.status(statusCode).entity(responseBody);
         for (Header header : response.getAllHeaders()) {
             String key = header.getName();
-            if (!key.equalsIgnoreCase("content-encoding") && !key.equalsIgnoreCase("content-length")) {
+            if (!key.equalsIgnoreCase("content-encoding") && !key.equalsIgnoreCase("content-length") && !key.equalsIgnoreCase("transfer-encoding")) {
                 responseBuilder = responseBuilder.header(key, header.getValue());
-                logger.info("header: " + key + ":" + header.getValue());
             }
         }
         if (statusCode == 500) {
             logger.info("Cloud Auth returned a 500 status code.");
         }
         responseBuilder.header("response-source", "cloud-auth");
+
         return responseBuilder;
     }
 
@@ -122,9 +122,8 @@ public class CloudClient {
             Response.ResponseBuilder builder = Response.status(Response.Status.MOVED_PERMANENTLY); //.header("Location", uri);
             for (Header header : response.getAllHeaders()) {
                 String key = header.getName();
-                if (!key.equalsIgnoreCase("content-encoding") && !key.equalsIgnoreCase("content-length")) {
+                if (!key.equalsIgnoreCase("content-encoding") && !key.equalsIgnoreCase("content-length") && !key.equalsIgnoreCase("transfer-encoding")) {
                     builder.header(key, header.getValue());
-                    logger.info("header: " + key + ":" + header.getValue());
                 }
             }
             //builder.entity(response.getEntity());
