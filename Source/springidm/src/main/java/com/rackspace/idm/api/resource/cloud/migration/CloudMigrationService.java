@@ -489,6 +489,10 @@ public class CloudMigrationService {
     }
 
     public void unmigrateUserByUsername(String username) throws Exception {
+        unmigrateUserByUsername(username, true);
+    }
+
+    private void unmigrateUserByUsername(String username, boolean rootUser) throws Exception {
         com.rackspace.idm.domain.entity.User user = userService.getUser(username);
         if(user == null)
             throw new NotFoundException("User not found.");
@@ -505,6 +509,10 @@ public class CloudMigrationService {
         UserForAuthenticateResponse cloudUser = authenticateResponse.getUser();
         String userToken = authenticateResponse.getToken().getId();
 
+        if (rootUser && isSubUser(cloudUser)) {
+            throw new BadRequestException("Migration is not allowed for subusers");
+        }
+
         if (isUserAdmin(cloudUser)) {
             UserList users = null;
 
@@ -519,7 +527,7 @@ public class CloudMigrationService {
                         continue;
                     }
                     try {
-                        unmigrateUserByUsername(childUser.getUsername());
+                        unmigrateUserByUsername(childUser.getUsername(), false);
                     } catch (Exception e) {
                     }
                 }
