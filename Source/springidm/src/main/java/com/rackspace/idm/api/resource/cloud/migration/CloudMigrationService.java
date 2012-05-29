@@ -252,19 +252,20 @@ public class CloudMigrationService {
         result.setId(newUser.getId());
         result.setUsername(newUser.getUsername());
         result.setEmail(newUser.getEmail());
-        result.setApiKey(newUser.getApiKey());
-        result.setPassword(newUser.getPassword());
-        result.setSecretQuestion(newUser.getSecretQuestion());
-        result.setSecretAnswer(newUser.getSecretAnswer());
+
+        result.setApiKey("*****");         //newUser.getApiKey());
+        result.setPassword("*****");       //newUser.getPassword());
+        result.setSecretQuestion("*****"); //newUser.getSecretQuestion());
+        result.setSecretAnswer("*****");   //newUser.getSecretAnswer());
 
         checkIfEqual(user.getId(), newUser.getId(), commentList, "id");
         checkIfEqual(user.getEmail(), newUser.getEmail(), commentList, "email");
-        checkIfEqual(apiKey, newUser.getApiKey(), commentList, "apiKey");
-        checkIfEqual(password, newUser.getPassword(), commentList, "password");
+        checkIfEqual(apiKey, newUser.getApiKey(), commentList, "apiKey", true);
+        checkIfEqual(password, newUser.getPassword(), commentList, "password", true);
 
         if (secretQA != null) {
-            checkIfEqual(secretQA.getQuestion(), newUser.getSecretQuestion(), commentList, "secretQuestion");
-            checkIfEqual(secretQA.getAnswer(), newUser.getSecretAnswer(), commentList, "secretAnswer");
+            checkIfEqual(secretQA.getQuestion(), newUser.getSecretQuestion(), commentList, "secretQuestion", true);
+            checkIfEqual(secretQA.getAnswer(), newUser.getSecretAnswer(), commentList, "secretAnswer", true);
         }
 
         String comment = StringUtils.join(commentList, ",");
@@ -385,12 +386,19 @@ public class CloudMigrationService {
         }
 	}
 
-	private void checkIfEqual(String oldValue, String newValue, List<String> commentList, String id) {
+    private void checkIfEqual(String oldValue, String newValue, List<String> commentList, String id) {
+        checkIfEqual(oldValue, newValue, commentList, id, false);
+    }
+
+	private void checkIfEqual(String oldValue, String newValue, List<String> commentList, String id, boolean mask) {
 		String defaultOldValue = StringUtils.defaultString(oldValue);
         String defaultNewValue = StringUtils.defaultString(newValue);
         
         if (!defaultOldValue.equals(defaultNewValue)) {
-            commentList.add(id + ":" + defaultOldValue);
+            if(mask)
+                commentList.add(id + ":*****");
+            else
+                commentList.add(id + ":" + defaultOldValue);
         }
 	}
 
