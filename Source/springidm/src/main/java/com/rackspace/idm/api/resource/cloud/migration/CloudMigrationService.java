@@ -180,6 +180,13 @@ public class CloudMigrationService {
             if(password.equals(""))
                 password = Password.generateRandom(false).getValue();
 
+            AuthenticateResponse authenticateResponse = authenticate(username, apiKey, password);
+            UserForAuthenticateResponse cloudUser = authenticateResponse.getUser();
+
+            if (domainId == null && isSubUser(cloudUser)) {
+		        throw new BadRequestException("Migration is not allowed for subusers");
+            }
+
             // Get Secret QA
             SecretQA secretQA = getSecretQA(adminToken, user.getId());
 
@@ -190,9 +197,7 @@ public class CloudMigrationService {
             // CREATE NEW USER
             com.rackspace.idm.domain.entity.User newUser = addMigrationUser(user, apiKey, password, secretQA, domainId);
 
-            AuthenticateResponse authenticateResponse = authenticate(username, apiKey, password);
 
-            UserForAuthenticateResponse cloudUser = authenticateResponse.getUser();
             String userToken = authenticateResponse.getToken().getId();
 
             // Get Roles
@@ -458,6 +463,15 @@ public class CloudMigrationService {
 	private boolean isUserAdmin(UserForAuthenticateResponse cloudUser) {
 		for (Role role : cloudUser.getRoles().getRole()) {
 		    if ("identity:user-admin".equalsIgnoreCase(role.getName())) {
+		        return true;
+		    }
+		}
+		return false;
+	}
+
+	private boolean isSubUser(UserForAuthenticateResponse cloudUser) {
+		for (Role role : cloudUser.getRoles().getRole()) {
+		    if ("identity:default".equalsIgnoreCase(role.getName())) {
 		        return true;
 		    }
 		}
