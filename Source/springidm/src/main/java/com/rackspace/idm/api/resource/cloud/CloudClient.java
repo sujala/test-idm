@@ -107,6 +107,7 @@ public class CloudClient {
             String key = header.getName();
             if (!key.equalsIgnoreCase("content-encoding") && !key.equalsIgnoreCase("content-length")) {
                 responseBuilder = responseBuilder.header(key, header.getValue());
+                logger.info("header: " + key + ":" + header.getValue());
             }
         }
         if (statusCode == 500) {
@@ -123,6 +124,7 @@ public class CloudClient {
                 String key = header.getName();
                 if (!key.equalsIgnoreCase("content-encoding") && !key.equalsIgnoreCase("content-length")) {
                     builder.header(key, header.getValue());
+                    logger.info("header: " + key + ":" + header.getValue());
                 }
             }
             //builder.entity(response.getEntity());
