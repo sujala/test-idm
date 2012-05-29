@@ -187,6 +187,16 @@ public class CloudMigrationService {
 		        throw new BadRequestException("Migration is not allowed for subusers");
             }
 
+            String userToken = authenticateResponse.getToken().getId();
+
+            List<String> subUsers = getSubUsers(cloudUser, userToken);
+
+            for(String subUser : subUsers) {
+                if(userService.userExistsByUsername(username)) {
+                    throw new ConflictException("A user with username " + username + " already exists.");
+                }
+            }
+
             // Get Secret QA
             SecretQA secretQA = getSecretQA(adminToken, user.getId());
 
@@ -198,7 +208,6 @@ public class CloudMigrationService {
             com.rackspace.idm.domain.entity.User newUser = addMigrationUser(user, apiKey, password, secretQA, domainId);
 
 
-            String userToken = authenticateResponse.getToken().getId();
 
             // Get Roles
             addUserGlobalRoles(newUser, cloudUser.getRoles());
@@ -220,31 +229,40 @@ public class CloudMigrationService {
             UserType userResponse = validateUser(user, credentialListType, apiKey, cloudPassword, secretQA, cloudUser, groups, endpoints);
             MigrateUserResponseType result = new MigrateUserResponseType();
 
-            if (isUserAdmin(cloudUser)) {
-                UserList users = null;
-
-                try {
-                    users = client.getUsers(userToken);
-                } catch (Exception e) {
-                }
-
-                if (users != null) {
-                    for (User childUser : users.getUser()) {
-                        if (newUser.getUsername().equalsIgnoreCase(childUser.getUsername())) {
-                            continue;
-                        }
-                        MigrateUserResponseType childResponse = migrateUserByUsername(childUser.getUsername(), enable, newUser.getDomainId());
-                        result.getUsers().addAll(childResponse.getUsers());
-                    }
-                }
+            for(String subUser : subUsers) {
+                MigrateUserResponseType childResponse = migrateUserByUsername(subUser, enable, newUser.getDomainId());
+                result.getUsers().addAll(childResponse.getUsers());
             }
-
+            
             result.getUsers().add(userResponse);
 
             return result;
         }
         throw new UnauthorizedAccessException("Not Authorized.");
     }
+
+	private List<String> getSubUsers(UserForAuthenticateResponse cloudUser, String userToken) {
+		List<String> subUsers = new ArrayList<String>();
+
+		if (isUserAdmin(cloudUser)) {
+		    UserList users = null;
+
+		    try {
+		        users = client.getUsers(userToken);
+		    } catch (Exception e) {
+		    }
+
+		    if (users != null) {
+		        for (User childUser : users.getUser()) {
+                    if (cloudUser.getName().equalsIgnoreCase(childUser.getUsername())) {
+                        continue;
+                    }
+		            subUsers.add(childUser.getUsername());
+		        }
+		    }
+		}
+		return subUsers;
+	}
 
 	private UserType validateUser(User user, CredentialListType credentialListType, String apiKey,
 			String password, SecretQA secretQA, UserForAuthenticateResponse cloudUser, Groups groups, EndpointList endpoints) {
@@ -512,25 +530,13 @@ public class CloudMigrationService {
         if (rootUser && isSubUser(cloudUser)) {
             throw new BadRequestException("Migration is not allowed for subusers");
         }
+        
+        List<String> subUsers = getSubUsers(cloudUser, userToken);
 
-        if (isUserAdmin(cloudUser)) {
-            UserList users = null;
-
+        for(String subUser: subUsers) {
             try {
-                users = client.getUsers(userToken);
+                unmigrateUserByUsername(subUser, false);
             } catch (Exception e) {
-            }
-
-            if (users != null) {
-                for (User childUser : users.getUser()) {
-                    if (user.getUsername().equalsIgnoreCase(childUser.getUsername())) {
-                        continue;
-                    }
-                    try {
-                        unmigrateUserByUsername(childUser.getUsername(), false);
-                    } catch (Exception e) {
-                    }
-                }
             }
         }
 
