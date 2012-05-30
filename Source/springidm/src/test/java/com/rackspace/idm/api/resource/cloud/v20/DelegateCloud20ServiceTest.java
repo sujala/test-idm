@@ -2000,4 +2000,36 @@ public class DelegateCloud20ServiceTest {
         delegateCloud20Service.getTenantById(null, null, "tenantId");
         verify(cloudClient).get(anyString(), any(HttpHeaders.class));
     }
+
+    @Test
+    public void getGroupById_routingEnabledAndNotSourceOfTruth_callsCloudClient() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.getGroupById(null, null, "groupId");
+        verify(cloudClient).get(anyString(), any(HttpHeaders.class));
+    }
+
+    @Test
+    public void getGroupById_routingNotEnabledAndNotSourceOfTruth_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.getGroupById(null, null, "groupId");
+        verify(defaultCloud20Service).getGroupById(null, null, "groupId");
+    }
+
+    @Test
+    public void getGroupById_routingEnabledAndSourceOfTruthEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.getGroupById(null, null, "groupId");
+        verify(defaultCloud20Service).getGroupById(null, null, "groupId");
+    }
+
+    @Test
+    public void getGroupById_routingNotEnabledAndSourceOfTruthEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.getGroupById(null, null, "groupId");
+        verify(defaultCloud20Service).getGroupById(null, null, "groupId");
+    }
 }
