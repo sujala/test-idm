@@ -2160,5 +2160,37 @@ public class DelegateCloud20ServiceTest {
         spy.addGroupToUser(null, null, "groupId", "userId");
         verify(defaultCloud20Service).addGroupToUser(null, null, "groupId", "userId");
     }
+
+    @Test
+    public void removeGroupFromUser_routingEnabledAndNotUserInGAbyIdEnabled_callsCloudClient() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        doReturn(false).when(spy).isUserInGAbyId("userId");
+        spy.removeGroupFromUser(null,null,"groupId", "userId");
+        verify(cloudClient).delete(eq(url + "RAX-GRPADM/groups/groupId/users/userId"), any(HttpHeaders.class));
+    }
+
+    @Test
+    public void removeGroupFromUser_routingNotEnabledAndNotUserInGAbyIdEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        doReturn(false).when(spy).isUserInGAbyId("userId");
+        spy.removeGroupFromUser(null,null,"groupId", "userId");
+        verify(defaultCloud20Service).removeGroupFromUser(null, null, "groupId", "userId");
+    }
+
+    @Test
+    public void removeGroupFromUser_routingEnabledAndUserInGAbyIdEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        doReturn(true).when(spy).isUserInGAbyId("userId");
+        spy.removeGroupFromUser(null, null, "groupId", "userId");
+        verify(defaultCloud20Service).removeGroupFromUser(null, null, "groupId", "userId");
+    }
+
+    @Test
+    public void removeGroupFromUser_routingNotEnabledAndUserInGAbyIdEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        doReturn(true).when(spy).isUserInGAbyId("userId");
+        spy.removeGroupFromUser(null, null, "groupId", "userId");
+        verify(defaultCloud20Service).removeGroupFromUser(null, null, "groupId", "userId");
+    }
 }
 
