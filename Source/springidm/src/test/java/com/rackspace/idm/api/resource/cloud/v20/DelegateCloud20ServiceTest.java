@@ -2128,5 +2128,37 @@ public class DelegateCloud20ServiceTest {
         delegateCloud20Service.deleteGroup(null, null, "groupId");
         verify(defaultCloud20Service).deleteGroup(null, null, "groupId");
     }
+
+    @Test
+    public void addGroupToUser_routingEnabledAndNotUserInGAbyIdEnabled_callsCloudClient() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        doReturn(false).when(spy).isUserInGAbyId("userId");
+        spy.addGroupToUser(null,null,"groupId", "userId");
+        verify(cloudClient).put(eq(url + "RAX-GRPADM/groups/groupId/users/userId"), any(HttpHeaders.class), anyString());
+    }
+
+    @Test
+    public void addGroupToUser_routingNotEnabledAndNotUserInGAbyIdEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        doReturn(false).when(spy).isUserInGAbyId("userId");
+        spy.addGroupToUser(null,null,"groupId", "userId");
+        verify(defaultCloud20Service).addGroupToUser(null, null, "groupId", "userId");
+    }
+
+    @Test
+    public void addGroupToUser_routingEnabledAndUserInGAbyIdEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        doReturn(true).when(spy).isUserInGAbyId("userId");
+        spy.addGroupToUser(null, null, "groupId", "userId");
+        verify(defaultCloud20Service).addGroupToUser(null, null, "groupId", "userId");
+    }
+
+    @Test
+    public void addGroupToUser_routingNotEnabledAndUserInGAbyIdEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        doReturn(true).when(spy).isUserInGAbyId("userId");
+        spy.addGroupToUser(null, null, "groupId", "userId");
+        verify(defaultCloud20Service).addGroupToUser(null, null, "groupId", "userId");
+    }
 }
 
