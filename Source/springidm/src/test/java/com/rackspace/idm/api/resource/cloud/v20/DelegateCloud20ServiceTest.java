@@ -2064,4 +2064,37 @@ public class DelegateCloud20ServiceTest {
         delegateCloud20Service.addGroup(null, null, null, null);
         verify(defaultCloud20Service).addGroup(null, null, null, null);
     }
+
+    @Test
+    public void updateGroup_routingEnabledAndNotSourceOfTruthEnabled_callsCloudClient() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.updateGroup(null,null,"groupId",null);
+        verify(cloudClient).put(eq(url+"RAX-GRPADM/groups/groupId"),any(HttpHeaders.class),anyString());
+    }
+
+    @Test
+    public void updateGroup_routingNotEnabledAndNotSourceOfTruth_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.updateGroup(null,null,"groupId",null);
+        verify(defaultCloud20Service).updateGroup(null, null, "groupId", null);
+    }
+
+    @Test
+    public void updateGroup_routingEnabledAndSourceOfTruthEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.updateGroup(null, null, "groupId", null);
+        verify(defaultCloud20Service).updateGroup(null, null, "groupId", null);
+    }
+
+    @Test
+    public void updateGroup_routingNotEnabledAndSourceOfTruthEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.updateGroup(null, null, "groupId", null);
+        verify(defaultCloud20Service).updateGroup(null, null, "groupId", null);
+    }
 }
+
