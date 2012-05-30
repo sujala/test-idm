@@ -2096,5 +2096,37 @@ public class DelegateCloud20ServiceTest {
         delegateCloud20Service.updateGroup(null, null, "groupId", null);
         verify(defaultCloud20Service).updateGroup(null, null, "groupId", null);
     }
+
+    @Test
+    public void deleteGroup_routingEnabledAndNotSourceOfTruthEnabled_callsCloudClient() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.deleteGroup(null,null,"groupId");
+        verify(cloudClient).delete(eq(url + "RAX-GRPADM/groups/groupId"), any(HttpHeaders.class));
+    }
+
+    @Test
+    public void deleteGroup_routingNotEnabledAndNotSourceOfTruth_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.deleteGroup(null,null,"groupId");
+        verify(defaultCloud20Service).deleteGroup(null, null, "groupId");
+    }
+
+    @Test
+    public void deleteGroup_routingEnabledAndSourceOfTruthEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.deleteGroup(null, null, "groupId");
+        verify(defaultCloud20Service).deleteGroup(null, null, "groupId");
+    }
+
+    @Test
+    public void deleteGroup_routingNotEnabledAndSourceOfTruthEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.deleteGroup(null, null, "groupId");
+        verify(defaultCloud20Service).deleteGroup(null, null, "groupId");
+    }
 }
 
