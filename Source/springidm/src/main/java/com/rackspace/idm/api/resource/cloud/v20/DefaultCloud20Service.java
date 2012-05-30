@@ -2117,7 +2117,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         return tenant;
     }
 
-    private ScopeAccess checkAndGetToken(String tokenId) {
+     ScopeAccess checkAndGetToken(String tokenId) {
         ScopeAccess sa = this.scopeAccessService.getScopeAccessByAccessToken(tokenId);
 
         if (sa == null) {

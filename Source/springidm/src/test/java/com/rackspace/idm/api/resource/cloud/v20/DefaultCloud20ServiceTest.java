@@ -192,9 +192,21 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void validateToken_whenExpiredToken_returns404() throws Exception {
+        RackerScopeAccess rackerScopeAccess = new RackerScopeAccess();
+        rackerScopeAccess.setAccessTokenString("rackerToken");
+        rackerScopeAccess.setAccessTokenExpired();
+        doReturn(rackerScopeAccess).when(spy).checkAndGetToken("token");
+        Response.ResponseBuilder responseBuilder = spy.validateToken(null, authToken, "token", null);
+        assertThat("Reponse Code", responseBuilder.build().getStatus(), equalTo(404));
+    }
+
+    @Test
     public void validateToken_whenRackerScopeAccess_callsUserConverter_toUserForAuthenticateResponse() throws Exception {
         RackerScopeAccess rackerScopeAccess = new RackerScopeAccess();
         rackerScopeAccess.setRackerId("rackerId");
+        rackerScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
+        rackerScopeAccess.setAccessTokenString("rackerToken");
         when(scopeAccessService.getScopeAccessByAccessToken("rackerToken")).thenReturn(rackerScopeAccess);
         Token token = new Token();
         token.setId("rackerToken");
@@ -207,6 +219,8 @@ public class DefaultCloud20ServiceTest {
     public void validateToken_whenRackerScopeAccess_callsTenantService_getTenantRolesForScopeAccess() throws Exception {
         RackerScopeAccess rackerScopeAccess = new RackerScopeAccess();
         rackerScopeAccess.setRackerId("rackerId");
+        rackerScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
+        rackerScopeAccess.setAccessTokenString("rackerToken");
         when(scopeAccessService.getScopeAccessByAccessToken("rackerToken")).thenReturn(rackerScopeAccess);
         Token token = new Token();
         token.setId("rackerToken");
@@ -219,6 +233,8 @@ public class DefaultCloud20ServiceTest {
     public void validateToken_whenRackerScopeAccess_callsUserService_getRackerByRackerId() throws Exception {
         RackerScopeAccess rackerScopeAccess = new RackerScopeAccess();
         rackerScopeAccess.setRackerId("rackerId");
+        rackerScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
+        rackerScopeAccess.setAccessTokenString("rackerToken");
         when(scopeAccessService.getScopeAccessByAccessToken("rackerToken")).thenReturn(rackerScopeAccess);
         Token token = new Token();
         token.setId("rackerToken");
