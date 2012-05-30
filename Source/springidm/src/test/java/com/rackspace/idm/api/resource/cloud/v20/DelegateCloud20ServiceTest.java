@@ -2224,5 +2224,37 @@ public class DelegateCloud20ServiceTest {
         delegateCloud20Service.getUsersForGroup(null, null, "groupId", "marker", 0);
         verify(defaultCloud20Service).getUsersForGroup(null, null, "groupId", "marker", 0);
     }
+
+    @Test
+    public void getGroup_routingEnabledAndNotSourceOfTruthEnabled_callsCloudClient() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.getGroup(null, null, "groupName");
+        verify(cloudClient).get(eq(url + "RAX-GRPADM/groups?name=groupName"), any(HttpHeaders.class));
+    }
+
+    @Test
+    public void getGroup_routingNotEnabledAndNotSourceOfTruth_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.getGroup(null, null, "groupName");
+        verify(defaultCloud20Service).listGroups(null, null, "groupName", null, null);
+    }
+
+    @Test
+    public void getGroup_routingEnabledAndSourceOfTruthEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.getGroup(null, null, "groupName");
+        verify(defaultCloud20Service).listGroups(null, null, "groupName", null, null);
+    }
+
+    @Test
+    public void getGroup_routingNotEnabledAndSourceOfTruthEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.getGroup(null, null, "groupName");
+        verify(defaultCloud20Service).listGroups(null, null, "groupName", null, null);
+    }
 }
 
