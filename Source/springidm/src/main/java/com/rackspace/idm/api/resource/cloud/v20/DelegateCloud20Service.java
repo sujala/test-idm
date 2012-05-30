@@ -310,25 +310,25 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder addGroupToUser(HttpHeaders httpHeaders, String authToken, String groupId, String userId) throws IOException {
+    public ResponseBuilder addUserToGroup(HttpHeaders httpHeaders, String authToken, String groupId, String userId) throws IOException {
         if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
             String request = getCloudAuthV20Url() + "RAX-GRPADM/groups/" + groupId + "/users/" + userId;
             return cloudClient.put(request, httpHeaders, null);
         }
-        return defaultCloud20Service.addGroupToUser(httpHeaders, authToken, groupId, userId);
+        return defaultCloud20Service.addUserToGroup(httpHeaders, authToken, groupId, userId);
     }
 
     @Override
-    public ResponseBuilder removeGroupFromUser(HttpHeaders httpHeaders, String authToken, String groupId, String userId) throws IOException {
+    public ResponseBuilder removeUserFromGroup(HttpHeaders httpHeaders, String authToken, String groupId, String userId) throws IOException {
         if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
             String request = getCloudAuthV20Url() + "RAX-GRPADM/groups/" + groupId + "/users/" + userId;
             return cloudClient.delete(request, httpHeaders);
         }
-        return defaultCloud20Service.removeGroupFromUser(httpHeaders, authToken, groupId, userId);
+        return defaultCloud20Service.removeUserFromGroup(httpHeaders, authToken, groupId, userId);
     }
 
     @Override
-    public ResponseBuilder listUsersWithGroup(HttpHeaders httpHeaders, String authToken, String groupId, String marker, Integer limit) throws IOException {
+    public ResponseBuilder getUsersForGroup(HttpHeaders httpHeaders, String authToken, String groupId, String marker, Integer limit) throws IOException {
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             // TODO: Implement routing to DefaultCloud20Service
             String request = getCloudAuthV20Url() + "RAX-GRPADM/groups/" + groupId + "/users";
@@ -338,7 +338,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             request = appendQueryParams(request, params);
             return cloudClient.get(request, httpHeaders);
         }
-        return defaultCloud20Service.listUsersWithGroup(httpHeaders, authToken, groupId, marker, limit);
+        return defaultCloud20Service.getUsersForGroup(httpHeaders, authToken, groupId, marker, limit);
     }
 
     @Override
