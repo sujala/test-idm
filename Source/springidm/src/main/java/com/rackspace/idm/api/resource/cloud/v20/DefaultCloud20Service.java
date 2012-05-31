@@ -1485,7 +1485,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder impersonate(HttpHeaders httpHeaders, String authToken, ImpersonationRequest impersonationRequest) throws IOException, JAXBException {
-        //verifyServiceAdminLevelAccess(authToken);
         verifyRackerOrServiceAdminAccess(authToken);
         validateImpersonationRequest(impersonationRequest);
 
@@ -1517,14 +1516,17 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         ScopeAccess sa = checkAndGetToken(authToken);
         ScopeAccess usa;
+        //impersonator is a service user
         if (sa instanceof UserScopeAccess) {
             UserScopeAccess userSa = (UserScopeAccess) sa;
             User impersonator = this.userService.getUserById(userSa.getUserRsId());
-            usa = scopeAccessService.addImpersonatedScopeAccess(impersonator, getCloudAuthClientId(), impersonatingUsername, impersonatingToken);
-        } else if (sa instanceof RackerScopeAccess) {
+            usa = scopeAccessService.addImpersonatedScopeAccess(impersonator, getCloudAuthClientId(), impersonatingToken, impersonationRequest);
+        }
+        //impersonator is a Racker
+        else if (sa instanceof RackerScopeAccess) {
             RackerScopeAccess rackerSa = (RackerScopeAccess) sa;
             Racker racker = this.userService.getRackerByRackerId(rackerSa.getRackerId());
-            usa = scopeAccessService.addImpersonatedScopeAccess(racker, getCloudAuthClientId(), impersonatingUsername, impersonatingToken);
+            usa = scopeAccessService.addImpersonatedScopeAccess(racker, getCloudAuthClientId(), impersonatingToken, impersonationRequest);
         } else { throw new NotAuthorizedException("User does not have access"); }
 
         ImpersonationResponse auth = authConverterCloudV20.toImpersonationResponse(usa);
