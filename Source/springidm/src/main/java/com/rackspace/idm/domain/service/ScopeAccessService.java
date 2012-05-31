@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service;
 
+import com.rackspace.docs.identity.api.ext.rax_ga.v1.ImpersonationRequest;
 import com.rackspace.idm.domain.entity.*;
 
 import java.util.Date;
@@ -16,7 +17,7 @@ public interface ScopeAccessService {
     
     ScopeAccess addDelegateScopeAccess(String parentUniqueId, ScopeAccess scopeAccess);
 
-    ScopeAccess addImpersonatedScopeAccess(User user, String clientId, String impersonatingUsername, String impersonatingToken);
+    ScopeAccess addImpersonatedScopeAccess(User user, String clientId, String impersonatingToken, ImpersonationRequest impersonationRequest);
     
     ScopeAccess addScopeAccess(String parentUniqueId, ScopeAccess scopeAccess);
 
