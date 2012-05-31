@@ -183,7 +183,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         return defaultCloud20Service.validateToken(httpHeaders, authToken, tokenId, belongsTo);
     }
 
-    private ResponseBuilder validateImpersonatedTokenFromCloud(HttpHeaders httpHeaders, String impersonatedCloudToken, String belongsTo, ImpersonatedScopeAccess impersonatedScopeAccess) throws Exception, JAXBException {
+     ResponseBuilder validateImpersonatedTokenFromCloud(HttpHeaders httpHeaders, String impersonatedCloudToken, String belongsTo, ImpersonatedScopeAccess impersonatedScopeAccess) throws Exception, JAXBException {
         String gaXAuthToken = getXAuthToken_byPassword(config.getString("ga.username"), config.getString("ga.password")).getToken().getId();
         httpHeaders.getRequestHeaders().get("x-auth-token").set(0, gaXAuthToken);
         httpHeaders.getRequestHeaders().get("accept").set(0, "application/xml");

@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.idm.api.resource.cloud.CloudClient;
 import com.rackspace.idm.api.resource.cloud.CloudUserExtractor;
+import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.service.ScopeAccessService;
@@ -9,6 +10,7 @@ import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.TokenService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
+import com.sun.jersey.core.spi.factory.ResponseBuilderImpl;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Test;
@@ -288,9 +290,26 @@ public class DelegateCloud20ServiceTest {
         verify(defaultCloud20Service).validateToken(null, "token", "token", null);
     }
 
+    @Test
+    public void validateToken_RoutingFalseAndTokenIsImpersonatedUserWithNoAccess_callsValidateImpersonatedTokenFromCloud() throws Exception {
+
+        ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
+        impersonatedScopeAccess.setImpersonatingToken("foo");
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(scopeAccessService.getScopeAccessByAccessToken("token")).thenReturn(impersonatedScopeAccess);
+        doReturn(new ResponseBuilderImpl()).when(spy).validateImpersonatedTokenFromCloud(any(HttpHeaders.class), anyString(), anyString(), any(ImpersonatedScopeAccess.class));
+        spy.validateToken(null, "token", "token", null);
+        verify(spy).validateImpersonatedTokenFromCloud(any(HttpHeaders.class), anyString(), anyString(), eq(impersonatedScopeAccess));
+    }
+
     @Test(expected = BadRequestException.class)
     public void validateToken_nullToken_throwsBadRequestException() throws Exception {
         delegateCloud20Service.validateToken(null,null,null,null);
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void validateToken_emptyToken_throwsBadRequestException() throws Exception {
+        delegateCloud20Service.validateToken(null,"   ",null,null);
     }
 
     @Test
