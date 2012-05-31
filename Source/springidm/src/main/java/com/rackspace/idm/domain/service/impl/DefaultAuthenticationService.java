@@ -336,10 +336,10 @@ public class DefaultAuthenticationService implements AuthenticationService {
     private UserScopeAccess getAndUpdateUserScopeAccessForClientId(User user, Application client) {
 
         logger.debug("Get and Update ScopeAccess for User: {} and ClientId: {}", user.getUsername(), client.getClientId());
-
-        UserScopeAccess scopeAccess = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), client.getClientId());
-
-        if (scopeAccess == null) {
+        UserScopeAccess scopeAccess = null;
+        try{
+            scopeAccess = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), client.getClientId());
+        }catch(NotFoundException ex){
             // Auto-Provision Scope Access Objects for Users
             scopeAccess = new UserScopeAccess();
             scopeAccess.setUsername(user.getUsername());
@@ -360,8 +360,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
             scopeAccess.setAccessTokenExp(current.plusSeconds(this.getDefaultTokenExpirationSeconds()).toDate());
         }
 
-        DateTime refreshExpiration = scopeAccess.getRefreshTokenExp() == null ? new DateTime()
-                .minusDays(1)
+        DateTime refreshExpiration = scopeAccess.getRefreshTokenExp() == null ? new DateTime().minusDays(1)
                 : new DateTime(scopeAccess.getRefreshTokenExp());
 
         if (refreshExpiration.isBefore(current)) {

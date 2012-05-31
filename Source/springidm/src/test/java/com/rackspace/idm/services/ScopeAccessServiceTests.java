@@ -1,10 +1,12 @@
 package com.rackspace.idm.services;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import com.rackspace.idm.domain.dao.*;
+import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.domain.service.impl.DefaultScopeAccessService;
+import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.util.AuthHeaderHelper;
 import junit.framework.Assert;
-
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
@@ -13,29 +15,8 @@ import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.rackspace.idm.domain.dao.ApplicationDao;
-import com.rackspace.idm.domain.dao.EndpointDao;
-import com.rackspace.idm.domain.dao.ScopeAccessDao;
-import com.rackspace.idm.domain.dao.TenantDao;
-import com.rackspace.idm.domain.dao.UserDao;
-import com.rackspace.idm.domain.entity.Application;
-import com.rackspace.idm.domain.entity.Applications;
-import com.rackspace.idm.domain.entity.ClientScopeAccess;
-import com.rackspace.idm.domain.entity.DefinedPermission;
-import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
-import com.rackspace.idm.domain.entity.FilterParam;
-import com.rackspace.idm.domain.entity.GrantedPermission;
-import com.rackspace.idm.domain.entity.PasswordResetScopeAccess;
-import com.rackspace.idm.domain.entity.Permission;
-import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.UserAuthenticationResult;
-import com.rackspace.idm.domain.entity.UserScopeAccess;
-import com.rackspace.idm.domain.entity.Users;
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.domain.service.impl.DefaultScopeAccessService;
-import com.rackspace.idm.exception.NotFoundException;
-import com.rackspace.idm.util.AuthHeaderHelper;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ScopeAccessServiceTests extends ServiceTestsBase {
 
@@ -316,21 +297,18 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
 
         String nastId = "fakeNastId";
         String apiKey = "fakeApiKey";
-        EasyMock.expect(
-            mockUserDao.authenticateByNastIdAndAPIKey(nastId, apiKey))
-            .andReturn(new UserAuthenticationResult(user, true));
+        EasyMock.expect(mockUserDao.authenticateByNastIdAndAPIKey(nastId, apiKey))
+                       .andReturn(new UserAuthenticationResult(user, true));
 
-        EasyMock.expect(
-            scopeAccessDao.getDirectScopeAccessForParentByClientId(
-                user.getUniqueId(), client.getClientId())).andReturn(sa);
+        EasyMock.expect(scopeAccessDao.getDirectScopeAccessForParentByClientId( user.getUniqueId(), client.getClientId()))
+                        .andReturn(sa);
 
         EasyMock.expect(scopeAccessDao.updateScopeAccess(sa)).andReturn(true);
 
         EasyMock.replay(scopeAccessDao, mockUserDao);
 
-        scopeAccessService
-            .getUserScopeAccessForClientIdByNastIdAndApiCredentials(nastId,
-                apiKey, clientId);
+        scopeAccessService.getUserScopeAccessForClientIdByNastIdAndApiCredentials(nastId,
+                                                                                  apiKey, clientId);
 
         EasyMock.verify(scopeAccessDao, mockUserDao);
 
@@ -395,6 +373,8 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
         EasyMock.expect(
             scopeAccessDao.getDirectScopeAccessForParentByClientId("userUniqueId",
                 "clientId")).andReturn(usao);
+        EasyMock.expect(
+            scopeAccessDao.updateScopeAccess(usao)).andReturn(true);
         EasyMock.replay(scopeAccessDao);
         scopeAccessService.getUserScopeAccessForClientId("userUniqueId",
             "clientId");
