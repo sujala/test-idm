@@ -2509,4 +2509,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     public void setTokenConverterCloudV20(TokenConverterCloudV20 tokenConverterCloudV20) {
         this.tokenConverterCloudV20 = tokenConverterCloudV20;
     }
+
+    public void setAtomHopperClient(AtomHopperClient atomHopperClient) {
+        this.atomHopperClient = atomHopperClient;
+    }
 }

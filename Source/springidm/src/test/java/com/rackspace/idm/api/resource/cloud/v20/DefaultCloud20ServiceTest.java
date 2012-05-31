@@ -5,6 +5,7 @@ import com.rackspace.idm.api.converter.cloudv20.EndpointConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.TenantConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.TokenConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
+import com.rackspace.idm.api.resource.cloud.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.*;
@@ -84,6 +85,7 @@ public class DefaultCloud20ServiceTest {
     private Group group;
     private UriInfo uriInfo;
     private CloudKsGroupBuilder cloudKsGroupBuilder;
+    private AtomHopperClient atomHopperClient;
 
     @Before
     public void setUp() throws Exception {
@@ -104,6 +106,8 @@ public class DefaultCloud20ServiceTest {
         clientService = mock(ApplicationService.class);
         config = mock(Configuration.class);
         cloudKsGroupBuilder = mock(CloudKsGroupBuilder.class);
+        atomHopperClient = mock(AtomHopperClient.class);
+
 
         //setting mocks
         defaultCloud20Service.setUserService(userService);
@@ -120,6 +124,7 @@ public class DefaultCloud20ServiceTest {
         defaultCloud20Service.setClientService(clientService);
         defaultCloud20Service.setConfig(config);
         defaultCloud20Service.setCloudKsGroupBuilder(cloudKsGroupBuilder);
+        defaultCloud20Service.setAtomHopperClient(atomHopperClient);
 
         //fields
         user = new User();
@@ -156,6 +161,7 @@ public class DefaultCloud20ServiceTest {
         userOS.setId("userName");
         userOS.setUsername("username");
         userOS.setEmail("foo@bar.com");
+        userOS.setEnabled(true);
         cloudBaseUrl = new CloudBaseUrl();
         cloudBaseUrl.setBaseUrlId(101);
         cloudBaseUrl.setGlobal(false);
