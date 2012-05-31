@@ -670,7 +670,7 @@ public class Cloud20VersionResource {
             @PathParam("groupId") String groupId,
             @QueryParam("marker") String marker,
             @QueryParam("limit") Integer limit) throws IOException {
-        return getCloud20Service().listUsersWithGroup(httpHeaders, authToken, groupId, marker, limit).build();
+        return getCloud20Service().getUsersForGroup(httpHeaders, authToken, groupId, marker, limit).build();
     }
 
     @PUT
@@ -680,7 +680,7 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("groupId") String groupId,
             @PathParam("userId") String userId) throws IOException {
-        return getCloud20Service().addGroupToUser(httpHeaders, authToken, groupId, userId).build();
+        return getCloud20Service().addUserToGroup(httpHeaders, authToken, groupId, userId).build();
     }
 
     @DELETE
@@ -690,7 +690,7 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("groupId") String groupId,
             @PathParam("userId") String userId) throws IOException {
-        return getCloud20Service().removeGroupFromUser(httpHeaders, authToken, groupId, userId).build();
+        return getCloud20Service().removeUserFromGroup(httpHeaders, authToken, groupId, userId).build();
     }
 
 

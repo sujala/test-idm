@@ -2,10 +2,13 @@ package com.rackspace.idm.api.converter.cloudv11;
 
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.CloudEndpoint;
+import com.rackspace.idm.domain.entity.OpenstackEndpoint;
 import com.rackspace.idm.util.CloudAuthServiceCatalogFactory;
 import com.rackspacecloud.docs.auth.api.v1.*;
+
 import org.apache.commons.configuration.Configuration;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class EndpointConverterCloudV11 {
@@ -82,8 +85,42 @@ public class EndpointConverterCloudV11 {
         }
         return refs;
     }
+    
+	public BaseURLRefList openstackToBaseUrlRefs(List<OpenstackEndpoint> endpoints) {
+        BaseURLRefList refs = of.createBaseURLRefList();
 
-    public BaseURLList toBaseUrls(List<CloudBaseUrl> urls) {
+        if (endpoints == null || endpoints.size() == 0) {
+            return refs;
+        }
+
+        for (OpenstackEndpoint e : endpoints) {
+            refs.getBaseURLRef().addAll(toBaseUrlRef(e));
+        }
+        return refs;
+	}
+
+    private List<BaseURLRef> toBaseUrlRef(OpenstackEndpoint endpoint) {
+    	List<BaseURLRef> result = new ArrayList<BaseURLRef>();
+    	
+    	if (endpoint == null) {
+            return result;
+        }
+    	
+    	for (CloudBaseUrl baseUrl : endpoint.getBaseUrls()) {
+    		
+            BaseURLRef baseUrlRef = of.createBaseURLRef();
+            baseUrlRef.setId(baseUrl.getBaseUrlId());
+            baseUrlRef.setV1Default(baseUrl.getDef());
+            baseUrlRef.setHref(String.format(getBaseUrlReferenceString(),
+                    baseUrl.getBaseUrlId()));
+            
+            result.add(baseUrlRef);
+    	}
+    	
+        return result;
+	}
+
+	public BaseURLList toBaseUrls(List<CloudBaseUrl> urls) {
         BaseURLList baseUrls = of.createBaseURLList();
         if (urls == null || urls.size() == 0) {
             return baseUrls;
