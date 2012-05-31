@@ -161,11 +161,11 @@ public interface Cloud20Service {
 
     ResponseBuilder deleteGroup(HttpHeaders httpHeaders, String authToken, String groupId) throws IOException;
 
-    ResponseBuilder addGroupToUser(HttpHeaders httpHeaders, String authToken, String groupId, String userId) throws IOException;
+    ResponseBuilder addUserToGroup(HttpHeaders httpHeaders, String authToken, String groupId, String userId) throws IOException;
 
-    ResponseBuilder removeGroupFromUser(HttpHeaders httpHeaders, String authToken, String groupId, String userId) throws IOException;
+    ResponseBuilder removeUserFromGroup(HttpHeaders httpHeaders, String authToken, String groupId, String userId) throws IOException;
 
-    ResponseBuilder listUsersWithGroup(HttpHeaders httpHeaders, String authToken, String groupId, String marker, Integer limit) throws IOException;
+    ResponseBuilder getUsersForGroup(HttpHeaders httpHeaders, String authToken, String groupId, String marker, Integer limit) throws IOException;
 
     ResponseBuilder getGroup(HttpHeaders httpHeaders, String authToken, String groupName) throws IOException;
 

@@ -2000,4 +2000,261 @@ public class DelegateCloud20ServiceTest {
         delegateCloud20Service.getTenantById(null, null, "tenantId");
         verify(cloudClient).get(anyString(), any(HttpHeaders.class));
     }
+
+    @Test
+    public void getGroupById_routingEnabledAndNotSourceOfTruth_callsCloudClient() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.getGroupById(null, null, "groupId");
+        verify(cloudClient).get(eq(url + "RAX-GRPADM/groups/groupId"), any(HttpHeaders.class));
+    }
+
+    @Test
+    public void getGroupById_routingNotEnabledAndNotSourceOfTruth_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.getGroupById(null, null, "groupId");
+        verify(defaultCloud20Service).getGroupById(null, null, "groupId");
+    }
+
+    @Test
+    public void getGroupById_routingEnabledAndSourceOfTruthEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.getGroupById(null, null, "groupId");
+        verify(defaultCloud20Service).getGroupById(null, null, "groupId");
+    }
+
+    @Test
+    public void getGroupById_routingNotEnabledAndSourceOfTruthEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.getGroupById(null, null, "groupId");
+        verify(defaultCloud20Service).getGroupById(null, null, "groupId");
+    }
+
+    @Test
+    public void addGroup_routingEnabledAndNotSourceOfTruth_callsCloudClient() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.addGroup(null, null, null, null);
+        verify(cloudClient).post(eq(url + "RAX-GRPADM/groups"), any(HttpHeaders.class), anyString());
+    }
+
+    @Test
+    public void addGroup_routingNotEnabledAndNotSourceOfTruth_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.addGroup(null, null, null, null);
+        verify(defaultCloud20Service).addGroup(null, null, null, null);
+    }
+
+    @Test
+    public void addGroup_routingEnabledAndSourceOfTruthEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.addGroup(null, null, null, null);
+        verify(defaultCloud20Service).addGroup(null, null, null, null);
+    }
+
+    @Test
+    public void addGroup_routingNotEnabledAndSourceOfTruthEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.addGroup(null, null, null, null);
+        verify(defaultCloud20Service).addGroup(null, null, null, null);
+    }
+
+    @Test
+    public void updateGroup_routingEnabledAndNotSourceOfTruthEnabled_callsCloudClient() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.updateGroup(null, null, "groupId", null);
+        verify(cloudClient).put(eq(url + "RAX-GRPADM/groups/groupId"), any(HttpHeaders.class), anyString());
+    }
+
+    @Test
+    public void updateGroup_routingNotEnabledAndNotSourceOfTruth_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.updateGroup(null, null, "groupId", null);
+        verify(defaultCloud20Service).updateGroup(null, null, "groupId", null);
+    }
+
+    @Test
+    public void updateGroup_routingEnabledAndSourceOfTruthEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.updateGroup(null, null, "groupId", null);
+        verify(defaultCloud20Service).updateGroup(null, null, "groupId", null);
+    }
+
+    @Test
+    public void updateGroup_routingNotEnabledAndSourceOfTruthEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.updateGroup(null, null, "groupId", null);
+        verify(defaultCloud20Service).updateGroup(null, null, "groupId", null);
+    }
+
+    @Test
+    public void deleteGroup_routingEnabledAndNotSourceOfTruthEnabled_callsCloudClient() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.deleteGroup(null, null, "groupId");
+        verify(cloudClient).delete(eq(url + "RAX-GRPADM/groups/groupId"), any(HttpHeaders.class));
+    }
+
+    @Test
+    public void deleteGroup_routingNotEnabledAndNotSourceOfTruth_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.deleteGroup(null, null, "groupId");
+        verify(defaultCloud20Service).deleteGroup(null, null, "groupId");
+    }
+
+    @Test
+    public void deleteGroup_routingEnabledAndSourceOfTruthEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.deleteGroup(null, null, "groupId");
+        verify(defaultCloud20Service).deleteGroup(null, null, "groupId");
+    }
+
+    @Test
+    public void deleteGroup_routingNotEnabledAndSourceOfTruthEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.deleteGroup(null, null, "groupId");
+        verify(defaultCloud20Service).deleteGroup(null, null, "groupId");
+    }
+
+    @Test
+    public void addUserToGroup_routingEnabledAndNotUserInGAbyIdEnabled_callsCloudClient() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        doReturn(false).when(spy).isUserInGAbyId("userId");
+        spy.addUserToGroup(null, null, "groupId", "userId");
+        verify(cloudClient).put(eq(url + "RAX-GRPADM/groups/groupId/users/userId"), any(HttpHeaders.class), anyString());
+    }
+
+    @Test
+    public void addUserToGroup_routingNotEnabledAndNotUserInGAbyIdEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        doReturn(false).when(spy).isUserInGAbyId("userId");
+        spy.addUserToGroup(null, null, "groupId", "userId");
+        verify(defaultCloud20Service).addUserToGroup(null, null, "groupId", "userId");
+    }
+
+    @Test
+    public void addUserToGroup_routingEnabledAndUserInGAbyIdEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        doReturn(true).when(spy).isUserInGAbyId("userId");
+        spy.addUserToGroup(null, null, "groupId", "userId");
+        verify(defaultCloud20Service).addUserToGroup(null, null, "groupId", "userId");
+    }
+
+    @Test
+    public void addUserToGroup_routingNotEnabledAndUserInGAbyIdEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        doReturn(true).when(spy).isUserInGAbyId("userId");
+        spy.addUserToGroup(null, null, "groupId", "userId");
+        verify(defaultCloud20Service).addUserToGroup(null, null, "groupId", "userId");
+    }
+
+    @Test
+    public void removeUserFromGroup_routingEnabledAndNotUserInGAbyIdEnabled_callsCloudClient() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        doReturn(false).when(spy).isUserInGAbyId("userId");
+        spy.removeUserFromGroup(null, null, "groupId", "userId");
+        verify(cloudClient).delete(eq(url + "RAX-GRPADM/groups/groupId/users/userId"), any(HttpHeaders.class));
+    }
+
+    @Test
+    public void removeUserFromGroup_routingNotEnabledAndNotUserInGAbyIdEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        doReturn(false).when(spy).isUserInGAbyId("userId");
+        spy.removeUserFromGroup(null, null, "groupId", "userId");
+        verify(defaultCloud20Service).removeUserFromGroup(null, null, "groupId", "userId");
+    }
+
+    @Test
+    public void removeUserFromGroup_routingEnabledAndUserInGAbyIdEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        doReturn(true).when(spy).isUserInGAbyId("userId");
+        spy.removeUserFromGroup(null, null, "groupId", "userId");
+        verify(defaultCloud20Service).removeUserFromGroup(null, null, "groupId", "userId");
+    }
+
+    @Test
+    public void removeUserFromGroup_routingNotEnabledAndUserInGAbyIdEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        doReturn(true).when(spy).isUserInGAbyId("userId");
+        spy.removeUserFromGroup(null, null, "groupId", "userId");
+        verify(defaultCloud20Service).removeUserFromGroup(null, null, "groupId", "userId");
+    }
+
+    @Test
+    public void getUsersForGroup_routingEnabledAndNotSourceOfTruthEnabled_callsCloudClient() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.getUsersForGroup(null, null, "groupId", "marker", 0);
+        verify(cloudClient).get(eq(url + "RAX-GRPADM/groups/groupId/users?limit=0&marker=marker"), any(HttpHeaders.class));
+    }
+
+    @Test
+    public void getUsersForGroup_routingNotEnabledAndNotSourceOfTruth_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.getUsersForGroup(null, null, "groupId", "marker", 0);
+        verify(defaultCloud20Service).getUsersForGroup(null, null, "groupId", "marker", 0);
+    }
+
+    @Test
+    public void getUsersForGroup_routingEnabledAndSourceOfTruthEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.getUsersForGroup(null, null, "groupId", "marker", 0);
+        verify(defaultCloud20Service).getUsersForGroup(null, null, "groupId", "marker", 0);
+    }
+
+    @Test
+    public void getUsersForGroup_routingNotEnabledAndSourceOfTruthEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.getUsersForGroup(null, null, "groupId", "marker", 0);
+        verify(defaultCloud20Service).getUsersForGroup(null, null, "groupId", "marker", 0);
+    }
+
+    @Test
+    public void getGroup_routingEnabledAndNotSourceOfTruthEnabled_callsCloudClient() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.getGroup(null, null, "groupName");
+        verify(cloudClient).get(eq(url + "RAX-GRPADM/groups?name=groupName"), any(HttpHeaders.class));
+    }
+
+    @Test
+    public void getGroup_routingNotEnabledAndNotSourceOfTruth_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.getGroup(null, null, "groupName");
+        verify(defaultCloud20Service).listGroups(null, null, "groupName", null, null);
+    }
+
+    @Test
+    public void getGroup_routingEnabledAndSourceOfTruthEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.getGroup(null, null, "groupName");
+        verify(defaultCloud20Service).listGroups(null, null, "groupName", null, null);
+    }
+
+    @Test
+    public void getGroup_routingNotEnabledAndSourceOfTruthEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.getGroup(null, null, "groupName");
+        verify(defaultCloud20Service).listGroups(null, null, "groupName", null, null);
+    }
 }
+
