@@ -6,6 +6,7 @@ import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 
 import com.rackspace.idm.domain.entity.CloudEndpoint;
+import com.rackspace.idm.domain.entity.OpenstackEndpoint;
 import com.rackspace.idm.domain.entity.User;
 
 public class UserConverterCloudV11 {
@@ -31,7 +32,28 @@ public class UserConverterCloudV11 {
     
     public com.rackspacecloud.docs.auth.api.v1.User toCloudV11User(User user, List<CloudEndpoint> endpoints) {
         
-        com.rackspacecloud.docs.auth.api.v1.User jaxbUser = OBJ_FACTORY.createUser();
+        com.rackspacecloud.docs.auth.api.v1.User jaxbUser = toCloudV11User(user);
+        
+        if (endpoints != null && endpoints.size() > 0) {
+            jaxbUser.setBaseURLRefs(this.enpointConverterCloudV11.toBaseUrlRefs(endpoints));
+        }
+        
+        return jaxbUser;
+    }
+
+    public com.rackspacecloud.docs.auth.api.v1.User openstackToCloudV11User(User user, List<OpenstackEndpoint> endpoints) {
+        
+        com.rackspacecloud.docs.auth.api.v1.User jaxbUser = toCloudV11User(user);
+        
+        if (endpoints != null && endpoints.size() > 0) {
+            jaxbUser.setBaseURLRefs(this.enpointConverterCloudV11.openstackToBaseUrlRefs(endpoints));
+        }
+        
+        return jaxbUser;
+    }
+
+	private com.rackspacecloud.docs.auth.api.v1.User toCloudV11User(User user) {
+		com.rackspacecloud.docs.auth.api.v1.User jaxbUser = OBJ_FACTORY.createUser();
         jaxbUser.setId(user.getUsername());
         jaxbUser.setKey(user.getApiKey());
         jaxbUser.setMossoId(user.getMossoId());
@@ -56,13 +78,8 @@ public class UserConverterCloudV11 {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-        
-        if (endpoints != null && endpoints.size() > 0) {
-            jaxbUser.setBaseURLRefs(this.enpointConverterCloudV11.toBaseUrlRefs(endpoints));
-        }
-        
-        return jaxbUser;
-    }
+		return jaxbUser;
+	}
     
     public com.rackspacecloud.docs.auth.api.v1.UserWithOnlyEnabled toCloudV11UserWithOnlyEnabled(User user) {
         
