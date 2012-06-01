@@ -507,7 +507,7 @@ public class DelegateCloud11Service implements Cloud11Service {
         return config.getBoolean(CLOUD_AUTH_ROUTING);
     }
 
-    private AuthData getAuthFromResponse(String entity) {
+    AuthData getAuthFromResponse(String entity) {
         try {
             JAXBContext jc = JAXBContext.newInstance(AuthData.class);
             Unmarshaller unmarshaller = jc.createUnmarshaller();
