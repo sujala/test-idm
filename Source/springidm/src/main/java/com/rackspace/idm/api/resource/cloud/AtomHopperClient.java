@@ -39,6 +39,8 @@ public class AtomHopperClient {
     @Autowired
     private Configuration config;
 
+    DefaultHttpClient httpClient;
+
     private ObjectFactory objectFactory = new ObjectFactory();
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -65,7 +67,7 @@ public class AtomHopperClient {
     }
 
     public HttpResponse executePostRequest(String authToken, Writer writer, String url) throws IOException {
-        DefaultHttpClient httpClient = new DefaultHttpClient();
+        httpClient = new DefaultHttpClient();
         HttpPost httpPost = new HttpPost(url);
         httpPost.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_ATOM_XML);
         httpPost.setHeader("X-Auth-Token", authToken);
@@ -74,7 +76,7 @@ public class AtomHopperClient {
         return httpClient.execute(httpPost);
     }
 
-    private Writer marshal20User(org.openstack.docs.identity.api.v2.User user20) throws JAXBException {
+    public Writer marshal20User(org.openstack.docs.identity.api.v2.User user20) throws JAXBException {
         Writer writer = new StringWriter();
         JAXBContext jc = JAXBContext.newInstance(org.openstack.docs.identity.api.v2.User.class);
         Marshaller marshaller = jc.createMarshaller();
@@ -83,13 +85,25 @@ public class AtomHopperClient {
         return writer;
     }
 
-    private InputStreamEntity createRequestEntity(String s) throws UnsupportedEncodingException {
+    public InputStreamEntity createRequestEntity(String s) throws UnsupportedEncodingException {
         InputStream isStream = new ByteArrayInputStream(createEntryPayload(s).getBytes("UTF-8"));
         InputStreamEntity reqEntity = new InputStreamEntity(isStream, -1);
         return reqEntity;
     }
 
-    private String createEntryPayload(String userObject) {
+    public String createEntryPayload(String userObject) {
         return "<entry xmlns=\"http://www.w3.org/2005/Atom\">" + userObject + "</entry>";
+    }
+
+    public void setUserConverterCloudV20(UserConverterCloudV20 userConverterCloudV20) {
+        this.userConverterCloudV20 = userConverterCloudV20;
+    }
+
+    public void setConfig(Configuration config) {
+        this.config = config;
+    }
+
+    public void setObjectFactory(ObjectFactory objectFactory) {
+        this.objectFactory = objectFactory;
     }
 }
