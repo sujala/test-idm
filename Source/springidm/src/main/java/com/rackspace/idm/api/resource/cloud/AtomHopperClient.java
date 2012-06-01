@@ -52,12 +52,11 @@ public class AtomHopperClient {
             org.openstack.docs.identity.api.v2.User user20 = userConverterCloudV20.toUser(user);
             Writer writer = marshal20User(user20);
             HttpResponse response;
-            if(userStatus.equals("deleted")){
-                response = executePostRequest(authToken, writer,config.getString("atomHopperDeletedUrl"));
-            }else if(userStatus.equals("disabled")){
-                response = executePostRequest(authToken, writer,config.getString("atomHopperDisabledUrl"));
-            }
-            else{
+            if (userStatus.equals("deleted")) {
+                response = executePostRequest(authToken, writer, config.getString("atomHopperDeletedUrl"));
+            } else if (userStatus.equals("disabled")) {
+                response = executePostRequest(authToken, writer, config.getString("atomHopperDisabledUrl"));
+            } else {
                 response = null;
             }
             if (response.getStatusLine().getStatusCode() != 201) {
@@ -74,7 +73,7 @@ public class AtomHopperClient {
         httpPost.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_ATOM_XML);
         httpPost.setHeader("X-Auth-Token", authToken);
         httpPost.setEntity(createRequestEntity(writer.toString()));
-        
+
         return httpClient.execute(httpPost);
     }
 
