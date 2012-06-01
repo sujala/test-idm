@@ -51,6 +51,9 @@ public class DefaultScopeAccessServiceTest {
         authHeaderHelper = mock(AuthHeaderHelper.class);
         configuration = mock(Configuration.class);
         when(configuration.getInt("token.cloudAuthExpirationSeconds")).thenReturn(86400);
+        when(configuration.getInt("token.cloudAuthExpirationSeconds")).thenReturn(86400);
+        when(configuration.getInt("token.refreshWindowHours")).thenReturn(12);
+
         defaultScopeAccessService = new DefaultScopeAccessService(userDao, clientDao, scopeAccessDao,
                                                                   tenantDao, endpointDao, authHeaderHelper,
                                                                   configuration);
@@ -216,20 +219,31 @@ public class DefaultScopeAccessServiceTest {
         userScopeAccess.setAccessTokenExp(new DateTime().minusDays(2).toDate());
         userScopeAccess.setAccessTokenString("1234567890");
         when(scopeAccessDao.getDirectScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(userScopeAccess);
+        when(scopeAccessDao.updateScopeAccess(userScopeAccess)).thenReturn(true);
         UserScopeAccess uas = defaultScopeAccessService.getUserScopeAccessForClientId("12345", "12345");
         uas.isAccessTokenExpired(new DateTime());
         assertThat("newUserScopeAccess", uas.getAccessTokenString(), not("1234567890"));
     }
 
     @Test
+    public void getUserScopeAccessForClientId_withinRefreshWindow_returnsNewToken(){
+        UserScopeAccess userScopeAccess = new UserScopeAccess();
+        userScopeAccess.setAccessTokenExp(new DateTime().plusHours(5).toDate());
+        userScopeAccess.setAccessTokenString("1234567890");
+        when(scopeAccessDao.getDirectScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(userScopeAccess);
+        when(scopeAccessDao.updateScopeAccess(userScopeAccess)).thenReturn(true);
+        UserScopeAccess uas = defaultScopeAccessService.getUserScopeAccessForClientId("12345", "12345");
+        assertThat("newUserScopeAccessWithinWindow", uas.getAccessTokenString(), not("1234567890"));
+    }
+
+    @Test
     public void getUserScopeAccessForClientId_withNonExpiredScopeAccess_returnsSameToken(){
         UserScopeAccess userScopeAccess = new UserScopeAccess();
-        userScopeAccess.setAccessTokenExp(new DateTime().toDate());
+        userScopeAccess.setAccessTokenExp(new DateTime().plusDays(1).toDate());
         userScopeAccess.setAccessTokenString("1234567890");
         when(scopeAccessDao.getDirectScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(userScopeAccess);
         UserScopeAccess uas = defaultScopeAccessService.getUserScopeAccessForClientId("12345", "12345");
-        uas.isAccessTokenExpired(new DateTime());
-        assertThat("newUserScopeAccess", uas.getAccessTokenString(), equalTo(userScopeAccess.getAccessTokenString()));
+        assertThat("newUserScopeAccessNoneExpired", uas.getAccessTokenString(), equalTo("1234567890"));
     }
 
 

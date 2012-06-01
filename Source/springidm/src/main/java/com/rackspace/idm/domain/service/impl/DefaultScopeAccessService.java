@@ -937,9 +937,10 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     @Override
     public UserScopeAccess updateExpiredUserScopeAccess(UserScopeAccess scopeAccess) {
-        if (scopeAccess.isAccessTokenExpired(new DateTime())) {
+        if (scopeAccess.isAccessTokenExpired(new DateTime()) || scopeAccess.isAccessTokenWithinRefreshWindow(getRefreshTokenWindow())) {
+            Date accessTokenExp = new DateTime().plusSeconds(getDefaultCloudAuthTokenExpirationSeconds()).toDate();
             scopeAccess.setAccessTokenString(this.generateToken());
-            scopeAccess.setAccessTokenExp(new DateTime().plusSeconds(getDefaultCloudAuthTokenExpirationSeconds()).toDate());
+            scopeAccess.setAccessTokenExp(accessTokenExp);
             scopeAccessDao.updateScopeAccess(scopeAccess);
         }
         return scopeAccess;
@@ -982,6 +983,10 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     private int getDefaultCloudAuthTokenExpirationSeconds() {
         return config.getInt("token.cloudAuthExpirationSeconds");
+    }
+
+    private int getRefreshTokenWindow() {
+        return config.getInt("token.refreshWindowHours");
     }
 
     private int getDefaultTokenExpirationSeconds() {
