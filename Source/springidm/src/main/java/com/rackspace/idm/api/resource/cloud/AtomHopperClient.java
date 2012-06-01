@@ -13,6 +13,7 @@ import org.openstack.docs.identity.api.v2.ObjectFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import javax.ws.rs.core.MediaType;
@@ -45,6 +46,7 @@ public class AtomHopperClient {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    @Async
     public void postUser(User user, String authToken, String userStatus) throws JAXBException, IOException, HttpException, URISyntaxException {
         try {
             org.openstack.docs.identity.api.v2.User user20 = userConverterCloudV20.toUser(user);
