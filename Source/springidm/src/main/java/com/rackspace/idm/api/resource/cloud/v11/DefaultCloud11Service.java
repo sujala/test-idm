@@ -493,7 +493,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     * This does not do any validation since there are methods before this one that does it.
     * By the time this method is called it assumes very thing is correct
     */
-    private UserScopeAccess getAuthtokenFromRequest(HttpServletRequest request) {
+    UserScopeAccess getAuthtokenFromRequest(HttpServletRequest request) {
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         Map<String, String> stringStringMap = authHeaderHelper.parseBasicParams(authHeader);
         UserScopeAccess   usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(
@@ -1180,5 +1180,13 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     private String getCloudAuthUserAdminRole() {
         return config.getString("cloudAuth.userAdminRole");
+    }
+
+    public AtomHopperClient getAtomHopperClient() {
+        return atomHopperClient;
+    }
+
+    public void setAtomHopperClient(AtomHopperClient atomHopperClient) {
+        this.atomHopperClient = atomHopperClient;
     }
 }

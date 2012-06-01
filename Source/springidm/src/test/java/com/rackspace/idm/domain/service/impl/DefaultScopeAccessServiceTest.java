@@ -1,12 +1,11 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.docs.identity.api.ext.rax_ga.v1.ImpersonationRequest;
-import com.rackspace.idm.domain.dao.ScopeAccessDao;
-import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess;
-import com.rackspace.idm.domain.entity.Racker;
-import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.dao.*;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.util.AuthHeaderHelper;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -32,6 +31,11 @@ public class DefaultScopeAccessServiceTest {
     ScopeAccessDao scopeAccessDao;
     Configuration configuration;
     ImpersonationRequest impersonationRequest;
+    private UserDao userDao;
+    private ApplicationDao clientDao;
+    private TenantDao tenantDao;
+    private EndpointDao endpointDao;
+    private AuthHeaderHelper authHeaderHelper;
 
     @Before
     public void setUp() throws Exception {
@@ -39,10 +43,22 @@ public class DefaultScopeAccessServiceTest {
         org.openstack.docs.identity.api.v2.User user = new org.openstack.docs.identity.api.v2.User();
         user.setUsername("impersonatedUser");
         impersonationRequest.setUser(user);
+        userDao = mock(UserDao.class);
+        clientDao =  mock(ApplicationDao.class);
         scopeAccessDao = mock(ScopeAccessDao.class);
+        tenantDao = mock(TenantDao.class);
+        endpointDao = mock(EndpointDao.class);
+        authHeaderHelper = mock(AuthHeaderHelper.class);
         configuration = mock(Configuration.class);
-        defaultScopeAccessService = new DefaultScopeAccessService(null, null, scopeAccessDao, null, null, null, configuration);
+        when(configuration.getInt("token.cloudAuthExpirationSeconds")).thenReturn(86400);
+        when(configuration.getInt("token.cloudAuthExpirationSeconds")).thenReturn(86400);
+        when(configuration.getInt("token.refreshWindowHours")).thenReturn(12);
+
+        defaultScopeAccessService = new DefaultScopeAccessService(userDao, clientDao, scopeAccessDao,
+                                                                  tenantDao, endpointDao, authHeaderHelper,
+                                                                  configuration);
         spy = spy(defaultScopeAccessService);
+
     }
 
     @Test
@@ -181,4 +197,56 @@ public class DefaultScopeAccessServiceTest {
         spy.addImpersonatedScopeAccess(user, null, null, impersonationRequest);
         verify(spy).setImpersonatedScopeAccess(eq(user), eq(impersonationRequest), any(ImpersonatedScopeAccess.class));
     }
+
+    @Test
+    public void updateExpiredUserScopeAccess() throws Exception {
+        UserScopeAccess userScopeAccess = new UserScopeAccess();
+        userScopeAccess.setAccessTokenExpired();
+        when(scopeAccessDao.updateScopeAccess(userScopeAccess)).thenReturn(true);
+        defaultScopeAccessService.updateExpiredUserScopeAccess(userScopeAccess);
+        assertThat("updatesExpiredUserScopeAccess", userScopeAccess.isAccessTokenExpired(new DateTime()), equalTo(false));
+    }
+
+    @Test(expected = NotFoundException.class)
+    public void getUserScopeAccessForClientId_withNonExistentUser_throwsNotFoundException(){
+        when(scopeAccessDao.getDirectScopeAccessForParentByClientId(anyString(),anyString())).thenReturn(null);
+        defaultScopeAccessService.getUserScopeAccessForClientId("12345", "12345");
+    }
+
+    @Test
+    public void getUserScopeAccessForClientId_withExpiredScopeAccess_returnsNewToken(){
+        UserScopeAccess userScopeAccess = new UserScopeAccess();
+        userScopeAccess.setAccessTokenExp(new DateTime().minusDays(2).toDate());
+        userScopeAccess.setAccessTokenString("1234567890");
+        when(scopeAccessDao.getDirectScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(userScopeAccess);
+        when(scopeAccessDao.updateScopeAccess(userScopeAccess)).thenReturn(true);
+        UserScopeAccess uas = defaultScopeAccessService.getUserScopeAccessForClientId("12345", "12345");
+        uas.isAccessTokenExpired(new DateTime());
+        assertThat("newUserScopeAccess", uas.getAccessTokenString(), not("1234567890"));
+    }
+
+    @Test
+    public void getUserScopeAccessForClientId_withinRefreshWindow_returnsNewToken(){
+        UserScopeAccess userScopeAccess = new UserScopeAccess();
+        userScopeAccess.setAccessTokenExp(new DateTime().plusHours(5).toDate());
+        userScopeAccess.setAccessTokenString("1234567890");
+        when(scopeAccessDao.getDirectScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(userScopeAccess);
+        when(scopeAccessDao.updateScopeAccess(userScopeAccess)).thenReturn(true);
+        UserScopeAccess uas = defaultScopeAccessService.getUserScopeAccessForClientId("12345", "12345");
+        assertThat("newUserScopeAccessWithinWindow", uas.getAccessTokenString(), not("1234567890"));
+    }
+
+    @Test
+    public void getUserScopeAccessForClientId_withNonExpiredScopeAccess_returnsSameToken(){
+        UserScopeAccess userScopeAccess = new UserScopeAccess();
+        userScopeAccess.setAccessTokenExp(new DateTime().plusDays(1).toDate());
+        userScopeAccess.setAccessTokenString("1234567890");
+        when(scopeAccessDao.getDirectScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(userScopeAccess);
+        UserScopeAccess uas = defaultScopeAccessService.getUserScopeAccessForClientId("12345", "12345");
+        assertThat("newUserScopeAccessNoneExpired", uas.getAccessTokenString(), equalTo("1234567890"));
+    }
+
+
+
+
 }

@@ -574,6 +574,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                     throw new NotAuthenticatedException(errMsg);
                 }
                 usa = (UserScopeAccess) sa;
+                scopeAccessService.updateExpiredUserScopeAccess(usa);
                 user = this.checkAndGetUser(usa.getUserRsId());
             } else if (authenticationRequest.getCredential().getDeclaredType().isAssignableFrom(PasswordCredentialsRequiredUsername.class)) {
                 PasswordCredentialsRequiredUsername creds = (PasswordCredentialsRequiredUsername) authenticationRequest.getCredential().getValue();
@@ -590,6 +591,8 @@ public class DefaultCloud20Service implements Cloud20Service {
                 String key = creds.getApiKey();
                 user = checkAndGetUserByName(username);
                 usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(username, key, getCloudAuthClientId());
+                //Check if authentication is within 12hrs of experation if so create a new one
+
             }
             List<TenantRole> roles = tenantService.getTenantRolesForScopeAccess(usa);
             if (authenticationRequest.getTenantName() != null && !tenantService.hasTenantAccess(usa, authenticationRequest.getTenantName())) {
