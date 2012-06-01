@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v11;
 
 import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11;
+import com.rackspace.idm.api.resource.cloud.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.CloudExceptionResponse;
 import com.rackspace.idm.domain.dao.impl.LdapCloudAdminRepository;
 import com.rackspace.idm.domain.entity.*;
@@ -15,6 +16,7 @@ import com.rackspacecloud.docs.auth.api.v1.PasswordCredentials;
 import com.rackspacecloud.docs.auth.api.v1.User;
 import com.sun.jersey.api.uri.UriBuilderImpl;
 import org.apache.commons.configuration.Configuration;
+import org.hamcrest.CoreMatchers;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -38,6 +40,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.mockito.Mockito.any;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.*;
@@ -72,6 +75,7 @@ public class DefaultCloud11ServiceTest {
     javax.ws.rs.core.HttpHeaders httpHeaders;
     CloudExceptionResponse cloudExceptionResponse;
     Application application = new Application("id",null,"myApp", null, null);
+    AtomHopperClient atomHopperClient;
 
     @Before
     public void setUp() throws Exception {
@@ -91,6 +95,7 @@ public class DefaultCloud11ServiceTest {
         request = mock(HttpServletRequest.class);
         userValidator = mock(UserValidator.class);
         authorizationService = mock(AuthorizationService.class);
+        atomHopperClient = mock(AtomHopperClient.class);
         when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn("Basic YXV0aDphdXRoMTIz");
         UriBuilderImpl uriBuilder = mock(UriBuilderImpl.class);
         when(uriBuilder.build()).thenReturn(new URI(""));
@@ -112,6 +117,7 @@ public class DefaultCloud11ServiceTest {
         defaultCloud11Service.setNastFacade(nastFacade);
         defaultCloud11Service.setUserValidator(userValidator);
         defaultCloud11Service.setAuthorizationService(authorizationService);
+        defaultCloud11Service.setAtomHopperClient(atomHopperClient);
         spy = spy(defaultCloud11Service);
     }
 
@@ -762,9 +768,94 @@ public class DefaultCloud11ServiceTest {
     }
 
     @Test
+    public void deleteBaseUrlRef_userServiceReturnsNull_returnNotFoundResponse() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUser(null);
+        Response.ResponseBuilder responseBuilder = spy.deleteBaseURLRef(null, null, null, null);
+        assertThat("response builder", responseBuilder.build().getStatus(), equalTo(404));
+    }
+
+    @Test
+    public void deleteBaseUrlRef_withValidUserId_callsEndpointService_getBaseUrlRefById() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUser(null);
+        when(userService.getUser(null)).thenReturn(new com.rackspace.idm.domain.entity.User());
+        spy.deleteBaseURLRef(null, null, "12345", null);
+        verify(endpointService).getBaseUrlById(anyInt());
+    }
+
+    @Test
+    public void deleteBaseUrlRef_withNullBaseUrl_returnsNotFoundResponse() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUser(null);
+        when(userService.getUser(null)).thenReturn(new com.rackspace.idm.domain.entity.User());
+        when(endpointService.getBaseUrlById(12345)).thenReturn(null);
+        Response.ResponseBuilder responseBuilder = spy.deleteBaseURLRef(null, null, "12345", null);
+        assertThat("response builder", responseBuilder.build().getStatus(), equalTo(404));
+
+    }
+
+    @Test
+    public void deleteBaseUrlRef_withValidData_callsEndpointService_removeBaseUrlFromUser() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUser(null);
+        when(userService.getUser(null)).thenReturn(new com.rackspace.idm.domain.entity.User());
+        when(endpointService.getBaseUrlById(12345)).thenReturn(new CloudBaseUrl());
+        spy.deleteBaseURLRef(null, null, "12345", null);
+        verify(endpointService).removeBaseUrlFromUser(12345, null);
+    }
+
+    @Test
+    public void deleteBaseUrlRef_withValidData_returnsStatus204() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUser(null);
+        when(userService.getUser(null)).thenReturn(new com.rackspace.idm.domain.entity.User());
+        when(endpointService.getBaseUrlById(12345)).thenReturn(new CloudBaseUrl());
+        Response.ResponseBuilder responseBuilder = spy.deleteBaseURLRef(null, null, "12345", null);
+        assertThat("response builder", responseBuilder.build().getStatus(), equalTo(204));
+    }
+
+    @Test
     public void deleteUser_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
         spy.deleteUser(request, null, null);
         verify(spy).authenticateCloudAdminUser(request);
+    }
+
+    @Test
+    public void deleteUser_callsUserService_getUser() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUser(null);
+        spy.deleteUser(null, null, null);
+        verify(userService).getUser(null);
+    }
+
+    @Test
+    public void deleteUser_withNullUser_returnsNotFoundResponse() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUser(null);
+        when(userService.getUser(null)).thenReturn(null);
+        Response.ResponseBuilder responseBuilder = spy.deleteUser(null, null, null);
+        assertThat("response builder", responseBuilder.build().getStatus(), equalTo(404));
+    }
+
+    @Test
+    public void deleteUser_withValidUser_callsUserService_softDeleteUser() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUser(null);
+        when(userService.getUser(null)).thenReturn(userDO);
+        spy.deleteUser(null, null, null);
+        verify(userService).softDeleteUser(userDO);
+    }
+
+    @Test
+    public void deleteUser_withValidUser_callsAtomHopperClient_postUser() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUser(null);
+        when(userService.getUser(null)).thenReturn(userDO);
+        doReturn(new UserScopeAccess()).when(spy).getAuthtokenFromRequest(null);
+        spy.deleteUser(null, null, null);
+        verify(atomHopperClient).postUser(eq(userDO), anyString(), eq("deleted"));
+    }
+
+    @Test
+    public void deleteUser_withValidUser_returnsResponseStatus204() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUser(null);
+        when(userService.getUser(null)).thenReturn(userDO);
+        doReturn(new UserScopeAccess()).when(spy).getAuthtokenFromRequest(null);
+        doNothing().when(atomHopperClient).postUser(eq(userDO), anyString(), eq("deleted"));
+        Response.ResponseBuilder responseBuilder = spy.deleteUser(null, null, null);
+        assertThat("response status", responseBuilder.build().getStatus(), equalTo(204));
     }
 
     @Test
@@ -950,4 +1041,57 @@ public class DefaultCloud11ServiceTest {
         verify(tenantService).addTenantRoleToUser(Matchers.<com.rackspace.idm.domain.entity.User>any(), Matchers.<TenantRole>any());
     }
 
+    @Test
+    public void createUser_withBlankId_returnsBadRequest() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUser(null);
+        User user = new User();
+        Response.ResponseBuilder responseBuilder = spy.createUser(null, null, null, user);
+        assertThat("response builder", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
+    public void createUser_withoutMossId_returnsBadRequest() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUser(null);
+        User user = new User();
+        user.setId("someId");
+        Response.ResponseBuilder responseBuilder = spy.createUser(null, null, null, user);
+        assertThat("response builder", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
+    public void createUser_withBaseURLRefs_callsEndpointService_addBaseUrlToUser() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUser(null);
+        User user = new User();
+        user.setId("someId");
+        user.setMossoId(12345);
+        user.setBaseURLRefs(new BaseURLRefList());
+        user.getBaseURLRefs().getBaseURLRef().add(new BaseURLRef());
+        when(userService.getUser(anyString())).thenReturn(null);
+        when(userConverterCloudV11.toUserDO(user)).thenReturn(new com.rackspace.idm.domain.entity.User());
+        doNothing().when(spy).validateMossoId(anyInt());
+        doNothing().when(userService).addUser(any(com.rackspace.idm.domain.entity.User.class));
+        doNothing().when(userService).updateUser(any(com.rackspace.idm.domain.entity.User.class), anyBoolean());
+        when(clientService.getClientRoleById(null)).thenReturn(new ClientRole());
+        spy.createUser(null, null, null, user);
+        verify(endpointService).addBaseUrlToUser(anyInt(), anyBoolean(), anyString());
+    }
+
+    @Test
+    public void createUser_endpointServiceHasDefaultBaseUrls_callsEndpointService_addBaseUrlToUser() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUser(null);
+        User user = new User();
+        user.setId("someId");
+        user.setMossoId(12345);
+        when(userService.getUser(anyString())).thenReturn(null);
+        when(userConverterCloudV11.toUserDO(user)).thenReturn(new com.rackspace.idm.domain.entity.User());
+        when(clientService.getClientRoleById(null)).thenReturn(new ClientRole());
+        ArrayList<CloudBaseUrl> baseUrls = new ArrayList<CloudBaseUrl>();
+        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
+        cloudBaseUrl.setDef(true);
+        cloudBaseUrl.setBaseUrlId(123);
+        baseUrls.add(cloudBaseUrl);
+        when(endpointService.getDefaultBaseUrls()).thenReturn(baseUrls);
+        spy.createUser(null, null, null, user);
+        verify(endpointService).addBaseUrlToUser(anyInt(), anyBoolean(), anyString());
+    }
 }
