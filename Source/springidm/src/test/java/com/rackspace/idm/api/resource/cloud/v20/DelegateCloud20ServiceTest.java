@@ -5,24 +5,36 @@ import com.rackspace.idm.api.resource.cloud.CloudUserExtractor;
 import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.Tenant;
+import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.TokenService;
 import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.domain.service.impl.DefaultUserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.sun.jersey.core.spi.factory.ResponseBuilderImpl;
+import com.sun.jersey.spi.container.ContainerRequest;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Matchers;
+import org.openstack.docs.identity.api.v2.AuthenticateResponse;
 import org.openstack.docs.identity.api.v2.AuthenticationRequest;
+import org.openstack.docs.identity.api.v2.ObjectFactory;
+import org.openstack.docs.identity.api.v2.Token;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.assertThat;
@@ -113,6 +125,21 @@ public class DelegateCloud20ServiceTest {
         when(scopeAccessService.getScopeAccessByAccessToken("tokenId")).thenReturn(new ScopeAccess());
         spy.listEndpointsForToken(null,null,"tokenId");
         verify(defaultCloud20Service).listEndpointsForToken(null,null,"tokenId");
+    }
+    // Created Today
+    @Test
+    public void authenticate_userIsMigrated_returnsDefaultServiceResponse() throws Exception {
+        when(userService.isMigratedUser(any(User.class))).thenReturn(true);
+        when(defaultCloud20Service.authenticate(httpHeaders, authenticationRequest)).thenReturn(Response.noContent());
+        assertThat("response", delegateCloud20Service.authenticate(httpHeaders, authenticationRequest), instanceOf(Response.ResponseBuilder.class));
+    }
+    // Created Today
+    @Test
+    public void authenticate_userNotNull_returnsDefaultServiceResponse() throws Exception {
+        User user = new User();
+        when(cloudUserExtractor.getUserByV20CredentialType(authenticationRequest)).thenReturn(user);
+        when(cloudClient.post(anyString(), any(HttpHeaders.class), anyString())).thenReturn(Response.status(123));
+        assertThat("response", delegateCloud20Service.authenticate(httpHeaders, authenticationRequest), instanceOf(Response.ResponseBuilder.class));
     }
 
     @Test
@@ -289,27 +316,36 @@ public class DelegateCloud20ServiceTest {
         delegateCloud20Service.validateToken(null, "token", "token", null);
         verify(defaultCloud20Service).validateToken(null, "token", "token", null);
     }
-
+    // Edited Today
     @Test
     public void validateToken_RoutingFalseAndTokenIsImpersonatedUserWithNoAccess_callsValidateImpersonatedTokenFromCloud() throws Exception {
 
         ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
-        impersonatedScopeAccess.setImpersonatingToken("foo");
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(scopeAccessService.getScopeAccessByAccessToken("token")).thenReturn(impersonatedScopeAccess);
-        doReturn(new ResponseBuilderImpl()).when(spy).validateImpersonatedTokenFromCloud(any(HttpHeaders.class), anyString(), anyString(), any(ImpersonatedScopeAccess.class));
+        doReturn(new ResponseBuilderImpl()).when(spy).validateImpersonatedTokenFromCloud(null, null, null, impersonatedScopeAccess);
         spy.validateToken(null, "token", "token", null);
-        verify(spy).validateImpersonatedTokenFromCloud(any(HttpHeaders.class), anyString(), anyString(), eq(impersonatedScopeAccess));
+        verify(spy).validateImpersonatedTokenFromCloud(null, null, null, impersonatedScopeAccess);
+    }
+     // Created Today
+    @Test
+    public void validateToken_RoutingFalseAndTokenIsImpersonatedUserWithAccess_callsDefaultCloud20ServiceValidateToken() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(scopeAccessService.getScopeAccessByAccessToken("token")).thenReturn(new ImpersonatedScopeAccess());
+        when(scopeAccessService.getScopeAccessByAccessToken(null)).thenReturn(new ScopeAccess());
+        when(defaultCloud20Service.validateToken(null, "token", "token", null)).thenReturn(new ResponseBuilderImpl());
+        defaultCloud20Service.validateToken(null, "token", "token", null);
+        verify(defaultCloud20Service).validateToken(null, "token", "token", null);
     }
 
     @Test(expected = BadRequestException.class)
     public void validateToken_nullToken_throwsBadRequestException() throws Exception {
         delegateCloud20Service.validateToken(null,null,null,null);
     }
-
+    // Edited Today
     @Test(expected = BadRequestException.class)
     public void validateToken_emptyToken_throwsBadRequestException() throws Exception {
-        delegateCloud20Service.validateToken(null,"   ",null,null);
+        delegateCloud20Service.validateToken(null,null,"  ",null);
     }
 
     @Test
@@ -328,6 +364,44 @@ public class DelegateCloud20ServiceTest {
         when(scopeAccessService.getScopeAccessByAccessToken(Matchers.<String>any())).thenReturn(mockSA);
         delegateCloud20Service.validateToken(null, null, "test", null);
         verify(defaultCloud20Service).validateToken(null, null, "test", null);
+    }
+
+    @Test
+    public void validateImpersonatedTokenFromCloud_SCOkFalseAndSCNonAuthoritativeInformationFalse() throws Exception{
+       AuthenticateResponse authenticateResponse = new AuthenticateResponse();
+       authenticateResponse.setToken(new Token());
+       ArrayList<String> dummy = new ArrayList<String>();
+       dummy.add("foo");
+       MultivaluedMap<String,String> requestHeaders = mock(MultivaluedMap.class);
+       doReturn(authenticateResponse).when(spy).getXAuthToken_byPassword(anyString(), anyString());
+       when(httpHeaders.getRequestHeaders()).thenReturn(requestHeaders);
+       when(requestHeaders.get("x-auth-token")).thenReturn(dummy);
+       when(requestHeaders.get("accept")).thenReturn(dummy);
+       doReturn(Response.status(123)).when(spy).checkToken(eq(httpHeaders), anyString(), eq("token"), eq("foo"));
+       assertThat("response", spy.validateImpersonatedTokenFromCloud(httpHeaders, "token", "foo", null).build().getStatus(), equalTo(123));
+    }
+
+    @Ignore
+    @Test
+    public void validateImpersonatedTokenFromCloud_SCOkTrueAndSCNonAuthoritativeInformationFalse() throws Exception{
+        AuthenticateResponse authenticateResponse = mock(AuthenticateResponse.class);
+        Response.ResponseBuilder responseBuilder = mock(Response.ResponseBuilder.class);
+        Response response = mock(Response.class);
+        ArrayList<String> dummy = new ArrayList<String>();
+        dummy.add("foo");
+        MultivaluedMap<String,String> requestHeaders = mock(MultivaluedMap.class);
+
+        doReturn(authenticateResponse).when(spy).getXAuthToken_byPassword(anyString(), anyString());
+        when(httpHeaders.getRequestHeaders()).thenReturn(requestHeaders);
+        when(requestHeaders.get("x-auth-token")).thenReturn(dummy);
+        when(requestHeaders.get("accept")).thenReturn(dummy);
+        when(authenticateResponse.getToken()).thenReturn(new Token());
+        doReturn(responseBuilder).when(spy).checkToken(eq(httpHeaders), anyString(), eq("token"), eq("foo"));
+        when(responseBuilder.build()).thenReturn(response);
+        when(response.getStatus()).thenReturn(200);
+        when(response.getEntity()).thenReturn(new Object());
+        doReturn(authenticateResponse).when(spy).unmarshallResponse(anyString(),eq(AuthenticateResponse.class));
+        assertThat("response", spy.validateImpersonatedTokenFromCloud(httpHeaders, "token", "foo", null).build().getStatus(), equalTo(200));
     }
 
     @Test
