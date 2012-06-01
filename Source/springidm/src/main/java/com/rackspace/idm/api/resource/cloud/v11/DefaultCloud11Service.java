@@ -3,11 +3,13 @@ package com.rackspace.idm.api.resource.cloud.v11;
 import com.rackspace.idm.api.converter.cloudv11.AuthConverterCloudV11;
 import com.rackspace.idm.api.converter.cloudv11.EndpointConverterCloudV11;
 import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11;
+import com.rackspace.idm.api.resource.cloud.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.CloudExceptionResponse;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.dao.impl.LdapCloudAdminRepository;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.OpenstackEndpoint;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
@@ -21,6 +23,7 @@ import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.openstack.docs.common.api.v1.VersionChoice;
+import org.openstack.docs.identity.api.v2.EndpointList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -89,6 +92,9 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     @Autowired
     private GroupService cloudGroupService;
+
+    @Autowired
+    private AtomHopperClient atomHopperClient;
 
     @Autowired
     public DefaultCloud11Service(Configuration config,
@@ -472,10 +478,27 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             this.userService.softDeleteUser(gaUser);
 
+
+            UserScopeAccess usa = getAuthtokenFromRequest(request);
+
+            atomHopperClient.postUser(gaUser,usa.getAccessTokenString(),"deleted");
+
             return Response.noContent();
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }
+    }
+   /*
+    * This is used to get the token for AtomHopper
+    * This does not do any validation since there are methods before this one that does it.
+    * By the time this method is called it assumes very thing is correct
+    */
+    private UserScopeAccess getAuthtokenFromRequest(HttpServletRequest request) {
+        String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+        Map<String, String> stringStringMap = authHeaderHelper.parseBasicParams(authHeader);
+        UserScopeAccess   usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(
+                    stringStringMap.get("username"), stringStringMap.get("password"), getCloudAuthClientId());
+        return usa;
     }
 
     @Override
@@ -526,9 +549,10 @@ public class DefaultCloud11Service implements Cloud11Service {
                 throw new NotFoundException(errMsg);
             }
 
-            List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(userId);
+            ScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), config.getString("cloudAuth.clientId"));
+            List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(sa);
 
-            return Response.ok(OBJ_FACTORY.createBaseURLRefs(this.endpointConverterCloudV11.toBaseUrlRefs(endpoints)));
+            return Response.ok(OBJ_FACTORY.createBaseURLRefs(this.endpointConverterCloudV11.openstackToBaseUrlRefs(endpoints)));
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }
@@ -570,9 +594,10 @@ public class DefaultCloud11Service implements Cloud11Service {
                 throw new NotFoundException(errMsg);
             }
 
-            List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(userId);
+            ScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), config.getString("cloudAuth.clientId"));
+            List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(sa);
 
-            return Response.ok(OBJ_FACTORY.createUser(this.userConverterCloudV11.toCloudV11User(user, endpoints)));
+            return Response.ok(OBJ_FACTORY.createUser(this.userConverterCloudV11.openstackToCloudV11User(user, endpoints)));
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }
@@ -796,6 +821,11 @@ public class DefaultCloud11Service implements Cloud11Service {
                     this.endpointService.addBaseUrlToUser(ref.getId(),
                             ref.isV1Default(), userId);
                 }
+            }
+
+            if(gaUser.isDisabled()){
+                UserScopeAccess usa = getAuthtokenFromRequest(request);
+                atomHopperClient.postUser(gaUser,usa.getAccessTokenString(),"disabled"); 
             }
 
             List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(userId);

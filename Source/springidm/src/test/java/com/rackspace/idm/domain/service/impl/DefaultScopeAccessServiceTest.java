@@ -1,248 +1,207 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.docs.identity.api.ext.rax_ga.v1.ImpersonationRequest;
 import com.rackspace.idm.domain.dao.*;
-import com.rackspace.idm.domain.entity.UserScopeAccess;
+import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.*;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
- * User: alan.erwin
- * Date: 5/30/12
- * Time: 2:11 PM
+ * Created by IntelliJ IDEA.
+ * User: Hector
+ * Date: 5/31/12
+ * Time: 10:30 AM
  */
 public class DefaultScopeAccessServiceTest {
+
     DefaultScopeAccessService defaultScopeAccessService;
+    DefaultScopeAccessService spy;
+    ScopeAccessDao scopeAccessDao;
+    Configuration configuration;
+    ImpersonationRequest impersonationRequest;
     private UserDao userDao;
-    private ScopeAccessDao scopeAccessDao;
+    private ApplicationDao clientDao;
     private TenantDao tenantDao;
     private EndpointDao endpointDao;
     private AuthHeaderHelper authHeaderHelper;
-    private Configuration config;
-    private ApplicationDao clientDao;
 
     @Before
     public void setUp() throws Exception {
+        impersonationRequest = new ImpersonationRequest();
+        org.openstack.docs.identity.api.v2.User user = new org.openstack.docs.identity.api.v2.User();
+        user.setUsername("impersonatedUser");
+        impersonationRequest.setUser(user);
         userDao = mock(UserDao.class);
         clientDao =  mock(ApplicationDao.class);
         scopeAccessDao = mock(ScopeAccessDao.class);
         tenantDao = mock(TenantDao.class);
         endpointDao = mock(EndpointDao.class);
         authHeaderHelper = mock(AuthHeaderHelper.class);
-        config = mock(Configuration.class);
-        when(config.getInt("token.cloudAuthExpirationSeconds")).thenReturn(86400);
+        configuration = mock(Configuration.class);
+        when(configuration.getInt("token.cloudAuthExpirationSeconds")).thenReturn(86400);
         defaultScopeAccessService = new DefaultScopeAccessService(userDao, clientDao, scopeAccessDao,
                                                                   tenantDao, endpointDao, authHeaderHelper,
-                                                                  config);
-
-    }
-
-    @After
-    public void tearDown() throws Exception {
+                                                                  configuration);
+        spy = spy(defaultScopeAccessService);
 
     }
 
     @Test
-    public void getOpenstackEndpointsForScopeAccess() throws Exception {
-        //TODO getOpenstackEndpointsForScopeAccess
-
+    public void addImpersonatedScopeAccess_TokenDoesNotExists_callsScopeAccessDao_addImpersonatedScopeAccess() throws Exception {
+        when(scopeAccessDao.getImpersonatedScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(null);
+        defaultScopeAccessService.addImpersonatedScopeAccess(new User(), "clientId", "impToken", impersonationRequest);
+        verify(scopeAccessDao).addImpersonatedScopeAccess(anyString(), any(ScopeAccess.class));
     }
 
     @Test
-    public void addDelegateScopeAccess() throws Exception {
-        //TODO addDelegateScopeAccess
-
+    public void addImpersonatedScopeAccess_TokenExists_callsScopeAccessDao_updateScopeAccess() throws Exception {
+        when(scopeAccessDao.getImpersonatedScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(new ImpersonatedScopeAccess());
+        defaultScopeAccessService.addImpersonatedScopeAccess(new User(), "clientId", "impToken", impersonationRequest);
+        verify(scopeAccessDao).updateScopeAccess(any(ScopeAccess.class));
     }
 
     @Test
-    public void addImpersonatedScopeAccess() throws Exception {
-        //TODO addImpersonatedScopeAccess
-
+    public void setImpersonatedScopeAccess_callerIsRacker_setsRackerId() throws Exception {
+        Racker racker = new Racker();
+        racker.setRackerId("foo");
+        ImpersonatedScopeAccess impersonatedScopeAccess = defaultScopeAccessService.setImpersonatedScopeAccess(racker, impersonationRequest, new ImpersonatedScopeAccess());
+        assertThat("racker id", impersonatedScopeAccess.getRackerId(), equalTo("foo"));
     }
 
     @Test
-    public void addDirectScopeAccess() throws Exception {
-        //TODO addDirectScopeAccess
+    public void addImpersonatedScopeAccess_expireInIsNullAndCallerIsServiceUser_setsExpirationToDefault() throws Exception {
+        ArgumentCaptor<ImpersonatedScopeAccess> argument = ArgumentCaptor.forClass(ImpersonatedScopeAccess.class);
+        when(scopeAccessDao.getImpersonatedScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(null);
+        when(scopeAccessDao.addImpersonatedScopeAccess(anyString(), argument.capture())).thenReturn(null);
+        when(configuration.getInt("token.impersonatedByServiceDefaultSeconds")).thenReturn(3600);
+        defaultScopeAccessService.addImpersonatedScopeAccess(new User(), "clientId", "impToken", impersonationRequest);
+        DateTime dateTime = new DateTime().plusSeconds(3600);
+        assertThat("expiration date", argument.getValue().getAccessTokenExp().getTime(), greaterThan(dateTime.getMillis() - 60000L));
+        assertThat("expiration date", argument.getValue().getAccessTokenExp().getTime(), lessThan(dateTime.getMillis() + 60000L));
+    }
 
+
+    @Test
+    public void setImpersonationScopeAccess_expireInIsNotNullAndCallerIsRacker_setsExpiration() throws Exception {
+        DateTime expectedExpirationTime = new DateTime().plusSeconds(10000);
+        impersonationRequest.setExpireInSeconds(10000);
+        when(configuration.getInt("token.impersonatedByRackerMaxSeconds")).thenReturn(10800);
+        ImpersonatedScopeAccess impersonatedScopeAccess = defaultScopeAccessService.setImpersonatedScopeAccess(new Racker(), impersonationRequest, new ImpersonatedScopeAccess());
+        assertThat("expiration date", impersonatedScopeAccess.getAccessTokenExp().getTime(), greaterThan(expectedExpirationTime.getMillis() - 60000L));
+        assertThat("expiration date", impersonatedScopeAccess.getAccessTokenExp().getTime(), lessThan(expectedExpirationTime.getMillis() + 60000L));
     }
 
     @Test
-    public void addScopeAccess() throws Exception {
-        //TODO addScopeAccess
+    public void setImpersonationScopeAccess_expireInIsNotNullAndCallerIsServiceUser_setsExpiration() throws Exception {
+        DateTime expectedExpirationTime = new DateTime().plusSeconds(10000);
+        impersonationRequest.setExpireInSeconds(10000);
+        when(configuration.getInt("token.impersonatedByServiceMaxSeconds")).thenReturn(10800);
+        ImpersonatedScopeAccess impersonatedScopeAccess = defaultScopeAccessService.setImpersonatedScopeAccess(new User(), impersonationRequest, new ImpersonatedScopeAccess());
+        assertThat("expiration date", impersonatedScopeAccess.getAccessTokenExp().getTime(), greaterThan(expectedExpirationTime.getMillis() - 60000L));
+        assertThat("expiration date", impersonatedScopeAccess.getAccessTokenExp().getTime(), lessThan(expectedExpirationTime.getMillis() + 60000L));
+    }
 
+    @Test(expected = BadRequestException.class)
+    public void setImpersonationScopeAccess_expireInGreaterThanMaxAndCallerIsRacker_throwsBadRequestException() throws Exception {
+        impersonationRequest.setExpireInSeconds(10800000);
+        defaultScopeAccessService.setImpersonatedScopeAccess(new Racker(), impersonationRequest, new ImpersonatedScopeAccess());
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void setImpersonationScopeAccess_expireInGreaterThanMaxAndCallerIsServiceUser_throwsBadRequestException() throws Exception {
+        impersonationRequest.setExpireInSeconds(108000000);
+        defaultScopeAccessService.setImpersonatedScopeAccess(new User(), impersonationRequest, new ImpersonatedScopeAccess());
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void setImpersonationScopeAccess_expireInLessThan1AndCallerIsRacker_throwsBadRequestException() throws Exception {
+        impersonationRequest.setExpireInSeconds(0);
+        defaultScopeAccessService.setImpersonatedScopeAccess(new Racker(), impersonationRequest, new ImpersonatedScopeAccess());
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void setImpersonationScopeAccess_expireInLessThan1AndCallerIsServiceUser_throwsBadRequestException() throws Exception {
+        impersonationRequest.setExpireInSeconds(0);
+        defaultScopeAccessService.setImpersonatedScopeAccess(new User(), impersonationRequest, new ImpersonatedScopeAccess());
     }
 
     @Test
-    public void authenticateAccessToken() throws Exception {
-        //TODO authenticateAccessToken
-
+    public void setImpersonationScopeAccess_expireInIsNotNullAndCallerIsRacker_checksMaxTime() throws Exception {
+        impersonationRequest.setExpireInSeconds(10800);
+        when(configuration.getInt("token.impersonatedByRackerMaxSeconds")).thenReturn(10800);
+        defaultScopeAccessService.setImpersonatedScopeAccess(new Racker(), impersonationRequest, new ImpersonatedScopeAccess());
+        verify(configuration).getInt("token.impersonatedByRackerMaxSeconds");
     }
 
     @Test
-    public void delegatePermission() throws Exception {
-        //TODO delegatePermission
-
+    public void setImpersonationScopeAccess_expireInIsNotNullAndCallerIsServiceUser_checksMaxTime() throws Exception {
+        impersonationRequest.setExpireInSeconds(10800);
+        when(configuration.getInt("token.impersonatedByServiceMaxSeconds")).thenReturn(10800);
+        defaultScopeAccessService.setImpersonatedScopeAccess(new User(), impersonationRequest, new ImpersonatedScopeAccess());
+        verify(configuration).getInt("token.impersonatedByServiceMaxSeconds");
     }
 
     @Test
-    public void deleteScopeAccess() throws Exception {
-        //TODO deleteScopeAccess
-
+    public void setImpersonationScopeAccess_expireInIsNullAndCallerIsRacker_setsExpirationToRackerDefault() throws Exception {
+        impersonationRequest.setExpireInSeconds(null);
+        defaultScopeAccessService.setImpersonatedScopeAccess(new Racker(), impersonationRequest, new ImpersonatedScopeAccess());
+        verify(configuration).getInt("token.impersonatedByRackerDefaultSeconds");
     }
 
     @Test
-    public void deleteDelegatedToken() throws Exception {
-        //TODO deleteDelegatedToken
-
+    public void setImpersonationScopeAccess_expireInIsNullAndCallerIsServiceUser_setsExpirationToServiceDefault() throws Exception {
+        impersonationRequest.setExpireInSeconds(null);
+        defaultScopeAccessService.setImpersonatedScopeAccess(new User(), impersonationRequest, new ImpersonatedScopeAccess());
+        verify(configuration).getInt("token.impersonatedByServiceDefaultSeconds");
     }
 
     @Test
-    public void doesAccessTokenHavePermission() throws Exception {
-        //TODO doesAccessTokenHavePermission
-
+    public void setImpersonationScopeAccess_CallerIsRacker_setsExpirationToRackerDefault() throws Exception {
+        defaultScopeAccessService.setImpersonatedScopeAccess(new Racker(), impersonationRequest, new ImpersonatedScopeAccess());
+        verify(configuration).getInt("token.impersonatedByRackerDefaultSeconds");
     }
 
     @Test
-    public void doesAccessTokenHaveService() throws Exception {
-        //TODO doesAccessTokenHaveService
-
+    public void setImpersonationScopeAccess_CallerIsServiceUser_setsExpirationToServiceDefault() throws Exception {
+        defaultScopeAccessService.setImpersonatedScopeAccess(new User(), impersonationRequest, new ImpersonatedScopeAccess());
+        verify(configuration).getInt("token.impersonatedByServiceDefaultSeconds");
     }
 
     @Test
-    public void doesUserHavePermissionForClient() throws Exception {
-        //TODO doesUserHavePermissionForClient
-
+    public void addImpersonatedScopeAccess_whenScopeAccessDoesNotExist_callsSetImpersonatedScopeAccess() throws Exception {
+        when(scopeAccessDao.getImpersonatedScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(null);
+        User user = new User();
+        spy.addImpersonatedScopeAccess(user, null, null, impersonationRequest);
+        verify(spy).setImpersonatedScopeAccess(eq(user), eq(impersonationRequest), any(ImpersonatedScopeAccess.class));
     }
 
     @Test
-    public void expireAccessToken() throws Exception {
-        //TODO expireAccessToken
-
+    public void addImpersonatedScopeAccess_whenScopeAccessExists_callsSetImpersonatedScopeAccess() throws Exception {
+        when(scopeAccessDao.getImpersonatedScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(new ImpersonatedScopeAccess());
+        User user = new User();
+        spy.addImpersonatedScopeAccess(user, null, null, impersonationRequest);
+        verify(spy).setImpersonatedScopeAccess(eq(user), eq(impersonationRequest), any(ImpersonatedScopeAccess.class));
     }
 
     @Test
-    public void expireAllTokensForClient() throws Exception {
-        //TODO expireAllTokensForClient
-
-    }
-
-    @Test
-    public void expireAllTokensForCustomer() throws Exception {
-        //TODO expireAllTokensForCustomer
-
-    }
-
-    @Test
-    public void expireAllTokensForUser() throws Exception {
-        //TODO expireAllTokensForUser
-
-    }
-
-    @Test
-    public void getAccessTokenByAuthHeader() throws Exception {
-        //TODO getAccessTokenByAuthHeader
-
-    }
-
-    @Test
-    public void getClientScopeAccessForClientId() throws Exception {
-        //TODO getClientScopeAccessForClientId
-
-    }
-
-    @Test
-    public void getDelegateScopeAccessesForParent() throws Exception {
-        //TODO getDelegateScopeAccessesForParent
-
-    }
-
-    @Test
-    public void getDelegateScopeAccessForParentByClientId() throws Exception {
-        //TODO getDelegateScopeAccessForParentByClientId
-
-    }
-
-    @Test
-    public void getDirectScopeAccessForParentByClientId() throws Exception {
-        //TODO getDirectScopeAccessForParentByClientId
-
-    }
-
-    @Test
-    public void getOrCreatePasswordResetScopeAccessForUser() throws Exception {
-        //TODO getOrCreatePasswordResetScopeAccessForUser
-
-    }
-
-    @Test
-    public void getPermissionForParent() throws Exception {
-        //TODO getPermissionForParent
-
-    }
-
-    @Test
-    public void getPermissionsForParent_withPermission() throws Exception {
-        //TODO getPermissionsForParent
-
-    }
-
-    @Test
-    public void getPermissionsForParent() throws Exception {
-        //TODO getPermissionsForParent
-
-    }
-
-    @Test
-    public void getRackerScopeAccessForClientId() throws Exception {
-        //TODO getRackerScopeAccessForClientId
-
-    }
-
-    @Test
-    public void getScopeAccessByAccessToken() throws Exception {
-        //TODO getScopeAccessByAccessToken
-
-    }
-
-    @Test
-    public void loadScopeAccessByAccessToken() throws Exception {
-        //TODO loadScopeAccessByAccessToken
-
-    }
-
-    @Test
-    public void getDelegatedScopeAccessByRefreshToken() throws Exception {
-        //TODO getDelegatedScopeAccessByRefreshToken
-
-    }
-
-    @Test
-    public void getScopeAccessByAuthCode() throws Exception {
-        //TODO getScopeAccessByAuthCode
-
-    }
-
-    @Test
-    public void getScopeAccessByRefreshToken() throws Exception {
-        //TODO getScopeAccessByRefreshToken
-
-    }
-
-    @Test
-    public void getScopeAccessesForParentByClientId() throws Exception {
-        //TODO getScopeAccessesForParentByClientId
-
+    public void updateExpiredUserScopeAccess() throws Exception {
+        UserScopeAccess userScopeAccess = new UserScopeAccess();
+        userScopeAccess.setAccessTokenExpired();
+        when(scopeAccessDao.updateScopeAccess(userScopeAccess)).thenReturn(true);
+        defaultScopeAccessService.updateExpiredUserScopeAccess(userScopeAccess);
+        assertThat("updatesExpiredUserScopeAccess", userScopeAccess.isAccessTokenExpired(new DateTime()), equalTo(false));
     }
 
     @Test(expected = NotFoundException.class)
@@ -273,84 +232,7 @@ public class DefaultScopeAccessServiceTest {
         assertThat("newUserScopeAccess", uas.getAccessTokenString(), equalTo(userScopeAccess.getAccessTokenString()));
     }
 
-    @Test
-    public void getDelegatedUserScopeAccessForUsername() throws Exception {
-        //TODO getDelegatedUserScopeAccessForUsername
 
-    }
 
-    @Test
-    public void updateUserScopeAccessTokenForClientIdByUser() throws Exception {
-        //TODO updateUserScopeAccessTokenForClientIdByUser
 
-    }
-
-    @Test
-    public void getUserScopeAccessForClientIdByMossoIdAndApiCredentials() throws Exception {
-        //TODO getUserScopeAccessForClientIdByMossoIdAndApiCredentials
-
-    }
-
-    @Test
-    public void getUserScopeAccessForClientIdByNastIdAndApiCredentials() throws Exception {
-        //TODO getUserScopeAccessForClientIdByNastIdAndApiCredentials
-
-    }
-
-    @Test
-    public void getUserScopeAccessForClientIdByUsernameAndApiCredentials() throws Exception {
-        //TODO getUserScopeAccessForClientIdByUsernameAndApiCredentials
-
-    }
-
-    @Test
-    public void getUserScopeAccessForClientIdByUsernameAndPassword() throws Exception {
-        //TODO getUserScopeAccessForClientIdByUsernameAndPassword
-
-    }
-
-    @Test
-    public void grantPermissionToClient() throws Exception {
-        //TODO grantPermissionToClient
-
-    }
-
-    @Test
-    public void grantPermissionToUser() throws Exception {
-        //TODO grantPermissionToUser
-
-    }
-
-    @Test
-    public void removePermission() throws Exception {
-        //TODO removePermission
-
-    }
-
-    @Test
-    public void updatePermission() throws Exception {
-        //TODO updatePermission
-
-    }
-
-    @Test
-    public void updateScopeAccess() throws Exception {
-        //TODO updateScopeAccess
-
-    }
-
-    @Test
-    public void deleteScopeAccessesForParentByApplicationId() throws Exception {
-        //TODO deleteScopeAccessesForParentByApplicationId
-
-    }
-
-    @Test
-    public void updateExpiredUserScopeAccess() throws Exception {
-        UserScopeAccess userScopeAccess = new UserScopeAccess();
-        userScopeAccess.setAccessTokenExpired();
-        when(scopeAccessDao.updateScopeAccess(userScopeAccess)).thenReturn(true);
-        defaultScopeAccessService.updateExpiredUserScopeAccess(userScopeAccess);
-        assertThat("updatesExpiredUserScopeAccess", userScopeAccess.isAccessTokenExpired(new DateTime()), equalTo(false));
-    }
 }

@@ -6,6 +6,7 @@ import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.converter.cloudv20.*;
+import com.rackspace.idm.api.resource.cloud.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
@@ -116,11 +117,16 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Autowired
     private DelegateCloud20Service delegateCloud20Service;
 
+    @Autowired
+    private AtomHopperClient atomHopperClient;
+
     private HashMap<String, JAXBElement<Extension>> extensionMap;
 
     private JAXBElement<Extensions> currentExtensions;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+
 
     @Override
     public ResponseBuilder addEndpoint(HttpHeaders httpHeaders, String authToken, String tenantId, EndpointTemplate endpoint) {
@@ -382,10 +388,12 @@ public class DefaultCloud20Service implements Cloud20Service {
                 verifyDomain(retrievedUser, caller);
             }
             User userDO = this.userConverterCloudV20.toUserDO(user);
+            retrievedUser.copyChanges(userDO);
+
             if (userDO.isDisabled()) {
                 this.scopeAccessService.expireAllTokensForUser(retrievedUser.getUsername());
+                atomHopperClient.postUser(retrievedUser,authToken,"disabled");
             }
-            retrievedUser.copyChanges(userDO);
             userService.updateUserById(retrievedUser, false);
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(retrievedUser)));
         } catch (Exception ex) {
@@ -758,8 +766,10 @@ public class DefaultCloud20Service implements Cloud20Service {
                 User caller = userService.getUserByAuthToken(authToken);
                 verifyDomain(user, caller);
             }
-
             userService.softDeleteUser(user);
+
+            atomHopperClient.postUser(user,authToken,"deleted");
+
             return Response.noContent();
         } catch (Exception ex) {
             return exceptionResponse(ex);
@@ -1485,7 +1495,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder impersonate(HttpHeaders httpHeaders, String authToken, ImpersonationRequest impersonationRequest) throws IOException, JAXBException {
-        //verifyServiceAdminLevelAccess(authToken);
         verifyRackerOrServiceAdminAccess(authToken);
         validateImpersonationRequest(impersonationRequest);
 
@@ -1517,14 +1526,17 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         ScopeAccess sa = checkAndGetToken(authToken);
         ScopeAccess usa;
+        //impersonator is a service user
         if (sa instanceof UserScopeAccess) {
             UserScopeAccess userSa = (UserScopeAccess) sa;
             User impersonator = this.userService.getUserById(userSa.getUserRsId());
-            usa = scopeAccessService.addImpersonatedScopeAccess(impersonator, getCloudAuthClientId(), impersonatingUsername, impersonatingToken);
-        } else if (sa instanceof RackerScopeAccess) {
+            usa = scopeAccessService.addImpersonatedScopeAccess(impersonator, getCloudAuthClientId(), impersonatingToken, impersonationRequest);
+        }
+        //impersonator is a Racker
+        else if (sa instanceof RackerScopeAccess) {
             RackerScopeAccess rackerSa = (RackerScopeAccess) sa;
             Racker racker = this.userService.getRackerByRackerId(rackerSa.getRackerId());
-            usa = scopeAccessService.addImpersonatedScopeAccess(racker, getCloudAuthClientId(), impersonatingUsername, impersonatingToken);
+            usa = scopeAccessService.addImpersonatedScopeAccess(racker, getCloudAuthClientId(), impersonatingToken, impersonationRequest);
         } else { throw new NotAuthorizedException("User does not have access"); }
 
         ImpersonationResponse auth = authConverterCloudV20.toImpersonationResponse(usa);
@@ -2498,5 +2510,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     public void setTokenConverterCloudV20(TokenConverterCloudV20 tokenConverterCloudV20) {
         this.tokenConverterCloudV20 = tokenConverterCloudV20;
+    }
+
+    public void setAtomHopperClient(AtomHopperClient atomHopperClient) {
+        this.atomHopperClient = atomHopperClient;
     }
 }
