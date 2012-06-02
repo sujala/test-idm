@@ -76,6 +76,19 @@ public class DefaultScopeAccessServiceTest {
     }
 
     @Test
+        public void addImpersonatedScopeAccess_TokenExistsAndIsNotExpired_returnsSameAccessToken() throws Exception {
+        ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
+        impersonatedScopeAccess.setAccessTokenExp(new DateTime().plusSeconds(100).toDate());
+        String token = "abc";
+        String impToken = "imp";
+        impersonatedScopeAccess.setAccessTokenString(token);
+        impersonatedScopeAccess.setImpersonatingToken(impToken);
+        when(scopeAccessDao.getImpersonatedScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(impersonatedScopeAccess);
+        ImpersonatedScopeAccess returnedImpersonatedScopeAccess = defaultScopeAccessService.addImpersonatedScopeAccess(new User(), "clientId", "imp", impersonationRequest);
+        assertThat("impersonated token", returnedImpersonatedScopeAccess.getAccessTokenString(), equalTo("abc"));
+    }
+
+    @Test
     public void setImpersonatedScopeAccess_callerIsRacker_setsRackerId() throws Exception {
         Racker racker = new Racker();
         racker.setRackerId("foo");
