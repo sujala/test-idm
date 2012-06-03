@@ -131,7 +131,8 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             return newScopeAccess;
         } else {
             scopeAccess = (ImpersonatedScopeAccess) existingAccess;
-            if (!scopeAccess.isAccessTokenExpired(new DateTime()) && scopeAccess.getImpersonatingToken() == impersonatingToken) {
+            if (!scopeAccess.isAccessTokenExpired(new DateTime()) && scopeAccess.getImpersonatingToken()!= null &&
+                    scopeAccess.getImpersonatingToken().equals(impersonatingToken)) {
                 return scopeAccess;
             }
             setImpersonatedScopeAccess(user, impersonationRequest, scopeAccess);

@@ -952,7 +952,7 @@ public class DelegateCloud20Service implements Cloud20Service {
 
 //    private AuthenticateResponse getAuthFromResponse(String entity) {
 
-    private Object unmarshallResponse(String entity, Class<?> objectClass) {
+     Object unmarshallResponse(String entity, Class<?> objectClass) {
         try {
             if (entity.trim().startsWith("{")) {
                 //TODO: HANDLE JAXBElement for user
@@ -995,7 +995,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         return userService.userExistsById(userId);
     }
 
-    private String marshallObjectToString(Object jaxbObject) throws JAXBException {
+     String marshallObjectToString(Object jaxbObject) throws JAXBException {
         StringWriter sw = new StringWriter();
         Marshaller marshaller = JAXBContextResolver.get().createMarshaller();
         try {
