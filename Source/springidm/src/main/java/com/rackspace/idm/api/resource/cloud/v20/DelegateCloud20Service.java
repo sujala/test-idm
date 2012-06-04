@@ -183,7 +183,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         return defaultCloud20Service.validateToken(httpHeaders, authToken, tokenId, belongsTo);
     }
 
-     ResponseBuilder validateImpersonatedTokenFromCloud(HttpHeaders httpHeaders, String impersonatedCloudToken, String belongsTo, ImpersonatedScopeAccess impersonatedScopeAccess) throws Exception, JAXBException {
+
+    ResponseBuilder validateImpersonatedTokenFromCloud(HttpHeaders httpHeaders, String impersonatedCloudToken, String belongsTo, ImpersonatedScopeAccess impersonatedScopeAccess) throws Exception, JAXBException {
         String gaXAuthToken = getXAuthToken_byPassword(config.getString("ga.username"), config.getString("ga.password")).getToken().getId();
         httpHeaders.getRequestHeaders().get("x-auth-token").set(0, gaXAuthToken);
         httpHeaders.getRequestHeaders().get("accept").set(0, "application/xml");
@@ -1043,7 +1044,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         this.userService = userService;
     }
 
-    private String getCloudAuthClientId() {
+     private String getCloudAuthClientId() {
         return config.getString("cloudAuth.clientId");
     }
 
@@ -1154,5 +1155,17 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     public void setTenantService(TenantService tenantService) {
         this.tenantService = tenantService;
+    }
+
+    public UserConverterCloudV20 getUserConverterCloudV20() {
+        return userConverterCloudV20;
+    }
+
+    public void setUserConverterCloudV20(UserConverterCloudV20 userConverterCloudV20) {
+        this.userConverterCloudV20 = userConverterCloudV20;
+    }
+
+    public void setOBJ_FACTORIES(JAXBObjectFactories OBJ_FACTORIES) {
+        this.OBJ_FACTORIES = OBJ_FACTORIES;
     }
 }
