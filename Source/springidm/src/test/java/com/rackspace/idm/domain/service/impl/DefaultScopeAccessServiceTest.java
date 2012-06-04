@@ -62,6 +62,11 @@ public class DefaultScopeAccessServiceTest {
     }
 
     @Test
+    public void validateExpireInElement_ExpireInIsNull_succeeds() throws Exception {
+        defaultScopeAccessService.validateExpireInElement(new User(), new ImpersonationRequest());
+    }
+
+    @Test
     public void addImpersonatedScopeAccess_TokenDoesNotExists_callsScopeAccessDao_addImpersonatedScopeAccess() throws Exception {
         when(scopeAccessDao.getImpersonatedScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(null);
         defaultScopeAccessService.addImpersonatedScopeAccess(new User(), "clientId", "impToken", impersonationRequest);
