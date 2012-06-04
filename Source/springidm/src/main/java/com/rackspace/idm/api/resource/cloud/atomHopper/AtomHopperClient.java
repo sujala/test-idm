@@ -1,6 +1,5 @@
-package com.rackspace.idm.api.resource.cloud;
+package com.rackspace.idm.api.resource.cloud.atomHopper;
 
-import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
 import com.rackspace.idm.domain.entity.User;
 import org.apache.commons.configuration.Configuration;
 import org.apache.http.HttpException;
@@ -9,7 +8,6 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.openstack.docs.identity.api.v2.ObjectFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,22 +33,17 @@ import java.net.URISyntaxException;
 public class AtomHopperClient {
 
     @Autowired
-    private UserConverterCloudV20 userConverterCloudV20;
-
-    @Autowired
     private Configuration config;
 
     DefaultHttpClient httpClient;
-
-    private ObjectFactory objectFactory = new ObjectFactory();
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Async
     public void postUser(User user, String authToken, String userStatus) throws JAXBException, IOException, HttpException, URISyntaxException {
         try {
-            org.openstack.docs.identity.api.v2.User user20 = userConverterCloudV20.toUser(user);
-            Writer writer = marshal20User(user20);
+            AtomFeed atomFeed = createAtomFeed(user);
+            Writer writer = marshalFeed(atomFeed);
             HttpResponse response;
             if (userStatus.equals("deleted")) {
                 response = executePostRequest(authToken, writer, config.getString("atomHopperDeletedUrl"));
@@ -60,7 +53,7 @@ public class AtomHopperClient {
                 response = null;
             }
             if (response.getStatusLine().getStatusCode() != 201) {
-                logger.warn("Failed to create delete feed for user: " + user20.getUsername() + "with Id:" + user20.getId());
+                logger.warn("Failed to create delete feed for user: " + user.getUsername() + "with Id:" + user.getId());
             }
         } catch (Exception e) {
             logger.warn("AtomHopperClient Exception: " + e);
@@ -77,34 +70,32 @@ public class AtomHopperClient {
         return httpClient.execute(httpPost);
     }
 
-    public Writer marshal20User(org.openstack.docs.identity.api.v2.User user20) throws JAXBException {
+    public Writer marshalFeed(AtomFeed atomFeed) throws JAXBException {
         Writer writer = new StringWriter();
-        JAXBContext jc = JAXBContext.newInstance(org.openstack.docs.identity.api.v2.User.class);
+        JAXBContext jc = JAXBContext.newInstance(AtomFeed.class);
         Marshaller marshaller = jc.createMarshaller();
         marshaller.setProperty(Marshaller.JAXB_FRAGMENT, true);
-        marshaller.marshal(objectFactory.createUser(user20), writer);
+        marshaller.marshal(atomFeed, writer);
         return writer;
     }
 
     public InputStreamEntity createRequestEntity(String s) throws UnsupportedEncodingException {
-        InputStream isStream = new ByteArrayInputStream(createEntryPayload(s).getBytes("UTF-8"));
+        InputStream isStream = new ByteArrayInputStream(s.getBytes("UTF-8"));
         InputStreamEntity reqEntity = new InputStreamEntity(isStream, -1);
         return reqEntity;
     }
 
-    public String createEntryPayload(String userObject) {
-        return "<entry xmlns=\"http://www.w3.org/2005/Atom\">" + userObject + "</entry>";
-    }
-
-    public void setUserConverterCloudV20(UserConverterCloudV20 userConverterCloudV20) {
-        this.userConverterCloudV20 = userConverterCloudV20;
+    public AtomFeed createAtomFeed(User user){
+        AtomFeed atomFeed = new AtomFeed();
+        FeedUser feedUser = new FeedUser();
+        feedUser.setDisplayName(user.getDisplayName());
+        feedUser.setId(user.getId());
+        feedUser.setUsername(user.getUsername());
+        atomFeed.setUser(feedUser);
+        return atomFeed;
     }
 
     public void setConfig(Configuration config) {
         this.config = config;
-    }
-
-    public void setObjectFactory(ObjectFactory objectFactory) {
-        this.objectFactory = objectFactory;
     }
 }
