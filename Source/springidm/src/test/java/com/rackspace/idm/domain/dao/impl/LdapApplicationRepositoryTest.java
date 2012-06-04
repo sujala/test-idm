@@ -28,8 +28,8 @@ public class LdapApplicationRepositoryTest {
     String userDN = "inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!1111,ou=users,o=rackspace,dc=rackspace,dc=com";
     String testCustomerDN = "o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,ou=customers,o=rackspace,dc=rackspace,dc=com";
     
-    @BeforeClass
-    public static void cleanUpData() {
+    @Before
+    public void cleanUpData() {
         final LdapConnectionPools pools = getConnPools();
         LdapApplicationRepository cleanUpRepo = getRepo(pools);
         LdapUserRepository cleanUpRepo2 = getUserRepo(pools);
