@@ -1015,7 +1015,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         }
     }
 
-    private Response.ResponseBuilder authenticateJSON(HttpServletResponse response, HttpHeaders httpHeaders, String body,
+    Response.ResponseBuilder authenticateJSON(HttpServletResponse response, HttpHeaders httpHeaders, String body,
                                                       boolean isAdmin) throws IOException {
 
         JAXBElement<? extends Credentials> cred = null;
@@ -1029,7 +1029,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     }
 
     @SuppressWarnings("unchecked")
-    private Response.ResponseBuilder authenticateXML(HttpServletResponse response, HttpHeaders httpHeaders, String body,
+    Response.ResponseBuilder authenticateXML(HttpServletResponse response, HttpHeaders httpHeaders, String body,
                                                      boolean isAdmin) throws IOException {
 
         JAXBElement<? extends Credentials> cred = null;
