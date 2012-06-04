@@ -1,16 +1,13 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
-<<<<<<< HEAD
 import com.rackspace.idm.api.converter.cloudv20.*;
-import com.rackspace.idm.api.resource.cloud.AtomHopperClient;
-=======
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.converter.cloudv20.EndpointConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.TenantConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.TokenConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
->>>>>>> 72b5a8c2d02a499c8d8f987cb73eeaf9bd30e4a6
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.*;
