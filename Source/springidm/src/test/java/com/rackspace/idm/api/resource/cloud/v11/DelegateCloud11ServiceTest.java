@@ -8,10 +8,13 @@ import com.rackspace.idm.api.resource.cloud.v11.DelegateCloud11Service;
 import com.rackspace.idm.api.resource.cloud.v11.DummyCloud11Service;
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.AuthData;
+import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.impl.DefaultUserService;
 import com.rackspacecloud.docs.auth.api.v1.*;
 import com.rackspacecloud.docs.auth.api.v1.Credentials;
 import com.rackspacecloud.docs.auth.api.v1.User;
+import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -27,6 +30,7 @@ import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
+import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.namespace.QName;
 import java.net.URI;
 import java.util.HashMap;
@@ -64,6 +68,7 @@ public class DelegateCloud11ServiceTest {
     private CloudUserExtractor cloudUserExtractor;
     private DefaultUserService defaultUserService;
     private DelegateCloud11Service spy;
+    private ScopeAccessService scopeAccessService;
 
     private Response.ResponseBuilder okResponse;
     private Response.ResponseBuilder notFoundResponse;
@@ -76,11 +81,13 @@ public class DelegateCloud11ServiceTest {
         defaultUserService = mock(DefaultUserService.class);
         credentialUnmarshaller = mock(CredentialUnmarshaller.class);
         cloudUserExtractor = mock(CloudUserExtractor.class);
+        scopeAccessService = mock(ScopeAccessService.class);
         delegateCloud11Service.setCredentialUnmarshaller(credentialUnmarshaller);
         delegateCloud11Service.setDefaultCloud11Service(defaultCloud11Service);
         delegateCloud11Service.setDummyCloud11Service(dummyCloud11Service);
         delegateCloud11Service.setCloudUserExtractor(cloudUserExtractor);
         delegateCloud11Service.setDefaultUserService(defaultUserService);
+        delegateCloud11Service.setScopeAccessService(scopeAccessService);
         OBJ_FACTORY = mock(com.rackspacecloud.docs.auth.api.v1.ObjectFactory.class);
         DelegateCloud11Service.setOBJ_FACTORY(OBJ_FACTORY);
         config = mock(Configuration.class);
@@ -101,7 +108,7 @@ public class DelegateCloud11ServiceTest {
         when(config.getString("cloudAuth11url")).thenReturn(url);
         when(httpHeaders.getMediaType()).thenReturn(new MediaType("application/json", null));
         when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn("Basic YXV0aDphdXRoMTIz");
-        spy = mock(DelegateCloud11Service.class);
+        spy = spy(delegateCloud11Service);
 
         okResponse = Response.ok();
         notFoundResponse = Response.status(404);
@@ -991,6 +998,28 @@ public class DelegateCloud11ServiceTest {
     }
 
     @Test
+    public void authenticate_statusIsOKAndUserIsNotNullAndAuthResultIsNotNull_returnsServiceResponse() throws Exception {
+        Response.ResponseBuilder response = Response.status(200).entity("notNull");
+        HttpServletResponse httpServletResponse = mock(HttpServletResponse.class);
+        XMLGregorianCalendar xmlGregorianCalendar = new XMLGregorianCalendarImpl();
+        Token token = new Token();
+        token.setId("tokenId");
+        token.setExpires(xmlGregorianCalendar);
+        com.rackspacecloud.docs.auth.api.v1.AuthData authResult = new com.rackspacecloud.docs.auth.api.v1.AuthData();
+        authResult.setToken(token);
+        com.rackspace.idm.domain.entity.User user = new com.rackspace.idm.domain.entity.User("username");
+        JAXBElement jaxbElement = new JAXBElement<UserCredentials>(QName.valueOf("foo"), UserCredentials.class, new UserCredentials());
+        when(cloudUserExtractor.getUserByCredentialType(jaxbElement)).thenReturn(user);
+        when(defaultUserService.isMigratedUser(user)).thenReturn(false);
+        when(defaultCloud11Service.authenticate(request, httpServletResponse, httpHeaders, jsonBody)).thenReturn(response);
+        when(credentialUnmarshaller.unmarshallCredentialsFromJSON(jsonBody)).thenReturn(jaxbElement);
+        when(cloudClient.post(eq(url + "auth"), Matchers.<javax.ws.rs.core.HttpHeaders>any(), anyString())).thenReturn(response);
+        doReturn(authResult).when(spy).getAuthFromResponse(anyString());
+        spy.authenticate(request, httpServletResponse, httpHeaders, jsonBody);
+        verify(scopeAccessService).updateUserScopeAccessTokenForClientIdByUser(user, null, "tokenId", xmlGregorianCalendar.toGregorianCalendar().getTime());
+    }
+
+    @Test
     public void authenticate_statusIsNotOkAndUserIsNotNull_returnsCloud11ServiceAuthenticate() throws Exception {
         Response.ResponseBuilder response = Response.status(300)      ;
         Response.ResponseBuilder responseClone = mock(Response.ResponseBuilder.class);
@@ -1007,6 +1036,44 @@ public class DelegateCloud11ServiceTest {
         when(dummyResponse.getStatus()).thenReturn(300);
         delegateCloud11Service.authenticate(request, httpServletResponse, httpHeaders, jsonBody);
         verify(defaultCloud11Service).authenticate(request, httpServletResponse, httpHeaders, jsonBody);
+    }
+
+    @Test
+    public void adminAuthenticate_statusIsOKAndUserIsNotNullAndAuthResultIsNull_returnsServiceResponse() throws Exception {
+        Response.ResponseBuilder response = Response.status(200).entity("");
+        HttpServletResponse httpServletResponse = mock(HttpServletResponse.class);
+        com.rackspace.idm.domain.entity.User user = new com.rackspace.idm.domain.entity.User("username");
+        JAXBElement jaxbElement = new JAXBElement<UserCredentials>(QName.valueOf("foo"), UserCredentials.class, new UserCredentials());
+        when(cloudUserExtractor.getUserByCredentialType(jaxbElement)).thenReturn(user);
+        when(defaultUserService.isMigratedUser(user)).thenReturn(false);
+        when(defaultCloud11Service.authenticate(request, httpServletResponse, httpHeaders, jsonBody)).thenReturn(response);
+        when(credentialUnmarshaller.unmarshallCredentialsFromJSON(jsonBody)).thenReturn(jaxbElement);
+        when(cloudClient.post(eq(url + "auth-admin"), Matchers.<javax.ws.rs.core.HttpHeaders>any(), anyString())).thenReturn(response);
+        doReturn(null).when(spy).getAuthFromResponse("");
+        Response.ResponseBuilder adminAuthenticate = delegateCloud11Service.adminAuthenticate(request, httpServletResponse, httpHeaders, jsonBody);
+        assertThat("Response Code", adminAuthenticate.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void adminAuthenticate_statusIsOKAndUserIsNotNullAndAuthResultIsNotNull_returnsServiceResponse() throws Exception {
+        Response.ResponseBuilder response = Response.status(200).entity("notNull");
+        HttpServletResponse httpServletResponse = mock(HttpServletResponse.class);
+        XMLGregorianCalendar xmlGregorianCalendar = new XMLGregorianCalendarImpl();
+        Token token = new Token();
+        token.setId("tokenId");
+        token.setExpires(xmlGregorianCalendar);
+        com.rackspacecloud.docs.auth.api.v1.AuthData authResult = new com.rackspacecloud.docs.auth.api.v1.AuthData();
+        authResult.setToken(token);
+        com.rackspace.idm.domain.entity.User user = new com.rackspace.idm.domain.entity.User("username");
+        JAXBElement jaxbElement = new JAXBElement<UserCredentials>(QName.valueOf("foo"), UserCredentials.class, new UserCredentials());
+        when(cloudUserExtractor.getUserByCredentialType(jaxbElement)).thenReturn(user);
+        when(defaultUserService.isMigratedUser(user)).thenReturn(false);
+        when(defaultCloud11Service.adminAuthenticate(request, httpServletResponse, httpHeaders, jsonBody)).thenReturn(response);
+        when(credentialUnmarshaller.unmarshallCredentialsFromJSON(jsonBody)).thenReturn(jaxbElement);
+        when(cloudClient.post(eq(url + "auth-admin"), Matchers.<javax.ws.rs.core.HttpHeaders>any(), anyString())).thenReturn(response);
+        doReturn(authResult).when(spy).getAuthFromResponse(anyString());
+        spy.adminAuthenticate(request, httpServletResponse, httpHeaders, jsonBody);
+        verify(scopeAccessService).updateUserScopeAccessTokenForClientIdByUser(user, null, "tokenId", xmlGregorianCalendar.toGregorianCalendar().getTime());
     }
 
     @Test
@@ -1052,5 +1119,116 @@ public class DelegateCloud11ServiceTest {
         when(serviceResponse.clone()).thenReturn(Response.status(200));
         Response.ResponseBuilder revokeToken = delegateCloud11Service.revokeToken(request, "tokenId", httpHeaders);
         assertThat("Response Code", revokeToken, equalTo(serviceResponse));
+    }
+
+    @Test
+    public void migrate_httpServletResponseNotFound_callsCloudClientPost() throws Exception {
+        Response.ResponseBuilder serviceResponse = Response.status(404);
+        when(defaultCloud11Service.migrate(request, "user", httpHeaders, "body")).thenReturn(serviceResponse);
+        delegateCloud11Service.migrate(request, "user", httpHeaders, "body");
+        verify(cloudClient).post(url + "migration/user/migrate", httpHeaders, "body");
+    }
+
+    @Test
+    public void migrate_httpServletResponseNotAuthorized_callsCloudClientPost() throws Exception {
+        Response.ResponseBuilder serviceResponse = Response.status(401);
+        when(defaultCloud11Service.migrate(request, "user", httpHeaders, "body")).thenReturn(serviceResponse);
+        delegateCloud11Service.migrate(request, "user", httpHeaders, "body");
+        verify(cloudClient).post(url + "migration/user/migrate", httpHeaders, "body");
+    }
+
+    @Test
+    public void migrate_httpServletResponseOk_callsServiceResponse() throws Exception {
+        Response.ResponseBuilder serviceResponse = Response.status(200);
+        when(defaultCloud11Service.migrate(request, "user", httpHeaders, "body")).thenReturn(serviceResponse);
+        Response.ResponseBuilder migrate = delegateCloud11Service.migrate(request, "user", httpHeaders, "body");
+        assertThat("Response Code", migrate, equalTo(serviceResponse));
+    }
+
+    @Test
+    public void unmigrate_httpServletResponseNotFound_callsCloudClientPost() throws Exception {
+        Response.ResponseBuilder serviceResponse = Response.status(404);
+        when(defaultCloud11Service.unmigrate(request, "user", httpHeaders, "body")).thenReturn(serviceResponse);
+        delegateCloud11Service.unmigrate(request, "user", httpHeaders, "body");
+        verify(cloudClient).post(url + "migration/user/unmigrate", httpHeaders, "body");
+    }
+
+    @Test
+    public void unmigrate_httpServletResponseNotAuthorized_callsCloudClientPost() throws Exception {
+        Response.ResponseBuilder serviceResponse = Response.status(401);
+        when(defaultCloud11Service.unmigrate(request, "user", httpHeaders, "body")).thenReturn(serviceResponse);
+        delegateCloud11Service.unmigrate(request, "user", httpHeaders, "body");
+        verify(cloudClient).post(url + "migration/user/unmigrate", httpHeaders, "body");
+    }
+
+    @Test
+    public void unmigrate_httpServletResponseOk_callsServiceResponse() throws Exception {
+        Response.ResponseBuilder serviceResponse = Response.status(200);
+        when(defaultCloud11Service.unmigrate(request, "user", httpHeaders, "body")).thenReturn(serviceResponse);
+        Response.ResponseBuilder unmigrate = delegateCloud11Service.unmigrate(request, "user", httpHeaders, "body");
+        assertThat("Response Code", unmigrate, equalTo(serviceResponse));
+    }
+
+    @Test
+    public void all_httpServletResponseNotFound_callsCloudClientPost() throws Exception {
+        Response.ResponseBuilder serviceResponse = Response.status(404);
+        when(defaultCloud11Service.all(request, httpHeaders, "body")).thenReturn(serviceResponse);
+        delegateCloud11Service.all(request, httpHeaders, "body");
+        verify(cloudClient).post(url + "migration/all", httpHeaders, "body");
+    }
+
+    @Test
+    public void all_httpServletResponseNotAuthorized_callsCloudClientPost() throws Exception {
+        Response.ResponseBuilder serviceResponse = Response.status(401);
+        when(defaultCloud11Service.all(request, httpHeaders, "body")).thenReturn(serviceResponse);
+        delegateCloud11Service.all(request, httpHeaders, "body");
+        verify(cloudClient).post(url + "migration/all", httpHeaders, "body");
+    }
+
+    @Test
+    public void all_httpServletResponseOk_callsServiceResponse() throws Exception {
+        Response.ResponseBuilder serviceResponse = Response.status(200);
+        when(defaultCloud11Service.all(request, httpHeaders, "body")).thenReturn(serviceResponse);
+        Response.ResponseBuilder all = delegateCloud11Service.all(request, httpHeaders, "body");
+        assertThat("Response Code", all, equalTo(serviceResponse));
+    }
+
+    @Test
+    public void extensions_cloudRoutingEnabledAndGASourceOfTruthNotEnabled_callsCloudClient() throws Exception {
+        when(config.getBoolean("useCloudAuth")).thenReturn(true);
+        when(config.getBoolean("gaIsSourceOfTruth")).thenReturn(false);
+        delegateCloud11Service.extensions(httpHeaders);
+        verify(cloudClient).get(url+"extensions", httpHeaders);
+    }
+
+    @Test
+    public void extensions_cloudRoutingEnabledAndGASourceOfTruthEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean("useCloudAuth")).thenReturn(true);
+        when(config.getBoolean("gaIsSourceOfTruth")).thenReturn(true);
+        delegateCloud11Service.extensions(httpHeaders);
+        verify(defaultCloud11Service).extensions(httpHeaders);
+    }
+
+    @Test
+    public void extensions_cloudRoutingNotEnabledAndGASourceOfTruthEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean("useCloudAuth")).thenReturn(false);
+        when(config.getBoolean("gaIsSourceOfTruth")).thenReturn(true);
+        delegateCloud11Service.extensions(httpHeaders);
+        verify(defaultCloud11Service).extensions(httpHeaders);
+    }
+
+    @Test
+    public void extensions_cloudRoutingNotEnabledAndGASourceOfTruthNotEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean("useCloudAuth")).thenReturn(false);
+        when(config.getBoolean("gaIsSourceOfTruth")).thenReturn(false);
+        delegateCloud11Service.extensions(httpHeaders);
+        verify(defaultCloud11Service).extensions(httpHeaders);
+    }
+
+    @Test
+    public void getCloud11Service_GAKeystoneDisabled_returnsDummyCloud11Service() throws Exception {
+        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(true);
+        Cloud11Service cloud11Service = delegateCloud11Service.getCloud11Service();
+        assertThat("Service", cloud11Service, equalTo((Cloud11Service)dummyCloud11Service));
     }
 }

@@ -436,7 +436,7 @@ public class DelegateCloud11Service implements Cloud11Service {
         return defaultCloud11Service.extensions(httpHeaders);
     }
 
-    private Cloud11Service getCloud11Service() {
+    Cloud11Service getCloud11Service() {
         if (config.getBoolean("GAKeystoneDisabled")) {
             return dummyCloud11Service;
         } else {
