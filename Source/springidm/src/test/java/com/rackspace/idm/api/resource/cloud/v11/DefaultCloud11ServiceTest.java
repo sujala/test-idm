@@ -2,7 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v11;
 
 import com.rackspace.idm.api.converter.cloudv11.EndpointConverterCloudV11;
 import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11;
-import com.rackspace.idm.api.resource.cloud.AtomHopperClient;
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.CloudExceptionResponse;
 import com.rackspace.idm.api.resource.cloud.v20.CloudGroupBuilder;
 import com.rackspace.idm.domain.dao.impl.LdapCloudAdminRepository;

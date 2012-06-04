@@ -2,11 +2,13 @@ package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_ga.v1.ImpersonationRequest;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
+import com.rackspace.idm.api.converter.cloudv20.*;
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.converter.cloudv20.EndpointConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.TenantConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.TokenConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
-import com.rackspace.idm.api.resource.cloud.AtomHopperClient;
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.*;
@@ -21,16 +23,20 @@ import org.apache.commons.configuration.Configuration;
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.Ignore;
 import org.mockito.ArgumentCaptor;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
-import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.*;
 import org.openstack.docs.identity.api.v2.*;
+import org.openstack.docs.identity.api.v2.ObjectFactory;
 
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.JAXBElement;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -65,6 +71,7 @@ public class DefaultCloud20ServiceTest {
     private TenantConverterCloudV20 tenantConverterCloudV20;
     private TokenConverterCloudV20 tokenConverterCloudV20;
     private EndpointConverterCloudV20 endpointConverterCloudV20;
+    private RoleConverterCloudV20 roleConverterCloudV20;
     private String authToken = "token";
     private EndpointTemplate endpointTemplate;
     private String userId = "id";
@@ -87,6 +94,7 @@ public class DefaultCloud20ServiceTest {
     private UriInfo uriInfo;
     private CloudKsGroupBuilder cloudKsGroupBuilder;
     private AtomHopperClient atomHopperClient;
+    private HttpHeaders httpHeaders;
 
     @Before
     public void setUp() throws Exception {
@@ -102,12 +110,14 @@ public class DefaultCloud20ServiceTest {
         tenantConverterCloudV20 = mock(TenantConverterCloudV20.class);
         tokenConverterCloudV20 = mock(TokenConverterCloudV20.class);
         endpointConverterCloudV20 = mock(EndpointConverterCloudV20.class);
+        roleConverterCloudV20 = mock(RoleConverterCloudV20.class);
         tenantService = mock(TenantService.class);
         endpointService = mock(EndpointService.class);
         clientService = mock(ApplicationService.class);
         config = mock(Configuration.class);
         cloudKsGroupBuilder = mock(CloudKsGroupBuilder.class);
         atomHopperClient = mock(AtomHopperClient.class);
+        httpHeaders = mock(HttpHeaders.class);
 
 
         //setting mocks
@@ -126,6 +136,7 @@ public class DefaultCloud20ServiceTest {
         defaultCloud20Service.setConfig(config);
         defaultCloud20Service.setCloudKsGroupBuilder(cloudKsGroupBuilder);
         defaultCloud20Service.setAtomHopperClient(atomHopperClient);
+        defaultCloud20Service.setRoleConverterCloudV20(roleConverterCloudV20);
 
         //fields
         user = new User();
@@ -350,6 +361,53 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void addUser_callerIsUserAdmin_setsMossoAndNastId() throws Exception {
+        ArgumentCaptor<User> argument = ArgumentCaptor.forClass(User.class);
+        User caller = new User();
+        caller.setMossoId(123);
+        caller.setNastId("nastId");
+        users = mock(Users.class);
+        List<User> usersList = new ArrayList();
+        User tempUser = new User();
+        tempUser.setId("1");
+        tempUser.setUsername("tempUser");
+        usersList.add(tempUser);
+        users.setUsers(usersList);
+        when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
+        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(new User());
+        when(userService.getAllUsers(org.mockito.Matchers.<FilterParam[]>any())).thenReturn(users);
+        when(config.getInt("numberOfSubUsers")).thenReturn(100);
+        doNothing().when(spy).setDomainId(any(ScopeAccess.class), any(User.class));
+        UserForCreate userForCreate = new UserForCreate();
+        userForCreate.setUsername("userforcreate");
+        userForCreate.setEmail("user@rackspace.com");
+        spy.addUser(null, null, authToken, userForCreate);
+        verify(userService).addUser(argument.capture());
+        assertThat("nast id", argument.getValue().getNastId(), equalTo("nastId"));
+        assertThat("mosso id", argument.getValue().getMossoId(), equalTo(123));
+    }
+
+    @Test
+    public void addUser_callerIsNotUserAdmin_doesNotSetMossoAndNastId() throws Exception {
+        ArgumentCaptor<User> argument = ArgumentCaptor.forClass(User.class);
+        User caller = new User();
+        caller.setMossoId(123);
+        caller.setNastId("nastId");
+        when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
+        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(new User());
+        doNothing().when(spy).setDomainId(any(ScopeAccess.class), any(User.class));
+        UserForCreate userForCreate = new UserForCreate();
+        userForCreate.setUsername("userforcreate");
+        userForCreate.setEmail("user@rackspace.com");
+        spy.addUser(null, null, authToken, userForCreate);
+        verify(userService).addUser(argument.capture());
+        assertThat("nast id", argument.getValue().getNastId(), not(equalTo("nastId")));
+        assertThat("mosso id", argument.getValue().getMossoId(), not(equalTo(123)));
+    }
+
+    @Test
     public void addUser_callsVerifyUserAdminLevelAccess() throws Exception {
         spy.addUser(null, null, authToken, userOS);
         verify(spy).verifyUserAdminLevelAccess(authToken);
@@ -373,6 +431,57 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void addUser_withUserMissingUsername_returns400() throws Exception {
+        userOS.setUsername(null);
+        Response.ResponseBuilder responseBuilder = spy.addUser(null, null, authToken, userOS);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
+    public void addUser_callsUserConverter_toUserDOMethod() throws Exception {
+        spy.addUser(null, null, authToken, userOS);
+        verify(userConverterCloudV20).toUserDO(userOS);
+    }
+
+    @Test
+    public void addUser_callsUserService_addUserMethod() throws Exception {
+        spy.addUser(null, null, authToken, userOS);
+        verify(userService).addUser(user);
+    }
+
+    @Test
+    public void addUser_callsSetDomainId() throws Exception {
+        spy.addUser(null, null, authToken, userOS);
+        verify(spy).setDomainId(any(ScopeAccess.class), any(User.class));
+    }
+
+    @Test
+    public void addUser_userPasswordNotNull_callsValidatePassword() throws Exception {
+        userOS.setPassword("password");
+        spy.addUser(null, null, authToken, userOS);
+        verify(spy).validatePassword("password");
+    }
+
+    @Ignore
+    @Test
+    public void addUser_adminRoleUserSizeGreaterThanNumSubUsersThrowsBadRequest_returns400() throws Exception {
+        User caller = mock(User.class);
+        users = mock(Users.class);
+        List<User> userList = new ArrayList<User>();
+        User tempUser = new User();
+        tempUser.setId("1");
+        tempUser.setUsername("tempUser");
+        userList.add(tempUser);
+        userList.add(tempUser);
+        users.setUsers(userList);
+        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(userService.getUserByAuthToken(anyString())).thenReturn(caller);
+        when(userService.getAllUsers(org.mockito.Matchers.<FilterParam[]>any())).thenReturn(users);
+        Response.ResponseBuilder responseBuilder = spy.addUser(null, null, authToken, userOS);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
     public void deleteUser_callsUserService_softDeleteUserMethod() throws Exception {
         User user1 = new User();
         User caller = new User();
@@ -383,13 +492,6 @@ public class DefaultCloud20ServiceTest {
         when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
         spy.deleteUser(null, authToken, userId);
         verify(userService).softDeleteUser(any(User.class));
-    }
-
-    @Test
-    public void addEndpopintTemplate_endPointServiceThrowsBaseUrlConflictException_returns409() throws Exception {
-        doThrow(new BaseUrlConflictException()).when(endpointService).addBaseUrl(any(CloudBaseUrl.class));
-        Response.ResponseBuilder responseBuilder = spy.addEndpointTemplate(null, null, authToken, endpointTemplate);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(409));
     }
 
     @Test
@@ -496,28 +598,9 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void addUser_withUserMissingUsername_returns400() throws Exception {
-        userOS.setUsername(null);
-        Response.ResponseBuilder responseBuilder = spy.addUser(null, null, authToken, userOS);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
-    }
-
-    @Test
-    public void addUser_callsUserConverter_toUserDOMethod() throws Exception {
-        spy.addUser(null, null, authToken, userOS);
-        verify(userConverterCloudV20).toUserDO(userOS);
-    }
-
-    @Test
-    public void addUser_callsUserService_addUserMethod() throws Exception {
-        spy.addUser(null, null, authToken, userOS);
-        verify(userService).addUser(user);
-    }
-
-    @Test
-    public void addUser_callsSetDomainId() throws Exception {
-        spy.addUser(null, null, authToken, userOS);
-        verify(spy).setDomainId(any(ScopeAccess.class), any(User.class));
+    public void addTenant_callsverifyServiceAdminLevelAccess() throws Exception {
+        spy.addTenant(null, null, authToken, null);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
@@ -537,6 +620,36 @@ public class DefaultCloud20ServiceTest {
         tenantOS.setName(null);
         Response.ResponseBuilder responseBuilder = spy.addTenant(null, null, authToken, tenantOS);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
+    public void addTenant_responseCreated_returns201() throws Exception {
+        UriBuilder uriBuilder = mock(UriBuilder.class);
+        URI uri = new URI("");
+        Tenant domainTenant = mock(Tenant.class);
+        org.openstack.docs.identity.api.v2.ObjectFactory objectFactory = mock(org.openstack.docs.identity.api.v2.ObjectFactory.class);
+        doReturn(domainTenant).when(tenantConverterCloudV20).toTenantDO(any(org.openstack.docs.identity.api.v2.Tenant.class));
+        when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
+        doReturn(uriBuilder).when(uriBuilder).path(anyString());
+        doReturn(uri).when(uriBuilder).build();
+        doReturn(tenantId).when(domainTenant).getTenantId();
+        when(jaxbObjectFactories.getOpenStackIdentityV2Factory()).thenReturn(objectFactory);
+        when(tenantConverterCloudV20.toTenant(any(Tenant.class))).thenReturn(tenantOS);
+        Response.ResponseBuilder responseBuilder = spy.addTenant(httpHeaders, uriInfo, authToken, tenantOS);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(201));
+    }
+
+    @Test
+    public void addTenant_tenantServiceDuplicateException_returns409() throws Exception {
+        doThrow(new DuplicateException()).when(tenantService).addTenant(any(Tenant.class));
+        Response.ResponseBuilder responseBuilder = spy.addTenant(null, null, authToken, tenantOS);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(409));
+    }
+
+    @Test
+    public void addService_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+        spy.addService(null, null, authToken, null);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
     }
 
     @Test
@@ -566,6 +679,41 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void addService_responseCreated_returns201() throws Exception {
+        UriBuilder uriBuilder = mock(UriBuilder.class);
+        URI uri = new URI("");
+        org.openstack.docs.identity.api.ext.os_ksadm.v1.ObjectFactory objectFactory = mock(org.openstack.docs.identity.api.ext.os_ksadm.v1.ObjectFactory.class);
+        when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
+        doReturn(uriBuilder).when(uriBuilder).path(anyString());
+        doReturn(uri).when(uriBuilder).build();
+        when(jaxbObjectFactories.getOpenStackIdentityExtKsadmnV1Factory()).thenReturn(objectFactory);
+        Response.ResponseBuilder responseBuilder = spy.addService(httpHeaders, uriInfo, authToken, service);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(201));
+    }
+
+    @Test
+    public void addService_clientServiceDuplicateException_returns409() throws Exception {
+        doThrow(new DuplicateException()).when(clientService).add(any(Application.class));
+        Response.ResponseBuilder responseBuilder = spy.addService(null, null, authToken, service);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(409));
+    }
+
+    @Test
+    public void addRole_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
+        Role role1 = new Role();
+        role1.setServiceId("id");
+        spy.addRole(null, null, authToken, role1);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
+    }
+
+    @Test
+    public void addRole_callsClientService_addClientRole() throws Exception {
+        doNothing().when(spy).verifyServiceAdminLevelAccess(anyString());
+        spy.addRole(null, null, authToken, role);
+        verify(clientService).addClientRole(any(ClientRole.class));
+    }
+
+    @Test
     public void addRole_roleWithNullName_returns400() throws Exception {
         Role role1 = new Role();
         role1.setName(null);
@@ -589,6 +737,27 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void addRole_responseCreated() throws Exception {
+        UriBuilder uriBuilder = mock(UriBuilder.class);
+        URI uri = new URI("");
+        org.openstack.docs.identity.api.v2.ObjectFactory objectFactory = mock(org.openstack.docs.identity.api.v2.ObjectFactory.class);
+        when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
+        doReturn(uriBuilder).when(uriBuilder).path(anyString());
+        doReturn(uri).when(uriBuilder).build();
+        when(jaxbObjectFactories.getOpenStackIdentityV2Factory()).thenReturn(objectFactory);
+        when(roleConverterCloudV20.toRoleFromClientRole(any(ClientRole.class))).thenReturn(role);
+        Response.ResponseBuilder responseBuilder = spy.addRole(httpHeaders, uriInfo, authToken, role);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(201));
+    }
+
+    @Test
+    public void addRole_roleConflictThrowsDuplicateException_returns409() throws Exception {
+        doThrow(new DuplicateException()).when(clientService).addClientRole(any(ClientRole.class));
+        Response.ResponseBuilder responseBuilder = spy.addRole(null, null, authToken, role);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(409));
+    }
+
+    @Test
     public void addRolesToUserOnTenant_callsTenantService_addTenantRoleToUser() throws Exception {
         doNothing().when(spy).verifyServiceAdminLevelAccess(anyString());
         doNothing().when(spy).verifyTokenHasTenantAccess(authToken, tenantId);
@@ -607,20 +776,6 @@ public class DefaultCloud20ServiceTest {
         cloudBaseUrl.setGlobal(true);
         Response.ResponseBuilder responseBuilder = spy.addEndpoint(null, authToken, tenantId, endpointTemplate);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
-    }
-
-    @Test
-    public void addEndpointTemplate_callsEndpointService_addBaseUrl() throws Exception {
-        when(endpointConverterCloudV20.toCloudBaseUrl(endpointTemplate)).thenReturn(baseUrl);
-        spy.addEndpointTemplate(null, null, authToken, endpointTemplate);
-        verify(endpointService).addBaseUrl(baseUrl);
-    }
-
-    @Test
-    public void addRole_callsClientService_addClientRole() throws Exception {
-        doNothing().when(spy).verifyServiceAdminLevelAccess(anyString());
-        spy.addRole(null, null, authToken, role);
-        verify(clientService).addClientRole(any(ClientRole.class));
     }
 
     @Test
@@ -665,76 +820,45 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void addRole_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
-        Role role1 = new Role();
-        role1.setServiceId("id");
-        spy.addRole(null, null, authToken, role1);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+    public void addEndpointTemplate_callsEndpointService_addBaseUrl() throws Exception {
+        when(endpointConverterCloudV20.toCloudBaseUrl(endpointTemplate)).thenReturn(baseUrl);
+        spy.addEndpointTemplate(null, null, authToken, endpointTemplate);
+        verify(endpointService).addBaseUrl(baseUrl);
+    }
+
+    @Test
+    public void addEndpointTemplate_returnsResponseCreated() throws Exception {
+        UriBuilder uriBuilder = mock(UriBuilder.class);
+        URI uri = new URI("101");
+        org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory objectFactory = mock(org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory.class);
+        when(endpointConverterCloudV20.toCloudBaseUrl(endpointTemplate)).thenReturn(cloudBaseUrl);
+        when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
+        doReturn(uriBuilder).when(uriBuilder).path("101");
+        doReturn(uri).when(uriBuilder).build();
+        when(endpointConverterCloudV20.toEndpointTemplate(cloudBaseUrl)).thenReturn(endpointTemplate);
+        when(jaxbObjectFactories.getOpenStackIdentityExtKscatalogV1Factory()).thenReturn(objectFactory);
+        Response.ResponseBuilder responseBuilder = spy.addEndpointTemplate(httpHeaders, uriInfo, authToken, endpointTemplate);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(201));
+    }
+
+    @Test
+    public void addEndpointTemplate_endPointServiceThrowsBaseUrlConflictException_returns409() throws Exception {
+        doThrow(new BaseUrlConflictException()).when(endpointService).addBaseUrl(any(CloudBaseUrl.class));
+        Response.ResponseBuilder responseBuilder = spy.addEndpointTemplate(null, null, authToken, endpointTemplate);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(409));
+    }
+
+    @Test
+    public void addEndpointTemplate_endPointServiceThrowsDuplicateException_returns409() throws Exception {
+        doThrow(new DuplicateException()).when(endpointService).addBaseUrl(any(CloudBaseUrl.class));
+        Response.ResponseBuilder responseBuilder = spy.addEndpointTemplate(null, null, authToken, endpointTemplate);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(409));
     }
 
     @Test
     public void addRoleToUserOnTenant_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.addRolesToUserOnTenant(null, authToken, null, null, null);
         verify(spy).verifyUserAdminLevelAccess(authToken);
-    }
-
-    @Test
-    public void addService_isAdminCall_callsCheckAuthTokenMethod() throws Exception {
-        spy.addService(null, null, authToken, null);
-        verify(spy).checkXAUTHTOKEN(authToken, true, null);
-    }
-
-    @Test
-    public void addTenant_callsverifyServiceAdminLevelAccess() throws Exception {
-        spy.addTenant(null, null, authToken, null);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
-    }
-
-    @Test
-    public void addUser_callerIsUserAdmin_setsMossoAndNastId() throws Exception {
-        ArgumentCaptor<User> argument = ArgumentCaptor.forClass(User.class);
-        User caller = new User();
-        caller.setMossoId(123);
-        caller.setNastId("nastId");
-        users = mock(Users.class);
-        List<User> usersList = new ArrayList();
-        User tempUser = new User();
-        tempUser.setId("1");
-        tempUser.setUsername("tempUser");
-        usersList.add(tempUser);
-        users.setUsers(usersList);
-        when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
-        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
-        when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(new User());
-        when(userService.getAllUsers(org.mockito.Matchers.<FilterParam[]>any())).thenReturn(users);
-        when(config.getInt("numberOfSubUsers")).thenReturn(100);
-        doNothing().when(spy).setDomainId(any(ScopeAccess.class), any(User.class));
-        UserForCreate userForCreate = new UserForCreate();
-        userForCreate.setUsername("userforcreate");
-        userForCreate.setEmail("user@rackspace.com");
-        spy.addUser(null, null, authToken, userForCreate);
-        verify(userService).addUser(argument.capture());
-        assertThat("nast id", argument.getValue().getNastId(), equalTo("nastId"));
-        assertThat("mosso id", argument.getValue().getMossoId(), equalTo(123));
-    }
-
-    @Test
-    public void addUser_callerIsNotUserAdmin_doesNotSetMossoAndNastId() throws Exception {
-        ArgumentCaptor<User> argument = ArgumentCaptor.forClass(User.class);
-        User caller = new User();
-        caller.setMossoId(123);
-        caller.setNastId("nastId");
-        when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
-        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(false);
-        when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(new User());
-        doNothing().when(spy).setDomainId(any(ScopeAccess.class), any(User.class));
-        UserForCreate userForCreate = new UserForCreate();
-        userForCreate.setUsername("userforcreate");
-        userForCreate.setEmail("user@rackspace.com");
-        spy.addUser(null, null, authToken, userForCreate);
-        verify(userService).addUser(argument.capture());
-        assertThat("nast id", argument.getValue().getNastId(), not(equalTo("nastId")));
-        assertThat("mosso id", argument.getValue().getMossoId(), not(equalTo(123)));
     }
 
     @Test
