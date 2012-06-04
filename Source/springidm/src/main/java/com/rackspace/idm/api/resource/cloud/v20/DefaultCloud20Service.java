@@ -1546,13 +1546,15 @@ public class DefaultCloud20Service implements Cloud20Service {
         return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtRaxgaV1Factory().createAccess(auth));
     }
 
-    private void validateImpersonationRequest(ImpersonationRequest impersonationRequest) {
+    void validateImpersonationRequest(ImpersonationRequest impersonationRequest) {
         if (impersonationRequest.getUser() == null) {
             throw new BadRequestException("User cannot be null for impersonation request");
         } else if (impersonationRequest.getUser().getUsername() == null) {
             throw new BadRequestException("Username cannot be null for impersonation request");
         } else if (impersonationRequest.getUser().getUsername().isEmpty() || StringUtils.isBlank(impersonationRequest.getUser().getUsername())) {
             throw new BadRequestException("Username cannot be empty or blank");
+        }else if(impersonationRequest.getExpireInSeconds()!=null && impersonationRequest.getExpireInSeconds()<1){
+            throw new BadRequestException("Expire in element cannot be less than 1.");
         }
 
     }

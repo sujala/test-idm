@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.rackspace.docs.identity.api.ext.rax_ga.v1.ImpersonationRequest;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.idm.api.converter.cloudv20.EndpointConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.TenantConverterCloudV20;
@@ -195,6 +196,26 @@ public class DefaultCloud20ServiceTest {
         spy = spy(defaultCloud20Service);
         doNothing().when(spy).checkXAUTHTOKEN(eq(authToken), anyBoolean(), any(String.class));
         doNothing().when(spy).checkXAUTHTOKEN(eq(authToken), anyBoolean(), eq(tenantId));
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void validateImpersonationRequest_expireInIsLessThan1_throwsBadRequestException() throws Exception {
+        ImpersonationRequest impersonationRequest = new ImpersonationRequest();
+        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
+        user1.setUsername("username");
+        impersonationRequest.setUser(user1);
+        impersonationRequest.setExpireInSeconds(0);
+        defaultCloud20Service.validateImpersonationRequest(impersonationRequest);
+    }
+
+    @Test
+    public void validateImpersonationRequest_expireInNull_succeeds() throws Exception {
+        ImpersonationRequest impersonationRequest = new ImpersonationRequest();
+        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
+        user1.setUsername("username");
+        impersonationRequest.setUser(user1);
+        impersonationRequest.setExpireInSeconds(null);
+        defaultCloud20Service.validateImpersonationRequest(impersonationRequest);
     }
 
     @Test
