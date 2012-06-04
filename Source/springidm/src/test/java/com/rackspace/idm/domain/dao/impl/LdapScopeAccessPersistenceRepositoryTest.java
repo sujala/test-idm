@@ -45,11 +45,13 @@ public class LdapScopeAccessPersistenceRepositoryTest {
     Customer customer = null;
     
     String id = "XXXX";
-    String id2 = "YYYY";
 
+    @AfterClass
+    public static void tearDownAfterClass() throws Exception {
+    }
 
-    @BeforeClass
-    public static void setUpBeforeClass() throws Exception {
+    @Before
+    public void setUp() throws Exception {
         final LdapConnectionPools pools = getConnPools();
         final LdapApplicationRepository cleanUpRepo = getClientRepo(pools);
         final Application deleteme = cleanUpRepo.getClientByClientId("XXX");
@@ -61,14 +63,6 @@ public class LdapScopeAccessPersistenceRepositoryTest {
             cleanUpRepo.deleteClient(deleteme2);
         }
         pools.close();
-    }
-
-    @AfterClass
-    public static void tearDownAfterClass() throws Exception {
-    }
-
-    @Before
-    public void setUp() throws Exception {
         connPools = getConnPools();
         repo = getSaRepo(connPools);
         customerRepo = getCustomerRepo(connPools);

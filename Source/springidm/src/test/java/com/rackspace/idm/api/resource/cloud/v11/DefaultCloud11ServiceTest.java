@@ -4,8 +4,10 @@ import com.rackspace.idm.api.converter.cloudv11.EndpointConverterCloudV11;
 import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11;
 import com.rackspace.idm.api.resource.cloud.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.CloudExceptionResponse;
+import com.rackspace.idm.api.resource.cloud.v20.CloudGroupBuilder;
 import com.rackspace.idm.domain.dao.impl.LdapCloudAdminRepository;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateException;
@@ -71,7 +73,7 @@ public class DefaultCloud11ServiceTest {
     TenantService tenantService;
     ApplicationService clientService;
     User user = new User();
-    com.rackspace.idm.domain.entity.User userDO = new com.rackspace.idm.domain.entity.User("userDO");
+    com.rackspace.idm.domain.entity.User userDO = new com.rackspace.idm.domain.entity.User("userId");
     HttpServletRequest request;
     private ScopeAccessService scopeAccessService;
     UserScopeAccess userScopeAccess;
@@ -79,6 +81,7 @@ public class DefaultCloud11ServiceTest {
     CloudExceptionResponse cloudExceptionResponse;
     Application application = new Application("id",null,"myApp", null, null);
     AtomHopperClient atomHopperClient;
+    GroupService userGroupService, cloudGroupService;
 
     @Before
     public void setUp() throws Exception {
@@ -100,6 +103,8 @@ public class DefaultCloud11ServiceTest {
         userValidator = mock(UserValidator.class);
         authorizationService = mock(AuthorizationService.class);
         atomHopperClient = mock(AtomHopperClient.class);
+        userGroupService = mock(GroupService.class);
+        cloudGroupService = mock(GroupService.class);
         when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn("Basic YXV0aDphdXRoMTIz");
         UriBuilderImpl uriBuilder = mock(UriBuilderImpl.class);
         when(uriBuilder.build()).thenReturn(new URI(""));
@@ -122,6 +127,8 @@ public class DefaultCloud11ServiceTest {
         defaultCloud11Service.setUserValidator(userValidator);
         defaultCloud11Service.setAuthorizationService(authorizationService);
         defaultCloud11Service.setAtomHopperClient(atomHopperClient);
+        defaultCloud11Service.setCloudGroupService(cloudGroupService);
+        defaultCloud11Service.setUserGroupService(userGroupService);
         spy = spy(defaultCloud11Service);
     }
 
@@ -579,16 +586,9 @@ public class DefaultCloud11ServiceTest {
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
     }
 
-    @Ignore
-    @Test
-    public void getUserGroups_notAuthorized_returns401() throws Exception {
-        HttpServletRequest request = mock(HttpServletRequest.class);
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.getUserGroups(request, null, null);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(401));
-    }
 
     @Test
-    public void revokeToken_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
+    public void revokeToken_isAdminCall_callAuthenticateCloudAdminUserForGetRequests() throws Exception {
         spy.revokeToken(request, null, null);
         verify(spy).authenticateCloudAdminUser(request);
     }
@@ -730,8 +730,8 @@ public class DefaultCloud11ServiceTest {
         doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
         when(userScopeAccess.isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
         when(scopeAccessService.getScopeAccessByAccessToken(null)).thenReturn(userScopeAccess);
-        when(userDO.isEnabled()).thenReturn(false);
         when(userService.getUser("belongsTo")).thenReturn(userDO);
+        when(userDO.isEnabled()).thenReturn(false);
         Response.ResponseBuilder responseBuilder = spy.validateToken(null, null, "belongsTo", "CLOUD", null);
         assertThat("response builder", responseBuilder.build().getStatus(), equalTo(403));
     }
@@ -748,25 +748,25 @@ public class DefaultCloud11ServiceTest {
     }
 
     @Test
-    public void adminAuthenticate_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
+    public void adminAuthenticate_isAdminCall_callAuthenticateCloudAdminUserForGetRequests() throws Exception {
         spy.adminAuthenticate(request, null, null, null);
         verify(spy).authenticateCloudAdminUser(request);
     }
 
     @Test
-    public void addBaserUrlRef_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
+    public void addBaserUrlRef_isAdminCall_callAuthenticateCloudAdminUserForGetRequests() throws Exception {
         spy.addBaseURLRef(request, null, null, null, null);
         verify(spy).authenticateCloudAdminUser(request);
     }
 
     @Test
-    public void createUser_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
+    public void createUser_isAdminCall_callAuthenticateCloudAdminUserForGetRequests() throws Exception {
         spy.createUser(request, null, null, null);
         verify(spy).authenticateCloudAdminUser(request);
     }
 
     @Test
-    public void deleteBaseUrlRef_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
+    public void deleteBaseUrlRef_isAdminCall_callAuthenticateCloudAdminUserForGetRequests() throws Exception {
         spy.deleteBaseURLRef(request, null, null, null);
         verify(spy).authenticateCloudAdminUser(request);
     }
@@ -815,7 +815,7 @@ public class DefaultCloud11ServiceTest {
     }
 
     @Test
-    public void deleteUser_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
+    public void deleteUser_isAdminCall_callAuthenticateCloudAdminUserForGetRequests() throws Exception {
         spy.deleteUser(request, null, null);
         verify(spy).authenticateCloudAdminUser(request);
     }
@@ -863,7 +863,7 @@ public class DefaultCloud11ServiceTest {
     }
 
     @Test
-    public void getBaseUrlRef_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
+    public void getBaseUrlRef_isAdminCall_callAuthenticateCloudAdminUserForGetRequests() throws Exception {
         spy.getBaseURLRef(request, null, null, null);
         verify(spy).authenticateCloudAdminUserForGetRequests(request);
     }
@@ -911,7 +911,7 @@ public class DefaultCloud11ServiceTest {
     }
 
     @Test
-    public void getBaseUrlRefs_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
+    public void getBaseUrlRefs_isAdminCall_callAuthenticateCloudAdminUserForGetRequests() throws Exception {
         spy.getBaseURLRefs(request, null, null);
         verify(spy).authenticateCloudAdminUserForGetRequests(request);
     }
@@ -973,27 +973,170 @@ public class DefaultCloud11ServiceTest {
     }
 
     @Test
-    public void getServiceCatalog_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
+    public void getServiceCatalog_isAdminCall_authenticateCloudAdminUserForGetRequests() throws Exception {
         spy.getServiceCatalog(request, null, null);
         verify(spy).authenticateCloudAdminUserForGetRequests(request);
     }
 
     @Test
-    public void getUser_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
+    public void getServiceCatalog_isAdminCall_callUserService_getUser() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
+        spy.getServiceCatalog(null, null, null);
+        verify(userService).getUser(null);
+    }
+
+    @Test
+    public void getServiceCatalog_withNullUser_returnsNotFoundResponse() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
+        when(userService.getUser(null)).thenReturn(null);
+        Response.ResponseBuilder responseBuilder = spy.getServiceCatalog(null, null, null);
+        assertThat("response status", responseBuilder.build().getStatus(), equalTo(404));
+    }
+
+    @Test
+    public void getServiceCatalog_withValidUser_callsEndpointService_getEndpointsForUser() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
+        when(userService.getUser(null)).thenReturn(new com.rackspace.idm.domain.entity.User());
+        spy.getServiceCatalog(null, null, null);
+        verify(endpointService).getEndpointsForUser(null);
+    }
+
+    @Test
+    public void getServiceCatalog_withValidUser_callsEndpointConverterCloudV11_toServiceCatalog() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
+        when(userService.getUser(null)).thenReturn(new com.rackspace.idm.domain.entity.User());
+        spy.getServiceCatalog(null, null, null);
+        verify(endpointConverterCloudV11).toServiceCatalog(any(List.class));
+    }
+
+    @Test
+    public void getServiceCatalog_withValidUser_returns200Status() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
+        when(userService.getUser(null)).thenReturn(new com.rackspace.idm.domain.entity.User());
+        Response.ResponseBuilder responseBuilder = spy.getServiceCatalog(null, null, null);
+        assertThat("response status", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void getUser_isAdminCall_callAuthenticateCloudAdminUserForGetRequests() throws Exception {
         spy.getUser(request, null, null);
         verify(spy).authenticateCloudAdminUserForGetRequests(request);
     }
 
     @Test
-    public void getUserEnabled_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
+    public void getUser_isAdminCall_callUserService_getUser() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
+        spy.getUser(null, "userId", null);
+        verify(userService).getUser("userId");
+    }
+
+    @Test
+    public void getUser_userIsNull_returnsNotFoundResponse() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
+        Response.ResponseBuilder responseBuilder = spy.getUser(null, "userId", null);
+        assertThat("response status", responseBuilder.build().getStatus(), equalTo(404));
+    }
+
+    @Test
+    public void getUser_validUser_callsScopeAccessService_getUserScopeAccessForClientId() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
+        when(userService.getUser("userId")).thenReturn(userDO);
+        spy.getUser(null, "userId", null);
+        verify(scopeAccessService).getUserScopeAccessForClientId(anyString(), anyString());
+    }
+
+    @Test
+    public void getUser_validUser_callsScopeAccessService_getOpenstackEndpointsForScopeAccess() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
+        when(userService.getUser("userId")).thenReturn(userDO);
+        when(scopeAccessService.getUserScopeAccessForClientId(anyString(), anyString())).thenReturn(userScopeAccess);
+        spy.getUser(null, "userId", null);
+        verify(scopeAccessService).getOpenstackEndpointsForScopeAccess(userScopeAccess);
+    }
+
+    @Test
+    public void getUser_validUser_callsUserConverterCloudV11_openstackToCloudV11User() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
+        when(userService.getUser("userId")).thenReturn(userDO);
+        spy.getUser(null, "userId", null);
+        verify(userConverterCloudV11).openstackToCloudV11User(eq(userDO), any(List.class));
+    }
+
+    @Test
+    public void getUser_validUser_returns200Status() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
+        when(userService.getUser("userId")).thenReturn(userDO);
+        Response.ResponseBuilder responseBuilder = spy.getUser(null, "userId", null);
+        assertThat("response status", responseBuilder.build().getStatus(), equalTo(200));
+
+    }
+
+
+    @Test
+    public void getUserEnabled_isAdminCall_callAuthenticateCloudAdminUserForGetRequests() throws Exception {
         spy.getUserEnabled(request, null, null);
         verify(spy).authenticateCloudAdminUserForGetRequests(request);
     }
 
     @Test
-    public void getUserFromMossoId_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
+    public void getUserEnabled_isAdminCall_callsUserService_getUser() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
+        spy.getUserEnabled(null, "userId", null);
+        verify(userService).getUser("userId");
+    }
+
+    @Test
+    public void getUserEnabled_withNullUser_returnsNotFoundResponse() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
+        when(userService.getUser("userId")).thenReturn(null);
+        Response.ResponseBuilder responseBuilder = spy.getUserEnabled(null, "userId", null);
+        assertThat("response status", responseBuilder.build().getStatus(), equalTo(404));
+    }
+
+    @Test
+    public void getUserEnabled_withValidUser_callsUserConverterCloudV11_toCloudV11UserWithOnlyEnabled() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
+        when(userService.getUser("userId")).thenReturn(userDO);
+        spy.getUserEnabled(null, "userId", null);
+        verify(userConverterCloudV11).toCloudV11UserWithOnlyEnabled(userDO);
+    }
+
+    @Test
+    public void getUserEnabled_withValidUser_returns200Status() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
+        when(userService.getUser("userId")).thenReturn(userDO);
+        Response.ResponseBuilder responseBuilder = spy.getUserEnabled(null, "userId", null);
+        assertThat("response status", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void getUserFromMossoId_isAdminCall_callAuthenticateCloudAdminUserForGetRequests() throws Exception {
         spy.getUserFromMossoId(request, 0, null);
         verify(spy).authenticateCloudAdminUserForGetRequests(request);
+    }
+
+    @Test
+    public void getUserFromMossoId_isAdminCall_callsUserService_getUserByMossoId() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
+        spy.getUserFromMossoId(request, 12345, null);
+        verify(userService).getUserByMossoId(12345);
+    }
+
+    @Test
+    public void getUserFromMossoId_withNullUser_returnsNotFoundResponse() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
+        when(userService.getUserByMossoId(12345)).thenReturn(null);
+        Response.ResponseBuilder responseBuilder = spy.getUserFromMossoId(request, 12345, null);
+        assertThat("response status", responseBuilder.build().getStatus(), equalTo(404));
+    }
+
+    @Test
+    public void getUserFromMossoId_withValidUser_returns301Status() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
+        when(userService.getUserByMossoId(12345)).thenReturn(userDO);
+        Response.ResponseBuilder responseBuilder = spy.getUserFromMossoId(request, 12345, null);
+        assertThat("response status", responseBuilder.build().getStatus(), equalTo(301));
+
     }
 
     @Test
@@ -1012,22 +1155,116 @@ public class DefaultCloud11ServiceTest {
     }
 
     @Test
-    public void getUserFromNastId_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
+    public void getUserFromNastId_isAdminCall_callAuthenticateCloudAdminUserForGetRequests() throws Exception {
         spy.getUserFromNastId(request, null, null);
         verify(spy).authenticateCloudAdminUserForGetRequests(request);
     }
 
-    @Ignore
     @Test
-    public void getUserGroups_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
+    public void getUserFromNastId_isAdminCall_callsUserService_getUserByMossoId() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
+        spy.getUserFromNastId(request, "nastId", null);
+        verify(userService).getUserByNastId("nastId");
+    }
+
+    @Test
+    public void getUserFromNastId_withNullUser_returnsNotFoundResponse() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
+        when(userService.getUserByNastId("nastId")).thenReturn(null);
+        Response.ResponseBuilder responseBuilder = spy.getUserFromNastId(request, "nastId", null);
+        assertThat("response status", responseBuilder.build().getStatus(), equalTo(404));
+    }
+
+    @Test
+    public void getUserFromNastId_withValidUser_returns301Status() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
+        when(userService.getUserByNastId("nastId")).thenReturn(userDO);
+        Response.ResponseBuilder responseBuilder = spy.getUserFromNastId(request, "nastId", null);
+        assertThat("response status", responseBuilder.build().getStatus(), equalTo(301));
+    }
+
+    @Test
+    public void getUserGroups_isAdminCall_callAuthenticateCloudAdminUserForGetRequests() throws Exception {
         spy.getUserGroups(request, null, null);
         verify(spy).authenticateCloudAdminUserForGetRequests(request);
     }
 
     @Test
-    public void getUserKey_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
+    public void getUserGroups_notAuthorized_returns401() throws Exception {
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        Response.ResponseBuilder responseBuilder = defaultCloud11Service.getUserGroups(request, null, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(401));
+    }
+
+    @Test
+    public void getUserGroups_blankUserId_returnsBadRequestResponse() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
+        Response.ResponseBuilder responseBuilder = spy.getUserGroups(request, "", null);
+        assertThat("response status", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
+    public void getUserGroups_withNullUser_returnsNotFoundResponse() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
+        when(userService.getUser("userId")).thenReturn(null);
+        Response.ResponseBuilder responseBuilder = spy.getUserGroups(request, "userId", null);
+        assertThat("response status", responseBuilder.build().getStatus(), equalTo(404));
+    }
+
+    @Test
+    public void getUserGroups_withValidUser_callsUserGroupService_getGroupsForUser() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
+        when(userService.getUser("userId")).thenReturn(userDO);
+        spy.getUserGroups(request, "userId", null);
+        verify(userGroupService).getGroupsForUser(anyString());
+    }
+
+    @Test
+    public void getUserGroups_noUserGroups_callsCloudGroupService_getGroupById() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
+        when(userGroupService.getGroupsForUser(anyString())).thenReturn(new ArrayList<Group>());
+        when(userService.getUser("userId")).thenReturn(userDO);
+        spy.getUserGroups(request, "userId", null);
+        verify(cloudGroupService).getGroupById(anyInt());
+    }
+
+    @Test
+    public void getUserGroups_returns200Status() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
+        when(userGroupService.getGroupsForUser(anyString())).thenReturn(new ArrayList<Group>());
+        when(cloudGroupService.getGroupById(anyInt())).thenReturn(new Group());
+        when(userService.getUser("userId")).thenReturn(userDO);
+        Response.ResponseBuilder responseBuilder = spy.getUserGroups(request, "userId", null);
+        assertThat("response status", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void getUserKey_isAdminCall_callAuthenticateCloudAdminUserForGetRequests() throws Exception {
         spy.getUserKey(request, null, null);
         verify(spy).authenticateCloudAdminUserForGetRequests(request);
+    }
+
+    @Test
+    public void getUserKey_isAdminCall_callsUserService_getUser() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
+        spy.getUserKey(request, "userId", null);
+        verify(userService).getUser("userId");
+    }
+
+    @Test
+    public void getUserKey_withNullUser_returnsNotFoundResponse() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
+        when(userService.getUser("userId")).thenReturn(null);
+        Response.ResponseBuilder responseBuilder = spy.getUserKey(request, "userId", null);
+        assertThat("response status", responseBuilder.build().getStatus(), equalTo(404));
+    }
+
+    @Test
+    public void getUserKey_withValidUser_returns200Status() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
+        when(userService.getUser("userId")).thenReturn(userDO);
+        Response.ResponseBuilder responseBuilder = spy.getUserKey(request, "userId", null);
+        assertThat("response status", responseBuilder.build().getStatus(), equalTo(200));
     }
 
     @Test
@@ -1037,9 +1274,121 @@ public class DefaultCloud11ServiceTest {
     }
 
     @Test
+    public void setUserEnabled_isAdminCall_callUserService_getUser() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUser(request);
+        spy.setUserEnabled(request, "userId", null, null);
+        verify(userService).getUser("userId");
+    }
+
+    @Test
+    public void setUserEnabled_withNullUser_returnNotFoundResponse() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUser(request);
+        when(userService.getUser("userId")).thenReturn(null);
+        Response.ResponseBuilder responseBuilder = spy.setUserEnabled(request, "userId", null, null);
+        assertThat("response status", responseBuilder.build().getStatus(), equalTo(404));
+    }
+
+    @Test
+    public void setUserEnabled_withValidUser_callsUser_setEnabled() throws Exception {
+        UserWithOnlyEnabled enabledUser = mock(UserWithOnlyEnabled.class);
+        com.rackspace.idm.domain.entity.User user = mock(com.rackspace.idm.domain.entity.User.class);
+        doNothing().when(spy).authenticateCloudAdminUser(request);
+        when(userService.getUser("userId")).thenReturn(user);
+        when(enabledUser.isEnabled()).thenReturn(true);
+        spy.setUserEnabled(request, "userId", enabledUser, null);
+        verify(user).setEnabled(true);
+    }
+
+    @Test
+    public void setUserEnabled_withValidUser_callsUserService_updateUser() throws Exception {
+        UserWithOnlyEnabled enabledUser = mock(UserWithOnlyEnabled.class);
+        doNothing().when(spy).authenticateCloudAdminUser(request);
+        when(userService.getUser("userId")).thenReturn(userDO);
+        when(enabledUser.isEnabled()).thenReturn(true);
+        spy.setUserEnabled(request, "userId", enabledUser, null);
+        verify(userService).updateUser(userDO, false);
+    }
+
+    @Test
+    public void setUserEnabled_withValidUser_callsUserConverterCloudV11_toCloudV11UserWithOnlyEnabled() throws Exception {
+        UserWithOnlyEnabled enabledUser = mock(UserWithOnlyEnabled.class);
+        doNothing().when(spy).authenticateCloudAdminUser(request);
+        when(userService.getUser("userId")).thenReturn(userDO);
+        when(enabledUser.isEnabled()).thenReturn(true);
+        spy.setUserEnabled(request, "userId", enabledUser, null);
+        verify(userConverterCloudV11).toCloudV11UserWithOnlyEnabled(userDO);
+    }
+
+    @Test
+    public void setUserEnabled_withValidUser_returns200Status() throws Exception {
+        UserWithOnlyEnabled enabledUser = mock(UserWithOnlyEnabled.class);
+        doNothing().when(spy).authenticateCloudAdminUser(request);
+        when(userService.getUser("userId")).thenReturn(userDO);
+        when(enabledUser.isEnabled()).thenReturn(true);
+        Response.ResponseBuilder responseBuilder = spy.setUserEnabled(request, "userId", enabledUser, null);
+        assertThat("response status", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
     public void setUserKey_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
         spy.setUserKey(request, null, null, null);
         verify(spy).authenticateCloudAdminUser(request);
+    }
+
+    @Test
+    public void setUserKey_isAdminCall_callUserService_getUser() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUser(request);
+        spy.setUserKey(request, "userId", null, null);
+        verify(userService).getUser("userId");
+    }
+
+    @Test
+    public void setUserKey_withNullUser_returnNotFoundResponse() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUser(request);
+        when(userService.getUser("userId")).thenReturn(null);
+        Response.ResponseBuilder responseBuilder = spy.setUserKey(request, "userId", null, null);
+        assertThat("response status", responseBuilder.build().getStatus(), equalTo(404));
+    }
+
+    @Test
+    public void setUserKey_withValidUser_callsUser_setApiKey() throws Exception {
+        UserWithOnlyKey keyUser = mock(UserWithOnlyKey.class);
+        com.rackspace.idm.domain.entity.User user = mock(com.rackspace.idm.domain.entity.User.class);
+        doNothing().when(spy).authenticateCloudAdminUser(request);
+        when(userService.getUser("userId")).thenReturn(user);
+        when(keyUser.isEnabled()).thenReturn(true);
+        spy.setUserKey(request, "userId", null, keyUser);
+        verify(user).setApiKey(anyString());
+    }
+
+    @Test
+    public void setUserKey_withValidUser_callsUserService_updateUser() throws Exception {
+        UserWithOnlyKey keyUser = mock(UserWithOnlyKey.class);
+        doNothing().when(spy).authenticateCloudAdminUser(request);
+        when(userService.getUser("userId")).thenReturn(userDO);
+        when(keyUser.isEnabled()).thenReturn(true);
+        spy.setUserKey(request, "userId", null, keyUser);
+        verify(userService).updateUser(userDO, false);
+    }
+
+    @Test
+    public void setUserKey_withValidUser_callsUserConverterCloudV11_toCloudV11UserWithOnlyKey() throws Exception {
+        UserWithOnlyKey keyUser = mock(UserWithOnlyKey.class);
+        doNothing().when(spy).authenticateCloudAdminUser(request);
+        when(userService.getUser("userId")).thenReturn(userDO);
+        when(keyUser.isEnabled()).thenReturn(true);
+        spy.setUserKey(request, "userId", null, keyUser);
+        verify(userConverterCloudV11).toCloudV11UserWithOnlyKey(userDO);
+    }
+
+    @Test
+    public void setUserKey_withValidUser_returns200Status() throws Exception {
+        UserWithOnlyKey keyUser = mock(UserWithOnlyKey.class);
+        doNothing().when(spy).authenticateCloudAdminUser(request);
+        when(userService.getUser("userId")).thenReturn(userDO);
+        when(keyUser.isEnabled()).thenReturn(true);
+        Response.ResponseBuilder responseBuilder = spy.setUserKey(request, "userId", null, keyUser);
+        assertThat("response status", responseBuilder.build().getStatus(), equalTo(200));
     }
 
     @Test
@@ -1049,25 +1398,33 @@ public class DefaultCloud11ServiceTest {
     }
 
     @Test
-    public void getBaseURLId_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
+    public void updateUser_isAdminCall_callUserValidator_validate() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUser(request);
+        spy.updateUser(request, null, null, user);
+        verify(userValidator).validate(user);
+    }
+
+
+    @Test
+    public void getBaseURLId_isAdminCall_callAuthenticateCloudAdminUserForGetRequests() throws Exception {
         spy.getBaseURLId(request, 0, null, null);
         verify(spy).authenticateCloudAdminUserForGetRequests(request);
     }
 
     @Test
-    public void getBaseURLs_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
+    public void getBaseURLs_isAdminCall_callAuthenticateCloudAdminUserForGetRequests() throws Exception {
         spy.getBaseURLs(request, null, null);
         verify(spy).authenticateCloudAdminUserForGetRequests(request);
     }
 
     @Test
-    public void getEnabledBaseURL_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
+    public void getEnabledBaseURL_isAdminCall_callAuthenticateCloudAdminUserForGetRequests() throws Exception {
         spy.getEnabledBaseURL(request, null, null);
         verify(spy).authenticateCloudAdminUserForGetRequests(request);
     }
 
     @Test
-    public void addBaseURL_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
+    public void addBaseURL_isAdminCall_callAuthenticateCloudAdminUserForGetRequests() throws Exception {
         spy.addBaseURL(request, null, null);
         verify(spy).authenticateCloudAdminUser(request);
     }
