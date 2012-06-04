@@ -14,6 +14,7 @@ import com.rackspace.idm.domain.service.impl.DefaultUserService;
 import com.rackspacecloud.docs.auth.api.v1.*;
 import com.rackspacecloud.docs.auth.api.v1.Credentials;
 import com.rackspacecloud.docs.auth.api.v1.User;
+import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -29,6 +30,7 @@ import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
+import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.namespace.QName;
 import java.net.URI;
 import java.util.HashMap;
@@ -66,6 +68,7 @@ public class DelegateCloud11ServiceTest {
     private CloudUserExtractor cloudUserExtractor;
     private DefaultUserService defaultUserService;
     private DelegateCloud11Service spy;
+    private ScopeAccessService scopeAccessService;
 
     private Response.ResponseBuilder okResponse;
     private Response.ResponseBuilder notFoundResponse;
@@ -78,11 +81,13 @@ public class DelegateCloud11ServiceTest {
         defaultUserService = mock(DefaultUserService.class);
         credentialUnmarshaller = mock(CredentialUnmarshaller.class);
         cloudUserExtractor = mock(CloudUserExtractor.class);
+        scopeAccessService = mock(ScopeAccessService.class);
         delegateCloud11Service.setCredentialUnmarshaller(credentialUnmarshaller);
         delegateCloud11Service.setDefaultCloud11Service(defaultCloud11Service);
         delegateCloud11Service.setDummyCloud11Service(dummyCloud11Service);
         delegateCloud11Service.setCloudUserExtractor(cloudUserExtractor);
         delegateCloud11Service.setDefaultUserService(defaultUserService);
+        delegateCloud11Service.setScopeAccessService(scopeAccessService);
         OBJ_FACTORY = mock(com.rackspacecloud.docs.auth.api.v1.ObjectFactory.class);
         DelegateCloud11Service.setOBJ_FACTORY(OBJ_FACTORY);
         config = mock(Configuration.class);
@@ -103,7 +108,7 @@ public class DelegateCloud11ServiceTest {
         when(config.getString("cloudAuth11url")).thenReturn(url);
         when(httpHeaders.getMediaType()).thenReturn(new MediaType("application/json", null));
         when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn("Basic YXV0aDphdXRoMTIz");
-        spy = mock(DelegateCloud11Service.class);
+        spy = spy(delegateCloud11Service);
 
         okResponse = Response.ok();
         notFoundResponse = Response.status(404);
@@ -992,15 +997,16 @@ public class DelegateCloud11ServiceTest {
         assertThat("Response Code", authenticate.build().getStatus(), equalTo(200));
     }
 
-    @Ignore
     @Test
     public void authenticate_statusIsOKAndUserIsNotNullAndAuthResultIsNotNull_returnsServiceResponse() throws Exception {
         Response.ResponseBuilder response = Response.status(200).entity("notNull");
-        ScopeAccessService scopeAccessService = mock(ScopeAccessService.class);
         HttpServletResponse httpServletResponse = mock(HttpServletResponse.class);
+        XMLGregorianCalendar xmlGregorianCalendar = new XMLGregorianCalendarImpl();
+        Token token = new Token();
+        token.setId("tokenId");
+        token.setExpires(xmlGregorianCalendar);
         com.rackspacecloud.docs.auth.api.v1.AuthData authResult = new com.rackspacecloud.docs.auth.api.v1.AuthData();
-        authResult.setToken(new Token());
-        authResult.setServiceCatalog(new ServiceCatalog());
+        authResult.setToken(token);
         com.rackspace.idm.domain.entity.User user = new com.rackspace.idm.domain.entity.User("username");
         JAXBElement jaxbElement = new JAXBElement<UserCredentials>(QName.valueOf("foo"), UserCredentials.class, new UserCredentials());
         when(cloudUserExtractor.getUserByCredentialType(jaxbElement)).thenReturn(user);
@@ -1008,9 +1014,9 @@ public class DelegateCloud11ServiceTest {
         when(defaultCloud11Service.authenticate(request, httpServletResponse, httpHeaders, jsonBody)).thenReturn(response);
         when(credentialUnmarshaller.unmarshallCredentialsFromJSON(jsonBody)).thenReturn(jaxbElement);
         when(cloudClient.post(eq(url + "auth"), Matchers.<javax.ws.rs.core.HttpHeaders>any(), anyString())).thenReturn(response);
-        doReturn(authResult).when(spy).getAuthFromResponse("notNull");
-        delegateCloud11Service.authenticate(request, httpServletResponse, httpHeaders, jsonBody);
-        verify(scopeAccessService).updateUserScopeAccessTokenForClientIdByUser(null, null, null, null);
+        doReturn(authResult).when(spy).getAuthFromResponse(anyString());
+        spy.authenticate(request, httpServletResponse, httpHeaders, jsonBody);
+        verify(scopeAccessService).updateUserScopeAccessTokenForClientIdByUser(user, null, "tokenId", xmlGregorianCalendar.toGregorianCalendar().getTime());
     }
 
     @Test
@@ -1046,6 +1052,28 @@ public class DelegateCloud11ServiceTest {
         doReturn(null).when(spy).getAuthFromResponse("");
         Response.ResponseBuilder adminAuthenticate = delegateCloud11Service.adminAuthenticate(request, httpServletResponse, httpHeaders, jsonBody);
         assertThat("Response Code", adminAuthenticate.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void adminAuthenticate_statusIsOKAndUserIsNotNullAndAuthResultIsNotNull_returnsServiceResponse() throws Exception {
+        Response.ResponseBuilder response = Response.status(200).entity("notNull");
+        HttpServletResponse httpServletResponse = mock(HttpServletResponse.class);
+        XMLGregorianCalendar xmlGregorianCalendar = new XMLGregorianCalendarImpl();
+        Token token = new Token();
+        token.setId("tokenId");
+        token.setExpires(xmlGregorianCalendar);
+        com.rackspacecloud.docs.auth.api.v1.AuthData authResult = new com.rackspacecloud.docs.auth.api.v1.AuthData();
+        authResult.setToken(token);
+        com.rackspace.idm.domain.entity.User user = new com.rackspace.idm.domain.entity.User("username");
+        JAXBElement jaxbElement = new JAXBElement<UserCredentials>(QName.valueOf("foo"), UserCredentials.class, new UserCredentials());
+        when(cloudUserExtractor.getUserByCredentialType(jaxbElement)).thenReturn(user);
+        when(defaultUserService.isMigratedUser(user)).thenReturn(false);
+        when(defaultCloud11Service.adminAuthenticate(request, httpServletResponse, httpHeaders, jsonBody)).thenReturn(response);
+        when(credentialUnmarshaller.unmarshallCredentialsFromJSON(jsonBody)).thenReturn(jaxbElement);
+        when(cloudClient.post(eq(url + "auth-admin"), Matchers.<javax.ws.rs.core.HttpHeaders>any(), anyString())).thenReturn(response);
+        doReturn(authResult).when(spy).getAuthFromResponse(anyString());
+        spy.adminAuthenticate(request, httpServletResponse, httpHeaders, jsonBody);
+        verify(scopeAccessService).updateUserScopeAccessTokenForClientIdByUser(user, null, "tokenId", xmlGregorianCalendar.toGregorianCalendar().getTime());
     }
 
     @Test
