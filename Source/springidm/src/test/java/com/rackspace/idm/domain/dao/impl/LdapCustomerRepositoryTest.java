@@ -23,17 +23,6 @@ public class LdapCustomerRepositoryTest {
     boolean softDeleted = false;
     String id = "XXXX";
 
-    @BeforeClass
-    public static void cleanUpData() {
-        final LdapConnectionPools pools = getConnPools();
-        LdapCustomerRepository cleanUpRepo = getRepo(pools);
-        Customer deleteme = cleanUpRepo.getCustomerByCustomerId(customerId);
-        if (deleteme != null) {
-            cleanUpRepo.deleteCustomer(customerId);
-        }
-        pools.close();
-    }
-
     private static LdapCustomerRepository getRepo(LdapConnectionPools connPools) {
         Configuration appConfig = null;
         try {
@@ -58,6 +47,14 @@ public class LdapCustomerRepositoryTest {
 
     @Before
     public void setUp() {
+        final LdapConnectionPools pools = getConnPools();
+        LdapCustomerRepository cleanUpRepo = getRepo(pools);
+        Customer deleteme = cleanUpRepo.getCustomerByCustomerId(customerId);
+        if (deleteme != null) {
+            cleanUpRepo.deleteCustomer(customerId);
+        }
+        pools.close();
+
         connPools = getConnPools();
         repo = getRepo(connPools);
 
@@ -67,7 +64,6 @@ public class LdapCustomerRepositoryTest {
     @After
     public void tearDown() {
         connPools.close();
-        cleanUpData();
     }
 
     @Test
