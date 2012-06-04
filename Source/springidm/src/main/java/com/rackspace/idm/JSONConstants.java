@@ -102,4 +102,5 @@ public class JSONConstants {
     public static final Object OS_KSADM_PASSWORD = "OS-KSADM:password";
     public static final Object IMPERSONATION = "RAX-GA:impersonation";
     public static final Object IMPERSONATOR = "RAX-GA:impersonator";
+    public static final Object IMPERSONATION_EXPIRE_IN_SECONDS = "expire-in-seconds";
 }
