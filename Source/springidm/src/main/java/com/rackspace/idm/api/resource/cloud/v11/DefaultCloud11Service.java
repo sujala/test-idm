@@ -1189,4 +1189,20 @@ public class DefaultCloud11Service implements Cloud11Service {
     public void setAtomHopperClient(AtomHopperClient atomHopperClient) {
         this.atomHopperClient = atomHopperClient;
     }
+
+    public GroupService getUserGroupService() {
+        return userGroupService;
+    }
+
+    public void setUserGroupService(GroupService userGroupService) {
+        this.userGroupService = userGroupService;
+    }
+
+    public GroupService getCloudGroupService() {
+        return cloudGroupService;
+    }
+
+    public void setCloudGroupService(GroupService cloudGroupService) {
+        this.cloudGroupService = cloudGroupService;
+    }
 }
