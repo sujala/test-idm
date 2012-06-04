@@ -54,6 +54,8 @@ public class CloudMigrationService {
 
     private MigrationClient client;
 
+    private MigrationClient client11;
+
     @Autowired
     private UserService userService;
     
@@ -148,14 +150,19 @@ public class CloudMigrationService {
         client = new MigrationClient();
 		client.setCloud20Host(config.getString("cloudAuth20url"));
 
+        client11 = new MigrationClient();
+        client11.setCloud11Host(config.getString("cloudAuth11url"));
+
         if(userService.userExistsByUsername(username))
             throw new ConflictException("A user with username "+ username +" already exists.");
 
         String adminToken = getAdminToken();
 
         if(!adminToken.equals("")) {
+            com.rackspacecloud.docs.auth.api.v1.User user11;
             User user;
             try {
+                user11 = client11.getUserTenantsBaseUrls(config.getString("ga.username"), config.getString("ga.password"), username);
                 user = client.getUser(adminToken, username);
             }
             catch(Exception ex) {
@@ -181,15 +188,17 @@ public class CloudMigrationService {
                 password = Password.generateRandom(false).getValue();
 
             AuthenticateResponse authenticateResponse = authenticate(username, apiKey, password);
-            UserForAuthenticateResponse cloudUser = authenticateResponse.getUser();
 
-            if (domainId == null && isSubUser(cloudUser)) {
+            RoleList roles = client.getRolesForUser(adminToken, user.getId());
+
+            if (domainId == null && isSubUser(roles)) {
 		        throw new BadRequestException("Migration is not allowed for subusers");
             }
 
             String userToken = authenticateResponse.getToken().getId();
 
-            List<String> subUsers = getSubUsers(cloudUser, userToken);
+            //TODO: We cannot get the users for a userAdmin blocker ??
+            List<String> subUsers = getSubUsers(username, userToken, roles);
 
             for(String subUser : subUsers) {
                 if(userService.userExistsByUsername(username)) {
@@ -210,12 +219,32 @@ public class CloudMigrationService {
 
 
             // Get Roles
-            addUserGlobalRoles(newUser, cloudUser.getRoles());
+            addUserGlobalRoles(newUser, roles);
 
             // Get Tenants
             // Using Endpoints call to get both Tenants and Endpoint information
+            
+            //TODO: use mossoId and nastId for tenants and baseURLRef
+            //v1.0/users/userId
+
+            List<String> mossoBaseUrlRef = new ArrayList<String>();
+            List<String> nastBaseUrlRef = new ArrayList<String>();
+
+            for (com.rackspacecloud.docs.auth.api.v1.BaseURLRef baseUrlRef : user11.getBaseURLRefs().getBaseURLRef()) {
+                CloudBaseUrl cloudBaseUrl = endpointService.getBaseUrlById(baseUrlRef.getId());
+                if("MOSSO".equals(cloudBaseUrl.getBaseUrlType())) {
+                    mossoBaseUrlRef.add(String.valueOf(baseUrlRef.getId()));
+                }
+
+                if("NAST".equals(cloudBaseUrl.getBaseUrlType())) {
+                    nastBaseUrlRef.add(String.valueOf(baseUrlRef.getId()));
+                }
+            }
+
+            addTenantsForUserByToken(newUser, user11.getMossoId().toString(), mossoBaseUrlRef);
+            addTenantsForUserByToken(newUser, user11.getNastId(), nastBaseUrlRef);
+
             EndpointList endpoints = client.getEndpointsByToken(adminToken, userToken);
-            addTenantsForUserByToken(newUser, endpoints);
 
             // Groups
             Groups groups = client.getGroupsForUser(adminToken, legacyId);
@@ -226,7 +255,7 @@ public class CloudMigrationService {
                 userService.updateUserById(newUser, false);
             }
 
-            UserType userResponse = validateUser(user, credentialListType, apiKey, cloudPassword, secretQA, cloudUser, groups, endpoints);
+            UserType userResponse = validateUser(user, credentialListType, apiKey, cloudPassword, secretQA, roles, groups, endpoints);
             MigrateUserResponseType result = new MigrateUserResponseType();
 
             for(String subUser : subUsers) {
@@ -241,10 +270,10 @@ public class CloudMigrationService {
         throw new UnauthorizedAccessException("Not Authorized.");
     }
 
-	private List<String> getSubUsers(UserForAuthenticateResponse cloudUser, String userToken) {
+	private List<String> getSubUsers(String username, String userToken, RoleList roles) {
 		List<String> subUsers = new ArrayList<String>();
 
-		if (isUserAdmin(cloudUser)) {
+		if (isUserAdmin(roles)) {
 		    UserList users = null;
 
 		    try {
@@ -254,7 +283,7 @@ public class CloudMigrationService {
 
 		    if (users != null) {
 		        for (User childUser : users.getUser()) {
-                    if (cloudUser.getName().equalsIgnoreCase(childUser.getUsername())) {
+                    if (username.equalsIgnoreCase(childUser.getUsername())) {
                         continue;
                     }
 		            subUsers.add(childUser.getUsername());
@@ -265,7 +294,7 @@ public class CloudMigrationService {
 	}
 
 	private UserType validateUser(User user, CredentialListType credentialListType, String apiKey,
-			String password, SecretQA secretQA, UserForAuthenticateResponse cloudUser, Groups groups, EndpointList endpoints) {
+			String password, SecretQA secretQA, RoleList newRoles, Groups groups, EndpointList endpoints) {
 
         UserType result = new UserType();
         com.rackspace.idm.domain.entity.User newUser = userService.getUser(user.getUsername());
@@ -297,7 +326,7 @@ public class CloudMigrationService {
         result.setValid(StringUtils.isBlank(comment));
 
         List<TenantRole> roles = tenantService.getGlobalRolesForUser(newUser);
-        validateRoles(roles, cloudUser.getRoles(), result);
+        validateRoles(roles, newRoles, result);
 
         List<com.rackspace.idm.domain.entity.Group> newGroups = cloudGroupService.getGroupsForUser(newUser.getId());
         validateGroups(groups, newGroups, result);
@@ -478,8 +507,8 @@ public class CloudMigrationService {
 		return authenticateResponse;
 	}
 
-	private boolean isUserAdmin(UserForAuthenticateResponse cloudUser) {
-		for (Role role : cloudUser.getRoles().getRole()) {
+	private boolean isUserAdmin(RoleList roles) {
+		for (Role role : roles.getRole()) {
 		    if ("identity:user-admin".equalsIgnoreCase(role.getName())) {
 		        return true;
 		    }
@@ -487,8 +516,8 @@ public class CloudMigrationService {
 		return false;
 	}
 
-	private boolean isSubUser(UserForAuthenticateResponse cloudUser) {
-		for (Role role : cloudUser.getRoles().getRole()) {
+	private boolean isSubUser(RoleList roles) {
+		for (Role role : roles.getRole()) {
 		    if ("identity:default".equalsIgnoreCase(role.getName())) {
 		        return true;
 		    }
@@ -524,14 +553,15 @@ public class CloudMigrationService {
         String password = getPassword(credentialListType);
         
         AuthenticateResponse authenticateResponse = authenticate(username, apiKey, password);
-        UserForAuthenticateResponse cloudUser = authenticateResponse.getUser();
         String userToken = authenticateResponse.getToken().getId();
 
-        if (rootUser && isSubUser(cloudUser)) {
+        RoleList roles = client.getRolesForUser(adminToken, user.getId());
+
+        if (rootUser && isSubUser(roles)) {
             throw new BadRequestException("Migration is not allowed for subusers");
         }
         
-        List<String> subUsers = getSubUsers(cloudUser, userToken);
+        List<String> subUsers = getSubUsers(username, userToken, roles);
 
         for(String subUser: subUsers) {
             try {
@@ -617,34 +647,34 @@ public class CloudMigrationService {
         }
     }
 
-    private void addTenantsForUserByToken(com.rackspace.idm.domain.entity.User user, EndpointList endpoints) throws Exception {
-        if(endpoints != null) {
-            for (Endpoint endpoint : endpoints.getEndpoint()) {
-                // Add the Tenant if it doesn't exist.
-                com.rackspace.idm.domain.entity.Tenant newTenant = tenantService.getTenant(endpoint.getTenantId());
-                if (newTenant == null) {
-                    // Find all BaseUrls
-                    String[] baseUrls = getBaseUrlsForTenant(endpoint.getTenantId(), endpoints);
-                    // Add new Tenant
-                    addTenant(endpoint, baseUrls);
-                }
-                // Add roles to user on tenant
-                addTenantRole(user, endpoint);
+    private void addTenantsForUserByToken(com.rackspace.idm.domain.entity.User user, String tenantId, List<String> baseUrlRefs) throws Exception {
+        if(baseUrlRefs != null) {
+            com.rackspace.idm.domain.entity.Tenant newTenant = tenantService.getTenant(tenantId);
+            // Add the Tenant if it doesn't exist.
+            if (newTenant == null) {
+                // Add new Tenant
+                addTenant(tenantId, baseUrlRefs.toArray(new String[0]));
+            }
+            // Add roles to user on tenant
+
+            for (String baseUrl : baseUrlRefs) {
+                addTenantRole(user, tenantId, Integer.parseInt(baseUrl));
             }
         }
     }
 
-    private void addTenant(Endpoint endpoint, String [] baseUrls) {
+    private void addTenant(String tenantId, String [] baseUrls) {
         com.rackspace.idm.domain.entity.Tenant newTenant = new com.rackspace.idm.domain.entity.Tenant();
-        newTenant.setTenantId(endpoint.getTenantId());
-        newTenant.setName(endpoint.getTenantId());
+        newTenant.setTenantId(tenantId);
+        newTenant.setName(tenantId);
         newTenant.setEnabled(true);
         newTenant.setBaseUrlIds(baseUrls);
         tenantService.addTenant(newTenant);
     }
 
-    private void addTenantRole(com.rackspace.idm.domain.entity.User user, Endpoint endpoint) {
-        Application application = applicationService.getByName(endpoint.getName());
+    private void addTenantRole(com.rackspace.idm.domain.entity.User user, String tenantId, int endpointId) {
+        CloudBaseUrl cloudBaseUrl = endpointService.getBaseUrlById(endpointId);
+        Application application = applicationService.getByName(cloudBaseUrl.getServiceName());
         if(application == null) {
             logger.debug("Unknown application detected");
             // ToDo: Should we throw an error and roll everything back?
@@ -656,7 +686,7 @@ public class CloudMigrationService {
                 TenantRole tenantRole = new TenantRole();
                 tenantRole.setClientId(application.getClientId());
                 tenantRole.setUserId(user.getId());
-                tenantRole.setTenantIds(new String[]{endpoint.getTenantId()}); //ToDo: does this overwrite a previous?
+                tenantRole.setTenantIds(new String[]{tenantId}); //ToDo: does this overwrite a previous?
                 tenantRole.setName(role.getName());
                 tenantRole.setRoleRsId(role.getId());
                 tenantService.addTenantRoleToUser(user, tenantRole);
