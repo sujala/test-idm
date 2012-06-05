@@ -70,9 +70,10 @@ public class JSONReaderForImpersonation implements MessageBodyReader<Impersonati
                         request.setExpireInSeconds(Integer.parseInt(expireInSeconds));
                     }
                 }
-
                 request.setUser(user);
             }
+        } catch (NumberFormatException e) {
+            throw new BadRequestException("Expire-in element should be an integer.");
         } catch (Exception e) {
             throw new BadRequestException("Invalid json request body");
         }
