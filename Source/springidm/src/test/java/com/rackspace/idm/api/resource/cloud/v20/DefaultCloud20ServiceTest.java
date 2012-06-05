@@ -129,7 +129,7 @@ public class DefaultCloud20ServiceTest {
         defaultCloud20Service.setClientService(clientService);
         defaultCloud20Service.setConfig(config);
         defaultCloud20Service.setCloudKsGroupBuilder(cloudKsGroupBuilder);
-//        defaultCloud20Service.setAtomHopperClient(atomHopperClient);
+        defaultCloud20Service.setAtomHopperClient(atomHopperClient);
         defaultCloud20Service.setRoleConverterCloudV20(roleConverterCloudV20);
 
         //fields
