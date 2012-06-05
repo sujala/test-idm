@@ -4,6 +4,7 @@ import com.rackspace.idm.api.converter.cloudv11.AuthConverterCloudV11;
 import com.rackspace.idm.api.converter.cloudv11.EndpointConverterCloudV11;
 import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11;
 import com.rackspace.idm.api.resource.cloud.CloudExceptionResponse;
+//import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.dao.impl.LdapCloudAdminRepository;
@@ -233,7 +234,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             throws IOException {
 
         try {
-            if (httpHeaders.getMediaType().isCompatible(MediaType.APPLICATION_XML_TYPE)) {
+            if (httpHeaders.getMediaType() != null && httpHeaders.getMediaType().isCompatible(MediaType.APPLICATION_XML_TYPE)) {
                 return authenticateXML(response, httpHeaders, body, false);
             } else {
                 return authenticateJSON(response, httpHeaders, body, false);
@@ -476,8 +477,8 @@ public class DefaultCloud11Service implements Cloud11Service {
             this.userService.softDeleteUser(gaUser);
 
 
-            UserScopeAccess usa = getAuthtokenFromRequest(request);
-
+//            UserScopeAccess usa = getAuthtokenFromRequest(request);
+//
 //            atomHopperClient.postUser(gaUser,usa.getAccessTokenString(),"deleted");
 
             return Response.noContent();
@@ -657,7 +658,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         }
     }
 
-    private User checkAndGetUser(String id) {
+    User checkAndGetUser(String id) {  //Not used right now
         User user = this.userService.getUserById(id);
 
         if (user == null) {
@@ -821,7 +822,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             }
 
             if(gaUser.isDisabled()){
-                UserScopeAccess usa = getAuthtokenFromRequest(request);
+//                UserScopeAccess usa = getAuthtokenFromRequest(request);
 //                atomHopperClient.postUser(gaUser,usa.getAccessTokenString(),"disabled");
             }
 
@@ -946,7 +947,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     }
 
     // Private Methods
-    private Response.ResponseBuilder adminAuthenticateResponse(JAXBElement<? extends Credentials> cred, HttpServletResponse response)
+    Response.ResponseBuilder adminAuthenticateResponse(JAXBElement<? extends Credentials> cred, HttpServletResponse response)
             throws IOException {
         if (cred.getValue() instanceof UserCredentials) {
             handleRedirect(response, "cloud/auth");
