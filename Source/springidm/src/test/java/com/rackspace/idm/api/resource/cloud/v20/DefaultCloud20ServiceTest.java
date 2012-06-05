@@ -3,13 +3,8 @@ package com.rackspace.idm.api.resource.cloud.v20;
 import com.rackspace.docs.identity.api.ext.rax_ga.v1.ImpersonationRequest;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.idm.api.converter.cloudv20.*;
-import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
-import com.rackspace.idm.api.converter.cloudv20.EndpointConverterCloudV20;
-import com.rackspace.idm.api.converter.cloudv20.TenantConverterCloudV20;
-import com.rackspace.idm.api.converter.cloudv20.TokenConverterCloudV20;
-import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
-import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Tenant;
@@ -22,14 +17,13 @@ import com.unboundid.ldap.sdk.SearchResultEntry;
 import org.apache.commons.configuration.Configuration;
 import org.hamcrest.Matchers;
 import org.junit.Before;
-import org.junit.Test;
 import org.junit.Ignore;
+import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
-import org.openstack.docs.identity.api.ext.os_kscatalog.v1.*;
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.*;
-import org.openstack.docs.identity.api.v2.ObjectFactory;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
@@ -135,7 +129,7 @@ public class DefaultCloud20ServiceTest {
         defaultCloud20Service.setClientService(clientService);
         defaultCloud20Service.setConfig(config);
         defaultCloud20Service.setCloudKsGroupBuilder(cloudKsGroupBuilder);
-        defaultCloud20Service.setAtomHopperClient(atomHopperClient);
+//        defaultCloud20Service.setAtomHopperClient(atomHopperClient);
         defaultCloud20Service.setRoleConverterCloudV20(roleConverterCloudV20);
 
         //fields
