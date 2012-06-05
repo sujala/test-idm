@@ -161,7 +161,7 @@ public class JSONReaderForTenantTest {
                 "            \"password\":\"theUsersPassword\"\n" +
                 "        }\n" +
                 "    }\n";
-        assertThat("tenant", JSONReaderForTenant.getTenantFromJSONString(body).getId(), nullValue());
+        JSONReaderForTenant.getTenantFromJSONString(body);
     }
 
     @Test
@@ -191,7 +191,7 @@ public class JSONReaderForTenantTest {
     }
 
     @Test
-    public void getTenantFromJSONString_nullDescription_returnsTenantNullDisplayName() throws Exception {
+    public void getTenantFromJSONString_nullDisplayName_returnsTenantNullDisplayName() throws Exception {
         String body = "{\n" +
                 "  \"tenant\": {\n" +
                 "    \"id\": \"1234\",\n" +
@@ -204,19 +204,20 @@ public class JSONReaderForTenantTest {
     }
 
     @Test
-    public void getTenantFromJSONString_nullDescription_returnsTenantNullName() throws Exception {
+    public void getTenantFromJSONString_nullDescription_returnsTenantNullDescription() throws Exception {
         String body = "{\n" +
                 "  \"tenant\": {\n" +
                 "    \"id\": \"1234\",\n" +
+                "    \"name\": \"ACME corp\",\n" +
                 "    \"display-name\": \"acme\",\n" +
                 "    \"enabled\": true\n" +
                 "  }\n" +
                 "}";
-        assertThat("tenant", JSONReaderForTenant.getTenantFromJSONString(body).getName(), nullValue());
+        assertThat("tenant", JSONReaderForTenant.getTenantFromJSONString(body).getDescription(), nullValue());
     }
 
     @Test
-    public void getTenantFromJSONString_nullDescription_returnsTenantEnableTrue() throws Exception {
+    public void getTenantFromJSONString_nullEnable_returnsTenantEnableTrue() throws Exception {
         String body = "{\n" +
                 "  \"tenant\": {\n" +
                 "    \"id\": \"1234\",\n" +
