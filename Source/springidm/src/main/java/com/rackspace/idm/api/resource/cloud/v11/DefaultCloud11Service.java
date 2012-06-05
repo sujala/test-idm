@@ -3,13 +3,12 @@ package com.rackspace.idm.api.resource.cloud.v11;
 import com.rackspace.idm.api.converter.cloudv11.AuthConverterCloudV11;
 import com.rackspace.idm.api.converter.cloudv11.EndpointConverterCloudV11;
 import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11;
-import com.rackspace.idm.api.resource.cloud.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.CloudExceptionResponse;
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.dao.impl.LdapCloudAdminRepository;
 import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.entity.OpenstackEndpoint;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
@@ -23,7 +22,6 @@ import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.openstack.docs.common.api.v1.VersionChoice;
-import org.openstack.docs.identity.api.v2.EndpointList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -825,7 +823,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             if(gaUser.isDisabled()){
                 UserScopeAccess usa = getAuthtokenFromRequest(request);
-                atomHopperClient.postUser(gaUser,usa.getAccessTokenString(),"disabled"); 
+                atomHopperClient.postUser(gaUser,usa.getAccessTokenString(),"disabled");
             }
 
             List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(userId);
@@ -1015,7 +1013,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         }
     }
 
-    private Response.ResponseBuilder authenticateJSON(HttpServletResponse response, HttpHeaders httpHeaders, String body,
+    Response.ResponseBuilder authenticateJSON(HttpServletResponse response, HttpHeaders httpHeaders, String body,
                                                       boolean isAdmin) throws IOException {
 
         JAXBElement<? extends Credentials> cred = null;
@@ -1029,7 +1027,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     }
 
     @SuppressWarnings("unchecked")
-    private Response.ResponseBuilder authenticateXML(HttpServletResponse response, HttpHeaders httpHeaders, String body,
+    Response.ResponseBuilder authenticateXML(HttpServletResponse response, HttpHeaders httpHeaders, String body,
                                                      boolean isAdmin) throws IOException {
 
         JAXBElement<? extends Credentials> cred = null;
@@ -1188,5 +1186,21 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     public void setAtomHopperClient(AtomHopperClient atomHopperClient) {
         this.atomHopperClient = atomHopperClient;
+    }
+
+    public GroupService getUserGroupService() {
+        return userGroupService;
+    }
+
+    public void setUserGroupService(GroupService userGroupService) {
+        this.userGroupService = userGroupService;
+    }
+
+    public GroupService getCloudGroupService() {
+        return cloudGroupService;
+    }
+
+    public void setCloudGroupService(GroupService cloudGroupService) {
+        this.cloudGroupService = cloudGroupService;
     }
 }

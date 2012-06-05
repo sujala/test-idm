@@ -37,31 +37,14 @@ public class LdapScopeAccessPersistenceRepositoryTest {
 
     String accessToken = "YYYYYYY";
     String refreshToken = "ZZZZZZZ";
-    
+
     String userId = "userId";
 
     Application client = null;
     Application client2 = null;
     Customer customer = null;
-    
+
     String id = "XXXX";
-    String id2 = "YYYY";
-
-
-    @BeforeClass
-    public static void setUpBeforeClass() throws Exception {
-        final LdapConnectionPools pools = getConnPools();
-        final LdapApplicationRepository cleanUpRepo = getClientRepo(pools);
-        final Application deleteme = cleanUpRepo.getClientByClientId("XXX");
-        final Application deleteme2 = cleanUpRepo.getClientByClientId("YYY");
-        if (deleteme != null) {
-            cleanUpRepo.deleteClient(deleteme);
-        }
-        if (deleteme2 != null) {
-            cleanUpRepo.deleteClient(deleteme2);
-        }
-        pools.close();
-    }
 
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
@@ -69,13 +52,29 @@ public class LdapScopeAccessPersistenceRepositoryTest {
 
     @Before
     public void setUp() throws Exception {
+        LdapConnectionPools pools = getConnPools();
+        LdapApplicationRepository cleanUpRepo = getClientRepo(pools);
+        Application deleteme = cleanUpRepo.getClientByClientId("XXX");
+        Application deleteme2 = cleanUpRepo.getClientByClientId("YYY");
+        LdapCustomerRepository customerRepository = getCustomerRepo(pools);
+        Customer deleteCustomer = customerRepository.getCustomerByCustomerId(customerId);
+        if(deleteCustomer !=null){
+            customerRepository.deleteCustomer(customerId);
+        }
+        if (deleteme != null) {
+            cleanUpRepo.deleteClient(deleteme);
+        }
+        if (deleteme2 != null) {
+            cleanUpRepo.deleteClient(deleteme2);
+        }
+        pools.close();
         connPools = getConnPools();
         repo = getSaRepo(connPools);
         customerRepo = getCustomerRepo(connPools);
         clientRepo = getClientRepo(connPools);
 
         try {
-            customer = addNewTestCustomer(customerId, customerName, inum, iname, seeAlso, owner, country);
+            customer = addNewTestCustomer(customerId);
             client = addNewTestClient(clientId);
             client2 = addNewTestClient2(clientId2);
         } catch (Exception e) {
@@ -252,7 +251,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         sa = (UserScopeAccess) repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
         GrantedPermission p = createGrantedPermissionInstance(client.getClientId(), client.getRCN(), permissionId);
-        p.setResourceGroups(new String[] { "test" });
+        p.setResourceGroups(new String[]{"test"});
 
         p = repo.grantPermission(sa.getUniqueId(), p);
         Assert.assertNotNull(p);
@@ -278,7 +277,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         sa = (UserScopeAccess) repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
         GrantedPermission p = createGrantedPermissionInstance(client.getClientId(), client.getRCN(), permissionId);
-        p.setResourceGroups(new String[] { "test" });
+        p.setResourceGroups(new String[]{"test"});
 
         p = repo.grantPermission(sa.getUniqueId(), p);
         p = repo.grantPermission(sa.getUniqueId(), p);
@@ -699,9 +698,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         return new LdapConfiguration(appConfig).connectionPools();
     }
 
-    private Customer addNewTestCustomer(String customerId, String name, String inum, String iname,
-                                         String seeAlso, String owner, String country) {
-
+    private Customer addNewTestCustomer(String customerId) {
         final Customer newCustomer = createTestCustomerInstance(customerId);
         newCustomer.setId(id);
         customerRepo.addCustomer(newCustomer);
@@ -721,7 +718,7 @@ public class LdapScopeAccessPersistenceRepositoryTest {
         clientRepo.addClient(newClient);
         return newClient;
     }
-    
+
     private Application addNewTestClient2(String clientId) {
         final Application newClient = createTestClientInstance();
         newClient.setClientId(clientId2);

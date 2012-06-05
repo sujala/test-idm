@@ -6,11 +6,12 @@ import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.converter.cloudv20.*;
-import com.rackspace.idm.api.resource.cloud.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
+import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.domain.entity.Tenant;
@@ -24,6 +25,7 @@ import org.openstack.docs.common.api.v1.Extensions;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory;
 import org.openstack.docs.identity.api.v2.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,12 +35,9 @@ import org.springframework.stereotype.Component;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import javax.ws.rs.core.*;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
-import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
@@ -47,6 +46,7 @@ import javax.xml.transform.stream.StreamSource;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -152,9 +152,14 @@ public class DefaultCloud20Service implements Cloud20Service {
             verifyServiceAdminLevelAccess(authToken);
             CloudBaseUrl baseUrl = this.endpointConverterCloudV20.toCloudBaseUrl(endpoint);
             this.endpointService.addBaseUrl(baseUrl);
-            return Response.created(uriInfo.getRequestUriBuilder().path(String.valueOf(baseUrl.getBaseUrlId())).build())
-                    .entity(OBJ_FACTORIES.getOpenStackIdentityExtKscatalogV1Factory()
-                            .createEndpointTemplate(this.endpointConverterCloudV20.toEndpointTemplate(baseUrl)));
+            UriBuilder requestUriBuilder = uriInfo.getRequestUriBuilder();
+            String id = String.valueOf(baseUrl.getBaseUrlId());
+            URI build = requestUriBuilder.path(id).build();
+            Response.ResponseBuilder response = Response.created(build);
+            EndpointTemplate value = this.endpointConverterCloudV20.toEndpointTemplate(baseUrl);
+            ObjectFactory openStackIdentityExtKscatalogV1Factory = OBJ_FACTORIES.getOpenStackIdentityExtKscatalogV1Factory();
+            response.entity(openStackIdentityExtKscatalogV1Factory.createEndpointTemplate(value));
+            return response;
         } catch (BaseUrlConflictException buce) {
             return endpointTemplateConflictException(buce.getMessage());
         } catch (DuplicateException dex) {
@@ -197,8 +202,13 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             clientService.addClientRole(clientRole);
 
-            return Response.created(uriInfo.getRequestUriBuilder().path(clientRole.getId()).build())
-                    .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRole(roleConverterCloudV20.toRoleFromClientRole(clientRole)));
+            UriBuilder requestUriBuilder = uriInfo.getRequestUriBuilder();
+            String id = clientRole.getId();
+            URI build = requestUriBuilder.path(id).build();
+            Response.ResponseBuilder response =  Response.created(build);
+            org.openstack.docs.identity.api.v2.ObjectFactory openStackIdentityV2Factory = OBJ_FACTORIES.getOpenStackIdentityV2Factory();
+            Role value = roleConverterCloudV20.toRoleFromClientRole(clientRole);
+            return response.entity(openStackIdentityV2Factory.createRole(value));
 
         } catch (DuplicateException bre) {
             return roleConflictExceptionResponse(bre.getMessage());
@@ -264,9 +274,11 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             this.clientService.add(client);
             service.setId(client.getClientId());
-            return Response.created(
-                    uriInfo.getRequestUriBuilder().path(service.getId()).build())
-                    .entity(OBJ_FACTORIES.getOpenStackIdentityExtKsadmnV1Factory().createService(service));
+            UriBuilder requestUriBuilder = uriInfo.getRequestUriBuilder();
+            String id = service.getId();
+            URI build = requestUriBuilder.path(id).build();
+            org.openstack.docs.identity.api.ext.os_ksadm.v1.ObjectFactory openStackIdentityExtKsadmnV1Factory = OBJ_FACTORIES.getOpenStackIdentityExtKsadmnV1Factory();
+            return Response.created(build).entity(openStackIdentityExtKsadmnV1Factory.createService(service));
 
         } catch (DuplicateException de) {
             return serviceConflictExceptionResponse(de.getMessage());
@@ -294,9 +306,12 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             this.tenantService.addTenant(savedTenant);
 
-            return Response.created(uriInfo.getRequestUriBuilder().path(savedTenant.getTenantId()).build())
-                    .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                            .createTenant(this.tenantConverterCloudV20.toTenant(savedTenant)));
+            UriBuilder requestUriBuilder = uriInfo.getRequestUriBuilder();
+            String tenantId = savedTenant.getTenantId();
+            URI build = requestUriBuilder.path(tenantId).build();
+            org.openstack.docs.identity.api.v2.ObjectFactory openStackIdentityV2Factory = OBJ_FACTORIES.getOpenStackIdentityV2Factory();
+            org.openstack.docs.identity.api.v2.Tenant value = this.tenantConverterCloudV20.toTenant(savedTenant);
+            return Response.created(build).entity(openStackIdentityV2Factory.createTenant(value));
 
         } catch (DuplicateException de) {
             return tenantConflictExceptionResponse(de.getMessage());
@@ -1546,13 +1561,15 @@ public class DefaultCloud20Service implements Cloud20Service {
         return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtRaxgaV1Factory().createAccess(auth));
     }
 
-    private void validateImpersonationRequest(ImpersonationRequest impersonationRequest) {
+    void validateImpersonationRequest(ImpersonationRequest impersonationRequest) {
         if (impersonationRequest.getUser() == null) {
             throw new BadRequestException("User cannot be null for impersonation request");
         } else if (impersonationRequest.getUser().getUsername() == null) {
             throw new BadRequestException("Username cannot be null for impersonation request");
         } else if (impersonationRequest.getUser().getUsername().isEmpty() || StringUtils.isBlank(impersonationRequest.getUser().getUsername())) {
             throw new BadRequestException("Username cannot be empty or blank");
+        }else if(impersonationRequest.getExpireInSeconds()!=null && impersonationRequest.getExpireInSeconds()<1){
+            throw new BadRequestException("Expire in element cannot be less than 1.");
         }
 
     }
@@ -2517,5 +2534,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     public void setAtomHopperClient(AtomHopperClient atomHopperClient) {
         this.atomHopperClient = atomHopperClient;
+    }
+
+    public void setRoleConverterCloudV20(RoleConverterCloudV20 roleConverterCloudV20) {
+        this.roleConverterCloudV20 = roleConverterCloudV20;
     }
 }
