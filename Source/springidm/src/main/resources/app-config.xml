@@ -1,34 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xmlns:security="http://www.springframework.org/schema/security"
-       xmlns:oauth="http://spring-security-oauth.codehaus.org/3.0"
-       xmlns:p="http://www.springframework.org/schema/p" xmlns:aop="http://www.springframework.org/schema/aop"
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop"
        xmlns:context="http://www.springframework.org/schema/context"
-       xmlns:jee="http://www.springframework.org/schema/jee" xmlns:util="http://www.springframework.org/schema/util"
        xmlns:task="http://www.springframework.org/schema/task"
 
-       xsi:schemaLocation="http://www.springframework.org/schema/security  http://www.springframework.org/schema/security/spring-security-2.0.xsd
-			http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-2.5.xsd
-			http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
-			http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-2.5.xsd
-			http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee-2.5.xsd http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
-			http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-3.0.xsd">
-    
+       xsi:schemaLocation="
+			http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.1.xsd
+			http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+			http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd
+			http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-3.1.xsd">
+
 
     <!--
-         Uses Apache Commons DBCP for connection pooling. See Commons DBCP documentation
-         for the required JAR files. See the PetStore sample application also shipped with
-         Spring, for an example of Commons DBCP usage and the necessary build script.
-         Alternatively you can use another connection pool such as C3P0, similarly configured
-         using Spring.
-         A standalone connection pool such as Commons DBCP is a good choice for use outside an
-         application server environment, including web applications running in a web container without
-         JTA, or integration testing using the org.springframework.test package.
-     <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close"
-             p:driverClassName="${jdbc.driverClassName}" p:url="${jdbc.url}" p:username="${jdbc.username}"
-             p:password="${jdbc.password}"/>
+        Uses Apache Commons DBCP for connection pooling. See Commons DBCP documentation
+        for the required JAR files. See the PetStore sample application also shipped with
+        Spring, for an example of Commons DBCP usage and the necessary build script.
+        Alternatively you can use another connection pool such as C3P0, similarly configured
+        using Spring.
+        A standalone connection pool such as Commons DBCP is a good choice for use outside an
+        application server environment, including web applications running in a web container without
+        JTA, or integration testing using the org.springframework.test package.
+    <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close"
+            p:driverClassName="${jdbc.driverClassName}" p:url="${jdbc.url}" p:username="${jdbc.username}"
+            p:password="${jdbc.password}"/>
 
-     -->
+    -->
     <!-- Transaction manager for a single JDBC DataSource (alternative to JTA)
         <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager"
                 p:dataSource-ref="dataSource"/>
