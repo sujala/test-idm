@@ -12,6 +12,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyReader;
 import javax.ws.rs.ext.Provider;
 
+import com.rackspace.idm.exception.BadRequestException;
 import org.apache.commons.io.IOUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -19,10 +20,13 @@ import org.json.simple.parser.ParseException;
 import org.openstack.docs.identity.api.v2.Tenant;
 
 import com.rackspace.idm.JSONConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
 public class JSONReaderForTenant implements MessageBodyReader<Tenant> {
+    private static final Logger logger = LoggerFactory.getLogger(JSONReaderForTenant.class);
 
     @Override
     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations,
@@ -80,7 +84,8 @@ public class JSONReaderForTenant implements MessageBodyReader<Tenant> {
             }
         } catch (ParseException e) {
             // TODO Auto-generated catch block
-            e.printStackTrace();
+            logger.info(e.toString());
+            throw new BadRequestException("Bad JSON request");
         }
         
         return tenant;
