@@ -4,6 +4,7 @@ import com.rackspace.idm.api.converter.cloudv11.AuthConverterCloudV11;
 import com.rackspace.idm.api.converter.cloudv11.EndpointConverterCloudV11;
 import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11;
 import com.rackspace.idm.api.resource.cloud.CloudExceptionResponse;
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.dao.impl.LdapCloudAdminRepository;
@@ -90,8 +91,8 @@ public class DefaultCloud11Service implements Cloud11Service {
     @Autowired
     private GroupService cloudGroupService;
 
-//    @Autowired
-//    private AtomHopperClient atomHopperClient;
+    @Autowired
+    private AtomHopperClient atomHopperClient;
 
     @Autowired
     public DefaultCloud11Service(Configuration config,
@@ -478,7 +479,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             UserScopeAccess usa = getAuthtokenFromRequest(request);
 
-//            atomHopperClient.postUser(gaUser,usa.getAccessTokenString(),"deleted");
+            atomHopperClient.postUser(gaUser,usa.getAccessTokenString(),"deleted");
 
             return Response.noContent();
         } catch (Exception ex) {
@@ -822,7 +823,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             if(gaUser.isDisabled()){
                 UserScopeAccess usa = getAuthtokenFromRequest(request);
-//                atomHopperClient.postUser(gaUser,usa.getAccessTokenString(),"disabled");
+                atomHopperClient.postUser(gaUser,usa.getAccessTokenString(),"disabled");
             }
 
             List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(userId);
@@ -1179,13 +1180,13 @@ public class DefaultCloud11Service implements Cloud11Service {
         return config.getString("cloudAuth.userAdminRole");
     }
 
-//    public AtomHopperClient getAtomHopperClient() {
-//        return atomHopperClient;
-//    }
-//
-//    public void setAtomHopperClient(AtomHopperClient atomHopperClient) {
-//        this.atomHopperClient = atomHopperClient;
-//    }
+    public AtomHopperClient getAtomHopperClient() {
+        return atomHopperClient;
+    }
+
+    public void setAtomHopperClient(AtomHopperClient atomHopperClient) {
+        this.atomHopperClient = atomHopperClient;
+    }
 
     public GroupService getUserGroupService() {
         return userGroupService;
