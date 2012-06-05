@@ -7,6 +7,7 @@ import org.junit.Test;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Created by IntelliJ IDEA.
@@ -50,5 +51,15 @@ public class JSONReaderForImpersonationTest {
     @Test(expected = BadRequestException.class)
     public void getImpersonationFromJSONString_withExpireInElementContainsNonIntValue_throwsBadRequestException() throws Exception {
         JSONReaderForImpersonation.getImpersonationFromJSONString("{\"RAX-GA:impersonation\":{\"user\":{\"username\":\"john.smith\"},\"expire-in-seconds\":\"abc\"}}");
+    }
+
+    @Test
+    public void getImpersonationFromJSONString_withExpireInElementContainsDecimalValue_throwsBadRequestException() throws Exception {
+        try {
+            JSONReaderForImpersonation.getImpersonationFromJSONString("{\"RAX-GA:impersonation\":{\"user\":{\"username\":\"john.smith\"},\"expire-in-seconds\":\".1\"}}");
+            assertTrue("expected and exception to be thrown", false);
+        } catch (Exception e) {
+            assertThat("expected message", e.getMessage(), equalTo("Expire-in element should be an integer."));
+        }
     }
 }

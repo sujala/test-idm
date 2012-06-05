@@ -131,7 +131,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             return newScopeAccess;
         } else {
             scopeAccess = (ImpersonatedScopeAccess) existingAccess;
-            if (!scopeAccess.isAccessTokenExpired(new DateTime()) && scopeAccess.getImpersonatingToken()!= null &&
+            if (!scopeAccess.isAccessTokenExpired(new DateTime()) && scopeAccess.getImpersonatingToken() != null &&
                     scopeAccess.getImpersonatingToken().equals(impersonatingToken)) {
                 return scopeAccess;
             }
@@ -144,6 +144,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     ImpersonatedScopeAccess setImpersonatedScopeAccess(User caller, ImpersonationRequest impersonationRequest, ImpersonatedScopeAccess impersonatedScopeAccess) {
+        validateExpireInElement(caller, impersonationRequest);
         if (impersonationRequest.getExpireInSeconds() == null) {
             if (caller instanceof Racker) {
                 impersonatedScopeAccess.setRackerId(((Racker) caller).getRackerId());
@@ -152,25 +153,34 @@ public class DefaultScopeAccessService implements ScopeAccessService {
                 impersonatedScopeAccess.setAccessTokenExp(new DateTime().plusSeconds(config.getInt("token.impersonatedByServiceDefaultSeconds")).toDate());
             }
         } else {
-            if (impersonationRequest.getExpireInSeconds() < 1) {
-                throw new BadRequestException("Expire in element cannot be less than 1.");
-            }
             if (caller instanceof Racker) {
                 impersonatedScopeAccess.setRackerId(((Racker) caller).getRackerId());
-                int rackerMax = config.getInt("token.impersonatedByRackerMaxSeconds");
-                if (impersonationRequest.getExpireInSeconds() > rackerMax) {
-                    throw new BadRequestException("Expire in element cannot be more than " + rackerMax);
-                }
                 impersonatedScopeAccess.setAccessTokenExp(new DateTime().plusSeconds(impersonationRequest.getExpireInSeconds()).toDate());
             } else {
-                int serviceMax = config.getInt("token.impersonatedByServiceMaxSeconds");
-                if (impersonationRequest.getExpireInSeconds() > serviceMax) {
-                    throw new BadRequestException("Expire in element cannot be more than " + serviceMax);
-                }
                 impersonatedScopeAccess.setAccessTokenExp(new DateTime().plusSeconds(impersonationRequest.getExpireInSeconds()).toDate());
             }
         }
         return impersonatedScopeAccess;
+    }
+
+    void validateExpireInElement(User caller, ImpersonationRequest impersonationRequest) {
+        if(impersonationRequest==null || impersonationRequest.getExpireInSeconds()==null){
+            return;
+        }
+        if (impersonationRequest.getExpireInSeconds() < 1) {
+            throw new BadRequestException("Expire in element cannot be less than 1.");
+        }
+        if (caller instanceof Racker) {
+            int rackerMax = config.getInt("token.impersonatedByRackerMaxSeconds");
+            if (impersonationRequest.getExpireInSeconds() > rackerMax) {
+                throw new BadRequestException("Expire in element cannot be more than " + rackerMax);
+            }
+        } else {
+            int serviceMax = config.getInt("token.impersonatedByServiceMaxSeconds");
+            if (impersonationRequest.getExpireInSeconds() > serviceMax) {
+                throw new BadRequestException("Expire in element cannot be more than " + serviceMax);
+            }
+        }
     }
 
     @Override
@@ -706,7 +716,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public void updateUserScopeAccessTokenForClientIdByUser(User user, String clientId, String token, Date expires) {
         final UserScopeAccess scopeAccess = this.getUserScopeAccessForClientId(user.getUniqueId(), clientId);
-        if(scopeAccess != null) {
+        if (scopeAccess != null) {
             scopeAccess.setAccessTokenString(token);
             scopeAccess.setAccessTokenExp(expires);
             scopeAccessDao.updateScopeAccess(scopeAccess);
@@ -723,18 +733,18 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         final UserAuthenticationResult result = this.userDao.authenticateByMossoIdAndAPIKey(mossoId, apiKey);
         handleAuthenticationFailure((new Integer(mossoId)).toString(), result);
 
-        final UserScopeAccess scopeAccess = this.getUserScopeAccessForClientId( result.getUser().getUniqueId(), clientId);
+        final UserScopeAccess scopeAccess = this.getUserScopeAccessForClientId(result.getUser().getUniqueId(), clientId);
         return scopeAccess;
     }
 
     @Override
-    public UserScopeAccess getUserScopeAccessForClientIdByNastIdAndApiCredentials( String nastId,
-                                                                                   String apiKey, String clientId) {
+    public UserScopeAccess getUserScopeAccessForClientIdByNastIdAndApiCredentials(String nastId,
+                                                                                  String apiKey, String clientId) {
         logger.debug("Getting nastId {} ScopeAccess by clientId {}", nastId, clientId);
         final UserAuthenticationResult result = this.userDao.authenticateByNastIdAndAPIKey(nastId, apiKey);
         handleAuthenticationFailure(nastId, result);
 
-        final UserScopeAccess scopeAccess = this.getUserScopeAccessForClientId(result.getUser().getUniqueId(),clientId);
+        final UserScopeAccess scopeAccess = this.getUserScopeAccessForClientId(result.getUser().getUniqueId(), clientId);
         return scopeAccess;
     }
 
@@ -927,14 +937,14 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
 
     @Override
-	public void deleteScopeAccessesForParentByApplicationId(
-			String parentUniqueId, String applicationId) {
+    public void deleteScopeAccessesForParentByApplicationId(
+            String parentUniqueId, String applicationId) {
 
-    	List<ScopeAccess> saList = getScopeAccessesForParentByClientId(parentUniqueId, applicationId);
-	    for (ScopeAccess sa : saList) {
-	       deleteScopeAccess(sa);
-	    }
-	}
+        List<ScopeAccess> saList = getScopeAccessesForParentByClientId(parentUniqueId, applicationId);
+        for (ScopeAccess sa : saList) {
+            deleteScopeAccess(sa);
+        }
+    }
 
     @Override
     public UserScopeAccess updateExpiredUserScopeAccess(UserScopeAccess scopeAccess) {
