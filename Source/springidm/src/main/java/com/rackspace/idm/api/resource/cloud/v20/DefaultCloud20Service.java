@@ -350,8 +350,12 @@ public class DefaultCloud20Service implements Cloud20Service {
             userService.addUser(userDO);
             assignProperRole(httpHeaders, authToken, scopeAccessByAccessToken, userDO);
 
-            return Response.created(uriInfo.getRequestUriBuilder().path(userDO.getId()).build())
-                    .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(userDO)));
+            UriBuilder requestUriBuilder = uriInfo.getRequestUriBuilder();
+            String id = userDO.getId();
+            URI build = requestUriBuilder.path(id).build();
+            org.openstack.docs.identity.api.v2.ObjectFactory openStackIdentityV2Factory = OBJ_FACTORIES.getOpenStackIdentityV2Factory();
+            org.openstack.docs.identity.api.v2.User value = userConverterCloudV20.toUser(userDO);
+            return Response.created(build).entity(openStackIdentityV2Factory.createUser(value));
         } catch (DuplicateException de) {
             return userConflictExceptionResponse(de.getMessage());
         } catch (DuplicateUsernameException due) {
@@ -2398,7 +2402,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         return config.getString("rackspace.customerId");
     }
 
-    private JAXBElement<? extends CredentialType> getJSONCredentials(String jsonBody) {
+    JAXBElement<? extends CredentialType> getJSONCredentials(String jsonBody) {
 
         JAXBElement<? extends CredentialType> jaxbCreds = null;
 
@@ -2414,7 +2418,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @SuppressWarnings("unchecked")
-    private JAXBElement<? extends CredentialType> getXMLCredentials(String body) {
+    JAXBElement<? extends CredentialType> getXMLCredentials(String body) {
         JAXBElement<? extends CredentialType> cred = null;
         try {
             JAXBContext context = JAXBContextResolver.get();
