@@ -18,6 +18,7 @@ import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspacecloud.docs.auth.api.v1.BaseURL;
 import com.rackspacecloud.docs.auth.api.v1.BaseURLList;
+import com.rackspacecloud.docs.auth.api.v1.BaseURLRef;
 import com.sun.jersey.api.ConflictException;
 import com.sun.servicetag.UnauthorizedAccessException;
 import org.apache.commons.configuration.Configuration;
@@ -222,15 +223,10 @@ public class CloudMigrationService {
             addUserGlobalRoles(newUser, roles);
 
             // Get Tenants
-            // Using Endpoints call to get both Tenants and Endpoint information
-            
-            //TODO: use mossoId and nastId for tenants and baseURLRef
-            //v1.0/users/userId
-
             List<String> mossoBaseUrlRef = new ArrayList<String>();
             List<String> nastBaseUrlRef = new ArrayList<String>();
 
-            for (com.rackspacecloud.docs.auth.api.v1.BaseURLRef baseUrlRef : user11.getBaseURLRefs().getBaseURLRef()) {
+            for (BaseURLRef baseUrlRef : user11.getBaseURLRefs().getBaseURLRef()) {
                 CloudBaseUrl cloudBaseUrl = endpointService.getBaseUrlById(baseUrlRef.getId());
                 if("MOSSO".equals(cloudBaseUrl.getBaseUrlType())) {
                     mossoBaseUrlRef.add(String.valueOf(baseUrlRef.getId()));
@@ -255,7 +251,7 @@ public class CloudMigrationService {
                 userService.updateUserById(newUser, false);
             }
 
-            UserType userResponse = validateUser(user, credentialListType, apiKey, cloudPassword, secretQA, roles, groups, endpoints);
+            UserType userResponse = validateUser(user, credentialListType, apiKey, cloudPassword, secretQA, roles, groups, user11.getBaseURLRefs().getBaseURLRef());
             MigrateUserResponseType result = new MigrateUserResponseType();
 
             for(String subUser : subUsers) {
@@ -294,7 +290,7 @@ public class CloudMigrationService {
 	}
 
 	private UserType validateUser(User user, CredentialListType credentialListType, String apiKey,
-			String password, SecretQA secretQA, RoleList newRoles, Groups groups, EndpointList endpoints) {
+			String password, SecretQA secretQA, RoleList newRoles, Groups groups, List<BaseURLRef> baseUrlRefs) {
 
         UserType result = new UserType();
         com.rackspace.idm.domain.entity.User newUser = userService.getUser(user.getUsername());
@@ -332,10 +328,37 @@ public class CloudMigrationService {
         validateGroups(groups, newGroups, result);
 
         EndpointList newEndpoints = getEndpointsForUser(newUser.getUniqueId());
-        validateEndpoints(endpoints, newEndpoints, result);
+        validateBaseUrlRefs(baseUrlRefs, newEndpoints, result);
 
 		return result;
 	}
+
+    private void validateBaseUrlRefs(List<BaseURLRef> baseUrlRefs, EndpointList newEndpoints, UserType result) {
+		List<String> commentList;
+
+        for (BaseURLRef baseUrlRef : baseUrlRefs) {
+            commentList = new ArrayList<String>();
+
+            String newEndpointId = null;
+
+            for (Endpoint newEndpoint: newEndpoints.getEndpoint()) {
+                if (baseUrlRef.getId() == newEndpoint.getId()) {
+                    newEndpointId = String.valueOf(newEndpoint.getId());
+                }
+            }
+
+            checkIfEqual(String.valueOf(baseUrlRef.getId()), newEndpointId, commentList, "id");
+
+            EndpointType endpointResponse = new EndpointType();
+            endpointResponse.setName(newEndpointId);
+
+            String comment = StringUtils.join(commentList, ",");
+            endpointResponse.setComment(comment);
+            endpointResponse.setValid(StringUtils.isBlank(comment));
+
+            result.getEndpoints().add(endpointResponse);
+        }
+    }
 
 	private void validateEndpoints(EndpointList endpoints, EndpointList newEndpoints, UserType result) {
 		List<String> commentList;
