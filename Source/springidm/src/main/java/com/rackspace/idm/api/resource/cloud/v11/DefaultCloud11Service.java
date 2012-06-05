@@ -657,7 +657,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         }
     }
 
-    private User checkAndGetUser(String id) {
+    User checkAndGetUser(String id) {  //Not used right now
         User user = this.userService.getUserById(id);
 
         if (user == null) {
@@ -821,7 +821,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             }
 
             if(gaUser.isDisabled()){
-                UserScopeAccess usa = getAuthtokenFromRequest(request);
+//                UserScopeAccess usa = getAuthtokenFromRequest(request);
 //                atomHopperClient.postUser(gaUser,usa.getAccessTokenString(),"disabled");
             }
 
@@ -946,7 +946,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     }
 
     // Private Methods
-    private Response.ResponseBuilder adminAuthenticateResponse(JAXBElement<? extends Credentials> cred, HttpServletResponse response)
+    Response.ResponseBuilder adminAuthenticateResponse(JAXBElement<? extends Credentials> cred, HttpServletResponse response)
             throws IOException {
         if (cred.getValue() instanceof UserCredentials) {
             handleRedirect(response, "cloud/auth");
