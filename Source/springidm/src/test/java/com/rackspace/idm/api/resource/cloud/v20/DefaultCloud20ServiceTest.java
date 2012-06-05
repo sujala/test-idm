@@ -7,6 +7,7 @@ import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
@@ -25,11 +26,9 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.*;
 
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.core.*;
 import javax.xml.bind.JAXBElement;
+import javax.xml.namespace.QName;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Date;
@@ -87,8 +86,9 @@ public class DefaultCloud20ServiceTest {
     private Group group;
     private UriInfo uriInfo;
     private CloudKsGroupBuilder cloudKsGroupBuilder;
-    private AtomHopperClient atomHopperClient;
+//    private AtomHopperClient atomHopperClient;
     private HttpHeaders httpHeaders;
+    private String jsonBody = "{\"passwordCredentials\":{\"username\":\"test_user\",\"password\":\"resetpass\"}}";
 
     @Before
     public void setUp() throws Exception {
@@ -110,7 +110,7 @@ public class DefaultCloud20ServiceTest {
         clientService = mock(ApplicationService.class);
         config = mock(Configuration.class);
         cloudKsGroupBuilder = mock(CloudKsGroupBuilder.class);
-        atomHopperClient = mock(AtomHopperClient.class);
+//        atomHopperClient = mock(AtomHopperClient.class);
         httpHeaders = mock(HttpHeaders.class);
 
 
@@ -129,7 +129,7 @@ public class DefaultCloud20ServiceTest {
         defaultCloud20Service.setClientService(clientService);
         defaultCloud20Service.setConfig(config);
         defaultCloud20Service.setCloudKsGroupBuilder(cloudKsGroupBuilder);
-        defaultCloud20Service.setAtomHopperClient(atomHopperClient);
+//        defaultCloud20Service.setAtomHopperClient(atomHopperClient);
         defaultCloud20Service.setRoleConverterCloudV20(roleConverterCloudV20);
 
         //fields
@@ -197,6 +197,7 @@ public class DefaultCloud20ServiceTest {
         when(userService.getUserById(userId)).thenReturn(user);
         when(config.getString("rackspace.customerId")).thenReturn(null);
         when(userConverterCloudV20.toUserDO(userOS)).thenReturn(user);
+
 
         spy = spy(defaultCloud20Service);
         doNothing().when(spy).checkXAUTHTOKEN(eq(authToken), anyBoolean(), any(String.class));
@@ -456,23 +457,50 @@ public class DefaultCloud20ServiceTest {
         verify(spy).validatePassword("password");
     }
 
-    @Ignore
     @Test
     public void addUser_adminRoleUserSizeGreaterThanNumSubUsersThrowsBadRequest_returns400() throws Exception {
-        User caller = mock(User.class);
+        User caller = new User();
         users = mock(Users.class);
-        List<User> userList = new ArrayList<User>();
+        List<User> userList = new ArrayList();
         User tempUser = new User();
         tempUser.setId("1");
         tempUser.setUsername("tempUser");
         userList.add(tempUser);
-        userList.add(tempUser);
         users.setUsers(userList);
+        when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(new User());
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
-        when(userService.getUserByAuthToken(anyString())).thenReturn(caller);
+        when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
         when(userService.getAllUsers(org.mockito.Matchers.<FilterParam[]>any())).thenReturn(users);
+        when(config.getInt("numberOfSubUsers")).thenReturn(-1);
         Response.ResponseBuilder responseBuilder = spy.addUser(null, null, authToken, userOS);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
+    public void addUser_responseCreated_returns201() throws Exception {
+        UriBuilder uriBuilder = mock(UriBuilder.class);
+        URI uri = new URI("");
+        when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(new User());
+        doNothing().when(spy).assignProperRole(eq(httpHeaders), eq(authToken), any(ScopeAccess.class), any(User.class));
+        when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
+        doReturn(uriBuilder).when(uriBuilder).path(anyString());
+        doReturn(uri).when(uriBuilder).build();
+        Response.ResponseBuilder responseBuilder = spy.addUser(httpHeaders, uriInfo, authToken, userOS);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(201));
+    }
+
+    @Test
+    public void addUser_userServiceDuplicateException_returns409() throws Exception {
+        doThrow(new DuplicateException()).when(userService).addUser(any(User.class));
+        Response.ResponseBuilder responseBuilder = spy.addUser(null, null, authToken, userOS);
+        assertThat("respone code", responseBuilder.build().getStatus(), equalTo(409));
+    }
+
+    @Test
+    public void addUser_userServiceDuplicateUserNameException_returns409() throws Exception {
+        doThrow(new DuplicateUsernameException()).when(userService).addUser(any(User.class));
+        Response.ResponseBuilder responseBuilder = spy.addUser(null, null, authToken, userOS);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(409));
     }
 
     @Test
@@ -862,6 +890,63 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void addUserCredential_mediaTypeXML_callsGetXMLCredentials() throws Exception {
+        MediaType mediaType = mock(MediaType.class);
+        when(httpHeaders.getMediaType()).thenReturn(mediaType);
+        when(mediaType.isCompatible(MediaType.APPLICATION_XML_TYPE)).thenReturn(true);
+        spy.addUserCredential(httpHeaders, authToken, null, null);
+        verify(spy).getXMLCredentials(null);
+    }
+
+    @Test
+    public void addUserCredential_mediaTypeJSON_callsGetJSONCredentials() throws Exception {
+        MediaType mediaType = mock(MediaType.class);
+        when(httpHeaders.getMediaType()).thenReturn(mediaType);
+        when(mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)).thenReturn(true);
+        spy.addUserCredential(httpHeaders, authToken, null, null);
+        verify(spy).getJSONCredentials(null);
+    }
+
+    @Test
+    public void addUserCredential_passwordCredentials_callsUserServiceUpdateUser() throws Exception {
+        MediaType mediaType = mock(MediaType.class);
+        user.setUsername("test_user");
+        when(httpHeaders.getMediaType()).thenReturn(mediaType);
+        when(mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)).thenReturn(true);
+        doNothing().when(spy).validatePasswordCredentials(any(PasswordCredentialsRequiredUsername.class));
+        doNothing().when(spy).validatePassword(anyString());
+        doReturn(user).when(spy).checkAndGetUser(anyString());
+        spy.addUserCredential(httpHeaders, authToken, userId, jsonBody);
+        verify(userService).updateUser(user, false);
+    }
+
+    @Test
+    public void addUserCredential_passwordCredentialsUserCredentialNotMatchUserName_returns400() throws Exception {
+        MediaType mediaType = mock(MediaType.class);
+        user.setUsername("wrong_user");
+        when(httpHeaders.getMediaType()).thenReturn(mediaType);
+        when(mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)).thenReturn(true);
+        doNothing().when(spy).validatePasswordCredentials(any(PasswordCredentialsRequiredUsername.class));
+        doNothing().when(spy).validatePassword(anyString());
+        doReturn(user).when(spy).checkAndGetUser(anyString());
+        Response.ResponseBuilder responseBuilder = spy.addUserCredential(httpHeaders, authToken, userId, jsonBody);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
+    public void addUserCredential_passwordCredentialOkResponseCreated_returns201() throws Exception {
+        MediaType mediaType = mock(MediaType.class);
+        user.setUsername("test_user");
+        when(httpHeaders.getMediaType()).thenReturn(mediaType);
+        when(mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)).thenReturn(true);
+        doNothing().when(spy).validatePasswordCredentials(any(PasswordCredentialsRequiredUsername.class));
+        doNothing().when(spy).validatePassword(anyString());
+        doReturn(user).when(spy).checkAndGetUser(anyString());
+        Response.ResponseBuilder responseBuilder = spy.addUserCredential(httpHeaders, authToken, userId, jsonBody);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(201));
+    }
+
+    @Test
     public void addUserRole_callsVerifyUserAdminLevelAccess() throws Exception {
         spy.addUserRole(null, authToken, authToken, null);
         verify(spy).verifyUserAdminLevelAccess(authToken);
@@ -1168,6 +1253,58 @@ public class DefaultCloud20ServiceTest {
         when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(scopeAccess);
         spy.updateUser(null, authToken, null, new UserForCreate());
         verify(authorizationService).authorizeCloudUser(scopeAccess);
+    }
+
+    @Test
+    public void updateUser_passwordNotNull_callsValidatePassword() throws Exception {
+        userOS.setPassword("123");
+        spy.updateUser(null, authToken, null, userOS);
+        verify(spy).validatePassword("123");
+    }
+
+    @Test
+    public void updateUser_authorizationServiceAuthorizeCloudUserIsTrue_callsUserServiceGetUserByAuthToken() throws Exception {
+        doReturn(new User()).when(spy).checkAndGetUser(null);
+        when(authorizationService.authorizeCloudUser(any(ScopeAccess.class))).thenReturn(true);
+        spy.updateUser(null, authToken, null, userOS);
+        verify(userService).getUserByAuthToken(authToken);
+    }
+
+    @Test
+    public void updateUser_authorizationServiceAuthorizeCloudUserIsTrueIdNotMatch_returns403() throws Exception {
+        doReturn(new User()).when(spy).checkAndGetUser(null);
+        when(authorizationService.authorizeCloudUser(any(ScopeAccess.class))).thenReturn(true);
+        when(userService.getUserByAuthToken(authToken)).thenReturn(user);
+        Response.ResponseBuilder responseBuilder = spy.updateUser(null, authToken, null, userOS);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(403));
+    }
+
+    @Test
+    public void updateUser_cloudUserAdminIsTrue_callsUserServiceGetUserByAuthToken() throws Exception {
+        doReturn(new User()).when(spy).checkAndGetUser(null);
+        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
+        spy.updateUser(null, authToken, null, userOS);
+        verify(userService).getUserByAuthToken(authToken);
+    }
+
+    @Test
+    public void updateUser_cloudUserAdminIsTrue_callsVerifyDomain() throws Exception {
+        doReturn(new User()).when(spy).checkAndGetUser(null);
+        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(userService.getUserByAuthToken(authToken)).thenReturn(user);
+        spy.updateUser(null, authToken, null, userOS);
+        verify(spy).verifyDomain(any(User.class), eq(user));
+    }
+
+    @Test
+    public void updateUser_userDisabled_callsScopeAccessServiceExpiresAllTokensForUsers() throws Exception {
+        User user = mock(User.class);
+        doReturn(user).when(spy).checkAndGetUser(null);
+        when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(user);
+        doNothing().when(user).copyChanges(any(User.class));
+        when(user.isDisabled()).thenReturn(true);
+        spy.updateUser(null, authToken, null, userOS);
+        verify(scopeAccessService).expireAllTokensForUser(user.getUsername());
     }
 
     @Test(expected = BadRequestException.class)
@@ -1579,6 +1716,30 @@ public class DefaultCloud20ServiceTest {
     public void assignProperRole_callsAuthorizeCloudIdentityAdmin() throws Exception {
         defaultCloud20Service.assignProperRole(null, authToken, null, null);
         verify(authorizationService).authorizeCloudIdentityAdmin(null);
+    }
+
+    @Test
+    public void assignProperRole_cloudUserAdmin_callsAddUserRole() throws Exception {
+        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(clientService.getClientRoleByClientIdAndRoleName(anyString(), anyString())).thenReturn(clientRole);
+        spy.assignProperRole(null, authToken, null, user);
+        verify(spy).addUserRole(null, authToken, user.getId(), clientRole.getId());
+    }
+
+    @Test
+    public void assignProperRole_cloudServiceAdmin_callsAddUserRole() throws Exception {
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(clientService.getClientRoleByClientIdAndRoleName(anyString(), anyString())).thenReturn(clientRole);
+        spy.assignProperRole(null, authToken, null, user);
+        verify(spy).addUserRole(null, authToken, user.getId(), clientRole.getId());
+    }
+
+    @Test
+    public void assignProperRole_cloudIdentityAdmin_callsAddUserRole() throws  Exception {
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(clientService.getClientRoleByClientIdAndRoleName(anyString(), anyString())).thenReturn(clientRole);
+        spy.assignProperRole(null, authToken, null, user);
+        verify(spy).addUserRole(null, authToken, user.getId(), clientRole.getId());
     }
 
     @Test(expected = BadRequestException.class)
