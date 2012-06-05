@@ -62,6 +62,15 @@ public class MigrationClientTest {
         
         assertThat("users", users, notNullValue());
     }
+
+    @Test
+    public void getRoles_validUserName_returnsRoles() throws URISyntaxException, HttpException, IOException, JAXBException {
+        String token = getAdminToken();
+        User user = client.getUser(token, "cmarin2");
+        RoleList roles = client.getRolesForUser(token, user.getId());
+
+        assertThat("roles", roles, notNullValue());
+    }
     
     @Test
     public void getSecretQA_validUserName_returnsSecretQA() throws URISyntaxException, HttpException, IOException, JAXBException {
@@ -96,6 +105,13 @@ public class MigrationClientTest {
         
         assertThat("credentials", credentials, notNullValue());
     }
+
+    @Test
+    public void getUserTenantsBaseUrls_validToken_returnsUser() throws URISyntaxException, HttpException, IOException, JAXBException {
+        com.rackspacecloud.docs.auth.api.v1.User user = client.getUserTenantsBaseUrls(username, password, "cmarin2");
+        assertThat("User", user, notNullValue());
+    }
+
 
     @Test
     public void getBaseUrls_validToken_returnsBaseUrls() throws URISyntaxException, HttpException, IOException, JAXBException {

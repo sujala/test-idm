@@ -83,7 +83,7 @@ public class DefaultCloud11ServiceTest {
     javax.ws.rs.core.HttpHeaders httpHeaders;
     CloudExceptionResponse cloudExceptionResponse;
     Application application = new Application("id",null,"myApp", null, null);
-    AtomHopperClient atomHopperClient;
+//    AtomHopperClient atomHopperClient;
     GroupService userGroupService, cloudGroupService;
     AuthConverterCloudV11 authConverterCloudv11;
 
@@ -108,7 +108,7 @@ public class DefaultCloud11ServiceTest {
         request = mock(HttpServletRequest.class);
         userValidator = mock(UserValidator.class);
         authorizationService = mock(AuthorizationService.class);
-        atomHopperClient = mock(AtomHopperClient.class);
+//        atomHopperClient = mock(AtomHopperClient.class);
         userGroupService = mock(GroupService.class);
         cloudGroupService = mock(GroupService.class);
         when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn("Basic YXV0aDphdXRoMTIz");
@@ -1272,7 +1272,7 @@ public class DefaultCloud11ServiceTest {
         doNothing().when(spy).authenticateCloudAdminUser(null);
         when(userService.getUser(null)).thenReturn(userDO);
         doReturn(new UserScopeAccess()).when(spy).getAuthtokenFromRequest(null);
-        doNothing().when(atomHopperClient).postUser(eq(userDO), anyString(), eq("deleted"));
+//        doNothing().when(atomHopperClient).postUser(eq(userDO), anyString(), eq("deleted"));
         Response.ResponseBuilder responseBuilder = spy.deleteUser(null, null, null);
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(204));
     }

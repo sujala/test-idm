@@ -87,7 +87,7 @@ public class DefaultCloud20ServiceTest {
     private Group group;
     private UriInfo uriInfo;
     private CloudKsGroupBuilder cloudKsGroupBuilder;
-    private AtomHopperClient atomHopperClient;
+//    private AtomHopperClient atomHopperClient;
     private HttpHeaders httpHeaders;
 
     @Before
@@ -110,7 +110,7 @@ public class DefaultCloud20ServiceTest {
         clientService = mock(ApplicationService.class);
         config = mock(Configuration.class);
         cloudKsGroupBuilder = mock(CloudKsGroupBuilder.class);
-        atomHopperClient = mock(AtomHopperClient.class);
+//        atomHopperClient = mock(AtomHopperClient.class);
         httpHeaders = mock(HttpHeaders.class);
 
 

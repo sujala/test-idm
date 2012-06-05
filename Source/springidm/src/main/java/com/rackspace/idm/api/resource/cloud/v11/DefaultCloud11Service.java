@@ -4,6 +4,7 @@ import com.rackspace.idm.api.converter.cloudv11.AuthConverterCloudV11;
 import com.rackspace.idm.api.converter.cloudv11.EndpointConverterCloudV11;
 import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11;
 import com.rackspace.idm.api.resource.cloud.CloudExceptionResponse;
+//import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.dao.impl.LdapCloudAdminRepository;
@@ -476,8 +477,8 @@ public class DefaultCloud11Service implements Cloud11Service {
             this.userService.softDeleteUser(gaUser);
 
 
-            UserScopeAccess usa = getAuthtokenFromRequest(request);
-
+//            UserScopeAccess usa = getAuthtokenFromRequest(request);
+//
 //            atomHopperClient.postUser(gaUser,usa.getAccessTokenString(),"deleted");
 
             return Response.noContent();
