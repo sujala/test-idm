@@ -235,11 +235,14 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void validateToken_whenRackerScopeAccess_callsUserConverter_toUserForAuthenticateResponse() throws Exception {
+        Racker racker = new Racker();
+        racker.setRackerId("rackerId");
         RackerScopeAccess rackerScopeAccess = new RackerScopeAccess();
         rackerScopeAccess.setRackerId("rackerId");
         rackerScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
         rackerScopeAccess.setAccessTokenString("rackerToken");
         when(scopeAccessService.getScopeAccessByAccessToken("rackerToken")).thenReturn(rackerScopeAccess);
+        when(userService.getRackerByRackerId(any(String.class))).thenReturn(racker);
         Token token = new Token();
         token.setId("rackerToken");
         when(tokenConverterCloudV20.toToken(rackerScopeAccess)).thenReturn(token);
