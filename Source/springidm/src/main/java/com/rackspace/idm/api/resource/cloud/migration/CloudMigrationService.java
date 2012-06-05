@@ -240,8 +240,6 @@ public class CloudMigrationService {
             addTenantsForUserByToken(newUser, user11.getMossoId().toString(), mossoBaseUrlRef);
             addTenantsForUserByToken(newUser, user11.getNastId(), nastBaseUrlRef);
 
-            EndpointList endpoints = client.getEndpointsByToken(adminToken, userToken);
-
             // Groups
             Groups groups = client.getGroupsForUser(adminToken, legacyId);
             addUserGroups(user.getId(), groups);
