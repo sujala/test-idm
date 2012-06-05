@@ -188,18 +188,14 @@ public class CloudMigrationService {
             if(password.equals(""))
                 password = Password.generateRandom(false).getValue();
 
-            AuthenticateResponse authenticateResponse = authenticate(username, apiKey, password);
-
             RoleList roles = client.getRolesForUser(adminToken, user.getId());
 
             if (domainId == null && isSubUser(roles)) {
 		        throw new BadRequestException("Migration is not allowed for subusers");
             }
 
-            String userToken = authenticateResponse.getToken().getId();
-
             //TODO: We cannot get the users for a userAdmin blocker ??
-            List<String> subUsers = getSubUsers(username, userToken, roles);
+            List<String> subUsers = getSubUsers(username, apiKey, password, roles);
 
             for(String subUser : subUsers) {
                 if(userService.userExistsByUsername(username)) {
@@ -264,26 +260,35 @@ public class CloudMigrationService {
         throw new UnauthorizedAccessException("Not Authorized.");
     }
 
-	private List<String> getSubUsers(String username, String userToken, RoleList roles) {
+	private List<String> getSubUsers(String username, String apiKey, String password, RoleList roles) {
 		List<String> subUsers = new ArrayList<String>();
 
-		if (isUserAdmin(roles)) {
-		    UserList users = null;
+		try {
+            AuthenticateResponse authenticateResponse = authenticate(username, apiKey, password);
+            String userToken = authenticateResponse.getToken().getId();
 
-		    try {
-		        users = client.getUsers(userToken);
-		    } catch (Exception e) {
-		    }
+            if (isUserAdmin(roles)) {
+                UserList users = null;
 
-		    if (users != null) {
-		        for (User childUser : users.getUser()) {
-                    if (username.equalsIgnoreCase(childUser.getUsername())) {
-                        continue;
+                try {
+                    users = client.getUsers(userToken);
+                } catch (Exception e) {
+                }
+
+                if (users != null) {
+                    for (User childUser : users.getUser()) {
+                        if (username.equalsIgnoreCase(childUser.getUsername())) {
+                            continue;
+                        }
+                        subUsers.add(childUser.getUsername());
                     }
-		            subUsers.add(childUser.getUsername());
-		        }
-		    }
+                }
+            }
+		} catch (Exception e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
 		}
+
 		return subUsers;
 	}
 
@@ -522,7 +527,6 @@ public class CloudMigrationService {
 		    }
 		}
 		catch(Exception ex) {
-		    unmigrateUserByUsername(username);
 		    throw new BadRequestException("Failed migration with incomplete credential information.");
 		}
 		return authenticateResponse;
@@ -573,16 +577,13 @@ public class CloudMigrationService {
         String apiKey = getApiKey(credentialListType);
         String password = getPassword(credentialListType);
         
-        AuthenticateResponse authenticateResponse = authenticate(username, apiKey, password);
-        String userToken = authenticateResponse.getToken().getId();
-
         RoleList roles = client.getRolesForUser(adminToken, user.getId());
 
         if (rootUser && isSubUser(roles)) {
             throw new BadRequestException("Migration is not allowed for subusers");
         }
         
-        List<String> subUsers = getSubUsers(username, userToken, roles);
+        List<String> subUsers = getSubUsers(username, apiKey, password, roles);
 
         for(String subUser: subUsers) {
             try {
@@ -618,7 +619,7 @@ public class CloudMigrationService {
 
         newUser.setApiKey(apiKey);
         newUser.setPassword(password);
-        newUser.setEnabled(true);
+        newUser.setEnabled(user.isEnabled());
         newUser.setCreated(new DateTime(user.getCreated().toGregorianCalendar().getTime()));
 
         if(user.getUpdated() != null)
