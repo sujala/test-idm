@@ -233,7 +233,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             throws IOException {
 
         try {
-            if (httpHeaders.getMediaType().isCompatible(MediaType.APPLICATION_XML_TYPE)) {
+            if (httpHeaders.getMediaType() != null && httpHeaders.getMediaType().isCompatible(MediaType.APPLICATION_XML_TYPE)) {
                 return authenticateXML(response, httpHeaders, body, false);
             } else {
                 return authenticateJSON(response, httpHeaders, body, false);

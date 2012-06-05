@@ -1043,6 +1043,30 @@ public class DefaultCloud11ServiceTest {
     }
 
     @Test
+    public void authenticate_mediaTypeIsNull_callsAuthenticateJSON() throws Exception {
+        spy.authenticate(request, null, httpHeaders, null);
+        verify(spy).authenticateJSON(null, httpHeaders, null, false);
+    }
+
+    @Test
+    public void authenticate_mediaTypeIsNotNullAndNotXML_callsAuthenticateJSON() throws Exception {
+        MediaType mediaType = mock(MediaType.class);
+        when(mediaType.isCompatible(any(MediaType.class))).thenReturn(false);
+        when(httpHeaders.getMediaType()).thenReturn(mediaType);
+        spy.authenticate(request, null, httpHeaders, null);
+        verify(spy).authenticateJSON(null, httpHeaders, null, false);
+    }
+
+    @Test
+    public void authenticate_mediaTypeIsNullAndIsXML_callsAuthenticateXML() throws Exception {
+        MediaType mediaType = mock(MediaType.class);
+        when(mediaType.isCompatible(any(MediaType.class))).thenReturn(true);
+        when(httpHeaders.getMediaType()).thenReturn(mediaType);
+        spy.authenticate(request, null, httpHeaders, null);
+        verify(spy).authenticateXML(null, httpHeaders, null, false);
+    }
+
+    @Test
     public void authenticateJSON_callsCredentialUnmarshaller_unmarshallCredentialsFromJSON() throws Exception {
         doReturn(null).when(spy).adminAuthenticateResponse(any(JAXBElement.class), any(HttpServletResponse.class));
         spy.authenticateJSON(null, httpHeaders, "jsonBody", true);
