@@ -3,7 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v20;
 import com.rackspace.docs.identity.api.ext.rax_ga.v1.ImpersonationRequest;
 import com.rackspace.docs.identity.api.ext.rax_ga.v1.ImpersonationResponse;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
-import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
+import com.rackspace.docs.identity.api.ext.rax_kskey.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.converter.cloudv20.TokenConverterCloudV20;
@@ -30,6 +30,7 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.*;
+import org.openstack.docs.identity.api.v2.ObjectFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -1157,6 +1158,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         this.tenantService = tenantService;
     }
 
+
+
     public UserConverterCloudV20 getUserConverterCloudV20() {
         return userConverterCloudV20;
     }
@@ -1167,5 +1170,9 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     public void setOBJ_FACTORIES(JAXBObjectFactories OBJ_FACTORIES) {
         this.OBJ_FACTORIES = OBJ_FACTORIES;
+    }
+
+    public void setObjectFactoryRAXKSKEY(com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory objectFactoryRAXKSKEY) {
+        this.objectFactoryRAXKSKEY = objectFactoryRAXKSKEY;
     }
 }

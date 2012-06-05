@@ -6,13 +6,13 @@ import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.converter.cloudv20.*;
-import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
+//import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
-import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Application;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
@@ -24,7 +24,7 @@ import org.openstack.docs.common.api.v1.Extension;
 import org.openstack.docs.common.api.v1.Extensions;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
-import org.openstack.docs.identity.api.ext.os_kscatalog.v1.*;
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory;
 import org.openstack.docs.identity.api.v2.*;
 import org.slf4j.Logger;
@@ -117,8 +117,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Autowired
     private DelegateCloud20Service delegateCloud20Service;
 
-    @Autowired
-    private AtomHopperClient atomHopperClient;
+//    @Autowired
+//    private AtomHopperClient atomHopperClient;
 
     private HashMap<String, JAXBElement<Extension>> extensionMap;
 
@@ -351,8 +351,12 @@ public class DefaultCloud20Service implements Cloud20Service {
             userService.addUser(userDO);
             assignProperRole(httpHeaders, authToken, scopeAccessByAccessToken, userDO);
 
-            return Response.created(uriInfo.getRequestUriBuilder().path(userDO.getId()).build())
-                    .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(userDO)));
+            UriBuilder requestUriBuilder = uriInfo.getRequestUriBuilder();
+            String id = userDO.getId();
+            URI build = requestUriBuilder.path(id).build();
+            org.openstack.docs.identity.api.v2.ObjectFactory openStackIdentityV2Factory = OBJ_FACTORIES.getOpenStackIdentityV2Factory();
+            org.openstack.docs.identity.api.v2.User value = userConverterCloudV20.toUser(userDO);
+            return Response.created(build).entity(openStackIdentityV2Factory.createUser(value));
         } catch (DuplicateException de) {
             return userConflictExceptionResponse(de.getMessage());
         } catch (DuplicateUsernameException due) {
@@ -407,7 +411,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             if (userDO.isDisabled()) {
                 this.scopeAccessService.expireAllTokensForUser(retrievedUser.getUsername());
-                atomHopperClient.postUser(retrievedUser,authToken,"disabled");
+//                atomHopperClient.postUser(retrievedUser,authToken,"disabled");
             }
             userService.updateUserById(retrievedUser, false);
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(retrievedUser)));
@@ -786,7 +790,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
             userService.softDeleteUser(user);
 
-            atomHopperClient.postUser(user,authToken,"deleted");
+//            atomHopperClient.postUser(user,authToken,"deleted");
 
             return Response.noContent();
         } catch (Exception ex) {
@@ -2399,7 +2403,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         return config.getString("rackspace.customerId");
     }
 
-    private JAXBElement<? extends CredentialType> getJSONCredentials(String jsonBody) {
+    JAXBElement<? extends CredentialType> getJSONCredentials(String jsonBody) {
 
         JAXBElement<? extends CredentialType> jaxbCreds = null;
 
@@ -2415,7 +2419,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @SuppressWarnings("unchecked")
-    private JAXBElement<? extends CredentialType> getXMLCredentials(String body) {
+    JAXBElement<? extends CredentialType> getXMLCredentials(String body) {
         JAXBElement<? extends CredentialType> cred = null;
         try {
             JAXBContext context = JAXBContextResolver.get();
@@ -2532,9 +2536,9 @@ public class DefaultCloud20Service implements Cloud20Service {
         this.tokenConverterCloudV20 = tokenConverterCloudV20;
     }
 
-    public void setAtomHopperClient(AtomHopperClient atomHopperClient) {
-        this.atomHopperClient = atomHopperClient;
-    }
+//    public void setAtomHopperClient(AtomHopperClient atomHopperClient) {
+//        this.atomHopperClient = atomHopperClient;
+//    }
 
     public void setRoleConverterCloudV20(RoleConverterCloudV20 roleConverterCloudV20) {
         this.roleConverterCloudV20 = roleConverterCloudV20;

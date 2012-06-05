@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
 import com.rackspace.idm.api.resource.cloud.CloudClient;
 import com.rackspace.idm.api.resource.cloud.CloudUserExtractor;
@@ -12,9 +13,11 @@ import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.TokenService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.domain.service.impl.DefaultUserService;
+import com.rackspace.idm.exception.ApiException;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.sun.jersey.core.spi.factory.ResponseBuilderImpl;
+import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory;
 import com.sun.jersey.spi.container.ContainerRequest;
 import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
 import org.apache.commons.configuration.Configuration;
@@ -61,7 +64,7 @@ public class DelegateCloud20ServiceTest {
     CloudUserExtractor cloudUserExtractor = mock(CloudUserExtractor.class);
     UserConverterCloudV20 userConverterCloudV20 = mock(UserConverterCloudV20.class);
     JAXBObjectFactories OBJ_FACTORIES = new JAXBObjectFactories();
-    //ObjectFactory objectFactory = mock(ObjectFactory.class);
+    org.openstack.docs.identity.api.v2.ObjectFactory objectFactory = mock(org.openstack.docs.identity.api.v2.ObjectFactory.class);
     HttpHeaders httpHeaders = mock(HttpHeaders.class);
     private final Configuration config = mock(Configuration.class);
     AuthenticationRequest authenticationRequest = mock(AuthenticationRequest.class);
@@ -86,7 +89,6 @@ public class DelegateCloud20ServiceTest {
         delegateCloud20Service.setCloudUserExtractor(cloudUserExtractor);
         delegateCloud20Service.setUserConverterCloudV20(userConverterCloudV20);
         delegateCloud20Service.setOBJ_FACTORIES(OBJ_FACTORIES);
-        //delegateCloud20Service.setObjectFactory(objectFactory);
         delegateCloud20Service.setScopeAccessService(scopeAccessService);
         delegateCloud20Service.setTenantService(tenantService);
         when(config.getString("cloudAuth20url")).thenReturn(url);
@@ -228,6 +230,22 @@ public class DelegateCloud20ServiceTest {
         String updatedRequest = delegateCloud20Service.appendQueryParams(request, params);
 
         assertThat("appendQueryParams", updatedRequest, equalTo("http://localhost/echo?param=value"));
+    }
+
+    @Test
+    public void unmarshallResponse_inputStartsWithBracket_returnsCorrectAPIKeyCredentials() throws Exception {
+        String body = "{\n" +
+                "    \"RAX-KSKEY:apiKeyCredentials\":{\n" +
+                "        \"username\":\"jsmith\",\n" +
+                "        \"apiKey\":\"aaaaa-bbbbb-ccccc-12345678\"\n" +
+                "    }\n" +
+                "}";
+        assertThat(delegateCloud20Service.unmarshallResponse(body, ApiKeyCredentials.class), not(nullValue()));
+    }
+
+    @Test (expected = JAXBException.class)
+    public void marshallObjectToString_nullValues_throwsJAXBException() throws Exception {
+        delegateCloud20Service.marshallObjectToString(null);
     }
 
     @Test
@@ -1652,19 +1670,47 @@ public class DelegateCloud20ServiceTest {
         verify(defaultCloud20Service).addUserCredential(null, null, userId, null);
     }
 
-    @Ignore
     @Test
     public void convertCredentialToXML_PasswordCredentialsRequiredUsername_callsCreatePasswordCredentials() throws Exception {
-        ObjectFactory objectFactory1 = new ObjectFactory();
-        delegateCloud20Service.setObjectFactory(objectFactory1);
+        spy.setObjectFactory(objectFactory);
         String body = "{\n" +
                 "    \"passwordCredentials\": {\n" +
                 "        \"username\": \"test_user\",\n" +
                 "        \"password\": \"resetpass\"\n" +
                 "    }\n" +
                 "}";
+        when(objectFactory.createPasswordCredentials(any(PasswordCredentialsRequiredUsername.class))).thenReturn(null);
+        doReturn("foo").when(spy).marshallObjectToString(null);
+        spy.convertCredentialToXML(body);
+        verify(objectFactory).createPasswordCredentials(any(PasswordCredentialsRequiredUsername.class));
+    }
 
+    @Test
+    public void convertCredentialToXML_APIKeyCredentials_callsCreateAPIKeyCredentials() throws Exception {
+        com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory objectFactoryRAXKSKEY = mock(com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory.class);
+        spy.setObjectFactoryRAXKSKEY(objectFactoryRAXKSKEY);
+        String body = "{\n" +
+                "    \"RAX-KSKEY:apiKeyCredentials\":{\n" +
+                "        \"username\":\"jsmith\",\n" +
+                "        \"apiKey\":\"aaaaa-bbbbb-ccccc-12345678\"\n" +
+                "    }\n" +
+                "}";
+        when(objectFactoryRAXKSKEY.createApiKeyCredentials(any(ApiKeyCredentials.class))).thenReturn(null);
+        doReturn("foo").when(spy).marshallObjectToString(null);
+        spy.convertCredentialToXML(body);
+        verify(objectFactoryRAXKSKEY).createApiKeyCredentials(any(ApiKeyCredentials.class));
+    }
 
+    @Test (expected = IllegalStateException.class)
+    public void convertCredentialToXML_invalidCredentials_throwsIllegalStateException() throws Exception {
+        delegateCloud20Service.setObjectFactory(objectFactory);
+        String body = "{\n" +
+                "    \"passwordCredentials\": {\n" +
+                "        \"username\": \"test_user\",\n" +
+                "        \"password\": \"resetpass\"\n" +
+                "    }\n" +
+                "}";
+        when(objectFactory.createPasswordCredentials(any(PasswordCredentialsRequiredUsername.class))).thenReturn(null);
         delegateCloud20Service.convertCredentialToXML(body);
     }
 
@@ -2515,11 +2561,247 @@ public class DelegateCloud20ServiceTest {
         verify(defaultCloud20Service).listGroups(null, null, "groupName", null, null);
     }
 
+    @Test (expected = ApiException.class)
+    public void getXAuthToken_ResponseNot200AndNot203_throwsApiException() throws Exception {
+        when(cloudClient.post(anyString(),any(HashMap.class),anyString())).thenReturn(Response.status(123));
+        delegateCloud20Service.getXAuthToken(null, null);
+    }
+
+    @Test
+    public void getXAuthToken_Response200_returnsResponse() throws Exception {
+        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
+        ResponseBuilderImpl responseBuilder = new ResponseBuilderImpl();
+        responseBuilder.entity(new Object());
+        responseBuilder.status(200);
+        when(cloudClient.post(anyString(), any(HashMap.class), anyString())).thenReturn(responseBuilder);
+        doReturn(authenticateResponse).when(spy).unmarshallResponse(anyString(),eq(AuthenticateResponse.class));
+
+        assertThat("response",spy.getXAuthToken(null, null),equalTo(authenticateResponse));
+    }
+
+    @Test
+    public void getXAuthToken_Response203_returnsResponse() throws Exception {
+        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
+        ResponseBuilderImpl responseBuilder = new ResponseBuilderImpl();
+        responseBuilder.entity(new Object());
+        responseBuilder.status(203);
+        when(cloudClient.post(anyString(), any(HashMap.class), anyString())).thenReturn(responseBuilder);
+        doReturn(authenticateResponse).when(spy).unmarshallResponse(anyString(),eq(AuthenticateResponse.class));
+
+        assertThat("response",spy.getXAuthToken(null, null),equalTo(authenticateResponse));
+    }
+
+    @Test (expected = ApiException.class)
+    public void getXAuthTokenByPassword_ResponseNot200AndNot203_throwsApiException() throws Exception {
+        when(cloudClient.post(anyString(),any(HashMap.class),anyString())).thenReturn(Response.status(123));
+        delegateCloud20Service.getXAuthToken_byPassword(null, null);
+    }
+
+    @Test
+    public void getXAuthTokenByPassword_Response200_returnsResponse() throws Exception {
+        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
+        ResponseBuilderImpl responseBuilder = new ResponseBuilderImpl();
+        responseBuilder.entity(new Object());
+        responseBuilder.status(200);
+        when(cloudClient.post(anyString(), any(HashMap.class), anyString())).thenReturn(responseBuilder);
+        doReturn(authenticateResponse).when(spy).unmarshallResponse(anyString(),eq(AuthenticateResponse.class));
+
+        assertThat("response",spy.getXAuthToken_byPassword(null, null),equalTo(authenticateResponse));
+    }
+
+    @Test
+    public void getXAuthTokenByPassword_Response203_returnsResponse() throws Exception {
+        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
+        ResponseBuilderImpl responseBuilder = new ResponseBuilderImpl();
+        responseBuilder.entity(new Object());
+        responseBuilder.status(203);
+        when(cloudClient.post(anyString(), any(HashMap.class), anyString())).thenReturn(responseBuilder);
+        doReturn(authenticateResponse).when(spy).unmarshallResponse(anyString(),eq(AuthenticateResponse.class));
+
+        assertThat("response",spy.getXAuthToken_byPassword(null, null),equalTo(authenticateResponse));
+    }
+
+    @Test (expected = ApiException.class)
+    public void getUserApiCredentials_ResponseNot200AndNot203_throwsAPIException() throws Exception {
+        when(cloudClient.get(anyString(),any(HashMap.class))).thenReturn(Response.status(123));
+        delegateCloud20Service.getUserApiCredentials(null, null);
+    }
+
+    @Test
+    public void getUserApiCredentials_Response200__returnsAPICredentials() throws Exception {
+        ApiKeyCredentials apiKeyCredentials = new ApiKeyCredentials();
+        ResponseBuilderImpl responseBuilder = new ResponseBuilderImpl();
+        responseBuilder.entity(new Object());
+        responseBuilder.status(200);
+        when(cloudClient.get(anyString(), any(HashMap.class))).thenReturn(responseBuilder);
+        doReturn(apiKeyCredentials).when(spy).unmarshallResponse(anyString(),eq(ApiKeyCredentials.class));
+
+        assertThat("response", spy.getUserApiCredentials(null, null), equalTo(apiKeyCredentials));
+    }
+
+    @Test
+    public void getUserApiCredentials_Response203__returnsAPICredentials() throws Exception {
+        ApiKeyCredentials apiKeyCredentials = new ApiKeyCredentials();
+        ResponseBuilderImpl responseBuilder = new ResponseBuilderImpl();
+        responseBuilder.entity(new Object());
+        responseBuilder.status(203);
+        when(cloudClient.get(anyString(), any(HashMap.class))).thenReturn(responseBuilder);
+        doReturn(apiKeyCredentials).when(spy).unmarshallResponse(anyString(),eq(ApiKeyCredentials.class));
+
+        assertThat("response", spy.getUserApiCredentials(null, null), equalTo(apiKeyCredentials));
+    }
+
+    @Test (expected = ApiException.class)
+    public void getCloudUserByName_ResponseNot200AndNot203_throwsAPIException() throws Exception {
+        when(cloudClient.get(anyString(),any(HashMap.class))).thenReturn(Response.status(123));
+        delegateCloud20Service.getCloudUserByName(null,null);
+    }
+
+    @Test
+    public void getCloudUserByName_Response200_returnsUser() throws Exception {
+        ResponseBuilderImpl responseBuilder = new ResponseBuilderImpl();
+        org.openstack.docs.identity.api.v2.User user = new org.openstack.docs.identity.api.v2.User();
+        responseBuilder.status(200);
+        responseBuilder.entity(new Object());
+        when(cloudClient.get(anyString(), any(HashMap.class))).thenReturn(responseBuilder);
+        doReturn(user).when(spy).unmarshallResponse(anyString(),eq(org.openstack.docs.identity.api.v2.User.class));
+        assertThat("user", spy.getCloudUserByName(null, null), equalTo(user));
+    }
+
+    @Test
+    public void getCloudUserByName_Response203_returnsUser() throws Exception {
+        ResponseBuilderImpl responseBuilder = new ResponseBuilderImpl();
+        org.openstack.docs.identity.api.v2.User user = new org.openstack.docs.identity.api.v2.User();
+        responseBuilder.status(203);
+        responseBuilder.entity(new Object());
+        when(cloudClient.get(anyString(), any(HashMap.class))).thenReturn(responseBuilder);
+        doReturn(user).when(spy).unmarshallResponse(anyString(),eq(org.openstack.docs.identity.api.v2.User.class));
+        assertThat("user", spy.getCloudUserByName(null, null), equalTo(user));
+    }
+
+    @Test(expected = ApiException.class)
+    public void getGlobalRolesForCloudUser_ResponseNot200AndNot203_throwsAPIException() throws Exception {
+        when(cloudClient.get(anyString(),any(HashMap.class))).thenReturn(Response.status(123));
+        delegateCloud20Service.getGlobalRolesForCloudUser(null,null);
+    }
+
+    @Test
+    public void getGlobalRolesForCloudUser_Response200_throwsAPIException() throws Exception {
+        ResponseBuilderImpl responseBuilder = new ResponseBuilderImpl();
+        RoleList roleList = new RoleList();
+        responseBuilder.status(200);
+        responseBuilder.entity(new Object());
+        when(cloudClient.get(anyString(), any(HashMap.class))).thenReturn(responseBuilder);
+        doReturn(roleList).when(spy).unmarshallResponse(anyString(), eq(RoleList.class));
+        assertThat("rolelist", spy.getGlobalRolesForCloudUser(null, null), equalTo(roleList));
+    }
+
+    @Test
+    public void getGlobalRolesForCloudUser_Response203_throwsAPIException() throws Exception {
+        ResponseBuilderImpl responseBuilder = new ResponseBuilderImpl();
+        RoleList roleList = new RoleList();
+        responseBuilder.status(203);
+        responseBuilder.entity(new Object());
+        when(cloudClient.get(anyString(), any(HashMap.class))).thenReturn(responseBuilder);
+        doReturn(roleList).when(spy).unmarshallResponse(anyString(), eq(RoleList.class));
+        assertThat("rolelist",spy.getGlobalRolesForCloudUser(null,null),equalTo(roleList));
+    }
+
+    @Test (expected = BadRequestException.class)
+    public void impersonateUser_validCloudImpersonateFalse_throwsBadRequestException() throws Exception {
+        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
+        authenticateResponse.setToken(new Token());
+        org.openstack.docs.identity.api.v2.User user = mock(org.openstack.docs.identity.api.v2.User.class);
+        doReturn(authenticateResponse).when(spy).getXAuthToken_byPassword(null, null);
+        doReturn(user).when(spy).getCloudUserByName(null,null);
+        doReturn(new RoleList()).when(spy).getGlobalRolesForCloudUser(null,null);
+        doReturn(false).when(spy).isValidCloudImpersonatee(any(RoleList.class));
+        spy.impersonateUser(null,null,null);
+    }
+
+    @Test
+    public void impersonateUser_validCloudImpersonateTrue_returnsUserXAuthToken() throws Exception {
+        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
+        authenticateResponse.setToken(new Token());
+        org.openstack.docs.identity.api.v2.User user = mock(org.openstack.docs.identity.api.v2.User.class);
+        doReturn(authenticateResponse).when(spy).getXAuthToken_byPassword(null, null);
+        doReturn(user).when(spy).getCloudUserByName(null,null);
+        doReturn(new RoleList()).when(spy).getGlobalRolesForCloudUser(null,null);
+        doReturn(true).when(spy).isValidCloudImpersonatee(any(RoleList.class));
+        doReturn(new ApiKeyCredentials()).when(spy).getUserApiCredentials(null,null);
+        doReturn(authenticateResponse).when(spy).getXAuthToken(null,null);
+
+        assertThat("token", spy.impersonateUser(null, null, null), equalTo(null));
+    }
+
+    @Test
+    public void isValidCloudImpersonatee_userRolesEmpty_returnsFalse() throws Exception {
+        assertThat("bool", delegateCloud20Service.isValidCloudImpersonatee(new RoleList()), equalTo(false));
+    }
+
+    @Test
+    public void isValidCloudImpersonatee_noRolesDefaultOrUserAdmin_returnsFalse() throws Exception {
+        RoleList roleList = new RoleList();
+        Role role1 = new Role();
+        role1.setName("role1");
+        Role role2 = new Role();
+        role2.setName("role2");
+        Role role3 = new Role();
+        role3.setName("role3");
+        roleList.getRole().add(role1);
+        roleList.getRole().add(role2);
+        roleList.getRole().add(role3);
+        assertThat("bool", delegateCloud20Service.isValidCloudImpersonatee(roleList), equalTo(false));
+    }
+
+    @Test
+    public void isValidCloudImpersonatee_RoleDefault_returnsTrue() throws Exception {
+        RoleList roleList = new RoleList();
+        Role role1 = new Role();
+        role1.setName("role1");
+        Role role2 = new Role();
+        role2.setName("role2");
+        Role role3 = new Role();
+        role3.setName("identity:default");
+        roleList.getRole().add(role1);
+        roleList.getRole().add(role2);
+        roleList.getRole().add(role3);
+        assertThat("bool", delegateCloud20Service.isValidCloudImpersonatee(roleList), equalTo(true));
+    }
+
+    @Test
+    public void isValidCloudImpersonatee_RoleUserAdmin_returnsTrue() throws Exception {
+        RoleList roleList = new RoleList();
+        Role role1 = new Role();
+        role1.setName("role1");
+        Role role2 = new Role();
+        role2.setName("role2");
+        Role role3 = new Role();
+        role3.setName("identity:user-admin");
+        roleList.getRole().add(role1);
+        roleList.getRole().add(role2);
+        roleList.getRole().add(role3);
+        assertThat("bool", delegateCloud20Service.isValidCloudImpersonatee(roleList), equalTo(true));
+    }
+
     @Test
     public void impersonate_returnsNull() throws Exception{
         assertThat("returns", delegateCloud20Service.impersonate(null,null,null), equalTo(null));
     }
 
+    @Test
+    public void getTokenService_returnsTokenService() throws Exception{
+        assertThat("tokenService",delegateCloud20Service.getTokenService(),equalTo(tokenService));
+    }
 
+    @Test
+    public void getTenantService_returnsTenetService() throws Exception {
+        assertThat("tenantService",delegateCloud20Service.getTenantService(),equalTo(tenantService));
+    }
+
+    @Test
+    public void getUserConverterCloudV20_returnsUserConverterCloudV20() throws Exception {
+        assertThat("UserConverterCloudV20",delegateCloud20Service.getUserConverterCloudV20(),equalTo(userConverterCloudV20));
+    }
 }
 

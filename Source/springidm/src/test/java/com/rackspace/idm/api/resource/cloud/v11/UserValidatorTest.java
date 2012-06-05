@@ -33,9 +33,24 @@ public class UserValidatorTest {
     }
 
     @Test(expected = BadRequestException.class)
-    public void validate_UserWithNEmptyId_throwsBadRequestException() throws Exception {
+    public void validate_UserWithEmptyId_throwsBadRequestException() throws Exception {
         User user = new User();
         user.setId("");
+        userValidator.validate(user);
+    }
+
+    @Test
+    public void validate_UserWithNastIdAndKey() throws Exception {
+        User user = new User();
+        user.setNastId("nastId");
+        user.setKey("key");
+        userValidator.validate(user);
+    }
+
+    @Test
+    public void validate_UserWithOnlyId() throws Exception {
+        User user = new User();
+        user.setId("Id");
         userValidator.validate(user);
     }
 

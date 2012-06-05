@@ -88,10 +88,10 @@ public class RootResource {
         return cloudVersionsResource;
     }
 
-    @Path("migration")
-    public MigrationResource getMigrationResource() {
-        return migrationResource;
-    }
+//    @Path("migration")
+//    public MigrationResource getMigrationResource() {
+//        return migrationResource;
+//    }
 
     @Path("buildInfo")
     @GET
