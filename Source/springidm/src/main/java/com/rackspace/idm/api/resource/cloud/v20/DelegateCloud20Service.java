@@ -465,7 +465,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         return defaultCloud20Service.addUserCredential(httpHeaders, authToken, userId, body);
     }
 
-    private String convertCredentialToXML(String body) {
+     String convertCredentialToXML(String body) {
         JAXBElement<? extends CredentialType> jaxbCreds = null;
         String xml = null;
 
