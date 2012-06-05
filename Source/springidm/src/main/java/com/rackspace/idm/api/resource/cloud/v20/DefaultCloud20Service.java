@@ -2079,7 +2079,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
-    private boolean belongsTo(String belongsTo, List<TenantRole> roles) {
+    boolean belongsTo(String belongsTo, List<TenantRole> roles) {
 
         if (StringUtils.isBlank(belongsTo)) {
             return true;
@@ -2177,7 +2177,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         return user;
     }
 
-    private User checkAndGetUserByName(String username) {
+    User checkAndGetUserByName(String username) {
         User user = this.userService.getUser(username);
 
         if (user == null) {
@@ -2339,7 +2339,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         verifyTokenHasTenant(tenantId, authScopeAccess);
     }
 
-    private void stripEndpoints(List<OpenstackEndpoint> endpoints) {
+    void stripEndpoints(List<OpenstackEndpoint> endpoints) {
         for (int i = 0; i < endpoints.size(); i++) {
             for (CloudBaseUrl baseUrl : endpoints.get(i).getBaseUrls()) {
                 baseUrl.setAdminUrl(null);
@@ -2542,5 +2542,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     public void setRoleConverterCloudV20(RoleConverterCloudV20 roleConverterCloudV20) {
         this.roleConverterCloudV20 = roleConverterCloudV20;
+    }
+
+    public void setAuthConverterCloudV20(AuthConverterCloudV20 authConverterCloudV20) {
+        this.authConverterCloudV20 = authConverterCloudV20;
     }
 }
