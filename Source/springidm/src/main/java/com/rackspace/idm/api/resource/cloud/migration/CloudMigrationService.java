@@ -1,7 +1,5 @@
 package com.rackspace.idm.api.resource.cloud.migration;
 
-import org.openstack.docs.identity.api.v2.UserList;
-
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
@@ -20,7 +18,6 @@ import com.rackspacecloud.docs.auth.api.v1.BaseURL;
 import com.rackspacecloud.docs.auth.api.v1.BaseURLList;
 import com.rackspacecloud.docs.auth.api.v1.BaseURLRef;
 import com.sun.jersey.api.ConflictException;
-import com.sun.servicetag.UnauthorizedAccessException;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpException;
