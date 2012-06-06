@@ -257,7 +257,7 @@ public class CloudMigrationService {
 
             return result;
         }
-        throw new UnauthorizedAccessException("Not Authorized.");
+        throw new NotAuthenticatedException("Not Authorized.");
     }
 
 	private List<String> getSubUsers(String username, String apiKey, String password, RoleList roles) {
