@@ -1998,6 +1998,17 @@ public class DefaultCloud20Service implements Cloud20Service {
                 RackerScopeAccess rackerScopeAccess = (RackerScopeAccess) sa;
                 Racker racker = userService.getRackerByRackerId(rackerScopeAccess.getRackerId());
                 List<TenantRole> roleList = tenantService.getTenantRolesForScopeAccess(rackerScopeAccess);
+
+                //Add Racker eDir Roles
+                List<String> rackerRoles = userService.getRackerRoles(racker.getRackerId());
+                if(rackerRoles != null) {
+                    for(String r : rackerRoles){
+                        TenantRole t = new TenantRole();
+                        t.setName(r);
+                        roleList.add(t);
+                    }
+                }
+                
                 access.setUser(userConverterCloudV20.toUserForAuthenticateResponse(racker, roleList));
             } else if (sa instanceof UserScopeAccess || sa instanceof ImpersonatedScopeAccess) {
                 String username = "";

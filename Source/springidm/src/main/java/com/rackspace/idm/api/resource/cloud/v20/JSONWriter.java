@@ -550,7 +550,9 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     @SuppressWarnings("unchecked")
     private JSONObject getRole(Role role) {
         JSONObject outer = new JSONObject();
-        outer.put(JSONConstants.ID, role.getId());
+        if (role.getId() != null) {
+            outer.put(JSONConstants.ID, role.getId());
+        }
         if (role.getDescription() != null) {
             outer.put(JSONConstants.DESCRIPTION, role.getDescription());
         }
