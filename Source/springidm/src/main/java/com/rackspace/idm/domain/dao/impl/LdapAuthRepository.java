@@ -60,13 +60,11 @@ public class LdapAuthRepository implements AuthDao {
     public List<String> getRackerRoles(String username) {
         List<String> roles = new ArrayList<String>();
         
-        Filter searchFilter = new LdapSearchBuilder()
-        .addEqualAttribute(LdapRepository.ATTR_UID, username).build();
+        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(LdapRepository.ATTR_UID, username).build();
 
         SearchResultEntry entry = null;
         try {
-            entry = connPool.searchForEntry(BASE_DN, SearchScope.ONE,
-                searchFilter);
+            entry = connPool.searchForEntry(BASE_DN, SearchScope.ONE, searchFilter);
         } catch (LDAPSearchException ldapEx) {
             throw new IllegalStateException(ldapEx);
         }
