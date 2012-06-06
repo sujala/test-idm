@@ -201,7 +201,7 @@ public class JSONReaderForUserTest {
     }
 
     @Test
-    public void getUserFromJSONString_nullEmail_returnsTenantNullEmail() throws Exception {
+    public void getUserFromJSONString_nullEmail_returnsUserNullEmail() throws Exception {
         String body = "{\n" +
                 "  \"user\": {\n" +
                 "    \"id\": \"123456\",\n" +
