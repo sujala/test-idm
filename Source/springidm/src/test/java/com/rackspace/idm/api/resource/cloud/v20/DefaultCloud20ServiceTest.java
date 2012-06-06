@@ -89,6 +89,7 @@ public class DefaultCloud20ServiceTest {
 //    private AtomHopperClient atomHopperClient;
     private HttpHeaders httpHeaders;
     private String jsonBody = "{\"passwordCredentials\":{\"username\":\"test_user\",\"password\":\"resetpass\"}}";
+    private AuthConverterCloudV20 authConverterCloudV20;
 
     @Before
     public void setUp() throws Exception {
@@ -112,6 +113,7 @@ public class DefaultCloud20ServiceTest {
         cloudKsGroupBuilder = mock(CloudKsGroupBuilder.class);
 //        atomHopperClient = mock(AtomHopperClient.class);
         httpHeaders = mock(HttpHeaders.class);
+        authConverterCloudV20 = mock(AuthConverterCloudV20.class);
 
 
         //setting mocks
@@ -131,6 +133,7 @@ public class DefaultCloud20ServiceTest {
         defaultCloud20Service.setCloudKsGroupBuilder(cloudKsGroupBuilder);
 //        defaultCloud20Service.setAtomHopperClient(atomHopperClient);
         defaultCloud20Service.setRoleConverterCloudV20(roleConverterCloudV20);
+        defaultCloud20Service.setAuthConverterCloudV20(authConverterCloudV20);
 
         //fields
         user = new User();
@@ -299,6 +302,179 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void authenticate_withTenantIdAndNoTenantAccess_returns404() throws Exception {
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
+        tokenForAuthenticationRequest.setId("tokenId");
+        authenticationRequest.setTenantId("tenantId");
+        authenticationRequest.setToken(tokenForAuthenticationRequest);
+        UserScopeAccess scopeAccess = new UserScopeAccess();
+        scopeAccess.setAccessTokenExp(new Date(5000, 1, 1));
+        scopeAccess.setAccessTokenString("foo");
+        when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
+        when(tenantService.hasTenantAccess(any(ScopeAccess.class), eq("tenantId"))).thenReturn(false);
+        doReturn(new User()).when(spy).checkAndGetUser(anyString());
+        Response.ResponseBuilder responseBuilder = spy.authenticate(null, authenticationRequest);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(404));
+    }
+
+    @Test
+    public void authenticate_withTenantNameAndNoTenantAccess_returns404() throws Exception {
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
+        tokenForAuthenticationRequest.setId("tokenId");
+        authenticationRequest.setTenantName("tenantName");
+        authenticationRequest.setToken(tokenForAuthenticationRequest);
+        UserScopeAccess scopeAccess = new UserScopeAccess();
+        scopeAccess.setAccessTokenExp(new Date(5000, 1, 1));
+        scopeAccess.setAccessTokenString("foo");
+        when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
+        when(tenantService.hasTenantAccess(any(ScopeAccess.class), eq("tenantName"))).thenReturn(false);
+        doReturn(new User()).when(spy).checkAndGetUser(anyString());
+        Response.ResponseBuilder responseBuilder = spy.authenticate(null, authenticationRequest);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(404));
+    }
+
+    @Test
+    public void authenticate_endpoints_callsScopeAccessService() throws Exception {
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
+        tokenForAuthenticationRequest.setId("tokenId");
+        authenticationRequest.setToken(tokenForAuthenticationRequest);
+        UserScopeAccess scopeAccess = new UserScopeAccess();
+        scopeAccess.setAccessTokenExp(new Date(5000, 1, 1));
+        scopeAccess.setAccessTokenString("foo");
+        when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
+        doReturn(new User()).when(spy).checkAndGetUser(anyString());
+        spy.authenticate(null, authenticationRequest);
+        verify(scopeAccessService).getOpenstackEndpointsForScopeAccess(any(ScopeAccess.class));
+    }
+
+    @Test
+    public void authenticate_notCloudIdentityAdmin_callsStripEndpoints() throws Exception {
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
+        tokenForAuthenticationRequest.setId("tokenId");
+        authenticationRequest.setToken(tokenForAuthenticationRequest);
+        UserScopeAccess scopeAccess = new UserScopeAccess();
+        scopeAccess.setAccessTokenExp(new Date(5000, 1, 1));
+        scopeAccess.setAccessTokenString("foo");
+        when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
+        doReturn(new User()).when(spy).checkAndGetUser(anyString());
+        spy.authenticate(null, authenticationRequest);
+        verify(spy).stripEndpoints(any(List.class));
+    }
+
+    @Test
+    public void authenticate_callsAuthConverterCloud() throws Exception {
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
+        tokenForAuthenticationRequest.setId("tokenId");
+        authenticationRequest.setToken(tokenForAuthenticationRequest);
+        UserScopeAccess scopeAccess = new UserScopeAccess();
+        scopeAccess.setAccessTokenExp(new Date(5000, 1, 1));
+        scopeAccess.setAccessTokenString("foo");
+        when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
+        doReturn(new User()).when(spy).checkAndGetUser(anyString());
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
+        spy.authenticate(null, authenticationRequest);
+        verify(authConverterCloudV20).toAuthenticationResponse(any(User.class), any(ScopeAccess.class), any(List.class), any(List.class));
+    }
+
+    @Test
+    public void authenticate_withTenantId_callsVerifyTokenHasAccessForAuthenticate() throws Exception {
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
+        Token token = new Token();
+        token.setId("token");
+        authenticateResponse.setToken(token);
+        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
+        tokenForAuthenticationRequest.setId("tokenId");
+        authenticationRequest.setTenantId("tenantId");
+        authenticationRequest.setToken(tokenForAuthenticationRequest);
+        UserScopeAccess scopeAccess = new UserScopeAccess();
+        scopeAccess.setAccessTokenExp(new Date(5000, 1, 1));
+        scopeAccess.setAccessTokenString("foo");
+        when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
+        doReturn(new User()).when(spy).checkAndGetUser(anyString());
+        when(tenantService.hasTenantAccess(any(ScopeAccess.class), eq("tenantId"))).thenReturn(true);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(authConverterCloudV20.toAuthenticationResponse(any(User.class), any(ScopeAccess.class), any(List.class), any(List.class))).thenReturn(authenticateResponse);
+        spy.authenticate(null, authenticationRequest);
+        verify(spy).verifyTokenHasTenantAccessForAuthenticate("token", "tenantId");
+    }
+
+    @Test
+    public void authenticate_withEmptyTenantId_returns400() throws Exception {
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
+        tokenForAuthenticationRequest.setId("tokenId");
+        authenticationRequest.setTenantId("");
+        authenticationRequest.setToken(tokenForAuthenticationRequest);
+        UserScopeAccess scopeAccess = new UserScopeAccess();
+        scopeAccess.setAccessTokenExp(new Date(5000, 1, 1));
+        scopeAccess.setAccessTokenString("foo");
+        when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
+        doReturn(new User()).when(spy).checkAndGetUser(anyString());
+        when(tenantService.hasTenantAccess(any(ScopeAccess.class), eq(""))).thenReturn(true);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
+        Response.ResponseBuilder responseBuilder = spy.authenticate(null, authenticationRequest);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
+    public void authenticate_getTenantIdThrowForbiddenException_returns401() throws Exception {
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
+        Token token = new Token();
+        token.setId("token");
+        authenticateResponse.setToken(token);
+        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
+        tokenForAuthenticationRequest.setId("tokenId");
+        authenticationRequest.setTenantId("tenantId");
+        authenticationRequest.setToken(tokenForAuthenticationRequest);
+        UserScopeAccess scopeAccess = new UserScopeAccess();
+        scopeAccess.setAccessTokenExp(new Date(5000, 1, 1));
+        scopeAccess.setAccessTokenString("foo");
+        when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
+        doReturn(new User()).when(spy).checkAndGetUser(anyString());
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(tenantService.hasTenantAccess(any(ScopeAccess.class), eq("tenantId"))).thenReturn(true);
+        when(authConverterCloudV20.toAuthenticationResponse(any(User.class), any(ScopeAccess.class), any(List.class), any(List.class))).thenReturn(authenticateResponse);
+        doThrow(new ForbiddenException()).when(spy).verifyTokenHasTenantAccessForAuthenticate("tokenId", "tenantId");
+        Response.ResponseBuilder responseBuilder = spy.authenticate(null, authenticationRequest);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(401));
+    }
+
+    @Test
+    public void authenticate_responseOk_returns200() throws Exception {
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
+        Token token = new Token();
+        token.setId("token");
+        UserForAuthenticateResponse userForAuthenticateResponse = new UserForAuthenticateResponse();
+        RoleList roleList = mock(RoleList.class);
+        userForAuthenticateResponse.setRoles(roleList);
+        authenticateResponse.setToken(token);
+        authenticateResponse.setUser(userForAuthenticateResponse);
+        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
+        tokenForAuthenticationRequest.setId("tokenId");
+        authenticationRequest.setTenantId("tenantId");
+        authenticationRequest.setToken(tokenForAuthenticationRequest);
+        UserScopeAccess scopeAccess = new UserScopeAccess();
+        scopeAccess.setAccessTokenExp(new Date(5000, 1, 1));
+        scopeAccess.setAccessTokenString("foo");
+        when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
+        doReturn(new User()).when(spy).checkAndGetUser(anyString());
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(tenantService.hasTenantAccess(any(ScopeAccess.class), eq("tenantId"))).thenReturn(true);
+        when(authConverterCloudV20.toAuthenticationResponse(any(User.class), any(ScopeAccess.class), any(List.class), any(List.class))).thenReturn(authenticateResponse);
+        doNothing().when(spy).verifyTokenHasTenantAccessForAuthenticate(anyString(), anyString());
+        Response.ResponseBuilder responseBuilder = spy.authenticate(null, authenticationRequest);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
     public void authenticate_withTenantName_callsTenantService_hasTenantAccess() throws Exception {
         AuthenticationRequest authenticationRequest = new AuthenticationRequest();
         TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
@@ -312,6 +488,70 @@ public class DefaultCloud20ServiceTest {
         doReturn(new User()).when(spy).checkAndGetUser(anyString());
         spy.authenticate(null, authenticationRequest);
         verify(tenantService).hasTenantAccess(org.mockito.Matchers.any(UserScopeAccess.class), eq("tenantId"));
+    }
+
+    @Test
+    public void authenticate_tokenNotNullAndIdNotBlankScopeAccessIsNull_returns401() throws Exception {
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
+        tokenForAuthenticationRequest.setId("tokenId");
+        authenticationRequest.setToken(tokenForAuthenticationRequest);
+        Response.ResponseBuilder responseBuilder = spy.authenticate(null, authenticationRequest);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(401));
+    }
+
+    @Test
+    public void authenticate_tokenNotNullAndIsNotBlankTokenExpired_returns401() throws Exception {
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
+        UserScopeAccess sa = new UserScopeAccess();
+        sa.setAccessTokenExp(new Date(1000, 1, 1));
+        tokenForAuthenticationRequest.setId("tokenId");
+        authenticationRequest.setToken(tokenForAuthenticationRequest);
+        when(scopeAccessService.getScopeAccessByAccessToken("tokenId")).thenReturn(sa);
+        Response.ResponseBuilder responseBuilder = spy.authenticate(null, authenticationRequest);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(401));
+    }
+
+    @Test
+    public void authenticate_tokenNotNullAndIsNotBlankScopeAccessNotInstanceOfUserScopeAccess_returns401() throws Exception {
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
+        RackerScopeAccess sa = new RackerScopeAccess();
+        sa.setAccessTokenExp(new Date(1000, 1, 1));
+        tokenForAuthenticationRequest.setId("tokenId");
+        authenticationRequest.setToken(tokenForAuthenticationRequest);
+        when(scopeAccessService.getScopeAccessByAccessToken("tokenId")).thenReturn(sa);
+        Response.ResponseBuilder responseBuilder = spy.authenticate(null, authenticationRequest);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(401));
+    }
+
+    @Test
+    public void authenticate_tokenIsNullAndIsPasswordCredentials_callsScopeAccessService() throws Exception {
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
+        passwordCredentialsRequiredUsername.setUsername("test_user");
+        passwordCredentialsRequiredUsername.setPassword("123");
+        JAXBElement<? extends PasswordCredentialsRequiredUsername> credentialType = new JAXBElement(QName.valueOf("foo"), PasswordCredentialsRequiredUsername.class, passwordCredentialsRequiredUsername);
+        authenticationRequest.setToken(null);
+        authenticationRequest.setCredential(credentialType);
+        doReturn(new User()).when(spy).checkAndGetUserByName("test_user");
+        spy.authenticate(null, authenticationRequest);
+        verify(scopeAccessService).getUserScopeAccessForClientIdByUsernameAndPassword("test_user", "123", null);
+    }
+
+    @Test
+    public void authenticate_tokenIsNullAndIsAPICredentials_callsScopeAccessService() throws Exception {
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        ApiKeyCredentials apiKeyCredentials = new ApiKeyCredentials();
+        apiKeyCredentials.setUsername("test_user");
+        apiKeyCredentials.setApiKey("123");
+        JAXBElement<? extends ApiKeyCredentials> credentialType = new JAXBElement(QName.valueOf("foo"), ApiKeyCredentials.class, apiKeyCredentials);
+        authenticationRequest.setToken(null);
+        authenticationRequest.setCredential(credentialType);
+        doReturn(new User()).when(spy).checkAndGetUserByName("test_user");
+        spy.authenticate(null, authenticationRequest);
+        verify(scopeAccessService).getUserScopeAccessForClientIdByUsernameAndApiCredentials("test_user", "123", null);
     }
 
     @Test
@@ -971,6 +1211,58 @@ public class DefaultCloud20ServiceTest {
     public void checkToken_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.checkToken(null, authToken, authToken, null);
         verify(spy).verifyServiceAdminLevelAccess(authToken);
+    }
+
+    @Test
+    public void checkToken_belongsToNotBlank_callsTenantServiceGetTenantRolesForScopeAccess() throws Exception {
+        doReturn(null).when(spy).checkAndGetToken("tokenId");
+        spy.checkToken(null, authToken, "tokenId", "belongsTo");
+        verify(tenantService).getTenantRolesForScopeAccess(any(ScopeAccess.class));
+    }
+
+    @Test
+    public void checkToken_bleongsToNotBlankThrowsNotFoundException_returns404() throws Exception {
+        doReturn(null).when(spy).checkAndGetToken("tokenId");
+        when(tenantService.getTenantRolesForScopeAccess(any(ScopeAccess.class))).thenReturn(null);
+        doReturn(false).when(spy).belongsTo("belongsTo", null);
+        Response.ResponseBuilder responseBuilder = spy.checkToken(null, authToken, "tokenId", "belongsTo");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(404));
+    }
+
+    @Test
+    public void checkToken_responseOk_returns200() throws Exception {
+        doReturn(null).when(spy).checkAndGetToken("tokenId");
+        when(tenantService.getTenantRolesForScopeAccess(any(ScopeAccess.class))).thenReturn(null);
+        Response.ResponseBuilder responseBuilder = spy.checkToken(null, authToken, "tokenId", "");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void checkToken_throwsBadRequestException_returns400() throws Exception {
+        doThrow(new BadRequestException()).when(spy).verifyServiceAdminLevelAccess(authToken);
+        Response.ResponseBuilder responseBuilder = spy.checkToken(null, authToken, null, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
+    public void checkToken_throwsNotAuthorizedException_returns401() throws Exception {
+        doThrow(new NotAuthorizedException()).when(spy).verifyServiceAdminLevelAccess(authToken);
+        Response.ResponseBuilder responseBuilder = spy.checkToken(null, authToken, null, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(401));
+    }
+
+    @Test
+    public void checkToken_throwsForbiddenException_returns403() throws Exception {
+        doThrow(new ForbiddenException()).when(spy).verifyServiceAdminLevelAccess(authToken);
+        Response.ResponseBuilder responseBuilder = spy.checkToken(null, authToken, null, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(403));
+    }
+
+    @Test
+    public void checkToken_throwsNotFoundException_returns404() throws Exception {
+        doThrow(new NotFoundException()).when(spy).verifyServiceAdminLevelAccess(authToken);
+        Response.ResponseBuilder responseBuilder = spy.checkToken(null, authToken, null, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(404));
     }
 
     @Test
