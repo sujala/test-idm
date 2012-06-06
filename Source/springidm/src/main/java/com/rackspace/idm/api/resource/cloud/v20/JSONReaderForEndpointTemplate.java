@@ -12,6 +12,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyReader;
 import javax.ws.rs.ext.Provider;
 
+import com.rackspace.idm.exception.BadRequestException;
 import org.apache.commons.io.IOUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -20,11 +21,15 @@ import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.VersionForService;
 
 import com.rackspace.idm.JSONConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
 public class JSONReaderForEndpointTemplate implements
 MessageBodyReader<EndpointTemplate> {
+    private static Logger logger = LoggerFactory.getLogger(JSONReaderForEndpointTemplate.class);
+
     @Override
     public boolean isReadable(Class<?> type, Type genericType,
         Annotation[] annotations, MediaType mediaType) {
@@ -111,8 +116,8 @@ MessageBodyReader<EndpointTemplate> {
                 }
             }
         } catch (ParseException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            logger.info(e.toString());
+            throw new BadRequestException("Invalid JSON");
         }
 
         return template;
