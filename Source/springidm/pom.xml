@@ -26,6 +26,8 @@
         <powermock.version>1.4.11</powermock.version>
         <!--SoapUI Pro version-->
         <soapui.version>4.0.2-SNAPSHOT</soapui.version>
+        <!--Integration test flag for sonar 3.0-->
+        <skip.test.surefire>true</skip.test.surefire>
     </properties>
 
     <dependencies>
@@ -1174,7 +1176,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.12</version>
                 <configuration>
-                    <skip>true</skip>
+                    <skip>${skip.test.surefire}</skip>
                     <systemProperties>
                         <property>
                             <name>idm.properties.location</name>

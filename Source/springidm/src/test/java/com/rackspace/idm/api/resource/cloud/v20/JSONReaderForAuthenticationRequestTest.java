@@ -13,6 +13,7 @@ import java.io.InputStream;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Created with IntelliJ IDEA.
@@ -68,6 +69,12 @@ public class JSONReaderForAuthenticationRequestTest {
     }
 
     @Test
+    public void isReadable_withNotAuthenticationRequestClass_returnsFalse() throws Exception {
+        boolean readable = jsonReaderForAuthenticationRequest.isReadable(Object.class, null, null, null);
+        assertThat("readable", readable, equalTo(false));
+    }
+
+    @Test
     public void readFrom_withValidJSON_returnsAuthenticationRequest() throws Exception {
         InputStream inputStream = new BufferedInputStream(new ByteArrayInputStream(authRequestWithApiKey.getBytes()));
         AuthenticationRequest authenticationRequest = jsonReaderForAuthenticationRequest.readFrom(AuthenticationRequest.class, null, null, null, null, inputStream);
@@ -78,6 +85,12 @@ public class JSONReaderForAuthenticationRequestTest {
     public void readFrom_withInvalidJSON_throwsBadRequestException() throws Exception {
         InputStream inputStream = new BufferedInputStream(new ByteArrayInputStream("invalid JSON string".getBytes()));
         jsonReaderForAuthenticationRequest.readFrom(AuthenticationRequest.class, null, null, null, null, inputStream);
+    }
+
+    @Test
+    public void getAuthenticationRequestFromJSONString_withNoAuthRequestKey_returnsEmptyAuthenticationRequest() throws Exception {
+        AuthenticationRequest authenticationRequestFromJSONString = JSONReaderForAuthenticationRequest.getAuthenticationRequestFromJSONString("{ }");
+        assertThat("authentication request", authenticationRequestFromJSONString.getCredential(), nullValue());
     }
 
     @Test
@@ -96,6 +109,17 @@ public class JSONReaderForAuthenticationRequestTest {
     public void getAuthenticationRequestFromJSONString_withValidTokenRequest_returnsAuthenticationRequestWithToken() throws Exception {
         AuthenticationRequest authenticationRequestFromJSONString = JSONReaderForAuthenticationRequest.getAuthenticationRequestFromJSONString(authRequestWithToken);
         assertThat("authentication credentials token Id", authenticationRequestFromJSONString.getToken().getId(), equalTo("vvvvvvvv-wwww-xxxx-yyyy-zzzzzzzzzzzz"));
+    }
+
+    @Test
+    public void getAuthenticationRequestFromJSONString_withNoTokenIdRequest_returnNullTokenId() throws Exception {
+        AuthenticationRequest authenticationRequestFromJSONString = JSONReaderForAuthenticationRequest.getAuthenticationRequestFromJSONString("{\n" +
+                "    \"auth\": {\n" +
+                "        \"token\": {\n" +
+                "        }\n" +
+                "    }\n" +
+                "}");
+        assertThat("authenticationRquest tokenId", authenticationRequestFromJSONString.getToken().getId(), nullValue());
     }
 
     @Test
