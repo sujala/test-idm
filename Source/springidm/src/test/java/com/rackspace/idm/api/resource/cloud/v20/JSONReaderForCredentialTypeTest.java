@@ -7,8 +7,10 @@ import org.junit.Test;
 import org.openstack.docs.identity.api.v2.CredentialType;
 import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
 
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Created with IntelliJ IDEA.
@@ -52,9 +54,14 @@ public class JSONReaderForCredentialTypeTest {
         assertThat("credential type", credentialType, instanceOf(ApiKeyCredentials.class));
     }
 
-    @Test(expected = BadRequestException.class)
+    @Test
     public void checkAndGetCredentialsFromJSONString_withValidJSONAndInvalidCredentialType_throwsBadRequestException() throws Exception {
-        JSONReaderForCredentialType.checkAndGetCredentialsFromJSONString(invalidCredentialTypeJSON);
+        try {
+            JSONReaderForCredentialType.checkAndGetCredentialsFromJSONString(invalidCredentialTypeJSON);
+            assertTrue("expected exception", false);
+        }catch (Exception e){
+            assertThat("exception message", e.getMessage(), equalTo("Unsupported credential type"));
+        }
     }
 
     @Test(expected = BadRequestException.class)
