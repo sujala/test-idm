@@ -81,6 +81,29 @@ public class JSONReaderForImpersonationTest {
     }
 
     @Test
+    public void getImpersonationFromJSONString_withUserAndNoUsername_setsNullUser() throws Exception {
+        ImpersonationRequest impersonationRequest = JSONReaderForImpersonation.getImpersonationFromJSONString("{\n" +
+                "  \"RAX-GA:impersonation\" : {\n" +
+                "      \"user\": {\n" +
+                "      },\n" +
+                "      \"expire-in-seconds\": \"5000\"\n" +
+                "  }\n" +
+                "}");
+        assertThat("impersonation user name", impersonationRequest.getUser().getUsername(), nullValue());
+    }
+
+    @Test
+    public void getImpersonationFromJSONString_withNoExpireInSeconds_setsNullExpireInSeconds() throws Exception {
+        ImpersonationRequest impersonationRequest = JSONReaderForImpersonation.getImpersonationFromJSONString("{\n" +
+                "  \"RAX-GA:impersonation\" : {\n" +
+                "      \"user\": {\n" +
+                "      },\n" +
+                "  }\n" +
+                "}");
+        assertThat("impersonation expireInSeconds", impersonationRequest.getExpireInSeconds(), nullValue());
+    }
+
+    @Test
     public void getImpersonationFromJSONString_withEmptyJSON_returnsNewImpersonationRequest() throws Exception {
         ImpersonationRequest impersonationRequest = JSONReaderForImpersonation.getImpersonationFromJSONString("{ }");
         assertThat("user", impersonationRequest.getUser(), nullValue());
