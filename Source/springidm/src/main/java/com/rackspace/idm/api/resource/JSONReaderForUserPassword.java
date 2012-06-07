@@ -2,10 +2,13 @@ package com.rackspace.idm.api.resource;
 
 import com.rackspace.api.idm.v1.UserPassword;
 import com.rackspace.idm.JSONConstants;
+import com.rackspace.idm.exception.BadRequestException;
 import org.apache.commons.io.IOUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.WebApplicationException;
@@ -22,6 +25,8 @@ import java.lang.reflect.Type;
 @Consumes(MediaType.APPLICATION_JSON)
 public class JSONReaderForUserPassword implements
     MessageBodyReader<UserPassword> {
+
+    private static final Logger logger = LoggerFactory.getLogger(JSONReaderForUserPassword.class);
 
     @Override
     public boolean isReadable(Class<?> type, Type genericType,
@@ -63,7 +68,8 @@ public class JSONReaderForUserPassword implements
             }
         } catch (ParseException e) {
             // TODO Auto-generated catch block
-            e.printStackTrace();
+            logger.info(e.toString());
+            throw new BadRequestException("Bad JSON request");
         }
 
         return userPassword;
@@ -84,7 +90,8 @@ public class JSONReaderForUserPassword implements
             }
         } catch (ParseException e) {
             // TODO Auto-generated catch block
-            e.printStackTrace();
+            logger.info(e.toString());
+            throw new BadRequestException("Bad JSON request");
         }
 
         return userPassword;

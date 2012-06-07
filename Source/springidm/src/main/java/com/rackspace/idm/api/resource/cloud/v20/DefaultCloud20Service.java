@@ -7,7 +7,7 @@ import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.converter.cloudv20.*;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
-import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
+//import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
@@ -117,8 +117,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Autowired
     private DelegateCloud20Service delegateCloud20Service;
 
-    @Autowired
-    private AtomHopperClient atomHopperClient;
+//    @Autowired
+//    private AtomHopperClient atomHopperClient;
 
     private HashMap<String, JAXBElement<Extension>> extensionMap;
 
@@ -408,7 +408,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             User userDO = this.userConverterCloudV20.toUserDO(user);
             if (userDO.isDisabled()) {
                 this.scopeAccessService.expireAllTokensForUser(retrievedUser.getUsername());
-                atomHopperClient.postUser(retrievedUser,authToken,"disabled");
+                //atomHopperClient.postUser(retrievedUser,authToken,"disabled");
             }
             retrievedUser.copyChanges(userDO);
 
@@ -789,7 +789,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
             userService.softDeleteUser(user);
 
-            atomHopperClient.postUser(user,authToken,"deleted");
+            //atomHopperClient.postUser(user,authToken,"deleted");
 
             return Response.noContent();
         } catch (Exception ex) {
@@ -2550,9 +2550,9 @@ public class DefaultCloud20Service implements Cloud20Service {
         this.tokenConverterCloudV20 = tokenConverterCloudV20;
     }
 
-    public void setAtomHopperClient(AtomHopperClient atomHopperClient) {
-        this.atomHopperClient = atomHopperClient;
-    }
+//    public void setAtomHopperClient(AtomHopperClient atomHopperClient) {
+//        this.atomHopperClient = atomHopperClient;
+//    }
 
     public void setRoleConverterCloudV20(RoleConverterCloudV20 roleConverterCloudV20) {
         this.roleConverterCloudV20 = roleConverterCloudV20;
