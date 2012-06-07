@@ -264,6 +264,33 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
             }
             outer.put(JSONConstants.ACCESS, access);
 
+            if (authenticateResponse.getAny().size() > 0) {
+                for(Object response : authenticateResponse.getAny()) {
+                    if (response instanceof UserForAuthenticateResponse) {
+                        UserForAuthenticateResponse userForAuthenticateResponse = (UserForAuthenticateResponse)response;
+
+                        JSONObject subAccess = new JSONObject();
+                        subAccess.put(JSONConstants.ID, userForAuthenticateResponse.getId());
+
+                        JSONArray subRoles = new JSONArray();
+
+                        for (Role role : userForAuthenticateResponse.getRoles().getRole()) {
+                            JSONObject subRole = new JSONObject();
+                            subRole.put(JSONConstants.SERVICE_ID, role.getServiceId());
+                            subRole.put(JSONConstants.DESCRIPTION, role.getDescription());
+                            subRole.put(JSONConstants.NAME, role.getName());
+                            subRole.put(JSONConstants.ID, role.getId());
+
+                            subRoles.add(subRole);
+                        }
+
+                        subAccess.put(JSONConstants.ROLES, subRoles);
+                        access.put(JSONConstants.ACCESS, subAccess);
+                        break;
+                    }
+                }
+            }
+
             String jsonText = JSONValue.toJSONString(outer);
             outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
 
@@ -273,15 +300,6 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
             ImpersonationResponse authenticateResponse = (ImpersonationResponse) object.getValue();
             access.put(JSONConstants.TOKEN, getToken(authenticateResponse.getToken()));
 
-            //TODO:
-            /*
-            if (authenticateResponse.getImpersonator() != null) {
-                access.put(JSONConstants.IMPERSONATOR, getTokenUser(authenticateResponse.getImpersonator()));
-            }
-            if (authenticateResponse.getUser() != null) {
-                access.put(JSONConstants.USER, getTokenUser(authenticateResponse.getUser()));
-            }
-            */
             outer.put(JSONConstants.ACCESS, access);
 
             String jsonText = JSONValue.toJSONString(outer);
