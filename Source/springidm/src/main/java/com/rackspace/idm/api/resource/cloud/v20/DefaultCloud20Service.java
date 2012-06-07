@@ -1216,7 +1216,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
-    private boolean isUserAdmin(ScopeAccess requesterScopeAccess, List<TenantRole> tenantRoles) {
+    boolean isUserAdmin(ScopeAccess requesterScopeAccess, List<TenantRole> tenantRoles) {
         if (tenantRoles == null) {
             tenantRoles = tenantService.getTenantRolesForScopeAccess(requesterScopeAccess);
         }
@@ -1230,7 +1230,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         return hasRole;
     }
 
-    private boolean isDefaultUser(ScopeAccess requesterScopeAccess, List<TenantRole> tenantRoles) {
+    boolean isDefaultUser(ScopeAccess requesterScopeAccess, List<TenantRole> tenantRoles) {
         if (tenantRoles == null) {
             tenantRoles = tenantService.getTenantRolesForScopeAccess(requesterScopeAccess);
         }
@@ -1998,6 +1998,17 @@ public class DefaultCloud20Service implements Cloud20Service {
                 RackerScopeAccess rackerScopeAccess = (RackerScopeAccess) sa;
                 Racker racker = userService.getRackerByRackerId(rackerScopeAccess.getRackerId());
                 List<TenantRole> roleList = tenantService.getTenantRolesForScopeAccess(rackerScopeAccess);
+
+                //Add Racker eDir Roles
+                List<String> rackerRoles = userService.getRackerRoles(racker.getRackerId());
+                if(rackerRoles != null) {
+                    for(String r : rackerRoles){
+                        TenantRole t = new TenantRole();
+                        t.setName(r);
+                        roleList.add(t);
+                    }
+                }
+                
                 access.setUser(userConverterCloudV20.toUserForAuthenticateResponse(racker, roleList));
             } else if (sa instanceof UserScopeAccess || sa instanceof ImpersonatedScopeAccess) {
                 String username = "";
@@ -2101,7 +2112,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         return ok;
     }
 
-    private Application checkAndGetApplication(String applicationId) {
+    Application checkAndGetApplication(String applicationId) {
         Application application = this.clientService.getById(applicationId);
         if (application == null) {
             String errMsg = String.format("Service %s not found", applicationId);
@@ -2131,7 +2142,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         return baseUrl;
     }
 
-    private CloudBaseUrl checkAndGetEndpointTemplate(String id) {
+    CloudBaseUrl checkAndGetEndpointTemplate(String id) {
         Integer baseUrlId;
         try {
             baseUrlId = Integer.parseInt(id);
@@ -2190,7 +2201,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         return user;
     }
 
-    private User checkAndGetSoftDeletedUser(String id) {
+    User checkAndGetSoftDeletedUser(String id) {
         User user = this.userService.getSoftDeletedUser(id);
 
         if (user == null) {
@@ -2547,5 +2558,17 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     public void setAuthConverterCloudV20(AuthConverterCloudV20 authConverterCloudV20) {
         this.authConverterCloudV20 = authConverterCloudV20;
+    }
+
+    public void setExtensionMap(HashMap<String, JAXBElement<Extension>> extensionMap) {
+        this.extensionMap = extensionMap;
+    }
+
+    public void setCurrentExtensions(JAXBElement<Extensions> currentExtensions) {
+        this.currentExtensions = currentExtensions;
+    }
+
+    public void setServiceConverterCloudV20(ServiceConverterCloudV20 serviceConverterCloudV20) {
+        this.serviceConverterCloudV20 = serviceConverterCloudV20;
     }
 }

@@ -680,9 +680,9 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return sa;
     }
 
+    // Return UserScopeAccess from the directory, valid, expired or null
     @Override
-    public UserScopeAccess getUserScopeAccessForClientId(String userUniqueId, String clientId) {
-        logger.debug("Getting User ScopeAccess by clientId {}", clientId);
+    public UserScopeAccess getExistingUserScopeAccessForClientId(String userUniqueId, String clientId) {
         final UserScopeAccess scopeAccess = (UserScopeAccess) this.scopeAccessDao
                 .getDirectScopeAccessForParentByClientId(userUniqueId, clientId);
         if (scopeAccess == null) {
@@ -690,6 +690,14 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
+        return scopeAccess;
+    }
+
+    // Return UserScopeAccess from directory, refreshes expired
+    @Override
+    public UserScopeAccess getUserScopeAccessForClientId(String userUniqueId, String clientId) {
+        logger.debug("Getting User ScopeAccess by clientId {}", clientId);
+        UserScopeAccess scopeAccess = getExistingUserScopeAccessForClientId(userUniqueId, clientId);
         //if expired update with new token
         updateExpiredUserScopeAccess(scopeAccess);
         logger.debug("Got User ScopeAccess {} by clientId {}", scopeAccess, clientId);
@@ -715,7 +723,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     @Override
     public void updateUserScopeAccessTokenForClientIdByUser(User user, String clientId, String token, Date expires) {
-        final UserScopeAccess scopeAccess = this.getUserScopeAccessForClientId(user.getUniqueId(), clientId);
+        final UserScopeAccess scopeAccess = this.getExistingUserScopeAccessForClientId(user.getUniqueId(), clientId);
         if (scopeAccess != null) {
             scopeAccess.setAccessTokenString(token);
             scopeAccess.setAccessTokenExp(expires);
@@ -723,7 +731,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             logger.debug("Updated ScopeAccess {} by clientId {}", scopeAccess, clientId);
         }
     }
-
 
     @Override
     public UserScopeAccess getUserScopeAccessForClientIdByMossoIdAndApiCredentials(int mossoId,
