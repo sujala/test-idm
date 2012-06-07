@@ -1085,10 +1085,24 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void listTenants_invalidToken_returns401() throws Exception {
+        doNothing().when(spy).verifyUserLevelAccess("bad");
         when(scopeAccessService.getAccessTokenByAuthHeader("bad")).thenReturn(null);
         when(tenantConverterCloudV20.toTenantList(org.mockito.Matchers.<List<Tenant>>any())).thenReturn(null);
         Response.ResponseBuilder responseBuilder = spy.listTenants(null, "bad", null, 1);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(401));
+    }
+
+    @Test
+    public void listTenants_callsUserLevelAccess() throws Exception {
+        spy.listTenants(null, null, null, null);
+        verify(spy).verifyUserLevelAccess(null);
+    }
+
+    @Test
+    public void listTenants_scopeAccessSaNotNullResponseOk_returns200() throws Exception {
+        when(scopeAccessService.getAccessTokenByAuthHeader(authToken)).thenReturn(new ScopeAccess());
+        Response.ResponseBuilder responseBuilder = spy.listTenants(httpHeaders, authToken, null, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
     @Test
@@ -1874,9 +1888,40 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void listEndpointTemplates_serviceIdIsBlankResponseOk_returns200() throws Exception {
+        when(jaxbObjectFactories.getOpenStackIdentityExtKscatalogV1Factory()).thenReturn(new org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory());
+        Response.ResponseBuilder responseBuilder = spy.listEndpointTemplates(httpHeaders, authToken, "");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void listEndpointTemplates_serviceIdNotBlankResponseOk_returns200() throws Exception {
+        List<CloudBaseUrl> cloudBaseUrlList = new ArrayList<CloudBaseUrl>();
+        when(jaxbObjectFactories.getOpenStackIdentityExtKscatalogV1Factory()).thenReturn(new org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory());
+        doReturn(new Application()).when(spy).checkAndGetApplication("serviceId");
+        when(endpointService.getBaseUrlsByServiceId(anyString())).thenReturn(cloudBaseUrlList);
+        Response.ResponseBuilder responseBuilder = spy.listEndpointTemplates(httpHeaders, authToken, "serviceId");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
     public void listRoles_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.listRoles(null, authToken, null, null, 0);
         verify(spy).verifyServiceAdminLevelAccess(authToken);
+    }
+
+    @Test
+    public void listRoles_serviceIdIsBlankResponseOk_returns200() throws Exception {
+        Response.ResponseBuilder responseBuilder = spy.listRoles(httpHeaders, authToken, "", null, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void listRoles_serviceIdNotBlankResponseOk_returns200() throws Exception {
+        List<ClientRole> roles = new ArrayList<ClientRole>();
+        when(clientService.getClientRolesByClientId("serviceId")).thenReturn(roles);
+        Response.ResponseBuilder responseBuilder = spy.listRoles(httpHeaders, authToken, "serviceId", null, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
     @Test
@@ -1886,15 +1931,34 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void listRolesForTenant_responseOk_returns200() throws Exception {
+        Response.ResponseBuilder responseBuilder = spy.listRolesForTenant(httpHeaders, authToken, tenantId, null, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
     public void listRolesForUserOnTenant_verifyServiceAdminLevelAccess() throws Exception {
         spy.listRolesForUserOnTenant(null, authToken, null, null);
         verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
+    public void listRolesForUserOnTenant_responseOk_returns200() throws Exception {
+        Response.ResponseBuilder responseBuilder = spy.listRolesForUserOnTenant(httpHeaders, authToken, tenantId, userId);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
     public void listServices_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.listServices(null, authToken, null, null);
         verify(spy).verifyServiceAdminLevelAccess(authToken);
+    }
+
+    @Test
+    public void listServices_responseOk_returns200() throws Exception {
+        when(jaxbObjectFactories.getOpenStackIdentityExtKsadmnV1Factory()).thenReturn(new org.openstack.docs.identity.api.ext.os_ksadm.v1.ObjectFactory());
+        Response.ResponseBuilder responseBuilder = spy.listServices(httpHeaders, authToken, null, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
     @Test
@@ -1930,9 +1994,24 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void listUserGlobalROlesByServiceId_callsVerifyServiceAdminLevelAccess() throws Exception {
+    public void listUserGlobalRoles_notCloudIdentityAdminAndNotCloudServiceAdminResponseOk_returns200() throws Exception {
+        doReturn(user).when(spy).getUser(any(ScopeAccess.class));
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
+        Response.ResponseBuilder responseBuilder = spy.listUserGlobalRoles(httpHeaders, authToken, userId);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void listUserGlobalRolesByServiceId_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.listUserGlobalRolesByServiceId(null, authToken, null, null);
         verify(spy).verifyServiceAdminLevelAccess(authToken);
+    }
+
+    @Test
+    public void listUserGlobalRolesByServiceId_responseOk_returns200() throws Exception {
+        Response.ResponseBuilder responseBuilder = spy.listUserGlobalRolesByServiceId(httpHeaders, authToken, userId, "serviceId");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
     @Test
@@ -2258,12 +2337,6 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void listTenants_callsUserLevelAccess() throws Exception {
-        spy.listTenants(null, null, null, null);
-        verify(spy).verifyUserLevelAccess(null);
-    }
-
-    @Test
     public void listEndpointsForToken_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.listEndpointsForToken(null, null, null);
         verify(spy).verifyServiceAdminLevelAccess(null);
@@ -2276,6 +2349,24 @@ public class DefaultCloud20ServiceTest {
         when(scopeAccessService.getOpenstackEndpointsForScopeAccess(any(ScopeAccess.class))).thenReturn(openstackEndpointList);
         when(endpointConverterCloudV20.toEndpointList(openstackEndpointList)).thenReturn(new EndpointList());
         Response.ResponseBuilder responseBuilder = spy.listEndpointsForToken(httpHeaders, authToken, "tokenId");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void listExtensions_currentExtensionsIsNullResponseOk_returns200() throws Exception {
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.listExtensions(httpHeaders);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void listExtension_currentExtensionsNotNullResponseOk_returns200() throws Exception {
+        JAXBContext jaxbContext = JAXBContextResolver.get();
+        Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+        InputStream is = StringUtils.class.getResourceAsStream("/extensions.xml");
+        StreamSource ss = new StreamSource(is);
+        currentExtensions = unmarshaller.unmarshal(ss, Extensions.class);
+        defaultCloud20Service.setCurrentExtensions(currentExtensions);
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.listExtensions(httpHeaders);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
