@@ -903,7 +903,7 @@
                 </plugins>
             </build>
         </profile>
-         <profile>
+        <profile>
             <id>soapui-dev2</id>
             <activation>
                 <property>
@@ -1120,6 +1120,13 @@
                 <configuration>
                     <extension>true</extension>
                     <strict>false</strict>
+                    <plugins>
+                        <plugin>
+                            <groupId>org/jvnet/jaxb2_commons</groupId>
+                            <artifactId>annotate</artifactId>
+                            <version>0.4.1.5</version>
+                        </plugin>
+                    </plugins>
                 </configuration>
                 <executions>
                     <execution>
@@ -1144,6 +1151,12 @@
                             <bindingDirectory>target/generated-resources/keystone/xml/xslt</bindingDirectory>
                             <generateDirectory>target/generated-sources/xjc</generateDirectory>
                             <forceRegenerate>true</forceRegenerate>
+                            <bindingIncludes>
+                                <include>*.xjb</include>
+                            </bindingIncludes>
+                            <args>
+                                <arg>-Xannotate</arg>
+                            </args>
                         </configuration>
                     </execution>
                     <execution>

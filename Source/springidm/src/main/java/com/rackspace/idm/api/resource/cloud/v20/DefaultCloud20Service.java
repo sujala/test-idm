@@ -1,5 +1,9 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import java.io.StringWriter;
+
+import javax.xml.bind.Marshaller;
+
 import com.rackspace.docs.identity.api.ext.rax_ga.v1.ImpersonationRequest;
 import com.rackspace.docs.identity.api.ext.rax_ga.v1.ImpersonationResponse;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
@@ -2028,12 +2032,14 @@ public class DefaultCloud20Service implements Cloud20Service {
                     user = userService.getUser(isa.getImpersonatingUsername());
                     roles = tenantService.getTenantRolesForUser(user, null);
                     validateBelongsTo(belongsTo, roles);
-                    ImpersonationResponse impersonationResponse = new ImpersonationResponse();
-                    impersonationResponse.setToken(tokenConverterCloudV20.toToken(isa));
-                    impersonationResponse.setUser(userConverterCloudV20.toUserForAuthenticateResponse(user, roles));
+
+                    access.setToken(tokenConverterCloudV20.toToken(isa));
+                    access.setUser(userConverterCloudV20.toUserForAuthenticateResponse(user, roles));
+
                     List<TenantRole> impRoles = this.tenantService.getGlobalRolesForUser(impersonator, null);
-                    impersonationResponse.setImpersonator(this.userConverterCloudV20.toUserForAuthenticateResponse(impersonator, impRoles));
-                    return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtRaxgaV1Factory().createAccess(impersonationResponse));
+                    UserForAuthenticateResponse userForAuthenticateResponse = userConverterCloudV20.toUserForAuthenticateResponse(impersonator, impRoles);
+
+                    access.getAny().add(userForAuthenticateResponse);
                 }
             }
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createAccess(access));

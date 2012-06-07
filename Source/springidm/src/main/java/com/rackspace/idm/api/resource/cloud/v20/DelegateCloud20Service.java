@@ -196,13 +196,17 @@ public class DelegateCloud20Service implements Cloud20Service {
         }
         AuthenticateResponse validateResponse = (AuthenticateResponse) unmarshallResponse(cloudValidateResponse.getEntity().toString(), AuthenticateResponse.class);
         validateResponse.getToken().setId(impersonatedScopeAccess.getAccessTokenString());
-        ImpersonationResponse impersonationResponse = new ImpersonationResponse();
-        impersonationResponse.setUser(validateResponse.getUser());
-        impersonationResponse.setToken(validateResponse.getToken());
+
+        validateResponse.setUser(validateResponse.getUser());
+        validateResponse.setToken(validateResponse.getToken());
+
         com.rackspace.idm.domain.entity.User impersonator = userService.getUserByScopeAccess(impersonatedScopeAccess);
         List<TenantRole> impRoles = tenantService.getGlobalRolesForUser(impersonator, null);
-        impersonationResponse.setImpersonator(this.userConverterCloudV20.toUserForAuthenticateResponse(impersonator, impRoles));
-        return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtRaxgaV1Factory().createAccess(impersonationResponse));
+        UserForAuthenticateResponse userForAuthenticateResponse = userConverterCloudV20.toUserForAuthenticateResponse(impersonator, impRoles);
+
+        validateResponse.getAny().add(userForAuthenticateResponse);
+
+        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createAccess(validateResponse));
     }
 
     @Override

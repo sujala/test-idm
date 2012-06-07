@@ -18,7 +18,13 @@
 
     <element name="impersonation" type="RAX-GA:ImpersonationRequest" />
     <element name="access" type="RAX-GA:ImpersonationResponse" />
-    <element name="impersonator" type="identity:UserForAuthenticateResponse" />
+    <element name="impersonator" type="identity:UserForAuthenticateResponse" >
+    	<annotation>
+            <xsd:documentation>
+                <p>The user impersonating.</p>
+            </xsd:documentation>
+        </annotation>
+    </element>
 
     <!-- Complex Types -->
     <complexType name="ImpersonationRequest">
@@ -40,20 +46,6 @@
                 <annotation>
                     <xsd:documentation>
                         <p>A token representing the impersonated user.</p>
-                    </xsd:documentation>
-                </annotation>
-            </element>
-            <element name="user" type="identity:UserForAuthenticateResponse">
-                <annotation>
-                    <xsd:documentation>
-                        <p>The user being impersonated.</p>
-                    </xsd:documentation>
-                </annotation>
-            </element>
-            <element name="impersonator" type="identity:UserForAuthenticateResponse">
-                <annotation>
-                    <xsd:documentation>
-                        <p>The user impersonating.</p>
                     </xsd:documentation>
                 </annotation>
             </element>
