@@ -39,7 +39,7 @@ public class AtomHopperClient {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    @Async
+    //@Async
     public void postUser(User user, String authToken, String userStatus) throws JAXBException, IOException, HttpException, URISyntaxException {
         try {
             AtomFeed atomFeed = createAtomFeed(user);
