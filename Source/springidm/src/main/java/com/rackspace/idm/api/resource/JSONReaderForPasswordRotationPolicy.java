@@ -12,6 +12,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyReader;
 import javax.ws.rs.ext.Provider;
 
+import com.rackspace.idm.exception.BadRequestException;
 import org.apache.commons.io.IOUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -19,10 +20,14 @@ import org.json.simple.parser.ParseException;
 
 import com.rackspace.api.idm.v1.PasswordRotationPolicy;
 import com.rackspace.idm.JSONConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
 public class JSONReaderForPasswordRotationPolicy implements MessageBodyReader<PasswordRotationPolicy> {
+    private static Logger logger = LoggerFactory.getLogger(JSONReaderForPasswordRotationPolicy.class);
+
     @Override
     public boolean isReadable(Class<?> type, Type genericType,
         Annotation[] annotations, MediaType mediaType) {
@@ -66,8 +71,8 @@ public class JSONReaderForPasswordRotationPolicy implements MessageBodyReader<Pa
                 }
             }
         } catch (ParseException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            logger.info(e.toString());
+            throw new BadRequestException("Invalid JSON");
         }
 
         return ip;
