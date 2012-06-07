@@ -4,7 +4,7 @@ import com.rackspace.idm.api.converter.cloudv11.AuthConverterCloudV11;
 import com.rackspace.idm.api.converter.cloudv11.EndpointConverterCloudV11;
 import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11;
 import com.rackspace.idm.api.resource.cloud.CloudExceptionResponse;
-import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
+//import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.domain.dao.impl.LdapCloudAdminRepository;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Group;
@@ -83,7 +83,7 @@ public class DefaultCloud11ServiceTest {
     javax.ws.rs.core.HttpHeaders httpHeaders;
     CloudExceptionResponse cloudExceptionResponse;
     Application application = new Application("id",null,"myApp", null, null);
-    AtomHopperClient atomHopperClient;
+//    AtomHopperClient atomHopperClient;
     GroupService userGroupService, cloudGroupService;
     AuthConverterCloudV11 authConverterCloudv11;
 
@@ -108,7 +108,7 @@ public class DefaultCloud11ServiceTest {
         request = mock(HttpServletRequest.class);
         userValidator = mock(UserValidator.class);
         authorizationService = mock(AuthorizationService.class);
-        atomHopperClient = mock(AtomHopperClient.class);
+//        atomHopperClient = mock(AtomHopperClient.class);
         userGroupService = mock(GroupService.class);
         cloudGroupService = mock(GroupService.class);
         when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn("Basic YXV0aDphdXRoMTIz");
@@ -132,7 +132,7 @@ public class DefaultCloud11ServiceTest {
         defaultCloud11Service.setNastFacade(nastFacade);
         defaultCloud11Service.setUserValidator(userValidator);
         defaultCloud11Service.setAuthorizationService(authorizationService);
-        defaultCloud11Service.setAtomHopperClient(atomHopperClient);
+//        defaultCloud11Service.setAtomHopperClient(atomHopperClient);
         defaultCloud11Service.setCloudGroupService(cloudGroupService);
         defaultCloud11Service.setUserGroupService(userGroupService);
         defaultCloud11Service.setCredentialUnmarshaller(credentialUnmarshaller);
@@ -1258,21 +1258,21 @@ public class DefaultCloud11ServiceTest {
         verify(userService).softDeleteUser(userDO);
     }
 //TODO
-    @Test
-    public void deleteUser_withValidUser_callsAtomHopperClient_postUser() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUser(null);
-        when(userService.getUser(null)).thenReturn(userDO);
-        doReturn(new UserScopeAccess()).when(spy).getAuthtokenFromRequest(null);
-        spy.deleteUser(null, null, null);
-        verify(atomHopperClient).postUser(eq(userDO), anyString(), eq("deleted"));
-    }
+//    @Test
+//    public void deleteUser_withValidUser_callsAtomHopperClient_postUser() throws Exception {
+//        doNothing().when(spy).authenticateCloudAdminUser(null);
+//        when(userService.getUser(null)).thenReturn(userDO);
+//        doReturn(new UserScopeAccess()).when(spy).getAuthtokenFromRequest(null);
+//        spy.deleteUser(null, null, null);
+//        verify(atomHopperClient).postUser(eq(userDO), anyString(), eq("deleted"));
+//    }
 
     @Test
     public void deleteUser_withValidUser_returnsResponseStatus204() throws Exception {
         doNothing().when(spy).authenticateCloudAdminUser(null);
         when(userService.getUser(null)).thenReturn(userDO);
         doReturn(new UserScopeAccess()).when(spy).getAuthtokenFromRequest(null);
-        doNothing().when(atomHopperClient).postUser(eq(userDO), anyString(), eq("deleted"));
+//        doNothing().when(atomHopperClient).postUser(eq(userDO), anyString(), eq("deleted"));
         Response.ResponseBuilder responseBuilder = spy.deleteUser(null, null, null);
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(204));
     }
@@ -1931,17 +1931,17 @@ public class DefaultCloud11ServiceTest {
     }
 
     //TODO
-    @Test
-    public void updateUser_userIsDisabled_callsAtomHopperClient_postUser() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUser(request);
-        doNothing().when(userValidator).validate(user);
-        user.setId("userId");
-        user.setEnabled(false);
-        when(userService.getUser("userId")).thenReturn(userDO);
-        doReturn(new UserScopeAccess()).when(spy).getAuthtokenFromRequest(request);
-        spy.updateUser(request, "userId", null, user);
-        verify(atomHopperClient).postUser(any(com.rackspace.idm.domain.entity.User.class), anyString(), eq("disabled"));
-    }
+//    @Test
+//    public void updateUser_userIsDisabled_callsAtomHopperClient_postUser() throws Exception {
+//        doNothing().when(spy).authenticateCloudAdminUser(request);
+//        doNothing().when(userValidator).validate(user);
+//        user.setId("userId");
+//        user.setEnabled(false);
+//        when(userService.getUser("userId")).thenReturn(userDO);
+//        doReturn(new UserScopeAccess()).when(spy).getAuthtokenFromRequest(request);
+//        spy.updateUser(request, "userId", null, user);
+//        verify(atomHopperClient).postUser(any(com.rackspace.idm.domain.entity.User.class), anyString(), eq("disabled"));
+//    }
 
     @Test
     public void updateUser_userExistsAndIsValid_callsUserConverterCloudV11_toCloudV11User() throws Exception {
