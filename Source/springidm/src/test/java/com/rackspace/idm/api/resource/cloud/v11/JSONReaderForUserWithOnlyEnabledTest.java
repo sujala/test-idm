@@ -10,6 +10,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 
@@ -51,7 +52,8 @@ public class JSONReaderForUserWithOnlyEnabledTest {
     public void readFrom_withValidStream_returnsUserObject() throws Exception {
         JSONReaderForUserWithOnlyEnabled jsonReaderForUserWithOnlyEnabled = new JSONReaderForUserWithOnlyEnabled();
         InputStream inputStream = new BufferedInputStream(new ByteArrayInputStream(userOnlyEnabledJSON.getBytes()));
-        jsonReaderForUserWithOnlyEnabled.readFrom(UserWithOnlyEnabled.class, null, null, null, null, inputStream);
+        UserWithOnlyEnabled userWithOnlyEnabled = jsonReaderForUserWithOnlyEnabled.readFrom(UserWithOnlyEnabled.class, null, null, null, null, inputStream);
+        assertThat("user", userWithOnlyEnabled, is(UserWithOnlyEnabled.class));
     }
 
     @Test
