@@ -7,7 +7,7 @@ import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.api.converter.cloudv20.*;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
-//import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.*;
@@ -102,7 +102,7 @@ public class DefaultCloud20ServiceTest {
     private Group group;
     private UriInfo uriInfo;
     private CloudKsGroupBuilder cloudKsGroupBuilder;
-    //private AtomHopperClient atomHopperClient;
+    private AtomHopperClient atomHopperClient;
     private HttpHeaders httpHeaders;
     private String jsonBody = "{\"passwordCredentials\":{\"username\":\"test_user\",\"password\":\"resetpass\"}}";
     private AuthConverterCloudV20 authConverterCloudV20;
@@ -134,7 +134,7 @@ public class DefaultCloud20ServiceTest {
         clientService = mock(ApplicationService.class);
         config = mock(Configuration.class);
         cloudKsGroupBuilder = mock(CloudKsGroupBuilder.class);
-        //atomHopperClient = mock(AtomHopperClient.class);
+        atomHopperClient = mock(AtomHopperClient.class);
         httpHeaders = mock(HttpHeaders.class);
         authConverterCloudV20 = mock(AuthConverterCloudV20.class);
         serviceConverterCloudV20 = mock(ServiceConverterCloudV20.class);
@@ -156,7 +156,7 @@ public class DefaultCloud20ServiceTest {
         defaultCloud20Service.setClientService(clientService);
         defaultCloud20Service.setConfig(config);
         defaultCloud20Service.setCloudKsGroupBuilder(cloudKsGroupBuilder);
-        //defaultCloud20Service.setAtomHopperClient(atomHopperClient);
+        defaultCloud20Service.setAtomHopperClient(atomHopperClient);
         defaultCloud20Service.setRoleConverterCloudV20(roleConverterCloudV20);
         defaultCloud20Service.setAuthConverterCloudV20(authConverterCloudV20);
         defaultCloud20Service.setServiceConverterCloudV20(serviceConverterCloudV20);
