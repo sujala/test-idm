@@ -2571,4 +2571,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     public void setServiceConverterCloudV20(ServiceConverterCloudV20 serviceConverterCloudV20) {
         this.serviceConverterCloudV20 = serviceConverterCloudV20;
     }
+
+    public void setDelegateCloud20Service(DelegateCloud20Service delegateCloud20Service) {
+        this.delegateCloud20Service = delegateCloud20Service;
+    }
 }
