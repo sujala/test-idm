@@ -5,6 +5,7 @@ import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.idm.api.converter.cloudv20.*;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
+import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Application;
@@ -21,17 +22,28 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.verification.VerificationMode;
+import org.openstack.docs.common.api.v1.Extension;
+import org.openstack.docs.common.api.v1.Extensions;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
-import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.*;
 import org.openstack.docs.identity.api.v2.*;
+import org.openstack.docs.identity.api.v2.ObjectFactory;
+import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import javax.ws.rs.core.*;
+import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
+import javax.xml.bind.Unmarshaller;
 import javax.xml.namespace.QName;
+import javax.xml.transform.stream.StreamSource;
+import java.io.InputStream;
 import java.net.URI;
+import java.rmi.ServerException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 import static org.hamcrest.Matchers.*;
@@ -90,6 +102,11 @@ public class DefaultCloud20ServiceTest {
     private HttpHeaders httpHeaders;
     private String jsonBody = "{\"passwordCredentials\":{\"username\":\"test_user\",\"password\":\"resetpass\"}}";
     private AuthConverterCloudV20 authConverterCloudV20;
+    private HashMap<String, JAXBElement<Extension>> extensionMap;
+    private JAXBElement<Extensions> currentExtensions;
+    private ServiceConverterCloudV20 serviceConverterCloudV20;
+    private String passwordCredentials = "passwordCredentials";
+    private String apiKeyCredentials = "RAX-KSKEY:apiKeyCredentials";
 
     @Before
     public void setUp() throws Exception {
@@ -114,6 +131,7 @@ public class DefaultCloud20ServiceTest {
 //        atomHopperClient = mock(AtomHopperClient.class);
         httpHeaders = mock(HttpHeaders.class);
         authConverterCloudV20 = mock(AuthConverterCloudV20.class);
+        serviceConverterCloudV20 = mock(ServiceConverterCloudV20.class);
 
 
         //setting mocks
@@ -134,6 +152,7 @@ public class DefaultCloud20ServiceTest {
 //        defaultCloud20Service.setAtomHopperClient(atomHopperClient);
         defaultCloud20Service.setRoleConverterCloudV20(roleConverterCloudV20);
         defaultCloud20Service.setAuthConverterCloudV20(authConverterCloudV20);
+        defaultCloud20Service.setServiceConverterCloudV20(serviceConverterCloudV20);
 
         //fields
         user = new User();
@@ -1269,6 +1288,13 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void checkToken_throwsException_returns500() throws Exception {
+        doThrow(new NullPointerException()).when(spy).verifyServiceAdminLevelAccess(authToken);
+        Response.ResponseBuilder responseBuilder = spy.checkToken(null, authToken, null, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(500));
+    }
+
+    @Test
     public void deleteEndpoint_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.deleteEndpoint(null, authToken, authToken, null);
         verify(spy).verifyServiceAdminLevelAccess(authToken);
@@ -1327,9 +1353,100 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void deleteUserCredential_passwordCredentials_returns501() throws Exception {
+        String credentialType = "passwordCredentials";
+        Response.ResponseBuilder responseBuilder = spy.deleteUserCredential(null, authToken, null, credentialType);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(501));
+    }
+
+    @Test
+    public void deleteUserCredential_notPasswordCredentialAndNotAPIKEYCredential_returns400() throws Exception {
+        String credentialType = "";
+        Response.ResponseBuilder responseBuilder = spy.deleteUserCredential(null, authToken, null, credentialType);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
+    public void deleteUserCredential_APIKEYCredential_callsCheckAndGetUser() throws Exception {
+        String credentialType = "RAX-KSKEY:apiKeyCredentials";
+        spy.deleteUserCredential(null, authToken, "userId", credentialType);
+        verify(spy).checkAndGetUser("userId");
+    }
+
+    @Test
+    public void deleteUserCredential_APIKeyCredential_callsUserServiceUpdateUser() throws Exception {
+        String credentialType = "RAX-KSKEY:apiKeyCredentials";
+        doReturn(new User()).when(spy).checkAndGetUser("userId");
+        spy.deleteUserCredential(null, authToken, "userId", credentialType);
+        verify(userService).updateUser(any(User.class), eq(false));
+    }
+
+    @Test
+    public void deleteUserCredential_APIKeyCredentialResponseNoContent_returns204() throws Exception {
+        String credentialType = "RAX-KSKEY:apiKeyCredentials";
+        doReturn(new User()).when(spy).checkAndGetUser("userId");
+        doNothing().when(userService).updateUser(any(User.class), eq(false));
+        Response.ResponseBuilder responseBuilder = spy.deleteUserCredential(null, authToken, "userId", credentialType);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(204));
+    }
+
+    @Test
     public void deleteUserRole_callsVerifyUserAdminLevelAccess() throws Exception {
         spy.deleteUserRole(null, authToken, null, null);
         verify(spy).verifyUserAdminLevelAccess(authToken);
+    }
+
+    @Test
+    public void deleteUserRole_callsTenantServiceGetGlobalRolesForUser() throws Exception {
+        spy.deleteUserRole(null, authToken, userId, null);
+        verify(tenantService).getGlobalRolesForUser(any(User.class));
+    }
+
+    @Test
+    public void deleteUserRole_roleIsNull_returns404() throws Exception {
+        Response.ResponseBuilder responseBuilder = spy.deleteUserRole(null, authToken, userId, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(404));
+    }
+
+    @Test
+    public void deleteUserRole_callsScopeAccessService() throws Exception {
+        List<TenantRole> globalRoles = new ArrayList<TenantRole>();
+        globalRoles.add(tenantRole);
+        when(tenantService.getGlobalRolesForUser(any(User.class))).thenReturn(globalRoles);
+        spy.deleteUserRole(null, authToken, userId, "tenantRoleId");
+        verify(scopeAccessService, times(2)).getScopeAccessByAccessToken(authToken);
+    }
+
+    @Test
+    public void deleteUserRole_notCloudIdentityAdminAndAdminRoleThrowsForbiddenException_returns403() throws Exception {
+        List<TenantRole> globalRoles = new ArrayList<TenantRole>();
+        tenantRole.setName("identity:admin");
+        globalRoles.add(tenantRole);
+        when(tenantService.getGlobalRolesForUser(any(User.class))).thenReturn(globalRoles);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(config.getString("cloudAuth.adminRole")).thenReturn("identity:admin");
+        Response.ResponseBuilder responseBuilder = spy.deleteUserRole(httpHeaders, authToken, userId, "tenantRoleId");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(403));
+    }
+
+    @Test
+    public void deleteUserRole_callsTenantServiceDeleteGlobalRole() throws Exception {
+        List<TenantRole> globalRoles = new ArrayList<TenantRole>();
+        globalRoles.add(tenantRole);
+        when(tenantService.getGlobalRolesForUser(any(User.class))).thenReturn(globalRoles);
+        spy.deleteUserRole(httpHeaders, authToken, userId, "tenantRoleId");
+        verify(tenantService).deleteGlobalRole(any(TenantRole.class));
+    }
+
+    @Test
+    public void deleteUserRole_responseNoContent_returns204() throws Exception {
+        List<TenantRole> globalRoles = new ArrayList<TenantRole>();
+        globalRoles.add(tenantRole);
+        when(tenantService.getGlobalRolesForUser(any(User.class))).thenReturn(globalRoles);
+        doNothing().when(tenantService).deleteGlobalRole(any(TenantRole.class));
+        Response.ResponseBuilder responseBuilder = spy.deleteUserRole(httpHeaders, authToken, userId, "tenantRoleId");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(204));
     }
 
     @Test
@@ -1339,9 +1456,41 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void getEndpoint_throwsNotFoundException_returns404() throws Exception {
+        Response.ResponseBuilder responseBuilder = spy.getEndpoint(null, authToken, tenantId, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(404));
+    }
+
+    @Test
+    public void getEndpoint_callsCheckAndGetEndPointTemplate() throws Exception {
+        tenant.addBaseUrlId("endpointId");
+        doReturn(tenant).when(spy).checkAndGetTenant(tenantId);
+        spy.getEndpoint(null, authToken, tenantId, "endpointId");
+        verify(spy).checkAndGetEndpointTemplate("endpointId");
+    }
+
+    @Test
+    public void getEndpoint_responseOk_returns200() throws Exception {
+        tenant.addBaseUrlId("endpointId");
+        doReturn(tenant).when(spy).checkAndGetTenant(tenantId);
+        doReturn(cloudBaseUrl).when(spy).checkAndGetEndpointTemplate("endpointId");
+        Response.ResponseBuilder responseBuilder = spy.getEndpoint(httpHeaders, authToken, tenantId, "endpointId");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
     public void getEndpointTemplate_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.getEndpointTemplate(null, authToken, null);
         verify(spy).verifyServiceAdminLevelAccess(authToken);
+    }
+
+    @Test
+    public void getEndpointTemplate_responseOk_returns200() throws Exception {
+        doReturn(cloudBaseUrl).when(spy).checkAndGetEndpointTemplate("endpointTemplateId");
+        when(endpointConverterCloudV20.toEndpointTemplate(cloudBaseUrl)).thenReturn(endpointTemplate);
+        when(jaxbObjectFactories.getOpenStackIdentityExtKscatalogV1Factory()).thenReturn(new org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory());
+        Response.ResponseBuilder responseBuilder = spy.getEndpointTemplate(httpHeaders, authToken, "endpointTemplateId");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
     @Test
@@ -1351,9 +1500,22 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void getRole_responseOk_returns200() throws Exception {
+        Response.ResponseBuilder responseBuilder = spy.getRole(httpHeaders, authToken, roleId);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
     public void getSecretQA_callsverifyServiceAdminLevelAccess() throws Exception {
         spy.getSecretQA(null, authToken, null);
         verify(spy).verifyServiceAdminLevelAccess(authToken);
+    }
+
+    @Test
+    public void getSecretQA_responseOk_returns200() throws Exception {
+        when(jaxbObjectFactories.getRackspaceIdentityExtKsqaV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_ksqa.v1.ObjectFactory());
+        Response.ResponseBuilder responseBuilder = spy.getSecretQA(httpHeaders, authToken, userId);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
     @Test
@@ -1363,15 +1525,43 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void getService_responseOk_returns200() throws Exception {
+        doReturn(new Application()).when(spy).checkAndGetApplication("serviceId");
+        when(jaxbObjectFactories.getOpenStackIdentityExtKsadmnV1Factory()).thenReturn(new org.openstack.docs.identity.api.ext.os_ksadm.v1.ObjectFactory());
+        when(serviceConverterCloudV20.toService(any(Application.class))).thenReturn(new Service());
+        Response.ResponseBuilder responseBuilder = spy.getService(httpHeaders, authToken, "serviceId");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
     public void getTenantById_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.getTenantById(null, authToken, null);
         verify(spy).verifyServiceAdminLevelAccess(authToken);
     }
 
     @Test
+    public void getTenantById_responseOk_returns200() throws Exception {
+        Response.ResponseBuilder responseBuilder = spy.getTenantById(httpHeaders, authToken, tenantId);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
     public void getTenantByName_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.getTenantByName(null, authToken, null);
         verify(spy).verifyServiceAdminLevelAccess(authToken);
+    }
+
+    @Test
+    public void getTenantByName_tenantIsNullThrowsNotFoundException_returns404() throws Exception {
+        Response.ResponseBuilder responseBuilder = spy.getTenantByName(null, authToken, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(404));
+    }
+
+    @Test
+    public void getTenantByName_responseOk_returns200() throws Exception {
+        when(tenantService.getTenantByName(tenantId)).thenReturn(tenant);
+        Response.ResponseBuilder responseBuilder = spy.getTenantByName(httpHeaders, authToken, tenantId);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
     @Test
@@ -1391,9 +1581,153 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void getUserById_isCloudUserAndIdMatchesResponseOk_returns200() throws Exception {
+        when(authorizationService.authorizeCloudUser(any(ScopeAccess.class))).thenReturn(true);
+        doReturn(user).when(spy).getUser(any(ScopeAccess.class));
+        Response.ResponseBuilder responseBuilder = spy.getUserById(httpHeaders, authToken, userId);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void getUserById_isCloudUserAndIdDoesNotMatchThrowForbiddenException_returns403() throws Exception {
+        when(authorizationService.authorizeCloudUser(any(ScopeAccess.class))).thenReturn(true);
+        doReturn(user).when(spy).getUser(any(ScopeAccess.class));
+        Response.ResponseBuilder responseBuilder = spy.getUserById(httpHeaders, authToken, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(403));
+    }
+
+    @Test
+    public void getUserById_responseOk_returns200() throws Exception {
+        doReturn(new User()).when(spy).getUser(any(ScopeAccess.class));
+        Response.ResponseBuilder responseBuilder = spy.getUserById(httpHeaders, authToken, userId);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void getUserByName_callsVerifyUserLevelAccess() throws Exception {
+        spy.getUserByName(null, authToken, null);
+        verify(spy).verifyUserLevelAccess(authToken);
+    }
+
+    @Test
+    public void getUserByName_userIsNullThrowsNotFoundException_returns404() throws Exception {
+        Response.ResponseBuilder responseBuilder = spy.getUserByName(null, authToken, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(404));
+    }
+
+    @Test
+    public void getUserByName_callsScopeAccessServiceGetScopeAccessByAccessToken() throws Exception {
+        when(userService.getUser("userName")).thenReturn(user);
+        spy.getUserByName(null, authToken, "userName");
+        verify(scopeAccessService, times(2)).getScopeAccessByAccessToken(authToken);
+    }
+
+    @Test
+    public void getUserByName_adminUser_callsVerifyDomain() throws Exception {
+        when(userService.getUser("userName")).thenReturn(user);
+        doReturn(true).when(spy).isUserAdmin(any(ScopeAccess.class), any(List.class));
+        when(userService.getUserByAuthToken(authToken)).thenReturn(user);
+        spy.getUserByName(null, authToken, "userName");
+        verify(spy).verifyDomain(user, user);
+    }
+
+    @Test
+    public void getUserByName_defaultUser_callsVerifySelf() throws Exception {
+        when(userService.getUser("userName")).thenReturn(user);
+        doReturn(false).when(spy).isUserAdmin(any(ScopeAccess.class), any(List.class));
+        doReturn(true).when(spy).isDefaultUser(any(ScopeAccess.class), any(List.class));
+        when(userService.getUserByAuthToken(authToken)).thenReturn(user);
+        spy.getUserByName(null, authToken, "userName");
+        verify(spy).verifySelf(authToken, user);
+    }
+
+    @Test
+    public void getUserByName_responseOk_returns200() throws Exception {
+        when(userService.getUser("userName")).thenReturn(user);
+        doReturn(false).when(spy).isUserAdmin(any(ScopeAccess.class), any(List.class));
+        doReturn(false).when(spy).isDefaultUser(any(ScopeAccess.class), any(List.class));
+        when(userService.getUserByAuthToken(authToken)).thenReturn(user);
+        Response.ResponseBuilder responseBuilder = spy.getUserByName(httpHeaders, authToken, "userName");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
     public void getUserCredential_callsVerifyUserLevelAccess() throws Exception {
         spy.getUserCredential(null, authToken, null, null);
         verify(spy).verifyUserLevelAccess(authToken);
+    }
+
+    @Test
+    public void getUserCredential_notPasswordCredentialOrAPIKeyCredentialThrowsBadRequest_returns400() throws Exception {
+        Response.ResponseBuilder responseBuilder = spy.getUserCredential(null, authToken, null, "");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
+    public void getUserCredential_cloudUser_callsGetUser() throws Exception {
+        when(authorizationService.authorizeCloudUser(any(ScopeAccess.class))).thenReturn(true);
+        spy.getUserCredential(null, authToken, userId, apiKeyCredentials);
+        verify(spy).getUser(any(ScopeAccess.class));
+    }
+
+    @Test
+    public void getUserCredential_cloudUserIdNotMatchThrowsForbiddenException_returns403() throws Exception {
+        when(authorizationService.authorizeCloudUser(any(ScopeAccess.class))).thenReturn(true);
+        doReturn(user).when(spy).getUser(any(ScopeAccess.class));
+        Response.ResponseBuilder responseBuilder = spy.getUserCredential(null, authToken, "", apiKeyCredentials);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(403));
+    }
+
+    @Test
+    public void getUserCredential_cloudAdminUser_callsGetUser() throws Exception {
+        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
+        spy.getUserCredential(null, authToken, userId, passwordCredentials);
+        verify(spy).getUser(any(ScopeAccess.class));
+    }
+
+    @Test
+    public void getUserCredential_cloudAdminUserIdNotMatchThrowsForbiddenException_returns403() throws Exception {
+        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
+        doReturn(user).when(spy).getUser(any(ScopeAccess.class));
+        Response.ResponseBuilder responseBuilder = spy.getUserCredential(null, authToken, "", passwordCredentials);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(403));
+    }
+
+    @Test
+    public void getUserCredential_userIsNullThrowsNotFoundException_returns404() throws Exception {
+        Response.ResponseBuilder responseBuilder = spy.getUserCredential(null, authToken, "", apiKeyCredentials);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(404));
+    }
+
+    @Test
+    public void getUserCredential_passwordCredentialUserPasswordIsBlank_returns404() throws Exception {
+        when(userService.getUserById(userId)).thenReturn(new User());
+        Response.ResponseBuilder responseBuilder = spy.getUserCredential(null, authToken, userId, passwordCredentials);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(404));
+    }
+
+    @Test
+    public void getUserCredential_passwordCredentialResponseOk_returns200() throws Exception {
+        user.setPassword("123");
+        when(userService.getUserById(userId)).thenReturn(user);
+        Response.ResponseBuilder responseBuilder = spy.getUserCredential(httpHeaders, authToken, userId, passwordCredentials);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void getUserCredential_apiKeyCredentialResponseOk_returns200() throws Exception {
+        user.setApiKey("123");
+        when(userService.getUserById(userId)).thenReturn(user);
+        when(jaxbObjectFactories.getRackspaceIdentityExtKskeyV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory());
+        Response.ResponseBuilder responseBuilder = spy.getUserCredential(httpHeaders, authToken, userId, apiKeyCredentials);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void getUserCredential_apiKeyCredentialAPIKeyIsBlank_returns404() throws Exception {
+        when(userService.getUserById(userId)).thenReturn(user);
+        Response.ResponseBuilder responseBuilder = spy.getUserCredential(httpHeaders, authToken, userId, apiKeyCredentials);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(404));
     }
 
     @Test
@@ -1403,15 +1737,134 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void getUserRole_roleIsNullThrowsNotFoundException_returns404() throws Exception {
+        Response.ResponseBuilder responseBuilder = spy.getUserRole(null, authToken, userId, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(404));
+    }
+
+    @Test
+    public void getUserRole_responseOk_returns200() throws Exception {
+        List<TenantRole> globalRoles = new ArrayList<TenantRole>();
+        globalRoles.add(tenantRole);
+        when(tenantService.getGlobalRolesForUser(any(User.class))).thenReturn(globalRoles);
+        Response.ResponseBuilder responseBuilder = spy.getUserRole(httpHeaders, authToken, userId, "tenantRoleId");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
     public void listCredentials_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.listCredentials(null, authToken, null, null, 0);
         verify(spy).verifyUserLevelAccess(authToken);
     }
 
     @Test
+    public void listCredentials_userAdmin_callsVerifySelf() throws Exception {
+        doReturn(true).when(spy).isUserAdmin(any(ScopeAccess.class), any(List.class));
+        spy.listCredentials(null, authToken, userId, null, null);
+        verify(spy).verifySelf(eq(authToken), any(User.class));
+    }
+
+    @Test
+    public void listCredential_defaultUser_callsVerifySelf() throws Exception {
+        doReturn(true).when(spy).isDefaultUser(any(ScopeAccess.class), any(List.class));
+        spy.listCredentials(null, authToken, userId, null, null);
+        verify(spy).verifySelf(eq(authToken), any(User.class));
+    }
+
+    @Test
+    public void listCredential_userPasswordIsNotBlankResponseOk_returns200() throws Exception {
+        user.setPassword("123");
+        doReturn(user).when(spy).checkAndGetUser(userId);
+        Response.ResponseBuilder responseBuilder = spy.listCredentials(httpHeaders, authToken, userId, null, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void listCredential_userApiKeyIsNotBlankResponseOk_returns200() throws Exception {
+        user.setApiKey("123");
+        doReturn(user).when(spy).checkAndGetUser(userId);
+        when(jaxbObjectFactories.getRackspaceIdentityExtKskeyV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory());
+        Response.ResponseBuilder responseBuilder = spy.listCredentials(httpHeaders, authToken, userId, null, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void listCredential_userPasswordIsBlankAndApiKeyIsBlankResponseOk_returns200() throws Exception {
+        doReturn(user).when(spy).checkAndGetUser(userId);
+        Response.ResponseBuilder responseBuilder = spy.listCredentials(httpHeaders, authToken, userId, null, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void listCredential_userPasswordIsNotBlankAndApiKeyIsNotBlank_returns200() throws Exception {
+        user.setApiKey("123");
+        user.setPassword("123");
+        doReturn(user).when(spy).checkAndGetUser(userId);
+        when(jaxbObjectFactories.getRackspaceIdentityExtKskeyV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory());
+        Response.ResponseBuilder responseBuilder = spy.listCredentials(httpHeaders, authToken, userId, null, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void isUserAdmin_tenantRolesIsNull_callsTenantService() throws Exception {
+        spy.isUserAdmin(null, null);
+        verify(tenantService).getTenantRolesForScopeAccess(null);
+    }
+
+    @Test
+    public void isUserAdmin_returnsFalse() throws Exception {
+        Boolean hasRole = spy.isUserAdmin(null, null);
+        assertThat("boolean value", hasRole, equalTo(false));
+    }
+
+    @Test
+    public void isUserAdmin_returnsTrue() throws Exception {
+        tenantRole.setName("identity:user-admin");
+        List<TenantRole> globalRoles = new ArrayList<TenantRole>();
+        globalRoles.add(tenantRole);
+        Boolean hasRole = spy.isUserAdmin(null, globalRoles);
+        assertThat("boolean value", hasRole, equalTo(true));
+    }
+
+    @Test
+    public void isDefaultUser_tenantRolesIsNull_callsTenantService() throws Exception {
+        spy.isDefaultUser(null, null);
+        verify(tenantService).getTenantRolesForScopeAccess(null);
+    }
+
+    @Test
+    public void isDefaultUser_returnsFalse() throws Exception {
+        Boolean hasRole = spy.isUserAdmin(null, null);
+        assertThat("boolean value", hasRole, equalTo(false));
+    }
+
+    @Test
+    public void isDefaultUser_returnsTrue() throws Exception {
+        tenantRole.setName("identity:default");
+        List<TenantRole> globalRoles = new ArrayList<TenantRole>();
+        globalRoles.add(tenantRole);
+        Boolean hasRole = spy.isDefaultUser(null, globalRoles);
+        assertThat("boolean value", hasRole, equalTo(true));
+    }
+
+    @Test
     public void listEndpoints_verifyServiceAdminLevelAccess() throws Exception {
         spy.listEndpoints(null, authToken, null);
         verify(spy).verifyServiceAdminLevelAccess(authToken);
+    }
+
+    @Test
+    public void listEndpoints_baseUrlIdsIsNotNullResponseOk_returns200() throws Exception {
+        Response.ResponseBuilder responseBuilder = spy.listEndpoints(httpHeaders, authToken, tenantId);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void listEndpoints_baseUrlIdsIsNullResponseOk_returns200() throws Exception {
+        tenant.setBaseUrlIds(null);
+        doReturn(tenant).when(spy).checkAndGetTenant(tenantId);
+        Response.ResponseBuilder responseBuilder = spy.listEndpoints(httpHeaders, authToken, tenantId);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
     @Test
@@ -1817,6 +2270,16 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void listEndpointsForToken_responseOk_returns200() throws Exception {
+        List<OpenstackEndpoint> openstackEndpointList = new ArrayList<OpenstackEndpoint>();
+        doReturn(new ScopeAccess()).when(spy).checkAndGetToken("tokenId");
+        when(scopeAccessService.getOpenstackEndpointsForScopeAccess(any(ScopeAccess.class))).thenReturn(openstackEndpointList);
+        when(endpointConverterCloudV20.toEndpointList(openstackEndpointList)).thenReturn(new EndpointList());
+        Response.ResponseBuilder responseBuilder = spy.listEndpointsForToken(httpHeaders, authToken, "tokenId");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
     public void addGroup_callsCloudGroupBuilder() throws Exception {
         CloudGroupBuilder cloudGrpBuilder = mock(CloudGroupBuilder.class);
         defaultCloud20Service.setCloudGroupBuilder(cloudGrpBuilder);
@@ -2149,6 +2612,27 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void getExtension_extensionMapNotNullResponseOk_returns200() throws Exception {
+        extensionMap = mock(HashMap.class);
+        defaultCloud20Service.setExtensionMap(extensionMap);
+        when(extensionMap.containsKey(anyObject())).thenReturn(true);
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.getExtension(null, "RAX-KSKEY");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void getExtension_currentExtensionNotNullThrowsException_returns500() throws Exception {
+        JAXBContext jaxbContext = JAXBContextResolver.get();
+        Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+        InputStream is = StringUtils.class.getResourceAsStream("/extensions.xml");
+        StreamSource ss = new StreamSource(is);
+        currentExtensions = unmarshaller.unmarshal(ss, Extensions.class);
+        defaultCloud20Service.setCurrentExtensions(currentExtensions);
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.getExtension(null, "RAX-KSKEY");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(500));
+    }
+
+    @Test
     public void listUserGroups_noGroup_ReturnDefaultGroup() throws Exception {
         when(userGroupService.getGroupById(config.getInt(org.mockito.Matchers.<String>any()))).thenReturn(group);
         when(cloudKsGroupBuilder.build(org.mockito.Matchers.<Group>any())).thenReturn(groupKs);
@@ -2195,5 +2679,39 @@ public class DefaultCloud20ServiceTest {
         user2.setUniqueId("!foo");
         defaultCloud20Service.verifySelf("token", user2);
         verify(userService).getUserByScopeAccess(org.mockito.Matchers.any(ScopeAccess.class));
+    }
+
+    @Test
+    public void deleteUserFromSoftDeleted_callsCheckXAUTHTOKEN() throws Exception {
+        spy.deleteUserFromSoftDeleted(null, authToken, null);
+        verify(spy).checkXAUTHTOKEN(authToken, true, null);
+    }
+
+    @Test
+    public void deleteUserFromSoftDeleted_callsCheckAndGetSoftDeletedUser() throws Exception {
+        spy.deleteUserFromSoftDeleted(null, authToken, "userId");
+        verify(spy).checkAndGetSoftDeletedUser("userId");
+    }
+
+    @Test
+    public void deleteUserFromSoftDeleted_callsUserServiceDeleteUser() throws Exception {
+        doReturn(new User()).when(spy).checkAndGetSoftDeletedUser("userId");
+        spy.deleteUserFromSoftDeleted(null, authToken, "userId");
+        verify(userService).deleteUser(any(User.class));
+    }
+
+    @Test
+    public void deleteUserFromSoftDeleted_responseNoContent_returns204() throws Exception {
+        doReturn(new User()).when(spy).checkAndGetSoftDeletedUser("userId");
+        doNothing().when(userService).deleteUser(any(User.class));
+        Response.ResponseBuilder responseBuilder = spy.deleteUserFromSoftDeleted(null, authToken, "userId");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(204));
+    }
+
+    @Test
+    public void deleteUserFromSoftDeleted_throwsExceptionResponseBadRequest_returns400() throws Exception {
+        doThrow(new BadRequestException()).when(spy).checkXAUTHTOKEN(authToken, true, null);
+        Response.ResponseBuilder responseBuilder = spy.deleteUserFromSoftDeleted(null, authToken, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
     }
 }
