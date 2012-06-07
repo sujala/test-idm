@@ -55,6 +55,7 @@ public class AtomHopperClient {
             if (response.getStatusLine().getStatusCode() != 201) {
                 logger.warn("Failed to create delete feed for user: " + user.getUsername() + "with Id:" + user.getId());
             }
+
         } catch (Exception e) {
             logger.warn("AtomHopperClient Exception: " + e);
         }
@@ -85,7 +86,7 @@ public class AtomHopperClient {
         return reqEntity;
     }
 
-    public AtomFeed createAtomFeed(User user){
+    public AtomFeed createAtomFeed(User user) {
         AtomFeed atomFeed = new AtomFeed();
         FeedUser feedUser = new FeedUser();
         feedUser.setDisplayName(user.getDisplayName());
