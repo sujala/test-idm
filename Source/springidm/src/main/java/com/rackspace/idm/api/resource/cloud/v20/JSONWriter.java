@@ -384,7 +384,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
         return linkArray;
     }
 
-    private JSONObject getVersionChoice(VersionChoice versionChoice) {
+    JSONObject getVersionChoice(VersionChoice versionChoice) {
 
         JSONObject outer = new JSONObject();
         JSONObject inner = new JSONObject();
