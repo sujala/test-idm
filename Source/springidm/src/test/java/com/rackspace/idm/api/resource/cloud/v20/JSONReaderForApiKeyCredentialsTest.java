@@ -11,6 +11,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 
@@ -43,10 +44,22 @@ public class JSONReaderForApiKeyCredentialsTest {
     }
 
     @Test
+    public void isReadable_withNonApiKeyCredentialsClass_returnsFalse() throws Exception {
+        boolean readable = jsonReaderForApiKey.isReadable(Object.class, null, null, null);
+        assertThat("readable", readable, equalTo(false));
+    }
+
+    @Test
     public void readFrom_withValidCredentials_returnsCorrectCredentials() throws Exception {
         InputStream inputStream = new BufferedInputStream(new ByteArrayInputStream(jsonBody.getBytes()));
         ApiKeyCredentials apiKeyCredentials = jsonReaderForApiKey.readFrom(ApiKeyCredentials.class, null, null, null, null, inputStream);
         assertThat("returned credentials", apiKeyCredentials.getApiKey(), equalTo("aaaaa-bbbbb-ccccc-12345678"));
+    }
+
+    @Test
+    public void getApiKeyCredentialsFromJSONString_withEmptyJSON_returnsNewApiKeyCredentials() throws Exception {
+        ApiKeyCredentials apiKeyCredentialsFromJSONString = JSONReaderForApiKeyCredentials.getApiKeyCredentialsFromJSONString("{ }");
+        assertThat("credential apiKey", apiKeyCredentialsFromJSONString.getApiKey(), nullValue());
     }
 
     @Test
@@ -76,6 +89,28 @@ public class JSONReaderForApiKeyCredentialsTest {
     public void checkAndGetApiKeyCredentialsFromJSONString_withValidCredentials_returnsCredentialsWithCorrectApiKey() throws Exception {
         ApiKeyCredentials apiKeyCredentials = JSONReaderForApiKeyCredentials.checkAndGetApiKeyCredentialsFromJSONString(jsonBody);
         assertThat("credential's apiKey", apiKeyCredentials.getApiKey(), equalTo("aaaaa-bbbbb-ccccc-12345678"));
+    }
+
+    @Test
+    public void getApiKeyCredentialsFromJSONString_withInvalidUsername_returnsNullUsername() throws Exception {
+        String brokenJsonBody = "{\n" +
+                "    \"RAX-KSKEY:apiKeyCredentials\":{\n" +
+                "        \"apiKey\":\"aaaaa-bbbbb-ccccc-12345678\"\n" +
+                "    }\n" +
+                "}";
+        ApiKeyCredentials apiKeyCredentials = JSONReaderForApiKeyCredentials.getApiKeyCredentialsFromJSONString(brokenJsonBody);
+        assertThat("apiKeyCredentials username", apiKeyCredentials.getUsername(), nullValue());
+    }
+
+    @Test
+    public void getApiKeyCredentialsFromJSONString_withInvalidApiKey_returnsNullApiKey() throws Exception {
+        String brokenJsonBody = "{\n" +
+                "    \"RAX-KSKEY:apiKeyCredentials\":{\n" +
+                "        \"username\":\"jsmith\",\n" +
+                "    }\n" +
+                "}";
+        ApiKeyCredentials apiKeyCredentials = JSONReaderForApiKeyCredentials.getApiKeyCredentialsFromJSONString(brokenJsonBody);
+        assertThat("apiKeyCredentials apiKey", apiKeyCredentials.getApiKey(), nullValue());
     }
 
     @Test(expected = BadRequestException.class)
