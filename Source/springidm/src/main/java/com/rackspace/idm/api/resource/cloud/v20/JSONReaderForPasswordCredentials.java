@@ -39,7 +39,7 @@ public class JSONReaderForPasswordCredentials {
                 }
             }
         } catch (ParseException e) {
-            logger.info("JSON Parsing error");
+            logger.info(e.toString());
             throw new BadRequestException("JSON Parsing error");
         }
 

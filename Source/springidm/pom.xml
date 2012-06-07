@@ -27,7 +27,7 @@
         <!--SoapUI Pro version-->
         <soapui.version>4.0.2-SNAPSHOT</soapui.version>
         <!--Integration test flag for sonar 3.0-->
-        <skip.test.surefire>true</skip.test.surefire>
+        <skip.default.surefire>true</skip.default.surefire>
     </properties>
 
     <dependencies>
@@ -905,7 +905,7 @@
                 </plugins>
             </build>
         </profile>
-         <profile>
+        <profile>
             <id>soapui-dev2</id>
             <activation>
                 <property>
@@ -1122,6 +1122,13 @@
                 <configuration>
                     <extension>true</extension>
                     <strict>false</strict>
+                    <plugins>
+                        <plugin>
+                            <groupId>org/jvnet/jaxb2_commons</groupId>
+                            <artifactId>annotate</artifactId>
+                            <version>0.4.1.5</version>
+                        </plugin>
+                    </plugins>
                 </configuration>
                 <executions>
                     <execution>
@@ -1146,6 +1153,12 @@
                             <bindingDirectory>target/generated-resources/keystone/xml/xslt</bindingDirectory>
                             <generateDirectory>target/generated-sources/xjc</generateDirectory>
                             <forceRegenerate>true</forceRegenerate>
+                            <bindingIncludes>
+                                <include>*.xjb</include>
+                            </bindingIncludes>
+                            <args>
+                                <arg>-Xannotate</arg>
+                            </args>
                         </configuration>
                     </execution>
                     <execution>
@@ -1176,7 +1189,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.12</version>
                 <configuration>
-                    <skip>${skip.test.surefire}</skip>
+                    <skip>${skip.default.surefire}</skip>
                     <systemProperties>
                         <property>
                             <name>idm.properties.location</name>
@@ -1185,7 +1198,6 @@
                         <!--<idm.properties.location>${idm.properties.location}</idm.properties.location> -->
                     </systemProperties>
                 </configuration>
-
                 <executions>
                     <execution>
                         <id>tests</id>
