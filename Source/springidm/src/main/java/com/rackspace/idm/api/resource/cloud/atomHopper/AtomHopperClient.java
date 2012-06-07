@@ -39,9 +39,6 @@ public class AtomHopperClient {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    String deletedURL = config.getString("atomHopperDeletedUrl");
-    String disabledURL = config.getString("atomHopperDisabledUrl");
-
     @Async
     public void postUser(User user, String authToken, String userStatus) throws JAXBException, IOException, HttpException, URISyntaxException {
         try {
@@ -49,9 +46,9 @@ public class AtomHopperClient {
             Writer writer = marshalFeed(atomFeed);
             HttpResponse response;
             if (userStatus.equals("deleted")) {
-                response = executePostRequest(authToken, writer,deletedURL);
+                response = executePostRequest(authToken, writer,config.getString("atomHopperDeletedUrl"));
             } else if (userStatus.equals("disabled")) {
-                response = executePostRequest(authToken, writer, disabledURL);
+                response = executePostRequest(authToken, writer, config.getString("atomHopperDisabledUrl"));
             } else {
                 response = null;
             }
