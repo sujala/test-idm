@@ -330,7 +330,7 @@ public class ApplicationConverterTest {
     @Test
     public void toClientJaxb_withClientWithSecretCredAndIncludeCreds_setsSecretCredentials() throws Exception {
         clientDO.setClientSecret("clientSecret");
-        JAXBElement<Application> applicationJAXBElement = applicationConverter.toClientJaxb(clientDO, false);
+        JAXBElement<Application> applicationJAXBElement = applicationConverter.toClientJaxb(clientDO, true);
         assertThat("client secret", applicationJAXBElement.getValue().getSecretCredentials(), not(nullValue()));
         assertThat("client secret", applicationJAXBElement.getValue().getSecretCredentials().getClientSecret(), equalTo("clientSecret"));
     }
