@@ -1035,8 +1035,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             Unmarshaller unmarshaller = context.createUnmarshaller();
             cred = (JAXBElement<? extends Credentials>) unmarshaller.unmarshal(new StringReader(body));
         } catch (JAXBException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            throw new BadRequestException("Invalid XML");
         }
         if (isAdmin) {
             return adminAuthenticateResponse(cred, response);
