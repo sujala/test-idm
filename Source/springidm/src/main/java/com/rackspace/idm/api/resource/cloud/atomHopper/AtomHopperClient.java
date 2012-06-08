@@ -11,8 +11,9 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+
+//import javax.ejb.Asynchronous;
 
 import javax.ws.rs.core.MediaType;
 import javax.xml.bind.JAXBContext;
@@ -39,7 +40,7 @@ public class AtomHopperClient {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    @Async
+    //@Asynchronous
     public void postUser(User user, String authToken, String userStatus) throws JAXBException, IOException, HttpException, URISyntaxException {
         try {
             AtomFeed atomFeed = createAtomFeed(user);
@@ -55,7 +56,7 @@ public class AtomHopperClient {
             if (response.getStatusLine().getStatusCode() != 201) {
                 logger.warn("Failed to create delete feed for user: " + user.getUsername() + "with Id:" + user.getId());
             }
-
+            
         } catch (Exception e) {
             logger.warn("AtomHopperClient Exception: " + e);
         }
