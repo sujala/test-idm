@@ -137,7 +137,7 @@ public class CloudMigrationService {
         return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createEndpoints(list));
     }
 
-	private EndpointList getEndpointsForUser(String userId) {
+	EndpointList getEndpointsForUser(String userId) {
 		ScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(userId, config.getString("cloudAuth.clientId"));
         List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(sa);
         EndpointList list = endpointConverterCloudV20.toEndpointList(endpoints);
@@ -592,7 +592,7 @@ public class CloudMigrationService {
         userService.deleteUser(username);
     }
     
-    private String getAdminToken() throws URISyntaxException, HttpException, IOException, JAXBException {
+    String getAdminToken() throws URISyntaxException, HttpException, IOException, JAXBException {
         try {
             client = new MigrationClient();
             client.setCloud20Host(config.getString("cloudAuth20url"));
@@ -734,7 +734,7 @@ public class CloudMigrationService {
         }
     }
 
-    private void addOrUpdateGroups(String adminToken) throws Exception {
+    void addOrUpdateGroups(String adminToken) throws Exception {
         client.setCloud20Host(config.getString("cloudAuth20url"));
         Groups groups = client.getGroups(adminToken);
         if(groups != null){
@@ -760,7 +760,7 @@ public class CloudMigrationService {
         }
     }
 
-    private void addOrUpdateEndpointTemplates(String adminToken) throws Exception {
+    void addOrUpdateEndpointTemplates(String adminToken) throws Exception {
         // Using Endpoints call to get Keystone Endpoint
         client.setCloud20Host(config.getString("cloudAuth20url"));
         EndpointTemplateList endpoints = client.getEndpointTemplates(adminToken);

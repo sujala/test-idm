@@ -66,7 +66,7 @@ public class JSONReaderForGroup implements MessageBodyReader<Group> {
                     ip.setDescription(desc.toString());
                 }
                 if (id != null){
-                    ip.setId(desc.toString());
+                    ip.setId(id.toString());
                 }
             }
         } catch (ParseException e) {

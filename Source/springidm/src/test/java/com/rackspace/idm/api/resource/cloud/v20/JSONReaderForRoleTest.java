@@ -125,23 +125,8 @@ public class JSONReaderForRoleTest {
         assertThat("role", JSONReaderForRole.getRoleFromJSONString(body).getServiceId(), equalTo("789"));
     }
 
-    /*@Test
-    public void getUserFromJSONString_validJsonBody_returnsUserForCreateCorrectPassword() throws Exception {
-        String body = "{\n" +
-                "    \"user\": {\n" +
-                "            \"id\": \"123456\",     \n" +
-                "            \"username\": \"cmarin1subX2\",     \n" +
-                "            \"display-name\": \"marin\",     \n" +
-                "            \"email\": \"cmarin1-sub@example.com\",     \n" +
-                "            \"enabled\": false,     \n" +
-                "            \"OS-KSADM:password\":\"Password48\"     \n" +
-                "        }     \n" +
-                "}\n";
-        assertThat("userForCreate", JSONReaderForUserForCreate.getUserFromJSONString(body).getPassword(), equalTo("Password48"));
-    }
-
     @Test
-    public void getUserFromJSONString_passwordCredentialInput_returnsEmptyUserForCreate() throws Exception {
+    public void getRoleFromJSONString_passwordCredentialInput_returnsEmptyRole() throws Exception {
         String body = "{\n" +
                 "    \"auth\":{\n" +
                 "        \"passwordCredentials\":{\n" +
@@ -150,107 +135,87 @@ public class JSONReaderForRoleTest {
                 "        }\n" +
                 "    }\n" +
                 "}";
-        assertThat("userForCreate", JSONReaderForUserForCreate.getUserFromJSONString(body).getId(), nullValue());
-        assertThat("userForCreate", JSONReaderForUserForCreate.getUserFromJSONString(body).getUsername(), nullValue());
-        assertThat("userForCreate", JSONReaderForUserForCreate.getUserFromJSONString(body).getDisplayName(), nullValue());
-        assertThat("userForCreate", JSONReaderForUserForCreate.getUserFromJSONString(body).getPassword(), nullValue());
-        assertThat("userForCreate", JSONReaderForUserForCreate.getUserFromJSONString(body).getEmail(), nullValue());
-        assertThat("userForCreate", JSONReaderForUserForCreate.getUserFromJSONString(body).isEnabled(), equalTo(true));
+        assertThat("role", JSONReaderForRole.getRoleFromJSONString(body).getId(), nullValue());
+        assertThat("role", JSONReaderForRole.getRoleFromJSONString(body).getName(), nullValue());
+        assertThat("role", JSONReaderForRole.getRoleFromJSONString(body).getDescription(), nullValue());
+        assertThat("role", JSONReaderForRole.getRoleFromJSONString(body).getTenantId(), nullValue());
+        assertThat("role", JSONReaderForRole.getRoleFromJSONString(body).getServiceId(), nullValue());
     }
 
     @Test(expected = BadRequestException.class)
-    public void getUserFromJSONString_invalidInput_throwsBadRequestException() throws Exception {
+    public void getRoleFromJSONString_invalidInput_throwsBadRequestException() throws Exception {
         String body = "\"auth\":{\n" +
                 "        \"passwordCredentials\":{\n" +
                 "            \"username\":\"jsmith\",\n" +
                 "            \"password\":\"theUsersPassword\"\n" +
                 "        }\n" +
                 "    }\n";
-        JSONReaderForUserForCreate.getUserFromJSONString(body);
+        JSONReaderForRole.getRoleFromJSONString(body);
     }
 
     @Test
-    public void getUserFromJSONString_nullID_returnsUserForCreateNullID() throws Exception {
+    public void getRoleFromJSONString_nullID_returnsRoleNullID() throws Exception {
         String body = "{\n" +
-                "    \"user\": {\n" +
-                "           \"username\": \"cmarin1subX2\",\n" +
-                "           \"display-name\": \"marin\",\n" +
-                "           \"email\": \"cmarin1-sub@example.com\",\n" +
-                "           \"enabled\": false,\n" +
-                "           \"OS-KSADM:password\": \"Password48\"\n" +
-                "        }\n" +
+                "  \"role\": {\n" +
+                "    \"tenantId\": \"456\"\n" +
+                "    \"serviceId\": \"789\"\n" +
+                "    \"name\": \"Guest\",\n" +
+                "    \"description\": \"Guest Access\"\n" +
+                "  }\n" +
                 "}";
 
-        assertThat("userForCreate", JSONReaderForUserForCreate.getUserFromJSONString(body).getId(), nullValue());
+        assertThat("role", JSONReaderForRole.getRoleFromJSONString(body).getId(), nullValue());
     }
 
     @Test
-    public void getUserFromJSONString_nullUserName_returnsUserForCreateNullUserName() throws Exception {
+    public void getRoleFromJSONString_nullName_returnsRoleNullName() throws Exception {
         String body = "{\n" +
-                "    \"user\": {\n" +
-                "             \"id\": \"123456\",     \n" +
-                "             \"display-name\": \"marin\",\n" +
-                "             \"email\": \"cmarin1-sub@example.com\",\n" +
-                "             \"enabled\": false,\n" +
-                "             \"OS-KSADM:password\":\"Password48\"\n" +
-                "        }\n" +
+                "  \"role\": {\n" +
+                "    \"id\": \"123\",\n" +
+                "    \"tenantId\": \"456\"\n" +
+                "    \"serviceId\": \"789\"\n" +
+                "    \"description\": \"Guest Access\"\n" +
+                "  }\n" +
                 "}";
-        assertThat("userForCreate", JSONReaderForUserForCreate.getUserFromJSONString(body).getUsername(), nullValue());
+        assertThat("role", JSONReaderForRole.getRoleFromJSONString(body).getName(), nullValue());
     }
 
     @Test
-    public void getUserFromJSONString_nullDisplayName_returnsUserForCreateNullDisplayName() throws Exception {
+    public void getRoleFromJSONString_nullDescription_returnsRoleNullDescription() throws Exception {
         String body = "{\n" +
-                "    \"user\": {\n" +
-                "             \"id\": \"123456\",     \n" +
-                "            \"username\": \"cmarin1subX2\",\n" +
-                "            \"email\": \"cmarin1-sub@example.com\",\n" +
-                "            \"enabled\": false,\n" +
-                "            \"OS-KSADM:password\":\"Password48\"\n" +
-                "        }\n" +
+                "  \"role\": {\n" +
+                "    \"id\": \"123\",\n" +
+                "    \"name\": \"Guest\",\n" +
+                "    \"tenantId\": \"456\"\n" +
+                "    \"serviceId\": \"789\"\n" +
+                "  }\n" +
                 "}";
-        assertThat("userForCreate", JSONReaderForUserForCreate.getUserFromJSONString(body).getDisplayName(), nullValue());
+        assertThat("role", JSONReaderForRole.getRoleFromJSONString(body).getDescription(), nullValue());
     }
 
     @Test
-    public void getUserFromJSONString_nullEmail_returnsUserForCreateNullEmail() throws Exception {
+    public void getRoleFromJSONString_nullTenantID_returnsRoleNullTenantID() throws Exception {
         String body = "{\n" +
-                "    \"user\": {\n" +
-                "             \"id\": \"123456\",     \n" +
-                "             \"username\": \"cmarin1subX2\",\n" +
-                "             \"display-name\": \"marin\",\n" +
-                "             \"enabled\": false,\n" +
-                "             \"OS-KSADM:password\":\"Password48\"\n" +
-                "        }\n" +
+                "  \"role\": {\n" +
+                "    \"id\": \"123\",\n" +
+                "    \"name\": \"Guest\",\n" +
+                "    \"description\": \"Guest Access\"\n" +
+                "    \"serviceId\": \"789\"\n" +
+                "  }\n" +
                 "}";
-        assertThat("userForCreate", JSONReaderForUserForCreate.getUserFromJSONString(body).getEmail(), nullValue());
+        assertThat("role", JSONReaderForRole.getRoleFromJSONString(body).getTenantId(), nullValue());
     }
 
     @Test
-    public void getUserFromJSONString_nullEnable_returnsUserForCreateEnableTrue() throws Exception {
+    public void getRoleFromJSONString_nullServiceID_returnsRoleNullServiceID() throws Exception {
         String body = "{\n" +
-                "    \"user\": {\n" +
-                "             \"id\": \"123456\",     \n" +
-                "            \"username\": \"cmarin1subX2\",\n" +
-                "             \"display-name\": \"marin\",\n" +
-                "            \"email\": \"cmarin1-sub@example.com\",\n" +
-                "            \"OS-KSADM:password\":\"Password48\"\n" +
-                "        }\n" +
+                "  \"role\": {\n" +
+                "    \"id\": \"123\",\n" +
+                "    \"name\": \"Guest\",\n" +
+                "    \"tenantId\": \"456\"\n" +
+                "    \"description\": \"Guest Access\"\n" +
+                "  }\n" +
                 "}";
-        assertThat("userForCreate", JSONReaderForUserForCreate.getUserFromJSONString(body).isEnabled(), equalTo(true));
+        assertThat("role", JSONReaderForRole.getRoleFromJSONString(body).getServiceId(), nullValue());
     }
-
-    @Test
-    public void getUserFromJSONString_nullPassword_returnsUserForCreateNullPassword() throws Exception {
-        String body = "{\n" +
-                "    \"user\": {\n" +
-                "             \"id\": \"123456\",     \n" +
-                "            \"username\": \"cmarin1subX2\",\n" +
-                "             \"display-name\": \"marin\",\n" +
-                "             \"enabled\": false,\n" +
-                "            \"email\": \"cmarin1-sub@example.com\",\n" +
-                "        }\n" +
-                "}";
-        assertThat("userForCreate", JSONReaderForUserForCreate.getUserFromJSONString(body).getPassword(), nullValue());
-    }*/
 }

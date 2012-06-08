@@ -2,10 +2,13 @@ package com.rackspace.idm.api.resource;
 
 import com.rackspace.api.idm.v1.UserPasswordCredentials;
 import com.rackspace.idm.JSONConstants;
+import com.rackspace.idm.exception.BadRequestException;
 import org.apache.commons.io.IOUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.WebApplicationException;
@@ -22,6 +25,8 @@ import java.lang.reflect.Type;
 @Consumes(MediaType.APPLICATION_JSON)
 public class JSONReaderForPasswordCredentials implements
         MessageBodyReader<UserPasswordCredentials> {
+
+    private static Logger logger = LoggerFactory.getLogger(JSONReaderForPasswordCredentials.class);
 
     @Override
     public boolean isReadable(Class<?> type, Type genericType,
@@ -59,7 +64,7 @@ public class JSONReaderForPasswordCredentials implements
 
                 Object newPassword = obj3.get(JSONConstants.NEW_PASSWORD);
                 Object currentPassword = obj3.get(JSONConstants.CURRENT_PASSWORD);
-                Object varifyCurrentPassword = obj3.get(JSONConstants.VERIFY_CURRENT_PASSWORD);
+                Object verifyCurrentPassword = obj3.get(JSONConstants.VERIFY_CURRENT_PASSWORD);
 
 
                 if (newPassword != null) {
@@ -74,8 +79,8 @@ public class JSONReaderForPasswordCredentials implements
                                     .getUserPasswordFromJSONStringWithoutWrapper(currentPassword
                                             .toString()));
                 }
-                if (varifyCurrentPassword != null) {
-                    if (varifyCurrentPassword.equals("false"))
+                if (verifyCurrentPassword != null) {
+                    if (verifyCurrentPassword.equals("false"))
                         creds.setVerifyCurrentPassword(false);
                     else {
                         creds.setVerifyCurrentPassword(true);
@@ -83,8 +88,8 @@ public class JSONReaderForPasswordCredentials implements
                 }
             }
         } catch (ParseException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            logger.info(e.toString());
+            throw new BadRequestException("Invalid JSON");
         }
 
         return creds;

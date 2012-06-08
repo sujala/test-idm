@@ -1,11 +1,14 @@
 package com.rackspace.idm.api.resource.cloud.v11;
 
 import com.rackspace.idm.JSONConstants;
+import com.rackspace.idm.exception.BadRequestException;
 import com.rackspacecloud.docs.auth.api.v1.User;
 import org.apache.commons.io.IOUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.WebApplicationException;
@@ -21,6 +24,8 @@ import java.lang.reflect.Type;
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
 public class JSONReaderForUser implements MessageBodyReader<User> {
+
+    private static Logger logger = LoggerFactory.getLogger(JSONReaderForUser.class);
 
     @Override
     public boolean isReadable(Class<?> type, Type genericType,
@@ -84,8 +89,8 @@ public class JSONReaderForUser implements MessageBodyReader<User> {
 
             }
         } catch (ParseException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            logger.info(e.toString());
+            throw new BadRequestException("Invalid JSON");
         }
 
         return user;
