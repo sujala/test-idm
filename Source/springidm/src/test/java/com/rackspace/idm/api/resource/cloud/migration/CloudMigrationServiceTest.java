@@ -8,6 +8,7 @@ import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.api.resource.cloud.MigrationClient;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
+import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.sun.jersey.api.ConflictException;
 import org.apache.commons.configuration.Configuration;
@@ -244,6 +245,36 @@ public class CloudMigrationServiceTest {
     public void migrateUserByUsername_returns_ConflicException() throws Exception {
         when(userService.userExistsByUsername(anyString())).thenReturn(true);
         spy.migrateUserByUsername("conflictingUser", false, null);
+    }
+
+    @Test(expected = NotAuthenticatedException.class)
+    public void migrateUserByUsername_getAdminTokenReturnsBlankString_throwsNotAuthenticated() throws Exception {
+        doReturn("").when(spy).getAdminToken();
+        spy.migrateUserByUsername("", false, null);
+    }
+
+    @Test (expected = NotFoundException.class)
+    public void migrateUserByUsername_client11UsernameCanNotBeFound_throwsNotFoundException() throws Exception {
+        when(config.getString("cloudAuth20url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v2.0/");
+        when(config.getString("migration.username")).thenReturn("migration_user");
+        when(config.getString("migration.apikey")).thenReturn("0f97f489c848438090250d50c7e1ea88");
+        spy.migrateUserByUsername("userNotExist", false, null);
+    }
+
+    /*
+        Not sure how to get client11.getUserTenantsBaseUrls(config.getString("ga.username"), config.getString("ga.password"), username);
+        to not throw an exception. Instead having it return an actual user and then have user = client.getUser(adminToken, username);
+        throw the NotFoundException. Must ponder some more.
+     */
+    @Ignore
+    @Test (expected = NotFoundException.class)
+    public void migrateUserByUsername_clientGetUserAndUsernameCanNotBeFound_throwsNotFoundException() throws Exception {
+        when(config.getString("cloudAuth20url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v2.0/");
+        when(config.getString("migration.username")).thenReturn("migration_user");
+        when(config.getString("migration.apikey")).thenReturn("0f97f489c848438090250d50c7e1ea88");
+        when(config.getString("ga.username")).thenReturn("auth");
+        when(config.getString("ga.password")).thenReturn("auth123");
+        spy.migrateUserByUsername("userId", false, null);
     }
 
     @Ignore

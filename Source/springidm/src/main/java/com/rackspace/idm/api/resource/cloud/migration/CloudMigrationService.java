@@ -592,7 +592,7 @@ public class CloudMigrationService {
         userService.deleteUser(username);
     }
     
-    private String getAdminToken() throws URISyntaxException, HttpException, IOException, JAXBException {
+    String getAdminToken() throws URISyntaxException, HttpException, IOException, JAXBException {
         try {
             client = new MigrationClient();
             client.setCloud20Host(config.getString("cloudAuth20url"));
