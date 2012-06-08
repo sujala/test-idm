@@ -1,8 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_ga.v1.ImpersonationRequest;
-import com.rackspace.docs.identity.api.ext.rax_ga.v1.ImpersonationResponse;
-import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.api.converter.cloudv20.*;
@@ -10,9 +8,8 @@ import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
-import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Application;
-import com.rackspace.idm.domain.entity.Group;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
@@ -23,17 +20,14 @@ import com.unboundid.ldap.sdk.SearchResultEntry;
 import org.apache.commons.configuration.Configuration;
 import org.hamcrest.Matchers;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.verification.VerificationMode;
 import org.openstack.docs.common.api.v1.Extension;
 import org.openstack.docs.common.api.v1.Extensions;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
-import org.openstack.docs.identity.api.ext.os_kscatalog.v1.*;
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.*;
-import org.openstack.docs.identity.api.v2.ObjectFactory;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import javax.ws.rs.core.*;
@@ -44,7 +38,6 @@ import javax.xml.namespace.QName;
 import javax.xml.transform.stream.StreamSource;
 import java.io.InputStream;
 import java.net.URI;
-import java.rmi.ServerException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -238,6 +231,27 @@ public class DefaultCloud20ServiceTest {
         doNothing().when(spy).checkXAUTHTOKEN(eq(authToken), anyBoolean(), eq(tenantId));
     }
 
+    @Test
+    public void validatePassword_containsHyphen_succeeds() throws Exception {
+        defaultCloud20Service.validateEmail("foo-bar@test.com");
+    }
+
+    @Test
+    public void getUserByName_callsAuthorizationService_authenticateCloudUserAdmin() throws Exception {
+        when(userService.getUser("userName")).thenReturn(new User("username"));
+        defaultCloud20Service.getUserByName(null, authToken, "userName");
+        ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByAccessToken(authToken);
+        verify(authorizationService).authorizeCloudUserAdmin(scopeAccess);
+    }
+
+    @Test
+    public void getUserByName_callsAuthorizationService_authenticateCloudUser() throws Exception {
+        when(userService.getUser("userName")).thenReturn(new User("username"));
+        defaultCloud20Service.getUserByName(null, authToken, "userName");
+        ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByAccessToken(authToken);
+        verify(authorizationService).authorizeCloudUser(scopeAccess);
+    }
+
     @Test(expected = BadRequestException.class)
     public void validateImpersonationRequest_expireInIsLessThan1_throwsBadRequestException() throws Exception {
         ImpersonationRequest impersonationRequest = new ImpersonationRequest();
@@ -258,7 +272,7 @@ public class DefaultCloud20ServiceTest {
         defaultCloud20Service.validateImpersonationRequest(impersonationRequest);
     }
 
-    @Test (expected = BadRequestException.class)
+    @Test(expected = BadRequestException.class)
     public void validateImpersonationRequest_userIsNull_throwsBadRequestException() throws Exception {
         ImpersonationRequest impersonationRequest = new ImpersonationRequest();
         org.openstack.docs.identity.api.v2.User impersonateUser = null;
@@ -266,7 +280,7 @@ public class DefaultCloud20ServiceTest {
         defaultCloud20Service.validateImpersonationRequest(impersonationRequest);
     }
 
-    @Test (expected = BadRequestException.class)
+    @Test(expected = BadRequestException.class)
     public void validateImpersonationRequest_userNameIsNull_throwsBadRequestException() throws Exception {
         ImpersonationRequest impersonationRequest = new ImpersonationRequest();
         org.openstack.docs.identity.api.v2.User impersonateUser = new org.openstack.docs.identity.api.v2.User();
@@ -274,7 +288,7 @@ public class DefaultCloud20ServiceTest {
         defaultCloud20Service.validateImpersonationRequest(impersonationRequest);
     }
 
-    @Test (expected = BadRequestException.class)
+    @Test(expected = BadRequestException.class)
     public void validateImpersonationRequest_userNameIsEmpty_throwsBadRequestException() throws Exception {
         ImpersonationRequest impersonationRequest = new ImpersonationRequest();
         org.openstack.docs.identity.api.v2.User impersonateUser = new org.openstack.docs.identity.api.v2.User();
@@ -283,7 +297,7 @@ public class DefaultCloud20ServiceTest {
         defaultCloud20Service.validateImpersonationRequest(impersonationRequest);
     }
 
-    @Test (expected = BadRequestException.class)
+    @Test(expected = BadRequestException.class)
     public void validateImpersonationRequest_userNameIsBlankString_throwsBadRequestException() throws Exception {
         ImpersonationRequest impersonationRequest = new ImpersonationRequest();
         org.openstack.docs.identity.api.v2.User impersonateUser = new org.openstack.docs.identity.api.v2.User();
@@ -460,7 +474,7 @@ public class DefaultCloud20ServiceTest {
         spy.validateBelongsTo("", null);
     }
 
-    @Test (expected = NotFoundException.class)
+    @Test(expected = NotFoundException.class)
     public void validateBelongsTo_throwsNotFoundException() throws Exception {
         spy.validateBelongsTo("belong", null);
     }
@@ -539,12 +553,12 @@ public class DefaultCloud20ServiceTest {
         assertThat("Boolean Value", belong, equalTo(false));
     }
 
-    @Test (expected = NotFoundException.class)
+    @Test(expected = NotFoundException.class)
     public void checkAndGetEndpointTemplate_baseUrlIsNull_throwsNotFoundException() throws Exception {
         spy.checkAndGetEndpointTemplate(1);
     }
 
-    @Test (expected = NotFoundException.class)
+    @Test(expected = NotFoundException.class)
     public void checkAndGetUserByName_userIsNull_throwsNotFoundException() throws Exception {
         spy.checkAndGetUserByName(null);
     }
@@ -556,7 +570,7 @@ public class DefaultCloud20ServiceTest {
         assertThat("user name", checkUser.getUsername(), equalTo("id"));
     }
 
-    @Test (expected = NotFoundException.class)
+    @Test(expected = NotFoundException.class)
     public void checkAndGetSoftDeletedUser_userIsNull_throwsNotFoundException() throws Exception {
         spy.checkAndGetSoftDeletedUser(null);
     }
@@ -837,7 +851,7 @@ public class DefaultCloud20ServiceTest {
         verify(scopeAccessService).getUserScopeAccessForClientIdByUsernameAndApiCredentials("test_user", "123", null);
     }
 
-    @Test (expected = ForbiddenException.class)
+    @Test(expected = ForbiddenException.class)
     public void verifyRackerOrServiceAdminAccess_notRackerAndNotCloudServiceAdmin_throwsForbidden() throws Exception {
         when(authorizationService.authorizeRacker(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(false);
         when(authorizationService.authorizeCloudServiceAdmin(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(false);
@@ -866,7 +880,7 @@ public class DefaultCloud20ServiceTest {
         verify(authorizationService).authorizeCloudServiceAdmin(org.mockito.Matchers.any(ScopeAccess.class));
     }
 
-    @Test (expected = ForbiddenException.class)
+    @Test(expected = ForbiddenException.class)
     public void verifyUserLevelAccess_notValidUserLevelAccess_throwsForbidden() throws Exception {
         when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
         when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
@@ -875,7 +889,7 @@ public class DefaultCloud20ServiceTest {
         spy.verifyUserLevelAccess(authToken);
     }
 
-    @Test (expected = ForbiddenException.class)
+    @Test(expected = ForbiddenException.class)
     public void verifyUserAdminLevelAccess_notAuthorized_throwsForbidden() throws Exception {
         when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
         when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
@@ -1945,6 +1959,7 @@ public class DefaultCloud20ServiceTest {
     public void getUserByName_adminUser_callsVerifyDomain() throws Exception {
         when(userService.getUser("userName")).thenReturn(user);
         doReturn(true).when(spy).isUserAdmin(any(ScopeAccess.class), any(List.class));
+        when(authorizationService.authorizeCloudUserAdmin(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(true);
         when(userService.getUserByAuthToken(authToken)).thenReturn(user);
         spy.getUserByName(null, authToken, "userName");
         verify(spy).verifyDomain(user, user);
@@ -1953,8 +1968,7 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void getUserByName_defaultUser_callsVerifySelf() throws Exception {
         when(userService.getUser("userName")).thenReturn(user);
-        doReturn(false).when(spy).isUserAdmin(any(ScopeAccess.class), any(List.class));
-        doReturn(true).when(spy).isDefaultUser(any(ScopeAccess.class), any(List.class));
+        when(authorizationService.authorizeCloudUser(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(true);
         when(userService.getUserByAuthToken(authToken)).thenReturn(user);
         spy.getUserByName(null, authToken, "userName");
         verify(spy).verifySelf(authToken, user);
@@ -2458,7 +2472,7 @@ public class DefaultCloud20ServiceTest {
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
-    @Test (expected = ForbiddenException.class)
+    @Test(expected = ForbiddenException.class)
     public void verifyDomain_domainIdIsNull_throwsForbiddenException() throws Exception {
         User caller = new User();
         User retrievedUser = new User();
@@ -2466,7 +2480,7 @@ public class DefaultCloud20ServiceTest {
         spy.verifyDomain(retrievedUser, caller);
     }
 
-    @Test (expected = ForbiddenException.class)
+    @Test(expected = ForbiddenException.class)
     public void verifyDomain_callerDomainIdNotMatchRetrievedUserDomainId_throwsForbiddenException() throws Exception {
         User caller = new User();
         caller.setDomainId("notSame");
@@ -2849,13 +2863,13 @@ public class DefaultCloud20ServiceTest {
         defaultCloud20Service.verifyServiceAdminLevelAccess("admin");
     }
 
-    @Test (expected = ForbiddenException.class)
+    @Test(expected = ForbiddenException.class)
     public void checkXAUTHTOKEN_notAuthorized_throwsForbiddenException() throws Exception {
         when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
         defaultCloud20Service.checkXAUTHTOKEN(authToken, true, tenantId);
     }
 
-    @Test (expected = ForbiddenException.class)
+    @Test(expected = ForbiddenException.class)
     public void checkXAUTHTOKEN_isCloudUserAdminAndAdminTenantIdNotMatch_throwsForbidden() throws Exception {
         List<Tenant> adminTenants = new ArrayList<Tenant>();
         adminTenants.add(tenant);
@@ -2875,7 +2889,7 @@ public class DefaultCloud20ServiceTest {
         defaultCloud20Service.checkXAUTHTOKEN(authToken, false, tenantId);
     }
 
-    @Test (expected = ForbiddenException.class)
+    @Test(expected = ForbiddenException.class)
     public void checkXAUTHTOKEN_notCloudIdentityAdminAndNotCloudUserAdmin_throwsForbidden() throws Exception {
         when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(false);
@@ -3008,13 +3022,13 @@ public class DefaultCloud20ServiceTest {
         defaultCloud20Service.validateKsGroup(groupKs);
     }
 
-    @Test (expected = NullPointerException.class)
+    @Test(expected = NullPointerException.class)
     public void validateKsGroup_groupNameIsNull_throwsNullPointException() {
         groupKs.setName(null);
         defaultCloud20Service.validateKsGroup(groupKs);
     }
 
-    @Test (expected = BadRequestException.class)
+    @Test(expected = BadRequestException.class)
     public void validateKsGroup_groupDescriptionMoreThan1000Characters_throwsBadRequest() {
         groupKs.setName("valid");
         String moreThan1000Chars = org.apache.commons.lang.StringUtils.repeat("a", 1001);
@@ -3059,7 +3073,7 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void updateGroup_callsValidateGroupId() throws Exception {
-        spy.updateGroup(null, authToken,"1", groupKs);
+        spy.updateGroup(null, authToken, "1", groupKs);
         verify(spy).validateGroupId("1");
     }
 
@@ -3137,7 +3151,7 @@ public class DefaultCloud20ServiceTest {
         }
     }
 
-    @Test (expected = BadRequestException.class)
+    @Test(expected = BadRequestException.class)
     public void validateGroupId_groupIdIsNull_throwsBadRequest() throws Exception {
         defaultCloud20Service.validateGroupId(null);
     }
@@ -3314,7 +3328,7 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void assignProperRole_cloudIdentityAdmin_callsAddUserRole() throws  Exception {
+    public void assignProperRole_cloudIdentityAdmin_callsAddUserRole() throws Exception {
         when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(clientService.getClientRoleByClientIdAndRoleName(anyString(), anyString())).thenReturn(clientRole);
         spy.assignProperRole(null, authToken, null, user);
@@ -3495,7 +3509,7 @@ public class DefaultCloud20ServiceTest {
         verify(spy).validateImpersonationRequest(impersonationRequest);
     }
 
-    @Test (expected = ForbiddenException.class)
+    @Test(expected = ForbiddenException.class)
     public void impersonate_userNotNullAndNotEnabled_throwsForbiddenException() throws Exception {
         user.setEnabled(false);
         org.openstack.docs.identity.api.v2.User impersonateUser = new org.openstack.docs.identity.api.v2.User();
@@ -3508,7 +3522,7 @@ public class DefaultCloud20ServiceTest {
         spy.impersonate(null, authToken, impersonationRequest);
     }
 
-    @Test (expected = BadRequestException.class)
+    @Test(expected = BadRequestException.class)
     public void impersonate_userNotNullAndEnabledAndNotValidImpersonatee_throwsBadRequestException() throws Exception {
         user.setEnabled(true);
         org.openstack.docs.identity.api.v2.User impersonateUser = new org.openstack.docs.identity.api.v2.User();
@@ -3541,7 +3555,7 @@ public class DefaultCloud20ServiceTest {
         verify(scopeAccessService).updateExpiredUserScopeAccess(userScopeAccess);
     }
 
-    @Test (expected = BadRequestException.class)
+    @Test(expected = BadRequestException.class)
     public void impersonate_impersonatingTokenIsBlankString_throwsBadRequestException() throws Exception {
         UserScopeAccess userScopeAccess = new UserScopeAccess();
         userScopeAccess.setAccessTokenExpired();
@@ -3560,7 +3574,7 @@ public class DefaultCloud20ServiceTest {
         spy.impersonate(null, authToken, impersonationRequest);
     }
 
-    @Test (expected = BadRequestException.class)
+    @Test(expected = BadRequestException.class)
     public void impersonate_impersonatingUserNameIsBlankString_throwsBadRequestException() throws Exception {
         UserScopeAccess userScopeAccess = new UserScopeAccess();
         userScopeAccess.setAccessTokenExpired();
@@ -3613,7 +3627,7 @@ public class DefaultCloud20ServiceTest {
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
-    @Test (expected = NotAuthorizedException.class)
+    @Test(expected = NotAuthorizedException.class)
     public void impersonate_scopeAccessNotInstanceOfUserOrRackerScopeAccess_throwsNotAuthorizedException() throws Exception {
         ClientScopeAccess clientScopeAccess = new ClientScopeAccess();
         user.setEnabled(true);
