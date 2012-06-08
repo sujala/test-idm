@@ -329,6 +329,12 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void validateToken_callsVerifyServiceAdminLevelAccess() throws Exception {
+        spy.validateToken(null, null, null, null);
+        verify(spy).verifyServiceAdminLevelAccess(null);
+    }
+
+    @Test
     public void validateToken_whenExpiredToken_returns404() throws Exception {
         RackerScopeAccess rackerScopeAccess = new RackerScopeAccess();
         rackerScopeAccess.setAccessTokenString("rackerToken");
@@ -387,6 +393,179 @@ public class DefaultCloud20ServiceTest {
     public void validateToken_callsScopeAccessService_getScopeAccessByAccessToken() throws Exception {
         spy.validateToken(null, authToken, "rackerToken", null);
         verify(scopeAccessService).getScopeAccessByAccessToken("rackerToken");
+    }
+
+    @Test
+    public void validateToken_whenRackerScopeAccessResponseOk_returns200() throws Exception {
+        Racker racker = new Racker();
+        racker.setRackerId("rackerId");
+        RackerScopeAccess rackerScopeAccess = new RackerScopeAccess();
+        rackerScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
+        rackerScopeAccess.setAccessTokenString("rackerToken");
+        rackerScopeAccess.setRackerId("rackerId");
+        List<String> rackerRoles = new ArrayList<String>();
+        String rackerRole = "racker";
+        rackerRoles.add(rackerRole);
+        doReturn(rackerScopeAccess).when(spy).checkAndGetToken("rackerToken");
+        when(userService.getRackerByRackerId("rackerId")).thenReturn(racker);
+        when(userService.getRackerRoles(anyString())).thenReturn(rackerRoles);
+        Response.ResponseBuilder responseBuilder = spy.validateToken(httpHeaders, authToken, "rackerToken", "belongsTo");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void validateToken_whenUserScopeAccess_callsValidateBelongsTo() throws Exception {
+        UserScopeAccess userScopeAccess = new UserScopeAccess();
+        userScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
+        userScopeAccess.setAccessTokenString("userToken");
+        doReturn(userScopeAccess).when(spy).checkAndGetToken("token");
+        spy.validateToken(httpHeaders, authToken, "token", "belongsTo");
+        verify(spy).validateBelongsTo(eq("belongsTo"), any(List.class));
+    }
+
+    @Test
+    public void validateToken_whenUserScopeAccessResponseOk_returns200() throws Exception {
+        UserScopeAccess userScopeAccess = new UserScopeAccess();
+        userScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
+        userScopeAccess.setAccessTokenString("userToken");
+        doReturn(userScopeAccess).when(spy).checkAndGetToken("token");
+        doNothing().when(spy).validateBelongsTo(eq("belongsTo"), any(List.class));
+        Response.ResponseBuilder responseBuilder = spy.validateToken(httpHeaders, authToken, "token", "belongsTo");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void validateToken_whenImpersonatedScopeAccess_callsValidateBelongsTo() throws Exception {
+        ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
+        impersonatedScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
+        impersonatedScopeAccess.setAccessTokenString("impToken");
+        doReturn(impersonatedScopeAccess).when(spy).checkAndGetToken("token");
+        spy.validateToken(httpHeaders, authToken, "token", "belongsTo");
+        verify(spy).validateBelongsTo(eq("belongsTo"), any(List.class));
+    }
+
+    @Test
+    public void validateToken_whenImpersonatedScopeAccessResponseOk_returns200() throws Exception {
+        ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
+        impersonatedScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
+        impersonatedScopeAccess.setAccessTokenString("impToken");
+        doReturn(impersonatedScopeAccess).when(spy).checkAndGetToken("token");
+        doNothing().when(spy).validateBelongsTo(eq("belongsTo"), any(List.class));
+        Response.ResponseBuilder responseBuilder = spy.validateToken(httpHeaders, authToken, "token", "belongsTo");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void validateBelongsTo_success() throws Exception {
+        spy.validateBelongsTo("", null);
+    }
+
+    @Test (expected = NotFoundException.class)
+    public void validateBelongsTo_throwsNotFoundException() throws Exception {
+        spy.validateBelongsTo("belong", null);
+    }
+
+    @Test
+    public void getRolesForScopeAccess_whenUserScopeAccess_callsTenantServiceGetTenantRolesForScopeAccess() throws Exception {
+        UserScopeAccess userScopeAccess = new UserScopeAccess();
+        spy.getRolesForScopeAccess(userScopeAccess);
+        verify(tenantService).getTenantRolesForScopeAccess(userScopeAccess);
+    }
+
+    @Test
+    public void getRolesForScopeAccess_whenImpersonatedScopeAccess_callsTenantServiceGetTenantRolesForScopeAccess() throws Exception {
+        ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
+        spy.getRolesForScopeAccess(impersonatedScopeAccess);
+        verify(tenantService).getTenantRolesForScopeAccess(impersonatedScopeAccess);
+    }
+
+    @Test
+    public void exceptionResponse_whenClientConflictExceptionResponse_returns409() throws Exception {
+        ClientConflictException clientConflictException = new ClientConflictException();
+        Response.ResponseBuilder responseBuilder = spy.exceptionResponse(clientConflictException);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(409));
+    }
+
+    @Test
+    public void exceptionResponse_whenUserDisabledException_returns403() throws Exception {
+        UserDisabledException userDisabledException = new UserDisabledException();
+        Response.ResponseBuilder responseBuilder = spy.exceptionResponse(userDisabledException);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(403));
+    }
+
+    @Test
+    public void exceptionResponse_whenStalePasswordException_returns400() throws Exception {
+        StalePasswordException stalePasswordException = new StalePasswordException("Wrong Password");
+        Response.ResponseBuilder responseBuilder = spy.exceptionResponse(stalePasswordException);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
+    public void belongsTo_stringBelongsToIsBlank_returnsTrue() throws Exception {
+        Boolean belong = spy.belongsTo("", null);
+        assertThat("Boolean Value", belong, equalTo(true));
+    }
+
+    @Test
+    public void belongsTo_rolesIsNull_returnsFalse() throws Exception {
+        Boolean belong = spy.belongsTo("belong", null);
+        assertThat("Boolean Value", belong, equalTo(false));
+    }
+
+    @Test
+    public void belongsTo_rolesSizeIsZero_returnsFalse() throws Exception {
+        List<TenantRole> roles = new ArrayList<TenantRole>();
+        Boolean belong = spy.belongsTo("belong", roles);
+        assertThat("Boolean Value", belong, equalTo(false));
+    }
+
+    @Test
+    public void belongsTo_tenantIdMatchesBelongsTo_returnsTrue() throws Exception {
+        List<TenantRole> roles = new ArrayList<TenantRole>();
+        String[] tenantId = {"belong"};
+        tenantRole.setTenantIds(tenantId);
+        roles.add(tenantRole);
+        Boolean belong = spy.belongsTo("belong", roles);
+        assertThat("Boolean Value", belong, equalTo(true));
+    }
+
+    @Test
+    public void belongsTo_tenantIdDoesNotMatcheBelongsTo_returnsFalse() throws Exception {
+        List<TenantRole> roles = new ArrayList<TenantRole>();
+        String[] tenantId = {"NotMatch"};
+        tenantRole.setTenantIds(tenantId);
+        roles.add(tenantRole);
+        Boolean belong = spy.belongsTo("belong", roles);
+        assertThat("Boolean Value", belong, equalTo(false));
+    }
+
+    @Test (expected = NotFoundException.class)
+    public void checkAndGetEndpointTemplate_baseUrlIsNull_throwsNotFoundException() throws Exception {
+        spy.checkAndGetEndpointTemplate(1);
+    }
+
+    @Test (expected = NotFoundException.class)
+    public void checkAndGetUserByName_userIsNull_throwsNotFoundException() throws Exception {
+        spy.checkAndGetUserByName(null);
+    }
+
+    @Test
+    public void checkAndGetUserByName_returnsCorrectUser() throws Exception {
+        when(userService.getUser("user")).thenReturn(user);
+        User checkUser = spy.checkAndGetUserByName("user");
+        assertThat("user name", checkUser.getUsername(), equalTo("id"));
+    }
+
+    @Test (expected = NotFoundException.class)
+    public void checkAndGetSoftDeletedUser_userIsNull_throwsNotFoundException() throws Exception {
+        spy.checkAndGetSoftDeletedUser(null);
+    }
+
+    @Test
+    public void checkAndGetSoftDeletedUser_returnsCorrectUser() throws Exception {
+        when(userService.getSoftDeletedUser("user")).thenReturn(user);
+        User checkUser = spy.checkAndGetSoftDeletedUser("user");
+        assertThat("user name", checkUser.getUsername(), equalTo("id"));
     }
 
     @Test
@@ -658,6 +837,20 @@ public class DefaultCloud20ServiceTest {
         verify(scopeAccessService).getUserScopeAccessForClientIdByUsernameAndApiCredentials("test_user", "123", null);
     }
 
+    @Test (expected = ForbiddenException.class)
+    public void verifyRackerOrServiceAdminAccess_notRackerAndNotCloudServiceAdmin_throwsForbidden() throws Exception {
+        when(authorizationService.authorizeRacker(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(false);
+        spy.verifyRackerOrServiceAdminAccess(authToken);
+    }
+
+    @Test
+    public void verifyRackerOrServiceAdminAccess_isRackerAndNotCloudServiceAdmin_succeeds() throws Exception {
+        when(authorizationService.authorizeRacker(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(false);
+        spy.verifyRackerOrServiceAdminAccess(authToken);
+    }
+
     @Test
     public void verifyRackerOrServiceAdminAccess_callsAuthorizationService_authorizeCloudServiceAdmin() throws Exception {
         when(authorizationService.authorizeRacker(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(false);
@@ -671,6 +864,23 @@ public class DefaultCloud20ServiceTest {
         when(authorizationService.authorizeCloudServiceAdmin(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(true);
         spy.verifyRackerOrServiceAdminAccess(authToken);
         verify(authorizationService).authorizeCloudServiceAdmin(org.mockito.Matchers.any(ScopeAccess.class));
+    }
+
+    @Test (expected = ForbiddenException.class)
+    public void verifyUserLevelAccess_notValidUserLevelAccess_throwsForbidden() throws Exception {
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudUser(any(ScopeAccess.class))).thenReturn(false);
+        spy.verifyUserLevelAccess(authToken);
+    }
+
+    @Test (expected = ForbiddenException.class)
+    public void verifyUserAdminLevelAccess_notAuthorized_throwsForbidden() throws Exception {
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(false);
+        spy.verifyUserAdminLevelAccess(authToken);
     }
 
     @Test
@@ -2610,17 +2820,17 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test(expected = NotAuthorizedException.class)
-    public void checkXAuthToken_withNullToken_throwsNotAuthorizedException() throws Exception {
+    public void verifyServiceAdminLevelAccess_withNullToken_throwsNotAuthorizedException() throws Exception {
         defaultCloud20Service.verifyServiceAdminLevelAccess(null);
     }
 
     @Test(expected = NotAuthorizedException.class)
-    public void checkXAuthToken_withBlankToken_throwsNotAuthorizedException() throws Exception {
+    public void verifyServiceAdminLevelAccess_withBlankToken_throwsNotAuthorizedException() throws Exception {
         defaultCloud20Service.verifyServiceAdminLevelAccess("");
     }
 
     @Test
-    public void checkXAuthToken_identityAdminCaller_succeeds() throws Exception {
+    public void verifyServiceAdminLevelAccess_identityAdminCaller_succeeds() throws Exception {
         UserScopeAccess userScopeAccess = new UserScopeAccess();
         userScopeAccess.setAccessTokenString("admin");
         userScopeAccess.setAccessTokenExp(new Date(2099, 1, 1));
@@ -2630,7 +2840,7 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test(expected = ForbiddenException.class)
-    public void checkXAuthToken_userAdminCaller_throwsForbiddenException() throws Exception {
+    public void verifyServiceAdminLevelAccess_userAdminCaller_throwsForbiddenException() throws Exception {
         UserScopeAccess userScopeAccess = new UserScopeAccess();
         userScopeAccess.setAccessTokenString("admin");
         userScopeAccess.setAccessTokenExp(new Date(2099, 1, 1));
@@ -2639,10 +2849,57 @@ public class DefaultCloud20ServiceTest {
         defaultCloud20Service.verifyServiceAdminLevelAccess("admin");
     }
 
+    @Test (expected = ForbiddenException.class)
+    public void checkXAUTHTOKEN_notAuthorized_throwsForbiddenException() throws Exception {
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
+        defaultCloud20Service.checkXAUTHTOKEN(authToken, true, tenantId);
+    }
+
+    @Test (expected = ForbiddenException.class)
+    public void checkXAUTHTOKEN_isCloudUserAdminAndAdminTenantIdNotMatch_throwsForbidden() throws Exception {
+        List<Tenant> adminTenants = new ArrayList<Tenant>();
+        adminTenants.add(tenant);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(tenantService.getTenantsForScopeAccessByTenantRoles(any(ScopeAccess.class))).thenReturn(adminTenants);
+        defaultCloud20Service.checkXAUTHTOKEN(authToken, false, "notMatch");
+    }
+
     @Test
-    public void validateToken_callsVerifyServiceAdminLevelAccess() throws Exception {
-        spy.validateToken(null, null, null, null);
-        verify(spy).verifyServiceAdminLevelAccess(null);
+    public void checkXAUTHTOKEN_isCloudUserAdminAndAdminTenantIdMatch_succeeds() throws Exception {
+        List<Tenant> adminTenants = new ArrayList<Tenant>();
+        adminTenants.add(tenant);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(tenantService.getTenantsForScopeAccessByTenantRoles(any(ScopeAccess.class))).thenReturn(adminTenants);
+        defaultCloud20Service.checkXAUTHTOKEN(authToken, false, tenantId);
+    }
+
+    @Test (expected = ForbiddenException.class)
+    public void checkXAUTHTOKEN_notCloudIdentityAdminAndNotCloudUserAdmin_throwsForbidden() throws Exception {
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(false);
+        defaultCloud20Service.checkXAUTHTOKEN(authToken, false, tenantId);
+    }
+
+    @Test
+    public void verifyTokenHasTenantAccessForAuthenticate_callsVerifyTokenHasTenant() throws Exception {
+        List<Tenant> adminTenants = new ArrayList<Tenant>();
+        adminTenants.add(tenant);
+        when(tenantService.getTenantsForScopeAccessByTenantRoles(any(ScopeAccess.class))).thenReturn(adminTenants);
+        spy.verifyTokenHasTenantAccessForAuthenticate(authToken, tenantId);
+        verify(spy).verifyTokenHasTenant(eq(tenantId), any(ScopeAccess.class));
+    }
+
+    @Test
+    public void stripEndpoints_succeeds() throws Exception {
+        List<OpenstackEndpoint> endpoints = new ArrayList<OpenstackEndpoint>();
+        List<CloudBaseUrl> cloudBaseUrls = new ArrayList<CloudBaseUrl>();
+        cloudBaseUrls.add(cloudBaseUrl);
+        OpenstackEndpoint endpoint = new OpenstackEndpoint();
+        endpoint.setBaseUrls(cloudBaseUrls);
+        endpoints.add(endpoint);
+        defaultCloud20Service.stripEndpoints(endpoints);
     }
 
     @Test

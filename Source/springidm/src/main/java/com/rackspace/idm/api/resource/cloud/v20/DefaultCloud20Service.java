@@ -2044,7 +2044,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
-    private void validateBelongsTo(String belongsTo, List<TenantRole> roles) {
+    void validateBelongsTo(String belongsTo, List<TenantRole> roles) {
         if (!belongsTo(belongsTo, roles)) {
             String errMsg = String.format("Token doesn't belong to Tenant with Id/Name: '%s'", belongsTo);
             logger.warn(errMsg);
@@ -2336,7 +2336,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         verifyTokenHasTenant(tenantId, authScopeAccess);
     }
 
-    private void verifyTokenHasTenant(String tenantId, ScopeAccess authScopeAccess) {
+    void verifyTokenHasTenant(String tenantId, ScopeAccess authScopeAccess) {
         List<Tenant> adminTenants = this.tenantService.getTenantsForScopeAccessByTenantRoles(authScopeAccess);
         for (Tenant tenant : adminTenants) {
             if (tenant.getTenantId().equals(tenantId)) {

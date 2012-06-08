@@ -8,9 +8,11 @@ import com.rackspacecloud.docs.auth.api.v1.BaseURLRefList;
 import junit.framework.Assert;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.openstack.docs.common.api.v1.Extension;
 import org.openstack.docs.common.api.v1.Extensions;
+import org.openstack.docs.common.api.v1.VersionChoice;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.ServiceList;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
@@ -21,6 +23,12 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.namespace.QName;
+
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 
 /**
  * Created by IntelliJ IDEA.
@@ -33,6 +41,7 @@ public class JSONWriterTest {
 
     private JSONWriter writer = new JSONWriter();
     private XMLGregorianCalendar calendar;
+    JSONWriter spy;
 
     @Before
     public void setup() throws Exception {
@@ -40,6 +49,22 @@ public class JSONWriterTest {
         calendar.setDay(1);
         calendar.setMonth(1);
         calendar.setYear(2012);
+        spy = spy(writer);
+    }
+
+    @Test
+    public void getSize_returnsNegativeOne() throws Exception {
+        assertThat("long", writer.getSize(null,null,null,null,null), equalTo(-1L));
+    }
+
+    @Test
+    public void isWritable_typeIsJAXBElement_returnsTrue() throws Exception {
+        assertThat("bool",writer.isWriteable(JAXBElement.class,null,null,null),equalTo(true));
+    }
+
+    @Test
+    public void isWritable_typeIsNotJAXBElement_returnsFalse() throws Exception {
+        assertThat("bool",writer.isWriteable(User.class,null,null,null),equalTo(false));
     }
 
     @Test
@@ -55,6 +80,21 @@ public class JSONWriterTest {
         JAXBElement jaxbElement = new JAXBElement<Extension>(QName.valueOf("foo"), Extension.class, extension);
         writer.writeTo(jaxbElement, Extension.class, null, null, null, null, myOut);
         Assert.assertEquals("{\"extension\":{\"updated\":\"2012-01-01\",\"alias\":\"alias\",\"description\":\"description\",\"name\":\"name\",\"namespace\":\"namespace\"}}", myOut.toString());
+    }
+
+    @Test
+    public void writeTo_JAXBElementTypeVersionChoice_callsGetVersionChoice() throws Exception {
+        VersionChoice versionChoice = new VersionChoice();
+        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JAXBElement<VersionChoice> jaxbElement = new JAXBElement<VersionChoice>(QName.valueOf("foo"),VersionChoice.class,versionChoice);
+        spy.writeTo(jaxbElement, VersionChoice.class, null, null, null, null, myOut);
+        verify(spy).getVersionChoice(versionChoice);
+    }
+
+    @Ignore
+    @Test
+    public void writeTo_JAXBElementTypeVersionChoice_writesToOutputStream() throws Exception {
+
     }
 
     @Test
