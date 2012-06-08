@@ -1087,14 +1087,14 @@ public class DefaultCloud11ServiceTest {
         verify(spy).authenticateResponse(null);
     }
 
-    @Test
+    @Test(expected = BadRequestException.class)
     public void authenticateXML_isAdmin_callsAdminAuthenticateResponse() throws Exception {
         doReturn(null).when(spy).adminAuthenticateResponse(any(JAXBElement.class), any(HttpServletResponse.class));
         spy.authenticateXML(null, httpHeaders, "<xmlBody/>", true);
         verify(spy).adminAuthenticateResponse(null, null);
     }
 
-    @Test
+    @Test(expected = BadRequestException.class)
     public void authenticateXML_isNotAdmin_callsAuthenticateResponse() throws Exception {
         doReturn(null).when(spy).authenticateResponse(any(JAXBElement.class));
         spy.authenticateXML(null, httpHeaders, "<xmlBody/>", false);

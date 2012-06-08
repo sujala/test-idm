@@ -53,10 +53,9 @@ public class CredentialUnmarshallerTest {
         credentialUnmarshaller = new CredentialUnmarshaller();
     }
 
-    @Test
-    public void unmarshallCredentialsFromJSON_withEmptyJSON_returnsNull() throws Exception {
+    @Test(expected = BadRequestException.class)
+    public void unmarshallCredentialsFromJSON_withEmptyJSON_throwsBadRequestException() throws Exception {
         JAXBElement<? extends Credentials> credentials = credentialUnmarshaller.unmarshallCredentialsFromJSON("{ }");
-        assertThat("credentials", credentials, nullValue());
     }
 
     @Test(expected = BadRequestException.class)
@@ -64,12 +63,11 @@ public class CredentialUnmarshallerTest {
         credentialUnmarshaller.unmarshallCredentialsFromJSON("Invalid JSON");
     }
 
-    @Test
-    public void unmarshallCredentialsFromJSON_withNonCredentialJSON_returnsNull() throws Exception {
+    @Test(expected = BadRequestException.class)
+    public void unmarshallCredentialsFromJSON_withNonCredentialJSON_throwsBadRequestException() throws Exception {
         JAXBElement<? extends Credentials> credentials = credentialUnmarshaller.unmarshallCredentialsFromJSON("{ " +
                 "   \"notCredentials\" : \"someValue\"" +
                 "}");
-        assertThat("credentials", credentials, nullValue());
     }
 
     @Test

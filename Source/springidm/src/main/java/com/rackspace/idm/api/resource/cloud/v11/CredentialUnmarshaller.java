@@ -58,6 +58,8 @@ public class CredentialUnmarshaller {
                 passwordCreds.setUsername((String) (obj3.get(JSONConstants.USERNAME)));
                 passwordCreds.setPassword((String) (obj3.get(JSONConstants.PASSWORD)));
                 creds = OBJ_FACTORY.createPasswordCredentials(passwordCreds);
+            } else {
+            	throw new BadRequestException("malformed JSON");
             }
         } catch (ParseException e) {
             throw new BadRequestException("malformed JSON");
