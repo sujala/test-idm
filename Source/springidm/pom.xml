@@ -1197,6 +1197,7 @@
                 <version>2.12</version>
                 <configuration>
                     <skip>${skip.default.surefire}</skip>
+                    <argLine>-Xmx512m -XX:MaxPermSize=256m</argLine>
                     <systemProperties>
                         <property>
                             <name>idm.properties.location</name>
