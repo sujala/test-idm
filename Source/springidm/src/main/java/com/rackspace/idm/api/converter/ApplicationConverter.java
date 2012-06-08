@@ -91,7 +91,7 @@ public class ApplicationConverter {
         return objectFactory.createApplications(returnedClients);
     }
 
-    private JAXBElement<com.rackspace.api.idm.v1.Application> toClientJaxbMin(Application application) {
+    JAXBElement<com.rackspace.api.idm.v1.Application> toClientJaxbMin(Application application) {
         
     	com.rackspace.api.idm.v1.Application returnedApplication = objectFactory.createApplication();
 
