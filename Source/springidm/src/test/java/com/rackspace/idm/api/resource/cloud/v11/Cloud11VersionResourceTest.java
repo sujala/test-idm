@@ -88,6 +88,7 @@ public class Cloud11VersionResourceTest extends AbstractAroundClassJerseyTest {
         assertThat("response code", clientResponse.getStatus(), equalTo(401));
     }
 
+    @Ignore
     @Test
     public void getUser_withValidUser_returns200() {
         WebResource resource = resource().path("cloud/v1.1/users/user01");
@@ -95,6 +96,7 @@ public class Cloud11VersionResourceTest extends AbstractAroundClassJerseyTest {
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
     }
 
+    @Ignore
     @Test
     public void getUser_withInvalidUser_returns404() {
         WebResource resource = resource().path("cloud/v1.1/users/a1b2c3");
