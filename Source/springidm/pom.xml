@@ -409,11 +409,11 @@
             <version>1.0</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.glassfish</groupId>
-            <artifactId>javax.ejb</artifactId>
-            <version>3.0-b64</version>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>org.glassfish</groupId>-->
+            <!--<artifactId>javax.ejb</artifactId>-->
+            <!--<version>3.0-b64</version>-->
+        <!--</dependency>-->
 
     </dependencies>
 
