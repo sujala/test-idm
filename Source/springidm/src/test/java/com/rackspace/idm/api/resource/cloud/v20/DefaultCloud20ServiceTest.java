@@ -1,8 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_ga.v1.ImpersonationRequest;
-import com.rackspace.docs.identity.api.ext.rax_ga.v1.ImpersonationResponse;
-import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.api.converter.cloudv20.*;
@@ -10,9 +8,8 @@ import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
-import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Application;
-import com.rackspace.idm.domain.entity.Group;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
@@ -23,17 +20,14 @@ import com.unboundid.ldap.sdk.SearchResultEntry;
 import org.apache.commons.configuration.Configuration;
 import org.hamcrest.Matchers;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.verification.VerificationMode;
 import org.openstack.docs.common.api.v1.Extension;
 import org.openstack.docs.common.api.v1.Extensions;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
-import org.openstack.docs.identity.api.ext.os_kscatalog.v1.*;
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.*;
-import org.openstack.docs.identity.api.v2.ObjectFactory;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import javax.ws.rs.core.*;
@@ -44,7 +38,6 @@ import javax.xml.namespace.QName;
 import javax.xml.transform.stream.StreamSource;
 import java.io.InputStream;
 import java.net.URI;
-import java.rmi.ServerException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -236,6 +229,11 @@ public class DefaultCloud20ServiceTest {
         spy = spy(defaultCloud20Service);
         doNothing().when(spy).checkXAUTHTOKEN(eq(authToken), anyBoolean(), any(String.class));
         doNothing().when(spy).checkXAUTHTOKEN(eq(authToken), anyBoolean(), eq(tenantId));
+    }
+
+    @Test
+    public void validatePassword_containsHyphen_succeeds() throws Exception {
+        defaultCloud20Service.validateEmail("foo-bar@test.com");
     }
 
     @Test(expected = BadRequestException.class)

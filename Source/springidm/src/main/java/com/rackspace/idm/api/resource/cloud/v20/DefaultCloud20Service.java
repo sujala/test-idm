@@ -441,12 +441,16 @@ public class DefaultCloud20Service implements Cloud20Service {
             logger.warn(errorMsg);
             throw new BadRequestException(errorMsg);
         }
-        if (!email.matches("[a-zA-Z0-9_\\.\"]+@[a-zA-Z0-9_\\.]+\\.[a-zA-Z]+")) {
+        validateEmail(email);
+
+    }
+
+    void validateEmail(String email) {
+        if (!email.matches("[a-zA-Z0-9_\\-\\.\"]+@[a-zA-Z0-9_\\.]+\\.[a-zA-Z]+")) {
             String errorMsg = "Expecting valid email address";
             logger.warn(errorMsg);
             throw new BadRequestException(errorMsg);
         }
-
     }
 
     void validateUsername(String username) {
