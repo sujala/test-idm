@@ -412,7 +412,7 @@
         <!--<dependency>-->
             <!--<groupId>org.glassfish</groupId>-->
             <!--<artifactId>javax.ejb</artifactId>-->
-            <!--<version>3.0-b64</version>-->
+            <!--<version>3.0.1</version>-->
         <!--</dependency>-->
 
     </dependencies>
