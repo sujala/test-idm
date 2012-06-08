@@ -75,7 +75,7 @@ public class ApplicationConverter {
      * should be retrieved directly from teh resource
      */
     public JAXBElement<com.rackspace.api.idm.v1.ApplicationList> toApplicationJaxbMin(com.rackspace.idm.domain.entity.Applications applications) {
-        if (applications == null) {
+        if (applications == null || applications.getClients() == null) {
             return null;
         }
 
@@ -102,7 +102,7 @@ public class ApplicationConverter {
 
         return objectFactory.createApplication(returnedApplication);
     }
-    private JAXBElement<com.rackspace.api.idm.v1.Application> toClientJaxb(Application client, boolean includeCredentials) {
+    JAXBElement<com.rackspace.api.idm.v1.Application> toClientJaxb(Application client, boolean includeCredentials) {
        
     	com.rackspace.api.idm.v1.Application returnedApplication = objectFactory.createApplication();
 

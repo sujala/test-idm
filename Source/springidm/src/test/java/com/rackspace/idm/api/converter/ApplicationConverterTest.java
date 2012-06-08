@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 
@@ -26,14 +27,15 @@ import static org.junit.Assert.assertThat;
 public class ApplicationConverterTest {
 
     private ApplicationConverter applicationConverter;
-    com.rackspace.idm.domain.entity.Application clientJaxb;
+    //TODO: give these sensical names. application and client are used interchangably in this class!
+    com.rackspace.idm.domain.entity.Application clientDO;
     Application client;
 
 
     @Before
     public void setUp() throws Exception {
         applicationConverter = new ApplicationConverter(new RolesConverter());
-        clientJaxb = new com.rackspace.idm.domain.entity.Application();
+        clientDO = new com.rackspace.idm.domain.entity.Application();
         client = new Application();
     }
 
@@ -188,6 +190,13 @@ public class ApplicationConverterTest {
     }
 
     @Test
+    public void toApplicationJaxbMin_withNullGetClients_returnsNull() throws Exception {
+        Applications applications = new Applications();
+        JAXBElement<ApplicationList> applicationListJAXBElement = applicationConverter.toApplicationJaxbMin(applications);
+        assertThat("applications", applicationListJAXBElement, nullValue());
+    }
+
+    @Test
     public void toApplicationJaxbMin_withApplications_returnsJaxbApplicationList() throws Exception {
         Applications applications = new Applications();
         applications.setClients(new ArrayList<com.rackspace.idm.domain.entity.Application>());
@@ -235,39 +244,95 @@ public class ApplicationConverterTest {
     }
 
     @Test
-    public void toApplicationJaxbMin_toCLientJaxbMin_setsClientId() throws Exception {
-        com.rackspace.idm.domain.entity.Application application = new com.rackspace.idm.domain.entity.Application();
-        application.setClientId("clientId");
-        JAXBElement<Application> applicationJAXBElement = applicationConverter.toClientJaxbMin(application);
+    public void toCLientJaxbMin_withClient_setsClientId() throws Exception {
+        clientDO.setClientId("clientId");
+        JAXBElement<Application> applicationJAXBElement = applicationConverter.toClientJaxbMin(clientDO);
         assertThat("application client id", applicationJAXBElement.getValue().getClientId(), equalTo("clientId"));
     }
 
     @Test
-    public void toApplicationJaxbMin_toCLientJaxbMin_setsCustomerId() throws Exception {
-        com.rackspace.idm.domain.entity.Application application = new com.rackspace.idm.domain.entity.Application();
-        application.setRCN("customerId");
-        JAXBElement<Application> applicationJAXBElement = applicationConverter.toClientJaxbMin(application);
+    public void toCLientJaxbMin_setsCustomerId() throws Exception {
+        clientDO.setRCN("customerId");
+        JAXBElement<Application> applicationJAXBElement = applicationConverter.toClientJaxbMin(clientDO);
         assertThat("application customer id", applicationJAXBElement.getValue().getCustomerId(), equalTo("customerId"));
     }
 
     @Test
-    public void toApplicationJaxbMin_toCLientJaxbMin_setsName() throws Exception {
-        com.rackspace.idm.domain.entity.Application application = new com.rackspace.idm.domain.entity.Application();
-        application.setName("name");
-        JAXBElement<Application> applicationJAXBElement = applicationConverter.toClientJaxbMin(application);
+    public void toCLientJaxbMin_setsName() throws Exception {
+        clientDO.setName("name");
+        JAXBElement<Application> applicationJAXBElement = applicationConverter.toClientJaxbMin(clientDO);
         assertThat("application name", applicationJAXBElement.getValue().getName(), equalTo("name"));
     }
 
     @Test
-    public void toApplicationJaxbMin_toCLientJaxbMin_setsDescription() throws Exception {
-        com.rackspace.idm.domain.entity.Application application = new com.rackspace.idm.domain.entity.Application();
-        application.setDescription("description");
-        JAXBElement<Application> applicationJAXBElement = applicationConverter.toClientJaxbMin(application);
+    public void toCLientJaxbMin_setsDescription() throws Exception {
+        clientDO.setDescription("description");
+        JAXBElement<Application> applicationJAXBElement = applicationConverter.toClientJaxbMin(clientDO);
         assertThat("application description", applicationJAXBElement.getValue().getDescription(), equalTo("description"));
     }
 
     @Test
     public void toClientJaxb_withClient_setsClientId() throws Exception {
-
+        clientDO.setClientId("clientId");
+        JAXBElement<Application> applicationJAXBElement = applicationConverter.toClientJaxb(clientDO, false);
+        assertThat("client id", applicationJAXBElement.getValue().getClientId(), equalTo("clientId"));
     }
+
+    @Test
+    public void toClientJaxb_withClient_setsCustomerId() throws Exception {
+        clientDO.setRCN("customerId");
+        JAXBElement<Application> applicationJAXBElement = applicationConverter.toClientJaxb(clientDO, false);
+        assertThat("customer id", applicationJAXBElement.getValue().getCustomerId(), equalTo("customerId"));
+    }
+
+    @Test
+    public void toClientJaxb_withClient_setsEnabled() throws Exception {
+        clientDO.setEnabled(true);
+        JAXBElement<Application> applicationJAXBElement = applicationConverter.toClientJaxb(clientDO, false);
+        assertThat("enabled", applicationJAXBElement.getValue().isEnabled(), equalTo(true));
+    }
+
+    @Test
+    public void toClientJaxb_withClient_setsName() throws Exception {
+        clientDO.setName("name");
+        JAXBElement<Application> applicationJAXBElement = applicationConverter.toClientJaxb(clientDO, false);
+        assertThat("name", applicationJAXBElement.getValue().getName(), equalTo("name"));
+    }
+
+    @Test
+    public void toClientJaxb_withClient_setsCallBackUrl() throws Exception {
+        clientDO.setCallBackUrl("callBackUrl");
+        JAXBElement<Application> applicationJAXBElement = applicationConverter.toClientJaxb(clientDO, false);
+        assertThat("callback url", applicationJAXBElement.getValue().getCallBackUrl(), equalTo("callBackUrl"));
+    }
+
+    @Test
+    public void toClientJaxb_withClient_setsTitle() throws Exception {
+        clientDO.setTitle("title");
+        JAXBElement<Application> applicationJAXBElement = applicationConverter.toClientJaxb(clientDO, false);
+        assertThat("title", applicationJAXBElement.getValue().getTitle(), equalTo("title"));
+    }
+
+    @Test
+    public void toClientJaxb_withClient_setsDescription() throws Exception {
+        clientDO.setDescription("description");
+        JAXBElement<Application> applicationJAXBElement = applicationConverter.toClientJaxb(clientDO, false);
+        assertThat("description", applicationJAXBElement.getValue().getDescription(), equalTo("description"));
+    }
+
+    @Test
+    public void toClientJaxb_withClient_setsScope() throws Exception {
+        clientDO.setScope("scope");
+        JAXBElement<Application> applicationJAXBElement = applicationConverter.toClientJaxb(clientDO, false);
+        assertThat("scope", applicationJAXBElement.getValue().getScope(), equalTo("scope"));
+    }
+
+    @Test
+    public void toClientJaxb_withClientWithSecretCredAndIncludeCreds_setsSecretCredentials() throws Exception {
+        clientDO.setClientSecret("clientSecret");
+        JAXBElement<Application> applicationJAXBElement = applicationConverter.toClientJaxb(clientDO, false);
+        assertThat("client secret", applicationJAXBElement.getValue().getSecretCredentials(), not(nullValue()));
+        assertThat("client secret", applicationJAXBElement.getValue().getSecretCredentials().getClientSecret(), equalTo("clientSecret"));
+    }
+
 }
