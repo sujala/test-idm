@@ -184,9 +184,13 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
                 SecretQA secrets = (SecretQA) object.getValue();
                 String jsonText = JSONValue.toJSONString(getSecretQA(secrets));
                 outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
-            } else {
+            } else if(cred instanceof PasswordCredentialsRequiredUsername){
                 PasswordCredentialsRequiredUsername creds = (PasswordCredentialsRequiredUsername) cred;
                 String jsonText = JSONValue.toJSONString(getPasswordCredentials(creds));
+                outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
+            } else if(cred instanceof PasswordCredentialsBase){
+                PasswordCredentialsBase creds = (PasswordCredentialsBase) cred;
+                String jsonText = JSONValue.toJSONString(getPasswordCredentialsBase(creds));
                 outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
             }
 
@@ -446,7 +450,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     }
 
     @SuppressWarnings("unchecked")
-    private JSONObject getTenantWithoutWrapper(Tenant tenant) {
+    JSONObject getTenantWithoutWrapper(Tenant tenant) {
         JSONObject userInner = new JSONObject();
         userInner.put(JSONConstants.ID, tenant.getId());
         userInner.put(JSONConstants.ENABLED, tenant.isEnabled());
@@ -539,7 +543,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     }
 
     @SuppressWarnings("unchecked")
-    private JSONObject getPasswordCredentials(
+    JSONObject getPasswordCredentials(
             PasswordCredentialsRequiredUsername creds) {
         JSONObject outer = new JSONObject();
         JSONObject inner = new JSONObject();
@@ -550,7 +554,18 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     }
 
     @SuppressWarnings("unchecked")
-    private JSONObject getSecretQA(SecretQA secrets) {
+    JSONObject getPasswordCredentialsBase(
+            PasswordCredentialsBase creds) {
+        JSONObject outer = new JSONObject();
+        JSONObject inner = new JSONObject();
+        outer.put(JSONConstants.PASSWORD_CREDENTIALS, inner);
+        inner.put(JSONConstants.USERNAME, creds.getUsername());
+        inner.put(JSONConstants.PASSWORD, creds.getPassword());
+        return outer;
+    }
+
+    @SuppressWarnings("unchecked")
+    JSONObject getSecretQA(SecretQA secrets) {
         JSONObject outer = new JSONObject();
         JSONObject inner = new JSONObject();
         outer.put(JSONConstants.SECRET_QA, inner);
@@ -648,7 +663,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     }
 
     @SuppressWarnings("unchecked")
-    private JSONObject getServiceWithoutWrapper(Service service) {
+    JSONObject getServiceWithoutWrapper(Service service) {
         JSONObject outer = new JSONObject();
         outer.put(JSONConstants.ID, service.getId());
         outer.put(JSONConstants.NAME, service.getName());
@@ -767,7 +782,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     }
 
     @SuppressWarnings("unchecked")
-    private JSONObject getEndpoint(Endpoint endpoint) {
+    JSONObject getEndpoint(Endpoint endpoint) {
         JSONObject endpointItem = new JSONObject();
         endpointItem.put(JSONConstants.ID, endpoint.getId());
         if (endpoint.getRegion() != null) {
