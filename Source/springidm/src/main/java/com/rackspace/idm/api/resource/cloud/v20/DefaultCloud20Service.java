@@ -7,7 +7,7 @@ import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.converter.cloudv20.*;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
-//import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
@@ -117,8 +117,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Autowired
     private DelegateCloud20Service delegateCloud20Service;
 
-//    @Autowired
-//    private AtomHopperClient atomHopperClient;
+    @Autowired
+    private AtomHopperClient atomHopperClient;
 
     private HashMap<String, JAXBElement<Extension>> extensionMap;
 
@@ -408,7 +408,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             User userDO = this.userConverterCloudV20.toUserDO(user);
             if (userDO.isDisabled()) {
                 this.scopeAccessService.expireAllTokensForUser(retrievedUser.getUsername());
-                //atomHopperClient.postUser(retrievedUser,authToken,"disabled");
+                atomHopperClient.postUser(retrievedUser,authToken,"disabled");
             }
             retrievedUser.copyChanges(userDO);
 
@@ -441,12 +441,16 @@ public class DefaultCloud20Service implements Cloud20Service {
             logger.warn(errorMsg);
             throw new BadRequestException(errorMsg);
         }
-        if (!email.matches("[a-zA-Z0-9_\\.\"]+@[a-zA-Z0-9_\\.]+\\.[a-zA-Z]+")) {
+        validateEmail(email);
+
+    }
+
+    void validateEmail(String email) {
+        if (!email.matches("[a-zA-Z0-9_\\-\\.\"]+@[a-zA-Z0-9_\\.]+\\.[a-zA-Z]+")) {
             String errorMsg = "Expecting valid email address";
             logger.warn(errorMsg);
             throw new BadRequestException(errorMsg);
         }
-
     }
 
     void validateUsername(String username) {
@@ -789,7 +793,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
             userService.softDeleteUser(user);
 
-            //atomHopperClient.postUser(user,authToken,"deleted");
+            atomHopperClient.postUser(user,authToken,"deleted");
 
             return Response.noContent();
         } catch (Exception ex) {
@@ -1026,21 +1030,17 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getUserById(HttpHeaders httpHeaders, String authToken, String userId) throws IOException {
-
         try {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
             User caller = getUser(scopeAccessByAccessToken);
-
             //if caller has default user role
             if (authorizationService.authorizeCloudUser(scopeAccessByAccessToken)) {
                 if (caller.getId().equals(userId)) {
-                    return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                            .createUser(this.userConverterCloudV20.toUser(caller)));
+                    return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUser(this.userConverterCloudV20.toUser(caller)));
                 } else {
                     throw new ForbiddenException("Not authorized.");
                 }
             }
-
             verifyUserAdminLevelAccess(authToken);
             User user = this.userService.getUserById(userId);
             if (user == null) {
@@ -1048,14 +1048,10 @@ public class DefaultCloud20Service implements Cloud20Service {
                 logger.warn(errMsg);
                 throw new NotFoundException(errMsg);
             }
-
             if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
                 verifyDomain(user, caller);
             }
-
-            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                    .createUser(this.userConverterCloudV20.toUser(user)));
-
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUser(this.userConverterCloudV20.toUser(user)));
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
@@ -1063,24 +1059,19 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getUserByName(HttpHeaders httpHeaders, String authToken, String name) throws IOException {
-
         try {
             verifyUserLevelAccess(authToken);
-            //verifyServiceAdminLevelAccess(authToken);
-
             User user = this.userService.getUser(name);
-
             if (user == null) {
                 String errMsg = String.format("User not found: '%s'", name);
                 logger.warn(errMsg);
                 throw new NotFoundException(errMsg);
             }
-
-            ScopeAccess scopeAccessByAccessToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
-            if (isUserAdmin(scopeAccessByAccessToken, null)) {
+            ScopeAccess callerScopeAccess = scopeAccessService.getScopeAccessByAccessToken(authToken);
+            if (authorizationService.authorizeCloudUserAdmin(callerScopeAccess)) {
                 User adminUser = userService.getUserByAuthToken(authToken);
                 verifyDomain(user, adminUser);
-            } else if (isDefaultUser(scopeAccessByAccessToken, null)) {
+            } else if (authorizationService.authorizeCloudUser(callerScopeAccess)) {
                 verifySelf(authToken, user);
             }
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(user)));
@@ -2550,9 +2541,9 @@ public class DefaultCloud20Service implements Cloud20Service {
         this.tokenConverterCloudV20 = tokenConverterCloudV20;
     }
 
-//    public void setAtomHopperClient(AtomHopperClient atomHopperClient) {
-//        this.atomHopperClient = atomHopperClient;
-//    }
+    public void setAtomHopperClient(AtomHopperClient atomHopperClient) {
+        this.atomHopperClient = atomHopperClient;
+    }
 
     public void setRoleConverterCloudV20(RoleConverterCloudV20 roleConverterCloudV20) {
         this.roleConverterCloudV20 = roleConverterCloudV20;

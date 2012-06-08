@@ -4,7 +4,7 @@ import com.rackspace.idm.api.converter.cloudv11.AuthConverterCloudV11;
 import com.rackspace.idm.api.converter.cloudv11.EndpointConverterCloudV11;
 import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11;
 import com.rackspace.idm.api.resource.cloud.CloudExceptionResponse;
-//import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.dao.impl.LdapCloudAdminRepository;
@@ -91,8 +91,8 @@ public class DefaultCloud11Service implements Cloud11Service {
     @Autowired
     private GroupService cloudGroupService;
 
-//    @Autowired
-//    private AtomHopperClient atomHopperClient;
+    @Autowired
+    private AtomHopperClient atomHopperClient;
 
     @Autowired
     public DefaultCloud11Service(Configuration config,
@@ -477,8 +477,8 @@ public class DefaultCloud11Service implements Cloud11Service {
             this.userService.softDeleteUser(gaUser);
 
             //AtomHopper
-//            UserScopeAccess usa = getAuthtokenFromRequest(request);
-//            atomHopperClient.postUser(gaUser,usa.getAccessTokenString(),"deleted");
+            UserScopeAccess usa = getAuthtokenFromRequest(request);
+            atomHopperClient.postUser(gaUser,usa.getAccessTokenString(),"deleted");
 
             return Response.noContent();
         } catch (Exception ex) {
@@ -820,10 +820,10 @@ public class DefaultCloud11Service implements Cloud11Service {
                 }
             }
 
-//            if(gaUser.isDisabled()){
-//                UserScopeAccess usa = getAuthtokenFromRequest(request);
-//                atomHopperClient.postUser(gaUser,usa.getAccessTokenString(),"disabled");
-//            }
+            if(gaUser.isDisabled()){
+                UserScopeAccess usa = getAuthtokenFromRequest(request);
+                atomHopperClient.postUser(gaUser,usa.getAccessTokenString(),"disabled");
+            }
 
             List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(userId);
 
@@ -1035,8 +1035,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             Unmarshaller unmarshaller = context.createUnmarshaller();
             cred = (JAXBElement<? extends Credentials>) unmarshaller.unmarshal(new StringReader(body));
         } catch (JAXBException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            throw new BadRequestException("Invalid XML");
         }
         if (isAdmin) {
             return adminAuthenticateResponse(cred, response);
@@ -1195,7 +1194,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         this.cloudGroupService = cloudGroupService;
     }
 
-//    public void setAtomHopperClient(AtomHopperClient atomHopperClient) {
-//        this.atomHopperClient = atomHopperClient;
-//    }
+    public void setAtomHopperClient(AtomHopperClient atomHopperClient) {
+        this.atomHopperClient = atomHopperClient;
+    }
 }

@@ -408,6 +408,13 @@
             <artifactId>tinyradius</artifactId>
             <version>1.0</version>
         </dependency>
+
+        <!--<dependency>-->
+            <!--<groupId>org.glassfish</groupId>-->
+            <!--<artifactId>javax.ejb</artifactId>-->
+            <!--<version>3.0.1</version>-->
+        <!--</dependency>-->
+
     </dependencies>
 
     <distributionManagement>
@@ -1190,6 +1197,7 @@
                 <version>2.12</version>
                 <configuration>
                     <skip>${skip.default.surefire}</skip>
+                    <argLine>-Xmx1024m -XX:MaxPermSize=512m</argLine>
                     <systemProperties>
                         <property>
                             <name>idm.properties.location</name>
