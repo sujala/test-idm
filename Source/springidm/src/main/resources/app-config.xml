@@ -49,7 +49,6 @@
          The SpringJdbcIntro class uses @Transactional annotations.
      <tx:annotation-driven/>
      -->
-
     <aop:aspectj-autoproxy/>
 
 </beans>
