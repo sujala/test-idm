@@ -1,12 +1,16 @@
 package com.rackspace.idm.api.converter.cloudv20;
 
+import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.TenantRole;
+import com.rackspace.idm.domain.entity.User;
 import org.junit.Before;
 import org.junit.Test;
+import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.v2.ObjectFactory;
 import org.openstack.docs.identity.api.v2.UserForAuthenticateResponse;
 
+import javax.xml.namespace.QName;
 import java.util.ArrayList;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -30,6 +34,14 @@ public class UserConverterCloudV20Test {
         userConverterCloudV20 = new UserConverterCloudV20();
         userConverterCloudV20.setObjectFactory(objectFactory);
         userConverterCloudV20.setRoleConverterCloudV20(roleConverterCloudV20);
+    }
+
+    @Test
+    public void toUserDO_setsRegion() throws Exception {
+        final UserForCreate user = new UserForCreate();
+        user.getOtherAttributes().put(new QName(JSONConstants.OS_KSADM_DEFAULT_REGION.toString()),"foo");
+        final User userDO = userConverterCloudV20.toUserDO(user);
+        assertThat("user region", userDO.getRegion(), equalTo("foo"));
     }
 
     @Test

@@ -898,6 +898,43 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void assignDefaultRegionToDomainUser_withNullRegion_assignsDefaultRegion() throws Exception {
+        final User userDO = new User();
+        defaultCloud20Service.assignDefaultRegionToDomainUser(userDO);
+        assertThat("default region", userDO.getRegion(), equalTo("default"));
+    }
+
+    @Test
+    public void assignDefaultRegionToDomainUser_withRegion_assignsRegion() throws Exception {
+        final User userDO = new User();
+        userDO.setRegion("foo");
+        defaultCloud20Service.assignDefaultRegionToDomainUser(userDO);
+        assertThat("default region", userDO.getRegion(), equalTo("foo"));
+    }
+
+    @Test
+    public void addUser_withNoRegion_callsAssignDefaultRegionToDomainUser() throws Exception {
+        UserForCreate userNoRegion = new UserForCreate();
+        doNothing().when(spy).verifyUserAdminLevelAccess(authToken);
+        doNothing().when(spy).validateUser(org.mockito.Matchers.any(org.openstack.docs.identity.api.v2.User.class));
+        when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(new User());
+        spy.addUser(httpHeaders, uriInfo, authToken, userNoRegion);
+        verify(spy).assignDefaultRegionToDomainUser(org.mockito.Matchers.any(User.class));
+    }
+
+    @Test
+    public void addUser_withNoRegion_setsDefaultRegion() throws Exception {
+        UserForCreate userNoRegion = new UserForCreate();
+        ArgumentCaptor<User> argumentCaptor = ArgumentCaptor.forClass(User.class);
+        doNothing().when(spy).verifyUserAdminLevelAccess(authToken);
+        doNothing().when(spy).validateUser(org.mockito.Matchers.any(org.openstack.docs.identity.api.v2.User.class));
+        when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(new User());
+        spy.addUser(httpHeaders, uriInfo, authToken, userNoRegion);
+        verify(userService).addUser(argumentCaptor.capture());
+        assertThat("user region", argumentCaptor.getValue().getRegion(), equalTo("default"));
+    }
+
+    @Test
     public void addUser_callerIsUserAdmin_setsMossoAndNastId() throws Exception {
         ArgumentCaptor<User> argument = ArgumentCaptor.forClass(User.class);
         User caller = new User();

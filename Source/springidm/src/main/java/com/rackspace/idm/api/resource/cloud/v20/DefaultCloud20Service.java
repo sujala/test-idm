@@ -346,6 +346,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 userDO.setMossoId(caller.getMossoId());
                 userDO.setNastId(caller.getNastId());
             }
+            assignDefaultRegionToDomainUser(userDO);
             setDomainId(scopeAccessByAccessToken, userDO);
             userService.addUser(userDO);
             assignProperRole(httpHeaders, authToken, scopeAccessByAccessToken, userDO);
@@ -362,6 +363,12 @@ public class DefaultCloud20Service implements Cloud20Service {
             return userConflictExceptionResponse(due.getMessage());
         } catch (Exception ex) {
             return exceptionResponse(ex);
+        }
+    }
+
+    void assignDefaultRegionToDomainUser(User userDO) {
+        if(userDO.getRegion()==null){
+            userDO.setRegion("default");
         }
     }
 
