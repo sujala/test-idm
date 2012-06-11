@@ -1139,10 +1139,10 @@ public class DefaultCloud11Service implements Cloud11Service {
             UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(
                     stringStringMap.get("username"), stringStringMap.get("password"), getCloudAuthClientId());
             boolean authenticated = authorizationService.authorizeCloudServiceAdmin(usa);
-
-            if (!authenticated) {
+            if (!authenticated)
+                authenticated = authorizationService.authorizeCloudIdentityAdmin(usa);
+            if (!authenticated)
                 throw new NotAuthorizedException("You are not authorized to access this resource.");
-            }
         }
     }
 
