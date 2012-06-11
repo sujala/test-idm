@@ -77,7 +77,7 @@ public class AuthConverter {
         return objectFactory.createAuth(authJaxb);
     }
 
-    private XMLGregorianCalendar toXmlGregorianCalender(DateTime dateTime) {
+    XMLGregorianCalendar toXmlGregorianCalender(DateTime dateTime) {
         try {
             if (dateTime != null) {
                 GregorianCalendar gc = new GregorianCalendar();
