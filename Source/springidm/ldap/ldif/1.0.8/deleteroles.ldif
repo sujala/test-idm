@@ -1,0 +1,8 @@
+### deleteroles.ldif ###
+rsId=2,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+rsId=3,cn=CLIENT ROLES,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou=applications,o=rackspace,dc=rackspace,dc=com
+rsId=4,cn=CLIENT ROLES,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou=applications,o=rackspace,dc=rackspace,dc=com
+rsId=5,cn=CLIENT ROLES,clientId=6047d506862b81d6d99273b4853adfe81e0478c1,ou=applications,o=rackspace,dc=rackspace,dc=com
+rsId=6,cn=CLIENT ROLES,clientId=a45b14e394a57e3fd4e45d59ff3693ead204998b,ou=applications,o=rackspace,dc=rackspace,dc=com
+rsId=7,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+rsId=8,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
