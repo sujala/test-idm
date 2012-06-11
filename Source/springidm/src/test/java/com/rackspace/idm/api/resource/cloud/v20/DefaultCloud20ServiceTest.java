@@ -923,6 +923,41 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void updateUser_withNoRegionAndPreviousRegionsExists_previousRegionRemains() throws Exception {
+        UserForCreate userNoRegion = new UserForCreate();
+        doNothing().when(spy).verifyUserAdminLevelAccess(authToken);
+        doNothing().when(spy).validateUser(org.mockito.Matchers.any(org.openstack.docs.identity.api.v2.User.class));
+        when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(new User());
+        User retrievedUser = new User("testUser");
+        retrievedUser.setId("id");
+        retrievedUser.setRegion("US of A");
+        doReturn(retrievedUser).when(spy).checkAndGetUser("id");
+        ArgumentCaptor<User> argumentCaptor = ArgumentCaptor.forClass(User.class);
+        doNothing().when(userService).updateUserById(argumentCaptor.capture(), anyBoolean());
+        spy.updateUser(httpHeaders, authToken, userId, userNoRegion);
+        verify(userService).updateUserById(argumentCaptor.capture(), anyBoolean());
+        assertThat("default region", argumentCaptor.getValue().getRegion(), equalTo("US of A"));
+    }
+
+    @Test
+    public void updateUser_withRegionAndPreviousRegionsExists_newRegionGetsSaved() throws Exception {
+        UserForCreate userWithRegion = new UserForCreate();
+        userWithRegion.getOtherAttributes().put(new QName("http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0","defaultRegion"), "foo");
+        doNothing().when(spy).verifyUserAdminLevelAccess(authToken);
+        doNothing().when(spy).validateUser(org.mockito.Matchers.any(org.openstack.docs.identity.api.v2.User.class));
+        spy.setUserConverterCloudV20(new UserConverterCloudV20());
+        User retrievedUser = new User("testUser");
+        retrievedUser.setId("id");
+        retrievedUser.setRegion("US of A");
+        doReturn(retrievedUser).when(spy).checkAndGetUser("id");
+        ArgumentCaptor<User> argumentCaptor = ArgumentCaptor.forClass(User.class);
+        doNothing().when(userService).updateUserById(argumentCaptor.capture(), anyBoolean());
+        spy.updateUser(httpHeaders, authToken, userId, userWithRegion);
+        verify(userService).updateUserById(argumentCaptor.capture(), anyBoolean());
+        assertThat("default region", argumentCaptor.getValue().getRegion(), equalTo("foo"));
+    }
+
+    @Test
     public void addUser_withNoRegion_setsDefaultRegion() throws Exception {
         UserForCreate userNoRegion = new UserForCreate();
         ArgumentCaptor<User> argumentCaptor = ArgumentCaptor.forClass(User.class);
