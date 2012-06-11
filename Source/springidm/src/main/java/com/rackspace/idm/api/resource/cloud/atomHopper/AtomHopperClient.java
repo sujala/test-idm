@@ -11,7 +11,6 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import javax.ws.rs.core.MediaType;
 import javax.xml.bind.JAXBContext;
@@ -38,7 +37,25 @@ public class AtomHopperClient {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    @Async
+    /* Created new thread to run the atom hopper post call to make it
+     * Asynchronous. The reason Spring @Async annotation was not use was
+     * it broke test when sonar ran. Other annotation were used a but
+     * similar problems occurred.
+     */
+    public void asyncPost(final User user,final String authToken, final String userStatus) {
+        Runnable task = new Runnable() {
+            @Override
+            public void run() {
+                try{
+                    postUser(user, authToken, userStatus);
+                }catch(Exception e){
+                    logger.warn("AtomHopperClient Exception: " + e);
+                }
+            }
+        };
+        new Thread(task,"Atom Hopper").start();
+    }
+
     public void postUser(User user, String authToken, String userStatus) throws JAXBException, IOException, HttpException, URISyntaxException {
         try {
             AtomFeed atomFeed = createAtomFeed(user);

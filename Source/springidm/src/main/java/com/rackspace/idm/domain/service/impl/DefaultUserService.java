@@ -295,8 +295,7 @@ public class DefaultUserService implements UserService {
     @Override
     public User getUser(String customerId, String username) {
         logger.debug("Getting User: {} - {}", customerId, username);
-        User user = userDao
-                .getUserByCustomerIdAndUsername(customerId, username);
+        User user = userDao.getUserByCustomerIdAndUsername(customerId, username);
         logger.debug("Got User: {}", user);
         return user;
     }
@@ -551,6 +550,7 @@ public class DefaultUserService implements UserService {
     @Override
     public void softDeleteUser(User user) {
         logger.debug("SoftDeleting User: {}", user);
+        scopeAccessService.expireAllTokensForUser(user.getUsername());
         userDao.softDeleteUser(user);
         logger.debug("SoftDeleted User: {}", user);
     }
