@@ -296,8 +296,22 @@ public class CloudMigrationServiceTest {
         assertThat("password", userList.get(0).getPassword().length(), not(0));
     }
 
+    @Test (expected = ConflictException.class)
+    public void migrateUserByUsername_usernameALreadyExists_throwsConflictException() throws Exception {
+        doReturn(adminToken).when(spy).getAdminToken();
+        when(config.getString("cloudAuth11url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v1.1/");
+        when(config.getString("cloudAuth20url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v2.0/");
+        when(config.getString("ga.username")).thenReturn("auth");
+        when(config.getString("ga.password")).thenReturn("auth123");
+        when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
+        when(userService.getUser(anyString())).thenReturn(user);
+        when(userService.userExistsByUsername(anyString())).thenReturn(false).thenReturn(true);
+        doReturn(true).when(spy).isSubUser(any(RoleList.class));
+        spy.migrateUserByUsername("cmarin2", false, "1");
+    }
+
     @Test (expected = BadRequestException.class)
-    public void migrateUserByUsername_domainIdIsNullAndIsSubUser() throws Exception {
+    public void migrateUserByUsername_domainIdIsNullAndIsSubUser_throwsBadRequestException() throws Exception {
         doReturn(adminToken).when(spy).getAdminToken();
         when(config.getString("cloudAuth11url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v1.1/");
         when(config.getString("cloudAuth20url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v2.0/");
@@ -307,6 +321,59 @@ public class CloudMigrationServiceTest {
         when(userService.getUser(anyString())).thenReturn(user);
         doReturn(true).when(spy).isSubUser(any(RoleList.class));
         spy.migrateUserByUsername("cmarin2", false, null);
+    }
+
+    @Test
+    public void migrateUserByUsername_enableIsTrue_callsUserServiceUpdateUserById() throws Exception {
+        doReturn(adminToken).when(spy).getAdminToken();
+        when(config.getString("cloudAuth11url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v1.1/");
+        when(config.getString("cloudAuth20url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v2.0/");
+        when(config.getString("ga.username")).thenReturn("auth");
+        when(config.getString("ga.password")).thenReturn("auth123");
+        when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
+        when(userService.getUser(anyString())).thenReturn(user);
+        when(userService.userExistsById(anyString())).thenReturn(true);
+        spy.migrateUserByUsername("cmarin2", true, "1");
+        verify(userService, times(2)).updateUserById(any(User.class), eq(false));
+    }
+
+    @Test
+    public void migrateUserByUsername_CloudBaseUrlBaseUrlTypeIsNAST_succeedsWithNoExceptions() throws Exception {
+        cloudBaseUrl.setBaseUrlType("NAST");
+        doReturn(adminToken).when(spy).getAdminToken();
+        when(config.getString("cloudAuth11url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v1.1/");
+        when(config.getString("cloudAuth20url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v2.0/");
+        when(config.getString("ga.username")).thenReturn("auth");
+        when(config.getString("ga.password")).thenReturn("auth123");
+        when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
+        when(userService.getUser(anyString())).thenReturn(user);
+        spy.migrateUserByUsername("cmarin2", false, "1");
+    }
+
+    @Test
+    public void migrateUserByUsername_CloudBaseUrlGetBaseUrlTypeIsMOSSO_succeedsWithNoExceptions() throws Exception {
+        cloudBaseUrl.setBaseUrlType("MOSSO");
+        doReturn(adminToken).when(spy).getAdminToken();
+        when(config.getString("cloudAuth11url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v1.1/");
+        when(config.getString("cloudAuth20url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v2.0/");
+        when(config.getString("ga.username")).thenReturn("auth");
+        when(config.getString("ga.password")).thenReturn("auth123");
+        when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
+        when(userService.getUser(anyString())).thenReturn(user);
+        spy.migrateUserByUsername("cmarin2", false, "1");
+    }
+
+    @Test
+    public void migrateUserByUsername_userDoesNotExist_returnsWithNoExceptions() throws Exception {
+        doReturn(adminToken).when(spy).getAdminToken();
+        when(config.getString("cloudAuth11url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v1.1/");
+        when(config.getString("cloudAuth20url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v2.0/");
+        when(config.getString("ga.username")).thenReturn("auth");
+        when(config.getString("ga.password")).thenReturn("auth123");
+        when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
+        when(userService.getUser(anyString())).thenReturn(user);
+        when(userService.userExistsById(anyString())).thenReturn(true);
+        spy.migrateUserByUsername("cmarin2", false, "1");
     }
 
     @Test
@@ -322,7 +389,7 @@ public class CloudMigrationServiceTest {
     }
 
     @Test
-    public void getSubUsers_returns() throws Exception {
+    public void getSubUsers_succeedsWithNoExceptions() throws Exception {
         MigrationClient clientTest = new MigrationClient();
         spy.setClient(clientTest);
         clientTest.setCloud20Host("https://auth.staging.us.ccp.rackspace.net/v2.0/");
