@@ -12,7 +12,6 @@ import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotAuthorizedException;
-import com.rackspace.idm.exception.UserDisabledException;
 import com.rackspace.idm.util.NastFacade;
 import com.rackspacecloud.docs.auth.api.v1.*;
 import com.rackspacecloud.docs.auth.api.v1.Credentials;
@@ -20,7 +19,6 @@ import com.rackspacecloud.docs.auth.api.v1.PasswordCredentials;
 import com.rackspacecloud.docs.auth.api.v1.User;
 import com.sun.jersey.api.uri.UriBuilderImpl;
 import org.apache.commons.configuration.Configuration;
-import org.hamcrest.CoreMatchers;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
@@ -1556,14 +1554,14 @@ public class DefaultCloud11ServiceTest {
 
     @Test
     public void updateUser_callsValidateUser() throws Exception {
-        when(authorizationService.authorizeCloudIdentityAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
         spy.updateUser(request, null, null, null);
         verify(userValidator).validate(null);
     }
 
     @Test
     public void updateUser_whenValidatorThrowsBadRequestException_returns400() throws Exception {
-        when(authorizationService.authorizeCloudIdentityAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
         doThrow(new BadRequestException("test exception")).when(userValidator).validate(null);
         Response.ResponseBuilder responseBuilder = spy.updateUser(request, null, null, null);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
@@ -2158,7 +2156,7 @@ public class DefaultCloud11ServiceTest {
 
     @Test
     public void authAdmin_withPasswordCredentials_withInvalidUser_returns401() throws Exception {
-        when(authorizationService.authorizeCloudIdentityAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
         when(httpHeaders.getMediaType()).thenReturn(new MediaType());
         String credentials = "<passwordCredentials password=\"123\" username=\"IValidUser\" xmlns=\"http://docs.rackspacecloud.com/auth/api/v1.1\"/>";
         Response.ResponseBuilder responseBuilder = spy.adminAuthenticate(request, null, httpHeaders, credentials);
@@ -2169,7 +2167,7 @@ public class DefaultCloud11ServiceTest {
     public void createUser_validMossoId_callValidateMossoId() throws Exception{
         user.setId("1");
         user.setMossoId(123456);
-        when(authorizationService.authorizeCloudIdentityAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
         spy.createUser(request,httpHeaders,uriInfo,user);
         verify(spy).validateMossoId(123456);
     }
@@ -2217,7 +2215,7 @@ public class DefaultCloud11ServiceTest {
         ClientRole clientRole = new ClientRole();
         clientRole.setId("7");
         clientRole.setName("identity:user-admin");
-        when(authorizationService.authorizeCloudIdentityAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
         when(userService.getUsersByMossoId(123456)).thenReturn(users);
         when(clientService.getClientRoleByClientIdAndRoleName(Matchers.<String>any(), Matchers.<String>any())).thenReturn(clientRole);
         when(clientService.getClientRoleById(Matchers.<String>any())).thenReturn(clientRole);

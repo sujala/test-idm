@@ -238,7 +238,7 @@ public class DefaultScopeAccessServiceTest {
         userScopeAccess.setAccessTokenString("1234567890");
         when(scopeAccessDao.getDirectScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(userScopeAccess);
         when(scopeAccessDao.updateScopeAccess(userScopeAccess)).thenReturn(true);
-        UserScopeAccess uas = defaultScopeAccessService.getUserScopeAccessForClientId("12345", "12345");
+        UserScopeAccess uas = defaultScopeAccessService.getValidUserScopeAccessForClientId("12345", "12345");
         uas.isAccessTokenExpired(new DateTime());
         assertThat("newUserScopeAccess", uas.getAccessTokenString(), not("1234567890"));
     }
@@ -250,7 +250,7 @@ public class DefaultScopeAccessServiceTest {
         userScopeAccess.setAccessTokenString("1234567890");
         when(scopeAccessDao.getDirectScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(userScopeAccess);
         when(scopeAccessDao.updateScopeAccess(userScopeAccess)).thenReturn(true);
-        UserScopeAccess uas = defaultScopeAccessService.getUserScopeAccessForClientId("12345", "12345");
+        UserScopeAccess uas = defaultScopeAccessService.getValidUserScopeAccessForClientId("12345", "12345");
         assertThat("newUserScopeAccessWithinWindow", uas.getAccessTokenString(), not("1234567890"));
     }
 
