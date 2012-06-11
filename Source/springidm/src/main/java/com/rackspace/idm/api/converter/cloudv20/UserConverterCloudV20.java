@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.converter.cloudv20;
 
+import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.TenantRole;
@@ -13,6 +14,7 @@ import org.openstack.docs.identity.api.v2.ObjectFactory;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
+import javax.xml.namespace.QName;
 import java.util.List;
 
 @Component
@@ -35,6 +37,9 @@ public class UserConverterCloudV20 {
         userDO.setEnabled(user.isEnabled());
         if(user instanceof UserForCreate){
             userDO.setPassword(((UserForCreate) user).getPassword());
+        }
+        if(user.getOtherAttributes()!=null){
+            userDO.setRegion(user.getOtherAttributes().get(new QName(JSONConstants.OS_KSADM_DEFAULT_REGION.toString())));
         }
         return userDO;
     }
