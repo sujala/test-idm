@@ -15,6 +15,7 @@ import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.openstack.docs.identity.api.v2.CredentialListType;
 import org.openstack.docs.identity.api.v2.EndpointList;
 
 import javax.ws.rs.core.Response;
@@ -41,19 +42,21 @@ public class CloudMigrationServiceTest {
     private CloudMigrationService spy;
     private Configuration config;
     private ApplicationService applicationService;
-    private MigrationClient migrationClient;
+    private MigrationClient client11;
     private EndpointService endpointService;
     private JAXBObjectFactories jaxbObjectFactories;
     private TenantService tenantService;
     private UserConverterCloudV20 userConverterCloudV20;
     private UserService userService;
     private GroupService groupService;
-    private MigrationClient client = new MigrationClient();
+    private MigrationClient client;
     private GregorianCalendar gc = new GregorianCalendar();
     private static DatatypeFactory df = null;
     private RoleConverterCloudV20 roleConverterCloudV20;
     private ScopeAccessService scopeAccessService;
     private EndpointConverterCloudV20 endpointConverterCloudV20;
+    private String adminToken;
+    private CloudBaseUrl cloudBaseUrl;
 
     private User user;
     private org.openstack.docs.identity.api.v2.User cloudUser;
@@ -62,11 +65,12 @@ public class CloudMigrationServiceTest {
     public void setUp() throws Exception {
         cloudMigrationService = new CloudMigrationService();
         endpointConverterCloudV20 = new EndpointConverterCloudV20();
-
+        cloudBaseUrl = new CloudBaseUrl();
         //mocks
         config = mock(Configuration.class);
         applicationService = mock(ApplicationService.class);
-        migrationClient = mock(MigrationClient.class);
+        client = mock(MigrationClient.class);
+        client11 = mock(MigrationClient.class);
         endpointService = mock(EndpointService.class);
         jaxbObjectFactories = mock(JAXBObjectFactories.class);
         tenantService = mock(TenantService.class);
@@ -78,7 +82,7 @@ public class CloudMigrationServiceTest {
 
         //setting mocks
         cloudMigrationService.setApplicationService(applicationService);
-        cloudMigrationService.setClient(migrationClient);
+        cloudMigrationService.setClient(client);
         cloudMigrationService.setConfig(config);
         cloudMigrationService.setEndpointService(endpointService);
         cloudMigrationService.setOBJ_FACTORIES(jaxbObjectFactories);
@@ -105,6 +109,7 @@ public class CloudMigrationServiceTest {
         user.setApiKey("APIKEY");
         user.setDisplayName("name");
         user.setEmail("email@test.rackspacec.com");
+        adminToken = "a7c3507e-48aa-4bb2-af6c-af74ea834423";
 
         df = DatatypeFactory.newInstance();
         cloudUser = new org.openstack.docs.identity.api.v2.User();
@@ -115,6 +120,22 @@ public class CloudMigrationServiceTest {
         cloudUser.setUsername("migrateUser");
         cloudUser.setCreated(df.newXMLGregorianCalendar(gc));
         cloudUser.setUpdated(df.newXMLGregorianCalendar(gc));
+
+        cloudBaseUrl.setBaseUrlId(1);
+        cloudBaseUrl.setAdminUrl("adminUrl");
+        cloudBaseUrl.setBaseUrlType("baseUrlType");
+        cloudBaseUrl.setDef(true);
+        cloudBaseUrl.setEnabled(true);
+        cloudBaseUrl.setGlobal(true);
+        cloudBaseUrl.setInternalUrl("internalUrl");
+        cloudBaseUrl.setOpenstackType("openStackType");
+        cloudBaseUrl.setPublicUrl("publicUrl");
+        cloudBaseUrl.setRegion("region");
+        cloudBaseUrl.setServiceName("serviceName");
+        cloudBaseUrl.setVersionId("versionId");
+        cloudBaseUrl.setVersionInfo("versionInfo");
+        cloudBaseUrl.setVersionList("versionList");
+        cloudBaseUrl.setUniqueId("uniqueId");
 
         //stubbing
         when(jaxbObjectFactories.getRackspaceIdentityExtKsgrpV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.ObjectFactory());
@@ -186,22 +207,6 @@ public class CloudMigrationServiceTest {
 
     @Test
     public void getEndpointsForUser_returnsCorrectEndpointList() throws Exception {
-        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
-        cloudBaseUrl.setBaseUrlId(1);
-        cloudBaseUrl.setAdminUrl("adminUrl");
-        cloudBaseUrl.setBaseUrlType("baseUrlType");
-        cloudBaseUrl.setDef(true);
-        cloudBaseUrl.setEnabled(true);
-        cloudBaseUrl.setGlobal(true);
-        cloudBaseUrl.setInternalUrl("internalUrl");
-        cloudBaseUrl.setOpenstackType("openStackType");
-        cloudBaseUrl.setPublicUrl("publicUrl");
-        cloudBaseUrl.setRegion("region");
-        cloudBaseUrl.setServiceName("serviceName");
-        cloudBaseUrl.setVersionId("versionId");
-        cloudBaseUrl.setVersionInfo("versionInfo");
-        cloudBaseUrl.setVersionList("versionList");
-        cloudBaseUrl.setUniqueId("uniqueId");
         List<CloudBaseUrl> cloudBaseUrlList = new ArrayList<CloudBaseUrl>();
         cloudBaseUrlList.add(cloudBaseUrl);
         OpenstackEndpoint openstackEndpoint = new OpenstackEndpoint();
@@ -261,28 +266,42 @@ public class CloudMigrationServiceTest {
         spy.migrateUserByUsername("userNotExist", false, null);
     }
 
-    /*
-        Not sure how to get client11.getUserTenantsBaseUrls(config.getString("ga.username"), config.getString("ga.password"), username);
-        to not throw an exception. Instead having it return an actual user and then have user = client.getUser(adminToken, username);
-        throw the NotFoundException. Must ponder some more.
-     */
-    @Ignore
     @Test (expected = NotFoundException.class)
     public void migrateUserByUsername_clientGetUserAndUsernameCanNotBeFound_throwsNotFoundException() throws Exception {
+        doReturn(client).doReturn(client11).when(spy).getMigrationClientInstance();
+        doReturn(adminToken).when(spy).getAdminToken();
+        when(config.getString("cloudAuth11url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v1.1/");
         when(config.getString("cloudAuth20url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v2.0/");
-        when(config.getString("migration.username")).thenReturn("migration_user");
-        when(config.getString("migration.apikey")).thenReturn("0f97f489c848438090250d50c7e1ea88");
         when(config.getString("ga.username")).thenReturn("auth");
         when(config.getString("ga.password")).thenReturn("auth123");
-        spy.migrateUserByUsername("userId", false, null);
+        doThrow(new NotFoundException()).when(client).getUser(anyString(), anyString());
+        spy.migrateUserByUsername("cmarin2", false, null);
     }
+
+    /*
+        Need to figure out how to verify Password.generateRandom(false);
+     */
 
     @Ignore
     @Test
+    public void migrateUserByUsername_passwordIsBlankString_callsGenerateRandom() throws Exception {
+        doReturn(client).doReturn(client11).when(spy).getMigrationClientInstance();
+        doReturn(adminToken).when(spy).getAdminToken();
+        doReturn(cloudUser).when(client).getUser(adminToken, "cmarin2");
+        spy.migrateUserByUsername("cmarin2", false, null);
+        verify(Password.generateRandom(false));
+    }
+
+    @Test
     public void migrateUserByUsername_returns() throws Exception {
-        when(userService.userExistsByUsername(anyString())).thenReturn(false);
-        when(client.getUser(anyString(), anyString())).thenReturn(cloudUser);
-        MigrateUserResponseType response = spy.migrateUserByUsername("migrateUser", false, null);
+        doReturn(adminToken).when(spy).getAdminToken();
+        when(config.getString("cloudAuth11url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v1.1/");
+        when(config.getString("cloudAuth20url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v2.0/");
+        when(config.getString("ga.username")).thenReturn("auth");
+        when(config.getString("ga.password")).thenReturn("auth123");
+        when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
+        when(userService.getUser(anyString())).thenReturn(user);
+        spy.migrateUserByUsername("cmarin2", false, "1");
     }
 
 }
