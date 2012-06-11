@@ -8,6 +8,7 @@ import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.api.resource.cloud.MigrationClient;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
+import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.sun.jersey.api.ConflictException;
@@ -15,8 +16,10 @@ import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.openstack.docs.identity.api.v2.CredentialListType;
 import org.openstack.docs.identity.api.v2.EndpointList;
+import org.openstack.docs.identity.api.v2.RoleList;
 
 import javax.ws.rs.core.Response;
 import javax.xml.datatype.DatatypeFactory;
@@ -278,22 +281,36 @@ public class CloudMigrationServiceTest {
         spy.migrateUserByUsername("cmarin2", false, null);
     }
 
-    /*
-        Need to figure out how to verify Password.generateRandom(false);
-     */
-
-    @Ignore
     @Test
-    public void migrateUserByUsername_passwordIsBlankString_callsGenerateRandom() throws Exception {
-        doReturn(client).doReturn(client11).when(spy).getMigrationClientInstance();
+    public void migrateUserByUsername_passwordIsBlankString_checksPasswordIsNotEmptyString() throws Exception {
+        when(config.getString("cloudAuth11url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v1.1/");
+        when(config.getString("cloudAuth20url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v2.0/");
+        when(config.getString("ga.username")).thenReturn("auth");
+        when(config.getString("ga.password")).thenReturn("auth123");
+        when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
+        when(userService.getUser(anyString())).thenReturn(user);
         doReturn(adminToken).when(spy).getAdminToken();
-        doReturn(cloudUser).when(client).getUser(adminToken, "cmarin2");
+        doReturn("").when(spy).getPassword(any(CredentialListType.class));
+        MigrateUserResponseType responseType = spy.migrateUserByUsername("cmarin2", false, "1");
+        List<UserType> userList = responseType.getUsers();
+        assertThat("password", userList.get(0).getPassword().length(), not(0));
+    }
+
+    @Test (expected = BadRequestException.class)
+    public void migrateUserByUsername_domainIdIsNullAndIsSubUser() throws Exception {
+        doReturn(adminToken).when(spy).getAdminToken();
+        when(config.getString("cloudAuth11url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v1.1/");
+        when(config.getString("cloudAuth20url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v2.0/");
+        when(config.getString("ga.username")).thenReturn("auth");
+        when(config.getString("ga.password")).thenReturn("auth123");
+        when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
+        when(userService.getUser(anyString())).thenReturn(user);
+        doReturn(true).when(spy).isSubUser(any(RoleList.class));
         spy.migrateUserByUsername("cmarin2", false, null);
-        verify(Password.generateRandom(false));
     }
 
     @Test
-    public void migrateUserByUsername_returns() throws Exception {
+    public void migrateUserByUsername_succeedsWithNoExceptions() throws Exception {
         doReturn(adminToken).when(spy).getAdminToken();
         when(config.getString("cloudAuth11url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v1.1/");
         when(config.getString("cloudAuth20url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v2.0/");
@@ -302,6 +319,15 @@ public class CloudMigrationServiceTest {
         when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
         when(userService.getUser(anyString())).thenReturn(user);
         spy.migrateUserByUsername("cmarin2", false, "1");
+    }
+
+    @Test
+    public void getSubUsers_returns() throws Exception {
+        MigrationClient clientTest = new MigrationClient();
+        spy.setClient(clientTest);
+        clientTest.setCloud20Host("https://auth.staging.us.ccp.rackspace.net/v2.0/");
+        RoleList roles = clientTest.getRolesForUser("a7c3507e-48aa-4bb2-af6c-af74ea834423", "104472");
+        spy.getSubUsers("cmarin2", "0f97f489c848438090250d50c7e1ea88", "Password1", roles);
     }
 
 }

@@ -261,7 +261,7 @@ public class CloudMigrationService {
         return new MigrationClient();
     }
 
-    private List<String> getSubUsers(String username, String apiKey, String password, RoleList roles) {
+    List<String> getSubUsers(String username, String apiKey, String password, RoleList roles) {
 		List<String> subUsers = new ArrayList<String>();
 
 		try {
@@ -498,7 +498,7 @@ public class CloudMigrationService {
 		return apiKey;
 	}
 
-	private String getPassword(CredentialListType credentialListType) {
+	String getPassword(CredentialListType credentialListType) {
 		String password = "";
 
 		try {
@@ -542,7 +542,7 @@ public class CloudMigrationService {
 		return false;
 	}
 
-	private boolean isSubUser(RoleList roles) {
+	boolean isSubUser(RoleList roles) {
 		for (Role role : roles.getRole()) {
 		    if ("identity:default".equalsIgnoreCase(role.getName())) {
 		        return true;

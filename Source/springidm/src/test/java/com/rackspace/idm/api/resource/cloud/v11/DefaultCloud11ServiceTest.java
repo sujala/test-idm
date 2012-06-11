@@ -22,14 +22,12 @@ import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
 import org.mortbay.jetty.HttpHeaders;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -55,7 +53,6 @@ import static org.mockito.Mockito.*;
  * Date: 10/18/11
  * Time: 6:19 PM
  */
-@RunWith(PowerMockRunner.class)
 public class DefaultCloud11ServiceTest {
 
     AuthorizationService authorizationService;
