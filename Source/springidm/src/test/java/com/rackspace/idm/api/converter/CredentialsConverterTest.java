@@ -71,7 +71,7 @@ public class CredentialsConverterTest {
 
     @Test
     public void toCredentialsDO_withApiAuthCredentials_setsAuthorizationCode() throws Exception {
-        authCredentials.setAuthorizationCode("AuthorizationCode");
+        authCredentials.setAuthorizationCode("authorizationCode");
         Credentials credentials = credentialsConverter.toCredentialsDO(authCredentials);
         assertThat("Authorization code", credentials.getAuthorizationCode(), equalTo("authorizationCode"));
     }
