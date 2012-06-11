@@ -1,0 +1,20 @@
+
+#####################################################################################################################################
+ To update the roles in Production, we must execute the following two files in order.
+
+Step 1)
+    dxdelete -h cert-ldap1.cidm.iad2.corp.rackspace.com -p 1636 -D 'cn=admin,ou=internal,dc=rackspace,dc=com' -W -v -f deleteroles.ldif
+
+Step 2)
+    dxmodify -h cert-ldap1.cidm.iad2.corp.rackspace.com -p 1636 -D 'cn=admin,ou=internal,dc=rackspace,dc=com' -W -v -a -f addroles.ldif
+
+
+#####################################################################################################################################
+ If we need to rollback, be sure to remove all the new roles then execute the rollback script to re-insert the old roles as they were.
+
+Step 1)
+    dxdelete -h cert-ldap1.cidm.iad2.corp.rackspace.com -p 1636 -D 'cn=admin,ou=internal,dc=rackspace,dc=com' -W -v -f deletenewroles.ldif
+
+Step 2)
+    dxmodify -h cert-ldap1.cidm.iad2.corp.rackspace.com -p 1636 -D 'cn=admin,ou=internal,dc=rackspace,dc=com' -W -v -a -f rollback.ldif
+

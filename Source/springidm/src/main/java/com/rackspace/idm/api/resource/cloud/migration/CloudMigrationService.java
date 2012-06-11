@@ -145,10 +145,10 @@ public class CloudMigrationService {
 	}
 
     public MigrateUserResponseType migrateUserByUsername(String username, boolean enable, String domainId) throws Exception {
-        client = new MigrationClient();
+        client = getMigrationClientInstance();
 		client.setCloud20Host(config.getString("cloudAuth20url"));
 
-        client11 = new MigrationClient();
+        client11 = getMigrationClientInstance();
         client11.setCloud11Host(config.getString("cloudAuth11url"));
 
         if(userService.userExistsByUsername(username))
@@ -257,7 +257,11 @@ public class CloudMigrationService {
         throw new NotAuthenticatedException("Not Authorized.");
     }
 
-	private List<String> getSubUsers(String username, String apiKey, String password, RoleList roles) {
+    MigrationClient getMigrationClientInstance() {
+        return new MigrationClient();
+    }
+
+    List<String> getSubUsers(String username, String apiKey, String password, RoleList roles) {
 		List<String> subUsers = new ArrayList<String>();
 
 		try {
@@ -494,7 +498,7 @@ public class CloudMigrationService {
 		return apiKey;
 	}
 
-	private String getPassword(CredentialListType credentialListType) {
+	String getPassword(CredentialListType credentialListType) {
 		String password = "";
 
 		try {
@@ -538,7 +542,7 @@ public class CloudMigrationService {
 		return false;
 	}
 
-	private boolean isSubUser(RoleList roles) {
+	boolean isSubUser(RoleList roles) {
 		for (Role role : roles.getRole()) {
 		    if ("identity:default".equalsIgnoreCase(role.getName())) {
 		        return true;
@@ -594,7 +598,7 @@ public class CloudMigrationService {
     
     String getAdminToken() throws URISyntaxException, HttpException, IOException, JAXBException {
         try {
-            client = new MigrationClient();
+            client = getMigrationClientInstance();
             client.setCloud20Host(config.getString("cloudAuth20url"));
             String adminUsername = config.getString("migration.username");
             String adminApiKey = config.getString("migration.apikey");
@@ -768,7 +772,7 @@ public class CloudMigrationService {
         //Get V1.1 BaseURLs for extra info
         BaseURLList baseURLs;
         try {
-            client = new MigrationClient();
+            client = getMigrationClientInstance();
             client.setCloud11Host(config.getString("cloudAuth11url"));
             baseURLs = client.getBaseUrls(config.getString("ga.username"), config.getString("ga.password"));
         }
