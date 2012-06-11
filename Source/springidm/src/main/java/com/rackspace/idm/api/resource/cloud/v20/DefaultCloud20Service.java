@@ -408,7 +408,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             User userDO = this.userConverterCloudV20.toUserDO(user);
             if (userDO.isDisabled()) {
                 this.scopeAccessService.expireAllTokensForUser(retrievedUser.getUsername());
-                atomHopperClient.postUser(retrievedUser,authToken,"disabled");
+                atomHopperClient.asyncPost(retrievedUser,authToken,"disabled");
             }
             retrievedUser.copyChanges(userDO);
 
@@ -793,7 +793,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
             userService.softDeleteUser(user);
 
-            atomHopperClient.postUser(user,authToken,"deleted");
+            atomHopperClient.asyncPost(user,authToken,"deleted");
 
             return Response.noContent();
         } catch (Exception ex) {

@@ -478,7 +478,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             //AtomHopper
             UserScopeAccess usa = getAuthtokenFromRequest(request);
-            atomHopperClient.postUser(gaUser,usa.getAccessTokenString(),"deleted");
+            atomHopperClient.asyncPost(gaUser,usa.getAccessTokenString(),"deleted");
 
             return Response.noContent();
         } catch (Exception ex) {
@@ -822,7 +822,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             if(gaUser.isDisabled()){
                 UserScopeAccess usa = getAuthtokenFromRequest(request);
-                atomHopperClient.postUser(gaUser,usa.getAccessTokenString(),"disabled");
+                atomHopperClient.asyncPost(gaUser,usa.getAccessTokenString(),"disabled");
             }
 
             List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(userId);
