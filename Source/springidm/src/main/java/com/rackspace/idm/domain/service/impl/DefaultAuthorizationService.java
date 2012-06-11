@@ -169,6 +169,8 @@ public class DefaultAuthorizationService implements AuthorizationService {
         }
 
         boolean authorized = this.tenantDao.doesScopeAccessHaveTenantRole(scopeAccess, CLOUD_SERVICE_ADMIN_ROLE);
+        if(!authorized)
+            authorized = authorizeCloudIdentityAdmin(scopeAccess);
 
         logger.debug("Authorized {} as cloud service admin - {}", scopeAccess, authorized);
         return authorized;
