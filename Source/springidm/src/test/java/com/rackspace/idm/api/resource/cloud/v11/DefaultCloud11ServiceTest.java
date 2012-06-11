@@ -1264,7 +1264,7 @@ public class DefaultCloud11ServiceTest {
         when(userService.getUser(null)).thenReturn(userDO);
         doReturn(new UserScopeAccess()).when(spy).getAuthtokenFromRequest(null);
         spy.deleteUser(null, null, null);
-        verify(atomHopperClient).postUser(eq(userDO), anyString(), eq("deleted"));
+        verify(atomHopperClient).asyncPost(eq(userDO), anyString(), eq("deleted"));
     }
 
     @Test
@@ -1272,7 +1272,7 @@ public class DefaultCloud11ServiceTest {
         doNothing().when(spy).authenticateCloudAdminUser(null);
         when(userService.getUser(null)).thenReturn(userDO);
         doReturn(new UserScopeAccess()).when(spy).getAuthtokenFromRequest(null);
-        doNothing().when(atomHopperClient).postUser(eq(userDO), anyString(), eq("deleted"));
+        doNothing().when(atomHopperClient).asyncPost(eq(userDO), anyString(), eq("deleted"));
         Response.ResponseBuilder responseBuilder = spy.deleteUser(null, null, null);
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(204));
     }
@@ -1940,7 +1940,7 @@ public class DefaultCloud11ServiceTest {
         when(userService.getUser("userId")).thenReturn(userDO);
         doReturn(new UserScopeAccess()).when(spy).getAuthtokenFromRequest(request);
         spy.updateUser(request, "userId", null, user);
-        verify(atomHopperClient).postUser(any(com.rackspace.idm.domain.entity.User.class), anyString(), eq("disabled"));
+        verify(atomHopperClient).asyncPost(any(com.rackspace.idm.domain.entity.User.class), anyString(), eq("disabled"));
     }
 
     @Test
