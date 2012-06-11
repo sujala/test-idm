@@ -3,11 +3,14 @@ package com.rackspace.idm.api.converter;
 import com.rackspace.api.idm.v1.Application;
 import com.rackspace.api.idm.v1.ApplicationList;
 import com.rackspace.api.idm.v1.ApplicationSecretCredentials;
+import com.rackspace.api.idm.v1.RoleList;
 import com.rackspace.idm.domain.entity.Applications;
+import com.rackspace.idm.domain.entity.TenantRole;
 import org.junit.Before;
 import org.junit.Test;
 
 import javax.xml.bind.JAXBElement;
+import javax.xml.namespace.QName;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +19,10 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.anyList;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * Created with IntelliJ IDEA.
@@ -29,12 +36,14 @@ public class ApplicationConverterTest {
     private ApplicationConverter applicationConverter;
     //TODO: give these sensical names. application and client are used interchangably in this class!
     com.rackspace.idm.domain.entity.Application clientDO;
+    RolesConverter rolesConverter;
     Application client;
 
 
     @Before
     public void setUp() throws Exception {
-        applicationConverter = new ApplicationConverter(new RolesConverter());
+        rolesConverter = mock(RolesConverter.class);
+        applicationConverter = new ApplicationConverter(rolesConverter);
         clientDO = new com.rackspace.idm.domain.entity.Application();
         client = new Application();
     }
@@ -335,4 +344,74 @@ public class ApplicationConverterTest {
         assertThat("client secret", applicationJAXBElement.getValue().getSecretCredentials().getClientSecret(), equalTo("clientSecret"));
     }
 
+    @Test
+    public void toClientJaxb_withClientWithSecretCredAndDontIncludeCreds_nullSecretCredentials() throws Exception {
+        clientDO.setClientSecret("clientSecret");
+        JAXBElement<Application> applicationJAXBElement = applicationConverter.toClientJaxb(clientDO, false);
+        assertThat("client secret", applicationJAXBElement.getValue().getSecretCredentials(), nullValue());
+    }
+
+    @Test
+    public void toClientJaxb_withClientWithBlankSecretCredAndIncludeCreds_nullSecretCredentials() throws Exception {
+        clientDO.setClientSecret("");
+        JAXBElement<Application> applicationJAXBElement = applicationConverter.toClientJaxb(clientDO, true);
+        assertThat("client secret", applicationJAXBElement.getValue().getSecretCredentials(), nullValue());
+    }
+
+    @Test
+    public void toClientJaxb_withClientWithBlankSecretCredAndDontIncludeCreds_nullSecretCredentials() throws Exception {
+        clientDO.setClientSecret("");
+        JAXBElement<Application> applicationJAXBElement = applicationConverter.toClientJaxb(clientDO, false);
+        assertThat("client secret", applicationJAXBElement.getValue().getSecretCredentials(), nullValue());
+    }
+
+    @Test
+    public void toClientJaxb_withClientWithNoSecretCredAndDontIncludeCreds_nullSecretCredentials() throws Exception {
+        JAXBElement<Application> applicationJAXBElement = applicationConverter.toClientJaxb(clientDO, false);
+        assertThat("client secret", applicationJAXBElement.getValue().getSecretCredentials(), nullValue());
+    }
+
+    @Test
+    public void toClientJaxb_withClientWithNoSecretCredAndIncludeCreds_nullSecretCredentials() throws Exception {
+        JAXBElement<Application> applicationJAXBElement = applicationConverter.toClientJaxb(clientDO, true);
+        assertThat("client secret", applicationJAXBElement.getValue().getSecretCredentials(), nullValue());
+    }
+
+    @Test
+    public void toApplicationJaxbFromApplication_withNullClient_returnsNull() throws Exception {
+        JAXBElement<Application> applicationJAXBElement = applicationConverter.toApplicationJaxbFromApplication(null);
+        assertThat("returned client", applicationJAXBElement, nullValue());
+    }
+
+    @Test
+    public void toApplicationJaxbFromApplication_withValidClient_setsClientId() throws Exception {
+        clientDO.setClientId("clientId");
+        when(rolesConverter.toRoleJaxbFromTenantRole(anyList())).thenReturn(new JAXBElement<RoleList>(new QName("Name"), RoleList.class, new RoleList()));
+        JAXBElement<Application> applicationJAXBElement = applicationConverter.toApplicationJaxbFromApplication(clientDO);
+        assertThat("client id", applicationJAXBElement.getValue().getClientId(), equalTo("clientId"));
+    }
+
+    @Test
+    public void toApplicationJaxbFromApplication_withValidClient_setsCustomerId() throws Exception {
+        clientDO.setRCN("customerId");
+        when(rolesConverter.toRoleJaxbFromTenantRole(anyList())).thenReturn(new JAXBElement<RoleList>(new QName("Name"), RoleList.class, new RoleList()));
+        JAXBElement<Application> applicationJAXBElement = applicationConverter.toApplicationJaxbFromApplication(clientDO);
+        assertThat("customer id", applicationJAXBElement.getValue().getCustomerId(), equalTo("customerId"));
+    }
+
+    @Test
+    public void toApplicationJaxbFromApplication_withValidClient_setsName() throws Exception {
+        clientDO.setName("name");
+        when(rolesConverter.toRoleJaxbFromTenantRole(anyList())).thenReturn(new JAXBElement<RoleList>(new QName("Name"), RoleList.class, new RoleList()));
+        JAXBElement<Application> applicationJAXBElement = applicationConverter.toApplicationJaxbFromApplication(clientDO);
+        assertThat("client name", applicationJAXBElement.getValue().getName(), equalTo("name"));
+    }
+
+    @Test
+    public void toApplicationJaxbFromApplication_withValidClient_convertsRoles() throws Exception {
+        clientDO.setRoles(new ArrayList<TenantRole>());
+        when(rolesConverter.toRoleJaxbFromTenantRole(anyList())).thenReturn(new JAXBElement<RoleList>(new QName("Name"), RoleList.class, new RoleList()));
+        applicationConverter.toApplicationJaxbFromApplication(clientDO);
+        verify(rolesConverter).toRoleJaxbFromTenantRole(anyList());
+    }
 }
