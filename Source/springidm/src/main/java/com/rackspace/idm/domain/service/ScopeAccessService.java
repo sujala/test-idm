@@ -61,9 +61,9 @@ public interface ScopeAccessService {
 
     void updateUserScopeAccessTokenForClientIdByUser(User user, String clientId, String token, Date expires);
 
-    UserScopeAccess getExistingUserScopeAccessForClientId(String userUniqueId, String clientId);
-
     UserScopeAccess getUserScopeAccessForClientId(String userUniqueId, String clientId);
+
+    UserScopeAccess getValidUserScopeAccessForClientId(String userUniqueId, String clientId);
     
     DelegatedClientScopeAccess getDelegatedScopeAccessByRefreshToken(User user, String accessToken);
     

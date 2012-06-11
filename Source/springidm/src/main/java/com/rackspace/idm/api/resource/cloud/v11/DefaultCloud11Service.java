@@ -478,7 +478,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             //AtomHopper
             UserScopeAccess usa = getAuthtokenFromRequest(request);
-            atomHopperClient.postUser(gaUser,usa.getAccessTokenString(),"deleted");
+            atomHopperClient.asyncPost(gaUser,usa.getAccessTokenString(),"deleted");
 
             return Response.noContent();
         } catch (Exception ex) {
@@ -822,7 +822,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             if(gaUser.isDisabled()){
                 UserScopeAccess usa = getAuthtokenFromRequest(request);
-                atomHopperClient.postUser(gaUser,usa.getAccessTokenString(),"disabled");
+                atomHopperClient.asyncPost(gaUser,usa.getAccessTokenString(),"disabled");
             }
 
             List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(userId);
@@ -1138,11 +1138,11 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(
                     stringStringMap.get("username"), stringStringMap.get("password"), getCloudAuthClientId());
-            boolean authenticated = authorizationService.authorizeCloudIdentityAdmin(usa);
-
-            if (!authenticated) {
+            boolean authenticated = authorizationService.authorizeCloudServiceAdmin(usa);
+            if (!authenticated)
+                authenticated = authorizationService.authorizeCloudIdentityAdmin(usa);
+            if (!authenticated)
                 throw new NotAuthorizedException("You are not authorized to access this resource.");
-            }
         }
     }
 
@@ -1158,8 +1158,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         } else {
             UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(
                     stringStringMap.get("username"), stringStringMap.get("password"), getCloudAuthClientId());
-            boolean authenticated = authorizationService.authorizeCloudIdentityAdmin(usa);
-            //boolean authenticated = ldapCloudAdminRepository.authenticate(stringStringMap.get("username"), stringStringMap.get("password"));
+            boolean authenticated = authorizationService.authorizeCloudServiceAdmin(usa);
             if (!authenticated) {
                 throw new CloudAdminAuthorizationException("Cloud admin user authorization Failed.");
             }
