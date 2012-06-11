@@ -682,7 +682,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     // Return UserScopeAccess from the directory, valid, expired or null
     @Override
-    public UserScopeAccess getExistingUserScopeAccessForClientId(String userUniqueId, String clientId) {
+    public UserScopeAccess getUserScopeAccessForClientId(String userUniqueId, String clientId) {
         final UserScopeAccess scopeAccess = (UserScopeAccess) this.scopeAccessDao
                 .getDirectScopeAccessForParentByClientId(userUniqueId, clientId);
         if (scopeAccess == null) {
@@ -695,9 +695,9 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     // Return UserScopeAccess from directory, refreshes expired
     @Override
-    public UserScopeAccess getUserScopeAccessForClientId(String userUniqueId, String clientId) {
+    public UserScopeAccess getValidUserScopeAccessForClientId(String userUniqueId, String clientId) {
         logger.debug("Getting User ScopeAccess by clientId {}", clientId);
-        UserScopeAccess scopeAccess = getExistingUserScopeAccessForClientId(userUniqueId, clientId);
+        UserScopeAccess scopeAccess = getUserScopeAccessForClientId(userUniqueId, clientId);
         //if expired update with new token
         updateExpiredUserScopeAccess(scopeAccess);
         logger.debug("Got User ScopeAccess {} by clientId {}", scopeAccess, clientId);
@@ -723,7 +723,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     @Override
     public void updateUserScopeAccessTokenForClientIdByUser(User user, String clientId, String token, Date expires) {
-        final UserScopeAccess scopeAccess = this.getExistingUserScopeAccessForClientId(user.getUniqueId(), clientId);
+        final UserScopeAccess scopeAccess = this.getUserScopeAccessForClientId(user.getUniqueId(), clientId);
         if (scopeAccess != null) {
             scopeAccess.setAccessTokenString(token);
             scopeAccess.setAccessTokenExp(expires);
@@ -740,7 +740,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         final UserAuthenticationResult result = this.userDao.authenticateByMossoIdAndAPIKey(mossoId, apiKey);
         handleAuthenticationFailure((new Integer(mossoId)).toString(), result);
 
-        final UserScopeAccess scopeAccess = this.getUserScopeAccessForClientId(result.getUser().getUniqueId(), clientId);
+        final UserScopeAccess scopeAccess = this.getValidUserScopeAccessForClientId(result.getUser().getUniqueId(), clientId);
         return scopeAccess;
     }
 
@@ -751,7 +751,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         final UserAuthenticationResult result = this.userDao.authenticateByNastIdAndAPIKey(nastId, apiKey);
         handleAuthenticationFailure(nastId, result);
 
-        final UserScopeAccess scopeAccess = this.getUserScopeAccessForClientId(result.getUser().getUniqueId(), clientId);
+        final UserScopeAccess scopeAccess = this.getValidUserScopeAccessForClientId(result.getUser().getUniqueId(), clientId);
         return scopeAccess;
     }
 
@@ -762,7 +762,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         final UserAuthenticationResult result = userDao.authenticateByAPIKey(username, apiKey);
         handleAuthenticationFailure(username, result);
 
-        final UserScopeAccess scopeAccess = this.getUserScopeAccessForClientId(result.getUser().getUniqueId(), clientId);
+        final UserScopeAccess scopeAccess = this.getValidUserScopeAccessForClientId(result.getUser().getUniqueId(), clientId);
         return scopeAccess;
     }
 
@@ -773,7 +773,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         final UserAuthenticationResult result = this.userDao.authenticate(username, password);
         handleAuthenticationFailure(username, result);
 
-        final UserScopeAccess scopeAccess = this.getUserScopeAccessForClientId(result.getUser().getUniqueId(), clientId);
+        final UserScopeAccess scopeAccess = this.getValidUserScopeAccessForClientId(result.getUser().getUniqueId(), clientId);
         return scopeAccess;
     }
 
