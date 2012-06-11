@@ -7,7 +7,6 @@ import org.junit.Test;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.datatype.XMLGregorianCalendar;
-import java.util.Date;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -65,7 +64,7 @@ public class AuthConverterTest {
         racker.setRackerId("rackerId");
         authData.setRacker(racker);
         JAXBElement<com.rackspace.api.idm.v1.AuthData> authDataJAXBElement = authConverter.toAuthDataJaxb(authData);
-        assertThat("racker", authDataJAXBElement.getValue().getRacker().getId(), equalTo("rackerId"));
+        assertThat("racker", authDataJAXBElement.getValue().getRacker().getUsername(), equalTo("rackerId"));
     }
 
     @Test
@@ -116,7 +115,7 @@ public class AuthConverterTest {
     @Test
     public void toAuthDataJaxb_withAuthDataAndNoRacker_setsNullRacker() throws Exception {
         JAXBElement<com.rackspace.api.idm.v1.AuthData> authDataJAXBElement = authConverter.toAuthDataJaxb(authData);
-        assertThat("racker", authDataJAXBElement.getValue().getRacker().getId(), nullValue());
+        assertThat("racker", authDataJAXBElement.getValue().getRacker(), nullValue());
     }
 
     @Test
