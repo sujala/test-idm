@@ -1,11 +1,15 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.rackspace.docs.identity.api.ext.rax_ga.v1.ImpersonationResponse;
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentialsWithOnlyApiKey;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
+import com.rackspace.idm.exception.BadRequestException;
 import com.rackspacecloud.docs.auth.api.v1.BaseURLList;
 import com.rackspacecloud.docs.auth.api.v1.BaseURLRefList;
+import com.rackspacecloud.docs.auth.api.v1.GroupsList;
 import junit.framework.Assert;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.json.simple.JSONArray;
@@ -20,6 +24,7 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.ServiceList;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplateList;
+import org.openstack.docs.identity.api.ext.os_ksec2.v1.Ec2CredentialsType;
 import org.openstack.docs.identity.api.v2.*;
 
 import javax.xml.bind.JAXBElement;
@@ -74,6 +79,7 @@ public class JSONWriterTest {
         VersionChoice versionChoice = new VersionChoice();
         ByteArrayOutputStream myOut = new ByteArrayOutputStream();
         JAXBElement<VersionChoice> jaxbElement = new JAXBElement<VersionChoice>(QName.valueOf("foo"),VersionChoice.class,versionChoice);
+        doReturn(new JSONObject()).when(spy).getVersionChoice(versionChoice);
         spy.writeTo(jaxbElement, VersionChoice.class, null, null, null, null, myOut);
         verify(spy).getVersionChoice(versionChoice);
     }
@@ -98,6 +104,7 @@ public class JSONWriterTest {
         ByteArrayOutputStream myOut = new ByteArrayOutputStream();
         JAXBElement<Tenants> jaxbElement = new JAXBElement<Tenants>(QName.valueOf("foo"),Tenants.class,tenants);
         spy.writeTo(jaxbElement, VersionChoice.class, null, null, null, null, myOut);
+        doReturn(new JSONObject()).when(spy).getTenantWithoutWrapper(tenant);
         verify(spy).getTenantWithoutWrapper(tenant);
     }
 
@@ -122,6 +129,7 @@ public class JSONWriterTest {
         serviceList.getService().add(service);
         ByteArrayOutputStream myOut = new ByteArrayOutputStream();
         JAXBElement<ServiceList> jaxbElement = new JAXBElement<ServiceList>(QName.valueOf("foo"),ServiceList.class,serviceList);
+        doReturn(new JSONObject()).when(spy).getServiceWithoutWrapper(service);
         spy.writeTo(jaxbElement, ServiceList.class, null, null, null, null, myOut);
         verify(spy).getServiceWithoutWrapper(service);
     }
@@ -147,6 +155,7 @@ public class JSONWriterTest {
         endpointList.getEndpoint().add(endpoint);
         ByteArrayOutputStream myOut = new ByteArrayOutputStream();
         JAXBElement<EndpointList> jaxbElement = new JAXBElement<EndpointList>(QName.valueOf("foo"),EndpointList.class,endpointList);
+        doReturn(new JSONObject()).when(spy).getEndpoint(endpoint);
         spy.writeTo(jaxbElement, EndpointList.class, null, null, null, null, myOut);
         verify(spy).getEndpoint(endpoint);
     }
@@ -209,11 +218,10 @@ public class JSONWriterTest {
         SecretQA secretQA = new SecretQA();
         ByteArrayOutputStream myOut = new ByteArrayOutputStream();
         JAXBElement<CredentialType> jaxbElement = new JAXBElement<CredentialType>(QName.valueOf("foo"),CredentialType.class,secretQA);
+        doReturn(new JSONObject()).when(spy).getSecretQA(secretQA);
         spy.writeTo(jaxbElement, CredentialType.class, null, null, null, null, myOut);
         verify(spy).getSecretQA(secretQA);
     }
-
-
 
     @Test
     public void writeTo_JAXBElementTypeCredentialTypeSecretQA_writesToOutputStream() throws Exception {
@@ -232,6 +240,7 @@ public class JSONWriterTest {
         PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
         ByteArrayOutputStream myOut = new ByteArrayOutputStream();
         JAXBElement<CredentialType> jaxbElement = new JAXBElement<CredentialType>(QName.valueOf("foo"),CredentialType.class,passwordCredentialsRequiredUsername);
+        doReturn(new JSONObject()).when(spy).getPasswordCredentials(passwordCredentialsRequiredUsername);
         spy.writeTo(jaxbElement, CredentialType.class, null, null, null, null, myOut);
         verify(spy).getPasswordCredentials(passwordCredentialsRequiredUsername);
     }
@@ -251,15 +260,14 @@ public class JSONWriterTest {
     }
 
     @Test
-    public void writeTo_JAXBElementTypeCredentialTypePasswordCredentialsBase_callsGetPasswordCredentialsBase() throws Exception {
+    public void writeTo_JAXBElementTypeCredentialTypePasswordCredentialsBase_callsGetPasswordCredentials() throws Exception {
         PasswordCredentialsBase passwordCredentialsBase = new PasswordCredentialsBase();
         ByteArrayOutputStream myOut = new ByteArrayOutputStream();
         JAXBElement<CredentialType> jaxbElement = new JAXBElement<CredentialType>(QName.valueOf("foo"),CredentialType.class,passwordCredentialsBase);
+        doReturn(new JSONObject()).when(spy).getPasswordCredentials(passwordCredentialsBase);
         spy.writeTo(jaxbElement, CredentialType.class, null, null, null, null, myOut);
-        verify(spy).getPasswordCredentialsBase(passwordCredentialsBase);
+        verify(spy).getPasswordCredentials(passwordCredentialsBase);
     }
-
-
 
     @Test
     public void writeTo_JAXBElementTypeCredentialTypePasswordCredentialsBase_writesToOutputStream() throws Exception {
@@ -268,15 +276,302 @@ public class JSONWriterTest {
         ByteArrayOutputStream myOut = new ByteArrayOutputStream();
         jsonObject.put("success","This test worked!");
         JAXBElement<CredentialType> jaxbElement = new JAXBElement<CredentialType>(QName.valueOf("foo"),CredentialType.class,passwordCredentialsBase);
-        doReturn(jsonObject).when(spy).getPasswordCredentialsBase(passwordCredentialsBase);
+        doReturn(jsonObject).when(spy).getPasswordCredentials(passwordCredentialsBase);
         spy.writeTo(jaxbElement, CredentialType.class, null, null, null, null, myOut);
         assertThat("string",myOut.toString(),equalTo("{\"success\":\"This test worked!\"}"));
     }
 
-    @Ignore
-    @Test
-    public void writeTo_JAXBElementTypeCredentialTypeEC2CredentialsType_() throws Exception {
+    @Test (expected = BadRequestException.class)
+    public void writeTo_JAXBElementTypeEC2CredentialsType_throwException() throws Exception {
+        Ec2CredentialsType ec2CredentialsType  = new Ec2CredentialsType();
+        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JAXBElement<CredentialType> jaxbElement = new JAXBElement<CredentialType>(QName.valueOf("foo"),CredentialType.class,ec2CredentialsType);
+        spy.writeTo(jaxbElement, CredentialType.class, null, null, null, null, myOut);
+        writer.writeTo(jaxbElement,CredentialType.class,null,null,null,null,myOut);
+    }
 
+    @Test
+    public void writeTo_JAXBElementTypeGroup_callsGetGroup() throws Exception {
+        Group group = new Group();
+        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JAXBElement<Group> jaxbElement = new JAXBElement<Group>(QName.valueOf("foo"),Group.class,group);
+        doReturn(new JSONObject()).when(spy).getGroup(group);
+        spy.writeTo(jaxbElement, Group.class, null, null, null, null, myOut);
+        verify(spy).getGroup(group);
+    }
+
+    @Test
+    public void writeTo_JAXBElementTypeGroup_writesToOutputStream() throws Exception {
+        Group group = new Group();
+        JSONObject jsonObject = new JSONObject();
+        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        jsonObject.put("success","This test worked!");
+        JAXBElement<Group> jaxbElement = new JAXBElement<Group>(QName.valueOf("foo"),Group.class,group);
+        doReturn(jsonObject).when(spy).getGroup(group);
+        spy.writeTo(jaxbElement, Group.class, null, null, null, null, myOut);
+        assertThat("string",myOut.toString(),equalTo("{\"success\":\"This test worked!\"}"));
+    }
+
+    @Test
+    public void writeTo_JAXBElementTypeGroupsList_callsGetGroupsList() throws Exception {
+        GroupsList groupsList = new GroupsList();
+        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JAXBElement<GroupsList> jaxbElement = new JAXBElement<GroupsList>(QName.valueOf("foo"),GroupsList.class,groupsList);
+        doReturn(new JSONObject()).when(spy).getGroupsList(groupsList);
+        spy.writeTo(jaxbElement, GroupsList.class, null, null, null, null, myOut);
+        verify(spy).getGroupsList(groupsList);
+    }
+
+    @Test
+    public void writeTo_JAXBElementTypeGroupsList_writesToOutputStream() throws Exception {
+        GroupsList groupsList = new GroupsList();
+        JSONObject jsonObject = new JSONObject();
+        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        jsonObject.put("success","This test worked!");
+        JAXBElement<GroupsList> jaxbElement = new JAXBElement<GroupsList>(QName.valueOf("foo"),GroupsList.class,groupsList);
+        doReturn(jsonObject).when(spy).getGroupsList(groupsList);
+        spy.writeTo(jaxbElement, GroupsList.class, null, null, null, null, myOut);
+        assertThat("string",myOut.toString(),equalTo("{\"success\":\"This test worked!\"}"));
+    }
+
+    @Test
+    public void writeTo_JAXBElementTypeCredentialListTypeApiKeyCredentials_callsGetApiKeyCredentials() throws Exception {
+        ApiKeyCredentials apiKeyCredentials = new ApiKeyCredentials();
+        JAXBElement<ApiKeyCredentials> apiKeyCredentialsJAXBElement = new JAXBElement<ApiKeyCredentials>(QName.valueOf("fee"),ApiKeyCredentials.class,apiKeyCredentials);
+        CredentialListType credentialListType = new CredentialListType();
+        credentialListType.getCredential().add(apiKeyCredentialsJAXBElement);
+        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JAXBElement<CredentialListType> jaxbElement = new JAXBElement<CredentialListType>(QName.valueOf("foo"),CredentialListType.class,credentialListType);
+        doReturn(new JSONObject()).when(spy).getApiKeyCredentials(apiKeyCredentials);
+        spy.writeTo(jaxbElement, CredentialListType.class, null, null, null, null, myOut);
+        verify(spy).getApiKeyCredentials(apiKeyCredentials);
+    }
+
+    @Test
+    public void writeTo_JAXBElementTypeCredentialListTypePasswordCredentials_callsGetPasswordCredentials() throws Exception {
+        PasswordCredentialsBase passwordCredentialsBase = new PasswordCredentialsBase();
+        JAXBElement<PasswordCredentialsBase> passwordCredentialsBaseJAXBElement = new JAXBElement<PasswordCredentialsBase>(QName.valueOf("fee"),PasswordCredentialsBase.class,passwordCredentialsBase);
+        CredentialListType credentialListType = new CredentialListType();
+        credentialListType.getCredential().add(passwordCredentialsBaseJAXBElement);
+        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JAXBElement<CredentialListType> jaxbElement = new JAXBElement<CredentialListType>(QName.valueOf("foo"),CredentialListType.class,credentialListType);
+        doReturn(new JSONObject()).when(spy).getPasswordCredentials(passwordCredentialsBase);
+        spy.writeTo(jaxbElement, CredentialListType.class, null, null, null, null, myOut);
+        verify(spy).getPasswordCredentials(passwordCredentialsBase);
+    }
+
+    @Test
+    public void writeTo_JAXBElementTypeCredentialListTypeEC2CredentialType_writesBlankListToOutputStream() throws Exception {
+        Ec2CredentialsType ec2CredentialsType = new Ec2CredentialsType();
+        JAXBElement<Ec2CredentialsType> ec2CredentialsTypeJAXBElement = new JAXBElement<Ec2CredentialsType>(QName.valueOf("fee"),Ec2CredentialsType.class,ec2CredentialsType);
+        CredentialListType credentialListType = new CredentialListType();
+        credentialListType.getCredential().add(ec2CredentialsTypeJAXBElement);
+        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JAXBElement<CredentialListType> jaxbElement = new JAXBElement<CredentialListType>(QName.valueOf("foo"),CredentialListType.class,credentialListType);
+        writer.writeTo(jaxbElement, CredentialListType.class, null, null, null, null, myOut);
+        assertThat("string",myOut.toString(),equalTo("{\"credentials\":[]}"));
+    }
+
+    @Test
+    public void writeTo_JAXBElementTypeRoleList_callsGetRole() throws Exception {
+        Role role = new Role();
+        RoleList roleList = new RoleList();
+        roleList.getRole().add(role);
+        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JAXBElement<RoleList> jaxbElement = new JAXBElement<RoleList>(QName.valueOf("foo"),RoleList.class,roleList);
+        doReturn(new JSONObject()).when(spy).getRole(role);
+        spy.writeTo(jaxbElement, RoleList.class, null, null, null, null, myOut);
+        verify(spy).getRole(role);
+    }
+
+    @Test
+    public void writeTo_JAXBElementTypeRoleList_writesToOutputStream() throws Exception {
+        Role role = new Role();
+        RoleList roleList = new RoleList();
+        roleList.getRole().add(role);
+        JSONObject jsonObject = new JSONObject();
+        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JAXBElement<RoleList> jaxbElement = new JAXBElement<RoleList>(QName.valueOf("foo"),RoleList.class,roleList);
+        jsonObject.put("success","This test worked!");
+        doReturn(jsonObject).when(spy).getRole(role);
+        spy.writeTo(jaxbElement, RoleList.class, null, null, null, null, myOut);
+        assertThat("string",myOut.toString(),equalTo("{\"roles\":[{\"success\":\"This test worked!\"}]}"));
+    }
+
+    @Test
+    public void writeTo_JAXBElementTypeUserList_callsGetUser() throws Exception {
+        User user = new User();
+        UserList userList = new UserList();
+        userList.getUser().add(user);
+        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JAXBElement<UserList> jaxbElement = new JAXBElement<UserList>(QName.valueOf("foo"),UserList.class,userList);
+        doReturn(new JSONObject()).when(spy).getUser(user);
+        spy.writeTo(jaxbElement, UserList.class, null, null, null, null, myOut);
+        verify(spy).getUser(user);
+    }
+
+    @Test
+    public void writeTo_JAXBElementTypeUserList_writesToOutputStream() throws Exception {
+        User user = new User();
+        UserList userList = new UserList();
+        userList.getUser().add(user);
+        JSONObject jsonObject = new JSONObject();
+        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JAXBElement<UserList> jaxbElement = new JAXBElement<UserList>(QName.valueOf("foo"),UserList.class,userList);
+        jsonObject.put("success","This test worked!");
+        doReturn(jsonObject).when(spy).getUser(user);
+        spy.writeTo(jaxbElement, UserList.class, null, null, null, null, myOut);
+        assertThat("string",myOut.toString(),equalTo("{\"users\":[{\"success\":\"This test worked!\"}]}"));
+    }
+
+    @Test
+    public void writeTo_JAXBElementTypeAuthenticateResponseNoUserNoAny_writesToOutputStream() throws Exception {
+        Token token = new Token();
+        ServiceCatalog serviceCatalog = new ServiceCatalog();
+        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
+        authenticateResponse.setToken(token);
+        authenticateResponse.setServiceCatalog(serviceCatalog);
+        JSONObject jsonObject = new JSONObject();
+        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JAXBElement<AuthenticateResponse> jaxbElement = new JAXBElement<AuthenticateResponse>(QName.valueOf("foo"),AuthenticateResponse.class,authenticateResponse);
+        jsonObject.put("success","This test worked!");
+        JSONArray jsonArray = new JSONArray();
+        jsonArray.add(jsonObject);
+        doReturn(jsonObject).when(spy).getToken(token);
+        doReturn(jsonArray).when(spy).getServiceCatalog(serviceCatalog);
+        spy.writeTo(jaxbElement, ServiceCatalog.class, null, null, null, null, myOut);
+        assertThat("string",myOut.toString(),equalTo("{\"access\":{\"token\":{\"success\":\"This test worked!\"},\"serviceCatalog\":[{\"success\":" +
+        "\"This test worked!\"}]}}"));
+    }
+
+    @Test
+    public void writeTo_JAXBElementTypeAuthenticateResponseWithSubRoles_writesToOutputStreamCorrectSubRole() throws Exception {
+        Token token = new Token();
+        ServiceCatalog serviceCatalog = new ServiceCatalog();
+
+        Role role = new Role();
+        role.setServiceId("123");
+        role.setDescription("description");
+        role.setName("name");
+        role.setId("456");
+
+        RoleList roleList = new RoleList();
+        roleList.getRole().add(role);
+
+        UserForAuthenticateResponse userForAuthenticateResponse = new UserForAuthenticateResponse();
+        userForAuthenticateResponse.setId("789");
+        userForAuthenticateResponse.setRoles(roleList);
+
+        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
+        authenticateResponse.setToken(token);
+        authenticateResponse.setServiceCatalog(serviceCatalog);
+        authenticateResponse.getAny().add(userForAuthenticateResponse);
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success","This test worked!");
+
+        JSONArray jsonArray = new JSONArray();
+        jsonArray.add(jsonObject);
+
+        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JAXBElement<AuthenticateResponse> jaxbElement = new JAXBElement<AuthenticateResponse>(QName.valueOf("foo"),AuthenticateResponse.class,authenticateResponse);
+
+        doReturn(jsonObject).when(spy).getToken(token);
+        doReturn(jsonArray).when(spy).getServiceCatalog(serviceCatalog);
+
+        spy.writeTo(jaxbElement, ServiceCatalog.class, null, null, null, null, myOut);
+
+        assertThat("string",myOut.toString(),equalTo("{\"access\":{\"token\":{\"success\":\"This test worked!\"}," +
+                "\"access\":{\"id\":\"789\",\"roles\":[{\"id\":\"456\",\"serviceId\":\"123\",\"description\":\"description\",\"name\":\"name\"" +
+                "}]},\"serviceCatalog\":[{\"success\":\"This test worked!\"}]}}"));
+    }
+
+    @Test
+    public void writeTo_JAXBElementTypeAuthenticateResponseWithUserForAuthenticateResponse_writesToOutputStreamCorrectAccessID() throws Exception {
+        Token token = new Token();
+        ServiceCatalog serviceCatalog = new ServiceCatalog();
+        RoleList roleList = new RoleList();
+
+        UserForAuthenticateResponse userForAuthenticateResponse = new UserForAuthenticateResponse();
+        userForAuthenticateResponse.setId("789");
+        userForAuthenticateResponse.setRoles(roleList);
+
+        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
+        authenticateResponse.setToken(token);
+        authenticateResponse.setServiceCatalog(serviceCatalog);
+        authenticateResponse.getAny().add(userForAuthenticateResponse);
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success","This test worked!");
+
+        JSONArray jsonArray = new JSONArray();
+        jsonArray.add(jsonObject);
+
+        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JAXBElement<AuthenticateResponse> jaxbElement = new JAXBElement<AuthenticateResponse>(QName.valueOf("foo"),AuthenticateResponse.class,authenticateResponse);
+
+        doReturn(jsonObject).when(spy).getToken(token);
+        doReturn(jsonArray).when(spy).getServiceCatalog(serviceCatalog);
+
+        spy.writeTo(jaxbElement, ServiceCatalog.class, null, null, null, null, myOut);
+
+        assertThat("string",myOut.toString(),equalTo("{\"access\":{\"token\":{\"success\":\"This test worked!\"}," +
+                "\"access\":{\"id\":\"789\",\"roles\":[]},\"serviceCatalog\":[{\"success\":\"This test worked!\"}]}}"));
+    }
+
+    @Test
+    public void writeTo_JAXBElementTypeAuthenticateResponseWithUnusableAny_writesToOutputStream() throws Exception {
+        Token token = new Token();
+        ServiceCatalog serviceCatalog = new ServiceCatalog();
+
+        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
+        authenticateResponse.setToken(token);
+        authenticateResponse.setServiceCatalog(serviceCatalog);
+        authenticateResponse.getAny().add(new Token());
+        authenticateResponse.getAny().add(new Token());
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success","This test worked!");
+
+        JSONArray jsonArray = new JSONArray();
+        jsonArray.add(jsonObject);
+
+        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JAXBElement<AuthenticateResponse> jaxbElement = new JAXBElement<AuthenticateResponse>(QName.valueOf("foo"),AuthenticateResponse.class,authenticateResponse);
+
+        doReturn(jsonObject).when(spy).getToken(token);
+        doReturn(jsonArray).when(spy).getServiceCatalog(serviceCatalog);
+
+        spy.writeTo(jaxbElement, ServiceCatalog.class, null, null, null, null, myOut);
+
+        assertThat("string",myOut.toString(),equalTo("{\"access\":{\"token\":{\"success\":\"This test worked!\"}," +
+                "\"serviceCatalog\":[{\"success\":\"This test worked!\"}]}}"));
+    }
+
+    @Test
+    public void writeTo_JAXBElementTypeImpersonationResponse_callsGetToken() throws Exception {
+        Token token = new Token();
+        ImpersonationResponse impersonationResponse = new ImpersonationResponse();
+        impersonationResponse.setToken(token);
+        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JAXBElement<ImpersonationResponse> jaxbElement = new JAXBElement<ImpersonationResponse>(QName.valueOf("foo"),ImpersonationResponse.class,impersonationResponse);
+        doReturn(new JSONObject()).when(spy).getToken(token);
+        spy.writeTo(jaxbElement, ImpersonationResponse.class, null, null, null, null, myOut);
+        verify(spy).getToken(token);
+    }
+
+    @Test
+    public void writeTo_JAXBElementTypeImpersonationRequest_writesToOutputStream() throws Exception {
+        Token token = new Token();
+        ImpersonationResponse impersonationResponse = new ImpersonationResponse();
+        impersonationResponse.setToken(token);
+        JSONObject jsonObject = new JSONObject();
+        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JAXBElement<ImpersonationResponse> jaxbElement = new JAXBElement<ImpersonationResponse>(QName.valueOf("foo"),ImpersonationResponse.class,impersonationResponse);
+        jsonObject.put("success","This test worked!");
+        doReturn(jsonObject).when(spy).getToken(token);
+        spy.writeTo(jaxbElement, ImpersonationResponse.class, null, null, null, null, myOut);
+        assertThat("string",myOut.toString(),equalTo("{\"access\":{\"token\":{\"success\":\"This test worked!\"}}}"));
     }
 
     @Test
@@ -344,7 +639,7 @@ public class JSONWriterTest {
         PasswordCredentialsBase passwordCredentialsBase = new PasswordCredentialsBase();
         passwordCredentialsBase.setPassword("bananas");
         passwordCredentialsBase.setUsername("jqsmith");
-        JSONObject jsonObject = writer.getPasswordCredentialsBase(passwordCredentialsBase);
+        JSONObject jsonObject = writer.getPasswordCredentials(passwordCredentialsBase);
         JSONObject jsonObject1 = (JSONObject) jsonObject.get("passwordCredentials");
         assertThat("string",jsonObject1.get("username").toString(),equalTo("jqsmith"));
         assertThat("string",jsonObject1.get("password").toString(),equalTo("bananas"));
