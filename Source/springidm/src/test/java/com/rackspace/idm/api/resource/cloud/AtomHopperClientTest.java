@@ -71,22 +71,22 @@ public class AtomHopperClientTest extends TestCase {
         when(httpResponse.getStatusLine()).thenReturn(statusLine);
         when(statusLine.getStatusCode()).thenReturn(201);
         when(config.getString(Matchers.<String>any())).thenReturn("http://localhost:8080/test");
-        spy.postUser(user,"token","deleted");
-        assertThat("Post to Atom Hopper",httpResponse.getStatusLine().getStatusCode(),equalTo(201));
+        spy.postUser(user, "token", "deleted");
+        assertThat("Post to Atom Hopper", httpResponse.getStatusLine().getStatusCode(), equalTo(201));
     }
 
     public void testMarshalFeed() throws Exception {
         Writer writer = atomHopperClient.marshalFeed(atomFeed);
-        assertThat("Marshal User",writer.toString(),equalTo("<entry xmlns=\"http://www.w3.org/2005/Atom\"><user displayName=\"testDisplayName\" id=\"2\" username=\"test2\"/></entry>"));
+        assertThat("Marshal User", writer.toString(), equalTo("<entry xmlns=\"http://www.w3.org/2005/Atom\"><user displayName=\"testDisplayName\" id=\"2\" username=\"test2\"/></entry>"));
     }
 
     public void testCreateRequestEntity() throws Exception {
         InputStreamEntity reqEntity = atomHopperClient.createRequestEntity("<user name=\"Jorge\" />");
-        assertThat("Input Stream is created",reqEntity!=null,equalTo(true));
+        assertThat("Input Stream is created", reqEntity != null, equalTo(true));
     }
 
-    public void testCreateAtomFeed() throws Exception{
+    public void testCreateAtomFeed() throws Exception {
         AtomFeed testAtomFeed = atomHopperClient.createAtomFeed(user);
-        assertThat("Test Atom Create",testAtomFeed.getUser().getId(),equalTo("1"));
+        assertThat("Test Atom Create", testAtomFeed.getUser().getId(), equalTo("1"));
     }
 }
