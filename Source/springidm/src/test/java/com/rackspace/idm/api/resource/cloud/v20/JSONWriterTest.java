@@ -7,31 +7,41 @@ import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentialsWithOnlyApiKey;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.exception.BadRequestException;
-import com.rackspacecloud.docs.auth.api.v1.BaseURLList;
-import com.rackspacecloud.docs.auth.api.v1.BaseURLRefList;
-import com.rackspacecloud.docs.auth.api.v1.GroupsList;
+import com.rackspacecloud.docs.auth.api.v1.*;
+import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
 import junit.framework.Assert;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import com.sun.jersey.api.json.JSONMarshaller;
+import org.json.simple.JSONValue;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.openstack.docs.common.api.v1.Extension;
-import org.openstack.docs.common.api.v1.Extensions;
-import org.openstack.docs.common.api.v1.VersionChoice;
+import org.openstack.docs.common.api.v1.*;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.ServiceList;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplateList;
 import org.openstack.docs.identity.api.ext.os_ksec2.v1.Ec2CredentialsType;
 import org.openstack.docs.identity.api.v2.*;
+import org.openstack.docs.identity.api.v2.Endpoint;
+import org.openstack.docs.identity.api.v2.ServiceCatalog;
+import org.openstack.docs.identity.api.v2.Token;
+import org.openstack.docs.identity.api.v2.User;
+import org.w3._2005.atom.Link;
+import org.w3._2005.atom.Relation;
 
 import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.namespace.QName;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.hamcrest.CoreMatchers.any;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -572,6 +582,546 @@ public class JSONWriterTest {
         doReturn(jsonObject).when(spy).getToken(token);
         spy.writeTo(jaxbElement, ImpersonationResponse.class, null, null, null, null, myOut);
         assertThat("string",myOut.toString(),equalTo("{\"access\":{\"token\":{\"success\":\"This test worked!\"}}}"));
+    }
+
+    @Test
+    public void writeTo_JAXBElementTypeBaseURLList_callsGetBaseURLList() throws Exception {
+        BaseURL baseURL = new BaseURL();
+        BaseURLList baseURLList = new BaseURLList();
+        baseURLList.getBaseURL().add(baseURL);
+        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JAXBElement<BaseURLList> jaxbElement = new JAXBElement<BaseURLList>(QName.valueOf("foo"),BaseURLList.class,baseURLList);
+        doReturn(new JSONObject()).when(spy).getBaseUrlList(baseURL);
+        spy.writeTo(jaxbElement, BaseURLList.class, null, null, null, null, myOut);
+        verify(spy).getBaseUrlList(baseURL);
+    }
+
+    @Test
+    public void writeTo_JAXBElementTypeBaseURLList_writesToOutputStream() throws Exception {
+        BaseURL baseURL = new BaseURL();
+        BaseURLList baseURLList = new BaseURLList();
+        baseURLList.getBaseURL().add(baseURL);
+        JSONObject jsonObject = new JSONObject();
+        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JAXBElement<BaseURLList> jaxbElement = new JAXBElement<BaseURLList>(QName.valueOf("foo"),BaseURLList.class,baseURLList);
+        jsonObject.put("success","This test worked!");
+        doReturn(jsonObject).when(spy).getBaseUrlList(baseURL);
+        spy.writeTo(jaxbElement, BaseURLList.class, null, null, null, null, myOut);
+        assertThat("string",myOut.toString(),equalTo("{\"baseURLs\":[{\"success\":\"This test worked!\"}]}"));
+    }
+
+    @Test
+    public void writeTo_JAXBElementTypeV1User_writesToOutputStreamCorrectBaseURL() throws Exception {
+        BaseURLRef baseURLRef = new BaseURLRef();
+        baseURLRef.setId(798);
+        baseURLRef.setHref("101112");
+        baseURLRef.setV1Default(true);
+
+        BaseURLRefList baseURLRefList = new BaseURLRefList();
+        baseURLRefList.getBaseURLRef().add(baseURLRef);
+
+        com.rackspacecloud.docs.auth.api.v1.User user = new com.rackspacecloud.docs.auth.api.v1.User();
+        user.setId("131415");
+        user.setEnabled(false);
+        user.setKey("key");
+        user.setMossoId(123);
+        user.setNastId("456");
+        user.setBaseURLRefs(baseURLRefList);
+
+        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JAXBElement<com.rackspacecloud.docs.auth.api.v1.User> jaxbElement = new JAXBElement<com.rackspacecloud.docs.auth.api.v1.User>(QName.valueOf("foo"),
+                com.rackspacecloud.docs.auth.api.v1.User.class,user);
+
+        writer.writeTo(jaxbElement, BaseURLList.class, null, null, null, null, myOut);
+        assertThat("string",myOut.toString(),equalTo("{\"user\":{\"id\":\"131415\",\"enabled\":false,\"nastId\":\"456\",\"mossoId\":123,\"baseURLRefs\":[{" +
+        "\"id\":798,\"v1Default\":true,\"href\":\"101112\"}],\"key\":\"key\"}}"));
+    }
+
+    @Test
+    public void writeTo_JAXBElementTypeV1UserNullKey_writesToOutputStreamNoKey() throws Exception {
+        BaseURLRef baseURLRef = new BaseURLRef();
+        baseURLRef.setId(798);
+        baseURLRef.setHref("101112");
+        baseURLRef.setV1Default(true);
+
+        BaseURLRefList baseURLRefList = new BaseURLRefList();
+        baseURLRefList.getBaseURLRef().add(baseURLRef);
+
+        com.rackspacecloud.docs.auth.api.v1.User user = new com.rackspacecloud.docs.auth.api.v1.User();
+        user.setId("131415");
+        user.setEnabled(false);
+        user.setMossoId(123);
+        user.setNastId("456");
+        user.setBaseURLRefs(baseURLRefList);
+
+        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JAXBElement<com.rackspacecloud.docs.auth.api.v1.User> jaxbElement = new JAXBElement<com.rackspacecloud.docs.auth.api.v1.User>(QName.valueOf("foo"),
+                com.rackspacecloud.docs.auth.api.v1.User.class,user);
+
+        writer.writeTo(jaxbElement, BaseURLList.class, null, null, null, null, myOut);
+        assertThat("string",myOut.toString(),equalTo("{\"user\":{\"id\":\"131415\",\"enabled\":false,\"nastId\":\"456\",\"mossoId\":123,\"baseURLRefs\":[{" +
+                "\"id\":798,\"v1Default\":true,\"href\":\"101112\"}]}}"));
+    }
+
+    @Test
+    public void writeTo_JAXBElementTypeV1UserNullMossoId_writesToOutputStreamNoMossoId() throws Exception {
+        BaseURLRef baseURLRef = new BaseURLRef();
+        baseURLRef.setId(798);
+        baseURLRef.setHref("101112");
+        baseURLRef.setV1Default(true);
+
+        BaseURLRefList baseURLRefList = new BaseURLRefList();
+        baseURLRefList.getBaseURLRef().add(baseURLRef);
+
+        com.rackspacecloud.docs.auth.api.v1.User user = new com.rackspacecloud.docs.auth.api.v1.User();
+        user.setId("131415");
+        user.setKey("key");
+        user.setEnabled(false);
+        user.setNastId("456");
+        user.setBaseURLRefs(baseURLRefList);
+
+        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JAXBElement<com.rackspacecloud.docs.auth.api.v1.User> jaxbElement = new JAXBElement<com.rackspacecloud.docs.auth.api.v1.User>(QName.valueOf("foo"),
+                com.rackspacecloud.docs.auth.api.v1.User.class,user);
+
+        writer.writeTo(jaxbElement, BaseURLList.class, null, null, null, null, myOut);
+        assertThat("string",myOut.toString(),equalTo("{\"user\":{\"id\":\"131415\",\"enabled\":false,\"nastId\":\"456\",\"baseURLRefs\":[{" +
+                "\"id\":798,\"v1Default\":true,\"href\":\"101112\"}],\"key\":\"key\"}}"));
+    }
+
+    @Test
+    public void writeTo_JAXBElementTypeV1UserNullNastID_writesToOutputStreamNoNastID() throws Exception {
+        BaseURLRef baseURLRef = new BaseURLRef();
+        baseURLRef.setId(798);
+        baseURLRef.setHref("101112");
+        baseURLRef.setV1Default(true);
+
+        BaseURLRefList baseURLRefList = new BaseURLRefList();
+        baseURLRefList.getBaseURLRef().add(baseURLRef);
+
+        com.rackspacecloud.docs.auth.api.v1.User user = new com.rackspacecloud.docs.auth.api.v1.User();
+        user.setId("131415");
+        user.setEnabled(false);
+        user.setKey("key");
+        user.setMossoId(123);
+        user.setBaseURLRefs(baseURLRefList);
+
+        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JAXBElement<com.rackspacecloud.docs.auth.api.v1.User> jaxbElement = new JAXBElement<com.rackspacecloud.docs.auth.api.v1.User>(QName.valueOf("foo"),
+                com.rackspacecloud.docs.auth.api.v1.User.class,user);
+
+        writer.writeTo(jaxbElement, BaseURLList.class, null, null, null, null, myOut);
+        assertThat("string",myOut.toString(),equalTo("{\"user\":{\"id\":\"131415\",\"enabled\":false,\"mossoId\":123,\"baseURLRefs\":[{" +
+                "\"id\":798,\"v1Default\":true,\"href\":\"101112\"}],\"key\":\"key\"}}"));
+    }
+
+    @Test (expected = BadRequestException.class)
+    public void writeTo_marsahllerFails_throwsBadRequestException() throws Exception {
+        Token token = new Token();
+        JAXBElement<Token> jaxbElement = new JAXBElement<Token>(QName.valueOf("foo"),Token.class,token);
+        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONMarshaller marshaller = mock(JSONMarshaller.class);
+        doReturn(marshaller).when(spy).getMarshaller();
+        doThrow(new JAXBException("bad")).when(marshaller).marshallToJSON(jaxbElement,myOut);
+
+        spy.writeTo(jaxbElement, null, null, null, null, null, myOut);
+    }
+
+    @Test
+    public void getLinks_ListCorrectlyPopulated_returnsJSONArrayWithCorrectValues() throws Exception {
+        Relation relation = Relation.AUTHOR;
+        Link link = new Link();
+        link.setRel(relation);
+        link.setType("type");
+        link.setHref("href");
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JAXBElement<Link> jaxbElement = new JAXBElement<Link>(QName.valueOf("foo"),Link.class,link);
+        List<Object> list = new ArrayList<Object>();
+        list.add(jaxbElement);
+        JSONArray jsonArray = JSONWriter.getLinks(list);
+        String jsonText = JSONValue.toJSONString(jsonArray);
+        myOut.write(jsonText.getBytes());
+
+        assertThat("string",myOut.toString(), equalTo("[{\"rel\":\"author\",\"type\":\"type\",\"href\":\"href\"}]"));
+    }
+
+    @Test
+    public void getLinks_ListCorrectlyPopulatedNoRelation_returnsJSONArrayWithoutRelation() throws Exception {
+        Link link = new Link();
+        link.setType("type");
+        link.setHref("href");
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JAXBElement<Link> jaxbElement = new JAXBElement<Link>(QName.valueOf("foo"),Link.class,link);
+        List<Object> list = new ArrayList<Object>();
+        list.add(jaxbElement);
+        JSONArray jsonArray = JSONWriter.getLinks(list);
+
+        String jsonText = JSONValue.toJSONString(jsonArray);
+        myOut.write(jsonText.getBytes());
+
+        assertThat("string",myOut.toString(), equalTo("[{\"type\":\"type\",\"href\":\"href\"}]"));
+    }
+
+    @Test
+    public void getLinks_ListCorrectlyPopulatedNoType_returnsJSONArrayWithoutType() throws Exception {
+        Relation relation = Relation.AUTHOR;
+        Link link = new Link();
+        link.setRel(relation);
+        link.setHref("href");
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JAXBElement<Link> jaxbElement = new JAXBElement<Link>(QName.valueOf("foo"),Link.class,link);
+        List<Object> list = new ArrayList<Object>();
+        list.add(jaxbElement);
+        JSONArray jsonArray = JSONWriter.getLinks(list);
+
+        String jsonText = JSONValue.toJSONString(jsonArray);
+        myOut.write(jsonText.getBytes());
+
+        assertThat("string",myOut.toString(), equalTo("[{\"rel\":\"author\",\"href\":\"href\"}]"));
+    }
+
+    @Test
+    public void getLinks_ListNoLink_returnsEmptyJSONArray() throws Exception {
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JAXBElement<AuthenticateResponse> jaxbElement = new JAXBElement<AuthenticateResponse>(QName.valueOf("foo"),AuthenticateResponse.class,new AuthenticateResponse());
+        List<Object> list = new ArrayList<Object>();
+        list.add(jaxbElement);
+        JSONArray jsonArray = JSONWriter.getLinks(list);
+
+        String jsonText = JSONValue.toJSONString(jsonArray);
+        myOut.write(jsonText.getBytes());
+        assertThat("string",myOut.toString(), equalTo("[]"));
+    }
+
+    @Test
+    public void getLinks_listNotJAXBElements_returnsEmptyJSONArray() throws Exception {
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        List<Object> list = new ArrayList<Object>();
+        list.add(new Token());
+        list.add(new Token());
+        list.add(new Token());
+        JSONArray jsonArray = JSONWriter.getLinks(list);
+
+        String jsonText = JSONValue.toJSONString(jsonArray);
+        myOut.write(jsonText.getBytes());
+        assertThat("string",myOut.toString(), equalTo("[]"));
+    }
+
+    @Test
+    public void getLinks_listEmpty_returnsEmptyJSONArray() throws Exception {
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        List<Object> list = new ArrayList<Object>();
+        JSONArray jsonArray = JSONWriter.getLinks(list);
+
+        String jsonText = JSONValue.toJSONString(jsonArray);
+        myOut.write(jsonText.getBytes());
+        assertThat("string",myOut.toString(), equalTo("[]"));
+    }
+
+    @Test
+    public void getVersionChoice_allFieldsPopulated_returnsFullJSONObject() throws Exception {
+        Link link = new Link();
+        JAXBElement<Link> jaxbElement = new JAXBElement<Link>(QName.valueOf("foo"),Link.class,link);
+        MediaTypeList mediaTypeList = new MediaTypeList();
+        mediaTypeList.getMediaType().add(new MediaType());
+        VersionStatus versionStatus = VersionStatus.ALPHA;
+        XMLGregorianCalendar calendar1 = new XMLGregorianCalendarImpl();
+        calendar1.setMonth(11);
+        calendar1.setDay(27);
+        calendar1.setYear(1992);
+
+        VersionChoice versionChoice = new VersionChoice();
+        versionChoice.setStatus(versionStatus);
+        versionChoice.setUpdated(calendar1);
+        versionChoice.getAny().add(jaxbElement);
+        versionChoice.setMediaTypes(mediaTypeList);
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+
+        JSONObject jsonObject = writer.getVersionChoice(versionChoice);
+        String jsonText = JSONValue.toJSONString(jsonObject);
+        myOut.write(jsonText.getBytes());
+        assertThat("string",myOut.toString(), equalTo("{\"version\":{\"id\":null,\"updated\":\"1992-11-27\",\"status\":\"ALPHA\",\"links\":[{\"href\":null}]," +
+            "\"media-types\":{\"values\":[{\"base\":\"\",\"type\":null}]}}}"));
+    }
+
+    @Test
+    public void getVersionChoice_noStatus_returnsJSONObjectNoStatus() throws Exception {
+        Link link = new Link();
+        JAXBElement<Link> jaxbElement = new JAXBElement<Link>(QName.valueOf("foo"),Link.class,link);
+        MediaTypeList mediaTypeList = new MediaTypeList();
+        mediaTypeList.getMediaType().add(new MediaType());
+        XMLGregorianCalendar calendar1 = new XMLGregorianCalendarImpl();
+        calendar1.setMonth(11);
+        calendar1.setDay(27);
+        calendar1.setYear(1992);
+
+        VersionChoice versionChoice = new VersionChoice();
+        versionChoice.setUpdated(calendar1);
+        versionChoice.getAny().add(jaxbElement);
+        versionChoice.setMediaTypes(mediaTypeList);
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+
+        JSONObject jsonObject = writer.getVersionChoice(versionChoice);
+        String jsonText = JSONValue.toJSONString(jsonObject);
+        myOut.write(jsonText.getBytes());
+        assertThat("string",myOut.toString(), equalTo("{\"version\":{\"id\":null,\"updated\":\"1992-11-27\",\"links\":[{\"href\":null}]," +
+                "\"media-types\":{\"values\":[{\"base\":\"\",\"type\":null}]}}}"));
+    }
+
+    @Test
+    public void getVersionChoice_noUpdated_returnsJSONObjectNoUpdatedField() throws Exception {
+        Link link = new Link();
+        JAXBElement<Link> jaxbElement = new JAXBElement<Link>(QName.valueOf("foo"),Link.class,link);
+        MediaTypeList mediaTypeList = new MediaTypeList();
+        mediaTypeList.getMediaType().add(new MediaType());
+        VersionStatus versionStatus = VersionStatus.ALPHA;
+
+        VersionChoice versionChoice = new VersionChoice();
+        versionChoice.setStatus(versionStatus);
+        versionChoice.getAny().add(jaxbElement);
+        versionChoice.setMediaTypes(mediaTypeList);
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+
+        JSONObject jsonObject = writer.getVersionChoice(versionChoice);
+        String jsonText = JSONValue.toJSONString(jsonObject);
+        myOut.write(jsonText.getBytes());
+        assertThat("string",myOut.toString(), equalTo("{\"version\":{\"id\":null,\"status\":\"ALPHA\",\"links\":[{\"href\":null}]," +
+                "\"media-types\":{\"values\":[{\"base\":\"\",\"type\":null}]}}}"));
+    }
+
+    @Test
+    public void getVersionChoice_noLinks_returnsJSONObjectNoLinks() throws Exception {
+        MediaTypeList mediaTypeList = new MediaTypeList();
+        mediaTypeList.getMediaType().add(new MediaType());
+        VersionStatus versionStatus = VersionStatus.ALPHA;
+        XMLGregorianCalendar calendar1 = new XMLGregorianCalendarImpl();
+        calendar1.setMonth(11);
+        calendar1.setDay(27);
+        calendar1.setYear(1992);
+
+        VersionChoice versionChoice = new VersionChoice();
+        versionChoice.setStatus(versionStatus);
+        versionChoice.setUpdated(calendar1);
+        versionChoice.getAny().add(new Link());
+        versionChoice.setMediaTypes(mediaTypeList);
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+
+        JSONObject jsonObject = writer.getVersionChoice(versionChoice);
+        String jsonText = JSONValue.toJSONString(jsonObject);
+        myOut.write(jsonText.getBytes());
+        assertThat("string",myOut.toString(), equalTo("{\"version\":{\"id\":null,\"updated\":\"1992-11-27\",\"status\":\"ALPHA\"," +
+                "\"media-types\":{\"values\":[{\"base\":\"\",\"type\":null}]}}}"));
+    }
+
+    @Test
+    public void getVersionChoice_anyFieldEmpty_returnsJSONObjectNoLinks() throws Exception {
+        MediaTypeList mediaTypeList = new MediaTypeList();
+        mediaTypeList.getMediaType().add(new MediaType());
+        VersionStatus versionStatus = VersionStatus.ALPHA;
+        XMLGregorianCalendar calendar1 = new XMLGregorianCalendarImpl();
+        calendar1.setMonth(11);
+        calendar1.setDay(27);
+        calendar1.setYear(1992);
+
+        VersionChoice versionChoice = new VersionChoice();
+        versionChoice.setStatus(versionStatus);
+        versionChoice.setUpdated(calendar1);
+        versionChoice.setMediaTypes(mediaTypeList);
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+
+        JSONObject jsonObject = writer.getVersionChoice(versionChoice);
+        String jsonText = JSONValue.toJSONString(jsonObject);
+        myOut.write(jsonText.getBytes());
+        assertThat("string",myOut.toString(), equalTo("{\"version\":{\"id\":null,\"updated\":\"1992-11-27\",\"status\":\"ALPHA\"," +
+                "\"media-types\":{\"values\":[{\"base\":\"\",\"type\":null}]}}}"));
+    }
+
+    @Test
+    public void getVersionChoice_MediaListTypeNull_JSONObjectNoMediaTypes() throws Exception {
+        Link link = new Link();
+        JAXBElement<Link> jaxbElement = new JAXBElement<Link>(QName.valueOf("foo"),Link.class,link);
+        VersionStatus versionStatus = VersionStatus.ALPHA;
+        XMLGregorianCalendar calendar1 = new XMLGregorianCalendarImpl();
+        calendar1.setMonth(11);
+        calendar1.setDay(27);
+        calendar1.setYear(1992);
+
+        VersionChoice versionChoice = new VersionChoice();
+        versionChoice.setStatus(versionStatus);
+        versionChoice.setUpdated(calendar1);
+        versionChoice.getAny().add(jaxbElement);
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+
+        JSONObject jsonObject = writer.getVersionChoice(versionChoice);
+        String jsonText = JSONValue.toJSONString(jsonObject);
+        myOut.write(jsonText.getBytes());
+        assertThat("string",myOut.toString(), equalTo("{\"version\":{\"id\":null,\"updated\":\"1992-11-27\",\"status\":\"ALPHA\",\"links\":[{\"href\":null}]}}"));
+    }
+
+    @Test
+    public void getVersionChoice_MediaTypeListEmpty_returnsJSONObjectNoMediaTypes() throws Exception {
+        Link link = new Link();
+        JAXBElement<Link> jaxbElement = new JAXBElement<Link>(QName.valueOf("foo"),Link.class,link);
+        MediaTypeList mediaTypeList = new MediaTypeList();
+        VersionStatus versionStatus = VersionStatus.ALPHA;
+        XMLGregorianCalendar calendar1 = new XMLGregorianCalendarImpl();
+        calendar1.setMonth(11);
+        calendar1.setDay(27);
+        calendar1.setYear(1992);
+
+        VersionChoice versionChoice = new VersionChoice();
+        versionChoice.setStatus(versionStatus);
+        versionChoice.setUpdated(calendar1);
+        versionChoice.getAny().add(jaxbElement);
+        versionChoice.setMediaTypes(mediaTypeList);
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+
+        JSONObject jsonObject = writer.getVersionChoice(versionChoice);
+        String jsonText = JSONValue.toJSONString(jsonObject);
+        myOut.write(jsonText.getBytes());
+        assertThat("string",myOut.toString(), equalTo("{\"version\":{\"id\":null,\"updated\":\"1992-11-27\",\"status\":\"ALPHA\",\"links\":[{\"href\":null}]}}"));
+    }
+
+    @Test
+    public void getTokenUser_allFieldsPopulated_returnsFullJSONObject() throws Exception {
+        Role role1 = new Role();
+        Role role2 = new Role();
+        RoleList roleList = new RoleList();
+        roleList.getRole().add(role1);
+        roleList.getRole().add(role2);
+
+        UserForAuthenticateResponse userForAuthenticateResponse = new UserForAuthenticateResponse();
+        userForAuthenticateResponse.setName("John Smith");
+        userForAuthenticateResponse.setRoles(roleList);
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success","This test worked!");
+        doReturn(jsonObject).when(spy).getRole(role1);
+        doReturn(jsonObject).when(spy).getRole(role2);
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = spy.getTokenUser(userForAuthenticateResponse);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"id\":null,\"roles\":[{\"success\":\"This test worked!\"},{\"success\":\"This test worked!\"}],\"name\":\"John Smith\"}"));
+    }
+
+    @Test
+    public void getTokenUser_nameNull_returnsJSONObjectNoName() throws Exception {
+        Role role1 = new Role();
+        Role role2 = new Role();
+        RoleList roleList = new RoleList();
+        roleList.getRole().add(role1);
+        roleList.getRole().add(role2);
+
+        UserForAuthenticateResponse userForAuthenticateResponse = new UserForAuthenticateResponse();
+        userForAuthenticateResponse.setRoles(roleList);
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success","This test worked!");
+        doReturn(jsonObject).when(spy).getRole(role1);
+        doReturn(jsonObject).when(spy).getRole(role2);
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = spy.getTokenUser(userForAuthenticateResponse);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"id\":null,\"roles\":[{\"success\":\"This test worked!\"},{\"success\":\"This test worked!\"}]}"));
+    }
+
+    @Test
+    public void getTokenUser_emptyRoleList_returnsJSONObjectNoRoles() throws Exception {
+        RoleList roleList = new RoleList();
+
+        UserForAuthenticateResponse userForAuthenticateResponse = new UserForAuthenticateResponse();
+        userForAuthenticateResponse.setName("John Smith");
+        userForAuthenticateResponse.setRoles(roleList);
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success","This test worked!");
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getTokenUser(userForAuthenticateResponse);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"id\":null,\"roles\":[],\"name\":\"John Smith\"}"));
+    }
+
+    @Test
+    public void getTokenUser_nullRoleList_returnsJSONObjectNoRoles() throws Exception {
+        UserForAuthenticateResponse userForAuthenticateResponse = new UserForAuthenticateResponse();
+        userForAuthenticateResponse.setName("John Smith");
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success","This test worked!");
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getTokenUser(userForAuthenticateResponse);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"id\":null,\"roles\":[],\"name\":\"John Smith\"}"));
+    }
+
+    @Test
+    public void getTenantWithoutWrapper_fullyPopulated_returnsFullJSONObject() throws Exception {
+        Tenant tenant = new Tenant();
+        tenant.setName("John Smith");
+        tenant.setDescription("this is a description");
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getTenantWithoutWrapper(tenant);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"id\":null,\"enabled\":true,\"description\":\"this is a description\",\"name\":\"John Smith\"}"));
+    }
+
+    @Test
+    public void getTenantWithoutWrapper_nullName_returnsJSONObjectNoName() throws Exception {
+        Tenant tenant = new Tenant();
+        tenant.setDescription("this is a description");
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getTenantWithoutWrapper(tenant);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"id\":null,\"enabled\":true,\"description\":\"this is a description\"}"));
+    }
+
+    @Test
+    public void getTenantWithoutWrapper_nullDescription_returnsJSONObjectNoDescription() throws Exception {
+        Tenant tenant = new Tenant();
+        tenant.setName("John Smith");
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getTenantWithoutWrapper(tenant);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"id\":null,\"enabled\":true,\"name\":\"John Smith\"}"));
+    }
+
+    @Test
+    public void getServiceCatalog_fullyPopulated_returnsFullJSONObject() throws Exception {
+        ServiceForCatalog serviceForCatalog = mock(ServiceForCatalog.class);
+        when(serviceForCatalog.getName()).thenReturn("John Smith");
+        when(serviceForCatalog.getType()).thenReturn("type");
+        when(serviceForCatalog.getEndpoint()).thenReturn(null);
+        ServiceCatalog serviceCatalog = new ServiceCatalog();
+        serviceCatalog.getService().add(serviceForCatalog);
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success","This test worked!");
+        JSONArray jsonArray = new JSONArray();
+        jsonArray.add(jsonObject);
+        doReturn(jsonArray).when(spy).getEndpointsForCatalog(null);
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONArray result = spy.getServiceCatalog(serviceCatalog);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("[{\"name\":\"John Smith\",\"endpoints\":[{\"success\":\"This test worked!\"}],\"type\":\"type\"}]"));
     }
 
     @Test

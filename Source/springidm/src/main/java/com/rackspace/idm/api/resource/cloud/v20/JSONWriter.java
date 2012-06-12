@@ -28,6 +28,8 @@ import org.openstack.docs.identity.api.v2.Endpoint;
 import org.openstack.docs.identity.api.v2.ServiceCatalog;
 import org.openstack.docs.identity.api.v2.Token;
 import org.openstack.docs.identity.api.v2.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3._2005.atom.Link;
 
 import javax.ws.rs.Produces;
@@ -49,6 +51,8 @@ import java.util.List;
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
 public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
+
+    private static final Logger logger = LoggerFactory.getLogger(JSONWriter.class);
 
     @Override
     public long getSize(JAXBElement<?> arg0, Class<?> arg1, Type arg2,
@@ -360,13 +364,14 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
             try {
                 getMarshaller().marshallToJSON(object, outputStream);
             } catch (JAXBException e) {
-                e.printStackTrace();
+                logger.info(e.toString());
+                throw new BadRequestException("Parameters are not valid.");
             }
         }
     }
 
     @SuppressWarnings("unchecked")
-    private static JSONArray getLinks(List<Object> any) {
+    static JSONArray getLinks(List<Object> any) {
         JSONArray linkArray = new JSONArray();
         for (Object o : any) {
             if (o instanceof JAXBElement) {
@@ -432,7 +437,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     }
 
     @SuppressWarnings("unchecked")
-    private JSONObject getTokenUser(UserForAuthenticateResponse user) {
+    JSONObject getTokenUser(UserForAuthenticateResponse user) {
         JSONObject userInner = new JSONObject();
         userInner.put(JSONConstants.ID, user.getId());
         if (user.getName() != null) {
@@ -506,7 +511,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     }
 
     @SuppressWarnings("unchecked")
-    private JSONArray getEndpointsForCatalog(List<EndpointForService> endpoints) {
+    JSONArray getEndpointsForCatalog(List<EndpointForService> endpoints) {
         JSONArray endpointList = new JSONArray();
         for (EndpointForService endpoint : endpoints) {
             JSONObject endpointItem = new JSONObject();
@@ -728,7 +733,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     }
 
     @SuppressWarnings("unchecked")
-    private JSONObject getBaseUrlList(BaseURL url) {
+    JSONObject getBaseUrlList(BaseURL url) {
         JSONObject baseURL = new JSONObject();
         baseURL.put(JSONConstants.ENABLED, url.isEnabled());
         baseURL.put(JSONConstants.DEFAULT, url.isDefault());
@@ -845,7 +850,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
         return outer;
     }
 
-    private JSONMarshaller getMarshaller() throws JAXBException {
+    JSONMarshaller getMarshaller() throws JAXBException {
         return ((JSONJAXBContext) JAXBContextResolver.get()).createJSONMarshaller();
     }
 }
