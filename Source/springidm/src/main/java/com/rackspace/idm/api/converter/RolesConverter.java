@@ -110,7 +110,7 @@ public class RolesConverter {
      	return jaxbRoles;
     }
     
-    private com.rackspace.api.idm.v1.Role createJaxbRole(TenantRole tenantRole) {
+    com.rackspace.api.idm.v1.Role createJaxbRole(TenantRole tenantRole) {
     	com.rackspace.api.idm.v1.Role jaxbRole = objectFactory.createRole();
     	jaxbRole.setId(tenantRole.getRoleRsId());
 		jaxbRole.setName(tenantRole.getName());

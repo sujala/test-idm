@@ -1,6 +1,5 @@
 package com.rackspace.idm.services;
 
-import com.rackspace.idm.api.converter.TenantRoleConverter;
 import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
@@ -47,7 +46,6 @@ public class AuthenticationServiceTests {
     AuthDao mockAuthDao;
     CustomerDao mockCustomerDao;
     List<TenantRole> tenantRoles;
-    TenantRoleConverter mockTenantRoleConverter;
 
     String customerId = "RACKSPACE";
     String clientId = "DELETE_My_ClientId";
@@ -80,7 +78,6 @@ public class AuthenticationServiceTests {
         mockApplicationDao = EasyMock.createMock(ApplicationDao.class);
         mockAuthDao = EasyMock.createMock(AuthDao.class);
         mockCustomerDao = EasyMock.createMock(CustomerDao.class);
-        mockTenantRoleConverter = EasyMock.createMock(TenantRoleConverter.class);
 
 
         tenantRoles = new ArrayList<TenantRole>();
@@ -95,11 +92,11 @@ public class AuthenticationServiceTests {
         authenticationService = new DefaultAuthenticationService(
                 mockTokenService, mockAuthDao, mockTenantService,
                 mockScopeAccessService, mockApplicationDao, appConfig,
-                mockUserDao, mockCustomerDao, inputValidator, mockTenantRoleConverter);
+                mockUserDao, mockCustomerDao, inputValidator);
         authSpy = PowerMockito.spy(new DefaultAuthenticationService(
                 mockTokenService, mockAuthDao, mockTenantService,
                 mockScopeAccessService, mockApplicationDao, appConfig,
-                mockUserDao, mockCustomerDao, inputValidator, mockTenantRoleConverter));
+                mockUserDao, mockCustomerDao, inputValidator));
     }
 
     @Test

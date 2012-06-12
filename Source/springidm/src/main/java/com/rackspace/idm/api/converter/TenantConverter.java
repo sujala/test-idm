@@ -22,8 +22,8 @@ public class TenantConverter {
 
     private final ObjectFactory objectFactory = new ObjectFactory();
 
-    @Autowired
-    private JAXBObjectFactories OBJ_FACTORIES;
+//    @Autowired
+//    private JAXBObjectFactories OBJ_FACTORIES;
 
     /*
      com.rackspace.api.idm.v1.Tenant
@@ -60,7 +60,7 @@ public class TenantConverter {
             try {
                 updatedDate = DatatypeFactory.newInstance()
                     .newXMLGregorianCalendar(gc);
-                jaxbTenant.setCreated(updatedDate);
+                jaxbTenant.setUpdated(updatedDate);
             } catch (DatatypeConfigurationException e) {
                 e.printStackTrace();
             }
