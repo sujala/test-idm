@@ -65,13 +65,14 @@ public class UserConverterCloudV20 {
     }
 
     public User toUser(com.rackspace.idm.domain.entity.User user) {
-        User jaxbUser = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUser();
+        User jaxbUser = objectFactory.createUser();
 
         jaxbUser.setDisplayName(user.getDisplayName());
         jaxbUser.setEmail(user.getEmail());
         jaxbUser.setEnabled(user.isEnabled());
         jaxbUser.setId(user.getId());
         jaxbUser.setUsername(user.getUsername());
+        jaxbUser.getOtherAttributes().put(new QName("http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0","defaultRegion"),user.getRegion());
 
         try {
             if (user.getCreated() != null) {
