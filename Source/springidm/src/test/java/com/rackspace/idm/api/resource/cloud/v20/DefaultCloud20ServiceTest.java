@@ -913,16 +913,6 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void addUser_withNoRegion_callsAssignDefaultRegionToDomainUser() throws Exception {
-        UserForCreate userNoRegion = new UserForCreate();
-        doNothing().when(spy).verifyUserAdminLevelAccess(authToken);
-        doNothing().when(spy).validateUser(org.mockito.Matchers.any(org.openstack.docs.identity.api.v2.User.class));
-        when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(new User());
-        spy.addUser(httpHeaders, uriInfo, authToken, userNoRegion);
-        verify(spy).assignDefaultRegionToDomainUser(org.mockito.Matchers.any(User.class));
-    }
-
-    @Test
     public void updateUser_withNoRegionAndPreviousRegionsExists_previousRegionRemains() throws Exception {
         UserForCreate userNoRegion = new UserForCreate();
         doNothing().when(spy).verifyUserAdminLevelAccess(authToken);
@@ -958,7 +948,7 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void addUser_withNoRegion_setsDefaultRegion() throws Exception {
+    public void addUser_withNoRegion_RegionIsNull() throws Exception {
         UserForCreate userNoRegion = new UserForCreate();
         ArgumentCaptor<User> argumentCaptor = ArgumentCaptor.forClass(User.class);
         doNothing().when(spy).verifyUserAdminLevelAccess(authToken);
@@ -966,7 +956,7 @@ public class DefaultCloud20ServiceTest {
         when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(new User());
         spy.addUser(httpHeaders, uriInfo, authToken, userNoRegion);
         verify(userService).addUser(argumentCaptor.capture());
-        assertThat("user region", argumentCaptor.getValue().getRegion(), equalTo("default"));
+        assertThat("user region", argumentCaptor.getValue().getRegion(), equalTo(null));
     }
 
     @Test

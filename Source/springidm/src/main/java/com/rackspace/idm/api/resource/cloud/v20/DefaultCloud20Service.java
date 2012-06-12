@@ -346,7 +346,6 @@ public class DefaultCloud20Service implements Cloud20Service {
                 userDO.setMossoId(caller.getMossoId());
                 userDO.setNastId(caller.getNastId());
             }
-            assignDefaultRegionToDomainUser(userDO);
             setDomainId(scopeAccessByAccessToken, userDO);
             userService.addUser(userDO);
             assignProperRole(httpHeaders, authToken, scopeAccessByAccessToken, userDO);
