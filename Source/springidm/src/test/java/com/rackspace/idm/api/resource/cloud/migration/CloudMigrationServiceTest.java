@@ -271,7 +271,7 @@ public class CloudMigrationServiceTest {
     @Test (expected = NotFoundException.class)
     public void migrateUserByUsername_clientGetUserAndUsernameCanNotBeFound_throwsNotFoundException() throws Exception {
         doReturn(client).doReturn(client11).when(spy).getMigrationClientInstance();
-        doReturn(adminToken).when(spy).getAdminToken();
+        doReturn("token").when(spy).getAdminToken();
         when(config.getString("cloudAuth11url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v1.1/");
         when(config.getString("cloudAuth20url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v2.0/");
         when(config.getString("ga.username")).thenReturn("auth");
@@ -388,8 +388,6 @@ public class CloudMigrationServiceTest {
         when(config.getString("migration.apikey")).thenReturn("0f97f489c848438090250d50c7e1ea88");
         when(config.getString("cloudAuth11url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v1.1/");
         when(config.getString("cloudAuth20url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v2.0/");
-        when(config.getString("cloudAuth11url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v1.1/");
-        when(config.getString("cloudAuth20url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v2.0/");
         when(config.getString("ga.username")).thenReturn("auth");
         when(config.getString("ga.password")).thenReturn("auth123");
         when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
@@ -399,6 +397,8 @@ public class CloudMigrationServiceTest {
 
     @Test
     public void getSubUsers_succeedsWithNoExceptions() throws Exception {
+        when(config.getString("cloudAuth11url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v1.1/");
+        when(config.getString("cloudAuth20url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v2.0/");
         when(config.getString("migration.username")).thenReturn("migration_user");
         when(config.getString("migration.apikey")).thenReturn("0f97f489c848438090250d50c7e1ea88");
         MigrationClient clientTest = new MigrationClient();
