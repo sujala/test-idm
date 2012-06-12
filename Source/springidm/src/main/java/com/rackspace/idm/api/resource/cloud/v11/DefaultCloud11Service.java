@@ -747,6 +747,11 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             this.userService.updateUser(gaUser, false);
 
+            if(gaUser.isDisabled()){
+                UserScopeAccess usa = getAuthtokenFromRequest(request);
+                atomHopperClient.asyncPost(gaUser,usa.getAccessTokenString(),"disabled");
+            }
+
             return Response.ok(OBJ_FACTORY.createUser(this.userConverterCloudV11.toCloudV11UserWithOnlyEnabled(gaUser)));
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
