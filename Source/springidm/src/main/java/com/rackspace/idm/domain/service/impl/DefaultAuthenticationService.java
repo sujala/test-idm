@@ -1,6 +1,5 @@
 package com.rackspace.idm.domain.service.impl;
 
-import com.rackspace.idm.api.converter.TenantRoleConverter;
 import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.AuthDao;
@@ -40,7 +39,6 @@ public class DefaultAuthenticationService implements AuthenticationService {
     private final UserDao userDao;
     private final CustomerDao customerDao;
     private final InputValidator inputValidator;
-    private final TenantRoleConverter tenantRoleConverter;
 
     @Autowired
     private RSAClient rsaClient;
@@ -52,8 +50,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
                                         ScopeAccessService scopeAccessService,
                                         ApplicationDao clientDao,
                                         Configuration config, UserDao userDao,
-                                        CustomerDao customerDao, InputValidator inputValidator,
-                                        TenantRoleConverter tenantRoleConverter) {
+                                        CustomerDao customerDao, InputValidator inputValidator) {
         this.authDao = authDao;
         this.tenantService = tenantService;
         this.scopeAccessService = scopeAccessService;
@@ -62,7 +59,6 @@ public class DefaultAuthenticationService implements AuthenticationService {
         this.userDao = userDao;
         this.customerDao = customerDao;
         this.inputValidator = inputValidator;
-        this.tenantRoleConverter = tenantRoleConverter;
     }
 
     @Override

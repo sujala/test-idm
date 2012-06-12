@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.jmx.export.MBeanExporter;
 
-import com.rackspace.idm.api.converter.TenantRoleConverter;
 import com.rackspace.idm.domain.dao.ApiDocDao;
 import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.AuthDao;
@@ -45,7 +44,6 @@ import com.rackspace.idm.domain.service.impl.DefaultUserService;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.rackspace.idm.util.LdapRouterMBean;
 import com.rackspace.idm.util.LoggerMBean;
-import com.rackspace.idm.util.RSAClient;
 import com.rackspace.idm.util.WadlTrie;
 import com.rackspace.idm.validation.InputValidator;
 
@@ -85,8 +83,6 @@ public class ServiceConfiguration {
     private InputValidator inputValidator;
     @Autowired
     private TenantDao tenantDao;
-    @Autowired
-    private TenantRoleConverter tenantRoleConverter;
 
     public ServiceConfiguration() {
     }
@@ -184,7 +180,7 @@ public class ServiceConfiguration {
     @Bean
     public AuthenticationService authenticationService() {
     	return new DefaultAuthenticationService(tokenService(), authDao, tenantService(), scopeAccessService(),
-    			clientDao, config, userRepo, customerDao, inputValidator, tenantRoleConverter);
+    			clientDao, config, userRepo, customerDao, inputValidator);
     }
     
     @Bean
