@@ -1,6 +1,5 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.exception.BadRequestException;
 import org.junit.Before;
 import org.junit.Test;
@@ -57,7 +56,7 @@ public class JSONReaderForUserForCreateTest {
                         "            \"OS-KSADM:defaultRegion\":\"foo\"\n" +
                         "        }\n" +
                         "}";
-        assertThat("default region", JSONReaderForUserForCreate.getUserFromJSONString(body).getOtherAttributes().get(new QName(JSONConstants.OS_KSADM_DEFAULT_REGION.toString())), equalTo("foo"));
+        assertThat("default region", JSONReaderForUserForCreate.getUserFromJSONString(body).getOtherAttributes().get(new QName("http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0","defaultRegion")), equalTo("foo"));
     }
 
     @Test

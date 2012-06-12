@@ -129,7 +129,8 @@ public class AcceptServlet extends HttpServlet {
 
         // remove the secureId since its no longer needed
         user.setSecureId("");
-        getUserService().updateUser(user, false);
+        UserService userService1 = getUserService();
+        userService1.updateUser(user, false);
 
         String authCode = generateAuthCode();
 
@@ -199,7 +200,7 @@ public class AcceptServlet extends HttpServlet {
         return;
     }
 
-    private synchronized ApplicationService getClientService() {
+    synchronized ApplicationService getClientService() {
         if (clientService == null) {
             WebApplicationContext context = WebApplicationContextUtils
                 .getWebApplicationContext(getServletContext());
@@ -208,7 +209,7 @@ public class AcceptServlet extends HttpServlet {
         return clientService;
     }
 
-    private synchronized UserService getUserService() {
+    synchronized UserService getUserService() {
         if (userService == null) {
             WebApplicationContext context = WebApplicationContextUtils
                 .getWebApplicationContext(getServletContext());
@@ -217,7 +218,7 @@ public class AcceptServlet extends HttpServlet {
         return userService;
     }
 
-    private synchronized ScopeAccessService getScopeAccessService() {
+    synchronized ScopeAccessService getScopeAccessService() {
         if (scopeAccessService == null) {
             WebApplicationContext context = WebApplicationContextUtils
                 .getWebApplicationContext(getServletContext());
@@ -239,7 +240,7 @@ public class AcceptServlet extends HttpServlet {
         return config.getInt("authcode.expiration.seconds", 20);
     }
 
-    private void setErrorResponse(HttpServletResponse response,
+    void setErrorResponse(HttpServletResponse response,
         String redirectUri, String errMsg) {
         URI uri = UriBuilder.fromPath(redirectUri)
             .queryParam("error", errMsg).build();

@@ -747,6 +747,11 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             this.userService.updateUser(gaUser, false);
 
+            if(gaUser.isDisabled()){
+                UserScopeAccess usa = getAuthtokenFromRequest(request);
+                atomHopperClient.asyncPost(gaUser,usa.getAccessTokenString(),"disabled");
+            }
+
             return Response.ok(OBJ_FACTORY.createUser(this.userConverterCloudV11.toCloudV11UserWithOnlyEnabled(gaUser)));
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
@@ -1158,7 +1163,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         } else {
             UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(
                     stringStringMap.get("username"), stringStringMap.get("password"), getCloudAuthClientId());
-            boolean authenticated = authorizationService.authorizeCloudServiceAdmin(usa);
+            boolean authenticated = authorizationService.authorizeCloudServiceAdmin(usa) || authorizationService.authorizeCloudIdentityAdmin(usa);
             if (!authenticated) {
                 throw new CloudAdminAuthorizationException("Cloud admin user authorization Failed.");
             }
