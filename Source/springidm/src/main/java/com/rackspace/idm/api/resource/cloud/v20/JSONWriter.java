@@ -370,10 +370,10 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
                 inner.put(JSONConstants.EMAIL, user.getEmail());
             }
             if (user.getCreated() != null) {
-                inner.put(JSONConstants.CREATED, user.getCreated());
+                inner.put(JSONConstants.CREATED, user.getCreated().toString());
             }
             if (user.getUpdated() != null) {
-                inner.put(JSONConstants.UPDATED, user.getUpdated());
+                inner.put(JSONConstants.UPDATED, user.getUpdated().toString());
             }
             outer.put(JSONConstants.USER, inner);
 
