@@ -1,16 +1,15 @@
 package com.rackspace.idm.api.converter.cloudv20;
 
-import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.TenantRole;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
+import org.openstack.docs.identity.api.v2.ObjectFactory;
 import org.openstack.docs.identity.api.v2.User;
 import org.openstack.docs.identity.api.v2.UserForAuthenticateResponse;
 import org.openstack.docs.identity.api.v2.UserList;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.openstack.docs.identity.api.v2.ObjectFactory;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
@@ -39,7 +38,7 @@ public class UserConverterCloudV20 {
             userDO.setPassword(((UserForCreate) user).getPassword());
         }
         if(user.getOtherAttributes()!=null){
-            userDO.setRegion(user.getOtherAttributes().get(new QName(JSONConstants.OS_KSADM_DEFAULT_REGION.toString())));
+            userDO.setRegion(user.getOtherAttributes().get(new QName("http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0","defaultRegion")));
         }
         return userDO;
     }

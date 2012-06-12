@@ -7,6 +7,7 @@ import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
+import com.rackspace.idm.exception.BadRequestException;
 import com.rackspacecloud.docs.auth.api.v1.*;
 import com.sun.jersey.api.json.JSONJAXBContext;
 import com.sun.jersey.api.json.JSONMarshaller;
@@ -21,6 +22,7 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.ServiceList;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplateList;
+import org.openstack.docs.identity.api.ext.os_ksec2.v1.Ec2CredentialsType;
 import org.openstack.docs.identity.api.v2.*;
 import org.openstack.docs.identity.api.v2.Endpoint;
 import org.openstack.docs.identity.api.v2.ServiceCatalog;
@@ -184,14 +186,12 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
                 SecretQA secrets = (SecretQA) object.getValue();
                 String jsonText = JSONValue.toJSONString(getSecretQA(secrets));
                 outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
-            } else if(cred instanceof PasswordCredentialsRequiredUsername){
-                PasswordCredentialsRequiredUsername creds = (PasswordCredentialsRequiredUsername) cred;
+            } else if(cred instanceof  PasswordCredentialsBase){
+                PasswordCredentialsBase creds = (PasswordCredentialsBase) cred;
                 String jsonText = JSONValue.toJSONString(getPasswordCredentials(creds));
                 outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
-            } else if(cred instanceof PasswordCredentialsBase){
-                PasswordCredentialsBase creds = (PasswordCredentialsBase) cred;
-                String jsonText = JSONValue.toJSONString(getPasswordCredentialsBase(creds));
-                outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
+            } else{
+                throw new BadRequestException("Credential Type must be API Key Credentials, Password Credentials, or SecretQA.");
             }
 
         } else if (object.getDeclaredType().isAssignableFrom(Groups.class)) {
@@ -221,8 +221,8 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
                         ApiKeyCredentials.class)) {
                     list.add(getApiKeyCredentials((ApiKeyCredentials) cred.getValue()));
                 } else if (cred.getDeclaredType().isAssignableFrom(
-                        PasswordCredentialsRequiredUsername.class)) {
-                    list.add(getPasswordCredentials((PasswordCredentialsRequiredUsername) cred.getValue()));
+                        PasswordCredentialsBase.class)) {
+                    list.add(getPasswordCredentials((PasswordCredentialsBase) cred.getValue()));
                 }
             }
 
@@ -466,7 +466,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     }
 
     @SuppressWarnings("unchecked")
-    private JSONArray getServiceCatalog(ServiceCatalog serviceCatalog) {
+    JSONArray getServiceCatalog(ServiceCatalog serviceCatalog) {
         JSONArray serviceInner = new JSONArray();
         if (serviceCatalog != null) {
             for (ServiceForCatalog service : serviceCatalog.getService()) {
@@ -485,7 +485,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     }
 
     @SuppressWarnings("unchecked")
-    private JSONObject getToken(Token token) {
+    JSONObject getToken(Token token) {
         JSONObject tokenInner = new JSONObject();
         tokenInner.put(JSONConstants.ID, token.getId());
         tokenInner.put(JSONConstants.EXPIRES, token.getExpires().toString());
@@ -533,7 +533,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     }
 
     @SuppressWarnings("unchecked")
-    private JSONObject getApiKeyCredentials(ApiKeyCredentials creds) {
+    JSONObject getApiKeyCredentials(ApiKeyCredentials creds) {
         JSONObject outer = new JSONObject();
         JSONObject inner = new JSONObject();
         outer.put(JSONConstants.APIKEY_CREDENTIALS, inner);
@@ -544,17 +544,6 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
 
     @SuppressWarnings("unchecked")
     JSONObject getPasswordCredentials(
-            PasswordCredentialsRequiredUsername creds) {
-        JSONObject outer = new JSONObject();
-        JSONObject inner = new JSONObject();
-        outer.put(JSONConstants.PASSWORD_CREDENTIALS, inner);
-        inner.put(JSONConstants.USERNAME, creds.getUsername());
-        inner.put(JSONConstants.PASSWORD, creds.getPassword());
-        return outer;
-    }
-
-    @SuppressWarnings("unchecked")
-    JSONObject getPasswordCredentialsBase(
             PasswordCredentialsBase creds) {
         JSONObject outer = new JSONObject();
         JSONObject inner = new JSONObject();
@@ -575,7 +564,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     }
 
     @SuppressWarnings("unchecked")
-    private JSONObject getUser(User user) {
+    JSONObject getUser(User user) {
         JSONObject outer = new JSONObject();
         outer.put(JSONConstants.ID, user.getId());
         outer.put(JSONConstants.USERNAME, user.getUsername());
@@ -585,7 +574,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     }
 
     @SuppressWarnings("unchecked")
-    private JSONObject getRole(Role role) {
+    JSONObject getRole(Role role) {
         JSONObject outer = new JSONObject();
         if (role.getId() != null) {
             outer.put(JSONConstants.ID, role.getId());
@@ -616,7 +605,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
         return outer;
     }
 
-    private JSONObject getGroupsList(GroupsList groupsList) {
+    JSONObject getGroupsList(GroupsList groupsList) {
         JSONObject outer = new JSONObject();
         JSONObject values = new JSONObject();
         JSONArray list = new JSONArray();
@@ -629,7 +618,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     }
 
     @SuppressWarnings("unchecked")
-    private JSONObject getGroup(Group group) {
+    JSONObject getGroup(Group group) {
         JSONObject outer = new JSONObject();
         outer.put(JSONConstants.GROUP, getGroupWithoutWrapper(group));
         return outer;

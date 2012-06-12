@@ -1,6 +1,5 @@
 package com.rackspace.idm.api.converter.cloudv20;
 
-import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.entity.User;
@@ -39,7 +38,7 @@ public class UserConverterCloudV20Test {
     @Test
     public void toUserDO_setsRegion() throws Exception {
         final UserForCreate user = new UserForCreate();
-        user.getOtherAttributes().put(new QName(JSONConstants.OS_KSADM_DEFAULT_REGION.toString()),"foo");
+        user.getOtherAttributes().put(new QName("http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0","defaultRegion"),"foo");
         final User userDO = userConverterCloudV20.toUserDO(user);
         assertThat("user region", userDO.getRegion(), equalTo("foo"));
     }
