@@ -239,7 +239,7 @@ public class AcceptServlet extends HttpServlet {
         return config.getInt("authcode.expiration.seconds", 20);
     }
 
-    private void setErrorResponse(HttpServletResponse response,
+    void setErrorResponse(HttpServletResponse response,
         String redirectUri, String errMsg) {
         URI uri = UriBuilder.fromPath(redirectUri)
             .queryParam("error", errMsg).build();
