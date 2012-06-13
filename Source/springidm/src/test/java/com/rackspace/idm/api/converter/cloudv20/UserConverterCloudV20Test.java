@@ -44,6 +44,15 @@ public class UserConverterCloudV20Test {
     }
 
     @Test
+    public void toUser_domainUserHasRegion_setsJaxbObjectsRegion() throws Exception {
+        final User user = new User();
+        user.setRegion("myRegion");
+        when(objectFactory.createUser()).thenReturn(new org.openstack.docs.identity.api.v2.User());
+        final org.openstack.docs.identity.api.v2.User jaxbObject = userConverterCloudV20.toUser(user);
+        assertThat("region", jaxbObject.getOtherAttributes().get(new QName("http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0","defaultRegion")),equalTo("myRegion"));
+    }
+
+    @Test
     public void toUserForAuthenticateResponse_calls_createUserForAuthenticateResponse() throws Exception {
         when(objectFactory.createUserForAuthenticateResponse()).thenReturn(new UserForAuthenticateResponse());
         userConverterCloudV20.toUserForAuthenticateResponse(new Racker(), null);

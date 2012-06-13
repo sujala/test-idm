@@ -64,7 +64,7 @@ public class JSONReaderForUserForCreate implements MessageBodyReader<UserForCrea
                 Object defaultRegion = obj3.get(JSONConstants.OS_KSADM_DEFAULT_REGION);
 
                 if (defaultRegion != null) {
-                    user.getOtherAttributes().put(new QName(JSONConstants.OS_KSADM_DEFAULT_REGION.toString()), defaultRegion.toString());
+                    user.getOtherAttributes().put(new QName("http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0","defaultRegion"), defaultRegion.toString());
                 }
 
                 if (password != null) {

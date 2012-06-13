@@ -22,12 +22,13 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.ServiceList;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplateList;
-import org.openstack.docs.identity.api.ext.os_ksec2.v1.Ec2CredentialsType;
 import org.openstack.docs.identity.api.v2.*;
 import org.openstack.docs.identity.api.v2.Endpoint;
 import org.openstack.docs.identity.api.v2.ServiceCatalog;
 import org.openstack.docs.identity.api.v2.Token;
 import org.openstack.docs.identity.api.v2.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3._2005.atom.Link;
 
 import javax.ws.rs.Produces;
@@ -39,6 +40,7 @@ import javax.ws.rs.ext.Provider;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.XMLGregorianCalendar;
+import javax.xml.namespace.QName;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.annotation.Annotation;
@@ -49,6 +51,8 @@ import java.util.List;
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
 public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
+
+    private static final Logger logger = LoggerFactory.getLogger(JSONWriter.class);
 
     @Override
     public long getSize(JAXBElement<?> arg0, Class<?> arg1, Type arg2,
@@ -186,11 +190,11 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
                 SecretQA secrets = (SecretQA) object.getValue();
                 String jsonText = JSONValue.toJSONString(getSecretQA(secrets));
                 outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
-            } else if(cred instanceof  PasswordCredentialsBase){
+            } else if (cred instanceof PasswordCredentialsBase) {
                 PasswordCredentialsBase creds = (PasswordCredentialsBase) cred;
                 String jsonText = JSONValue.toJSONString(getPasswordCredentials(creds));
                 outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
-            } else{
+            } else {
                 throw new BadRequestException("Credential Type must be API Key Credentials, Password Credentials, or SecretQA.");
             }
 
@@ -269,9 +273,9 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
             outer.put(JSONConstants.ACCESS, access);
 
             if (authenticateResponse.getAny().size() > 0) {
-                for(Object response : authenticateResponse.getAny()) {
+                for (Object response : authenticateResponse.getAny()) {
                     if (response instanceof UserForAuthenticateResponse) {
-                        UserForAuthenticateResponse userForAuthenticateResponse = (UserForAuthenticateResponse)response;
+                        UserForAuthenticateResponse userForAuthenticateResponse = (UserForAuthenticateResponse) response;
 
                         JSONObject subAccess = new JSONObject();
                         subAccess.put(JSONConstants.ID, userForAuthenticateResponse.getId());
@@ -356,17 +360,41 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
             String jsonText = JSONValue.toJSONString(outer);
             outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
 
+        } else if (object.getDeclaredType().isAssignableFrom(User.class)) {
+            User user = (User) object.getValue();
+            JSONObject outer = new JSONObject();
+            JSONObject inner = new JSONObject();
+            inner.put(JSONConstants.USERNAME, user.getUsername());
+            inner.put(JSONConstants.ID, user.getId());
+            inner.put(JSONConstants.ENABLED, user.isEnabled());
+            if (user.getOtherAttributes().size() != 0) {
+                inner.put(JSONConstants.OS_KSADM_DEFAULT_REGION, user.getOtherAttributes().get(new QName("http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0", "defaultRegion")));
+            }
+            if (user.getEmail() != null) {
+                inner.put(JSONConstants.EMAIL, user.getEmail());
+            }
+            if (user.getCreated() != null) {
+                inner.put(JSONConstants.CREATED, user.getCreated().toString());
+            }
+            if (user.getUpdated() != null) {
+                inner.put(JSONConstants.UPDATED, user.getUpdated().toString());
+            }
+            outer.put(JSONConstants.USER, inner);
+
+            String jsonText = JSONValue.toJSONString(outer);
+            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
         } else {
             try {
                 getMarshaller().marshallToJSON(object, outputStream);
             } catch (JAXBException e) {
-                e.printStackTrace();
+                logger.info(e.toString());
+                throw new BadRequestException("Parameters are not valid.");
             }
         }
     }
 
     @SuppressWarnings("unchecked")
-    private static JSONArray getLinks(List<Object> any) {
+    static JSONArray getLinks(List<Object> any) {
         JSONArray linkArray = new JSONArray();
         for (Object o : any) {
             if (o instanceof JAXBElement) {
@@ -432,7 +460,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     }
 
     @SuppressWarnings("unchecked")
-    private JSONObject getTokenUser(UserForAuthenticateResponse user) {
+    JSONObject getTokenUser(UserForAuthenticateResponse user) {
         JSONObject userInner = new JSONObject();
         userInner.put(JSONConstants.ID, user.getId());
         if (user.getName() != null) {
@@ -506,7 +534,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     }
 
     @SuppressWarnings("unchecked")
-    private JSONArray getEndpointsForCatalog(List<EndpointForService> endpoints) {
+    JSONArray getEndpointsForCatalog(List<EndpointForService> endpoints) {
         JSONArray endpointList = new JSONArray();
         for (EndpointForService endpoint : endpoints) {
             JSONObject endpointItem = new JSONObject();
@@ -728,7 +756,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     }
 
     @SuppressWarnings("unchecked")
-    private JSONObject getBaseUrlList(BaseURL url) {
+    JSONObject getBaseUrlList(BaseURL url) {
         JSONObject baseURL = new JSONObject();
         baseURL.put(JSONConstants.ENABLED, url.isEnabled());
         baseURL.put(JSONConstants.DEFAULT, url.isDefault());
@@ -845,7 +873,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
         return outer;
     }
 
-    private JSONMarshaller getMarshaller() throws JAXBException {
+    JSONMarshaller getMarshaller() throws JAXBException {
         return ((JSONJAXBContext) JAXBContextResolver.get()).createJSONMarshaller();
     }
 }
