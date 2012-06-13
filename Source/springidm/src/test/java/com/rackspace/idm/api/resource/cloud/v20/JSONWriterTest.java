@@ -734,71 +734,27 @@ public class JSONWriterTest {
     }
 
     @Test
-    public void writeTo_v20UserOtherAttributesNull_writerToOutputStreamNoDefaultRegion() throws Exception {
+    public void writeTo_v20user_callsGetUser() throws Exception {
         final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
         final User user = new User();
-        user.setId("10019805");
-        user.setUsername("kurt");
-        user.setEmail("myEmail");
-        user.setCreated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
-        user.setUpdated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
         JAXBElement jaxbElement = new JAXBElement<User>(new QName("user"), User.class, user);
-        writer.writeTo(jaxbElement, null, null, null, null, null, myOut);
-        assertThat("user", myOut.toString(), equalTo(
-                "{\"user\":{\"id\":\"10019805\",\"enabled\":true," +"\"username\":\"kurt\",\"updated\":\"0001-02-01T00:00:00.000-06:00\"," +
-                        "\"created\":\"0001-02-01T00:00:00.000-06:00\",\"email\":\"myEmail\"}}"));
+        doReturn(new JSONObject()).when(spy).getUser(user);
+        spy.writeTo(jaxbElement, null, null, null, null, null, myOut);
+        verify(spy).getUser(user);
     }
 
     @Test
-    public void writeTo_v20UserEmailNull_writerToOutputStreamNoEmail() throws Exception {
+    public void writeTo_v20user_writerToOutputStream() throws Exception {
         final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
         final User user = new User();
-        user.setId("10019805");
-        user.setUsername("kurt");
-        user.setCreated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
-        user.setUpdated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
-        user.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "defaultRegion"), "myRegion");
         JAXBElement jaxbElement = new JAXBElement<User>(new QName("user"), User.class, user);
-        writer.writeTo(jaxbElement, null, null, null, null, null, myOut);
-        assertThat("user", myOut.toString(), equalTo(
-                "{\"user\":{" +
-                        "\"id\":\"10019805\",\"enabled\":true," +"\"username\":\"kurt\",\"updated\":\"0001-02-01T00:00:00.000-06:00\"," +
-                        "\"created\":\"0001-02-01T00:00:00.000-06:00\",\"RAX-AUTH:defaultRegion\":\"myRegion\"}}"));
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success","This test worked!");
+        doReturn(jsonObject).when(spy).getUser(user);
+        spy.writeTo(jaxbElement, null, null, null, null, null, myOut);
+        assertThat("string",myOut.toString(),equalTo("{\"user\":{\"success\":\"This test worked!\"}}"));
     }
 
-    @Test
-    public void writeTo_v20userCreatedNull_writerToOutputStreamNoCreated() throws Exception {
-        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-        final User user = new User();
-        user.setId("10019805");
-        user.setUsername("kurt");
-        user.setEmail("myEmail");
-        user.setUpdated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
-        user.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "defaultRegion"), "myRegion");
-        JAXBElement jaxbElement = new JAXBElement<User>(new QName("user"), User.class, user);
-        writer.writeTo(jaxbElement, null, null, null, null, null, myOut);
-        assertThat("user", myOut.toString(), equalTo(
-                "{\"user\":{" +
-                        "\"id\":\"10019805\",\"enabled\":true," +"\"username\":\"kurt\",\"updated\":\"0001-02-01T00:00:00.000-06:00\",\"email\":\"myEmail\"," +
-                        "\"RAX-AUTH:defaultRegion\":\"myRegion\"}}"));
-    }
-
-    @Test
-    public void writeTo_v20userUpdatedNull_writerToOutputStreamNoUpdated() throws Exception {
-        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-        final User user = new User();
-        user.setId("10019805");
-        user.setUsername("kurt");
-        user.setEmail("myEmail");
-        user.setCreated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
-        user.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "defaultRegion"), "myRegion");
-        JAXBElement jaxbElement = new JAXBElement<User>(new QName("user"), User.class, user);
-        writer.writeTo(jaxbElement, null, null, null, null, null, myOut);
-        assertThat("user", myOut.toString(), equalTo(
-                "{\"user\":{" +
-                        "\"id\":\"10019805\",\"enabled\":true," +"\"username\":\"kurt\",\"created\":\"0001-02-01T00:00:00.000-06:00\",\"email\":\"myEmail\"," +
-                        "\"RAX-AUTH:defaultRegion\":\"myRegion\"}}"));
-    }
 
     @Test (expected = BadRequestException.class)
     public void writeTo_marsahllerFails_throwsBadRequestException() throws Exception {
@@ -1423,10 +1379,59 @@ public class JSONWriterTest {
         assertThat("string", myOut.toString(), equalTo("{\"RAX-KSQA:secretQA\":{\"answer\":null,\"question\":null}}"));
     }
 
-    @Ignore
     @Test
-    public void getUser() throws Exception {
+    public void getUser_fullyPopulated_returnsJSONObjectWithDefaultRegion() throws Exception {
+        final User user = new User();
+        user.setId("10019805");
+        user.setUsername("kurt");
+        user.setEmail("myEmail");
+        user.setCreated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
+        user.setUpdated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
+        user.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "defaultRegion"), "myRegion");
 
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getUser(user);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("user", myOut.toString(), equalTo(
+                "{\"id\":\"10019805\",\"enabled\":true," +"\"username\":\"kurt\",\"updated\":\"0001-02-01T00:00:00.000-06:00\",\"created\":\"0001-02-01T00:00:00.000-06:00\",\"email\":\"myEmail\",\"RAX-AUTH:defaultRegion\":\"myRegion\"" +
+                        "}"));
+    }
+
+    @Test
+    public void getUser_nullCreated_returnsJSONObjectWithDefaultRegion() throws Exception {
+        final User user = new User();
+        user.setId("10019805");
+        user.setUsername("kurt");
+        user.setEmail("myEmail");
+        user.setUpdated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
+        user.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "defaultRegion"), "myRegion");
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getUser(user);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("user", myOut.toString(), equalTo(
+                "{\"id\":\"10019805\",\"enabled\":true," +"\"username\":\"kurt\",\"updated\":\"0001-02-01T00:00:00.000-06:00\",\"email\":\"myEmail\",\"RAX-AUTH:defaultRegion\":\"myRegion\"" +
+                        "}"));
+    }
+
+    @Test
+    public void getUser_nullUpdated_returnsJSONObjectWithDefaultRegion() throws Exception {
+        final User user = new User();
+        user.setId("10019805");
+        user.setUsername("kurt");
+        user.setEmail("myEmail");
+        user.setCreated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
+        user.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "defaultRegion"), "myRegion");
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getUser(user);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("user", myOut.toString(), equalTo(
+                "{\"id\":\"10019805\",\"enabled\":true," +"\"username\":\"kurt\",\"created\":\"0001-02-01T00:00:00.000-06:00\",\"email\":\"myEmail\",\"RAX-AUTH:defaultRegion\":\"myRegion\"" +
+                        "}"));
     }
 
     @Test
@@ -1677,39 +1682,6 @@ public class JSONWriterTest {
         Assert.assertEquals("{\"extension\":{\"updated\":\"2012-01-01\",\"alias\":\"alias\",\"description\":\"description\",\"name\":\"name\",\"namespace\":\"namespace\"}}", myOut.toString());
     }
 
-    @Test
-    public void writeTo_v20user_writerToOutputStreamAndSetsAllFields() throws Exception {
-        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-        final User user = new User();
-        user.setId("10019805");
-        user.setUsername("kurt");
-        user.setEmail("myEmail");
-        user.setCreated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
-        user.setUpdated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
-        user.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "defaultRegion"), "myRegion");
-        JAXBElement jaxbElement = new JAXBElement<User>(new QName("user"), User.class, user);
-        writer.writeTo(jaxbElement, null, null, null, null, null, myOut);
-        assertThat("user", myOut.toString(), equalTo(
-                "{\"user\":{" +
-                        "\"id\":\"10019805\",\"enabled\":true," +"\"username\":\"kurt\",\"updated\":\"0001-02-01T00:00:00.000-06:00\",\"created\":\"0001-02-01T00:00:00.000-06:00\",\"email\":\"myEmail\",\"RAX-AUTH:defaultRegion\":\"myRegion\"" +
-                        "}}"));
-    }
-
-    @Test
-    public void writeTo_v20UserOtherAttributesNull_writerToOutputStreamNoOtherAttributes() throws Exception {
-        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-        final User user = new User();
-        user.setId("10019805");
-        user.setUsername("kurt");
-        user.setEmail("myEmail");
-        user.setCreated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
-        user.setUpdated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
-        JAXBElement jaxbElement = new JAXBElement<User>(new QName("user"), User.class, user);
-        writer.writeTo(jaxbElement, null, null, null, null, null, myOut);
-        assertThat("user", myOut.toString(), equalTo(
-                "{\"user\":{\"id\":\"10019805\",\"enabled\":true," +"\"username\":\"kurt\",\"updated\":\"0001-02-01T00:00:00.000-06:00\"," +
-                        "\"created\":\"0001-02-01T00:00:00.000-06:00\",\"email\":\"myEmail\"}}"));
-    }
 
     @Test
     public void getExtensions() throws Exception {

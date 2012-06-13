@@ -363,23 +363,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
         } else if (object.getDeclaredType().isAssignableFrom(User.class)) {
             User user = (User) object.getValue();
             JSONObject outer = new JSONObject();
-            JSONObject inner = new JSONObject();
-            inner.put(JSONConstants.USERNAME, user.getUsername());
-            inner.put(JSONConstants.ID, user.getId());
-            inner.put(JSONConstants.ENABLED, user.isEnabled());
-            if (user.getOtherAttributes().size() != 0) {
-                inner.put(JSONConstants.RAX_AUTH_DEFAULT_REGION, user.getOtherAttributes().get(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "defaultRegion")));
-            }
-            if (user.getEmail() != null) {
-                inner.put(JSONConstants.EMAIL, user.getEmail());
-            }
-            if (user.getCreated() != null) {
-                inner.put(JSONConstants.CREATED, user.getCreated().toString());
-            }
-            if (user.getUpdated() != null) {
-                inner.put(JSONConstants.UPDATED, user.getUpdated().toString());
-            }
-            outer.put(JSONConstants.USER, inner);
+            outer.put(JSONConstants.USER, getUser(user));
 
             String jsonText = JSONValue.toJSONString(outer);
             outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
@@ -603,6 +587,15 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
         outer.put(JSONConstants.USERNAME, user.getUsername());
         outer.put(JSONConstants.EMAIL, user.getEmail());
         outer.put(JSONConstants.ENABLED, user.isEnabled());
+        if(user.getCreated() != null){
+            outer.put(JSONConstants.CREATED,user.getCreated().toString());
+        }
+        if(user.getUpdated() != null){
+            outer.put(JSONConstants.UPDATED,user.getUpdated().toString());
+        }
+        if(user.getOtherAttributes().size() != 0){
+            outer.put(JSONConstants.RAX_AUTH_DEFAULT_REGION, user.getOtherAttributes().get(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "defaultRegion")));
+        }
         return outer;
     }
 
