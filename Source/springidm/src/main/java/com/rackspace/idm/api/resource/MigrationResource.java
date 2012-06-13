@@ -53,7 +53,7 @@ public class MigrationResource {
     @POST
     @Path("cloud/users/{username}")
     public Response migrateCloudUserByUsername(@PathParam("username") String username) throws Exception {
-    	MigrateUserResponseType migrateUserResponseType = cloudMigrationService.migrateUserByUsername(username, true, null);
+    	MigrateUserResponseType migrateUserResponseType = cloudMigrationService.migrateUserByUsername(username, true);
     	return Response.status(Response.Status.OK).entity(migrateUserResponseType).build();
     }
 
