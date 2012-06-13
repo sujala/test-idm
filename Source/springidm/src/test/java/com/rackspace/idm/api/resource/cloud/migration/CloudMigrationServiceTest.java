@@ -58,7 +58,6 @@ public class CloudMigrationServiceTest {
     private RoleConverterCloudV20 roleConverterCloudV20;
     private ScopeAccessService scopeAccessService;
     private EndpointConverterCloudV20 endpointConverterCloudV20;
-    private String adminToken;
     private CloudBaseUrl cloudBaseUrl;
 
     private User user;
