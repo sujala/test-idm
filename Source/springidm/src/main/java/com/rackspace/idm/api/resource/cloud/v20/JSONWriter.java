@@ -515,14 +515,19 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     @SuppressWarnings("unchecked")
     JSONObject getToken(Token token) {
         JSONObject tokenInner = new JSONObject();
-        tokenInner.put(JSONConstants.ID, token.getId());
-        tokenInner.put(JSONConstants.EXPIRES, token.getExpires().toString());
+        try{
+            tokenInner.put(JSONConstants.ID, token.getId());
+            tokenInner.put(JSONConstants.EXPIRES, token.getExpires().toString());
+        } catch (NullPointerException e){
+            throw new BadRequestException("Expected \"id\" and \"expired\" to not be null.");
+        }
+
         if (token.getTenant() != null) { tokenInner.put(JSONConstants.TENANT, token.getTenant().getName()); }
         return tokenInner;
     }
 
     @SuppressWarnings("unchecked")
-    private JSONArray getTenants(List<TenantForAuthenticateResponse> tenants) {
+    JSONArray getTenants(List<TenantForAuthenticateResponse> tenants) {
         JSONArray tenantList = new JSONArray();
         for (TenantForAuthenticateResponse tenant : tenants) {
             JSONObject tenantItem = new JSONObject();
@@ -623,7 +628,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     }
 
     @SuppressWarnings("unchecked")
-    private JSONObject getGroups(Groups groups) {
+    JSONObject getGroups(Groups groups) {
         JSONObject outer = new JSONObject();
         JSONArray list = new JSONArray();
         outer.put(JSONConstants.GROUPS, list);
@@ -653,7 +658,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     }
 
     @SuppressWarnings("unchecked")
-    private JSONObject getGroupWithoutWrapper(Group group) {
+    JSONObject getGroupWithoutWrapper(Group group) {
         JSONObject outer = new JSONObject();
         outer.put(JSONConstants.ID, group.getId());
         outer.put(JSONConstants.NAME, group.getName());
@@ -663,7 +668,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
         return outer;
     }
 
-    private JSONObject get11Group(com.rackspacecloud.docs.auth.api.v1.Group group) {
+    JSONObject get11Group(com.rackspacecloud.docs.auth.api.v1.Group group) {
         JSONObject outer = new JSONObject();
         outer.put(JSONConstants.ID, group.getId());
         if (group.getDescription() != null) {
@@ -692,7 +697,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     }
 
     @SuppressWarnings("unchecked")
-    private JSONObject getServiceList(ServiceList serviceList) {
+    JSONObject getServiceList(ServiceList serviceList) {
         JSONObject outer = new JSONObject();
         JSONArray list = new JSONArray();
         for (Service service : serviceList.getService()) {
@@ -710,7 +715,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     }
 
     @SuppressWarnings("unchecked")
-    private JSONObject getEndpointTemplateWithoutWrapper(
+    JSONObject getEndpointTemplateWithoutWrapper(
             EndpointTemplate template) {
         JSONObject outer = new JSONObject();
         outer.put(JSONConstants.ID, template.getId());
