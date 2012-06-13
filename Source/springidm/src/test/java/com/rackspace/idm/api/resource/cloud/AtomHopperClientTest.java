@@ -86,7 +86,7 @@ public class AtomHopperClientTest extends TestCase {
     }
 
     public void testCreateAtomFeed() throws Exception {
-        AtomFeed testAtomFeed = atomHopperClient.createAtomFeed(user);
+        AtomFeed testAtomFeed = atomHopperClient.createAtomFeed(user,null);
         assertThat("Test Atom Create", testAtomFeed.getUser().getId(), equalTo("1"));
     }
 }

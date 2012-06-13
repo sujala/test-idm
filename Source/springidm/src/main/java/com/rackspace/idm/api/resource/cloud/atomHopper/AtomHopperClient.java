@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
 import javax.ws.rs.core.MediaType;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -42,34 +43,58 @@ public class AtomHopperClient {
      * it broke test when sonar ran. Other annotation were used a but
      * similar problems occurred.
      */
-    public void asyncPost(final User user,final String authToken, final String userStatus) {
+
+    public void asyncPost(final User user, final String authToken, final String userStatus, final String migrationStatus) {
         Runnable task = new Runnable() {
             @Override
             public void run() {
-                try{
-                    postUser(user, authToken, userStatus);
-                }catch(Exception e){
+                try {
+                    if (userStatus.equals(AtomHopperConstants.MIGRATED)) {
+                        postMigrateUser(user, authToken, userStatus, migrationStatus);
+                    } else {
+                        postUser(user, authToken, userStatus);
+                    }
+                } catch (Exception e) {
                     logger.warn("AtomHopperClient Exception: " + e);
                 }
             }
         };
-        new Thread(task,"Atom Hopper").start();
+        new Thread(task, "Atom Hopper").start();
     }
 
-    public void postUser(User user, String authToken, String userStatus) throws JAXBException, IOException, HttpException, URISyntaxException {
+    public void postMigrateUser(User user, String authToken, String userStatus, String migrationStatus) throws JAXBException, IOException, HttpException, URISyntaxException {
         try {
-            AtomFeed atomFeed = createAtomFeed(user);
+            AtomFeed atomFeed = createAtomFeed(user,migrationStatus);
             Writer writer = marshalFeed(atomFeed);
             HttpResponse response;
-            if (userStatus.equals("deleted")) {
-                response = executePostRequest(authToken, writer, config.getString("atomHopperDeletedUrl"));
-            } else if (userStatus.equals("disabled")) {
-                response = executePostRequest(authToken, writer, config.getString("atomHopperDisabledUrl"));
+            if (userStatus.equals(AtomHopperConstants.MIGRATED)) {
+                response = executePostRequest(authToken, writer, config.getString(AtomHopperConstants.ATOM_HOPPER_MIGRATED_URL));
             } else {
                 response = null;
             }
             if (response.getStatusLine().getStatusCode() != 201) {
-                logger.warn("Failed to create delete feed for user: " + user.getUsername() + "with Id:" + user.getId());
+                logger.warn("Failed to create feed for user: " + user.getUsername() + "with Id:" + user.getId());
+            }
+
+        } catch (Exception e) {
+            logger.warn("AtomHopperClient Exception: " + e);
+        }
+    }
+
+    public void postUser(User user, String authToken, String userStatus) throws JAXBException, IOException, HttpException, URISyntaxException {
+        try {
+            AtomFeed atomFeed = createAtomFeed(user,null);
+            Writer writer = marshalFeed(atomFeed);
+            HttpResponse response;
+            if (userStatus.equals(AtomHopperConstants.DELETED)) {
+                response = executePostRequest(authToken, writer, config.getString(AtomHopperConstants.ATOM_HOPPER_DELETED_URL));
+            } else if (userStatus.equals(AtomHopperConstants.DISABLED)) {
+                response = executePostRequest(authToken, writer, config.getString(AtomHopperConstants.ATOM_HOPPER_DISABLED_URL));
+            } else {
+                response = null;
+            }
+            if (response.getStatusLine().getStatusCode() != 201) {
+                logger.warn("Failed to create feed for user: " + user.getUsername() + "with Id:" + user.getId());
             }
 
         } catch (Exception e) {
@@ -102,12 +127,13 @@ public class AtomHopperClient {
         return reqEntity;
     }
 
-    public AtomFeed createAtomFeed(User user) {
+    public AtomFeed createAtomFeed(User user, String status) {
         AtomFeed atomFeed = new AtomFeed();
         FeedUser feedUser = new FeedUser();
         feedUser.setDisplayName(user.getDisplayName());
         feedUser.setId(user.getId());
         feedUser.setUsername(user.getUsername());
+        feedUser.setMigrationStatus(status);
         atomFeed.setUser(feedUser);
         return atomFeed;
     }
