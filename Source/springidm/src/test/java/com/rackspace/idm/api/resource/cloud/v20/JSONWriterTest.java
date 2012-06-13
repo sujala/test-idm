@@ -1399,6 +1399,24 @@ public class JSONWriterTest {
     }
 
     @Test
+    public void getUser_nullDefaultRegion_returnsJSONObject() throws Exception {
+        final User user = new User();
+        user.setId("10019805");
+        user.setUsername("kurt");
+        user.setEmail("myEmail");
+        user.setCreated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
+        user.setUpdated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getUser(user);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("user", myOut.toString(), equalTo(
+                "{\"id\":\"10019805\",\"enabled\":true," +"\"username\":\"kurt\",\"updated\":\"0001-02-01T00:00:00.000-06:00\",\"created\":\"0001-02-01T00:00:00.000-06:00\",\"email\":\"myEmail\"" +
+                        "}"));
+    }
+
+    @Test
     public void getUser_nullCreated_returnsJSONObjectWithDefaultRegion() throws Exception {
         final User user = new User();
         user.setId("10019805");
@@ -1646,11 +1664,10 @@ public class JSONWriterTest {
         myOut.write(jsonText.getBytes());
         assertThat("string", myOut.toString(), equalTo("{\"OS-KSADM:services\":[]}"));
     }
-    @Ignore
+
     @Test
     public void getEndpointTemplateWithoutWrapper_nullAdminURL_returnJSONObject() throws Exception {
         EndpointTemplate endpointTemplate = new EndpointTemplate();
-        endpointTemplate.setAdminURL("www.adminURL.com");
         endpointTemplate.setInternalURL("www.internalURL.com");
         endpointTemplate.setName("John Smith");
         endpointTemplate.setPublicURL("www.publicURL.com");
@@ -1662,9 +1679,122 @@ public class JSONWriterTest {
         JSONObject result = writer.getEndpointTemplateWithoutWrapper(endpointTemplate);
         String jsonText = JSONValue.toJSONString(result);
         myOut.write(jsonText.getBytes());
-        assertThat("string", myOut.toString(), equalTo("{\"region\":\"USA\",\"id\":0,\"enabled\":true,\"adminURL\":\"www.adminURL.com\",\"internalURL\":\"www.internalURL.com\"," +
-                "\"name\":\"John Smith\",\"publicURL\":\"www.publicURL.com\",\"type\":\"myType\",\"global\":false," +
-                "\"versionId\":null,\"versionInfo\":null,\"versionList\":null}"));
+        assertThat("string", myOut.toString(), equalTo("{\"region\":\"USA\",\"id\":0,\"enabled\":true,\"publicURL\":\"www.publicURL.com\",\"versionInfo\":null," +
+                "\"versionList\":null,\"global\":false,\"name\":\"John Smith\",\"versionId\":null,\"type\":\"myType\"," +
+                "\"internalURL\":\"www.internalURL.com\"}"));
+    }
+
+    @Test
+    public void getEndpointTemplateWithoutWrapper_nullInternalURL_returnJSONObject() throws Exception {
+        EndpointTemplate endpointTemplate = new EndpointTemplate();
+        endpointTemplate.setAdminURL("www.adminURL.com");
+        endpointTemplate.setName("John Smith");
+        endpointTemplate.setPublicURL("www.publicURL.com");
+        endpointTemplate.setType("myType");
+        endpointTemplate.setRegion("USA");
+        endpointTemplate.setVersion(new VersionForService());
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getEndpointTemplateWithoutWrapper(endpointTemplate);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"region\":\"USA\",\"id\":0,\"enabled\":true,\"publicURL\":\"www.publicURL.com\",\"versionInfo\":null," +
+                "\"versionList\":null,\"global\":false,\"name\":\"John Smith\",\"adminURL\":\"www.adminURL.com\",\"versionId\":null,\"type\":\"myType\"}"));
+    }
+
+    @Test
+    public void getEndpointTemplateWithoutWrapper_nullName_returnJSONObject() throws Exception {
+        EndpointTemplate endpointTemplate = new EndpointTemplate();
+        endpointTemplate.setAdminURL("www.adminURL.com");
+        endpointTemplate.setInternalURL("www.internalURL.com");
+        endpointTemplate.setPublicURL("www.publicURL.com");
+        endpointTemplate.setType("myType");
+        endpointTemplate.setRegion("USA");
+        endpointTemplate.setVersion(new VersionForService());
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getEndpointTemplateWithoutWrapper(endpointTemplate);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"region\":\"USA\",\"id\":0,\"enabled\":true,\"publicURL\":\"www.publicURL.com\",\"versionInfo\":null," +
+                "\"versionList\":null,\"global\":false,\"adminURL\":\"www.adminURL.com\",\"versionId\":null,\"type\":\"myType\"," +
+                "\"internalURL\":\"www.internalURL.com\"}"));
+    }
+
+    @Test
+    public void getEndpointTemplateWithoutWrapper_nullPublicURL_returnJSONObject() throws Exception {
+        EndpointTemplate endpointTemplate = new EndpointTemplate();
+        endpointTemplate.setAdminURL("www.adminURL.com");
+        endpointTemplate.setInternalURL("www.internalURL.com");
+        endpointTemplate.setName("John Smith");
+        endpointTemplate.setType("myType");
+        endpointTemplate.setRegion("USA");
+        endpointTemplate.setVersion(new VersionForService());
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getEndpointTemplateWithoutWrapper(endpointTemplate);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"region\":\"USA\",\"id\":0,\"enabled\":true,\"versionInfo\":null," +
+                "\"versionList\":null,\"global\":false,\"name\":\"John Smith\",\"adminURL\":\"www.adminURL.com\",\"versionId\":null,\"type\":\"myType\"," +
+                "\"internalURL\":\"www.internalURL.com\"}"));
+    }
+
+    @Test
+    public void getEndpointTemplateWithoutWrapper_nullType_returnJSONObject() throws Exception {
+        EndpointTemplate endpointTemplate = new EndpointTemplate();
+        endpointTemplate.setAdminURL("www.adminURL.com");
+        endpointTemplate.setInternalURL("www.internalURL.com");
+        endpointTemplate.setName("John Smith");
+        endpointTemplate.setPublicURL("www.publicURL.com");
+        endpointTemplate.setRegion("USA");
+        endpointTemplate.setVersion(new VersionForService());
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getEndpointTemplateWithoutWrapper(endpointTemplate);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"region\":\"USA\",\"id\":0,\"enabled\":true,\"publicURL\":\"www.publicURL.com\",\"versionInfo\":null," +
+                "\"versionList\":null,\"global\":false,\"name\":\"John Smith\",\"adminURL\":\"www.adminURL.com\",\"versionId\":null," +
+                "\"internalURL\":\"www.internalURL.com\"}"));
+    }
+
+    @Test
+    public void getEndpointTemplateWithoutWrapper_nullRegion_returnJSONObject() throws Exception {
+        EndpointTemplate endpointTemplate = new EndpointTemplate();
+        endpointTemplate.setAdminURL("www.adminURL.com");
+        endpointTemplate.setInternalURL("www.internalURL.com");
+        endpointTemplate.setName("John Smith");
+        endpointTemplate.setPublicURL("www.publicURL.com");
+        endpointTemplate.setType("myType");
+        endpointTemplate.setVersion(new VersionForService());
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getEndpointTemplateWithoutWrapper(endpointTemplate);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"id\":0,\"enabled\":true,\"publicURL\":\"www.publicURL.com\",\"versionInfo\":null," +
+                "\"versionList\":null,\"global\":false,\"name\":\"John Smith\",\"adminURL\":\"www.adminURL.com\",\"versionId\":null,\"type\":\"myType\"," +
+                "\"internalURL\":\"www.internalURL.com\"}"));
+    }
+
+    @Test
+    public void getEndpointTemplateWithoutWrapper_nullVersionL_returnJSONObject() throws Exception {
+        EndpointTemplate endpointTemplate = new EndpointTemplate();
+        endpointTemplate.setAdminURL("www.adminURL.com");
+        endpointTemplate.setInternalURL("www.internalURL.com");
+        endpointTemplate.setName("John Smith");
+        endpointTemplate.setPublicURL("www.publicURL.com");
+        endpointTemplate.setType("myType");
+        endpointTemplate.setRegion("USA");
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getEndpointTemplateWithoutWrapper(endpointTemplate);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"region\":\"USA\",\"id\":0,\"enabled\":true,\"publicURL\":\"www.publicURL.com\"," +
+                "\"global\":false,\"name\":\"John Smith\",\"adminURL\":\"www.adminURL.com\",\"type\":\"myType\"," +
+                "\"internalURL\":\"www.internalURL.com\"}"));
     }
 
     @Test
