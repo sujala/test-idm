@@ -52,7 +52,7 @@ public class UserConverterCloudV11 {
         return jaxbUser;
     }
 
-	private com.rackspacecloud.docs.auth.api.v1.User toCloudV11User(User user) {
+	com.rackspacecloud.docs.auth.api.v1.User toCloudV11User(User user) {
 		com.rackspacecloud.docs.auth.api.v1.User jaxbUser = OBJ_FACTORY.createUser();
         jaxbUser.setId(user.getUsername());
         jaxbUser.setKey(user.getApiKey());
