@@ -50,9 +50,10 @@ public class EndpointConverterCloudV20 {
                 version.setId(baseUrl.getVersionId());
                 version.setInfo(baseUrl.getVersionInfo());
                 version.setList(baseUrl.getVersionList());
+
                 Endpoint endpoint = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createEndpoint();
                 endpoint.setAdminURL(baseUrl.getAdminUrl());
-                endpoint.setId(baseUrl.getBaseUrlId());
+                endpoint.setId(baseUrl.getBaseUrlId());     //TODO: throws null pointer of Id is not set.
                 endpoint.setInternalURL(baseUrl.getInternalUrl());
                 endpoint.setName(baseUrl.getServiceName());
                 endpoint.setPublicURL(baseUrl.getPublicUrl());
@@ -84,7 +85,7 @@ public class EndpointConverterCloudV20 {
 
             Endpoint endpoint = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createEndpoint();
             endpoint.setAdminURL(baseUrl.getAdminUrl());
-            endpoint.setId(baseUrl.getBaseUrlId());
+            endpoint.setId(baseUrl.getBaseUrlId());     //TODO: throws null pointer of Id is not set. Only going from Endpoints to BaseUrls throws the NPE
             endpoint.setInternalURL(baseUrl.getInternalUrl());
             endpoint.setName(baseUrl.getServiceName());
             endpoint.setPublicURL(baseUrl.getPublicUrl());
