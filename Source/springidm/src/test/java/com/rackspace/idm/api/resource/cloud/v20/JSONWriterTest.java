@@ -18,6 +18,7 @@ import org.json.simple.JSONObject;
 import com.sun.jersey.api.json.JSONMarshaller;
 import org.json.simple.JSONValue;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.openstack.docs.common.api.v1.*;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
@@ -732,6 +733,29 @@ public class JSONWriterTest {
                 "\"key\":\"key\"}}"));
     }
 
+    @Test
+    public void writeTo_v20user_callsGetUser() throws Exception {
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        final User user = new User();
+        JAXBElement jaxbElement = new JAXBElement<User>(new QName("user"), User.class, user);
+        doReturn(new JSONObject()).when(spy).getUser(user);
+        spy.writeTo(jaxbElement, null, null, null, null, null, myOut);
+        verify(spy).getUser(user);
+    }
+
+    @Test
+    public void writeTo_v20user_writerToOutputStream() throws Exception {
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        final User user = new User();
+        JAXBElement jaxbElement = new JAXBElement<User>(new QName("user"), User.class, user);
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success","This test worked!");
+        doReturn(jsonObject).when(spy).getUser(user);
+        spy.writeTo(jaxbElement, null, null, null, null, null, myOut);
+        assertThat("string",myOut.toString(),equalTo("{\"user\":{\"success\":\"This test worked!\"}}"));
+    }
+
+
     @Test (expected = BadRequestException.class)
     public void writeTo_marsahllerFails_throwsBadRequestException() throws Exception {
         Token token = new Token();
@@ -1142,6 +1166,508 @@ public class JSONWriterTest {
     }
 
     @Test
+    public void getServiceCatalog_NullName_returnsJSONObjectNoName() throws Exception {
+        ServiceForCatalog serviceForCatalog = mock(ServiceForCatalog.class);
+        when(serviceForCatalog.getType()).thenReturn("type");
+        when(serviceForCatalog.getEndpoint()).thenReturn(null);
+        ServiceCatalog serviceCatalog = new ServiceCatalog();
+        serviceCatalog.getService().add(serviceForCatalog);
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success","This test worked!");
+        JSONArray jsonArray = new JSONArray();
+        jsonArray.add(jsonObject);
+        doReturn(jsonArray).when(spy).getEndpointsForCatalog(null);
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONArray result = spy.getServiceCatalog(serviceCatalog);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("[{\"endpoints\":[{\"success\":\"This test worked!\"}],\"type\":\"type\"}]"));
+    }
+
+    @Test
+    public void getServiceCatalog_NullType_returnsJSONObjectNoType() throws Exception {
+        ServiceForCatalog serviceForCatalog = mock(ServiceForCatalog.class);
+        when(serviceForCatalog.getName()).thenReturn("John Smith");
+        when(serviceForCatalog.getEndpoint()).thenReturn(null);
+        ServiceCatalog serviceCatalog = new ServiceCatalog();
+        serviceCatalog.getService().add(serviceForCatalog);
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success","This test worked!");
+        JSONArray jsonArray = new JSONArray();
+        jsonArray.add(jsonObject);
+        doReturn(jsonArray).when(spy).getEndpointsForCatalog(null);
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONArray result = spy.getServiceCatalog(serviceCatalog);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("[{\"name\":\"John Smith\",\"endpoints\":[{\"success\":\"This test worked!\"}]}]"));
+    }
+
+    @Test
+    public void getServiceCatalog_nullServiceCatalog_returnsEmptyJSONArray() throws Exception {
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONArray result = writer.getServiceCatalog(null);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("[]"));
+    }
+
+    @Test (expected = BadRequestException.class)
+    public void getToken_nullExpired_throwsBadRequestException() throws Exception {
+        Token token = new Token();
+        writer.getToken(token);
+
+    }
+
+    @Test
+    public void getToken_nullTenant_returnsJSONObjectNoTenant() throws Exception {
+        Token token = new Token();
+        token.setExpires(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
+        token.setId("123");
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getToken(token);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"id\":\"123\",\"expires\":\"0001-02-01T00:00:00.000-06:00\"}"));
+
+    }
+
+    @Test
+    public void getTenants_twoTenantsInList_returnsJSONObject() throws Exception {
+        List<TenantForAuthenticateResponse> list = new ArrayList<TenantForAuthenticateResponse>();
+        list.add(new TenantForAuthenticateResponse());
+        list.add(new TenantForAuthenticateResponse());
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONArray result = writer.getTenants(list);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("[{\"id\":null,\"name\":null},{\"id\":null,\"name\":null}]"));
+    }
+
+    @Test
+    public void getTenants_emptyList_returnsEmptyJSONObject() throws Exception {
+        List<TenantForAuthenticateResponse> list = new ArrayList<TenantForAuthenticateResponse>();
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONArray result = writer.getTenants(list);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("[]"));
+    }
+
+    @Test
+    public void getEndpointsForCatalog_fullyPopulated_returnsJSONObjectAllFields() throws Exception {
+        VersionForService versionForService = new VersionForService();
+        EndpointForService endpointForService = new EndpointForService();
+        endpointForService.setTenantId("123");
+        endpointForService.setPublicURL("www.publicURL.com");
+        endpointForService.setInternalURL("www.internalURL.com");
+        endpointForService.setRegion("USA");
+        endpointForService.setVersion(versionForService);
+        List<EndpointForService> list = new ArrayList<EndpointForService>();
+        list.add(endpointForService);
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONArray result = writer.getEndpointsForCatalog(list);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("[{\"region\":\"USA\",\"tenantId\":\"123\",\"publicURL\":\"www.publicURL.com\",\"versionInfo\":null," +
+                "\"versionList\":null,\"versionId\":null,\"internalURL\":\"www.internalURL.com\"}]"));
+
+    }
+
+    @Test
+    public void getEndpointsForCatalog_nullTenantID_returnsJSONObjectNoTenantID() throws Exception {
+        VersionForService versionForService = new VersionForService();
+        EndpointForService endpointForService = new EndpointForService();
+        endpointForService.setPublicURL("www.publicURL.com");
+        endpointForService.setInternalURL("www.internalURL.com");
+        endpointForService.setRegion("USA");
+        endpointForService.setVersion(versionForService);
+        List<EndpointForService> list = new ArrayList<EndpointForService>();
+        list.add(endpointForService);
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONArray result = writer.getEndpointsForCatalog(list);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("[{\"region\":\"USA\",\"publicURL\":\"www.publicURL.com\",\"versionInfo\":null," +
+                "\"versionList\":null,\"versionId\":null,\"internalURL\":\"www.internalURL.com\"}]"));
+
+    }
+
+    @Test
+    public void getEndpointsForCatalog_nullPublicURL_returnsJSONObjectNullPublicURL() throws Exception {
+        VersionForService versionForService = new VersionForService();
+        EndpointForService endpointForService = new EndpointForService();
+        endpointForService.setTenantId("123");
+        endpointForService.setInternalURL("www.internalURL.com");
+        endpointForService.setRegion("USA");
+        endpointForService.setVersion(versionForService);
+        List<EndpointForService> list = new ArrayList<EndpointForService>();
+        list.add(endpointForService);
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONArray result = writer.getEndpointsForCatalog(list);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("[{\"region\":\"USA\",\"tenantId\":\"123\",\"versionInfo\":null," +
+                "\"versionList\":null,\"versionId\":null,\"internalURL\":\"www.internalURL.com\"}]"));
+
+    }
+
+    @Test
+    public void getEndpointsForCatalog_nullRegion_returnsJSONObjectNoRegion() throws Exception {
+        VersionForService versionForService = new VersionForService();
+        EndpointForService endpointForService = new EndpointForService();
+        endpointForService.setTenantId("123");
+        endpointForService.setPublicURL("www.publicURL.com");
+        endpointForService.setInternalURL("www.internalURL.com");
+        endpointForService.setVersion(versionForService);
+        List<EndpointForService> list = new ArrayList<EndpointForService>();
+        list.add(endpointForService);
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONArray result = writer.getEndpointsForCatalog(list);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("[{\"tenantId\":\"123\",\"publicURL\":\"www.publicURL.com\",\"versionInfo\":null," +
+                "\"versionList\":null,\"versionId\":null,\"internalURL\":\"www.internalURL.com\"}]"));
+
+    }
+
+    @Test
+    public void getEndpointsForCatalog_nullVersion_returnsJSONObjectNoVersionFields() throws Exception {
+        EndpointForService endpointForService = new EndpointForService();
+        endpointForService.setTenantId("123");
+        endpointForService.setPublicURL("www.publicURL.com");
+        endpointForService.setInternalURL("www.internalURL.com");
+        endpointForService.setRegion("USA");
+        List<EndpointForService> list = new ArrayList<EndpointForService>();
+        list.add(endpointForService);
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONArray result = writer.getEndpointsForCatalog(list);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("[{\"region\":\"USA\",\"tenantId\":\"123\",\"publicURL\":\"www.publicURL.com\"," +
+                "\"internalURL\":\"www.internalURL.com\"}]"));
+
+    }
+
+    @Test
+    public void getEndpointsForCatalog_emptyList_returnsEmptyJSONObject() throws Exception {
+        List<EndpointForService> list = new ArrayList<EndpointForService>();
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONArray result = writer.getEndpointsForCatalog(list);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("[]"));
+
+    }
+
+    @Test
+    public void getSecretQA_returnsJSONObject() throws Exception {
+        SecretQA secretQA = new SecretQA();
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getSecretQA(secretQA);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"RAX-KSQA:secretQA\":{\"answer\":null,\"question\":null}}"));
+    }
+
+    @Test
+    public void getUser_fullyPopulated_returnsJSONObjectWithDefaultRegion() throws Exception {
+        final User user = new User();
+        user.setId("10019805");
+        user.setUsername("kurt");
+        user.setEmail("myEmail");
+        user.setCreated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
+        user.setUpdated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
+        user.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "defaultRegion"), "myRegion");
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getUser(user);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("user", myOut.toString(), equalTo(
+                "{\"id\":\"10019805\",\"enabled\":true," +"\"username\":\"kurt\",\"updated\":\"0001-02-01T00:00:00.000-06:00\",\"created\":\"0001-02-01T00:00:00.000-06:00\",\"email\":\"myEmail\",\"RAX-AUTH:defaultRegion\":\"myRegion\"" +
+                        "}"));
+    }
+
+    @Test
+    public void getUser_nullCreated_returnsJSONObjectWithDefaultRegion() throws Exception {
+        final User user = new User();
+        user.setId("10019805");
+        user.setUsername("kurt");
+        user.setEmail("myEmail");
+        user.setUpdated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
+        user.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "defaultRegion"), "myRegion");
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getUser(user);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("user", myOut.toString(), equalTo(
+                "{\"id\":\"10019805\",\"enabled\":true," +"\"username\":\"kurt\",\"updated\":\"0001-02-01T00:00:00.000-06:00\",\"email\":\"myEmail\",\"RAX-AUTH:defaultRegion\":\"myRegion\"" +
+                        "}"));
+    }
+
+    @Test
+    public void getUser_nullUpdated_returnsJSONObjectWithDefaultRegion() throws Exception {
+        final User user = new User();
+        user.setId("10019805");
+        user.setUsername("kurt");
+        user.setEmail("myEmail");
+        user.setCreated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
+        user.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "defaultRegion"), "myRegion");
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getUser(user);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("user", myOut.toString(), equalTo(
+                "{\"id\":\"10019805\",\"enabled\":true," +"\"username\":\"kurt\",\"created\":\"0001-02-01T00:00:00.000-06:00\",\"email\":\"myEmail\",\"RAX-AUTH:defaultRegion\":\"myRegion\"" +
+                        "}"));
+    }
+
+    @Test
+    public void getRole_allFieldsPopulated_returnsJSONObject() throws Exception {
+        Role role = new Role();
+        role.setId("123");
+        role.setDescription("this is a description");
+        role.setName("John Smith");
+        role.setServiceId("456");
+        role.setTenantId("789");
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getRole(role);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"tenantId\":\"789\",\"id\":\"123\",\"serviceId\":\"456\",\"description\":\"this is a description\"," +
+                "\"name\":\"John Smith\"}"));
+    }
+
+    @Test
+    public void getRole_nullId_returnsJSONObjectNoId() throws Exception {
+        Role role = new Role();
+        role.setDescription("this is a description");
+        role.setName("John Smith");
+        role.setServiceId("456");
+        role.setTenantId("789");
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getRole(role);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"tenantId\":\"789\",\"serviceId\":\"456\",\"description\":\"this is a description\"," +
+                "\"name\":\"John Smith\"}"));
+    }
+
+    @Test
+    public void getRole_nullDescription_returnsJSONObjectNoDescription() throws Exception {
+        Role role = new Role();
+        role.setId("123");
+        role.setName("John Smith");
+        role.setServiceId("456");
+        role.setTenantId("789");
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getRole(role);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"tenantId\":\"789\",\"id\":\"123\",\"serviceId\":\"456\",\"name\":\"John Smith\"}"));
+    }
+
+    @Test
+    public void getRole_nullName_returnsJSONObjectNoName() throws Exception {
+        Role role = new Role();
+        role.setId("123");
+        role.setDescription("this is a description");
+        role.setServiceId("456");
+        role.setTenantId("789");
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getRole(role);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"tenantId\":\"789\",\"id\":\"123\",\"serviceId\":\"456\",\"description\":\"this is a description\"}"));
+    }
+
+    @Test
+    public void getRole_nullServiceId_returnsJSONObjectNoServiceId() throws Exception {
+        Role role = new Role();
+        role.setId("123");
+        role.setDescription("this is a description");
+        role.setName("John Smith");
+        role.setTenantId("789");
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getRole(role);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"tenantId\":\"789\",\"id\":\"123\",\"description\":\"this is a description\"," +
+                "\"name\":\"John Smith\"}"));
+    }
+
+    @Test
+    public void getRole_nullTenantId_returnsJSONObjectNoTenantId() throws Exception {
+        Role role = new Role();
+        role.setId("123");
+        role.setDescription("this is a description");
+        role.setName("John Smith");
+        role.setServiceId("456");
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getRole(role);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"id\":\"123\",\"serviceId\":\"456\",\"description\":\"this is a description\"," +
+                "\"name\":\"John Smith\"}"));
+    }
+
+    @Test
+    public void getGroups_twoGroups_addsGroupsToArray() throws Exception {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success", "This test worked!");
+        Group group1 = new Group();
+        Group group2 = new Group();
+        Groups groups = new Groups();
+        groups.getGroup().add(group1);
+        groups.getGroup().add(group2);
+
+        doReturn(jsonObject).when(spy).getGroupWithoutWrapper(group1);
+        doReturn(jsonObject).when(spy).getGroupWithoutWrapper(group2);
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = spy.getGroups(groups);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"RAX-KSGRP:groups\":[{\"success\":\"This test worked!\"},{\"success\":\"This test worked!\"}]}"));
+    }
+
+    @Test
+    public void getGroup_callsGetGroupWithoutWrapper() throws Exception {
+        Group group = new Group();
+        doReturn(new JSONObject()).when(spy).getGroupWithoutWrapper(group);
+        spy.getGroup(group);
+        verify(spy).getGroupWithoutWrapper(group);
+    }
+
+    @Test
+    public void getGroup_returnsJSONObject() throws Exception {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success","This test worked!");
+        Group group = new Group();
+        doReturn(jsonObject).when(spy).getGroupWithoutWrapper(group);
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = spy.getGroup(group);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"RAX-KSGRP:group\":{\"success\":\"This test worked!\"}}"));
+
+    }
+
+    @Test
+    public void getGroupWithoutWrapper_withDescription_returnsJSONObject() throws Exception {
+        Group group = new Group();
+        group.setDescription("this is a description");
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getGroupWithoutWrapper(group);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"id\":null,\"description\":\"this is a description\",\"name\":null}"));
+    }
+
+    @Test
+    public void getGroupWithoutWrapper_withoutDescription_returnsJSONObjectNoDescription() throws Exception {
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getGroupWithoutWrapper(new Group());
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"id\":null,\"name\":null}"));
+    }
+
+    @Test
+    public void get11Group_withDescription_returnsJSONObject() throws Exception {
+        com.rackspacecloud.docs.auth.api.v1.Group group = new com.rackspacecloud.docs.auth.api.v1.Group();
+        group.setDescription("this is a description");
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.get11Group(group);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"id\":null,\"description\":\"this is a description\"}"));
+    }
+
+    @Test
+    public void get11Group_withoutDescription_returnsJSONObject() throws Exception {
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.get11Group(new com.rackspacecloud.docs.auth.api.v1.Group());
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"id\":null}"));
+    }
+
+    @Test
+    public void getServiceWithoutWrapper_nullDescription_returnsJSONObject() throws Exception {
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getServiceWithoutWrapper(new Service());
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"id\":null,\"name\":null,\"type\":null}"));
+    }
+
+    @Test
+    public void getServiceList_listPopulated_callsGetServiceWithoutWrapper() throws Exception {
+        Service service1 = new Service();
+        Service service2 = new Service();
+        ServiceList serviceList = new ServiceList();
+        serviceList.getService().add(service1);
+        serviceList.getService().add(service2);
+
+        doReturn(new JSONObject()).when(spy).getServiceWithoutWrapper(service1);
+        doReturn(new JSONObject()).when(spy).getServiceWithoutWrapper(service2);
+
+        spy.getServiceList(serviceList);
+        verify(spy).getServiceWithoutWrapper(service1);
+        verify(spy).getServiceWithoutWrapper(service2);
+    }
+
+    @Test
+    public void getServiceList_emptyList_returnsJSONObject() throws Exception {
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getServiceList(new ServiceList());
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"OS-KSADM:services\":[]}"));
+    }
+    @Ignore
+    @Test
+    public void getEndpointTemplateWithoutWrapper_nullAdminURL_returnJSONObject() throws Exception {
+        EndpointTemplate endpointTemplate = new EndpointTemplate();
+        endpointTemplate.setAdminURL("www.adminURL.com");
+        endpointTemplate.setInternalURL("www.internalURL.com");
+        endpointTemplate.setName("John Smith");
+        endpointTemplate.setPublicURL("www.publicURL.com");
+        endpointTemplate.setType("myType");
+        endpointTemplate.setRegion("USA");
+        endpointTemplate.setVersion(new VersionForService());
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getEndpointTemplateWithoutWrapper(endpointTemplate);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"region\":\"USA\",\"id\":0,\"enabled\":true,\"adminURL\":\"www.adminURL.com\",\"internalURL\":\"www.internalURL.com\"," +
+                "\"name\":\"John Smith\",\"publicURL\":\"www.publicURL.com\",\"type\":\"myType\",\"global\":false," +
+                "\"versionId\":null,\"versionInfo\":null,\"versionList\":null}"));
+    }
+
+    @Test
     public void getExtension() throws Exception {
         Extension extension = new Extension();
         extension.setAlias("alias");
@@ -1156,39 +1682,6 @@ public class JSONWriterTest {
         Assert.assertEquals("{\"extension\":{\"updated\":\"2012-01-01\",\"alias\":\"alias\",\"description\":\"description\",\"name\":\"name\",\"namespace\":\"namespace\"}}", myOut.toString());
     }
 
-    @Test
-    public void writeTo_v20user_writerToOutputStreamAndSetsAllFields() throws Exception {
-        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-        final User user = new User();
-        user.setId("10019805");
-        user.setUsername("kurt");
-        user.setEmail("myEmail");
-        user.setCreated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
-        user.setUpdated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
-        user.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "defaultRegion"), "myRegion");
-        JAXBElement jaxbElement = new JAXBElement<User>(new QName("user"), User.class, user);
-        writer.writeTo(jaxbElement, null, null, null, null, null, myOut);
-        assertThat("user", myOut.toString(), equalTo(
-                "{\"user\":{" +
-                        "\"id\":\"10019805\",\"enabled\":true," +"\"username\":\"kurt\",\"updated\":\"0001-02-01T00:00:00.000-06:00\",\"created\":\"0001-02-01T00:00:00.000-06:00\",\"email\":\"myEmail\",\"RAX-AUTH:defaultRegion\":\"myRegion\"" +
-                        "}}"));
-    }
-
-    @Test
-    public void writeTo_v20UserOtherAttributesNull_writerToOutputStreamNoOtherAttributes() throws Exception {
-        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-        final User user = new User();
-        user.setId("10019805");
-        user.setUsername("kurt");
-        user.setEmail("myEmail");
-        user.setCreated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
-        user.setUpdated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
-        JAXBElement jaxbElement = new JAXBElement<User>(new QName("user"), User.class, user);
-        writer.writeTo(jaxbElement, null, null, null, null, null, myOut);
-        assertThat("user", myOut.toString(), equalTo(
-                "{\"user\":{\"id\":\"10019805\",\"enabled\":true," +"\"username\":\"kurt\",\"updated\":\"0001-02-01T00:00:00.000-06:00\"," +
-                        "\"created\":\"0001-02-01T00:00:00.000-06:00\",\"email\":\"myEmail\"}}"));
-    }
 
     @Test
     public void getExtensions() throws Exception {
