@@ -610,7 +610,7 @@ public class JSONWriterTest {
     }
 
     @Test
-    public void writeTo_JAXBElementTypeV1User_writesToOutputStreamCorrectBaseURL() throws Exception {
+    public void writeTo_JAXBElementTypeV1User_writesToOutputStream() throws Exception {
         BaseURLRef baseURLRef = new BaseURLRef();
         baseURLRef.setId(798);
         baseURLRef.setHref("101112");
@@ -631,7 +631,7 @@ public class JSONWriterTest {
         JAXBElement<com.rackspacecloud.docs.auth.api.v1.User> jaxbElement = new JAXBElement<com.rackspacecloud.docs.auth.api.v1.User>(QName.valueOf("foo"),
                 com.rackspacecloud.docs.auth.api.v1.User.class,user);
 
-        writer.writeTo(jaxbElement, BaseURLList.class, null, null, null, null, myOut);
+        writer.writeTo(jaxbElement, com.rackspacecloud.docs.auth.api.v1.User.class, null, null, null, null, myOut);
         assertThat("string",myOut.toString(),equalTo("{\"user\":{\"id\":\"131415\",\"enabled\":false,\"nastId\":\"456\",\"mossoId\":123,\"baseURLRefs\":[{" +
         "\"id\":798,\"v1Default\":true,\"href\":\"101112\"}],\"key\":\"key\"}}"));
     }
@@ -657,7 +657,7 @@ public class JSONWriterTest {
         JAXBElement<com.rackspacecloud.docs.auth.api.v1.User> jaxbElement = new JAXBElement<com.rackspacecloud.docs.auth.api.v1.User>(QName.valueOf("foo"),
                 com.rackspacecloud.docs.auth.api.v1.User.class,user);
 
-        writer.writeTo(jaxbElement, BaseURLList.class, null, null, null, null, myOut);
+        writer.writeTo(jaxbElement, com.rackspacecloud.docs.auth.api.v1.User.class, null, null, null, null, myOut);
         assertThat("string",myOut.toString(),equalTo("{\"user\":{\"id\":\"131415\",\"enabled\":false,\"nastId\":\"456\",\"mossoId\":123,\"baseURLRefs\":[{" +
                 "\"id\":798,\"v1Default\":true,\"href\":\"101112\"}]}}"));
     }
@@ -683,7 +683,7 @@ public class JSONWriterTest {
         JAXBElement<com.rackspacecloud.docs.auth.api.v1.User> jaxbElement = new JAXBElement<com.rackspacecloud.docs.auth.api.v1.User>(QName.valueOf("foo"),
                 com.rackspacecloud.docs.auth.api.v1.User.class,user);
 
-        writer.writeTo(jaxbElement, BaseURLList.class, null, null, null, null, myOut);
+        writer.writeTo(jaxbElement, com.rackspacecloud.docs.auth.api.v1.User.class, null, null, null, null, myOut);
         assertThat("string",myOut.toString(),equalTo("{\"user\":{\"id\":\"131415\",\"enabled\":false,\"nastId\":\"456\",\"baseURLRefs\":[{" +
                 "\"id\":798,\"v1Default\":true,\"href\":\"101112\"}],\"key\":\"key\"}}"));
     }
@@ -709,9 +709,27 @@ public class JSONWriterTest {
         JAXBElement<com.rackspacecloud.docs.auth.api.v1.User> jaxbElement = new JAXBElement<com.rackspacecloud.docs.auth.api.v1.User>(QName.valueOf("foo"),
                 com.rackspacecloud.docs.auth.api.v1.User.class,user);
 
-        writer.writeTo(jaxbElement, BaseURLList.class, null, null, null, null, myOut);
+        writer.writeTo(jaxbElement, com.rackspacecloud.docs.auth.api.v1.User.class, null, null, null, null, myOut);
         assertThat("string",myOut.toString(),equalTo("{\"user\":{\"id\":\"131415\",\"enabled\":false,\"mossoId\":123,\"baseURLRefs\":[{" +
                 "\"id\":798,\"v1Default\":true,\"href\":\"101112\"}],\"key\":\"key\"}}"));
+    }
+
+    @Test
+    public void writeTo_JAXBElementTypeV1User_writesToOutputStreamNoBasURLRefList() throws Exception {
+        com.rackspacecloud.docs.auth.api.v1.User user = new com.rackspacecloud.docs.auth.api.v1.User();
+        user.setId("131415");
+        user.setEnabled(false);
+        user.setKey("key");
+        user.setMossoId(123);
+        user.setNastId("456");
+
+        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JAXBElement<com.rackspacecloud.docs.auth.api.v1.User> jaxbElement = new JAXBElement<com.rackspacecloud.docs.auth.api.v1.User>(QName.valueOf("foo"),
+                com.rackspacecloud.docs.auth.api.v1.User.class,user);
+
+        writer.writeTo(jaxbElement, com.rackspacecloud.docs.auth.api.v1.User.class, null, null, null, null, myOut);
+        assertThat("string",myOut.toString(),equalTo("{\"user\":{\"id\":\"131415\",\"enabled\":false,\"nastId\":\"456\",\"mossoId\":123,\"baseURLRefs\":[]," +
+                "\"key\":\"key\"}}"));
     }
 
     @Test (expected = BadRequestException.class)
@@ -1154,6 +1172,22 @@ public class JSONWriterTest {
                 "{\"user\":{" +
                         "\"id\":\"10019805\",\"enabled\":true," +"\"username\":\"kurt\",\"updated\":\"0001-02-01T00:00:00.000-06:00\",\"created\":\"0001-02-01T00:00:00.000-06:00\",\"email\":\"myEmail\",\"OS-KSADM:defaultRegion\":\"myRegion\"" +
                         "}}"));
+    }
+
+    @Test
+    public void writeTo_v20UserOtherAttributesNull_writerToOutputStreamNoOtherAttributes() throws Exception {
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        final User user = new User();
+        user.setId("10019805");
+        user.setUsername("kurt");
+        user.setEmail("myEmail");
+        user.setCreated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
+        user.setUpdated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
+        JAXBElement jaxbElement = new JAXBElement<User>(new QName("user"), User.class, user);
+        writer.writeTo(jaxbElement, null, null, null, null, null, myOut);
+        assertThat("user", myOut.toString(), equalTo(
+                "{\"user\":{\"id\":\"10019805\",\"enabled\":true," +"\"username\":\"kurt\",\"updated\":\"0001-02-01T00:00:00.000-06:00\"," +
+                        "\"created\":\"0001-02-01T00:00:00.000-06:00\",\"email\":\"myEmail\"}}"));
     }
 
     @Test
