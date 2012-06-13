@@ -19,6 +19,7 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.openstack.docs.identity.api.v2.CredentialListType;
 import org.openstack.docs.identity.api.v2.EndpointList;
+import org.openstack.docs.identity.api.v2.Role;
 import org.openstack.docs.identity.api.v2.RoleList;
 
 import javax.ws.rs.core.Response;
@@ -407,4 +408,46 @@ public class CloudMigrationServiceTest {
         spy.getSubUsers("cmarin2", "0f97f489c848438090250d50c7e1ea88", "Password1", roles);
     }
 
+    @Test
+    public void isSubUser_identityNotMatchName_returnsFalse() throws Exception {
+        RoleList roles = new RoleList();
+        Role role = new Role();
+        role.setName("notMatch");
+        List<Role> roleList = roles.getRole();
+        roleList.add(role);
+        boolean subUser = cloudMigrationService.isSubUser(roles);
+        assertThat("boolean", subUser, equalTo(false));
+    }
+
+    @Test
+    public void isSubUser_identityMatches_returnsTrue() throws Exception {
+        RoleList roles = new RoleList();
+        Role role = new Role();
+        role.setName("identity:default");
+        List<Role> roleList = roles.getRole();
+        roleList.add(role);
+        boolean subUser = cloudMigrationService.isSubUser(roles);
+        assertThat("boolean", subUser, equalTo(true));
+    }
+
+
+    @Test (expected = NotFoundException.class)
+    public void setMigratedUserEnabledStatus_userIsNull_throwsNotFoundException() throws Exception {
+        when(userService.getUser(null)).thenReturn(null);
+        spy.setMigratedUserEnabledStatus(null, false);
+    }
+
+    @Test (expected = NotFoundException.class)
+    public void setMigratedUserEnabledStatus_userInMigrationIsNull_throwsNotFoundException() throws Exception {
+        when(userService.getUser(null)).thenReturn(new User());
+        spy.setMigratedUserEnabledStatus(null, false);
+    }
+
+    @Test
+    public void setMigratedUserEnabledStatus_callsUserServiceUpdateUserById() throws Exception {
+        user.setInMigration(true);
+        when(userService.getUser(null)).thenReturn(user);
+        spy.setMigratedUserEnabledStatus(null, true);
+        verify(userService).updateUserById(any(User.class), eq(false));
+    }
 }
