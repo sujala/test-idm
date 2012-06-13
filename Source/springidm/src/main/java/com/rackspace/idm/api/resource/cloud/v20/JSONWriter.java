@@ -367,7 +367,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
             inner.put(JSONConstants.USERNAME, user.getUsername());
             inner.put(JSONConstants.ID, user.getId());
             inner.put(JSONConstants.ENABLED, user.isEnabled());
-            if (user.getOtherAttributes() != null) {
+            if (user.getOtherAttributes().size() != 0) {
                 inner.put(JSONConstants.OS_KSADM_DEFAULT_REGION, user.getOtherAttributes().get(new QName("http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0", "defaultRegion")));
             }
             if (user.getEmail() != null) {

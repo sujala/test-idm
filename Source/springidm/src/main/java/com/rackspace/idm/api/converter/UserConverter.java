@@ -97,7 +97,7 @@ public class UserConverter {
         Racker racker) {
         com.rackspace.api.idm.v1.Racker returnedRacker = objectFactory
             .createRacker();
-        returnedRacker.setId(racker.getRackerId());
+        returnedRacker.setId(racker.getRackerId()); //TODO: is this correct or should it set username?
         if (racker.getRackerRoles() != null
             && racker.getRackerRoles().size() > 0) {
             returnedRacker.setRoles(toRackerRolesJaxb(racker.getRackerRoles())
@@ -129,8 +129,8 @@ public class UserConverter {
         return toUserJaxb(user, false, false);
     }
 
-    private JAXBElement<com.rackspace.api.idm.v1.User> toUserJaxb(User user,
-        boolean includePassword, boolean includeSecret) {
+    JAXBElement<com.rackspace.api.idm.v1.User> toUserJaxb(User user,
+                                                          boolean includePassword, boolean includeSecret) {
         com.rackspace.api.idm.v1.User returnedUser = objectFactory.createUser();
         returnedUser.setId(user.getId());
         returnedUser.setCountry(user.getCountry());
