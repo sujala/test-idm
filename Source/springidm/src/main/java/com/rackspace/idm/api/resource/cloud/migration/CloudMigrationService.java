@@ -144,6 +144,20 @@ public class CloudMigrationService {
 		return list;
 	}
 
+
+    public MigrateUserResponseType migrateUserByUsername(String username, boolean enable) throws Exception {
+        try {
+            MigrateUserResponseType response = migrateUserByUsername(username, enable, null);
+            return response;
+        } catch (Exception e) {
+        	try{
+        		unmigrateUserByUsername(username);
+        	} catch (Exception e2) {
+        	}
+            throw e;
+        }
+    }
+
     public MigrateUserResponseType migrateUserByUsername(String username, boolean enable, String domainId) throws Exception {
         client = getMigrationClientInstance();
 		client.setCloud20Host(config.getString("cloudAuth20url"));
