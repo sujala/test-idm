@@ -61,10 +61,10 @@ public class JSONReaderForUserForCreate implements MessageBodyReader<UserForCrea
                 Object displayname = obj3.get(JSONConstants.DISPLAY_NAME_CLOUD);
                 Object enabled = obj3.get(JSONConstants.ENABLED);
                 Object password = obj3.get(JSONConstants.OS_KSADM_PASSWORD);
-                Object defaultRegion = obj3.get(JSONConstants.OS_KSADM_DEFAULT_REGION);
+                Object defaultRegion = obj3.get(JSONConstants.RAX_AUTH_DEFAULT_REGION);
 
                 if (defaultRegion != null) {
-                    user.getOtherAttributes().put(new QName("http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0","defaultRegion"), defaultRegion.toString());
+                    user.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","defaultRegion"), defaultRegion.toString());
                 }
 
                 if (password != null) {

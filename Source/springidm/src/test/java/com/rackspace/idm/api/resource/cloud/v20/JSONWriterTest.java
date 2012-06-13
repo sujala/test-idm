@@ -1165,12 +1165,12 @@ public class JSONWriterTest {
         user.setEmail("myEmail");
         user.setCreated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
         user.setUpdated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
-        user.getOtherAttributes().put(new QName("http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0", "defaultRegion"), "myRegion");
+        user.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "defaultRegion"), "myRegion");
         JAXBElement jaxbElement = new JAXBElement<User>(new QName("user"), User.class, user);
         writer.writeTo(jaxbElement, null, null, null, null, null, myOut);
         assertThat("user", myOut.toString(), equalTo(
                 "{\"user\":{" +
-                        "\"id\":\"10019805\",\"enabled\":true," +"\"username\":\"kurt\",\"updated\":\"0001-02-01T00:00:00.000-06:00\",\"created\":\"0001-02-01T00:00:00.000-06:00\",\"email\":\"myEmail\",\"OS-KSADM:defaultRegion\":\"myRegion\"" +
+                        "\"id\":\"10019805\",\"enabled\":true," +"\"username\":\"kurt\",\"updated\":\"0001-02-01T00:00:00.000-06:00\",\"created\":\"0001-02-01T00:00:00.000-06:00\",\"email\":\"myEmail\",\"RAX-AUTH:defaultRegion\":\"myRegion\"" +
                         "}}"));
     }
 

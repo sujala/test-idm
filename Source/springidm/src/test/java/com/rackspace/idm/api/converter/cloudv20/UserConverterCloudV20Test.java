@@ -38,7 +38,7 @@ public class UserConverterCloudV20Test {
     @Test
     public void toUserDO_setsRegion() throws Exception {
         final UserForCreate user = new UserForCreate();
-        user.getOtherAttributes().put(new QName("http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0","defaultRegion"),"foo");
+        user.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","defaultRegion"),"foo");
         final User userDO = userConverterCloudV20.toUserDO(user);
         assertThat("user region", userDO.getRegion(), equalTo("foo"));
     }
@@ -49,7 +49,7 @@ public class UserConverterCloudV20Test {
         user.setRegion("myRegion");
         when(objectFactory.createUser()).thenReturn(new org.openstack.docs.identity.api.v2.User());
         final org.openstack.docs.identity.api.v2.User jaxbObject = userConverterCloudV20.toUser(user);
-        assertThat("region", jaxbObject.getOtherAttributes().get(new QName("http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0","defaultRegion")),equalTo("myRegion"));
+        assertThat("region", jaxbObject.getOtherAttributes().get(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","defaultRegion")),equalTo("myRegion"));
     }
 
     @Test

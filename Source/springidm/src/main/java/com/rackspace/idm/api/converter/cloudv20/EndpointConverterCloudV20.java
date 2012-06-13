@@ -21,7 +21,7 @@ public class EndpointConverterCloudV20 {
     @Autowired
     private JAXBObjectFactories OBJ_FACTORIES;
 
-    private final OpenStackServiceCatalogFactory sf = new OpenStackServiceCatalogFactory();
+    private OpenStackServiceCatalogFactory sf = new OpenStackServiceCatalogFactory();
 
     public ServiceCatalog toServiceCatalog(List<OpenstackEndpoint> endpoints) {
         ServiceCatalog catalog = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
@@ -181,5 +181,9 @@ public class EndpointConverterCloudV20 {
 
     public void setOBJ_FACTORIES(JAXBObjectFactories OBJ_FACTORIES) {
         this.OBJ_FACTORIES = OBJ_FACTORIES;
+    }
+
+    public void setSf(OpenStackServiceCatalogFactory sf) {
+        this.sf = sf;
     }
 }
