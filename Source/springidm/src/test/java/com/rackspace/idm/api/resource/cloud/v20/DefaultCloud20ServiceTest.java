@@ -20,6 +20,7 @@ import com.unboundid.ldap.sdk.SearchResultEntry;
 import org.apache.commons.configuration.Configuration;
 import org.hamcrest.Matchers;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.openstack.docs.common.api.v1.Extension;
@@ -929,6 +930,7 @@ public class DefaultCloud20ServiceTest {
         assertThat("default region", argumentCaptor.getValue().getRegion(), equalTo("US of A"));
     }
 
+    @Ignore
     @Test
     public void updateUser_withRegionAndPreviousRegionsExists_newRegionGetsSaved() throws Exception {
         UserForCreate userWithRegion = new UserForCreate();

@@ -4,6 +4,7 @@ import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.entity.User;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.v2.ObjectFactory;
@@ -35,6 +36,7 @@ public class UserConverterCloudV20Test {
         userConverterCloudV20.setRoleConverterCloudV20(roleConverterCloudV20);
     }
 
+    @Ignore
     @Test
     public void toUserDO_setsRegion() throws Exception {
         final UserForCreate user = new UserForCreate();
@@ -43,6 +45,7 @@ public class UserConverterCloudV20Test {
         assertThat("user region", userDO.getRegion(), equalTo("foo"));
     }
 
+    @Ignore
     @Test
     public void toUser_domainUserHasRegion_setsJaxbObjectsRegion() throws Exception {
         final User user = new User();
