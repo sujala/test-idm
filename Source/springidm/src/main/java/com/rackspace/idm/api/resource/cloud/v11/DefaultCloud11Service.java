@@ -5,6 +5,7 @@ import com.rackspace.idm.api.converter.cloudv11.EndpointConverterCloudV11;
 import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11;
 import com.rackspace.idm.api.resource.cloud.CloudExceptionResponse;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.dao.impl.LdapCloudAdminRepository;
@@ -478,14 +479,15 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             //AtomHopper
             UserScopeAccess usa = getAuthtokenFromRequest(request);
-            atomHopperClient.asyncPost(gaUser,usa.getAccessTokenString(),"deleted");
+            atomHopperClient.asyncPost(gaUser, usa.getAccessTokenString(), AtomHopperConstants.DELETED, null);
 
             return Response.noContent();
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }
     }
-   /*
+
+    /*
     * This is used to get the token for AtomHopper
     * This does not do any validation since there are methods before this one that does it.
     * By the time this method is called it assumes everything is correct
@@ -493,8 +495,8 @@ public class DefaultCloud11Service implements Cloud11Service {
     UserScopeAccess getAuthtokenFromRequest(HttpServletRequest request) {
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         Map<String, String> stringStringMap = authHeaderHelper.parseBasicParams(authHeader);
-        UserScopeAccess   usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(
-                    stringStringMap.get("username"), stringStringMap.get("password"), getCloudAuthClientId());
+        UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(
+                stringStringMap.get("username"), stringStringMap.get("password"), getCloudAuthClientId());
         return usa;
     }
 
@@ -747,9 +749,9 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             this.userService.updateUser(gaUser, false);
 
-            if(gaUser.isDisabled()){
+            if (gaUser.isDisabled()) {
                 UserScopeAccess usa = getAuthtokenFromRequest(request);
-                atomHopperClient.asyncPost(gaUser,usa.getAccessTokenString(),"disabled");
+                atomHopperClient.asyncPost(gaUser, usa.getAccessTokenString(), AtomHopperConstants.DISABLED, null);
             }
 
             return Response.ok(OBJ_FACTORY.createUser(this.userConverterCloudV11.toCloudV11UserWithOnlyEnabled(gaUser)));
@@ -825,9 +827,9 @@ public class DefaultCloud11Service implements Cloud11Service {
                 }
             }
 
-            if(gaUser.isDisabled()){
+            if (gaUser.isDisabled()) {
                 UserScopeAccess usa = getAuthtokenFromRequest(request);
-                atomHopperClient.asyncPost(gaUser,usa.getAccessTokenString(),"disabled");
+                atomHopperClient.asyncPost(gaUser, usa.getAccessTokenString(), AtomHopperConstants.DISABLED, null);
             }
 
             List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(userId);
@@ -1018,7 +1020,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     }
 
     Response.ResponseBuilder authenticateJSON(HttpServletResponse response, HttpHeaders httpHeaders, String body,
-                                                      boolean isAdmin) throws IOException {
+                                              boolean isAdmin) throws IOException {
 
         JAXBElement<? extends Credentials> cred = null;
 
@@ -1032,7 +1034,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     @SuppressWarnings("unchecked")
     Response.ResponseBuilder authenticateXML(HttpServletResponse response, HttpHeaders httpHeaders, String body,
-                                                     boolean isAdmin) throws IOException {
+                                             boolean isAdmin) throws IOException {
 
         JAXBElement<? extends Credentials> cred = null;
         try {
