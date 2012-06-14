@@ -43,32 +43,16 @@ public class AuthConverterCloudV20 {
         return auth;
     }
 
-    public JAXBObjectFactories getOBJ_FACTORIES() {
-        return OBJ_FACTORIES;
-    }
-
     public void setOBJ_FACTORIES(JAXBObjectFactories OBJ_FACTORIES) {
         this.OBJ_FACTORIES = OBJ_FACTORIES;
-    }
-
-    public TokenConverterCloudV20 getTokenConverterCloudV20() {
-        return tokenConverterCloudV20;
     }
 
     public void setTokenConverterCloudV20(TokenConverterCloudV20 tokenConverterCloudV20) {
         this.tokenConverterCloudV20 = tokenConverterCloudV20;
     }
 
-    public UserConverterCloudV20 getUserConverterCloudV20() {
-        return userConverterCloudV20;
-    }
-
     public void setUserConverterCloudV20(UserConverterCloudV20 userConverterCloudV20) {
         this.userConverterCloudV20 = userConverterCloudV20;
-    }
-
-    public EndpointConverterCloudV20 getEndpointConverterCloudV20() {
-        return endpointConverterCloudV20;
     }
 
     public void setEndpointConverterCloudV20(EndpointConverterCloudV20 endpointConverterCloudV20) {
