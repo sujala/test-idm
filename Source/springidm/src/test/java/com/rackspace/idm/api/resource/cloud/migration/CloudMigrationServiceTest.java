@@ -60,9 +60,9 @@ public class CloudMigrationServiceTest {
     private ScopeAccessService scopeAccessService;
     private EndpointConverterCloudV20 endpointConverterCloudV20;
     private CloudBaseUrl cloudBaseUrl;
-
     private User user;
     private org.openstack.docs.identity.api.v2.User cloudUser;
+    private String adminToken;
 
     @Before
     public void setUp() throws Exception {
@@ -143,8 +143,12 @@ public class CloudMigrationServiceTest {
         when(jaxbObjectFactories.getRackspaceIdentityExtKsgrpV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.ObjectFactory());
         when(jaxbObjectFactories.getOpenStackIdentityV2Factory()).thenReturn(new org.openstack.docs.identity.api.v2.ObjectFactory());
         when(config.getString("rackspace.customerId")).thenReturn(null);
+        when(config.getString("cloudAuth20url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v2.0/");
+        when(config.getString("migration.username")).thenReturn("migration_user");
+        when(config.getString("migration.apikey")).thenReturn("0f97f489c848438090250d50c7e1ea88");
 
         spy = spy(cloudMigrationService);
+        adminToken = spy.getAdminToken();
     }
 
     @Test
@@ -449,5 +453,33 @@ public class CloudMigrationServiceTest {
         when(userService.getUser(null)).thenReturn(user);
         spy.setMigratedUserEnabledStatus(null, true);
         verify(userService).updateUserById(any(User.class), eq(false));
+    }
+
+    @Test (expected = NotFoundException.class)
+    public void unmigrateUserByUsername_userIsNull_throwsNotFoundException() throws Exception {
+        spy.unmigrateUserByUsername(null, true);
+    }
+
+    @Test (expected = NotFoundException.class)
+    public void unmigrateUserByUsername_userGetInMigrationIsNull_throwsNotFoundException() throws Exception {
+        when(userService.getUser("username")).thenReturn(new User());
+        spy.unmigrateUserByUsername("username", true);
+    }
+
+    @Test (expected = BadRequestException.class)
+    public void unmigrateUserByUsername_isRootUserAndIsSubUser_throwsBadRequest() throws Exception {
+        RoleList roleList = new RoleList();
+        List<Role> roles = roleList.getRole();
+        Role role = new Role();
+        role.setName("identity:default");
+        roles.add(role);
+        spy.setClient(client);
+        doReturn(adminToken).when(spy).getAdminToken();
+        when(client.getUserCredentials(anyString(), anyString())).thenReturn(new CredentialListType());
+        doReturn("").when(spy).getPassword(any(CredentialListType.class));
+        doReturn("").when(spy).getApiKey(any(CredentialListType.class));
+        when(client.getRolesForUser(anyString(), anyString())).thenReturn(roleList);
+        when(userService.getUser("username")).thenReturn(user);
+        spy.unmigrateUserByUsername("username", true);
     }
 }
