@@ -42,7 +42,6 @@ import javax.xml.namespace.QName;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.hamcrest.CoreMatchers.any;
 import java.util.GregorianCalendar;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -591,9 +590,9 @@ public class JSONWriterTest {
         baseURLList.getBaseURL().add(baseURL);
         ByteArrayOutputStream myOut = new ByteArrayOutputStream();
         JAXBElement<BaseURLList> jaxbElement = new JAXBElement<BaseURLList>(QName.valueOf("foo"),BaseURLList.class,baseURLList);
-        doReturn(new JSONObject()).when(spy).getBaseUrlList(baseURL);
+        doReturn(new JSONObject()).when(spy).getBaseUrl(baseURL);
         spy.writeTo(jaxbElement, BaseURLList.class, null, null, null, null, myOut);
-        verify(spy).getBaseUrlList(baseURL);
+        verify(spy).getBaseUrl(baseURL);
     }
 
     @Test
@@ -605,7 +604,7 @@ public class JSONWriterTest {
         ByteArrayOutputStream myOut = new ByteArrayOutputStream();
         JAXBElement<BaseURLList> jaxbElement = new JAXBElement<BaseURLList>(QName.valueOf("foo"),BaseURLList.class,baseURLList);
         jsonObject.put("success","This test worked!");
-        doReturn(jsonObject).when(spy).getBaseUrlList(baseURL);
+        doReturn(jsonObject).when(spy).getBaseUrl(baseURL);
         spy.writeTo(jaxbElement, BaseURLList.class, null, null, null, null, myOut);
         assertThat("string",myOut.toString(),equalTo("{\"baseURLs\":[{\"success\":\"This test worked!\"}]}"));
     }
@@ -825,6 +824,24 @@ public class JSONWriterTest {
     }
 
     @Test
+    public void getLinks_ListCorrectlyPopulatedNoHRef_returnsJSONArrayWithCorrectValues() throws Exception {
+        Relation relation = Relation.AUTHOR;
+        Link link = new Link();
+        link.setRel(relation);
+        link.setType("type");
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JAXBElement<Link> jaxbElement = new JAXBElement<Link>(QName.valueOf("foo"),Link.class,link);
+        List<Object> list = new ArrayList<Object>();
+        list.add(jaxbElement);
+        JSONArray jsonArray = JSONWriter.getLinks(list);
+        String jsonText = JSONValue.toJSONString(jsonArray);
+        myOut.write(jsonText.getBytes());
+
+        assertThat("string",myOut.toString(), equalTo("[{\"rel\":\"author\",\"type\":\"type\"}]"));
+    }
+
+    @Test
     public void getLinks_ListNoLink_returnsEmptyJSONArray() throws Exception {
         final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
         JAXBElement<AuthenticateResponse> jaxbElement = new JAXBElement<AuthenticateResponse>(QName.valueOf("foo"),AuthenticateResponse.class,new AuthenticateResponse());
@@ -884,7 +901,7 @@ public class JSONWriterTest {
         JSONObject jsonObject = writer.getVersionChoice(versionChoice);
         String jsonText = JSONValue.toJSONString(jsonObject);
         myOut.write(jsonText.getBytes());
-        assertThat("string",myOut.toString(), equalTo("{\"version\":{\"id\":null,\"updated\":\"1992-11-27\",\"status\":\"ALPHA\",\"links\":[{\"href\":null}]," +
+        assertThat("string",myOut.toString(), equalTo("{\"version\":{\"id\":null,\"updated\":\"1992-11-27\",\"status\":\"ALPHA\",\"links\":[{}]," +
             "\"media-types\":{\"values\":[{\"base\":\"\",\"type\":null}]}}}"));
     }
 
@@ -908,7 +925,7 @@ public class JSONWriterTest {
         JSONObject jsonObject = writer.getVersionChoice(versionChoice);
         String jsonText = JSONValue.toJSONString(jsonObject);
         myOut.write(jsonText.getBytes());
-        assertThat("string",myOut.toString(), equalTo("{\"version\":{\"id\":null,\"updated\":\"1992-11-27\",\"links\":[{\"href\":null}]," +
+        assertThat("string",myOut.toString(), equalTo("{\"version\":{\"id\":null,\"updated\":\"1992-11-27\",\"links\":[{}]," +
                 "\"media-types\":{\"values\":[{\"base\":\"\",\"type\":null}]}}}"));
     }
 
@@ -929,7 +946,7 @@ public class JSONWriterTest {
         JSONObject jsonObject = writer.getVersionChoice(versionChoice);
         String jsonText = JSONValue.toJSONString(jsonObject);
         myOut.write(jsonText.getBytes());
-        assertThat("string",myOut.toString(), equalTo("{\"version\":{\"id\":null,\"status\":\"ALPHA\",\"links\":[{\"href\":null}]," +
+        assertThat("string",myOut.toString(), equalTo("{\"version\":{\"id\":null,\"status\":\"ALPHA\",\"links\":[{}]," +
                 "\"media-types\":{\"values\":[{\"base\":\"\",\"type\":null}]}}}"));
     }
 
@@ -999,7 +1016,7 @@ public class JSONWriterTest {
         JSONObject jsonObject = writer.getVersionChoice(versionChoice);
         String jsonText = JSONValue.toJSONString(jsonObject);
         myOut.write(jsonText.getBytes());
-        assertThat("string",myOut.toString(), equalTo("{\"version\":{\"id\":null,\"updated\":\"1992-11-27\",\"status\":\"ALPHA\",\"links\":[{\"href\":null}]}}"));
+        assertThat("string",myOut.toString(), equalTo("{\"version\":{\"id\":null,\"updated\":\"1992-11-27\",\"status\":\"ALPHA\",\"links\":[{}]}}"));
     }
 
     @Test
@@ -1023,7 +1040,7 @@ public class JSONWriterTest {
         JSONObject jsonObject = writer.getVersionChoice(versionChoice);
         String jsonText = JSONValue.toJSONString(jsonObject);
         myOut.write(jsonText.getBytes());
-        assertThat("string",myOut.toString(), equalTo("{\"version\":{\"id\":null,\"updated\":\"1992-11-27\",\"status\":\"ALPHA\",\"links\":[{\"href\":null}]}}"));
+        assertThat("string",myOut.toString(), equalTo("{\"version\":{\"id\":null,\"updated\":\"1992-11-27\",\"status\":\"ALPHA\",\"links\":[{}]}}"));
     }
 
     @Test
@@ -1320,6 +1337,26 @@ public class JSONWriterTest {
     }
 
     @Test
+    public void getEndpointsForCatalog_nullInternalURL_returnsJSONObjectNoInternalURL() throws Exception {
+        VersionForService versionForService = new VersionForService();
+        EndpointForService endpointForService = new EndpointForService();
+        endpointForService.setTenantId("123");
+        endpointForService.setPublicURL("www.publicURL.com");
+        endpointForService.setRegion("USA");
+        endpointForService.setVersion(versionForService);
+        List<EndpointForService> list = new ArrayList<EndpointForService>();
+        list.add(endpointForService);
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONArray result = writer.getEndpointsForCatalog(list);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("[{\"region\":\"USA\",\"tenantId\":\"123\",\"publicURL\":\"www.publicURL.com\",\"versionInfo\":null," +
+                "\"versionList\":null,\"versionId\":null}]"));
+
+    }
+
+    @Test
     public void getEndpointsForCatalog_nullRegion_returnsJSONObjectNoRegion() throws Exception {
         VersionForService versionForService = new VersionForService();
         EndpointForService endpointForService = new EndpointForService();
@@ -1568,6 +1605,36 @@ public class JSONWriterTest {
     }
 
     @Test
+    public void getGroupsList_fullyPopulated_returnsJSONObject() throws Exception {
+        com.rackspacecloud.docs.auth.api.v1.Group group1 = new com.rackspacecloud.docs.auth.api.v1.Group();
+        com.rackspacecloud.docs.auth.api.v1.Group group2 = new com.rackspacecloud.docs.auth.api.v1.Group();
+        GroupsList groupsList = new GroupsList();
+        groupsList.getGroup().add(group1);
+        groupsList.getGroup().add(group2);
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success","This test worked!");
+        doReturn(jsonObject).when(spy).get11Group(group1);
+        doReturn(jsonObject).when(spy).get11Group(group2);
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = spy.getGroupsList(groupsList);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"groups\":{\"values\":[{\"success\":\"This test worked!\"},{\"success\":\"This test worked!\"}]}}"));
+    }
+
+    @Test
+    public void getGroupsList_emptyList_returnsJSONObject() throws Exception {
+        GroupsList groupsList = new GroupsList();
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = spy.getGroupsList(groupsList);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"groups\":{\"values\":[]}}"));
+    }
+
+    @Test
     public void getGroup_callsGetGroupWithoutWrapper() throws Exception {
         Group group = new Group();
         doReturn(new JSONObject()).when(spy).getGroupWithoutWrapper(group);
@@ -1798,6 +1865,134 @@ public class JSONWriterTest {
     }
 
     @Test
+    public void getEndpointTemplateList_fullyPopulated_returnsJSONObject() throws Exception {
+        EndpointTemplate endpointTemplate1 = new EndpointTemplate();
+        EndpointTemplate endpointTemplate2 = new EndpointTemplate();
+        EndpointTemplateList endpointTemplateList = new EndpointTemplateList();
+        endpointTemplateList.getEndpointTemplate().add(endpointTemplate1);
+        endpointTemplateList.getEndpointTemplate().add(endpointTemplate2);
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success","This test worked!");
+        doReturn(jsonObject).when(spy).getEndpointTemplateWithoutWrapper(endpointTemplate1);
+        doReturn(jsonObject).when(spy).getEndpointTemplateWithoutWrapper(endpointTemplate2);
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = spy.getEndpointTemplateList(endpointTemplateList);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"OS-KSCATALOG:endpointTemplates\":{\"OS-KSCATALOG:endpointTemplate\":[" +
+                "{\"success\":\"This test worked!\"},{\"success\":\"This test worked!\"}]}}"));
+    }
+
+    @Test
+    public void getEndpointTemplateList_emptyList_returnsJSONObject() throws Exception {
+        EndpointTemplateList endpointTemplateList = new EndpointTemplateList();
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getEndpointTemplateList(endpointTemplateList);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"OS-KSCATALOG:endpointTemplates\":{\"OS-KSCATALOG:endpointTemplate\":[]}}"));
+    }
+
+    @Test
+    public void getBaseURL_fullyPopulated_returnsJSONObject() throws Exception {
+        BaseURL baseURL = new BaseURL();
+        baseURL.setInternalURL("www.internalURL.com");
+        baseURL.setPublicURL("www.publicURL.com");
+        baseURL.setRegion("USA");
+        baseURL.setServiceName("service");
+        baseURL.setUserType(UserType.CLOUD);
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getBaseUrl(baseURL);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"id\":0,\"region\":\"USA\",\"publicURL\":\"www.publicURL.com\",\"enabled\":true," +
+                "\"default\":false,\"userType\":\"CLOUD\",\"serviceName\":\"service\",\"internalURL\":\"www.internalURL.com\"}"));
+    }
+
+    @Test
+    public void getBaseURL_nullInternalURL_returnsJSONObject() throws Exception {
+        BaseURL baseURL = new BaseURL();
+        baseURL.setPublicURL("www.publicURL.com");
+        baseURL.setRegion("USA");
+        baseURL.setServiceName("service");
+        baseURL.setUserType(UserType.CLOUD);
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getBaseUrl(baseURL);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"id\":0,\"region\":\"USA\",\"publicURL\":\"www.publicURL.com\",\"enabled\":true," +
+                "\"default\":false,\"userType\":\"CLOUD\",\"serviceName\":\"service\"}"));
+    }
+
+    @Test
+    public void getBaseURL_nullPublicURL_returnsJSONObject() throws Exception {
+        BaseURL baseURL = new BaseURL();
+        baseURL.setInternalURL("www.internalURL.com");
+        baseURL.setRegion("USA");
+        baseURL.setServiceName("service");
+        baseURL.setUserType(UserType.CLOUD);
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getBaseUrl(baseURL);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"id\":0,\"region\":\"USA\",\"enabled\":true," +
+                "\"default\":false,\"userType\":\"CLOUD\",\"serviceName\":\"service\",\"internalURL\":\"www.internalURL.com\"}"));
+    }
+
+    @Test
+    public void getBaseURL_nullRegion_returnsJSONObject() throws Exception {
+        BaseURL baseURL = new BaseURL();
+        baseURL.setInternalURL("www.internalURL.com");
+        baseURL.setPublicURL("www.publicURL.com");
+        baseURL.setServiceName("service");
+        baseURL.setUserType(UserType.CLOUD);
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getBaseUrl(baseURL);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"id\":0,\"publicURL\":\"www.publicURL.com\",\"enabled\":true," +
+                "\"default\":false,\"userType\":\"CLOUD\",\"serviceName\":\"service\",\"internalURL\":\"www.internalURL.com\"}"));
+    }
+
+    @Test
+    public void getBaseURL_nullServiceName_returnsJSONObject() throws Exception {
+        BaseURL baseURL = new BaseURL();
+        baseURL.setInternalURL("www.internalURL.com");
+        baseURL.setPublicURL("www.publicURL.com");
+        baseURL.setRegion("USA");
+        baseURL.setUserType(UserType.CLOUD);
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getBaseUrl(baseURL);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"id\":0,\"region\":\"USA\",\"publicURL\":\"www.publicURL.com\",\"enabled\":true," +
+                "\"default\":false,\"userType\":\"CLOUD\",\"internalURL\":\"www.internalURL.com\"}"));
+    }
+
+    @Test
+    public void getBaseURL_nullUserType_returnsJSONObject() throws Exception {
+        BaseURL baseURL = new BaseURL();
+        baseURL.setInternalURL("www.internalURL.com");
+        baseURL.setPublicURL("www.publicURL.com");
+        baseURL.setRegion("USA");
+        baseURL.setServiceName("service");
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getBaseUrl(baseURL);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"id\":0,\"region\":\"USA\",\"publicURL\":\"www.publicURL.com\",\"enabled\":true," +
+                "\"default\":false,\"serviceName\":\"service\",\"internalURL\":\"www.internalURL.com\"}"));
+    }
+
+    @Test
     public void getExtension() throws Exception {
         Extension extension = new Extension();
         extension.setAlias("alias");
@@ -1812,6 +2007,280 @@ public class JSONWriterTest {
         Assert.assertEquals("{\"extension\":{\"updated\":\"2012-01-01\",\"alias\":\"alias\",\"description\":\"description\",\"name\":\"name\",\"namespace\":\"namespace\"}}", myOut.toString());
     }
 
+    @Test
+    public void getExtensionList_listPopulated_returnsJSONObject() throws Exception {
+        Extension extension1 = new Extension();
+        Extension extension2 = new Extension();
+        Extensions extensions = new Extensions();
+        extensions.getExtension().add(extension1);
+        extensions.getExtension().add(extension2);
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("success","This test worked!");
+        doReturn(jsonObject).when(spy).getExtensionWithoutWrapper(extension1);
+        doReturn(jsonObject).when(spy).getExtensionWithoutWrapper(extension2);
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = spy.getExtensionList(extensions);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"extensions\":[{\"success\":\"This test worked!\"},{\"success\":\"This test worked!\"}]}"));
+    }
+
+    @Test
+    public void getExtensionList_listEmpty_returnsJSONObject() throws Exception {
+        Extensions extensions = new Extensions();
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getExtensionList(extensions);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"extensions\":[]}"));
+    }
+
+    @Test
+    public void getEndpoint_fullyPopulated_returnsJSONObject() throws Exception {
+        Endpoint endpoint = new Endpoint();
+        endpoint.setRegion("USA");
+        endpoint.setPublicURL("www.publicURL.com");
+        endpoint.setName("John Smith");
+        endpoint.setAdminURL("www.adminURL.com");
+        endpoint.setType("type");
+        endpoint.setTenantId("123");
+        endpoint.setInternalURL("www.internalURL.com");
+        endpoint.setVersion(new VersionForService());
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getEndpoint(endpoint);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"tenantId\":\"123\",\"region\":\"USA\",\"id\":0,\"publicURL\":\"www.publicURL.com\"," +
+                "\"versionInfo\":null,\"versionList\":null,\"adminURL\":\"www.adminURL.com\",\"name\":\"John Smith\",\"versionId\":null," +
+                "\"type\":\"type\",\"internalURL\":\"www.internalURL.com\"}"));
+
+    }
+
+    @Test
+    public void getEndpoint_nullRegion_returnsJSONObject() throws Exception {
+        Endpoint endpoint = new Endpoint();
+        endpoint.setPublicURL("www.publicURL.com");
+        endpoint.setName("John Smith");
+        endpoint.setAdminURL("www.adminURL.com");
+        endpoint.setType("type");
+        endpoint.setTenantId("123");
+        endpoint.setInternalURL("www.internalURL.com");
+        endpoint.setVersion(new VersionForService());
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getEndpoint(endpoint);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"tenantId\":\"123\",\"id\":0,\"publicURL\":\"www.publicURL.com\"," +
+                "\"versionInfo\":null,\"versionList\":null,\"adminURL\":\"www.adminURL.com\",\"name\":\"John Smith\",\"versionId\":null," +
+                "\"type\":\"type\",\"internalURL\":\"www.internalURL.com\"}"));
+
+    }
+
+    @Test
+    public void getEndpoint_nullPublicURL_returnsJSONObject() throws Exception {
+        Endpoint endpoint = new Endpoint();
+        endpoint.setRegion("USA");
+        endpoint.setName("John Smith");
+        endpoint.setAdminURL("www.adminURL.com");
+        endpoint.setType("type");
+        endpoint.setTenantId("123");
+        endpoint.setInternalURL("www.internalURL.com");
+        endpoint.setVersion(new VersionForService());
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getEndpoint(endpoint);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"tenantId\":\"123\",\"region\":\"USA\",\"id\":0," +
+                "\"versionInfo\":null,\"versionList\":null,\"adminURL\":\"www.adminURL.com\",\"name\":\"John Smith\",\"versionId\":null," +
+                "\"type\":\"type\",\"internalURL\":\"www.internalURL.com\"}"));
+
+    }
+
+    @Test
+    public void getEndpoint_nullName_returnsJSONObject() throws Exception {
+        Endpoint endpoint = new Endpoint();
+        endpoint.setRegion("USA");
+        endpoint.setPublicURL("www.publicURL.com");
+        endpoint.setAdminURL("www.adminURL.com");
+        endpoint.setType("type");
+        endpoint.setTenantId("123");
+        endpoint.setInternalURL("www.internalURL.com");
+        endpoint.setVersion(new VersionForService());
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getEndpoint(endpoint);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"tenantId\":\"123\",\"region\":\"USA\",\"id\":0,\"publicURL\":\"www.publicURL.com\"," +
+                "\"versionInfo\":null,\"versionList\":null,\"adminURL\":\"www.adminURL.com\",\"versionId\":null," +
+                "\"type\":\"type\",\"internalURL\":\"www.internalURL.com\"}"));
+
+    }
+
+    @Test
+    public void getEndpoint_nullAdminURL_returnsJSONObject() throws Exception {
+        Endpoint endpoint = new Endpoint();
+        endpoint.setRegion("USA");
+        endpoint.setPublicURL("www.publicURL.com");
+        endpoint.setName("John Smith");
+        endpoint.setType("type");
+        endpoint.setTenantId("123");
+        endpoint.setInternalURL("www.internalURL.com");
+        endpoint.setVersion(new VersionForService());
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getEndpoint(endpoint);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"tenantId\":\"123\",\"region\":\"USA\",\"id\":0,\"publicURL\":\"www.publicURL.com\"," +
+                "\"versionInfo\":null,\"versionList\":null,\"name\":\"John Smith\",\"versionId\":null," +
+                "\"type\":\"type\",\"internalURL\":\"www.internalURL.com\"}"));
+
+    }
+
+    @Test
+    public void getEndpoint_nullType_returnsJSONObject() throws Exception {
+        Endpoint endpoint = new Endpoint();
+        endpoint.setRegion("USA");
+        endpoint.setPublicURL("www.publicURL.com");
+        endpoint.setName("John Smith");
+        endpoint.setAdminURL("www.adminURL.com");
+        endpoint.setTenantId("123");
+        endpoint.setInternalURL("www.internalURL.com");
+        endpoint.setVersion(new VersionForService());
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getEndpoint(endpoint);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"tenantId\":\"123\",\"region\":\"USA\",\"id\":0,\"publicURL\":\"www.publicURL.com\"," +
+                "\"versionInfo\":null,\"versionList\":null,\"adminURL\":\"www.adminURL.com\",\"name\":\"John Smith\",\"versionId\":null," +
+                "\"internalURL\":\"www.internalURL.com\"}"));
+
+    }
+
+    @Test
+    public void getEndpoint_nullTenantID_returnsJSONObject() throws Exception {
+        Endpoint endpoint = new Endpoint();
+        endpoint.setRegion("USA");
+        endpoint.setPublicURL("www.publicURL.com");
+        endpoint.setName("John Smith");
+        endpoint.setAdminURL("www.adminURL.com");
+        endpoint.setType("type");
+        endpoint.setInternalURL("www.internalURL.com");
+        endpoint.setVersion(new VersionForService());
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getEndpoint(endpoint);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"region\":\"USA\",\"id\":0,\"publicURL\":\"www.publicURL.com\"," +
+                "\"versionInfo\":null,\"versionList\":null,\"adminURL\":\"www.adminURL.com\",\"name\":\"John Smith\",\"versionId\":null," +
+                "\"type\":\"type\",\"internalURL\":\"www.internalURL.com\"}"));
+
+    }
+
+    @Test
+    public void getEndpoint_nullInternalURL_returnsJSONObject() throws Exception {
+        Endpoint endpoint = new Endpoint();
+        endpoint.setRegion("USA");
+        endpoint.setPublicURL("www.publicURL.com");
+        endpoint.setName("John Smith");
+        endpoint.setAdminURL("www.adminURL.com");
+        endpoint.setType("type");
+        endpoint.setTenantId("123");
+        endpoint.setVersion(new VersionForService());
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getEndpoint(endpoint);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"tenantId\":\"123\",\"region\":\"USA\",\"id\":0,\"publicURL\":\"www.publicURL.com\"," +
+                "\"versionInfo\":null,\"versionList\":null,\"adminURL\":\"www.adminURL.com\",\"name\":\"John Smith\",\"versionId\":null," +
+                "\"type\":\"type\"}"));
+
+    }
+
+    @Test
+    public void getEndpoint_nullVersion_returnsJSONObject() throws Exception {
+        Endpoint endpoint = new Endpoint();
+        endpoint.setRegion("USA");
+        endpoint.setPublicURL("www.publicURL.com");
+        endpoint.setName("John Smith");
+        endpoint.setAdminURL("www.adminURL.com");
+        endpoint.setType("type");
+        endpoint.setTenantId("123");
+        endpoint.setInternalURL("www.internalURL.com");
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getEndpoint(endpoint);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"tenantId\":\"123\",\"region\":\"USA\",\"id\":0,\"publicURL\":\"www.publicURL.com\"," +
+                "\"adminURL\":\"www.adminURL.com\",\"name\":\"John Smith\"," +
+                "\"type\":\"type\",\"internalURL\":\"www.internalURL.com\"}"));
+
+    }
+
+    @Test
+    public void getExtensionWithoutWrapper_nullUpdated_returnsJSONObject() throws Exception {
+        Extension extension = new Extension();
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getExtensionWithoutWrapper(extension);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"alias\":null,\"description\":null,\"name\":null,\"namespace\":null}"));
+    }
+
+    @Test
+    public void getExtensionWithoutWrapper_anyEmpty_returnsJSONObject() throws Exception {
+        Extension extension = new Extension();
+        extension.setUpdated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getExtensionWithoutWrapper(extension);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"updated\":\"0001-02-01T00:00:00.000-06:00\",\"alias\":null,\"description\":null,\"name\":null,\"namespace\":null}"));
+    }
+
+    @Test
+    public void getExtensionWithoutWrapper_anyHasLinks_returnsJSONObject() throws Exception {
+        Link link1 = new Link();
+        Link link2 = new Link();
+        Extension extension = new Extension();
+
+        JAXBElement<Link> jaxbElement1 = new JAXBElement<Link>(QName.valueOf("foo"),Link.class,link1);
+        JAXBElement<Link> jaxbElement2 = new JAXBElement<Link>(QName.valueOf("foo"),Link.class,link2);
+
+        extension.getAny().add(jaxbElement1);
+        extension.getAny().add(jaxbElement2);
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getExtensionWithoutWrapper(extension);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"alias\":null,\"description\":null,\"name\":null,\"links\":[{},{}],\"namespace\":null}"));
+    }
+
+    @Test
+    public void getExtensionWithoutWrapper_anyHasNoLinks_returnsJSONObject() throws Exception {
+        Extension extension = new Extension();
+        extension.getAny().add(new Token());
+        extension.getAny().add(new Token());
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getExtensionWithoutWrapper(extension);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"alias\":null,\"description\":null,\"name\":null,\"namespace\":null}"));
+    }
 
     @Test
     public void getExtensions() throws Exception {
