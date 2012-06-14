@@ -512,7 +512,7 @@ public class CloudMigrationService {
         }
     }
 
-    private String getApiKey(CredentialListType credentialListType) {
+    String getApiKey(CredentialListType credentialListType) {
         String apiKey = "";
 
         try {
@@ -596,7 +596,7 @@ public class CloudMigrationService {
         unmigrateUserByUsername(username, true);
     }
 
-    private void unmigrateUserByUsername(String username, boolean rootUser) throws Exception {
+    void unmigrateUserByUsername(String username, boolean rootUser) throws Exception {
         com.rackspace.idm.domain.entity.User user = userService.getUser(username);
         if (user == null)
             throw new NotFoundException("User not found.");
