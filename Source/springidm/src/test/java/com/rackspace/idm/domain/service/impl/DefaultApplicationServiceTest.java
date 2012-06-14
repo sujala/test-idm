@@ -195,7 +195,7 @@ public class DefaultApplicationServiceTest {
     public void addClientGroup_throwsNotFoundException_whenCustomerDoesNotExist() throws Exception {
         when(clientDao.getClientByClientId("id")).thenReturn(new Application());
         when(customerDao.getCustomerByCustomerId("id")).thenReturn(null);
-        service.addClientGroup(new ClientGroup("id","id",null,null));
+        service.addClientGroup(new ClientGroup("id", "id", null, null));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -220,8 +220,8 @@ public class DefaultApplicationServiceTest {
 
     @Test(expected = NotFoundException.class)
     public void deleteClientGroup_throwsNotFoundException_whenGroupIsNotFound() throws Exception {
-        when(clientDao.getClientGroup("customerId","clientId", "groupName")).thenReturn(null);
-        service.deleteClientGroup("customerId","clientId", "groupName");
+        when(clientDao.getClientGroup("customerId", "clientId", "groupName")).thenReturn(null);
+        service.deleteClientGroup("customerId", "clientId", "groupName");
     }
 
     @Test (expected = NotFoundException.class)
@@ -230,7 +230,106 @@ public class DefaultApplicationServiceTest {
         service.checkAndGetPermission(null, null, null);
     }
 
+    @Test (expected = NotFoundException.class)
+    public void checkAndGetPermission_customerIdDoesNotMatch_throwsNotFoundException() throws Exception {
+        Application client = new Application();
+        client.setRCN("rcn");
+        client.setClientId("clientId");
+        DefinedPermission permission = new DefinedPermission();
+        permission.setClientId("clientId");
+        permission.setCustomerId("customerId");
+        permission.setPermissionId("permissionId");
+        when(scopeAccessDao.getPermissionByParentAndPermission(anyString(), any(Permission.class))).thenReturn(permission);
+        when(clientDao.getClientByClientId(anyString())).thenReturn(client);
+        service.checkAndGetPermission("notMatch", "clientId", "permissionId");
+    }
 
+    @Test (expected = NotFoundException.class)
+    public void checkAndGetPermission_clientIdDoesNotMatch_throwsNotFoundException() throws Exception {
+        Application client = new Application();
+        client.setRCN("rcn");
+        client.setClientId("clientId");
+        DefinedPermission permission = new DefinedPermission();
+        permission.setClientId("clientId");
+        permission.setCustomerId("customerId");
+        permission.setPermissionId("permissionId");
+        when(scopeAccessDao.getPermissionByParentAndPermission(anyString(), any(Permission.class))).thenReturn(permission);
+        when(clientDao.getClientByClientId(anyString())).thenReturn(client);
+        service.checkAndGetPermission("customerId", "notMatch", "permissionId");
+    }
+
+    @Test (expected = NotFoundException.class)
+    public void checkAndGetPermission_permissionNotEnabled_throwsNotFoundException() throws Exception {
+        Application client = new Application();
+        client.setRCN("rcn");
+        client.setClientId("clientId");
+        DefinedPermission permission = new DefinedPermission();
+        permission.setClientId("clientId");
+        permission.setCustomerId("customerId");
+        permission.setPermissionId("permissionId");
+        permission.setEnabled(false);
+        when(scopeAccessDao.getPermissionByParentAndPermission(anyString(), any(Permission.class))).thenReturn(permission);
+        when(clientDao.getClientByClientId(anyString())).thenReturn(client);
+        service.checkAndGetPermission("customerId", "clientId", "permissionId");
+    }
+
+    @Test
+    public void checkAndGetPermission_permissionCreated_returnsCorrectly() throws Exception {
+        Application client = new Application();
+        client.setRCN("rcn");
+        client.setClientId("clientId");
+        DefinedPermission permission = new DefinedPermission();
+        permission.setClientId("clientId");
+        permission.setCustomerId("customerId");
+        permission.setPermissionId("permissionId");
+        permission.setEnabled(true);
+        when(scopeAccessDao.getPermissionByParentAndPermission(anyString(), any(Permission.class))).thenReturn(permission);
+        when(clientDao.getClientByClientId(anyString())).thenReturn(client);
+        DefinedPermission definedPermission = service.checkAndGetPermission("customerId", "clientId", "permissionId");
+        assertThat("permission id", definedPermission.getPermissionId(), equalTo("permissionId"));
+    }
+
+    @Test
+    public void updateClientRole_callsClientDao_updateClientRole() throws Exception {
+        service.updateClientRole(null);
+        verify(clientDao).updateClientRole(null);
+    }
+
+    @Test
+    public void getClientRolesByClientId_callsClientDao_getClientRolesByClientId() throws Exception {
+        List<ClientRole> roles = new ArrayList<ClientRole>();
+        when(clientDao.getClientRolesByClientId("clientId")).thenReturn(roles);
+        service.getClientRolesByClientId("clientId");
+        verify(clientDao).getClientRolesByClientId("clientId");
+    }
+
+    @Test
+    public void getAllClientRoles_callsClientDao_getAllClientRoles() throws Exception {
+        List<ClientRole> roles = new ArrayList<ClientRole>();
+        when(clientDao.getAllClientRoles(null)).thenReturn(roles);
+        service.getAllClientRoles(null);
+    }
+
+    @Test
+    public void getClientRoleByClientIdAndRoleName_callsClientDao_getClientRoleByClientIdAndRoleName() throws Exception {
+        when(clientDao.getClientRoleByClientIdAndRoleName("clientId", "roleName")).thenReturn(new ClientRole());
+        service.getClientRoleByClientIdAndRoleName("clientId", "roleName");
+        verify(clientDao).getClientRoleByClientIdAndRoleName("clientId", "roleName");
+    }
+
+    @Test
+    public void getClientRoleById_callsClientDao_getClientRoleById() throws Exception {
+        when(clientDao.getClientRoleById("id")).thenReturn(new ClientRole());
+        service.getClientRoleById("id");
+        verify(clientDao).getClientRoleById("id");
+    }
+
+    @Test
+    public void getOpenStackService_callsClientDao_getOpenStackService() throws Exception {
+        when(clientDao.getOpenStackServices()).thenReturn(new ArrayList<Application>());
+        service.getOpenStackServices();
+        verify(clientDao).getOpenStackServices();
+    }
 
     @Test(expected = NotFoundException.class)
     public void removeUserFromClientGroup_throwsNotFoundException_whenCustomerDoesNotExist() throws Exception {
