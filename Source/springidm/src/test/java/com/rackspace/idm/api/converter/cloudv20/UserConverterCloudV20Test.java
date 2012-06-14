@@ -36,7 +36,6 @@ public class UserConverterCloudV20Test {
         userConverterCloudV20.setRoleConverterCloudV20(roleConverterCloudV20);
     }
 
-    @Ignore
     @Test
     public void toUserDO_setsRegion() throws Exception {
         final UserForCreate user = new UserForCreate();
@@ -45,7 +44,6 @@ public class UserConverterCloudV20Test {
         assertThat("user region", userDO.getRegion(), equalTo("foo"));
     }
 
-    @Ignore
     @Test
     public void toUser_domainUserHasRegion_setsJaxbObjectsRegion() throws Exception {
         final User user = new User();

@@ -930,7 +930,6 @@ public class DefaultCloud20ServiceTest {
         assertThat("default region", argumentCaptor.getValue().getRegion(), equalTo("US of A"));
     }
 
-    @Ignore
     @Test
     public void updateUser_withRegionAndPreviousRegionsExists_newRegionGetsSaved() throws Exception {
         UserForCreate userWithRegion = new UserForCreate();
