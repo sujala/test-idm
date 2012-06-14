@@ -128,16 +128,6 @@ public class ApplicationConverter {
         return objectFactory.createApplication(returnedApplication);
     }
 
-    public JAXBElement<com.rackspace.api.idm.v1.Application> toClientJaxbFromClient(
-        String clientId, String customerId) {
-        com.rackspace.api.idm.v1.Application returnedClient = objectFactory.createApplication();
-
-        returnedClient.setClientId(clientId);
-        returnedClient.setCustomerId(customerId);
-
-        return objectFactory.createApplication(returnedClient);
-    }
-    
     public JAXBElement<com.rackspace.api.idm.v1.Application> toApplicationJaxbFromApplication(Application client) {
     	if (client == null) {
     		return null;
