@@ -20,6 +20,8 @@ public class FeedUser {
     protected String id;
     @XmlAttribute
     protected String displayName;
+    @XmlAttribute
+    protected String migrationStatus;
 
     public String getUsername() {
         return username;
@@ -41,9 +43,12 @@ public class FeedUser {
         return displayName;
     }
 
-
     public void setDisplayName(String value) {
         this.displayName = value;
+    }
+
+    public void setMigrationStatus(String value){
+        this.migrationStatus = value;
     }
 
 }

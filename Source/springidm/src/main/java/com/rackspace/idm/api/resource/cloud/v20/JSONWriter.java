@@ -22,12 +22,13 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.ServiceList;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplateList;
-import org.openstack.docs.identity.api.ext.os_ksec2.v1.Ec2CredentialsType;
 import org.openstack.docs.identity.api.v2.*;
 import org.openstack.docs.identity.api.v2.Endpoint;
 import org.openstack.docs.identity.api.v2.ServiceCatalog;
 import org.openstack.docs.identity.api.v2.Token;
 import org.openstack.docs.identity.api.v2.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3._2005.atom.Link;
 
 import javax.ws.rs.Produces;
@@ -39,6 +40,7 @@ import javax.ws.rs.ext.Provider;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.XMLGregorianCalendar;
+import javax.xml.namespace.QName;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.annotation.Annotation;
@@ -49,6 +51,8 @@ import java.util.List;
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
 public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
+
+    private static final Logger logger = LoggerFactory.getLogger(JSONWriter.class);
 
     @Override
     public long getSize(JAXBElement<?> arg0, Class<?> arg1, Type arg2,
@@ -186,11 +190,11 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
                 SecretQA secrets = (SecretQA) object.getValue();
                 String jsonText = JSONValue.toJSONString(getSecretQA(secrets));
                 outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
-            } else if(cred instanceof  PasswordCredentialsBase){
+            } else if (cred instanceof PasswordCredentialsBase) {
                 PasswordCredentialsBase creds = (PasswordCredentialsBase) cred;
                 String jsonText = JSONValue.toJSONString(getPasswordCredentials(creds));
                 outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
-            } else{
+            } else {
                 throw new BadRequestException("Credential Type must be API Key Credentials, Password Credentials, or SecretQA.");
             }
 
@@ -269,9 +273,9 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
             outer.put(JSONConstants.ACCESS, access);
 
             if (authenticateResponse.getAny().size() > 0) {
-                for(Object response : authenticateResponse.getAny()) {
+                for (Object response : authenticateResponse.getAny()) {
                     if (response instanceof UserForAuthenticateResponse) {
-                        UserForAuthenticateResponse userForAuthenticateResponse = (UserForAuthenticateResponse)response;
+                        UserForAuthenticateResponse userForAuthenticateResponse = (UserForAuthenticateResponse) response;
 
                         JSONObject subAccess = new JSONObject();
                         subAccess.put(JSONConstants.ID, userForAuthenticateResponse.getId());
@@ -356,17 +360,25 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
             String jsonText = JSONValue.toJSONString(outer);
             outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
 
+        } else if (object.getDeclaredType().isAssignableFrom(User.class)) {
+            User user = (User) object.getValue();
+            JSONObject outer = new JSONObject();
+            outer.put(JSONConstants.USER, getUser(user));
+
+            String jsonText = JSONValue.toJSONString(outer);
+            outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
         } else {
             try {
                 getMarshaller().marshallToJSON(object, outputStream);
             } catch (JAXBException e) {
-                e.printStackTrace();
+                logger.info(e.toString());
+                throw new BadRequestException("Parameters are not valid.");
             }
         }
     }
 
     @SuppressWarnings("unchecked")
-    private static JSONArray getLinks(List<Object> any) {
+    static JSONArray getLinks(List<Object> any) {
         JSONArray linkArray = new JSONArray();
         for (Object o : any) {
             if (o instanceof JAXBElement) {
@@ -432,7 +444,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     }
 
     @SuppressWarnings("unchecked")
-    private JSONObject getTokenUser(UserForAuthenticateResponse user) {
+    JSONObject getTokenUser(UserForAuthenticateResponse user) {
         JSONObject userInner = new JSONObject();
         userInner.put(JSONConstants.ID, user.getId());
         if (user.getName() != null) {
@@ -487,14 +499,19 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     @SuppressWarnings("unchecked")
     JSONObject getToken(Token token) {
         JSONObject tokenInner = new JSONObject();
-        tokenInner.put(JSONConstants.ID, token.getId());
-        tokenInner.put(JSONConstants.EXPIRES, token.getExpires().toString());
+        try{
+            tokenInner.put(JSONConstants.ID, token.getId());
+            tokenInner.put(JSONConstants.EXPIRES, token.getExpires().toString());
+        } catch (NullPointerException e){
+            throw new BadRequestException("Expected \"id\" and \"expired\" to not be null.");
+        }
+
         if (token.getTenant() != null) { tokenInner.put(JSONConstants.TENANT, token.getTenant().getName()); }
         return tokenInner;
     }
 
     @SuppressWarnings("unchecked")
-    private JSONArray getTenants(List<TenantForAuthenticateResponse> tenants) {
+    JSONArray getTenants(List<TenantForAuthenticateResponse> tenants) {
         JSONArray tenantList = new JSONArray();
         for (TenantForAuthenticateResponse tenant : tenants) {
             JSONObject tenantItem = new JSONObject();
@@ -506,7 +523,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     }
 
     @SuppressWarnings("unchecked")
-    private JSONArray getEndpointsForCatalog(List<EndpointForService> endpoints) {
+    JSONArray getEndpointsForCatalog(List<EndpointForService> endpoints) {
         JSONArray endpointList = new JSONArray();
         for (EndpointForService endpoint : endpoints) {
             JSONObject endpointItem = new JSONObject();
@@ -570,6 +587,15 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
         outer.put(JSONConstants.USERNAME, user.getUsername());
         outer.put(JSONConstants.EMAIL, user.getEmail());
         outer.put(JSONConstants.ENABLED, user.isEnabled());
+        if(user.getCreated() != null){
+            outer.put(JSONConstants.CREATED,user.getCreated().toString());
+        }
+        if(user.getUpdated() != null){
+            outer.put(JSONConstants.UPDATED,user.getUpdated().toString());
+        }
+        if(user.getOtherAttributes().size() != 0){
+            outer.put(JSONConstants.RAX_AUTH_DEFAULT_REGION, user.getOtherAttributes().get(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "defaultRegion")));
+        }
         return outer;
     }
 
@@ -595,7 +621,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     }
 
     @SuppressWarnings("unchecked")
-    private JSONObject getGroups(Groups groups) {
+    JSONObject getGroups(Groups groups) {
         JSONObject outer = new JSONObject();
         JSONArray list = new JSONArray();
         outer.put(JSONConstants.GROUPS, list);
@@ -625,7 +651,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     }
 
     @SuppressWarnings("unchecked")
-    private JSONObject getGroupWithoutWrapper(Group group) {
+    JSONObject getGroupWithoutWrapper(Group group) {
         JSONObject outer = new JSONObject();
         outer.put(JSONConstants.ID, group.getId());
         outer.put(JSONConstants.NAME, group.getName());
@@ -635,7 +661,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
         return outer;
     }
 
-    private JSONObject get11Group(com.rackspacecloud.docs.auth.api.v1.Group group) {
+    JSONObject get11Group(com.rackspacecloud.docs.auth.api.v1.Group group) {
         JSONObject outer = new JSONObject();
         outer.put(JSONConstants.ID, group.getId());
         if (group.getDescription() != null) {
@@ -664,7 +690,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     }
 
     @SuppressWarnings("unchecked")
-    private JSONObject getServiceList(ServiceList serviceList) {
+    JSONObject getServiceList(ServiceList serviceList) {
         JSONObject outer = new JSONObject();
         JSONArray list = new JSONArray();
         for (Service service : serviceList.getService()) {
@@ -682,7 +708,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     }
 
     @SuppressWarnings("unchecked")
-    private JSONObject getEndpointTemplateWithoutWrapper(
+    JSONObject getEndpointTemplateWithoutWrapper(
             EndpointTemplate template) {
         JSONObject outer = new JSONObject();
         outer.put(JSONConstants.ID, template.getId());
@@ -728,7 +754,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     }
 
     @SuppressWarnings("unchecked")
-    private JSONObject getBaseUrlList(BaseURL url) {
+    JSONObject getBaseUrlList(BaseURL url) {
         JSONObject baseURL = new JSONObject();
         baseURL.put(JSONConstants.ENABLED, url.isEnabled());
         baseURL.put(JSONConstants.DEFAULT, url.isDefault());
@@ -845,7 +871,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
         return outer;
     }
 
-    private JSONMarshaller getMarshaller() throws JAXBException {
+    JSONMarshaller getMarshaller() throws JAXBException {
         return ((JSONJAXBContext) JAXBContextResolver.get()).createJSONMarshaller();
     }
 }

@@ -7,6 +7,7 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 
+import com.rackspace.api.idm.v1.Token;
 import org.joda.time.DateTime;
 
 import com.rackspace.api.idm.v1.ObjectFactory;
@@ -99,9 +100,10 @@ public class TokenConverter {
         com.rackspace.api.idm.v1.TokenList jaxbTokens = of.createTokenList();
 
         for (DelegatedClientScopeAccess u : scopeAccessList) {
-            com.rackspace.api.idm.v1.Token token = toTokenJaxb(
-                u.getRefreshTokenString(), u.getRefreshTokenExp()).getValue();
-            jaxbTokens.getToken().add(token);
+            JAXBElement<Token> token = toTokenJaxb(u.getRefreshTokenString(), u.getRefreshTokenExp());
+            if(token != null) {
+                jaxbTokens.getToken().add(token.getValue());
+            }
         }
         return of.createTokens(jaxbTokens);
     }

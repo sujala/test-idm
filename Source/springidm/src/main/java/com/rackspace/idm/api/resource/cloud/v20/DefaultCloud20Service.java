@@ -8,6 +8,7 @@ import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.converter.cloudv20.*;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
@@ -346,7 +347,6 @@ public class DefaultCloud20Service implements Cloud20Service {
                 userDO.setMossoId(caller.getMossoId());
                 userDO.setNastId(caller.getNastId());
             }
-            assignDefaultRegionToDomainUser(userDO);
             setDomainId(scopeAccessByAccessToken, userDO);
             userService.addUser(userDO);
             assignProperRole(httpHeaders, authToken, scopeAccessByAccessToken, userDO);
@@ -367,7 +367,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     void assignDefaultRegionToDomainUser(User userDO) {
-        if(userDO.getRegion()==null){
+        if (userDO.getRegion() == null) {
             userDO.setRegion("default");
         }
     }
@@ -415,7 +415,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             User userDO = this.userConverterCloudV20.toUserDO(user);
             if (userDO.isDisabled()) {
                 this.scopeAccessService.expireAllTokensForUser(retrievedUser.getUsername());
-                atomHopperClient.asyncPost(retrievedUser,authToken,"disabled");
+                atomHopperClient.asyncPost(retrievedUser, authToken, AtomHopperConstants.DISABLED, null);
             }
             retrievedUser.copyChanges(userDO);
 
@@ -800,7 +800,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
             userService.softDeleteUser(user);
 
-            atomHopperClient.asyncPost(user,authToken,"deleted");
+            atomHopperClient.asyncPost(user, authToken, AtomHopperConstants.DELETED, null);
 
             return Response.noContent();
         } catch (Exception ex) {
@@ -1999,14 +1999,14 @@ public class DefaultCloud20Service implements Cloud20Service {
 
                 //Add Racker eDir Roles
                 List<String> rackerRoles = userService.getRackerRoles(racker.getRackerId());
-                if(rackerRoles != null) {
-                    for(String r : rackerRoles){
+                if (rackerRoles != null) {
+                    for (String r : rackerRoles) {
                         TenantRole t = new TenantRole();
                         t.setName(r);
                         roleList.add(t);
                     }
                 }
-                
+
                 access.setUser(userConverterCloudV20.toUserForAuthenticateResponse(racker, roleList));
             } else if (sa instanceof UserScopeAccess || sa instanceof ImpersonatedScopeAccess) {
                 String username = "";

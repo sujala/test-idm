@@ -99,7 +99,7 @@ public class EndpointConverterCloudV11 {
         return refs;
 	}
 
-    private List<BaseURLRef> toBaseUrlRef(OpenstackEndpoint endpoint) {
+    List<BaseURLRef> toBaseUrlRef(OpenstackEndpoint endpoint) {
     	List<BaseURLRef> result = new ArrayList<BaseURLRef>();
     	
     	if (endpoint == null) {

@@ -28,6 +28,7 @@
         <soapui.version>4.0.2-SNAPSHOT</soapui.version>
         <!--Integration test flag for sonar 3.0-->
         <skip.default.surefire>true</skip.default.surefire>
+        <skip.test>false</skip.test>
     </properties>
 
     <dependencies>
@@ -1202,6 +1203,7 @@
                 <version>2.12</version>
                 <configuration>
                     <skip>${skip.default.surefire}</skip>
+                    <skipTests>${skip.test}</skipTests>
                     <argLine>-Xmx1024m -XX:MaxPermSize=512m</argLine>
                     <systemProperties>
                         <property>

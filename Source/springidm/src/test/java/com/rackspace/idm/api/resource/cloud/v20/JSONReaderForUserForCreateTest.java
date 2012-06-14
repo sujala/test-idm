@@ -1,6 +1,5 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.exception.BadRequestException;
 import org.junit.Before;
 import org.junit.Test;
@@ -54,10 +53,10 @@ public class JSONReaderForUserForCreateTest {
                         "            \"email\": \"cmarin1-sub@example.com\",\n" +
                         "            \"enabled\": false,\n" +
                         "            \"OS-KSADM:password\":\"Password48\",\n" +
-                        "            \"OS-KSADM:defaultRegion\":\"foo\"\n" +
+                        "            \"RAX-AUTH:defaultRegion\":\"foo\"\n" +
                         "        }\n" +
                         "}";
-        assertThat("default region", JSONReaderForUserForCreate.getUserFromJSONString(body).getOtherAttributes().get(new QName(JSONConstants.OS_KSADM_DEFAULT_REGION.toString())), equalTo("foo"));
+        assertThat("default region", JSONReaderForUserForCreate.getUserFromJSONString(body).getOtherAttributes().get(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","defaultRegion")), equalTo("foo"));
     }
 
     @Test
