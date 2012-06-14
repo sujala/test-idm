@@ -9,12 +9,12 @@
         <collectionProp name="Arguments.arguments">
           <elementProp name="env" elementType="Argument">
             <stringProp name="Argument.name">env</stringProp>
-            <stringProp name="Argument.value">${__P(Env,PROD-EXTERNAL)}</stringProp>
+            <stringProp name="Argument.value">${__P(Env,PROD-INTERNAL)}</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
           <elementProp name="format" elementType="Argument">
             <stringProp name="Argument.name">format</stringProp>
-            <stringProp name="Argument.value">${__P(Format,XML)}</stringProp>
+            <stringProp name="Argument.value">${__P(Format,JSON)}</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
         </collectionProp>
@@ -1944,14 +1944,14 @@
         <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
         <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
           <boolProp name="LoopController.continue_forever">false</boolProp>
-          <intProp name="LoopController.loops">-1</intProp>
+          <stringProp name="LoopController.loops">1</stringProp>
         </elementProp>
-        <stringProp name="ThreadGroup.num_threads">${ThreadCount}</stringProp>
-        <stringProp name="ThreadGroup.ramp_time">${RampPeriod}</stringProp>
+        <stringProp name="ThreadGroup.num_threads">1</stringProp>
+        <stringProp name="ThreadGroup.ramp_time">1</stringProp>
         <longProp name="ThreadGroup.start_time">1327375014000</longProp>
         <longProp name="ThreadGroup.end_time">1327375014000</longProp>
         <boolProp name="ThreadGroup.scheduler">true</boolProp>
-        <stringProp name="ThreadGroup.duration">${Duration}</stringProp>
+        <stringProp name="ThreadGroup.duration">600</stringProp>
         <stringProp name="ThreadGroup.delay"></stringProp>
       </ThreadGroup>
       <hashTree>
@@ -2087,7 +2087,7 @@
               <stringProp name="0"></stringProp>
             </collectionProp>
             <collectionProp name="UserParameters.thread_values">
-              <collectionProp name="922388134">
+              <collectionProp name="1079404215">
                 <stringProp name="-2126772429">https://dfw.rackidm.api.rackspace.com</stringProp>
                 <stringProp name="1349710559">https://ord.rackidm.api.rackspace.com</stringProp>
                 <stringProp name="1215921518">https://identity.api.rackspacecloud.com</stringProp>
@@ -2112,13 +2112,13 @@
                 <stringProp name="655416422">rackidentity.api.rackspacecloud.com</stringProp>
                 <stringProp name="51635">443</stringProp>
                 <stringProp name="99617003">https</stringProp>
-                <stringProp name="1847601885">/v1.0/tokens</stringProp>
+                <stringProp name="-1784288161">/v1/tokens</stringProp>
                 <stringProp name="1216985755">password</stringProp>
                 <stringProp name="-560617505">rackspacefoundationtestuser</stringProp>
                 <stringProp name="-2013988127">817W5jO4w52W50r</stringProp>
                 <stringProp name="-749075546">shan0433</stringProp>
                 <stringProp name="-384640052">Water1098!</stringProp>
-                <stringProp name="1216985755">password</stringProp>
+                <stringProp name="1503465806">mtNJny9mKj4JE</stringProp>
                 <stringProp name="-1657423355">18e7a7032733486cd32f472d7bd58f709ac0d221</stringProp>
                 <stringProp name="-893241125">bde1268ebabeeabb70a0e702a4626977c331d5c4</stringProp>
                 <stringProp name="-749075546">shan0433</stringProp>
@@ -2295,7 +2295,7 @@
               <stringProp name="0"></stringProp>
             </collectionProp>
             <collectionProp name="UserParameters.thread_values">
-              <collectionProp name="1788649575">
+              <collectionProp name="1747114334">
                 <stringProp name="-2126772429">https://dfw.rackidm.api.rackspace.com</stringProp>
                 <stringProp name="1349710559">https://ord.rackidm.api.rackspace.com</stringProp>
                 <stringProp name="1215921518">https://identity.api.rackspacecloud.com</stringProp>
@@ -2385,7 +2385,7 @@
                 <stringProp name="99617003">https</stringProp>
                 <stringProp name="0"></stringProp>
                 <stringProp name="0"></stringProp>
-                <stringProp name="0"></stringProp>
+                <stringProp name="-1612874128">b-ext-api2.cidm.dfw1.corp.rackspace.com</stringProp>
                 <stringProp name="0"></stringProp>
                 <stringProp name="0"></stringProp>
                 <stringProp name="0"></stringProp>
@@ -2510,7 +2510,7 @@
               <stringProp name="1355383284">API - Authenticate and Validation</stringProp>
               <stringProp name="-1318149299">Auth2.0_GA</stringProp>
               <stringProp name="1203240311">Auth2.0_GA-XML</stringProp>
-              <stringProp name="1085383526">Auth2.0-GA - Loop Controller - Validate Token - XML</stringProp>
+              <stringProp name="198306600">Auth2.0-GA - Authenticate - Token Password Credentials - XML</stringProp>
             </collectionProp>
           </ModuleController>
           <hashTree/>
@@ -2569,7 +2569,7 @@
               </collectionProp>
             </ModuleController>
             <hashTree/>
-            <ModuleController guiclass="ModuleControllerGui" testclass="ModuleController" testname="Module Controller - Authenticate As Application - Non Admin Token - XML" enabled="true">
+            <ModuleController guiclass="ModuleControllerGui" testclass="ModuleController" testname="Module Controller - Authenticate As Application - Non Admin Token - XML" enabled="false">
               <collectionProp name="ModuleController.node_path">
                 <stringProp name="-1227702913">WorkBench</stringProp>
                 <stringProp name="-1493716441">Auth and Validate Performance</stringProp>
@@ -2580,7 +2580,7 @@
               </collectionProp>
             </ModuleController>
             <hashTree/>
-            <ModuleController guiclass="ModuleControllerGui" testclass="ModuleController" testname="Module Controller - Loop Controller - Validate Non Admin Token - XML" enabled="true">
+            <ModuleController guiclass="ModuleControllerGui" testclass="ModuleController" testname="Module Controller - Loop Controller - Validate Non Admin Token - XML" enabled="false">
               <collectionProp name="ModuleController.node_path">
                 <stringProp name="-1227702913">WorkBench</stringProp>
                 <stringProp name="-1493716441">Auth and Validate Performance</stringProp>
