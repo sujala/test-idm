@@ -54,6 +54,14 @@ public class UserConverterCloudV20Test {
     }
 
     @Test
+    public void toUser_domainUserHasNullRegion_doesNotSetJaxbObjectsRegion() throws Exception {
+        final User user = new User();
+        when(objectFactory.createUser()).thenReturn(new org.openstack.docs.identity.api.v2.User());
+        final org.openstack.docs.identity.api.v2.User jaxbObject = userConverterCloudV20.toUser(user);
+        assertThat("does not contain region", jaxbObject.getOtherAttributes().containsKey("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0\",\"defaultRegion"), equalTo(false));
+    }
+
+    @Test
     public void toUserForAuthenticateResponse_calls_createUserForAuthenticateResponse() throws Exception {
         when(objectFactory.createUserForAuthenticateResponse()).thenReturn(new UserForAuthenticateResponse());
         userConverterCloudV20.toUserForAuthenticateResponse(new Racker(), null);
