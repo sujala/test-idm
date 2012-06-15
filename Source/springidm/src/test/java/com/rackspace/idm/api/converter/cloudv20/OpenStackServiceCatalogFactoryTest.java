@@ -46,6 +46,7 @@ public class OpenStackServiceCatalogFactoryTest {
         ArrayList<CloudBaseUrl> baseUrls = new ArrayList<CloudBaseUrl>();
         CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
         cloudBaseUrl.setServiceName("serviceName");
+        cloudBaseUrl.setOpenstackType("endpointType");
         baseUrls.add(cloudBaseUrl);
         openstackEndpoint.setBaseUrls(baseUrls);
         openstackEndpoint.setTenantName("tenantName");
@@ -71,6 +72,7 @@ public class OpenStackServiceCatalogFactoryTest {
         ArrayList<CloudBaseUrl> baseUrls = new ArrayList<CloudBaseUrl>();
         CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
         cloudBaseUrl.setServiceName("serviceName");
+        cloudBaseUrl.setOpenstackType("endpointType");
         baseUrls.add(cloudBaseUrl);
         baseUrls.add(cloudBaseUrl);
         endPoint.setBaseUrls(baseUrls);
@@ -87,10 +89,11 @@ public class OpenStackServiceCatalogFactoryTest {
         OpenstackEndpoint endPoint = new OpenstackEndpoint();
         ArrayList<CloudBaseUrl> baseUrls = new ArrayList<CloudBaseUrl>();
         CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
+        cloudBaseUrl.setServiceName("serviceName");
+        cloudBaseUrl.setOpenstackType("endpointType");
         cloudBaseUrl.setVersionId("versionId");
         cloudBaseUrl.setVersionInfo("versionInfo");
         cloudBaseUrl.setVersionList("versionList");
-        cloudBaseUrl.setServiceName("serviceName");
         cloudBaseUrl.setAdminUrl("adminUrl");
         cloudBaseUrl.setInternalUrl("internalUrl");
         cloudBaseUrl.setPublicUrl("publicUrl");
