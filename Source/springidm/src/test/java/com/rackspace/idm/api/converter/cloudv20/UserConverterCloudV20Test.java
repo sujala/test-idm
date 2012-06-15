@@ -4,6 +4,7 @@ import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.entity.User;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.v2.ObjectFactory;
@@ -50,6 +51,14 @@ public class UserConverterCloudV20Test {
         when(objectFactory.createUser()).thenReturn(new org.openstack.docs.identity.api.v2.User());
         final org.openstack.docs.identity.api.v2.User jaxbObject = userConverterCloudV20.toUser(user);
         assertThat("region", jaxbObject.getOtherAttributes().get(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","defaultRegion")),equalTo("myRegion"));
+    }
+
+    @Test
+    public void toUser_domainUserHasNullRegion_doesNotSetJaxbObjectsRegion() throws Exception {
+        final User user = new User();
+        when(objectFactory.createUser()).thenReturn(new org.openstack.docs.identity.api.v2.User());
+        final org.openstack.docs.identity.api.v2.User jaxbObject = userConverterCloudV20.toUser(user);
+        assertThat("does not contain region", jaxbObject.getOtherAttributes().containsKey("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0\",\"defaultRegion"), equalTo(false));
     }
 
     @Test

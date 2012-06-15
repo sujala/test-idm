@@ -50,7 +50,7 @@ public class OpenStackServiceCatalogFactory {
                 endpointItem.setVersion(version);
             }
             
-            setEndpointUrls(endpointItem, endPoint.getTenantName());
+            //setEndpointUrls(endpointItem, endPoint.getTenantName());
             
             currentService.getEndpoint().add(endpointItem);
         }

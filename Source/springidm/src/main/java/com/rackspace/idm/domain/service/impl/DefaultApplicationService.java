@@ -482,7 +482,7 @@ public class DefaultApplicationService implements ApplicationService {
         return permission;
     }
 
-    private void addUserToClientGroup(String username, ClientGroup clientGroup) {
+    void addUserToClientGroup(String username, ClientGroup clientGroup) {
         logger.debug("Add User: {} to ClientGroup: {}", username, clientGroup);
         if (StringUtils.isBlank(username)) {
             logger.warn("Username is blank");
