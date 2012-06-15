@@ -19,9 +19,6 @@ import java.util.List;
 @Component
 public class UserConverterCloudV20 {
     
-    @Autowired
-    private JAXBObjectFactories OBJ_FACTORIES;
-
     ObjectFactory objectFactory = new ObjectFactory();
 
     @Autowired
@@ -44,7 +41,7 @@ public class UserConverterCloudV20 {
     }
 
     public UserForAuthenticateResponse toUserForAuthenticateResponse(com.rackspace.idm.domain.entity.User user, List<TenantRole> roles) {
-        UserForAuthenticateResponse jaxbUser = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUserForAuthenticateResponse();
+        UserForAuthenticateResponse jaxbUser = objectFactory.createUserForAuthenticateResponse();
 
         jaxbUser.setId(user.getId());
         jaxbUser.setName(user.getUsername());
@@ -100,7 +97,7 @@ public class UserConverterCloudV20 {
 
     public UserList toUserList(List<com.rackspace.idm.domain.entity.User> users) {
 
-        UserList list = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUserList();
+        UserList list = objectFactory.createUserList();
 
         for (com.rackspace.idm.domain.entity.User user : users) {
             list.getUser().add(this.toUser(user));
@@ -109,16 +106,8 @@ public class UserConverterCloudV20 {
         return list;
     }
 
-    public ObjectFactory getObjectFactory() {
-        return objectFactory;
-    }
-
     public void setObjectFactory(ObjectFactory objectFactory) {
         this.objectFactory = objectFactory;
-    }
-
-    public RoleConverterCloudV20 getRoleConverterCloudV20() {
-        return roleConverterCloudV20;
     }
 
     public void setRoleConverterCloudV20(RoleConverterCloudV20 roleConverterCloudV20) {
