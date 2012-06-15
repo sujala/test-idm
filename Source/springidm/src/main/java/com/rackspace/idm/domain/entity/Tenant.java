@@ -95,8 +95,16 @@ public class Tenant implements Auditable {
         this.displayName = displayName;
     }
 
+    public void setCreated(Date created) {
+        this.created = created;
+    }
+
     public Date getCreated() {
         return created;
+    }
+
+    public void setUpdated(Date updated) {
+        this.updated = updated;
     }
 
     public Date getUpdated() {
