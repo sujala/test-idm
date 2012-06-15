@@ -23,21 +23,16 @@ public class UserPasswordCredentialsValidator {
 
     public void validateCurrentPassword(UserPasswordCredentials userPasswordCredentials, User user) {
         UserPassword currentPassword = userPasswordCredentials.getCurrentPassword();
-        boolean badRequest = false;
         if (currentPassword == null) {
             throw new BadRequestException("Invalid request");
         }
         String password = userPasswordCredentials.getCurrentPassword().getPassword();
-        if (!user.getPassword().equals(password)) {
-            badRequest = true;
-        }
         if (password == null || password.equals("")) {
-            badRequest = true;
-        }
-        if (badRequest) {
             throw new BadRequestException("Invalid request");
         }
-
+        if (!user.getPassword().equals(password)) {
+            throw new BadRequestException("Invalid request");
+        }
     }
 
     public void validateCurrentPassword(UserPasswordCredentials userPasswordCredentials) {
