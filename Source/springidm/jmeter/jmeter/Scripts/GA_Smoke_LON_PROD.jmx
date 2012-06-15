@@ -2276,11 +2276,11 @@
               <stringProp name="540328134">GA_port</stringProp>
               <stringProp name="478350429">GA_protocol</stringProp>
               <stringProp name="0"></stringProp>
-              <stringProp name="0"></stringProp>
-              <stringProp name="0"></stringProp>
+              <stringProp name="-680589388">production node end point</stringProp>
+              <stringProp name="-1512662465">production vip endpoint</stringProp>
             </collectionProp>
             <collectionProp name="UserParameters.thread_values">
-              <collectionProp name="-1982536443">
+              <collectionProp name="-1705403095">
                 <stringProp name="0"></stringProp>
                 <stringProp name="0"></stringProp>
                 <stringProp name="0"></stringProp>
@@ -2309,7 +2309,7 @@
                 <stringProp name="1349710559">https://ord.rackidm.api.rackspace.com</stringProp>
                 <stringProp name="1215921518">https://identity.api.rackspacecloud.com</stringProp>
                 <stringProp name="0"></stringProp>
-                <stringProp name="2076448579">lon.rackidentity.api.rackspacecloud.com</stringProp>
+                <stringProp name="-847556109">b-int-api1.cidm.lon3.corp.rackspace.com</stringProp>
                 <stringProp name="51635">443</stringProp>
                 <stringProp name="99617003">https</stringProp>
                 <stringProp name="1847601885">/v1.0/tokens</stringProp>
@@ -2357,12 +2357,12 @@
                 <stringProp name="-1821635732">globalAuthUserUK</stringProp>
                 <stringProp name="0"></stringProp>
                 <stringProp name="0"></stringProp>
-                <stringProp name="2076448579">lon.rackidentity.api.rackspacecloud.com</stringProp>
+                <stringProp name="-847556109">b-int-api1.cidm.lon3.corp.rackspace.com</stringProp>
                 <stringProp name="51635">443</stringProp>
                 <stringProp name="99617003">https</stringProp>
                 <stringProp name="0"></stringProp>
-                <stringProp name="0"></stringProp>
-                <stringProp name="0"></stringProp>
+                <stringProp name="75127474">a-int-api1.cidm.lon3.corp.rackspace.com</stringProp>
+                <stringProp name="2076448579">lon.rackidentity.api.rackspacecloud.com</stringProp>
               </collectionProp>
             </collectionProp>
             <boolProp name="UserParameters.per_iteration">false</boolProp>
@@ -2477,7 +2477,7 @@
               <stringProp name="0"></stringProp>
             </collectionProp>
             <collectionProp name="UserParameters.thread_values">
-              <collectionProp name="-1774200640">
+              <collectionProp name="202930117">
                 <stringProp name="0"></stringProp>
                 <stringProp name="0"></stringProp>
                 <stringProp name="0"></stringProp>
@@ -2567,7 +2567,7 @@
                 <stringProp name="0"></stringProp>
                 <stringProp name="0"></stringProp>
                 <stringProp name="0"></stringProp>
-                <stringProp name="176092026">lon.identity.api.rackspacecloud.com</stringProp>
+                <stringProp name="156514213">b-ext-api1.cidm.lon3.corp.rackspace.com</stringProp>
                 <stringProp name="51635">443</stringProp>
                 <stringProp name="99617003">https</stringProp>
                 <stringProp name="0"></stringProp>
