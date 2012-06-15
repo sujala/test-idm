@@ -70,6 +70,11 @@ public class DefaultGroupService implements GroupService {
 
     @Override
     public void addGroup(Group group) {
+
+        if(group == null){
+            throw new IllegalArgumentException("Group cannot be null");
+        }
+
         logger.info("Adding Client Group: {}", group);
         verifyDuplicateGroup(group);
         group.setGroupId(Integer.parseInt(this.groupDao.getNextGroupId()));
@@ -85,14 +90,26 @@ public class DefaultGroupService implements GroupService {
     @Override
     public void updateGroup(Group group) {
         logger.info("Updating Client Group: {}", group);
-        Group groupDo = groupDao.getGroupById(group.getGroupId());
+        if(group == null){
+            throw new IllegalArgumentException("Group cannot be null");
+        }
+        if(group.getGroupId() == null){
+            throw new IllegalArgumentException("GroupId cannot be null");
+        }
+        Integer groupId = group.getGroupId();
+        Group groupDo = groupDao.getGroupById(groupId);
+
+        if(groupDo.getName() == null){
+            throw new BadRequestException();
+        }
+
         if (!groupDo.getName().equals(group.getName())) {
             verifyDuplicateGroup(group);
         }
         groupDao.updateGroup(group);
     }
 
-    private void verifyDuplicateGroup(Group group) {
+    void verifyDuplicateGroup(Group group) {
         Group exists = groupDao.getGroupByName(group.getName());
         if (exists != null) {
             String errMsg = String.format("Group with name %s already exists", group.getName());
