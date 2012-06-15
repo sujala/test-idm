@@ -4,6 +4,7 @@ import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.OpenstackEndpoint;
 import org.junit.Before;
 import org.junit.Test;
+import org.openstack.docs.identity.api.v2.EndpointForService;
 import org.openstack.docs.identity.api.v2.ServiceCatalog;
 import org.openstack.docs.identity.api.v2.ServiceForCatalog;
 
@@ -25,10 +26,12 @@ import static org.mockito.Mockito.*;
 public class OpenStackServiceCatalogFactoryTest {
 
     OpenStackServiceCatalogFactory openStackServiceCatalogFactory;
+    ServiceCatalog serviceCatalog;
 
     @Before
     public void setUp() throws Exception {
         openStackServiceCatalogFactory = new OpenStackServiceCatalogFactory();
+        serviceCatalog = mock(ServiceCatalog.class);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -54,7 +57,7 @@ public class OpenStackServiceCatalogFactoryTest {
     }
 
     @Test
-    public void processEndpoint_withEndpoint_WithNoBaseUrls_doesNotGetService() throws Exception {
+    public void processEndpoint_withEndpoint_WithNoBaseUrls_doesChangeAnyService() throws Exception {
         OpenstackEndpoint endPoint = new OpenstackEndpoint();
         endPoint.setBaseUrls(new ArrayList<CloudBaseUrl>());
         ServiceCatalog serviceCatalog = mock(ServiceCatalog.class);
@@ -63,18 +66,51 @@ public class OpenStackServiceCatalogFactoryTest {
     }
 
     @Test
-    public void processEndpoint_withEndpoint_AddsEndpointToService() throws Exception {
+    public void processEndpoint_withEndpoint_AddsEndpointsToService() throws Exception {
         OpenstackEndpoint endPoint = new OpenstackEndpoint();
         ArrayList<CloudBaseUrl> baseUrls = new ArrayList<CloudBaseUrl>();
         CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
         cloudBaseUrl.setServiceName("serviceName");
         baseUrls.add(cloudBaseUrl);
+        baseUrls.add(cloudBaseUrl);
         endPoint.setBaseUrls(baseUrls);
 
-        ServiceCatalog serviceCatalog = mock(ServiceCatalog.class);
         when(serviceCatalog.getService()).thenReturn(new ArrayList<ServiceForCatalog>());
 
         OpenStackServiceCatalogFactory.processEndpoint(serviceCatalog, endPoint);
-        assertThat("endpoint", serviceCatalog.getService().size(), equalTo(1));
+        assertThat("service name", serviceCatalog.getService().get(0).getName(), equalTo("serviceName"));
+        assertThat("endpoint list size", serviceCatalog.getService().get(0).getEndpoint().size(), equalTo(2));
     }
+
+    @Test
+    public void processEndpoint_withEndpoint_setsFields() throws Exception {
+        OpenstackEndpoint endPoint = new OpenstackEndpoint();
+        ArrayList<CloudBaseUrl> baseUrls = new ArrayList<CloudBaseUrl>();
+        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
+        cloudBaseUrl.setVersionId("versionId");
+        cloudBaseUrl.setVersionInfo("versionInfo");
+        cloudBaseUrl.setVersionList("versionList");
+        cloudBaseUrl.setServiceName("serviceName");
+        cloudBaseUrl.setAdminUrl("adminUrl");
+        cloudBaseUrl.setInternalUrl("internalUrl");
+        cloudBaseUrl.setPublicUrl("publicUrl");
+        cloudBaseUrl.setRegion("region");
+        baseUrls.add(cloudBaseUrl);
+        endPoint.setBaseUrls(baseUrls);
+        endPoint.setTenantId("tenantId");
+
+        when(serviceCatalog.getService()).thenReturn(new ArrayList<ServiceForCatalog>());
+        OpenStackServiceCatalogFactory.processEndpoint(serviceCatalog, endPoint);
+        EndpointForService endpointForService = serviceCatalog.getService().get(0).getEndpoint().get(0);
+        assertThat("version id", endpointForService.getVersion().getId(), equalTo("versionId"));
+        assertThat("version list", endpointForService.getVersion().getList(), equalTo("versionList"));
+        assertThat("version info", endpointForService.getVersion().getInfo(), equalTo("versionInfo"));
+        assertThat("admin url", endpointForService.getAdminURL(), equalTo("adminUrl"));
+        assertThat("internal url", endpointForService.getInternalURL(), equalTo("internalUrl"));
+        assertThat("public url", endpointForService.getPublicURL(), equalTo("publicUrl"));
+        assertThat("region", endpointForService.getRegion(), equalTo("region"));
+        assertThat("tenant id", endpointForService.getTenantId(), equalTo("tenantId"));
+    }
+
+
 }
