@@ -14,7 +14,7 @@
           </elementProp>
           <elementProp name="format" elementType="Argument">
             <stringProp name="Argument.name">format</stringProp>
-            <stringProp name="Argument.value">${__P(Format,JSON)}</stringProp>
+            <stringProp name="Argument.value">${__P(Format,XML)}</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
         </collectionProp>
@@ -1271,7 +1271,7 @@
                   <collectionProp name="Arguments.arguments">
                     <elementProp name="" elementType="HTTPArgument">
                       <boolProp name="HTTPArgument.always_encode">false</boolProp>
-                      <stringProp name="Argument.value">&lt;authCredentials xmlns=&quot;http://idm.api.rackspace.com/v1.0&quot; password=&quot;${foundationApi_customerPassword}&quot; username=&quot;${foundationApi_customerUserName}&quot; client_secret=&quot;${foundationApi_clientSecretCustomer}&quot; client_id=&quot;${foundationApi_adminClientId}&quot; grant_type=&quot;PASSWORD&quot; /&gt;</stringProp>
+                      <stringProp name="Argument.value">&lt;authCredentials xmlns=&quot;http://idm.api.rackspace.com/v1.0&quot; password=&quot;${foundationApi_customerPassword}&quot; username=&quot;${foundationApi_customerUserName}&quot; client_secret=&quot;${foundationApi_clientSecret}&quot; client_id=&quot;${foundationApi_adminClientId}&quot; grant_type=&quot;PASSWORD&quot; /&gt;</stringProp>
                       <stringProp name="Argument.metadata">=</stringProp>
                       <boolProp name="HTTPArgument.use_equals">true</boolProp>
                     </elementProp>
@@ -1951,7 +1951,7 @@
         <longProp name="ThreadGroup.start_time">1327375014000</longProp>
         <longProp name="ThreadGroup.end_time">1327375014000</longProp>
         <boolProp name="ThreadGroup.scheduler">true</boolProp>
-        <stringProp name="ThreadGroup.duration">600</stringProp>
+        <stringProp name="ThreadGroup.duration">7200</stringProp>
         <stringProp name="ThreadGroup.delay"></stringProp>
       </ThreadGroup>
       <hashTree>
@@ -2087,7 +2087,7 @@
               <stringProp name="0"></stringProp>
             </collectionProp>
             <collectionProp name="UserParameters.thread_values">
-              <collectionProp name="1079404215">
+              <collectionProp name="373825305">
                 <stringProp name="-2126772429">https://dfw.rackidm.api.rackspace.com</stringProp>
                 <stringProp name="1349710559">https://ord.rackidm.api.rackspace.com</stringProp>
                 <stringProp name="1215921518">https://identity.api.rackspacecloud.com</stringProp>
@@ -2109,7 +2109,7 @@
                 <stringProp name="0"></stringProp>
                 <stringProp name="0"></stringProp>
                 <stringProp name="655416422">rackidentity.api.rackspacecloud.com</stringProp>
-                <stringProp name="655416422">rackidentity.api.rackspacecloud.com</stringProp>
+                <stringProp name="1666706719">b-int-api1.cidm.dfw1.corp.rackspace.com</stringProp>
                 <stringProp name="51635">443</stringProp>
                 <stringProp name="99617003">https</stringProp>
                 <stringProp name="-1784288161">/v1/tokens</stringProp>
@@ -2160,13 +2160,13 @@
                 <stringProp name="0"></stringProp>
                 <stringProp name="0"></stringProp>
                 <stringProp name="0"></stringProp>
-                <stringProp name="655416422">rackidentity.api.rackspacecloud.com</stringProp>
+                <stringProp name="1666706719">b-int-api1.cidm.dfw1.corp.rackspace.com</stringProp>
                 <stringProp name="51635">443</stringProp>
                 <stringProp name="99617003">https</stringProp>
                 <stringProp name="0"></stringProp>
-                <stringProp name="0"></stringProp>
-                <stringProp name="0"></stringProp>
-                <stringProp name="0"></stringProp>
+                <stringProp name="694358666">a-int-api1.cidm.ord1.corp.rackspace.com</stringProp>
+                <stringProp name="655416422">rackidentity.api.rackspacecloud.com</stringProp>
+                <stringProp name="1678022846">b-int-api2.cidm.dfw1.corp.rackspace.com</stringProp>
                 <stringProp name="0"></stringProp>
                 <stringProp name="0"></stringProp>
                 <stringProp name="0"></stringProp>
@@ -2295,7 +2295,7 @@
               <stringProp name="0"></stringProp>
             </collectionProp>
             <collectionProp name="UserParameters.thread_values">
-              <collectionProp name="1747114334">
+              <collectionProp name="208828219">
                 <stringProp name="-2126772429">https://dfw.rackidm.api.rackspace.com</stringProp>
                 <stringProp name="1349710559">https://ord.rackidm.api.rackspace.com</stringProp>
                 <stringProp name="1215921518">https://identity.api.rackspacecloud.com</stringProp>
@@ -2380,11 +2380,11 @@
                 <stringProp name="0"></stringProp>
                 <stringProp name="0"></stringProp>
                 <stringProp name="0"></stringProp>
-                <stringProp name="-1695956451">identity.api.rackspacecloud.com</stringProp>
+                <stringProp name="-1612874128">b-ext-api2.cidm.dfw1.corp.rackspace.com</stringProp>
                 <stringProp name="51635">443</stringProp>
                 <stringProp name="99617003">https</stringProp>
                 <stringProp name="0"></stringProp>
-                <stringProp name="0"></stringProp>
+                <stringProp name="1709745115">a-ext-api2.cidm.ord1.corp.rackspace.com</stringProp>
                 <stringProp name="-1612874128">b-ext-api2.cidm.dfw1.corp.rackspace.com</stringProp>
                 <stringProp name="0"></stringProp>
                 <stringProp name="0"></stringProp>
@@ -2510,7 +2510,7 @@
               <stringProp name="1355383284">API - Authenticate and Validation</stringProp>
               <stringProp name="-1318149299">Auth2.0_GA</stringProp>
               <stringProp name="1203240311">Auth2.0_GA-XML</stringProp>
-              <stringProp name="198306600">Auth2.0-GA - Authenticate - Token Password Credentials - XML</stringProp>
+              <stringProp name="1085383526">Auth2.0-GA - Loop Controller - Validate Token - XML</stringProp>
             </collectionProp>
           </ModuleController>
           <hashTree/>
@@ -2569,7 +2569,7 @@
               </collectionProp>
             </ModuleController>
             <hashTree/>
-            <ModuleController guiclass="ModuleControllerGui" testclass="ModuleController" testname="Module Controller - Authenticate As Application - Non Admin Token - XML" enabled="false">
+            <ModuleController guiclass="ModuleControllerGui" testclass="ModuleController" testname="Module Controller - Authenticate As Application - Non Admin Token - XML" enabled="true">
               <collectionProp name="ModuleController.node_path">
                 <stringProp name="-1227702913">WorkBench</stringProp>
                 <stringProp name="-1493716441">Auth and Validate Performance</stringProp>
@@ -2580,7 +2580,7 @@
               </collectionProp>
             </ModuleController>
             <hashTree/>
-            <ModuleController guiclass="ModuleControllerGui" testclass="ModuleController" testname="Module Controller - Loop Controller - Validate Non Admin Token - XML" enabled="false">
+            <ModuleController guiclass="ModuleControllerGui" testclass="ModuleController" testname="Module Controller - Loop Controller - Validate Non Admin Token - XML" enabled="true">
               <collectionProp name="ModuleController.node_path">
                 <stringProp name="-1227702913">WorkBench</stringProp>
                 <stringProp name="-1493716441">Auth and Validate Performance</stringProp>
