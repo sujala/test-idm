@@ -1,12 +1,10 @@
 package com.rackspace.idm.domain.service.impl;
 
-import com.rackspace.idm.domain.dao.ApplicationDao;
-import com.rackspace.idm.domain.dao.CustomerDao;
-import com.rackspace.idm.domain.dao.ScopeAccessDao;
-import com.rackspace.idm.domain.dao.UserDao;
+import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.exception.UserDisabledException;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -31,6 +29,7 @@ public class DefaultApplicationServiceTest {
     private CustomerDao customerDao;
     private UserDao userDao;
     private ScopeAccessDao scopeAccessDao;
+    private TenantDao tenantDao;
 
     @Before
     public void setUp() throws Exception {
@@ -38,7 +37,8 @@ public class DefaultApplicationServiceTest {
         customerDao = mock(CustomerDao.class);
         userDao = mock(UserDao.class);
         scopeAccessDao = mock(ScopeAccessDao.class);
-        service = new DefaultApplicationService(scopeAccessDao, clientDao,customerDao,userDao,null);
+        tenantDao = mock(TenantDao.class);
+        service = new DefaultApplicationService(scopeAccessDao, clientDao,customerDao,userDao,tenantDao);
     }
 
     @Test (expected = IllegalStateException.class)
@@ -362,5 +362,111 @@ public class DefaultApplicationServiceTest {
         when(clientDao.getClientByClientId("clientId")).thenReturn(new Application());
         when(clientDao.getClientRoleByClientIdAndRoleName("clientId","role")).thenReturn(new ClientRole());
         service.addClientRole(role);
+    }
+
+    @Test
+    public void addClientRole_callsClientDao_addClientRole() throws Exception {
+        ClientRole role = new ClientRole();
+        role.setClientId("clientId");
+        role.setName("role");
+        when(clientDao.getClientByClientId("clientId")).thenReturn(new Application());
+        when(clientDao.getClientRoleByClientIdAndRoleName("clientId","role")).thenReturn(null);
+        service.addClientRole(role);
+        verify(clientDao).addClientRole(anyString(), eq(role));
+    }
+
+    @Test (expected = NotFoundException.class)
+    public void loadApplication_clientIsNull_throwsNotFoundException() throws Exception {
+        when(clientDao.getClientByClientId(null)).thenReturn(null);
+        service.loadApplication(null);
+    }
+
+    @Test
+    public void loadApplication_clientFound_returnsApplicationClient() throws Exception {
+        Application client = new Application();
+        client.setClientId("correctClientId");
+        when(clientDao.getClientByClientId("clientId")).thenReturn(client);
+        Application applicationClient = service.loadApplication("clientId");
+        assertThat("client id", applicationClient.getClientId(), equalTo("correctClientId"));
+    }
+
+    @Test
+    public void deleteClientRole_callsTenantDao_deleteTenantRole() throws Exception {
+        ClientRole role = new ClientRole();
+        List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
+        TenantRole tenantRole = new TenantRole();
+        tenantRoles.add(tenantRole);
+        when(tenantDao.getAllTenantRolesForClientRole(role)).thenReturn(tenantRoles);
+        service.deleteClientRole(role);
+        verify(tenantDao).deleteTenantRole(tenantRole);
+    }
+
+    @Test
+    public void deleteClientRole_callsClientDao_deleteClientRole() throws Exception {
+        ClientRole role = new ClientRole();
+        List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
+        when(tenantDao.getAllTenantRolesForClientRole(role)).thenReturn(tenantRoles);
+        service.deleteClientRole(role);
+        verify(clientDao).deleteClientRole(role);
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void getClientServices_clientUniqueIdIsNull_throwsIllegalArgumentException() throws Exception {
+        service.getClientServices(new Application());
+    }
+
+    @Test
+    public void getClientServices_callsClientDao_getClientByClientId() throws Exception {
+        Application client = new Application();
+        client.setUniqueId("uniqueId");
+        List<ScopeAccess> services = new ArrayList<ScopeAccess>();
+        ScopeAccess scopeAccess = new ScopeAccess();
+        scopeAccess.setClientId("clientId");
+        services.add(scopeAccess);
+        when(scopeAccessDao.getScopeAccessesByParent("uniqueId")).thenReturn(services);
+        service.getClientServices(client);
+        verify(clientDao).getClientByClientId("clientId");
+    }
+
+    @Test
+    public void getClientServices_createsApplicationClients_returnsCorrectInfo() throws Exception {
+        Application client = new Application();
+        client.setUniqueId("uniqueId");
+        List<ScopeAccess> services = new ArrayList<ScopeAccess>();
+        ScopeAccess scopeAccess = new ScopeAccess();
+        scopeAccess.setClientId("clientId");
+        services.add(scopeAccess);
+        when(scopeAccessDao.getScopeAccessesByParent("uniqueId")).thenReturn(services);
+        Applications clientServices = service.getClientServices(client);
+        assertThat("total records", clientServices.getTotalRecords(), equalTo(1));
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void addUserToClientGroup_usernameIsBlank_throwsIllegalArgument() throws Exception {
+        service.addUserToClientGroup("", null);
+    }
+
+    @Test (expected = NotFoundException.class)
+    public void addUserToClientGroup_userIsNull_throwsNotFoundException() throws Exception {
+        when(userDao.getUserByUsername("username")).thenReturn(null);
+        service.addUserToClientGroup("username", null);
+    }
+
+    @Test (expected = UserDisabledException.class)
+    public void addUserToClientGroup_userIsDisabled_throwsUserDisabled() throws Exception {
+        when(userDao.getUserByUsername("username")).thenReturn(new User());
+        service.addUserToClientGroup("username", null);
+    }
+
+    @Test
+    public void addUserToClientGroup_userExistsInGroup_throwsDuplicateException() throws Exception {
+        User user = new User();
+        ClientGroup clientGroup = new ClientGroup();
+        user.setEnabled(true);
+        user.setUniqueId("uniqueId");
+        when(userDao.getUserByUsername("username")).thenReturn(user);
+        doThrow(new DuplicateException()).when(clientDao).addUserToClientGroup("uniqueId", clientGroup);
+        service.addUserToClientGroup("username", clientGroup);
+        verify(clientDao).addUserToClientGroup("uniqueId", clientGroup);
     }
 }
