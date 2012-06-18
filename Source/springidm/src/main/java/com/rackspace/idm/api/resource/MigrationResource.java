@@ -111,4 +111,8 @@ public class MigrationResource {
         return Response.status(Response.Status.ACCEPTED).build();
     }
 
+    public void setCloudMigrationService(CloudMigrationService cloudMigrationService) {
+        this.cloudMigrationService = cloudMigrationService;
+    }
+
 }
