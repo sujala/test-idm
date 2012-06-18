@@ -1,13 +1,19 @@
 package com.rackspace.idm.api.resource.application;
 
 import com.rackspace.idm.api.converter.RolesConverter;
+import com.rackspace.idm.domain.entity.Application;
+import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.TenantService;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.mockito.Matchers.anyString;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.not;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.*;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -41,6 +47,32 @@ public class ApplicationGlobalRolesResourceTest {
     public void getRoles_callsAuthorizationService_verifyIdmSuperAdminAccess() throws Exception {
         applicationGlobalRolesResource.getRoles(null, null, null);
         verify(authorizationService).verifyIdmSuperAdminAccess(anyString());
+    }
 
+    @Test
+    public void getRoles_withProvisionedApplicationIdNotBlank_setsFilterParams() throws Exception {
+        doNothing().when(authorizationService).verifyIdmSuperAdminAccess(anyString());
+        applicationGlobalRolesResource.getRoles(null, null, "provisionedApplicationId");
+        verify(tenantService).getGlobalRolesForApplication(any(Application.class), (FilterParam[]) notNull());
+    }
+
+    @Test
+    public void getRoles_withNullProvisionedApplicationId_setsNullFilterParams() throws Exception {
+        doNothing().when(authorizationService).verifyIdmSuperAdminAccess(anyString());
+        applicationGlobalRolesResource.getRoles(null, null, null);
+        verify(tenantService).getGlobalRolesForApplication(any(Application.class), (FilterParam[]) isNull());
+    }
+
+    @Test
+    public void getRoles_callsTenantService_getGlobalRolesForApplication() throws Exception {
+        doNothing().when(authorizationService).verifyIdmSuperAdminAccess(anyString());
+        applicationGlobalRolesResource.getRoles(null, null, null);
+        verify(rolesConverter).toRoleJaxbFromTenantRole(anyList());
+    }
+
+    @Test
+    public void ApplicationGlobalRoleResource_returnsRoleResource() throws Exception {
+        ApplicationGlobalRoleResource roleResource1 = applicationGlobalRolesResource.getRoleResource();
+        assertThat("role resource", roleResource1, equalTo(roleResource));
     }
 }
