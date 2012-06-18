@@ -81,6 +81,7 @@ public class DefaultCloud11ServiceTest {
     AtomHopperClient atomHopperClient;
     GroupService userGroupService, cloudGroupService;
     AuthConverterCloudV11 authConverterCloudv11;
+    CredentialValidator credentialValidator;
 
     @Before
     public void setUp() throws Exception {
@@ -106,6 +107,8 @@ public class DefaultCloud11ServiceTest {
         atomHopperClient = mock(AtomHopperClient.class);
         userGroupService = mock(GroupService.class);
         cloudGroupService = mock(GroupService.class);
+        credentialValidator = mock(CredentialValidator.class);
+
         when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn("Basic YXV0aDphdXRoMTIz");
         UriBuilderImpl uriBuilder = mock(UriBuilderImpl.class);
         when(uriBuilder.build()).thenReturn(new URI(""));
@@ -131,7 +134,15 @@ public class DefaultCloud11ServiceTest {
         defaultCloud11Service.setCloudGroupService(cloudGroupService);
         defaultCloud11Service.setUserGroupService(userGroupService);
         defaultCloud11Service.setCredentialUnmarshaller(credentialUnmarshaller);
+        defaultCloud11Service.setCredentialValidator(credentialValidator);
         spy = spy(defaultCloud11Service);
+    }
+
+    @Test
+    public void adminAuthenticateResponse_callsCredentialValidator_validateCredential() throws Exception {
+        NastCredentials nastCredentials = new NastCredentials();
+        defaultCloud11Service.adminAuthenticateResponse(new JAXBElement<Credentials>(new QName(""),Credentials.class, nastCredentials),null);
+        verify(credentialValidator).validateCredential(nastCredentials);
     }
 
     @Test
