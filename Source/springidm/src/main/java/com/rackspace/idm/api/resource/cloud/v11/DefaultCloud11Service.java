@@ -1062,6 +1062,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             User user = null;
             UserScopeAccess usa = null;
             String cloudAuthClientId = getCloudAuthClientId();
+            credentialValidator.validateCredential(value);
             if (value instanceof UserCredentials) {
                 UserCredentials userCreds = (UserCredentials) value;
                 username = userCreds.getUsername();

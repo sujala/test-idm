@@ -139,6 +139,13 @@ public class DefaultCloud11ServiceTest {
     }
 
     @Test
+    public void authenticateResponse_callsCredentialValidator_validateCredential() throws Exception {
+        NastCredentials nastCredentials = new NastCredentials();
+        defaultCloud11Service.authenticateResponse(new JAXBElement<Credentials>(new QName(""),Credentials.class, nastCredentials));
+        verify(credentialValidator).validateCredential(nastCredentials);
+    }
+
+    @Test
     public void adminAuthenticateResponse_callsCredentialValidator_validateCredential() throws Exception {
         NastCredentials nastCredentials = new NastCredentials();
         defaultCloud11Service.adminAuthenticateResponse(new JAXBElement<Credentials>(new QName(""),Credentials.class, nastCredentials),null);
