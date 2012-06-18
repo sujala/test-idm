@@ -6,15 +6,7 @@ public class UserDisabledException extends IdmException {
         super();
     }
 
-    public UserDisabledException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
     public UserDisabledException(String message) {
         super(message);
-    }
-
-    public UserDisabledException(Throwable cause) {
-        super(cause);
     }
 }

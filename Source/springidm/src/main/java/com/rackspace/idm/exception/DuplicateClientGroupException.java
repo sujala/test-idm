@@ -6,15 +6,7 @@ public class DuplicateClientGroupException extends IdmException {
         super();
     }
 
-    public DuplicateClientGroupException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
     public DuplicateClientGroupException(String message) {
         super(message);
-    }
-
-    public DuplicateClientGroupException(Throwable cause) {
-        super(cause);
     }
 }
