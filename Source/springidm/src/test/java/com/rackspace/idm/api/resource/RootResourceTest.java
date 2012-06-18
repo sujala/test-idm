@@ -91,4 +91,16 @@ public class RootResourceTest {
     public void getVersionResource_versionIdDoesNotMatch_throwsNotFoundException() throws Exception {
         rootResource.getVersionResource("notMatch");
     }
+
+    @Test
+    public void getInternalServiceProfile_callsServiceProfileDescriptionBuilder_buildInternalServiceProfile() throws Exception {
+        rootResource.getInternalServiceProfile();
+        verify(serviceProfileDescriptionBuilder).buildInternalServiceProfile(any(UriInfo.class));
+    }
+
+    @Test
+    public void getInternalServiceProfile_responseOk_returns200() throws Exception {
+        Response response = rootResource.getInternalServiceProfile();
+        assertThat("response code", response.getStatus(), equalTo(200));
+    }
 }
