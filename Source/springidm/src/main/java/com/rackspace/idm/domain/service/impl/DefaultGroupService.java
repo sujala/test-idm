@@ -110,6 +110,9 @@ public class DefaultGroupService implements GroupService {
     }
 
     void verifyDuplicateGroup(Group group) {
+        if(group == null){
+            throw new IllegalArgumentException("Group cannot be null");
+        }
         Group exists = groupDao.getGroupByName(group.getName());
         if (exists != null) {
             String errMsg = String.format("Group with name %s already exists", group.getName());
@@ -120,6 +123,9 @@ public class DefaultGroupService implements GroupService {
 
     @Override
     public void deleteGroup(String groupId) {
+        if(groupId == null){
+            throw new IllegalArgumentException("Group cannot be null");
+        }
         int grpId = Integer.parseInt(groupId);
         Group exists = groupDao.getGroupById(grpId);
         if (exists == null) {

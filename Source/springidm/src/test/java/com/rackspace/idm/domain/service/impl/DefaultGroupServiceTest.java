@@ -5,6 +5,7 @@ import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspacecloud.docs.auth.api.v1.Group;
 import org.junit.Before;
@@ -15,6 +16,7 @@ import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
 /**
@@ -79,7 +81,7 @@ public class DefaultGroupServiceTest{
 
     @Test
     public void getGroupListByMossoId_returnsNull() throws Exception {
-        assertThat("null",defaultGroupService.getGroupsByMossoId(null),nullValue());
+        assertThat("null",defaultGroupService.getGroupListByMossoId(null),nullValue());
     }
 
     @Test
@@ -196,6 +198,7 @@ public class DefaultGroupServiceTest{
         group2.setName("Adam Smith");
         when(groupDao.getGroupById(123)).thenReturn(group2);
         doNothing().when(groupDao).updateGroup(group1);
+        doNothing().when(spy).verifyDuplicateGroup(group1);
 
         spy.updateGroup(group1);
 
@@ -215,5 +218,101 @@ public class DefaultGroupServiceTest{
 
         verify(groupDao).updateGroup(group);
 
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void verifyDuplicateGroup_nullGroup_doesNothing() throws Exception {
+        defaultGroupService.verifyDuplicateGroup(null);
+    }
+
+    @Test
+    public void verifyDuplicateGroup_existsNull_doesNothing() throws Exception {
+        com.rackspace.idm.domain.entity.Group group = mock(com.rackspace.idm.domain.entity.Group.class);
+        defaultGroupService.verifyDuplicateGroup(group);
+    }
+
+    @Test (expected = DuplicateException.class)
+    public void verifyDuplicateGroup_existsNotNull_throwsDuplicateException() throws Exception {
+        com.rackspace.idm.domain.entity.Group group = mock(com.rackspace.idm.domain.entity.Group.class);
+        when(groupDao.getGroupByName(null)).thenReturn(group);
+        defaultGroupService.verifyDuplicateGroup(group);
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void deleteGroup_nullId_throwsIllegalArgumentException() throws Exception {
+        defaultGroupService.deleteGroup(null);
+    }
+
+    @Test (expected = NotFoundException.class)
+    public void deleteGroup_nullExists_throwsNotFoundException() throws Exception {
+        defaultGroupService.deleteGroup("123");
+    }
+
+    @Test (expected = BadRequestException.class)
+    public void deleteGroup_existsNotNullAndUserEnabled_throwsBadRequestException() throws Exception {
+        User user = new User();
+        user.setEnabled(true);
+        Users users = new Users();
+        users.setUsers(new ArrayList<User>());
+        users.getUsers().add(user);
+        when(groupDao.getGroupById(123)).thenReturn(new com.rackspace.idm.domain.entity.Group());
+        when(defaultUserService.getAllUsers(any(FilterParam[].class))).thenReturn(users);
+        defaultGroupService.deleteGroup("123");
+    }
+
+    @Test
+    public void deleteGroup_existsNotNullAndUserNotEnabled_callsDeleteGroupFromUser() throws Exception {
+        User user = new User();
+        user.setEnabled(false);
+        Users users = new Users();
+        users.setUsers(new ArrayList<User>());
+        users.getUsers().add(user);
+        when(groupDao.getGroupById(123)).thenReturn(new com.rackspace.idm.domain.entity.Group());
+        when(defaultUserService.getAllUsers(any(FilterParam[].class))).thenReturn(users);
+        doNothing().when(spy).deleteGroupFromUser(123, null);
+        doNothing().when(groupDao).deleteGroup(123);
+        spy.deleteGroup("123");
+        verify(spy).deleteGroupFromUser(123,null);
+    }
+
+    @Test
+    public void deleteGroup_existsNotNullAndNoUsers_callsGroupDaoMethod() throws Exception {
+        Users users = new Users();
+        users.setUsers(new ArrayList<User>());
+        when(groupDao.getGroupById(123)).thenReturn(new com.rackspace.idm.domain.entity.Group());
+        when(defaultUserService.getAllUsers(any(FilterParam[].class))).thenReturn(users);
+        doNothing().when(groupDao).deleteGroup(123);
+        defaultGroupService.deleteGroup("123");
+        verify(groupDao).deleteGroup(123);
+    }
+
+    @Test (expected = AssertionError.class)
+    public void deleteGroup_existsNotNullAndNoUsers_doesNotCallDeleteGroupFromUser() throws Exception {
+        Users users = new Users();
+        users.setUsers(new ArrayList<User>());
+        when(groupDao.getGroupById(123)).thenReturn(new com.rackspace.idm.domain.entity.Group());
+        when(defaultUserService.getAllUsers(any(FilterParam[].class))).thenReturn(users);
+        doNothing().when(spy).deleteGroupFromUser(123, null);
+        doNothing().when(groupDao).deleteGroup(123);
+        spy.deleteGroup("123");
+        verify(spy).deleteGroupFromUser(123, null);
+    }
+
+    @Test
+    public void addGroupToUser_callsGroupDaoMethod() throws Exception {
+        defaultGroupService.addGroupToUser(0,null);
+        verify(groupDao).addGroupToUser(0,null);
+    }
+
+    @Test
+    public void deleteGroupFromUser_callsGroupDaoMethod() throws Exception {
+        defaultGroupService.deleteGroupFromUser(0,null);
+        verify(groupDao).deleteGroupFromUser(0,null);
+    }
+
+    @Test
+    public void getGroupsForUser_callsGroupDaoMethod() throws Exception {
+        defaultGroupService.getGroupsForUser(null);
+        verify(groupDao).getGroupsForUser(null);
     }
 }
