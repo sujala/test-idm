@@ -19,4 +19,10 @@ public class EncoderTest {
         String encodedUrl = Encoder.encode(string);
         assertThat("encode url", encodedUrl, Matchers.equalTo("%7BtokenId%7D"));
     }
+
+    @Test
+    public void encode_urlIsNull_returnsNull() throws Exception {
+        String encodeUrl = Encoder.encode(null);
+        assertThat("encode url", encodeUrl, Matchers.equalTo(null));
+    }
 }

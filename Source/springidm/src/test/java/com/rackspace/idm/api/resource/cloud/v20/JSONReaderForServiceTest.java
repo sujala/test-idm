@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.rackspace.idm.exception.BadRequestException;
 import org.junit.Test;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 
@@ -30,7 +31,7 @@ public class JSONReaderForServiceTest {
             "}";
 
     String emptyServiceJSON = "{" +
-            "\"OS-KSADM:Service\" : {" +
+            "\"OS-KSADM:service\" : {" +
             "}" +
             "}";
 
@@ -112,5 +113,10 @@ public class JSONReaderForServiceTest {
         assertThat("service desc", serviceFromJSONString.getDescription(), nullValue());
         assertThat("service name", serviceFromJSONString.getName(), nullValue());
         assertThat("service type", serviceFromJSONString.getType(), nullValue());
+    }
+
+    @Test (expected = BadRequestException.class)
+    public void getServiceFromJSONString_parseException_throwsBadRequest() throws Exception {
+        JSONReaderForService.getServiceFromJSONString("invalid json string");
     }
 }

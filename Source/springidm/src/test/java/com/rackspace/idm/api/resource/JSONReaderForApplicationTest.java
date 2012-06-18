@@ -1,7 +1,9 @@
 package com.rackspace.idm.api.resource;
 
 import com.rackspace.api.idm.v1.Application;
+import com.rackspace.api.idm.v1.ApplicationSecretCredentials;
 import com.rackspace.idm.exception.BadRequestException;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.BufferedInputStream;
@@ -33,6 +35,35 @@ public class JSONReaderForApplicationTest {
             "       \"callBackUrl\" : \"applicationCallBackUrl\"," +
             "       \"scope\" : \"applicationScope\"," +
             "       \"secretCredentials\" : \"applicationSecretCredentials\"" +
+            "   }" +
+            "}";
+
+    private String applicationJSONWithClientSecret = "{" +
+            "   \"applicationSecretCredentials\" : {" +
+            "       \"clientId\" : \"clientId\"," +
+            "       \"customerId\" : \"customerId\"," +
+            "       \"name\" : \"applicationName\"," +
+            "       \"enabled\" : false," +
+            "       \"title\" : \"applicationTitle\"," +
+            "       \"description\" : \"applicationDescription\"," +
+            "       \"callBackUrl\" : \"applicationCallBackUrl\"," +
+            "       \"scope\" : \"applicationScope\"," +
+            "       \"secretCredentials\" : \"secretCredentials\"," +
+            "       \"clientSecret\" : \"clientSecret\"" +
+            "   }" +
+            "}";
+
+    private String applicationJSONWithOutClientSecret = "{" +
+            "   \"applicationSecretCredentials\" : {" +
+            "       \"clientId\" : \"clientId\"," +
+            "       \"customerId\" : \"customerId\"," +
+            "       \"name\" : \"applicationName\"," +
+            "       \"enabled\" : false," +
+            "       \"title\" : \"applicationTitle\"," +
+            "       \"description\" : \"applicationDescription\"," +
+            "       \"callBackUrl\" : \"applicationCallBackUrl\"," +
+            "       \"scope\" : \"applicationScope\"," +
+            "       \"secretCredentials\" : \"secretCredentials\"" +
             "   }" +
             "}";
 
@@ -183,5 +214,23 @@ public class JSONReaderForApplicationTest {
     @Test(expected = BadRequestException.class)
     public void getApplicationFromJSONString_withInvalidJSON_throwsBadRequestException() throws Exception {
         JSONReaderForApplication.getApplicationFromJSONString("Invalid JSON");
+    }
+
+    @Test
+    public void getSecretCredentialsFromJSONString_withValidJsonAndSecretIsNull_doesNotSetClientSecret() throws Exception {
+        ApplicationSecretCredentials creds = JSONReaderForApplication.getSecretCredentialsFromJSONString(applicationJSONWithOutClientSecret);
+        assertThat("Secret", creds.getClientSecret(), equalTo(null));
+    }
+
+    @Test
+    public void getSecretCredentialsFromJSONString_withValidJsonAndSecretIsNotNull_setClientSecret() throws Exception {
+        ApplicationSecretCredentials creds = JSONReaderForApplication.getSecretCredentialsFromJSONString(applicationJSONWithClientSecret);
+        assertThat("Secret", creds.getClientSecret(), equalTo("clientSecret"));
+    }
+
+    @Test
+    public void getSecretCredentialsFromJSONString_withInvalidJsonKey_returnsEmptyCredentials() throws Exception {
+        ApplicationSecretCredentials creds = JSONReaderForApplication.getSecretCredentialsFromJSONString(applicationJSON);
+        assertThat("Secret", creds.getClientSecret(), equalTo(null));
     }
 }

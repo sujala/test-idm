@@ -12,15 +12,7 @@ public class CloudAdminAuthorizationException extends IdmException {
         super();
     }
 
-    public CloudAdminAuthorizationException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
     public CloudAdminAuthorizationException(String message) {
         super(message);
-    }
-
-    public CloudAdminAuthorizationException(Throwable cause) {
-        super(cause);
     }
 }

@@ -6,10 +6,6 @@ public class IdmException extends RuntimeException {
         super();
     }
 
-    public IdmException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
     public IdmException(String message) {
         super(message);
     }
