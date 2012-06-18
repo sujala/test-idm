@@ -5,7 +5,4 @@ public class PermissionConflictException extends IdmException {
     public PermissionConflictException() {
         super();
     }
-    public PermissionConflictException(String message) {
-        super(message);
-    }
 }
