@@ -27,6 +27,7 @@ public class DefaultUserService implements UserService {
     private final ApplicationService clientService;
     private final TokenService oauthService;
     private final Configuration config;
+
     // private final CustomerDao customerDao;
     private final PasswordComplexityService passwordComplexityService;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -37,6 +38,9 @@ public class DefaultUserService implements UserService {
 
     @Autowired
     private ScopeAccessService scopeAccessService;
+
+    @Autowired
+    private AuthorizationService authorizationService;
 
     public DefaultUserService(UserDao userDao, AuthDao rackerDao,
                               ScopeAccessDao scopeAccessDao,
@@ -300,13 +304,22 @@ public class DefaultUserService implements UserService {
         return user;
     }
 
-
     @Override
-    public User getUserByMossoId(int mossoId) {
+    public User getUserByMossoId(int mossoId) { // Returns the first User-Admin it finds with matching mossoId
         logger.debug("Getting User: {}", mossoId);
-        User user = userDao.getUserByMossoId(mossoId);
-        logger.debug("Got User: {}", user);
-        return user;
+        Users users = userDao.getUsersByMossoId(mossoId);
+
+        if(users.getUsers().size() == 1) {
+            return users.getUsers().get(0);
+        }else if(users.getUsers().size() > 1) {
+            for(User user : users.getUsers()) {
+                UserScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), getCloudAuthClientId());
+                if(authorizationService.authorizeCloudUserAdmin(sa))
+                    return user;
+            }
+        }
+
+        return null;
     }
 
     @Override
@@ -318,11 +331,21 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public User getUserByNastId(String nastId) {
+    public User getUserByNastId(String nastId) { // Returns the first User-Admin it finds with matching nastId
         logger.debug("Getting User: {}", nastId);
-        User user = userDao.getUserByNastId(nastId);
-        logger.debug("Got User: {}", user);
-        return user;
+        Users users = userDao.getUsersByNastId(nastId);
+
+        if(users.getUsers().size() == 1) {
+            return users.getUsers().get(0);
+        }else if(users.getUsers().size() > 1) {
+            for(User user : users.getUsers()) {
+                UserScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), getCloudAuthClientId());
+                if(authorizationService.authorizeCloudUserAdmin(sa))
+                    return user;
+            }
+        }
+
+        return null;
     }
 
     @Override
