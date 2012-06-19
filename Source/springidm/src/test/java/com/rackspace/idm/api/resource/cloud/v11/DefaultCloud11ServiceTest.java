@@ -11,6 +11,7 @@ import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateException;
+import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotAuthorizedException;
 import com.rackspace.idm.util.NastFacade;
 import com.rackspacecloud.docs.auth.api.v1.*;
@@ -42,6 +43,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -153,6 +155,21 @@ public class DefaultCloud11ServiceTest {
     }
 
     @Test
+    public void adminAuthenticateResponse_notAuthenticatedExceptionthrown_throws401WithCorrectMessage() throws Exception {
+        MossoCredentials mossoCredentials = new MossoCredentials();
+        mossoCredentials.setKey("key");
+        mossoCredentials.setMossoId(123);
+        JAXBElement<Credentials> jaxbElement = new JAXBElement<Credentials>(new QName(""),Credentials.class, mossoCredentials);
+        when(userService.getUserByMossoId(123)).thenThrow(new NotAuthenticatedException());
+
+        Response response = defaultCloud11Service.adminAuthenticateResponse(jaxbElement, null).build();
+        assertThat("response status", response.getStatus(), equalTo(401));
+        assertThat("response message",((UnauthorizedFault) ((JAXBElement<UnauthorizedFault>) response.getEntity()).getValue()).getMessage(),equalTo("Username or api key is invalid"));
+        assertThat("response message",((UnauthorizedFault) ((JAXBElement<UnauthorizedFault>) response.getEntity()).getValue()).getDetails(),nullValue());
+
+    }
+
+    @Test
     public void validateMossoId_calls_UserService_getUsersByMossoId() throws Exception {
         defaultCloud11Service.validateMossoId(123);
         verify(userService).getUserByMossoId(123);
@@ -184,14 +201,6 @@ public class DefaultCloud11ServiceTest {
         Response.ResponseBuilder responseBuilder = spy.getUserGroups(request, "testUser", httpHeaders);
         UnauthorizedFault entity = (UnauthorizedFault)((JAXBElement)responseBuilder.build().getEntity()).getValue();
         assertThat("code", entity.getCode(), equalTo(401));
-    }
-
-    @Test
-    public void getUserGroups_notAuthorized_entityDetailsShouldMatchCloudResponse() throws Exception {
-        doThrow(new NotAuthorizedException("You are not authorized to access this resource.")).when(spy).authenticateCloudAdminUserForGetRequests(request);
-        Response.ResponseBuilder responseBuilder = spy.getUserGroups(request, "testUser", httpHeaders);
-        UnauthorizedFault entity = (UnauthorizedFault)((JAXBElement)responseBuilder.build().getEntity()).getValue();
-        assertThat("code", entity.getDetails(), equalTo("AuthErrorHandler"));
     }
 
     @Test

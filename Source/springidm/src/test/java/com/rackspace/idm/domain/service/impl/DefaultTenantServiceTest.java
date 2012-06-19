@@ -428,6 +428,21 @@ public class DefaultTenantServiceTest {
 
     }
 
+    @Test (expected = AssertionError.class)
+    public void addTenantRoleToUser_scopeAccessNotNull_doesNotCallScopeAccessDaoMethodAdd() throws Exception {
+        User user = new User();
+        user.setUniqueId("123");
+        TenantRole role = new TenantRole();
+        when(clientDao.getClientByClientId(null)).thenReturn(new Application());
+        when(clientDao.getClientRoleByClientIdAndRoleName(null, null)).thenReturn(new ClientRole());
+        when(scopeAccessDao.getDirectScopeAccessForParentByClientId("123", null)).thenReturn(new ScopeAccess());
+        when(scopeAccessDao.addDirectScopeAccess(eq("123"),any(UserScopeAccess.class))).thenReturn(new ScopeAccess());
+        doNothing().when(spy).addTenantRole(null,role);
+        spy.addTenantRoleToUser(user, role);
+        verify(scopeAccessDao).addDirectScopeAccess(eq("123"),any(ScopeAccess.class));
+
+    }
+
     @Test
     public void addTenantRoleToUser_callsAddTenantRole() throws Exception {
         User user = new User();
@@ -663,5 +678,50 @@ public class DefaultTenantServiceTest {
         List<TenantRole> roles = spy.getTenantRolesForUser(null,null);
 
         assertThat("list size",roles.size(),equalTo(0));
+    }
+
+    @Test
+    public void getTenantRolesForApplication_callsTenantDaoMethod() throws Exception {
+        when(tenantDao.getTenantRolesForApplication(null,null)).thenReturn(null);
+        doReturn(new ArrayList<TenantRole>()).when(spy).getTenantOnlyRoles(null);
+        spy.getTenantRolesForApplication(null,null);
+        verify(tenantDao).getTenantRolesForApplication(null,null);
+    }
+
+    @Test
+    public void getTenantRolesForApplication_callsGetTenantOnlyRoles() throws Exception {
+        when(tenantDao.getTenantRolesForApplication(null,null)).thenReturn(null);
+        doReturn(new ArrayList<TenantRole>()).when(spy).getTenantOnlyRoles(null);
+        spy.getTenantRolesForApplication(null,null);
+        verify(spy).getTenantOnlyRoles(null);
+    }
+
+    @Test
+    public void getTenantRolesForApplication_returnsList() throws Exception {
+        when(tenantDao.getTenantRolesForApplication(null,null)).thenReturn(null);
+        doReturn(new ArrayList<TenantRole>()).when(spy).getTenantOnlyRoles(null);
+        assertThat("tenant roles", spy.getTenantRolesForApplication(null, null), instanceOf(List.class));
+    }
+
+    @Test
+    public void getTenantRolesForTenant_clientRoleExists_returnsPopulatedTenantRoleList() throws Exception {
+        TenantRole role = new TenantRole();
+        role.setRoleRsId("123");
+        ArrayList<TenantRole> roles = new ArrayList<TenantRole>();
+        roles.add(role);
+        ClientRole cRole = new ClientRole();
+        cRole.setClientId("456");
+        cRole.setDescription("this is a description");
+        cRole.setName("John Smith");
+        cRole.setId("789");
+        when(tenantDao.getAllTenantRolesForTenant("id")).thenReturn(roles);
+        when(clientDao.getClientRoleById("123")).thenReturn(cRole);
+        List<TenantRole> returnedRoles = defaultTenantService.getTenantRolesForTenant("id");
+        assertThat("list size",returnedRoles.size(),equalTo(1));
+        assertThat("clientId",returnedRoles.get(0).getClientId(),equalTo("456"));
+        assertThat("description",returnedRoles.get(0).getDescription(),equalTo("this is a description"));
+        assertThat("name", returnedRoles.get(0).getName(),equalTo("John Smith"));
+        assertThat("role rs id", returnedRoles.get(0).getRoleRsId(),equalTo("789"));
+        assertThat("tenant ids",returnedRoles.get(0).getTenantIds()[0],equalTo("id"));
     }
 }
