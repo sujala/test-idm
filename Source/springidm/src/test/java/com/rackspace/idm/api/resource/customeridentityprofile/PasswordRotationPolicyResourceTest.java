@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.customeridentityprofile;
 
+import com.rackspace.api.idm.v1.PasswordRotationPolicy;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.CustomerService;
@@ -55,11 +56,10 @@ public class PasswordRotationPolicyResourceTest {
         assertThat("response status", response.getStatus(), equalTo(200));
     }
 
-    @Ignore
     @Test
     public void updatePasswordRotationPolicy_callsAuthorizationService_verifyIdmSuperAdminAccess() throws Exception {
-        EntityHolder holder = mock(EntityHolder.class);
-        when(holder.hasEntity()).thenReturn(true);
+        EntityHolder<PasswordRotationPolicy> holder = new EntityHolder<PasswordRotationPolicy>(new PasswordRotationPolicy());
+        when(customerService.loadCustomer(anyString())).thenReturn(new Customer());
         passwordRotationPolicyResource.updatePasswordRotationPolicy(null, null, holder);
         verify(authorizationService).verifyIdmSuperAdminAccess(null);
     }
@@ -70,5 +70,32 @@ public class PasswordRotationPolicyResourceTest {
         EntityHolder holder = mock(EntityHolder.class);
         when(holder.hasEntity()).thenReturn(false);
         passwordRotationPolicyResource.updatePasswordRotationPolicy(null, null, holder);
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void updatePasswordRotationPolicy_withNegativeDuration_throwsBadRequestException() throws Exception {
+        doNothing().when(authorizationService).verifyIdmSuperAdminAccess(null);
+        PasswordRotationPolicy passwordRotationPolicy = new PasswordRotationPolicy();
+        passwordRotationPolicy.setDuration(-1);
+        EntityHolder<PasswordRotationPolicy> holder = new EntityHolder<PasswordRotationPolicy>(passwordRotationPolicy);
+        passwordRotationPolicyResource.updatePasswordRotationPolicy(null, null, holder);
+    }
+
+    @Test
+    public void updatePasswordRotationPolicy_callsCustomerService_updateCustomer() throws Exception {
+        doNothing().when(authorizationService).verifyIdmSuperAdminAccess(null);
+        EntityHolder<PasswordRotationPolicy> holder = new EntityHolder<PasswordRotationPolicy>(new PasswordRotationPolicy());
+        when(customerService.loadCustomer(anyString())).thenReturn(new Customer());
+        passwordRotationPolicyResource.updatePasswordRotationPolicy(null, null, holder);
+        verify(customerService).updateCustomer(any(Customer.class));
+    }
+
+    @Test
+    public void updatePasswordRotationPolicy_returnsNoContentResponse() throws Exception {
+        doNothing().when(authorizationService).verifyIdmSuperAdminAccess(null);
+        EntityHolder<PasswordRotationPolicy> holder = new EntityHolder<PasswordRotationPolicy>(new PasswordRotationPolicy());
+        when(customerService.loadCustomer(anyString())).thenReturn(new Customer());
+        Response response = passwordRotationPolicyResource.updatePasswordRotationPolicy(null, null, holder);
+        assertThat("response status", response.getStatus(), equalTo(204));
     }
 }
