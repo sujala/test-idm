@@ -25,7 +25,7 @@ import java.net.URI;
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
-public class CustomerIdenityProfilesResource extends ParentResource {
+public class CustomerIdentityProfilesResource extends ParentResource {
     
     private final CustomerIdentityProfileResource customerIdentityProfileResource;
     private final CustomerService customerService;
@@ -34,9 +34,9 @@ public class CustomerIdenityProfilesResource extends ParentResource {
     private final AuthorizationService authorizationService;
 
     @Autowired
-    public CustomerIdenityProfilesResource(CustomerIdentityProfileResource customerResource, CustomerService customerService, 
-        ScopeAccessService scopeAccessService, InputValidator inputValidator, CustomerConverter customerConverter,
-        AuthorizationService authorizationService) {
+    public CustomerIdentityProfilesResource(CustomerIdentityProfileResource customerResource, CustomerService customerService,
+                                            ScopeAccessService scopeAccessService, InputValidator inputValidator, CustomerConverter customerConverter,
+                                            AuthorizationService authorizationService) {
        
     	super(inputValidator);
         this.customerIdentityProfileResource = customerResource;
