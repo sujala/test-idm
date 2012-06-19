@@ -2,13 +2,12 @@ package com.rackspace.idm.api.resource;
 
 import com.rackspace.idm.api.resource.application.ApplicationsResource;
 import com.rackspace.idm.api.resource.cloud.CloudVersionsResource;
-import com.rackspace.idm.api.resource.customeridentityprofile.CustomerIdenityProfilesResource;
+import com.rackspace.idm.api.resource.customeridentityprofile.CustomerIdentityProfilesResource;
 import com.rackspace.idm.api.resource.passwordrule.PasswordRulesResource;
 import com.rackspace.idm.api.resource.roles.RolesResource;
 import com.rackspace.idm.api.resource.tenant.TenantsResource;
 import com.rackspace.idm.api.resource.token.TokensResource;
 import com.rackspace.idm.api.resource.user.RackerResource;
-import com.rackspace.idm.api.resource.user.UserResource;
 import com.rackspace.idm.api.resource.user.UsersResource;
 import com.rackspace.idm.api.serviceprofile.CanonicalContractDescriptionBuilder;
 import com.rackspace.idm.domain.service.ApiDocService;
@@ -38,7 +37,7 @@ public class Version10ResourceTest {
     private ApiDocService apiDocService;
     private RolesResource rolesResource;
     private UsersResource usersResource;
-    private CustomerIdenityProfilesResource customerIdentityProfilesResource;
+    private CustomerIdentityProfilesResource customerIdentityProfilesResource;
     private PasswordRulesResource passwordRulesResource;
     private TokensResource tokenResource;
     private ApplicationsResource applicationsResource;
@@ -53,7 +52,7 @@ public class Version10ResourceTest {
         apiDocService = mock(ApiDocService.class);
         rolesResource = mock(RolesResource.class);
         usersResource = mock(UsersResource.class);
-        customerIdentityProfilesResource = mock(CustomerIdenityProfilesResource.class);
+        customerIdentityProfilesResource = mock(CustomerIdentityProfilesResource.class);
         passwordRulesResource = mock(PasswordRulesResource.class);
         tokenResource = mock(TokensResource.class);
         applicationsResource = mock(ApplicationsResource.class);
@@ -92,7 +91,7 @@ public class Version10ResourceTest {
 
     @Test
     public void getCustomerIdentityProfileResource_returnsCustomerIdentityProfileResource() throws Exception {
-        CustomerIdenityProfilesResource resource = version10Resource.getCustomerIdentityProfilesResource();
+        CustomerIdentityProfilesResource resource = version10Resource.getCustomerIdentityProfilesResource();
         assertThat("customer identity profile resource", resource, equalTo(customerIdentityProfilesResource));
     }
 
