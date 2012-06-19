@@ -1017,7 +1017,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             List<CloudEndpoint> endpoints = endpointService.getEndpointsForUser(user.getUsername());
             return Response.ok(OBJ_FACTORY.createAuth(this.authConverterCloudV11.toCloudv11AuthDataJaxb(usa, endpoints)));
         } catch (NotAuthenticatedException nae) {
-            return cloudExceptionResponse.notAuthenticatedExceptionResponse(user.getUsername());
+            return cloudExceptionResponse.notAuthenticatedExceptionResponse("Username or api key is invalid");
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }
