@@ -6,15 +6,7 @@ public class ForbiddenException extends IdmException {
         super();
     }
 
-    public ForbiddenException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
     public ForbiddenException(String message) {
         super(message);
-    }
-
-    public ForbiddenException(Throwable cause) {
-        super(cause);
     }
 }

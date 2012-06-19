@@ -42,7 +42,6 @@ public class LdapConfiguration {
      * Use for unit testing.
      * 
      * @param config
-     * @param logger
      */
     public LdapConfiguration(Configuration config) {
         this.config = config;

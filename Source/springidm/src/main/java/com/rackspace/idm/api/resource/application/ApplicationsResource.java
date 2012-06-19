@@ -99,7 +99,6 @@ public class ApplicationsResource extends ParentResource {
      * Add an application
      *
      * @param authHeader HTTP Authorization header for authenticating the caller.
-     * @param application
      */
     @POST
     public Response addApplication(

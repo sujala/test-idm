@@ -96,6 +96,9 @@ public class DefaultCloud11Service implements Cloud11Service {
     private AtomHopperClient atomHopperClient;
 
     @Autowired
+    private CredentialValidator credentialValidator;
+
+    @Autowired
     public DefaultCloud11Service(Configuration config,
                                  ScopeAccessService scopeAccessService, EndpointService endpointService,
                                  UserService userService, AuthConverterCloudV11 authConverterCloudV11,
@@ -962,6 +965,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         User user = null;
         UserScopeAccess usa = null;
 
+       credentialValidator.validateCredential(cred.getValue());
         try {
             if (cred.getValue() instanceof MossoCredentials) {
                 MossoCredentials mossoCreds = (MossoCredentials) cred.getValue();
@@ -1058,6 +1062,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             User user = null;
             UserScopeAccess usa = null;
             String cloudAuthClientId = getCloudAuthClientId();
+            credentialValidator.validateCredential(value);
             if (value instanceof UserCredentials) {
                 UserCredentials userCreds = (UserCredentials) value;
                 username = userCreds.getUsername();
@@ -1202,5 +1207,9 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     public void setAtomHopperClient(AtomHopperClient atomHopperClient) {
         this.atomHopperClient = atomHopperClient;
+    }
+
+    public void setCredentialValidator(CredentialValidator credentialValidator) {
+        this.credentialValidator = credentialValidator;
     }
 }
