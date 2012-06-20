@@ -558,26 +558,30 @@ public class DefaultTenantServiceTest {
     @Test
     public void getGlobalRolesForUser_userParameter_callsTenantDaoMethod() throws Exception {
         User user = new User();
-        defaultTenantService.getGlobalRolesForUser(user);
+        doReturn(new ArrayList<TenantRole>()).when(spy).getGlobalRoles(null);
+        spy.getGlobalRolesForUser(user);
         verify(tenantDao).getTenantRolesForUser(user);
     }
 
     @Test
     public void getGlobalRolesForUser_userParameter_returnsList() throws Exception {
         User user = new User();
-        assertThat("tenant role list",defaultTenantService.getGlobalRolesForUser(user),instanceOf(ArrayList.class));
+        doReturn(new ArrayList<TenantRole>()).when(spy).getGlobalRoles(null);
+        assertThat("tenant role list",spy.getGlobalRolesForUser(user),instanceOf(ArrayList.class));
 
     }
 
     @Test
     public void getGlobalRolesForUser_userAndFilterParameters_callsTenantDaoMethod() throws Exception {
-        defaultTenantService.getGlobalRolesForUser(null,null);
+        doReturn(null).when(spy).getGlobalRoles(null);
+        spy.getGlobalRolesForUser(null, null);
         verify(tenantDao).getTenantRolesForUser(null,null);
     }
 
     @Test
     public void getGlobalRolesForUser_userAndFilterParameters_returnsList() throws Exception {
-        assertThat("tenant role list", defaultTenantService.getGlobalRolesForUser(null, null), instanceOf(ArrayList.class));
+        doReturn(new ArrayList<TenantRole>()).when(spy).getGlobalRoles(null);
+        assertThat("tenant role list", spy.getGlobalRolesForUser(null, null), instanceOf(ArrayList.class));
     }
 
     @Test (expected = IllegalArgumentException.class)
@@ -588,13 +592,15 @@ public class DefaultTenantServiceTest {
     @Test
     public void getGlobalRolesForApplication_callsTenantRoleDaoMethod() throws Exception {
         Application application = new Application();
-        defaultTenantService.getGlobalRolesForApplication(application,null);
+        doReturn(null).when(spy).getGlobalRoles(null);
+        spy.getGlobalRolesForApplication(application, null);
         verify(tenantDao).getTenantRolesForApplication(application,null);
     }
 
     @Test
     public void getGlobalRolesForApplication_returnsList() throws Exception {
-        assertThat("tenant role list",defaultTenantService.getGlobalRolesForApplication(new Application(),null),instanceOf(ArrayList.class));
+        doReturn(new ArrayList<TenantRole>()).when(spy).getGlobalRoles(null);
+        assertThat("tenant role list",spy.getGlobalRolesForApplication(new Application(),null),instanceOf(ArrayList.class));
     }
 
     @Test (expected = IllegalArgumentException.class)
@@ -752,7 +758,7 @@ public class DefaultTenantServiceTest {
         user.setEnabled(true);
         when(tenantDao.getAllTenantRolesForTenant("123")).thenReturn(list);
         when(userDao.getUserById("123")).thenReturn(user);
-        assertThat("list size",defaultTenantService.getUsersForTenant("123").size(),equalTo(1));
+        assertThat("list size", defaultTenantService.getUsersForTenant("123").size(), equalTo(1));
     }
 
     @Test (expected = AssertionError.class)
@@ -799,5 +805,37 @@ public class DefaultTenantServiceTest {
         when(tenantDao.getAllTenantRolesForTenant("123")).thenReturn(list);
         when(userDao.getUserById("123")).thenReturn(null);
         assertThat("list size",defaultTenantService.getUsersForTenant("123").size(),equalTo(0));
+    }
+
+    @Test
+    public void getGlobalRoles_roleTenantIdsIsNull_returnsCorrectRole() throws Exception {
+        TenantRole role = new TenantRole();
+        role.setRoleRsId("123");
+        List<TenantRole> roles = new ArrayList<TenantRole>();
+        roles.add(role);
+        ClientRole cRole = new ClientRole();
+        cRole.setName("John Smith");
+        cRole.setDescription("this is a description");
+        when(clientDao.getClientRoleById("123")).thenReturn(cRole);
+        List<TenantRole> list = defaultTenantService.getGlobalRoles(roles);
+        assertThat("role name",list.get(0).getName(),equalTo("John Smith"));
+        assertThat("role description",list.get(0).getDescription(),equalTo("this is a description"));
+    }
+
+    @Test
+    public void getGlobalRoles_roleTenantIdsIsEmpty_returnsCorrectRole() throws Exception {
+        String[] tenantIds = {};
+        TenantRole role = new TenantRole();
+        role.setRoleRsId("123");
+        role.setTenantIds(tenantIds);
+        List<TenantRole> roles = new ArrayList<TenantRole>();
+        roles.add(role);
+        ClientRole cRole = new ClientRole();
+        cRole.setName("John Smith");
+        cRole.setDescription("this is a description");
+        when(clientDao.getClientRoleById("123")).thenReturn(cRole);
+        List<TenantRole> list = defaultTenantService.getGlobalRoles(roles);
+        assertThat("role name",list.get(0).getName(),equalTo("John Smith"));
+        assertThat("role description",list.get(0).getDescription(),equalTo("this is a description"));
     }
 }

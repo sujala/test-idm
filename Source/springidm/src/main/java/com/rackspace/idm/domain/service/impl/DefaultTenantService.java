@@ -525,7 +525,7 @@ public class DefaultTenantService implements TenantService {
      * get roles in this list that are non-tenant specific
      * @param roles
      */
-    private List<TenantRole> getGlobalRoles(List<TenantRole> roles) {
+    List<TenantRole> getGlobalRoles(List<TenantRole> roles) {
         List<TenantRole> globalRoles = new ArrayList<TenantRole>();
         for (TenantRole role : roles) {
             if (role != null

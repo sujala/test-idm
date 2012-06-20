@@ -852,6 +852,38 @@ public class DefaultCloud20ServiceTest {
         verify(scopeAccessService).getUserScopeAccessForClientIdByUsernameAndApiCredentials("test_user", "123", null);
     }
 
+    @Test
+    public void authenticate_withTenantIdAndNullToken_returnsBadRequestResponse() throws Exception {
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        authenticationRequest.setTenantId("tenantId");
+        authenticationRequest.setToken(null);
+        Response response = spy.authenticate(null, authenticationRequest).build();
+        assertThat("response status", response.getStatus(), equalTo(400));
+        assertThat("response message",( (JAXBElement<BadRequestFault>) response.getEntity()).getValue().getMessage(),equalTo("Invalid request body: unable to parse Auth data. Please review XML or JSON formatting."));
+    }
+
+    @Test
+    public void authenticate_withTenantIdAndBlankTokenId_returnsBadRequestResponse() throws Exception {
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        authenticationRequest.setTenantId("tenantId");
+        TokenForAuthenticationRequest token = new TokenForAuthenticationRequest();
+        token.setId(" ");
+        authenticationRequest.setToken(token);
+        Response.ResponseBuilder responseBuilder = spy.authenticate(null, authenticationRequest);
+        assertThat("response status", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
+    public void authenticate_withTenantIdAndNullTokenId_returnsBadRequestResponse() throws Exception {
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        authenticationRequest.setTenantId("tenantId");
+        TokenForAuthenticationRequest token = new TokenForAuthenticationRequest();
+        token.setId(null);
+        authenticationRequest.setToken(token);
+        Response.ResponseBuilder responseBuilder = spy.authenticate(null, authenticationRequest);
+        assertThat("response status", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
     @Test(expected = ForbiddenException.class)
     public void verifyRackerOrServiceAdminAccess_notRackerAndNotCloudServiceAdmin_throwsForbidden() throws Exception {
         when(authorizationService.authorizeRacker(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(false);
@@ -3799,5 +3831,15 @@ public class DefaultCloud20ServiceTest {
         doThrow(new BadRequestException()).when(spy).checkXAUTHTOKEN(authToken, true, null);
         Response.ResponseBuilder responseBuilder = spy.deleteUserFromSoftDeleted(null, authToken, null);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test (expected = AssertionError.class)
+    public void badRequestExceptionResponse_doesNotSetDetails() throws Exception {
+        BadRequestFault badRequestFault = mock(BadRequestFault.class);
+        ObjectFactory objectFactory = mock(ObjectFactory.class);
+        when(jaxbObjectFactories.getOpenStackIdentityV2Factory()).thenReturn(objectFactory);
+        when(objectFactory.createBadRequestFault()).thenReturn(badRequestFault);
+        defaultCloud20Service.badRequestExceptionResponse("message");
+        verify(badRequestFault).setDetails(anyString());
     }
 }

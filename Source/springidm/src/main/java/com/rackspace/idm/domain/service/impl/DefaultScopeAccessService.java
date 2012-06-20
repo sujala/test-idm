@@ -760,7 +760,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
                                                                                     String apiKey, String clientId) {
         logger.debug("Getting User {} ScopeAccess by clientId {}", username, clientId);
         final UserAuthenticationResult result = userDao.authenticateByAPIKey(username, apiKey);
-        handleAuthenticationFailure(username, result);
+        handleApiKeyUsernameAuthenticationFailure(username, result);
 
         final UserScopeAccess scopeAccess = this.getValidUserScopeAccessForClientId(result.getUser().getUniqueId(), clientId);
         return scopeAccess;
@@ -1022,6 +1022,14 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     private void handleAuthenticationFailure(String username, final UserAuthenticationResult result) {
         if (!result.isAuthenticated()) {
             String errorMessage = String.format("Invalid username or password.", username);
+            logger.warn(errorMessage);
+            throw new NotAuthenticatedException(errorMessage);
+        }
+    }
+
+    void handleApiKeyUsernameAuthenticationFailure(String username, UserAuthenticationResult result) {
+        if (!result.isAuthenticated()) {
+            String errorMessage = String.format("Username or api key is invalid.", username);
             logger.warn(errorMessage);
             throw new NotAuthenticatedException(errorMessage);
         }

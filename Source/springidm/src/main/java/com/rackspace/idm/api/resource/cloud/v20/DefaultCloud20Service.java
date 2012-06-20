@@ -599,10 +599,13 @@ public class DefaultCloud20Service implements Cloud20Service {
             User user = null;
             UserScopeAccess usa = null;
 
-//            if(authenticationRequest.getCredential() == null && authenticationRequest.getToken() == null)
-//                throw new BadRequestException("Unable to parse Auth data. Please review XML or JSON formatting.");
+            if(authenticationRequest.getCredential() == null && authenticationRequest.getToken() == null)
+                throw new BadRequestException("Invalid request body: unable to parse Auth data. Please review XML or JSON formatting.");
 
-            if (authenticationRequest.getToken() != null && !StringUtils.isBlank(authenticationRequest.getToken().getId())) {
+            if (authenticationRequest.getToken() != null) {
+                if(StringUtils.isBlank(authenticationRequest.getToken().getId())){
+                    throw new BadRequestException("Invalid Token Id");
+                }
                 ScopeAccess sa = scopeAccessService.getScopeAccessByAccessToken(authenticationRequest.getToken().getId());
                 if (sa == null || ((HasAccessToken) sa).isAccessTokenExpired(new DateTime()) || !(sa instanceof UserScopeAccess)) {
                     String errMsg = "Token not authenticated";
@@ -2067,11 +2070,10 @@ public class DefaultCloud20Service implements Cloud20Service {
         return roles;
     }
 
-    private Response.ResponseBuilder badRequestExceptionResponse(String message) {
+    Response.ResponseBuilder badRequestExceptionResponse(String message) {
         BadRequestFault fault = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequestFault();
         fault.setCode(HttpServletResponse.SC_BAD_REQUEST);
         fault.setMessage(message);
-        fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_BAD_REQUEST).entity(
                 OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequest(fault));
     }

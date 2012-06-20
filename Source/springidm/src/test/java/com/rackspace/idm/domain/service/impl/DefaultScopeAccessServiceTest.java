@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_ga.v1.ImpersonationRequest;
 import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import org.apache.commons.configuration.Configuration;
@@ -265,6 +266,22 @@ public class DefaultScopeAccessServiceTest {
     }
 
 
+    @Test (expected = NotAuthenticatedException.class)
+    public void handleApiKeyUsernameAuthenticationFailure_notAuthenticated_throwsNotAuthenticated() throws Exception {
+        UserAuthenticationResult result = new UserAuthenticationResult(new User(), false);
+        defaultScopeAccessService.handleApiKeyUsernameAuthenticationFailure("username", result);
+    }
 
+    @Test
+    public void handleApiKeyUsernameAuthenticationFailure_authenticated_doesNothing() throws Exception {
+        UserAuthenticationResult result = new UserAuthenticationResult(new User(), true);
+        defaultScopeAccessService.handleApiKeyUsernameAuthenticationFailure("username", result);
+    }
+
+    @Test (expected = NotAuthenticatedException.class)
+    public void getUserScopeAccessForClientIdByUsernameAndApiCredentials_notAuthenticated_throwsNotAuthenticated() throws Exception {
+        when(userDao.authenticateByAPIKey("username", "apiKey")).thenReturn(new UserAuthenticationResult(new User(), false));
+        defaultScopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials("username", "apiKey", "clientId");
+    }
 
 }
