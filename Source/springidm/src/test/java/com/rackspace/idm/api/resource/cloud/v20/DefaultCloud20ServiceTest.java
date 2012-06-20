@@ -852,6 +852,37 @@ public class DefaultCloud20ServiceTest {
         verify(scopeAccessService).getUserScopeAccessForClientIdByUsernameAndApiCredentials("test_user", "123", null);
     }
 
+    @Test
+    public void authenticate_withTenantIdAndNullToken_returnsBadRequestResponse() throws Exception {
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        authenticationRequest.setTenantId("tenantId");
+        authenticationRequest.setToken(null);
+        Response.ResponseBuilder responseBuilder = spy.authenticate(null, authenticationRequest);
+        assertThat("response status", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
+    public void authenticate_withTenantIdAndBlankTokenId_returnsBadRequestResponse() throws Exception {
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        authenticationRequest.setTenantId("tenantId");
+        TokenForAuthenticationRequest token = new TokenForAuthenticationRequest();
+        token.setId(" ");
+        authenticationRequest.setToken(token);
+        Response.ResponseBuilder responseBuilder = spy.authenticate(null, authenticationRequest);
+        assertThat("response status", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
+    public void authenticate_withTenantIdAndNullTokenId_returnsBadRequestResponse() throws Exception {
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        authenticationRequest.setTenantId("tenantId");
+        TokenForAuthenticationRequest token = new TokenForAuthenticationRequest();
+        token.setId(null);
+        authenticationRequest.setToken(token);
+        Response.ResponseBuilder responseBuilder = spy.authenticate(null, authenticationRequest);
+        assertThat("response status", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
     @Test(expected = ForbiddenException.class)
     public void verifyRackerOrServiceAdminAccess_notRackerAndNotCloudServiceAdmin_throwsForbidden() throws Exception {
         when(authorizationService.authorizeRacker(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(false);
