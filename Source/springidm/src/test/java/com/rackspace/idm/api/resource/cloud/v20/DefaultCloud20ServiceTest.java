@@ -949,6 +949,26 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void addUser_userPasswordIsNull_generateRandomPassword() throws Exception {
+        UriBuilder uriBuilder = mock(UriBuilder.class);
+        UserForCreate userNullPassword = new UserForCreate();
+        User user = new User();
+        ArgumentCaptor<UserForCreate> argumentCaptor = ArgumentCaptor.forClass(UserForCreate.class);
+        doNothing().when(spy).assignProperRole(any(HttpHeaders.class), anyString(), any(ScopeAccess.class), any(User.class));
+        doNothing().when(spy).verifyUserAdminLevelAccess(authToken);
+        doNothing().when(spy).validateUser(org.mockito.Matchers.any(org.openstack.docs.identity.api.v2.User.class));
+        when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
+        when(uriBuilder.path(anyString())).thenReturn(uriBuilder);
+        when(uriBuilder.build()).thenReturn(new URI("uri"));
+        when(jaxbObjectFactories.getOpenStackIdentityV2Factory()).thenReturn(new ObjectFactory());
+        when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(user);
+        when(userConverterCloudV20.toUser(any(User.class))).thenReturn(new org.openstack.docs.identity.api.v2.User());
+        spy.addUser(httpHeaders, uriInfo, authToken, userNullPassword);
+        verify(userConverterCloudV20).toUserDO(argumentCaptor.capture());
+        assertThat("user password", argumentCaptor.getValue().getPassword(), notNullValue());
+    }
+
+    @Test
     public void addUser_withNoRegion_RegionIsNull() throws Exception {
         UserForCreate userNoRegion = new UserForCreate();
         ArgumentCaptor<User> argumentCaptor = ArgumentCaptor.forClass(User.class);

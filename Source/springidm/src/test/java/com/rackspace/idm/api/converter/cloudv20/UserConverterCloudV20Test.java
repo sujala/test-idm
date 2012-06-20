@@ -55,6 +55,53 @@ public class UserConverterCloudV20Test {
     }
 
     @Test
+    public void toUserForCreate_withUser_returnsNewUser() throws Exception {
+        User user = new User();
+        user.setDisplayName("display");
+        user.setEmail("email");
+        user.setEnabled(true);
+        user.setId("id");
+        user.setUsername("username");
+        UserForCreate userForCreate = userConverterCloudV20.toUserForCreate(user);
+        assertThat("display name", userForCreate.getDisplayName(), equalTo("display"));
+        assertThat("email", userForCreate.getEmail(), equalTo("email"));
+        assertThat("id", userForCreate.getId(), equalTo("id"));
+        assertThat("username", userForCreate.getUsername(), equalTo("username"));
+    }
+
+    @Test
+    public void toUserForCreate_passwordIsNotNull_setPassword() throws Exception {
+        User user = new User();
+        user.setPassword("password");
+        UserForCreate userForCreate = userConverterCloudV20.toUserForCreate(user);
+        assertThat("password", userForCreate.getPassword(), equalTo("password"));
+    }
+
+    @Test
+    public void toUserForCreate_defaultRegionNotNull_setsDefaultRegion() throws Exception {
+        User user = new User();
+        user.setRegion("myRegion");
+        UserForCreate userForCreate = userConverterCloudV20.toUserForCreate(user);
+        assertThat("region", userForCreate.getOtherAttributes().get(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","defaultRegion")),equalTo("myRegion"));
+    }
+
+    @Test
+    public void toUserForCreate_createdNotNull_setsCreated() throws Exception {
+        User user = new User();
+        user.setCreated(new DateTime(1));
+        UserForCreate userForCreate = userConverterCloudV20.toUserForCreate(user);
+        assertThat("date created", userForCreate.getCreated().toGregorianCalendar().getTimeInMillis(), equalTo(1L));
+    }
+
+    @Test
+    public void toUserForCreate_updatedNotNull_setsCreated() throws Exception {
+        User user = new User();
+        user.setUpdated(new DateTime(1));
+        UserForCreate userForCreate = userConverterCloudV20.toUserForCreate(user);
+        assertThat("date created", userForCreate.getUpdated().toGregorianCalendar().getTimeInMillis(), equalTo(1L));
+    }
+
+    @Test
     public void toUserDO_withUserForCreate_setsPassword() throws Exception {
         UserForCreate userForCreate = new UserForCreate();
         userForCreate.setPassword("password");

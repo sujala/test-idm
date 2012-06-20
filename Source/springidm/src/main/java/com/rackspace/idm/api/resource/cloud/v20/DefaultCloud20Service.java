@@ -128,6 +128,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
 
+
     @Override
     public ResponseBuilder addEndpoint(HttpHeaders httpHeaders, String authToken, String tenantId, EndpointTemplate endpoint) {
         try {
@@ -329,6 +330,10 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (user.getPassword() != null) {
                 validatePassword(user.getPassword());
             }
+            else {
+                String password = Password.generateRandom(false).getValue();
+                user.setPassword(password);
+            }
             User userDO = this.userConverterCloudV20.toUserDO(user);
 
             //if caller is a user-admin, give user same mosso and nastId and verifies that it has less then 100 subusers
@@ -354,9 +359,18 @@ public class DefaultCloud20Service implements Cloud20Service {
             UriBuilder requestUriBuilder = uriInfo.getRequestUriBuilder();
             String id = userDO.getId();
             URI build = requestUriBuilder.path(id).build();
+
             org.openstack.docs.identity.api.v2.ObjectFactory openStackIdentityV2Factory = OBJ_FACTORIES.getOpenStackIdentityV2Factory();
-            org.openstack.docs.identity.api.v2.User value = userConverterCloudV20.toUser(userDO);
-            return Response.created(build).entity(openStackIdentityV2Factory.createUser(value));
+            UserForCreate value = userConverterCloudV20.toUserForCreate(userDO);
+            ResponseBuilder created = Response.created(build);
+            return created.entity(openStackIdentityV2Factory.createUser(value));
+
+            /*
+            org.openstack.docs.identity.api.ext.os_ksadm.v1.ObjectFactory openStackIdentityExtKsadmnV1Factory = OBJ_FACTORIES.getOpenStackIdentityExtKsadmnV1Factory();
+            userConverterCloudV20.toUser(userDO);
+            ResponseBuilder created = Response.created(build);
+            return created.entity(openStackIdentityExtKsadmnV1Factory);
+            */
         } catch (DuplicateException de) {
             return userConflictExceptionResponse(de.getMessage());
         } catch (DuplicateUsernameException due) {

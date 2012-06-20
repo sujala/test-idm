@@ -23,6 +23,7 @@ import org.junit.Test;
 import org.openstack.docs.common.api.v1.*;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.ServiceList;
+import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplateList;
 import org.openstack.docs.identity.api.ext.os_ksec2.v1.Ec2CredentialsType;
@@ -1414,6 +1415,22 @@ public class JSONWriterTest {
         String jsonText = JSONValue.toJSONString(result);
         myOut.write(jsonText.getBytes());
         assertThat("string", myOut.toString(), equalTo("{\"RAX-KSQA:secretQA\":{\"answer\":null,\"question\":null}}"));
+    }
+
+    @Test
+    public void getUser_instanceOfUserForCreate_returnsJSONObjectWithPassword() throws Exception {
+        User user = new UserForCreate();
+        user.setId("10019805");
+        user.setUsername("kurt");
+        user.setEmail("myEmail");
+        ((UserForCreate)user).setPassword("myPassword");
+        user.setCreated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getUser(user);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("user", myOut.toString(), equalTo(
+                "{\"id\":\"10019805\",\"enabled\":true,\"username\":\"kurt\",\"OS-KSADM:password\":\"myPassword\",\"created\":\"0001-02-01T00:00:00.000-06:00\",\"email\":\"myEmail\"}"));
     }
 
     @Test

@@ -61,6 +61,43 @@ public class UserConverterCloudV20 {
         return userForAuthenticateResponse;
     }
 
+    public UserForCreate toUserForCreate(com.rackspace.idm.domain.entity.User user) {
+        org.openstack.docs.identity.api.ext.os_ksadm.v1.ObjectFactory v1ObjectFactory = new org.openstack.docs.identity.api.ext.os_ksadm.v1.ObjectFactory();
+        UserForCreate jaxbUser = v1ObjectFactory.createUserForCreate();
+
+        jaxbUser.setDisplayName(user.getDisplayName());
+        jaxbUser.setEmail(user.getEmail());
+        jaxbUser.setEnabled(user.isEnabled());
+        jaxbUser.setId(user.getId());
+        jaxbUser.setUsername(user.getUsername());
+        if (user.getPassword() != null) {
+            jaxbUser.setPassword(user.getPassword());
+        }
+        if(user.getRegion() != null){
+            jaxbUser.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","defaultRegion"),user.getRegion());
+        }
+
+        try {
+            if (user.getCreated() != null) {
+
+                jaxbUser.setCreated(DatatypeFactory.newInstance()
+                        .newXMLGregorianCalendar(
+                                user.getCreated().toGregorianCalendar()));
+            }
+
+            if (user.getUpdated() != null) {
+                jaxbUser.setUpdated(DatatypeFactory.newInstance()
+                        .newXMLGregorianCalendar(
+                                user.getUpdated().toGregorianCalendar()));
+            }
+
+        }   catch (DatatypeConfigurationException e) {
+                e.printStackTrace();
+        }
+
+        return jaxbUser;
+    }
+
     public User toUser(com.rackspace.idm.domain.entity.User user) {
         User jaxbUser = objectFactory.createUser();
 
