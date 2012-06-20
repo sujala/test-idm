@@ -364,13 +364,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             UserForCreate value = userConverterCloudV20.toUserForCreate(userDO);
             ResponseBuilder created = Response.created(build);
             return created.entity(openStackIdentityV2Factory.createUser(value));
-
-            /*
-            org.openstack.docs.identity.api.ext.os_ksadm.v1.ObjectFactory openStackIdentityExtKsadmnV1Factory = OBJ_FACTORIES.getOpenStackIdentityExtKsadmnV1Factory();
-            userConverterCloudV20.toUser(userDO);
-            ResponseBuilder created = Response.created(build);
-            return created.entity(openStackIdentityExtKsadmnV1Factory);
-            */
         } catch (DuplicateException de) {
             return userConflictExceptionResponse(de.getMessage());
         } catch (DuplicateUsernameException due) {
