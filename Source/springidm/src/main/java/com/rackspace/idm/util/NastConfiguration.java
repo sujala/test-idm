@@ -19,6 +19,10 @@ public class NastConfiguration {
     @Autowired
     private Configuration configuration;
 
+    public void setConfiguration(Configuration configuration) {
+        this.configuration = configuration;
+    }
+
     public boolean isNastXmlRpcEnabled(){
         return configuration.getBoolean("nast.xmlrpc.enabled");
     }
