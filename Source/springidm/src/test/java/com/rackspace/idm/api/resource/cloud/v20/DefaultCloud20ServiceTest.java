@@ -857,8 +857,9 @@ public class DefaultCloud20ServiceTest {
         AuthenticationRequest authenticationRequest = new AuthenticationRequest();
         authenticationRequest.setTenantId("tenantId");
         authenticationRequest.setToken(null);
-        Response.ResponseBuilder responseBuilder = spy.authenticate(null, authenticationRequest);
-        assertThat("response status", responseBuilder.build().getStatus(), equalTo(400));
+        Response response = spy.authenticate(null, authenticationRequest).build();
+        assertThat("response status", response.getStatus(), equalTo(400));
+        assertThat("response message",( (JAXBElement<BadRequestFault>) response.getEntity()).getValue().getMessage(),equalTo("Invalid request body: unable to parse Auth data. Please review XML or JSON formatting."));
     }
 
     @Test
@@ -3830,5 +3831,15 @@ public class DefaultCloud20ServiceTest {
         doThrow(new BadRequestException()).when(spy).checkXAUTHTOKEN(authToken, true, null);
         Response.ResponseBuilder responseBuilder = spy.deleteUserFromSoftDeleted(null, authToken, null);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test (expected = AssertionError.class)
+    public void badRequestExceptionResponse_doesNotSetDetails() throws Exception {
+        BadRequestFault badRequestFault = mock(BadRequestFault.class);
+        ObjectFactory objectFactory = mock(ObjectFactory.class);
+        when(jaxbObjectFactories.getOpenStackIdentityV2Factory()).thenReturn(objectFactory);
+        when(objectFactory.createBadRequestFault()).thenReturn(badRequestFault);
+        defaultCloud20Service.badRequestExceptionResponse("message");
+        verify(badRequestFault).setDetails(anyString());
     }
 }
