@@ -1,16 +1,16 @@
 package com.rackspace.idm.api.filter;
 
 import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.domain.entity.HasAccessToken;
-import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess;
-import com.rackspace.idm.domain.entity.ScopeAccess;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.AuthenticationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotAuthorizedException;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.sun.jersey.spi.container.ContainerRequest;
 import com.sun.jersey.spi.container.ContainerRequestFilter;
+import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +23,7 @@ import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Context;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -43,6 +44,12 @@ public class AuthenticationFilter implements ContainerRequestFilter,
     @Autowired
     private ScopeAccessService scopeAccessService;
 
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private Configuration config;
+    
     public AuthenticationFilter() {
     }
 
@@ -93,6 +100,26 @@ public class AuthenticationFilter implements ContainerRequestFilter,
                 }
             }
             return request;
+        }
+
+        if(path.startsWith("migration")){
+            // Validate Racker Token and has valid role
+            final String authToken = request.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER);
+            ScopeAccess sa = scopeAccessService.getScopeAccessByAccessToken(authToken);
+            if(sa instanceof RackerScopeAccess){
+                List<String> rackerRoles = userService.getRackerRoles(((RackerScopeAccess) sa).getRackerId());
+                if (rackerRoles != null) {
+                    for (String r : rackerRoles) {
+                        if(r.equals(getMigrationAdminGroup()))
+                            return request;
+                    }
+                }
+                else {
+                    throw new NotAuthenticatedException("Authentication Failed.");
+                }
+            }
+            // if we get here, no role was found
+            throw new NotAuthenticatedException("Authentication Failed.");
         }
 
         // Skip authentication for the following calls
@@ -152,5 +179,9 @@ public class AuthenticationFilter implements ContainerRequestFilter,
         }
 
         return scopeAccessService;
+    }
+
+    protected String getMigrationAdminGroup() {
+        return config.getString("migrationAdminGroup");
     }
 }
