@@ -45,6 +45,67 @@
         <url-pattern>/cloud/*</url-pattern>
     </filter-mapping>
 
+    <filter>
+        <filter-name>ResponseHeaderFilter10</filter-name>
+        <filter-class>com.rackspace.idm.api.filter.ResponseFilter</filter-class>
+        <init-param>
+            <param-name>Headers</param-name>
+            <param-value>
+                Vary: X-Auth-Token, X-Auth-Key, X-Storage-User, X-Storage-Pass, X-Auth-User
+            </param-value>
+        </init-param>
+    </filter>
+
+    <filter>
+        <filter-name>ResponseHeaderFilter11</filter-name>
+        <filter-class>com.rackspace.idm.api.filter.ResponseFilter</filter-class>
+        <init-param>
+            <param-name>Headers</param-name>
+            <param-value>
+                Vary: Accept, Accept-Encoding
+            </param-value>
+        </init-param>
+    </filter>
+
+    <filter>
+        <description>
+            The filter adds response headers to every response that it is
+            mapped to. It does not replace existing http headers.
+        </description>
+        <filter-name>ResponseHeaderFilter20</filter-name>
+        <filter-class>com.rackspace.idm.api.filter.ResponseFilter</filter-class>
+        <init-param>
+            <description>
+                The Headers parameter denotes the headers to add to the
+                response. Set this value to the actual headers. For example:
+
+                Vary: Accept, Accept-Encoding
+
+                You can supply multiple headers one per line. If the same header is
+                specified twice it will be combined into a comma separated list.
+
+                Vary: Accept
+                Vary: Accept-Encoding
+            </description>
+            <param-name>Headers</param-name>
+            <param-value>
+                Vary: Accept, Accept-Encoding, X-Auth-Token
+            </param-value>
+        </init-param>
+    </filter>
+    <filter-mapping>
+        <filter-name>ResponseHeaderFilter10</filter-name>
+        <url-pattern>/cloud/v1.0/*</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>ResponseHeaderFilter11</filter-name>
+        <url-pattern>/cloud/v1.1/*</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>ResponseHeaderFilter20</filter-name>
+        <url-pattern>/cloud/v2.0/*</url-pattern>
+    </filter-mapping>
+
 	<listener>
 		<listener-class>org.springframework.web.util.Log4jConfigListener</listener-class>
 	</listener>
