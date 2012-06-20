@@ -40,9 +40,10 @@ public class CloudUserExtractor {
 
     public CloudUserExtractor(){}
     
-    public CloudUserExtractor(CloudExceptionResponse cloudExceptionResponse, UserService userService) {
+    public CloudUserExtractor(CloudExceptionResponse cloudExceptionResponse, UserService userService, ScopeAccessService scopeAccessService) {
         this.cloudExceptionResponse = cloudExceptionResponse;
         this.userService = userService;
+        this.scopeAccessService = scopeAccessService;
     }
 
     public User getUserByV20CredentialType(AuthenticationRequest authenticationRequest) throws IOException {
@@ -92,8 +93,8 @@ public class CloudUserExtractor {
         } else if (credentials.getValue() instanceof MossoCredentials) {
             Integer mossoId = ((MossoCredentials) credentials.getValue()).getMossoId();
             String key = ((MossoCredentials) credentials.getValue()).getKey();
-            if (mossoId == null) {
-                throw new CloudExceptionResponse(cloudExceptionResponse.badRequestExceptionResponse("Expecting mosso id"));
+            if (key == null) {
+                throw new CloudExceptionResponse(cloudExceptionResponse.badRequestExceptionResponse("Expecting mosso key"));
             }
             user = userService.getUserByMossoId(mossoId);
         } else if (credentials.getValue() instanceof NastCredentials) {

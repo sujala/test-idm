@@ -29,10 +29,6 @@ public class CloudExceptionResponse extends WebApplicationException {
     public CloudExceptionResponse() {
     }
 
-    public CloudExceptionResponse(Throwable cause) {
-        super(cause);
-    }
-
     public Response.ResponseBuilder exceptionResponse(Exception ex) {
         if (ex instanceof NotFoundException) {
             return notFoundExceptionResponse(ex.getMessage());
