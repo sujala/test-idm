@@ -156,9 +156,19 @@ public class EndpointServiceTests {
     
     @Test
     public void shouldRemoveBaseUrlFromUser() {
+        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
+        cloudBaseUrl.setBaseUrlId(baseUrlId);
+        cloudBaseUrl.setServiceName(service);
+
+        List<CloudEndpoint> cloudEndpoints = new ArrayList<CloudEndpoint>();
+        CloudEndpoint cloudEndpoint = new CloudEndpoint();
+        cloudEndpoint.setBaseUrl(cloudBaseUrl);
+        cloudEndpoints.add(cloudEndpoint);
+
         baseUrls.add(baseUrl);
         EasyMock.expect(mockEndpointDao.getBaseUrlById(baseUrlId)).andReturn(baseUrl);
         EasyMock.expect(mockEndpointDao.getBaseUrlsByService(service)).andReturn(baseUrls);
+        EasyMock.expect(mockEndpointDao.getEndpointsForUser(username)).andReturn(cloudEndpoints);
         mockEndpointDao.removeBaseUrlFromUser(baseUrlId, username);
         EasyMock.replay(mockEndpointDao);
         

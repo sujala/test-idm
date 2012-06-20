@@ -2,7 +2,9 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
+import com.rackspace.idm.domain.entity.CloudEndpoint;
 import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.NotFoundException;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -11,6 +13,7 @@ import java.util.List;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 
 /**
@@ -47,14 +50,110 @@ public class DefaultEndpointServiceTest {
 
     @Test
     public void removeBaseUrlFromUser_getsAllBaseUrlForService() throws Exception {
+        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
+        cloudBaseUrl.setDef(false);
+        cloudBaseUrl.setBaseUrlId(baseUrlId);
+        cloudBaseUrl.setServiceName(service);
+        List<CloudBaseUrl> list = new ArrayList<CloudBaseUrl>();
+        list.add(new CloudBaseUrl());
+        list.add(new CloudBaseUrl());
+        list.add(new CloudBaseUrl());
+
+        List<CloudEndpoint> cloudEndpoints = new ArrayList<CloudEndpoint>();
+        CloudEndpoint cloudEndpoint = new CloudEndpoint();
+        cloudEndpoint.setBaseUrl(cloudBaseUrl);
+        cloudEndpoints.add(cloudEndpoint);
+
+        when(endpointDao.getBaseUrlsByService(anyString())).thenReturn(list);
+        when(endpointDao.getBaseUrlById(baseUrlId)).thenReturn(cloudBaseUrl);
+        when(endpointDao.getEndpointsForUser(user)).thenReturn(cloudEndpoints);
         defaultEndpointService.removeBaseUrlFromUser(baseUrlId, user);
         verify(endpointDao).getBaseUrlsByService(service);
     }
 
     @Test
     public void removeBaseUrlFromUser_getsBaseUrlById() throws Exception {
+        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
+        cloudBaseUrl.setBaseUrlId(baseUrlId);
+        cloudBaseUrl.setServiceName(service);
+        List<CloudBaseUrl> list = new ArrayList<CloudBaseUrl>();
+        list.add(new CloudBaseUrl());
+        list.add(new CloudBaseUrl());
+        list.add(new CloudBaseUrl());
+
+        List<CloudEndpoint> cloudEndpoints = new ArrayList<CloudEndpoint>();
+        CloudEndpoint cloudEndpoint = new CloudEndpoint();
+        cloudEndpoint.setBaseUrl(cloudBaseUrl);
+        cloudEndpoints.add(cloudEndpoint);
+
+        when(endpointDao.getBaseUrlsByService(anyString())).thenReturn(list);
+        when(endpointDao.getBaseUrlById(baseUrlId)).thenReturn(cloudBaseUrl);
+        when(endpointDao.getEndpointsForUser(user)).thenReturn(cloudEndpoints);
         defaultEndpointService.removeBaseUrlFromUser(baseUrlId, user);
         verify(endpointDao).getBaseUrlById(baseUrlId);
+    }
+
+    @Test
+    public void removeBaseUrlFromUser_callsGetEndpointsForUser() throws Exception {
+        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
+        cloudBaseUrl.setBaseUrlId(baseUrlId);
+        cloudBaseUrl.setServiceName(service);
+        List<CloudBaseUrl> list = new ArrayList<CloudBaseUrl>();
+        list.add(new CloudBaseUrl());
+        list.add(new CloudBaseUrl());
+        list.add(new CloudBaseUrl());
+
+        List<CloudEndpoint> cloudEndpoints = new ArrayList<CloudEndpoint>();
+        CloudEndpoint cloudEndpoint = new CloudEndpoint();
+        cloudEndpoint.setBaseUrl(cloudBaseUrl);
+        cloudEndpoints.add(cloudEndpoint);
+
+        when(endpointDao.getBaseUrlsByService(anyString())).thenReturn(list);
+        when(endpointDao.getBaseUrlById(baseUrlId)).thenReturn(cloudBaseUrl);
+        when(endpointDao.getEndpointsForUser(user)).thenReturn(cloudEndpoints);
+        defaultEndpointService.removeBaseUrlFromUser(baseUrlId, user);
+        verify(endpointDao).getEndpointsForUser(user);
+    }
+
+    @Test
+    public void removeBaseUrlFromUser_baseURLNotForUser_throwsNotFoundException() throws Exception {
+        try{
+            CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
+            cloudBaseUrl.setDef(false);
+            List<CloudBaseUrl> list = new ArrayList<CloudBaseUrl>();
+            list.add(new CloudBaseUrl());
+            list.add(new CloudBaseUrl());
+            list.add(new CloudBaseUrl());
+            when(endpointDao.getBaseUrlsByService(anyString())).thenReturn(list);
+            when(endpointDao.getBaseUrlById(3)).thenReturn(cloudBaseUrl);
+            when(endpointDao.getEndpointsForUser(user)).thenReturn(new ArrayList<CloudEndpoint>());
+            defaultEndpointService.removeBaseUrlFromUser(3, user);
+            assertTrue("expected exception",false);
+        } catch (NotFoundException nf){
+            assertThat("exception message",nf.getMessage(),equalTo("Attempting to delete nonexisting baseUrl: 3"));
+        }
+
+
+    }
+
+    @Test
+    public void removeBaseUrlFromUser_baseURLForUser_callsEndpointDaoMethod() throws Exception {
+        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
+        cloudBaseUrl.setDef(false);
+        cloudBaseUrl.setBaseUrlId(3);
+        CloudEndpoint cloudEndpoint = new CloudEndpoint();
+        cloudEndpoint.setBaseUrl(cloudBaseUrl);
+        List<CloudEndpoint> endpoints = new ArrayList<CloudEndpoint>();
+        endpoints.add(cloudEndpoint);
+        List<CloudBaseUrl> list = new ArrayList<CloudBaseUrl>();
+        list.add(new CloudBaseUrl());
+        list.add(new CloudBaseUrl());
+        list.add(new CloudBaseUrl());
+        when(endpointDao.getBaseUrlsByService(anyString())).thenReturn(list);
+        when(endpointDao.getBaseUrlById(3)).thenReturn(cloudBaseUrl);
+        when(endpointDao.getEndpointsForUser(user)).thenReturn(endpoints);
+        defaultEndpointService.removeBaseUrlFromUser(3, user);
+        verify(endpointDao).removeBaseUrlFromUser(3,user);
     }
 
     @Test(expected = BadRequestException.class)
