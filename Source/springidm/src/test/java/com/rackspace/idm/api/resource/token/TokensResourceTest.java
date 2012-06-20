@@ -2,10 +2,14 @@ package com.rackspace.idm.api.resource.token;
 
 import com.rackspace.idm.api.converter.AuthConverter;
 import com.rackspace.idm.api.converter.CredentialsConverter;
+import com.rackspace.idm.domain.entity.AuthData;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.AuthenticationService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TokenService;
+import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.rackspace.idm.validation.InputValidator;
 import com.sun.jersey.core.provider.EntityHolder;
@@ -19,7 +23,10 @@ import javax.ws.rs.core.Response;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -84,17 +91,133 @@ public class TokensResourceTest {
         assertThat("response code", response.getStatus(), equalTo(200));
     }
 
-    @Ignore
-    @Test
-    public void authenticate_mediaTypeNotJSONResponseOk_returns200() throws Throwable {
-        String jsonString = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
-                "<mossoCredentials " +
-                "xlmns=\"http://docs.openstack.org/identity/api/v2.0\"" +
-                "mossoId=\"323676\"" +
-                "key=\"a86850deb2742ec3cb41518e26aa2d89\"/>";
+    @Test (expected = BadRequestException.class)
+    public void authenticate_mediaTypeNotJSON_throwsException() throws Throwable {
+        String jsonString = "<?xml version=\"1.0\" encoding=\"UTF-8\"?> <passwordCredentials username=\"jsmith\" password=\"theUsersPassword\"/>";
         EntityHolder<String> holder = new EntityHolder<String>(jsonString);
         when(httpHeaders.getMediaType()).thenReturn(new MediaType("application","xml"));
         Response response = tokensResource.authenticate(httpHeaders, holder);
         assertThat("response code", response.getStatus(), equalTo(200));
     }
+
+    @Test
+    public void validateAccessToken_callsScopeAccessService_getAccessTokenByAuthHeader() throws Exception {
+        tokensResource.validateAccessToken("authHeader", "tokenString");
+        verify(scopeAccessService).getAccessTokenByAuthHeader("authHeader");
+    }
+
+    @Test
+    public void validateAccessToken_callsAuthorizationService_authorizeIdmSuperAdminOrRackspaceClient() throws Exception {
+        tokensResource.validateAccessToken("authHeader", "tokenString");
+        verify(authorizationService).authorizeIdmSuperAdminOrRackspaceClient(any(ScopeAccess.class));
+    }
+
+    @Test
+    public void validateAccessToken_callsAuthenticationService_getAuthDateFromToken() throws Exception {
+        tokensResource.validateAccessToken("authHeader", "tokenString");
+        verify(authenticationService).getAuthDataFromToken("tokenString");
+    }
+
+    @Test
+    public void validateAccessToken_callsAuthConverter_toAuthDataJaxb() throws Exception {
+        tokensResource.validateAccessToken("authHeader", "tokenString");
+        verify(authConverter).toAuthDataJaxb(any(AuthData.class));
+    }
+
+    @Test
+    public void validateAccessToken_responseOk_returns200() throws Exception {
+        Response response = tokensResource.validateAccessToken("authHeader", "tokenString");
+        assertThat("response code", response.getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void revokeAccessToken_callsAuthorizationService_verifyIdmSuperAdminAccess() throws Exception {
+        tokensResource.revokeAccessToken("authHeader", "tokenString");
+        verify(authorizationService).verifyIdmSuperAdminAccess("authHeader");
+    }
+
+    @Test
+    public void revokeAccessToken_callsAuthHeaderHelper_getTokenFromAuthHeader() throws Exception {
+        tokensResource.revokeAccessToken("authHeader", "tokenString");
+        verify(authHeaderHelper).getTokenFromAuthHeader("authHeader");
+    }
+
+    @Test
+    public void revokeAccessToken_callsTokenService_revokeAccessToken() throws Exception {
+        tokensResource.revokeAccessToken("authHeader", "tokenString");
+        verify(tokenService).revokeAccessToken(anyString(), anyString());
+    }
+
+    @Test
+    public void revokeAccessToken_noContent_returns204() throws Exception {
+        Response response = tokensResource.revokeAccessToken("authHeader", "tokenString");
+        assertThat("response code", response.getStatus(), equalTo(204));
+    }
+
+    @Test
+    public void doesTokenHaveApplicationAccess_callsAuthorizationService_verifyIdmSuperAdminAccess() throws Exception {
+        when(tokenService.doesTokenHaveAccessToApplication(anyString(), anyString())).thenReturn(true);
+        tokensResource.doesTokenHaveApplicationAccess("authHeader", "tokenStrin", "applicationId");
+        verify(authorizationService).verifyIdmSuperAdminAccess("authHeader");
+    }
+
+    @Test
+    public void doesTokenHaveApplicationAccess_callsScopeAccessService_getAccessTokenByAuthHeader() throws Exception {
+        when(tokenService.doesTokenHaveAccessToApplication(anyString(), anyString())).thenReturn(true);
+        tokensResource.doesTokenHaveApplicationAccess("authHeader", "tokenString", "applicationId");
+        verify(scopeAccessService).getAccessTokenByAuthHeader("authHeader");
+    }
+
+    @Test
+    public void doesTokenHaveApplicationAccess_callsTokenService_doesTokenHaveAccessToApplication() throws Exception {
+        when(tokenService.doesTokenHaveAccessToApplication(anyString(), anyString())).thenReturn(true);
+        tokensResource.doesTokenHaveApplicationAccess("authHeader", "tokenString", "applicationId");
+        verify(tokenService).doesTokenHaveAccessToApplication(anyString(), anyString());
+    }
+
+    @Test (expected = NotFoundException.class)
+    public void doesTokenHaveApplicationAccess_noApplicationAccess_throwsNotFound() throws Exception {
+        tokensResource.doesTokenHaveApplicationAccess("authHeader", "tokenString", "applicationId");
+    }
+
+    @Test
+    public void doesTokenHaveApplicationAccess_responseNoContent_returns204() throws Exception {
+        when(tokenService.doesTokenHaveAccessToApplication(anyString(), anyString())).thenReturn(true);
+        Response response = tokensResource.doesTokenHaveApplicationAccess("authHeader", "tokenString", "applicationId");
+        assertThat("response code", response.getStatus(), equalTo(204));
+    }
+
+    @Test
+    public void doesTokenHaveApplicationRole_callsAuthorizationService_verifyIdmSuperAdminAccess() throws Exception {
+        when(tokenService.doesTokenHaveAplicationRole(anyString(), anyString(), anyString())).thenReturn(true);
+        tokensResource.doesTokenHaveApplicationRole("authHeader", "tokenStrin", "applicationId", "roleId");
+        verify(authorizationService).verifyIdmSuperAdminAccess("authHeader");
+    }
+
+    @Test
+    public void doesTokenHaveApplicationRole_callsScopeAccessService_getAccessTokenByAuthHeader() throws Exception {
+        when(tokenService.doesTokenHaveAplicationRole(anyString(), anyString(), anyString())).thenReturn(true);
+        tokensResource.doesTokenHaveApplicationRole("authHeader", "tokenStrin", "applicationId", "roleId");
+        verify(scopeAccessService).getAccessTokenByAuthHeader("authHeader");
+    }
+
+    @Test
+    public void doesTokenHaveApplicationRole_callsTokenService_doesTokenHaveAplicationRole() throws Exception {
+        when(tokenService.doesTokenHaveAplicationRole(anyString(), anyString(), anyString())).thenReturn(true);
+        tokensResource.doesTokenHaveApplicationRole("authHeader", "tokenStrin", "applicationId", "roleId");
+        verify(tokenService).doesTokenHaveAplicationRole(anyString(), anyString(), anyString());
+    }
+
+    @Test (expected = NotFoundException.class)
+    public void doesTokenHaveApplicationRole_noApplicationAccess_throwsNotFound() throws Exception {
+        tokensResource.doesTokenHaveApplicationRole("authHeader", "tokenStrin", "applicationId", "roleId");
+    }
+
+    @Test
+    public void doesTokenHaveApplicationRole_responseNoContent_returns204() throws Exception {
+        when(tokenService.doesTokenHaveAplicationRole(anyString(), anyString(), anyString())).thenReturn(true);
+        Response response = tokensResource.doesTokenHaveApplicationRole("authHeader", "tokenStrin", "applicationId", "roleId");
+        assertThat("response code", response.getStatus(), equalTo(204));
+    }
+
 }
