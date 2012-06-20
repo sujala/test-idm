@@ -1,4 +1,4 @@
-package com.rackspace.idm.services;
+package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.*;
