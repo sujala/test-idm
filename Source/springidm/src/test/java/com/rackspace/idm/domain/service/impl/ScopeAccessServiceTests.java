@@ -1,9 +1,8 @@
-package com.rackspace.idm.services;
+package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.domain.service.impl.DefaultScopeAccessService;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import junit.framework.Assert;

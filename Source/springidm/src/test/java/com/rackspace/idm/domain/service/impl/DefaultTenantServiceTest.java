@@ -724,4 +724,80 @@ public class DefaultTenantServiceTest {
         assertThat("role rs id", returnedRoles.get(0).getRoleRsId(),equalTo("789"));
         assertThat("tenant ids",returnedRoles.get(0).getTenantIds()[0],equalTo("id"));
     }
+
+    @Test
+    public void getUsersForTenant_rolesExistAndNoDuplicates_populatesUserIdList() throws Exception {
+        TenantRole role = new TenantRole();
+        role.setUserId("123");
+        List<TenantRole> list = new ArrayList<TenantRole>();
+        list.add(role);
+        when(tenantDao.getAllTenantRolesForTenant("123")).thenReturn(list);
+        defaultTenantService.getUsersForTenant("123");
+        verify(userDao).getUserById("123");
+    }
+
+    @Test
+    public void getUsersForTenant_rolesExistWithDuplicatesAndUserExistsAndEnabled_returnsListOfOneUser() throws Exception {
+        TenantRole role1 = new TenantRole();
+        role1.setUserId("123");
+        TenantRole role2 = new TenantRole();
+        role2.setUserId("123");
+        TenantRole role3 = new TenantRole();
+        role3.setUserId("123");
+        List<TenantRole> list = new ArrayList<TenantRole>();
+        list.add(role1);
+        list.add(role2);
+        list.add(role3);
+        User user = new User();
+        user.setEnabled(true);
+        when(tenantDao.getAllTenantRolesForTenant("123")).thenReturn(list);
+        when(userDao.getUserById("123")).thenReturn(user);
+        assertThat("list size",defaultTenantService.getUsersForTenant("123").size(),equalTo(1));
+    }
+
+    @Test (expected = AssertionError.class)
+    public void getUsersForTenant_noRolesAndUserExistsAndEnabled_doesNotCallUserDaoMethod() throws Exception {
+        List<TenantRole> list = new ArrayList<TenantRole>();
+        User user = new User();
+        user.setEnabled(true);
+        when(tenantDao.getAllTenantRolesForTenant("123")).thenReturn(list);
+        defaultTenantService.getUsersForTenant("123");
+        verify(userDao).getUserById("123");
+    }
+
+    @Test
+    public void getUsersForTenant_userExistsAndNotEnabled_returnsEmptyList() throws Exception {
+        TenantRole role1 = new TenantRole();
+        role1.setUserId("123");
+        TenantRole role2 = new TenantRole();
+        role2.setUserId("123");
+        TenantRole role3 = new TenantRole();
+        role3.setUserId("123");
+        List<TenantRole> list = new ArrayList<TenantRole>();
+        list.add(role1);
+        list.add(role2);
+        list.add(role3);
+        User user = new User();
+        user.setEnabled(false);
+        when(tenantDao.getAllTenantRolesForTenant("123")).thenReturn(list);
+        when(userDao.getUserById("123")).thenReturn(user);
+        assertThat("list size",defaultTenantService.getUsersForTenant("123").size(),equalTo(0));
+    }
+
+    @Test
+    public void getUsersForTenant_userIsNull_returnsEmptyList() throws Exception {
+        TenantRole role1 = new TenantRole();
+        role1.setUserId("123");
+        TenantRole role2 = new TenantRole();
+        role2.setUserId("123");
+        TenantRole role3 = new TenantRole();
+        role3.setUserId("123");
+        List<TenantRole> list = new ArrayList<TenantRole>();
+        list.add(role1);
+        list.add(role2);
+        list.add(role3);
+        when(tenantDao.getAllTenantRolesForTenant("123")).thenReturn(list);
+        when(userDao.getUserById("123")).thenReturn(null);
+        assertThat("list size",defaultTenantService.getUsersForTenant("123").size(),equalTo(0));
+    }
 }
