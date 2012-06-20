@@ -20,6 +20,7 @@ import org.openstack.docs.common.api.v1.MediaTypeList;
 import org.openstack.docs.common.api.v1.VersionChoice;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.ServiceList;
+import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplateList;
 import org.openstack.docs.identity.api.v2.*;
@@ -589,8 +590,14 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
         outer.put(JSONConstants.USERNAME, user.getUsername());
         outer.put(JSONConstants.EMAIL, user.getEmail());
         outer.put(JSONConstants.ENABLED, user.isEnabled());
+        if (user instanceof UserForCreate) {
+            if (((UserForCreate) user).getPassword() != null) {
+                outer.put(JSONConstants.OS_KSADM_PASSWORD, ((UserForCreate) user).getPassword());
+            }
+        }
         if(user.getCreated() != null){
             outer.put(JSONConstants.CREATED,user.getCreated().toString());
+
         }
         if(user.getUpdated() != null){
             outer.put(JSONConstants.UPDATED,user.getUpdated().toString());

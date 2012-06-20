@@ -201,8 +201,12 @@ public class UserServiceTests {
     @Test
     public void shouldGetUserByNastId() {
         final User user = getFakeUser();
+        List<User> userList = new ArrayList<User>();
+        userList.add(user);
+        Users users = new Users();
+        users.setUsers(userList);
 
-        EasyMock.expect(mockUserDao.getUserByNastId(nastId)).andReturn(user);
+        EasyMock.expect(mockUserDao.getUsersByNastId(nastId)).andReturn(users);
         EasyMock.replay(mockUserDao);
 
         final User retrievedUser = userService.getUserByNastId(nastId);
@@ -227,8 +231,12 @@ public class UserServiceTests {
     @Test
     public void shouldGetUserByMossoId() {
         final User user = getFakeUser();
+        List<User> userList = new ArrayList<User>();
+        userList.add(user);
+        Users users = new Users();
+        users.setUsers(userList);
 
-        EasyMock.expect(mockUserDao.getUserByMossoId(mossoId)).andReturn(user);
+        EasyMock.expect(mockUserDao.getUsersByMossoId(mossoId)).andReturn(users);
         EasyMock.replay(mockUserDao);
 
         final User retrievedUser = userService.getUserByMossoId(mossoId);

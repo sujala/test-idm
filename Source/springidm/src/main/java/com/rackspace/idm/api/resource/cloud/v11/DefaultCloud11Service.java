@@ -544,17 +544,10 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             authenticateCloudAdminUserForGetRequests(request);
 
-            User user = userService.getUser(userId);
+            List<CloudEndpoint> endpointsForUser = endpointService.getEndpointsForUser(userId);
+            JAXBElement<BaseURLRefList> baseURLRefsNew = OBJ_FACTORY.createBaseURLRefs(this.endpointConverterCloudV11.toBaseUrlRefs(endpointsForUser));
 
-            if (user == null) {
-                String errMsg = String.format("User %s not found", userId);
-                throw new NotFoundException(errMsg);
-            }
-
-            ScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), config.getString("cloudAuth.clientId"));
-            List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(sa);
-
-            return Response.ok(OBJ_FACTORY.createBaseURLRefs(this.endpointConverterCloudV11.openstackToBaseUrlRefs(endpoints)));
+            return Response.ok(baseURLRefsNew);
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }
@@ -1017,7 +1010,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             List<CloudEndpoint> endpoints = endpointService.getEndpointsForUser(user.getUsername());
             return Response.ok(OBJ_FACTORY.createAuth(this.authConverterCloudV11.toCloudv11AuthDataJaxb(usa, endpoints)));
         } catch (NotAuthenticatedException nae) {
-            return cloudExceptionResponse.notAuthenticatedExceptionResponse(user.getUsername());
+            return cloudExceptionResponse.notAuthenticatedExceptionResponse("Username or api key is invalid");
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }

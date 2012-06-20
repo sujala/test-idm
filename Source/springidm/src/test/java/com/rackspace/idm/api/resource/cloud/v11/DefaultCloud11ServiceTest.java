@@ -11,6 +11,7 @@ import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateException;
+import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotAuthorizedException;
 import com.rackspace.idm.util.NastFacade;
 import com.rackspacecloud.docs.auth.api.v1.*;
@@ -42,6 +43,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -153,6 +155,21 @@ public class DefaultCloud11ServiceTest {
     }
 
     @Test
+    public void adminAuthenticateResponse_notAuthenticatedExceptionthrown_throws401WithCorrectMessage() throws Exception {
+        MossoCredentials mossoCredentials = new MossoCredentials();
+        mossoCredentials.setKey("key");
+        mossoCredentials.setMossoId(123);
+        JAXBElement<Credentials> jaxbElement = new JAXBElement<Credentials>(new QName(""),Credentials.class, mossoCredentials);
+        when(userService.getUserByMossoId(123)).thenThrow(new NotAuthenticatedException());
+
+        Response response = defaultCloud11Service.adminAuthenticateResponse(jaxbElement, null).build();
+        assertThat("response status", response.getStatus(), equalTo(401));
+        assertThat("response message",((UnauthorizedFault) ((JAXBElement<UnauthorizedFault>) response.getEntity()).getValue()).getMessage(),equalTo("Username or api key is invalid"));
+        assertThat("response message",((UnauthorizedFault) ((JAXBElement<UnauthorizedFault>) response.getEntity()).getValue()).getDetails(),nullValue());
+
+    }
+
+    @Test
     public void validateMossoId_calls_UserService_getUsersByMossoId() throws Exception {
         defaultCloud11Service.validateMossoId(123);
         verify(userService).getUserByMossoId(123);
@@ -184,14 +201,6 @@ public class DefaultCloud11ServiceTest {
         Response.ResponseBuilder responseBuilder = spy.getUserGroups(request, "testUser", httpHeaders);
         UnauthorizedFault entity = (UnauthorizedFault)((JAXBElement)responseBuilder.build().getEntity()).getValue();
         assertThat("code", entity.getCode(), equalTo(401));
-    }
-
-    @Test
-    public void getUserGroups_notAuthorized_entityDetailsShouldMatchCloudResponse() throws Exception {
-        doThrow(new NotAuthorizedException("You are not authorized to access this resource.")).when(spy).authenticateCloudAdminUserForGetRequests(request);
-        Response.ResponseBuilder responseBuilder = spy.getUserGroups(request, "testUser", httpHeaders);
-        UnauthorizedFault entity = (UnauthorizedFault)((JAXBElement)responseBuilder.build().getEntity()).getValue();
-        assertThat("code", entity.getDetails(), equalTo("AuthErrorHandler"));
     }
 
     @Test
@@ -1344,58 +1353,26 @@ public class DefaultCloud11ServiceTest {
         verify(spy).authenticateCloudAdminUserForGetRequests(request);
     }
 
+
     @Test
-    public void getBaseUrlRefs_isAdminCall_callsUserService_getUser() throws Exception {
+    public void getBaseUrlRefs_isAdminCall_callsEndpointServce_getEndpointsForUser() throws Exception {
         doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
-        spy.getBaseURLRefs(null, null, null);
-        verify(userService).getUser(null);
+        spy.getBaseURLRefs(null, "userId", null);
+        verify(endpointService).getEndpointsForUser("userId");
     }
 
     @Test
-    public void getBaseUrlRefs_withNullUser_returnsNotFoundResponse() throws Exception {
+    public void getBaseUrlRefs_callsEndpointConverterCloudV11_toBaseUrlRefs_withCloudEndpoints() throws Exception {
         doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
-        when(userService.getUser(null)).thenReturn(null);
-        Response.ResponseBuilder responseBuilder = spy.getBaseURLRefs(null, null, null);
-        assertThat("response status", responseBuilder.build().getStatus(), equalTo(404));
-    }
-
-    @Test
-    public void getBaseUrlRefs_withValidUser_callsConfig() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
-        when(userService.getUser(null)).thenReturn(new com.rackspace.idm.domain.entity.User());
-        spy.getBaseURLRefs(null, null, null);
-        verify(config).getString("cloudAuth.clientId");
-    }
-
-    @Test
-    public void getBaseUrlRefs_withValidUser_callsScopeAccessService_getUserScopeAccessForClientId() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
-        when(userService.getUser(null)).thenReturn(new com.rackspace.idm.domain.entity.User());
-        spy.getBaseURLRefs(null, null, null);
-        verify(scopeAccessService).getUserScopeAccessForClientId(anyString(), anyString());
-    }
-
-    @Test
-    public void getBaseUrlRefs_withValidUser_callsScopeAccessService_getOpenstackEndpointsForScopeAccess() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
-        when(userService.getUser(null)).thenReturn(new com.rackspace.idm.domain.entity.User());
-        spy.getBaseURLRefs(null, null, null);
-        verify(scopeAccessService).getOpenstackEndpointsForScopeAccess(any(ScopeAccess.class));
-    }
-
-    @Test
-    public void getBaseUrlRefs_withValidUser_endpointConverterCloudV11_openstackToBaseUrlRefs() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
-        when(userService.getUser(null)).thenReturn(new com.rackspace.idm.domain.entity.User());
-        spy.getBaseURLRefs(null, null, null);
-        verify(endpointConverterCloudV11).openstackToBaseUrlRefs(any(List.class));
+        ArrayList<CloudEndpoint> cloudEndpoints = new ArrayList<CloudEndpoint>();
+        when(endpointService.getEndpointsForUser("userId")).thenReturn(cloudEndpoints);
+        spy.getBaseURLRefs(null, "userId", null);
+        verify(endpointConverterCloudV11).toBaseUrlRefs(cloudEndpoints);
     }
 
     @Test
     public void getBaseUrlRefs_withValidUser_returns200Status() throws Exception {
         doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
-        when(userService.getUser(null)).thenReturn(new com.rackspace.idm.domain.entity.User());
-        when(endpointConverterCloudV11.openstackToBaseUrlRefs(any(List.class))).thenReturn(null);
         Response.ResponseBuilder responseBuilder = spy.getBaseURLRefs(null, null, null);
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(200));
     }

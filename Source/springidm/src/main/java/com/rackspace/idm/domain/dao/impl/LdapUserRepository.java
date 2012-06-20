@@ -316,7 +316,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
     @Override
     public User getUserByMossoId(int mossoId) {
-        getLogger().debug("Doing search for nastId " + mossoId);
+        getLogger().debug("Doing search for mossoId " + mossoId);
 
         Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_MOSSO_ID, String.valueOf(mossoId))
@@ -332,7 +332,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
     @Override
     public Users getUsersByMossoId(int mossoId) {
-        getLogger().debug("Doing search for nastId " + mossoId);
+        getLogger().debug("Doing search for mossoId " + mossoId);
 
         Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_MOSSO_ID, String.valueOf(mossoId))
@@ -341,7 +341,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES,getLdapPagingOffsetDefault(),getLdapPagingLimitDefault());
 
-        getLogger().debug("Found User - {}", users);
+        getLogger().debug("Found Users - {}", users);
 
         return users;
     }
@@ -365,6 +365,27 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().debug("Found User - {}", user);
 
         return user;
+    }
+
+    @Override
+    public Users getUsersByNastId(String nastId) {
+        getLogger().debug("Doing search for nastId " + nastId);
+        if (StringUtils.isBlank(nastId)) {
+            getLogger().error("Null or Empty nastId parameter");
+            throw new IllegalArgumentException(
+                "Null or Empty nastId parameter.");
+        }
+
+        Filter searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_NAST_ID, nastId)
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+            .build();
+
+        Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES,getLdapPagingOffsetDefault(),getLdapPagingLimitDefault());
+
+        getLogger().debug("Found Users - {}", users);
+
+        return users;
     }
 
     @Override
