@@ -239,8 +239,8 @@ public class CloudMigrationService {
                 user.setId(null);
 
             // CREATE NEW USER
-            com.rackspace.idm.domain.entity.User newUser = addMigrationUser(user, apiKey, password, secretQA, domainId);
-
+            com.rackspace.idm.domain.entity.User newUser = addMigrationUser(user, user11.getMossoId(),
+                    user11.getNastId(), apiKey, password, secretQA, domainId);
 
             // Get Roles
             addUserGlobalRoles(newUser, roles);
@@ -647,10 +647,19 @@ public class CloudMigrationService {
         }
     }
 
-    private com.rackspace.idm.domain.entity.User addMigrationUser(User user, String apiKey, String password, SecretQA secretQA, String domainId) {
+    private com.rackspace.idm.domain.entity.User addMigrationUser(User user,
+                                                                  int mossoId,
+                                                                  String nastId,
+                                                                  String apiKey,
+                                                                  String password,
+                                                                  SecretQA secretQA,
+                                                                  String domainId) {
         com.rackspace.idm.domain.entity.User newUser = new com.rackspace.idm.domain.entity.User();
         newUser.setId(user.getId());
         newUser.setUsername(user.getUsername());
+
+        newUser.setMossoId(mossoId);
+        newUser.setNastId(nastId);
 
         if (!user.getEmail().equals(""))
             newUser.setEmail(user.getEmail());
