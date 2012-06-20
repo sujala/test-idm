@@ -132,6 +132,17 @@ public class DefaultEndpointService implements EndpointService {
         if(baseUrlById.getDef()!=null && baseUrlById.getDef()==true || baseUrlsByService.size() < 2){
             throw new BadRequestException("Cannot delete the only endpoint for the service '"+service+"'.");
         }
+        List<CloudEndpoint> endpoints = endpointDao.getEndpointsForUser(username);
+        boolean found = false;
+        for(CloudEndpoint endpoint: endpoints ){
+            if(endpoint.getBaseUrl().getBaseUrlId() == baseUrlId){
+                found = true;
+            }
+        }
+        if(!found){
+            throw new NotFoundException("Attempting to delete nonexisting baseUrl: " + baseUrlId);
+        }
+
         endpointDao.removeBaseUrlFromUser(baseUrlId, username);
     }
 
