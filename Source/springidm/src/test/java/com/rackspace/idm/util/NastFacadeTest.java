@@ -104,4 +104,18 @@ public class NastFacadeTest {
         boolean response = nastFacade.hasResellerInfo("name", "id");
         assertThat("boolean", response, equalTo(true));
     }
+
+    @Test
+    public void addNastUser_withNastXmlRpcNotEnabled_returnsNull() throws Exception {
+        when(nastConfiguration.isNastXmlRpcEnabled()).thenReturn(false);
+        String response = nastFacade.addNastUser();
+        assertThat("string", response, equalTo(null));
+    }
+
+    @Test
+    public void addNastUser_emptyResponse_returnsNull() throws Exception {
+        when(nastXmlRpcClientWrapper.addResellerStorageAccount(null)).thenReturn(null);
+        String response = nastFacade.addNastUser((String[]) null);
+        assertThat("string", response, equalTo(null));
+    }
 }
