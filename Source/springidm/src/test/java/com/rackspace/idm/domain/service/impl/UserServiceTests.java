@@ -3,7 +3,6 @@ package com.rackspace.idm.domain.service.impl;
 import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
-import com.rackspace.idm.domain.service.impl.DefaultUserService;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.DuplicateUsernameException;
 import junit.framework.Assert;
@@ -157,7 +156,6 @@ public class UserServiceTests {
         final User user = getFakeUser();
         final Customer customer = getFakeCustomer();
         customer.setUniqueId(customerDN);
-        EasyMock.expect(mockUserDao.getUserByMossoId(1)).andReturn(null);
         EasyMock.expect(mockUserDao.isUsernameUnique(user.getUsername())).andReturn(true);
         EasyMock.expect(mockUserDao.getNextUserId()).andReturn(id);
         EasyMock.expect(mockPasswordComplexityService.checkPassword(user.getPassword())).andReturn(new PasswordComplexityResult());
@@ -359,45 +357,6 @@ public class UserServiceTests {
 
         final UserAuthenticationResult authenticated = userService
         .authenticateWithApiKey(username, apiKey);
-
-        Assert.assertTrue(authenticated.isAuthenticated());
-        EasyMock.verify(mockUserDao);
-    }
-
-    @Test
-    public void shouldAuthenticateUserByNastIdApiKey() {
-        EasyMock.expect(
-                mockUserDao.authenticateByNastIdAndAPIKey(nastId, apiKey))
-                .andReturn(getTrueAuthenticationResult());
-
-
-
-        EasyMock.replay(mockUserDao);
-
-        EasyMock.expect(mockClientService.getClientGroupsForUser(username)).andReturn(new ArrayList<ClientGroup>());
-        EasyMock.replay(mockClientService);
-
-        final UserAuthenticationResult authenticated = userService
-        .authenticateWithNastIdAndApiKey(nastId, apiKey);
-
-        Assert.assertTrue(authenticated.isAuthenticated());
-        EasyMock.verify(mockUserDao);
-    }
-
-    @Test
-    public void shouldAuthenticateUserByMossoIdApiKey() {
-        EasyMock.expect(
-                mockUserDao.authenticateByMossoIdAndAPIKey(mossoId, apiKey))
-                .andReturn(getTrueAuthenticationResult());
-
-
-        EasyMock.replay(mockUserDao);
-
-        EasyMock.expect(mockClientService.getClientGroupsForUser(username)).andReturn(new ArrayList<ClientGroup>());
-        EasyMock.replay(mockClientService);
-
-        final UserAuthenticationResult authenticated = userService
-        .authenticateWithMossoIdAndApiKey(mossoId, apiKey);
 
         Assert.assertTrue(authenticated.isAuthenticated());
         EasyMock.verify(mockUserDao);

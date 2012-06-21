@@ -974,7 +974,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 if (user.isDisabled()) {
                     throw new UserDisabledException(user.getMossoId().toString());
                 }
-                usa = scopeAccessService.getUserScopeAccessForClientIdByMossoIdAndApiCredentials(mossoId, apiKey, getCloudAuthClientId());
+                usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(user.getUsername(), apiKey, getCloudAuthClientId());
             } else if (cred.getValue() instanceof NastCredentials) {
                 NastCredentials nastCreds = (NastCredentials) cred.getValue();
                 String nastId = nastCreds.getNastId();
@@ -986,7 +986,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 if (user.isDisabled()) {
                     throw new UserDisabledException(user.getNastId());
                 }
-                usa = scopeAccessService.getUserScopeAccessForClientIdByNastIdAndApiCredentials(nastId, apiKey, getCloudAuthClientId());
+                usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(user.getUsername(), apiKey, getCloudAuthClientId());
             } else {
                 PasswordCredentials passCreds = (PasswordCredentials) cred.getValue();
                 String username = passCreds.getUsername();
@@ -1086,7 +1086,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                     return cloudExceptionResponse.badRequestExceptionResponse("Expecting mosso id");
                 }
                 user = userService.getUserByMossoId(mossoId);
-                usa = scopeAccessService.getUserScopeAccessForClientIdByMossoIdAndApiCredentials(mossoId, key, cloudAuthClientId);
+                usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(user.getUsername(), key, cloudAuthClientId);
             } else if (value instanceof NastCredentials) {
                 String nastId = ((NastCredentials) value).getNastId();
                 String key = ((NastCredentials) value).getKey();
@@ -1094,7 +1094,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                     return cloudExceptionResponse.badRequestExceptionResponse("Expecting nast id");
                 }
                 user = userService.getUserByNastId(nastId);
-                usa = scopeAccessService.getUserScopeAccessForClientIdByNastIdAndApiCredentials(nastId, key, cloudAuthClientId);
+                usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(user.getUsername(), key, cloudAuthClientId);
             }
 
             if (user == null) {

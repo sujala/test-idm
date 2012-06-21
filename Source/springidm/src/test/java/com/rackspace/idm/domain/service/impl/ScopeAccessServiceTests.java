@@ -289,59 +289,6 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
     }
 
     @Test
-    public void shouldGetUserScopeAccessForClientIdByNastIdAndApiCredentials() {
-        User user = getFakeUser();
-        Application client = getFakeClient();
-        UserScopeAccess sa = getFakeUserScopeAccess();
-
-        String nastId = "fakeNastId";
-        String apiKey = "fakeApiKey";
-        EasyMock.expect(mockUserDao.authenticateByNastIdAndAPIKey(nastId, apiKey))
-                       .andReturn(new UserAuthenticationResult(user, true));
-
-        EasyMock.expect(scopeAccessDao.getDirectScopeAccessForParentByClientId( user.getUniqueId(), client.getClientId()))
-                        .andReturn(sa);
-
-        EasyMock.expect(scopeAccessDao.updateScopeAccess(sa)).andReturn(true);
-
-        EasyMock.replay(scopeAccessDao, mockUserDao);
-
-        scopeAccessService.getUserScopeAccessForClientIdByNastIdAndApiCredentials(nastId,
-                                                                                  apiKey, clientId);
-
-        EasyMock.verify(scopeAccessDao, mockUserDao);
-
-    }
-
-    @Test
-    public void shouldGetUserScopeAccessForClientIdByMossoIdAndApiCredentials() {
-        User user = getFakeUser();
-        Application client = getFakeClient();
-        UserScopeAccess sa = getFakeUserScopeAccess();
-
-        int mossoId = 12345;
-        String apiKey = "fakeApiKey";
-        EasyMock.expect(
-            mockUserDao.authenticateByMossoIdAndAPIKey(mossoId, apiKey))
-            .andReturn(new UserAuthenticationResult(user, true));
-
-        EasyMock.expect(
-            scopeAccessDao.getDirectScopeAccessForParentByClientId(
-                user.getUniqueId(), client.getClientId())).andReturn(sa);
-
-        EasyMock.expect(scopeAccessDao.updateScopeAccess(sa)).andReturn(true);
-
-        EasyMock.replay(scopeAccessDao, mockUserDao);
-
-        scopeAccessService
-            .getUserScopeAccessForClientIdByMossoIdAndApiCredentials(mossoId,
-                apiKey, clientId);
-
-        EasyMock.verify(scopeAccessDao, mockUserDao);
-
-    }
-
-    @Test
     public void shouldGetUserScopeAccessForClientIdByUsernameAndApiCredentials() {
         User user = getFakeUser();
         Application client = getFakeClient();
