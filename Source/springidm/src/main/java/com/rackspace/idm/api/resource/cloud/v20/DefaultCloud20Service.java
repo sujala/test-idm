@@ -406,6 +406,9 @@ public class DefaultCloud20Service implements Cloud20Service {
                 validatePassword(user.getPassword());
             }
             User retrievedUser = checkAndGetUser(userId);
+            if (!userId.equals(user.getId())) {
+                throw new BadRequestException("Id in url does not match id in body.");
+            }
             ScopeAccess scopeAccessByAccessToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
             //if caller is default user, usedId must match callers user id
             if (authorizationService.authorizeCloudUser(scopeAccessByAccessToken)) {
@@ -419,6 +422,14 @@ public class DefaultCloud20Service implements Cloud20Service {
                 User caller = userService.getUserByAuthToken(authToken);
                 verifyDomain(retrievedUser, caller);
             }
+
+            if (!user.isEnabled()) {
+                User caller = userService.getUserByAuthToken(authToken);
+                if (caller.getId().equals(user.getId())) {
+                    throw new BadRequestException("User cannot enable/disable his/her own account.");
+                }
+            }
+
             User userDO = this.userConverterCloudV20.toUserDO(user);
             if (userDO.isDisabled()) {
                 this.scopeAccessService.expireAllTokensForUser(retrievedUser.getUsername());
