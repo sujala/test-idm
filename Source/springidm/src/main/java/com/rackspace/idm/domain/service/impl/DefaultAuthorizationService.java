@@ -463,6 +463,14 @@ public class DefaultAuthorizationService implements AuthorizationService {
         DefaultAuthorizationService.IDM_SUPER_ADMIN_ROLE = IDM_SUPER_ADMIN_ROLE;
     }
 
+    public static String getIDM_ADMIN_GROUP_DN() {
+        return IDM_ADMIN_GROUP_DN;
+    }
+
+    public static void setIDM_ADMIN_GROUP_DN(String IDM_ADMIN_GROUP_DN) {
+        DefaultAuthorizationService.IDM_ADMIN_GROUP_DN = IDM_ADMIN_GROUP_DN;
+    }
+
     private String getIdmAdminGroupName() {
         return config.getString("idm.AdminGroupName");
     }

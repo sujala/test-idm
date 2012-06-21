@@ -418,17 +418,64 @@ public class DefaultAuthorizationServiceTest {
 
     @Test
     public void authorizeCustomerUser_scopeAccessNotInstanceOfUserScopeAccessOrDelegatedClientScopeAccess_returnsFalse() throws Exception {
-        assertThat("boolean",defaultAuthorizationService.authorizeCustomerUser(null,null),equalTo(false));
+        assertThat("boolean", defaultAuthorizationService.authorizeCustomerUser(null, null), equalTo(false));
     }
 
-    /*@Test
-    public void authorizeCustomerUser_scopeAccessInstanceOfDelegatedClientScopeAccessAndUsernamesEqual_returnsFalse() throws Exception {
-
+    @Test
+    public void authorizeCustomerUser_scopeAccessInstanceOfDelegatedClientScopeAccessAndUsernamesEqual_returnsTrue() throws Exception {
+        DelegatedClientScopeAccess delegatedClientScopeAccess = new DelegatedClientScopeAccess();
+        delegatedClientScopeAccess.setUsername("jsmith");
+        assertThat("boolean",defaultAuthorizationService.authorizeCustomerUser(delegatedClientScopeAccess, "jsmith"),equalTo(true));
 
     }
 
-    public void testAuthorizeAdmin() throws Exception {
+    @Test
+    public void authorizeAdmin_scopeAccessNotInstanceOfUserScopeAccessOrDelegatedClientScopeAccess_returnsFalse() throws Exception {
+        assertThat("boolean",defaultAuthorizationService.authorizeAdmin(null,null),equalTo(false));
+    }
 
+    @Test
+    public void authorizeAdmin_scopeAccessInstanceOfDelegatedClientScopeAccessAndUserInGroupAndIdMatches_returnsTrue() throws Exception {
+        DelegatedClientScopeAccess delegatedClientScopeAccess = new DelegatedClientScopeAccess();
+        delegatedClientScopeAccess.setUsername("jsmith");
+        delegatedClientScopeAccess.setUserRCN("rcn");
+        DefaultAuthorizationService.setIDM_ADMIN_GROUP_DN("dn");
+        when(clientDao.isUserInClientGroup("jsmith","dn")).thenReturn(true);
+        assertThat("boolean",defaultAuthorizationService.authorizeAdmin(delegatedClientScopeAccess,"rcn"),equalTo(true));
+        DefaultAuthorizationService.setIDM_ADMIN_GROUP_DN(null);
+    }
+
+    @Test
+    public void authorizeAdmin_scopeAccessInstanceOfDelegatedClientScopeAccessAndUserNotInGroupAndIdMatches_returnsFalse() throws Exception {
+        DelegatedClientScopeAccess delegatedClientScopeAccess = new DelegatedClientScopeAccess();
+        delegatedClientScopeAccess.setUsername("jsmith");
+        delegatedClientScopeAccess.setUserRCN("rcn");
+        DefaultAuthorizationService.setIDM_ADMIN_GROUP_DN("dn");
+        when(clientDao.isUserInClientGroup("jsmith","dn")).thenReturn(false);
+        assertThat("boolean",defaultAuthorizationService.authorizeAdmin(delegatedClientScopeAccess,"rcn"),equalTo(false));
+        DefaultAuthorizationService.setIDM_ADMIN_GROUP_DN(null);
+    }
+
+    @Test
+    public void authorizeAdmin_scopeAccessInstanceOfDelegatedClientScopeAccessAndUserInGroupAndIdDoesNotMatch_returnsFalse() throws Exception {
+        DelegatedClientScopeAccess delegatedClientScopeAccess = new DelegatedClientScopeAccess();
+        delegatedClientScopeAccess.setUsername("jsmith");
+        delegatedClientScopeAccess.setUserRCN("rcn");
+        DefaultAuthorizationService.setIDM_ADMIN_GROUP_DN("dn");
+        when(clientDao.isUserInClientGroup("jsmith","dn")).thenReturn(true);
+        assertThat("boolean",defaultAuthorizationService.authorizeAdmin(delegatedClientScopeAccess,"scn"),equalTo(false));
+        DefaultAuthorizationService.setIDM_ADMIN_GROUP_DN(null);
+    }
+
+    @Test
+    public void authorizeAdmin_scopeAccessInstanceOfDelegatedClientScopeAccessAndUserNotInGroupAndIdDoesNotMatch_returnsFalse() throws Exception {
+        DelegatedClientScopeAccess delegatedClientScopeAccess = new DelegatedClientScopeAccess();
+        delegatedClientScopeAccess.setUsername("jsmith");
+        delegatedClientScopeAccess.setUserRCN("rcn");
+        DefaultAuthorizationService.setIDM_ADMIN_GROUP_DN("dn");
+        when(clientDao.isUserInClientGroup("jsmith","dn")).thenReturn(false);
+        assertThat("boolean",defaultAuthorizationService.authorizeAdmin(delegatedClientScopeAccess,"scn"),equalTo(false));
+        DefaultAuthorizationService.setIDM_ADMIN_GROUP_DN(null);
     }
 
     public void testAuthorizeCustomerIdm() throws Exception {
@@ -445,5 +492,5 @@ public class DefaultAuthorizationServiceTest {
 
     public void testCheckAuthAndHandleFailure() throws Exception {
 
-    }*/
+    }
 }
