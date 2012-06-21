@@ -174,7 +174,7 @@ public class AuthorizeServlet extends HttpServlet {
 
     }
 
-    private synchronized ApplicationService getClientService() {
+    synchronized ApplicationService getClientService() {
         if (clientService == null) {
             WebApplicationContext context = WebApplicationContextUtils
                 .getWebApplicationContext(getServletContext());
@@ -183,7 +183,7 @@ public class AuthorizeServlet extends HttpServlet {
         return clientService;
     }
 
-    private synchronized UserService getUserService() {
+    synchronized UserService getUserService() {
         if (userService == null) {
             WebApplicationContext context = WebApplicationContextUtils
                 .getWebApplicationContext(getServletContext());
@@ -192,7 +192,7 @@ public class AuthorizeServlet extends HttpServlet {
         return userService;
     }
 
-    private synchronized ScopeAccessService getScopeAccessService() {
+    synchronized ScopeAccessService getScopeAccessService() {
         if (scopeAccessService == null) {
             WebApplicationContext context = WebApplicationContextUtils
                 .getWebApplicationContext(getServletContext());

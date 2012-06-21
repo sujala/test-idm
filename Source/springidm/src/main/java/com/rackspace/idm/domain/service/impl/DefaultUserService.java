@@ -139,26 +139,24 @@ public class DefaultUserService implements UserService {
 
 
     @Override
-    public UserAuthenticationResult authenticateWithMossoIdAndApiKey(
-            int mossoId, String apiKey) {
-        logger
-                .debug("Authenticating User with MossoId {} and Api Key", mossoId);
-        UserAuthenticationResult authenticated = userDao
-                .authenticateByMossoIdAndAPIKey(mossoId, apiKey);
-        logger.debug("Authenticated User with MossoId {} and API Key - {}",
-                mossoId, authenticated);
+    public UserAuthenticationResult authenticateWithMossoIdAndApiKey(int mossoId, String apiKey) {
+        logger.debug("Authenticating User with MossoId {} and Api Key", mossoId);
+        User user = getUserByMossoId(mossoId);
+        UserAuthenticationResult authenticated = userDao.authenticateByAPIKey(user.getUsername(), apiKey);
+        logger.debug("Authenticated User with MossoId {} and API Key - {}", mossoId, authenticated);
         return authenticated;
     }
 
 
     @Override
-    public UserAuthenticationResult authenticateWithNastIdAndApiKey(
-            String nastId, String apiKey) {
+    public UserAuthenticationResult authenticateWithNastIdAndApiKey(String nastId, String apiKey) {
         logger.debug("Authenticating User with NastId {} and API Key", nastId);
-        UserAuthenticationResult authenticated = userDao
-                .authenticateByNastIdAndAPIKey(nastId, apiKey);
-        logger.debug("Authenticated User with NastId {} and API Key - {}",
-                nastId, authenticated);
+
+        User user = getUserByNastId(nastId);
+
+        UserAuthenticationResult authenticated = userDao.authenticateByAPIKey(user.getUsername(), apiKey);
+
+        logger.debug("Authenticated User with NastId {} and API Key - {}", nastId, authenticated);
         return authenticated;
     }
 
@@ -556,9 +554,11 @@ public class DefaultUserService implements UserService {
     }
 
     void validateMossoId(int mossoId) {
-        User userByMossoId = userDao.getUserByMossoId(mossoId);
-        if (userByMossoId != null) {
-            throw new BadRequestException("User with Mosso Account ID: " + mossoId + " already exists.");
+        Users usersByMossoId = userDao.getUsersByMossoId(mossoId);
+        if(usersByMossoId != null) {
+            if (usersByMossoId.getUsers().size() > 0) {
+                throw new BadRequestException("User with Mosso Account ID: " + mossoId + " already exists.");
+            }
         }
     }
 
