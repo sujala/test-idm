@@ -508,6 +508,17 @@ public class DefaultCloud20ServiceTest {
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(403));
     }
 
+    @Test (expected = AssertionError.class)
+    public void exceptionResponse_whenUserDisabledException_detailsNotSet() throws Exception {
+        UserDisabledFault userDisabledFault = mock(UserDisabledFault.class);
+        ObjectFactory objectFactory = mock(ObjectFactory.class);
+        when(jaxbObjectFactories.getOpenStackIdentityV2Factory()).thenReturn(objectFactory);
+        when(objectFactory.createUserDisabledFault()).thenReturn(userDisabledFault);
+        UserDisabledException userDisabledException = new UserDisabledException();
+        spy.exceptionResponse(userDisabledException);
+        verify(userDisabledFault).setDetails(anyString());
+    }
+
     @Test
     public void exceptionResponse_whenStalePasswordException_returns400() throws Exception {
         StalePasswordException stalePasswordException = new StalePasswordException("Wrong Password");

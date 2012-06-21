@@ -42,7 +42,7 @@
     		<atom:link rel="documentation" href="http://docs.rackspace.com/servers/api/v1.0/cs-devguide/content/Authentication-d1e506.html#d6e202" title="Admin Developer Guide"/>
     	</contract>
     	
-    	<contract version="v1.1" status="BETA">        
+    	<contract version="v1.1" status="CURRENT">
     		<media-types>
     			<media-type base="application/xml" type="application/vnd.rackspace.cloudauth-v1.1+xml">
     				<atom:link rel="describedby" type="application/xml" href="http://docs.rackspacecloud.com/auth/api/v1.1/xsd/" title="schema" />

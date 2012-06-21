@@ -2410,7 +2410,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         ForbiddenFault fault = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createForbiddenFault();
         fault.setCode(HttpServletResponse.SC_FORBIDDEN);
         fault.setMessage(errMsg);
-        fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_FORBIDDEN)
                 .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createForbidden(fault));
     }
@@ -2511,7 +2510,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         UserDisabledFault fault = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUserDisabledFault();
         fault.setCode(HttpServletResponse.SC_FORBIDDEN);
         fault.setMessage(message);
-        fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_FORBIDDEN).
                 entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUserDisabled(fault));
     }
