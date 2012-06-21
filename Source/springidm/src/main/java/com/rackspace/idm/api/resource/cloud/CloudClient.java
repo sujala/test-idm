@@ -2,12 +2,15 @@ package com.rackspace.idm.api.resource.cloud;
 
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
+import org.apache.http.ProtocolVersion;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.params.ClientPNames;
 import org.apache.http.client.protocol.RequestAcceptEncoding;
 import org.apache.http.client.protocol.ResponseContentEncoding;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicHttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -77,14 +80,14 @@ public class CloudClient {
     }
 
 
-    private Response.ResponseBuilder executeRequest(HttpRequestBase request) {
-        DefaultHttpClient client = getHttpClient();
+    Response.ResponseBuilder executeRequest(HttpRequestBase request) {
+        HttpClient client = getHttpClient();
         // ToDo: Fix when returning 301 - errors in build of ResponseBuilder due to entity
         client.getParams().setParameter(ClientPNames.HANDLE_REDIRECTS, false);
 
         String responseBody = null;
         int statusCode = 500;
-        HttpResponse response = null;
+        HttpResponse response = new BasicHttpResponse(request.getProtocolVersion(), 500, "Unable To connect to Auth Service");
         try {
             response = client.execute(request);
             statusCode = response.getStatusLine().getStatusCode();
@@ -118,7 +121,7 @@ public class CloudClient {
         return responseBuilder;
     }
 
-    private Response.ResponseBuilder handleRedirect(HttpResponse response, String responseBody) {
+    Response.ResponseBuilder handleRedirect(HttpResponse response, String responseBody) {
         try {
             Response.ResponseBuilder builder = Response.status(Response.Status.MOVED_PERMANENTLY); //.header("Location", uri);
             for (Header header : response.getAllHeaders()) {
@@ -146,7 +149,7 @@ public class CloudClient {
         return entity;
     }
 
-    private DefaultHttpClient getHttpClient() {
+    HttpClient getHttpClient() {
         DefaultHttpClient client = new DefaultHttpClient();
         client.addRequestInterceptor(new RequestAcceptEncoding());
         client.addResponseInterceptor(new ResponseContentEncoding());
