@@ -123,14 +123,27 @@ public class MigrationClient {
     }
     
     public UserList getUsers(String token) throws URISyntaxException, HttpException, IOException, JAXBException {
+        UserList userList = new UserList();
     	String response = client.url(cloud20Host + "users")
     	    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML)
     	    .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML)
     	    .header(X_AUTH_TOKEN, token)
     	    .get();
-    	
-    	ObjectMarshaller<UserList> unmarshaller = new ObjectMarshaller<UserList>();
-    	return unmarshaller.unmarshal(response, UserList.class);
+
+    	try {
+            ObjectMarshaller<User> unmarshaller = new ObjectMarshaller<User>();
+            User user = unmarshaller.unmarshal(response, User.class);
+            userList.getUser().add(user);
+        }catch(Exception ex1){
+            try {
+                ObjectMarshaller<UserList> unmarshaller = new ObjectMarshaller<UserList>();
+                userList = unmarshaller.unmarshal(response, UserList.class);
+            }catch (Exception ex2){
+
+            }
+        }
+
+    	return userList;
     }
 
     public SecretQA getSecretQA(String token, String userId) throws URISyntaxException, HttpException, IOException, JAXBException {
