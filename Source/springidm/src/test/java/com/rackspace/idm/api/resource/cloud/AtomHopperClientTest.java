@@ -9,6 +9,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.entity.InputStreamEntity;
 import org.junit.Before;
+import org.junit.Test;
 import org.mockito.Matchers;
 import com.rackspace.idm.domain.entity.User;
 
@@ -25,7 +26,7 @@ import static org.mockito.Mockito.*;
  * Time: 10:08:24 AM
  * To change this template use File | Settings | File Templates.
  */
-public class AtomHopperClientTest extends TestCase {
+public class AtomHopperClientTest {
 
     private AtomHopperClient atomHopperClient;
     private AtomHopperClient spy;
@@ -67,7 +68,8 @@ public class AtomHopperClientTest extends TestCase {
         doReturn(httpResponse).when(spy).executePostRequest(Matchers.<String>any(), Matchers.<Writer>any(), Matchers.<String>any());
     }
 
-    public void testPostUserDeleted() throws Exception {
+    @Test
+    public void postUserDeleted() throws Exception {
         when(httpResponse.getStatusLine()).thenReturn(statusLine);
         when(statusLine.getStatusCode()).thenReturn(201);
         when(config.getString(Matchers.<String>any())).thenReturn("http://localhost:8080/test");
@@ -75,17 +77,38 @@ public class AtomHopperClientTest extends TestCase {
         assertThat("Post to Atom Hopper", httpResponse.getStatusLine().getStatusCode(), equalTo(201));
     }
 
-    public void testMarshalFeed() throws Exception {
+    @Test
+    public void postUser_userStatusDisabled_setsCorrectResponse() throws Exception {
+        when(httpResponse.getStatusLine()).thenReturn(statusLine);
+        when(statusLine.getStatusCode()).thenReturn(201);
+        when(config.getString(Matchers.<String>any())).thenReturn("http://localhost:8080/test");
+        spy.postUser(user, "token", "disabled");
+        assertThat("Post to Atom Hopper", httpResponse.getStatusLine().getStatusCode(), equalTo(201));
+    }
+
+    @Test
+    public void postUser_userStatusNotDisabledOrDeleted_setsNullResponse() throws Exception {
+        when(httpResponse.getStatusLine()).thenReturn(statusLine);
+        when(statusLine.getStatusCode()).thenReturn(201);
+        when(config.getString(Matchers.<String>any())).thenReturn("http://localhost:8080/test");
+        spy.postUser(user, "token", "");
+        assertThat("Post to Atom Hopper", httpResponse.getStatusLine().getStatusCode(), equalTo(201));
+    }
+
+    @Test
+    public void marshalFeed() throws Exception {
         Writer writer = atomHopperClient.marshalFeed(atomFeed);
         assertThat("Marshal User", writer.toString(), equalTo("<entry xmlns=\"http://www.w3.org/2005/Atom\"><user displayName=\"testDisplayName\" id=\"2\" username=\"test2\"/></entry>"));
     }
 
-    public void testCreateRequestEntity() throws Exception {
+    @Test
+    public void createRequestEntity() throws Exception {
         InputStreamEntity reqEntity = atomHopperClient.createRequestEntity("<user name=\"Jorge\" />");
         assertThat("Input Stream is created", reqEntity != null, equalTo(true));
     }
 
-    public void testCreateAtomFeed() throws Exception {
+    @Test
+    public void createAtomFeed() throws Exception {
         AtomFeed testAtomFeed = atomHopperClient.createAtomFeed(user,null);
         assertThat("Test Atom Create", testAtomFeed.getUser().getId(), equalTo("1"));
     }
