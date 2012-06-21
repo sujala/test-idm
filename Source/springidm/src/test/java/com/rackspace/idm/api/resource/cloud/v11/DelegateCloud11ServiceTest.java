@@ -2,18 +2,11 @@ package com.rackspace.idm.api.resource.cloud.v11;
 
 import com.rackspace.idm.api.resource.cloud.CloudClient;
 import com.rackspace.idm.api.resource.cloud.CloudUserExtractor;
-import com.rackspace.idm.api.resource.cloud.v11.CredentialUnmarshaller;
-import com.rackspace.idm.api.resource.cloud.v11.DefaultCloud11Service;
-import com.rackspace.idm.api.resource.cloud.v11.DelegateCloud11Service;
-import com.rackspace.idm.api.resource.cloud.v11.DummyCloud11Service;
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository;
-import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.entity.AuthData;
+import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.impl.DefaultUserService;
 import com.rackspacecloud.docs.auth.api.v1.*;
-import com.rackspacecloud.docs.auth.api.v1.Credentials;
-import com.rackspacecloud.docs.auth.api.v1.User;
 import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
@@ -33,11 +26,16 @@ import javax.xml.bind.Marshaller;
 import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.namespace.QName;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.contains;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
 import static org.mockito.internal.verification.VerificationModeFactory.times;
 
@@ -50,6 +48,8 @@ import static org.mockito.internal.verification.VerificationModeFactory.times;
  */
 public class DelegateCloud11ServiceTest {
     com.rackspace.idm.domain.entity.User idmUser;
+    com.rackspace.idm.domain.entity.Users idmUsers;
+    List<com.rackspace.idm.domain.entity.User> userList;
     DelegateCloud11Service delegateCloud11Service;
     DefaultCloud11Service defaultCloud11Service;
     DummyCloud11Service dummyCloud11Service = new DummyCloud11Service();
@@ -76,6 +76,7 @@ public class DelegateCloud11ServiceTest {
     @Before
     public void setUp() throws JAXBException {
         idmUser = mock(com.rackspace.idm.domain.entity.User.class);
+        idmUsers = new com.rackspace.idm.domain.entity.Users();
         delegateCloud11Service = new DelegateCloud11Service();
         defaultCloud11Service = mock(DefaultCloud11Service.class);
         defaultUserService = mock(DefaultUserService.class);
@@ -109,6 +110,10 @@ public class DelegateCloud11ServiceTest {
         when(httpHeaders.getMediaType()).thenReturn(new MediaType("application/json", null));
         when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn("Basic YXV0aDphdXRoMTIz");
         spy = spy(delegateCloud11Service);
+
+        userList = new ArrayList<com.rackspace.idm.domain.entity.User>();
+        userList.add(idmUser);
+        idmUsers.setUsers(userList);
 
         okResponse = Response.ok();
         notFoundResponse = Response.status(404);
@@ -766,7 +771,7 @@ public class DelegateCloud11ServiceTest {
     @Test
     public void getUserFromNastId_RoutingFalse_userExistsFalse_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
-        when(ldapUserRepository.getUserByNastId(userId)).thenReturn(null);
+        when(ldapUserRepository.getUsersByNastId(userId)).thenReturn(null);
         delegateCloud11Service.getUserFromNastId(null, userId, null);
         verify(defaultCloud11Service).getUserFromNastId(null, userId, null);
     }
@@ -774,7 +779,7 @@ public class DelegateCloud11ServiceTest {
     @Test
     public void getUserFromNastId_RoutingFalse_userExistsTrue_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
-        when(ldapUserRepository.getUserByNastId(userId)).thenReturn(new com.rackspace.idm.domain.entity.User());
+        when(ldapUserRepository.getUsersByNastId(userId)).thenReturn(new com.rackspace.idm.domain.entity.Users());
         delegateCloud11Service.getUserFromNastId(null, userId, null);
         verify(defaultCloud11Service).getUserFromNastId(null, userId, null);
     }
@@ -782,7 +787,7 @@ public class DelegateCloud11ServiceTest {
     @Test
     public void getUserFromNastId_RoutingTrue_userExistsFalse_callsClient() throws Exception {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
-        when(ldapUserRepository.getUserByNastId(userId)).thenReturn(null);
+        when(ldapUserRepository.getUsersByNastId(userId)).thenReturn(new Users());
         delegateCloud11Service.getUserFromNastId(null, userId, null);
         verify(cloudClient).get(eq(url + "nast/" + userId), Matchers.<javax.ws.rs.core.HttpHeaders>any());
     }
@@ -790,7 +795,7 @@ public class DelegateCloud11ServiceTest {
     @Test
     public void getUserFromNastId_RoutingTrue_userExistsTrue_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
-        when(ldapUserRepository.getUserByNastId(userId)).thenReturn(new com.rackspace.idm.domain.entity.User());
+        when(ldapUserRepository.getUsersByNastId(userId)).thenReturn(idmUsers);
         delegateCloud11Service.getUserFromNastId(null, userId, null);
         verify(defaultCloud11Service).getUserFromNastId(null, userId, null);
     }
@@ -798,7 +803,7 @@ public class DelegateCloud11ServiceTest {
     @Test
     public void getUserFromMossoId_RoutingFalse_userExistsFalse_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
-        when(ldapUserRepository.getUserByMossoId(0)).thenReturn(null);
+        when(ldapUserRepository.getUsersByMossoId(0)).thenReturn(null);
         delegateCloud11Service.getUserFromMossoId(null, 0, null);
         verify(defaultCloud11Service).getUserFromMossoId(null, 0, null);
     }
@@ -806,15 +811,16 @@ public class DelegateCloud11ServiceTest {
     @Test
     public void getUserFromMossoId_RoutingFalse_userExistsTrue_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
-        when(ldapUserRepository.getUserByMossoId(0)).thenReturn(new com.rackspace.idm.domain.entity.User());
+        when(ldapUserRepository.getUsersByMossoId(0)).thenReturn(new com.rackspace.idm.domain.entity.Users());
         delegateCloud11Service.getUserFromMossoId(null, 0, null);
         verify(defaultCloud11Service).getUserFromMossoId(null, 0, null);
     }
 
     @Test
     public void getUserFromMossoId_RoutingTrue_userExistsFalse_callsClient() throws Exception {
+        idmUsers.getUsers().remove(0);
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
-        when(ldapUserRepository.getUserByMossoId(0)).thenReturn(null);
+        when(ldapUserRepository.getUsersByMossoId(0)).thenReturn(idmUsers);
         delegateCloud11Service.getUserFromMossoId(null, 0, null);
         verify(cloudClient).get(eq(url + "mosso/" + 0), Matchers.<javax.ws.rs.core.HttpHeaders>any());
     }
@@ -822,7 +828,7 @@ public class DelegateCloud11ServiceTest {
     @Test
     public void getUserFromMossoId_RoutingTrue_userExistsTrue_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
-        when(ldapUserRepository.getUserByMossoId(0)).thenReturn(new com.rackspace.idm.domain.entity.User());
+        when(ldapUserRepository.getUsersByMossoId(0)).thenReturn(idmUsers);
         delegateCloud11Service.getUserFromMossoId(null, 0, null);
         verify(defaultCloud11Service).getUserFromMossoId(null, 0, null);
     }

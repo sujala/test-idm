@@ -301,17 +301,16 @@ public class DefaultCloud11ServiceTest {
     public void authenticateResponse_withNastCredentials_callsScopeAccessService_getUserScopeAccessForClientIdByNastIdAndApiCredentials() throws Exception {
         NastCredentials nastCredentials = new NastCredentials();
         nastCredentials.setNastId("nastId");
-        JAXBElement<NastCredentials> credentials =
-                new JAXBElement<NastCredentials>(QName.valueOf("foo"), NastCredentials.class, nastCredentials);
+        JAXBElement<NastCredentials> credentials = new JAXBElement<NastCredentials>(QName.valueOf("foo"), NastCredentials.class, nastCredentials);
         when(userService.getUser(null)).thenReturn(new com.rackspace.idm.domain.entity.User());
         defaultCloud11Service.authenticateResponse(credentials);
-        verify(scopeAccessService).getUserScopeAccessForClientIdByNastIdAndApiCredentials(anyString(), anyString(), anyString());
+        verify(userService).getUserByNastId(anyString());
+        //verify(scopeAccessService).getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString());
     }
 
     @Test
     public void authenticateResponse_withMossoCredentials_callsUserService_getUserByMossoId() throws Exception {
-        JAXBElement<MossoCredentials> credentials =
-                new JAXBElement<MossoCredentials>(QName.valueOf("foo"), MossoCredentials.class, new MossoCredentials());
+        JAXBElement<MossoCredentials> credentials = new JAXBElement<MossoCredentials>(QName.valueOf("foo"), MossoCredentials.class, new MossoCredentials());
         defaultCloud11Service.authenticateResponse(credentials);
         verify(userService).getUserByMossoId(anyInt());
     }
@@ -320,11 +319,11 @@ public class DefaultCloud11ServiceTest {
     public void authenticateResponse_withMossoCredentials_callsScopeAccessService_getUserScopeAccessForClientIdByMossoIdAndApiCredentials() throws Exception {
         MossoCredentials mossoCredentials = new MossoCredentials();
         mossoCredentials.setMossoId(1);
-        JAXBElement<MossoCredentials> credentials =
-                new JAXBElement<MossoCredentials>(QName.valueOf("foo"), MossoCredentials.class, mossoCredentials);
+        JAXBElement<MossoCredentials> credentials = new JAXBElement<MossoCredentials>(QName.valueOf("foo"), MossoCredentials.class, mossoCredentials);
         when(userService.getUser(null)).thenReturn(new com.rackspace.idm.domain.entity.User());
         defaultCloud11Service.authenticateResponse(credentials);
-        verify(scopeAccessService).getUserScopeAccessForClientIdByMossoIdAndApiCredentials(anyInt(), anyString(), anyString());
+        verify(userService).getUserByMossoId(1);
+        //verify(scopeAccessService).getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString());
     }
 
     @Test
@@ -474,7 +473,7 @@ public class DefaultCloud11ServiceTest {
         userDO.setEnabled(true);
         when(userService.getUserByNastId(null)).thenReturn(userDO);
         defaultCloud11Service.adminAuthenticateResponse(credentials, null);
-        verify(scopeAccessService).getUserScopeAccessForClientIdByNastIdAndApiCredentials(anyString(), anyString(), anyString());
+        verify(scopeAccessService).getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString());
     }
 
     @Test
@@ -541,7 +540,7 @@ public class DefaultCloud11ServiceTest {
         when(userService.getUserByMossoId(anyInt())).thenReturn(userDO);
         userDO.setEnabled(true);
         defaultCloud11Service.adminAuthenticateResponse(credentials, null);
-        verify(scopeAccessService).getUserScopeAccessForClientIdByMossoIdAndApiCredentials(eq(12345), eq("apiKey"), anyString());
+        verify(scopeAccessService).getUserScopeAccessForClientIdByUsernameAndApiCredentials(eq(userDO.getUsername()), eq("apiKey"), anyString());
     }
 
     @Test
@@ -553,7 +552,7 @@ public class DefaultCloud11ServiceTest {
         when(mossoCredentials.getMossoId()).thenReturn(12345);
         when(userService.getUserByMossoId(anyInt())).thenReturn(userDO);
         userDO.setEnabled(true);
-        when(scopeAccessService.getUserScopeAccessForClientIdByMossoIdAndApiCredentials(12345, "apiKey", null)).thenReturn(new UserScopeAccess());
+        when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(userDO.getUsername(), "apiKey", null)).thenReturn(new UserScopeAccess());
         defaultCloud11Service.adminAuthenticateResponse(credentials, null);
         verify(endpointService).getEndpointsForUser(anyString());
     }
@@ -567,7 +566,7 @@ public class DefaultCloud11ServiceTest {
         when(mossoCredentials.getMossoId()).thenReturn(12345);
         when(userService.getUserByMossoId(anyInt())).thenReturn(userDO);
         userDO.setEnabled(true);
-        when(scopeAccessService.getUserScopeAccessForClientIdByMossoIdAndApiCredentials(12345, "apiKey", null)).thenReturn(new UserScopeAccess());
+        when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(userDO.getUsername(), "apiKey", null)).thenReturn(new UserScopeAccess());
         when(endpointService.getEndpointsForUser(anyString())).thenReturn(new ArrayList<CloudEndpoint>());
         defaultCloud11Service.adminAuthenticateResponse(credentials, null);
         verify(authConverterCloudv11).toCloudv11AuthDataJaxb(any(UserScopeAccess.class), anyList());
@@ -582,7 +581,7 @@ public class DefaultCloud11ServiceTest {
         when(mossoCredentials.getMossoId()).thenReturn(12345);
         when(userService.getUserByMossoId(anyInt())).thenReturn(userDO);
         userDO.setEnabled(true);
-        when(scopeAccessService.getUserScopeAccessForClientIdByMossoIdAndApiCredentials(12345, "apiKey", null)).thenReturn(new UserScopeAccess());
+        when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(userDO.getUsername(), "apiKey", null)).thenReturn(new UserScopeAccess());
         when(endpointService.getEndpointsForUser(anyString())).thenReturn(new ArrayList<CloudEndpoint>());
         Response.ResponseBuilder responseBuilder = defaultCloud11Service.adminAuthenticateResponse(credentials, null);
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(200));

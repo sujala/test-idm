@@ -733,29 +733,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public UserScopeAccess getUserScopeAccessForClientIdByMossoIdAndApiCredentials(int mossoId,
-                                                                                   String apiKey, String clientId) {
-
-        logger.debug("Getting mossoId {} ScopeAccess by clientId {}", mossoId, clientId);
-        final UserAuthenticationResult result = this.userDao.authenticateByMossoIdAndAPIKey(mossoId, apiKey);
-        handleAuthenticationFailure((new Integer(mossoId)).toString(), result);
-
-        final UserScopeAccess scopeAccess = this.getValidUserScopeAccessForClientId(result.getUser().getUniqueId(), clientId);
-        return scopeAccess;
-    }
-
-    @Override
-    public UserScopeAccess getUserScopeAccessForClientIdByNastIdAndApiCredentials(String nastId,
-                                                                                  String apiKey, String clientId) {
-        logger.debug("Getting nastId {} ScopeAccess by clientId {}", nastId, clientId);
-        final UserAuthenticationResult result = this.userDao.authenticateByNastIdAndAPIKey(nastId, apiKey);
-        handleAuthenticationFailure(nastId, result);
-
-        final UserScopeAccess scopeAccess = this.getValidUserScopeAccessForClientId(result.getUser().getUniqueId(), clientId);
-        return scopeAccess;
-    }
-
-    @Override
     public UserScopeAccess getUserScopeAccessForClientIdByUsernameAndApiCredentials(String username,
                                                                                     String apiKey, String clientId) {
         logger.debug("Getting User {} ScopeAccess by clientId {}", username, clientId);
