@@ -2,16 +2,18 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.exception.BadRequestException;
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -100,24 +102,32 @@ public class DefaultUserServiceTest {
     @Test
     public void validateMossoId_callsUserDAO_getUserByMossoId() throws Exception {
         defaultUserService.validateMossoId(1);
-        verify(userDao).getUserByMossoId(1);
+        verify(userDao).getUsersByMossoId(1);
     }
 
     @Test(expected = BadRequestException.class)
     public void validateMossoId_withExistingUserWithMossoId_throwsBadRequestException() throws Exception {
+        Users users = new Users();
+        List<User> userList = new ArrayList<User>();
         User testUser = new User("testUser");
+        userList.add(testUser);
+        users.setUsers(userList);
         testUser.setMossoId(1);
-        when(userDao.getUserByMossoId(1)).thenReturn(testUser);
+        when(userDao.getUsersByMossoId(1)).thenReturn(users);
         defaultUserService.validateMossoId(1);
     }
 
     @Test
     public void validateMossoId_withExistingUserWithMossoId_throwsBadRequestException_returnsCorrectMessage() throws Exception {
+        Users users = new Users();
+        List<User> userList = new ArrayList<User>();
         User testUser = new User("testUser");
+        userList.add(testUser);
+        users.setUsers(userList);
         testUser.setMossoId(1);
-        when(userDao.getUserByMossoId(1)).thenReturn(testUser);
+        when(userDao.getUsersByMossoId(1)).thenReturn(users);
         try{
-        defaultUserService.validateMossoId(1);
+            defaultUserService.validateMossoId(1);
         }catch (Exception e){
             assertThat("exception message", e.getMessage(), Matchers.equalTo("User with Mosso Account ID: 1 already exists."));
         }

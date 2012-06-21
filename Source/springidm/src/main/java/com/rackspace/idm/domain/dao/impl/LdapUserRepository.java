@@ -127,30 +127,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     }
 
     @Override
-    public UserAuthenticationResult authenticateByMossoIdAndAPIKey(int mossoId, String apiKey) {
-        getLogger().info("Authenticating User with MossoId {}", mossoId);
-
-        User user = getUserByMossoId(mossoId);
-        getLogger().debug("Found user {}, authenticating...", user);
-        return authenticateUserByApiKey(user, apiKey);
-    }
-
-    @Override
-    public UserAuthenticationResult authenticateByNastIdAndAPIKey(
-        String nastId, String apiKey) {
-        getLogger().debug("Authenticating User with NastId {}", nastId);
-        if (StringUtils.isBlank(nastId)) {
-            String errmsg = "Null or Empty NastId parameter";
-            getLogger().error(errmsg);
-            throw new IllegalArgumentException(errmsg);
-        }
-
-        User user = getUserByNastId(nastId);
-        getLogger().debug("Found user {}, authenticating...", user);
-        return authenticateUserByApiKey(user, apiKey);
-    }
-
-    @Override
     public void deleteRacker(String rackerId) {
         getLogger().info("Deleting racker - {}", rackerId);
         if (StringUtils.isBlank(rackerId)) {
@@ -315,22 +291,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     }
 
     @Override
-    public User getUserByMossoId(int mossoId) {
-        getLogger().debug("Doing search for mossoId " + mossoId);
-
-        Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_MOSSO_ID, String.valueOf(mossoId))
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
-            .build();
-
-        User user = getSingleUser(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES);
-
-        getLogger().debug("Found User - {}", user);
-
-        return user;
-    }
-
-    @Override
     public Users getUsersByMossoId(int mossoId) {
         getLogger().debug("Doing search for mossoId " + mossoId);
 
@@ -344,27 +304,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().debug("Found Users - {}", users);
 
         return users;
-    }
-
-    @Override
-    public User getUserByNastId(String nastId) {
-        getLogger().debug("Doing search for nastId " + nastId);
-        if (StringUtils.isBlank(nastId)) {
-            getLogger().error("Null or Empty nastId parameter");
-            throw new IllegalArgumentException(
-                "Null or Empty nastId parameter.");
-        }
-
-        Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_NAST_ID, nastId)
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
-            .build();
-
-        User user = getSingleUser(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES);
-
-        getLogger().debug("Found User - {}", user);
-
-        return user;
     }
 
     @Override

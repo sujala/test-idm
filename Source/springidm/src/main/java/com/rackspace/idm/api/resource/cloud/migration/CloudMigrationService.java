@@ -307,7 +307,7 @@ public class CloudMigrationService {
             try {
                 users = client.getUsers(userToken);
             } catch (Exception e) {
-                throw new ConflictException("Could not retrieve users for useradmin");
+                throw new ConflictException("Could not retrieve users for useradmin - " + e.getMessage());
             }
 
             if (users != null) {
