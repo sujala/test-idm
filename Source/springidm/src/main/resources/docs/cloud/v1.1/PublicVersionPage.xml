@@ -5,7 +5,7 @@
 <contract xmlns="http://service-registry.api.rackspace.com/service-profile"
 	xmlns:atom="http://www.w3.org/2005/Atom" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="https://service-registry.api.rackspace.com/service-profile ./../resources/xsd/service-profile-v2.0.xsd"
-	id="v1.1" status="BETA">
+	id="v1.1" status="CURRENT">
 	<media-types>
 		<media-type base="application/xml"
 			type="application/vnd.rackspace.cloudauth-v1.1+xml">
