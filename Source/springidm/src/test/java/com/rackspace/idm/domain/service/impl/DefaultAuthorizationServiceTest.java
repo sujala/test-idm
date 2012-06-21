@@ -424,8 +424,8 @@ public class DefaultAuthorizationServiceTest {
     @Test
     public void authorizeCustomerUser_scopeAccessInstanceOfDelegatedClientScopeAccessAndUsernamesEqual_returnsTrue() throws Exception {
         DelegatedClientScopeAccess delegatedClientScopeAccess = new DelegatedClientScopeAccess();
-        delegatedClientScopeAccess.setUsername("jsmith");
-        assertThat("boolean",defaultAuthorizationService.authorizeCustomerUser(delegatedClientScopeAccess, "jsmith"),equalTo(true));
+        delegatedClientScopeAccess.setUserRCN("rcn");
+        assertThat("boolean",defaultAuthorizationService.authorizeCustomerUser(delegatedClientScopeAccess, "rcn"),equalTo(true));
 
     }
 
