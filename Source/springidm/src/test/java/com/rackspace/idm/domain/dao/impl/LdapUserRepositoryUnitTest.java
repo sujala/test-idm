@@ -1,10 +1,13 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.exception.UserDisabledException;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Test;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.Mockito.*;
 
 /**
@@ -33,5 +36,17 @@ public class LdapUserRepositoryUnitTest {
         doReturn(user).when(ldapUserRepositorySpy).getUserById("id");
         ldapUserRepositorySpy.updateUserById(user, false);
         verify(ldapUserRepositorySpy).getUserById("id");
+    }
+
+    @Test
+    public void validateUserStatus_userIsDisabled_throwsUserDisabledException() throws Exception {
+        try{
+            User user = new User();
+            user.setEnabled(false);
+            user.setUsername("rclements");
+            ldapUserRepository.validateUserStatus(user,true);
+        }catch(UserDisabledException ex){
+            assertThat("message",ex.getMessage(),equalTo("User 'rclements' is disabled."));
+        }
     }
 }
