@@ -179,11 +179,11 @@
     "links": {
         "General Email List": "mailto:global_auth2.0@lists.rackspace.com",
         "Code": "https://github.rackspace.com/GlobalServices/GlobalAuth",
-        "Docs": "",
+        "Docs": "https://one.rackspace.com:8443/display/auth/Home",
         "API Docs (Public)": "http://docs.rackspace.com",
         "API Docs (Internal)": "http://docs-internal.rackspace.com",
         "SharePoint": "https://mosso.rackspace.corp/projects/cloud2.0/integration/AuthGlobalAuth/Forms/AllItems.aspx",
-        "Roadmap": "",
+        "Roadmap": "https://one.rackspace.com:8443/display/auth/Identity+Roadmap",
         "Dashboard": "",
         "Ticketing": "https://www15.v1host.com/RACKSPCE/",
         "Tests - Jenkins": "http://10.6.50.168:8080/jenkins/job/globalAuth/",
