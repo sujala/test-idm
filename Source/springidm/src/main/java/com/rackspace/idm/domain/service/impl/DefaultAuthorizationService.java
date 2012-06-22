@@ -54,7 +54,11 @@ public class DefaultAuthorizationService implements AuthorizationService {
 	public void authorize(String token, Entity object, String... authorizedRoles) 
     		throws ForbiddenException {
 
-    	final ScopeAccess scopeAccess = scopeAccessDao.getScopeAccessByAccessToken(token.trim());
+    	if(token == null){
+            throw new IllegalArgumentException("Token cannot be null");
+        }
+
+        final ScopeAccess scopeAccess = scopeAccessDao.getScopeAccessByAccessToken(token.trim());
     	
     	// 1. if client has any of the authorized roles (by default super admin role), grant access
     	// 2. if client is the entity being modified, grant access
@@ -69,7 +73,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
     	throw new ForbiddenException("Token " + token + " is not allowed to execute the specified capability.");
 	}
     
-    private boolean doesClientHaveAuthorizedRoles(ScopeAccess scopeAccess, String... authorizedRoles) {
+    boolean doesClientHaveAuthorizedRoles(ScopeAccess scopeAccess, String... authorizedRoles) {
     	List<String> allAuthorizedRoles = createRoleList(authorizedRoles);
     	for (String authorizedRole : allAuthorizedRoles) {
     		ClientRole clientRole = this.clientDao.getClientRoleById(authorizedRole);
@@ -81,7 +85,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
     	return false;
     }
     
-    private List<String> createRoleList(String... authorizedRoles) {
+    List<String> createRoleList(String... authorizedRoles) {
     	List<String> allAuthorizedRoles = new ArrayList<String>();
     	allAuthorizedRoles.add(ClientRole.SUPER_ADMIN_ROLE);
     	
@@ -94,7 +98,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
     	return allAuthorizedRoles;
     }
     
-	private boolean isClientTheEntityBeingAccessed(ScopeAccess scopeAccess, Entity entity) {
+	boolean isClientTheEntityBeingAccessed(ScopeAccess scopeAccess, Entity entity) {
 //		if (entity != null) {
 //			if (scopeAccess instanceof ClientScopeAccess) {
 //				ClientScopeAccess csa = (ClientScopeAccess) scopeAccess;
@@ -409,6 +413,62 @@ public class DefaultAuthorizationService implements AuthorizationService {
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
+    }
+
+    public static ClientRole getCLOUD_ADMIN_ROLE() {
+        return CLOUD_ADMIN_ROLE;
+    }
+
+    public static void setCLOUD_ADMIN_ROLE(ClientRole CLOUD_ADMIN_ROLE) {
+        DefaultAuthorizationService.CLOUD_ADMIN_ROLE = CLOUD_ADMIN_ROLE;
+    }
+
+    public static ClientRole getRACKER_ROLE() {
+        return RACKER_ROLE;
+    }
+
+    public static void setRACKER_ROLE(ClientRole RACKER_ROLE) {
+        DefaultAuthorizationService.RACKER_ROLE = RACKER_ROLE;
+    }
+
+    public static ClientRole getCLOUD_SERVICE_ADMIN_ROLE() {
+        return CLOUD_SERVICE_ADMIN_ROLE;
+    }
+
+    public static void setCLOUD_SERVICE_ADMIN_ROLE(ClientRole CLOUD_SERVICE_ADMIN_ROLE) {
+        DefaultAuthorizationService.CLOUD_SERVICE_ADMIN_ROLE = CLOUD_SERVICE_ADMIN_ROLE;
+    }
+
+    public static ClientRole getCLOUD_USER_ADMIN_ROLE() {
+        return CLOUD_USER_ADMIN_ROLE;
+    }
+
+    public static void setCLOUD_USER_ADMIN_ROLE(ClientRole CLOUD_USER_ADMIN_ROLE) {
+        DefaultAuthorizationService.CLOUD_USER_ADMIN_ROLE = CLOUD_USER_ADMIN_ROLE;
+    }
+
+    public static ClientRole getCLOUD_USER_ROLE() {
+        return CLOUD_USER_ROLE;
+    }
+
+    public static void setCLOUD_USER_ROLE(ClientRole CLOUD_USER_ROLE) {
+        DefaultAuthorizationService.CLOUD_USER_ROLE = CLOUD_USER_ROLE;
+    }
+
+    public static ClientRole getIDM_SUPER_ADMIN_ROLE() {
+        return IDM_SUPER_ADMIN_ROLE;
+    }
+
+    public static void setIDM_SUPER_ADMIN_ROLE(ClientRole IDM_SUPER_ADMIN_ROLE) {
+        DefaultAuthorizationService.IDM_SUPER_ADMIN_ROLE = IDM_SUPER_ADMIN_ROLE;
+    }
+
+    public static String getIDM_ADMIN_GROUP_DN() {
+        return IDM_ADMIN_GROUP_DN;
+    }
+
+    public static void setIDM_ADMIN_GROUP_DN(String IDM_ADMIN_GROUP_DN) {
+        DefaultAuthorizationService.IDM_ADMIN_GROUP_DN = IDM_ADMIN_GROUP_DN;
     }
 
     private String getIdmAdminGroupName() {

@@ -508,6 +508,17 @@ public class DefaultCloud20ServiceTest {
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(403));
     }
 
+    @Test (expected = AssertionError.class)
+    public void exceptionResponse_whenUserDisabledException_detailsNotSet() throws Exception {
+        UserDisabledFault userDisabledFault = mock(UserDisabledFault.class);
+        ObjectFactory objectFactory = mock(ObjectFactory.class);
+        when(jaxbObjectFactories.getOpenStackIdentityV2Factory()).thenReturn(objectFactory);
+        when(objectFactory.createUserDisabledFault()).thenReturn(userDisabledFault);
+        UserDisabledException userDisabledException = new UserDisabledException();
+        spy.exceptionResponse(userDisabledException);
+        verify(userDisabledFault).setDetails(anyString());
+    }
+
     @Test
     public void exceptionResponse_whenStalePasswordException_returns400() throws Exception {
         StalePasswordException stalePasswordException = new StalePasswordException("Wrong Password");
@@ -946,8 +957,33 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void updateUser_userIdDoesNotMatchUriId_throwsBadRequest() throws Exception {
+        UserForCreate userForCreate = new UserForCreate();
+        userForCreate.setId("notSameId");
+        doReturn(user).when(spy).checkAndGetUser("123");
+        Response.ResponseBuilder responseBuilder = spy.updateUser(httpHeaders, authToken, "123", userForCreate);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
+    public void updateUser_userCannotDisableOwnAccount_throwsBadRequest() throws Exception {
+        UserForCreate userForCreate = new UserForCreate();
+        userForCreate.setEnabled(false);
+        userForCreate.setId(userId);
+        User user = new User();
+        user.setEnabled(true);
+        user.setId(userId);
+        doNothing().when(spy).verifyUserLevelAccess(authToken);
+        doReturn(user).when(spy).checkAndGetUser(userId);
+        when(userService.getUserByAuthToken(authToken)).thenReturn(user);
+        Response.ResponseBuilder responseBuilder = spy.updateUser(httpHeaders, authToken, userId, userForCreate);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
     public void updateUser_withNoRegionAndPreviousRegionsExists_previousRegionRemains() throws Exception {
         UserForCreate userNoRegion = new UserForCreate();
+        userNoRegion.setId(userId);
         doNothing().when(spy).verifyUserAdminLevelAccess(authToken);
         doNothing().when(spy).validateUser(org.mockito.Matchers.any(org.openstack.docs.identity.api.v2.User.class));
         when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(new User());
@@ -965,6 +1001,7 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void updateUser_withRegionAndPreviousRegionsExists_newRegionGetsSaved() throws Exception {
         UserForCreate userWithRegion = new UserForCreate();
+        userWithRegion.setId(userId);
         userWithRegion.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","defaultRegion"), "foo");
         doNothing().when(spy).verifyUserAdminLevelAccess(authToken);
         doNothing().when(spy).validateUser(org.mockito.Matchers.any(org.openstack.docs.identity.api.v2.User.class));
@@ -2621,69 +2658,89 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void updateUser_calls_userService_updateUserById() throws Exception {
+        userOS.setId(userId);
         spy.updateUser(null, authToken, userId, userOS);
         verify(userService).updateUserById(any(User.class), anyBoolean());
     }
 
     @Test
     public void updateUser_callsAuthorizeCloudUser() throws Exception {
+        User user = new User();
+        user.setId(userId);
+        userOS.setId(userId);
         ScopeAccess scopeAccess = new ScopeAccess();
         doNothing().when(spy).verifyUserLevelAccess(authToken);
-        doReturn(new User()).when(spy).checkAndGetUser(anyString());
+        doReturn(user).when(spy).checkAndGetUser(anyString());
         when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(scopeAccess);
-        spy.updateUser(null, authToken, null, new UserForCreate());
+        spy.updateUser(null, authToken, userId, userOS);
         verify(authorizationService).authorizeCloudUser(scopeAccess);
     }
 
     @Test
     public void updateUser_passwordNotNull_callsValidatePassword() throws Exception {
         userOS.setPassword("123");
-        spy.updateUser(null, authToken, null, userOS);
+        userOS.setId(userId);
+        spy.updateUser(null, authToken, userId, userOS);
         verify(spy).validatePassword("123");
     }
 
     @Test
     public void updateUser_authorizationServiceAuthorizeCloudUserIsTrue_callsUserServiceGetUserByAuthToken() throws Exception {
-        doReturn(new User()).when(spy).checkAndGetUser(null);
+        User user = new User();
+        user.setId(userId);
+        userOS.setId(userId);
+        doReturn(user).when(spy).checkAndGetUser(userId);
         when(authorizationService.authorizeCloudUser(any(ScopeAccess.class))).thenReturn(true);
-        spy.updateUser(null, authToken, null, userOS);
+        spy.updateUser(null, authToken, userId, userOS);
         verify(userService).getUserByAuthToken(authToken);
     }
 
     @Test
     public void updateUser_authorizationServiceAuthorizeCloudUserIsTrueIdNotMatch_returns403() throws Exception {
-        doReturn(new User()).when(spy).checkAndGetUser(null);
+        User user1 = new User();
+        user1.setId(userId);
+        userOS.setId(userId);
+        user.setId("notMatch");
+        doReturn(user1).when(spy).checkAndGetUser(userId);
         when(authorizationService.authorizeCloudUser(any(ScopeAccess.class))).thenReturn(true);
         when(userService.getUserByAuthToken(authToken)).thenReturn(user);
-        Response.ResponseBuilder responseBuilder = spy.updateUser(null, authToken, null, userOS);
+        Response.ResponseBuilder responseBuilder = spy.updateUser(null, authToken, userId, userOS);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(403));
     }
 
     @Test
     public void updateUser_cloudUserAdminIsTrue_callsUserServiceGetUserByAuthToken() throws Exception {
-        doReturn(new User()).when(spy).checkAndGetUser(null);
+        User user = new User();
+        user.setId(userId);
+        userOS.setId(userId);
+        doReturn(user).when(spy).checkAndGetUser(userId);
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
-        spy.updateUser(null, authToken, null, userOS);
+        spy.updateUser(null, authToken, userId, userOS);
         verify(userService).getUserByAuthToken(authToken);
     }
 
     @Test
     public void updateUser_cloudUserAdminIsTrue_callsVerifyDomain() throws Exception {
-        doReturn(new User()).when(spy).checkAndGetUser(null);
+        User user = new User();
+        user.setId(userId);
+        userOS.setId(userId);
+        doReturn(user).when(spy).checkAndGetUser(userId);
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(userService.getUserByAuthToken(authToken)).thenReturn(user);
-        spy.updateUser(null, authToken, null, userOS);
+        spy.updateUser(null, authToken, userId, userOS);
         verify(spy).verifyDomain(any(User.class), eq(user));
     }
 
     @Test
     public void updateUser_userDisabled_callsScopeAccessServiceExpiresAllTokensForUsers() throws Exception {
+        userOS.setId(userId);
         User user = mock(User.class);
-        doReturn(user).when(spy).checkAndGetUser(null);
+        doReturn(user).when(spy).checkAndGetUser(userId);
         when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(user);
         doNothing().when(user).copyChanges(any(User.class));
+        when(user.getId()).thenReturn(userId);
         when(user.isDisabled()).thenReturn(true);
-        spy.updateUser(null, authToken, null, userOS);
+        spy.updateUser(httpHeaders, authToken, userId, userOS);
         verify(scopeAccessService).expireAllTokensForUser(user.getUsername());
     }
 

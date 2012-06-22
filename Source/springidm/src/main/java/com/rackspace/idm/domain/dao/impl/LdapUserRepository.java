@@ -939,10 +939,10 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return user;
     }
 
-    private UserAuthenticationResult validateUserStatus(User user, boolean isAuthenticated) {
+    UserAuthenticationResult validateUserStatus(User user, boolean isAuthenticated) {
         if (isAuthenticated && user.isDisabled()) {
             getLogger().error(user.getUsername());
-            throw new UserDisabledException(user.getUsername());
+            throw new UserDisabledException("User '" + user.getUsername() +"' is disabled.");
         }
         getLogger().debug("User {} authenticated == {}", user.getUsername(), isAuthenticated);
         return new UserAuthenticationResult(user, isAuthenticated);

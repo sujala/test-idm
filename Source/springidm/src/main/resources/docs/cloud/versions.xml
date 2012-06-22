@@ -28,7 +28,7 @@
     </version>
 
     <version id="v2.0"
-             status="BETA"
+             status="CURRENT"
              updated="2012-01-19T22:30:00.25Z">
 
         <atom:link rel="self"
