@@ -340,17 +340,17 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
     private void appendTenantToBaseUrl(String tenantId, CloudBaseUrl baseUrl) {
         String publicUrl = baseUrl.getPublicUrl();
         if(publicUrl != null) {
-            publicUrl = publicUrl.substring(0, publicUrl.length() - (publicUrl.endsWith("/") ? 1 : 0)) + tenantId;
+            publicUrl = publicUrl.substring(0, publicUrl.length() - (publicUrl.endsWith("/") ? 1 : 0)) + "/" + tenantId;
             baseUrl.setPublicUrl(publicUrl);
         }
         String adminUrl = baseUrl.getAdminUrl();
         if(adminUrl != null) {
-            adminUrl = adminUrl.substring(0, adminUrl.length() - (adminUrl.endsWith("/") ? 1 : 0)) + tenantId;
+            adminUrl = adminUrl.substring(0, adminUrl.length() - (adminUrl.endsWith("/") ? 1 : 0)) + "/" + tenantId;
             baseUrl.setAdminUrl(adminUrl);
         }
         String internalUrl = baseUrl.getInternalUrl();
         if(internalUrl != null) {
-            internalUrl = internalUrl.substring(0, internalUrl.length() - (internalUrl.endsWith("/") ? 1 : 0)) + tenantId;
+            internalUrl = internalUrl.substring(0, internalUrl.length() - (internalUrl.endsWith("/") ? 1 : 0)) + "/" + tenantId;
             baseUrl.setInternalUrl(internalUrl);
         }
     }
