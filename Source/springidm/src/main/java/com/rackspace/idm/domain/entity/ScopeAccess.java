@@ -58,7 +58,11 @@ public class ScopeAccess implements Auditable {
         final String format = "ScopeAccess(clientId=%s)";
         return String.format(format, getClientId());
     }
-    
+
+    public void setLdapEntry(ReadOnlyEntry ldapEntry) {
+        this.ldapEntry = ldapEntry;
+    }
+
     @Override
     public String toString() {
         return getAuditContext() ;
