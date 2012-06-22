@@ -1,0 +1,274 @@
+{
+    "name": "Global Auth",
+    "description": "Global Auth / Identity API",
+    "devopsJSON_URL": "https://github.rackspace.com/GlobalServices/GlobalAuth/blob/master/Source/docs/devops.json",
+    "tags": [
+        "identity",
+        "authentication",
+        "users",
+        "tokens",
+        "security",
+        "service catalog"
+    ],
+    "contacts": [
+        {
+            "team_name": "Product",
+            "members": [
+                {
+                    "name": "Joe Savak",
+                    "sso": "",
+                    "github": "https://github.rackspace.com/joe3963",
+                    "mailto": "joe.savak@rackspace.com",
+                    "ircnick": "jsavak",
+                    "mobile": ""
+                }
+            ]
+        },
+        {
+            "team_name": "Business Analyst",
+            "members": [
+                {
+                    "name": "Sheena Gregson",
+                    "sso": "",
+                    "github": "",
+                    "mailto": "sheena.gregson@rackspace.com",
+                    "ircnick": "",
+                    "mobile": ""
+                }
+            ]
+        },
+        {
+            "team_name": "Dev Management",
+            "members": [
+                {
+                    "name": "John Smith",
+                    "sso": "",
+                    "github": "",
+                    "mailto": "john.smith@rackspace.com",
+                    "ircnick": "",
+                    "mobile": ""
+                }
+            ]
+        },        {
+            "team_name": "Project Management",
+            "members": [
+                {
+                    "name": "Glenn Kuklewski",
+                    "sso": "",
+                    "github": "",
+                    "mailto": "glen.kuklewski@rackspace.com",
+                    "ircnick": "",
+                    "mobile": ""
+                }
+            ]
+        },
+        {
+            "team_name": "Operations",
+            "members": [
+                {
+                    "name": "Ken Savich",
+                    "sso": "ken.savich",
+                    "github": "",
+                    "mailto": "ken.savich@rackspace.com",
+                    "ircnick": "",
+                    "mobile": ""
+                },
+                {
+                    "name": "Ravi Rachakonda",
+                    "sso": "ravi.rachakonda",
+                    "github": "",
+                    "mailto": "ravi.rachakonda@rackspace.com",
+                    "ircnick": "",
+                    "mobile": ""
+                },
+                {
+                    "name": "Venu Rachakonda",
+                    "sso": "venu.rachakonda",
+                    "github": "",
+                    "mailto": "venu.rachakonda@rackspace.com",
+                    "ircnick": "",
+                    "mobile": ""
+                }
+            ]
+        },
+        {
+            "team_name": "SDLC",
+            "members": [
+                {
+                    "name": "Junius Rowland",
+                    "sso": "",
+                    "mailto": "junius.rowland@rackspace.com"
+                }
+            ]
+        },
+        {
+            "team_name": "Development",
+            "members": [
+                {
+                    "name": "Alan Erwin",
+                    "sso": "",
+                    "github": "",
+                    "mailto": "matt.colton@rackspace.com",
+                    "ircnick": "",
+                    "mobile": ""
+                },
+                {
+                    "name": "Carlos Marin",
+                    "sso": "carlos.marin",
+                    "github": "https://github.rackspace.com/carlos-marin",
+                    "mailto": "carlos.marin@rackspace.com",
+                    "ircnick": "CarlosM",
+                    "mobile": "408-633-1024"
+                },
+                {
+                    "name": "Hector Munoz",
+                    "sso": "",
+                    "github": "",
+                    "mailto": "hector.munoz@rackspace.com",
+                    "ircnick": "",
+                    "mobile": ""
+                },
+                {
+                    "name": "Jorge Munoz",
+                    "sso": "",
+                    "github": "",
+                    "mailto": "jorge.Munoz@rackspace.com",
+                    "ircnick": "",
+                    "mobile": ""
+                },
+                {
+                    "name": "Matt Colton",
+                    "sso": "",
+                    "github": "",
+                    "mailto": "matt.colton@rackspace.com",
+                    "ircnick": "",
+                    "mobile": ""
+                },
+                {
+                    "name": "Werner Mendizabal",
+                    "sso": "",
+                    "github": "",
+                    "mailto": "werner.mendizabal@rackspace.com",
+                    "ircnick": "",
+                    "mobile": ""
+                }
+
+            ]
+        },
+        {
+           "team_name": "QE",
+            "members": [
+                {
+                    "name": "Shanthi Vedula",
+                    "sso": "",
+                    "mailto": "shanthi.vedula@rackspace.com",
+                    "ircnick": "",
+                    "mobile": ""
+                },
+                {
+                    "name": "Manthan Kathoratiya",
+                    "sso": "",
+                    "mailto": "manthan.kathoratiya@rackspace.com",
+                    "ircnick": "",
+                    "mobile": ""
+                }
+            ]
+        }
+
+    ],
+    "links": {
+        "General Email List": "mailto:global_auth2.0@lists.rackspace.com",
+        "Code": "https://github.rackspace.com/GlobalServices/GlobalAuth",
+        "Docs": "",
+        "API Docs (Public)": "http://docs.rackspace.com",
+        "API Docs (Internal)": "http://docs-internal.rackspace.com",
+        "SharePoint": "https://mosso.rackspace.corp/projects/cloud2.0/integration/AuthGlobalAuth/Forms/AllItems.aspx",
+        "Roadmap": "",
+        "Dashboard": "",
+        "Ticketing": "https://www15.v1host.com/RACKSPCE/",
+        "Tests - Jenkins": "http://10.6.50.168:8080/jenkins/job/globalAuth/",
+        "Manual Test Status": "",
+        "Chatter-Group": "https://na3.salesforce.com/_ui/core/chatter/groups/GroupProfilePage?g=0F950000000TPeD",
+        "Chat": "irc://irc.intra.rackspace.com -> #identityauth"
+    },
+    "environments": [
+        {
+            "type": "Development",
+            "platforms": [
+                ""
+            ],
+            "regions": [],
+            "url": {
+                "url": "https://dev.identity.api.rackspacecloud.com"
+            },
+            "links": {
+                "Identity": "https://dev.identity.api.rackspacecloud.com",
+                "RackIdentity": "https://dev.rackidentity.api.rackspacecloud.com"
+            }
+        },
+        {
+            "type": "Test",
+            "platforms": [
+                ""
+            ],
+            "regions": [],
+            "url": {
+                "url": "https://test.identity.api.rackspacecloud.com"
+            },
+            "links": {
+                "Identity": "https://test.identity.api.rackspacecloud.com",
+                "RackIdentity": "https://test.rackidentity.api.rackspacecloud.com"
+            }
+        },
+        {
+            "type": "UAT",
+            "platforms": [
+                ""
+            ],
+            "regions": [],
+            "url": {
+                "url": "https://uat.identity.api.rackspacecloud.com"
+            },
+            "links": {
+                "Identity": "https://uat.identity.api.rackspacecloud.com",
+                "RackIdentity": "https://uat.rackidentity.api.rackspacecloud.com"
+            }
+        },
+        {
+            "type": "Production-US",
+            "platforms": [
+                ""
+            ],
+            "regions": [],
+            "url": {
+                "url": "https://identity.api.rackspacecloud.com"
+            },
+            "links": {
+                "Identity": "https://identity.api.rackspacecloud.com",
+                "RackIdentity": "https://rackidentity.api.rackspacecloud.com"
+            }
+        },
+        {
+            "type": "Production-UK",
+            "platforms": [
+                ""
+            ],
+            "regions": [],
+            "url": {
+                "url": "https://lon.identity.api.rackspacecloud.com"
+            },
+            "links": {
+                "Identity": "https://lon.identity.api.rackspacecloud.com",
+                "RackIdentity": "https://lon.rackidentity.api.rackspacecloud.com"
+            }
+        }
+    ],
+    "metadata": {
+        "current_version": "v1.0.8",
+        "last_deployed": 20120614
+    },
+    "related_apis": {
+    },
+    "dependent_services": [
+    ]
+}
