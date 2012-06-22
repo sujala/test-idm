@@ -113,6 +113,14 @@
                     "mobile": ""
                 },
                 {
+                    "name": "Carlos Marin",
+                    "sso": "carlos.marin",
+                    "github": "https://github.rackspace.com/carlos-marin",
+                    "mailto": "carlos.marin@rackspace.com",
+                    "ircnick": "CarlosM",
+                    "mobile": "408-633-1024"
+                },
+                {
                     "name": "Hector Munoz",
                     "sso": "",
                     "github": "",
@@ -178,7 +186,7 @@
         "Roadmap": "",
         "Dashboard": "",
         "Ticketing": "https://www15.v1host.com/RACKSPCE/",
-        "Tests - Jenkins": "http://jenkins-n01.dev.ord1.ci.rackspace.net/view/Simple/",
+        "Tests - Jenkins": "http://10.6.50.168:8080/jenkins/job/globalAuth/",
         "Manual Test Status": "",
         "Chatter-Group": "https://na3.salesforce.com/_ui/core/chatter/groups/GroupProfilePage?g=0F950000000TPeD",
         "Chat": "irc://irc.intra.rackspace.com -> #identityauth"
