@@ -250,7 +250,8 @@
                 "url": "https://lon.identity.api.rackspacecloud.com"
             },
             "links": {
-                "Identity": "https://lon.identity.api.rackspacecloud.com"
+                "Identity": "https://lon.identity.api.rackspacecloud.com",
+                "RackIdentity": "https://lon.rackidentity.api.rackspacecloud.com"
             }
         }
     ],
