@@ -62,4 +62,8 @@ public class NastXmlRpcClientWrapper {
 
         return nastAccountId;
     }
+
+    public void setAuthConfiguration(NastConfiguration authConfiguration) {
+        this.authConfiguration = authConfiguration;
+    }
 }

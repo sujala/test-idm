@@ -415,6 +415,10 @@ public class DefaultAuthorizationService implements AuthorizationService {
         }
     }
 
+    public void setScopeAccessService(ScopeAccessService scopeAccessService) {
+        this.scopeAccessService = scopeAccessService;
+    }
+
     public static ClientRole getCLOUD_ADMIN_ROLE() {
         return CLOUD_ADMIN_ROLE;
     }
@@ -463,15 +467,23 @@ public class DefaultAuthorizationService implements AuthorizationService {
         DefaultAuthorizationService.IDM_SUPER_ADMIN_ROLE = IDM_SUPER_ADMIN_ROLE;
     }
 
+    public static String getIDM_ADMIN_GROUP_DN() {
+        return IDM_ADMIN_GROUP_DN;
+    }
+
+    public static void setIDM_ADMIN_GROUP_DN(String IDM_ADMIN_GROUP_DN) {
+        DefaultAuthorizationService.IDM_ADMIN_GROUP_DN = IDM_ADMIN_GROUP_DN;
+    }
+
     private String getIdmAdminGroupName() {
         return config.getString("idm.AdminGroupName");
     }
 
-    private String getIdmClientId() {
+    String getIdmClientId() {
         return config.getString("idm.clientId");
     }
 
-    private String getRackspaceCustomerId() {
+    String getRackspaceCustomerId() {
         return config.getString("rackspace.customerId");
     }
 

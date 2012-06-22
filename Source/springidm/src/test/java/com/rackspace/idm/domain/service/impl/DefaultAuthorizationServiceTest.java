@@ -4,6 +4,7 @@ import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.util.WadlTrie;
 import org.apache.commons.configuration.Configuration;
@@ -15,8 +16,10 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
+import static junit.framework.Assert.assertTrue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
@@ -62,7 +65,7 @@ public class DefaultAuthorizationServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         when(scopeAccessDao.getScopeAccessByAccessToken("token")).thenReturn(scopeAccess);
         when(spy.doesClientHaveAuthorizedRoles(scopeAccess, null)).thenReturn(false);
-        when(spy.isClientTheEntityBeingAccessed(scopeAccess,null)).thenReturn(true);
+        when(spy.isClientTheEntityBeingAccessed(scopeAccess, null)).thenReturn(true);
         spy.authorize("token",null,null);
     }
 
@@ -82,7 +85,7 @@ public class DefaultAuthorizationServiceTest {
         ClientRole clientRole = new ClientRole();
         when(spy.createRoleList(null)).thenReturn(allAuthorizedRoles);
         when(clientDao.getClientRoleById("1")).thenReturn(clientRole);
-        when(tenantDao.doesScopeAccessHaveTenantRole(null,clientRole)).thenReturn(true);
+        when(tenantDao.doesScopeAccessHaveTenantRole(null, clientRole)).thenReturn(true);
         assertThat("has authorized status", spy.doesClientHaveAuthorizedRoles(null, null), equalTo(true));
     }
 
@@ -107,7 +110,7 @@ public class DefaultAuthorizationServiceTest {
     @Test
     public void createRoleList_twoRoles_returnsCorrectList() throws Exception {
        List<String> allAuthorizedRoles = defaultAuthorizationService.createRoleList("programmers","awesome");
-       assertThat("number of roles",allAuthorizedRoles.size(),equalTo(3));
+       assertThat("number of roles", allAuthorizedRoles.size(), equalTo(3));
        assertThat("first role",allAuthorizedRoles.get(0),equalTo(ClientRole.SUPER_ADMIN_ROLE));
        assertThat("second role",allAuthorizedRoles.get(1),equalTo("programmers"));
        assertThat("third role",allAuthorizedRoles.get(2),equalTo("awesome"));
@@ -145,13 +148,13 @@ public class DefaultAuthorizationServiceTest {
         when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
         when(clientDao.getClientRoleByClientIdAndRoleName(anyString(),anyString())).thenReturn(null);
         defaultAuthorizationService.authorizeCloudIdentityAdmin(scopeAccess);
-        assertThat("client role",DefaultAuthorizationService.getCLOUD_ADMIN_ROLE(),equalTo(clientRole));
+        assertThat("client role", DefaultAuthorizationService.getCLOUD_ADMIN_ROLE(), equalTo(clientRole));
         DefaultAuthorizationService.setCLOUD_ADMIN_ROLE(null);
     }
 
     @Test
     public void authorizeRacker_tokenExpired_returnsFalse() throws Exception {
-        ScopeAccess scopeAccess = mock(UserScopeAccess.class);
+        ScopeAccess scopeAccess = mock(RackerScopeAccess.class);
         when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(true);
         assertThat("boolean", defaultAuthorizationService.authorizeRacker(scopeAccess), equalTo(false));
     }
@@ -160,7 +163,7 @@ public class DefaultAuthorizationServiceTest {
     public void authorizeRacker_rackerRoleNotNull_doesNotResetRackerRole() throws Exception {
         ClientRole clientRole = new ClientRole();
         DefaultAuthorizationService.setRACKER_ROLE(clientRole);
-        ScopeAccess scopeAccess = mock(UserScopeAccess.class);
+        ScopeAccess scopeAccess = mock(RackerScopeAccess.class);
         when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
         when(clientDao.getClientRoleByClientIdAndRoleName(anyString(), anyString())).thenReturn(null);
         defaultAuthorizationService.authorizeRacker(scopeAccess);
@@ -233,7 +236,7 @@ public class DefaultAuthorizationServiceTest {
         when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
         when(clientDao.getClientRoleByClientIdAndRoleName(anyString(),anyString())).thenReturn(null);
         defaultAuthorizationService.authorizeCloudUserAdmin(scopeAccess);
-        assertThat("client role",DefaultAuthorizationService.getCLOUD_USER_ADMIN_ROLE(),equalTo(clientRole));
+        assertThat("client role", DefaultAuthorizationService.getCLOUD_USER_ADMIN_ROLE(), equalTo(clientRole));
         DefaultAuthorizationService.setCLOUD_USER_ADMIN_ROLE(null);
     }
 
@@ -255,7 +258,7 @@ public class DefaultAuthorizationServiceTest {
         when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
         defaultAuthorizationService.authorizeCloudUser(scopeAccess);
         DefaultAuthorizationService.setCLOUD_USER_ROLE(null);
-        verify(clientDao).getClientRoleByClientIdAndRoleName(anyString(),anyString());
+        verify(clientDao).getClientRoleByClientIdAndRoleName(anyString(), anyString());
     }
 
     @Test
@@ -264,9 +267,9 @@ public class DefaultAuthorizationServiceTest {
         DefaultAuthorizationService.setCLOUD_USER_ROLE(clientRole);
         ScopeAccess scopeAccess = mock(UserScopeAccess.class);
         when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
-        when(clientDao.getClientRoleByClientIdAndRoleName(anyString(),anyString())).thenReturn(null);
+        when(clientDao.getClientRoleByClientIdAndRoleName(anyString(), anyString())).thenReturn(null);
         defaultAuthorizationService.authorizeCloudUser(scopeAccess);
-        assertThat("client role",DefaultAuthorizationService.getCLOUD_USER_ROLE(),equalTo(clientRole));
+        assertThat("client role", DefaultAuthorizationService.getCLOUD_USER_ROLE(), equalTo(clientRole));
         DefaultAuthorizationService.setCLOUD_USER_ROLE(null);
     }
 
@@ -276,7 +279,7 @@ public class DefaultAuthorizationServiceTest {
         when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
         defaultAuthorizationService.authorizeCloudUser(scopeAccess);
         DefaultAuthorizationService.setCLOUD_USER_ROLE(null);
-        verify(tenantDao).doesScopeAccessHaveTenantRole(eq(scopeAccess),any(ClientRole.class));
+        verify(tenantDao).doesScopeAccessHaveTenantRole(eq(scopeAccess), any(ClientRole.class));
     }
 
     @Test
@@ -286,7 +289,7 @@ public class DefaultAuthorizationServiceTest {
         when(tenantDao.doesScopeAccessHaveTenantRole(eq(scopeAccess), any(ClientRole.class))).thenReturn(true);
         boolean authorized = defaultAuthorizationService.authorizeCloudUser(scopeAccess);
         DefaultAuthorizationService.setCLOUD_USER_ROLE(null);
-        assertThat("boolean",authorized,equalTo(true));
+        assertThat("boolean", authorized, equalTo(true));
     }
 
     @Test
@@ -317,7 +320,7 @@ public class DefaultAuthorizationServiceTest {
         when(((HasAccessToken) scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
         when(clientDao.getClientRoleByClientIdAndRoleName(anyString(),anyString())).thenReturn(clientRole);
         spy.authorizeIdmSuperAdmin(scopeAccess);
-        assertThat("client role",DefaultAuthorizationService.getIDM_SUPER_ADMIN_ROLE(),equalTo(clientRole));
+        assertThat("client role", DefaultAuthorizationService.getIDM_SUPER_ADMIN_ROLE(), equalTo(clientRole));
         DefaultAuthorizationService.setIDM_SUPER_ADMIN_ROLE(null);
     }
 
@@ -337,20 +340,22 @@ public class DefaultAuthorizationServiceTest {
     @Test
     public void authorizeIdmSuperAdmin_callsTenantDaoMethod() throws Exception {
         ScopeAccess scopeAccess = mock(UserScopeAccess.class);
+        doReturn(false).when(spy).authorizeCustomerIdm(scopeAccess);
         when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
-        defaultAuthorizationService.authorizeIdmSuperAdmin(scopeAccess);
+        spy.authorizeIdmSuperAdmin(scopeAccess);
         DefaultAuthorizationService.setIDM_SUPER_ADMIN_ROLE(null);
-        verify(tenantDao).doesScopeAccessHaveTenantRole(eq(scopeAccess),any(ClientRole.class));
+        verify(tenantDao).doesScopeAccessHaveTenantRole(eq(scopeAccess), any(ClientRole.class));
     }
 
     @Test
     public void authorizeIdmSuperAdmin_returnsBoolean() throws Exception {
         ScopeAccess scopeAccess = mock(UserScopeAccess.class);
+        doReturn(false).when(spy).authorizeCustomerIdm(scopeAccess);
         when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
         when(tenantDao.doesScopeAccessHaveTenantRole(eq(scopeAccess), any(ClientRole.class))).thenReturn(true);
-        boolean authorized = defaultAuthorizationService.authorizeIdmSuperAdmin(scopeAccess);
+        boolean authorized = spy.authorizeIdmSuperAdmin(scopeAccess);
         DefaultAuthorizationService.setIDM_SUPER_ADMIN_ROLE(null);
-        assertThat("boolean",authorized,equalTo(true));
+        assertThat("boolean", authorized, equalTo(true));
     }
 
     @Test
@@ -360,7 +365,7 @@ public class DefaultAuthorizationServiceTest {
 
     @Test
     public void authorizeClient_scopeAccessNotInstanceOfClientScopeAccess() throws Exception {
-        assertThat("boolean",defaultAuthorizationService.authorizeClient(null,null,null),equalTo(false));
+        assertThat("boolean",defaultAuthorizationService.authorizeClient(null, null, null),equalTo(false));
     }
 
     @Test
@@ -418,32 +423,324 @@ public class DefaultAuthorizationServiceTest {
 
     @Test
     public void authorizeCustomerUser_scopeAccessNotInstanceOfUserScopeAccessOrDelegatedClientScopeAccess_returnsFalse() throws Exception {
-        assertThat("boolean",defaultAuthorizationService.authorizeCustomerUser(null,null),equalTo(false));
+        assertThat("boolean", defaultAuthorizationService.authorizeCustomerUser(null, null), equalTo(false));
     }
 
-    /*@Test
-    public void authorizeCustomerUser_scopeAccessInstanceOfDelegatedClientScopeAccessAndUsernamesEqual_returnsFalse() throws Exception {
-
-
-    }
-
-    public void testAuthorizeAdmin() throws Exception {
-
-    }
-
-    public void testAuthorizeCustomerIdm() throws Exception {
+    @Test
+    public void authorizeCustomerUser_scopeAccessInstanceOfDelegatedClientScopeAccessAndUsernamesEqual_returnsTrue() throws Exception {
+        DelegatedClientScopeAccess delegatedClientScopeAccess = new DelegatedClientScopeAccess();
+        delegatedClientScopeAccess.setUserRCN("rcn");
+        assertThat("boolean",defaultAuthorizationService.authorizeCustomerUser(delegatedClientScopeAccess, "rcn"),equalTo(true));
 
     }
 
-    public void testAuthorizeAsRequestorOrOwner() throws Exception {
-
+    @Test
+    public void authorizeAdmin_scopeAccessNotInstanceOfUserScopeAccessOrDelegatedClientScopeAccess_returnsFalse() throws Exception {
+        assertThat("boolean",defaultAuthorizationService.authorizeAdmin(null,null),equalTo(false));
     }
 
-    public void testVerifyIdmSuperAdminAccess() throws Exception {
-
+    @Test
+    public void authorizeAdmin_scopeAccessInstanceOfDelegatedClientScopeAccessAndUserInGroupAndIdMatches_returnsTrue() throws Exception {
+        DelegatedClientScopeAccess delegatedClientScopeAccess = new DelegatedClientScopeAccess();
+        delegatedClientScopeAccess.setUsername("jsmith");
+        delegatedClientScopeAccess.setUserRCN("rcn");
+        DefaultAuthorizationService.setIDM_ADMIN_GROUP_DN("dn");
+        when(clientDao.isUserInClientGroup("jsmith","dn")).thenReturn(true);
+        assertThat("boolean",defaultAuthorizationService.authorizeAdmin(delegatedClientScopeAccess,"rcn"),equalTo(true));
+        DefaultAuthorizationService.setIDM_ADMIN_GROUP_DN(null);
     }
 
-    public void testCheckAuthAndHandleFailure() throws Exception {
+    @Test
+    public void authorizeAdmin_scopeAccessInstanceOfDelegatedClientScopeAccessAndUserNotInGroupAndIdMatches_returnsFalse() throws Exception {
+        DelegatedClientScopeAccess delegatedClientScopeAccess = new DelegatedClientScopeAccess();
+        delegatedClientScopeAccess.setUsername("jsmith");
+        delegatedClientScopeAccess.setUserRCN("rcn");
+        DefaultAuthorizationService.setIDM_ADMIN_GROUP_DN("dn");
+        when(clientDao.isUserInClientGroup("jsmith","dn")).thenReturn(false);
+        assertThat("boolean",defaultAuthorizationService.authorizeAdmin(delegatedClientScopeAccess,"rcn"),equalTo(false));
+        DefaultAuthorizationService.setIDM_ADMIN_GROUP_DN(null);
+    }
 
-    }*/
+    @Test
+    public void authorizeAdmin_scopeAccessInstanceOfDelegatedClientScopeAccessAndUserInGroupAndIdDoesNotMatch_returnsFalse() throws Exception {
+        DelegatedClientScopeAccess delegatedClientScopeAccess = new DelegatedClientScopeAccess();
+        delegatedClientScopeAccess.setUsername("jsmith");
+        delegatedClientScopeAccess.setUserRCN("rcn");
+        DefaultAuthorizationService.setIDM_ADMIN_GROUP_DN("dn");
+        when(clientDao.isUserInClientGroup("jsmith","dn")).thenReturn(true);
+        assertThat("boolean",defaultAuthorizationService.authorizeAdmin(delegatedClientScopeAccess,"scn"),equalTo(false));
+        DefaultAuthorizationService.setIDM_ADMIN_GROUP_DN(null);
+    }
+
+    @Test
+    public void authorizeAdmin_scopeAccessInstanceOfDelegatedClientScopeAccessAndUserNotInGroupAndIdDoesNotMatch_returnsFalse() throws Exception {
+        DelegatedClientScopeAccess delegatedClientScopeAccess = new DelegatedClientScopeAccess();
+        delegatedClientScopeAccess.setUsername("jsmith");
+        delegatedClientScopeAccess.setUserRCN("rcn");
+        DefaultAuthorizationService.setIDM_ADMIN_GROUP_DN("dn");
+        when(clientDao.isUserInClientGroup("jsmith","dn")).thenReturn(false);
+        assertThat("boolean",defaultAuthorizationService.authorizeAdmin(delegatedClientScopeAccess,"scn"),equalTo(false));
+        DefaultAuthorizationService.setIDM_ADMIN_GROUP_DN(null);
+    }
+
+    @Test
+    public void authorizeCustomerIdm_scopeAccessNotInstanceOfClientScopeAccess_returnsFalse() throws Exception {
+        assertThat("boolean", defaultAuthorizationService.authorizeCustomerIdm(null), equalTo(false));
+    }
+
+    @Test
+    public void authorizeCustomerIdm_scopeAccessInstanceOfClientScopeAccessAndIdsMatchAndCustomerIdMatches_returnsTrue() throws Exception {
+        ScopeAccess scopeAccess = new ClientScopeAccess();
+        scopeAccess.setClientId("123");
+        scopeAccess.setClientRCN("456");
+        doReturn("123").when(spy).getIdmClientId();
+        doReturn("456").when(spy).getRackspaceCustomerId();
+        assertThat("boolean",spy.authorizeCustomerIdm(scopeAccess),equalTo(true));
+    }
+
+    @Test
+    public void authorizeCustomerIdm_scopeAccessInstanceOfClientScopeAccessAndIdsMatchAndCustomerIdDoesNotMatch_returnsFalse() throws Exception {
+        ScopeAccess scopeAccess = new ClientScopeAccess();
+        scopeAccess.setClientId("123");
+        scopeAccess.setClientRCN("4");
+        doReturn("123").when(spy).getIdmClientId();
+        doReturn("456").when(spy).getRackspaceCustomerId();
+        assertThat("boolean",spy.authorizeCustomerIdm(scopeAccess),equalTo(false));
+    }
+
+    @Test
+    public void authorizeCustomerIdm_scopeAccessInstanceOfClientScopeAccessAndIdsDoNotMatchAndCustomerIdMatches_returnsFalse() throws Exception {
+        ScopeAccess scopeAccess = new ClientScopeAccess();
+        scopeAccess.setClientId("12");
+        scopeAccess.setClientRCN("456");
+        doReturn("123").when(spy).getIdmClientId();
+        doReturn("456").when(spy).getRackspaceCustomerId();
+        assertThat("boolean",spy.authorizeCustomerIdm(scopeAccess),equalTo(false));
+    }
+
+    @Test
+    public void authorizeCustomerIdm_scopeAccessInstanceOfClientScopeAccessAndIdsDoNotMatchAndCustomerIdDoesNotMatch_returnsFalse() throws Exception {
+        ScopeAccess scopeAccess = new ClientScopeAccess();
+        scopeAccess.setClientId("1");
+        scopeAccess.setClientRCN("4");
+        doReturn("123").when(spy).getIdmClientId();
+        doReturn("456").when(spy).getRackspaceCustomerId();
+        assertThat("boolean",spy.authorizeCustomerIdm(scopeAccess),equalTo(false));
+    }
+
+    @Test
+    public void authorizeAsRequestorOrOwner_requestorInstanceOfClientScopeAccessAndClientIdMatchesAndTargetInstanceOfClientScopeAccessAndClientIdMatches_returnsTrue() throws Exception {
+        ScopeAccess targetScopeAccess = new ClientScopeAccess();
+        targetScopeAccess.setClientId("123");
+        ScopeAccess requestingScopeAccess = new ClientScopeAccess();
+        requestingScopeAccess.setClientId("123");
+        assertThat("boolean", defaultAuthorizationService.authorizeAsRequestorOrOwner(targetScopeAccess, requestingScopeAccess), equalTo(true));
+    }
+
+    @Test
+    public void authorizeAsRequestorOrOwner_requestorInstanceOfClientScopeAccessAndClientIdMatchesAndTargetInstanceOfClientScopeAccessAndClientIdDoesNotMatch_returnsTrue() throws Exception {
+        ScopeAccess targetScopeAccess = new ClientScopeAccess();
+        targetScopeAccess.setClientId("abc");
+        ScopeAccess requestingScopeAccess = new ClientScopeAccess();
+        requestingScopeAccess.setClientId("ABC");
+        assertThat("boolean",defaultAuthorizationService.authorizeAsRequestorOrOwner(targetScopeAccess,requestingScopeAccess),equalTo(true));
+    }
+
+    @Test
+    public void authorizeAsRequestorOrOwner_requestorInstanceOfClientScopeAccessAndClientIdMatchesAndTargetNotInstanceOfClientScopeAccessOrUserScopeAccessOrRackerScopeAccess_returnsTrue() throws Exception {
+        ScopeAccess targetScopeAccess = new ScopeAccess();
+        targetScopeAccess.setClientId("abc");
+        ScopeAccess requestingScopeAccess = new ClientScopeAccess();
+        requestingScopeAccess.setClientId("ABC");
+        assertThat("boolean",defaultAuthorizationService.authorizeAsRequestorOrOwner(targetScopeAccess,requestingScopeAccess),equalTo(true));
+    }
+
+    @Test
+    public void authorizeAsRequestorOrOwner_requestorNotInstanceOfClientScopeAccessAndClientIdsMatchAndTargetInstanceOfClientScopeAccessAndClientIdsMatch_returnsTrue() throws Exception {
+        ScopeAccess targetScopeAccess = new ClientScopeAccess();
+        targetScopeAccess.setClientId("abc");
+        ScopeAccess requestingScopeAccess = new UserScopeAccess();
+        requestingScopeAccess.setClientId("abc");
+        assertThat("boolean",defaultAuthorizationService.authorizeAsRequestorOrOwner(targetScopeAccess,requestingScopeAccess),equalTo(true));
+    }
+
+    @Test
+    public void authorizeAsRequestorOrOwner_requestorNotInstanceOfClientScopeAccessAndClientIdsMatchAndTargetInstanceOfUserScopeAccessAndUsernamesMatch_returnsTrue() throws Exception {
+        ScopeAccess targetScopeAccess = new UserScopeAccess();
+        targetScopeAccess.setClientId("123");
+        ((UserScopeAccess) targetScopeAccess).setUsername("jsmith");
+        ScopeAccess requestingScopeAccess = new UserScopeAccess();
+        ((UserScopeAccess) requestingScopeAccess).setUsername("jsmith");
+        requestingScopeAccess.setClientId("123");
+        assertThat("boolean",defaultAuthorizationService.authorizeAsRequestorOrOwner(targetScopeAccess,requestingScopeAccess),equalTo(true));
+    }
+
+    @Test
+    public void authorizeAsRequestorOrOwner_requestorNotInstanceOfClientScopeAccessAndClientIdsMatchAndTargetInstanceOfRackerScopeAccessAndRackerIdsMatch_returnsTrue() throws Exception {
+        ScopeAccess targetScopeAccess = new RackerScopeAccess();
+        targetScopeAccess.setClientId("456");
+        ((RackerScopeAccess) targetScopeAccess).setRackerId("123");
+        ScopeAccess requestingScopeAccess = new RackerScopeAccess();
+        ((RackerScopeAccess)requestingScopeAccess).setRackerId("123");
+        requestingScopeAccess.setClientId("456");
+        assertThat("boolean", defaultAuthorizationService.authorizeAsRequestorOrOwner(targetScopeAccess, requestingScopeAccess), equalTo(true));
+    }
+
+    @Test
+    public void authorizeAsRequestorOrOwner_requestorNotInstanceOfClientScopeAccessAndClientIdsDoNotMatchAndTargetInstanceOfUserScopeAccessAndUsernamesMatch_returnsTrue() throws Exception {
+        ScopeAccess targetScopeAccess = new UserScopeAccess();
+        targetScopeAccess.setClientId("1");
+        ((UserScopeAccess) targetScopeAccess).setUsername("jsmith");
+        ScopeAccess requestingScopeAccess = new UserScopeAccess();
+        ((UserScopeAccess) requestingScopeAccess).setUsername("jsmith");
+        requestingScopeAccess.setClientId("123");
+        assertThat("boolean", defaultAuthorizationService.authorizeAsRequestorOrOwner(targetScopeAccess, requestingScopeAccess), equalTo(true));
+    }
+
+    @Test
+    public void authorizeAsRequestorOrOwner_requestorNotInstanceOfClientScopeAccessAndClientIdsDoNotMatchAndTargetInstanceOfRackerScopeAccessAndRackerIdsMatch_returnsTrue() throws Exception {
+        ScopeAccess targetScopeAccess = new RackerScopeAccess();
+        targetScopeAccess.setClientId("4");
+        ((RackerScopeAccess) targetScopeAccess).setRackerId("123");
+        ScopeAccess requestingScopeAccess = new RackerScopeAccess();
+        ((RackerScopeAccess)requestingScopeAccess).setRackerId("123");
+        requestingScopeAccess.setClientId("456");
+        assertThat("boolean",defaultAuthorizationService.authorizeAsRequestorOrOwner(targetScopeAccess,requestingScopeAccess),equalTo(true));
+    }
+
+    @Test
+    public void authorizeAsRequestorOrOwner_requestorInstanceOfClientScopeAccessAndClientIdsDoNotMatchAndTargetInstanceOfClientScopeAccessAndClientIdsDoNotMatch_returnsFalse() throws Exception {
+        ScopeAccess targetScopeAccess = new ClientScopeAccess();
+        targetScopeAccess.setClientId("4");
+        ScopeAccess requestingScopeAccess = new ClientScopeAccess();
+        requestingScopeAccess.setClientId("456");
+        assertThat("boolean",defaultAuthorizationService.authorizeAsRequestorOrOwner(targetScopeAccess,requestingScopeAccess),equalTo(false));
+    }
+
+    @Test
+    public void authorizeAsRequestorOrOwner_requestorInstanceOfClientScopeAccessAndClientIdsDoNotMatchAndTargetNotInstanceOfClientScopeAccessOrUserScopeAccessOrRackerScopeAccess_returnsFalse() throws Exception {
+        ScopeAccess targetScopeAccess = new ScopeAccess();
+        targetScopeAccess.setClientId("4");
+        ScopeAccess requestingScopeAccess = new ClientScopeAccess();
+        requestingScopeAccess.setClientId("456");
+        assertThat("boolean",defaultAuthorizationService.authorizeAsRequestorOrOwner(targetScopeAccess,requestingScopeAccess),equalTo(false));
+    }
+
+    @Test
+    public void authorizeAsRequestorOrOwner_requestorNotInstanceOfClientScopeAccessAndClientIdsMatchAndTargetInstanceOfUserScopeAccessAndUsernamesDoNotMatch_returnsFalse() throws Exception {
+        ScopeAccess targetScopeAccess = new UserScopeAccess();
+        targetScopeAccess.setClientId("456");
+        ((UserScopeAccess) targetScopeAccess).setUsername("rclements");
+        ScopeAccess requestingScopeAccess = new UserScopeAccess();
+        requestingScopeAccess.setClientId("456");
+        ((UserScopeAccess) requestingScopeAccess).setUsername("jsmith");
+        assertThat("boolean", defaultAuthorizationService.authorizeAsRequestorOrOwner(targetScopeAccess, requestingScopeAccess), equalTo(false));
+    }
+
+    @Test
+    public void authorizeAsRequestorOrOwner_requestorNotInstanceOfClientScopeAccessAndClientIdsMatchAndTargetInstanceOfRackerScopeAccessAndRackerIdsDoNotMatch_returnsFalse() throws Exception {
+        ScopeAccess targetScopeAccess = new RackerScopeAccess();
+        targetScopeAccess.setClientId("456");
+        ((RackerScopeAccess) targetScopeAccess).setRackerId("rclements");
+        ScopeAccess requestingScopeAccess = new RackerScopeAccess();
+        requestingScopeAccess.setClientId("456");
+        ((RackerScopeAccess) requestingScopeAccess).setRackerId("jsmith");
+        assertThat("boolean",defaultAuthorizationService.authorizeAsRequestorOrOwner(targetScopeAccess,requestingScopeAccess),equalTo(false));
+    }
+
+    @Test
+    public void authorizeAsRequestorOrOwner_requestorNotInstanceOfClientScopeAccessAndClientIdsMatchAndTargetNotInstanceOfClientScopeAccessOrUserScopeAccessOrRackerScopeAccess_returnsFalse() throws Exception {
+        ScopeAccess targetScopeAccess = new ScopeAccess();
+        targetScopeAccess.setClientId("456");
+        ScopeAccess requestingScopeAccess = new RackerScopeAccess();
+        requestingScopeAccess.setClientId("456");
+        ((RackerScopeAccess) requestingScopeAccess).setRackerId("jsmith");
+        assertThat("boolean",defaultAuthorizationService.authorizeAsRequestorOrOwner(targetScopeAccess,requestingScopeAccess),equalTo(false));
+    }
+
+    @Test
+    public void authorizeAsRequestorOrOwner_requestorNotInstanceOfClientScopeAccessAndClientIdsDoNotMatchAndTargetInstanceOfClientScopeAccessAndClientIdsDoNotMatch_returnsFalse() throws Exception {
+        ScopeAccess targetScopeAccess = new ClientScopeAccess();
+        targetScopeAccess.setClientId("4");
+        ScopeAccess requestingScopeAccess = new UserScopeAccess();
+        requestingScopeAccess.setClientId("456");
+        assertThat("boolean",defaultAuthorizationService.authorizeAsRequestorOrOwner(targetScopeAccess,requestingScopeAccess),equalTo(false));
+    }
+
+    @Test
+    public void authorizeAsRequestorOrOwner_requestorNotInstanceOfClientScopeAccessAndClientIdsDoNotMatchAndTargetInstanceOfUserScopeAccessAndUsernamesDoNotMatch_returnsFalse() throws Exception {
+        ScopeAccess targetScopeAccess = new UserScopeAccess();
+        targetScopeAccess.setClientId("4");
+        ((UserScopeAccess) targetScopeAccess).setUsername("rclements");
+        ScopeAccess requestingScopeAccess = new UserScopeAccess();
+        requestingScopeAccess.setClientId("456");
+        ((UserScopeAccess) requestingScopeAccess).setUsername("jsmith");
+        assertThat("boolean", defaultAuthorizationService.authorizeAsRequestorOrOwner(targetScopeAccess, requestingScopeAccess), equalTo(false));
+    }
+
+    @Test
+    public void authorizeAsRequestorOrOwner_requestorNotInstanceOfClientScopeAccessAndClientIdsDoNotMatchAndTargetInstanceOfRackerScopeAccessAndRackerIdsDoNotMatch_returnsFalse() throws Exception {
+        ScopeAccess targetScopeAccess = new RackerScopeAccess();
+        targetScopeAccess.setClientId("4");
+        ((RackerScopeAccess) targetScopeAccess).setRackerId("rclements");
+        ScopeAccess requestingScopeAccess = new RackerScopeAccess();
+        requestingScopeAccess.setClientId("456");
+        ((RackerScopeAccess) requestingScopeAccess).setRackerId("jsmith");
+        assertThat("boolean",defaultAuthorizationService.authorizeAsRequestorOrOwner(targetScopeAccess,requestingScopeAccess),equalTo(false));
+    }
+
+    @Test
+    public void authorizeAsRequestorOrOwner_requestorNotInstanceOfClientScopeAccessAndClientIdsDoNotMatchAndTargetNotInstanceOfClientScopeAccessOrUserScopeAccessOrRackerScopeAccess_returnsFalse() throws Exception {
+        ScopeAccess targetScopeAccess = new ScopeAccess();
+        targetScopeAccess.setClientId("4");
+        ScopeAccess requestingScopeAccess = new RackerScopeAccess();
+        requestingScopeAccess.setClientId("456");
+        ((RackerScopeAccess) requestingScopeAccess).setRackerId("jsmith");
+        assertThat("boolean",defaultAuthorizationService.authorizeAsRequestorOrOwner(targetScopeAccess,requestingScopeAccess),equalTo(false));
+    }
+
+    @Test
+    public void verifyIdmSuperAdminAccess_hasAccess_doesNothing() throws Exception {
+        ScopeAccessService scopeAccessService = mock(ScopeAccessService.class);
+        ScopeAccess scopeAccess = new ScopeAccess();
+        spy.setScopeAccessService(scopeAccessService);
+        when(scopeAccessService.getScopeAccessByAccessToken(null)).thenReturn(scopeAccess);
+        doReturn(true).when(spy).authorizeIdmSuperAdmin(scopeAccess);
+        spy.verifyIdmSuperAdminAccess(null);
+    }
+
+    @Test (expected = ForbiddenException.class)
+    public void verifyIdmSuperAdminAccess_doesNotHaveAccess_throwsForbiddenException() throws Exception {
+        ScopeAccessService scopeAccessService = mock(ScopeAccessService.class);
+        ScopeAccess scopeAccess = new ScopeAccess();
+        spy.setScopeAccessService(scopeAccessService);
+        when(scopeAccessService.getScopeAccessByAccessToken(null)).thenReturn(scopeAccess);
+        doReturn(false).when(spy).authorizeIdmSuperAdmin(scopeAccess);
+        spy.verifyIdmSuperAdminAccess(null);
+    }
+
+    @Test
+    public void checkAuthAndHandleFailure_isAuthorized_doesNothing() throws Exception {
+        defaultAuthorizationService.checkAuthAndHandleFailure(true,null);
+    }
+
+
+
+    @Test
+    public void checkAuthAndHandleFailure_notAuthorized_throwsForbiddenException() throws Exception {
+        try{
+            ScopeAccess token = new UserScopeAccess();
+            ((HasAccessToken) token).setAccessTokenString("cat");
+            defaultAuthorizationService.checkAuthAndHandleFailure(false,token);
+            assertTrue("expecting exception",false);
+        } catch (ForbiddenException ex){
+            String message = ex.getMessage();
+            assertThat("message",message,equalTo("Token cat Forbidden from this call"));
+        }
+    }
+
+    @Test
+    public void getIDM_ADMIN_GROUP_DN() throws Exception {
+        assertThat("string", DefaultAuthorizationService.getIDM_ADMIN_GROUP_DN(), nullValue());
+    }
 }

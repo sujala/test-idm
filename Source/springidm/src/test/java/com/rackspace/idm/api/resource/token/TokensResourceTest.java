@@ -14,7 +14,6 @@ import com.rackspace.idm.util.AuthHeaderHelper;
 import com.rackspace.idm.validation.InputValidator;
 import com.sun.jersey.core.provider.EntityHolder;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.ws.rs.core.HttpHeaders;
@@ -189,23 +188,23 @@ public class TokensResourceTest {
 
     @Test
     public void doesTokenHaveApplicationRole_callsAuthorizationService_verifyIdmSuperAdminAccess() throws Exception {
-        when(tokenService.doesTokenHaveAplicationRole(anyString(), anyString(), anyString())).thenReturn(true);
+        when(tokenService.doesTokenHaveApplicationRole(anyString(), anyString(), anyString())).thenReturn(true);
         tokensResource.doesTokenHaveApplicationRole("authHeader", "tokenStrin", "applicationId", "roleId");
         verify(authorizationService).verifyIdmSuperAdminAccess("authHeader");
     }
 
     @Test
     public void doesTokenHaveApplicationRole_callsScopeAccessService_getAccessTokenByAuthHeader() throws Exception {
-        when(tokenService.doesTokenHaveAplicationRole(anyString(), anyString(), anyString())).thenReturn(true);
+        when(tokenService.doesTokenHaveApplicationRole(anyString(), anyString(), anyString())).thenReturn(true);
         tokensResource.doesTokenHaveApplicationRole("authHeader", "tokenStrin", "applicationId", "roleId");
         verify(scopeAccessService).getAccessTokenByAuthHeader("authHeader");
     }
 
     @Test
     public void doesTokenHaveApplicationRole_callsTokenService_doesTokenHaveAplicationRole() throws Exception {
-        when(tokenService.doesTokenHaveAplicationRole(anyString(), anyString(), anyString())).thenReturn(true);
+        when(tokenService.doesTokenHaveApplicationRole(anyString(), anyString(), anyString())).thenReturn(true);
         tokensResource.doesTokenHaveApplicationRole("authHeader", "tokenStrin", "applicationId", "roleId");
-        verify(tokenService).doesTokenHaveAplicationRole(anyString(), anyString(), anyString());
+        verify(tokenService).doesTokenHaveApplicationRole(anyString(), anyString(), anyString());
     }
 
     @Test (expected = NotFoundException.class)
@@ -215,7 +214,7 @@ public class TokensResourceTest {
 
     @Test
     public void doesTokenHaveApplicationRole_responseNoContent_returns204() throws Exception {
-        when(tokenService.doesTokenHaveAplicationRole(anyString(), anyString(), anyString())).thenReturn(true);
+        when(tokenService.doesTokenHaveApplicationRole(anyString(), anyString(), anyString())).thenReturn(true);
         Response response = tokensResource.doesTokenHaveApplicationRole("authHeader", "tokenStrin", "applicationId", "roleId");
         assertThat("response code", response.getStatus(), equalTo(204));
     }
