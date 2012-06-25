@@ -255,7 +255,7 @@ public class DefaultTenantServiceTest {
         defaultTenantService.deleteTenantRole(null, null);
     }
 
-    @Test (expected = AssertionError.class)
+    @Test
     public void deleteTenantRole_roleExistsAndGivenTenantIdNotInExistingRole_doesNothing() throws Exception {
         String[] tenantIds = {"123"};
         String[] tenantIds2 = {"456"};
@@ -265,7 +265,7 @@ public class DefaultTenantServiceTest {
         tenantRole2.setTenantIds(tenantIds2);
         when(tenantDao.getTenantRoleForParentById(null, null)).thenReturn(tenantRole2);
         defaultTenantService.deleteTenantRole(null,tenantRole);
-        verify(tenantDao).deleteTenantRole(tenantRole2);
+        verify(tenantDao,never()).deleteTenantRole(any(TenantRole.class));
     }
 
     @Test
@@ -428,7 +428,7 @@ public class DefaultTenantServiceTest {
 
     }
 
-    @Test (expected = AssertionError.class)
+    @Test
     public void addTenantRoleToUser_scopeAccessNotNull_doesNotCallScopeAccessDaoMethodAdd() throws Exception {
         User user = new User();
         user.setUniqueId("123");
@@ -439,7 +439,7 @@ public class DefaultTenantServiceTest {
         when(scopeAccessDao.addDirectScopeAccess(eq("123"),any(UserScopeAccess.class))).thenReturn(new ScopeAccess());
         doNothing().when(spy).addTenantRole(null,role);
         spy.addTenantRoleToUser(user, role);
-        verify(scopeAccessDao).addDirectScopeAccess(eq("123"),any(ScopeAccess.class));
+        verify(scopeAccessDao,never()).addDirectScopeAccess(anyString(),any(ScopeAccess.class));
 
     }
 
@@ -524,7 +524,7 @@ public class DefaultTenantServiceTest {
         verify(scopeAccessDao).addDirectScopeAccess(eq("123"), any(ScopeAccess.class));
     }
 
-    @Test (expected = AssertionError.class)
+    @Test
     public void addTenantRoleToClient_scopeAccessIsNotNull_doesNotCallScopeAccessDaoMethod() throws Exception {
         TenantRole tenantRole = new TenantRole();
         Application application = new Application();
@@ -534,7 +534,7 @@ public class DefaultTenantServiceTest {
         when(scopeAccessDao.getDirectScopeAccessForParentByClientId("123", null)).thenReturn(new ScopeAccess());
         doNothing().when(spy).addTenantRole(null, tenantRole);
         spy.addTenantRoleToClient(application,tenantRole);
-        verify(scopeAccessDao).addDirectScopeAccess(eq("123"),any(ScopeAccess.class));
+        verify(scopeAccessDao,never()).addDirectScopeAccess(anyString(),any(ScopeAccess.class));
     }
 
     @Test
@@ -761,14 +761,14 @@ public class DefaultTenantServiceTest {
         assertThat("list size", defaultTenantService.getUsersForTenant("123").size(), equalTo(1));
     }
 
-    @Test (expected = AssertionError.class)
+    @Test
     public void getUsersForTenant_noRolesAndUserExistsAndEnabled_doesNotCallUserDaoMethod() throws Exception {
         List<TenantRole> list = new ArrayList<TenantRole>();
         User user = new User();
         user.setEnabled(true);
         when(tenantDao.getAllTenantRolesForTenant("123")).thenReturn(list);
         defaultTenantService.getUsersForTenant("123");
-        verify(userDao).getUserById("123");
+        verify(userDao,never()).getUserById(anyString());
     }
 
     @Test
