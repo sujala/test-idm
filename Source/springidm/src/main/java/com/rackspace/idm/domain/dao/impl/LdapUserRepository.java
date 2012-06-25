@@ -325,6 +325,27 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     }
 
     @Override
+    public Users getUsersByDomainId(String domainId) {
+        getLogger().debug("Doing search for domainId " + domainId);
+        if (StringUtils.isBlank(domainId)) {
+            getLogger().error("Null or Empty domainId parameter");
+            throw new IllegalArgumentException(
+                    "Null or Empty domainId parameter.");
+        }
+
+        Filter searchFilter = new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_DOMAIN_ID, domainId)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+                .build();
+
+        Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES,getLdapPagingOffsetDefault(),getLdapPagingLimitDefault());
+
+        getLogger().debug("Found Users - {}", users);
+
+        return users;
+    }
+
+    @Override
     public User getUserByRPN(String rpn) {
         getLogger().debug("Doing User search by rpn " + rpn);
         if (StringUtils.isBlank(rpn)) {

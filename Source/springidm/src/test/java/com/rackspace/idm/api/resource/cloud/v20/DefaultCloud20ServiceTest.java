@@ -234,6 +234,12 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void deleteUser_callsUserService_hasSubUsers() throws Exception {
+        spy.deleteUser(httpHeaders,authToken,userId);
+        verify(userService).hasSubUsers(userId);
+    }
+
+    @Test
     public void addUserCredential_returns200() throws Exception {
         ApiKeyCredentials apiKeyCredentials1 = new ApiKeyCredentials();
         apiKeyCredentials1.setUsername(userId);

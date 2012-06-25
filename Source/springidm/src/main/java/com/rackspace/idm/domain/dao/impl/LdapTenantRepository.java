@@ -310,10 +310,9 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         getLogger().debug("Getting tenantRoles");
         Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TENANT_ROLE).build();
 
-        //String dn = new LdapDnBuilder(user.getUniqueId()).addAttribute(ATTR_NAME, CONTAINER_ROLES).build();
         String dn = new LdapDnBuilder(user.getUniqueId()).build();
 
-        List<TenantRole> roles = new ArrayList<TenantRole>();
+        List<TenantRole> roles;
         try {
             roles = getMultipleTenantRoles(dn, searchFilter);
         } catch (LDAPPersistException e) {

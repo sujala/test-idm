@@ -476,8 +476,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     }
 
     @Override
-    public Response.ResponseBuilder deleteUser(HttpServletRequest request,
-                                               String userId, HttpHeaders httpHeaders) throws IOException {
+    public Response.ResponseBuilder deleteUser(HttpServletRequest request, String userId, HttpHeaders httpHeaders) throws IOException {
 
         try {
             authenticateCloudAdminUser(request);
@@ -487,6 +486,9 @@ public class DefaultCloud11Service implements Cloud11Service {
             if (gaUser == null) {
                 String errMsg = String.format("User %s not found", userId);
                 throw new NotFoundException(errMsg);
+            }
+            if(userService.hasSubUsers(userId)){
+                throw new BadRequestException("Cannot delete a User-Admin with Sub-Users. Please use v2.0 contract to remove Sub-Users then try again");
             }
 
             this.userService.softDeleteUser(gaUser);

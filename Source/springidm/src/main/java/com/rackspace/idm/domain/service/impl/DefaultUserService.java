@@ -28,7 +28,6 @@ public class DefaultUserService implements UserService {
     private final TokenService oauthService;
     private final Configuration config;
 
-    // private final CustomerDao customerDao;
     private final PasswordComplexityService passwordComplexityService;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -49,7 +48,6 @@ public class DefaultUserService implements UserService {
 
         this.userDao = userDao;
         this.authDao = rackerDao;
-        //this.customerDao = customerDao;
         this.scopeAccessDao = scopeAccessDao;
         this.clientService = clientService;
         this.config = config;
@@ -444,6 +442,26 @@ public class DefaultUserService implements UserService {
     @Override
     public boolean isUsernameUnique(String username) {
         return userDao.isUsernameUnique(username);
+    }
+
+    @Override
+    public boolean hasSubUsers(String userId) {
+        User user = userDao.getUserById(userId);
+        if(user==null){
+            return false;
+        }
+        Users users = userDao.getUsersByDomainId(user.getDomainId());
+        if(users==null || users.getUsers()==null || users.getUsers().size()==0){
+            return false;
+        }
+        for(User userInList: users.getUsers()){
+            ScopeAccess scopeAccess = scopeAccessDao.getScopeAccessByUserId(userInList.getId());
+            boolean isDefaultUser = authorizationService.authorizeCloudUser(scopeAccess);
+            if(isDefaultUser){
+                return true;
+            }
+        }
+        return false;
     }
 
 

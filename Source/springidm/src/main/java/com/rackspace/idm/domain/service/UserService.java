@@ -43,7 +43,7 @@ public interface UserService {
     
     User getUserByRPN(String rpn);
 
-    User getUserByNastId(String natsId);
+    User getUserByNastId(String nastId);
 
     User getUserByMossoId(int mossoId);
 
@@ -64,6 +64,8 @@ public interface UserService {
     User getUserByScopeAccess(ScopeAccess scopeAccess)throws Exception;
 
     boolean isUsernameUnique(String username);
+
+    boolean hasSubUsers(String userId);
     
     void setUserPassword(String userId, PasswordCredentials userCred, ScopeAccess token);
 

@@ -138,6 +138,14 @@ public class DefaultCloud11ServiceTest {
     }
 
     @Test
+    public void deleteUser_callsUserService_hasSubUsers() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUser(request);
+        when(userService.getUser("userId")).thenReturn(userDO);
+        spy.deleteUser(request,"userId",httpHeaders);
+        verify(userService).hasSubUsers("userId");
+    }
+
+    @Test
     public void authenticateResponse_callsCredentialValidator_validateCredential() throws Exception {
         NastCredentials nastCredentials = new NastCredentials();
         defaultCloud11Service.authenticateResponse(new JAXBElement<Credentials>(new QName(""),Credentials.class, nastCredentials));
