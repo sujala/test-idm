@@ -30,8 +30,7 @@ public class LdapUserRepositoryTest {
 
     private LdapUserRepository repo;
     private LdapConnectionPools connPools;
-    LdapUserRepository spy;
-    
+
     String rackerId = "racker";
     
     String id = "XXXX";
@@ -72,7 +71,6 @@ public class LdapUserRepositoryTest {
             cleanUpRepo.deleteUser("delete,me");
         }
         pools.close();
-        spy = spy(repo);
     }
 
     private static LdapUserRepository getRepo(LdapConnectionPools connPools) {
@@ -545,41 +543,6 @@ public class LdapUserRepositoryTest {
         List<Modification> mod = new ArrayList<Modification>();
         repo.checkForApiKeyModification(oldUser,newUser,null,mod);
         assertThat("modification type",mod.get(0).getModificationType().getName(),equalTo("DELETE"));
-    }
-
-    @Test(expected = DuplicateUsernameException.class)
-    public void updateUserById_throwsDuplicateUsernameException() throws Exception {
-        User updatedUser = new User("username2");
-        updatedUser.setId("userId");
-        User oldUser = new User("username");
-        doReturn(oldUser).when(spy).getUserById("userId");
-        doReturn(false).when(spy).isUsernameUnique("username2");
-        doNothing().when(spy).updateUser(any(User.class), any(User.class), eq(false));
-        spy.updateUserById(updatedUser, false);
-    }
-
-    @Test
-    public void updateUserById_callsUpdateUser_withNewAndOldUsernameTheSame() throws Exception {
-        User updatedUser = new User("username");
-        updatedUser.setId("userId");
-        User oldUser = new User("username");
-        doReturn(oldUser).when(spy).getUserById("userId");
-        doReturn(false).when(spy).isUsernameUnique("username");
-        doNothing().when(spy).updateUser(any(User.class), any(User.class), eq(false));
-        spy.updateUserById(updatedUser, false);
-        verify(spy).updateUser(updatedUser, oldUser, false);
-    }
-
-    @Test
-    public void updateUserById_callsUpdateUser_withDifferentAndUniqueNewUsername() throws Exception {
-        User updatedUser = new User("username2");
-        updatedUser.setId("userId");
-        User oldUser = new User("username");
-        doReturn(oldUser).when(spy).getUserById("userId");
-        doReturn(true).when(spy).isUsernameUnique("username2");
-        doNothing().when(spy).updateUser(any(User.class), any(User.class), eq(false));
-        spy.updateUserById(updatedUser, false);
-        verify(spy).updateUser(updatedUser, oldUser, false);
     }
 
     @Test
