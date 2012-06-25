@@ -218,7 +218,7 @@ public class TokensResource extends ParentResource {
 
         ScopeAccess token = this.scopeAccessService.getAccessTokenByAuthHeader(authHeader);
 
-        boolean hasApplicationRole = tokenService.doesTokenHaveAplicationRole(tokenString, applicationId, roleId);
+        boolean hasApplicationRole = tokenService.doesTokenHaveApplicationRole(tokenString, applicationId, roleId);
 
         if (!hasApplicationRole) {
             String errorMsg = String.format("Token does not have access : %s", token);

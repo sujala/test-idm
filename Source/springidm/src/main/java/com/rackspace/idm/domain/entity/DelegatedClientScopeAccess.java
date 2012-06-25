@@ -182,4 +182,8 @@ public class DelegatedClientScopeAccess extends ScopeAccess implements HasAccess
     public String getUserRsId() {
         return userRsId;
     }
+
+    public void setLdapEntry(ReadOnlyEntry ldapEntry) {
+        this.ldapEntry = ldapEntry;
+    }
 }
