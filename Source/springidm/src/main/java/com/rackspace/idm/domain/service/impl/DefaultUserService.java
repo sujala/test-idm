@@ -510,6 +510,7 @@ public class DefaultUserService implements UserService {
     public void updateUserById(User user, boolean hasSelfUpdatedPassword) {
         logger.info("Updating User: {}", user);
         validateUserEmailAddress(user);
+        validateUsername(user);
         userDao.updateUserById(user, hasSelfUpdatedPassword);
         logger.info("Updated User: {}", user);
     }
@@ -548,7 +549,7 @@ public class DefaultUserService implements UserService {
     private void validateUsername(User user) {
         boolean isUsernameUnique = userDao.isUsernameUnique(user.getUsername());
         if (!isUsernameUnique) {
-            logger.warn("Couldn't add user {} because username already taken", user);
+            logger.warn("Couldn't add/update user {} because username already taken", user);
             throw new DuplicateUsernameException(String.format("Username %s already exists", user.getUsername()));
         }
     }

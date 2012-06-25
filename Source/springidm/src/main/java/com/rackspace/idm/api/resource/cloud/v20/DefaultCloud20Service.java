@@ -366,9 +366,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             return created.entity(openStackIdentityV2Factory.createUser(value));
         } catch (DuplicateException de) {
             return userConflictExceptionResponse(de.getMessage());
-        } catch (DuplicateUsernameException due) {
-            return userConflictExceptionResponse(due.getMessage());
-        } catch (Exception ex) {
+        }  catch (Exception ex) {
             return exceptionResponse(ex);
         }
     }
@@ -2106,6 +2104,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             return userDisabledExceptionResponse(ex.getMessage());
         } else if (ex instanceof StalePasswordException) {
             return badRequestExceptionResponse(ex.getMessage());
+        } else if (ex instanceof DuplicateUsernameException) {
+            return userConflictExceptionResponse(ex.getMessage());
         } else {
             return serviceExceptionResponse();
         }
@@ -2501,7 +2501,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         BadRequestFault fault = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequestFault();
         fault.setCode(HttpServletResponse.SC_CONFLICT);
         fault.setMessage(message);
-        fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_CONFLICT)
                 .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequest(fault));
     }
