@@ -3399,6 +3399,17 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void getUsersForGroup_emptyGroup_returns404() throws Exception {
+        List<User> userList = new ArrayList<User>();
+        Users users = new Users();
+        users.setUsers(userList);
+        when(userGroupService.getGroupById(1)).thenReturn(group);
+        when(userGroupService.getAllEnabledUsers(any(FilterParam[].class), anyString(), anyInt())).thenReturn(users);
+        Response.ResponseBuilder responseBuilder = spy.getUsersForGroup(null, authToken, "1", null, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(404));
+    }
+
+    @Test
     public void getUsersForGroup_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.getUsersForGroup(null, authToken, null, null, null);
         verify(spy).verifyServiceAdminLevelAccess(authToken);
@@ -3418,8 +3429,12 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void getUsersForGroup_responseOk_returns200() throws Exception {
+        List<User> userList = new ArrayList<User>();
+        userList.add(user);
+        Users users = new Users();
+        users.setUsers(userList);
         when(userGroupService.getGroupById(1)).thenReturn(group);
-        when(userGroupService.getAllEnabledUsers(any(FilterParam[].class), anyString(), anyInt())).thenReturn(new Users());
+        when(userGroupService.getAllEnabledUsers(any(FilterParam[].class), anyString(), anyInt())).thenReturn(users);
         Response.ResponseBuilder responseBuilder = spy.getUsersForGroup(null, authToken, "1", null, null);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
