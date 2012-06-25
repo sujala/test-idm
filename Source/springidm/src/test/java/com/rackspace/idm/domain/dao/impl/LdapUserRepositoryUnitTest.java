@@ -2,9 +2,13 @@ package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.exception.UserDisabledException;
+import com.unboundid.ldap.sdk.Modification;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -49,4 +53,17 @@ public class LdapUserRepositoryUnitTest {
             assertThat("message",ex.getMessage(),equalTo("User 'rclements' is disabled."));
         }
     }
+
+    @Test
+    public void checkForApiKeyModification_newKeyBlank_addsDeleteKeyModification() throws Exception {
+        User oldUser = new User();
+        oldUser.setApiKey("hello!");
+        User newUser = new User();
+        newUser.setApiKey("");
+        List<Modification> mod = new ArrayList<Modification>();
+        ldapUserRepository.checkForApiKeyModification(oldUser,newUser,null,mod);
+        assertThat("modification type",mod.get(0).getModificationType().getName(),equalTo("DELETE"));
+    }
+
+
 }

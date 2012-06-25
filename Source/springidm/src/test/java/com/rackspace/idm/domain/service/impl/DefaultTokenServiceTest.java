@@ -156,7 +156,7 @@ public class DefaultTokenServiceTest {
         defaultTokenService.revokeAccessToken(null,null);
     }
 
-    @Test (expected = AssertionError.class)
+    @Test
     public void revokeAccessToken_scopeAccessToDeleteNotInstanceOfHasAccessToken_doesNotCallUpdateScopeAccess() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         when(scopeAccessService.getScopeAccessByAccessToken(null)).thenReturn(scopeAccess);
@@ -164,7 +164,7 @@ public class DefaultTokenServiceTest {
         when(authorizationService.authorizeCustomerIdm(scopeAccess)).thenReturn(false);
         when(authorizationService.authorizeAsRequestorOrOwner(scopeAccess,scopeAccess)).thenReturn(true);
         defaultTokenService.revokeAccessToken(null,null);
-        verify(scopeAccessService).updateScopeAccess(scopeAccess);
+        verify(scopeAccessService,never()).updateScopeAccess(any(ScopeAccess.class));
     }
 
     @Test
@@ -177,13 +177,13 @@ public class DefaultTokenServiceTest {
         verify(scopeAccessService).expireAllTokensForUser(null);
     }
 
-    @Test (expected = AssertionError.class)
+    @Test
     public void revokeAllTokensForCustomer_usersDoNotExist_doesNotCallScopeServiceMethod() throws Exception {
         List<User> usersList = new ArrayList<User>();
         doReturn(usersList).when(spy).getAllUsersForCustomerId(null);
         doReturn(new ArrayList<Application>()).when(spy).getAllClientsForCustomerId(null);
         spy.revokeAllTokensForCustomer(null);
-        verify(scopeAccessService).expireAllTokensForUser(null);
+        verify(scopeAccessService,never()).expireAllTokensForUser(anyString());
     }
 
     @Test
@@ -196,12 +196,12 @@ public class DefaultTokenServiceTest {
         verify(scopeAccessService).expireAllTokensForClient(null);
     }
 
-    @Test (expected = AssertionError.class)
+    @Test
     public void revokeAllTokensForCustomer_clientsDoNotExist_callScopeServiceMethod() throws Exception {
         doReturn(new ArrayList<User>()).when(spy).getAllUsersForCustomerId(null);
         doReturn(new ArrayList<Application>()).when(spy).getAllClientsForCustomerId(null);
         spy.revokeAllTokensForCustomer(null);
-        verify(scopeAccessService).expireAllTokensForClient(null);
+        verify(scopeAccessService,never()).expireAllTokensForClient(anyString());
     }
 
     @Test

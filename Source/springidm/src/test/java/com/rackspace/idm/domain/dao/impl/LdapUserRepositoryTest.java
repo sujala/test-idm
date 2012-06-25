@@ -14,12 +14,8 @@ import org.joda.time.DateTimeZone;
 import org.junit.*;
 
 import java.security.GeneralSecurityException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
 
 public class LdapUserRepositoryTest {
 
@@ -522,17 +518,6 @@ public class LdapUserRepositoryTest {
         Assert.assertNull(notExists);
         Assert.assertNotNull(softDeleted);
         Assert.assertNotNull(exists);
-    }
-
-    @Test
-    public void checkForApiKeyModification_newKeyBlank_addsDeleteKeyModification() throws Exception {
-        User oldUser = new User();
-        oldUser.setApiKey("hello!");
-        User newUser = new User();
-        newUser.setApiKey("");
-        List<Modification> mod = new ArrayList<Modification>();
-        repo.checkForApiKeyModification(oldUser,newUser,null,mod);
-        assertThat("modification type",mod.get(0).getModificationType().getName(),equalTo("DELETE"));
     }
 
     private User addNewTestUser() {

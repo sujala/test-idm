@@ -519,7 +519,7 @@ public class DefaultCloud20ServiceTest {
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(403));
     }
 
-    @Test (expected = AssertionError.class)
+    @Test
     public void exceptionResponse_whenUserDisabledException_detailsNotSet() throws Exception {
         UserDisabledFault userDisabledFault = mock(UserDisabledFault.class);
         ObjectFactory objectFactory = mock(ObjectFactory.class);
@@ -527,17 +527,17 @@ public class DefaultCloud20ServiceTest {
         when(objectFactory.createUserDisabledFault()).thenReturn(userDisabledFault);
         UserDisabledException userDisabledException = new UserDisabledException();
         spy.exceptionResponse(userDisabledException);
-        verify(userDisabledFault).setDetails(anyString());
+        verify(userDisabledFault,never()).setDetails(anyString());
     }
 
-    @Test (expected = AssertionError.class)
+    @Test
     public void exceptionResponse_whenNotFoundException_detailsNotSet() throws Exception {
         ItemNotFoundFault itemNotFoundFault = mock(ItemNotFoundFault.class);
         ObjectFactory objectFactory = mock(ObjectFactory.class);
         when(jaxbObjectFactories.getOpenStackIdentityV2Factory()).thenReturn(objectFactory);
         when(objectFactory.createItemNotFoundFault()).thenReturn(itemNotFoundFault);
         spy.exceptionResponse(new NotFoundException());
-        verify(itemNotFoundFault).setDetails(anyString());
+        verify(itemNotFoundFault,never()).setDetails(anyString());
     }
 
     @Test
@@ -3942,13 +3942,13 @@ public class DefaultCloud20ServiceTest {
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
     }
 
-    @Test (expected = AssertionError.class)
+    @Test
     public void badRequestExceptionResponse_doesNotSetDetails() throws Exception {
         BadRequestFault badRequestFault = mock(BadRequestFault.class);
         ObjectFactory objectFactory = mock(ObjectFactory.class);
         when(jaxbObjectFactories.getOpenStackIdentityV2Factory()).thenReturn(objectFactory);
         when(objectFactory.createBadRequestFault()).thenReturn(badRequestFault);
         defaultCloud20Service.badRequestExceptionResponse("message");
-        verify(badRequestFault).setDetails(anyString());
+        verify(badRequestFault,never()).setDetails(anyString());
     }
 }

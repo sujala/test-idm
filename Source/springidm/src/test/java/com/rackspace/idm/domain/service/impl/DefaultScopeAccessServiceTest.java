@@ -11,6 +11,8 @@ import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.DN;
 import com.unboundid.ldap.sdk.Entry;
 import com.unboundid.ldap.sdk.ReadOnlyEntry;
+import com.unboundid.ldap.sdk.migrate.ldapjdk.LDAPException;
+import com.unboundid.ldif.LDIFRecord;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -19,6 +21,7 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
@@ -90,6 +93,84 @@ public class DefaultScopeAccessServiceTest {
         when(tenantDao.getTenantRolesByParent("dn:=Tim Jones")).thenReturn(null);
         defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
         verify(tenantDao).getTenantRolesByParent("dc=parent");
+    }
+
+    @Test
+    public void getOpenStackEndpointsForScopeAccess_tokenNotInstanceOfDelegatedClientScopeAccessAndFails_stillPasses() throws Exception {
+        Entry entry = new Entry("junk");
+        ReadOnlyEntry ldapEntry = new ReadOnlyEntry(entry);
+        ScopeAccess token = new UserScopeAccess();
+        token.setLdapEntry(ldapEntry);
+        when(tenantDao.getTenantRolesByParent(null)).thenReturn(null);
+        defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
+        verify(tenantDao).getTenantRolesByParent(null);
+    }
+
+    @Test
+    public void getOpenStackEndpointsForScopeAccess_rolesNull_returnsEmptyList() throws Exception {
+        ReadOnlyEntry ldapEntry = new ReadOnlyEntry(new Entry("junk"));
+        ScopeAccess token = new UserScopeAccess();
+        token.setLdapEntry(ldapEntry);
+        when(tenantDao.getTenantRolesByParent(null)).thenReturn(null);
+        List<OpenstackEndpoint> endpoints = defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
+        assertThat("size", endpoints.size(),equalTo(0));
+    }
+
+    @Test
+    public void getOpenStackEndpointsForScopeAccess_rolesEmpty_returnsEmptyList() throws Exception {
+        ReadOnlyEntry ldapEntry = new ReadOnlyEntry(new Entry("junk"));
+        ScopeAccess token = new UserScopeAccess();
+        token.setLdapEntry(ldapEntry);
+        when(tenantDao.getTenantRolesByParent(null)).thenReturn(new ArrayList<TenantRole>());
+        List<OpenstackEndpoint> endpoints = defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
+        assertThat("size", endpoints.size(),equalTo(0));
+    }
+
+    @Test
+    public void getOpenStackEndpointsForScopeAccess_roleHasTenantIdAndIdValid_addsTenantToList() throws Exception {
+        ReadOnlyEntry ldapEntry = new ReadOnlyEntry(new Entry("junk"));
+        ScopeAccess token = new UserScopeAccess();
+        token.setLdapEntry(ldapEntry);
+        TenantRole role = new TenantRole();
+        String[] tenantIds = {"123"};
+        role.setTenantIds(tenantIds);
+        List<TenantRole> roles = new ArrayList<TenantRole>();
+        roles.add(role);
+        Tenant tenant = new Tenant();
+        when(tenantDao.getTenantRolesByParent(null)).thenReturn(roles);
+        when(tenantDao.getTenant("123")).thenReturn(tenant);
+        when(endpointDao.getOpenstackEndpointsForTenant(tenant)).thenReturn(null);
+        defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
+        verify(endpointDao).getOpenstackEndpointsForTenant(tenant);
+    }
+
+    @Test
+    public void getOpenStackEndpointsForScopeAccess_roleHasTenantIdAndIdNotValid_doesNotAddTenantToList() throws Exception {
+        ReadOnlyEntry ldapEntry = new ReadOnlyEntry(new Entry("junk"));
+        ScopeAccess token = new UserScopeAccess();
+        token.setLdapEntry(ldapEntry);
+        TenantRole role = new TenantRole();
+        String[] tenantIds = {"123"};
+        role.setTenantIds(tenantIds);
+        List<TenantRole> roles = new ArrayList<TenantRole>();
+        roles.add(role);
+        when(tenantDao.getTenantRolesByParent(null)).thenReturn(roles);
+        when(tenantDao.getTenant("123")).thenReturn(null);
+        defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
+        verify(endpointDao,never()).getOpenstackEndpointsForTenant(any(Tenant.class));
+    }
+
+    @Test
+    public void getOpenStackEndpointsForScopeAccess_noTenantIds_doesNotCallTenantDaoMethod() throws Exception {
+        ReadOnlyEntry ldapEntry = new ReadOnlyEntry(new Entry("junk"));
+        ScopeAccess token = new UserScopeAccess();
+        token.setLdapEntry(ldapEntry);
+        TenantRole role = new TenantRole();
+        List<TenantRole> roles = new ArrayList<TenantRole>();
+        roles.add(role);
+        when(tenantDao.getTenantRolesByParent(null)).thenReturn(roles);
+        defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
+        verify(tenantDao,never()).getTenant(anyString());
     }
 
     @Test
