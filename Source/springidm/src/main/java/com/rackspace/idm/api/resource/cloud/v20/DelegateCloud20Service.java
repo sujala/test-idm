@@ -566,7 +566,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     public ResponseBuilder addUser(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, UserForCreate user)
             throws IOException, JAXBException {
         ScopeAccess accessTokenByAuthHeader = scopeAccessService.getAccessTokenByAuthHeader(authToken);
-        if (isCloudAuthRoutingEnabled() && accessTokenByAuthHeader!=null) {
+        if (isCloudAuthRoutingEnabled() && accessTokenByAuthHeader==null) {
             String request = getCloudAuthV20Url() + "users";
             String body = marshallObjectToString(objectFactory.createUser(user));
             return cloudClient.post(request, httpHeaders, body);
