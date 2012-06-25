@@ -19,6 +19,7 @@ import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
+import com.sun.jersey.server.wadl.generators.resourcedoc.xhtml.Elements;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.openstack.docs.common.api.v1.Extension;
@@ -549,7 +550,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             User user;
 
-            if (credentials.getDeclaredType().isAssignableFrom(PasswordCredentialsRequiredUsername.class)) {
+            if (credentials.getValue() instanceof PasswordCredentialsRequiredUsername) {
                 PasswordCredentialsRequiredUsername userCredentials = (PasswordCredentialsRequiredUsername) credentials.getValue();
                 validatePasswordCredentials(userCredentials);
                 validatePassword(userCredentials.getPassword());
@@ -561,7 +562,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
                 user.setPassword(userCredentials.getPassword());
                 userService.updateUser(user, false);
-            } else if (credentials.getDeclaredType().isAssignableFrom(ApiKeyCredentials.class)) {
+            } else if (credentials.getValue() instanceof ApiKeyCredentials) {
                 ApiKeyCredentials userCredentials = (ApiKeyCredentials) credentials.getValue();
                 validateApiKeyCredentials(userCredentials);
                 user = checkAndGetUser(userId);
@@ -573,7 +574,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 user.setApiKey(userCredentials.getApiKey());
                 userService.updateUser(user, false);
             }
-            return Response.ok(credentials).status(Status.CREATED);
+            return Response.ok(credentials).status(Status.OK);
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }

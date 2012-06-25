@@ -225,11 +225,21 @@ public class DefaultCloud20ServiceTest {
         when(userService.getUserById(userId)).thenReturn(user);
         when(config.getString("rackspace.customerId")).thenReturn(null);
         when(userConverterCloudV20.toUserDO(userOS)).thenReturn(user);
-
+        when(httpHeaders.getMediaType()).thenReturn(MediaType.APPLICATION_XML_TYPE);
 
         spy = spy(defaultCloud20Service);
         doNothing().when(spy).checkXAUTHTOKEN(eq(authToken), anyBoolean(), any(String.class));
         doNothing().when(spy).checkXAUTHTOKEN(eq(authToken), anyBoolean(), eq(tenantId));
+    }
+
+    @Test
+    public void addUserCredential_returns200() throws Exception {
+        ApiKeyCredentials apiKeyCredentials1 = new ApiKeyCredentials();
+        apiKeyCredentials1.setUsername(userId);
+        apiKeyCredentials1.setApiKey("bar");
+        doReturn(new JAXBElement<CredentialType>(new QName(""),CredentialType.class, apiKeyCredentials1)).when(spy).getXMLCredentials(anyString());
+        Response.ResponseBuilder responseBuilder = spy.addUserCredential(httpHeaders, authToken, userId, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
     @Test
@@ -1681,7 +1691,7 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void addUserCredential_passwordCredentialOkResponseCreated_returns201() throws Exception {
+    public void addUserCredential_passwordCredentialOkResponseCreated_returns200() throws Exception {
         MediaType mediaType = mock(MediaType.class);
         user.setUsername("test_user");
         when(httpHeaders.getMediaType()).thenReturn(mediaType);
@@ -1690,7 +1700,7 @@ public class DefaultCloud20ServiceTest {
         doNothing().when(spy).validatePassword(anyString());
         doReturn(user).when(spy).checkAndGetUser(anyString());
         Response.ResponseBuilder responseBuilder = spy.addUserCredential(httpHeaders, authToken, userId, jsonBody);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(201));
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
     @Test
