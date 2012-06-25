@@ -830,7 +830,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return users;
     }
 
-    private Attribute[] getRackerAddAtrributes(Racker racker) {
+    Attribute[] getRackerAddAtrributes(Racker racker) {
 
         List<Attribute> atts = new ArrayList<Attribute>();
         atts.add(new Attribute(ATTR_OBJECT_CLASS, ATTR_RACKER_OBJECT_CLASS_VALUES));
