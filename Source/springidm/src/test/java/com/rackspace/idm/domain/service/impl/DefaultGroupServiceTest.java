@@ -286,7 +286,7 @@ public class DefaultGroupServiceTest{
         verify(groupDao).deleteGroup(123);
     }
 
-    @Test (expected = AssertionError.class)
+    @Test
     public void deleteGroup_existsNotNullAndNoUsers_doesNotCallDeleteGroupFromUser() throws Exception {
         Users users = new Users();
         users.setUsers(new ArrayList<User>());
@@ -295,7 +295,7 @@ public class DefaultGroupServiceTest{
         doNothing().when(spy).deleteGroupFromUser(123, null);
         doNothing().when(groupDao).deleteGroup(123);
         spy.deleteGroup("123");
-        verify(spy).deleteGroupFromUser(123, null);
+        verify(spy,never()).deleteGroupFromUser(anyInt(), anyString());
     }
 
     @Test

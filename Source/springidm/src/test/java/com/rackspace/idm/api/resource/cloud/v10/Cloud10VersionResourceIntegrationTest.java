@@ -17,20 +17,11 @@ import static org.junit.Assert.assertThat;
  * Time: 2:15 PM
  * To change this template use File | Settings | File Templates.
  */
-public class Cloud10VersionResourceTest extends AbstractAroundClassJerseyTest {
+public class Cloud10VersionResourceIntegrationTest extends AbstractAroundClassJerseyTest {
 
     @Before
     public void setUp() throws Exception {
         ensureGrizzlyStarted("classpath:app-config.xml");
-    }
-
-    @Test
-    public void getVersion_withValidInBoth_returns204() throws Exception {
-        WebResource resource = resource().path("cloud/v1.0");
-        ClientResponse clientResponse = resource.header("X-Auth-User", "auth")
-                .header("X-Auth-Key", "0f97f489c848438090250d50c7e1ea88")
-                .get(ClientResponse.class);
-        assertThat("response code", clientResponse.getStatus(), equalTo(204));
     }
 
     @Test

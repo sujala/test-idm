@@ -26,7 +26,7 @@ import java.util.Arrays;
  * Time: 3:53 PM
  * To change this template use File | Settings | File Templates.
  */
-public class LdapInMemoryTest {
+public class LdapInMemoryIntegrationTest {
 
     private static final int DEFAULT_SERVER_PORT = 636;
     private static InMemoryDirectoryServer server;

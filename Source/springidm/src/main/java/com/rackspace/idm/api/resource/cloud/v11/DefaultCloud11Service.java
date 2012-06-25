@@ -22,6 +22,8 @@ import com.rackspacecloud.docs.auth.api.v1.PasswordCredentials;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
+import org.openstack.docs.common.api.v1.Extension;
+import org.openstack.docs.common.api.v1.Extensions;
 import org.openstack.docs.common.api.v1.VersionChoice;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,14 +37,18 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.UriInfo;
+import javax.wsdl.extensions.http.HTTPAddress;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
+import javax.xml.transform.stream.StreamSource;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringReader;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -59,6 +65,11 @@ public class DefaultCloud11Service implements Cloud11Service {
     private final LdapCloudAdminRepository ldapCloudAdminRepository;
     private final UserConverterCloudV11 userConverterCloudV11;
     private final UserService userService;
+
+    private org.openstack.docs.common.api.v1.ObjectFactory objectFactory = new org.openstack.docs.common.api.v1.ObjectFactory();
+
+    private HashMap<String, JAXBElement<Extension>> extensionMap;
+    private JAXBElement<Extensions> currentExtensions;
 
     @Autowired
     private CloudContractDescriptionBuilder cloudContractDescriptionBuilder;
@@ -926,9 +937,60 @@ public class DefaultCloud11Service implements Cloud11Service {
     }
 
     @Override
-    public ResponseBuilder extensions(HttpHeaders httpHeaders) throws IOException {
-        //TODO
-        throw new IOException("Not Implemented");
+    public ResponseBuilder extensions(HttpHeaders httpHeaders) throws IOException{
+        try {
+            if (currentExtensions == null) {
+                JAXBContext jaxbContext = JAXBContextResolver.get();
+                Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+
+                InputStream is = org.tuckey.web.filters.urlrewrite.utils.StringUtils.class.getResourceAsStream("/extensions_v11.xml");
+                StreamSource ss = new StreamSource(is);
+
+                currentExtensions = unmarshaller.unmarshal(ss, Extensions.class);
+            }
+            return Response.ok(currentExtensions);
+        } catch (Exception e) {
+            // Return 500 error. Is WEB-IN/extensions.xml malformed?
+            return cloudExceptionResponse.exceptionResponse(e);
+        }
+    }
+
+    @Override
+    public ResponseBuilder getExtension(HttpHeaders httpHeaders, String alias) throws IOException {
+        if (org.tuckey.web.filters.urlrewrite.utils.StringUtils.isBlank(alias)) {
+            throw new BadRequestException("Invalid extension alias '" + alias + "'.");
+        }
+
+        final String normalizedAlias = alias.trim().toUpperCase();
+
+        if (extensionMap == null) {
+            extensionMap = new HashMap<String, JAXBElement<Extension>>();
+
+            try {
+                if (currentExtensions == null) {
+                    JAXBContext jaxbContext = JAXBContextResolver.get();
+                    Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+                    InputStream is = org.tuckey.web.filters.urlrewrite.utils.StringUtils.class.getResourceAsStream("/extensions_v11.xml");
+                    StreamSource ss = new StreamSource(is);
+                    currentExtensions = unmarshaller.unmarshal(ss, Extensions.class);
+                }
+
+                Extensions exts = currentExtensions.getValue();
+
+                for (Extension e : exts.getExtension()) {
+                    extensionMap.put(e.getAlias().trim().toUpperCase(), objectFactory.createExtension(e));
+                }
+            } catch (Exception e) {
+                // Return 500 error. Is WEB-IN/extensions.xml malformed?
+                return cloudExceptionResponse.exceptionResponse(e);
+            }
+        }
+
+        if (!extensionMap.containsKey(normalizedAlias)) {
+            throw new NotFoundException("Extension with alias '" + normalizedAlias + "' is not available.");
+        }
+
+        return Response.ok(extensionMap.get(normalizedAlias));
     }
 
     // Migration Methods

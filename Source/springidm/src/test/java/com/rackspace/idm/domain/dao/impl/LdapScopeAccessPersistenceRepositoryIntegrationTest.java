@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.junit.Assert.fail;
 
-public class LdapScopeAccessPersistenceRepositoryTest {
+public class LdapScopeAccessPersistenceRepositoryIntegrationTest {
     private LdapCustomerRepository customerRepo;
     private ScopeAccessDao repo;
     private LdapApplicationRepository clientRepo;

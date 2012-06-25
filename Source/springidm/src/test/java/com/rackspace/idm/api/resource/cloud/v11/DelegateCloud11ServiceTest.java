@@ -1232,6 +1232,38 @@ public class DelegateCloud11ServiceTest {
     }
 
     @Test
+    public void getExtension_cloudRoutingEnabledAndGASourceOfTruthNotEnabled_callsCloudClient() throws Exception {
+        when(config.getBoolean("useCloudAuth")).thenReturn(true);
+        when(config.getBoolean("gaIsSourceOfTruth")).thenReturn(false);
+        delegateCloud11Service.getExtension(httpHeaders,"EXAMPLE");
+        verify(cloudClient).get(url+"extensions/EXAMPLE", httpHeaders);
+    }
+
+    @Test
+    public void getExtension_cloudRoutingEnabledAndGASourceOfTruthEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean("useCloudAuth")).thenReturn(true);
+        when(config.getBoolean("gaIsSourceOfTruth")).thenReturn(true);
+        delegateCloud11Service.getExtension(httpHeaders,"EXAMPLE");
+        verify(defaultCloud11Service).extensions(httpHeaders);
+    }
+
+    @Test
+    public void getExtension_cloudRoutingNotEnabledAndGASourceOfTruthEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean("useCloudAuth")).thenReturn(false);
+        when(config.getBoolean("gaIsSourceOfTruth")).thenReturn(true);
+        delegateCloud11Service.getExtension(httpHeaders,"EXAMPLE");
+        verify(defaultCloud11Service).extensions(httpHeaders);
+    }
+
+    @Test
+    public void getExtension_cloudRoutingNotEnabledAndGASourceOfTruthNotEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean("useCloudAuth")).thenReturn(false);
+        when(config.getBoolean("gaIsSourceOfTruth")).thenReturn(false);
+        delegateCloud11Service.getExtension(httpHeaders,"EXAMPLE");
+        verify(defaultCloud11Service).extensions(httpHeaders);
+    }
+
+    @Test
     public void getCloud11Service_GAKeystoneDisabled_returnsDummyCloud11Service() throws Exception {
         when(config.getBoolean("GAKeystoneDisabled")).thenReturn(true);
         Cloud11Service cloud11Service = delegateCloud11Service.getCloud11Service();

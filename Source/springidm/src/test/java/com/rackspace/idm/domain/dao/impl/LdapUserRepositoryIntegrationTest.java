@@ -15,25 +15,18 @@ import org.joda.time.DateTimeZone;
 import org.junit.*;
 
 import java.security.GeneralSecurityException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-<<<<<<< HEAD
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
-=======
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
->>>>>>> 1d5db843fe2fdd3d52f716c1fe42569729645cd5
 
-public class LdapUserRepositoryTest {
+public class LdapUserRepositoryIntegrationTest {
 
     private LdapUserRepository repo;
     private LdapConnectionPools connPools;
-    LdapUserRepository spy;
-    
+
     String rackerId = "racker";
     
     String id = "XXXX";
@@ -74,7 +67,6 @@ public class LdapUserRepositoryTest {
             cleanUpRepo.deleteUser("delete,me");
         }
         pools.close();
-        spy = spy(repo);
     }
 
     private static LdapUserRepository getRepo(LdapConnectionPools connPools) {
@@ -185,6 +177,11 @@ public class LdapUserRepositoryTest {
             Assert.assertTrue(true);
         }
 
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void addRacker_rackerIsNull_throwsIllegalArgument() throws Exception {
+        repo.addRacker(null);
     }
     
     @Test
@@ -411,7 +408,7 @@ public class LdapUserRepositoryTest {
             ModificationType.REPLACE, LdapRepository.ATTR_PASSWORD,
             "newpassword!", newPassword.getValue()).getAttribute().getValue();
         Assert.assertEquals(expectedPasswordValue, mods.get(2).getAttribute()
-            .getValue());
+                .getValue());
     }
 
     @Test
@@ -427,7 +424,7 @@ public class LdapUserRepositoryTest {
     public void shouldAuthenticateForCorrectCredentials() {
         User user = addNewTestUser();
         UserAuthenticationResult result = repo.authenticate(user.getUsername(),
-            user.getPassword());
+                user.getPassword());
         repo.deleteUser(user.getUsername());
         Assert.assertTrue(result.isAuthenticated());
     }
@@ -436,7 +433,7 @@ public class LdapUserRepositoryTest {
     public void shouldAuthenticateByAPIKey() {
         User user = addNewTestUser();
         UserAuthenticationResult authenticated = repo.authenticateByAPIKey(
-            user.getUsername(), user.getApiKey());
+                user.getUsername(), user.getApiKey());
         repo.deleteUser(user.getUsername());
         Assert.assertTrue(authenticated.isAuthenticated());
     }
@@ -445,7 +442,7 @@ public class LdapUserRepositoryTest {
     public void shouldNotAuthenticateForBadCredentials() {
         User newUser = addNewTestUser();
         UserAuthenticationResult result = repo.authenticate(
-            newUser.getUsername(), "bad password");
+                newUser.getUsername(), "bad password");
         repo.deleteUser(newUser.getUsername());
         Assert.assertFalse(result.isAuthenticated());
     }
@@ -454,7 +451,7 @@ public class LdapUserRepositoryTest {
     public void shouldNotAuthenticateWithBadApiKey() {
         User newUser = addNewTestUser();
         UserAuthenticationResult authenticated = repo.authenticateByAPIKey(
-            newUser.getUsername(), "BadApiKey");
+                newUser.getUsername(), "BadApiKey");
         repo.deleteUser(newUser.getUsername());
         Assert.assertFalse(authenticated.isAuthenticated());
     }
@@ -531,53 +528,6 @@ public class LdapUserRepositoryTest {
         Assert.assertNull(notExists);
         Assert.assertNotNull(softDeleted);
         Assert.assertNotNull(exists);
-    }
-
-<<<<<<< HEAD
-    @Test(expected = DuplicateUsernameException.class)
-    public void updateUserById_throwsDuplicateUsernameException() throws Exception {
-        User updatedUser = new User("username2");
-        updatedUser.setId("userId");
-        User oldUser = new User("username");
-        doReturn(oldUser).when(spy).getUserById("userId");
-        doReturn(false).when(spy).isUsernameUnique("username2");
-        doNothing().when(spy).updateUser(any(User.class), any(User.class), eq(false));
-        spy.updateUserById(updatedUser, false);
-    }
-
-    @Test
-    public void updateUserById_callsUpdateUser_withNewAndOldUsernameTheSame() throws Exception {
-        User updatedUser = new User("username");
-        updatedUser.setId("userId");
-        User oldUser = new User("username");
-        doReturn(oldUser).when(spy).getUserById("userId");
-        doReturn(false).when(spy).isUsernameUnique("username");
-        doNothing().when(spy).updateUser(any(User.class), any(User.class), eq(false));
-        spy.updateUserById(updatedUser, false);
-        verify(spy).updateUser(updatedUser, oldUser, false);
-    }
-
-    @Test
-    public void updateUserById_callsUpdateUser_withDifferentAndUniqueNewUsername() throws Exception {
-        User updatedUser = new User("username2");
-        updatedUser.setId("userId");
-        User oldUser = new User("username");
-        doReturn(oldUser).when(spy).getUserById("userId");
-        doReturn(true).when(spy).isUsernameUnique("username2");
-        doNothing().when(spy).updateUser(any(User.class), any(User.class), eq(false));
-        spy.updateUserById(updatedUser, false);
-        verify(spy).updateUser(updatedUser, oldUser, false);
-=======
-    @Test
-    public void checkForApiKeyModification_newKeyBlank_addsDeleteKeyModification() throws Exception {
-        User oldUser = new User();
-        oldUser.setApiKey("hello!");
-        User newUser = new User();
-        newUser.setApiKey("");
-        List<Modification> mod = new ArrayList<Modification>();
-        repo.checkForApiKeyModification(oldUser,newUser,null,mod);
-        assertThat("modification type",mod.get(0).getModificationType().getName(),equalTo("DELETE"));
->>>>>>> 1d5db843fe2fdd3d52f716c1fe42569729645cd5
     }
 
     private User addNewTestUser() {
