@@ -357,6 +357,14 @@ public class Cloud20VersionResourceTest extends AbstractAroundClassJerseyTest {
     }
 
     @Test
+    public void listUserGlobalRoles() throws Exception {
+        String token = getAuthToken("hectorServiceAdmin", "Password1");
+        WebResource resource = resource().path("cloud/v2.0/users/10020461/roles");
+        ClientResponse clientResponse = resource.header("X-Auth-Token", token).accept(MediaType.APPLICATION_XML_TYPE).get(ClientResponse.class);
+        assertThat("response code", clientResponse.getStatus(), equalTo(200));
+    }
+
+    @Test
     public void getTenants_withDefaultUser_returns200() throws Exception {
         String token = getAuthToken("kurtDefaultUser", "Password1");
         WebResource resource = resource().path("cloud/v2.0/tenants");
@@ -388,7 +396,6 @@ public class Cloud20VersionResourceTest extends AbstractAroundClassJerseyTest {
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
     }
 
-
     @Test
     public void listUserGroups_invalidAuthToken_returns401() throws Exception {
         String token = "invalid";
@@ -396,6 +403,7 @@ public class Cloud20VersionResourceTest extends AbstractAroundClassJerseyTest {
         ClientResponse clientResponse = resource.header("X-Auth-Token",token).accept(MediaType.APPLICATION_XML_TYPE).get(ClientResponse.class);
         assertThat("response code", clientResponse.getStatus(), equalTo(401));
     }
+
 
     @Test
     public void listEndpointTemplates_returns200() throws Exception {
