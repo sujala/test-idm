@@ -17,7 +17,7 @@ import static org.junit.Assert.assertThat;
  * Time: 2:15 PM
  * To change this template use File | Settings | File Templates.
  */
-public class Cloud10VersionResourceTest extends AbstractAroundClassJerseyTest {
+public class Cloud10VersionResourceIntegrationTest extends AbstractAroundClassJerseyTest {
 
     @Before
     public void setUp() throws Exception {

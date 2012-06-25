@@ -21,7 +21,7 @@ import static org.junit.Assert.assertThat;
  * Date: 9/14/11
  * Time: 4:21 PM
  */
-public class Cloud20VersionResourceTest extends AbstractAroundClassJerseyTest {
+public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJerseyTest {
 
 
     @Before
