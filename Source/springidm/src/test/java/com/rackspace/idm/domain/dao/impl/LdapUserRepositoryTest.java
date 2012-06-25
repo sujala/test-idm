@@ -1,7 +1,10 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.exception.UserDisabledException;
+import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.Modification;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
@@ -23,12 +26,35 @@ import static org.mockito.Mockito.*;
 public class LdapUserRepositoryTest {
 
     LdapUserRepository ldapUserRepository;
-    LdapUserRepository ldapUserRepositorySpy;
+    LdapUserRepository spy;
 
     @Before
     public void setUp() throws Exception {
         ldapUserRepository = new LdapUserRepository(mock(LdapConnectionPools.class),mock(Configuration.class));
-        ldapUserRepositorySpy = spy(ldapUserRepository);
+        spy = spy(ldapUserRepository);
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void addRacker_userIsNull_throwsIllegalArgument() throws Exception {
+        ldapUserRepository.addRacker(null);
+    }
+
+    @Test
+    public void addRacker_callsGetRackerAddAttributes() throws Exception {
+        Racker racker = new Racker();
+        racker.setRackerId("rackerId");
+        doNothing().when(spy).addEntry(anyString(), any(Attribute[].class), any(Audit.class));
+        spy.addRacker(racker);
+        verify(spy).getRackerAddAtrributes(racker);
+    }
+
+    @Test
+    public void addRacker_callsAddEntry() throws Exception {
+        Racker racker = new Racker();
+        racker.setRackerId("rackerId");
+        doNothing().when(spy).addEntry(anyString(), any(Attribute[].class), any(Audit.class));
+        spy.addRacker(racker);
+        verify(spy).addEntry(anyString(), any(Attribute[].class), any(Audit.class));
     }
 
     @Test
@@ -36,10 +62,10 @@ public class LdapUserRepositoryTest {
         User user = new User();
         user.setUsername("user");
         user.setId("id");
-        doNothing().when(ldapUserRepositorySpy).updateUser(any(User.class),any(User.class),anyBoolean());
-        doReturn(user).when(ldapUserRepositorySpy).getUserById("id");
-        ldapUserRepositorySpy.updateUserById(user, false);
-        verify(ldapUserRepositorySpy).getUserById("id");
+        doNothing().when(spy).updateUser(any(User.class),any(User.class),anyBoolean());
+        doReturn(user).when(spy).getUserById("id");
+        spy.updateUserById(user, false);
+        verify(spy).getUserById("id");
     }
 
     @Test
