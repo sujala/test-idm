@@ -17,7 +17,7 @@ import java.util.List;
 
 import com.rackspace.idm.GlobalConstants;
 
-public class LdapTenantRepositoryTest {
+public class LdapTenantRepositoryIntegrationTest {
     private LdapTenantRepository repo;
     private LdapConnectionPools connPools;
     

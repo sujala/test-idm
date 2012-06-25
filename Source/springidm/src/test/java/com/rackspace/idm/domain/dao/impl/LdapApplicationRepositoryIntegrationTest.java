@@ -17,7 +17,7 @@ import java.security.GeneralSecurityException;
 import java.util.List;
 import java.util.Locale;
 
-public class LdapApplicationRepositoryTest {
+public class LdapApplicationRepositoryIntegrationTest {
 
     private LdapUserRepository userRepo;
     private LdapApplicationRepository repo;
