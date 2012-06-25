@@ -167,6 +167,8 @@ public class CloudMigrationService {
             }
 
             return response;
+        } catch (ConflictException ce){
+            throw ce;
         } catch (Exception e) {
             try {
                 unmigrateUserByUsername(username);

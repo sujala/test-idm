@@ -184,6 +184,11 @@ public class LdapUserRepositoryTest {
         }
 
     }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void addRacker_rackerIsNull_throwsIllegalArgument() throws Exception {
+        repo.addRacker(null);
+    }
     
     @Test
     public void shouldAddFindDeleteRacker() {
