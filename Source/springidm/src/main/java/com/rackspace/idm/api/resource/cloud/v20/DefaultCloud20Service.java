@@ -862,6 +862,10 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             User user = checkAndGetUser(userId);
 
+            if(user.getApiKey() == null){
+                throw new NotFoundException("Credential type RAX-KSKEY:apiKeyCredentials was not found for User with Id: " + user.getId());
+            }
+
             user.setApiKey("");
 
             userService.updateUser(user, false);
@@ -2479,7 +2483,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         ItemNotFoundFault fault = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createItemNotFoundFault();
         fault.setCode(HttpServletResponse.SC_NOT_FOUND);
         fault.setMessage(message);
-        fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_NOT_FOUND)
                 .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createItemNotFound(fault));
     }

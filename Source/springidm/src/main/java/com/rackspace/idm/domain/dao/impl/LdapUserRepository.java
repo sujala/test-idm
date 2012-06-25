@@ -1068,8 +1068,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    private void checkForApiKeyModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
-        if (uNew.getApiKey() != null && !StringUtils.isEmpty(uNew.getApiKey())) {
+    void checkForApiKeyModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
+        if (uNew.getApiKey() != null) {
             if (StringUtils.isBlank(uNew.getApiKey())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_RACKSPACE_API_KEY));
             } else if (!StringUtils.equals(uOld.getApiKey(), uNew.getApiKey())) {
