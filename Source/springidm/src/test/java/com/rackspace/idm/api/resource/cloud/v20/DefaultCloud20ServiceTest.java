@@ -225,11 +225,21 @@ public class DefaultCloud20ServiceTest {
         when(userService.getUserById(userId)).thenReturn(user);
         when(config.getString("rackspace.customerId")).thenReturn(null);
         when(userConverterCloudV20.toUserDO(userOS)).thenReturn(user);
-
+        when(httpHeaders.getMediaType()).thenReturn(MediaType.APPLICATION_XML_TYPE);
 
         spy = spy(defaultCloud20Service);
         doNothing().when(spy).checkXAUTHTOKEN(eq(authToken), anyBoolean(), any(String.class));
         doNothing().when(spy).checkXAUTHTOKEN(eq(authToken), anyBoolean(), eq(tenantId));
+    }
+
+    @Test
+    public void addUserCredential_returns200() throws Exception {
+        ApiKeyCredentials apiKeyCredentials1 = new ApiKeyCredentials();
+        apiKeyCredentials1.setUsername(userId);
+        apiKeyCredentials1.setApiKey("bar");
+        doReturn(new JAXBElement<CredentialType>(new QName(""),CredentialType.class, apiKeyCredentials1)).when(spy).getXMLCredentials(anyString());
+        Response.ResponseBuilder responseBuilder = spy.addUserCredential(httpHeaders, authToken, userId, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
     @Test
@@ -1681,7 +1691,7 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void addUserCredential_passwordCredentialOkResponseCreated_returns201() throws Exception {
+    public void addUserCredential_passwordCredentialOkResponseCreated_returns200() throws Exception {
         MediaType mediaType = mock(MediaType.class);
         user.setUsername("test_user");
         when(httpHeaders.getMediaType()).thenReturn(mediaType);
@@ -1690,7 +1700,7 @@ public class DefaultCloud20ServiceTest {
         doNothing().when(spy).validatePassword(anyString());
         doReturn(user).when(spy).checkAndGetUser(anyString());
         Response.ResponseBuilder responseBuilder = spy.addUserCredential(httpHeaders, authToken, userId, jsonBody);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(201));
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
     @Test
@@ -3389,6 +3399,17 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void getUsersForGroup_emptyGroup_returns404() throws Exception {
+        List<User> userList = new ArrayList<User>();
+        Users users = new Users();
+        users.setUsers(userList);
+        when(userGroupService.getGroupById(1)).thenReturn(group);
+        when(userGroupService.getAllEnabledUsers(any(FilterParam[].class), anyString(), anyInt())).thenReturn(users);
+        Response.ResponseBuilder responseBuilder = spy.getUsersForGroup(null, authToken, "1", null, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(404));
+    }
+
+    @Test
     public void getUsersForGroup_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.getUsersForGroup(null, authToken, null, null, null);
         verify(spy).verifyServiceAdminLevelAccess(authToken);
@@ -3408,8 +3429,12 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void getUsersForGroup_responseOk_returns200() throws Exception {
+        List<User> userList = new ArrayList<User>();
+        userList.add(user);
+        Users users = new Users();
+        users.setUsers(userList);
         when(userGroupService.getGroupById(1)).thenReturn(group);
-        when(userGroupService.getAllEnabledUsers(any(FilterParam[].class), anyString(), anyInt())).thenReturn(new Users());
+        when(userGroupService.getAllEnabledUsers(any(FilterParam[].class), anyString(), anyInt())).thenReturn(users);
         Response.ResponseBuilder responseBuilder = spy.getUsersForGroup(null, authToken, "1", null, null);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
