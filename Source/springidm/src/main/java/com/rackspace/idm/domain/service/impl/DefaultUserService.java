@@ -698,4 +698,11 @@ public class DefaultUserService implements UserService {
         return config.getInt("ldap.paging.limit.default");
     }
 
+    public void setScopeAccessService(ScopeAccessService scopeAccessService) {
+        this.scopeAccessService = scopeAccessService;
+    }
+
+    public void setAuthorizationService(AuthorizationService authorizationService) {
+        this.authorizationService = authorizationService;
+    }
 }
