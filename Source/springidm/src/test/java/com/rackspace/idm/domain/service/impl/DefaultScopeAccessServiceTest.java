@@ -25,6 +25,7 @@ import java.util.List;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
@@ -166,6 +167,8 @@ public class DefaultScopeAccessServiceTest {
         ScopeAccess token = new UserScopeAccess();
         token.setLdapEntry(ldapEntry);
         TenantRole role = new TenantRole();
+        String[] tenantIds = {};
+        role.setTenantIds(tenantIds);
         List<TenantRole> roles = new ArrayList<TenantRole>();
         roles.add(role);
         when(tenantDao.getTenantRolesByParent(null)).thenReturn(roles);
@@ -174,8 +177,149 @@ public class DefaultScopeAccessServiceTest {
     }
 
     @Test
-    public void validateExpireInElement_ExpireInIsNull_succeeds() throws Exception {
-        defaultScopeAccessService.validateExpireInElement(new User(), new ImpersonationRequest());
+    public void getOpenStackEndpointsForScopeAccess_tenantIdsNull_doesNotCallTenantDaoMethod() throws Exception {
+        ReadOnlyEntry ldapEntry = new ReadOnlyEntry(new Entry("junk"));
+        ScopeAccess token = new UserScopeAccess();
+        token.setLdapEntry(ldapEntry);
+        TenantRole role = new TenantRole();
+        List<TenantRole> roles = new ArrayList<TenantRole>();
+        roles.add(role);
+        when(tenantDao.getTenantRolesByParent(null)).thenReturn(roles);
+        defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
+        verify(tenantDao,never()).getTenant(anyString());
+    }
+
+    @Test
+    public void getOpenStackEndpointsForScopeAccess_rolesEmpty_doesNotCallTenantDaoMethod() throws Exception {
+        ReadOnlyEntry ldapEntry = new ReadOnlyEntry(new Entry("junk"));
+        ScopeAccess token = new UserScopeAccess();
+        token.setLdapEntry(ldapEntry);
+        List<TenantRole> roles = new ArrayList<TenantRole>();
+        when(tenantDao.getTenantRolesByParent(null)).thenReturn(roles);
+        defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
+        verify(tenantDao,never()).getTenant(anyString());
+    }
+
+    @Test
+    public void getOpenStackEndpointsForScopeAccess_endPointsExist_returnsListWithEndpoint() throws Exception {
+        ReadOnlyEntry ldapEntry = new ReadOnlyEntry(new Entry("junk"));
+        ScopeAccess token = new UserScopeAccess();
+        token.setLdapEntry(ldapEntry);
+
+        TenantRole role = new TenantRole();
+        String[] tenantIds = {"123"};
+        role.setTenantIds(tenantIds);
+        List<TenantRole> roles = new ArrayList<TenantRole>();
+        roles.add(role);
+
+        Tenant tenant = new Tenant();
+
+        OpenstackEndpoint endpoint = new OpenstackEndpoint();
+        endpoint.setBaseUrls(new ArrayList<CloudBaseUrl>());
+        endpoint.getBaseUrls().add(new CloudBaseUrl());
+
+        when(tenantDao.getTenantRolesByParent(null)).thenReturn(roles);
+        when(tenantDao.getTenant("123")).thenReturn(tenant);
+        when(endpointDao.getOpenstackEndpointsForTenant(tenant)).thenReturn(endpoint);
+
+        List<OpenstackEndpoint> endpointList = defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
+        assertThat("size",endpointList.size(),equalTo(1));
+        assertThat("endpoint",endpointList.get(0),equalTo(endpoint));
+    }
+
+    @Test
+    public void getOpenStackEndpointsForScopeAccess_endpointNull_returnsEmptyList() throws Exception {
+        ReadOnlyEntry ldapEntry = new ReadOnlyEntry(new Entry("junk"));
+        ScopeAccess token = new UserScopeAccess();
+        token.setLdapEntry(ldapEntry);
+
+        TenantRole role = new TenantRole();
+        String[] tenantIds = {"123"};
+        role.setTenantIds(tenantIds);
+        List<TenantRole> roles = new ArrayList<TenantRole>();
+        roles.add(role);
+
+        Tenant tenant = new Tenant();
+
+        OpenstackEndpoint endpoint = new OpenstackEndpoint();
+        endpoint.setBaseUrls(new ArrayList<CloudBaseUrl>());
+        endpoint.getBaseUrls().add(new CloudBaseUrl());
+
+        when(tenantDao.getTenantRolesByParent(null)).thenReturn(roles);
+        when(tenantDao.getTenant("123")).thenReturn(tenant);
+        when(endpointDao.getOpenstackEndpointsForTenant(tenant)).thenReturn(null);
+
+        List<OpenstackEndpoint> endpointList = defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
+        assertThat("size",endpointList.size(),equalTo(0));
+    }
+
+    @Test
+    public void getOpenStackEndpointsForScopeAccess_baseUrlsListEmpty_returnsEmptyList() throws Exception {
+        ReadOnlyEntry ldapEntry = new ReadOnlyEntry(new Entry("junk"));
+        ScopeAccess token = new UserScopeAccess();
+        token.setLdapEntry(ldapEntry);
+
+        TenantRole role = new TenantRole();
+        String[] tenantIds = {"123"};
+        role.setTenantIds(tenantIds);
+        List<TenantRole> roles = new ArrayList<TenantRole>();
+        roles.add(role);
+
+        Tenant tenant = new Tenant();
+
+        OpenstackEndpoint endpoint = new OpenstackEndpoint();
+        endpoint.setBaseUrls(new ArrayList<CloudBaseUrl>());
+
+        when(tenantDao.getTenantRolesByParent(null)).thenReturn(roles);
+        when(tenantDao.getTenant("123")).thenReturn(tenant);
+        when(endpointDao.getOpenstackEndpointsForTenant(tenant)).thenReturn(endpoint);
+
+        List<OpenstackEndpoint> endpointList = defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
+        assertThat("size",endpointList.size(),equalTo(0));
+    }
+
+    @Test
+    public void getOpenStackEndpointsForScopeAccess_tenantsEmpty_returnsEmptyList() throws Exception {
+        ReadOnlyEntry ldapEntry = new ReadOnlyEntry(new Entry("junk"));
+        ScopeAccess token = new UserScopeAccess();
+        token.setLdapEntry(ldapEntry);
+
+        TenantRole role = new TenantRole();
+        String[] tenantIds = {"123"};
+        role.setTenantIds(tenantIds);
+        List<TenantRole> roles = new ArrayList<TenantRole>();
+        roles.add(role);
+
+        when(tenantDao.getTenantRolesByParent(null)).thenReturn(roles);
+        when(tenantDao.getTenant("123")).thenReturn(null);
+
+        List<OpenstackEndpoint> endpointList = defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
+        assertThat("size",endpointList.size(),equalTo(0));
+    }
+
+    @Test
+    public void addDelegateScopeAccess_scopeAccessNull_throwsIllegalArgumentException() throws Exception {
+        try{
+            defaultScopeAccessService.addDelegateScopeAccess(null,null);
+            assertTrue("should throw exception",false);
+        } catch (IllegalArgumentException ex)
+        {
+            assertThat("exception message", ex.getMessage(), equalTo("Null argument passed in."));
+        }
+    }
+
+    @Test
+    public void addDelegateScopeAccess_scopeAccessNotNull_callsScopeAccessDaoMethod() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        defaultScopeAccessService.addDelegateScopeAccess(null, scopeAccess);
+        verify(scopeAccessDao).addDelegateScopeAccess(null,scopeAccess);
+    }
+
+    @Test
+    public void addDelegateScopeAccess_scopeAccessNotNull_returnsNewScopeAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        when(scopeAccessDao.addDelegateScopeAccess(null,scopeAccess)).thenReturn(scopeAccess);
+        assertThat("returned scope access", defaultScopeAccessService.addDelegateScopeAccess(null, scopeAccess), equalTo(scopeAccess));
     }
 
     @Test
@@ -186,14 +330,42 @@ public class DefaultScopeAccessServiceTest {
     }
 
     @Test
-    public void addImpersonatedScopeAccess_TokenExists_callsScopeAccessDao_updateScopeAccess() throws Exception {
+    public void addImpersonatedScopeAccess_whenScopeAccessDoesNotExist_callsSetImpersonatedScopeAccess() throws Exception {
+        when(scopeAccessDao.getImpersonatedScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(null);
+        User user = new User();
+        spy.addImpersonatedScopeAccess(user, null, null, impersonationRequest);
+        verify(spy).setImpersonatedScopeAccess(eq(user), eq(impersonationRequest), any(ImpersonatedScopeAccess.class));
+    }
+
+    @Test
+    public void addImpersonatedScopeAccess_existingAccessIsNullAndExpireInIsNullAndCallerIsServiceUser_setsExpirationToDefault() throws Exception {
+        ArgumentCaptor<ImpersonatedScopeAccess> argument = ArgumentCaptor.forClass(ImpersonatedScopeAccess.class);
+        when(scopeAccessDao.getImpersonatedScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(null);
+        when(scopeAccessDao.addImpersonatedScopeAccess(anyString(), argument.capture())).thenReturn(null);
+        when(configuration.getInt("token.impersonatedByServiceDefaultSeconds")).thenReturn(3600);
+        defaultScopeAccessService.addImpersonatedScopeAccess(new User(), "clientId", "impToken", impersonationRequest);
+        DateTime dateTime = new DateTime().plusSeconds(3600);
+        assertThat("expiration date", argument.getValue().getAccessTokenExp().getTime(), greaterThan(dateTime.getMillis() - 60000L));
+        assertThat("expiration date", argument.getValue().getAccessTokenExp().getTime(), lessThan(dateTime.getMillis() + 60000L));
+    }
+
+    @Test
+    public void addImpersonatedScopeAccess_TokenExistsAndIsExpiredAndImpersonatingTokenIsNull_callsScopeAccessDao_updateScopeAccess() throws Exception {
         when(scopeAccessDao.getImpersonatedScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(new ImpersonatedScopeAccess());
         defaultScopeAccessService.addImpersonatedScopeAccess(new User(), "clientId", "impToken", impersonationRequest);
         verify(scopeAccessDao).updateScopeAccess(any(ScopeAccess.class));
     }
 
     @Test
-        public void addImpersonatedScopeAccess_TokenExistsAndIsNotExpired_returnsSameAccessToken() throws Exception {
+    public void addImpersonatedScopeAccess_whenScopeAccessExistsAndTokenExpiredAndImpersonatedTokenNull_callsSetImpersonatedScopeAccess() throws Exception {
+        when(scopeAccessDao.getImpersonatedScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(new ImpersonatedScopeAccess());
+        User user = new User();
+        spy.addImpersonatedScopeAccess(user, null, null, impersonationRequest);
+        verify(spy).setImpersonatedScopeAccess(eq(user), eq(impersonationRequest), any(ImpersonatedScopeAccess.class));
+    }
+
+    @Test
+    public void addImpersonatedScopeAccess_tokenExistsAndIsNotExpiredAndImpersonatingTokenNotNullAndImpersonatingTokenEqualsParameter_returnsSameAccessToken() throws Exception {
         ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
         impersonatedScopeAccess.setAccessTokenExp(new DateTime().plusSeconds(100).toDate());
         String token = "abc";
@@ -206,25 +378,58 @@ public class DefaultScopeAccessServiceTest {
     }
 
     @Test
+    public void addImpersonatedScopeAccess_tokenExistsAndIsNotExpiredAndImpersonatingTokenNotNullAndImpersonatingTokenNotEqualToParameter_callsSetImpersonatedScopeAccess() throws Exception {
+        ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
+        impersonatedScopeAccess.setAccessTokenExp(new DateTime().plusSeconds(100).toDate());
+        impersonatedScopeAccess.setImpersonatingToken("token");
+        User user = new User();
+        when(scopeAccessDao.getImpersonatedScopeAccessForParentByClientId(null,"impersonatedUser")).thenReturn(impersonatedScopeAccess);
+        spy.addImpersonatedScopeAccess(user, null, "foo", impersonationRequest);
+        verify(spy).setImpersonatedScopeAccess(eq(user), eq(impersonationRequest), any(ImpersonatedScopeAccess.class));
+    }
+
+    @Test
+    public void addImpersonatedScopeAccess_tokenExistsAndIsNotExpiredAndImpersonatingTokenNull_callsSetImpersonatedScopeAccess() throws Exception {
+        ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
+        impersonatedScopeAccess.setAccessTokenExp(new DateTime().plusSeconds(100).toDate());
+        User user = new User();
+        when(scopeAccessDao.getImpersonatedScopeAccessForParentByClientId(null,"impersonatedUser")).thenReturn(impersonatedScopeAccess);
+        spy.addImpersonatedScopeAccess(user, null, "foo", impersonationRequest);
+        verify(spy).setImpersonatedScopeAccess(eq(user), eq(impersonationRequest), any(ImpersonatedScopeAccess.class));
+    }
+
+    @Test
+    public void addImpersonatedScopeAccess_tokenExistsAndIsExpiredAndImpersonatingTokenNotNullAndImpersonatingTokenEqualToParameter_callsSetImpersonatedScopeAccess() throws Exception {
+        ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
+        impersonatedScopeAccess.setImpersonatingToken("token");
+        User user = new User();
+        when(scopeAccessDao.getImpersonatedScopeAccessForParentByClientId(null,"impersonatedUser")).thenReturn(impersonatedScopeAccess);
+        spy.addImpersonatedScopeAccess(user, null, "token", impersonationRequest);
+        verify(spy).setImpersonatedScopeAccess(eq(user), eq(impersonationRequest), any(ImpersonatedScopeAccess.class));
+    }
+
+    @Test
+    public void addImpersonatedScopeAccess_tokenExistsAndIsExpiredAndImpersonatingTokenNotNullAndImpersonatingTokenNotEqualToParameter_callsSetImpersonatedScopeAccess() throws Exception {
+        ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
+        impersonatedScopeAccess.setImpersonatingToken("token");
+        User user = new User();
+        when(scopeAccessDao.getImpersonatedScopeAccessForParentByClientId(null,"impersonatedUser")).thenReturn(impersonatedScopeAccess);
+        spy.addImpersonatedScopeAccess(user, null, "foo", impersonationRequest);
+        verify(spy).setImpersonatedScopeAccess(eq(user), eq(impersonationRequest), any(ImpersonatedScopeAccess.class));
+    }
+
+    @Test
+    public void validateExpireInElement_ExpireInIsNull_succeeds() throws Exception {
+        defaultScopeAccessService.validateExpireInElement(new User(), new ImpersonationRequest());
+    }
+
+    @Test
     public void setImpersonatedScopeAccess_callerIsRacker_setsRackerId() throws Exception {
         Racker racker = new Racker();
         racker.setRackerId("foo");
         ImpersonatedScopeAccess impersonatedScopeAccess = defaultScopeAccessService.setImpersonatedScopeAccess(racker, impersonationRequest, new ImpersonatedScopeAccess());
         assertThat("racker id", impersonatedScopeAccess.getRackerId(), equalTo("foo"));
     }
-
-    @Test
-    public void addImpersonatedScopeAccess_expireInIsNullAndCallerIsServiceUser_setsExpirationToDefault() throws Exception {
-        ArgumentCaptor<ImpersonatedScopeAccess> argument = ArgumentCaptor.forClass(ImpersonatedScopeAccess.class);
-        when(scopeAccessDao.getImpersonatedScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(null);
-        when(scopeAccessDao.addImpersonatedScopeAccess(anyString(), argument.capture())).thenReturn(null);
-        when(configuration.getInt("token.impersonatedByServiceDefaultSeconds")).thenReturn(3600);
-        defaultScopeAccessService.addImpersonatedScopeAccess(new User(), "clientId", "impToken", impersonationRequest);
-        DateTime dateTime = new DateTime().plusSeconds(3600);
-        assertThat("expiration date", argument.getValue().getAccessTokenExp().getTime(), greaterThan(dateTime.getMillis() - 60000L));
-        assertThat("expiration date", argument.getValue().getAccessTokenExp().getTime(), lessThan(dateTime.getMillis() + 60000L));
-    }
-
 
     @Test
     public void setImpersonationScopeAccess_expireInIsNotNullAndCallerIsRacker_setsExpiration() throws Exception {
@@ -313,19 +518,33 @@ public class DefaultScopeAccessServiceTest {
     }
 
     @Test
-    public void addImpersonatedScopeAccess_whenScopeAccessDoesNotExist_callsSetImpersonatedScopeAccess() throws Exception {
-        when(scopeAccessDao.getImpersonatedScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(null);
-        User user = new User();
-        spy.addImpersonatedScopeAccess(user, null, null, impersonationRequest);
-        verify(spy).setImpersonatedScopeAccess(eq(user), eq(impersonationRequest), any(ImpersonatedScopeAccess.class));
+    public void addDirectScopeAccess_scopeAccessIsNull_throwsIllegalArgumentException() throws Exception {
+        try{
+            defaultScopeAccessService.addDirectScopeAccess(null,null);
+            assertTrue("illegalArgumentException expected",false);
+        }catch (IllegalArgumentException ex)
+        {
+            assertThat("exception message", ex.getMessage(),equalTo("Null argument passed in."));
+        }
     }
 
     @Test
-    public void addImpersonatedScopeAccess_whenScopeAccessExists_callsSetImpersonatedScopeAccess() throws Exception {
-        when(scopeAccessDao.getImpersonatedScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(new ImpersonatedScopeAccess());
-        User user = new User();
-        spy.addImpersonatedScopeAccess(user, null, null, impersonationRequest);
-        verify(spy).setImpersonatedScopeAccess(eq(user), eq(impersonationRequest), any(ImpersonatedScopeAccess.class));
+    public void addScopeAccess_nullScopeAccess_throwsIllegalArgumentException() throws Exception {
+        try{
+            defaultScopeAccessService.addScopeAccess(null, null);
+            assertTrue("illegalArgumentException expected",false);
+        }catch (IllegalArgumentException ex)
+        {
+            assertThat("exception message", ex.getMessage(),equalTo("Null argument passed in."));
+        }
+    }
+
+    @Test
+    public void addScopeAccess_scopeAccessNotNull_callsScopeAccessDaoMethod() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        ScopeAccess scopeAccess1 = new ScopeAccess();
+        when(scopeAccessDao.addScopeAccess(null,scopeAccess)).thenReturn(scopeAccess1);
+        assertThat("scope access",defaultScopeAccessService.addScopeAccess(null,scopeAccess),equalTo(scopeAccess1));
     }
 
     @Test
