@@ -1765,6 +1765,9 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new NotFoundException(errorMsg);
             }
             Users users = cloudGroupService.getAllEnabledUsers(filters, iMarker, iLimit);
+            if (users.getUsers().isEmpty()) {
+                throw new NotFoundException();
+            }
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUsers(this.userConverterCloudV20.toUserList(users.getUsers())));
         } catch (Exception e) {
             return exceptionResponse(e);
