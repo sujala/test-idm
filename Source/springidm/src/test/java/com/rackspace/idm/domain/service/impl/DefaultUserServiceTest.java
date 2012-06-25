@@ -172,15 +172,6 @@ public class DefaultUserServiceTest {
     }
 
     @Test
-    public void updateUserById_callsUserDaoUpdateByUd() throws Exception {
-        User user = new User();
-        user.setUsername("user");
-        user.setId("id");
-        defaultUserService.updateUserById(user, false );
-        verify(userDao).updateUserById(user,false);
-    }
-
-    @Test
     public void authenticateWithMossoIdAndApiKey_callsUserDao_authenticateByAPIKey() throws Exception {
         User user = new User();
         user.setUsername("username");
@@ -232,6 +223,33 @@ public class DefaultUserServiceTest {
         when(userDao.authenticateByAPIKey("username", "apiKey")).thenReturn(new UserAuthenticationResult(user, true));
         UserAuthenticationResult result = defaultUserService.authenticateWithNastIdAndApiKey("nastId", "apiKey");
         assertThat("username", result.getUser().getUsername(), equalTo("username"));
+    }
+
+    @Test
+    public void getUser_callsUserDao_getUserByCustomerIdAndUsername() throws Exception {
+        defaultUserService.getUser("customerId", "username");
+        verify(userDao).getUserByCustomerIdAndUsername("customerId", "username");
+    }
+
+    @Test
+    public void getUser_foundUser_returnsUser() throws Exception {
+        User user = new User();
+        when(userDao.getUserByCustomerIdAndUsername("customerId", "username")).thenReturn(user);
+        User result = defaultUserService.getUser("customerId", "username");
+        assertThat("user", result, equalTo(user));
+    }
+
+    @Test (expected = NotFoundException.class)
+    public void loadUser_withIdAndUsername_throwsNotFound() throws Exception {
+        defaultUserService.loadUser("userId", "username");
+    }
+
+    @Test
+    public void loadUser_foundUser_returnsUser() throws Exception {
+        User user = new User();
+        when(userDao.getUserByCustomerIdAndUsername("userId", "username")).thenReturn(user);
+        User result = defaultUserService.loadUser("userId", "username");
+        assertThat("user", result, equalTo(user));
     }
 
     @Test (expected = NotFoundException.class)
@@ -401,6 +419,22 @@ public class DefaultUserServiceTest {
         when(authorizationService.authorizeCloudUserAdmin(null)).thenReturn(true);
         User result = defaultUserService.getUserByNastId("nastId");
         assertThat("user", result, equalTo(user));
+    }
+
+    @Test
+    public void softDeleteUser_callsScopeAccessService_expireAllTokensForUser() throws Exception {
+        User user = new User();
+        user.setUsername("username");
+        defaultUserService.softDeleteUser(user);
+        verify(scopeAccessService).expireAllTokensForUser("username");
+    }
+
+    @Test
+    public void softDeleteUser_callsUserDao_softDeleteUser() throws Exception {
+        User user = new User();
+        user.setUsername("username");
+        defaultUserService.softDeleteUser(user);
+        verify(userDao).softDeleteUser(user);
     }
 
     @Test

@@ -65,5 +65,14 @@ public class LdapUserRepositoryUnitTest {
         assertThat("modification type",mod.get(0).getModificationType().getName(),equalTo("DELETE"));
     }
 
+    @Test
+    public void getModifications_ListsUserName() throws Exception {
+        User oldUser = new User();
+        oldUser.setUsername("orignal");
+        User newUser = new User();
+        newUser.setUsername("innovation");
+        List<Modification> mod = ldapUserRepository.getModifications(oldUser, newUser, false);
+        assertThat("modified attribute", mod.get(0).getAttributeName(), equalTo("uid"));
+    }
 
 }

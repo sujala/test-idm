@@ -548,7 +548,7 @@ public class DefaultUserService implements UserService {
     private void validateUsername(User user) {
         boolean isUsernameUnique = userDao.isUsernameUnique(user.getUsername());
         if (!isUsernameUnique) {
-            logger.warn("Couldn't add user {} because username already taken", user);
+            logger.warn("Couldn't add/update user {} because username already taken", user);
             throw new DuplicateUsernameException(String.format("Username %s already exists", user.getUsername()));
         }
     }

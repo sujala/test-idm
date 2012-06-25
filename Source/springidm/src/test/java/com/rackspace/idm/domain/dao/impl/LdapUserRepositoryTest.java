@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.domain.config.LdapConfiguration;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.exception.DuplicateUsernameException;
 import com.rackspace.idm.exception.PasswordSelfUpdateTooSoonException;
 import com.unboundid.ldap.sdk.Modification;
 import com.unboundid.ldap.sdk.ModificationType;
@@ -17,11 +18,15 @@ import java.security.GeneralSecurityException;
 import java.util.List;
 import java.util.Locale;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.*;
+
 public class LdapUserRepositoryTest {
 
     private LdapUserRepository repo;
     private LdapConnectionPools connPools;
-    
+
     String rackerId = "racker";
     
     String id = "XXXX";
@@ -172,6 +177,11 @@ public class LdapUserRepositoryTest {
             Assert.assertTrue(true);
         }
 
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void addRacker_rackerIsNull_throwsIllegalArgument() throws Exception {
+        repo.addRacker(null);
     }
     
     @Test
@@ -398,7 +408,7 @@ public class LdapUserRepositoryTest {
             ModificationType.REPLACE, LdapRepository.ATTR_PASSWORD,
             "newpassword!", newPassword.getValue()).getAttribute().getValue();
         Assert.assertEquals(expectedPasswordValue, mods.get(2).getAttribute()
-            .getValue());
+                .getValue());
     }
 
     @Test
@@ -414,7 +424,7 @@ public class LdapUserRepositoryTest {
     public void shouldAuthenticateForCorrectCredentials() {
         User user = addNewTestUser();
         UserAuthenticationResult result = repo.authenticate(user.getUsername(),
-            user.getPassword());
+                user.getPassword());
         repo.deleteUser(user.getUsername());
         Assert.assertTrue(result.isAuthenticated());
     }
@@ -423,7 +433,7 @@ public class LdapUserRepositoryTest {
     public void shouldAuthenticateByAPIKey() {
         User user = addNewTestUser();
         UserAuthenticationResult authenticated = repo.authenticateByAPIKey(
-            user.getUsername(), user.getApiKey());
+                user.getUsername(), user.getApiKey());
         repo.deleteUser(user.getUsername());
         Assert.assertTrue(authenticated.isAuthenticated());
     }
@@ -432,7 +442,7 @@ public class LdapUserRepositoryTest {
     public void shouldNotAuthenticateForBadCredentials() {
         User newUser = addNewTestUser();
         UserAuthenticationResult result = repo.authenticate(
-            newUser.getUsername(), "bad password");
+                newUser.getUsername(), "bad password");
         repo.deleteUser(newUser.getUsername());
         Assert.assertFalse(result.isAuthenticated());
     }
@@ -441,7 +451,7 @@ public class LdapUserRepositoryTest {
     public void shouldNotAuthenticateWithBadApiKey() {
         User newUser = addNewTestUser();
         UserAuthenticationResult authenticated = repo.authenticateByAPIKey(
-            newUser.getUsername(), "BadApiKey");
+                newUser.getUsername(), "BadApiKey");
         repo.deleteUser(newUser.getUsername());
         Assert.assertFalse(authenticated.isAuthenticated());
     }

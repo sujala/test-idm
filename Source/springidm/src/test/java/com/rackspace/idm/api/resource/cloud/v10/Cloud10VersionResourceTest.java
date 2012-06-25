@@ -25,15 +25,6 @@ public class Cloud10VersionResourceTest extends AbstractAroundClassJerseyTest {
     }
 
     @Test
-    public void getVersion_withValidInBoth_returns204() throws Exception {
-        WebResource resource = resource().path("cloud/v1.0");
-        ClientResponse clientResponse = resource.header("X-Auth-User", "auth")
-                .header("X-Auth-Key", "0f97f489c848438090250d50c7e1ea88")
-                .get(ClientResponse.class);
-        assertThat("response code", clientResponse.getStatus(), equalTo(204));
-    }
-
-    @Test
     public void getVersion_withValidLocalOnly_returns204() throws Exception {
         WebResource resource = resource().path("cloud/v1.0");
         ClientResponse clientResponse = resource.header("X-Auth-User", "mkovacs")
