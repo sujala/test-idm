@@ -321,7 +321,6 @@ public class Cloud20VersionResourceTest extends AbstractAroundClassJerseyTest {
         String token = getAuthToken("kurtDefaultUser", "Password1");
         WebResource resource = resource().path("cloud/v2.0/users").queryParam("name", "kurtDefaultUser");
         ClientResponse clientResponse = resource.header("X-Auth-Token", token).accept(MediaType.APPLICATION_XML_TYPE).get(ClientResponse.class);
-        System.out.println(clientResponse.getEntity(String.class));
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
     }
 
@@ -330,7 +329,6 @@ public class Cloud20VersionResourceTest extends AbstractAroundClassJerseyTest {
         String token = getAuthToken("kurtDefaultUser", "Password1");
         WebResource resource = resource().path("cloud/v2.0/users").queryParam("name", "kurtUserAdmin");
         ClientResponse clientResponse = resource.header("X-Auth-Token", token).accept(MediaType.APPLICATION_XML_TYPE).get(ClientResponse.class);
-        System.out.println(clientResponse.getEntity(String.class));
         assertThat("response code", clientResponse.getStatus(), equalTo(403));
     }
 
@@ -339,7 +337,6 @@ public class Cloud20VersionResourceTest extends AbstractAroundClassJerseyTest {
         String token = getAuthToken("kurtUserAdmin", "Password1");
         WebResource resource = resource().path("cloud/v2.0/users").queryParam("name", "kurtUserAdmin");
         ClientResponse clientResponse = resource.header("X-Auth-Token", token).accept(MediaType.APPLICATION_XML_TYPE).get(ClientResponse.class);
-        System.out.println(clientResponse.getEntity(String.class));
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
     }
 
@@ -348,7 +345,6 @@ public class Cloud20VersionResourceTest extends AbstractAroundClassJerseyTest {
         String token = getAuthToken("kurtUserAdmin", "Password1");
         WebResource resource = resource().path("cloud/v2.0/users").queryParam("name", "hectorServiceAdmin");
         ClientResponse clientResponse = resource.header("X-Auth-Token", token).accept(MediaType.APPLICATION_XML_TYPE).get(ClientResponse.class);
-        System.out.println(clientResponse.getEntity(String.class));
         assertThat("response code", clientResponse.getStatus(), equalTo(403));
     }
 
@@ -357,7 +353,6 @@ public class Cloud20VersionResourceTest extends AbstractAroundClassJerseyTest {
         String token = getAuthToken("hectorServiceAdmin", "Password1");
         WebResource resource = resource().path("cloud/v2.0/users").queryParam("name", "hectorServiceAdmin");
         ClientResponse clientResponse = resource.header("X-Auth-Token", token).accept(MediaType.APPLICATION_XML_TYPE).get(ClientResponse.class);
-        System.out.println(clientResponse.getEntity(String.class));
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
     }
 
@@ -403,7 +398,7 @@ public class Cloud20VersionResourceTest extends AbstractAroundClassJerseyTest {
     }
 
     @Test
-    public void listEndpointTemplates_returns404() throws Exception {
+    public void listEndpointTemplates_returns200() throws Exception {
         String token = getAuthToken("hectorServiceAdmin", "Password1");
         WebResource resource = resource().path("cloud/v2.0/OS-KSCATALOG/endpointTemplates");
         ClientResponse clientResponse = resource.header("X-Auth-Token", token).get(ClientResponse.class);
@@ -411,7 +406,7 @@ public class Cloud20VersionResourceTest extends AbstractAroundClassJerseyTest {
     }
 
     @Test
-    public void listEndpointTemplates_withMissingCredentials_returns404() throws Exception {
+    public void listEndpointTemplates_withMissingCredentials_returns401() throws Exception {
         WebResource resource = resource().path("cloud/v2.0/OS-KSCATALOG/endpointTemplates");
         ClientResponse clientResponse = resource.get(ClientResponse.class);
         assertThat("response code", clientResponse.getStatus(), equalTo(401));

@@ -256,8 +256,8 @@ public class DefaultAuthorizationServiceTest {
     public void authorizeCloudUser_cloudUserAdminRoleNull_setsCloudUserAdminRole() throws Exception {
         ScopeAccess scopeAccess = mock(UserScopeAccess.class);
         when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
-        defaultAuthorizationService.authorizeCloudUser(scopeAccess);
         DefaultAuthorizationService.setCLOUD_USER_ROLE(null);
+        defaultAuthorizationService.authorizeCloudUser(scopeAccess);
         verify(clientDao).getClientRoleByClientIdAndRoleName(anyString(), anyString());
     }
 
