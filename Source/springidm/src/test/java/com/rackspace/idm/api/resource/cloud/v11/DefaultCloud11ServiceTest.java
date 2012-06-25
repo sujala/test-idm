@@ -9,10 +9,7 @@ import com.rackspace.idm.domain.dao.impl.LdapCloudAdminRepository;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.service.*;
-import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.DuplicateException;
-import com.rackspace.idm.exception.NotAuthenticatedException;
-import com.rackspace.idm.exception.NotAuthorizedException;
+import com.rackspace.idm.exception.*;
 import com.rackspace.idm.util.NastFacade;
 import com.rackspacecloud.docs.auth.api.v1.*;
 import com.rackspacecloud.docs.auth.api.v1.Credentials;
@@ -2274,5 +2271,16 @@ public class DefaultCloud11ServiceTest {
     public void getAuthtokenFromRequest_callsScopeAccessService_getUserScopeAccessForClientIdByUsernameAndPassword() throws Exception {
         defaultCloud11Service.getAuthtokenFromRequest(request);
         verify(scopeAccessService).getUserScopeAccessForClientIdByUsernameAndPassword(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    public void extensions_returns200() throws IOException{
+        Response.ResponseBuilder responseBuilder = defaultCloud11Service.extensions(httpHeaders);
+        assertThat("response code", responseBuilder.build().getStatus(), org.hamcrest.Matchers.equalTo(200));
+    }
+
+    @Test(expected = NotFoundException.class)
+    public void getExtension_invalidExtension_returns404() throws IOException{
+        defaultCloud11Service.getExtension(httpHeaders, "INVALID");
     }
 }
