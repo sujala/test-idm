@@ -79,17 +79,17 @@ public class DefaultScopeAccessServiceTest {
         defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
         verify(tenantDao).getTenantRolesByParent("test");
     }
-    @Ignore
+
     @Test
     public void getOpenStackEndpointsForScopeAccess_tokenNotInstanceOfDelegatedClientScopeAccess_setsParentUniqueId() throws Exception {
-        DN dn = new DN("dn:=Tim Jones");
+        DN dn = new DN("cn=rdn,dc=parent");
         Attribute attribute = new Attribute("name");
         ReadOnlyEntry ldapEntry = new ReadOnlyEntry(dn,attribute,attribute);
         ScopeAccess token = new UserScopeAccess();
         token.setLdapEntry(ldapEntry);
         when(tenantDao.getTenantRolesByParent("dn:=Tim Jones")).thenReturn(null);
         defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
-        verify(tenantDao).getTenantRolesByParent("dn:=Tim Jones");
+        verify(tenantDao).getTenantRolesByParent("dc=parent");
     }
 
     @Test

@@ -46,6 +46,7 @@ import java.util.List;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.*;
 
@@ -225,11 +226,21 @@ public class DefaultCloud20ServiceTest {
         when(userService.getUserById(userId)).thenReturn(user);
         when(config.getString("rackspace.customerId")).thenReturn(null);
         when(userConverterCloudV20.toUserDO(userOS)).thenReturn(user);
-
+        when(httpHeaders.getMediaType()).thenReturn(MediaType.APPLICATION_XML_TYPE);
 
         spy = spy(defaultCloud20Service);
         doNothing().when(spy).checkXAUTHTOKEN(eq(authToken), anyBoolean(), any(String.class));
         doNothing().when(spy).checkXAUTHTOKEN(eq(authToken), anyBoolean(), eq(tenantId));
+    }
+
+    @Test
+    public void addUserCredential_returns200() throws Exception {
+        ApiKeyCredentials apiKeyCredentials1 = new ApiKeyCredentials();
+        apiKeyCredentials1.setUsername(userId);
+        apiKeyCredentials1.setApiKey("bar");
+        doReturn(new JAXBElement<CredentialType>(new QName(""),CredentialType.class, apiKeyCredentials1)).when(spy).getXMLCredentials(anyString());
+        Response.ResponseBuilder responseBuilder = spy.addUserCredential(httpHeaders, authToken, userId, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
     @Test
@@ -517,6 +528,16 @@ public class DefaultCloud20ServiceTest {
         UserDisabledException userDisabledException = new UserDisabledException();
         spy.exceptionResponse(userDisabledException);
         verify(userDisabledFault).setDetails(anyString());
+    }
+
+    @Test (expected = AssertionError.class)
+    public void exceptionResponse_whenNotFoundException_detailsNotSet() throws Exception {
+        ItemNotFoundFault itemNotFoundFault = mock(ItemNotFoundFault.class);
+        ObjectFactory objectFactory = mock(ObjectFactory.class);
+        when(jaxbObjectFactories.getOpenStackIdentityV2Factory()).thenReturn(objectFactory);
+        when(objectFactory.createItemNotFoundFault()).thenReturn(itemNotFoundFault);
+        spy.exceptionResponse(new NotFoundException());
+        verify(itemNotFoundFault).setDetails(anyString());
     }
 
     @Test
@@ -1681,7 +1702,7 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void addUserCredential_passwordCredentialOkResponseCreated_returns201() throws Exception {
+    public void addUserCredential_passwordCredentialOkResponseCreated_returns200() throws Exception {
         MediaType mediaType = mock(MediaType.class);
         user.setUsername("test_user");
         when(httpHeaders.getMediaType()).thenReturn(mediaType);
@@ -1690,7 +1711,7 @@ public class DefaultCloud20ServiceTest {
         doNothing().when(spy).validatePassword(anyString());
         doReturn(user).when(spy).checkAndGetUser(anyString());
         Response.ResponseBuilder responseBuilder = spy.addUserCredential(httpHeaders, authToken, userId, jsonBody);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(201));
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
     @Test
@@ -1861,7 +1882,9 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void deleteUserCredential_APIKeyCredential_callsUserServiceUpdateUser() throws Exception {
         String credentialType = "RAX-KSKEY:apiKeyCredentials";
-        doReturn(new User()).when(spy).checkAndGetUser("userId");
+        User user = new User();
+        user.setApiKey("123");
+        doReturn(user).when(spy).checkAndGetUser("userId");
         spy.deleteUserCredential(null, authToken, "userId", credentialType);
         verify(userService).updateUser(any(User.class), eq(false));
     }
@@ -1869,10 +1892,24 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void deleteUserCredential_APIKeyCredentialResponseNoContent_returns204() throws Exception {
         String credentialType = "RAX-KSKEY:apiKeyCredentials";
-        doReturn(new User()).when(spy).checkAndGetUser("userId");
+        User user = new User();
+        user.setApiKey("123");
+        doReturn(user).when(spy).checkAndGetUser("userId");
         doNothing().when(userService).updateUser(any(User.class), eq(false));
         Response.ResponseBuilder responseBuilder = spy.deleteUserCredential(null, authToken, "userId", credentialType);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(204));
+    }
+
+    @Test
+    public void deleteUserCredential_APIKeyCredentialNull_throws404() throws Exception {
+        String credentialType = "RAX-KSKEY:apiKeyCredentials";
+        User user = new User();
+        user.setId("123");
+        doReturn(user).when(spy).checkAndGetUser("userId");
+        Response response = spy.deleteUserCredential(null, authToken, "userId", credentialType).build();
+        assertThat("status",response.getStatus(),equalTo(404));
+        assertThat("message",((JAXBElement<ItemNotFoundFault>) response.getEntity()).getValue().getMessage(),
+                equalTo("Credential type RAX-KSKEY:apiKeyCredentials was not found for User with Id: 123"));
     }
 
     @Test
@@ -3389,6 +3426,17 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void getUsersForGroup_emptyGroup_returns404() throws Exception {
+        List<User> userList = new ArrayList<User>();
+        Users users = new Users();
+        users.setUsers(userList);
+        when(userGroupService.getGroupById(1)).thenReturn(group);
+        when(userGroupService.getAllEnabledUsers(any(FilterParam[].class), anyString(), anyInt())).thenReturn(users);
+        Response.ResponseBuilder responseBuilder = spy.getUsersForGroup(null, authToken, "1", null, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(404));
+    }
+
+    @Test
     public void getUsersForGroup_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.getUsersForGroup(null, authToken, null, null, null);
         verify(spy).verifyServiceAdminLevelAccess(authToken);
@@ -3408,8 +3456,12 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void getUsersForGroup_responseOk_returns200() throws Exception {
+        List<User> userList = new ArrayList<User>();
+        userList.add(user);
+        Users users = new Users();
+        users.setUsers(userList);
         when(userGroupService.getGroupById(1)).thenReturn(group);
-        when(userGroupService.getAllEnabledUsers(any(FilterParam[].class), anyString(), anyInt())).thenReturn(new Users());
+        when(userGroupService.getAllEnabledUsers(any(FilterParam[].class), anyString(), anyInt())).thenReturn(users);
         Response.ResponseBuilder responseBuilder = spy.getUsersForGroup(null, authToken, "1", null, null);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }

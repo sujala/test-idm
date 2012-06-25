@@ -19,6 +19,7 @@ import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
+import com.sun.jersey.server.wadl.generators.resourcedoc.xhtml.Elements;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.openstack.docs.common.api.v1.Extension;
@@ -366,9 +367,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             return created.entity(openStackIdentityV2Factory.createUser(value));
         } catch (DuplicateException de) {
             return userConflictExceptionResponse(de.getMessage());
-        } catch (DuplicateUsernameException due) {
-            return userConflictExceptionResponse(due.getMessage());
-        } catch (Exception ex) {
+        }  catch (Exception ex) {
             return exceptionResponse(ex);
         }
     }
@@ -549,7 +548,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             User user;
 
-            if (credentials.getDeclaredType().isAssignableFrom(PasswordCredentialsRequiredUsername.class)) {
+            if (credentials.getValue() instanceof PasswordCredentialsRequiredUsername) {
                 PasswordCredentialsRequiredUsername userCredentials = (PasswordCredentialsRequiredUsername) credentials.getValue();
                 validatePasswordCredentials(userCredentials);
                 validatePassword(userCredentials.getPassword());
@@ -561,7 +560,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
                 user.setPassword(userCredentials.getPassword());
                 userService.updateUser(user, false);
-            } else if (credentials.getDeclaredType().isAssignableFrom(ApiKeyCredentials.class)) {
+            } else if (credentials.getValue() instanceof ApiKeyCredentials) {
                 ApiKeyCredentials userCredentials = (ApiKeyCredentials) credentials.getValue();
                 validateApiKeyCredentials(userCredentials);
                 user = checkAndGetUser(userId);
@@ -573,7 +572,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 user.setApiKey(userCredentials.getApiKey());
                 userService.updateUser(user, false);
             }
-            return Response.ok(credentials).status(Status.CREATED);
+            return Response.ok(credentials).status(Status.OK);
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
@@ -862,6 +861,10 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             User user = checkAndGetUser(userId);
+
+            if(user.getApiKey() == null){
+                throw new NotFoundException("Credential type RAX-KSKEY:apiKeyCredentials was not found for User with Id: " + user.getId());
+            }
 
             user.setApiKey("");
 
@@ -1765,6 +1768,9 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new NotFoundException(errorMsg);
             }
             Users users = cloudGroupService.getAllEnabledUsers(filters, iMarker, iLimit);
+            if (users.getUsers().isEmpty()) {
+                throw new NotFoundException();
+            }
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUsers(this.userConverterCloudV20.toUserList(users.getUsers())));
         } catch (Exception e) {
             return exceptionResponse(e);
@@ -2106,6 +2112,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             return userDisabledExceptionResponse(ex.getMessage());
         } else if (ex instanceof StalePasswordException) {
             return badRequestExceptionResponse(ex.getMessage());
+        } else if (ex instanceof DuplicateUsernameException) {
+            return userConflictExceptionResponse(ex.getMessage());
         } else {
             return serviceExceptionResponse();
         }
@@ -2475,7 +2483,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         ItemNotFoundFault fault = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createItemNotFoundFault();
         fault.setCode(HttpServletResponse.SC_NOT_FOUND);
         fault.setMessage(message);
-        fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_NOT_FOUND)
                 .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createItemNotFound(fault));
     }
@@ -2501,7 +2508,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         BadRequestFault fault = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequestFault();
         fault.setCode(HttpServletResponse.SC_CONFLICT);
         fault.setMessage(message);
-        fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_CONFLICT)
                 .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequest(fault));
     }

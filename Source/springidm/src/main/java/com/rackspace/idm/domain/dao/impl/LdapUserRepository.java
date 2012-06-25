@@ -4,10 +4,7 @@ import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
-import com.rackspace.idm.exception.NotFoundException;
-import com.rackspace.idm.exception.PasswordSelfUpdateTooSoonException;
-import com.rackspace.idm.exception.StalePasswordException;
-import com.rackspace.idm.exception.UserDisabledException;
+import com.rackspace.idm.exception.*;
 import com.rackspace.idm.util.CryptHelper;
 import com.unboundid.ldap.sdk.*;
 import com.unboundid.util.StaticUtils;
@@ -455,6 +452,9 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().info("Updating user to {}", user);
         throwIfEmptyUsername(user);
         User oldUser = getUserById(user.getId());
+        if(!StringUtils.equalsIgnoreCase(oldUser.getUsername(), user.getUsername()) && !isUsernameUnique(user.getUsername())){
+            throw new DuplicateUsernameException("User with username: '" + user.getUsername() + "' already exists.");
+        }
         updateUser(user, oldUser, hasSelfUpdatedPassword);
     }
 
@@ -972,10 +972,21 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         checkForNastIdModification(uOld, uNew, mods);
         checkForMossoIdModification(uOld, uNew, mods);
         checkForMigrationStatusModification(uOld, uNew, mods);
+        checkForUserNameModificiation(uOld, uNew, mods);
 
         getLogger().debug("Found {} mods.", mods.size());
 
         return mods;
+    }
+
+    private void checkForUserNameModificiation(User uOld, User uNew, List<Modification> mods) {
+        if (uNew.getUsername() != null) {
+            if (StringUtils.isBlank(uNew.getUsername())) {
+                mods.add(new Modification(ModificationType.DELETE, ATTR_UID));
+            } else if (!StringUtils.equals(uOld.getUsername(), uNew.getUsername())) {
+                mods.add(new Modification(ModificationType.REPLACE, ATTR_UID, uNew.getUsername()));
+            }
+        }
     }
 
     private void checkForMossoIdModification(User uOld, User uNew, List<Modification> mods) {
@@ -1068,8 +1079,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    private void checkForApiKeyModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
-        if (uNew.getApiKey() != null && !StringUtils.isEmpty(uNew.getApiKey())) {
+    void checkForApiKeyModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
+        if (uNew.getApiKey() != null) {
             if (StringUtils.isBlank(uNew.getApiKey())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_RACKSPACE_API_KEY));
             } else if (!StringUtils.equals(uOld.getApiKey(), uNew.getApiKey())) {
