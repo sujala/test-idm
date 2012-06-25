@@ -1,7 +1,7 @@
 {
     "name": "Global Auth",
     "description": "Global Auth / Identity API",
-    "devopsJSON_URL": "https://github.rackspace.com/GlobalServices/GlobalAuth/blob/master/Source/docs/devops.json",
+    "devopsJSON_URL": "https://github.rackspace.com/GlobalServices/GlobalAuth/blob/master/Source/springidm/devops.json",
     "tags": [
         "identity",
         "authentication",

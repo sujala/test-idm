@@ -11,6 +11,7 @@ import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.unboundid.ldap.sdk.LDAPException;
+import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -60,7 +61,8 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             parentUniqueId = token.getUniqueId();
         } else {
             try {
-                parentUniqueId = token.getLDAPEntry().getParentDNString();
+                ReadOnlyEntry ldapEntry = token.getLDAPEntry();
+                parentUniqueId = ldapEntry.getParentDNString();
             } catch (LDAPException e) {
                 // noop
             }

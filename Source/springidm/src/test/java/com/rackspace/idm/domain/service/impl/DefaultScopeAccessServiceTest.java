@@ -7,11 +7,18 @@ import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.AuthHeaderHelper;
+import com.unboundid.ldap.sdk.Attribute;
+import com.unboundid.ldap.sdk.DN;
+import com.unboundid.ldap.sdk.Entry;
+import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+
+import java.util.ArrayList;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
@@ -60,6 +67,29 @@ public class DefaultScopeAccessServiceTest {
                                                                   configuration);
         spy = spy(defaultScopeAccessService);
 
+    }
+
+    @Test
+    public void getOpenStackEndpointsForScopeAccess_tokenInstanceOfDelegatedClientScopeAccess_setsParentUniqueId() throws Exception {
+        Attribute attribute = new Attribute("name");
+        ReadOnlyEntry ldapEntry = new ReadOnlyEntry("test",attribute);
+        DelegatedClientScopeAccess token = new DelegatedClientScopeAccess();
+        token.setLdapEntry(ldapEntry);
+        when(tenantDao.getTenantRolesByParent("test")).thenReturn(null);
+        defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
+        verify(tenantDao).getTenantRolesByParent("test");
+    }
+    @Ignore
+    @Test
+    public void getOpenStackEndpointsForScopeAccess_tokenNotInstanceOfDelegatedClientScopeAccess_setsParentUniqueId() throws Exception {
+        DN dn = new DN("dn:=Tim Jones");
+        Attribute attribute = new Attribute("name");
+        ReadOnlyEntry ldapEntry = new ReadOnlyEntry(dn,attribute,attribute);
+        ScopeAccess token = new UserScopeAccess();
+        token.setLdapEntry(ldapEntry);
+        when(tenantDao.getTenantRolesByParent("dn:=Tim Jones")).thenReturn(null);
+        defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
+        verify(tenantDao).getTenantRolesByParent("dn:=Tim Jones");
     }
 
     @Test
