@@ -510,7 +510,6 @@ public class DefaultUserService implements UserService {
     public void updateUserById(User user, boolean hasSelfUpdatedPassword) {
         logger.info("Updating User: {}", user);
         validateUserEmailAddress(user);
-        validateUsername(user);
         userDao.updateUserById(user, hasSelfUpdatedPassword);
         logger.info("Updated User: {}", user);
     }

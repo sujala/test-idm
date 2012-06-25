@@ -172,25 +172,6 @@ public class DefaultUserServiceTest {
     }
 
     @Test
-    public void updateUserById_callsUserDaoUpdateByUd() throws Exception {
-        User user = new User();
-        user.setUsername("user");
-        user.setId("id");
-        when(userDao.isUsernameUnique(anyString())).thenReturn(true);
-        defaultUserService.updateUserById(user, false );
-        verify(userDao).updateUserById(user,false);
-    }
-
-    @Test(expected = DuplicateUsernameException.class)
-    public void updateUserById_throwsDuplicateUsernameException() throws Exception {
-        User user = new User();
-        user.setUsername("user");
-        user.setId("id");
-        when(userDao.isUsernameUnique(anyString())).thenReturn(false);
-        defaultUserService.updateUserById(user, false );
-    }
-
-    @Test
     public void authenticateWithMossoIdAndApiKey_callsUserDao_authenticateByAPIKey() throws Exception {
         User user = new User();
         user.setUsername("username");

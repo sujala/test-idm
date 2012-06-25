@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.domain.config.LdapConfiguration;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.exception.DuplicateUsernameException;
 import com.rackspace.idm.exception.PasswordSelfUpdateTooSoonException;
 import com.unboundid.ldap.sdk.Modification;
 import com.unboundid.ldap.sdk.ModificationType;
@@ -17,10 +18,15 @@ import java.security.GeneralSecurityException;
 import java.util.List;
 import java.util.Locale;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.*;
+
 public class LdapUserRepositoryTest {
 
     private LdapUserRepository repo;
     private LdapConnectionPools connPools;
+    LdapUserRepository spy;
     
     String rackerId = "racker";
     
@@ -62,6 +68,7 @@ public class LdapUserRepositoryTest {
             cleanUpRepo.deleteUser("delete,me");
         }
         pools.close();
+        spy = spy(repo);
     }
 
     private static LdapUserRepository getRepo(LdapConnectionPools connPools) {
@@ -518,6 +525,41 @@ public class LdapUserRepositoryTest {
         Assert.assertNull(notExists);
         Assert.assertNotNull(softDeleted);
         Assert.assertNotNull(exists);
+    }
+
+    @Test(expected = DuplicateUsernameException.class)
+    public void updateUserById_throwsDuplicateUsernameException() throws Exception {
+        User updatedUser = new User("username2");
+        updatedUser.setId("userId");
+        User oldUser = new User("username");
+        doReturn(oldUser).when(spy).getUserById("userId");
+        doReturn(false).when(spy).isUsernameUnique("username2");
+        doNothing().when(spy).updateUser(any(User.class), any(User.class), eq(false));
+        spy.updateUserById(updatedUser, false);
+    }
+
+    @Test
+    public void updateUserById_callsUpdateUser_withNewAndOldUsernameTheSame() throws Exception {
+        User updatedUser = new User("username");
+        updatedUser.setId("userId");
+        User oldUser = new User("username");
+        doReturn(oldUser).when(spy).getUserById("userId");
+        doReturn(false).when(spy).isUsernameUnique("username");
+        doNothing().when(spy).updateUser(any(User.class), any(User.class), eq(false));
+        spy.updateUserById(updatedUser, false);
+        verify(spy).updateUser(updatedUser, oldUser, false);
+    }
+
+    @Test
+    public void updateUserById_callsUpdateUser_withDifferentAndUniqueNewUsername() throws Exception {
+        User updatedUser = new User("username2");
+        updatedUser.setId("userId");
+        User oldUser = new User("username");
+        doReturn(oldUser).when(spy).getUserById("userId");
+        doReturn(true).when(spy).isUsernameUnique("username2");
+        doNothing().when(spy).updateUser(any(User.class), any(User.class), eq(false));
+        spy.updateUserById(updatedUser, false);
+        verify(spy).updateUser(updatedUser, oldUser, false);
     }
 
     private User addNewTestUser() {

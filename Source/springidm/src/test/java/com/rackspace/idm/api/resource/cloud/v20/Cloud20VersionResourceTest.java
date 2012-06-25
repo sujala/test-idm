@@ -424,8 +424,20 @@ public class Cloud20VersionResourceTest extends AbstractAroundClassJerseyTest {
                 "  }\n" +
                 "}");
         assertThat("response code", clientResponse.getStatus(), equalTo(409));
+    }
 
-
+    @Test
+    public void updateUser_withNewUsernameEqualToOldUsername_returns200() throws Exception {
+        String token = getAuthToken("hectorServiceAdmin", "Password1");
+        WebResource resource = resource().path("cloud/v2.0/users/10020461"); //kurtUserAdmin
+        ClientResponse clientResponse = resource.header("X-Auth-Token", token).type(MediaType.APPLICATION_JSON_TYPE).post(ClientResponse.class, "{\n" +
+                "  \"user\": {\n" +
+                "    \"id\": \"10020461\",\n" +
+                "    \"username\": \"kurtUserAdmin\",\n" +
+                "    \"email\": \"kurt@example.org\"\n" +
+                "  }\n" +
+                "}");
+        assertThat("response code", clientResponse.getStatus(), equalTo(200));
     }
 
     private String getAuthToken(String username, String password) {

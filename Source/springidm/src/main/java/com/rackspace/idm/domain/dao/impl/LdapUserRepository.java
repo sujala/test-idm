@@ -4,10 +4,7 @@ import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
-import com.rackspace.idm.exception.NotFoundException;
-import com.rackspace.idm.exception.PasswordSelfUpdateTooSoonException;
-import com.rackspace.idm.exception.StalePasswordException;
-import com.rackspace.idm.exception.UserDisabledException;
+import com.rackspace.idm.exception.*;
 import com.rackspace.idm.util.CryptHelper;
 import com.unboundid.ldap.sdk.*;
 import com.unboundid.util.StaticUtils;
@@ -455,6 +452,9 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().info("Updating user to {}", user);
         throwIfEmptyUsername(user);
         User oldUser = getUserById(user.getId());
+        if(!StringUtils.equalsIgnoreCase(oldUser.getUsername(), user.getUsername()) && !isUsernameUnique(user.getUsername())){
+            throw new DuplicateUsernameException("User with username: '" + user.getUsername() + "' already exists.");
+        }
         updateUser(user, oldUser, hasSelfUpdatedPassword);
     }
 
