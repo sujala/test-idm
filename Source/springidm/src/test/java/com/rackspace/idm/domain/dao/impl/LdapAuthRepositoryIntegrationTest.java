@@ -9,7 +9,7 @@ import org.junit.*;
 
 import java.util.List;
 
-public class LdapAuthRepositoryTest {
+public class LdapAuthRepositoryIntegrationTest {
     private LdapAuthRepository repo;
     private LDAPConnectionPool connPool;
 
