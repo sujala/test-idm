@@ -577,6 +577,16 @@ public class LdapUserRepositoryTest {
         verify(spy).updateUser(updatedUser, oldUser, false);
     }
 
+    @Test
+    public void getModifications_ListsUserName() throws Exception {
+        User oldUser = new User();
+        oldUser.setUsername("orignal");
+        User newUser = new User();
+        newUser.setUsername("innovation");
+        List<Modification> mod = repo.getModifications(oldUser, newUser, false);
+        assertThat("modified attribute", mod.get(0).getAttributeName(), equalTo("uid"));
+    }
+
     private User addNewTestUser() {
         User newUser = createTestUserInstance();
         repo.addUser(newUser);
