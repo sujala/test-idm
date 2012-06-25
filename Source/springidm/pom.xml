@@ -1228,7 +1228,7 @@
                         <configuration>
                             <skip>false</skip>
                             <excludes>
-                                <exclude>**/Ldap*.java</exclude>
+                                <exclude>**/*IntegrationTest*.java</exclude>
                             </excludes>
                             <includes>
                                 <include>**/*Test*.java</include>
@@ -1247,7 +1247,7 @@
                                 <exclude>none</exclude>
                             </excludes>
                             <includes>
-                                <include>**/*Test*.java</include>
+                                <include>**/*IntegrationTest*.java</include>
                             </includes>
                         </configuration>
                     </execution>
