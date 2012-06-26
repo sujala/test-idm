@@ -581,7 +581,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().info("Removed users from clientGroup {}", group);
     }
     
-    private void throwIfEmptyOldUser(User oldUser, User user)
+    void throwIfEmptyOldUser(User oldUser, User user)
         throws IllegalArgumentException {
         if (oldUser == null) {
             getLogger().error("No record found for user {}", user.getUsername());
@@ -589,14 +589,14 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    private void throwIfEmptyUsername(User user) throws IllegalArgumentException {
+    void throwIfEmptyUsername(User user) throws IllegalArgumentException {
         if (user == null || StringUtils.isBlank(user.getUsername())) {
             getLogger().error("User instance is null or its userName has no value");
             throw new IllegalArgumentException("Bad parameter: The User instance either null or its userName has no value.");
         }
     }
 
-    private void throwIfStalePassword(LDAPException ldapEx, Audit audit) throws StalePasswordException {
+    void throwIfStalePassword(LDAPException ldapEx, Audit audit) throws StalePasswordException {
         if (ResultCode.CONSTRAINT_VIOLATION.equals(ldapEx.getResultCode())
             && STALE_PASSWORD_MESSAGE.equals(ldapEx.getMessage())) {
             audit.fail(STALE_PASSWORD_MESSAGE);
@@ -604,7 +604,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    private void addAuditLogForAuthentication(User user, boolean authenticated) {
+    void addAuditLogForAuthentication(User user, boolean authenticated) {
 
         Audit audit = Audit.authUser(user);
         if (authenticated) {
@@ -654,12 +654,12 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return authResult;
     }
 
-    private boolean bindUser(User user, String password) {
-        getLogger().debug("Authenticating user {}", user.getUsername());
-
+    boolean bindUser(User user, String password) {
         if (user == null || user.getUniqueId() == null) {
             throw new IllegalStateException("User cannot be null and must have a unique Id");
         }
+
+        getLogger().debug("Authenticating user {}", user.getUsername());
 
         BindResult result;
         try {
@@ -862,7 +862,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return user;
     }
 
-    private User getSingleSoftDeletedUser(Filter searchFilter,
+    User getSingleSoftDeletedUser(Filter searchFilter,
         String[] searchAttributes) {
         User user = null;
         try {
@@ -886,7 +886,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return user;
     }
 
-    private User getUser(SearchResultEntry resultEntry)
+    User getUser(SearchResultEntry resultEntry)
         throws GeneralSecurityException, InvalidCipherTextException {
         CryptHelper cryptHelper = CryptHelper.getInstance();
         User user = new User();
