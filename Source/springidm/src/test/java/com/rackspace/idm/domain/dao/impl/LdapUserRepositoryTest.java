@@ -2,15 +2,21 @@ package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.exception.DuplicateUsernameException;
 import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.exception.StalePasswordException;
 import com.rackspace.idm.exception.UserDisabledException;
 import com.unboundid.ldap.sdk.*;
+import com.unboundid.ldap.sdk.LDAPConnection;
+import com.unboundid.ldap.sdk.migrate.ldapjdk.*;
+import com.unboundid.ldap.sdk.migrate.ldapjdk.LDAPException;
 import org.apache.commons.configuration.Configuration;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.powermock.api.mockito.PowerMockito;
 
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
@@ -332,6 +338,26 @@ public class LdapUserRepositoryTest {
     }
 
     @Test (expected = IllegalArgumentException.class)
+    public void getUsersByDomainId_domainIdIsBlank_throwsIllegalArgument() throws Exception {
+        ldapUserRepository.getUsersByDomainId("");
+    }
+
+    @Test
+    public void getUsersByDomainId_callsGetMultipleUsers() throws Exception {
+        doReturn(null).when(spy).getMultipleUsers(any(Filter.class), any(String[].class), anyInt(), anyInt());
+        spy.getUsersByDomainId("domainId");
+        verify(spy).getMultipleUsers(any(Filter.class), any(String[].class), anyInt(), anyInt());
+    }
+
+    @Test
+    public void getUsersByDomainId_foundUsers_returnUsers() throws Exception {
+        Users users = new Users();
+        doReturn(users).when(spy).getMultipleUsers(any(Filter.class), any(String[].class), anyInt(), anyInt());
+        Users result = spy.getUsersByDomainId("domainId");
+        assertThat("users", result, equalTo(users));
+    }
+
+    @Test (expected = IllegalArgumentException.class)
     public void getUserByRPN_rpnIsBlank_throwsIllegalArgument() throws Exception {
         ldapUserRepository.getUserByRPN("");
     }
@@ -488,6 +514,58 @@ public class LdapUserRepositoryTest {
     }
 
     @Test
+    public void isUsernameUnique_callsSingleEntry() throws Exception {
+        doReturn(null).when(spy).getSingleEntry(anyString(), any(SearchScope.class), any(Filter.class));
+        spy.isUsernameUnique("username");
+        verify(spy).getSingleEntry(anyString(), any(SearchScope.class), any(Filter.class));
+    }
+
+    @Test
+    public void isUsernameUnique_callsGetUser() throws Exception {
+        User user = new User();
+        SearchResultEntry searchResultEntry = new SearchResultEntry("user", new Attribute[0], new Control[0]);
+        doReturn(user).when(spy).getUser(searchResultEntry);
+        doReturn(searchResultEntry).when(spy).getSingleEntry(anyString(), any(SearchScope.class), any(Filter.class));
+        spy.isUsernameUnique("username");
+        verify(spy).getUser(searchResultEntry);
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void isUsernameUnique_getUser_throwsGeneralSecurity() throws Exception {
+        SearchResultEntry searchResultEntry = new SearchResultEntry("user", new Attribute[0], new Control[0]);
+        doReturn(searchResultEntry).when(spy).getSingleEntry(anyString(), any(SearchScope.class), any(Filter.class));
+        doThrow(new GeneralSecurityException()).when(spy).getUser(searchResultEntry);
+        spy.isUsernameUnique("username");
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void isUsernameUnique_getUser_throwsInvalidCipherText() throws Exception {
+        SearchResultEntry searchResultEntry = new SearchResultEntry("user", new Attribute[0], new Control[0]);
+        doReturn(searchResultEntry).when(spy).getSingleEntry(anyString(), any(SearchScope.class), any(Filter.class));
+        doThrow(new InvalidCipherTextException()).when(spy).getUser(searchResultEntry);
+        spy.isUsernameUnique("username");
+    }
+
+    @Test
+    public void isUsernameUnique_foundUser_returnsFalse() throws Exception {
+        User user = new User();
+        SearchResultEntry searchResultEntry = new SearchResultEntry("user", new Attribute[0], new Control[0]);
+        doReturn(user).when(spy).getUser(searchResultEntry);
+        doReturn(searchResultEntry).when(spy).getSingleEntry(anyString(), any(SearchScope.class), any(Filter.class));
+        boolean result = spy.isUsernameUnique("username");
+        assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
+    public void isUsernameUnique_userIsNull_returnsTrue() throws Exception {
+        SearchResultEntry searchResultEntry = new SearchResultEntry("user", new Attribute[0], new Control[0]);
+        doReturn(null).when(spy).getUser(searchResultEntry);
+        doReturn(searchResultEntry).when(spy).getSingleEntry(anyString(), any(SearchScope.class), any(Filter.class));
+        boolean result = spy.isUsernameUnique("username");
+        assertThat("boolean", result, equalTo(true));
+    }
+
+    @Test
     public void updateUserById_callsGetUserById() throws Exception {
         User user = new User();
         user.setUsername("user");
@@ -496,6 +574,223 @@ public class LdapUserRepositoryTest {
         doReturn(user).when(spy).getUserById("id");
         spy.updateUserById(user, false);
         verify(spy).getUserById("id");
+    }
+
+    @Test (expected = DuplicateUsernameException.class)
+    public void updateUserById_usernameNotMatchAndNotUniqueUsername_throwsDuplicateUsername() throws Exception {
+        User newUser = new User();
+        newUser.setUsername("newUser");
+        newUser.setId("id");
+        User oldUser = new User();
+        oldUser.setUsername("oldUser");
+        doReturn(oldUser).when(spy).getUserById("id");
+        doReturn(false).when(spy).isUsernameUnique("newUser");
+        spy.updateUserById(newUser, false);
+    }
+
+    @Test
+    public void updateUserById_usernameMatchAndNotUniqueUsername_callsUpdateUser() throws Exception {
+        User newUser = new User();
+        newUser.setUsername("newUser");
+        newUser.setId("id");
+        User oldUser = new User();
+        oldUser.setUsername("newUser");
+        doReturn(oldUser).when(spy).getUserById("id");
+        doReturn(false).when(spy).isUsernameUnique("newUser");
+        spy.updateUserById(newUser, false);
+        verify(spy).updateUser(newUser, oldUser, false);
+    }
+
+    @Test
+    public void updateUserById_usernameNotMatchAndUniqueUsername_callsUpdateUser() throws Exception {
+        User newUser = new User();
+        newUser.setUsername("newUser");
+        newUser.setId("id");
+        User oldUser = new User();
+        oldUser.setUsername("oldUser");
+        doReturn(oldUser).when(spy).getUserById("id");
+        doReturn(true).when(spy).isUsernameUnique("newUser");
+        doNothing().when(spy).updateUser(newUser, oldUser, false);
+        spy.updateUserById(newUser, false);
+        verify(spy).updateUser(newUser, oldUser, false);
+    }
+
+    @Test
+    public void updateUserById_usernameMatchAndUniqueUsername_callsUpdateUser() throws Exception {
+        User newUser = new User();
+        newUser.setUsername("newUser");
+        newUser.setId("id");
+        User oldUser = new User();
+        oldUser.setUsername("newUser");
+        doReturn(oldUser).when(spy).getUserById("id");
+        doReturn(true).when(spy).isUsernameUnique("newUser");
+        spy.updateUserById(newUser, false);
+        verify(spy).updateUser(newUser, oldUser, false);
+    }
+
+    @Test
+    public void updateUser_callsUpdateUser() throws Exception {
+        User newUser = new User();
+        newUser.setUsername("username");
+        User oldUser = new User();
+        oldUser.setUsername("username");
+        doReturn(oldUser).when(spy).getUserByUsername("username");
+        spy.updateUser(newUser, false);
+        verify(spy).updateUser(newUser, oldUser, false);
+    }
+
+    @Test
+    public void updateUser_callsGetModification() throws Exception {
+        User newUser = new User();
+        newUser.setUsername("username");
+        User oldUser = new User();
+        oldUser.setUsername("username");
+        spy.updateUser(newUser, oldUser, false);
+        verify(spy).getModifications(oldUser, newUser, false);
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void updateUser_getModifications_throwsGeneralSecurity() throws Exception {
+        User newUser = new User();
+        newUser.setUsername("newUser");
+        User oldUser = new User();
+        oldUser.setUsername("oldUser");
+        doThrow(new GeneralSecurityException()).when(spy).getModifications(oldUser, newUser, false);
+        spy.updateUser(newUser, oldUser, false);
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void updateUser_getModifications_thrwosInvalidCipherText() throws Exception {
+        User newUser = new User();
+        newUser.setUsername("newUser");
+        User oldUser = new User();
+        oldUser.setUsername("oldUser");
+        doThrow(new InvalidCipherTextException()).when(spy).getModifications(oldUser, newUser, false);
+        spy.updateUser(newUser, oldUser, false);
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void removeUsersFromClientGroup_groupIsNull_throwsIllegalArgument() throws Exception {
+        ldapUserRepository.removeUsersFromClientGroup(null);
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void throwIfEmptyOldUser_oldUserIsNull_throwsIllegalArgument() throws Exception {
+        User user = new User();
+        user.setUsername("username");
+        ldapUserRepository.throwIfEmptyOldUser(null, user);
+    }
+
+    @Test
+    public void throwIfEmptyOldUser_oldUserNotNull_doesNothing() throws Exception {
+        ldapUserRepository.throwIfEmptyOldUser(new User(), new User());
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void throwIfEmptyUsername_userIsNull_throwsIllegalArgument() throws Exception {
+        ldapUserRepository.throwIfEmptyUsername(null);
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void throwIfEmptyUsername_usernameIsBlank_throwsIllegalArgument() throws Exception {
+        ldapUserRepository.throwIfEmptyUsername(new User());
+    }
+
+    @Test (expected = StalePasswordException.class)
+    public void throwIfStalePassword_ldapExMatchesViolationAndStalePasswordMessageMatchesLdapMessage_throwsStalePassword() throws Exception {
+        com.unboundid.ldap.sdk.LDAPException ldapException = new com.unboundid.ldap.sdk.LDAPException(ResultCode.CONSTRAINT_VIOLATION, "Password match in history");
+        spy.throwIfStalePassword(ldapException, mock(Audit.class));
+    }
+
+    @Test
+    public void throwIfStalePassword_ldapExNotViolationAndStalePasswordMessageMatchesLdapMessage_doesNothing() throws Exception {
+        com.unboundid.ldap.sdk.LDAPException ldapException = new com.unboundid.ldap.sdk.LDAPException(ResultCode.ADMIN_LIMIT_EXCEEDED, "Password match in history");
+        spy.throwIfStalePassword(ldapException, mock(Audit.class));
+    }
+
+    @Test
+    public void throwIfStalePassword_ldapExNotViolationAndStalePasswordMessageNotMatchLdapMessage_doesNothing() throws Exception {
+        com.unboundid.ldap.sdk.LDAPException ldapException = new com.unboundid.ldap.sdk.LDAPException(ResultCode.ADMIN_LIMIT_EXCEEDED, "different");
+        spy.throwIfStalePassword(ldapException, mock(Audit.class));
+    }
+
+    @Test
+    public void throwIfStalePassword_ldapExMatchesViolationAndStalePasswordMessageNotMatchLdapMessage_doesNothing() throws Exception {
+        com.unboundid.ldap.sdk.LDAPException ldapException = new com.unboundid.ldap.sdk.LDAPException(ResultCode.CONSTRAINT_VIOLATION, "different");
+        spy.throwIfStalePassword(ldapException, mock(Audit.class));
+    }
+
+    @Test
+    public void authenticateByPassword_userIsNull_returnsNewUserAuthenticationResult() throws Exception {
+        UserAuthenticationResult result = ldapUserRepository.authenticateByPassword(null, null);
+        assertThat("user authentication result", result.getUser(), equalTo(null));
+    }
+
+    @Test
+    public void authenticateByPassword_returnsAuthResult() throws Exception {
+        User user = new User();
+        doReturn(false).when(spy).bindUser(user, "password");
+        UserAuthenticationResult userAuthenticationResult = new UserAuthenticationResult(user, false);
+        doReturn(userAuthenticationResult).when(spy).validateUserStatus(user, false);
+        doNothing().when(spy).addAuditLogForAuthentication(user, false);
+        UserAuthenticationResult result = spy.authenticateByPassword(user, "password");
+        assertThat("user authentication result", result, equalTo(userAuthenticationResult));
+    }
+
+    @Test
+    public void authenticateUserByApiKey_userIsNull_returnsNewUserAuthenticationResult() throws Exception {
+        UserAuthenticationResult result = ldapUserRepository.authenticateUserByApiKey(null, null);
+        assertThat("user authentication result", result.getUser(), equalTo(null));
+    }
+
+    @Test
+    public void authenticateUserByApiKey_apiKeyNotBlankAndMatchesUserApiKey_setsAuthenticatedTrue() throws Exception {
+        User user = new User();
+        user.setApiKey("apiKey");
+        doReturn(new UserAuthenticationResult(user, false)).when(spy).validateUserStatus(user, true);
+        doNothing().when(spy).addAuditLogForAuthentication(user, true);
+        spy.authenticateUserByApiKey(user, "apiKey");
+        verify(spy).validateUserStatus(user, true);
+    }
+
+    @Test
+    public void authenticateUserByApiKey_apiKeyIsBlankAndMatchesUserApiKey_setAuthenticatedFalse() throws Exception {
+        User user = new User();
+        user.setApiKey("");
+        doReturn(new UserAuthenticationResult(user, false)).when(spy).validateUserStatus(user, false);
+        doNothing().when(spy).addAuditLogForAuthentication(user, false);
+        spy.authenticateUserByApiKey(user, "");
+        verify(spy).validateUserStatus(user, false);
+    }
+
+    @Test
+    public void authenticateUserByApiKey_apiKeyIsBlankAndNotMatchUserApiKey_setAuthenticatedFalse() throws Exception {
+        User user = new User();
+        user.setApiKey("");
+        doReturn(new UserAuthenticationResult(user, false)).when(spy).validateUserStatus(user, false);
+        doNothing().when(spy).addAuditLogForAuthentication(user, false);
+        spy.authenticateUserByApiKey(user, "notMatch");
+        verify(spy).validateUserStatus(user, false);
+    }
+
+    @Test
+    public void authenticateUserByApiKey_apiKeyIsNotBlankAndNotMatchUserApiKey_setAuthenticatedFalse() throws Exception {
+        User user = new User();
+        user.setApiKey("notBlank");
+        doReturn(new UserAuthenticationResult(user, false)).when(spy).validateUserStatus(user, false);
+        doNothing().when(spy).addAuditLogForAuthentication(user, false);
+        spy.authenticateUserByApiKey(user, "notMatch");
+        verify(spy).validateUserStatus(user, false);
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void bindUser_userIsNull_throwsIllegalState() throws Exception {
+        ldapUserRepository.bindUser(null, null);
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void bindUser_uniqueIdIsNull_throwsIllegalState() throws Exception {
+        ldapUserRepository.bindUser(new User(), null);
     }
 
     @Test
@@ -529,6 +824,46 @@ public class LdapUserRepositoryTest {
         newUser.setUsername("innovation");
         List<Modification> mod = ldapUserRepository.getModifications(oldUser, newUser, false);
         assertThat("modified attribute", mod.get(0).getAttributeName(), equalTo("uid"));
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void getSoftDeletedUserById_idIsBlank_throwsIllegalArgument() throws Exception {
+        ldapUserRepository.getSoftDeletedUserById("           ");
+    }
+
+    @Test
+    public void getSoftDeletedUserById_callsGetSingleSoftDeletedUser() throws Exception {
+        doReturn(new User()).when(spy).getSingleSoftDeletedUser(any(Filter.class), any(String[].class));
+        spy.getSoftDeletedUserById("id");
+        verify(spy).getSingleSoftDeletedUser(any(Filter.class), any(String[].class));
+    }
+
+    @Test
+    public void getSoftDeletedUserById_foundUser_returnsUser() throws Exception {
+        User user = new User();
+        doReturn(user).when(spy).getSingleSoftDeletedUser(any(Filter.class), any(String[].class));
+        User result = spy.getSoftDeletedUserById("id");
+        assertThat("user", result, equalTo(user));
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void getSoftDeletedUserByUsername_usernameIsBlank_throwsIllegalArgument() throws Exception {
+        ldapUserRepository.getSoftDeletedUserByUsername("           ");
+    }
+
+    @Test
+    public void getSoftDeletedUserByUsername_callsGetSingleSoftDeletedUser() throws Exception {
+        doReturn(new User()).when(spy).getSingleSoftDeletedUser(any(Filter.class), any(String[].class));
+        spy.getSoftDeletedUserByUsername("username");
+        verify(spy).getSingleSoftDeletedUser(any(Filter.class), any(String[].class));
+    }
+
+    @Test
+    public void getSoftDeletedUserByUsername_foundUser_returnsUser() throws Exception {
+        User user = new User();
+        doReturn(user).when(spy).getSingleSoftDeletedUser(any(Filter.class), any(String[].class));
+        User result = spy.getSoftDeletedUserByUsername("username");
+        assertThat("user", result, equalTo(user));
     }
 
 }

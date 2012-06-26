@@ -25,14 +25,13 @@ import java.io.StringReader;
 
 /**
  * Cloud Auth API Versions
- * 
  */
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
 public class CloudVersionsResource {
-    
-	private final CloudClient cloudClient;
+
+    private final CloudClient cloudClient;
     private final Cloud10VersionResource cloud10VersionResource;
     private final Cloud11VersionResource cloud11VersionResource;
     private final Cloud20VersionResource cloud20VersionResource;
@@ -43,12 +42,12 @@ public class CloudVersionsResource {
 
     @Context
     private UriInfo uriInfo;
-    
+
     @Autowired
     public CloudVersionsResource(Cloud10VersionResource cloud10VersionResource,
-    Cloud11VersionResource cloud11VersionResource,
-    Cloud20VersionResource cloud20VersionResource, Configuration config,
-    CloudContractDescriptionBuilder cloudContractDescriptionBuilder, CloudClient cloudClient) {
+                                 Cloud11VersionResource cloud11VersionResource,
+                                 Cloud20VersionResource cloud20VersionResource, Configuration config,
+                                 CloudContractDescriptionBuilder cloudContractDescriptionBuilder, CloudClient cloudClient) {
         this.cloud10VersionResource = cloud10VersionResource;
         this.cloud11VersionResource = cloud11VersionResource;
         this.cloud20VersionResource = cloud20VersionResource;
@@ -67,27 +66,32 @@ public class CloudVersionsResource {
     }
 
     public Response getPublicCloudVersionsInfo(@Context HttpHeaders httpHeaders) throws IOException {
-    	return cloudClient.get(getCloudAuthBaseUrl(), httpHeaders).build();
+        return cloudClient.get(getCloudAuthBaseUrl(), httpHeaders).build();
     }
-    
+
+    @Path("auth")
+    public Cloud10VersionResource getCloud10AuthResource() {
+        return cloud10VersionResource;
+    }
+
     @Path("v1.0")
     public Cloud10VersionResource getCloud10VersionResource() {
-            return cloud10VersionResource;
+        return cloud10VersionResource;
     }
-    
+
     @Path("v1.1")
     public Cloud11VersionResource getCloud11VersionResource() {
-            return cloud11VersionResource;
+        return cloud11VersionResource;
     }
-    
+
     @Path("v2.0")
     public Cloud20VersionResource getCloud20VersionResource() {
-            return cloud20VersionResource;
+        return cloud20VersionResource;
     }
-    
+
     private String getCloudAuthBaseUrl() {
         String url = config.getString("cloudAuth20url");
-        
+
         // the url is in the form https://auth.staging.us.ccp.rackspace.net/v2.0/
         // we want to strip off the trailing /2.0/ to get the root resource
         return url.substring(0, url.indexOf("v2.0"));
