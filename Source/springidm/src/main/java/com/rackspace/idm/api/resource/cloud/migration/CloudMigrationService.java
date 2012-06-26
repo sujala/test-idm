@@ -607,6 +607,17 @@ public class CloudMigrationService {
         if (user.getInMigration() == null) // Used so we do not delete a user who wasn't previously migrated.
             throw new NotFoundException("User not found.");
 
+        String domainId = user.getDomainId();
+        FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParam.FilterParamName.DOMAIN_ID, domainId)};
+        Users users = this.userService.getAllUsers(filters, 0, 0);
+
+        if (users.getUsers() == null) // Used so we do not delete a user who wasn't previously migrated.
+            throw new NotFoundException("User not found.");
+        
+        for (com.rackspace.idm.domain.entity.User u : users.getUsers())
+            userService.deleteUser(u.getUsername());
+        
+        /*
         String adminToken = getAdminToken();
 
         User cloudUser;
@@ -636,6 +647,7 @@ public class CloudMigrationService {
         }
 
         userService.deleteUser(username);
+        */
     }
 
     String getAdminToken() throws URISyntaxException, HttpException, IOException, JAXBException {
