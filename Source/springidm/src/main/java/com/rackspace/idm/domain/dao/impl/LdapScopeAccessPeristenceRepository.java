@@ -12,8 +12,7 @@ import org.apache.commons.configuration.Configuration;
 import java.util.ArrayList;
 import java.util.List;
 
-public class LdapScopeAccessPeristenceRepository extends LdapRepository
-    implements ScopeAccessDao {
+public class LdapScopeAccessPeristenceRepository extends LdapRepository implements ScopeAccessDao {
 
     public LdapScopeAccessPeristenceRepository(LdapConnectionPools connPools,
         Configuration config) {
@@ -395,19 +394,40 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository
             final Filter filter = new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_SCOPEACCESS)
                 .addEqualAttribute(ATTR_ACCESS_TOKEN, accessToken).build();
-            final SearchResult searchResult = conn.search(BASE_DN,
-                SearchScope.SUB, filter);
+            final SearchResult searchResult = conn.search(BASE_DN, SearchScope.SUB, filter);
 
-            final List<SearchResultEntry> searchEntries = searchResult
-                .getSearchEntries();
-            getLogger().debug("Found {} ScopeAccess by AccessToken: {}",
-                searchEntries.size(), accessToken);
+            final List<SearchResultEntry> searchEntries = searchResult.getSearchEntries();
+            getLogger().debug("Found {} ScopeAccess by AccessToken: {}", searchEntries.size(), accessToken);
             for (final SearchResultEntry searchResultEntry : searchEntries) {
                 return decodeScopeAccess(searchResultEntry);
             }
         } catch (final LDAPException e) {
-            getLogger().error(
-                "Error reading ScopeAccess by AccessToken: " + accessToken, e);
+            getLogger().error("Error reading ScopeAccess by AccessToken: " + accessToken, e);
+            throw new IllegalStateException(e);
+        } finally {
+            getAppConnPool().releaseConnection(conn);
+        }
+        return null;
+    }
+
+    @Override
+    public ScopeAccess getScopeAccessByUserId(String userId) {
+        getLogger().debug("Find ScopeAccess by user id: {}", userId);
+        LDAPConnection conn = null;
+        try {
+            conn = getAppConnPool().getConnection();
+            final Filter filter = new LdapSearchBuilder()
+                    .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_SCOPEACCESS)
+                    .addEqualAttribute(ATTR_UID, userId).build();
+            final SearchResult searchResult = conn.search(BASE_DN, SearchScope.SUB, filter);
+
+            final List<SearchResultEntry> searchEntries = searchResult.getSearchEntries();
+            getLogger().debug("Found {} ScopeAccess by AccessToken: {}", searchEntries.size(), userId);
+            for (final SearchResultEntry searchResultEntry : searchEntries) {
+                return decodeScopeAccess(searchResultEntry);
+            }
+        } catch (final LDAPException e) {
+            getLogger().error("Error reading ScopeAccess by AccessToken: " + userId, e);
             throw new IllegalStateException(e);
         } finally {
             getAppConnPool().releaseConnection(conn);

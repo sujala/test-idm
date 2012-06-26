@@ -22,8 +22,7 @@ public interface ScopeAccessDao {
 
     boolean deleteScopeAccess(ScopeAccess scopeAccess);
 
-    boolean doesAccessTokenHavePermission(ScopeAccess token,
-            Permission permission);
+    boolean doesAccessTokenHavePermission(ScopeAccess token, Permission permission);
     
     boolean doesParentHaveScopeAccess(String parentUniqueId, ScopeAccess scopeAccess);
 
@@ -36,14 +35,14 @@ public interface ScopeAccessDao {
     List<Permission> getPermissionsByPermission(Permission permission);
 
     ScopeAccess getScopeAccessByAccessToken(String accessToken);
+
+    ScopeAccess getScopeAccessByUserId(String userId);
     
-    DelegatedClientScopeAccess getScopeAccessByAuthorizationCode(
-        String authorizationCode);
+    DelegatedClientScopeAccess getScopeAccessByAuthorizationCode(String authorizationCode);
 
     ScopeAccess getScopeAccessByRefreshToken(String refreshToken);
 
-    ScopeAccess getScopeAccessByUsernameAndClientId(String username,
-            String clientId);
+    ScopeAccess getScopeAccessByUsernameAndClientId(String username, String clientId);
     
     List<DelegatedClientScopeAccess> getDelegatedClientScopeAccessByUsername(String username);
 

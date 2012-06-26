@@ -58,6 +58,70 @@ public class DefaultUserServiceTest {
     }
 
     @Test
+    public void hasSubUsers_callUserDao_getUsersByDomainId() throws Exception {
+        when((userDao.getUserById("id"))).thenReturn(new User());
+        defaultUserService.hasSubUsers("id");
+        verify(userDao).getUsersByDomainId(anyString());
+    }
+
+    @Test
+    public void hasSubUsers_callUserDao_getUserById() throws Exception {
+        defaultUserService.hasSubUsers("id");
+        verify(userDao).getUserById("id");
+    }
+
+    @Test
+    public void hasSubUsers_NoUsersWithGivenDomainId_returnsFalse() throws Exception {
+        when(userDao.getUserById("id")).thenReturn(new User());
+        when(userDao.getUsersByDomainId(anyString())).thenReturn(null);
+        boolean hasUsers = defaultUserService.hasSubUsers("id");
+        assertThat("User has subusers", hasUsers, equalTo(false));
+    }
+
+    @Test
+    public void hasSubUsers_NoUsersWithGivenDomainId_emptyList_returnsFalse() throws Exception {
+        when(userDao.getUserById("id")).thenReturn(new User());
+        when(userDao.getUsersByDomainId(anyString())).thenReturn(new Users());
+        boolean hasUsers = defaultUserService.hasSubUsers("id");
+        assertThat("User has subusers", hasUsers, equalTo(false));
+    }
+
+    @Test
+    public void hasSubUsers_HasSubUsers_returnsTrue() throws Exception {
+        User userAdmin = new User();
+        userAdmin.setDomainId("domainId");
+        when(userDao.getUserById("id")).thenReturn(userAdmin);
+        Users users = new Users();
+        ArrayList<User> userArrayList = new ArrayList<User>();
+        User defaultUser = new User();
+        defaultUser.setDomainId("domainId");
+        userArrayList.add(defaultUser);
+        User defaultUser2 = new User();
+        defaultUser2.setDomainId("domainId");
+        userArrayList.add(defaultUser2);
+        users.setUsers(userArrayList);
+        when(userDao.getUsersByDomainId(anyString())).thenReturn(users);
+        ScopeAccess scopeAccess = new ScopeAccess();
+        when(scopeAccessDao.getScopeAccessByUserId(anyString())).thenReturn(scopeAccess);
+        when(authorizationService.authorizeCloudUser(scopeAccess)).thenReturn(true);
+        boolean hasUsers = defaultUserService.hasSubUsers("id");
+        assertThat("User has subusers", hasUsers, equalTo(true));
+    }
+
+    @Test
+    public void hasSubUsers_userDoesNotExists_returnsFalse() throws Exception {
+        when(userDao.getUserById("id")).thenReturn(null);
+        boolean hasUsers = defaultUserService.hasSubUsers("id");
+        assertThat("User has subusers", hasUsers, equalTo(false));
+    }
+
+    @Test
+    public void hasSubUsers_invalidUserId_returnsFalse() throws Exception {
+        boolean hasUsers = defaultUserService.hasSubUsers("bad");
+        assertThat("User has subusers", hasUsers, equalTo(false));
+    }
+
+    @Test
     public void userExistsById_inMigration_returnsFalse() throws Exception {
         User user = new User();
         user.setInMigration(true);

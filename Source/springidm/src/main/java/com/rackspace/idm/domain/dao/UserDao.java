@@ -39,6 +39,8 @@ public interface UserDao {
 
     Users getUsersByNastId(String nastId);
 
+    Users getUsersByDomainId(String domainId);
+
     User getUserByRPN(String rpn);
 
     User getUserBySecureId(String secureId);

@@ -818,6 +818,9 @@ public class DefaultCloud20Service implements Cloud20Service {
                 User caller = userService.getUserByAuthToken(authToken);
                 verifyDomain(user, caller);
             }
+            if(userService.hasSubUsers(userId)){
+                throw new BadRequestException("Please delete sub-users before deleting last user-admin for the account");
+            }
             userService.softDeleteUser(user);
 
             atomHopperClient.asyncPost(user, authToken, AtomHopperConstants.DELETED, null);
