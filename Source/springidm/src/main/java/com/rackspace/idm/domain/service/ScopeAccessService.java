@@ -1,6 +1,6 @@
 package com.rackspace.idm.domain.service;
 
-import com.rackspace.docs.identity.api.ext.rax_ga.v1.ImpersonationRequest;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
 import com.rackspace.idm.domain.entity.*;
 
 import java.util.Date;
@@ -53,7 +53,7 @@ public interface ScopeAccessService {
 
     ScopeAccess getScopeAccessByAccessToken(String accessToken);
 
-    ScopeAccess getScopeAccessByUserId(String userId);
+    ScopeAccess getScopeAccessByUserId(String accessToken);
     
     ScopeAccess loadScopeAccessByAccessToken(String accessToken);
 
