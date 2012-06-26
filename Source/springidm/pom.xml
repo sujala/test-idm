@@ -1217,6 +1217,9 @@
                         </property>
                         <!--<idm.properties.location>${idm.properties.location}</idm.properties.location> -->
                     </systemProperties>
+                    <includes>
+                        <include>**/*Test*.java</include>
+                    </includes>
                 </configuration>
                 <executions>
                     <execution>
@@ -1247,7 +1250,7 @@
                                 <exclude>none</exclude>
                             </excludes>
                             <includes>
-                                <include>**/*IntegrationTest*.java</include>
+                                <include>**/*Test*.java</include>
                             </includes>
                         </configuration>
                     </execution>
