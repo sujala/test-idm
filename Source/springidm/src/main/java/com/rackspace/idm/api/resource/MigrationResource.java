@@ -52,8 +52,9 @@ public class MigrationResource {
 
     @POST
     @Path("cloud/users/{username}")
-    public Response migrateCloudUserByUsername(@PathParam("username") String username) throws Exception {
-    	MigrateUserResponseType migrateUserResponseType = cloudMigrationService.migrateUserByUsername(username, true);
+    public Response migrateCloudUserByUsername(@PathParam("username") String username,
+                                               @DefaultValue("false") @QueryParam("subusers") boolean processSubUsers) throws Exception {
+    	MigrateUserResponseType migrateUserResponseType = cloudMigrationService.migrateUserByUsername(username, processSubUsers);
     	return Response.status(Response.Status.OK).entity(migrateUserResponseType).build();
     }
 

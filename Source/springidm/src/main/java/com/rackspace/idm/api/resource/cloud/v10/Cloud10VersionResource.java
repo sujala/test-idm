@@ -92,7 +92,7 @@ public class Cloud10VersionResource {
         Response.ResponseBuilder builder = Response.noContent();
         builder.header("Vary", "Accept, Accept-Encoding, X-Auth-Token, X-Auth-Key, X-Storage-User, X-Storage-Pass");
 
-        if(username==null || username.trim().length() == 0){
+        if(StringUtils.isBlank(username)){
             return builder.status(HttpServletResponse.SC_UNAUTHORIZED).entity("Bad username or password").build();
         }
 
@@ -191,7 +191,7 @@ public class Cloud10VersionResource {
      */
     public static void addValuetoHeather(final String headerName,
         final String value, Response.ResponseBuilder builder) {
-        if (value != null && !StringUtils.isEmpty(value)) {
+        if (!StringUtils.isEmpty(value)) {
             builder.header(headerName, value);
         }
 
