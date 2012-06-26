@@ -603,7 +603,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    private UserAuthenticationResult authenticateByPassword(User user, String password) {
+    UserAuthenticationResult authenticateByPassword(User user, String password) {
         if (user == null) {
             return new UserAuthenticationResult(null, false);
         }
@@ -617,7 +617,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return authResult;
     }
 
-    private UserAuthenticationResult authenticateUserByApiKey(User user, String apiKey) {
+    UserAuthenticationResult authenticateUserByApiKey(User user, String apiKey) {
 
         if (user == null) {
             return new UserAuthenticationResult(null, false);
@@ -656,7 +656,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return ResultCode.SUCCESS.equals(result.getResultCode());
     }
 
-    private Attribute[] getAddAttributes(User user)
+    Attribute[] getAddAttributes(User user)
         throws GeneralSecurityException, InvalidCipherTextException {
         CryptHelper cryptHelper = CryptHelper.getInstance();
 
@@ -759,7 +759,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return attributes;
     }
 
-    private Users getMultipleUsers(Filter searchFilter,
+    Users getMultipleUsers(Filter searchFilter,
         String[] searchAttributes, int offset, int limit) {
 
         offset = offset < 0 ? this.getLdapPagingOffsetDefault() : offset;
@@ -818,7 +818,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return atts.toArray(new Attribute[0]);
     }
 
-    private User getSingleUser(Filter searchFilter, String[] searchAttributes) {
+    User getSingleUser(Filter searchFilter, String[] searchAttributes) {
         User user = null;
         try {
 
