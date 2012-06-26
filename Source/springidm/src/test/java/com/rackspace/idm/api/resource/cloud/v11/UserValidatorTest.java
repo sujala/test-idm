@@ -62,4 +62,33 @@ public class UserValidatorTest {
         user.setKey("key");
         userValidator.validate(user);
     }
+
+    @Test
+    public void validateUsername_validName() throws Exception {
+        User user = new User();
+        user.setId("test12");
+        userValidator.validateUserName(user.getId());
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void validateUsername_invalidName() throws Exception {
+        User user = new User();
+        user.setId("test12?");
+        userValidator.validateUserName(user.getId());
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void validateUsername_validNameOther() throws Exception {
+        User user = new User();
+        user.setId("123nogood");
+        userValidator.validateUserName(user.getId());
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void validateUsername_validNameLast() throws Exception {
+        User user = new User();
+        user.setId("test/");
+        userValidator.validateUserName(user.getId());
+    }
+
 }

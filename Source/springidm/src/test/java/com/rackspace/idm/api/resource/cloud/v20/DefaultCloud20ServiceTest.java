@@ -235,7 +235,7 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void deleteUser_callsUserService_hasSubUsers() throws Exception {
-        spy.deleteUser(httpHeaders,authToken,userId);
+        spy.deleteUser(httpHeaders, authToken, userId);
         verify(userService).hasSubUsers(userId);
     }
 
@@ -244,7 +244,7 @@ public class DefaultCloud20ServiceTest {
         ApiKeyCredentials apiKeyCredentials1 = new ApiKeyCredentials();
         apiKeyCredentials1.setUsername(userId);
         apiKeyCredentials1.setApiKey("bar");
-        doReturn(new JAXBElement<CredentialType>(new QName(""),CredentialType.class, apiKeyCredentials1)).when(spy).getXMLCredentials(anyString());
+        doReturn(new JAXBElement<CredentialType>(new QName(""), CredentialType.class, apiKeyCredentials1)).when(spy).getXMLCredentials(anyString());
         Response.ResponseBuilder responseBuilder = spy.addUserCredential(httpHeaders, authToken, userId, null);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
@@ -533,7 +533,7 @@ public class DefaultCloud20ServiceTest {
         when(objectFactory.createUserDisabledFault()).thenReturn(userDisabledFault);
         UserDisabledException userDisabledException = new UserDisabledException();
         spy.exceptionResponse(userDisabledException);
-        verify(userDisabledFault,never()).setDetails(anyString());
+        verify(userDisabledFault, never()).setDetails(anyString());
     }
 
     @Test
@@ -543,7 +543,7 @@ public class DefaultCloud20ServiceTest {
         when(jaxbObjectFactories.getOpenStackIdentityV2Factory()).thenReturn(objectFactory);
         when(objectFactory.createItemNotFoundFault()).thenReturn(itemNotFoundFault);
         spy.exceptionResponse(new NotFoundException());
-        verify(itemNotFoundFault,never()).setDetails(anyString());
+        verify(itemNotFoundFault, never()).setDetails(anyString());
     }
 
     @Test
@@ -897,7 +897,7 @@ public class DefaultCloud20ServiceTest {
         authenticationRequest.setToken(null);
         Response response = spy.authenticate(null, authenticationRequest).build();
         assertThat("response status", response.getStatus(), equalTo(400));
-        assertThat("response message",( (JAXBElement<BadRequestFault>) response.getEntity()).getValue().getMessage(),equalTo("Invalid request body: unable to parse Auth data. Please review XML or JSON formatting."));
+        assertThat("response message", ((JAXBElement<BadRequestFault>) response.getEntity()).getValue().getMessage(), equalTo("Invalid request body: unable to parse Auth data. Please review XML or JSON formatting."));
     }
 
     @Test
@@ -1029,7 +1029,7 @@ public class DefaultCloud20ServiceTest {
     public void updateUser_withRegionAndPreviousRegionsExists_newRegionGetsSaved() throws Exception {
         UserForCreate userWithRegion = new UserForCreate();
         userWithRegion.setId(userId);
-        userWithRegion.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","defaultRegion"), "foo");
+        userWithRegion.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "defaultRegion"), "foo");
         doNothing().when(spy).verifyUserAdminLevelAccess(authToken);
         doNothing().when(spy).validateUser(org.mockito.Matchers.any(org.openstack.docs.identity.api.v2.User.class));
         spy.setUserConverterCloudV20(new UserConverterCloudV20());
@@ -1913,8 +1913,8 @@ public class DefaultCloud20ServiceTest {
         user.setId("123");
         doReturn(user).when(spy).checkAndGetUser("userId");
         Response response = spy.deleteUserCredential(null, authToken, "userId", credentialType).build();
-        assertThat("status",response.getStatus(),equalTo(404));
-        assertThat("message",((JAXBElement<ItemNotFoundFault>) response.getEntity()).getValue().getMessage(),
+        assertThat("status", response.getStatus(), equalTo(404));
+        assertThat("message", ((JAXBElement<ItemNotFoundFault>) response.getEntity()).getValue().getMessage(),
                 equalTo("Credential type RAX-KSKEY:apiKeyCredentials was not found for User with Id: 123"));
     }
 
@@ -3595,6 +3595,21 @@ public class DefaultCloud20ServiceTest {
         defaultCloud20Service.validateUsername("first   last");
     }
 
+    @Test(expected = BadRequestException.class)
+    public void validateUsername_withNonAlphChara_throwBadRequestException() throws Exception {
+        defaultCloud20Service.validateUsername("12nogood");
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void validateUsername_withSpecialChara_throwBadRequestException() throws Exception {
+        defaultCloud20Service.validateUsername("jorgenogood!");
+    }
+
+    @Test
+    public void validateUsername_validUserName() throws Exception {
+        defaultCloud20Service.validateUsername("jorgegood");
+    }
+
     @Test
     public void validateApiKeyCredentials_validApiKey_noException() throws Exception {
         ApiKeyCredentials apiKeyCredentials = new ApiKeyCredentials();
@@ -3955,6 +3970,6 @@ public class DefaultCloud20ServiceTest {
         when(jaxbObjectFactories.getOpenStackIdentityV2Factory()).thenReturn(objectFactory);
         when(objectFactory.createBadRequestFault()).thenReturn(badRequestFault);
         defaultCloud20Service.badRequestExceptionResponse("message");
-        verify(badRequestFault,never()).setDetails(anyString());
+        verify(badRequestFault, never()).setDetails(anyString());
     }
 }
