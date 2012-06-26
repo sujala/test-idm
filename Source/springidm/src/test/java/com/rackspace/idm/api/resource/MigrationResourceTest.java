@@ -49,7 +49,7 @@ public class MigrationResourceTest {
     @Test
     public void migrateCloudUserByUsername_createsMigrateUserResponseType_returns200() throws Exception {
         when(cloudMigrationService.migrateUserByUsername("username", true)).thenReturn(new MigrateUserResponseType());
-        Response response = migrationResource.migrateCloudUserByUsername("username");
+        Response response = migrationResource.migrateCloudUserByUsername("username", false);
         assertThat("response code", response.getStatus(), equalTo(200));
     }
 
