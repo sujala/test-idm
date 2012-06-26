@@ -602,6 +602,17 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
+    public ScopeAccess getScopeAccessByUserId(String userId) {
+        logger.debug("Getting ScopeAccess by user id {}", userId);
+        if (userId == null) {
+            throw new NotFoundException("Invalid accessToken; Token cannot be null");
+        }
+        final ScopeAccess scopeAccess = this.scopeAccessDao.getScopeAccessByUserId(userId);
+        logger.debug("Got ScopeAccess {} by user id {}", scopeAccess, userId);
+        return scopeAccess;
+    }
+
+    @Override
     public ScopeAccess loadScopeAccessByAccessToken(String accessToken) {
         // Attempts to load the token. If the token is not found or expired
         // return a not found exception

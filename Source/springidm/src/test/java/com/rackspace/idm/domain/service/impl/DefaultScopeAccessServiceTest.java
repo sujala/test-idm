@@ -74,6 +74,12 @@ public class DefaultScopeAccessServiceTest {
     }
 
     @Test
+    public void getScopeAccessByUserId_callsScopeAccessDao_getScopeAccessByUserId() throws Exception {
+        defaultScopeAccessService.getScopeAccessByUserId("userId");
+        verify(scopeAccessDao).getScopeAccessByUserId("userId");
+    }
+
+    @Test
     public void getOpenStackEndpointsForScopeAccess_tokenInstanceOfDelegatedClientScopeAccess_setsParentUniqueId() throws Exception {
         Attribute attribute = new Attribute("name");
         ReadOnlyEntry ldapEntry = new ReadOnlyEntry("test",attribute);
