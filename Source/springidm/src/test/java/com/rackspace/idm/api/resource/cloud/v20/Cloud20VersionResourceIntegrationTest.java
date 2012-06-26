@@ -254,10 +254,10 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     @Test
     public void impersonate_returns200() throws Exception {
         String token = getAuthToken("hectorServiceAdmin", "Password1");
-        WebResource resource = resource().path("cloud/v2.0/RAX-GA/impersonation-tokens");
+        WebResource resource = resource().path("cloud/v2.0/RAX-AUTH/impersonation-tokens");
         ClientResponse clientResponse = resource.header("x-auth-token", token).type(MediaType.APPLICATION_XML_TYPE).post(ClientResponse.class , "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" +
                 "<impersonation\n" +
-                "    xmlns=\"http://docs.rackspace.com/identity/api/ext/RAX-GA/v1.0\"\n" +
+                "    xmlns=\"http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0\"\n" +
                 "    xmlns:ns2=\"http://docs.openstack.org/identity/api/v2.0\"\n" +
                 "    xmlns:ns3=\"http://www.w3.org/2005/Atom\">\n" +
                 "    <user username=\"kurtDefaultUser\"/>\n" +
@@ -269,10 +269,10 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     @Test
     public void impersonate_withNoAuth_returns403() throws Exception {
         String token = getAuthToken("hectorServiceAdmin", "Password1");
-        WebResource resource = resource().path("cloud/v2.0/RAX-GA/impersonation-tokens");
+        WebResource resource = resource().path("cloud/v2.0/RAX-AUTH/impersonation-tokens");
         ClientResponse clientResponse = resource.type(MediaType.APPLICATION_XML_TYPE).post(ClientResponse.class , "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" +
                 "<impersonation\n" +
-                "    xmlns=\"http://docs.rackspace.com/identity/api/ext/RAX-GA/v1.0\"\n" +
+                "    xmlns=\"http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0\"\n" +
                 "    xmlns:ns2=\"http://docs.openstack.org/identity/api/v2.0\"\n" +
                 "    xmlns:ns3=\"http://www.w3.org/2005/Atom\">\n" +
                 "    <user username=\"kurtDefaultUser\"/>\n" +
@@ -284,7 +284,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     @Test
     public void impersonate_withInvalidBody_returns400() throws Exception {
         String token = getAuthToken("hectorServiceAdmin", "Password1");
-        WebResource resource = resource().path("cloud/v2.0/RAX-GA/impersonation-tokens");
+        WebResource resource = resource().path("cloud/v2.0/RAX-AUTH/impersonation-tokens");
         ClientResponse clientResponse = resource.header("x-auth-token", token).type(MediaType.APPLICATION_XML_TYPE).post(ClientResponse.class , "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" +
                 "<impersonation\n" +
                 "</impersonation>");
@@ -295,10 +295,10 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     @Test
     public void impersonate_withDefaultUserAuth_returns403() throws Exception {
         String token = getAuthToken("kurtDefaultUser", "Password1");
-        WebResource resource = resource().path("cloud/v2.0/RAX-GA/impersonation-tokens");
+        WebResource resource = resource().path("cloud/v2.0/RAX-AUTH/impersonation-tokens");
         ClientResponse clientResponse = resource.header("x-auth-token", token).type(MediaType.APPLICATION_XML_TYPE).post(ClientResponse.class , "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" +
                 "<impersonation\n" +
-                "    xmlns=\"http://docs.rackspace.com/identity/api/ext/RAX-GA/v1.0\"\n" +
+                "    xmlns=\"http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0\"\n" +
                 "    xmlns:ns2=\"http://docs.openstack.org/identity/api/v2.0\"\n" +
                 "    xmlns:ns3=\"http://www.w3.org/2005/Atom\">\n" +
                 "    <user username=\"kurtDefaultUser\"/>\n" +

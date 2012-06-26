@@ -8,16 +8,16 @@
         attributeFormDefault="unqualified"
         xmlns="http://www.w3.org/2001/XMLSchema"
         xmlns:identity="http://docs.openstack.org/identity/api/v2.0"
-        xmlns:RAX-GA="http://docs.rackspace.com/identity/api/ext/RAX-GA/v1.0"
+        xmlns:RAX-AUTH="http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0"
         xmlns:xsd="http://www.w3.org/2001/XMLSchema"
         xmlns:xsdxt="http://docs.rackspacecloud.com/xsd-ext/v1.0"
-        targetNamespace="http://docs.rackspace.com/identity/api/ext/RAX-GA/v1.0">
+        targetNamespace="http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0">
 
     <import namespace="http://docs.openstack.org/identity/api/v2.0" schemaLocation="token.xsd" />
     <import namespace="http://docs.openstack.org/identity/api/v2.0" schemaLocation="user.xsd" />
 
-    <element name="impersonation" type="RAX-GA:ImpersonationRequest" />
-    <element name="access" type="RAX-GA:ImpersonationResponse" />
+    <element name="impersonation" type="RAX-AUTH:ImpersonationRequest" />
+    <element name="access" type="RAX-AUTH:ImpersonationResponse" />
     <element name="impersonator" type="identity:UserForAuthenticateResponse" >
     	<annotation>
             <xsd:documentation>
