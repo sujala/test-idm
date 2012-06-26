@@ -1,6 +1,5 @@
 package com.rackspace.idm.api.resource.cloud.migration;
 
-import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups;
 import com.rackspace.idm.api.converter.cloudv20.EndpointConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.RoleConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
@@ -16,7 +15,6 @@ import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
 import org.openstack.docs.identity.api.v2.CredentialListType;
 import org.openstack.docs.identity.api.v2.EndpointList;
 import org.openstack.docs.identity.api.v2.Role;
@@ -29,8 +27,7 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
 
-import static org.mockito.Mockito.any;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.*;
 
@@ -296,7 +293,7 @@ public class CloudMigrationServiceTest {
         when(userService.getUser(anyString())).thenReturn(user);
         when(userService.userExistsByUsername(anyString())).thenReturn(false).thenReturn(true);
         doReturn(true).when(spy).isSubUser(any(RoleList.class));
-        spy.migrateUserByUsername("cmarin2", false, "1");
+        spy.migrateUserByUsername("cmarin2", true, "1");
     }
 
     @Test (expected = BadRequestException.class)
@@ -437,6 +434,7 @@ public class CloudMigrationServiceTest {
         spy.unmigrateUserByUsername("username", true);
     }
 
+    @Ignore // Ignored due to code being removed...
     @Test (expected = BadRequestException.class)
     public void unmigrateUserByUsername_isRootUserAndIsSubUser_throwsBadRequest() throws Exception {
         RoleList roleList = new RoleList();

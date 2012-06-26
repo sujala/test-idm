@@ -1217,9 +1217,6 @@
                         </property>
                         <!--<idm.properties.location>${idm.properties.location}</idm.properties.location> -->
                     </systemProperties>
-                    <includes>
-                        <include>**/*Test*.java</include>
-                    </includes>
                 </configuration>
                 <executions>
                     <execution>
