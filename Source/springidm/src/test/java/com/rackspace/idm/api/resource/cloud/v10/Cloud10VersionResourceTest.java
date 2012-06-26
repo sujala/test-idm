@@ -142,9 +142,7 @@ public class Cloud10VersionResourceTest {
     public void getCloud10VersionInfo_notRouting_withDisabledUser_returns403Status() throws Exception {
         when(userService.getUser("username")).thenReturn(new User());
         when(config.getBoolean("useCloudAuth", false)).thenReturn(false);
-        UserScopeAccess userScopeAccess = mock(UserScopeAccess.class);
-        when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString())).thenReturn(userScopeAccess);
-        when(userScopeAccess.getAccessTokenString()).thenThrow(new UserDisabledException());
+        when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString())).thenThrow(new UserDisabledException());
         Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password");
         assertThat("response token", response.getStatus(), equalTo(403));
     }
