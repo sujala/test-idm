@@ -150,9 +150,9 @@ public class CloudMigrationService {
     }
 
 
-    public MigrateUserResponseType migrateUserByUsername(String username, boolean enable) throws Exception {
+    public MigrateUserResponseType migrateUserByUsername(String username, boolean processSubUsers) throws Exception {
         try {
-            MigrateUserResponseType response = migrateUserByUsername(username, enable, null);
+            MigrateUserResponseType response = migrateUserByUsername(username, processSubUsers, null);
 
             //Feed to atom hopper for migrated users
             List<com.rackspace.idm.api.resource.cloud.migration.UserType> users = response.getUsers();
@@ -178,7 +178,7 @@ public class CloudMigrationService {
         }
     }
 
-    public MigrateUserResponseType migrateUserByUsername(String username, boolean enable, String domainId) throws Exception {
+    public MigrateUserResponseType migrateUserByUsername(String username, boolean processSubUsers, String domainId) throws Exception {
         client = getMigrationClientInstance();
         client.setCloud20Host(config.getString("cloudAuth20url"));
 
@@ -225,11 +225,14 @@ public class CloudMigrationService {
                 throw new BadRequestException("Migration is not allowed for subusers");
             }
 
-            List<String> subUsers = getSubUsers(user, apiKey, password, roles);
 
-            for (String subUser : subUsers) {
-                if (userService.userExistsByUsername(username)) {
-                    throw new ConflictException("A user with username " + username + " already exists.");
+            List<String> subUsers = null;
+            if(processSubUsers) {
+                subUsers = getSubUsers(user, apiKey, password, roles);
+                for (String subUser : subUsers) {
+                    if (userService.userExistsByUsername(username)) {
+                        throw new ConflictException("A user with username " + username + " already exists.");
+                    }
                 }
             }
 
@@ -269,17 +272,17 @@ public class CloudMigrationService {
             Groups groups = client.getGroupsForUser(adminToken, legacyId);
             addUserGroups(user.getId(), groups);
 
-            if (enable) {
-                newUser.setInMigration(false);
-                userService.updateUserById(newUser, false);
-            }
+            newUser.setInMigration(false);
+            userService.updateUserById(newUser, false);
 
             UserType userResponse = validateUser(user, credentialListType, apiKey, cloudPassword, secretQA, roles, groups, user11.getBaseURLRefs().getBaseURLRef());
             MigrateUserResponseType result = new MigrateUserResponseType();
 
-            for (String subUser : subUsers) {
-                MigrateUserResponseType childResponse = migrateUserByUsername(subUser, enable, newUser.getDomainId());
-                result.getUsers().addAll(childResponse.getUsers());
+            if(subUsers != null) {
+                for (String subUser : subUsers) {
+                    MigrateUserResponseType childResponse = migrateUserByUsername(subUser, false, newUser.getDomainId());
+                    result.getUsers().addAll(childResponse.getUsers());
+                }
             }
 
             result.getUsers().add(userResponse);
@@ -604,6 +607,17 @@ public class CloudMigrationService {
         if (user.getInMigration() == null) // Used so we do not delete a user who wasn't previously migrated.
             throw new NotFoundException("User not found.");
 
+        String domainId = user.getDomainId();
+        FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParam.FilterParamName.DOMAIN_ID, domainId)};
+        Users users = this.userService.getAllUsers(filters, 0, 0);
+
+        if (users.getUsers() == null) // Used so we do not delete a user who wasn't previously migrated.
+            throw new NotFoundException("User not found.");
+        
+        for (com.rackspace.idm.domain.entity.User u : users.getUsers())
+            userService.deleteUser(u.getUsername());
+        
+        /*
         String adminToken = getAdminToken();
 
         User cloudUser;
@@ -633,6 +647,7 @@ public class CloudMigrationService {
         }
 
         userService.deleteUser(username);
+        */
     }
 
     String getAdminToken() throws URISyntaxException, HttpException, IOException, JAXBException {
