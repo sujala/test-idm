@@ -6,6 +6,7 @@ import com.rackspace.idm.exception.DuplicateUsernameException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.exception.StalePasswordException;
 import com.rackspace.idm.exception.UserDisabledException;
+import com.rackspace.idm.util.CryptHelper;
 import com.unboundid.ldap.sdk.*;
 import com.unboundid.ldap.sdk.LDAPConnection;
 import com.unboundid.ldap.sdk.migrate.ldapjdk.*;
@@ -13,6 +14,10 @@ import com.unboundid.ldap.sdk.migrate.ldapjdk.LDAPException;
 import org.apache.commons.configuration.Configuration;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.hamcrest.Matchers;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.tz.DateTimeZoneBuilder;
+import org.joda.time.tz.FixedDateTimeZone;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -21,6 +26,7 @@ import org.powermock.api.mockito.PowerMockito;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -794,7 +800,168 @@ public class LdapUserRepositoryTest {
     }
 
     @Test
-    public void validateUserStatus_userIsDisabled_throwsUserDisabledException() throws Exception {
+    public void getAddAttributes_addsAllAttributesOfAUser_returnsArray() throws Exception {
+        Password password = new Password();
+        password.setValue("secret");
+        User user = new User();
+        user.setId("123");
+        user.setCountry("us");
+        user.setDisplayName("test");
+        user.setFirstname("john");
+        user.setEmail("john.smith@email.com");
+        user.setMiddlename("jon");
+        user.setLocale(new Locale("en"));
+        user.setCustomerId("456");
+        user.setPersonId("789");
+        user.setApiKey("aaa-bbb-ccc");
+        user.setSecretAnswer("pass");
+        user.setSecretQuestion("tests");
+        user.setLastname("smith");
+        user.setTimeZoneObj(new FixedDateTimeZone("UTC", "UTC", 0, 0));
+        user.setUsername("jsmith");
+        user.setPasswordObj(password);
+        user.setRegion("central");
+        user.setEnabled(true);
+        user.setNastId("012");
+        user.setMossoId(123);
+        user.setDomainId("345");
+        user.setInMigration(true);
+        user.setMigrationDate(new DateTime());
+        CryptHelper cryptHelper = CryptHelper.getInstance();
+        Attribute[] result = ldapUserRepository.getAddAttributes(user);
+        assertThat("id", result[1].getValue(), equalTo("123"));
+        assertThat("country", result[2].getValue(), equalTo("us"));
+        assertThat("display name", cryptHelper.decrypt(result[3].getValueByteArray()), equalTo("test"));
+        assertThat("first name", cryptHelper.decrypt(result[4].getValueByteArray()), equalTo("john"));
+        assertThat("email", cryptHelper.decrypt(result[5].getValueByteArray()), equalTo("john.smith@email.com"));
+        assertThat("middle name", result[6].getValue(), equalTo("jon"));
+        assertThat("locale", result[7].getValue(), equalTo("en"));
+        assertThat("customer id", result[8].getValue(), equalTo("456"));
+        assertThat("person id", result[9].getValue(), equalTo("789"));
+        assertThat("api key", cryptHelper.decrypt(result[10].getValueByteArray()), equalTo("aaa-bbb-ccc"));
+        assertThat("secret answer", cryptHelper.decrypt(result[11].getValueByteArray()), equalTo("pass"));
+        assertThat("secret question", cryptHelper.decrypt(result[12].getValueByteArray()), equalTo("tests"));
+        assertThat("last name", cryptHelper.decrypt(result[13].getValueByteArray()), equalTo("smith"));
+        assertThat("time zone", result[14].getValue(), equalTo("UTC"));
+        assertThat("username", result[15].getValue(), equalTo("jsmith"));
+        assertThat("password", result[16].getValue(), equalTo("secret"));
+        assertThat("region", result[20].getValue(), equalTo("central"));
+        assertThat("enabled", result[21].getValue(), equalTo("true"));
+        assertThat("nast id", result[22].getValue(), equalTo("012"));
+        assertThat("mosso id", result[23].getValue(), equalTo("123"));
+        assertThat("domain id", result[24].getValue(), equalTo("345"));
+        assertThat("migration", result[25].getValue(), equalTo("true"));
+    }
+
+    @Test
+    public void getAddAttributes_onlyAddsUsername_returnsArray() throws Exception {
+        User user = new User();
+        user.setUsername("jsmith");
+        Attribute[] result = ldapUserRepository.getAddAttributes(user);
+        assertThat("username", result[1].getValue(), equalTo("jsmith"));
+        assertThat("list size", result.length, equalTo(2));
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void getSingleUser_getUser_throwsGeneralSecurityException() throws Exception {
+        String[] searchAttributes = new String[0];
+        Filter filter = null;
+        SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0], new Control[0]);
+        doReturn(searchResultEntry).when(spy).getSingleEntry("ou=users,o=rackspace,dc=rackspace,dc=com", SearchScope.SUB, null, searchAttributes);
+        doThrow(new GeneralSecurityException()).when(spy).getUser(searchResultEntry);
+        spy.getSingleUser(filter, searchAttributes);
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void getSingleUser_getUser_throwsInvalidCipherTextException() throws Exception {
+        String[] searchAttributes = new String[0];
+        Filter filter = null;
+        SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0], new Control[0]);
+        doReturn(searchResultEntry).when(spy).getSingleEntry("ou=users,o=rackspace,dc=rackspace,dc=com", SearchScope.SUB, null, searchAttributes);
+        doThrow(new InvalidCipherTextException()).when(spy).getUser(searchResultEntry);
+        spy.getSingleUser(filter, searchAttributes);
+    }
+
+    @Test
+    public void getSingleUser_foundUser_returnsUser() throws Exception {
+        String[] searchAttributes = new String[0];
+        Filter filter = null;
+        User user = new User();
+        SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0], new Control[0]);
+        doReturn(searchResultEntry).when(spy).getSingleEntry("ou=users,o=rackspace,dc=rackspace,dc=com", SearchScope.SUB, null, searchAttributes);
+        doReturn(user).when(spy).getUser(searchResultEntry);
+        User result = spy.getSingleUser(filter, searchAttributes);
+        assertThat("user", result, equalTo(user));
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void getSingleSoftDeletedUser_getUser_throwsGeneralSecurityException() throws Exception {
+        String[] searchAttributes = new String[0];
+        Filter filter = null;
+        SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0], new Control[0]);
+        doReturn(searchResultEntry).when(spy).getSingleEntry("ou=users,ou=softDeleted,o=rackspace,dc=rackspace,dc=com", SearchScope.SUB, null, searchAttributes);
+        doThrow(new GeneralSecurityException()).when(spy).getUser(searchResultEntry);
+        spy.getSingleSoftDeletedUser(filter, searchAttributes);
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void getSingleSoftDeletedUser_getUser_throwsInvalidCipherTextException() throws Exception {
+        String[] searchAttributes = new String[0];
+        Filter filter = null;
+        SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0], new Control[0]);
+        doReturn(searchResultEntry).when(spy).getSingleEntry("ou=users,ou=softDeleted,o=rackspace,dc=rackspace,dc=com", SearchScope.SUB, null, searchAttributes);
+        doThrow(new InvalidCipherTextException()).when(spy).getUser(searchResultEntry);
+        spy.getSingleSoftDeletedUser(filter, searchAttributes);
+    }
+
+    @Test
+    public void getSingleSoftDeletedUser_foundUser_returnsUser() throws Exception {
+        String[] searchAttributes = new String[0];
+        Filter filter = null;
+        User user = new User();
+        SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0], new Control[0]);
+        doReturn(searchResultEntry).when(spy).getSingleEntry("ou=users,ou=softDeleted,o=rackspace,dc=rackspace,dc=com", SearchScope.SUB, null, searchAttributes);
+        doReturn(user).when(spy).getUser(searchResultEntry);
+        User result = spy.getSingleSoftDeletedUser(filter, searchAttributes);
+        assertThat("user", result, equalTo(user));
+    }
+
+    @Test
+    public void getUser_setsAllUserAttributes_returnsUser() throws Exception {
+        Password password = new Password();
+        password.setValue("secret");
+        User user = new User();
+        user.setId("123");
+        user.setCountry("us");
+        user.setDisplayName("test");
+        user.setFirstname("john");
+        user.setEmail("john.smith@email.com");
+        user.setMiddlename("jon");
+        user.setLocale(new Locale("en"));
+        user.setCustomerId("456");
+        user.setPersonId("789");
+        user.setApiKey("aaa-bbb-ccc");
+        user.setSecretAnswer("pass");
+        user.setSecretQuestion("tests");
+        user.setLastname("smith");
+        user.setTimeZoneObj(new FixedDateTimeZone("UTC", "UTC", 0, 0));
+        user.setUsername("jsmith");
+        user.setPasswordObj(password);
+        user.setRegion("central");
+        user.setEnabled(true);
+        user.setNastId("012");
+        user.setMossoId(123);
+        user.setDomainId("345");
+        user.setInMigration(true);
+        user.setMigrationDate(new DateTime());
+        Attribute[] attributes = ldapUserRepository.getAddAttributes(user);
+        SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId", attributes, new Control[0]);
+        User result = ldapUserRepository.getUser(searchResultEntry);
+        assertThat("user", result.toString(), equalTo(user.toString()));
+    }
+
+    @Test
+    public void validateUserStatus_userIsDisabledAndNotAuthenticated_throwsUserDisabledException() throws Exception {
         try{
             User user = new User();
             user.setEnabled(false);
@@ -803,6 +970,22 @@ public class LdapUserRepositoryTest {
         }catch(UserDisabledException ex){
             assertThat("message",ex.getMessage(),equalTo("User 'rclements' is disabled."));
         }
+    }
+
+    @Test
+    public void validateUserStatus_notAuthenticated_returnsUserAuthenticationResult() throws Exception {
+        User user = new User();
+        user.setEnabled(true);
+        UserAuthenticationResult result = ldapUserRepository.validateUserStatus(user, false);
+        assertThat("user authentication result", result.getUser(), equalTo(user));
+    }
+
+    @Test
+    public void validateUserStatus_userIsDisabled_returnsUserAuthenticationResult() throws Exception {
+        User user = new User();
+        user.setEnabled(false);
+        UserAuthenticationResult result = ldapUserRepository.validateUserStatus(user, false);
+        assertThat("user authentication result", result.getUser(), equalTo(user));
     }
 
     @Test
