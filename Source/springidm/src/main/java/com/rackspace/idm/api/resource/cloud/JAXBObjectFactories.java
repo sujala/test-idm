@@ -1,6 +1,6 @@
 package com.rackspace.idm.api.resource.cloud;
 
-import com.rackspace.docs.identity.api.ext.rax_ga.v1.ObjectFactory;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -18,7 +18,7 @@ public class JAXBObjectFactories {
     private final com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory rackspaceIdentityExtKskeyV1Factory = new com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory();
     private final com.rackspace.docs.identity.api.ext.rax_ksqa.v1.ObjectFactory rackspaceIdentityExtKsqaV1Factory = new com.rackspace.docs.identity.api.ext.rax_ksqa.v1.ObjectFactory();
 
-    private final com.rackspace.docs.identity.api.ext.rax_ga.v1.ObjectFactory rackspaceIdentityExtRaxgaV1Factory = new com.rackspace.docs.identity.api.ext.rax_ga.v1.ObjectFactory();
+    private final com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory rackspaceIdentityExtRaxgaV1Factory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
     
     private final org.w3._2005.atom.ObjectFactory atomObjectFactory = new org.w3._2005.atom.ObjectFactory();
     
@@ -68,7 +68,7 @@ public class JAXBObjectFactories {
         return rackspaceCloudV1ObjectFactory;
     }
 
-    public com.rackspace.docs.identity.api.ext.rax_ga.v1.ObjectFactory getRackspaceIdentityExtRaxgaV1Factory() {
+    public com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory getRackspaceIdentityExtRaxgaV1Factory() {
         return rackspaceIdentityExtRaxgaV1Factory;
     }
 }

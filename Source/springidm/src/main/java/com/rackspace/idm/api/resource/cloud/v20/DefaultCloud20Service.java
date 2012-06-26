@@ -1,7 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
-
-import com.rackspace.docs.identity.api.ext.rax_ga.v1.ImpersonationRequest;
-import com.rackspace.docs.identity.api.ext.rax_ga.v1.ImpersonationResponse;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.JSONConstants;
@@ -21,6 +20,7 @@ import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import com.sun.jersey.server.wadl.generators.resourcedoc.xhtml.Elements;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.CharUtils;
 import org.joda.time.DateTime;
 import org.openstack.docs.common.api.v1.Extension;
 import org.openstack.docs.common.api.v1.Extensions;
@@ -52,6 +52,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * Created by IntelliJ IDEA.
@@ -127,7 +128,6 @@ public class DefaultCloud20Service implements Cloud20Service {
     private JAXBElement<Extensions> currentExtensions;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-
 
 
     @Override
@@ -330,8 +330,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             ScopeAccess scopeAccessByAccessToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
             if (user.getPassword() != null) {
                 validatePassword(user.getPassword());
-            }
-            else {
+            } else {
                 String password = Password.generateRandom(false).getValue();
                 user.setPassword(password);
             }
@@ -367,7 +366,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             return created.entity(openStackIdentityV2Factory.createUser(value));
         } catch (DuplicateException de) {
             return userConflictExceptionResponse(de.getMessage());
-        }  catch (Exception ex) {
+        } catch (Exception ex) {
             return exceptionResponse(ex);
         }
     }
@@ -487,6 +486,13 @@ public class DefaultCloud20Service implements Cloud20Service {
             String errorMsg = "Username should not contain white spaces";
             logger.warn(errorMsg);
             throw new BadRequestException(errorMsg);
+        }
+        Pattern alphaNumberic = Pattern.compile("[a-zA-z0-9]*");
+        if (!alphaNumberic.matcher(username).matches()) {
+            throw new BadRequestException("Username has invalid characters; only alphanumeric characters are allowed.");
+        }
+        if (!CharUtils.isAsciiAlpha(username.charAt(0))) {
+            throw new BadRequestException("Username must begin with an alphabetic character.");
         }
     }
 
@@ -609,11 +615,11 @@ public class DefaultCloud20Service implements Cloud20Service {
             User user = null;
             UserScopeAccess usa = null;
 
-            if(authenticationRequest.getCredential() == null && authenticationRequest.getToken() == null)
+            if (authenticationRequest.getCredential() == null && authenticationRequest.getToken() == null)
                 throw new BadRequestException("Invalid request body: unable to parse Auth data. Please review XML or JSON formatting.");
 
             if (authenticationRequest.getToken() != null) {
-                if(StringUtils.isBlank(authenticationRequest.getToken().getId())){
+                if (StringUtils.isBlank(authenticationRequest.getToken().getId())) {
                     throw new BadRequestException("Invalid Token Id");
                 }
                 ScopeAccess sa = scopeAccessService.getScopeAccessByAccessToken(authenticationRequest.getToken().getId());
@@ -818,7 +824,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 User caller = userService.getUserByAuthToken(authToken);
                 verifyDomain(user, caller);
             }
-            if(userService.hasSubUsers(userId)){
+            if (userService.hasSubUsers(userId)) {
                 throw new BadRequestException("Please delete sub-users before deleting last user-admin for the account");
             }
             userService.softDeleteUser(user);
@@ -865,7 +871,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             User user = checkAndGetUser(userId);
 
-            if(user.getApiKey() == null){
+            if (user.getApiKey() == null) {
                 throw new NotFoundException("Credential type RAX-KSKEY:apiKeyCredentials was not found for User with Id: " + user.getId());
             }
 
