@@ -606,6 +606,9 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             throw new NotFoundException("Invalid accessToken; Token cannot be null");
         }
         final ScopeAccess scopeAccess = this.scopeAccessDao.getScopeAccessByAccessToken(accessToken);
+        if (scopeAccess == null) {
+            throw new NotFoundException("Scope Access not found.");
+        }
         logger.debug("Got ScopeAccess {} by Access Token {}", scopeAccess, accessToken);
         return scopeAccess;
     }

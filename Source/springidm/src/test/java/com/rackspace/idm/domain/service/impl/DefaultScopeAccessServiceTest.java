@@ -1067,6 +1067,17 @@ public class DefaultScopeAccessServiceTest {
     }
 
     @Test
+    public void getScopeAccessByAccessToken_scopeAccessDaoReturnsNull_throwsNotFoundException() throws Exception {
+        try{
+            when(scopeAccessDao.getScopeAccessByAccessToken("accessToken")).thenReturn(null);
+            defaultScopeAccessService.getScopeAccessByAccessToken("accessToken");
+            assertTrue("should throw exception",false);
+        } catch (Exception ex){
+            assertThat("exception type",ex.getClass().getName(),equalTo("com.rackspace.idm.exception.NotFoundException"));
+        }
+    }
+
+    @Test
     public void getScopeAccessByUserId_nullUserId_throwsNotFoundException() throws Exception {
         try{
             defaultScopeAccessService.getScopeAccessByUserId(null);
