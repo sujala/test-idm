@@ -87,6 +87,28 @@ public class DefaultUserServiceTest {
     }
 
     @Test
+    public void hasSubUsers_HasSubUsers_callsAuthorizationService_hasDefaultUserRole() throws Exception {
+        User userAdmin = new User();
+        userAdmin.setDomainId("domainId");
+        when(userDao.getUserById("id")).thenReturn(userAdmin);
+        Users users = new Users();
+        ArrayList<User> userArrayList = new ArrayList<User>();
+        User defaultUser = new User();
+        defaultUser.setDomainId("domainId");
+        userArrayList.add(defaultUser);
+        User defaultUser2 = new User();
+        defaultUser2.setDomainId("domainId");
+        userArrayList.add(defaultUser2);
+        users.setUsers(userArrayList);
+        when(userDao.getUsersByDomainId(anyString())).thenReturn(users);
+        ScopeAccess scopeAccess = new ScopeAccess();
+        when(scopeAccessDao.getScopeAccessByUserId(anyString())).thenReturn(scopeAccess);
+        when(authorizationService.hasDefaultUserRole(scopeAccess)).thenReturn(true);
+        defaultUserService.hasSubUsers("id");
+        verify(authorizationService).hasDefaultUserRole(scopeAccess);
+    }
+
+    @Test
     public void hasSubUsers_HasSubUsers_returnsTrue() throws Exception {
         User userAdmin = new User();
         userAdmin.setDomainId("domainId");
@@ -103,7 +125,7 @@ public class DefaultUserServiceTest {
         when(userDao.getUsersByDomainId(anyString())).thenReturn(users);
         ScopeAccess scopeAccess = new ScopeAccess();
         when(scopeAccessDao.getScopeAccessByUserId(anyString())).thenReturn(scopeAccess);
-        when(authorizationService.authorizeCloudUser(scopeAccess)).thenReturn(true);
+        when(authorizationService.hasDefaultUserRole(scopeAccess)).thenReturn(true);
         boolean hasUsers = defaultUserService.hasSubUsers("id");
         assertThat("User has subusers", hasUsers, equalTo(true));
     }
