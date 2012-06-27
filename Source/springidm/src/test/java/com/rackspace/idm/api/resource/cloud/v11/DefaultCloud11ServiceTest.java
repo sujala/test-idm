@@ -5,6 +5,7 @@ import com.rackspace.idm.api.converter.cloudv11.EndpointConverterCloudV11;
 import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11;
 import com.rackspace.idm.api.resource.cloud.CloudExceptionResponse;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
+import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import com.rackspace.idm.domain.dao.impl.LdapCloudAdminRepository;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Group;
@@ -16,6 +17,7 @@ import com.rackspacecloud.docs.auth.api.v1.Credentials;
 import com.rackspacecloud.docs.auth.api.v1.PasswordCredentials;
 import com.rackspacecloud.docs.auth.api.v1.User;
 import com.sun.jersey.api.uri.UriBuilderImpl;
+import com.sun.jersey.server.impl.application.WebApplicationContext;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -81,6 +83,7 @@ public class DefaultCloud11ServiceTest {
     GroupService userGroupService, cloudGroupService;
     AuthConverterCloudV11 authConverterCloudv11;
     CredentialValidator credentialValidator;
+    private CloudContractDescriptionBuilder cloudContratDescriptionBuilder;
 
     @Before
     public void setUp() throws Exception {
@@ -107,6 +110,7 @@ public class DefaultCloud11ServiceTest {
         userGroupService = mock(GroupService.class);
         cloudGroupService = mock(GroupService.class);
         credentialValidator = mock(CredentialValidator.class);
+        cloudContratDescriptionBuilder = mock(CloudContractDescriptionBuilder.class);
 
         when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn("Basic YXV0aDphdXRoMTIz");
         UriBuilderImpl uriBuilder = mock(UriBuilderImpl.class);
@@ -134,7 +138,17 @@ public class DefaultCloud11ServiceTest {
         defaultCloud11Service.setUserGroupService(userGroupService);
         defaultCloud11Service.setCredentialUnmarshaller(credentialUnmarshaller);
         defaultCloud11Service.setCredentialValidator(credentialValidator);
+        defaultCloud11Service.setCloudContractDescriptionBuilder(cloudContratDescriptionBuilder);
         spy = spy(defaultCloud11Service);
+    }
+
+    @Test
+    public void getVersion_callsCloudContractDescriptionBuilder() throws Exception {
+        doReturn("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<version></version>").when(cloudContratDescriptionBuilder).buildVersion11Page();
+        try {
+            defaultCloud11Service.getVersion(null);
+        } catch (Exception e){ }
+        verify(cloudContratDescriptionBuilder).buildVersion11Page();
     }
 
     @Test
@@ -754,6 +768,36 @@ public class DefaultCloud11ServiceTest {
     }
 
     @Test
+    public void addNastTenant_whenNastDisabled_withEmptyNastId_DoesntCallTenantService() throws Exception {
+        User user1 = new User();
+        user1.setNastId(null);
+        when(config.getBoolean("nast.xmlrpc.enabled")).thenReturn(false);
+        defaultCloud11Service.addNastTenant(user1);
+        verify(tenantService, never()).addTenantRoleToUser(any(com.rackspace.idm.domain.entity.User.class), any(TenantRole.class));
+    }
+
+    @Test
+    public void addNastTenant_withNastId_addsBaseUrlsToTenant() throws Exception {
+        User user1 = new User();
+        user1.setNastId("nastId");
+        when(config.getBoolean("nast.xmlrpc.enabled")).thenReturn(false);
+        ArrayList<CloudBaseUrl> cloudBaseUrls = new ArrayList<CloudBaseUrl>();
+        CloudBaseUrl baseUrl = new CloudBaseUrl();
+        baseUrl.setDef(true);
+        baseUrl.setBaseUrlId(1);
+        cloudBaseUrls.add(baseUrl);
+        CloudBaseUrl baseUrl2 = new CloudBaseUrl();
+        baseUrl2.setDef(true);
+        baseUrl2.setBaseUrlId(2);
+        cloudBaseUrls.add(baseUrl2);
+        when(endpointService.getBaseUrlsByBaseUrlType("NAST")).thenReturn(cloudBaseUrls);
+        ArgumentCaptor<Tenant> argumentCaptor = ArgumentCaptor.forClass(Tenant.class);
+        defaultCloud11Service.addNastTenant(user1);
+        verify(tenantService).addTenant(argumentCaptor.capture());
+        assertThat("Tenant Base Urls", argumentCaptor.getValue().getBaseUrlIds(), equalTo(new String[]{"1", "2"}));
+    }
+
+    @Test
     public void addNastTenant_callsClientService_getClientRoleByClientIdAndRoleName() throws Exception {
         User user1 = new User();
         user1.setNastId("nastId");
@@ -815,6 +859,16 @@ public class DefaultCloud11ServiceTest {
         defaultCloud11Service.addNastTenant(user1);
         verify(tenantService).addTenantRoleToUser(any(com.rackspace.idm.domain.entity.User.class), any(TenantRole.class));
     }
+
+    @Test
+    public void addMossoTenant_withNullMossoId_doesNothing() throws Exception {
+        User user1 = new User();
+        user1.setMossoId(null);
+        defaultCloud11Service.addMossoTenant(user1);
+        verify(clientService, never()).getClientRoleByClientIdAndRoleName(anyString(), anyString());
+        verify(userService, never()).getUsersByMossoId(anyInt());
+    }
+
 
     @Test
     public void addMossoTenant_calls_tenantService_addTenantRoleToUser() throws Exception {
@@ -989,6 +1043,46 @@ public class DefaultCloud11ServiceTest {
         when(userService.getUser("belongsTo")).thenReturn(null);
         Response.ResponseBuilder responseBuilder = spy.validateToken(null, null, "belongsTo", "CLOUD", null);
         assertThat("response builder", responseBuilder.build().getStatus(), equalTo(401));
+    }
+
+    @Test
+    public void validateToken_scopeAccessService_returnsNullScope_throwsNotFoundException() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
+        when(userScopeAccess.isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
+        when(scopeAccessService.getScopeAccessByAccessToken(null)).thenReturn(null);
+        when(userService.getUser("belongsTo")).thenReturn(null);
+        Response.ResponseBuilder responseBuilder = spy.validateToken(null, null, "belongsTo", "CLOUD", null);
+        assertThat("response builder", responseBuilder.build().getStatus(), equalTo(404));
+    }
+
+    @Test
+    public void validateToken_scopeAccessService_returnsExpiredScope_throwsNotFoundException() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
+        when(userScopeAccess.isAccessTokenExpired(any(DateTime.class))).thenReturn(true);
+        when(scopeAccessService.getScopeAccessByAccessToken(null)).thenReturn(userScopeAccess);
+        when(userService.getUser("belongsTo")).thenReturn(null);
+        Response.ResponseBuilder responseBuilder = spy.validateToken(null, null, "belongsTo", "CLOUD", null);
+        assertThat("response builder", responseBuilder.build().getStatus(), equalTo(404));
+    }
+
+    @Test
+    public void validateToken_scopeAccessService_returnsNonUserScopeAccess_throwsNotFoundException() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
+        when(userScopeAccess.isAccessTokenExpired(any(DateTime.class))).thenReturn(true);
+        when(scopeAccessService.getScopeAccessByAccessToken(null)).thenReturn(new ScopeAccess());
+        when(userService.getUser("belongsTo")).thenReturn(null);
+        Response.ResponseBuilder responseBuilder = spy.validateToken(null, null, "belongsTo", "CLOUD", null);
+        assertThat("response builder", responseBuilder.build().getStatus(), equalTo(404));
+    }
+
+    @Test
+    public void validateToken_belongsToIsBlank_doesntCallUserService() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
+        when(userScopeAccess.isAccessTokenExpired(any(DateTime.class))).thenReturn(true);
+        when(scopeAccessService.getScopeAccessByAccessToken(null)).thenReturn(new UserScopeAccess());
+        when(userService.getUser("belongsTo")).thenReturn(null);
+        spy.validateToken(null, null, null, "CLOUD", null);
+        verify(userService, never()).getUser("belongsTo");
     }
 
     @Test

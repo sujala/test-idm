@@ -54,7 +54,7 @@ public class CloudClientTest {
     @Test
     public void get_withMapHeaders_callsExecuteRequest_withHttpGet() throws Exception {
         HashMap<String, String> headers = new HashMap<String, String>();
-        headers.put("someHeader", "someValue");
+        headers.put("content-type", "someValue");
         doReturn(null).when(spy).executeRequest(any(HttpGet.class));
 
         spy.get("url", headers);
@@ -195,6 +195,156 @@ public class CloudClientTest {
     }
 
     @Test
+    public void executeRequest_returnsResponseWithNonContentEncodingHeadersFromCloudResponse() throws Exception {
+        HttpClient client = mock(HttpClient.class);
+        HttpResponse response = mock(HttpResponse.class);
+        doReturn(client).when(spy).getHttpClient();
+        when(client.getParams()).thenReturn(new BasicHttpParams());
+        when(client.execute(any(HttpUriRequest.class))).thenReturn(response);
+        when(response.getEntity()).thenReturn(new ByteArrayEntity("Response Body".getBytes()));
+        when(response.getStatusLine()).thenReturn(new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 200, "OK"));
+        when(response.getAllHeaders()).thenReturn(new Header[]{new Header() {
+            @Override
+            public String getName() {
+                return "content-encoding";
+            }
+
+            @Override
+            public String getValue() {
+                return "someValue";
+            }
+
+            @Override
+            public HeaderElement[] getElements() throws ParseException {
+                return new HeaderElement[0];
+            }
+        }});
+
+        Response.ResponseBuilder responseBuilder = spy.executeRequest(new HttpGet("http://owijfaw.vmjioew.imkfwo"));
+        assertThat("response header", responseBuilder.build().getMetadata().containsKey("content-encoding"), equalTo(false));
+    }
+
+    @Test
+    public void executeRequest_returnsResponseWithNonContentLengthHeadersFromCloudResponse() throws Exception {
+        HttpClient client = mock(HttpClient.class);
+        HttpResponse response = mock(HttpResponse.class);
+        doReturn(client).when(spy).getHttpClient();
+        when(client.getParams()).thenReturn(new BasicHttpParams());
+        when(client.execute(any(HttpUriRequest.class))).thenReturn(response);
+        when(response.getEntity()).thenReturn(new ByteArrayEntity("Response Body".getBytes()));
+        when(response.getStatusLine()).thenReturn(new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 200, "OK"));
+        when(response.getAllHeaders()).thenReturn(new Header[]{new Header() {
+            @Override
+            public String getName() {
+                return "content-length";
+            }
+
+            @Override
+            public String getValue() {
+                return "someValue";
+            }
+
+            @Override
+            public HeaderElement[] getElements() throws ParseException {
+                return new HeaderElement[0];
+            }
+        }});
+
+        Response.ResponseBuilder responseBuilder = spy.executeRequest(new HttpGet("http://owijfaw.vmjioew.imkfwo"));
+        assertThat("response header", responseBuilder.build().getMetadata().containsKey("content-length"), equalTo(false));
+    }
+
+    @Test
+    public void executeRequest_returnsResponseWithNoTransferEncodingHeadersFromCloudResponse() throws Exception {
+        HttpClient client = mock(HttpClient.class);
+        HttpResponse response = mock(HttpResponse.class);
+        doReturn(client).when(spy).getHttpClient();
+        when(client.getParams()).thenReturn(new BasicHttpParams());
+        when(client.execute(any(HttpUriRequest.class))).thenReturn(response);
+        when(response.getEntity()).thenReturn(new ByteArrayEntity("Response Body".getBytes()));
+        when(response.getStatusLine()).thenReturn(new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 200, "OK"));
+        when(response.getAllHeaders()).thenReturn(new Header[]{new Header() {
+            @Override
+            public String getName() {
+                return "transfer-encoding";
+            }
+
+            @Override
+            public String getValue() {
+                return "someValue";
+            }
+
+            @Override
+            public HeaderElement[] getElements() throws ParseException {
+                return new HeaderElement[0];
+            }
+        }});
+
+        Response.ResponseBuilder responseBuilder = spy.executeRequest(new HttpGet("http://owijfaw.vmjioew.imkfwo"));
+        assertThat("response header", responseBuilder.build().getMetadata().containsKey("transfer-encoding"), equalTo(false));
+    }
+
+    @Test
+    public void executeRequest_returnsResponseWithNoVaryHeadersFromCloudResponse() throws Exception {
+        HttpClient client = mock(HttpClient.class);
+        HttpResponse response = mock(HttpResponse.class);
+        doReturn(client).when(spy).getHttpClient();
+        when(client.getParams()).thenReturn(new BasicHttpParams());
+        when(client.execute(any(HttpUriRequest.class))).thenReturn(response);
+        when(response.getEntity()).thenReturn(new ByteArrayEntity("Response Body".getBytes()));
+        when(response.getStatusLine()).thenReturn(new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 200, "OK"));
+        when(response.getAllHeaders()).thenReturn(new Header[]{new Header() {
+            @Override
+            public String getName() {
+                return "vary";
+            }
+
+            @Override
+            public String getValue() {
+                return "someValue";
+            }
+
+            @Override
+            public HeaderElement[] getElements() throws ParseException {
+                return new HeaderElement[0];
+            }
+        }});
+
+        Response.ResponseBuilder responseBuilder = spy.executeRequest(new HttpGet("http://owijfaw.vmjioew.imkfwo"));
+        assertThat("response header", responseBuilder.build().getMetadata().containsKey("vary"), equalTo(false));
+    }
+
+    @Test
+    public void executeRequest_returnsResponseWithNonContentRelatedHeadersFromCloudResponse() throws Exception {
+        HttpClient client = mock(HttpClient.class);
+        HttpResponse response = mock(HttpResponse.class);
+        doReturn(client).when(spy).getHttpClient();
+        when(client.getParams()).thenReturn(new BasicHttpParams());
+        when(client.execute(any(HttpUriRequest.class))).thenReturn(response);
+        when(response.getEntity()).thenReturn(new ByteArrayEntity("Response Body".getBytes()));
+        when(response.getStatusLine()).thenReturn(new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 200, "OK"));
+        when(response.getAllHeaders()).thenReturn(new Header[]{new Header() {
+            @Override
+            public String getName() {
+                return "someHeader";
+            }
+
+            @Override
+            public String getValue() {
+                return "someValue";
+            }
+
+            @Override
+            public HeaderElement[] getElements() throws ParseException {
+                return new HeaderElement[0];
+            }
+        }});
+
+        Response.ResponseBuilder responseBuilder = spy.executeRequest(new HttpGet("http://owijfaw.vmjioew.imkfwo"));
+        assertThat("response header", responseBuilder.build().getMetadata().containsKey("someHeader"), equalTo(true));
+    }
+
+    @Test
     public void handleRedirect_returnsResponseBuilderWith301Status_andCorrectEntity() throws Exception {
         HttpResponse response = mock(HttpResponse.class);
         when(response.getAllHeaders()).thenReturn(new Header[0]);
@@ -213,6 +363,16 @@ public class CloudClientTest {
         Response.ResponseBuilder responseBuilder = spy.handleRedirect(response, "response body");
         Response builtResponse = responseBuilder.build();
         assertThat("response-source header", builtResponse.getMetadata().containsKey("response-source"), equalTo(true));
+    }
+
+    @Test
+    public void handleRedirect_withNullRrsponseBody_returnsResponseBuilderWithNullEntity() throws Exception {
+        HttpResponse response = mock(HttpResponse.class);
+        when(response.getAllHeaders()).thenReturn(new Header[0]);
+
+        Response.ResponseBuilder responseBuilder = spy.handleRedirect(response, null);
+        Response builtResponse = responseBuilder.build();
+        assertThat("response entity", builtResponse.getEntity(), nullValue());
     }
 
     @Test

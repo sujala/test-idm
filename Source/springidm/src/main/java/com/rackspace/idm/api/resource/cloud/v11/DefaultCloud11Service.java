@@ -371,7 +371,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             nastId = user.getNastId();
         }
         user.setNastId(nastId);
-        if (nastId != null && !nastId.isEmpty()) {
+        if (!StringUtils.isEmpty(nastId)) {
             Tenant tenant = new Tenant();
             tenant.setName(nastId);
             tenant.setTenantId(nastId);
@@ -1254,16 +1254,8 @@ public class DefaultCloud11Service implements Cloud11Service {
         return config.getString("cloudAuth.userAdminRole");
     }
 
-    public GroupService getUserGroupService() {
-        return userGroupService;
-    }
-
     public void setUserGroupService(GroupService userGroupService) {
         this.userGroupService = userGroupService;
-    }
-
-    public GroupService getCloudGroupService() {
-        return cloudGroupService;
     }
 
     public void setCloudGroupService(GroupService cloudGroupService) {
@@ -1276,5 +1268,9 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     public void setCredentialValidator(CredentialValidator credentialValidator) {
         this.credentialValidator = credentialValidator;
+    }
+
+    public void setCloudContractDescriptionBuilder(CloudContractDescriptionBuilder cloudContractDescriptionBuilder) {
+        this.cloudContractDescriptionBuilder = cloudContractDescriptionBuilder;
     }
 }
