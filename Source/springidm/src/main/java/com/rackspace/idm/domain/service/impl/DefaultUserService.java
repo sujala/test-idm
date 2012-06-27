@@ -456,7 +456,7 @@ public class DefaultUserService implements UserService {
         }
         for(User userInList: users.getUsers()){
             ScopeAccess scopeAccess = scopeAccessDao.getScopeAccessByUserId(userInList.getId());
-            boolean isDefaultUser = authorizationService.authorizeCloudUser(scopeAccess);
+            boolean isDefaultUser = authorizationService.hasDefaultUserRole(scopeAccess);
             if(isDefaultUser){
                 return true;
             }
