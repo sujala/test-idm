@@ -2,15 +2,13 @@ package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.exception.DuplicateUsernameException;
-import com.rackspace.idm.exception.NotFoundException;
-import com.rackspace.idm.exception.StalePasswordException;
-import com.rackspace.idm.exception.UserDisabledException;
+import com.rackspace.idm.exception.*;
 import com.rackspace.idm.util.CryptHelper;
 import com.unboundid.ldap.sdk.*;
 import com.unboundid.ldap.sdk.LDAPConnection;
 import com.unboundid.ldap.sdk.migrate.ldapjdk.*;
 import com.unboundid.ldap.sdk.migrate.ldapjdk.LDAPException;
+import com.unboundid.util.StaticUtils;
 import org.apache.commons.configuration.Configuration;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.hamcrest.Matchers;
@@ -25,6 +23,7 @@ import org.powermock.api.mockito.PowerMockito;
 
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
@@ -954,8 +953,18 @@ public class LdapUserRepositoryTest {
         user.setDomainId("345");
         user.setInMigration(true);
         user.setMigrationDate(new DateTime());
+        user.setSoftDeletedTimestamp(new DateTime());
+        user.setCreated(new DateTime());
+        user.setUpdated(new DateTime());
         Attribute[] attributes = ldapUserRepository.getAddAttributes(user);
-        SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId", attributes, new Control[0]);
+        List<Attribute> attributeList = new ArrayList<Attribute>();
+        Collections.addAll(attributeList, attributes);
+        attributeList.add(new Attribute("softDeletedTimestamp", StaticUtils.encodeGeneralizedTime(user.getSoftDeleteTimestamp().toDate())));
+        attributeList.add(new Attribute("createTimestamp", StaticUtils.encodeGeneralizedTime(user.getCreated().toDate())));
+        attributeList.add(new Attribute("modifyTimestamp", StaticUtils.encodeGeneralizedTime(user.getUpdated().toDate())));
+        attributeList.add(new Attribute("dxPwdFailedTime", StaticUtils.encodeGeneralizedTime(new DateTime().toDate())));
+        Attribute[] newAttributes = attributeList.toArray(new Attribute[0]);
+        SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId", newAttributes, new Control[0]);
         User result = ldapUserRepository.getUser(searchResultEntry);
         assertThat("user", result.toString(), equalTo(user.toString()));
     }
@@ -989,17 +998,6 @@ public class LdapUserRepositoryTest {
     }
 
     @Test
-    public void checkForApiKeyModification_newKeyBlank_addsDeleteKeyModification() throws Exception {
-        User oldUser = new User();
-        oldUser.setApiKey("hello!");
-        User newUser = new User();
-        newUser.setApiKey("");
-        List<Modification> mod = new ArrayList<Modification>();
-        ldapUserRepository.checkForApiKeyModification(oldUser,newUser,null,mod);
-        assertThat("modification type",mod.get(0).getModificationType().getName(),equalTo("DELETE"));
-    }
-
-    @Test
     public void getModifications_ListsUserName() throws Exception {
         User oldUser = new User();
         oldUser.setUsername("orignal");
@@ -1007,6 +1005,626 @@ public class LdapUserRepositoryTest {
         newUser.setUsername("innovation");
         List<Modification> mod = ldapUserRepository.getModifications(oldUser, newUser, false);
         assertThat("modified attribute", mod.get(0).getAttributeName(), equalTo("uid"));
+    }
+
+    @Test
+    public void checkForUserNameModification_addsDeleteMod() throws Exception {
+        User newUser = new User();
+        User oldUser = new User();
+        newUser.setUsername("");
+        List<Modification> modificationList = new ArrayList<Modification>();
+        ldapUserRepository.checkForUserNameModificiation(oldUser, newUser, modificationList);
+        assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("DELETE"));
+    }
+
+    @Test
+    public void checkForMossoIdModification_addsDeleteMod() throws Exception {
+        User newUser = new User();
+        User oldUser = new User();
+        newUser.setMossoId(-1);
+        List<Modification> modificationList = new ArrayList<Modification>();
+        ldapUserRepository.checkForMossoIdModification(oldUser, newUser, modificationList);
+        assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("DELETE"));
+    }
+
+    @Test
+    public void checkForMossoIdModification_addsReplaceMod() throws Exception {
+        User newUser = new User();
+        User oldUser = new User();
+        newUser.setMossoId(1);
+        oldUser.setMossoId(2);
+        List<Modification> modificationList = new ArrayList<Modification>();
+        ldapUserRepository.checkForMossoIdModification(oldUser, newUser, modificationList);
+        assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("REPLACE"));
+    }
+
+    @Test
+    public void checkForMossoIdModification_doesNotAddMod() throws Exception {
+        User newUser = new User();
+        User oldUser = new User();
+        newUser.setMossoId(1);
+        oldUser.setMossoId(1);
+        List<Modification> modificationList = new ArrayList<Modification>();
+        ldapUserRepository.checkForMossoIdModification(oldUser, newUser, modificationList);
+        assertThat("mod list", modificationList.isEmpty(), equalTo(true));
+    }
+
+    @Test
+    public void checkForNastIdModification_addsDeleteMod() throws Exception {
+        User newUser = new User();
+        User oldUser = new User();
+        newUser.setNastId("");
+        List<Modification> modificationList = new ArrayList<Modification>();
+        ldapUserRepository.checkForNastIdModification(oldUser, newUser, modificationList);
+        assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("DELETE"));
+    }
+
+    @Test
+    public void checkForNastIdModification_addsReplaceMod() throws Exception {
+        User newUser = new User();
+        User oldUser = new User();
+        newUser.setNastId("1");
+        oldUser.setNastId("2");
+        List<Modification> modificationList = new ArrayList<Modification>();
+        ldapUserRepository.checkForNastIdModification(oldUser, newUser, modificationList);
+        assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("REPLACE"));
+    }
+
+    @Test
+    public void checkForNastIdModification_doesNotAddMod() throws Exception {
+        User newUser = new User();
+        User oldUser = new User();
+        newUser.setNastId("1");
+        oldUser.setNastId("1");
+        List<Modification> modificationList = new ArrayList<Modification>();
+        ldapUserRepository.checkForNastIdModification(oldUser, newUser, modificationList);
+        assertThat("mod list", modificationList.isEmpty(), equalTo(true));
+    }
+
+    @Test
+    public void checkForEnabledStatusModification_enabledNotNullAndNewEnabled_addsReplaceMod() throws Exception {
+        User newUser = new User();
+        User oldUser = new User();
+        newUser.setEnabled(true);
+        oldUser.setEnabled(false);
+        List<Modification> modificationList = new ArrayList<Modification>();
+        ldapUserRepository.checkForEnabledStatusModification(oldUser, newUser, modificationList);
+        assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("REPLACE"));
+    }
+
+    @Test
+    public void checkForEnabledStatusModification_enabledNull_doesNotAddReplaceMod() throws Exception {
+        User newUser = new User();
+        User oldUser = new User();
+        oldUser.setEnabled(false);
+        List<Modification> modificationList = new ArrayList<Modification>();
+        ldapUserRepository.checkForEnabledStatusModification(oldUser, newUser, modificationList);
+        assertThat("mod list", modificationList.isEmpty(), equalTo(true));
+    }
+
+    @Test
+    public void checkForEnabledStatusModfication_enabledNotNullAndNewEnabledEqualsOldEnabled_doesNotAddReplaceMod() throws Exception {
+        User newUser = new User();
+        User oldUser = new User();
+        newUser.setEnabled(false);
+        oldUser.setEnabled(false);
+        List<Modification> modificationList = new ArrayList<Modification>();
+        ldapUserRepository.checkForEnabledStatusModification(oldUser, newUser, modificationList);
+        assertThat("mod list", modificationList.isEmpty(), equalTo(true));
+    }
+
+    @Test
+    public void checkForTimeZoneModification_timeZoneNotNullAndNotEqual_addsReplaceMod() throws Exception {
+        User newUser = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        newUser.setTimeZoneObj(new FixedDateTimeZone("UTC", "UTC", 0, 0));
+        newUser.setTimeZone("UTC");
+        oldUser.setTimeZone("EST");
+        ldapUserRepository.checkForTimeZoneModification(oldUser, newUser, modificationList);
+        assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("REPLACE"));
+    }
+
+    @Test
+    public void checkForTimeZoneModification_timeZoneNull_doesNotAddMod() throws Exception {
+        User newUser = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        ldapUserRepository.checkForTimeZoneModification(oldUser, newUser, modificationList);
+        assertThat("mod list", modificationList.isEmpty(), equalTo(true));
+    }
+
+    @Test
+    public void checkForTimeZoneModification_timeZoneNotNullAndEqual_doesNotAddMod() throws Exception {
+        User newUser = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        newUser.setTimeZoneObj(new FixedDateTimeZone("UTC", "UTC", 0, 0));
+        newUser.setTimeZone("UTC");
+        oldUser.setTimeZone("UTC");
+        ldapUserRepository.checkForTimeZoneModification(oldUser, newUser, modificationList);
+        assertThat("mod list", modificationList.isEmpty(), equalTo(true));
+    }
+
+    @Test
+    public void checkForLocaleModification_localeNotNullAndNotEqual_addsReplaceMod() throws Exception {
+        User newUser = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        newUser.setLocale(new Locale("en"));
+        oldUser.setLocale(new Locale("chi"));
+        ldapUserRepository.checkForLocaleModification(oldUser, newUser, modificationList);
+        assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("REPLACE"));
+    }
+
+    @Test
+    public void checkForLocalModification_localeNull_doesNotAddMod() throws Exception {
+        User newUser = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        ldapUserRepository.checkForLocaleModification(oldUser, newUser, modificationList);
+        assertThat("mod list", modificationList.isEmpty(), equalTo(true));
+    }
+
+    @Test
+    public void checkForLocaleModification_localeNotNUllAndEqual_doesNotAddMod() throws Exception {
+        User newUser = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        newUser.setLocale(new Locale("en"));
+        oldUser.setLocale(new Locale("en"));
+        ldapUserRepository.checkForLocaleModification(oldUser, newUser, modificationList);
+        assertThat("mod list", modificationList.isEmpty(), equalTo(true));
+    }
+
+    @Test
+    public void checkForPersonIdModification_addsDeleteMod() throws Exception {
+        User user = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        user.setPersonId("");
+        ldapUserRepository.checkForPersonIdModification(oldUser, user, modificationList);
+        assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("DELETE"));
+    }
+
+    @Test
+    public void checkForPersonIdModification_addsReplaceMod() throws Exception {
+        User user = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        user.setPersonId("1");
+        oldUser.setPersonId("2");
+        ldapUserRepository.checkForPersonIdModification(oldUser, user, modificationList);
+        assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("REPLACE"));
+    }
+
+    @Test
+    public void checkForPersonIdModification_doesNotAddMod() throws Exception {
+        User user = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        user.setPersonId("1");
+        oldUser.setPersonId("1");
+        ldapUserRepository.checkForPersonIdModification(oldUser, user, modificationList);
+        assertThat("mod list", modificationList.isEmpty(), equalTo(true));
+    }
+
+    @Test
+    public void checkForRegionModification_addsDeleteMod() throws Exception {
+        User user = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        user.setRegion("");
+        ldapUserRepository.checkForRegionModification(oldUser, user, modificationList);
+        assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("DELETE"));
+    }
+
+    @Test
+    public void checkForRegionModification_addsReplaceMod() throws Exception {
+        User user = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        user.setRegion("cst");
+        oldUser.setRegion("est");
+        ldapUserRepository.checkForRegionModification(oldUser, user, modificationList);
+        assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("REPLACE"));
+    }
+
+    @Test
+    public void checkForRegionModification_doesNotAddMod() throws Exception {
+        User user = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        user.setRegion("cst");
+        oldUser.setRegion("cst");
+        ldapUserRepository.checkForRegionModification(oldUser, user, modificationList);
+        assertThat("mod list", modificationList.isEmpty(), equalTo(true));
+    }
+
+    @Test
+    public void checkForLastNameModification_addsDeleteMod() throws Exception {
+        User user = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        user.setLastname("");
+        ldapUserRepository.checkForLastNameModification(oldUser, user, new CryptHelper(), modificationList);
+        assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("DELETE"));
+    }
+
+    @Test
+    public void checkForLastNameModification_addsReplaceMod() throws Exception {
+        User user = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        user.setLastname("abc");
+        oldUser.setLastname("def");
+        ldapUserRepository.checkForLastNameModification(oldUser, user, new CryptHelper(), modificationList);
+        assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("REPLACE"));
+    }
+
+    @Test
+    public void checkForLastNameModification_doesNotAddMod() throws Exception {
+        User user = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        user.setLastname("abc");
+        oldUser.setLastname("abc");
+        ldapUserRepository.checkForLastNameModification(oldUser, user, new CryptHelper(), modificationList);
+        assertThat("mod list", modificationList.isEmpty(), equalTo(true));
+    }
+
+    @Test
+    public void checkForSecretQuestionModification_addsDeleteMod() throws Exception {
+        User user = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        user.setSecretQuestion("");
+        ldapUserRepository.checkForSecretQuestionModification(oldUser, user, new CryptHelper(), modificationList);
+        assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("DELETE"));
+    }
+
+    @Test
+    public void checkForSecretQuestionModification_addsReplaceMod() throws Exception {
+        User user = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        user.setSecretQuestion("abc");
+        oldUser.setSecretQuestion("def");
+        ldapUserRepository.checkForSecretQuestionModification(oldUser, user, new CryptHelper(), modificationList);
+        assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("REPLACE"));
+    }
+
+    @Test
+    public void checkForSecretQuestionModification_doesNotAddMod() throws Exception {
+        User user = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        user.setSecretQuestion("abc");
+        oldUser.setSecretQuestion("abc");
+        ldapUserRepository.checkForSecretQuestionModification(oldUser, user, new CryptHelper(), modificationList);
+        assertThat("mod list", modificationList.isEmpty(), equalTo(true));
+    }
+
+    @Test
+    public void checkForSecretAnswerModification_addsDeleteMod() throws Exception {
+        User user = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        user.setSecretAnswer("");
+        ldapUserRepository.checkForSecretAnswerModification(oldUser, user, new CryptHelper(), modificationList);
+        assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("DELETE"));
+    }
+
+    @Test
+    public void checkForSecretAnswerModification_addsReplaceMod() throws Exception {
+        User user = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        user.setSecretAnswer("abc");
+        oldUser.setSecretAnswer("def");
+        ldapUserRepository.checkForSecretAnswerModification(oldUser, user, new CryptHelper(), modificationList);
+        assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("REPLACE"));
+    }
+
+    @Test
+    public void checkForSecretAnswerModification_doesNotAddMod() throws Exception {
+        User user = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        user.setSecretAnswer("abc");
+        oldUser.setSecretAnswer("abc");
+        ldapUserRepository.checkForSecretAnswerModification(oldUser, user, new CryptHelper(), modificationList);
+        assertThat("mod list", modificationList.isEmpty(), equalTo(true));
+    }
+
+    @Test
+    public void checkForApiKeyModification_newKeyBlank_addsDeleteKeyModification() throws Exception {
+        User oldUser = new User();
+        oldUser.setApiKey("hello!");
+        User newUser = new User();
+        newUser.setApiKey("");
+        List<Modification> mod = new ArrayList<Modification>();
+        ldapUserRepository.checkForApiKeyModification(oldUser, newUser, null, mod);
+        assertThat("modification type",mod.get(0).getModificationType().getName(),equalTo("DELETE"));
+    }
+
+    @Test
+    public void checkForApiKeyModification_addsReplaceMod() throws Exception {
+        User user = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        user.setApiKey("abc");
+        oldUser.setApiKey("def");
+        ldapUserRepository.checkForApiKeyModification(oldUser, user, new CryptHelper(), modificationList);
+        assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("REPLACE"));
+    }
+
+    @Test
+    public void checkForApiKeyModification_doesNotAddMod() throws Exception {
+        User user = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        user.setApiKey("abc");
+        oldUser.setApiKey("abc");
+        ldapUserRepository.checkForApiKeyModification(oldUser, user, new CryptHelper(), modificationList);
+        assertThat("mod list", modificationList.isEmpty(), equalTo(true));
+    }
+
+    @Test
+    public void checkForMiddleNameModification_addsDeleteMod() throws Exception {
+        User user = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        user.setMiddlename("");
+        ldapUserRepository.checkForMiddleNameModification(oldUser, user, modificationList);
+        assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("DELETE"));
+    }
+
+    @Test
+    public void checkForMiddleNameModification_addsReplaceMod() throws Exception {
+        User user = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        user.setMiddlename("abc");
+        oldUser.setMiddlename("def");
+        ldapUserRepository.checkForMiddleNameModification(oldUser, user, modificationList);
+        assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("REPLACE"));
+    }
+
+    @Test
+    public void checkForMiddleNameModification_doesNotAddMod() throws Exception {
+        User user = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        user.setMiddlename("abc");
+        oldUser.setMiddlename("abc");
+        ldapUserRepository.checkForMiddleNameModification(oldUser, user, modificationList);
+        assertThat("mod list", modificationList.isEmpty(), equalTo(true));
+    }
+
+    @Test
+    public void checkForEmailModification_addsDeleteMod() throws Exception {
+        User user = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        user.setEmail("");
+        ldapUserRepository.checkForEmailModification(oldUser, user, new CryptHelper(), modificationList);
+        assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("DELETE"));
+    }
+
+    @Test
+    public void checkForEmailModification_addsReplaceMod() throws Exception {
+        User user = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        user.setEmail("abc");
+        oldUser.setEmail("def");
+        ldapUserRepository.checkForEmailModification(oldUser, user, new CryptHelper(), modificationList);
+        assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("REPLACE"));
+    }
+
+    @Test
+    public void checkForEmailModification_doesNotAddMod() throws Exception {
+        User user = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        user.setEmail("abc");
+        oldUser.setEmail("abc");
+        ldapUserRepository.checkForEmailModification(oldUser, user, new CryptHelper(), modificationList);
+        assertThat("mod list", modificationList.isEmpty(), equalTo(true));
+    }
+
+    @Test
+    public void checkForFirstNameModification_addsDeleteMod() throws Exception {
+        User user = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        user.setFirstname("");
+        ldapUserRepository.checkForFirstNameModification(oldUser, user, new CryptHelper(), modificationList);
+        assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("DELETE"));
+    }
+
+    @Test
+    public void checkForFirstNameModification_addsReplaceMod() throws Exception {
+        User user = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        user.setFirstname("abc");
+        oldUser.setFirstname("def");
+        ldapUserRepository.checkForFirstNameModification(oldUser, user, new CryptHelper(), modificationList);
+        assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("REPLACE"));
+    }
+
+    @Test
+    public void checkForFirstNameModification_doesNotAddMod() throws Exception {
+        User user = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        user.setFirstname("abc");
+        oldUser.setFirstname("abc");
+        ldapUserRepository.checkForFirstNameModification(oldUser, user, new CryptHelper(), modificationList);
+        assertThat("mod list", modificationList.isEmpty(), equalTo(true));
+    }
+
+    @Test
+    public void checkForSecureIdModification_addDeleteMod() throws Exception {
+        User user = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        user.setSecureId("");
+        ldapUserRepository.checkForSecureIdModification(oldUser, user, modificationList);
+        assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("DELETE"));
+    }
+
+    @Test
+    public void checkForSecureIdModification_addReplaceMod() throws Exception {
+        User user = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        user.setSecureId("abc");
+        oldUser.setSecureId("def");
+        ldapUserRepository.checkForSecureIdModification(oldUser, user, modificationList);
+        assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("REPLACE"));
+    }
+
+    @Test
+    public void checkForSecureIdModification_doesNotAddMod() throws Exception {
+        User user = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        user.setSecureId("abc");
+        oldUser.setSecureId("abc");
+        ldapUserRepository.checkForSecureIdModification(oldUser, user, modificationList);
+        assertThat("mod list", modificationList.isEmpty(), equalTo(true));
+    }
+
+    @Test
+    public void checkForDisplayNameModification_addsDeleteMod() throws Exception {
+        User user = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        user.setDisplayName("");
+        ldapUserRepository.checkForDisplayNameModification(oldUser, user, new CryptHelper(), modificationList);
+        assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("DELETE"));
+    }
+
+    @Test
+    public void checkForDisplayNameModification_addsReplaceMod() throws Exception {
+        User user = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        user.setDisplayName("abc");
+        oldUser.setDisplayName("def");
+        ldapUserRepository.checkForDisplayNameModification(oldUser, user, new CryptHelper(), modificationList);
+        assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("REPLACE"));
+    }
+
+    @Test
+    public void checkForDisplayNameModification_doesNotAddMod() throws Exception {
+        User user = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        user.setDisplayName("abc");
+        oldUser.setDisplayName("abc");
+        ldapUserRepository.checkForDisplayNameModification(oldUser, user, new CryptHelper(), modificationList);
+        assertThat("mod list", modificationList.isEmpty(), equalTo(true));
+    }
+
+    @Test
+    public void checkForCountryModification_addsDeleteMod() throws Exception {
+        User user = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        user.setCountry("");
+        ldapUserRepository.checkForCountryModification(oldUser, user, modificationList);
+        assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("DELETE"));
+    }
+
+    @Test
+    public void checkForCountryModification_addsReplaceMod() throws Exception {
+        User user = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        user.setCountry("abc");
+        oldUser.setCountry("def");
+        ldapUserRepository.checkForCountryModification(oldUser, user, modificationList);
+        assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("REPLACE"));
+    }
+
+    @Test
+    public void checkForCountryModification_doesNotAddMod() throws Exception {
+        User user = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        user.setCountry("abc");
+        oldUser.setCountry("abc");
+        ldapUserRepository.checkForCountryModification(oldUser, user, modificationList);
+        assertThat("mod list", modificationList.isEmpty(), equalTo(true));
+    }
+
+    @Test
+    public void checkForCustomerIdModification_addsDeleteMod() throws Exception {
+        User user = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        user.setCustomerId("");
+        ldapUserRepository.checkForCustomerIdModfication(oldUser, user, modificationList);
+        assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("DELETE"));
+    }
+
+    @Test
+    public void checkForCustomerIdModification_addsReplaceMod() throws Exception {
+        User user = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        user.setCustomerId("abc");
+        oldUser.setCustomerId("def");
+        ldapUserRepository.checkForCustomerIdModfication(oldUser, user, modificationList);
+        assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("REPLACE"));
+    }
+
+    @Test
+    public void checkForCustomerIdModification_doesNotAddMod() throws Exception {
+        User user = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        user.setCustomerId("abc");
+        oldUser.setCustomerId("abc");
+        ldapUserRepository.checkForCustomerIdModfication(oldUser, user, modificationList);
+        assertThat("mod list", modificationList.isEmpty(), equalTo(true));
+    }
+
+    @Test (expected = PasswordSelfUpdateTooSoonException.class)
+    public void checkForPasswordModification_selfUpdated_throwsPasswordSelfUpdateTooSoon() throws Exception {
+        User user = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        Password oldPassword = Password.existingInstance("abc", new DateTime(), true);
+        oldUser.setPasswordObj(oldPassword);
+        user.setPasswordObj(Password.newInstance("abc"));
+        ldapUserRepository.checkForPasswordModification(oldUser, user, true, new CryptHelper(), modificationList);
+    }
+
+    @Test
+    public void checkForPasswordModification_notSelfUpdated_addsMod() throws Exception {
+        User user = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        Password oldPassword = Password.existingInstance("abc", new DateTime(), true);
+        oldUser.setPasswordObj(oldPassword);
+        user.setPasswordObj(Password.newInstance("abc"));
+        ldapUserRepository.checkForPasswordModification(oldUser, user, false, new CryptHelper(), modificationList);
+        assertThat("mod list", modificationList.isEmpty(), equalTo(false));
+    }
+
+    @Test
+    public void checkForMigrationStatusModification_addsReplaceMod() throws Exception {
+        User user = new User();
+        User oldUser = new User();
+        List<Modification> modificationList = new ArrayList<Modification>();
+        user.setInMigration(true);
+        ldapUserRepository.checkForMigrationStatusModification(oldUser, user, modificationList);
+        assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("REPLACE"));
     }
 
     @Test (expected = IllegalArgumentException.class)

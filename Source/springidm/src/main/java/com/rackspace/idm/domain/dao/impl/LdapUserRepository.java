@@ -1000,7 +1000,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return mods;
     }
 
-    private void checkForUserNameModificiation(User uOld, User uNew, List<Modification> mods) {
+    void checkForUserNameModificiation(User uOld, User uNew, List<Modification> mods) {
         if (uNew.getUsername() != null) {
             if (StringUtils.isBlank(uNew.getUsername())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_UID));
@@ -1010,7 +1010,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    private void checkForMossoIdModification(User uOld, User uNew, List<Modification> mods) {
+    void checkForMossoIdModification(User uOld, User uNew, List<Modification> mods) {
         // To delete the attribute MossoId a negative value for the mossoId
         // is sent in.
         if (uNew.getMossoId() != null) {
@@ -1022,7 +1022,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    private void checkForNastIdModification(User uOld, User uNew, List<Modification> mods) {
+    void checkForNastIdModification(User uOld, User uNew, List<Modification> mods) {
         if (uNew.getNastId() != null) {
             if (StringUtils.isBlank(uNew.getNastId())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_NAST_ID));
@@ -1032,25 +1032,25 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    private void checkForEnabledStatusModification(User uOld, User uNew, List<Modification> mods) {
+    void checkForEnabledStatusModification(User uOld, User uNew, List<Modification> mods) {
         if (uNew.isEnabled() != null && uNew.isEnabled() != uOld.isEnabled()) {
             mods.add(new Modification(ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(uNew.isEnabled())));
         }
     }
 
-    private void checkForTimeZoneModification(User uOld, User uNew, List<Modification> mods) {
+    void checkForTimeZoneModification(User uOld, User uNew, List<Modification> mods) {
         if (uNew.getTimeZoneObj() != null && !uNew.getTimeZone().equals(uOld.getTimeZone())) {
             mods.add(new Modification(ModificationType.REPLACE, ATTR_TIME_ZONE, uNew.getTimeZone()));
         }
     }
 
-    private void checkForLocaleModification(User uOld, User uNew, List<Modification> mods) {
+    void checkForLocaleModification(User uOld, User uNew, List<Modification> mods) {
         if (uNew.getLocale() != null && !uNew.getPreferredLang().equals(uOld.getPreferredLang())) {
             mods.add(new Modification(ModificationType.REPLACE, ATTR_LANG, uNew.getPreferredLang().toString()));
         }
     }
 
-    private void checkForPersonIdModification(User uOld, User uNew, List<Modification> mods) {
+    void checkForPersonIdModification(User uOld, User uNew, List<Modification> mods) {
         if (uNew.getPersonId() != null) {
             if (StringUtils.isBlank(uNew.getPersonId())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_RACKSPACE_PERSON_NUMBER));
@@ -1060,7 +1060,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    private void checkForRegionModification(User uOld, User uNew, List<Modification> mods) {
+    void checkForRegionModification(User uOld, User uNew, List<Modification> mods) {
         if (uNew.getRegion() != null) {
             if (StringUtils.isBlank(uNew.getRegion())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_RACKSPACE_REGION));
@@ -1070,7 +1070,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    private void checkForLastNameModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
+    void checkForLastNameModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
         if (uNew.getLastname() != null) {
             if (StringUtils.isBlank(uNew.getLastname())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_SN));
@@ -1080,7 +1080,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    private void checkForSecretQuestionModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
+    void checkForSecretQuestionModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
         if (uNew.getSecretQuestion() != null) {
             if (StringUtils.isBlank(uNew.getSecretQuestion())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_PASSWORD_SECRET_Q));
@@ -1090,7 +1090,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    private void checkForSecretAnswerModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
+    void checkForSecretAnswerModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
         if (uNew.getSecretAnswer() != null) {
             if (StringUtils.isBlank(uNew.getSecretAnswer())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_PASSWORD_SECRET_A));
@@ -1110,7 +1110,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    private void checkForMiddleNameModification(User uOld, User uNew, List<Modification> mods) {
+    void checkForMiddleNameModification(User uOld, User uNew, List<Modification> mods) {
         if (uNew.getMiddlename() != null) {
             if (StringUtils.isBlank(uNew.getMiddlename())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_MIDDLE_NAME));
@@ -1121,7 +1121,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    private void checkForEmailModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
+    void checkForEmailModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
         if (uNew.getEmail() != null) {
             if (StringUtils.isBlank(uNew.getEmail())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_MAIL));
@@ -1131,7 +1131,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    private void checkForFirstNameModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
+    void checkForFirstNameModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
         if (uNew.getFirstname() != null) {
             if (StringUtils.isBlank(uNew.getFirstname())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_GIVEN_NAME));
@@ -1141,7 +1141,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    private void checkForSecureIdModification(User uOld, User uNew, List<Modification> mods) {
+    void checkForSecureIdModification(User uOld, User uNew, List<Modification> mods) {
         if (uNew.getSecureId() != null) {
             if (StringUtils.isBlank(uNew.getSecureId())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_SECURE_ID));
@@ -1151,7 +1151,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    private void checkForDisplayNameModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
+    void checkForDisplayNameModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
         if (uNew.getDisplayName() != null) {
             if (StringUtils.isBlank(uNew.getDisplayName())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_DISPLAY_NAME));
@@ -1162,7 +1162,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    private void checkForCountryModification(User uOld, User uNew, List<Modification> mods) {
+    void checkForCountryModification(User uOld, User uNew, List<Modification> mods) {
         if (uNew.getCountry() != null) {
             if (StringUtils.isBlank(uNew.getCountry())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_C));
@@ -1172,7 +1172,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    private void checkForCustomerIdModfication(User uOld, User uNew, List<Modification> mods) {
+    void checkForCustomerIdModfication(User uOld, User uNew, List<Modification> mods) {
         if (uNew.getCustomerId() != null) {
             if (StringUtils.isBlank(uNew.getCustomerId())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_RACKSPACE_CUSTOMER_NUMBER));
@@ -1183,7 +1183,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    private void checkForPasswordModification(User uOld, User uNew, boolean isSelfUpdate, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
+    void checkForPasswordModification(User uOld, User uNew, boolean isSelfUpdate, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
         DateTime currentTime = new DateTime();
         if (uNew.getPasswordObj().isNew()) {
             if (isSelfUpdate) {
@@ -1201,7 +1201,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    private void checkForMigrationStatusModification(User uOld, User uNew, List<Modification> mods){
+    void checkForMigrationStatusModification(User uOld, User uNew, List<Modification> mods){
         if(uNew.getInMigration() != null) {
             mods.add(new Modification(ModificationType.REPLACE, ATTR_IN_MIGRATION, String.valueOf(uNew.getInMigration())));
         }
