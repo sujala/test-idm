@@ -371,7 +371,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             nastId = user.getNastId();
         }
         user.setNastId(nastId);
-        if (nastId != null && !nastId.isEmpty()) {
+        if (!StringUtils.isEmpty(nastId)) {
             Tenant tenant = new Tenant();
             tenant.setName(nastId);
             tenant.setTenantId(nastId);
@@ -673,18 +673,6 @@ public class DefaultCloud11Service implements Cloud11Service {
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }
-    }
-
-    User checkAndGetUser(String id) {  //Not used right now
-        User user = this.userService.getUserById(id);
-
-        if (user == null) {
-            String errMsg = String.format("User %s not found", id);
-            logger.warn(errMsg);
-            throw new NotFoundException("User not found");
-        }
-
-        return user;
     }
 
     @Override
@@ -1132,10 +1120,10 @@ public class DefaultCloud11Service implements Cloud11Service {
                 UserCredentials userCreds = (UserCredentials) value;
                 username = userCreds.getUsername();
                 String apiKey = userCreds.getKey();
-                if (apiKey == null || apiKey.length() == 0) {
+                if (StringUtils.isBlank(apiKey)) {
                     return cloudExceptionResponse.badRequestExceptionResponse("Expecting apiKey");
                 }
-                if (username == null || username.length() == 0) {
+                if (StringUtils.isBlank(username)) {
                     return cloudExceptionResponse.badRequestExceptionResponse("Expecting username");
                 }
                 user = userService.getUser(username);
@@ -1143,10 +1131,10 @@ public class DefaultCloud11Service implements Cloud11Service {
             } else if (value instanceof PasswordCredentials) {
                 username = ((PasswordCredentials) value).getUsername();
                 String password = ((PasswordCredentials) value).getPassword();
-                if (password == null || password.length() == 0) {
+                if (StringUtils.isBlank(password)) {
                     return cloudExceptionResponse.badRequestExceptionResponse("Expecting password");
                 }
-                if (username == null || username.length() == 0) {
+                if (StringUtils.isBlank(username)) {
                     return cloudExceptionResponse.badRequestExceptionResponse("Expecting username");
                 }
                 user = userService.getUser(username);
@@ -1162,7 +1150,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             } else if (value instanceof NastCredentials) {
                 String nastId = ((NastCredentials) value).getNastId();
                 String key = ((NastCredentials) value).getKey();
-                if (nastId == null || nastId.length() == 0) {
+                if (StringUtils.isBlank(nastId)) {
                     return cloudExceptionResponse.badRequestExceptionResponse("Expecting nast id");
                 }
                 user = userService.getUserByNastId(nastId);
@@ -1254,16 +1242,8 @@ public class DefaultCloud11Service implements Cloud11Service {
         return config.getString("cloudAuth.userAdminRole");
     }
 
-    public GroupService getUserGroupService() {
-        return userGroupService;
-    }
-
     public void setUserGroupService(GroupService userGroupService) {
         this.userGroupService = userGroupService;
-    }
-
-    public GroupService getCloudGroupService() {
-        return cloudGroupService;
     }
 
     public void setCloudGroupService(GroupService cloudGroupService) {
@@ -1276,5 +1256,9 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     public void setCredentialValidator(CredentialValidator credentialValidator) {
         this.credentialValidator = credentialValidator;
+    }
+
+    public void setCloudContractDescriptionBuilder(CloudContractDescriptionBuilder cloudContractDescriptionBuilder) {
+        this.cloudContractDescriptionBuilder = cloudContractDescriptionBuilder;
     }
 }

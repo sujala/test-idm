@@ -67,14 +67,14 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
     public void addClientGroup(ClientGroup clientGroup, String clientUniqueId) {
         getLogger().info("Adding ClientGroup {}", clientGroup);
 
-        Audit audit = Audit.log(clientGroup).add();
 
         if (clientGroup == null) {
             String errMsg = "Null instance of clientGroup was passed";
-            audit.fail(errMsg);
             getLogger().error(errMsg);
             throw new IllegalArgumentException(errMsg);
         }
+
+        Audit audit = Audit.log(clientGroup).add();
 
         ClientGroup group = this.getClientGroup(clientGroup.getCustomerId(),
                 clientGroup.getClientId(), clientGroup.getName());
@@ -619,7 +619,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         return clients;
     }
 
-    private Attribute[] getAddAttributesForClientGroup(ClientGroup group) {
+    Attribute[] getAddAttributesForClientGroup(ClientGroup group) {
         List<Attribute> atts = new ArrayList<Attribute>();
 
         atts.add(new Attribute(ATTR_OBJECT_CLASS, ATTR_CLIENT_GROUP_OBJECT_CLASS_VALUES));
@@ -643,7 +643,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         return attributes;
     }
 
-    private Attribute[] getAddAttributesForClient(Application client) throws InvalidCipherTextException, GeneralSecurityException {
+    Attribute[] getAddAttributesForClient(Application client) throws InvalidCipherTextException, GeneralSecurityException {
         CryptHelper cryptHelper = CryptHelper.getInstance();
         List<Attribute> atts = new ArrayList<Attribute>();
 
