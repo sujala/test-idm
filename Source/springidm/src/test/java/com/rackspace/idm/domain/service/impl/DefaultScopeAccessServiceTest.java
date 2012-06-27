@@ -885,6 +885,7 @@ public class DefaultScopeAccessServiceTest {
     public void expireAllTokensForClient_scopeAccessNotInstanceOfHasAccessToken_doesNotCallUpdateMethod() throws Exception {
         List<ScopeAccess> saList = new ArrayList<ScopeAccess>();
         saList.add(new ScopeAccess());
+        when(clientDao.getClientByClientId(null)).thenReturn(new Application());
         when(scopeAccessDao.getScopeAccessesByParent(null)).thenReturn(saList);
         defaultScopeAccessService.expireAllTokensForClient(null);
         verify(scopeAccessDao,never()).updateScopeAccess(any(ScopeAccess.class));
@@ -917,6 +918,13 @@ public class DefaultScopeAccessServiceTest {
         List<ScopeAccess> sa = new ArrayList<ScopeAccess>();
         when(scopeAccessDao.getDelegateScopeAccessesByParent(null)).thenReturn(sa);
         assertThat("list",defaultScopeAccessService.getDelegateScopeAccessesForParent(null),equalTo(sa));
+    }
+
+    @Test
+    public void getDelegateScopeAccessForParentByClientId_returnsScopeAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        when(scopeAccessDao.getDelegateScopeAccessForParentByClientId(null,null)).thenReturn(scopeAccess);
+        assertThat("scope access",defaultScopeAccessService.getDelegateScopeAccessForParentByClientId(null,null), equalTo(scopeAccess));
     }
 
     @Test
@@ -973,6 +981,7 @@ public class DefaultScopeAccessServiceTest {
     public void getOrCreatePasswordResetScopeAccessForUser_passwordResetScopeAccessNotExpired_doesNotSetAccessTokenExp() throws Exception {
         User user = new User();
         PasswordResetScopeAccess prsa = mock(PasswordResetScopeAccess.class);
+        when(scopeAccessDao.getDirectScopeAccessForParentByClientId(null,"PASSWORDRESET")).thenReturn(prsa);
         when(prsa.isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
         defaultScopeAccessService.getOrCreatePasswordResetScopeAccessForUser(user);
         verify(prsa,never()).setAccessTokenExp(any(Date.class));
@@ -1050,6 +1059,17 @@ public class DefaultScopeAccessServiceTest {
     public void getScopeAccessByAccessToken_accessTokenNull_throwsNotFoundException() throws Exception {
         try{
             defaultScopeAccessService.getScopeAccessByAccessToken(null);
+            assertTrue("should throw exception",false);
+        } catch (Exception ex){
+            assertThat("exception type",ex.getClass().getName(),equalTo("com.rackspace.idm.exception.NotFoundException"));
+            assertThat("exception message", ex.getMessage(),equalTo("Invalid accessToken; Token cannot be null"));
+        }
+    }
+
+    @Test
+    public void getScopeAccessByUserId_nullUserId_throwsNotFoundException() throws Exception {
+        try{
+            defaultScopeAccessService.getScopeAccessByUserId(null);
             assertTrue("should throw exception",false);
         } catch (Exception ex){
             assertThat("exception type",ex.getClass().getName(),equalTo("com.rackspace.idm.exception.NotFoundException"));
@@ -1197,13 +1217,108 @@ public class DefaultScopeAccessServiceTest {
     }
 
     @Test
-    public void grantPermissionToClient_noScopeAccessForParent_getsDirectScopeAccessForParent() throws Exception {
+    public void grantPermissionToClient_noScopeAccessForParent_addsDirectScopeAccessForParent() throws Exception {
         Permission perm = mock(Permission.class);
         when(clientDao.getClientByClientId(null)).thenReturn(new Application());
         when(scopeAccessDao.getPermissionByParentAndPermission((String) eq(null), any(DefinedPermission.class))).thenReturn(perm);
         doReturn(null).when(spy).getDirectScopeAccessForParentByClientId(null, null);
         doReturn(new ScopeAccess()).when(spy).addDirectScopeAccess((String) eq(null), any(ScopeAccess.class));
         spy.grantPermissionToClient(null, new GrantedPermission());
+        verify(spy).addDirectScopeAccess((String) eq(null),any(ScopeAccess.class));
+    }
+
+    @Test
+    public void grantPermissionToUser_nullPermissionAndNullUser_throwsIllegalArgumentException() throws Exception {
+        try{
+            defaultScopeAccessService.grantPermissionToUser(null, null);
+            assertTrue("should throw exception",false);
+        } catch (Exception ex){
+            assertThat("exception type",ex.getClass().getName(),equalTo("java.lang.IllegalArgumentException"));
+            assertThat("exception message", ex.getMessage(), equalTo("Null argument passed in."));
+        }
+    }
+
+    @Test
+    public void grantPermissionToUser_nullPermissionAndUserExists_throwsIllegalArgumentException() throws Exception {
+        try{
+            defaultScopeAccessService.grantPermissionToUser(new User(), null);
+            assertTrue("should throw exception",false);
+        } catch (Exception ex){
+            assertThat("exception type",ex.getClass().getName(),equalTo("java.lang.IllegalArgumentException"));
+            assertThat("exception message", ex.getMessage(), equalTo("Null argument passed in."));
+        }
+    }
+
+    @Test
+    public void grantPermissionToUser_PermissionExistsAndNullUser_throwsIllegalArgumentException() throws Exception {
+        try{
+            defaultScopeAccessService.grantPermissionToUser(null, new GrantedPermission());
+            assertTrue("should throw exception",false);
+        } catch (Exception ex){
+            assertThat("exception type",ex.getClass().getName(),equalTo("java.lang.IllegalArgumentException"));
+            assertThat("exception message", ex.getMessage(), equalTo("Null argument passed in."));
+        }
+    }
+
+    @Test
+    public void grantPermissionToUser_nullClient_throwsNotFoundException() throws Exception {
+        try{
+            when(clientDao.getClientByCustomerIdAndClientId(null, null)).thenReturn(null);
+            defaultScopeAccessService.grantPermissionToUser(new User(), new GrantedPermission());
+            assertTrue("should throw exception",false);
+        } catch (Exception ex){
+            assertThat("exception type",ex.getClass().getName(),equalTo("com.rackspace.idm.exception.NotFoundException"));
+            assertThat("exception message", ex.getMessage(),equalTo("Client null not found"));
+        }
+    }
+
+    @Test
+    public void grantPermissionToUser_permissionNotAssociatedWithClient_throwsNotFoundException() throws Exception {
+        try{
+            when(clientDao.getClientByCustomerIdAndClientId(null,null)).thenReturn(new Application());
+            defaultScopeAccessService.grantPermissionToUser(new User(), new GrantedPermission());
+            assertTrue("should throw exception",false);
+        } catch (Exception ex){
+            assertThat("exception type",ex.getClass().getName(),equalTo("com.rackspace.idm.exception.NotFoundException"));
+            assertThat("exception message", ex.getMessage(),equalTo("Permission null not found for client null"));
+        }
+    }
+
+    @Test
+    public void grantPermissionToUser_noScopeAccessForParent_getsDataFromPermission() throws Exception {
+        Permission perm = mock(Permission.class);
+        when(clientDao.getClientByCustomerIdAndClientId(null,null)).thenReturn(new Application());
+        when(scopeAccessDao.getPermissionByParentAndPermission((String) eq(null), any(DefinedPermission.class))).thenReturn(perm);
+        doReturn(null).when(spy).getDirectScopeAccessForParentByClientId(null, null);
+        doReturn(new UserScopeAccess()).when(spy).addDirectScopeAccess((String) eq(null), any(ScopeAccess.class));
+        spy.grantPermissionToUser(new User(), new GrantedPermission());
+        verify(perm,atLeastOnce()).getClientId();
+        verify(perm,atLeastOnce()).getCustomerId();
+    }
+
+    @Test
+    public void grantPermissionToUser_noScopeAccessForParent_getsDataFromUser() throws Exception {
+        Permission perm = mock(Permission.class);
+        User user = mock(User.class);
+        when(clientDao.getClientByCustomerIdAndClientId(null,null)).thenReturn(new Application());
+        when(scopeAccessDao.getPermissionByParentAndPermission((String) eq(null), any(DefinedPermission.class))).thenReturn(perm);
+        doReturn(null).when(spy).getDirectScopeAccessForParentByClientId(null, null);
+        doReturn(new UserScopeAccess()).when(spy).addDirectScopeAccess((String) eq(null), any(ScopeAccess.class));
+        spy.grantPermissionToUser(user, new GrantedPermission());
+        verify(user,atLeastOnce()).getUsername();
+        verify(user,atLeastOnce()).getCustomerId();
+        verify(user,atLeastOnce()).getId();
+        verify(user,atLeastOnce()).getUniqueId();
+    }
+
+    @Test
+    public void grantPermissionToUser_noScopeAccessForParent_addsDirectScopeAccessForParent() throws Exception {
+        Permission perm = mock(Permission.class);
+        when(clientDao.getClientByCustomerIdAndClientId(null,null)).thenReturn(new Application());
+        when(scopeAccessDao.getPermissionByParentAndPermission((String) eq(null), any(DefinedPermission.class))).thenReturn(perm);
+        doReturn(null).when(spy).getDirectScopeAccessForParentByClientId(null, null);
+        doReturn(new UserScopeAccess()).when(spy).addDirectScopeAccess((String) eq(null), any(ScopeAccess.class));
+        spy.grantPermissionToUser(new User(), new GrantedPermission());
         verify(spy).addDirectScopeAccess((String) eq(null),any(ScopeAccess.class));
     }
 
