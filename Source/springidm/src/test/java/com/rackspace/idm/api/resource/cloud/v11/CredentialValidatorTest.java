@@ -25,6 +25,15 @@ public class CredentialValidatorTest {
         credentialValidator = new CredentialValidator();
     }
 
+    @Test
+    public void validateCredentials_withValidNastCredentials_returns() throws Exception {
+        final NastCredentials credential = new NastCredentials();
+        credential.setNastId("123");
+        credential.setKey("123");
+        credentialValidator.validateCredential(credential);
+        assertTrue("returned from validate", true);
+    }
+
     @Test(expected = BadRequestException.class)
     public void validateCredential_NastCredentialsWithNullNastId_throwsBadRequestException() throws Exception {
         final NastCredentials credential = new NastCredentials();
@@ -102,4 +111,12 @@ public class CredentialValidatorTest {
         credential.setNastId("");
         credentialValidator.validateCredential(credential);
     }
+
+    //TODO: should null be valid credentials?
+    @Test
+    public void validateCredential_withNonNastCredentials_returns() throws Exception {
+        credentialValidator.validateCredential(null);
+        assertTrue("returned from validate", true);
+    }
+
 }

@@ -1,5 +1,4 @@
 package com.rackspace.idm.api.resource.cloud.v20;
-
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
@@ -21,6 +20,7 @@ import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import com.sun.jersey.server.wadl.generators.resourcedoc.xhtml.Elements;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.CharUtils;
 import org.joda.time.DateTime;
 import org.openstack.docs.common.api.v1.Extension;
 import org.openstack.docs.common.api.v1.Extensions;
@@ -52,6 +52,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * Created by IntelliJ IDEA.
@@ -489,6 +490,13 @@ public class DefaultCloud20Service implements Cloud20Service {
             String errorMsg = "Username should not contain white spaces";
             logger.warn(errorMsg);
             throw new BadRequestException(errorMsg);
+        }
+        Pattern alphaNumberic = Pattern.compile("[a-zA-z0-9]*");
+        if (!alphaNumberic.matcher(username).matches()) {
+            throw new BadRequestException("Username has invalid characters; only alphanumeric characters are allowed.");
+        }
+        if (!CharUtils.isAsciiAlpha(username.charAt(0))) {
+            throw new BadRequestException("Username must begin with an alphabetic character.");
         }
     }
 

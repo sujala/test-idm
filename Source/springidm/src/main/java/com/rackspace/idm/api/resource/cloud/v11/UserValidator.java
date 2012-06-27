@@ -2,7 +2,12 @@ package com.rackspace.idm.api.resource.cloud.v11;
 
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspacecloud.docs.auth.api.v1.User;
+import com.rsa.cryptoj.c.P;
+import freemarker.template.utility.StringUtil;
+import org.apache.commons.lang.CharUtils;
 import org.springframework.stereotype.Component;
+
+import java.util.regex.Pattern;
 
 /**
  * Created by IntelliJ IDEA.
@@ -13,7 +18,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class UserValidator {
 
-    static final String USER_ID_EMPTY_MSG = "User Id Cannot be empty.";
+    static final String USER_ID_EMPTY_MSG = "User cannot be empty.";
     static final String USER_ID_NULL_MSG = "User ID can not be null.";
 
     public void validate(User user) {
@@ -30,4 +35,15 @@ public class UserValidator {
             }
         }
     }
+
+    public void validateUserName(String username){
+        Pattern alphaNumberic = Pattern.compile("[a-zA-z0-9]*");
+        if(!alphaNumberic.matcher(username).matches()){
+            throw new BadRequestException("Username has invalid characters; only alphanumeric characters are allowed.");
+        }
+        if(!CharUtils.isAsciiAlpha(username.charAt(0))){
+            throw new BadRequestException("Username must begin with an alphabetic character.");
+        }
+    }
+
 }

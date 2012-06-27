@@ -255,6 +255,10 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public void deleteDelegatedToken(User user, String tokenString) {
 
+        if(user == null){
+            throw new IllegalArgumentException("Null argument passed in");
+        }
+
         List<DelegatedClientScopeAccess> scopeAccessList = this.getDelegatedUserScopeAccessForUsername(user.getUsername());
 
         if (scopeAccessList != null && scopeAccessList.size() == 0) {
@@ -333,6 +337,11 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public boolean doesUserHavePermissionForClient(User user,
                                                    Permission permission, Application client) {
+
+        if(user == null || permission == null || client == null){
+            throw new IllegalArgumentException("Null argument(s) passed in.");
+        }
+
         logger.debug("Checking whether user {} has permission {}", user,
                 permission);
         Permission poSearchParam = new Permission();
@@ -597,6 +606,9 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             throw new NotFoundException("Invalid accessToken; Token cannot be null");
         }
         final ScopeAccess scopeAccess = this.scopeAccessDao.getScopeAccessByAccessToken(accessToken);
+        if (scopeAccess == null) {
+            throw new NotFoundException("Scope Access not found.");
+        }
         logger.debug("Got ScopeAccess {} by Access Token {}", scopeAccess, accessToken);
         return scopeAccess;
     }
@@ -736,6 +748,11 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     @Override
     public void updateUserScopeAccessTokenForClientIdByUser(User user, String clientId, String token, Date expires) {
+
+        if(user == null){
+            throw new IllegalArgumentException("Null user object instance.");
+        }
+
         final UserScopeAccess scopeAccess = this.getUserScopeAccessForClientId(user.getUniqueId(), clientId);
         if (scopeAccess != null) {
             scopeAccess.setAccessTokenString(token);
@@ -828,7 +845,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public GrantedPermission grantPermissionToUser(User user,
                                                    GrantedPermission permission) {
-        if (permission == null) {
+        if (permission == null || user == null) {
             String errMsg = String.format("Null argument passed in.");
             logger.error(errMsg);
             throw new IllegalArgumentException(errMsg);
@@ -954,7 +971,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return scopeAccess;
     }
 
-    private String generateToken() {
+    String generateToken() {
         return UUID.randomUUID().toString().replace("-", "");
     }
 
@@ -989,19 +1006,19 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return usersList;
     }
 
-    private int getDefaultCloudAuthTokenExpirationSeconds() {
+    int getDefaultCloudAuthTokenExpirationSeconds() {
         return config.getInt("token.cloudAuthExpirationSeconds");
     }
 
-    private int getRefreshTokenWindow() {
+    int getRefreshTokenWindow() {
         return config.getInt("token.refreshWindowHours");
     }
 
-    private int getDefaultTokenExpirationSeconds() {
+    int getDefaultTokenExpirationSeconds() {
         return config.getInt("token.expirationSeconds");
     }
 
-    private int getDefaultImpersonatedTokenExpirationSeconds() {
+    int getDefaultImpersonatedTokenExpirationSeconds() {
         return config.getInt("token.impersonatedExpirationSeconds");
     }
 
@@ -1009,7 +1026,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return config.getInt("ldap.paging.limit.max");
     }
 
-    private void handleAuthenticationFailure(String username, final UserAuthenticationResult result) {
+    void handleAuthenticationFailure(String username, final UserAuthenticationResult result) {
         if (!result.isAuthenticated()) {
             String errorMessage = String.format("Invalid username or password.", username);
             logger.warn(errorMessage);

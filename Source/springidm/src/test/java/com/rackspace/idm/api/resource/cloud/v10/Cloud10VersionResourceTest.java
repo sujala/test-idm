@@ -8,6 +8,8 @@ import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.exception.NotAuthenticatedException;
+import com.rackspace.idm.exception.UserDisabledException;
 import com.rackspacecloud.docs.auth.api.v1.Endpoint;
 import com.rackspacecloud.docs.auth.api.v1.Service;
 import com.rackspacecloud.docs.auth.api.v1.ServiceCatalog;
@@ -92,6 +94,22 @@ public class Cloud10VersionResourceTest {
     }
 
     @Test
+    public void getCloud10VersionInfo_usingCloudAuthAndNotMigratedUser_withNon204ResponseAndUser_DoesNotCallScopeAccessService_updateUserScopeAccessTokenForClientIdByUser() throws Exception {
+        when(userService.getUser("username")).thenReturn(new User());
+        when(userService.isMigratedUser(any(User.class))).thenReturn(false);
+        when(config.getBoolean("useCloudAuth", false)).thenReturn(true);
+        when(cloudClient.get(anyString(), any(HttpHeaders.class))).thenReturn(Response.status(404));
+        UserScopeAccess userScopeAccess = mock(UserScopeAccess.class);
+        when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString())).thenReturn(userScopeAccess);
+        when(userScopeAccess.getAccessTokenString()).thenReturn("token");
+        when(endpointConverterCloudV11.toServiceCatalog(anyList())).thenReturn(new ServiceCatalog());
+        when(userScopeAccess.getAccessTokenExp()).thenReturn(new DateTime(1).toDate());
+        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password");
+        verify(scopeAccessService, never()).updateUserScopeAccessTokenForClientIdByUser(any(User.class), anyString(), anyString(), any(Date.class));
+        assertThat("response status", response.getStatus(), equalTo(204));
+    }
+
+    @Test
     public void getCloud10VersionInfo_notRouting_withNullUser_returnsUnauthorizedResponse() throws Exception {
         when(userService.getUser("username")).thenReturn(null);
         when(config.getBoolean("useCloudAuth", false)).thenReturn(false);
@@ -109,6 +127,24 @@ public class Cloud10VersionResourceTest {
         when(endpointConverterCloudV11.toServiceCatalog(anyList())).thenReturn(new ServiceCatalog());
         Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password");
         assertThat("response token", response.getMetadata().getFirst("X-Auth-Token").toString(), equalTo("token"));
+    }
+
+    @Test
+    public void getCloud10VersionInfo_notRouting_withNotAuthenticatedUser_returns401Status() throws Exception {
+        when(userService.getUser("username")).thenReturn(new User());
+        when(config.getBoolean("useCloudAuth", false)).thenReturn(false);
+        when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString())).thenThrow(new NotAuthenticatedException());
+        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password");
+        assertThat("response token", response.getStatus(), equalTo(401));
+    }
+
+    @Test
+    public void getCloud10VersionInfo_notRouting_withDisabledUser_returns403Status() throws Exception {
+        when(userService.getUser("username")).thenReturn(new User());
+        when(config.getBoolean("useCloudAuth", false)).thenReturn(false);
+        when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString())).thenThrow(new UserDisabledException());
+        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password");
+        assertThat("response token", response.getStatus(), equalTo(403));
     }
 
     @Test

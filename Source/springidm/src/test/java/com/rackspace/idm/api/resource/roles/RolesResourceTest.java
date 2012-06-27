@@ -11,8 +11,11 @@ import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 
 import javax.ws.rs.core.Response;
+
+import java.util.List;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
@@ -54,6 +57,24 @@ public class RolesResourceTest {
         doNothing().when(authorizationService).verifyIdmSuperAdminAccess(null);
         rolesResource.getAllRoles(null, null, null);
         verify(applicationService).getAllClientRoles(anyList());
+    }
+
+    @Test
+    public void getAllRoles_withApplicationId_addsApplicationIdFilter() throws Exception {
+        doNothing().when(authorizationService).verifyIdmSuperAdminAccess(null);
+        rolesResource.getAllRoles(null, null, "applicationId");
+        ArgumentCaptor<List> argumentCaptor = ArgumentCaptor.forClass(List.class);
+        verify(applicationService).getAllClientRoles(argumentCaptor.capture());
+        assertThat("FilterParam", ((FilterParam)argumentCaptor.getValue().get(0)).getParam(), equalTo(FilterParam.FilterParamName.APPLICATION_ID));
+    }
+
+    @Test
+    public void getAllRoles_withName_addsNameFilter() throws Exception {
+        doNothing().when(authorizationService).verifyIdmSuperAdminAccess(null);
+        rolesResource.getAllRoles(null, "name", null);
+        ArgumentCaptor<List> argumentCaptor = ArgumentCaptor.forClass(List.class);
+        verify(applicationService).getAllClientRoles(argumentCaptor.capture());
+        assertThat("FilterParam", ((FilterParam)argumentCaptor.getValue().get(0)).getParam(), equalTo(FilterParam.FilterParamName.ROLE_NAME));
     }
 
     @Test
@@ -177,6 +198,11 @@ public class RolesResourceTest {
         when(applicationService.getClientRoleById("roleId")).thenReturn(new ClientRole());
         Response response = rolesResource.deleteRole(null, "roleId");
         assertThat("response status", response.getStatus(), equalTo(204));
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void validateRole_nullRole_throwsBadRequestException() throws Exception {
+        rolesResource.validateRole(null);
     }
 
     @Test(expected = BadRequestException.class)
