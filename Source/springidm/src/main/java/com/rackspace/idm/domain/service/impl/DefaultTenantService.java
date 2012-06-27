@@ -9,14 +9,19 @@ import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.exception.ClientConflictException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
+import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class DefaultTenantService implements TenantService {
+
+    @Autowired
+    private Configuration config;
 
     private final TenantDao tenantDao;
     private final ApplicationDao clientDao;
@@ -352,6 +357,26 @@ public class DefaultTenantService implements TenantService {
         addTenantRole(sa.getUniqueId(), role);
 
         logger.info("Adding tenantRole {} to user {}", role, user);
+    }
+
+    @Override
+    public void addTenantRolesToUser(ScopeAccess userAdminScopeAccess, User subUser) {
+        List<TenantRole> tenantRoles = this.getTenantRolesForScopeAccess(userAdminScopeAccess);
+        for (TenantRole tenantRole : tenantRoles) {
+            if (!tenantRole.getName().equalsIgnoreCase(config.getString("cloudAuth.adminRole"))
+                    && !tenantRole.getName().equalsIgnoreCase(config.getString("cloudAuth.serviceAdminRole"))
+                    && !tenantRole.getName().equalsIgnoreCase(config.getString("cloudAuth.userAdminRole"))
+                    && !tenantRole.getName().equalsIgnoreCase(config.getString("cloudAuth.userRole"))) {
+                TenantRole role = new TenantRole();
+                role.setClientId(tenantRole.getClientId());
+                role.setDescription(tenantRole.getDescription());
+                role.setName(tenantRole.getName());
+                role.setRoleRsId(tenantRole.getRoleRsId());
+                role.setTenantIds(tenantRole.getTenantIds());
+                tenantRole.setUserId(subUser.getId());
+                this.addTenantRoleToUser(subUser, role);
+            }
+        }
     }
 
     @Override

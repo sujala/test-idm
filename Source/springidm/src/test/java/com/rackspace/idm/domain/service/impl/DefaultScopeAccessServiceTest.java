@@ -1066,6 +1066,7 @@ public class DefaultScopeAccessServiceTest {
         }
     }
 
+
     @Test
     public void getScopeAccessByUserId_nullUserId_throwsNotFoundException() throws Exception {
         try{
