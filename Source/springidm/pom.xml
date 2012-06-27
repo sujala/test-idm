@@ -934,7 +934,7 @@
                         <artifactId>maven-soapui-plugin</artifactId>
                         <version>${soapui.version}</version>
                         <configuration>
-                            <projectFile>soapui/soapUI/foundationAPI/FoundationAPI-DEV.xml</projectFile>
+                            <projectFile>soapui/soapUI/foundationAPI/FoundationAPI.xml</projectFile>
                             <junitReport>true</junitReport>
                             <testSuite>FoundationAuth-GA TestSuite</testSuite>
                             <testSuite>FoundationAuth-GA NegativeTestSuite</testSuite>
