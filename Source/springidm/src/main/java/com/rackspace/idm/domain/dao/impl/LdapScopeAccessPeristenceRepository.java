@@ -398,8 +398,10 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
 
             final List<SearchResultEntry> searchEntries = searchResult.getSearchEntries();
             getLogger().debug("Found {} ScopeAccess by AccessToken: {}", searchEntries.size(), accessToken);
-            for (final SearchResultEntry searchResultEntry : searchEntries) {
-                return decodeScopeAccess(searchResultEntry);
+            if(searchEntries != null){
+                for (final SearchResultEntry searchResultEntry : searchEntries) {
+                    return decodeScopeAccess(searchResultEntry);
+                }
             }
         } catch (final LDAPException e) {
             getLogger().error("Error reading ScopeAccess by AccessToken: " + accessToken, e);

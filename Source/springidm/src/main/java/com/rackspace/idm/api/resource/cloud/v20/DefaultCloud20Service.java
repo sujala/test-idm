@@ -1797,6 +1797,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         try {
             ScopeAccess scopeAccessByAccessToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
+            if(scopeAccessByAccessToken == null){
+                throw new NotAuthorizedException("Invalid token");
+            }
             User caller = getUser(scopeAccessByAccessToken);
 
             //if default user

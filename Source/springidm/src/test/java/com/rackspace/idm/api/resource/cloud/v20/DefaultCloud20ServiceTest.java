@@ -3522,6 +3522,14 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void listUsers_withNullScopeAccess_returns401() throws Exception {
+        doReturn(new User()).when(spy).getUser(any(ScopeAccess.class));
+        when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(null);
+        Response.ResponseBuilder responseBuilder = spy.listUsers(null, authToken, null, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(401));
+    }
+
+    @Test
     public void listGroupWithQueryParam_validName_returns200() throws Exception {
         CloudKsGroupBuilder cloudKsGroupBuilder = mock(CloudKsGroupBuilder.class);
         when(userGroupService.getGroupByName(org.mockito.Matchers.<String>anyObject())).thenReturn(group);
