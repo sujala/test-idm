@@ -842,7 +842,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public GrantedPermission grantPermissionToUser(User user,
                                                    GrantedPermission permission) {
-        if (permission == null) {
+        if (permission == null || user == null) {
             String errMsg = String.format("Null argument passed in.");
             logger.error(errMsg);
             throw new IllegalArgumentException(errMsg);
