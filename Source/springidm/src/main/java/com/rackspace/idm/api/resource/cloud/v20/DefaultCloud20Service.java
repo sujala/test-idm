@@ -337,15 +337,16 @@ public class DefaultCloud20Service implements Cloud20Service {
             User userDO = this.userConverterCloudV20.toUserDO(user);
 
             //if caller is a user-admin, give user same mosso and nastId and verifies that it has less then 100 subusers
-            if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
+            boolean isUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken);
+            if (isUserAdmin) {
                 //TODO Pagination index and offset
                 Users users;
                 User caller = userService.getUserByAuthToken(authToken);
                 String domainId = caller.getDomainId();
                 FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParamName.DOMAIN_ID, domainId)};
-                users = this.userService.getAllUsers(filters);
+                users = userService.getAllUsers(filters);
                 int numSubUsers = config.getInt("numberOfSubUsers");
-                if (users.getUsers().size() > numSubUsers) {
+                if (users != null && users.getUsers() != null && users.getUsers().size() > numSubUsers) {
                     String errMsg = String.format("User cannot create more than %d sub-accounts.", numSubUsers);
                     throw new BadRequestException(errMsg);
                 }
@@ -355,7 +356,10 @@ public class DefaultCloud20Service implements Cloud20Service {
             setDomainId(scopeAccessByAccessToken, userDO);
             userService.addUser(userDO);
             assignProperRole(httpHeaders, authToken, scopeAccessByAccessToken, userDO);
-
+            //after user is created and caller is a user admin, add tenant roles to default user
+            if (isUserAdmin) {
+                tenantService.addTenantRolesToUser(scopeAccessByAccessToken, userDO);
+            }
             UriBuilder requestUriBuilder = uriInfo.getRequestUriBuilder();
             String id = userDO.getId();
             URI build = requestUriBuilder.path(id).build();

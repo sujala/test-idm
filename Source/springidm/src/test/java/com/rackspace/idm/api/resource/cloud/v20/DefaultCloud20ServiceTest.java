@@ -234,6 +234,20 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void addUser_withUserAdminCaller_callsTenantService_addTenantRolesToUser() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doNothing().when(spy).verifyUserAdminLevelAccess(authToken);
+        doNothing().when(spy).setDomainId(scopeAccess,user);
+        doNothing().when(spy).assignProperRole(httpHeaders,authToken,scopeAccess,user);
+        when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(scopeAccess) ;
+        when(authorizationService.authorizeCloudUserAdmin(scopeAccess)).thenReturn(true);
+        when(userService.getUserByAuthToken(authToken)).thenReturn(user);
+        when(userService.getAllUsers(org.mockito.Matchers.<FilterParam[]>anyObject())).thenReturn(new Users());
+        spy.addUser(httpHeaders,uriInfo,authToken,userOS);
+        verify(tenantService).addTenantRolesToUser(scopeAccess,user);
+    }
+
+    @Test
     public void deleteUser_callsUserService_hasSubUsers() throws Exception {
         spy.deleteUser(httpHeaders, authToken, userId);
         verify(userService).hasSubUsers(userId);

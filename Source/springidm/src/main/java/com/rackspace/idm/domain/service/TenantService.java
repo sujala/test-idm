@@ -16,6 +16,7 @@ public interface TenantService {
     
     void addTenantRole(String parentUniqueId, TenantRole role);
     void addTenantRoleToUser(User user, TenantRole role);
+    void addTenantRolesToUser(ScopeAccess userAdminScopeAccess, User subUser);
     void addTenantRoleToClient(Application client, TenantRole role);
     void deleteTenantRole(String parentUniqueId, TenantRole role);
     void deleteGlobalRole(TenantRole role);
