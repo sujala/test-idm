@@ -86,7 +86,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
      * @param scopeAccess
      * @return AuthData with roles
      */
-    private AuthData getAuthDataWithClientRoles(ScopeAccess scopeAccess) {
+    AuthData getAuthDataWithClientRoles(ScopeAccess scopeAccess) {
         AuthData authData = getAuthData(scopeAccess);
 
         if (authData.getUser() != null) {
@@ -113,7 +113,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
      * @param scopeAccess
      * @return AuthData
      */
-    private AuthData getAuthData(ScopeAccess scopeAccess) {
+    AuthData getAuthData(ScopeAccess scopeAccess) {
         AuthData authData = new AuthData();
 
         if (scopeAccess instanceof HasAccessToken) {
@@ -152,7 +152,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
      * @param scopeAccess
      * @param authData
      */
-    private void setClient(ScopeAccess scopeAccess, AuthData authData) {
+    void setClient(ScopeAccess scopeAccess, AuthData authData) {
         if (scopeAccess instanceof ClientScopeAccess) {
             // TODO: consider getting from client dao, so can retrieve more info
             // about client
@@ -195,9 +195,14 @@ public class DefaultAuthenticationService implements AuthenticationService {
         }
     }
 
-    private ScopeAccess getTokens(final Credentials trParam, final DateTime currentTime) throws NotAuthenticatedException {
+    ScopeAccess getTokens(final Credentials trParam, final DateTime currentTime) throws NotAuthenticatedException {
+
+        if(trParam.getGrantType() == null){
+            throw new BadRequestException("grant_type cannot be null");
+        }
 
         OAuthGrantType grantType = trParam.getOAuthGrantType();
+
         if (StringUtils.isBlank(trParam.getClientId())) {
             String msg = "client_id cannot be blank";
             logger.warn(msg);
@@ -329,7 +334,11 @@ public class DefaultAuthenticationService implements AuthenticationService {
         throw new NotAuthenticatedException(message);
     }
 
-    private UserScopeAccess getAndUpdateUserScopeAccessForClientId(User user, Application client) {
+    UserScopeAccess getAndUpdateUserScopeAccessForClientId(User user, Application client) {
+
+        if(user == null || client == null){
+            throw new IllegalArgumentException("Argument(s) cannot be null.");
+        }
 
         logger.debug("Get and Update ScopeAccess for User: {} and ClientId: {}", user.getUsername(), client.getClientId());
         UserScopeAccess scopeAccess = null;
@@ -566,11 +575,11 @@ public class DefaultAuthenticationService implements AuthenticationService {
         }
     }
 
-    private String generateToken() {
+    String generateToken() {
         return UUID.randomUUID().toString().replace("-", "");
     }
 
-    private int getDefaultTokenExpirationSeconds() {
+    int getDefaultTokenExpirationSeconds() {
         return config.getInt("token.expirationSeconds");
     }
 
@@ -581,6 +590,8 @@ public class DefaultAuthenticationService implements AuthenticationService {
     protected DateTime getCurrentTime() {
         return new DateTime();
     }
+
+
 
     public void setRsaClient(RSAClient rsaClient) {
         this.rsaClient = rsaClient;

@@ -246,6 +246,11 @@ public class DefaultAuthorizationServiceTest {
     }
 
     @Test
+    public void hasDefaultUserRole_scopeAccessIsNull_returnsFalse() throws Exception {
+        assertThat("boolean", defaultAuthorizationService.hasDefaultUserRole(null), equalTo(false));
+    }
+
+    @Test
     public void authorizeCloudUser_tokenExpired_returnsFalse() throws Exception {
         ScopeAccess scopeAccess = mock(UserScopeAccess.class);
         when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(true);
@@ -258,6 +263,15 @@ public class DefaultAuthorizationServiceTest {
         when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
         DefaultAuthorizationService.setCLOUD_USER_ROLE(null);
         defaultAuthorizationService.authorizeCloudUser(scopeAccess);
+        verify(clientDao).getClientRoleByClientIdAndRoleName(anyString(), anyString());
+    }
+
+    @Test
+    public void hasDefaultUserRole_cloudUserAdminRoleNull_setsCloudUserAdminRole() throws Exception {
+        ScopeAccess scopeAccess = mock(UserScopeAccess.class);
+        when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
+        DefaultAuthorizationService.setCLOUD_USER_ROLE(null);
+        defaultAuthorizationService.hasDefaultUserRole(scopeAccess);
         verify(clientDao).getClientRoleByClientIdAndRoleName(anyString(), anyString());
     }
 
@@ -278,6 +292,15 @@ public class DefaultAuthorizationServiceTest {
         ScopeAccess scopeAccess = mock(UserScopeAccess.class);
         when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
         defaultAuthorizationService.authorizeCloudUser(scopeAccess);
+        DefaultAuthorizationService.setCLOUD_USER_ROLE(null);
+        verify(tenantDao).doesScopeAccessHaveTenantRole(eq(scopeAccess), any(ClientRole.class));
+    }
+
+    @Test
+    public void hasDefaultUserROle_callsTenantDaoMethod() throws Exception {
+        ScopeAccess scopeAccess = mock(UserScopeAccess.class);
+        when(((HasAccessToken)scopeAccess).isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
+        defaultAuthorizationService.hasDefaultUserRole(scopeAccess);
         DefaultAuthorizationService.setCLOUD_USER_ROLE(null);
         verify(tenantDao).doesScopeAccessHaveTenantRole(eq(scopeAccess), any(ClientRole.class));
     }
