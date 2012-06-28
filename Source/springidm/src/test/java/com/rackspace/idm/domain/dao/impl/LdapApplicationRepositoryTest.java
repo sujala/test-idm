@@ -4,7 +4,9 @@ import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.exception.DuplicateClientGroupException;
 import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.util.CryptHelper;
 import com.unboundid.ldap.sdk.*;
+import com.unboundid.ldap.sdk.persist.LDAPPersistException;
 import org.apache.commons.configuration.Configuration;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.junit.Before;
@@ -17,6 +19,7 @@ import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.*;
 
@@ -505,5 +508,509 @@ public class LdapApplicationRepositoryTest {
         verify(spy).updateEntry(eq("notUniqueAtAll"), argumentCaptor.capture(), any(Audit.class));
         ArrayList<Modification> value = argumentCaptor.getValue();
         assertThat("modification type", value.get(0).getModificationType().toString(), equalTo("REPLACE"));
+    }
+
+    @Test
+    public void getAddAttributesForClientGroup_addsAllAttributes_returnsArray() throws Exception {
+        ClientGroup clientGroup = new ClientGroup();
+        clientGroup.setCustomerId("customerId");
+        clientGroup.setClientId("clientId");
+        clientGroup.setName("name");
+        clientGroup.setType("type");
+        Attribute[] result = ldapApplicationRepository.getAddAttributesForClientGroup(clientGroup);
+        assertThat("customer id", result[1].getValue(), equalTo("customerId"));
+        assertThat("client id", result[2].getValue(), equalTo("clientId"));
+        assertThat("name", result[3].getValue(), equalTo("name"));
+        assertThat("type", result[4].getValue(), equalTo("type"));
+    }
+
+    @Test
+    public void getAddAttributesForClientGroup_noAttributesAdded_returnsArray() throws Exception {
+        Attribute[] result = ldapApplicationRepository.getAddAttributesForClientGroup(new ClientGroup());
+        assertThat("attribute", result.length, equalTo(1));
+    }
+
+    @Test
+    public void getAddAttributesForclient_addsAllAttributes_returnsArray() throws Exception {
+        Application client = new Application();
+        client.setClientId("clientId");
+        client.setOpenStackType("openStack");
+        client.setName("name");
+        client.setRCN("rcn");
+        client.setClientSecretObj(ClientSecret.newInstance("secret"));
+        client.setEnabled(true);
+        client.setTitle("title");
+        client.setDescription("description");
+        client.setScope("scope");
+        client.setCallBackUrl("url");
+        CryptHelper cryptHelper = new CryptHelper();
+        Attribute[] result = ldapApplicationRepository.getAddAttributesForClient(client);
+        assertThat("client id", result[1].getValue(), equalTo("clientId"));
+        assertThat("open stack type", result[2].getValue(), equalTo("openStack"));
+        assertThat("name", result[3].getValue(), equalTo("name"));
+        assertThat("rcn", result[4].getValue(), equalTo("rcn"));
+        assertThat("client secret", result[5].getValue(), equalTo("secret"));
+        assertThat("client password", cryptHelper.decrypt(result[6].getValueByteArray()), equalTo("secret"));
+        assertThat("enabled", result[7].getValue(), equalTo("true"));
+        assertThat("title", result[8].getValue(), equalTo("title"));
+        assertThat("description", result[9].getValue(), equalTo("description"));
+        assertThat("scope", result[10].getValue(), equalTo("scope"));
+        assertThat("url", result[11].getValue(), equalTo("url"));
+    }
+
+    @Test
+    public void getAddAttributesForclient_addsNoAttributes_returnsArray() throws Exception {
+        Application client = new Application();
+        client.setClientSecretObj(ClientSecret.newInstance(null));
+        Attribute[] result = ldapApplicationRepository.getAddAttributesForClient(client);
+        assertThat("attribute", result.length, equalTo(1));
+    }
+
+    @Test
+    public void getClient_setupClientAttributes_returnsClient() throws Exception {
+        Application client = new Application();
+        client.setClientId("clientId");
+        client.setOpenStackType("openStack");
+        client.setName("name");
+        client.setRCN("rcn");
+        client.setClientSecretObj(ClientSecret.newInstance("secret"));
+        client.setEnabled(true);
+        client.setTitle("title");
+        client.setDescription("description");
+        client.setScope("scope");
+        client.setCallBackUrl("url");
+        Attribute[] attributesForClient = ldapApplicationRepository.getAddAttributesForClient(client);
+        SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId", attributesForClient);
+        Application result = ldapApplicationRepository.getClient(searchResultEntry);
+        assertThat("unique id", result.getUniqueId(), equalTo("uniqueId"));
+        assertThat("client id", result.getClientId(), equalTo("clientId"));
+        assertThat("open stack type", result.getOpenStackType(), equalTo("openStack"));
+        assertThat("name", result.getName(), equalTo("name"));
+        assertThat("rcn", result.getRCN(), equalTo("rcn"));
+        assertThat("client secret", result.getClientSecret(), equalTo("secret"));
+        assertThat("enabled", result.isEnabled(), equalTo(true));
+        assertThat("title",result.getTitle(), equalTo("title"));
+        assertThat("description", result.getDescription(), equalTo("description"));
+        assertThat("scope",result.getScope(), equalTo("scope"));
+        assertThat("url", result.getCallBackUrl(), equalTo("url"));
+    }
+
+    @Test
+    public void getClientGroup_setupClientGropuAttributes_returnsClientGroup() throws Exception {
+        ClientGroup clientGroup = new ClientGroup();
+        clientGroup.setCustomerId("customerId");
+        clientGroup.setClientId("clientId");
+        clientGroup.setName("name");
+        clientGroup.setType("type");
+        Attribute[] clientGroupAttributes = ldapApplicationRepository.getAddAttributesForClientGroup(clientGroup);
+        SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId", clientGroupAttributes);
+        ClientGroup result = ldapApplicationRepository.getClientGroup(searchResultEntry);
+        assertThat("unique id", result.getUniqueId(), equalTo("uniqueId"));
+        assertThat("customer id", result.getCustomerId(), equalTo("customerId"));
+        assertThat("client id", result.getClientId(), equalTo("clientId"));
+        assertThat("name", result.getName(), equalTo("name"));
+        assertThat("type", result.getType(), equalTo("type"));
+    }
+
+    @Test
+    public void getSingleClient_notFoundClient_returnsNull() throws Exception {
+        doReturn(null).when(spy).getSingleEntry(anyString(), any(SearchScope.class), any(Filter.class));
+        Application result = spy.getSingleClient(null);
+        assertThat("client", result, equalTo(null));
+    }
+
+    @Test
+    public void getSingleClient_foundClient_returnsClient() throws Exception {
+        Application client = new Application();
+        SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0]);
+        doReturn(searchResultEntry).when(spy).getSingleEntry(anyString(), any(SearchScope.class), any(Filter.class));
+        doReturn(client).when(spy).getClient(searchResultEntry);
+        Application result = spy.getSingleClient(null);
+        assertThat("client", result, equalTo(client));
+    }
+
+    @Test
+    public void getSingleSoftDeletedClient_notFoundClient_returnsNull() throws Exception {
+        doReturn(null).when(spy).getSingleEntry(anyString(), any(SearchScope.class), any(Filter.class));
+        Application result = spy.getSingleSoftDeletedClient(null);
+        assertThat("client", result, equalTo(null));
+    }
+
+    @Test
+    public void getSingleSoftDeletedClient_foundClient_returnsClient() throws Exception {
+        Application client = new Application();
+        SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0]);
+        doReturn(searchResultEntry).when(spy).getSingleEntry(anyString(), any(SearchScope.class), any(Filter.class));
+        doReturn(client).when(spy).getClient(searchResultEntry);
+        Application result = spy.getSingleSoftDeletedClient(null);
+        assertThat("client", result, equalTo(client));
+    }
+
+    @Test
+    public void getModifications_nothingToModify_returnsEmptyList() throws Exception {
+        Application client = new Application();
+        client.setClientSecretObj(ClientSecret.existingInstance(null));
+        List<Modification> result = spy.getModifications(client, client);
+        assertThat("mods", result.isEmpty(), equalTo(true));
+    }
+
+    @Test
+    public void checkForCallBackUrlModification_addsDeleteMod() throws Exception {
+        Application client = new Application();
+        client.setCallBackUrl("");
+        client.setClientSecretObj(ClientSecret.existingInstance(null));
+        List<Modification> result = spy.getModifications(client, client);
+        assertThat("mods", result.get(0).getModificationType().toString(), equalTo("DELETE"));
+    }
+
+    @Test
+    public void checkForCallBackUrlModification_addsReplaceMod() throws Exception {
+        Application client = new Application();
+        client.setCallBackUrl("url");
+        client.setClientSecretObj(ClientSecret.existingInstance(null));
+        Application oldClient = new Application();
+        oldClient.setCallBackUrl("differentUrl");
+        List<Modification> result = spy.getModifications(oldClient, client);
+        assertThat("mods", result.get(0).getModificationType().toString(), equalTo("REPLACE"));
+    }
+
+    @Test
+    public void checkForCallBackUrlModification_addsNoMod() throws Exception {
+        Application client = new Application();
+        client.setCallBackUrl("url");
+        client.setClientSecretObj(ClientSecret.existingInstance(null));
+        List<Modification> result = spy.getModifications(client, client);
+        assertThat("mods", result.isEmpty(), equalTo(true));
+    }
+
+    @Test
+    public void checkForScopeModification_addsDeleteMod() throws Exception {
+        Application client = new Application();
+        client.setScope("");
+        client.setClientSecretObj(ClientSecret.existingInstance(null));
+        List<Modification> result = spy.getModifications(client, client);
+        assertThat("mods", result.get(0).getModificationType().toString(), equalTo("DELETE"));
+    }
+
+    @Test
+    public void checkForScopeModification_addsReplaceMod() throws Exception {
+        Application client = new Application();
+        client.setScope("new");
+        client.setClientSecretObj(ClientSecret.existingInstance(null));
+        Application oldClient = new Application();
+        oldClient.setScope("different");
+        List<Modification> result = spy.getModifications(oldClient, client);
+        assertThat("mods", result.get(0).getModificationType().toString(), equalTo("REPLACE"));
+    }
+
+    @Test
+    public void checkForScopeModification_addsNoMod() throws Exception {
+        Application client = new Application();
+        client.setScope("new");
+        client.setClientSecretObj(ClientSecret.existingInstance(null));
+        List<Modification> result = spy.getModifications(client, client);
+        assertThat("mods", result.isEmpty(), equalTo(true));
+    }
+
+    @Test
+    public void checkForDescriptionModification_addsDeleteMod() throws Exception {
+        Application client = new Application();
+        client.setDescription("");
+        client.setClientSecretObj(ClientSecret.existingInstance(null));
+        List<Modification> result = spy.getModifications(client, client);
+        assertThat("mods", result.get(0).getModificationType().toString(), equalTo("DELETE"));
+    }
+
+    @Test
+    public void checkForDescriptionModification_addsReplaceMod() throws Exception {
+        Application client = new Application();
+        client.setDescription("new");
+        client.setClientSecretObj(ClientSecret.existingInstance(null));
+        Application oldClient = new Application();
+        oldClient.setDescription("different");
+        List<Modification> result = spy.getModifications(oldClient, client);
+        assertThat("mods", result.get(0).getModificationType().toString(), equalTo("REPLACE"));
+    }
+
+    @Test
+    public void checkForDescriptionModification_addsNoMod() throws Exception {
+        Application client = new Application();
+        client.setDescription("new");
+        client.setClientSecretObj(ClientSecret.existingInstance(null));
+        List<Modification> result = spy.getModifications(client, client);
+        assertThat("mods", result.isEmpty(), equalTo(true));
+    }
+
+    @Test
+    public void checkForTitleModification_addsDeleteMod() throws Exception {
+        Application client = new Application();
+        client.setTitle("");
+        client.setClientSecretObj(ClientSecret.existingInstance(null));
+        List<Modification> result = spy.getModifications(client, client);
+        assertThat("mods", result.get(0).getModificationType().toString(), equalTo("DELETE"));
+    }
+
+    @Test
+    public void checkForTitleModification_addsReplaceMod() throws Exception {
+        Application client = new Application();
+        client.setTitle("new");
+        client.setClientSecretObj(ClientSecret.existingInstance(null));
+        Application oldClient = new Application();
+        oldClient.setTitle("different");
+        List<Modification> result = spy.getModifications(oldClient, client);
+        assertThat("mods", result.get(0).getModificationType().toString(), equalTo("REPLACE"));
+    }
+
+    @Test
+    public void checkForTitleModification_addsNoMod() throws Exception {
+        Application client = new Application();
+        client.setTitle("new");
+        client.setClientSecretObj(ClientSecret.existingInstance(null));
+        List<Modification> result = spy.getModifications(client, client);
+        assertThat("mods", result.isEmpty(), equalTo(true));
+    }
+
+    @Test
+    public void checkForEnabledStatusModification_enabledNotNullAndNotEqual_addsReplaceMod() throws Exception {
+        Application client = new Application();
+        client.setClientSecretObj(ClientSecret.existingInstance(null));
+        client.setEnabled(true);
+        Application oldClient = new Application();
+        oldClient.setEnabled(false);
+        List<Modification> result = spy.getModifications(oldClient, client);
+        assertThat("mods", result.get(0).getModificationType().toString(), equalTo("REPLACE"));
+    }
+
+    @Test
+    public void checkForEnabledStatusModification_notNullAndEqual_addsNoMod() throws Exception {
+        Application client = new Application();
+        client.setClientSecretObj(ClientSecret.existingInstance(null));
+        client.setEnabled(true);
+        List<Modification> result = spy.getModifications(client, client);
+        assertThat("mods", result.isEmpty(), equalTo(true));
+    }
+
+    @Test
+    public void checkForClientSecretModification_addsReplaceMod() throws Exception {
+        Application client = new Application();
+        client.setClientSecretObj(ClientSecret.newInstance("secret"));
+        List<Modification> result = spy.getModifications(client, client);
+        assertThat("mods", result.get(0).getModificationType().toString(), equalTo("REPLACE"));
+        assertThat("mods", result.get(1).getModificationType().toString(), equalTo("REPLACE"));
+    }
+
+    @Test
+    public void checkForRCNModification_rcnNotNullAndNotEqual_addsReplaceMod() throws Exception {
+        Application client = new Application();
+        client.setRCN("new");
+        client.setClientSecretObj(ClientSecret.existingInstance(null));
+        Application oldClient = new Application();
+        oldClient.setRCN("old");
+        List<Modification> result = spy.getModifications(oldClient, client);
+        assertThat("mods", result.get(0).getModificationType().toString(), equalTo("REPLACE"));
+    }
+
+    @Test
+    public void checkForRCNModification_rcnNullAndEqual_addsNoMod() throws Exception {
+        Application client = new Application();
+        client.setRCN("new");
+        client.setClientSecretObj(ClientSecret.existingInstance(null));
+        Application oldClient = new Application();
+        oldClient.setRCN("new");
+        List<Modification> result = spy.getModifications(oldClient, client);
+        assertThat("mods", result.isEmpty(), equalTo(true));
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void addClientRole_clientUniqueIdIsBlank_throwsIllegalArgument() throws Exception {
+        ldapApplicationRepository.addClientRole("", null);
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void addClientRole_roleIsNull_throwsIllegalArgument() throws Exception {
+        ldapApplicationRepository.addClientRole("uniqueId", null);
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void deleteClientRole_roleIsNull_throwsIllegalArgument() throws Exception {
+        ldapApplicationRepository.deleteClientRole(null);
+    }
+
+    @Test
+    public void deleteClientRole_callsDeleteEntryAndSubtree() throws Exception {
+        ClientRole role = new ClientRole();
+        doNothing().when(spy).deleteEntryAndSubtree(anyString(), any(Audit.class));
+        spy.deleteClientRole(role);
+        verify(spy).deleteEntryAndSubtree(anyString(), any(Audit.class));
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void getClientRoleByClientIdAndRoleName_clientIdIsBlank_throwsIllegalArgument() throws Exception {
+        ldapApplicationRepository.getClientRoleByClientIdAndRoleName("", null);
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void getClientRoleByClientIdAndRoleName_roleNameIsBlank_throwsIllegalArgument() throws Exception {
+        ldapApplicationRepository.getClientRoleByClientIdAndRoleName("clientId", null);
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void getClientRoleByClientIdAndRoleName_callsSingleClientRole_throwsLDAPPersistException() throws Exception {
+        doThrow(new LDAPPersistException("error")).when(spy).getSingleClientRole(anyString(), any(Filter.class));
+        spy.getClientRoleByClientIdAndRoleName("clientId", "roleName");
+    }
+
+    @Test
+    public void getClientRoleByClientIdAndRoleName_foundClientRole_returnsRole() throws Exception {
+        ClientRole role = new ClientRole();
+        doReturn(role).when(spy).getSingleClientRole(anyString(), any(Filter.class));
+        ClientRole result = spy.getClientRoleByClientIdAndRoleName("clientId", "roleName");
+        assertThat("client role", result, equalTo(role));
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void getClientRolesByClientId_clientIdIsBlank_throwsIllegalArgument() throws Exception {
+        ldapApplicationRepository.getClientRolesByClientId("");
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void getClientRolesByClientId_callsGetMultipleClientRoles_throwsLDAPPersistException() throws Exception {
+        doThrow(new LDAPPersistException("error")).when(spy).getMultipleClientRoles(anyString(), any(Filter.class));
+        spy.getClientRolesByClientId("clientId");
+    }
+
+    @Test
+    public void getClientRolesByClientId_foundClientRoles_returnsRoles() throws Exception {
+        ClientRole clientRole = new ClientRole();
+        ArrayList<ClientRole> roleList = new ArrayList<ClientRole>();
+        roleList.add(clientRole);
+        doReturn(roleList).when(spy).getMultipleClientRoles(anyString(), any(Filter.class));
+        List<ClientRole> result = spy.getClientRolesByClientId("clientId");
+        assertThat("client role", result.get(0), equalTo(clientRole));
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void getAllClientRoles_callsGetMultipleClientRoles_throwsLDAPPersistException() throws Exception {
+        doThrow(new LDAPPersistException("error")).when(spy).getMultipleClientRoles(anyString(), any(Filter.class));
+        spy.getAllClientRoles();
+    }
+
+    @Test
+    public void getAllClientRoles_foundRoles_returnClientRoles() throws Exception {
+        ClientRole clientRole = new ClientRole();
+        ArrayList<ClientRole> roleList = new ArrayList<ClientRole>();
+        roleList.add(clientRole);
+        doReturn(roleList).when(spy).getMultipleClientRoles(anyString(), any(Filter.class));
+        List<ClientRole> result = spy.getAllClientRoles();
+        assertThat("client role", result.get(0), equalTo(clientRole));
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void updateClientRole_roleIsNull_throwsIllegalArgument() throws Exception {
+        ldapApplicationRepository.updateClientRole(null);
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void updateClientRole_roleUniqueIdIsBlank_throwsIllegalArgument() throws Exception {
+        ldapApplicationRepository.updateClientRole(new ClientRole());
+    }
+
+    @Test
+    public void getMultipleClientRoles_addsClientRole_returnsRoleList() throws Exception {
+        ArrayList<SearchResultEntry> entries = new ArrayList<SearchResultEntry>();
+        SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0]);
+        entries.add(searchResultEntry);
+        ClientRole clientRole = new ClientRole();
+        doReturn(clientRole).when(spy).getClientRole(searchResultEntry);
+        doReturn(entries).when(spy).getMultipleEntries(anyString(), any(SearchScope.class), any(Filter.class), anyString());
+        List<ClientRole> result = spy.getMultipleClientRoles("", null);
+        assertThat("client role", result.get(0), equalTo(clientRole));
+    }
+
+    @Test
+    public void getMultipleClientRoles_noEntries_returnsEmptyList() throws Exception {
+        ArrayList<SearchResultEntry> entries = new ArrayList<SearchResultEntry>();
+        doReturn(entries).when(spy).getMultipleEntries(anyString(), any(SearchScope.class), any(Filter.class), anyString());
+        List<ClientRole> result = spy.getMultipleClientRoles("", null);
+        assertThat("client role", result.isEmpty(), equalTo(true));
+    }
+
+    @Test
+    public void getSingleClientRole_foundRole_returnsRole() throws Exception {
+        ClientRole clientRole = new ClientRole();
+        SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0]);
+        doReturn(searchResultEntry).when(spy).getSingleEntry("", SearchScope.SUB, null);
+        doReturn(clientRole).when(spy).getClientRole(searchResultEntry);
+        ClientRole result = spy.getSingleClientRole("", null);
+        assertThat("client role", result, equalTo(clientRole));
+    }
+
+    @Test
+    public void getClientRole_entryIsNull_returnsNull() throws Exception {
+        ClientRole result = ldapApplicationRepository.getClientRole(null);
+        assertThat("client role", result, equalTo(null));
+    }
+
+    @Test
+    public void getClientRole_foundRole_returnsClientRole() throws Exception {
+        ClientRole result = ldapApplicationRepository.getClientRole(new SearchResultEntry("uniqueId", new Attribute[0]));
+        assertThat("client role", result.getUniqueId(), equalTo("uniqueId"));
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void getClientRoleById_idIsBlank_throwsIllegalArgument() throws Exception {
+        ldapApplicationRepository.getClientRoleById("");
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void getClientRoleById_callsGetSingleClientRole_throwsLDAPPersistException() throws Exception {
+        doThrow(new LDAPPersistException("error")).when(spy).getSingleClientRole(anyString(), any(Filter.class));
+        spy.getClientRoleById("id");
+    }
+
+    @Test
+    public void getClientRoleById_foundRole_returnsClientRole() throws Exception {
+        ClientRole clientRole = new ClientRole();
+        doReturn(clientRole).when(spy).getSingleClientRole(anyString(), any(Filter.class));
+        ClientRole result = spy.getClientRoleById("id");
+        assertThat("client role", result, equalTo(clientRole));
+    }
+
+    @Test
+    public void getOpenStackServices_foundClients_returnsList() throws Exception {
+        Applications clients = new Applications();
+        Application client = new Application();
+        ArrayList<Application> clientList = new ArrayList<Application>();
+        clientList.add(client);
+        clients.setClients(clientList);
+        doReturn(clients).when(spy).getMultipleClients(any(Filter.class), anyInt(), anyInt());
+        List<Application> result = spy.getOpenStackServices();
+        assertThat("client", result.get(0), equalTo(client));
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void getSoftDeletedApplicationById_idIsBlank_throwsIllegalArgument() throws Exception {
+        ldapApplicationRepository.getSoftDeletedApplicationById("");
+    }
+
+    @Test
+    public void getSoftDeletedApplicationById_foundApplication_returnsApplication() throws Exception {
+        Application application = new Application();
+        doReturn(application).when(spy).getSingleSoftDeletedClient(any(Filter.class));
+        Application result = spy.getSoftDeletedApplicationById("id");
+        assertThat("application", result, equalTo(application));
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void getSoftDeletedClientByName_clientNameIsBlank_throwsIllegalArgument() throws Exception {
+        ldapApplicationRepository.getSoftDeletedClientByName("");
+    }
+
+    @Test
+    public void getSoftDeletedClientByName_foundApplication_returnsApplication() throws Exception {
+        Application application = new Application();
+        doReturn(application).when(spy).getSingleSoftDeletedClient(any(Filter.class));
+        Application result = spy.getSoftDeletedClientByName("clientName");
+        assertThat("application", result, equalTo(application));
     }
 }
