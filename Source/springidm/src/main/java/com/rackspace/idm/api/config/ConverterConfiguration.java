@@ -86,7 +86,7 @@ public class ConverterConfiguration {
     }
     
     @Bean
-    UserConverterCloudV11 userConverterCloudC11() {
+    UserConverterCloudV11 userConverterCloudV11() {
         return new UserConverterCloudV11(endpointConverterCloudV11());
     }
 }
