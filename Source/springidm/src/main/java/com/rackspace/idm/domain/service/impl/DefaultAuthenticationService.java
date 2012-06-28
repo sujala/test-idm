@@ -380,8 +380,12 @@ public class DefaultAuthenticationService implements AuthenticationService {
         return scopeAccess;
     }
 
-    private ClientScopeAccess getAndUpdateClientScopeAccessForClientId(
+    ClientScopeAccess getAndUpdateClientScopeAccessForClientId(
             Application client) {
+
+        if(client == null){
+            throw new IllegalArgumentException("Argument cannot be null.");
+        }
 
         logger.debug("Get and Update Client ScopeAccess for ClientId: {}",
                 client.getClientId());
@@ -424,6 +428,10 @@ public class DefaultAuthenticationService implements AuthenticationService {
 
     RackerScopeAccess getAndUpdateRackerScopeAccessForClientId(Racker racker, Application client) {
 
+        if(racker == null || client == null){
+            throw new IllegalArgumentException("Argument(s) cannot be null.");
+        }
+
         logger.debug("Get and Update ScopeAccess for Racker: {} and ClientId: {}", racker.getRackerId(), client.getClientId());
 
         RackerScopeAccess scopeAccess = scopeAccessService.getRackerScopeAccessForClientId(racker.getUniqueId(), client.getClientId());
@@ -465,7 +473,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
         return scopeAccess;
     }
 
-    private void validateRackerHasRackerRole(Racker racker, RackerScopeAccess scopeAccess, Application client) {
+    void validateRackerHasRackerRole(Racker racker, RackerScopeAccess scopeAccess, Application client) {
         List<TenantRole> tenantRolesForScopeAccess = tenantService.getTenantRolesForScopeAccess(scopeAccess);
         boolean hasRackerRole = false;
         for (TenantRole tenantRole : tenantRolesForScopeAccess) {
@@ -521,7 +529,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
         return new UserAuthenticationResult(racker, authenticated);
     }
 
-    private DateTime getUserPasswordExpirationDate(String userName) {
+    DateTime getUserPasswordExpirationDate(String userName) {
         User user = this.userDao.getUserByUsername(userName);
         if (user == null) {
             logger.debug("No user found, returning null.");
@@ -547,7 +555,8 @@ public class DefaultAuthenticationService implements AuthenticationService {
 
     void validateCredentials(final Credentials trParam) {
         ApiError error = null;
-        if (trParam.getGrantType() == null) {
+
+        if (trParam == null || trParam.getGrantType() == null) {
             throw new BadRequestException("Invalid request: Missing or malformed parameter(s).");
         }
 

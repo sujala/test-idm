@@ -10,6 +10,8 @@ import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.api.resource.cloud.MigrationClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
+
+import com.rackspace.idm.api.resource.cloud.v20.CloudKsGroupBuilder;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.BadRequestException;
@@ -90,6 +92,9 @@ public class CloudMigrationService {
     private EndpointConverterCloudV20 endpointConverterCloudV20;
 
     @Autowired
+    private CloudKsGroupBuilder cloudKsGroupBuilder;
+
+    @Autowired
     private AtomHopperClient atomHopperClient;
 
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -101,6 +106,19 @@ public class CloudMigrationService {
 
     public void migrateGroups() throws Exception {
         addOrUpdateGroups(getAdminToken());
+    }
+
+    public Response.ResponseBuilder getGroups() {
+        List<com.rackspace.idm.domain.entity.Group> groups = cloudGroupService.getGroups("", 0);
+
+        com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups cloudGroups = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups();
+
+        for (com.rackspace.idm.domain.entity.Group group : groups) {
+            com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group cloudGroup = cloudKsGroupBuilder.build(group);
+            cloudGroups.getGroup().add(cloudGroup);
+        }
+
+        return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtKsgrpV1Factory().createGroups(cloudGroups));
     }
 
     public Response.ResponseBuilder getMigratedUserList() throws Exception {
@@ -613,6 +631,12 @@ public class CloudMigrationService {
 
         if (users.getUsers() == null) // Used so we do not delete a user who wasn't previously migrated.
             throw new NotFoundException("User not found.");
+
+        for (com.rackspace.idm.domain.entity.User u : users.getUsers()) {
+            if (u.getInMigration() == null) {
+                throw new ConflictException("Cannot unmigrate useradmin that contains subusers created after migration.");
+            }
+        }
         
         for (com.rackspace.idm.domain.entity.User u : users.getUsers())
             userService.deleteUser(u.getUsername());

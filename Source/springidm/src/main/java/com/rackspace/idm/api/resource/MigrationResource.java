@@ -112,6 +112,12 @@ public class MigrationResource {
         return Response.status(Response.Status.ACCEPTED).build();
     }
 
+    @GET
+    @Path("cloud/groups")
+    public Response getGroups() throws Exception {
+        return cloudMigrationService.getGroups().build();
+    }
+
     public void setCloudMigrationService(CloudMigrationService cloudMigrationService) {
         this.cloudMigrationService = cloudMigrationService;
     }

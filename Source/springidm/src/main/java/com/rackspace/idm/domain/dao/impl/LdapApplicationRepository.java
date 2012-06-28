@@ -695,7 +695,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         return attributes;
     }
 
-    private Application getClient(SearchResultEntry resultEntry) {
+    Application getClient(SearchResultEntry resultEntry) {
         CryptHelper cryptHelper = CryptHelper.getInstance();
         Application client = new Application();
         client.setUniqueId(resultEntry.getDN());
@@ -730,7 +730,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         return client;
     }
 
-    private ClientGroup getClientGroup(SearchResultEntry resultEntry) {
+    ClientGroup getClientGroup(SearchResultEntry resultEntry) {
         ClientGroup clientGroup = new ClientGroup();
         clientGroup.setUniqueId(resultEntry.getDN());
         clientGroup.setClientId(resultEntry.getAttributeValue(ATTR_CLIENT_ID));
@@ -742,7 +742,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         return clientGroup;
     }
 
-    private Applications getMultipleClients(Filter searchFilter, int offset, int limit) {
+    Applications getMultipleClients(Filter searchFilter, int offset, int limit) {
 
         offset = offset < 0 ? this.getLdapPagingOffsetDefault() : offset;
         limit = limit <= 0 ? this.getLdapPagingLimitDefault() : limit;
@@ -781,7 +781,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         return clients;
     }
 
-    private Application getSingleClient(Filter searchFilter) {
+    Application getSingleClient(Filter searchFilter) {
         Application client = null;
         SearchResultEntry entry = this.getSingleEntry(APPLICATIONS_BASE_DN, SearchScope.SUB, searchFilter);
 
@@ -794,7 +794,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         return client;
     }
 
-    private Application getSingleSoftDeletedClient(Filter searchFilter) {
+    Application getSingleSoftDeletedClient(Filter searchFilter) {
         Application client = null;
         SearchResultEntry entry = this.getSingleEntry(SOFT_DELETED_APPLICATIONS_BASE_DN, SearchScope.SUB, searchFilter);
 
@@ -1085,7 +1085,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         }
     }
 
-    private List<ClientRole> getMultipleClientRoles(String baseDN,
+    List<ClientRole> getMultipleClientRoles(String baseDN,
                                                     Filter searchFilter) throws LDAPPersistException {
         List<SearchResultEntry> entries = this.getMultipleEntries(baseDN,
                 SearchScope.SUB, searchFilter, ATTR_NAME);
@@ -1097,7 +1097,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         return roles;
     }
 
-    private ClientRole getSingleClientRole(String baseDN, Filter searchFilter)
+    ClientRole getSingleClientRole(String baseDN, Filter searchFilter)
             throws LDAPPersistException {
         SearchResultEntry entry = this.getSingleEntry(baseDN, SearchScope.SUB,
                 searchFilter);
@@ -1105,7 +1105,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         return role;
     }
 
-    private ClientRole getClientRole(SearchResultEntry entry)
+    ClientRole getClientRole(SearchResultEntry entry)
             throws LDAPPersistException {
         if (entry == null) {
             return null;

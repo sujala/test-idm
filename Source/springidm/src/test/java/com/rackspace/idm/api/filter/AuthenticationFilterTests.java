@@ -1,11 +1,23 @@
 package com.rackspace.idm.api.filter;
 
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.*;
 
 import javax.ws.rs.core.HttpHeaders;
 
+import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess;
+import com.rackspace.idm.domain.entity.RackerScopeAccess;
+import com.rackspace.idm.domain.entity.ScopeAccess;
+import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.exception.NotAuthorizedException;
+import com.sun.jersey.core.util.MultivaluedMapImpl;
+import org.apache.commons.configuration.Configuration;
 import org.easymock.EasyMock;
+import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -14,11 +26,19 @@ import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.sun.jersey.spi.container.ContainerRequest;
 
+import java.util.ArrayList;
+
 public class AuthenticationFilterTests {
 
     private ScopeAccessService oauthService;
     private AuthenticationFilter authFilter;
     private ContainerRequest request;
+    private ContainerRequest requestMock;
+    ScopeAccessService scopeAccessServiceMock;
+    UserService userService;
+    Configuration configuration;
+    AuthenticationFilter authenticationFilterWithMock;
+
 
     @Before
     public void setUp() {
@@ -26,8 +46,143 @@ public class AuthenticationFilterTests {
         .createNiceMock(ScopeAccessService.class);
         authFilter = new AuthenticationFilter(oauthService);
         request = EasyMock.createNiceMock(ContainerRequest.class);
+        requestMock = mock(ContainerRequest.class);
+        scopeAccessServiceMock = mock(ScopeAccessService.class);
+        userService = mock(UserService.class);
+        configuration = mock(Configuration.class);
+        authenticationFilterWithMock = new AuthenticationFilter(scopeAccessServiceMock);
+        authenticationFilterWithMock.setUserService(userService);
+        authenticationFilterWithMock.setConfig(configuration);
     }
-    
+
+    @Test
+    public void shouldPublicPaths() throws Exception {
+        when(requestMock.getMethod()).thenReturn("GET");
+        when(requestMock.getPath()).thenReturn("somet/thing/public");
+        authFilter.filter(requestMock);
+        verify(requestMock, never()).getHeaderValue("X-Auth-Token");
+        assertTrue("no exceptions", true);
+    }
+
+    @Test
+    public void shouldPublicCloudSplashScreen_withoutAuth() throws Exception {
+        when(requestMock.getMethod()).thenReturn("GET");
+        when(requestMock.getPath()).thenReturn("cloud");
+        authFilter.filter(requestMock);
+        verify(requestMock, never()).getHeaderValue("X-Auth-Token");
+        assertTrue("no exceptions", true);
+    }
+
+    @Test
+    public void shouldCloudAuthOrValidationEndpoint_withoutAuth() throws Exception {
+        when(requestMock.getMethod()).thenReturn("GET");
+        when(requestMock.getPath()).thenReturn("cloud/v2.0/tokens");
+        authFilter.filter(requestMock);
+        verify(requestMock, never()).getHeaderValue("X-Auth-Token");
+        assertTrue("no exceptions", true);
+    }
+
+    @Test
+    public void shouldCloudTokenEndpoints_withoutAuth() throws Exception {
+        when(requestMock.getMethod()).thenReturn("GET");
+        when(requestMock.getPath()).thenReturn("cloud/v2.0/tokens/someToken/endpoints");
+        authFilter.filter(requestMock);
+        verify(scopeAccessServiceMock, never()).getScopeAccessByAccessToken(anyString());
+    }
+
+    @Test
+    public void shouldCloudUrls_withNullToken_returnsRequest() throws Exception {
+        when(requestMock.getMethod()).thenReturn("GET");
+        when(requestMock.getPath()).thenReturn("cloud/Any/General/Path");
+        when(requestMock.getHeaderValue("X-Auth-Token")).thenReturn(null);
+        authFilter.filter(requestMock);
+        verify(requestMock, never()).getRequestHeaders();
+    }
+
+    @Test
+    public void shouldCloudUrls_withNonImpersonationToken_throwsNotAuthenticatedException() throws Exception {
+        when(requestMock.getMethod()).thenReturn("GET");
+        when(requestMock.getPath()).thenReturn("cloud/Any/General/Path");
+        when(requestMock.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER)).thenReturn("authToken");
+        ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
+        impersonatedScopeAccess.setAccessTokenString("authToken");
+        impersonatedScopeAccess.setImpersonatingToken("impToken");
+        impersonatedScopeAccess.setAccessTokenExp(new DateTime().plusMinutes(10).toDate());
+        when(scopeAccessServiceMock.getScopeAccessByAccessToken("authToken")).thenReturn(new ScopeAccess());
+        authenticationFilterWithMock.filter(requestMock);
+    }
+
+    @Test(expected = NotAuthorizedException.class)
+    public void shouldCloudUrls_withExpiredToken_throwsNotAuthorizedException() throws Exception {
+        when(requestMock.getMethod()).thenReturn("GET");
+        when(requestMock.getPath()).thenReturn("cloud/Any/General/Path");
+        when(requestMock.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER)).thenReturn("authToken");
+        ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
+        impersonatedScopeAccess.setAccessTokenString("authToken");
+        impersonatedScopeAccess.setImpersonatingToken("impToken");
+        impersonatedScopeAccess.setAccessTokenExp(new DateTime().minusMinutes(10).toDate());
+        when(scopeAccessServiceMock.getScopeAccessByAccessToken("authToken")).thenReturn(impersonatedScopeAccess);
+        authenticationFilterWithMock.filter(requestMock);
+    }
+
+    @Test
+    public void shouldCloudUrls_withImpersonationToken_returnsAlteredRequest() throws Exception {
+        when(requestMock.getMethod()).thenReturn("GET");
+        when(requestMock.getPath()).thenReturn("cloud/Any/General/Path");
+        when(requestMock.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER)).thenReturn("authToken");
+        ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
+        impersonatedScopeAccess.setAccessTokenString("authToken");
+        impersonatedScopeAccess.setImpersonatingToken("impToken");
+        impersonatedScopeAccess.setAccessTokenExp(new DateTime().plusMinutes(10).toDate());
+        when(scopeAccessServiceMock.getScopeAccessByAccessToken("authToken")).thenReturn(impersonatedScopeAccess);
+        MultivaluedMapImpl multivaluedMap = new MultivaluedMapImpl();
+        when(requestMock.getRequestHeaders()).thenReturn(multivaluedMap);
+        authenticationFilterWithMock.filter(requestMock);
+        assertThat("request headers changed", multivaluedMap.get("x-auth-token").get(0), equalTo("impToken"));
+    }
+
+    @Test(expected = NotAuthenticatedException.class)
+    public void shouldMigrateUrl_withNonRackerToken_throwsNotAuthenticatedException() throws Exception {
+        when(requestMock.getMethod()).thenReturn("GET");
+        when(requestMock.getPath()).thenReturn("migration/some/path");
+        when(requestMock.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER)).thenReturn("authToken");
+        when(scopeAccessServiceMock.getScopeAccessByAccessToken("authToken")).thenReturn(new ScopeAccess());
+        authenticationFilterWithMock.filter(requestMock);
+    }
+
+    @Test(expected = NotAuthenticatedException.class)
+    public void shouldMigrateUrl_withNoMigrationAdminRole_throwsNotAuthenticatedException() throws Exception {
+        when(requestMock.getMethod()).thenReturn("GET");
+        when(requestMock.getPath()).thenReturn("migration/some/path");
+        when(requestMock.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER)).thenReturn("authToken");
+        when(scopeAccessServiceMock.getScopeAccessByAccessToken("authToken")).thenReturn(new RackerScopeAccess());
+        when(userService.getRackerRoles(anyString())).thenReturn(new ArrayList<String >());
+        authenticationFilterWithMock.filter(requestMock);
+    }
+
+    @Test(expected = NotAuthenticatedException.class)
+    public void shouldMigrateUrl_withNullRoles_throwsNotAuthenticatedException() throws Exception {
+        when(requestMock.getMethod()).thenReturn("GET");
+        when(requestMock.getPath()).thenReturn("migration/some/path");
+        when(requestMock.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER)).thenReturn("authToken");
+        when(scopeAccessServiceMock.getScopeAccessByAccessToken("authToken")).thenReturn(new RackerScopeAccess());
+        when(userService.getRackerRoles(anyString())).thenReturn(null);
+        authenticationFilterWithMock.filter(requestMock);
+    }
+
+    @Test
+    public void shouldMigrateUrl_withMigrationAdminRole_returnsRequest() throws Exception {
+        when(requestMock.getMethod()).thenReturn("GET");
+        when(requestMock.getPath()).thenReturn("migration/some/path");
+        when(requestMock.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER)).thenReturn("authToken");
+        when(scopeAccessServiceMock.getScopeAccessByAccessToken("authToken")).thenReturn(new RackerScopeAccess());
+        ArrayList<String> roles = new ArrayList<String>();
+        roles.add("migrationAdminGroup");
+        when(userService.getRackerRoles(anyString())).thenReturn(roles);
+        when(configuration.getString("migrationAdminGroup")).thenReturn("migrationAdminGroup");
+        authenticationFilterWithMock.filter(requestMock);
+    }
+
     @Test
     public void shouldIgnoreCloudResourceRequest() {
         EasyMock.expect(request.getPath()).andReturn("cloud/v1.1/auth");
@@ -36,10 +191,43 @@ public class AuthenticationFilterTests {
     }
 
     @Test
-    public void shouldIgnoreWadlRequest() {
+    public void shouldIgnoreApplicationWadlRequest() {
         EasyMock.expect(request.getPath()).andReturn("v1.0/application.wadl");
         EasyMock.expect(request.getMethod()).andReturn("GET");
         replayAndRunFilter();
+    }
+
+    @Test
+    public void shouldIgnoreIdmWadlRequest() {
+        EasyMock.expect(request.getPath()).andReturn("v1.0/idm.wadl");
+        EasyMock.expect(request.getMethod()).andReturn("GET");
+        replayAndRunFilter();
+    }
+
+    @Test
+    public void shouldIgnoreXsdPath() throws Exception {
+        when(requestMock.getMethod()).thenReturn("GET");
+        when(requestMock.getPath()).thenReturn("xsdUsers.xsd");
+        authFilter.filter(requestMock);
+        verify(requestMock, never()).getHeaderValue("X-Auth-Token");
+        assertTrue("no exceptions", true);
+    }
+
+    @Test
+    public void shouldIgnoreXsltPath() throws Exception {
+        when(requestMock.getMethod()).thenReturn("GET");
+        when(requestMock.getPath()).thenReturn("xsltUsers.xslt");
+        authFilter.filter(requestMock);
+        verify(requestMock, never()).getHeaderValue("X-Auth-Token");
+        assertTrue("no exceptions", true);
+    }
+
+    @Test(expected = NotAuthenticatedException.class)
+    public void withInvalidAccessToken_shouldThrowNotAuthenticatedException() throws Exception {
+        when(requestMock.getMethod()).thenReturn("POST");
+        when(requestMock.getPath()).thenReturn("some/path");
+        when(scopeAccessServiceMock.authenticateAccessToken(anyString())).thenReturn(false);
+        authFilter.filter(requestMock);
     }
 
     @Test

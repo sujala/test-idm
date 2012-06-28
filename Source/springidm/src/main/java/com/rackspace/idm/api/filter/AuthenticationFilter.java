@@ -11,6 +11,7 @@ import com.rackspace.idm.util.AuthHeaderHelper;
 import com.sun.jersey.spi.container.ContainerRequest;
 import com.sun.jersey.spi.container.ContainerRequestFilter;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,8 +50,9 @@ public class AuthenticationFilter implements ContainerRequestFilter,
 
     @Autowired
     private Configuration config;
-    
-    public AuthenticationFilter() {
+
+    AuthenticationFilter() {
+
     }
 
     AuthenticationFilter(ScopeAccessService scopeAccessService) {
@@ -124,7 +126,7 @@ public class AuthenticationFilter implements ContainerRequestFilter,
 
         // Skip authentication for the following calls
         int index = path.indexOf("/");
-        path = index > 0 ? path.substring(index + 1) : "";
+        path = index > 0 ? path.substring(index + 1) : ""; //TODO: "/asdf/afafw/fwa" -> "" is correct behavior?
 
         if ("GET".equals(method) && "application.wadl".equals(path)) {
             return request;
@@ -150,7 +152,7 @@ public class AuthenticationFilter implements ContainerRequestFilter,
             return request;
         }
         final String authHeader = request.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER);
-        if (authHeader == null || authHeader.isEmpty()) {
+        if (StringUtils.isBlank(authHeader)) {
             throw new NotAuthenticatedException("The request for the resource must include the Authorization header.");
         }
 
@@ -179,6 +181,14 @@ public class AuthenticationFilter implements ContainerRequestFilter,
         }
 
         return scopeAccessService;
+    }
+
+    public void setUserService(UserService userService) {
+        this.userService = userService;
+    }
+
+    public void setConfig(Configuration config) {
+        this.config = config;
     }
 
     protected String getMigrationAdminGroup() {

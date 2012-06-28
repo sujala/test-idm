@@ -726,6 +726,34 @@ public class LdapUserRepositoryTest {
     }
 
     @Test
+    public void addAuditLogForAuthentication_authenticated_auditSucceed() throws Exception {
+         ldapUserRepository.addAuditLogForAuthentication(new User(), true);
+    }
+
+    @Test
+    public void addAuditLogForAuthentication_maxLoginFailureExceded_auditFail() throws Exception {
+        User user = new User();
+        user.setMaxLoginFailuresExceded(true);
+        spy.addAuditLogForAuthentication(user, false);
+    }
+
+    @Test
+    public void addAuditLogForAuthentication_userDisabled_auditFail() throws Exception {
+        User user = new User();
+        user.setMaxLoginFailuresExceded(false);
+        user.setEnabled(false);
+        spy.addAuditLogForAuthentication(user, false);
+    }
+
+    @Test
+    public void addAuditLogForAuthentication_incorrectCredentials_auditFail() throws Exception {
+        User user = new User();
+        user.setMaxLoginFailuresExceded(false);
+        user.setEnabled(true);
+        spy.addAuditLogForAuthentication(user, false);
+    }
+
+    @Test
     public void authenticateByPassword_userIsNull_returnsNewUserAuthenticationResult() throws Exception {
         UserAuthenticationResult result = ldapUserRepository.authenticateByPassword(null, null);
         assertThat("user authentication result", result.getUser(), equalTo(null));

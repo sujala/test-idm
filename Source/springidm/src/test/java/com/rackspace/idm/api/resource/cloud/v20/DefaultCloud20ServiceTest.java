@@ -248,9 +248,24 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void deleteUser_callsUserService_hasSubUsers() throws Exception {
+    public void deleteUser_userIsUserAdmin_callsUserService_hasSubUsers() throws Exception {
+        when(authorizationService.hasUserAdminRole(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(true);
         spy.deleteUser(httpHeaders, authToken, userId);
         verify(userService).hasSubUsers(userId);
+    }
+
+    @Test
+    public void deleteUser_callsScopeAccessService_getScopeAccessByUserId() throws Exception {
+        when(scopeAccessService.getScopeAccessByUserId(userId)).thenReturn(new ScopeAccess());
+        spy.deleteUser(httpHeaders, authToken, userId);
+        verify(scopeAccessService).getScopeAccessByUserId(userId);
+    }
+
+    @Test
+    public void deleteUser_callsAuthService_hasUserAdminRole() throws Exception {
+        when(scopeAccessService.getScopeAccessByUserId(userId)).thenReturn(new ScopeAccess());
+        spy.deleteUser(httpHeaders, authToken, userId);
+        verify(authorizationService).hasUserAdminRole(org.mockito.Matchers.any(ScopeAccess.class));
     }
 
     @Test
