@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
+import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Context;
@@ -50,9 +51,6 @@ public class AuthenticationFilter implements ContainerRequestFilter,
     @Autowired
     private Configuration config;
     
-    public AuthenticationFilter() {
-    }
-
     AuthenticationFilter(ScopeAccessService scopeAccessService) {
         this.scopeAccessService = scopeAccessService;
     }
@@ -124,7 +122,7 @@ public class AuthenticationFilter implements ContainerRequestFilter,
 
         // Skip authentication for the following calls
         int index = path.indexOf("/");
-        path = index > 0 ? path.substring(index + 1) : "";
+        path = index > 0 ? path.substring(index + 1) : ""; //TODO: "/asdf/afafw/fwa" -> "" is correct behavior?
 
         if ("GET".equals(method) && "application.wadl".equals(path)) {
             return request;
@@ -150,7 +148,7 @@ public class AuthenticationFilter implements ContainerRequestFilter,
             return request;
         }
         final String authHeader = request.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER);
-        if (authHeader == null || authHeader.isEmpty()) {
+        if (StringUtils.isBlank(authHeader)) {
             throw new NotAuthenticatedException("The request for the resource must include the Authorization header.");
         }
 
@@ -179,6 +177,14 @@ public class AuthenticationFilter implements ContainerRequestFilter,
         }
 
         return scopeAccessService;
+    }
+
+    public void setUserService(UserService userService) {
+        this.userService = userService;
+    }
+
+    public void setConfig(Configuration config) {
+        this.config = config;
     }
 
     protected String getMigrationAdminGroup() {
