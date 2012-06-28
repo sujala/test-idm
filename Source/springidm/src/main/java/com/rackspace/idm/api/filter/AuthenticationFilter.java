@@ -50,7 +50,11 @@ public class AuthenticationFilter implements ContainerRequestFilter,
 
     @Autowired
     private Configuration config;
-    
+
+    AuthenticationFilter() {
+
+    }
+
     AuthenticationFilter(ScopeAccessService scopeAccessService) {
         this.scopeAccessService = scopeAccessService;
     }
