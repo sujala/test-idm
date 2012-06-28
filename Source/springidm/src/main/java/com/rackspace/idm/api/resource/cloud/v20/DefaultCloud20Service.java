@@ -1,4 +1,5 @@
 package com.rackspace.idm.api.resource.cloud.v20;
+
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
@@ -828,8 +829,11 @@ public class DefaultCloud20Service implements Cloud20Service {
                 User caller = userService.getUserByAuthToken(authToken);
                 verifyDomain(user, caller);
             }
-            if (userService.hasSubUsers(userId)) {
-                throw new BadRequestException("Please delete sub-users before deleting last user-admin for the account");
+            ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByUserId(userId);
+            if (authorizationService.hasUserAdminRole(scopeAccess)) {
+                if (userService.hasSubUsers(userId)) {
+                    throw new BadRequestException("Please delete sub-users before deleting last user-admin for the account");
+                }
             }
             userService.softDeleteUser(user);
 
@@ -1797,7 +1801,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         try {
             ScopeAccess scopeAccessByAccessToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
-            if(scopeAccessByAccessToken == null){
+            if (scopeAccessByAccessToken == null) {
                 throw new NotAuthorizedException("Invalid token");
             }
             User caller = getUser(scopeAccessByAccessToken);
