@@ -359,7 +359,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     @Test
     public void listUserGlobalRoles() throws Exception {
         String token = getAuthToken("hectorServiceAdmin", "Password1");
-        WebResource resource = resource().path("cloud/v2.0/users/10020461/roles");
+        WebResource resource = resource().path("cloud/v2.0/users/10022622/roles");
         ClientResponse clientResponse = resource.header("X-Auth-Token", token).accept(MediaType.APPLICATION_XML_TYPE).get(ClientResponse.class);
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
     }
@@ -423,10 +423,10 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     @Test
     public void updateUser_withNewUsername_withUsernameAlreadyInUse_returns409() throws Exception {
         String token = getAuthToken("hectorServiceAdmin", "Password1");
-        WebResource resource = resource().path("cloud/v2.0/users/10020461"); //kurtUserAdmin
+        WebResource resource = resource().path("cloud/v2.0/users/10022622"); //kurtUserAdmin
         ClientResponse clientResponse = resource.header("X-Auth-Token", token).type(MediaType.APPLICATION_JSON_TYPE).post(ClientResponse.class, "{\n" +
                 "  \"user\": {\n" +
-                "    \"id\": \"10020461\",\n" +
+                "    \"id\": \"10022622\",\n" +
                 "    \"username\": \"hectorServiceAdmin\",\n" +
                 "    \"email\": \"kurt@example.org\"\n" +
                 "  }\n" +
@@ -437,10 +437,10 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     @Test
     public void updateUser_withNewUsernameEqualToOldUsername_returns200() throws Exception {
         String token = getAuthToken("hectorServiceAdmin", "Password1");
-        WebResource resource = resource().path("cloud/v2.0/users/10020461"); //kurtUserAdmin
+        WebResource resource = resource().path("cloud/v2.0/users/10022622"); //kurtUserAdmin
         ClientResponse clientResponse = resource.header("X-Auth-Token", token).type(MediaType.APPLICATION_JSON_TYPE).post(ClientResponse.class, "{\n" +
                 "  \"user\": {\n" +
-                "    \"id\": \"10020461\",\n" +
+                "    \"id\": \"10022622\",\n" +
                 "    \"username\": \"kurtUserAdmin\",\n" +
                 "    \"email\": \"kurt@example.org\"\n" +
                 "  }\n" +

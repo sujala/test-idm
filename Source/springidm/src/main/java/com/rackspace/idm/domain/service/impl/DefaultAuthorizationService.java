@@ -231,6 +231,21 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return authorized;
     }
 
+
+    //This method does not check if the scope access has an access token.
+    //This method checks if the scope access has the cloud default user role.
+    @Override
+    public boolean hasDefaultUserRole(ScopeAccess scopeAccess) {
+        if (scopeAccess == null) {
+            return false;
+        }
+        if (CLOUD_USER_ROLE == null) {
+            ClientRole role = clientDao.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserRole());
+            CLOUD_USER_ROLE = role;
+        }
+        return tenantDao.doesScopeAccessHaveTenantRole(scopeAccess, CLOUD_USER_ROLE);
+    }
+
     @Override
     public boolean authorizeIdmSuperAdmin(ScopeAccess scopeAccess) {
         logger.debug("Authorizing {} as idm super admin", scopeAccess);

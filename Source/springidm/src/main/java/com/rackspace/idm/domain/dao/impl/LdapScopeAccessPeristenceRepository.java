@@ -420,7 +420,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
             conn = getAppConnPool().getConnection();
             final Filter filter = new LdapSearchBuilder()
                     .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_SCOPEACCESS)
-                    .addEqualAttribute(ATTR_UID, userId).build();
+                    .addEqualAttribute(ATTR_USER_RS_ID, userId).build();
             final SearchResult searchResult = conn.search(BASE_DN, SearchScope.SUB, filter);
 
             final List<SearchResultEntry> searchEntries = searchResult.getSearchEntries();
