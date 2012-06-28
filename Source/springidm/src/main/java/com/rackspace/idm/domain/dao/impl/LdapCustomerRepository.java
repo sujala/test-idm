@@ -36,12 +36,10 @@ public class LdapCustomerRepository extends LdapRepository implements
         customer.setUniqueId(customerDN);
 
         Audit audit = Audit.log(customer).add();
-        LDAPConnection conn = getAppPoolConnection(audit);
-        this.addEntry(conn, customerDN, attributes, audit);
+
+        addEntry(customerDN, attributes, audit);
 
         audit.succeed();
-
-        getAppConnPool().releaseConnection(conn);
 
         getLogger().info("Added customer {}", customer);
     }

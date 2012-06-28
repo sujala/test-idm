@@ -206,6 +206,10 @@ public abstract class LdapRepository {
         return connPools.getAppConnPool();
     }
 
+    protected LDAPInterface getAppInterface() {
+        return connPools.getAppConnPool();
+    }
+
     protected LDAPConnection getAppPoolConnection(Audit audit) {
         LDAPConnection conn = null;
 
@@ -228,9 +232,12 @@ public abstract class LdapRepository {
     }
 
     protected void addEntry(String entryDn, Attribute[] attributes, Audit audit) {
-        LDAPConnection conn = getAppPoolConnection(audit);
-        addEntry(conn, entryDn, attributes, audit);
-        getAppConnPool().releaseConnection(conn);
+        try {
+            getAppInterface().add(entryDn, attributes);
+        } catch (LDAPException e) {
+            audit.fail();
+            throw new IllegalStateException(e);
+        }
     }
 
     protected void addEntry(LDAPConnection conn, String entryDn,
