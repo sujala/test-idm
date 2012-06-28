@@ -14,9 +14,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -29,6 +27,7 @@ public class PropertyFileConfigurationTest {
 
     PropertyFileConfiguration propertyFileConfiguration;
     PropertyFileConfiguration spy;
+    Configuration configuration = mock(Configuration.class);
 
     @Before
     public void setUp() throws Exception {
@@ -38,14 +37,14 @@ public class PropertyFileConfigurationTest {
 
     @Test
     public void getConfig_callsReadConfigFile() throws Exception {
-        doReturn(new AppletConfiguration(new Applet())).when(spy).readConfigFile(anyString());
+        doReturn(configuration).when(spy).readConfigFile(anyString());
         spy.getConfig();
         verify(spy).readConfigFile(anyString());
     }
 
     @Test
     public void getConfig_returnsConfiguration() throws Exception {
-        doReturn(new AppletConfiguration(new Applet())).when(spy).readConfigFile(anyString());
+        doReturn(configuration).when(spy).readConfigFile(anyString());
         assertThat("configuration", spy.getConfig(), instanceOf(Configuration.class));
     }
 
@@ -56,14 +55,15 @@ public class PropertyFileConfigurationTest {
 
     @Test
     public void getConfigurationFromClasspath_callsReadConfigFile() throws Exception {
-        doReturn(new AppletConfiguration(new Applet())).when(spy).readConfigFile("idm.properties");
+        Configuration configuration = mock(Configuration.class);
+        doReturn(configuration).when(spy).readConfigFile("idm.properties");
         spy.getConfigFromClasspath();
         verify(spy).readConfigFile("idm.properties");
     }
 
     @Test
     public void getConfigurationFormClasspath_returnsConfiguration() throws Exception {
-        doReturn(new AppletConfiguration(new Applet())).when(spy).readConfigFile("idm.properties");
+        doReturn(configuration).when(spy).readConfigFile("idm.properties");
         assertThat("configuration", spy.getConfigFromClasspath(), instanceOf(Configuration.class));
     }
 
