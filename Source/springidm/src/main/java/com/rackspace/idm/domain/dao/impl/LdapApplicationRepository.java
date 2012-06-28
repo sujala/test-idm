@@ -695,7 +695,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         return attributes;
     }
 
-    private Application getClient(SearchResultEntry resultEntry) {
+    Application getClient(SearchResultEntry resultEntry) {
         CryptHelper cryptHelper = CryptHelper.getInstance();
         Application client = new Application();
         client.setUniqueId(resultEntry.getDN());
@@ -730,7 +730,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         return client;
     }
 
-    private ClientGroup getClientGroup(SearchResultEntry resultEntry) {
+    ClientGroup getClientGroup(SearchResultEntry resultEntry) {
         ClientGroup clientGroup = new ClientGroup();
         clientGroup.setUniqueId(resultEntry.getDN());
         clientGroup.setClientId(resultEntry.getAttributeValue(ATTR_CLIENT_ID));
@@ -742,7 +742,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         return clientGroup;
     }
 
-    private Applications getMultipleClients(Filter searchFilter, int offset, int limit) {
+    Applications getMultipleClients(Filter searchFilter, int offset, int limit) {
 
         offset = offset < 0 ? this.getLdapPagingOffsetDefault() : offset;
         limit = limit <= 0 ? this.getLdapPagingLimitDefault() : limit;
@@ -781,7 +781,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         return clients;
     }
 
-    private Application getSingleClient(Filter searchFilter) {
+    Application getSingleClient(Filter searchFilter) {
         Application client = null;
         SearchResultEntry entry = this.getSingleEntry(APPLICATIONS_BASE_DN, SearchScope.SUB, searchFilter);
 
