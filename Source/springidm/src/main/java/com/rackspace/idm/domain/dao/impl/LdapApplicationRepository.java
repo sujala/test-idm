@@ -123,7 +123,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         Audit audit = Audit.log(group).modify(mods);
 
         try {
-            getAppConnPool().modify(userUniqueId, mods);
+            getAppInterface().modify(userUniqueId, mods);
         } catch (LDAPException ldapEx) {
             getLogger().error("Error adding user to group {} - {}", group,
                     ldapEx);
@@ -493,7 +493,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
         Audit audit = Audit.log(group).modify(mods);
         try {
-            getAppConnPool().modify(userUniqueId, mods);
+            getAppInterface().modify(userUniqueId, mods);
         } catch (LDAPException ldapEx) {
             audit.fail(ldapEx.getMessage());
             getLogger().error("Error deleting user from group {} - {}", group,
@@ -593,13 +593,10 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
                 .addEqualAttribute(ATTR_OBJECT_CLASS,
                         OBJECTCLASS_RACKSPACEAPPLICATION).build();
 
-        LDAPConnection conn = null;
-
         List<Application> clients = new ArrayList<Application>();
 
         try {
-            conn = getAppConnPool().getConnection();
-            final SearchResult searchResult = conn.search(APPLICATIONS_BASE_DN,
+            final SearchResult searchResult = getAppInterface().search(APPLICATIONS_BASE_DN,
                     SearchScope.SUB, filter);
 
             final List<SearchResultEntry> entries = searchResult.getSearchEntries();
@@ -610,8 +607,6 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         } catch (final LDAPException e) {
             getLogger().error("Error reading scopeAccessList for clients.", e);
             throw new IllegalStateException(e);
-        } finally {
-            getAppConnPool().releaseConnection(conn);
         }
 
         getLogger().debug("Found the scope accesses defined in the system.");
@@ -901,18 +896,16 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
         getLogger().info("Adding Client Role: {}", role);
         Audit audit = Audit.log(role).add();
-        LDAPConnection conn = null;
         try {
-            conn = getAppConnPool().getConnection();
 
-            SearchResultEntry entry = getContainer(conn, clientUniqueId, CONTAINER_ROLES);
+            SearchResultEntry entry = getContainer(clientUniqueId, CONTAINER_ROLES);
             if (entry == null) {
-                addContainer(conn, clientUniqueId, CONTAINER_ROLES);
-                entry = getContainer(conn, clientUniqueId, CONTAINER_ROLES);
+                addContainer(clientUniqueId, CONTAINER_ROLES);
+                entry = getContainer(clientUniqueId, CONTAINER_ROLES);
             }
 
             final LDAPPersister<ClientRole> persister = LDAPPersister.getInstance(ClientRole.class);
-            persister.add(role, conn, entry.getDN());
+            persister.add(role, getAppInterface(), entry.getDN());
             audit.succeed();
             getLogger().info("Added Client Role: {}", role);
         } catch (final LDAPException e) {
@@ -925,8 +918,6 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
             getLogger().error("Error adding client role object", e);
             audit.fail(e.getMessage());
             throw new IllegalStateException(e);
-        } finally {
-            getAppConnPool().releaseConnection(conn);
         }
     }
 
@@ -1063,25 +1054,21 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
             throw new IllegalArgumentException(errmsg);
         }
         getLogger().debug("Updating Client Role: {}", role);
-        LDAPConnection conn = null;
         Audit audit = Audit.log(role);
         try {
-            conn = getAppConnPool().getConnection();
             final LDAPPersister<ClientRole> persister = LDAPPersister.getInstance(ClientRole.class);
             List<Modification> modifications = persister.getModifications(role, true);
             if(modifications.size()<1){
                 return;
             }
             audit.modify(modifications);
-            persister.modify(role, conn, null, true);
+            persister.modify(role, getAppInterface(), null, true);
             getLogger().debug("Updated Client Role: {}", role);
             audit.succeed();
         } catch (final LDAPException e) {
             getLogger().error("Error updating Client Role", e);
             audit.fail();
             throw new IllegalStateException(e);
-        } finally {
-            getAppConnPool().releaseConnection(conn);
         }
     }
 
@@ -1163,23 +1150,19 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
     @Override
     public void softDeleteApplication(Application application) {
         getLogger().info("SoftDeleting customer - {}", application.getRCN());
-        LDAPConnection conn = null;
         try {
-            conn = getAppConnPool().getConnection();
             String oldDn = application.getUniqueId();
             String newRdn = new LdapDnBuilder("").addAttribute(ATTR_CLIENT_ID, application.getClientId()).build();
             String newDn = new LdapDnBuilder(SOFT_DELETED_APPLICATIONS_BASE_DN).addAttribute(ATTR_CLIENT_ID, application.getClientId()).build();
             // Modify the Application
-            conn.modifyDN(oldDn, newRdn, false, SOFT_DELETED_APPLICATIONS_BASE_DN);
+            getAppInterface().modifyDN(oldDn, newRdn, false, SOFT_DELETED_APPLICATIONS_BASE_DN);
             application.setUniqueId(newDn);
             // Disable the Application
-            conn.modify(application.getUniqueId(), new Modification(
+            getAppInterface().modify(application.getUniqueId(), new Modification(
                     ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(false)));
         } catch (LDAPException e) {
             getLogger().error("Error soft deleting application", e);
             throw new IllegalStateException(e);
-        } finally {
-            getAppConnPool().releaseConnection(conn);
         }
         getLogger().info("SoftDeleted application - {}", application.getRCN());
     }
@@ -1230,25 +1213,21 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
     @Override
     public void unSoftDeleteApplication(Application application) {
         getLogger().info("SoftDeleting user - {}", application);
-        LDAPConnection conn = null;
         try {
-            conn = getAppConnPool().getConnection();
             String oldDn = application.getUniqueId();
             String newRdn = new LdapDnBuilder("").addAttribute(ATTR_CLIENT_ID,
                     application.getClientId()).build();
             String newDn = new LdapDnBuilder(APPLICATIONS_BASE_DN)
                     .addAttribute(ATTR_CLIENT_ID, application.getClientId()).build();
             // Modify the User
-            conn.modifyDN(oldDn, newRdn, false, APPLICATIONS_BASE_DN);
+            getAppInterface().modifyDN(oldDn, newRdn, false, APPLICATIONS_BASE_DN);
             application.setUniqueId(newDn);
             // Enabled the User
-            conn.modify(application.getUniqueId(), new Modification(
+            getAppInterface().modify(application.getUniqueId(), new Modification(
                     ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(true)));
         } catch (LDAPException e) {
             getLogger().error("Error soft deleting application", e);
             throw new IllegalStateException(e);
-        } finally {
-            getAppConnPool().releaseConnection(conn);
         }
         getLogger().info("SoftDeleted application - {}", application);
     }
