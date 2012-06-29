@@ -26,8 +26,7 @@ public class LdapApplicationRepositoryIntegrationTest {
     String id = "XXXX";
     
     String userDN = "inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!1111,ou=users,o=rackspace,dc=rackspace,dc=com";
-    String testCustomerDN = "o=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE,ou=customers,o=rackspace,dc=rackspace,dc=com";
-    
+
     @Before
     public void cleanUpData() {
         final LdapConnectionPools pools = getConnPools();
@@ -317,9 +316,9 @@ public class LdapApplicationRepositoryIntegrationTest {
     }
     
     @Test 
-    public void shouldNotGetClientGroupForNonExistenClient() {
-        ClientGroup returnedGorup = repo.getClientGroup("RACKSPACE", "BADCLIENTNAME", "name");
-        Assert.assertNull(returnedGorup);
+    public void shouldNotGetClientGroupForNonExistentClient() {
+        ClientGroup returnedGroup = repo.getClientGroup("RACKSPACE", "BADCLIENTNAME", "name");
+        Assert.assertNull(returnedGroup);
     }
     
     @Test
