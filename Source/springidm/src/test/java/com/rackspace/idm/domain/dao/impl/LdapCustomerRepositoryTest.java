@@ -4,6 +4,7 @@ import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.entity.Customer;
 import com.unboundid.ldap.sdk.*;
 import org.apache.commons.configuration.Configuration;
+import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -70,12 +71,10 @@ public class LdapCustomerRepositoryTest {
         try {
             Customer customer = new Customer();
             customer.setId("id");
-            doReturn(null).when(spy).getAppPoolConnection(any(Audit.class));
-            doNothing().when(spy).addEntry(any(LDAPConnection.class), anyString(), any(Attribute[].class), any(Audit.class));
             doReturn(null).when(spy).getAppConnPool();
             spy.addCustomer(customer);
         } catch(Exception e) {
-            verify(spy).getAppConnPool();
+            verify(spy).addEntry(anyString(), any(Attribute[].class), any(Audit.class));
         }
     }
 

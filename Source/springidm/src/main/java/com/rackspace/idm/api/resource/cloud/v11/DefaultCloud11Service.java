@@ -8,7 +8,6 @@ import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
-import com.rackspace.idm.domain.dao.impl.LdapCloudAdminRepository;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
@@ -37,7 +36,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.UriInfo;
-import javax.wsdl.extensions.http.HTTPAddress;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
@@ -62,7 +60,6 @@ public class DefaultCloud11Service implements Cloud11Service {
     private final EndpointService endpointService;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final ScopeAccessService scopeAccessService;
-    private final LdapCloudAdminRepository ldapCloudAdminRepository;
     private final UserConverterCloudV11 userConverterCloudV11;
     private final UserService userService;
 
@@ -115,7 +112,6 @@ public class DefaultCloud11Service implements Cloud11Service {
                                  UserService userService, AuthConverterCloudV11 authConverterCloudV11,
                                  UserConverterCloudV11 userConverterCloudV11,
                                  EndpointConverterCloudV11 endpointConverterCloudV11,
-                                 LdapCloudAdminRepository ldapCloudAdminRepository,
                                  CloudExceptionResponse cloudExceptionResponse,
                                  ApplicationService clientService,
                                  TenantService tenantService) {
@@ -126,7 +122,6 @@ public class DefaultCloud11Service implements Cloud11Service {
         this.authConverterCloudV11 = authConverterCloudV11;
         this.userConverterCloudV11 = userConverterCloudV11;
         this.endpointConverterCloudV11 = endpointConverterCloudV11;
-        this.ldapCloudAdminRepository = ldapCloudAdminRepository;
         this.cloudExceptionResponse = cloudExceptionResponse;
         this.clientService = clientService;
         this.tenantService = tenantService;

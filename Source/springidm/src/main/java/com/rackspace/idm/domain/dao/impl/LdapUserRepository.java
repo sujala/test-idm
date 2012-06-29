@@ -501,7 +501,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 // No changes!
                 return;
             }
-            getAppConnPool().modify(oldUser.getUniqueId(), mods);
+            getAppInterface().modify(oldUser.getUniqueId(), mods);
         } catch (LDAPException ldapEx) {
             throwIfStalePassword(ldapEx, audit);
             getLogger().error("Error updating user {} - {}", newUser.getUsername(), ldapEx);
@@ -545,7 +545,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         try {
             SearchRequest request = new SearchRequest(USERS_BASE_DN,
                 SearchScope.SUB, searchFilter);
-            searchResult = getAppConnPool().search(request);
+            searchResult = getAppInterface().search(request);
 
             for (SearchResultEntry entry : searchResult.getSearchEntries()) {
                 userList.add(getUser(entry));
@@ -570,7 +570,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         for (User user : userList) {
             audit = Audit.log(user).modify(mods);
             try {
-                getAppConnPool().modify(user.getUniqueId(), mods);
+                getAppInterface().modify(user.getUniqueId(), mods);
             } catch (LDAPException ldapEx) {
                 audit.fail(ldapEx.getMessage());
                 throw new IllegalStateException(ldapEx);
@@ -1209,42 +1209,27 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
     @Override
     public String getNextUserId() {
-        String userId = null;
-        LDAPConnection conn = null;
-        try {
-            conn = getAppConnPool().getConnection();
-            userId = getNextId(conn, NEXT_USER_ID);
-        } catch (LDAPException e) {
-            getLogger().error("Error getting next userId", e);
-            throw new IllegalStateException(e);
-        } finally {
-            getAppConnPool().releaseConnection(conn);
-        }
-        return userId;
+        return getNextId(NEXT_USER_ID);
     }
 
     @Override
     public void softDeleteUser(User user) {
         getLogger().info("SoftDeleting user - {}", user.getUsername());
-        LDAPConnection conn = null;
         try {
-            conn = getAppConnPool().getConnection();
             String oldDn = user.getUniqueId();
             String newRdn = new LdapDnBuilder("").addAttribute(ATTR_ID,
                 user.getId()).build();
             String newDn = new LdapDnBuilder(SOFT_DELETED_USERS_BASE_DN)
                 .addAttribute(ATTR_ID, user.getId()).build();
             // Move the User
-            conn.modifyDN(oldDn, newRdn, false, SOFT_DELETED_USERS_BASE_DN);
+            getAppInterface().modifyDN(oldDn, newRdn, false, SOFT_DELETED_USERS_BASE_DN);
             user.setUniqueId(newDn);
             // Disabled the User
-            conn.modify(user.getUniqueId(), new Modification(
+            getAppInterface().modify(user.getUniqueId(), new Modification(
                 ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(false)));
         } catch (LDAPException e) {
             getLogger().error("Error soft deleting user", e);
             throw new IllegalStateException(e);
-        } finally {
-            getAppConnPool().releaseConnection(conn);
         }
         getLogger().info("SoftDeleted user - {}", user.getUsername());
     }
@@ -1297,25 +1282,21 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     @Override
     public void unSoftDeleteUser(User user) {
         getLogger().info("SoftDeleting user - {}", user.getUsername());
-        LDAPConnection conn = null;
         try {
-            conn = getAppConnPool().getConnection();
             String oldDn = user.getUniqueId();
             String newRdn = new LdapDnBuilder("").addAttribute(ATTR_ID,
                 user.getId()).build();
             String newDn = new LdapDnBuilder(USERS_BASE_DN)
             .addAttribute(ATTR_ID, user.getId()).build();
             // Modify the User
-            conn.modifyDN(oldDn, newRdn, false, USERS_BASE_DN);
+            getAppInterface().modifyDN(oldDn, newRdn, false, USERS_BASE_DN);
             user.setUniqueId(newDn);
             // Enabled the User
-            conn.modify(user.getUniqueId(), new Modification(
+            getAppInterface().modify(user.getUniqueId(), new Modification(
                 ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(true)));
         } catch (LDAPException e) {
             getLogger().error("Error soft deleting user", e);
             throw new IllegalStateException(e);
-        } finally {
-            getAppConnPool().releaseConnection(conn);
         }
         getLogger().info("SoftDeleted user - {}", user.getUsername());
     }

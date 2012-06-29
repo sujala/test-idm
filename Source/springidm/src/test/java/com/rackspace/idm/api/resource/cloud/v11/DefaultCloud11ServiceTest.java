@@ -6,7 +6,6 @@ import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11;
 import com.rackspace.idm.api.resource.cloud.CloudExceptionResponse;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
-import com.rackspace.idm.domain.dao.impl.LdapCloudAdminRepository;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.service.*;
@@ -18,7 +17,6 @@ import com.rackspacecloud.docs.auth.api.v1.PasswordCredentials;
 import com.rackspacecloud.docs.auth.api.v1.User;
 import com.sun.jersey.api.uri.UriBuilderImpl;
 import com.sun.jersey.core.util.Base64;
-import com.sun.jersey.server.impl.application.WebApplicationContext;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -64,7 +62,6 @@ public class DefaultCloud11ServiceTest {
     DefaultCloud11Service spy;
     UserConverterCloudV11 userConverterCloudV11;
     UserValidator userValidator;
-    LdapCloudAdminRepository ldapCloudAdminRepository;
     NastFacade nastFacade;
     UserService userService;
     EndpointService endpointService;
@@ -91,10 +88,8 @@ public class DefaultCloud11ServiceTest {
     public void setUp() throws Exception {
         userConverterCloudV11 = mock(UserConverterCloudV11.class);
         authConverterCloudv11 = mock(AuthConverterCloudV11.class);
-        ldapCloudAdminRepository = mock(LdapCloudAdminRepository.class);
         credentialUnmarshaller = mock(CredentialUnmarshaller.class);
         cloudExceptionResponse = new CloudExceptionResponse();
-        when(ldapCloudAdminRepository.authenticate("auth", "auth123")).thenReturn(true);
         userService = mock(UserService.class);
         httpHeaders = mock(javax.ws.rs.core.HttpHeaders.class);
         scopeAccessService = mock(ScopeAccessService.class);
@@ -130,7 +125,7 @@ public class DefaultCloud11ServiceTest {
         testService.setOpenStackType("foo");
         when(clientService.getByName(any(String.class))).thenReturn(testService);
         when(clientService.getClientRoleByClientIdAndRoleName(anyString(), anyString())).thenReturn(new ClientRole());
-        defaultCloud11Service = new DefaultCloud11Service(config, scopeAccessService, endpointService, userService, authConverterCloudv11, userConverterCloudV11, endpointConverterCloudV11, ldapCloudAdminRepository, cloudExceptionResponse, clientService, tenantService);
+        defaultCloud11Service = new DefaultCloud11Service(config, scopeAccessService, endpointService, userService, authConverterCloudv11, userConverterCloudV11, endpointConverterCloudV11, cloudExceptionResponse, clientService, tenantService);
         nastFacade = mock(NastFacade.class);
         defaultCloud11Service.setNastFacade(nastFacade);
         defaultCloud11Service.setUserValidator(userValidator);

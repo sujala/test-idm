@@ -193,6 +193,7 @@ public abstract class LdapRepository {
         ATTR_CREATED_DATE, ATTR_UPDATED_DATE};
 
     private final LdapConnectionPools connPools;
+
     private final Configuration config;
 
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -203,6 +204,10 @@ public abstract class LdapRepository {
     }
 
     protected LDAPConnectionPool getAppConnPool() {
+        return connPools.getAppConnPool();
+    }
+
+    protected LDAPInterface getAppInterface() {
         return connPools.getAppConnPool();
     }
 
@@ -228,9 +233,12 @@ public abstract class LdapRepository {
     }
 
     protected void addEntry(String entryDn, Attribute[] attributes, Audit audit) {
-        LDAPConnection conn = getAppPoolConnection(audit);
-        addEntry(conn, entryDn, attributes, audit);
-        getAppConnPool().releaseConnection(conn);
+        try {
+            getAppInterface().add(entryDn, attributes);
+        } catch (LDAPException e) {
+            audit.fail();
+            throw new IllegalStateException(e);
+        }
     }
 
     protected void addEntry(LDAPConnection conn, String entryDn,
@@ -245,9 +253,24 @@ public abstract class LdapRepository {
     }
 
     protected void deleteEntryAndSubtree(String dn, Audit audit) {
-        LDAPConnection conn = getAppPoolConnection(audit);
-        this.deleteEntryAndSubtree(conn, dn, audit);
-        getAppConnPool().releaseConnection(conn);
+        try {
+
+            Filter filter = Filter.createEqualityFilter(ATTR_OBJECT_CLASS,
+                    "top");
+            SearchResult searchResult = getAppInterface().search(dn, SearchScope.ONE,
+                    filter, ATTR_NO_ATTRIBUTES);
+
+            for (SearchResultEntry entry : searchResult.getSearchEntries()) {
+                deleteEntryAndSubtree(entry.getDN(), audit);
+            }
+
+            getAppInterface().delete(dn);
+
+        } catch (LDAPException e) {
+            audit.fail();
+            getLogger().error("LDAP Search error - {}", e.getMessage());
+            throw new IllegalStateException(e);
+        }
     }
 
     protected List<SearchResultEntry> getMultipleEntries(String baseDN,
@@ -259,7 +282,7 @@ public abstract class LdapRepository {
         try {
             SearchRequest request = new SearchRequest(baseDN, scope, searchFilter, attributes);
             request.setControls(new Control[]{sortRequest});
-            searchResult = getAppConnPool().search(request);
+            searchResult = getAppInterface().search(request);
         } catch (LDAPException ldapEx) {
             getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
             throw new IllegalStateException(ldapEx);
@@ -272,7 +295,7 @@ public abstract class LdapRepository {
         SearchScope scope, Filter searchFilter, String... attributes) {
         SearchResultEntry entry = null;
         try {
-            entry = getAppConnPool().searchForEntry(baseDN, scope,
+            entry = getAppInterface().searchForEntry(baseDN, scope,
                 searchFilter, attributes);
         } catch (LDAPSearchException ldapEx) {
             getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
@@ -299,9 +322,13 @@ public abstract class LdapRepository {
 
     protected void updateEntry(String entryDn, List<Modification> mods,
         Audit audit) {
-        LDAPConnection conn = getAppPoolConnection(audit);
-        updateEntry(conn, entryDn, mods, audit);
-        getAppConnPool().releaseConnection(conn);
+        try {
+            getAppInterface().modify(entryDn, mods);
+        } catch (LDAPException ldapEx) {
+            audit.fail();
+            getLogger().error("Error updating entry {} - {}", entryDn, ldapEx);
+            throw new IllegalStateException(ldapEx);
+        }
     }
 
     protected void updateEntry(LDAPConnection conn, String entryDn,
@@ -361,23 +388,23 @@ public abstract class LdapRepository {
         }
     }
 
-    protected void addContainer(LDAPConnection conn, String parentUniqueId, String name) {
+    protected void addContainer(String parentUniqueId, String name) {
         Audit audit = Audit.log("Adding ScopeAccess_Container").add();
         List<Attribute> atts = new ArrayList<Attribute>();
         atts.add(new Attribute(ATTR_OBJECT_CLASS,OBJECTCLASS_RACKSPACE_CONTAINER));
         atts.add(new Attribute(ATTR_NAME, name));
         Attribute[] attributes = atts.toArray(new Attribute[0]);
         String dn = new LdapDnBuilder(parentUniqueId).addAttribute(ATTR_NAME,name).build();
-        this.addEntry(conn, dn, attributes, audit);
+        this.addEntry(dn, attributes, audit);
         audit.succeed();
     }
 
-    protected SearchResultEntry getContainer(LDAPConnection conn, String parentUniqueId, String name) {
+    protected SearchResultEntry getContainer(String parentUniqueId, String name) {
         Filter filter = new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_OBJECT_CLASS,OBJECTCLASS_RACKSPACE_CONTAINER)
                 .addEqualAttribute(ATTR_NAME, name).build();
 
-        SearchResultEntry entry = this.getSingleEntry(conn, parentUniqueId,SearchScope.ONE, filter);
+        SearchResultEntry entry = this.getSingleEntry(parentUniqueId,SearchScope.ONE, filter);
 
         return entry;
     }
@@ -389,12 +416,12 @@ public abstract class LdapRepository {
     protected static final String NEXT_CUSTOMER_ID = "nextCustomerId";
     protected static final String NEXT_GROUP_ID = "nextGroupId";
 
-    protected String getNextId(LDAPConnection conn, String type) {
+    protected String getNextId(String type) {
         Filter filter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_NEXT_ID)
             .addEqualAttribute(ATTR_NAME, type).build();
         
-        SearchResultEntry entry = this.getSingleEntry(conn, NEXT_IDS_BASE_DN, SearchScope.ONE, filter);
+        SearchResultEntry entry = this.getSingleEntry(NEXT_IDS_BASE_DN, SearchScope.ONE, filter);
         
         long nextId = entry.getAttributeValueAsLong(ATTR_ID);
         
@@ -403,13 +430,14 @@ public abstract class LdapRepository {
         mods.add(new Modification(ModificationType.ADD,ATTR_ID, String.valueOf(nextId + 1)));
         
         try {
-            conn.modify(entry.getDN(), mods);
+            getAppInterface().modify(entry.getDN(), mods);
         } catch (LDAPException ex) {
             if (ex.getResultCode() == ResultCode.NO_SUCH_ATTRIBUTE) {
                 // Another applicaiton already got the number so
                 // we have to repeat the call
-                return getNextId(conn, type);
+                return getNextId(type);
             }
+            getLogger().error("Error getting next id of type {}", type, ex);
             throw new IllegalStateException();
         }
         return String.valueOf(nextId);
@@ -513,5 +541,9 @@ public abstract class LdapRepository {
 
             return Filter.createANDFilter(filters);
         }
+    }
+
+    public Configuration getConfig() {
+        return config;
     }
 }
