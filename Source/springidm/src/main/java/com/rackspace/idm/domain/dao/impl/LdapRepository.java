@@ -211,19 +211,6 @@ public abstract class LdapRepository {
         return connPools.getAppConnPool();
     }
 
-    protected LDAPConnection getAppPoolConnection(Audit audit) {
-        LDAPConnection conn = null;
-
-        try {
-            conn = getAppConnPool().getConnection();
-        } catch (LDAPException e) {
-            audit.fail(e.getMessage());
-            getLogger().error("Error getting connection to LDAP {}", e);
-        }
-
-        return conn;
-    }
-
     protected LDAPConnectionPool getBindConnPool() {
         return connPools.getBindConnPool();
     }
@@ -238,17 +225,6 @@ public abstract class LdapRepository {
         } catch (LDAPException e) {
             audit.fail();
             throw new IllegalStateException(e);
-        }
-    }
-
-    protected void addEntry(LDAPConnection conn, String entryDn,
-        Attribute[] attributes, Audit audit) {
-        try {
-            conn.add(entryDn, attributes);
-        } catch (LDAPException ldapEx) {
-            audit.fail();
-            getLogger().error("Error adding entry {} - {}", entryDn, ldapEx);
-            throw new IllegalStateException(ldapEx);
         }
     }
 
@@ -305,36 +281,10 @@ public abstract class LdapRepository {
         return entry;
     }
 
-    protected SearchResultEntry getSingleEntry(LDAPConnection conn,
-        String baseDN, SearchScope scope, Filter searchFilter,
-        String... attributes) {
-        SearchResultEntry entry = null;
-        try {
-            entry = conn
-                .searchForEntry(baseDN, scope, searchFilter, attributes);
-        } catch (LDAPSearchException ldapEx) {
-            getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
-            throw new IllegalStateException(ldapEx);
-        }
-
-        return entry;
-    }
-
     protected void updateEntry(String entryDn, List<Modification> mods,
         Audit audit) {
         try {
             getAppInterface().modify(entryDn, mods);
-        } catch (LDAPException ldapEx) {
-            audit.fail();
-            getLogger().error("Error updating entry {} - {}", entryDn, ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
-    }
-
-    protected void updateEntry(LDAPConnection conn, String entryDn,
-        List<Modification> mods, Audit audit) {
-        try {
-            conn.modify(entryDn, mods);
         } catch (LDAPException ldapEx) {
             audit.fail();
             getLogger().error("Error updating entry {} - {}", entryDn, ldapEx);
@@ -364,28 +314,6 @@ public abstract class LdapRepository {
 
     protected String getRackspaceCustomerId() {
         return config.getString("rackspace.customerId");
-    }
-
-    private void deleteEntryAndSubtree(LDAPConnection conn, String dn,
-        Audit audit) {
-
-        try {
-
-            Filter filter = Filter.createEqualityFilter(ATTR_OBJECT_CLASS,
-                "top");
-            SearchResult searchResult = conn.search(dn, SearchScope.ONE,
-                filter, ATTR_NO_ATTRIBUTES);
-
-            for (SearchResultEntry entry : searchResult.getSearchEntries()) {
-                deleteEntryAndSubtree(conn, entry.getDN(), audit);
-            }
-
-            conn.delete(dn);
-
-        } catch (LDAPException e) {
-            getLogger().error("LDAP Search error - {}", e.getMessage());
-            throw new IllegalStateException(e);
-        }
     }
 
     protected void addContainer(String parentUniqueId, String name) {
@@ -541,9 +469,5 @@ public abstract class LdapRepository {
 
             return Filter.createANDFilter(filters);
         }
-    }
-
-    public Configuration getConfig() {
-        return config;
     }
 }

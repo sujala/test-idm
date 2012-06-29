@@ -1,7 +1,6 @@
 package com.rackspace.idm.domain.config;
 
 import com.rackspace.idm.domain.dao.*;
-import com.rackspace.idm.domain.dao.impl.LdapCloudAdminRepository;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -50,11 +49,6 @@ public class RepositoryConfigurationTest {
     @Test
     public void authenticationRepository_returnsAuthDao() throws Exception {
         assertThat("auth dao",repositoryConfiguration.authenticationRepository(),instanceOf(AuthDao.class));
-    }
-
-    @Test
-    public void cloudAdminRepository_returnsLdapCloudAdminRepository() throws Exception {
-        assertThat("cloud admin repository",repositoryConfiguration.cloudAdminRepository(),instanceOf(LdapCloudAdminRepository.class));
     }
 
     @Test
