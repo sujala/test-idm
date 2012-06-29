@@ -64,7 +64,7 @@ public class LdapAuthRepository implements AuthDao {
 
         SearchResultEntry entry = null;
         try {
-            entry = connPool.searchForEntry(BASE_DN, SearchScope.ONE, searchFilter);
+            entry = getLdapInterface().searchForEntry(BASE_DN, SearchScope.ONE, searchFilter);
         } catch (LDAPSearchException ldapEx) {
             throw new IllegalStateException(ldapEx);
         }
@@ -87,5 +87,9 @@ public class LdapAuthRepository implements AuthDao {
 
     private String getBaseDn() {
         return config.getString("auth.ldap.base.dn", BASE_DN);
+    }
+
+    protected LDAPInterface getLdapInterface() {
+        return connPool;
     }
 }

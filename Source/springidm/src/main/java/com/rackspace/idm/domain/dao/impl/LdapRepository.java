@@ -193,6 +193,7 @@ public abstract class LdapRepository {
         ATTR_CREATED_DATE, ATTR_UPDATED_DATE};
 
     private final LdapConnectionPools connPools;
+
     private final Configuration config;
 
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -540,5 +541,9 @@ public abstract class LdapRepository {
 
             return Filter.createANDFilter(filters);
         }
+    }
+
+    public Configuration getConfig() {
+        return config;
     }
 }
