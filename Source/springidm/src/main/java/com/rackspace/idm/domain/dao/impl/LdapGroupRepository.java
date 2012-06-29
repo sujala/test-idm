@@ -38,7 +38,7 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
         Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLOUDGROUP).build();
 
         try {
-            searchResult = getAppConnPool().search(GROUP_BASE_DN, SearchScope.ONE, searchFilter);
+            searchResult = getAppInterface().search(GROUP_BASE_DN, SearchScope.ONE, searchFilter);
             getLogger().info("Got groups");
         } catch (LDAPSearchException ldapEx) {
             getLogger().error("Error searching for baseUrls - {}", ldapEx);
@@ -65,7 +65,7 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLOUDGROUP).build();
 
         try {
-            searchResult = getAppConnPool().search(GROUP_BASE_DN, SearchScope.ONE, searchFilter);
+            searchResult = getAppInterface().search(GROUP_BASE_DN, SearchScope.ONE, searchFilter);
             getLogger().info("Got group by Id {}", groupId);
         } catch (LDAPSearchException ldapEx) {
             getLogger().error("Error searching for group - {}", ldapEx);
@@ -98,7 +98,7 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
         Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(ATTR_GROUP_NAME,groupName).build();
 
         try{
-            searchResult = getAppConnPool().search(GROUP_BASE_DN, SearchScope.ONE, searchFilter);
+            searchResult = getAppInterface().search(GROUP_BASE_DN, SearchScope.ONE, searchFilter);
             getLogger().info("Got group by Name {}", groupName);
         } catch(LDAPSearchException ldapEx){
             getLogger().error("Error searching for group - {}", ldapEx);
@@ -166,7 +166,7 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
                 // No changes!
                 return;
             }
-            getAppConnPool().modify(oldGroup.getUniqueId(), mods);
+            getAppInterface().modify(oldGroup.getUniqueId(), mods);
         } catch (LDAPException ldapEx) {
             getLogger().error("Error updating group {} - {}", group.getName(), ldapEx);
             audit.fail("Error updating user");
@@ -186,7 +186,7 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
                 ATTR_ID, String.valueOf(groupId)).build();
 
         try {
-            result = getAppConnPool().delete(String.format(baseUrlDN, groupId));
+            result = getAppInterface().delete(String.format(baseUrlDN, groupId));
             getLogger().info("Deleted group - {}", groupId);
         } catch (LDAPException ldapEx) {
             getLogger().error("Error deleting group {} - {}", groupId, ldapEx);
@@ -204,18 +204,7 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
 
     @Override
     public String getNextGroupId() {
-        String groupId = null;
-        LDAPConnection conn = null;
-        try {
-            conn = getAppConnPool().getConnection();
-            groupId = getNextId(conn, NEXT_GROUP_ID);
-        } catch (LDAPException e) {
-            getLogger().error("Error getting next groupId", e);
-            throw new IllegalStateException(e);
-        } finally {
-            getAppConnPool().releaseConnection(conn);
-        }
-        return groupId;
+        return getNextId( NEXT_GROUP_ID);
     }
 
     @Override
@@ -258,7 +247,7 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
 
         LDAPResult result = null;
         try {
-            result = getAppConnPool().modify(userDN, mods);
+            result = getAppInterface().modify(userDN, mods);
             getLogger().info("Added group {} to user {}", groupId, userId);
         } catch (LDAPException ldapEx) {
             getLogger().error("Error updating user {} endpoints - {}", userId, ldapEx);
@@ -316,7 +305,7 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
         }
         LDAPResult result = null;
         try {
-            result = getAppConnPool().modify(userDN, mods);
+            result = getAppInterface().modify(userDN, mods);
             getLogger().info("Removed group {} from user {}", groupId, userId);
         } catch (LDAPException ldapEx) {
             getLogger().error("Error updating user {} groups - {}", userId, ldapEx);
@@ -344,7 +333,7 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
                 .build();
 
         try {
-            searchResult = getAppConnPool().search(
+            searchResult = getAppInterface().search(
                     BASE_DN,
                     SearchScope.SUB,
                     searchFilter,

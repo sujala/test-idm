@@ -1,13 +1,11 @@
 package com.rackspace.idm.api.converter.cloudv11;
 
-import java.util.List;
+import com.rackspace.idm.domain.entity.OpenstackEndpoint;
+import com.rackspace.idm.domain.entity.User;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
-
-import com.rackspace.idm.domain.entity.CloudEndpoint;
-import com.rackspace.idm.domain.entity.OpenstackEndpoint;
-import com.rackspace.idm.domain.entity.User;
+import java.util.List;
 
 public class UserConverterCloudV11 {
     
@@ -30,12 +28,12 @@ public class UserConverterCloudV11 {
         return userDO;
     }
     
-    public com.rackspacecloud.docs.auth.api.v1.User toCloudV11User(User user, List<CloudEndpoint> endpoints) {
+    public com.rackspacecloud.docs.auth.api.v1.User toCloudV11User(User user, List<OpenstackEndpoint> endpoints) {
         
         com.rackspacecloud.docs.auth.api.v1.User jaxbUser = toCloudV11User(user);
         
         if (endpoints != null && endpoints.size() > 0) {
-            jaxbUser.setBaseURLRefs(this.enpointConverterCloudV11.toBaseUrlRefs(endpoints));
+            jaxbUser.setBaseURLRefs(this.enpointConverterCloudV11.openstackToBaseUrlRefs(endpoints));
         }
         
         return jaxbUser;

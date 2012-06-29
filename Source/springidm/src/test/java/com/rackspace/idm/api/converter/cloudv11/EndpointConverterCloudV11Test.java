@@ -207,11 +207,10 @@ public class EndpointConverterCloudV11Test {
         urlList.add(cloudBaseUrl);
         openstackEndpoint.setBaseUrls(urlList);
         endpointList.add(openstackEndpoint);
-        when(config.getString("cloud.baseurl.ref.string")).thenReturn("https://idm.rackspace.com/idm/rest/cloud/v1.1/baseurls/%s");
         BaseURLRefList refList = endpointConverterCloudV11.openstackToBaseUrlRefs(endpointList);
         assertThat("id", refList.getBaseURLRef().get(0).getId(), equalTo(1));
         assertThat("v1default", refList.getBaseURLRef().get(0).isV1Default(), equalTo(true));
-        assertThat("reference string", refList.getBaseURLRef().get(0).getHref(), equalTo("https://idm.rackspace.com/idm/rest/cloud/v1.1/baseurls/1"));
+        assertThat("reference string", refList.getBaseURLRef().get(0).getHref(), equalTo(cloudBaseUrl.getPublicUrl()));
     }
 
     @Test
@@ -227,11 +226,10 @@ public class EndpointConverterCloudV11Test {
         List<CloudBaseUrl> urlList = new ArrayList<CloudBaseUrl>();
         urlList.add(cloudBaseUrl);
         openstackEndpoint.setBaseUrls(urlList);
-        when(config.getString("cloud.baseurl.ref.string")).thenReturn("https://idm.rackspace.com/idm/rest/cloud/v1.1/baseurls/%s");
         List<BaseURLRef> refList = endpointConverterCloudV11.toBaseUrlRef(openstackEndpoint);
         assertThat("id", refList.get(0).getId(), equalTo(1));
         assertThat("v1deafult", refList.get(0).isV1Default(), equalTo(true));
-        assertThat("reference string", refList.get(0).getHref(), equalTo("https://idm.rackspace.com/idm/rest/cloud/v1.1/baseurls/1"));
+        assertThat("reference string", refList.get(0).getHref(), equalTo(cloudBaseUrl.getPublicUrl()));
     }
 
     @Test
@@ -271,22 +269,24 @@ public class EndpointConverterCloudV11Test {
 
     @Test
     public void toServiceCatalog_cloudEndpointListSizeIsZero_returnsEmptyServiceCatalogList() throws Exception {
-        List<CloudEndpoint> urlList = new ArrayList<CloudEndpoint>();
+        List<OpenstackEndpoint> urlList = new ArrayList<OpenstackEndpoint>();
         ServiceCatalog catalog = endpointConverterCloudV11.toServiceCatalog(urlList);
         assertThat("list size",catalog.getService().size(), equalTo(0));
     }
 
     @Test
     public void toServiceCatalog_cloudEndpointListSizeMoreThanZero_returnsCatalogWithAddedEndpoint() throws Exception {
-        CloudEndpoint cloudEndpoint = new CloudEndpoint();
-        cloudEndpoint.setBaseUrl(cloudBaseUrl);
-        cloudEndpoint.setMossoId(1);
-        cloudEndpoint.setUsername("username");
-        cloudEndpoint.setNastId("nastId");
-        cloudEndpoint.setV1preferred(true);
-        List<CloudEndpoint> urlList = new ArrayList<CloudEndpoint>();
-        urlList.add(cloudEndpoint);
-        when(config.getString("cloud.baseurl.ref.string")).thenReturn("https://idm.rackspace.com/idm/rest/cloud/v1.1/baseurls/%s");
+        OpenstackEndpoint openstackEndpoint = new OpenstackEndpoint();
+        openstackEndpoint.setTenantId("nastId");
+        openstackEndpoint.setTenantName("nastId");
+        List<CloudBaseUrl> baseURLs = new ArrayList<CloudBaseUrl>();
+        baseURLs.add(cloudBaseUrl);
+        cloudBaseUrl.setAdminUrl(cloudBaseUrl.getAdminUrl()+"/nastId");
+        cloudBaseUrl.setPublicUrl(cloudBaseUrl.getPublicUrl()+"/nastId");
+        cloudBaseUrl.setInternalUrl(cloudBaseUrl.getInternalUrl()+"/nastId");
+        openstackEndpoint.setBaseUrls(baseURLs);
+        List<OpenstackEndpoint> urlList = new ArrayList<OpenstackEndpoint>();
+        urlList.add(openstackEndpoint);
         ServiceCatalog catalog = endpointConverterCloudV11.toServiceCatalog(urlList);
         assertThat("admin url", catalog.getService().get(0).getEndpoint().get(0).getAdminURL(), equalTo("adminUrl/nastId"));
         assertThat("v1default", catalog.getService().get(0).getEndpoint().get(0).isV1Default(), equalTo(true));
