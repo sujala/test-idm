@@ -38,6 +38,7 @@ public class ServiceConfigurationTest {
     @Before
     public void setUp() throws Exception {
         serviceConfiguration = new ServiceConfiguration(config);
+        spy = new ServiceConfiguration();
         spy = spy(serviceConfiguration);
     }
 
