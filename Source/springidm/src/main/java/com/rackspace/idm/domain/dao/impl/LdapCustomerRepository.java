@@ -181,7 +181,7 @@ public class LdapCustomerRepository extends LdapRepository implements
         getLogger().info("Updated customer {}", customer);
     }
 
-    private Attribute[] getAddAttributes(Customer customer) {
+    Attribute[] getAddAttributes(Customer customer) {
         List<Attribute> atts = new ArrayList<Attribute>();
 
         atts.add(new Attribute(ATTR_OBJECT_CLASS,
@@ -207,7 +207,7 @@ public class LdapCustomerRepository extends LdapRepository implements
         return attributes;
     }
 
-    private Customer getCustomer(SearchResultEntry resultEntry) {
+    Customer getCustomer(SearchResultEntry resultEntry) {
         Customer customer = new Customer();
 
         customer.setUniqueId(resultEntry.getDN());
