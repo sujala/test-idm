@@ -421,7 +421,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         return role;
     }
 
-    private TenantRole getTenantRole(SearchResultEntry entry)
+    TenantRole getTenantRole(SearchResultEntry entry)
         throws LDAPPersistException {
         if (entry == null) {
             return null;
