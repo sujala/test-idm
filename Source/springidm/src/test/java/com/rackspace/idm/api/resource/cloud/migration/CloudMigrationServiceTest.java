@@ -1,11 +1,14 @@
 package com.rackspace.idm.api.resource.cloud.migration;
 
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.*;
 import com.rackspace.idm.api.converter.cloudv20.EndpointConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.RoleConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.api.resource.cloud.MigrationClient;
+import com.rackspace.idm.api.resource.cloud.v20.CloudKsGroupBuilder;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
@@ -60,6 +63,7 @@ public class CloudMigrationServiceTest {
     private User user;
     private org.openstack.docs.identity.api.v2.User cloudUser;
     private String adminToken;
+    private CloudKsGroupBuilder cloudKsGroupBuilder;
 
     @Before
     public void setUp() throws Exception {
@@ -79,6 +83,7 @@ public class CloudMigrationServiceTest {
         groupService = mock(GroupService.class);
         roleConverterCloudV20 = mock(RoleConverterCloudV20.class);
         scopeAccessService = mock(ScopeAccessService.class);
+        cloudKsGroupBuilder = mock(CloudKsGroupBuilder.class);
 
         //setting mocks
         cloudMigrationService.setApplicationService(applicationService);
@@ -93,6 +98,7 @@ public class CloudMigrationServiceTest {
         cloudMigrationService.setRoleConverterCloudV20(roleConverterCloudV20);
         cloudMigrationService.setScopeAccessService(scopeAccessService);
         cloudMigrationService.setEndpointConverterCloudV20(endpointConverterCloudV20);
+        cloudMigrationService.setCloudKsGroupBuilder(cloudKsGroupBuilder);
         gc.setTimeInMillis(new Date().getTime());
 
         //setting mocks for endpointconverter
@@ -450,5 +456,24 @@ public class CloudMigrationServiceTest {
         when(client.getRolesForUser(anyString(), anyString())).thenReturn(roleList);
         when(userService.getUser("username")).thenReturn(user);
         spy.unmigrateUserByUsername("username", true);
+    }
+
+    @Test
+    public void getGroups_callsCloudKsGroupBuilder_reponseOk() throws Exception {
+        Group group = new Group();
+        List<Group> groups = new ArrayList<Group>();
+        groups.add(group);
+        when(groupService.getGroups("", 0)).thenReturn(groups);
+        when(cloudKsGroupBuilder.build(group)).thenReturn(new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group());
+        Response.ResponseBuilder result = spy.getGroups();
+        assertThat("response code", result.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void getGroups_callsGroupService_responseOk() throws Exception {
+        List<Group> groups = new ArrayList<Group>();
+        when(groupService.getGroups("", 0)).thenReturn(groups);
+        Response.ResponseBuilder result = spy.getGroups();
+        assertThat("response code", result.build().getStatus(), equalTo(200));
     }
 }
