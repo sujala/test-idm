@@ -1209,18 +1209,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
     @Override
     public String getNextUserId() {
-        String userId = null;
-        LDAPConnection conn = null;
-        try {
-            conn = getAppConnPool().getConnection();
-            userId = getNextId(conn, NEXT_USER_ID);
-        } catch (LDAPException e) {
-            getLogger().error("Error getting next userId", e);
-            throw new IllegalStateException(e);
-        } finally {
-            getAppConnPool().releaseConnection(conn);
-        }
-        return userId;
+        return getNextId(NEXT_USER_ID);
     }
 
     @Override

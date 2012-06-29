@@ -204,18 +204,7 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
 
     @Override
     public String getNextGroupId() {
-        String groupId = null;
-        LDAPConnection conn = null;
-        try {
-            conn = getAppConnPool().getConnection();
-            groupId = getNextId(conn, NEXT_GROUP_ID);
-        } catch (LDAPException e) {
-            getLogger().error("Error getting next groupId", e);
-            throw new IllegalStateException(e);
-        } finally {
-            getAppConnPool().releaseConnection(conn);
-        }
-        return groupId;
+        return getNextId( NEXT_GROUP_ID);
     }
 
     @Override
