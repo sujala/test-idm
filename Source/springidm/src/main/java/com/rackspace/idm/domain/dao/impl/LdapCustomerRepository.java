@@ -60,7 +60,7 @@ public class LdapCustomerRepository extends LdapRepository implements
 
         Audit audit = Audit.log(customer).delete();
 
-        this.deleteEntryAndSubtree(customerDN, audit);
+        deleteEntryAndSubtree(customerDN, audit);
 
         audit.succeed();
 

@@ -252,9 +252,24 @@ public abstract class LdapRepository {
     }
 
     protected void deleteEntryAndSubtree(String dn, Audit audit) {
-        LDAPConnection conn = getAppPoolConnection(audit);
-        this.deleteEntryAndSubtree(conn, dn, audit);
-        getAppConnPool().releaseConnection(conn);
+        try {
+
+            Filter filter = Filter.createEqualityFilter(ATTR_OBJECT_CLASS,
+                    "top");
+            SearchResult searchResult = getAppInterface().search(dn, SearchScope.ONE,
+                    filter, ATTR_NO_ATTRIBUTES);
+
+            for (SearchResultEntry entry : searchResult.getSearchEntries()) {
+                deleteEntryAndSubtree(entry.getDN(), audit);
+            }
+
+            getAppInterface().delete(dn);
+
+        } catch (LDAPException e) {
+            audit.fail();
+            getLogger().error("LDAP Search error - {}", e.getMessage());
+            throw new IllegalStateException(e);
+        }
     }
 
     protected List<SearchResultEntry> getMultipleEntries(String baseDN,
@@ -266,7 +281,7 @@ public abstract class LdapRepository {
         try {
             SearchRequest request = new SearchRequest(baseDN, scope, searchFilter, attributes);
             request.setControls(new Control[]{sortRequest});
-            searchResult = getAppConnPool().search(request);
+            searchResult = getAppInterface().search(request);
         } catch (LDAPException ldapEx) {
             getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
             throw new IllegalStateException(ldapEx);
