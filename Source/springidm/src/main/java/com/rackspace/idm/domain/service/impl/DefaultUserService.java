@@ -39,6 +39,12 @@ public class DefaultUserService implements UserService {
     private ScopeAccessService scopeAccessService;
 
     @Autowired
+    private TenantService tenantService;
+
+    @Autowired
+    private EndpointService endpointService;
+
+    @Autowired
     private AuthorizationService authorizationService;
 
     public DefaultUserService(UserDao userDao, AuthDao rackerDao,
@@ -314,7 +320,6 @@ public class DefaultUserService implements UserService {
                     return user;
             }
         }
-
         return null;
     }
 
@@ -340,7 +345,6 @@ public class DefaultUserService implements UserService {
                     return user;
             }
         }
-
         return null;
     }
 
@@ -704,6 +708,41 @@ public class DefaultUserService implements UserService {
         return user;
     }
 
+    @Override
+    public void addBaseUrlToUser(Integer baseUrlId, User user) {
+        CloudBaseUrl baseUrl = endpointService.getBaseUrlById(baseUrlId);
+        String tenantId;
+        if(baseUrl.getOpenstackType().equals("NAST"))
+            tenantId = user.getNastId();
+        else
+            tenantId = String.valueOf(user.getMossoId());
+
+        Tenant tenant = tenantService.getTenant(tenantId);
+
+        // Check for existing BaseUrl
+        for (String bId : tenant.getBaseUrlIds()){
+            if(bId.equals(String.valueOf(baseUrl.getBaseUrlId())))
+                throw new BadRequestException("BaseUrl already exists.");
+        }
+
+        tenant.addBaseUrlId(String.valueOf(baseUrl.getBaseUrlId()));
+        this.tenantService.updateTenant(tenant);
+    }
+
+    @Override
+    public void removeBaseUrlFromUser(Integer baseUrlId, User user) {
+        CloudBaseUrl baseUrl = endpointService.getBaseUrlById(baseUrlId);
+        String tenantId;
+        if(baseUrl.getOpenstackType().equals("NAST"))
+            tenantId = user.getNastId();
+        else
+            tenantId = String.valueOf(user.getMossoId());
+
+        Tenant tenant = this.tenantService.getTenant(tenantId);
+        tenant.removeBaseUrlId(String.valueOf(baseUrl.getBaseUrlId()));
+        this.tenantService.updateTenant(tenant);
+    }
+
     private boolean isPasswordRulesEnforced() {
         return config.getBoolean("password.rules.enforced", true);
     }
@@ -718,6 +757,14 @@ public class DefaultUserService implements UserService {
 
     public void setScopeAccessService(ScopeAccessService scopeAccessService) {
         this.scopeAccessService = scopeAccessService;
+    }
+
+    public void setTenantService(TenantService tenantService) {
+        this.tenantService = tenantService;
+    }
+
+    public void setEndpointService(EndpointService endpointService) {
+        this.endpointService = endpointService;
     }
 
     public void setAuthorizationService(AuthorizationService authorizationService) {

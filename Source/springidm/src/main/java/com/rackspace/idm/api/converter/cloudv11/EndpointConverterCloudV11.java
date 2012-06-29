@@ -85,7 +85,7 @@ public class EndpointConverterCloudV11 {
         }
         return refs;
     }
-    
+
 	public BaseURLRefList openstackToBaseUrlRefs(List<OpenstackEndpoint> endpoints) {
         BaseURLRefList refs = of.createBaseURLRefList();
 
@@ -111,8 +111,7 @@ public class EndpointConverterCloudV11 {
             BaseURLRef baseUrlRef = of.createBaseURLRef();
             baseUrlRef.setId(baseUrl.getBaseUrlId());
             baseUrlRef.setV1Default(baseUrl.getDef());
-            baseUrlRef.setHref(String.format(getBaseUrlReferenceString(),
-                    baseUrl.getBaseUrlId()));
+            baseUrlRef.setHref(String.format(baseUrl.getPublicUrl(), baseUrl.getBaseUrlId()));
             
             result.add(baseUrlRef);
     	}
@@ -131,7 +130,7 @@ public class EndpointConverterCloudV11 {
         return baseUrls;
     }
 
-    public ServiceCatalog toServiceCatalog(List<CloudEndpoint> endpoints) {
+    public ServiceCatalog toServiceCatalog(List<OpenstackEndpoint> endpoints) {
         ServiceCatalog catalog = of.createServiceCatalog();
 
         if (endpoints == null || endpoints.size() == 0) {

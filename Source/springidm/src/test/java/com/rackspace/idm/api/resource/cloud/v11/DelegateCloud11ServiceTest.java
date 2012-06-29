@@ -621,7 +621,10 @@ public class DelegateCloud11ServiceTest {
     @Test
     public void deleteUser_routingTrue_userExistsTrue_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
-        when(ldapUserRepository.getUserByUsername(userId)).thenReturn(new com.rackspace.idm.domain.entity.User());
+        com.rackspace.idm.domain.entity.User user = new com.rackspace.idm.domain.entity.User();
+        user.setId(userId);
+        when(defaultUserService.getUserById(userId)).thenReturn(user);
+        when(defaultUserService.isMigratedUser(Matchers.<com.rackspace.idm.domain.entity.User>any())).thenReturn(true);
         delegateCloud11Service.deleteUser(null, userId, null);
         verify(defaultCloud11Service).deleteUser(null, userId, null);
     }
