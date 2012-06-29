@@ -846,6 +846,10 @@ public class DefaultCloud11Service implements Cloud11Service {
             authenticateCloudAdminUser(request);
             userValidator.validate(user);
             userValidator.validateUserName(user.getId());
+
+            if(user.getId().equals(""))
+                throw new BadRequestException("User Id can not be null.");
+            
             if (!user.getId().equals(userId) && !user.getId().equals("")) { //ToDO: Move to user validator?
                 throw new BadRequestException("User Id does not match.");
             }
