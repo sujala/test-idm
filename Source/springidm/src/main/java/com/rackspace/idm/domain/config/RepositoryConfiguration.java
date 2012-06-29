@@ -50,11 +50,6 @@ public class RepositoryConfiguration {
     }
 
     @Bean
-    public LdapCloudAdminRepository cloudAdminRepository() {
-        return new LdapCloudAdminRepository(connPools, appConfig);
-    }
-
-    @Bean
     public EndpointDao endpointDao() {
         return new LdapEndpointRepository(connPools, appConfig);
     }
