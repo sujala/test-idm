@@ -37,14 +37,13 @@ public class LdapCustomerRepository extends LdapRepository implements
 
         Audit audit = Audit.log(customer).add();
 
-        addEntry(customerDN, attributes, audit);
+        this.addEntry(customerDN, attributes, audit);
 
         audit.succeed();
-
         getLogger().info("Added customer {}", customer);
     }
 
-    
+
     @Override
     public void deleteCustomer(String customerId) {
         getLogger().info("Deleting customer {}", customerId);
@@ -60,7 +59,7 @@ public class LdapCustomerRepository extends LdapRepository implements
 
         Audit audit = Audit.log(customer).delete();
 
-        deleteEntryAndSubtree(customerDN, audit);
+        this.deleteEntryAndSubtree(customerDN, audit);
 
         audit.succeed();
 
@@ -250,40 +249,25 @@ public class LdapCustomerRepository extends LdapRepository implements
     
     @Override
     public String getNextCustomerId() {
-        String customerId = null;
-        LDAPConnection conn = null;
-        try {
-            conn = getAppConnPool().getConnection();
-            customerId = getNextId(conn, NEXT_CUSTOMER_ID);
-        } catch (LDAPException e) {
-            getLogger().error("Error getting next customerId", e);
-            throw new IllegalStateException(e);
-        } finally {
-            getAppConnPool().releaseConnection(conn);
-        }
-        return customerId;
+        return getNextId(NEXT_CUSTOMER_ID);
     }
     
     @Override
     public void softDeleteCustomer(Customer customer) {
         getLogger().info("SoftDeleting customer - {}", customer.getRCN());
-        LDAPConnection conn = null;
         try {
-            conn = getAppConnPool().getConnection();
             String oldDn = customer.getUniqueId();
             String newRdn = new LdapDnBuilder("").addAttribute(ATTR_ID, customer.getId()).build();
             String newDn = new LdapDnBuilder(SOFT_DELETED_CUSTOMERS_BASE_DN).addAttribute(ATTR_ID, customer.getId()).build();
             // Modify the customer
-            conn.modifyDN(oldDn, newRdn, false, SOFT_DELETED_CUSTOMERS_BASE_DN);
+            getAppInterface().modifyDN(oldDn, newRdn, false, SOFT_DELETED_CUSTOMERS_BASE_DN);
             customer.setUniqueId(newDn);
             // Disabled the customer
-            conn.modify(customer.getUniqueId(), new Modification(
+            getAppInterface().modify(customer.getUniqueId(), new Modification(
                 ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(false)));
         } catch (LDAPException e) {
             getLogger().error("Error soft deleting customer", e);
             throw new IllegalStateException(e);
-        } finally {
-            getAppConnPool().releaseConnection(conn);
         }
         getLogger().info("SoftDeleted customer - {}", customer.getRCN());
     }
@@ -346,25 +330,21 @@ public class LdapCustomerRepository extends LdapRepository implements
     @Override
     public void unSoftDeleteCustomer(Customer customer) {
         getLogger().info("SoftDeleting customer - {}", customer);
-        LDAPConnection conn = null;
         try {
-            conn = getAppConnPool().getConnection();
             String oldDn = customer.getUniqueId();
             String newRdn = new LdapDnBuilder("").addAttribute(ATTR_ID,
                 customer.getId()).build();
             String newDn = new LdapDnBuilder(CUSTOMERS_BASE_DN)
             .addAttribute(ATTR_ID, customer.getId()).build();
             // Modify the User
-            conn.modifyDN(oldDn, newRdn, false, CUSTOMERS_BASE_DN);
+            getAppInterface().modifyDN(oldDn, newRdn, false, CUSTOMERS_BASE_DN);
             customer.setUniqueId(newDn);
             // Enabled the User
-            conn.modify(customer.getUniqueId(), new Modification(
+            getAppInterface().modify(customer.getUniqueId(), new Modification(
                 ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(true)));
         } catch (LDAPException e) {
             getLogger().error("Error soft deleting customer", e);
             throw new IllegalStateException(e);
-        } finally {
-            getAppConnPool().releaseConnection(conn);
         }
         getLogger().info("SoftDeleted customer - {}", customer);
     }
