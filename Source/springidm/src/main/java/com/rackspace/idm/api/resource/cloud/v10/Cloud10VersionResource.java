@@ -2,7 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v10;
 
 import com.rackspace.idm.api.converter.cloudv11.EndpointConverterCloudV11;
 import com.rackspace.idm.api.resource.cloud.CloudClient;
-import com.rackspace.idm.domain.entity.CloudEndpoint;
+import com.rackspace.idm.domain.entity.OpenstackEndpoint;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.service.EndpointService;
@@ -114,7 +114,7 @@ public class Cloud10VersionResource {
 
         try {
             UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(username, key, getCloudAuthClientId());
-            List<CloudEndpoint> endpointlist = endpointService.getEndpointsForUser(username);
+            List<OpenstackEndpoint> endpointlist = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
 
             ServiceCatalog catalog = endpointConverterCloudV11.toServiceCatalog(endpointlist);
 

@@ -1,6 +1,6 @@
 package com.rackspace.idm.api.converter.cloudv11;
 
-import com.rackspace.idm.domain.entity.CloudEndpoint;
+import com.rackspace.idm.domain.entity.OpenstackEndpoint;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspacecloud.docs.auth.api.v1.AuthData;
 import com.rackspacecloud.docs.auth.api.v1.FullToken;
@@ -25,7 +25,7 @@ public class AuthConverterCloudV11 {
 
     private final com.rackspacecloud.docs.auth.api.v1.ObjectFactory OBJ_FACTORY = new com.rackspacecloud.docs.auth.api.v1.ObjectFactory();
 
-    public AuthData toCloudv11AuthDataJaxb(UserScopeAccess usa, List<CloudEndpoint> endpoints) {
+    public AuthData toCloudv11AuthDataJaxb(UserScopeAccess usa, List<OpenstackEndpoint> endpoints) {
 
         AuthData auth = OBJ_FACTORY.createAuthData();
 

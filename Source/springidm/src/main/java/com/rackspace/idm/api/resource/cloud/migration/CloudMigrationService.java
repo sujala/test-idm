@@ -1024,4 +1024,8 @@ public class CloudMigrationService {
     public void setEndpointConverterCloudV20(EndpointConverterCloudV20 endpointConverterCloudV20) {
         this.endpointConverterCloudV20 = endpointConverterCloudV20;
     }
+
+    public void setCloudKsGroupBuilder(CloudKsGroupBuilder cloudKsGroupBuilder) {
+        this.cloudKsGroupBuilder = cloudKsGroupBuilder;
+    }
 }

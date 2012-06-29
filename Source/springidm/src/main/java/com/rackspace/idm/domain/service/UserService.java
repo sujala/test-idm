@@ -81,4 +81,8 @@ public interface UserService {
     boolean userExistsById(String userId);
     boolean userExistsByUsername(String username);
     boolean isMigratedUser(User user);
+
+    void addBaseUrlToUser(Integer baseUrlId, User user);
+
+    void removeBaseUrlFromUser(Integer baseUrlId, User user);
 }
