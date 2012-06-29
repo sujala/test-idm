@@ -645,7 +645,9 @@ public class DefaultCloud11Service implements Cloud11Service {
             if (user == null) {
                 throw new NotFoundException(String.format("User with MossoId %s not found", mossoId));
             }
-            return cloudExceptionResponse.redirect(request, user.getUsername());
+            ScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), config.getString("cloudAuth.clientId"));
+            List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(sa);
+            return Response.status(301).entity(OBJ_FACTORY.createUser(this.userConverterCloudV11.openstackToCloudV11User(user, endpoints)));
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }
@@ -664,7 +666,9 @@ public class DefaultCloud11Service implements Cloud11Service {
             if (user == null) {
                 throw new NotFoundException(String.format("User with NastId %s not found", nastId));
             }
-            return cloudExceptionResponse.redirect(request, user.getUsername());
+            ScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), config.getString("cloudAuth.clientId"));
+            List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(sa);
+            return Response.status(301).entity(OBJ_FACTORY.createUser(this.userConverterCloudV11.openstackToCloudV11User(user, endpoints)));
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }

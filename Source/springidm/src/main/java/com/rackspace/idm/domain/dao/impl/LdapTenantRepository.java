@@ -163,7 +163,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         }
     }
 
-    private List<Tenant> getMultipleTenants(Filter searchFilter)
+    List<Tenant> getMultipleTenants(Filter searchFilter)
         throws LDAPPersistException {
         List<SearchResultEntry> entries = this.getMultipleEntries(
             TENANT_BASE_DN, SearchScope.ONE, searchFilter, ATTR_ID,
@@ -176,7 +176,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         return tenants;
     }
 
-    private Tenant getSingleTenant(Filter searchFilter)
+    Tenant getSingleTenant(Filter searchFilter)
         throws LDAPPersistException {
         SearchResultEntry entry = this.getSingleEntry(TENANT_BASE_DN,
             SearchScope.ONE, searchFilter, ATTR_TENANT_SEARCH_ATTRIBUTES);
@@ -184,7 +184,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         return tenant;
     }
 
-    private Tenant getTenant(SearchResultEntry entry)
+    Tenant getTenant(SearchResultEntry entry)
         throws LDAPPersistException {
         if (entry == null) {
             return null;
@@ -356,7 +356,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         return roles;
     }
 
-    private List<TenantRole> getTenantRolesForClient(
+    List<TenantRole> getTenantRolesForClient(
         String uniqueParentClientId, FilterParam[] filters) {
         getLogger().debug("Getting tenantRoles");
 
@@ -391,7 +391,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         return roles;
     }
 
-    private List<TenantRole> getMultipleTenantRoles(String parentUniqueId,
+    List<TenantRole> getMultipleTenantRoles(String parentUniqueId,
         Filter searchFilter) throws LDAPPersistException {
         List<SearchResultEntry> entries = this.getMultipleEntries(parentUniqueId, SearchScope.SUB, searchFilter, ATTR_ID);
 
@@ -402,14 +402,14 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         return roles;
     }
 
-    private TenantRole getSingleTenantRole(String parentUniqueId,
+    TenantRole getSingleTenantRole(String parentUniqueId,
         Filter searchFilter) throws LDAPPersistException {
         SearchResultEntry entry = this.getSingleEntry(parentUniqueId, SearchScope.SUB, searchFilter);
         TenantRole role = getTenantRole(entry);
         return role;
     }
 
-    private TenantRole getTenantRole(SearchResultEntry entry)
+    TenantRole getTenantRole(SearchResultEntry entry)
         throws LDAPPersistException {
         if (entry == null) {
             return null;
