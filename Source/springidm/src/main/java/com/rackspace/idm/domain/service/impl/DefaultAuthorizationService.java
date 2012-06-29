@@ -253,11 +253,11 @@ public class DefaultAuthorizationService implements AuthorizationService {
         if (scopeAccess == null) {
             return false;
         }
-        if (CLOUD_USER_ROLE == null) {
+        if (CLOUD_USER_ADMIN_ROLE == null) {
             ClientRole role = clientDao.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserAdminRole());
-            CLOUD_USER_ROLE = role;
+            CLOUD_USER_ADMIN_ROLE = role;
         }
-        return tenantDao.doesScopeAccessHaveTenantRole(scopeAccess, CLOUD_USER_ROLE);
+        return tenantDao.doesScopeAccessHaveTenantRole(scopeAccess, CLOUD_USER_ADMIN_ROLE);
     }
 
     @Override

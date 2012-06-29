@@ -55,7 +55,7 @@ import com.rackspace.idm.validation.InputValidator;
  *         objects with dependency for the return type.
  */
 @org.springframework.context.annotation.Configuration
-public class ServiceConfiguration {
+public class  ServiceConfiguration {
 
 	//IMPORTANT!! This is at the top of the file, because every service is dependent on configuration. We want to ensure
 	//this is autowired first. If not, one of the autowired objects in this configuration might be depedent on config, and
@@ -195,3 +195,4 @@ public class ServiceConfiguration {
         return exp;
     }
 }
+

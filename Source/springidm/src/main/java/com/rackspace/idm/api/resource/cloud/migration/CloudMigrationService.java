@@ -631,6 +631,12 @@ public class CloudMigrationService {
 
         if (users.getUsers() == null) // Used so we do not delete a user who wasn't previously migrated.
             throw new NotFoundException("User not found.");
+
+        for (com.rackspace.idm.domain.entity.User u : users.getUsers()) {
+            if (u.getInMigration() == null) {
+                throw new ConflictException("Cannot unmigrate useradmin that contains subusers created after migration.");
+            }
+        }
         
         for (com.rackspace.idm.domain.entity.User u : users.getUsers())
             userService.deleteUser(u.getUsername());
