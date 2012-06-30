@@ -166,8 +166,8 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
     List<Tenant> getMultipleTenants(Filter searchFilter)
         throws LDAPPersistException {
         List<SearchResultEntry> entries = this.getMultipleEntries(
-            TENANT_BASE_DN, SearchScope.ONE, searchFilter, ATTR_ID,
-            ATTR_TENANT_SEARCH_ATTRIBUTES);
+            TENANT_BASE_DN, SearchScope.ONE, ATTR_ID, searchFilter,
+                ATTR_TENANT_SEARCH_ATTRIBUTES);
 
         List<Tenant> tenants = new ArrayList<Tenant>();
         for (SearchResultEntry entry : entries) {
