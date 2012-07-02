@@ -386,7 +386,7 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
         return group;
     }
 
-    private Attribute[] getAddAttributes(Group group)
+    Attribute[] getAddAttributes(Group group)
         throws GeneralSecurityException, InvalidCipherTextException {
         CryptHelper cryptHelper = CryptHelper.getInstance();
 
