@@ -2038,21 +2038,12 @@ public class DefaultCloud11ServiceTest {
     }
 
     @Test
-    public void updateUser_userIdIsBlankAndMatching_callsUserService_getUser() throws Exception {
+    public void updateUser_userIdIsBlank_returns400() throws Exception {
         doNothing().when(spy).authenticateCloudAdminUser(request);
         doNothing().when(userValidator).validate(user);
         user.setId("");
-        spy.updateUser(request, "", null, user);
-        verify(userService).getUser("");
-    }
-
-    @Test
-    public void updateUser_userIdIsBlankAndNotMatching_callsUserService_getUser() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUser(request);
-        doNothing().when(userValidator).validate(user);
-        user.setId("");
-        spy.updateUser(request, "123", null, user);
-        verify(userService).getUser("123");
+        Response.ResponseBuilder responseBuilder = spy.updateUser(request, "", null, user);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
     }
 
     @Test

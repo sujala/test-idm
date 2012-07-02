@@ -23,24 +23,16 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
     public ScopeAccess addDelegateScopeAccess(String parentUniqueId, ScopeAccess scopeAccess) {
         getLogger().info("Adding Delegate ScopeAccess: {}", scopeAccess);
         Audit audit = Audit.log(scopeAccess).add();
-        LDAPConnection conn = null;
-        try {
-            conn = getAppConnPool().getConnection();
-            SearchResultEntry entry = getContainer( parentUniqueId, CONTAINER_DELEGATE);
-            if (entry == null) {
-                addContainer( parentUniqueId, CONTAINER_DELEGATE);
-                entry = getContainer( parentUniqueId, CONTAINER_DELEGATE);
-            }
-            audit.succeed();
-            getLogger().debug("Added Delegate ScopeAccess: {}", scopeAccess);
-            return addScopeAccess(entry.getDN(), scopeAccess);
-        } catch (final LDAPException e) {
-            getLogger().error("Error adding scope access object", e);
-            audit.fail();
-            throw new IllegalStateException(e);
-        } finally {
-            getAppConnPool().releaseConnection(conn);
+        SearchResultEntry entry = getContainer( parentUniqueId, CONTAINER_DELEGATE);
+
+        if (entry == null) {
+            addContainer( parentUniqueId, CONTAINER_DELEGATE);
+            entry = getContainer( parentUniqueId, CONTAINER_DELEGATE);
         }
+
+        audit.succeed();
+        getLogger().debug("Added Delegate ScopeAccess: {}", scopeAccess);
+        return addScopeAccess(entry.getDN(), scopeAccess);
     }
 
     @Override

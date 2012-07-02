@@ -6,7 +6,7 @@
     <artifactId>idm</artifactId>
     <name>idm</name>
     <packaging>war</packaging>
-    <version>1.0.9-SNAPSHOT</version>
+    <version>1.0.10-SNAPSHOT</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -1140,8 +1140,13 @@
                             <goal>test</goal>
                         </goals>
                         <configuration>
+                            <skip>false</skip>
+                            <excludes>
+                                <exclude>none</exclude>
+                            </excludes>
                             <includes>
-                                <include>**/*IT.java</include>
+                                <include>**/*IntegrationTest*.java</include>
+                                <!--<include>**/*IT.java</include>-->
                             </includes>
                         </configuration>
                     </execution>

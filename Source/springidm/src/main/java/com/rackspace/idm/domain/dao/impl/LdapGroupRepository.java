@@ -375,7 +375,7 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
         return groups;
     }
 
-    private Group getGroup(SearchResultEntry resultEntry) {
+    Group getGroup(SearchResultEntry resultEntry) {
         getLogger().debug("Inside getCloudGroup");
         Group group = new Group();
         group.setUniqueId(resultEntry.getDN());
@@ -386,7 +386,7 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
         return group;
     }
 
-    private Attribute[] getAddAttributes(Group group)
+    Attribute[] getAddAttributes(Group group)
         throws GeneralSecurityException, InvalidCipherTextException {
         CryptHelper cryptHelper = CryptHelper.getInstance();
 
