@@ -592,7 +592,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     void throwIfEmptyUsername(User user) throws IllegalArgumentException {
         if (user == null || StringUtils.isBlank(user.getUsername())) {
             getLogger().error("User instance is null or its userName has no value");
-            throw new IllegalArgumentException("Bad parameter: The User instance either null or its userName has no value.");
+            throw new BadRequestException("Bad parameter: The User is null or has a blank Username");
         }
     }
 
