@@ -1140,8 +1140,13 @@
                             <goal>test</goal>
                         </goals>
                         <configuration>
+                            <skip>false</skip>
+                            <excludes>
+                                <exclude>none</exclude>
+                            </excludes>
                             <includes>
-                                <include>**/*IT.java</include>
+                                <include>**/*IntegrationTest*.java</include>
+                                <!--<include>**/*IT.java</include>-->
                             </includes>
                         </configuration>
                     </execution>
