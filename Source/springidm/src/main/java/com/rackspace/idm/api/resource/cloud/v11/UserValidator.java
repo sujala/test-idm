@@ -2,8 +2,6 @@ package com.rackspace.idm.api.resource.cloud.v11;
 
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspacecloud.docs.auth.api.v1.User;
-import com.rsa.cryptoj.c.P;
-import freemarker.template.utility.StringUtil;
 import org.apache.commons.lang.CharUtils;
 import org.springframework.stereotype.Component;
 
@@ -24,14 +22,14 @@ public class UserValidator {
     public void validate(User user) {
         if (user == null) {
             throw new BadRequestException(USER_ID_NULL_MSG);
-        } else if (user.getNastId() != null && user.getKey() != null) {
+        //} else if (user.getNastId() != null && user.getKey() != null) {
             //no op
         } else {
             if (user.getId() == null) {
                 throw new BadRequestException(USER_ID_NULL_MSG);
             }
             if (user.getId().isEmpty()) {
-                throw new BadRequestException(USER_ID_EMPTY_MSG);
+                throw new BadRequestException(USER_ID_NULL_MSG);
             }
         }
     }
