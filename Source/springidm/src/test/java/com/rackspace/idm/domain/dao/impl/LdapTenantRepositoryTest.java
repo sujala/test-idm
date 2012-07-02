@@ -132,7 +132,7 @@ public class LdapTenantRepositoryTest {
         SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0]);
         List<SearchResultEntry> entries = new ArrayList<SearchResultEntry>();
         entries.add(searchResultEntry);
-        doReturn(entries).when(spy).getMultipleEntries(LdapRepository.TENANT_BASE_DN, SearchScope.ONE, null, LdapRepository.ATTR_ID, LdapRepository.ATTR_TENANT_SEARCH_ATTRIBUTES);
+        doReturn(entries).when(spy).getMultipleEntries(LdapRepository.TENANT_BASE_DN, SearchScope.ONE, LdapRepository.ATTR_ID, null, LdapRepository.ATTR_TENANT_SEARCH_ATTRIBUTES);
         doReturn(tenant).when(spy).getTenant(searchResultEntry);
         List<Tenant> result = spy.getMultipleTenants(null);
         assertThat("tenant", result.get(0), equalTo(tenant));
@@ -141,7 +141,7 @@ public class LdapTenantRepositoryTest {
     @Test
     public void getMultipleTenants_tenantsNotFound_returnsEmptyList() throws Exception {
         List<SearchResultEntry> entries = new ArrayList<SearchResultEntry>();
-        doReturn(entries).when(spy).getMultipleEntries(LdapRepository.TENANT_BASE_DN, SearchScope.ONE, null, LdapRepository.ATTR_ID, LdapRepository.ATTR_TENANT_SEARCH_ATTRIBUTES);
+        doReturn(entries).when(spy).getMultipleEntries(LdapRepository.TENANT_BASE_DN, SearchScope.ONE, LdapRepository.ATTR_ID, null, LdapRepository.ATTR_TENANT_SEARCH_ATTRIBUTES);
         List<Tenant> result = spy.getMultipleTenants(null);
         assertThat("tenant", result.isEmpty(), equalTo(true));
     }

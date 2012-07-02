@@ -19,7 +19,6 @@ import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.instanceOf;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.*;
 
@@ -292,7 +291,7 @@ public class LdapApplicationRepositoryTest {
         Application client = new Application();
         client.setUniqueId("uniqueId");
         doReturn(client).when(spy).getClientByClientId("clientId");
-        doReturn(new ArrayList<SearchResultEntry>()).when(spy).getMultipleEntries("uniqueId", SearchScope.ONE, searchFilter, LdapRepository.ATTR_NAME, LdapRepository.ATTR_GROUP_SEARCH_ATTRIBUTES);
+        doReturn(new ArrayList<SearchResultEntry>()).when(spy).getMultipleEntries("uniqueId", SearchScope.ONE, LdapRepository.ATTR_NAME, searchFilter, LdapRepository.ATTR_GROUP_SEARCH_ATTRIBUTES);
         List<ClientGroup> result = spy.getClientGroupsByClientId("clientId");
         assertThat("group list", result.isEmpty(), equalTo(true));
     }
@@ -308,7 +307,7 @@ public class LdapApplicationRepositoryTest {
         ArrayList<SearchResultEntry> resultList = new ArrayList<SearchResultEntry>();
         resultList.add(searchResultEntry);
         doReturn(client).when(spy).getClientByClientId("clientId");
-        doReturn(resultList).when(spy).getMultipleEntries("uniqueId", SearchScope.ONE, searchFilter, LdapRepository.ATTR_NAME, LdapRepository.ATTR_GROUP_SEARCH_ATTRIBUTES);
+        doReturn(resultList).when(spy).getMultipleEntries("uniqueId", SearchScope.ONE, LdapRepository.ATTR_NAME, searchFilter, LdapRepository.ATTR_GROUP_SEARCH_ATTRIBUTES);
         doReturn(group).when(spy).getClientGroup(searchResultEntry);
         List<ClientGroup> result = spy.getClientGroupsByClientId("clientId");
         assertThat("group list", result.get(0), equalTo(group));
