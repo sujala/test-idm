@@ -592,7 +592,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     void throwIfEmptyUsername(User user) throws IllegalArgumentException {
         if (user == null || StringUtils.isBlank(user.getUsername())) {
             getLogger().error("User instance is null or its userName has no value");
-            throw new IllegalArgumentException("Bad parameter: The User instance either null or its userName has no value.");
+            throw new BadRequestException("Bad parameter: The User is null or has a blank Username");
         }
     }
 
@@ -794,7 +794,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         try {
 
             List<SearchResultEntry> entries = this.getMultipleEntries(
-                USERS_BASE_DN, SearchScope.SUB, searchFilter, ATTR_UID, searchAttributes);
+                USERS_BASE_DN, SearchScope.SUB, ATTR_UID, searchFilter, searchAttributes);
 
             contentCount = entries.size();
 
@@ -1226,7 +1226,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             user.setUniqueId(newDn);
             // Disabled the User
             getAppInterface().modify(user.getUniqueId(), new Modification(
-                ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(false)));
+                    ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(false)));
         } catch (LDAPException e) {
             getLogger().error("Error soft deleting user", e);
             throw new IllegalStateException(e);
@@ -1293,7 +1293,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             user.setUniqueId(newDn);
             // Enabled the User
             getAppInterface().modify(user.getUniqueId(), new Modification(
-                ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(true)));
+                    ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(true)));
         } catch (LDAPException e) {
             getLogger().error("Error soft deleting user", e);
             throw new IllegalStateException(e);

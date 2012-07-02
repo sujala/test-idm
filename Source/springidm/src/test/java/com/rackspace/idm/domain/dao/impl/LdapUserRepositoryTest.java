@@ -691,12 +691,12 @@ public class LdapUserRepositoryTest {
         ldapUserRepository.throwIfEmptyOldUser(new User(), new User());
     }
 
-    @Test (expected = IllegalArgumentException.class)
+    @Test (expected = BadRequestException.class)
     public void throwIfEmptyUsername_userIsNull_throwsIllegalArgument() throws Exception {
         ldapUserRepository.throwIfEmptyUsername(null);
     }
 
-    @Test (expected = IllegalArgumentException.class)
+    @Test (expected = BadRequestException.class)
     public void throwIfEmptyUsername_usernameIsBlank_throwsIllegalArgument() throws Exception {
         ldapUserRepository.throwIfEmptyUsername(new User());
     }

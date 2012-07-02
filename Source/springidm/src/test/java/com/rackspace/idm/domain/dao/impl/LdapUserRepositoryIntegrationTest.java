@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.domain.config.LdapConfiguration;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateUsernameException;
 import com.rackspace.idm.exception.PasswordSelfUpdateTooSoonException;
 import com.unboundid.ldap.sdk.Modification;
@@ -18,6 +19,7 @@ import java.security.GeneralSecurityException;
 import java.util.List;
 import java.util.Locale;
 
+import static junit.framework.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
@@ -166,7 +168,7 @@ public class LdapUserRepositoryIntegrationTest {
         try {
             repo.updateUser(null, false);
             Assert.fail("Should have thrown an exception!");
-        } catch (IllegalArgumentException e) {
+        } catch (BadRequestException e) {
             Assert.assertTrue(true);
         }
 
