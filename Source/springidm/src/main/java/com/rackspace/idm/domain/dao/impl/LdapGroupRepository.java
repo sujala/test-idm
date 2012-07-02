@@ -375,7 +375,7 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
         return groups;
     }
 
-    private Group getGroup(SearchResultEntry resultEntry) {
+    Group getGroup(SearchResultEntry resultEntry) {
         getLogger().debug("Inside getCloudGroup");
         Group group = new Group();
         group.setUniqueId(resultEntry.getDN());

@@ -44,6 +44,7 @@ public class UserValidatorTest {
         User user = new User();
         user.setNastId("nastId");
         user.setKey("key");
+        user.setId("id");
         userValidator.validate(user);
     }
 
@@ -57,6 +58,7 @@ public class UserValidatorTest {
     @Test
     public void validate_validUser() throws Exception {
         User user = new User();
+        user.setId("id");
         user.setNastId("nastId");
         user.setMossoId(1);
         user.setKey("key");
