@@ -92,5 +92,13 @@ public class NastFacade {
     static boolean hasResellerInfo(String resellerName, String resellerId) {
         return !(StringUtils.isBlank(resellerName) || StringUtils.isBlank(resellerId));
     }
+
+    public void setAuthConfiguration(NastConfiguration authConfiguration) {
+        this.authConfiguration = authConfiguration;
+    }
+
+    public void setNastXMLRpcClientWrapper(NastXmlRpcClientWrapper nastXMLRpcClientWrapper) {
+        this.nastXMLRpcClientWrapper = nastXMLRpcClientWrapper;
+    }
 }
 

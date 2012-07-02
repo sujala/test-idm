@@ -1,7 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.docs.identity.api.ext.rax_ga.v1.ImpersonationRequest;
-import com.rackspace.docs.identity.api.ext.rax_ga.v1.ImpersonationResponse;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
@@ -565,7 +565,8 @@ public class DelegateCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder addUser(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, UserForCreate user)
             throws IOException, JAXBException {
-        if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
+        ScopeAccess accessTokenByAuthHeader = scopeAccessService.getAccessTokenByAuthHeader(authToken);
+        if (isCloudAuthRoutingEnabled() && accessTokenByAuthHeader==null) {
             String request = getCloudAuthV20Url() + "users";
             String body = marshallObjectToString(objectFactory.createUser(user));
             return cloudClient.post(request, httpHeaders, body);

@@ -1,6 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.docs.identity.api.ext.rax_ga.v1.ImpersonationResponse;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
@@ -20,6 +20,7 @@ import org.openstack.docs.common.api.v1.MediaTypeList;
 import org.openstack.docs.common.api.v1.VersionChoice;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.ServiceList;
+import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplateList;
 import org.openstack.docs.identity.api.v2.*;
@@ -319,7 +320,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
 
             BaseURLList baseList = (BaseURLList) object.getValue();
             for (BaseURL url : baseList.getBaseURL()) {
-                list.add(getBaseUrlList(url));
+                list.add(getBaseUrl(url));
             }
             outer.put(JSONConstants.BASE_URLS, list);
 
@@ -392,7 +393,9 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
                     if (l.getType() != null) {
                         jlink.put("type", l.getType());
                     }
-                    jlink.put("href", l.getHref());
+                    if (l.getHref() != null){
+                        jlink.put("href", l.getHref());
+                    }
                     linkArray.add(jlink);
                 }
             }
@@ -587,8 +590,14 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
         outer.put(JSONConstants.USERNAME, user.getUsername());
         outer.put(JSONConstants.EMAIL, user.getEmail());
         outer.put(JSONConstants.ENABLED, user.isEnabled());
+        if (user instanceof UserForCreate) {
+            if (((UserForCreate) user).getPassword() != null) {
+                outer.put(JSONConstants.OS_KSADM_PASSWORD, ((UserForCreate) user).getPassword());
+            }
+        }
         if(user.getCreated() != null){
             outer.put(JSONConstants.CREATED,user.getCreated().toString());
+
         }
         if(user.getUpdated() != null){
             outer.put(JSONConstants.UPDATED,user.getUpdated().toString());
@@ -741,7 +750,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     }
 
     @SuppressWarnings("unchecked")
-    private JSONObject getEndpointTemplateList(EndpointTemplateList templateList) {
+    JSONObject getEndpointTemplateList(EndpointTemplateList templateList) {
         JSONObject outer = new JSONObject();
         JSONObject inner = new JSONObject();
         JSONArray list = new JSONArray();
@@ -754,7 +763,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     }
 
     @SuppressWarnings("unchecked")
-    JSONObject getBaseUrlList(BaseURL url) {
+    JSONObject getBaseUrl(BaseURL url) {
         JSONObject baseURL = new JSONObject();
         baseURL.put(JSONConstants.ENABLED, url.isEnabled());
         baseURL.put(JSONConstants.DEFAULT, url.isDefault());
@@ -785,9 +794,8 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     }
 
     @SuppressWarnings("unchecked")
-    private JSONObject getExtensionList(Extensions extensions) {
+    JSONObject getExtensionList(Extensions extensions) {
         JSONObject outer = new JSONObject();
-        JSONObject inner = new JSONObject();
         JSONArray list = new JSONArray();
         outer.put(JSONConstants.EXTENSIONS, list);
         for (Extension extension : extensions.getExtension()) {
@@ -830,44 +838,24 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     }
 
     @SuppressWarnings("unchecked")
-    private JSONObject getExtensionWithoutWrapper(Extension extension) {
+    JSONObject getExtensionWithoutWrapper(Extension extension) {
         JSONObject outer = new JSONObject();
 
         outer.put(JSONConstants.NAME, extension.getName());
         outer.put(JSONConstants.NAMESPACE, extension.getNamespace());
         outer.put(JSONConstants.ALIAS, extension.getAlias());
-        outer.put(JSONConstants.UPDATED, extension.getUpdated().toString());
+        if(extension.getUpdated() != null){
+            outer.put(JSONConstants.UPDATED, extension.getUpdated().toString());
+        }
         outer.put(JSONConstants.DESCRIPTION, extension.getDescription());
-        List<Link> links = new ArrayList<Link>();
-        if (extension.getAny() != null && extension.getAny().size() > 0) {
-            for (Object obj : extension.getAny()) {
-                if (Object.class.isAssignableFrom(Link.class)) {
-                    links.add(((JAXBElement<Link>) obj).getValue());
-                }
-            }
-        }
-        if (links.size() > 0) {
-            JSONArray list = new JSONArray();
-            outer.put(JSONConstants.LINKS, list);
-            for (Link link : links) {
-                list.add(getLinkWithoutWrapper(link));
-            }
-        }
-        return outer;
-    }
 
-    @SuppressWarnings("unchecked")
-    private JSONObject getLinkWithoutWrapper(Link link) {
-        JSONObject outer = new JSONObject();
-        if (link.getRel() != null) {
-            outer.put(JSONConstants.REL, link.getRel().toString());
+        if (extension.getAny().size() > 0) {
+            JSONArray links = JSONWriter.getLinks(extension.getAny());
+            if(links.size() > 0){
+                outer.put(JSONConstants.LINKS, links);
+            }
         }
-        if (link.getType() != null) {
-            outer.put(JSONConstants.TYPE, link.getType());
-        }
-        if (link.getHref() != null) {
-            outer.put(JSONConstants.HREF, link.getHref());
-        }
+
         return outer;
     }
 

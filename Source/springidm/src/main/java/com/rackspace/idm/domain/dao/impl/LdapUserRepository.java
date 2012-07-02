@@ -4,10 +4,7 @@ import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
-import com.rackspace.idm.exception.NotFoundException;
-import com.rackspace.idm.exception.PasswordSelfUpdateTooSoonException;
-import com.rackspace.idm.exception.StalePasswordException;
-import com.rackspace.idm.exception.UserDisabledException;
+import com.rackspace.idm.exception.*;
 import com.rackspace.idm.util.CryptHelper;
 import com.unboundid.ldap.sdk.*;
 import com.unboundid.util.StaticUtils;
@@ -122,30 +119,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
 
         User user = getUserByUsername(username);
-        getLogger().debug("Found user {}, authenticating...", user);
-        return authenticateUserByApiKey(user, apiKey);
-    }
-
-    @Override
-    public UserAuthenticationResult authenticateByMossoIdAndAPIKey(int mossoId, String apiKey) {
-        getLogger().info("Authenticating User with MossoId {}", mossoId);
-
-        User user = getUserByMossoId(mossoId);
-        getLogger().debug("Found user {}, authenticating...", user);
-        return authenticateUserByApiKey(user, apiKey);
-    }
-
-    @Override
-    public UserAuthenticationResult authenticateByNastIdAndAPIKey(
-        String nastId, String apiKey) {
-        getLogger().debug("Authenticating User with NastId {}", nastId);
-        if (StringUtils.isBlank(nastId)) {
-            String errmsg = "Null or Empty NastId parameter";
-            getLogger().error(errmsg);
-            throw new IllegalArgumentException(errmsg);
-        }
-
-        User user = getUserByNastId(nastId);
         getLogger().debug("Found user {}, authenticating...", user);
         return authenticateUserByApiKey(user, apiKey);
     }
@@ -315,24 +288,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     }
 
     @Override
-    public User getUserByMossoId(int mossoId) {
-        getLogger().debug("Doing search for nastId " + mossoId);
-
-        Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_MOSSO_ID, String.valueOf(mossoId))
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
-            .build();
-
-        User user = getSingleUser(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES);
-
-        getLogger().debug("Found User - {}", user);
-
-        return user;
-    }
-
-    @Override
     public Users getUsersByMossoId(int mossoId) {
-        getLogger().debug("Doing search for nastId " + mossoId);
+        getLogger().debug("Doing search for mossoId " + mossoId);
 
         Filter searchFilter = new LdapSearchBuilder()
             .addEqualAttribute(ATTR_MOSSO_ID, String.valueOf(mossoId))
@@ -341,13 +298,13 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES,getLdapPagingOffsetDefault(),getLdapPagingLimitDefault());
 
-        getLogger().debug("Found User - {}", users);
+        getLogger().debug("Found Users - {}", users);
 
         return users;
     }
 
     @Override
-    public User getUserByNastId(String nastId) {
+    public Users getUsersByNastId(String nastId) {
         getLogger().debug("Doing search for nastId " + nastId);
         if (StringUtils.isBlank(nastId)) {
             getLogger().error("Null or Empty nastId parameter");
@@ -360,11 +317,32 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
             .build();
 
-        User user = getSingleUser(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES);
+        Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES,getLdapPagingOffsetDefault(),getLdapPagingLimitDefault());
 
-        getLogger().debug("Found User - {}", user);
+        getLogger().debug("Found Users - {}", users);
 
-        return user;
+        return users;
+    }
+
+    @Override
+    public Users getUsersByDomainId(String domainId) {
+        getLogger().debug("Doing search for domainId " + domainId);
+        if (StringUtils.isBlank(domainId)) {
+            getLogger().error("Null or Empty domainId parameter");
+            throw new IllegalArgumentException(
+                    "Null or Empty domainId parameter.");
+        }
+
+        Filter searchFilter = new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_DOMAIN_ID, domainId)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
+                .build();
+
+        Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES,getLdapPagingOffsetDefault(),getLdapPagingLimitDefault());
+
+        getLogger().debug("Found Users - {}", users);
+
+        return users;
     }
 
     @Override
@@ -495,6 +473,9 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().info("Updating user to {}", user);
         throwIfEmptyUsername(user);
         User oldUser = getUserById(user.getId());
+        if(!StringUtils.equalsIgnoreCase(oldUser.getUsername(), user.getUsername()) && !isUsernameUnique(user.getUsername())){
+            throw new DuplicateUsernameException("User with username: '" + user.getUsername() + "' already exists.");
+        }
         updateUser(user, oldUser, hasSelfUpdatedPassword);
     }
 
@@ -520,7 +501,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 // No changes!
                 return;
             }
-            getAppConnPool().modify(oldUser.getUniqueId(), mods);
+            getAppInterface().modify(oldUser.getUniqueId(), mods);
         } catch (LDAPException ldapEx) {
             throwIfStalePassword(ldapEx, audit);
             getLogger().error("Error updating user {} - {}", newUser.getUsername(), ldapEx);
@@ -564,7 +545,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         try {
             SearchRequest request = new SearchRequest(USERS_BASE_DN,
                 SearchScope.SUB, searchFilter);
-            searchResult = getAppConnPool().search(request);
+            searchResult = getAppInterface().search(request);
 
             for (SearchResultEntry entry : searchResult.getSearchEntries()) {
                 userList.add(getUser(entry));
@@ -589,7 +570,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         for (User user : userList) {
             audit = Audit.log(user).modify(mods);
             try {
-                getAppConnPool().modify(user.getUniqueId(), mods);
+                getAppInterface().modify(user.getUniqueId(), mods);
             } catch (LDAPException ldapEx) {
                 audit.fail(ldapEx.getMessage());
                 throw new IllegalStateException(ldapEx);
@@ -600,7 +581,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().info("Removed users from clientGroup {}", group);
     }
     
-    private void throwIfEmptyOldUser(User oldUser, User user)
+    void throwIfEmptyOldUser(User oldUser, User user)
         throws IllegalArgumentException {
         if (oldUser == null) {
             getLogger().error("No record found for user {}", user.getUsername());
@@ -608,14 +589,14 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    private void throwIfEmptyUsername(User user) throws IllegalArgumentException {
+    void throwIfEmptyUsername(User user) throws IllegalArgumentException {
         if (user == null || StringUtils.isBlank(user.getUsername())) {
             getLogger().error("User instance is null or its userName has no value");
-            throw new IllegalArgumentException("Bad parameter: The User instance either null or its userName has no value.");
+            throw new BadRequestException("Bad parameter: The User is null or has a blank Username");
         }
     }
 
-    private void throwIfStalePassword(LDAPException ldapEx, Audit audit) throws StalePasswordException {
+    void throwIfStalePassword(LDAPException ldapEx, Audit audit) throws StalePasswordException {
         if (ResultCode.CONSTRAINT_VIOLATION.equals(ldapEx.getResultCode())
             && STALE_PASSWORD_MESSAGE.equals(ldapEx.getMessage())) {
             audit.fail(STALE_PASSWORD_MESSAGE);
@@ -623,7 +604,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    private void addAuditLogForAuthentication(User user, boolean authenticated) {
+    void addAuditLogForAuthentication(User user, boolean authenticated) {
 
         Audit audit = Audit.authUser(user);
         if (authenticated) {
@@ -643,7 +624,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    private UserAuthenticationResult authenticateByPassword(User user, String password) {
+    UserAuthenticationResult authenticateByPassword(User user, String password) {
         if (user == null) {
             return new UserAuthenticationResult(null, false);
         }
@@ -657,7 +638,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return authResult;
     }
 
-    private UserAuthenticationResult authenticateUserByApiKey(User user, String apiKey) {
+    UserAuthenticationResult authenticateUserByApiKey(User user, String apiKey) {
 
         if (user == null) {
             return new UserAuthenticationResult(null, false);
@@ -673,12 +654,12 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return authResult;
     }
 
-    private boolean bindUser(User user, String password) {
-        getLogger().debug("Authenticating user {}", user.getUsername());
-
+    boolean bindUser(User user, String password) {
         if (user == null || user.getUniqueId() == null) {
             throw new IllegalStateException("User cannot be null and must have a unique Id");
         }
+
+        getLogger().debug("Authenticating user {}", user.getUsername());
 
         BindResult result;
         try {
@@ -696,7 +677,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return ResultCode.SUCCESS.equals(result.getResultCode());
     }
 
-    private Attribute[] getAddAttributes(User user)
+    Attribute[] getAddAttributes(User user)
         throws GeneralSecurityException, InvalidCipherTextException {
         CryptHelper cryptHelper = CryptHelper.getInstance();
 
@@ -799,7 +780,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return attributes;
     }
 
-    private Users getMultipleUsers(Filter searchFilter,
+    Users getMultipleUsers(Filter searchFilter,
         String[] searchAttributes, int offset, int limit) {
 
         offset = offset < 0 ? this.getLdapPagingOffsetDefault() : offset;
@@ -849,7 +830,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return users;
     }
 
-    private Attribute[] getRackerAddAtrributes(Racker racker) {
+    Attribute[] getRackerAddAtrributes(Racker racker) {
 
         List<Attribute> atts = new ArrayList<Attribute>();
         atts.add(new Attribute(ATTR_OBJECT_CLASS, ATTR_RACKER_OBJECT_CLASS_VALUES));
@@ -858,7 +839,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return atts.toArray(new Attribute[0]);
     }
 
-    private User getSingleUser(Filter searchFilter, String[] searchAttributes) {
+    User getSingleUser(Filter searchFilter, String[] searchAttributes) {
         User user = null;
         try {
 
@@ -881,7 +862,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return user;
     }
 
-    private User getSingleSoftDeletedUser(Filter searchFilter,
+    User getSingleSoftDeletedUser(Filter searchFilter,
         String[] searchAttributes) {
         User user = null;
         try {
@@ -905,7 +886,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return user;
     }
 
-    private User getUser(SearchResultEntry resultEntry)
+    User getUser(SearchResultEntry resultEntry)
         throws GeneralSecurityException, InvalidCipherTextException {
         CryptHelper cryptHelper = CryptHelper.getInstance();
         User user = new User();
@@ -979,10 +960,10 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return user;
     }
 
-    private UserAuthenticationResult validateUserStatus(User user, boolean isAuthenticated) {
+    UserAuthenticationResult validateUserStatus(User user, boolean isAuthenticated) {
         if (isAuthenticated && user.isDisabled()) {
             getLogger().error(user.getUsername());
-            throw new UserDisabledException(user.getUsername());
+            throw new UserDisabledException("User '" + user.getUsername() +"' is disabled.");
         }
         getLogger().debug("User {} authenticated == {}", user.getUsername(), isAuthenticated);
         return new UserAuthenticationResult(user, isAuthenticated);
@@ -1012,13 +993,24 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         checkForNastIdModification(uOld, uNew, mods);
         checkForMossoIdModification(uOld, uNew, mods);
         checkForMigrationStatusModification(uOld, uNew, mods);
+        checkForUserNameModificiation(uOld, uNew, mods);
 
         getLogger().debug("Found {} mods.", mods.size());
 
         return mods;
     }
 
-    private void checkForMossoIdModification(User uOld, User uNew, List<Modification> mods) {
+    void checkForUserNameModificiation(User uOld, User uNew, List<Modification> mods) {
+        if (uNew.getUsername() != null) {
+            if (StringUtils.isBlank(uNew.getUsername())) {
+                mods.add(new Modification(ModificationType.DELETE, ATTR_UID));
+            } else if (!StringUtils.equals(uOld.getUsername(), uNew.getUsername())) {
+                mods.add(new Modification(ModificationType.REPLACE, ATTR_UID, uNew.getUsername()));
+            }
+        }
+    }
+
+    void checkForMossoIdModification(User uOld, User uNew, List<Modification> mods) {
         // To delete the attribute MossoId a negative value for the mossoId
         // is sent in.
         if (uNew.getMossoId() != null) {
@@ -1030,7 +1022,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    private void checkForNastIdModification(User uOld, User uNew, List<Modification> mods) {
+    void checkForNastIdModification(User uOld, User uNew, List<Modification> mods) {
         if (uNew.getNastId() != null) {
             if (StringUtils.isBlank(uNew.getNastId())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_NAST_ID));
@@ -1040,25 +1032,25 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    private void checkForEnabledStatusModification(User uOld, User uNew, List<Modification> mods) {
+    void checkForEnabledStatusModification(User uOld, User uNew, List<Modification> mods) {
         if (uNew.isEnabled() != null && uNew.isEnabled() != uOld.isEnabled()) {
             mods.add(new Modification(ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(uNew.isEnabled())));
         }
     }
 
-    private void checkForTimeZoneModification(User uOld, User uNew, List<Modification> mods) {
+    void checkForTimeZoneModification(User uOld, User uNew, List<Modification> mods) {
         if (uNew.getTimeZoneObj() != null && !uNew.getTimeZone().equals(uOld.getTimeZone())) {
             mods.add(new Modification(ModificationType.REPLACE, ATTR_TIME_ZONE, uNew.getTimeZone()));
         }
     }
 
-    private void checkForLocaleModification(User uOld, User uNew, List<Modification> mods) {
+    void checkForLocaleModification(User uOld, User uNew, List<Modification> mods) {
         if (uNew.getLocale() != null && !uNew.getPreferredLang().equals(uOld.getPreferredLang())) {
             mods.add(new Modification(ModificationType.REPLACE, ATTR_LANG, uNew.getPreferredLang().toString()));
         }
     }
 
-    private void checkForPersonIdModification(User uOld, User uNew, List<Modification> mods) {
+    void checkForPersonIdModification(User uOld, User uNew, List<Modification> mods) {
         if (uNew.getPersonId() != null) {
             if (StringUtils.isBlank(uNew.getPersonId())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_RACKSPACE_PERSON_NUMBER));
@@ -1068,7 +1060,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    private void checkForRegionModification(User uOld, User uNew, List<Modification> mods) {
+    void checkForRegionModification(User uOld, User uNew, List<Modification> mods) {
         if (uNew.getRegion() != null) {
             if (StringUtils.isBlank(uNew.getRegion())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_RACKSPACE_REGION));
@@ -1078,7 +1070,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    private void checkForLastNameModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
+    void checkForLastNameModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
         if (uNew.getLastname() != null) {
             if (StringUtils.isBlank(uNew.getLastname())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_SN));
@@ -1088,7 +1080,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    private void checkForSecretQuestionModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
+    void checkForSecretQuestionModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
         if (uNew.getSecretQuestion() != null) {
             if (StringUtils.isBlank(uNew.getSecretQuestion())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_PASSWORD_SECRET_Q));
@@ -1098,7 +1090,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    private void checkForSecretAnswerModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
+    void checkForSecretAnswerModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
         if (uNew.getSecretAnswer() != null) {
             if (StringUtils.isBlank(uNew.getSecretAnswer())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_PASSWORD_SECRET_A));
@@ -1108,8 +1100,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    private void checkForApiKeyModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
-        if (uNew.getApiKey() != null && !StringUtils.isEmpty(uNew.getApiKey())) {
+    void checkForApiKeyModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
+        if (uNew.getApiKey() != null) {
             if (StringUtils.isBlank(uNew.getApiKey())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_RACKSPACE_API_KEY));
             } else if (!StringUtils.equals(uOld.getApiKey(), uNew.getApiKey())) {
@@ -1118,7 +1110,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    private void checkForMiddleNameModification(User uOld, User uNew, List<Modification> mods) {
+    void checkForMiddleNameModification(User uOld, User uNew, List<Modification> mods) {
         if (uNew.getMiddlename() != null) {
             if (StringUtils.isBlank(uNew.getMiddlename())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_MIDDLE_NAME));
@@ -1129,7 +1121,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    private void checkForEmailModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
+    void checkForEmailModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
         if (uNew.getEmail() != null) {
             if (StringUtils.isBlank(uNew.getEmail())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_MAIL));
@@ -1139,7 +1131,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    private void checkForFirstNameModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
+    void checkForFirstNameModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
         if (uNew.getFirstname() != null) {
             if (StringUtils.isBlank(uNew.getFirstname())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_GIVEN_NAME));
@@ -1149,7 +1141,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    private void checkForSecureIdModification(User uOld, User uNew, List<Modification> mods) {
+    void checkForSecureIdModification(User uOld, User uNew, List<Modification> mods) {
         if (uNew.getSecureId() != null) {
             if (StringUtils.isBlank(uNew.getSecureId())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_SECURE_ID));
@@ -1159,7 +1151,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    private void checkForDisplayNameModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
+    void checkForDisplayNameModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
         if (uNew.getDisplayName() != null) {
             if (StringUtils.isBlank(uNew.getDisplayName())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_DISPLAY_NAME));
@@ -1170,7 +1162,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    private void checkForCountryModification(User uOld, User uNew, List<Modification> mods) {
+    void checkForCountryModification(User uOld, User uNew, List<Modification> mods) {
         if (uNew.getCountry() != null) {
             if (StringUtils.isBlank(uNew.getCountry())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_C));
@@ -1180,7 +1172,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    private void checkForCustomerIdModfication(User uOld, User uNew, List<Modification> mods) {
+    void checkForCustomerIdModfication(User uOld, User uNew, List<Modification> mods) {
         if (uNew.getCustomerId() != null) {
             if (StringUtils.isBlank(uNew.getCustomerId())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_RACKSPACE_CUSTOMER_NUMBER));
@@ -1191,7 +1183,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    private void checkForPasswordModification(User uOld, User uNew, boolean isSelfUpdate, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
+    void checkForPasswordModification(User uOld, User uNew, boolean isSelfUpdate, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
         DateTime currentTime = new DateTime();
         if (uNew.getPasswordObj().isNew()) {
             if (isSelfUpdate) {
@@ -1209,7 +1201,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
     }
 
-    private void checkForMigrationStatusModification(User uOld, User uNew, List<Modification> mods){
+    void checkForMigrationStatusModification(User uOld, User uNew, List<Modification> mods){
         if(uNew.getInMigration() != null) {
             mods.add(new Modification(ModificationType.REPLACE, ATTR_IN_MIGRATION, String.valueOf(uNew.getInMigration())));
         }
@@ -1217,42 +1209,27 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
     @Override
     public String getNextUserId() {
-        String userId = null;
-        LDAPConnection conn = null;
-        try {
-            conn = getAppConnPool().getConnection();
-            userId = getNextId(conn, NEXT_USER_ID);
-        } catch (LDAPException e) {
-            getLogger().error("Error getting next userId", e);
-            throw new IllegalStateException(e);
-        } finally {
-            getAppConnPool().releaseConnection(conn);
-        }
-        return userId;
+        return getNextId(NEXT_USER_ID);
     }
 
     @Override
     public void softDeleteUser(User user) {
         getLogger().info("SoftDeleting user - {}", user.getUsername());
-        LDAPConnection conn = null;
         try {
-            conn = getAppConnPool().getConnection();
             String oldDn = user.getUniqueId();
             String newRdn = new LdapDnBuilder("").addAttribute(ATTR_ID,
                 user.getId()).build();
             String newDn = new LdapDnBuilder(SOFT_DELETED_USERS_BASE_DN)
                 .addAttribute(ATTR_ID, user.getId()).build();
             // Move the User
-            conn.modifyDN(oldDn, newRdn, false, SOFT_DELETED_USERS_BASE_DN);
+            getAppInterface().modifyDN(oldDn, newRdn, false, SOFT_DELETED_USERS_BASE_DN);
             user.setUniqueId(newDn);
             // Disabled the User
-            conn.modify(user.getUniqueId(), new Modification(
+            getAppInterface().modify(user.getUniqueId(), new Modification(
                 ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(false)));
         } catch (LDAPException e) {
             getLogger().error("Error soft deleting user", e);
             throw new IllegalStateException(e);
-        } finally {
-            getAppConnPool().releaseConnection(conn);
         }
         getLogger().info("SoftDeleted user - {}", user.getUsername());
     }
@@ -1305,25 +1282,21 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     @Override
     public void unSoftDeleteUser(User user) {
         getLogger().info("SoftDeleting user - {}", user.getUsername());
-        LDAPConnection conn = null;
         try {
-            conn = getAppConnPool().getConnection();
             String oldDn = user.getUniqueId();
             String newRdn = new LdapDnBuilder("").addAttribute(ATTR_ID,
                 user.getId()).build();
             String newDn = new LdapDnBuilder(USERS_BASE_DN)
             .addAttribute(ATTR_ID, user.getId()).build();
             // Modify the User
-            conn.modifyDN(oldDn, newRdn, false, USERS_BASE_DN);
+            getAppInterface().modifyDN(oldDn, newRdn, false, USERS_BASE_DN);
             user.setUniqueId(newDn);
             // Enabled the User
-            conn.modify(user.getUniqueId(), new Modification(
+            getAppInterface().modify(user.getUniqueId(), new Modification(
                 ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(true)));
         } catch (LDAPException e) {
             getLogger().error("Error soft deleting user", e);
             throw new IllegalStateException(e);
-        } finally {
-            getAppConnPool().releaseConnection(conn);
         }
         getLogger().info("SoftDeleted user - {}", user.getUsername());
     }

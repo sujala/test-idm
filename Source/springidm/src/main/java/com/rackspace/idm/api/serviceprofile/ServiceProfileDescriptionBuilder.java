@@ -31,7 +31,7 @@ public class ServiceProfileDescriptionBuilder {
     	return build(content, uriInfo);
     }
     
-    private String build(final String pattern, final UriInfo uriInfo) {
+    String build(final String pattern, final UriInfo uriInfo) {
     	return templateUtil.build(pattern, uriInfo);
     }
 }

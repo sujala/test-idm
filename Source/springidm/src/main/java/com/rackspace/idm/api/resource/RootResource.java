@@ -110,4 +110,8 @@ public class RootResource {
         logger.warn(errMsg);
         throw new NotFoundException(errMsg);
     }
+
+    public void setConfig(Configuration config) {
+        this.config = config;
+    }
 }

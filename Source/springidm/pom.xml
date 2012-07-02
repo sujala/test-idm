@@ -6,7 +6,7 @@
     <artifactId>idm</artifactId>
     <name>idm</name>
     <packaging>war</packaging>
-    <version>1.0.9-SNAPSHOT</version>
+    <version>1.0.10-SNAPSHOT</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -20,7 +20,6 @@
 
         <!-- Default location for project properties file -->
         <idm.properties.location>${basedir}/target/config/DEV</idm.properties.location>
-        <powermock.version>1.4.11</powermock.version>
 
         <!--PowerMockito Properties-->
         <powermock.version>1.4.11</powermock.version>
@@ -29,6 +28,8 @@
         <!--Integration test flag for sonar 3.0-->
         <skip.default.surefire>true</skip.default.surefire>
         <skip.test>false</skip.test>
+        <jetty.port>8083</jetty.port>
+        <jetty.host>http://localhost:${jetty.port}/idm/</jetty.host>
     </properties>
 
     <dependencies>
@@ -44,15 +45,11 @@
             <version>${powermock.version}</version>
             <scope>test</scope>
         </dependency>
-
-
         <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-api</artifactId>
             <version>2.5.2</version>
         </dependency>
-
-
         <dependency>
             <groupId>com.rsa</groupId>
             <artifactId>authapi</artifactId>
@@ -70,7 +67,6 @@
             <artifactId>commons-httpclient</artifactId>
             <version>3.1</version>
         </dependency>
-
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
@@ -190,19 +186,18 @@
             <artifactId>unboundid-ldapsdk</artifactId>
             <version>2.1.0</version>
         </dependency>
-
         <dependency>
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
             <version>1.4</version>
         </dependency>
-
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.8.1</version>
             <scope>test</scope>
         </dependency>
+
         <!--PowerMockito Dependencies-->
         <dependency>
             <groupId>org.powermock</groupId>
@@ -216,6 +211,23 @@
             <version>${powermock.version}</version>
             <scope>test</scope>
         </dependency>
+
+        <!--Easy Mock-->
+        <dependency>
+            <groupId>org.easymock</groupId>
+            <artifactId>easymock</artifactId>
+            <version>3.0</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!--Mockito-->
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-all</artifactId>
+            <version>1.8.5</version>
+            <scope>test</scope>
+        </dependency>
+
 
         <dependency>
             <groupId>commons-configuration</groupId>
@@ -232,23 +244,14 @@
             <artifactId>cglib</artifactId>
             <version>2.2</version>
         </dependency>
-        <dependency>
-            <groupId>org.easymock</groupId>
-            <artifactId>easymock</artifactId>
-            <version>3.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-all</artifactId>
-            <version>1.8.5</version>
-            <scope>test</scope>
-        </dependency>
+
         <dependency>
             <groupId>joda-time</groupId>
             <artifactId>joda-time</artifactId>
             <version>1.6</version>
         </dependency>
+
+        <!--jersey-->
         <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-client</artifactId>
@@ -268,7 +271,6 @@
             <version>1.6</version>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-json</artifactId>
@@ -301,6 +303,8 @@
                 </exclusion>
             </exclusions>
         </dependency>
+
+        <!--Hibernate-->
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-validator</artifactId>
@@ -325,6 +329,8 @@
             <type>jar</type>
             <scope>compile</scope>
         </dependency>
+
+        <!--soapUI-->
         <dependency>
             <groupId>eviware</groupId>
             <artifactId>soapui</artifactId>
@@ -345,8 +351,13 @@
                     <artifactId>jaxb-impl</artifactId>
                     <groupId>activesoap</groupId>
                 </exclusion>
+                <exclusion>
+                    <groupId>groovy</groupId>
+                    <artifactId>groovy-all</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
+
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk16</artifactId>
@@ -419,8 +430,34 @@
         <!--<groupId>org.glassfish</groupId>-->
         <!--<artifactId>javax.ejb</artifactId>-->
         <!--<version>3.0.1</version>-->
+
         <!--</dependency>-->
 
+        <!--Jetty-->
+        <dependency>
+            <groupId>org.mortbay.jetty</groupId>
+            <artifactId>jetty</artifactId>
+            <version>7.0.0pre0</version>
+        </dependency>
+
+        <!--Cucumber-->
+        <dependency>
+            <groupId>org.codehaus.groovy</groupId>
+            <artifactId>groovy-all</artifactId>
+            <version>1.8.6</version>
+        </dependency>
+        <dependency>
+            <groupId>info.cukes</groupId>
+            <artifactId>cucumber-groovy</artifactId>
+            <version>1.0.8</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>info.cukes</groupId>
+            <artifactId>cucumber-junit</artifactId>
+            <version>1.0.8</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <distributionManagement>
@@ -433,446 +470,266 @@
 
     <profiles>
         <profile>
-            <id>localhost</id>
+            <id>cucumber</id>
             <activation>
-                <activeByDefault>true</activeByDefault>
+                <activeByDefault>false</activeByDefault>
             </activation>
             <build>
                 <plugins>
                     <plugin>
-                        <artifactId>maven-resources-plugin</artifactId>
+                        <groupId>org.codehaus.gmaven</groupId>
+                        <artifactId>gmaven-plugin</artifactId>
+                        <version>1.4</version>
                         <executions>
                             <execution>
-                                <id>copy-dev-resources</id>
-                                <phase>validate</phase>
-                                <goals>
-                                    <goal>copy-resources</goal>
-                                </goals>
                                 <configuration>
-                                    <outputDirectory>${basedir}/target/config/DEV</outputDirectory>
-                                    <resources>
-                                        <resource>
-                                            <filtering>true</filtering>
-                                            <directory>${basedir}/src/main/config</directory>
-                                            <includes>
-                                                <include>base.idm.properties</include>
-                                                <include>log4j.xml</include>
-                                                <include>rsa_api.properties</include>
-                                                <include>sdconf.rec</include>
-                                                <include>securid</include>
-                                            </includes>
-                                        </resource>
-                                        <resource>
-                                            <directory>${basedir}/src/main/config/DEV</directory>
-                                        </resource>
-                                    </resources>
+                                    <providerSelection>1.8</providerSelection>
+                                    <defaultScriptExtension>.groovy</defaultScriptExtension>
                                 </configuration>
-                            </execution>
-                            <execution>
-                                <id>copy-production-dfw-resources</id>
-                                <phase>validate</phase>
                                 <goals>
-                                    <goal>copy-resources</goal>
+                                    <goal>generateStubs</goal>
+                                    <goal>compile</goal>
+                                    <goal>generateTestStubs</goal>
+                                    <goal>testCompile</goal>
                                 </goals>
-                                <configuration>
-                                    <outputDirectory>${basedir}/target/config/EXT/PRODUCTION/DFW</outputDirectory>
-                                    <resources>
-                                        <resource>
-                                            <directory>${basedir}/src/main/config</directory>
-                                            <includes>
-                                                <include>base.idm.properties</include>
-                                                <include>log4j.xml</include>
-                                                <include>rsa_api.properties</include>
-                                                <include>sdconf.rec</include>
-                                                <include>securid</include>
-                                            </includes>
-                                        </resource>
-                                        <resource>
-                                            <directory>${basedir}/src/main/config/EXT/PRODUCTION/DFW</directory>
-                                        </resource>
-                                    </resources>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>copy-production-iad-resources</id>
-                                <phase>validate</phase>
-                                <goals>
-                                    <goal>copy-resources</goal>
-                                </goals>
-                                <configuration>
-                                    <outputDirectory>${basedir}/target/config/EXT/PRODUCTION/IAD</outputDirectory>
-                                    <resources>
-                                        <resource>
-                                            <directory>${basedir}/src/main/config</directory>
-                                            <includes>
-                                                <include>base.idm.properties</include>
-                                                <include>log4j.xml</include>
-                                                <include>rsa_api.properties</include>
-                                                <include>sdconf.rec</include>
-                                                <include>securid</include>
-                                            </includes>
-                                        </resource>
-                                        <resource>
-                                            <directory>${basedir}/src/main/config/EXT/PRODUCTION/IAD</directory>
-                                        </resource>
-                                    </resources>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>copy-production-lon-resources</id>
-                                <phase>validate</phase>
-                                <goals>
-                                    <goal>copy-resources</goal>
-                                </goals>
-                                <configuration>
-                                    <outputDirectory>${basedir}/target/config/EXT/PRODUCTION/LON</outputDirectory>
-                                    <resources>
-                                        <resource>
-                                            <directory>${basedir}/src/main/config</directory>
-                                            <includes>
-                                                <include>base.idm.properties</include>
-                                                <include>log4j.xml</include>
-                                                <include>rsa_api.properties</include>
-                                                <include>sdconf.rec</include>
-                                                <include>securid</include>
-                                            </includes>
-                                        </resource>
-                                        <resource>
-                                            <directory>${basedir}/src/main/config/EXT/PRODUCTION/LON</directory>
-                                        </resource>
-                                    </resources>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>copy-production-ord-resources</id>
-                                <phase>validate</phase>
-                                <goals>
-                                    <goal>copy-resources</goal>
-                                </goals>
-                                <configuration>
-                                    <outputDirectory>${basedir}/target/config/EXT/PRODUCTION/ORD</outputDirectory>
-                                    <resources>
-                                        <resource>
-                                            <directory>${basedir}/src/main/config</directory>
-                                            <includes>
-                                                <include>base.idm.properties</include>
-                                                <include>log4j.xml</include>
-                                                <include>rsa_api.properties</include>
-                                                <include>sdconf.rec</include>
-                                                <include>securid</include>
-                                            </includes>
-                                        </resource>
-                                        <resource>
-                                            <directory>${basedir}/src/main/config/EXT/PRODUCTION/ORD</directory>
-                                        </resource>
-                                    </resources>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>copy-production-dfw-int-resources</id>
-                                <phase>validate</phase>
-                                <goals>
-                                    <goal>copy-resources</goal>
-                                </goals>
-                                <configuration>
-                                    <outputDirectory>${basedir}/target/config/INT/PRODUCTION/DFW</outputDirectory>
-                                    <resources>
-                                        <resource>
-                                            <directory>${basedir}/src/main/config</directory>
-                                            <includes>
-                                                <include>base.idm.properties</include>
-                                                <include>log4j.xml</include>
-                                                <include>rsa_api.properties</include>
-                                                <include>sdconf.rec</include>
-                                                <include>securid</include>
-                                            </includes>
-                                        </resource>
-                                        <resource>
-                                            <directory>${basedir}/src/main/config/INT/PRODUCTION/DFW</directory>
-                                        </resource>
-                                    </resources>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>copy-production-iad-int-resources</id>
-                                <phase>validate</phase>
-                                <goals>
-                                    <goal>copy-resources</goal>
-                                </goals>
-                                <configuration>
-                                    <outputDirectory>${basedir}/target/config/INT/PRODUCTION/IAD</outputDirectory>
-                                    <resources>
-                                        <resource>
-                                            <directory>${basedir}/src/main/config</directory>
-                                            <includes>
-                                                <include>base.idm.properties</include>
-                                                <include>log4j.xml</include>
-                                                <include>rsa_api.properties</include>
-                                                <include>sdconf.rec</include>
-                                                <include>securid</include>
-                                            </includes>
-                                        </resource>
-                                        <resource>
-                                            <directory>${basedir}/src/main/config/INT/PRODUCTION/IAD</directory>
-                                        </resource>
-                                    </resources>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>copy-production-lon-int-resources</id>
-                                <phase>validate</phase>
-                                <goals>
-                                    <goal>copy-resources</goal>
-                                </goals>
-                                <configuration>
-                                    <outputDirectory>${basedir}/target/config/INT/PRODUCTION/LON</outputDirectory>
-                                    <resources>
-                                        <resource>
-                                            <directory>${basedir}/src/main/config</directory>
-                                            <includes>
-                                                <include>base.idm.properties</include>
-                                                <include>log4j.xml</include>
-                                                <include>rsa_api.properties</include>
-                                                <include>sdconf.rec</include>
-                                                <include>securid</include>
-                                            </includes>
-                                        </resource>
-                                        <resource>
-                                            <directory>${basedir}/src/main/config/INT/PRODUCTION/LON</directory>
-                                        </resource>
-                                    </resources>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>copy-production-ord-int-resources</id>
-                                <phase>validate</phase>
-                                <goals>
-                                    <goal>copy-resources</goal>
-                                </goals>
-                                <configuration>
-                                    <outputDirectory>${basedir}/target/config/INT/PRODUCTION/ORD</outputDirectory>
-                                    <resources>
-                                        <resource>
-                                            <directory>${basedir}/src/main/config</directory>
-                                            <includes>
-                                                <include>base.idm.properties</include>
-                                                <include>log4j.xml</include>
-                                                <include>rsa_api.properties</include>
-                                                <include>sdconf.rec</include>
-                                                <include>securid</include>
-                                            </includes>
-                                        </resource>
-                                        <resource>
-                                            <directory>${basedir}/src/main/config/INT/PRODUCTION/ORD</directory>
-                                        </resource>
-                                    </resources>
-                                </configuration>
-                            </execution>
 
+                            </execution>
+                        </executions>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.codehaus.gmaven.runtime</groupId>
+                                <artifactId>gmaven-runtime-1.8</artifactId>
+                                <version>1.4</version>
+                                <exclusions>
+                                    <exclusion>
+                                        <groupId>org.codehaus.groovy</groupId>
+                                        <artifactId>groovy-all</artifactId>
+                                    </exclusion>
+                                </exclusions>
+                            </dependency>
+                            <dependency>
+                                <groupId>org.codehaus.groovy</groupId>
+                                <artifactId>groovy-all</artifactId>
+                                <version>1.8.6</version>
+                            </dependency>
+                        </dependencies>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.mortbay.jetty</groupId>
+                        <artifactId>jetty-maven-plugin</artifactId>
+                        <version>7.3.0.v20110203</version>
+                        <configuration>
+                            <systemProperties>
+                                <systemProperty>
+                                    <name>jetty.port</name>
+                                    <value>${jetty.port}</value>
+                                </systemProperty>
+                                <systemProperty>
+                                    <name>idm.properties.location</name>
+                                    <value>${basedir}/target/config/DEV</value>
+                                </systemProperty>
+                            </systemProperties>
+                            <stopPort>9966</stopPort>
+                            <stopKey>jetty-stop</stopKey>
+                            <webAppConfig>
+                                <contextPath>/${project.name}</contextPath>
+                            </webAppConfig>
+                        </configuration>
+                        <executions>
                             <execution>
-                                <id>copy-staging-lon-resources</id>
-                                <phase>validate</phase>
+                                <id>start-jetty</id>
+                                <phase>pre-integration-test</phase>
                                 <goals>
-                                    <goal>copy-resources</goal>
+                                    <goal>run</goal>
                                 </goals>
                                 <configuration>
-                                    <outputDirectory>${basedir}/target/config/EXT/STAGING/LON</outputDirectory>
-                                    <resources>
-                                        <resource>
-                                            <directory>${basedir}/src/main/config</directory>
-                                            <includes>
-                                                <include>base.idm.properties</include>
-                                                <include>log4j.xml</include>
-                                                <include>rsa_api.properties</include>
-                                                <include>sdconf.rec</include>
-                                                <include>securid</include>
-                                            </includes>
-                                        </resource>
-                                        <resource>
-                                            <directory>${basedir}/src/main/config/EXT/STAGING/LON</directory>
-                                        </resource>
-                                    </resources>
+                                    <scanIntervalSeconds>0</scanIntervalSeconds>
+                                    <daemon>true</daemon>
                                 </configuration>
                             </execution>
                             <execution>
-                                <id>copy-staging-ord-resources</id>
-                                <phase>validate</phase>
+                                <id>stop-jetty</id>
+                                <phase>post-integration-test</phase>
                                 <goals>
-                                    <goal>copy-resources</goal>
+                                    <goal>stop</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <version>2.12</version>
+                        <configuration>
+                            <skip>true</skip>
+                            <argLine>-Xmx1024m -XX:MaxPermSize=512m</argLine>
+                            <systemProperties>
+                                <property>
+                                    <name>idm.properties.location</name>
+                                    <value>${basedir}/target/config/DEV</value>
+                                </property>
+                                <property>
+                                    <name>jetty.host</name>
+                                    <value>http://localhost:${jetty.port}/idm/</value>
+                                </property>
+                            </systemProperties>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>tests</id>
+                                <phase>test</phase>
+                                <goals>
+                                    <goal>test</goal>
                                 </goals>
                                 <configuration>
-                                    <outputDirectory>${basedir}/target/config/EXT/STAGING/ORD</outputDirectory>
-                                    <resources>
-                                        <resource>
-                                            <directory>${basedir}/src/main/config</directory>
-                                            <includes>
-                                                <include>base.idm.properties</include>
-                                                <include>log4j.xml</include>
-                                                <include>rsa_api.properties</include>
-                                                <include>sdconf.rec</include>
-                                                <include>securid</include>
-                                            </includes>
-                                        </resource>
-                                        <resource>
-                                            <directory>${basedir}/src/main/config/EXT/STAGING/ORD</directory>
-                                        </resource>
-                                    </resources>
+                                    <skip>true</skip>
+                                    <excludes>
+                                        <exclude>**/*IntegrationTest*.java</exclude>
+                                    </excludes>
+                                    <includes>
+                                        <include>**/*Test*.java</include>
+                                    </includes>
                                 </configuration>
                             </execution>
+                            <execution>
+                                <id>integration-tests</id>
+                                <phase>integration-test</phase>
+                                <goals>
+                                    <goal>test</goal>
+                                </goals>
+                                <configuration>
+                                    <skip>false</skip>
+                                    <excludes>
+                                        <exclude>**/Ldap*.java</exclude>
+                                        <exclude>**/*Test*.java</exclude>
+                                    </excludes>
+                                    <includes>
+                                        <include>**/*IT.java</include>
+                                    </includes>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
 
+        <profile>
+            <id>generateCucumberSteps</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <dependencies>
+                <!--cucumber-->
+                <dependency>
+                    <groupId>org.codehaus.groovy</groupId>
+                    <artifactId>groovy-all</artifactId>
+                    <version>1.8.6</version>
+                </dependency>
+                <dependency>
+                    <groupId>info.cukes</groupId>
+                    <artifactId>cucumber-groovy</artifactId>
+                    <version>1.0.8</version>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>info.cukes</groupId>
+                    <artifactId>cucumber-junit</artifactId>
+                    <version>1.0.8</version>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.gmaven</groupId>
+                        <artifactId>gmaven-plugin</artifactId>
+                        <version>1.4</version>
+                        <executions>
                             <execution>
-                                <id>copy-staging-lon-int-resources</id>
-                                <phase>validate</phase>
+                                <configuration>
+                                    <providerSelection>1.8</providerSelection>
+                                    <defaultScriptExtension>.groovy</defaultScriptExtension>
+                                </configuration>
                                 <goals>
-                                    <goal>copy-resources</goal>
+                                    <goal>generateStubs</goal>
+                                    <goal>compile</goal>
+                                    <goal>generateTestStubs</goal>
+                                    <goal>testCompile</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.codehaus.gmaven.runtime</groupId>
+                                <artifactId>gmaven-runtime-1.8</artifactId>
+                                <version>1.4</version>
+                                <exclusions>
+                                    <exclusion>
+                                        <groupId>org.codehaus.groovy</groupId>
+                                        <artifactId>groovy-all</artifactId>
+                                    </exclusion>
+                                </exclusions>
+                            </dependency>
+                            <dependency>
+                                <groupId>org.codehaus.groovy</groupId>
+                                <artifactId>groovy-all</artifactId>
+                                <version>1.8.6</version>
+                            </dependency>
+                        </dependencies>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <version>2.12</version>
+                        <configuration>
+                            <skip>true</skip>
+                            <argLine>-Xmx1024m -XX:MaxPermSize=512m</argLine>
+                            <systemProperties>
+                                <property>
+                                    <name>idm.properties.location</name>
+                                    <value>${basedir}/target/config/DEV</value>
+                                </property>
+                                <property>
+                                    <name>jetty.host</name>
+                                    <value>http://localhost:${jetty.port}/idm/</value>
+                                </property>
+                            </systemProperties>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>tests</id>
+                                <phase>test</phase>
+                                <goals>
+                                    <goal>test</goal>
                                 </goals>
                                 <configuration>
-                                    <outputDirectory>${basedir}/target/config/INT/STAGING/LON</outputDirectory>
-                                    <resources>
-                                        <resource>
-                                            <directory>${basedir}/src/main/config</directory>
-                                            <includes>
-                                                <include>base.idm.properties</include>
-                                                <include>log4j.xml</include>
-                                                <include>rsa_api.properties</include>
-                                                <include>sdconf.rec</include>
-                                                <include>securid</include>
-                                            </includes>
-                                        </resource>
-                                        <resource>
-                                            <directory>${basedir}/src/main/config/INT/STAGING/LON</directory>
-                                        </resource>
-                                    </resources>
+                                    <skip>true</skip>
+                                    <excludes>
+                                        <exclude>**/*IntegrationTest*.java</exclude>
+                                    </excludes>
+                                    <includes>
+                                        <include>**/*Test*.java</include>
+                                    </includes>
                                 </configuration>
                             </execution>
                             <execution>
-                                <id>copy-staging-ord-int-resources</id>
-                                <phase>validate</phase>
+                                <id>integration-tests</id>
+                                <phase>integration-test</phase>
                                 <goals>
-                                    <goal>copy-resources</goal>
+                                    <goal>test</goal>
                                 </goals>
                                 <configuration>
-                                    <outputDirectory>${basedir}/target/config/INT/STAGING/ORD</outputDirectory>
-                                    <resources>
-                                        <resource>
-                                            <directory>${basedir}/src/main/config</directory>
-                                            <includes>
-                                                <include>base.idm.properties</include>
-                                                <include>log4j.xml</include>
-                                                <include>rsa_api.properties</include>
-                                                <include>sdconf.rec</include>
-                                                <include>securid</include>
-                                            </includes>
-                                        </resource>
-                                        <resource>
-                                            <directory>${basedir}/src/main/config/INT/STAGING/ORD</directory>
-                                        </resource>
-                                    </resources>
+                                    <skip>false</skip>
+                                    <excludes>
+                                        <exclude>**/Ldap*.java</exclude>
+                                        <exclude>**/*Test*.java</exclude>
+                                    </excludes>
+                                    <includes>
+                                        <include>**/*IT.java</include>
+                                    </includes>
                                 </configuration>
                             </execution>
-
-                            <execution>
-                                <id>copy-test-resources</id>
-                                <phase>validate</phase>
-                                <goals>
-                                    <goal>copy-resources</goal>
-                                </goals>
-                                <configuration>
-                                    <outputDirectory>${basedir}/target/config/EXT/TEST</outputDirectory>
-                                    <resources>
-                                        <resource>
-                                            <directory>${basedir}/src/main/config</directory>
-                                            <includes>
-                                                <include>base.idm.properties</include>
-                                                <include>log4j.xml</include>
-                                                <include>rsa_api.properties</include>
-                                                <include>sdconf.rec</include>
-                                                <include>securid</include>
-                                            </includes>
-                                        </resource>
-                                        <resource>
-                                            <directory>${basedir}/src/main/config/EXT/TEST</directory>
-                                        </resource>
-                                    </resources>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>copy-test-int-resources</id>
-                                <phase>validate</phase>
-                                <goals>
-                                    <goal>copy-resources</goal>
-                                </goals>
-                                <configuration>
-                                    <outputDirectory>${basedir}/target/config/INT/TEST</outputDirectory>
-                                    <resources>
-                                        <resource>
-                                            <directory>${basedir}/src/main/config</directory>
-                                            <includes>
-                                                <include>base.idm.properties</include>
-                                                <include>log4j.xml</include>
-                                                <include>rsa_api.properties</include>
-                                                <include>sdconf.rec</include>
-                                                <include>securid</include>
-                                            </includes>
-                                        </resource>
-                                        <resource>
-                                            <directory>${basedir}/src/main/config/INT/TEST</directory>
-                                        </resource>
-                                    </resources>
-                                </configuration>
-                            </execution>
-
-                            <execution>
-                                <id>copy-uat-resources</id>
-                                <phase>validate</phase>
-                                <goals>
-                                    <goal>copy-resources</goal>
-                                </goals>
-                                <configuration>
-                                    <outputDirectory>${basedir}/target/config/EXT/UAT</outputDirectory>
-                                    <resources>
-                                        <resource>
-                                            <directory>${basedir}/src/main/config</directory>
-                                            <includes>
-                                                <include>base.idm.properties</include>
-                                                <include>log4j.xml</include>
-                                                <include>rsa_api.properties</include>
-                                                <include>sdconf.rec</include>
-                                                <include>securid</include>
-                                            </includes>
-                                        </resource>
-                                        <resource>
-                                            <directory>${basedir}/src/main/config/EXT/UAT</directory>
-                                        </resource>
-                                    </resources>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>copy-uat-int resources</id>
-                                <phase>validate</phase>
-                                <goals>
-                                    <goal>copy-resources</goal>
-                                </goals>
-                                <configuration>
-                                    <outputDirectory>${basedir}/target/config/INT/UAT</outputDirectory>
-                                    <resources>
-                                        <resource>
-                                            <directory>${basedir}/src/main/config</directory>
-                                            <includes>
-                                                <include>base.idm.properties</include>
-                                                <include>log4j.xml</include>
-                                                <include>rsa_api.properties</include>
-                                                <include>sdconf.rec</include>
-                                                <include>securid</include>
-                                            </includes>
-                                        </resource>
-                                        <resource>
-                                            <directory>${basedir}/src/main/config/INT/UAT</directory>
-                                        </resource>
-                                    </resources>
-                                </configuration>
-                            </execution>
-
                         </executions>
                     </plugin>
                 </plugins>
@@ -887,7 +744,6 @@
                 </property>
                 <activeByDefault>false</activeByDefault>
             </activation>
-
             <build>
                 <plugins>
                     <plugin>
@@ -895,16 +751,29 @@
                         <artifactId>maven-soapui-plugin</artifactId>
                         <version>${soapui.version}</version>
                         <configuration>
-                            <projectFile>soapui/soapUI/foundationAPI/FoundationAPI-DEV.xml</projectFile>
+                            <projectFile>soapui/soapUI/foundationAPI/FoundationAPI.xml</projectFile>
                             <junitReport>true</junitReport>
                             <testSuite>FoundationAuth-GA TestSuite</testSuite>
                             <testSuite>FoundationAuth-GA NegativeTestSuite</testSuite>
                             <outputFolder>soapui/dev-test-results</outputFolder>
                             <projectProperties>
-                                <property>endpoint=http://d-api1.cidm.iad2.corp.rackspace.com:4931</property>
-                                <property>endpointjson=http://d-api1.cidm.iad2.corp.rackspace.com</property>
+                                <property>endpoint=http://d-api2.cidm.iad2.corp.rackspace.com:4931</property>
+                                <property>endpointjson=http://d-api2.cidm.iad2.corp.rackspace.com</property>
                             </projectProperties>
                         </configuration>
+                        <dependencies>
+                            <dependency>
+                                <groupId>eviware</groupId>
+                                <artifactId>maven-soapui-plugin</artifactId>
+                                <version>${soapui.version}</version>
+                                <exclusions>
+                                    <exclusion>
+                                        <groupId>org.codehaus.groovy</groupId>
+                                        <artifactId>groovy-all</artifactId>
+                                    </exclusion>
+                                </exclusions>
+                            </dependency>
+                        </dependencies>
                         <executions>
                             <execution>
                                 <id>soapui-test</id>
@@ -940,10 +809,25 @@
                             <testSuite>FoundationAuth-GA NegativeTestSuite</testSuite>
                             <outputFolder>soapui/dev2-test-results</outputFolder>
                             <projectProperties>
+                                >>>>>>> Stashed changes
                                 <property>endpoint=http://d-api2.cidm.iad2.corp.rackspace.com:4931</property>
                                 <property>endpointjson=http://d-api2.cidm.iad2.corp.rackspace.com</property>
                             </projectProperties>
                         </configuration>
+                        <dependencies>
+                            <dependency>
+                                <groupId>eviware</groupId>
+                                <artifactId>maven-soapui-plugin</artifactId>
+                                <version>${soapui.version}</version>
+                                <exclusions>
+                                    <exclusion>
+                                        <groupId>org.codehaus.groovy</groupId>
+                                        <artifactId>groovy-all</artifactId>
+                                    </exclusion>
+                                </exclusions>
+                            </dependency>
+                        </dependencies>
+
                         <executions>
                             <execution>
                                 <id>soapui-test</id>
@@ -957,6 +841,7 @@
                 </plugins>
             </build>
         </profile>
+
         <profile>
             <id>soapui-test</id>
             <activation>
@@ -973,16 +858,29 @@
                         <artifactId>maven-soapui-plugin</artifactId>
                         <version>${soapui.version}</version>
                         <configuration>
-                            <projectFile>soapui/soapUI/foundationAPI/FoundationAPI-DEV.xml</projectFile>
+                            <projectFile>soapui/soapUI/foundationAPI/FoundationAPI.xml</projectFile>
                             <junitReport>true</junitReport>
                             <testSuite>FoundationAuth-GA TestSuite</testSuite>
                             <testSuite>FoundationAuth-GA NegativeTestSuite</testSuite>
                             <outputFolder>soapui/test-test-results</outputFolder>
                             <projectProperties>
-                                <property>endpoint=http://t-api1.cidm.iad2.corp.rackspace.com:4931</property>
-                                <property>endpointjson=http://t-api1.cidm.iad2.corp.rackspace.com</property>
+                                <property>endpoint=http://t-api2.cidm.iad2.corp.rackspace.com:4931</property>
+                                <property>endpointjson=http://t-api2.cidm.iad2.corp.rackspace.com</property>
                             </projectProperties>
                         </configuration>
+                        <dependencies>
+                            <dependency>
+                                <groupId>eviware</groupId>
+                                <artifactId>maven-soapui-plugin</artifactId>
+                                <version>${soapui.version}</version>
+                                <exclusions>
+                                    <exclusion>
+                                        <groupId>org.codehaus.groovy</groupId>
+                                        <artifactId>groovy-all</artifactId>
+                                    </exclusion>
+                                </exclusions>
+                            </dependency>
+                        </dependencies>
                         <executions>
                             <execution>
                                 <id>soapui-test</id>
@@ -1076,6 +974,11 @@
             <name>Maven Plugin Repository</name>
             <url>http://repo1.maven.org/maven2</url>
         </pluginRepository>
+        <pluginRepository>
+            <id>nexus</id>
+            <name>Nexus Dev Repo</name>
+            <url>http://d-build1.iad2.corp.rackspace.com:8100/nexus/content/repositories/thirdparty/</url>
+        </pluginRepository>
     </pluginRepositories>
 
     <ciManagement>
@@ -1087,7 +990,6 @@
         <name>Rackspace</name>
         <url>www.rackspace.com</url>
     </organization>
-
     <build>
         <plugins>
             <plugin>
@@ -1128,7 +1030,7 @@
                     </execution>
                 </executions>
             </plugin>
-
+            <!--JaxB-->
             <plugin>
                 <groupId>org.jvnet.jaxb2.maven2</groupId>
                 <artifactId>maven-jaxb2-plugin</artifactId>
@@ -1223,7 +1125,8 @@
                         <configuration>
                             <skip>false</skip>
                             <excludes>
-                                <exclude>**/Ldap*.java</exclude>
+                                <exclude>**/*IntegrationTest*.java</exclude>
+                                <exclude>**/*IT.java</exclude>
                             </excludes>
                             <includes>
                                 <include>**/*Test*.java</include>
@@ -1242,7 +1145,8 @@
                                 <exclude>none</exclude>
                             </excludes>
                             <includes>
-                                <include>**/*Test*.java</include>
+                                <include>**/*IntegrationTest*.java</include>
+                                <!--<include>**/*IT.java</include>-->
                             </includes>
                         </configuration>
                     </execution>
@@ -1260,7 +1164,31 @@
                     </systemProperties>
                 </configuration>
             </plugin>
+            <!--Jetty-->
+            <plugin>
+                <groupId>org.mortbay.jetty</groupId>
+                <artifactId>jetty-maven-plugin</artifactId>
+                <version>7.3.0.v20110203</version>
+                <configuration>
+                    <systemProperties>
+                        <systemProperty>
+                            <name>jetty.port</name>
+                            <value>${jetty.port}</value>
+                        </systemProperty>
+                        <systemProperty>
+                            <name>idm.properties.location</name>
+                            <value>${basedir}/target/config/DEV</value>
+                        </systemProperty>
+                    </systemProperties>
+                    <stopPort>9966</stopPort>
+                    <stopKey>jetty-stop</stopKey>
+                    <webAppConfig>
+                        <contextPath>/${project.name}</contextPath>
+                    </webAppConfig>
+                </configuration>
+            </plugin>
 
+            <!-- Maven Compiler-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -1270,7 +1198,7 @@
                     <encoding>UTF-8</encoding>
                 </configuration>
             </plugin>
-
+            <!--Aspect J-->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>aspectj-maven-plugin</artifactId>
@@ -1290,7 +1218,7 @@
                     <target>1.6</target>
                 </configuration>
             </plugin>
-
+            <!--Maven Dependency-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
@@ -1306,7 +1234,7 @@
             </plugin>
 
             <!-- Generates supporting XML file that is used to create the WADL at
-                   runtime. -->
+           runtime. -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
@@ -1413,7 +1341,7 @@
                     </execution>
                 </executions>
             </plugin>
-
+            <!--Maven War-->
             <plugin>
                 <artifactId>maven-war-plugin</artifactId>
                 <configuration>
@@ -1453,7 +1381,445 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>cobertura-maven-plugin</artifactId>
+                <version>2.5.1</version>
+            </plugin>
 
+            <!--maven-resource-->
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-dev-resources</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/target/config/DEV</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <filtering>true</filtering>
+                                    <directory>${basedir}/src/main/config</directory>
+                                    <includes>
+                                        <include>base.idm.properties</include>
+                                        <include>log4j.xml</include>
+                                        <include>rsa_api.properties</include>
+                                        <include>sdconf.rec</include>
+                                        <include>securid</include>
+                                    </includes>
+                                </resource>
+                                <resource>
+                                    <directory>${basedir}/src/main/config/DEV</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-production-dfw-resources</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/target/config/EXT/PRODUCTION/DFW</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${basedir}/src/main/config</directory>
+                                    <includes>
+                                        <include>base.idm.properties</include>
+                                        <include>log4j.xml</include>
+                                        <include>rsa_api.properties</include>
+                                        <include>sdconf.rec</include>
+                                        <include>securid</include>
+                                    </includes>
+                                </resource>
+                                <resource>
+                                    <directory>${basedir}/src/main/config/EXT/PRODUCTION/DFW</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-production-iad-resources</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/target/config/EXT/PRODUCTION/IAD</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${basedir}/src/main/config</directory>
+                                    <includes>
+                                        <include>base.idm.properties</include>
+                                        <include>log4j.xml</include>
+                                        <include>rsa_api.properties</include>
+                                        <include>sdconf.rec</include>
+                                        <include>securid</include>
+                                    </includes>
+                                </resource>
+                                <resource>
+                                    <directory>${basedir}/src/main/config/EXT/PRODUCTION/IAD</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-production-lon-resources</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/target/config/EXT/PRODUCTION/LON</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${basedir}/src/main/config</directory>
+                                    <includes>
+                                        <include>base.idm.properties</include>
+                                        <include>log4j.xml</include>
+                                        <include>rsa_api.properties</include>
+                                        <include>sdconf.rec</include>
+                                        <include>securid</include>
+                                    </includes>
+                                </resource>
+                                <resource>
+                                    <directory>${basedir}/src/main/config/EXT/PRODUCTION/LON</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-production-ord-resources</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/target/config/EXT/PRODUCTION/ORD</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${basedir}/src/main/config</directory>
+                                    <includes>
+                                        <include>base.idm.properties</include>
+                                        <include>log4j.xml</include>
+                                        <include>rsa_api.properties</include>
+                                        <include>sdconf.rec</include>
+                                        <include>securid</include>
+                                    </includes>
+                                </resource>
+                                <resource>
+                                    <directory>${basedir}/src/main/config/EXT/PRODUCTION/ORD</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-production-dfw-int-resources</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/target/config/INT/PRODUCTION/DFW</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${basedir}/src/main/config</directory>
+                                    <includes>
+                                        <include>base.idm.properties</include>
+                                        <include>log4j.xml</include>
+                                        <include>rsa_api.properties</include>
+                                        <include>sdconf.rec</include>
+                                        <include>securid</include>
+                                    </includes>
+                                </resource>
+                                <resource>
+                                    <directory>${basedir}/src/main/config/INT/PRODUCTION/DFW</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-production-iad-int-resources</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/target/config/INT/PRODUCTION/IAD</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${basedir}/src/main/config</directory>
+                                    <includes>
+                                        <include>base.idm.properties</include>
+                                        <include>log4j.xml</include>
+                                        <include>rsa_api.properties</include>
+                                        <include>sdconf.rec</include>
+                                        <include>securid</include>
+                                    </includes>
+                                </resource>
+                                <resource>
+                                    <directory>${basedir}/src/main/config/INT/PRODUCTION/IAD</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-production-lon-int-resources</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/target/config/INT/PRODUCTION/LON</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${basedir}/src/main/config</directory>
+                                    <includes>
+                                        <include>base.idm.properties</include>
+                                        <include>log4j.xml</include>
+                                        <include>rsa_api.properties</include>
+                                        <include>sdconf.rec</include>
+                                        <include>securid</include>
+                                    </includes>
+                                </resource>
+                                <resource>
+                                    <directory>${basedir}/src/main/config/INT/PRODUCTION/LON</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-production-ord-int-resources</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/target/config/INT/PRODUCTION/ORD</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${basedir}/src/main/config</directory>
+                                    <includes>
+                                        <include>base.idm.properties</include>
+                                        <include>log4j.xml</include>
+                                        <include>rsa_api.properties</include>
+                                        <include>sdconf.rec</include>
+                                        <include>securid</include>
+                                    </includes>
+                                </resource>
+                                <resource>
+                                    <directory>${basedir}/src/main/config/INT/PRODUCTION/ORD</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-staging-lon-resources</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/target/config/EXT/STAGING/LON</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${basedir}/src/main/config</directory>
+                                    <includes>
+                                        <include>base.idm.properties</include>
+                                        <include>log4j.xml</include>
+                                        <include>rsa_api.properties</include>
+                                        <include>sdconf.rec</include>
+                                        <include>securid</include>
+                                    </includes>
+                                </resource>
+                                <resource>
+                                    <directory>${basedir}/src/main/config/EXT/STAGING/LON</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-staging-ord-resources</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/target/config/EXT/STAGING/ORD</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${basedir}/src/main/config</directory>
+                                    <includes>
+                                        <include>base.idm.properties</include>
+                                        <include>log4j.xml</include>
+                                        <include>rsa_api.properties</include>
+                                        <include>sdconf.rec</include>
+                                        <include>securid</include>
+                                    </includes>
+                                </resource>
+                                <resource>
+                                    <directory>${basedir}/src/main/config/EXT/STAGING/ORD</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-staging-lon-int-resources</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/target/config/INT/STAGING/LON</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${basedir}/src/main/config</directory>
+                                    <includes>
+                                        <include>base.idm.properties</include>
+                                        <include>log4j.xml</include>
+                                        <include>rsa_api.properties</include>
+                                        <include>sdconf.rec</include>
+                                        <include>securid</include>
+                                    </includes>
+                                </resource>
+                                <resource>
+                                    <directory>${basedir}/src/main/config/INT/STAGING/LON</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-staging-ord-int-resources</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/target/config/INT/STAGING/ORD</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${basedir}/src/main/config</directory>
+                                    <includes>
+                                        <include>base.idm.properties</include>
+                                        <include>log4j.xml</include>
+                                        <include>rsa_api.properties</include>
+                                        <include>sdconf.rec</include>
+                                        <include>securid</include>
+                                    </includes>
+                                </resource>
+                                <resource>
+                                    <directory>${basedir}/src/main/config/INT/STAGING/ORD</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-test-resources</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/target/config/EXT/TEST</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${basedir}/src/main/config</directory>
+                                    <includes>
+                                        <include>base.idm.properties</include>
+                                        <include>log4j.xml</include>
+                                        <include>rsa_api.properties</include>
+                                        <include>sdconf.rec</include>
+                                        <include>securid</include>
+                                    </includes>
+                                </resource>
+                                <resource>
+                                    <directory>${basedir}/src/main/config/EXT/TEST</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-test-int-resources</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/target/config/INT/TEST</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${basedir}/src/main/config</directory>
+                                    <includes>
+                                        <include>base.idm.properties</include>
+                                        <include>log4j.xml</include>
+                                        <include>rsa_api.properties</include>
+                                        <include>sdconf.rec</include>
+                                        <include>securid</include>
+                                    </includes>
+                                </resource>
+                                <resource>
+                                    <directory>${basedir}/src/main/config/INT/TEST</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-uat-resources</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/target/config/EXT/UAT</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${basedir}/src/main/config</directory>
+                                    <includes>
+                                        <include>base.idm.properties</include>
+                                        <include>log4j.xml</include>
+                                        <include>rsa_api.properties</include>
+                                        <include>sdconf.rec</include>
+                                        <include>securid</include>
+                                    </includes>
+                                </resource>
+                                <resource>
+                                    <directory>${basedir}/src/main/config/EXT/UAT</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-uat-int resources</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/target/config/INT/UAT</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${basedir}/src/main/config</directory>
+                                    <includes>
+                                        <include>base.idm.properties</include>
+                                        <include>log4j.xml</include>
+                                        <include>rsa_api.properties</include>
+                                        <include>sdconf.rec</include>
+                                        <include>securid</include>
+                                    </includes>
+                                </resource>
+                                <resource>
+                                    <directory>${basedir}/src/main/config/INT/UAT</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+
+                </executions>
+            </plugin>
         </plugins>
         <resources>
             <resource>
@@ -1471,5 +1837,4 @@
             </plugin>
         </plugins>
     </reporting>
-
 </project>

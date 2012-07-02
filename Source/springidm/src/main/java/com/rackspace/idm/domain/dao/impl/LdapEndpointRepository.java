@@ -102,7 +102,7 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
         LDAPResult result;
 
         try {
-            result = getAppConnPool().add(baseUrlDN, atts);
+            result = getAppInterface().add(baseUrlDN, atts);
             getLogger().info("Added basedUrl {}", baseUrl);
         } catch (LDAPException ldapEx) {
             getLogger().error("Error adding baseUrl {} - {}", baseUrl, ldapEx);
@@ -154,7 +154,7 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
 
         LDAPResult result = null;
         try {
-            result = getAppConnPool().modify(oldEndpoints.getUserDN(), mods);
+            result = getAppInterface().modify(oldEndpoints.getUserDN(), mods);
             getLogger().debug("Added baseUlr {} to user {}", baseUrlId, username);
         } catch (LDAPException ldapEx) {
             getLogger().error("Error updating user {} endpoints - {}", username, ldapEx);
@@ -179,7 +179,7 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
                 ATTR_ID, String.valueOf(baseUrlId)).build();
 
         try {
-            result = getAppConnPool().delete(String.format(baseUrlDN, baseUrlId));
+            result = getAppInterface().delete(String.format(baseUrlDN, baseUrlId));
             getLogger().info("Deleted baseUrl - {}", baseUrlId);
         } catch (LDAPException ldapEx) {
             getLogger().error("Error deleting baseUlr {} - {}", baseUrlId, ldapEx);
@@ -207,7 +207,7 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_BASEURL).build();
 
         try {
-            searchResult = getAppConnPool().search(BASEURL_BASE_DN, SearchScope.ONE, searchFilter);
+            searchResult = getAppInterface().search(BASEURL_BASE_DN, SearchScope.ONE, searchFilter);
             getLogger().debug("Got baseurl by Id {}", baseUrlId);
         } catch (LDAPSearchException ldapEx) {
             getLogger().error("Error searching for baseUrl - {}", ldapEx);
@@ -238,7 +238,7 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_BASEURL).build();
 
         try {
-            searchResult = getAppConnPool().search(BASEURL_BASE_DN, SearchScope.ONE, searchFilter);
+            searchResult = getAppInterface().search(BASEURL_BASE_DN, SearchScope.ONE, searchFilter);
             getLogger().info("Got baseurls by Id {}", service);
         } catch (LDAPSearchException ldapEx) {
             getLogger().error("Error searching for baseUrl - {}", ldapEx);
@@ -263,7 +263,7 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
                 ATTR_OBJECT_CLASS, OBJECTCLASS_BASEURL).build();
 
         try {
-            searchResult = getAppConnPool().search(BASEURL_BASE_DN,
+            searchResult = getAppInterface().search(BASEURL_BASE_DN,
                     SearchScope.ONE, searchFilter);
             getLogger().info("Got baseurls");
         } catch (LDAPSearchException ldapEx) {
@@ -322,6 +322,8 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
             for (String baseUrlId : tenant.getBaseUrlIds()) {
                 CloudBaseUrl baseUrl = this.getBaseUrlById(Integer.parseInt(baseUrlId));
                 if (baseUrl != null) {
+                    //Add Tenant to end of baseurl
+                    appendTenantToBaseUrl(tenant.getName(), baseUrl);
                     baseUrls.add(baseUrl);
                 }
             }
@@ -333,6 +335,24 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
         point.setBaseUrls(baseUrls);
 
         return point;
+    }
+
+    private void appendTenantToBaseUrl(String tenantId, CloudBaseUrl baseUrl) {
+        String publicUrl = baseUrl.getPublicUrl();
+        if(publicUrl != null) {
+            publicUrl = publicUrl.substring(0, publicUrl.length() - (publicUrl.endsWith("/") ? 1 : 0)) + "/" + tenantId;
+            baseUrl.setPublicUrl(publicUrl);
+        }
+        String adminUrl = baseUrl.getAdminUrl();
+        if(adminUrl != null) {
+            adminUrl = adminUrl.substring(0, adminUrl.length() - (adminUrl.endsWith("/") ? 1 : 0)) + "/" + tenantId;
+            baseUrl.setAdminUrl(adminUrl);
+        }
+        String internalUrl = baseUrl.getInternalUrl();
+        if(internalUrl != null) {
+            internalUrl = internalUrl.substring(0, internalUrl.length() - (internalUrl.endsWith("/") ? 1 : 0)) + "/" + tenantId;
+            baseUrl.setInternalUrl(internalUrl);
+        }
     }
 
     @Override
@@ -375,7 +395,7 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
 
         LDAPResult result = null;
         try {
-            result = getAppConnPool().modify(endpoints.getUserDN(), mods);
+            result = getAppInterface().modify(endpoints.getUserDN(), mods);
             getLogger().info("Removed baseurl {} from user {}", baseUrlId, username);
         } catch (LDAPException ldapEx) {
             getLogger().error("Error updating user {} endpoints - {}", username, ldapEx);
@@ -422,15 +442,13 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
             throw new IllegalArgumentException(errmsg);
         }
         getLogger().debug("Updating BaseURL: {}", cloudBaseUrl);
-        LDAPConnection conn = null;
         Audit audit = Audit.log(cloudBaseUrl);
         try {
             CloudBaseUrl oldBaseUrl = getBaseUrlById(cloudBaseUrl.getBaseUrlId());
-            conn = getAppConnPool().getConnection();
             List<Modification> modifications = getModifications(oldBaseUrl, cloudBaseUrl);
             audit.modify(modifications);
             if (modifications.size() > 0) {
-                getAppConnPool().modify(oldBaseUrl.getUniqueId(), modifications);
+                getAppInterface().modify(oldBaseUrl.getUniqueId(), modifications);
             }
             getLogger().debug("Updated CloudBaseUrl: {}", cloudBaseUrl);
             audit.succeed();
@@ -438,8 +456,6 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
             getLogger().error("Error updating CloudBaseUrl", e);
             audit.fail();
             throw new IllegalStateException(e);
-        } finally {
-            getAppConnPool().releaseConnection(conn);
         }
     }
 
@@ -481,7 +497,7 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
                 .build();
 
         try {
-            searchResult = getAppConnPool().search(
+            searchResult = getAppInterface().search(
                     BASE_DN,
                     SearchScope.SUB,
                     searchFilter,

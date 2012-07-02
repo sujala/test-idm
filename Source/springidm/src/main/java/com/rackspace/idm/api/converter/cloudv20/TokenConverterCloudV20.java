@@ -18,7 +18,7 @@ import java.util.List;
 
 @Component
 public class TokenConverterCloudV20 {
-    
+
     @Autowired
     private JAXBObjectFactories OBJ_FACTORIES;
 
@@ -30,7 +30,7 @@ public class TokenConverterCloudV20 {
         Token token = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createToken();
         
         if (scopeAccess instanceof HasAccessToken) {
-            
+
             token.setId(((HasAccessToken)scopeAccess).getAccessTokenString());
 
             if(roles != null)
@@ -55,7 +55,7 @@ public class TokenConverterCloudV20 {
     }
 
     // TODO: Used for single tenant (mosso) in the response, future may be a list -- see below
-    private TenantForAuthenticateResponse toTenantForAuthenticateResponse(List<TenantRole> tenantRoleList) {
+    TenantForAuthenticateResponse toTenantForAuthenticateResponse(List<TenantRole> tenantRoleList) {
         for(TenantRole tenant : tenantRoleList) {
             // TODO: Check for other names? This is to match the Mosso Type
             if(tenant.getName().equals("compute:default")) {
@@ -87,4 +87,8 @@ public class TokenConverterCloudV20 {
         return tenantForAuthenticateResponseList;
     }
     */
+
+    public void setOBJ_FACTORIES(JAXBObjectFactories OBJ_FACTORIES) {
+        this.OBJ_FACTORIES = OBJ_FACTORIES;
+    }
 }

@@ -5,6 +5,7 @@ import org.apache.commons.configuration.Configuration;
 import org.apache.http.HttpException;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -34,9 +35,14 @@ public class AtomHopperClient {
     @Autowired
     private Configuration config;
 
-    DefaultHttpClient httpClient;
+    HttpClient httpClient;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+
+    public AtomHopperClient() {
+        httpClient = new DefaultHttpClient();
+    }
 
     /* Created new thread to run the atom hopper post call to make it
      * Asynchronous. The reason Spring @Async annotation was not use was
@@ -103,7 +109,6 @@ public class AtomHopperClient {
     }
 
     public HttpResponse executePostRequest(String authToken, Writer writer, String url) throws IOException {
-        httpClient = new DefaultHttpClient();
         HttpPost httpPost = new HttpPost(url);
         httpPost.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_ATOM_XML);
         httpPost.setHeader("X-Auth-Token", authToken);
@@ -141,4 +146,9 @@ public class AtomHopperClient {
     public void setConfig(Configuration config) {
         this.config = config;
     }
+
+    public void setHttpClient(HttpClient httpClient) {
+        this.httpClient = httpClient;
+    }
+
 }

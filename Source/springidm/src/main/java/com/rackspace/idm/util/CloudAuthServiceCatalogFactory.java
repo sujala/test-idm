@@ -1,34 +1,50 @@
 package com.rackspace.idm.util;
 
-import java.util.List;
-
-import org.apache.commons.lang.StringUtils;
-
-import com.rackspace.idm.domain.entity.CloudEndpoint;
+import com.rackspace.idm.domain.entity.CloudBaseUrl;
+import com.rackspace.idm.domain.entity.OpenstackEndpoint;
 import com.rackspacecloud.docs.auth.api.v1.Endpoint;
 import com.rackspacecloud.docs.auth.api.v1.Service;
 import com.rackspacecloud.docs.auth.api.v1.ServiceCatalog;
 import com.rackspacecloud.docs.auth.api.v1.UserType;
+import org.apache.commons.lang.StringUtils;
+
+import java.util.List;
 
 public class CloudAuthServiceCatalogFactory {
-    public ServiceCatalog createNew(List<CloudEndpoint> endPoints) {
+    public ServiceCatalog createNew(List<OpenstackEndpoint> endPoints) {
         if (endPoints == null) {
             throw new IllegalArgumentException("endPoints can not be null");
         }
 
         ServiceCatalog serviceCatalog = new ServiceCatalog();
 
-        for (CloudEndpoint endPoint : endPoints) {
-            processEndpoint(serviceCatalog, endPoint);
+        for (OpenstackEndpoint endPoint : endPoints) {
+            processService(serviceCatalog, endPoint);
         }
 
         return serviceCatalog;
     }
 
-    static void processEndpoint(ServiceCatalog serviceCatalog,
-        CloudEndpoint endPoint) {
-        Service currentService = new CloudAuthServiceCatalogHelper(serviceCatalog)
-            .getEndPointService(endPoint);
+    static void processService(ServiceCatalog serviceCatalog, OpenstackEndpoint openstackEndPoint) {
+        if(openstackEndPoint.getBaseUrls() != null) {
+            for (CloudBaseUrl baseUrl : openstackEndPoint.getBaseUrls()) {
+                Service service = new Service();
+                service.setName(baseUrl.getServiceName());
+                Endpoint endpoint = new Endpoint();
+                endpoint.setAdminURL(baseUrl.getAdminUrl());
+                endpoint.setInternalURL(baseUrl.getInternalUrl());
+                endpoint.setPublicURL(baseUrl.getPublicUrl());
+                endpoint.setRegion(baseUrl.getRegion());
+                endpoint.setV1Default(baseUrl.getDef());
+                service.getEndpoint().add(endpoint);
+                serviceCatalog.getService().add(service);
+            }
+        }
+    }
+
+    /*
+    static void processEndpoint(ServiceCatalog serviceCatalog, OpenstackEndpoint endPoint) {
+        Service currentService = new CloudAuthServiceCatalogHelper(serviceCatalog).getEndPointService(endPoint);
 
         String accountId = getAccountIdForUrl(endPoint.getBaseUrl()
             .getBaseUrlType(), endPoint.getUsername(), endPoint.getNastId(),
@@ -49,7 +65,8 @@ public class CloudAuthServiceCatalogFactory {
 
         currentService.getEndpoint().add(endpoint);
     }
-
+    */
+    
     static void setEndpointUrls(Endpoint endpoint, String accountId) {
         endpoint.setAdminURL(createUrl(endpoint.getAdminURL(), accountId));
         endpoint

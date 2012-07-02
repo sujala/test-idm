@@ -314,8 +314,16 @@ public class DelegateCloud11Service implements Cloud11Service {
 
     @Override
     public Response.ResponseBuilder deleteUser(HttpServletRequest request, String userId, HttpHeaders httpHeaders) throws IOException {
-        if(isCloudAuthRoutingEnabled() && !userExistsInGA(userId)){
-            return cloudClient.delete(getCloudAuthV11Url().concat("users/" + userId), httpHeaders);
+        if(isCloudAuthRoutingEnabled()){
+            com.rackspace.idm.domain.entity.User user = defaultUserService.getUserById(userId);
+
+            if(user == null)
+                return cloudClient.delete(getCloudAuthV11Url().concat("users/" + userId), httpHeaders);
+
+            if(defaultUserService.isMigratedUser(user)){
+                ResponseBuilder resp = cloudClient.delete(getCloudAuthV11Url().concat("users/" + userId), httpHeaders);
+                return defaultCloud11Service.deleteUser(request, userId, httpHeaders);
+            }
         }
         return defaultCloud11Service.deleteUser(request, userId, httpHeaders);
     }
@@ -436,6 +444,15 @@ public class DelegateCloud11Service implements Cloud11Service {
         return defaultCloud11Service.extensions(httpHeaders);
     }
 
+    @Override
+    public ResponseBuilder getExtension(HttpHeaders httpHeaders, String alias) throws IOException {
+        if(isCloudAuthRoutingEnabled() && !isGASourceOfTruth()){
+            String path = "extensions/" + alias;
+            return cloudClient.get(getCloudAuthV11Url().concat(path),httpHeaders);
+        }
+        return defaultCloud11Service.extensions(httpHeaders);
+    }
+
     Cloud11Service getCloud11Service() {
         if (config.getBoolean("GAKeystoneDisabled")) {
             return dummyCloud11Service;
@@ -445,18 +462,20 @@ public class DelegateCloud11Service implements Cloud11Service {
     }
 
     boolean userExistsInGAByMossoId(int mossoId){
-        com.rackspace.idm.domain.entity.User userById = ldapUserRepository.getUserByMossoId(mossoId);
-        if (userById == null) {
+        com.rackspace.idm.domain.entity.Users usersById = ldapUserRepository.getUsersByMossoId(mossoId);
+        if(usersById.getUsers() == null)
             return false;
-        }
+        if(usersById.getUsers().size() == 0)
+            return false;
         return true;
     }
 
     boolean userExistsInGAByNastId(String nastId){
-        com.rackspace.idm.domain.entity.User userById = ldapUserRepository.getUserByNastId(nastId);
-        if (userById == null) {
+        com.rackspace.idm.domain.entity.Users usersById = ldapUserRepository.getUsersByNastId(nastId);
+        if(usersById.getUsers() == null)
             return false;
-        }
+        if (usersById.getUsers().size() == 0)
+            return false;
         return true;
     }
 

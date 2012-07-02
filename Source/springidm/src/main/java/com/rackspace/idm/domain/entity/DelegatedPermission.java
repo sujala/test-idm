@@ -14,8 +14,6 @@ public class DelegatedPermission extends Permission implements Auditable {
     @LDAPField(attribute = LdapRepository.ATTR_RESOURCE_GROUP, objectClass = LdapRepository.OBJECTCLASS_DELEGATEDPERMISSION, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String[] resourceGroups;
 
-    public DelegatedPermission() {}
-
     @Override
     @LDAPGetter(attribute = LdapRepository.ATTR_NAME, inRDN = true, filterUsage = FilterUsage.ALWAYS_ALLOWED)
     public String getPermissionId() {

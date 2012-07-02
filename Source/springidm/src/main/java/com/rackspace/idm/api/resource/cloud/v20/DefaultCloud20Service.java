@@ -1,7 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.docs.identity.api.ext.rax_ga.v1.ImpersonationRequest;
-import com.rackspace.docs.identity.api.ext.rax_ga.v1.ImpersonationResponse;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.JSONConstants;
@@ -19,7 +19,9 @@ import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
+import com.sun.jersey.server.wadl.generators.resourcedoc.xhtml.Elements;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.CharUtils;
 import org.joda.time.DateTime;
 import org.openstack.docs.common.api.v1.Extension;
 import org.openstack.docs.common.api.v1.Extensions;
@@ -51,6 +53,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * Created by IntelliJ IDEA.
@@ -328,19 +331,23 @@ public class DefaultCloud20Service implements Cloud20Service {
             ScopeAccess scopeAccessByAccessToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
             if (user.getPassword() != null) {
                 validatePassword(user.getPassword());
+            } else {
+                String password = Password.generateRandom(false).getValue();
+                user.setPassword(password);
             }
             User userDO = this.userConverterCloudV20.toUserDO(user);
 
             //if caller is a user-admin, give user same mosso and nastId and verifies that it has less then 100 subusers
-            if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
+            boolean isUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken);
+            if (isUserAdmin) {
                 //TODO Pagination index and offset
                 Users users;
                 User caller = userService.getUserByAuthToken(authToken);
                 String domainId = caller.getDomainId();
                 FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParamName.DOMAIN_ID, domainId)};
-                users = this.userService.getAllUsers(filters);
+                users = userService.getAllUsers(filters);
                 int numSubUsers = config.getInt("numberOfSubUsers");
-                if (users.getUsers().size() > numSubUsers) {
+                if (users != null && users.getUsers() != null && users.getUsers().size() > numSubUsers) {
                     String errMsg = String.format("User cannot create more than %d sub-accounts.", numSubUsers);
                     throw new BadRequestException(errMsg);
                 }
@@ -350,17 +357,20 @@ public class DefaultCloud20Service implements Cloud20Service {
             setDomainId(scopeAccessByAccessToken, userDO);
             userService.addUser(userDO);
             assignProperRole(httpHeaders, authToken, scopeAccessByAccessToken, userDO);
-
+            //after user is created and caller is a user admin, add tenant roles to default user
+            if (isUserAdmin) {
+                tenantService.addTenantRolesToUser(scopeAccessByAccessToken, userDO);
+            }
             UriBuilder requestUriBuilder = uriInfo.getRequestUriBuilder();
             String id = userDO.getId();
             URI build = requestUriBuilder.path(id).build();
+
             org.openstack.docs.identity.api.v2.ObjectFactory openStackIdentityV2Factory = OBJ_FACTORIES.getOpenStackIdentityV2Factory();
-            org.openstack.docs.identity.api.v2.User value = userConverterCloudV20.toUser(userDO);
-            return Response.created(build).entity(openStackIdentityV2Factory.createUser(value));
+            UserForCreate value = userConverterCloudV20.toUserForCreate(userDO);
+            ResponseBuilder created = Response.created(build);
+            return created.entity(openStackIdentityV2Factory.createUser(value));
         } catch (DuplicateException de) {
             return userConflictExceptionResponse(de.getMessage());
-        } catch (DuplicateUsernameException due) {
-            return userConflictExceptionResponse(due.getMessage());
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
@@ -399,6 +409,9 @@ public class DefaultCloud20Service implements Cloud20Service {
                 validatePassword(user.getPassword());
             }
             User retrievedUser = checkAndGetUser(userId);
+            if (!userId.equals(user.getId())) {
+                throw new BadRequestException("Id in url does not match id in body.");
+            }
             ScopeAccess scopeAccessByAccessToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
             //if caller is default user, usedId must match callers user id
             if (authorizationService.authorizeCloudUser(scopeAccessByAccessToken)) {
@@ -412,6 +425,14 @@ public class DefaultCloud20Service implements Cloud20Service {
                 User caller = userService.getUserByAuthToken(authToken);
                 verifyDomain(retrievedUser, caller);
             }
+
+            if (!user.isEnabled()) {
+                User caller = userService.getUserByAuthToken(authToken);
+                if (caller.getId().equals(user.getId())) {
+                    throw new BadRequestException("User cannot enable/disable his/her own account.");
+                }
+            }
+
             User userDO = this.userConverterCloudV20.toUserDO(user);
             if (userDO.isDisabled()) {
                 this.scopeAccessService.expireAllTokensForUser(retrievedUser.getUsername());
@@ -470,6 +491,13 @@ public class DefaultCloud20Service implements Cloud20Service {
             String errorMsg = "Username should not contain white spaces";
             logger.warn(errorMsg);
             throw new BadRequestException(errorMsg);
+        }
+        Pattern alphaNumberic = Pattern.compile("[a-zA-z0-9]*");
+        if (!alphaNumberic.matcher(username).matches()) {
+            throw new BadRequestException("Username has invalid characters; only alphanumeric characters are allowed.");
+        }
+        if (!CharUtils.isAsciiAlpha(username.charAt(0))) {
+            throw new BadRequestException("Username must begin with an alphabetic character.");
         }
     }
 
@@ -531,7 +559,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             User user;
 
-            if (credentials.getDeclaredType().isAssignableFrom(PasswordCredentialsRequiredUsername.class)) {
+            if (credentials.getValue() instanceof PasswordCredentialsRequiredUsername) {
                 PasswordCredentialsRequiredUsername userCredentials = (PasswordCredentialsRequiredUsername) credentials.getValue();
                 validatePasswordCredentials(userCredentials);
                 validatePassword(userCredentials.getPassword());
@@ -543,7 +571,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
                 user.setPassword(userCredentials.getPassword());
                 userService.updateUser(user, false);
-            } else if (credentials.getDeclaredType().isAssignableFrom(ApiKeyCredentials.class)) {
+            } else if (credentials.getValue() instanceof ApiKeyCredentials) {
                 ApiKeyCredentials userCredentials = (ApiKeyCredentials) credentials.getValue();
                 validateApiKeyCredentials(userCredentials);
                 user = checkAndGetUser(userId);
@@ -555,7 +583,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 user.setApiKey(userCredentials.getApiKey());
                 userService.updateUser(user, false);
             }
-            return Response.ok(credentials).status(Status.CREATED);
+            return Response.ok(credentials).status(Status.OK);
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
@@ -592,10 +620,13 @@ public class DefaultCloud20Service implements Cloud20Service {
             User user = null;
             UserScopeAccess usa = null;
 
-//            if(authenticationRequest.getCredential() == null && authenticationRequest.getToken() == null)
-//                throw new BadRequestException("Unable to parse Auth data. Please review XML or JSON formatting.");
+            if (authenticationRequest.getCredential() == null && authenticationRequest.getToken() == null)
+                throw new BadRequestException("Invalid request body: unable to parse Auth data. Please review XML or JSON formatting.");
 
-            if (authenticationRequest.getToken() != null && !StringUtils.isBlank(authenticationRequest.getToken().getId())) {
+            if (authenticationRequest.getToken() != null) {
+                if (StringUtils.isBlank(authenticationRequest.getToken().getId())) {
+                    throw new BadRequestException("Invalid Token Id");
+                }
                 ScopeAccess sa = scopeAccessService.getScopeAccessByAccessToken(authenticationRequest.getToken().getId());
                 if (sa == null || ((HasAccessToken) sa).isAccessTokenExpired(new DateTime()) || !(sa instanceof UserScopeAccess)) {
                     String errMsg = "Token not authenticated";
@@ -798,6 +829,12 @@ public class DefaultCloud20Service implements Cloud20Service {
                 User caller = userService.getUserByAuthToken(authToken);
                 verifyDomain(user, caller);
             }
+            ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByUserId(userId);
+            if (authorizationService.hasUserAdminRole(scopeAccess)) {
+                if (userService.hasSubUsers(userId)) {
+                    throw new BadRequestException("Please delete sub-users before deleting last user-admin for the account");
+                }
+            }
             userService.softDeleteUser(user);
 
             atomHopperClient.asyncPost(user, authToken, AtomHopperConstants.DELETED, null);
@@ -841,6 +878,10 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             User user = checkAndGetUser(userId);
+
+            if (user.getApiKey() == null) {
+                throw new NotFoundException("Credential type RAX-KSKEY:apiKeyCredentials was not found for User with Id: " + user.getId());
+            }
 
             user.setApiKey("");
 
@@ -1744,6 +1785,9 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new NotFoundException(errorMsg);
             }
             Users users = cloudGroupService.getAllEnabledUsers(filters, iMarker, iLimit);
+            if (users.getUsers().isEmpty()) {
+                throw new NotFoundException();
+            }
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUsers(this.userConverterCloudV20.toUserList(users.getUsers())));
         } catch (Exception e) {
             return exceptionResponse(e);
@@ -1757,6 +1801,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         try {
             ScopeAccess scopeAccessByAccessToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
+            if (scopeAccessByAccessToken == null) {
+                throw new NotAuthorizedException("Invalid token");
+            }
             User caller = getUser(scopeAccessByAccessToken);
 
             //if default user
@@ -2060,11 +2107,10 @@ public class DefaultCloud20Service implements Cloud20Service {
         return roles;
     }
 
-    private Response.ResponseBuilder badRequestExceptionResponse(String message) {
+    Response.ResponseBuilder badRequestExceptionResponse(String message) {
         BadRequestFault fault = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequestFault();
         fault.setCode(HttpServletResponse.SC_BAD_REQUEST);
         fault.setMessage(message);
-        fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_BAD_REQUEST).entity(
                 OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequest(fault));
     }
@@ -2086,6 +2132,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             return userDisabledExceptionResponse(ex.getMessage());
         } else if (ex instanceof StalePasswordException) {
             return badRequestExceptionResponse(ex.getMessage());
+        } else if (ex instanceof DuplicateUsernameException) {
+            return userConflictExceptionResponse(ex.getMessage());
         } else {
             return serviceExceptionResponse();
         }
@@ -2390,7 +2438,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         ForbiddenFault fault = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createForbiddenFault();
         fault.setCode(HttpServletResponse.SC_FORBIDDEN);
         fault.setMessage(errMsg);
-        fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_FORBIDDEN)
                 .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createForbidden(fault));
     }
@@ -2456,7 +2503,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         ItemNotFoundFault fault = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createItemNotFoundFault();
         fault.setCode(HttpServletResponse.SC_NOT_FOUND);
         fault.setMessage(message);
-        fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_NOT_FOUND)
                 .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createItemNotFound(fault));
     }
@@ -2482,7 +2528,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         BadRequestFault fault = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequestFault();
         fault.setCode(HttpServletResponse.SC_CONFLICT);
         fault.setMessage(message);
-        fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_CONFLICT)
                 .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequest(fault));
     }
@@ -2491,7 +2536,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         UserDisabledFault fault = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUserDisabledFault();
         fault.setCode(HttpServletResponse.SC_FORBIDDEN);
         fault.setMessage(message);
-        fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_FORBIDDEN).
                 entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUserDisabled(fault));
     }

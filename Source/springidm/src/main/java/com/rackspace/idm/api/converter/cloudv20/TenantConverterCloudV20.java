@@ -51,7 +51,7 @@ public class TenantConverterCloudV20 {
             try {
                 updatedDate = DatatypeFactory.newInstance()
                     .newXMLGregorianCalendar(gc);
-                jaxbTenant.setCreated(updatedDate);
+                jaxbTenant.setUpdated(updatedDate);
             } catch (DatatypeConfigurationException e) {
                 e.printStackTrace();
             }
@@ -82,5 +82,9 @@ public class TenantConverterCloudV20 {
         tenant.setTenantId(jaxbTenant.getId());
         
         return tenant;
+    }
+
+    public void setOBJ_FACTORIES(JAXBObjectFactories OBJ_FACTORIES) {
+        this.OBJ_FACTORIES = OBJ_FACTORIES;
     }
 }

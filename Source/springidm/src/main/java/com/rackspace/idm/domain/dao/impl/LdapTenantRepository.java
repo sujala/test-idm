@@ -31,11 +31,9 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         }
         getLogger().info("Adding Tenant: {}", tenant);
         Audit audit = Audit.log(tenant).add();
-        LDAPConnection conn = null;
         try {
-            conn = getAppConnPool().getConnection();
             final LDAPPersister<Tenant> persister = LDAPPersister.getInstance(Tenant.class);
-            persister.add(tenant, conn, TENANT_BASE_DN);
+            persister.add(tenant, getAppInterface(), TENANT_BASE_DN);
             audit.succeed();
             getLogger().info("Added Tenant: {}", tenant);
         } catch (final LDAPException e) {
@@ -47,8 +45,6 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
             getLogger().error("Error adding tenant object", e);
             audit.fail(e.getMessage());
             throw new IllegalStateException(e);
-        } finally {
-            getAppConnPool().releaseConnection(conn);
         }
     }
 
@@ -150,15 +146,13 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
             throw new IllegalArgumentException(errmsg);
         }
         getLogger().debug("Updating Tenant: {}", tenant);
-        LDAPConnection conn = null;
         Audit audit = Audit.log(tenant);
         try {
-            conn = getAppConnPool().getConnection();
             final LDAPPersister<Tenant> persister = LDAPPersister.getInstance(Tenant.class);
             List<Modification> modifications = persister.getModifications(tenant, true);
             audit.modify(modifications);
             if (modifications.size() > 0) {
-                persister.modify(tenant, conn, null, true);
+                persister.modify(tenant, getAppInterface(), null, true);
             }
             getLogger().debug("Updated Tenant: {}", tenant);
             audit.succeed();
@@ -166,12 +160,10 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
             getLogger().error("Error updating tenant", e);
             audit.fail();
             throw new IllegalStateException(e);
-        } finally {
-            getAppConnPool().releaseConnection(conn);
         }
     }
 
-    private List<Tenant> getMultipleTenants(Filter searchFilter)
+    List<Tenant> getMultipleTenants(Filter searchFilter)
         throws LDAPPersistException {
         List<SearchResultEntry> entries = this.getMultipleEntries(
             TENANT_BASE_DN, SearchScope.ONE, searchFilter, ATTR_ID,
@@ -184,7 +176,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         return tenants;
     }
 
-    private Tenant getSingleTenant(Filter searchFilter)
+    Tenant getSingleTenant(Filter searchFilter)
         throws LDAPPersistException {
         SearchResultEntry entry = this.getSingleEntry(TENANT_BASE_DN,
             SearchScope.ONE, searchFilter, ATTR_TENANT_SEARCH_ATTRIBUTES);
@@ -192,7 +184,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         return tenant;
     }
 
-    private Tenant getTenant(SearchResultEntry entry)
+    Tenant getTenant(SearchResultEntry entry)
         throws LDAPPersistException {
         if (entry == null) {
             return null;
@@ -218,20 +210,16 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
 
         getLogger().info("Adding TenantRole: {}", role);
         Audit audit = Audit.log(role).add();
-        LDAPConnection conn = null;
         try {
-            conn = getAppConnPool().getConnection();
 
             final LDAPPersister<TenantRole> persister = LDAPPersister.getInstance(TenantRole.class);
-            persister.add(role, conn, parentUniqueId);
+            persister.add(role, getAppInterface(), parentUniqueId);
             audit.succeed();
             getLogger().info("Added TenantRole: {}", role);
         } catch (final LDAPException e) {
             getLogger().error("Error adding tenant role object", e);
             audit.fail(e.getMessage());
             throw new IllegalStateException(e);
-        } finally {
-            getAppConnPool().releaseConnection(conn);
         }
     }
 
@@ -310,10 +298,9 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         getLogger().debug("Getting tenantRoles");
         Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TENANT_ROLE).build();
 
-        //String dn = new LdapDnBuilder(user.getUniqueId()).addAttribute(ATTR_NAME, CONTAINER_ROLES).build();
         String dn = new LdapDnBuilder(user.getUniqueId()).build();
 
-        List<TenantRole> roles = new ArrayList<TenantRole>();
+        List<TenantRole> roles;
         try {
             roles = getMultipleTenantRoles(dn, searchFilter);
         } catch (LDAPPersistException e) {
@@ -369,7 +356,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         return roles;
     }
 
-    private List<TenantRole> getTenantRolesForClient(
+    List<TenantRole> getTenantRolesForClient(
         String uniqueParentClientId, FilterParam[] filters) {
         getLogger().debug("Getting tenantRoles");
 
@@ -404,7 +391,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         return roles;
     }
 
-    private List<TenantRole> getMultipleTenantRoles(String parentUniqueId,
+    List<TenantRole> getMultipleTenantRoles(String parentUniqueId,
         Filter searchFilter) throws LDAPPersistException {
         List<SearchResultEntry> entries = this.getMultipleEntries(parentUniqueId, SearchScope.SUB, searchFilter, ATTR_ID);
 
@@ -415,14 +402,14 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         return roles;
     }
 
-    private TenantRole getSingleTenantRole(String parentUniqueId,
+    TenantRole getSingleTenantRole(String parentUniqueId,
         Filter searchFilter) throws LDAPPersistException {
         SearchResultEntry entry = this.getSingleEntry(parentUniqueId, SearchScope.SUB, searchFilter);
         TenantRole role = getTenantRole(entry);
         return role;
     }
 
-    private TenantRole getTenantRole(SearchResultEntry entry)
+    TenantRole getTenantRole(SearchResultEntry entry)
         throws LDAPPersistException {
         if (entry == null) {
             return null;
@@ -439,22 +426,18 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
             throw new IllegalArgumentException(errmsg);
         }
         getLogger().debug("Updating Tenant Role: {}", role);
-        LDAPConnection conn = null;
         Audit audit = Audit.log(role);
         try {
-            conn = getAppConnPool().getConnection();
             final LDAPPersister<TenantRole> persister = LDAPPersister.getInstance(TenantRole.class);
             List<Modification> modifications = persister.getModifications(role, true);
             audit.modify(modifications);
-            persister.modify(role, conn, null, true);
+            persister.modify(role, getAppInterface(), null, true);
             getLogger().debug("Updated Tenant Role: {}", role);
             audit.succeed();
         } catch (final LDAPException e) {
             getLogger().error("Error updating Tenant Role", e);
             audit.fail();
             throw new IllegalStateException(e);
-        } finally {
-            getAppConnPool().releaseConnection(conn);
         }
     }
 

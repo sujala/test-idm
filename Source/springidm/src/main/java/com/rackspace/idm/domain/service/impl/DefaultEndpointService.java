@@ -2,11 +2,8 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
-import com.rackspace.idm.domain.entity.CloudEndpoint;
 import com.rackspace.idm.domain.service.EndpointService;
-import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.BaseUrlConflictException;
-import com.rackspace.idm.exception.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,13 +40,6 @@ public class DefaultEndpointService implements EndpointService {
         logger.debug("Updating base url");
         endpointDao.updateCloudBaseUrl(baseUrl);
         logger.debug("Done updating base url.");
-    }
-
-    @Override
-    public void addBaseUrlToUser(int baseUrlId, boolean def, String username) {
-        logger.debug("Adding baseurl {} to user {}", baseUrlId, username);
-        this.endpointDao.addBaseUrlToUser(baseUrlId, def, username);
-        logger.debug("Done adding baseurl {} to user {}", baseUrlId, username);
     }
 
     @Override
@@ -95,44 +85,6 @@ public class DefaultEndpointService implements EndpointService {
     public CloudBaseUrl getBaseUrlById(int baseUrlId) {
         logger.debug("Getting baserul {}", baseUrlId);
         return this.endpointDao.getBaseUrlById(baseUrlId);
-    }
-
-    @Override
-    public CloudEndpoint getEndpointForUser(String username, int baseUrlId) {
-        logger.debug("Getting endpoint {} for user {}", baseUrlId, username);
-        List<CloudEndpoint> endpoints = this.getEndpointsForUser(username);
-        CloudEndpoint endpoint = null;
-        if (endpoints != null && endpoints.size() > 0) {
-            for (CloudEndpoint e : endpoints) {
-                if (e.getBaseUrl().getBaseUrlId() == baseUrlId) {
-                    endpoint = e;
-                    break;
-                }
-            }
-        }
-        logger.debug("Got endpoint {} for user {}", baseUrlId, username);
-        return endpoint;
-    }
-
-    @Override
-    public List<CloudEndpoint> getEndpointsForUser(String username) {
-        logger.debug("Getting endpoints for user {}", username);
-        return this.endpointDao.getEndpointsForUser(username);
-    }
-
-    @Override
-    public void removeBaseUrlFromUser(int baseUrlId, String username) {
-        logger.debug("Removing baseurl {} from user {}", baseUrlId, username);
-        CloudBaseUrl baseUrlById = endpointDao.getBaseUrlById(baseUrlId);
-        if(baseUrlById==null){
-            throw new NotFoundException("Base url with id: "+baseUrlId+" not found");
-        }
-        String service = baseUrlById.getServiceName();
-        List<CloudBaseUrl> baseUrlsByService = endpointDao.getBaseUrlsByService(service);
-        if(baseUrlById.getDef()!=null && baseUrlById.getDef()==true || baseUrlsByService.size() < 2){
-            throw new BadRequestException("Cannot delete the only endpoint for the service '"+service+"'.");
-        }
-        endpointDao.removeBaseUrlFromUser(baseUrlId, username);
     }
 
     @Override

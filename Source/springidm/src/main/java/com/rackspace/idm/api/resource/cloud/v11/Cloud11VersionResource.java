@@ -108,6 +108,12 @@ public class Cloud11VersionResource {
     }
 
     @GET
+    @Path("extensions/{alias}")
+    public Response extensions(@PathParam("alias") String alias,@Context HttpHeaders httpHeaders) throws IOException {
+        return getCloud11Service().getExtension(httpHeaders,alias).build();
+    }
+
+    @GET
     @Path("nast/{nastId}")
     public Response getUserFromNastId(@Context HttpServletRequest request,
                                       @PathParam("nastId") String nastId,

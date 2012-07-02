@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.application;
 
 import com.rackspace.api.idm.v1.ApplicationSecretCredentials;
+import com.rackspace.api.idm.v1.ObjectFactory;
 import com.rackspace.idm.api.converter.ApplicationConverter;
 import com.rackspace.idm.api.resource.ParentResource;
 import com.rackspace.idm.domain.entity.Application;
@@ -127,12 +128,6 @@ public class ApplicationResource extends ParentResource {
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
 
         getLogger().info("Deleting Application: {}", applicationId);
-
-        // Load the application to ensure that it exists first, before
-        // attempting to delete it
-        Application client = this.applicationService.loadApplication(applicationId);
-
-        getLogger().debug("Got Application: {}", client);
 
         this.applicationService.delete(applicationId);
 

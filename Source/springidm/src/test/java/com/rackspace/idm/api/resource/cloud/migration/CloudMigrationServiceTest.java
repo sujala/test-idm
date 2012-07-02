@@ -1,12 +1,14 @@
 package com.rackspace.idm.api.resource.cloud.migration;
 
-import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups;
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.*;
 import com.rackspace.idm.api.converter.cloudv20.EndpointConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.RoleConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.api.resource.cloud.MigrationClient;
+import com.rackspace.idm.api.resource.cloud.v20.CloudKsGroupBuilder;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
@@ -16,7 +18,6 @@ import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
 import org.openstack.docs.identity.api.v2.CredentialListType;
 import org.openstack.docs.identity.api.v2.EndpointList;
 import org.openstack.docs.identity.api.v2.Role;
@@ -29,8 +30,7 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
 
-import static org.mockito.Mockito.any;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.*;
 
@@ -63,6 +63,7 @@ public class CloudMigrationServiceTest {
     private User user;
     private org.openstack.docs.identity.api.v2.User cloudUser;
     private String adminToken;
+    private CloudKsGroupBuilder cloudKsGroupBuilder;
 
     @Before
     public void setUp() throws Exception {
@@ -82,6 +83,7 @@ public class CloudMigrationServiceTest {
         groupService = mock(GroupService.class);
         roleConverterCloudV20 = mock(RoleConverterCloudV20.class);
         scopeAccessService = mock(ScopeAccessService.class);
+        cloudKsGroupBuilder = mock(CloudKsGroupBuilder.class);
 
         //setting mocks
         cloudMigrationService.setApplicationService(applicationService);
@@ -96,6 +98,7 @@ public class CloudMigrationServiceTest {
         cloudMigrationService.setRoleConverterCloudV20(roleConverterCloudV20);
         cloudMigrationService.setScopeAccessService(scopeAccessService);
         cloudMigrationService.setEndpointConverterCloudV20(endpointConverterCloudV20);
+        cloudMigrationService.setCloudKsGroupBuilder(cloudKsGroupBuilder);
         gc.setTimeInMillis(new Date().getTime());
 
         //setting mocks for endpointconverter
@@ -284,22 +287,6 @@ public class CloudMigrationServiceTest {
         spy.migrateUserByUsername("cmarin2", false, null);
     }
 
-    @Test
-    public void migrateUserByUsername_passwordIsBlankString_checksPasswordIsNotEmptyString() throws Exception {
-        when(config.getString("cloudAuth11url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v1.1/");
-        when(config.getString("cloudAuth20url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v2.0/");
-        when(config.getString("ga.username")).thenReturn("auth");
-        when(config.getString("ga.password")).thenReturn("auth123");
-        when(config.getString("migration.username")).thenReturn("migration_user");
-        when(config.getString("migration.apikey")).thenReturn("0f97f489c848438090250d50c7e1ea88");
-        when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
-        when(userService.getUser(anyString())).thenReturn(user);
-        doReturn("").when(spy).getPassword(any(CredentialListType.class));
-        MigrateUserResponseType responseType = spy.migrateUserByUsername("cmarin2", false, "1");
-        List<UserType> userList = responseType.getUsers();
-        assertThat("password", userList.get(0).getPassword().length(), not(0));
-    }
-
     @Test (expected = ConflictException.class)
     public void migrateUserByUsername_usernameALreadyExists_throwsConflictException() throws Exception {
         when(config.getString("migration.username")).thenReturn("migration_user");
@@ -312,7 +299,7 @@ public class CloudMigrationServiceTest {
         when(userService.getUser(anyString())).thenReturn(user);
         when(userService.userExistsByUsername(anyString())).thenReturn(false).thenReturn(true);
         doReturn(true).when(spy).isSubUser(any(RoleList.class));
-        spy.migrateUserByUsername("cmarin2", false, "1");
+        spy.migrateUserByUsername("cmarin2", true, "1");
     }
 
     @Test (expected = BadRequestException.class)
@@ -400,19 +387,6 @@ public class CloudMigrationServiceTest {
     }
 
     @Test
-    public void getSubUsers_succeedsWithNoExceptions() throws Exception {
-        when(config.getString("cloudAuth11url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v1.1/");
-        when(config.getString("cloudAuth20url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v2.0/");
-        when(config.getString("migration.username")).thenReturn("migration_user");
-        when(config.getString("migration.apikey")).thenReturn("0f97f489c848438090250d50c7e1ea88");
-        MigrationClient clientTest = new MigrationClient();
-        spy.setClient(clientTest);
-        clientTest.setCloud20Host("https://auth.staging.us.ccp.rackspace.net/v2.0/");
-        RoleList roles = clientTest.getRolesForUser(spy.getAdminToken(), "104472");
-        spy.getSubUsers("cmarin2", "0f97f489c848438090250d50c7e1ea88", "Password1", roles);
-    }
-
-    @Test
     public void isSubUser_identityNotMatchName_returnsFalse() throws Exception {
         RoleList roles = new RoleList();
         Role role = new Role();
@@ -466,6 +440,7 @@ public class CloudMigrationServiceTest {
         spy.unmigrateUserByUsername("username", true);
     }
 
+    @Ignore // Ignored due to code being removed...
     @Test (expected = BadRequestException.class)
     public void unmigrateUserByUsername_isRootUserAndIsSubUser_throwsBadRequest() throws Exception {
         RoleList roleList = new RoleList();
@@ -481,5 +456,24 @@ public class CloudMigrationServiceTest {
         when(client.getRolesForUser(anyString(), anyString())).thenReturn(roleList);
         when(userService.getUser("username")).thenReturn(user);
         spy.unmigrateUserByUsername("username", true);
+    }
+
+    @Test
+    public void getGroups_callsCloudKsGroupBuilder_reponseOk() throws Exception {
+        Group group = new Group();
+        List<Group> groups = new ArrayList<Group>();
+        groups.add(group);
+        when(groupService.getGroups("", 0)).thenReturn(groups);
+        when(cloudKsGroupBuilder.build(group)).thenReturn(new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group());
+        Response.ResponseBuilder result = spy.getGroups();
+        assertThat("response code", result.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void getGroups_callsGroupService_responseOk() throws Exception {
+        List<Group> groups = new ArrayList<Group>();
+        when(groupService.getGroups("", 0)).thenReturn(groups);
+        Response.ResponseBuilder result = spy.getGroups();
+        assertThat("response code", result.build().getStatus(), equalTo(200));
     }
 }

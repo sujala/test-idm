@@ -1,11 +1,10 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.docs.identity.api.ext.rax_ga.v1.ImpersonationRequest;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.JSONConstants;
-import com.rackspace.idm.api.resource.cloud.CloudClient;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.configuration.Configuration;
@@ -36,7 +35,6 @@ import java.io.StringReader;
 public class Cloud20VersionResource {
 
     private final Configuration config;
-    private final CloudClient cloudClient;
     private final CloudContractDescriptionBuilder cloudContractDescriptionBuilder;
 
     private final String X_AUTH_TOKEN = "X-AUTH-TOKEN";
@@ -52,10 +50,8 @@ public class Cloud20VersionResource {
 
     @Autowired
     public Cloud20VersionResource(Configuration config,
-        CloudClient cloudClient,
         CloudContractDescriptionBuilder cloudContractDescriptionBuilder) {
         this.config = config;
-        this.cloudClient = cloudClient;
         this.cloudContractDescriptionBuilder = cloudContractDescriptionBuilder;
     }
 
@@ -115,7 +111,7 @@ public class Cloud20VersionResource {
     }
 
     @POST
-    @Path("RAX-GA/impersonation-tokens")
+    @Path("RAX-AUTH/impersonation-tokens")
     public Response impersonate(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
@@ -328,8 +324,7 @@ public class Cloud20VersionResource {
     public Response getUserCredentialKey(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("userId") String userId,
-            @PathParam("credentialType") String credentialType) throws IOException {
+            @PathParam("userId") String userId) throws IOException {
         return getCloud20Service().getUserCredential(httpHeaders, authToken, userId, JSONConstants.APIKEY_CREDENTIALS).build();
     }
 
@@ -347,8 +342,7 @@ public class Cloud20VersionResource {
     public Response deleteUserKeyCredential(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("userId") String userId,
-            @PathParam("credentialType") String credentialType) throws IOException {
+            @PathParam("userId") String userId) throws IOException {
         return getCloud20Service().deleteUserCredential(httpHeaders, authToken, userId, JSONConstants.APIKEY_CREDENTIALS).build();
     }
 
@@ -562,7 +556,6 @@ public class Cloud20VersionResource {
     @Path("/tenants/{tenantId}/OS-KSCATALOG/endpoints")
     public Response addEndpoint(
             @Context HttpHeaders httpHeaders,
-            @Context UriInfo uriInfo,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("tenantId") String tenantId, EndpointTemplate endpoint) throws IOException, JAXBException {
         return getCloud20Service().addEndpoint(httpHeaders, authToken, tenantId, endpoint).build();

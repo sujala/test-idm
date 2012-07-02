@@ -51,7 +51,8 @@ public interface AuthorizationService {
     boolean authorizeCloudUserAdmin(ScopeAccess scopeAccess);
 
     boolean authorizeCloudUser(ScopeAccess scopeAccess);
-
+    boolean hasDefaultUserRole(ScopeAccess scopeAccess);
+    boolean hasUserAdminRole(ScopeAccess scopeAccess);
     boolean authorizeIdmSuperAdmin(ScopeAccess scopeAccess);
 
     void authorizeIdmSuperAdminOrRackspaceClient(ScopeAccess scopeAccess);

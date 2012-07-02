@@ -17,12 +17,6 @@ public interface UserDao {
 
     UserAuthenticationResult authenticateByAPIKey(String username, String apiKey);
 
-    UserAuthenticationResult authenticateByMossoIdAndAPIKey(int mossoId,
-        String apiKey);
-
-    UserAuthenticationResult authenticateByNastIdAndAPIKey(String nastId,
-        String apiKey);
-
     void deleteRacker(String rackerId);
 
     void deleteUser(User user);
@@ -41,11 +35,11 @@ public interface UserDao {
 
     User getUserById(String id);
 
-    User getUserByMossoId(int mossoId);
-
     Users getUsersByMossoId(int mossoId);
 
-    User getUserByNastId(String nastId);
+    Users getUsersByNastId(String nastId);
+
+    Users getUsersByDomainId(String domainId);
 
     User getUserByRPN(String rpn);
 

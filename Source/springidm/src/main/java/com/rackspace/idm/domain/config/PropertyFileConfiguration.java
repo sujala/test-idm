@@ -57,7 +57,7 @@ public class PropertyFileConfiguration {
         return readConfigFile(CONFIG_FILE_NAME);
     }
 
-    private Configuration readConfigFile(String filePath) {
+    Configuration readConfigFile(String filePath) {
         try {
             logger.debug(String.format("Attempting to open file %s", filePath));
             return new PropertiesConfiguration(filePath);

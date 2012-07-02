@@ -8,7 +8,6 @@ import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
-import com.rackspace.idm.domain.dao.impl.LdapCloudAdminRepository;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
@@ -22,6 +21,8 @@ import com.rackspacecloud.docs.auth.api.v1.PasswordCredentials;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
+import org.openstack.docs.common.api.v1.Extension;
+import org.openstack.docs.common.api.v1.Extensions;
 import org.openstack.docs.common.api.v1.VersionChoice;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,10 +40,13 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
+import javax.xml.transform.stream.StreamSource;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringReader;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -56,9 +60,13 @@ public class DefaultCloud11Service implements Cloud11Service {
     private final EndpointService endpointService;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final ScopeAccessService scopeAccessService;
-    private final LdapCloudAdminRepository ldapCloudAdminRepository;
     private final UserConverterCloudV11 userConverterCloudV11;
     private final UserService userService;
+
+    private org.openstack.docs.common.api.v1.ObjectFactory objectFactory = new org.openstack.docs.common.api.v1.ObjectFactory();
+
+    private HashMap<String, JAXBElement<Extension>> extensionMap;
+    private JAXBElement<Extensions> currentExtensions;
 
     @Autowired
     private CloudContractDescriptionBuilder cloudContractDescriptionBuilder;
@@ -96,12 +104,14 @@ public class DefaultCloud11Service implements Cloud11Service {
     private AtomHopperClient atomHopperClient;
 
     @Autowired
+    private CredentialValidator credentialValidator;
+
+    @Autowired
     public DefaultCloud11Service(Configuration config,
                                  ScopeAccessService scopeAccessService, EndpointService endpointService,
                                  UserService userService, AuthConverterCloudV11 authConverterCloudV11,
                                  UserConverterCloudV11 userConverterCloudV11,
                                  EndpointConverterCloudV11 endpointConverterCloudV11,
-                                 LdapCloudAdminRepository ldapCloudAdminRepository,
                                  CloudExceptionResponse cloudExceptionResponse,
                                  ApplicationService clientService,
                                  TenantService tenantService) {
@@ -112,7 +122,6 @@ public class DefaultCloud11Service implements Cloud11Service {
         this.authConverterCloudV11 = authConverterCloudV11;
         this.userConverterCloudV11 = userConverterCloudV11;
         this.endpointConverterCloudV11 = endpointConverterCloudV11;
-        this.ldapCloudAdminRepository = ldapCloudAdminRepository;
         this.cloudExceptionResponse = cloudExceptionResponse;
         this.clientService = clientService;
         this.tenantService = tenantService;
@@ -269,7 +278,22 @@ public class DefaultCloud11Service implements Cloud11Service {
                 throw new BadRequestException(String.format("Attempted to add a disabled BaseURL!"));
             }
 
-            this.endpointService.addBaseUrlToUser(baseUrl.getBaseUrlId(), baseUrlRef.isV1Default(), userId);
+            String tenantId;
+            if(baseUrl.getBaseUrlType().equals("NAST"))
+                tenantId = user.getNastId();
+            else
+                tenantId = String.valueOf(user.getMossoId());
+
+            Tenant tenant = this.tenantService.getTenant(tenantId);
+
+            // Check for existing BaseUrl
+            for (String bId : tenant.getBaseUrlIds()){
+                if(bId.equals(String.valueOf(baseUrl.getBaseUrlId())))
+                    throw new BadRequestException("Attempt to add existing BaseURL!");
+            }
+
+            tenant.addBaseUrlId(String.valueOf(baseUrl.getBaseUrlId()));
+            this.tenantService.updateTenant(tenant);
 
             return Response
                     .status(Response.Status.CREATED)
@@ -286,6 +310,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
         try {
             authenticateCloudAdminUser(request);
+            userValidator.validateUserName(user.getId());
 
             if (StringUtils.isBlank(user.getId())) {
                 String errorMsg = "Expecting username";
@@ -324,23 +349,22 @@ public class DefaultCloud11Service implements Cloud11Service {
             this.tenantService.addTenantRoleToUser(userDO, role);
 
             if (user.getBaseURLRefs() != null && user.getBaseURLRefs().getBaseURLRef().size() > 0) {
-                // If BaseUrlRefs were sent in then we're going to add the new
-                // list
+                // If BaseUrlRefs were sent in then we're going to add the new list
 
                 // Add new list of baseUrls
                 for (BaseURLRef ref : user.getBaseURLRefs().getBaseURLRef()) {
-                    this.endpointService.addBaseUrlToUser(ref.getId(), ref.isV1Default(), userDO.getUsername());
+                    try { // ToDo: throw error
+                        this.userService.addBaseUrlToUser(ref.getId(), userDO);
+                    } catch(Exception e){}
                 }
             }
-            for (CloudBaseUrl cloudBaseUrl : endpointService.getDefaultBaseUrls()) {
-                endpointService.addBaseUrlToUser(cloudBaseUrl.getBaseUrlId(), cloudBaseUrl.getDef(), userDO.getUsername());
-            }
 
-            List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(userDO.getUsername());
+            UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientId(userDO.getUniqueId(), config.getString("cloudAuth.clientId"));
+            List<OpenstackEndpoint> endpointsForUser = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
 
             String id = userDO.getId();
             URI uri = uriInfo.getRequestUriBuilder().path(id).build();
-            com.rackspacecloud.docs.auth.api.v1.User cloud11User = userConverterCloudV11.toCloudV11User(userDO, endpoints);
+            com.rackspacecloud.docs.auth.api.v1.User cloud11User = userConverterCloudV11.toCloudV11User(userDO, endpointsForUser);
             return Response.created(uri).entity(OBJ_FACTORY.createUser(cloud11User));
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
@@ -356,7 +380,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             nastId = user.getNastId();
         }
         user.setNastId(nastId);
-        if (nastId != null && !nastId.isEmpty()) {
+        if (!StringUtils.isEmpty(nastId)) {
             Tenant tenant = new Tenant();
             tenant.setName(nastId);
             tenant.setTenantId(nastId);
@@ -453,7 +477,29 @@ public class DefaultCloud11Service implements Cloud11Service {
             if (baseUrl == null) {
                 return cloudExceptionResponse.notFoundExceptionResponse(String.format("BaseUrlId %s not found for user %s", id, userId));
             }
-            this.endpointService.removeBaseUrlFromUser(id, userId);
+
+            if (baseUrl.getDef())
+                throw new BadRequestException(String.format("Cannot delete default BaseUrlId %s.", baseUrl.getBaseUrlId()));
+
+            String tenantId;
+            if(baseUrl.getBaseUrlType().equals("NAST"))
+                tenantId = user.getNastId();
+            else
+                tenantId = String.valueOf(user.getMossoId());
+
+            Tenant tenant = this.tenantService.getTenant(tenantId);
+
+            boolean found = false;
+            for (String currentId : tenant.getBaseUrlIds()){
+                if(currentId.equals(String.valueOf(baseUrl.getBaseUrlId())))
+                    found = true;
+            }
+
+            if (!found)
+                throw new NotFoundException(String.format("Attempting to delete nonexisting baseUrl: %s", String.valueOf(baseUrl.getBaseUrlId())));
+
+            tenant.removeBaseUrlId(String.valueOf(baseUrl.getBaseUrlId()));
+            this.tenantService.updateTenant(tenant);
 
             return Response.noContent();
         } catch (Exception ex) {
@@ -462,8 +508,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     }
 
     @Override
-    public Response.ResponseBuilder deleteUser(HttpServletRequest request,
-                                               String userId, HttpHeaders httpHeaders) throws IOException {
+    public Response.ResponseBuilder deleteUser(HttpServletRequest request, String userId, HttpHeaders httpHeaders) throws IOException {
 
         try {
             authenticateCloudAdminUser(request);
@@ -473,6 +518,15 @@ public class DefaultCloud11Service implements Cloud11Service {
             if (gaUser == null) {
                 String errMsg = String.format("User %s not found", userId);
                 throw new NotFoundException(errMsg);
+            }
+
+            ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByUserId(userId);
+            boolean isDefaultUser = authorizationService.authorizeCloudUser(scopeAccess);
+            if(isDefaultUser){
+                throw new BadRequestException("Cannot delete Sub-Users via Auth v1.1. Please use v2.0");
+            }
+            if(userService.hasSubUsers(userId)){
+                throw new BadRequestException("Cannot delete a User-Admin with Sub-Users. Please use v2.0 contract to remove Sub-Users then try again");
             }
 
             this.userService.softDeleteUser(gaUser);
@@ -516,18 +570,24 @@ public class DefaultCloud11Service implements Cloud11Service {
                 throw new NotFoundException(errMsg);
             }
 
-            int id = 0;
-
-            id = Integer.parseInt(baseURLId);
-
-            CloudEndpoint endpoint = this.endpointService.getEndpointForUser(
-                    userId, id);
-
-            if (endpoint == null) {
-                return cloudExceptionResponse.notFoundExceptionResponse(String.format("BaseUrlId %s not found for user %s", id, userId));
+            BaseURLRef baseURLRef = new BaseURLRef();
+            UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), config.getString("cloudAuth.clientId"));
+            List<OpenstackEndpoint> endpointsForUser = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
+            for (OpenstackEndpoint openstackEndpoint : endpointsForUser) {
+                for (CloudBaseUrl baseUrl : openstackEndpoint.getBaseUrls()){
+                    if(String.valueOf(baseUrl.getBaseUrlId()).equals(baseURLId)) {
+                        baseURLRef.setHref(baseUrl.getPublicUrl());
+                        baseURLRef.setId(baseUrl.getBaseUrlId());
+                        baseURLRef.setV1Default(baseUrl.getDef());
+                    }
+                }
             }
 
-            return Response.ok(OBJ_FACTORY.createBaseURLRef(this.endpointConverterCloudV11.toBaseUrlRef(endpoint)));
+            if (baseURLRef.getId() == 0) {
+                return cloudExceptionResponse.notFoundExceptionResponse(String.format("BaseUrlId %s not found for user %s", baseURLId, userId));
+            }
+
+            return Response.ok(OBJ_FACTORY.createBaseURLRef(baseURLRef));
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }
@@ -541,17 +601,19 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             authenticateCloudAdminUserForGetRequests(request);
 
-            User user = userService.getUser(userId);
+            User gaUser = userService.getUser(userId);
 
-            if (user == null) {
-                String errMsg = String.format("User %s not found", userId);
+            if (gaUser == null) {
+                String errMsg = "User not found: " + userId;
                 throw new NotFoundException(errMsg);
             }
 
-            ScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), config.getString("cloudAuth.clientId"));
-            List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(sa);
+            UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientId(gaUser.getUniqueId(), config.getString("cloudAuth.clientId"));
+            List<OpenstackEndpoint> endpointsForUser = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
 
-            return Response.ok(OBJ_FACTORY.createBaseURLRefs(this.endpointConverterCloudV11.openstackToBaseUrlRefs(endpoints)));
+            JAXBElement<BaseURLRefList> baseURLRefsNew = OBJ_FACTORY.createBaseURLRefs(this.endpointConverterCloudV11.openstackToBaseUrlRefs(endpointsForUser));
+
+            return Response.ok(baseURLRefsNew);
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }
@@ -571,7 +633,8 @@ public class DefaultCloud11Service implements Cloud11Service {
                 throw new NotFoundException(errMsg);
             }
 
-            List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(userId);
+            UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientId(gaUser.getUniqueId(), config.getString("cloudAuth.clientId"));
+            List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
 
             return Response.ok(OBJ_FACTORY.createServiceCatalog(this.endpointConverterCloudV11.toServiceCatalog(endpoints)));
         } catch (Exception ex) {
@@ -634,7 +697,9 @@ public class DefaultCloud11Service implements Cloud11Service {
             if (user == null) {
                 throw new NotFoundException(String.format("User with MossoId %s not found", mossoId));
             }
-            return cloudExceptionResponse.redirect(request, user.getUsername());
+            ScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), config.getString("cloudAuth.clientId"));
+            List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(sa);
+            return Response.status(301).entity(OBJ_FACTORY.createUser(this.userConverterCloudV11.openstackToCloudV11User(user, endpoints)));
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }
@@ -653,22 +718,12 @@ public class DefaultCloud11Service implements Cloud11Service {
             if (user == null) {
                 throw new NotFoundException(String.format("User with NastId %s not found", nastId));
             }
-            return cloudExceptionResponse.redirect(request, user.getUsername());
+            ScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), config.getString("cloudAuth.clientId"));
+            List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(sa);
+            return Response.status(301).entity(OBJ_FACTORY.createUser(this.userConverterCloudV11.openstackToCloudV11User(user, endpoints)));
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }
-    }
-
-    User checkAndGetUser(String id) {  //Not used right now
-        User user = this.userService.getUserById(id);
-
-        if (user == null) {
-            String errMsg = String.format("User %s not found", id);
-            logger.warn(errMsg);
-            throw new NotFoundException("User not found");
-        }
-
-        return user;
     }
 
     @Override
@@ -790,6 +845,11 @@ public class DefaultCloud11Service implements Cloud11Service {
         try {
             authenticateCloudAdminUser(request);
             userValidator.validate(user);
+            userValidator.validateUserName(user.getId());
+
+            if(user.getId().equals(""))
+                throw new BadRequestException("User Id can not be null.");
+            
             if (!user.getId().equals(userId) && !user.getId().equals("")) { //ToDO: Move to user validator?
                 throw new BadRequestException("User Id does not match.");
             }
@@ -806,24 +866,26 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             this.userService.updateUser(gaUser, false);
 
+            ScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(gaUser.getUniqueId(), config.getString("cloudAuth.clientId"));
             if (user.getBaseURLRefs() != null && user.getBaseURLRefs().getBaseURLRef().size() > 0) {
                 // If BaseUrlRefs were sent in then we're going to clear out the
                 // old
                 // endpoints
                 // and then re-add the new list
 
+                List<OpenstackEndpoint> currentEndpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(sa);
+
                 // Delete all old baseUrls
-                List<CloudEndpoint> current = this.endpointService
-                        .getEndpointsForUser(userId);
-                for (CloudEndpoint point : current) {
-                    this.endpointService.removeBaseUrlFromUser(point
-                            .getBaseUrl().getBaseUrlId(), userId);
+                for (OpenstackEndpoint endpoint : currentEndpoints) {
+                    for (CloudBaseUrl baseUrl : endpoint.getBaseUrls()){
+                        userService.removeBaseUrlFromUser(baseUrl.getBaseUrlId(), gaUser);
+                    }
+
                 }
 
                 // Add new list of baseUrls
                 for (BaseURLRef ref : user.getBaseURLRefs().getBaseURLRef()) {
-                    this.endpointService.addBaseUrlToUser(ref.getId(),
-                            ref.isV1Default(), userId);
+                    userService.addBaseUrlToUser(ref.getId(), gaUser);
                 }
             }
 
@@ -832,7 +894,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 atomHopperClient.asyncPost(gaUser, usa.getAccessTokenString(), AtomHopperConstants.DISABLED, null);
             }
 
-            List<CloudEndpoint> endpoints = this.endpointService.getEndpointsForUser(userId);
+            List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(sa);
 
             return Response.ok(OBJ_FACTORY.createUser(this.userConverterCloudV11.toCloudV11User(gaUser, endpoints)));
         } catch (Exception ex) {
@@ -930,9 +992,60 @@ public class DefaultCloud11Service implements Cloud11Service {
     }
 
     @Override
-    public ResponseBuilder extensions(HttpHeaders httpHeaders) throws IOException {
-        //TODO
-        throw new IOException("Not Implemented");
+    public ResponseBuilder extensions(HttpHeaders httpHeaders) throws IOException{
+        try {
+            if (currentExtensions == null) {
+                JAXBContext jaxbContext = JAXBContextResolver.get();
+                Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+
+                InputStream is = org.tuckey.web.filters.urlrewrite.utils.StringUtils.class.getResourceAsStream("/extensions_v11.xml");
+                StreamSource ss = new StreamSource(is);
+
+                currentExtensions = unmarshaller.unmarshal(ss, Extensions.class);
+            }
+            return Response.ok(currentExtensions);
+        } catch (Exception e) {
+            // Return 500 error. Is WEB-IN/extensions.xml malformed?
+            return cloudExceptionResponse.exceptionResponse(e);
+        }
+    }
+
+    @Override
+    public ResponseBuilder getExtension(HttpHeaders httpHeaders, String alias) throws IOException {
+        if (org.tuckey.web.filters.urlrewrite.utils.StringUtils.isBlank(alias)) {
+            throw new BadRequestException("Invalid extension alias '" + alias + "'.");
+        }
+
+        final String normalizedAlias = alias.trim().toUpperCase();
+
+        if (extensionMap == null) {
+            extensionMap = new HashMap<String, JAXBElement<Extension>>();
+
+            try {
+                if (currentExtensions == null) {
+                    JAXBContext jaxbContext = JAXBContextResolver.get();
+                    Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+                    InputStream is = org.tuckey.web.filters.urlrewrite.utils.StringUtils.class.getResourceAsStream("/extensions_v11.xml");
+                    StreamSource ss = new StreamSource(is);
+                    currentExtensions = unmarshaller.unmarshal(ss, Extensions.class);
+                }
+
+                Extensions exts = currentExtensions.getValue();
+
+                for (Extension e : exts.getExtension()) {
+                    extensionMap.put(e.getAlias().trim().toUpperCase(), objectFactory.createExtension(e));
+                }
+            } catch (Exception e) {
+                // Return 500 error. Is WEB-IN/extensions.xml malformed?
+                return cloudExceptionResponse.exceptionResponse(e);
+            }
+        }
+
+        if (!extensionMap.containsKey(normalizedAlias)) {
+            throw new NotFoundException("Extension with alias '" + normalizedAlias + "' is not available.");
+        }
+
+        return Response.ok(extensionMap.get(normalizedAlias));
     }
 
     // Migration Methods
@@ -962,6 +1075,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         User user = null;
         UserScopeAccess usa = null;
 
+       credentialValidator.validateCredential(cred.getValue());
         try {
             if (cred.getValue() instanceof MossoCredentials) {
                 MossoCredentials mossoCreds = (MossoCredentials) cred.getValue();
@@ -977,7 +1091,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 if (user.isDisabled()) {
                     throw new UserDisabledException(user.getMossoId().toString());
                 }
-                usa = scopeAccessService.getUserScopeAccessForClientIdByMossoIdAndApiCredentials(mossoId, apiKey, getCloudAuthClientId());
+                usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(user.getUsername(), apiKey, getCloudAuthClientId());
             } else if (cred.getValue() instanceof NastCredentials) {
                 NastCredentials nastCreds = (NastCredentials) cred.getValue();
                 String nastId = nastCreds.getNastId();
@@ -989,7 +1103,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 if (user.isDisabled()) {
                     throw new UserDisabledException(user.getNastId());
                 }
-                usa = scopeAccessService.getUserScopeAccessForClientIdByNastIdAndApiCredentials(nastId, apiKey, getCloudAuthClientId());
+                usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(user.getUsername(), apiKey, getCloudAuthClientId());
             } else {
                 PasswordCredentials passCreds = (PasswordCredentials) cred.getValue();
                 String username = passCreds.getUsername();
@@ -1010,10 +1124,10 @@ public class DefaultCloud11Service implements Cloud11Service {
                 }
                 usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(username, password, getCloudAuthClientId());
             }
-            List<CloudEndpoint> endpoints = endpointService.getEndpointsForUser(user.getUsername());
+            List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
             return Response.ok(OBJ_FACTORY.createAuth(this.authConverterCloudV11.toCloudv11AuthDataJaxb(usa, endpoints)));
         } catch (NotAuthenticatedException nae) {
-            return cloudExceptionResponse.notAuthenticatedExceptionResponse(user.getUsername());
+            return cloudExceptionResponse.notAuthenticatedExceptionResponse("Username or api key is invalid");
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }
@@ -1058,14 +1172,15 @@ public class DefaultCloud11Service implements Cloud11Service {
             User user = null;
             UserScopeAccess usa = null;
             String cloudAuthClientId = getCloudAuthClientId();
+            credentialValidator.validateCredential(value);
             if (value instanceof UserCredentials) {
                 UserCredentials userCreds = (UserCredentials) value;
                 username = userCreds.getUsername();
                 String apiKey = userCreds.getKey();
-                if (apiKey == null || apiKey.length() == 0) {
+                if (StringUtils.isBlank(apiKey)) {
                     return cloudExceptionResponse.badRequestExceptionResponse("Expecting apiKey");
                 }
-                if (username == null || username.length() == 0) {
+                if (StringUtils.isBlank(username)) {
                     return cloudExceptionResponse.badRequestExceptionResponse("Expecting username");
                 }
                 user = userService.getUser(username);
@@ -1073,10 +1188,10 @@ public class DefaultCloud11Service implements Cloud11Service {
             } else if (value instanceof PasswordCredentials) {
                 username = ((PasswordCredentials) value).getUsername();
                 String password = ((PasswordCredentials) value).getPassword();
-                if (password == null || password.length() == 0) {
+                if (StringUtils.isBlank(password)) {
                     return cloudExceptionResponse.badRequestExceptionResponse("Expecting password");
                 }
-                if (username == null || username.length() == 0) {
+                if (StringUtils.isBlank(username)) {
                     return cloudExceptionResponse.badRequestExceptionResponse("Expecting username");
                 }
                 user = userService.getUser(username);
@@ -1088,23 +1203,31 @@ public class DefaultCloud11Service implements Cloud11Service {
                     return cloudExceptionResponse.badRequestExceptionResponse("Expecting mosso id");
                 }
                 user = userService.getUserByMossoId(mossoId);
-                usa = scopeAccessService.getUserScopeAccessForClientIdByMossoIdAndApiCredentials(mossoId, key, cloudAuthClientId);
+                if(user == null)
+                    throw new NotAuthenticatedException("MossoId or api key is invalid.");
+                usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(user.getUsername(), key, cloudAuthClientId);
             } else if (value instanceof NastCredentials) {
                 String nastId = ((NastCredentials) value).getNastId();
                 String key = ((NastCredentials) value).getKey();
-                if (nastId == null || nastId.length() == 0) {
+                if (StringUtils.isBlank(nastId)) {
                     return cloudExceptionResponse.badRequestExceptionResponse("Expecting nast id");
                 }
                 user = userService.getUserByNastId(nastId);
-                usa = scopeAccessService.getUserScopeAccessForClientIdByNastIdAndApiCredentials(nastId, key, cloudAuthClientId);
+                if(user == null)
+                    throw new NotAuthenticatedException("NastId or api key is invalid.");
+                usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(user.getUsername(), key, cloudAuthClientId);
             }
 
             if (user == null) {
                 String errMsg = String.format("User %s not found", username);
                 throw new NotFoundException(errMsg);
             }
-            List<CloudEndpoint> endpoints = endpointService.getEndpointsForUser(user.getUsername());
+
+            List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
+
+            //List<CloudEndpoint> endpoints = endpointService.getEndpointsForUser(user.getUsername());
             return Response.ok(OBJ_FACTORY.createAuth(this.authConverterCloudV11.toCloudv11AuthDataJaxb(usa, endpoints)));
+
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }
@@ -1184,16 +1307,8 @@ public class DefaultCloud11Service implements Cloud11Service {
         return config.getString("cloudAuth.userAdminRole");
     }
 
-    public GroupService getUserGroupService() {
-        return userGroupService;
-    }
-
     public void setUserGroupService(GroupService userGroupService) {
         this.userGroupService = userGroupService;
-    }
-
-    public GroupService getCloudGroupService() {
-        return cloudGroupService;
     }
 
     public void setCloudGroupService(GroupService cloudGroupService) {
@@ -1202,5 +1317,13 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     public void setAtomHopperClient(AtomHopperClient atomHopperClient) {
         this.atomHopperClient = atomHopperClient;
+    }
+
+    public void setCredentialValidator(CredentialValidator credentialValidator) {
+        this.credentialValidator = credentialValidator;
+    }
+
+    public void setCloudContractDescriptionBuilder(CloudContractDescriptionBuilder cloudContractDescriptionBuilder) {
+        this.cloudContractDescriptionBuilder = cloudContractDescriptionBuilder;
     }
 }

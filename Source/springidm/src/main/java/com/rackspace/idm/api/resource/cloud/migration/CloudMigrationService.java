@@ -10,6 +10,8 @@ import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.api.resource.cloud.MigrationClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
+
+import com.rackspace.idm.api.resource.cloud.v20.CloudKsGroupBuilder;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.BadRequestException;
@@ -90,6 +92,9 @@ public class CloudMigrationService {
     private EndpointConverterCloudV20 endpointConverterCloudV20;
 
     @Autowired
+    private CloudKsGroupBuilder cloudKsGroupBuilder;
+
+    @Autowired
     private AtomHopperClient atomHopperClient;
 
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -101,6 +106,19 @@ public class CloudMigrationService {
 
     public void migrateGroups() throws Exception {
         addOrUpdateGroups(getAdminToken());
+    }
+
+    public Response.ResponseBuilder getGroups() {
+        List<com.rackspace.idm.domain.entity.Group> groups = cloudGroupService.getGroups("", 0);
+
+        com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups cloudGroups = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups();
+
+        for (com.rackspace.idm.domain.entity.Group group : groups) {
+            com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group cloudGroup = cloudKsGroupBuilder.build(group);
+            cloudGroups.getGroup().add(cloudGroup);
+        }
+
+        return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtKsgrpV1Factory().createGroups(cloudGroups));
     }
 
     public Response.ResponseBuilder getMigratedUserList() throws Exception {
@@ -150,9 +168,9 @@ public class CloudMigrationService {
     }
 
 
-    public MigrateUserResponseType migrateUserByUsername(String username, boolean enable) throws Exception {
+    public MigrateUserResponseType migrateUserByUsername(String username, boolean processSubUsers) throws Exception {
         try {
-            MigrateUserResponseType response = migrateUserByUsername(username, enable, null);
+            MigrateUserResponseType response = migrateUserByUsername(username, processSubUsers, null);
 
             //Feed to atom hopper for migrated users
             List<com.rackspace.idm.api.resource.cloud.migration.UserType> users = response.getUsers();
@@ -167,6 +185,8 @@ public class CloudMigrationService {
             }
 
             return response;
+        } catch (ConflictException ce){
+            throw ce;
         } catch (Exception e) {
             try {
                 unmigrateUserByUsername(username);
@@ -176,7 +196,7 @@ public class CloudMigrationService {
         }
     }
 
-    public MigrateUserResponseType migrateUserByUsername(String username, boolean enable, String domainId) throws Exception {
+    public MigrateUserResponseType migrateUserByUsername(String username, boolean processSubUsers, String domainId) throws Exception {
         client = getMigrationClientInstance();
         client.setCloud20Host(config.getString("cloudAuth20url"));
 
@@ -223,12 +243,14 @@ public class CloudMigrationService {
                 throw new BadRequestException("Migration is not allowed for subusers");
             }
 
-            //TODO: We cannot get the users for a userAdmin blocker ??
-            List<String> subUsers = getSubUsers(username, apiKey, password, roles);
 
-            for (String subUser : subUsers) {
-                if (userService.userExistsByUsername(username)) {
-                    throw new ConflictException("A user with username " + username + " already exists.");
+            List<String> subUsers = null;
+            if(processSubUsers) {
+                subUsers = getSubUsers(user, apiKey, password, roles);
+                for (String subUser : subUsers) {
+                    if (userService.userExistsByUsername(username)) {
+                        throw new ConflictException("A user with username " + username + " already exists.");
+                    }
                 }
             }
 
@@ -240,8 +262,8 @@ public class CloudMigrationService {
                 user.setId(null);
 
             // CREATE NEW USER
-            com.rackspace.idm.domain.entity.User newUser = addMigrationUser(user, apiKey, password, secretQA, domainId);
-
+            com.rackspace.idm.domain.entity.User newUser = addMigrationUser(user, user11.getMossoId(),
+                    user11.getNastId(), apiKey, password, secretQA, domainId);
 
             // Get Roles
             addUserGlobalRoles(newUser, roles);
@@ -268,17 +290,17 @@ public class CloudMigrationService {
             Groups groups = client.getGroupsForUser(adminToken, legacyId);
             addUserGroups(user.getId(), groups);
 
-            if (enable) {
-                newUser.setInMigration(false);
-                userService.updateUserById(newUser, false);
-            }
+            newUser.setInMigration(false);
+            userService.updateUserById(newUser, false);
 
             UserType userResponse = validateUser(user, credentialListType, apiKey, cloudPassword, secretQA, roles, groups, user11.getBaseURLRefs().getBaseURLRef());
             MigrateUserResponseType result = new MigrateUserResponseType();
 
-            for (String subUser : subUsers) {
-                MigrateUserResponseType childResponse = migrateUserByUsername(subUser, enable, newUser.getDomainId());
-                result.getUsers().addAll(childResponse.getUsers());
+            if(subUsers != null) {
+                for (String subUser : subUsers) {
+                    MigrateUserResponseType childResponse = migrateUserByUsername(subUser, false, newUser.getDomainId());
+                    result.getUsers().addAll(childResponse.getUsers());
+                }
             }
 
             result.getUsers().add(userResponse);
@@ -292,33 +314,33 @@ public class CloudMigrationService {
         return new MigrationClient();
     }
 
-    List<String> getSubUsers(String username, String apiKey, String password, RoleList roles) {
+    List<String> getSubUsers(User user, String apiKey, String password, RoleList roles) throws Exception {
         List<String> subUsers = new ArrayList<String>();
 
-        try {
-            AuthenticateResponse authenticateResponse = authenticate(username, apiKey, password);
+        if (isUserAdmin(roles)) {
+            if (!user.isEnabled()) {
+                throw new ConflictException("useradmin with username " + user.getUsername() + " is disabled.");
+            }
+
+            AuthenticateResponse authenticateResponse = authenticate(user.getUsername(), apiKey, password);
             String userToken = authenticateResponse.getToken().getId();
 
-            if (isUserAdmin(roles)) {
-                UserList users = null;
+            UserList users = null;
 
-                try {
-                    users = client.getUsers(userToken);
-                } catch (Exception e) {
-                }
+            try {
+                users = client.getUsers(userToken);
+            } catch (Exception e) {
+                throw new ConflictException("Could not retrieve users for useradmin - " + e.getMessage());
+            }
 
-                if (users != null) {
-                    for (User childUser : users.getUser()) {
-                        if (username.equalsIgnoreCase(childUser.getUsername())) {
-                            continue;
-                        }
-                        subUsers.add(childUser.getUsername());
+            if (users != null) {
+                for (User childUser : users.getUser()) {
+                    if (user.getUsername().equalsIgnoreCase(childUser.getUsername())) {
+                        continue;
                     }
+                    subUsers.add(childUser.getUsername());
                 }
             }
-        } catch (Exception e1) {
-            // TODO Auto-generated catch block
-            e1.printStackTrace();
         }
 
         return subUsers;
@@ -603,7 +625,31 @@ public class CloudMigrationService {
         if (user.getInMigration() == null) // Used so we do not delete a user who wasn't previously migrated.
             throw new NotFoundException("User not found.");
 
+        String domainId = user.getDomainId();
+        FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParam.FilterParamName.DOMAIN_ID, domainId)};
+        Users users = this.userService.getAllUsers(filters, 0, 0);
+
+        if (users.getUsers() == null) // Used so we do not delete a user who wasn't previously migrated.
+            throw new NotFoundException("User not found.");
+
+        for (com.rackspace.idm.domain.entity.User u : users.getUsers()) {
+            if (u.getInMigration() == null) {
+                throw new ConflictException("Cannot unmigrate useradmin that contains subusers created after migration.");
+            }
+        }
+        
+        for (com.rackspace.idm.domain.entity.User u : users.getUsers())
+            userService.deleteUser(u.getUsername());
+        
+        /*
         String adminToken = getAdminToken();
+
+        User cloudUser;
+        try {
+            cloudUser = client.getUser(adminToken, username);
+        } catch (Exception ex) {
+            throw new ConflictException("useradmin with username " + username + " is disabled.");
+        }
 
         CredentialListType credentialListType = client.getUserCredentials(adminToken, user.getId());
         String apiKey = getApiKey(credentialListType);
@@ -615,7 +661,7 @@ public class CloudMigrationService {
             throw new BadRequestException("Migration is not allowed for subusers");
         }
 
-        List<String> subUsers = getSubUsers(username, apiKey, password, roles);
+        List<String> subUsers = getSubUsers(cloudUser, apiKey, password, roles);
 
         for (String subUser : subUsers) {
             try {
@@ -625,6 +671,7 @@ public class CloudMigrationService {
         }
 
         userService.deleteUser(username);
+        */
     }
 
     String getAdminToken() throws URISyntaxException, HttpException, IOException, JAXBException {
@@ -641,10 +688,19 @@ public class CloudMigrationService {
         }
     }
 
-    private com.rackspace.idm.domain.entity.User addMigrationUser(User user, String apiKey, String password, SecretQA secretQA, String domainId) {
+    private com.rackspace.idm.domain.entity.User addMigrationUser(User user,
+                                                                  int mossoId,
+                                                                  String nastId,
+                                                                  String apiKey,
+                                                                  String password,
+                                                                  SecretQA secretQA,
+                                                                  String domainId) {
         com.rackspace.idm.domain.entity.User newUser = new com.rackspace.idm.domain.entity.User();
         newUser.setId(user.getId());
         newUser.setUsername(user.getUsername());
+
+        newUser.setMossoId(mossoId);
+        newUser.setNastId(nastId);
 
         if (!user.getEmail().equals(""))
             newUser.setEmail(user.getEmail());
@@ -967,5 +1023,9 @@ public class CloudMigrationService {
 
     public void setEndpointConverterCloudV20(EndpointConverterCloudV20 endpointConverterCloudV20) {
         this.endpointConverterCloudV20 = endpointConverterCloudV20;
+    }
+
+    public void setCloudKsGroupBuilder(CloudKsGroupBuilder cloudKsGroupBuilder) {
+        this.cloudKsGroupBuilder = cloudKsGroupBuilder;
     }
 }

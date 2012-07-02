@@ -1,26 +1,23 @@
 package com.rackspace.idm.api.converter.cloudv11;
 
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
-import com.rackspace.idm.domain.entity.CloudEndpoint;
+import com.rackspace.idm.domain.entity.OpenstackEndpoint;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspacecloud.docs.auth.api.v1.AuthData;
 import com.rackspacecloud.docs.auth.api.v1.FullToken;
 import com.rackspacecloud.docs.auth.api.v1.Service;
 import org.apache.commons.configuration.Configuration;
-import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 
-import javax.xml.datatype.DatatypeConfigurationException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.notNull;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Created with IntelliJ IDEA.
@@ -69,7 +66,7 @@ public class AuthConverterCloudV11Test {
     @Test
     public void toCloudV11AuthDataJaxb_callsSetToken() throws Exception {
         UserScopeAccess userScopeAccess = new UserScopeAccess();
-        List<CloudEndpoint> endpoints = new ArrayList<CloudEndpoint>();
+        List<OpenstackEndpoint> endpoints = new ArrayList<OpenstackEndpoint>();
         userScopeAccess.setAccessTokenString("token");
         userScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
         AuthData authData = authConverterCloudV11.toCloudv11AuthDataJaxb(userScopeAccess, endpoints);
@@ -87,14 +84,13 @@ public class AuthConverterCloudV11Test {
 
     @Test
     public void toCloudV11AuthDataJaxb_callsSetServiceCatalog() throws Exception {
-        CloudEndpoint cloudEndpoint = new CloudEndpoint();
         UserScopeAccess userScopeAccess = new UserScopeAccess();
-        List<CloudEndpoint> endpoints = new ArrayList<CloudEndpoint>();
-        cloudEndpoint.setMossoId(1);
-        cloudEndpoint.setNastId("nastId");
-        cloudEndpoint.setUsername("username");
-        cloudEndpoint.setV1preferred(true);
-        cloudEndpoint.setBaseUrl(cloudBaseUrl);
+        List<OpenstackEndpoint> endpoints = new ArrayList<OpenstackEndpoint>();
+        OpenstackEndpoint cloudEndpoint = new OpenstackEndpoint();
+        cloudEndpoint.setTenantName("tenant");
+        List<CloudBaseUrl> baseUrls = new ArrayList<CloudBaseUrl>();
+        baseUrls.add(cloudBaseUrl);
+        cloudEndpoint.setBaseUrls(baseUrls);
         endpoints.add(cloudEndpoint);
         userScopeAccess.setAccessTokenString("token");
         userScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));

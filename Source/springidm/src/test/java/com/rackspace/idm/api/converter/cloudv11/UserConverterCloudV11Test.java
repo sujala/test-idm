@@ -1,13 +1,11 @@
 package com.rackspace.idm.api.converter.cloudv11;
 
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
-import com.rackspace.idm.domain.entity.CloudEndpoint;
 import com.rackspace.idm.domain.entity.OpenstackEndpoint;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspacecloud.docs.auth.api.v1.UserWithId;
 import com.rackspacecloud.docs.auth.api.v1.UserWithOnlyEnabled;
 import com.rackspacecloud.docs.auth.api.v1.UserWithOnlyKey;
-import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -20,7 +18,6 @@ import java.util.List;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * Created with IntelliJ IDEA.
@@ -95,7 +92,7 @@ public class UserConverterCloudV11Test {
     public void toCloudV11User_cloudEndpointSizeZero_createsUser() throws Exception {
         User user = new User();
         user.setUsername("username");
-        List<CloudEndpoint> endpointList = new ArrayList<CloudEndpoint>();
+        List<OpenstackEndpoint> endpointList = new ArrayList<OpenstackEndpoint>();
         com.rackspacecloud.docs.auth.api.v1.User jaxbUser = userConverterCloudV11.toCloudV11User(user, endpointList);
         assertThat("username", jaxbUser.getId(), equalTo("username"));
     }
@@ -104,17 +101,21 @@ public class UserConverterCloudV11Test {
     public void toCloudV11User_cloudEndpointSizeMoreThanZero_createsUserWIthAddedBaseUrlReference() throws Exception {
         User user = new User();
         user.setUsername("username");
-        List<CloudEndpoint> endpointList = new ArrayList<CloudEndpoint>();
-        CloudEndpoint cloudEndpoint = new CloudEndpoint();
-        cloudEndpoint.setBaseUrl(cloudBaseUrl);
-        cloudEndpoint.setV1preferred(true);
-        endpointList.add(cloudEndpoint);
-        when(config.getString("cloud.baseurl.ref.string")).thenReturn("https://idm.rackspace.com/idm/rest/cloud/v1.1/baseurls/%s");
+        List<OpenstackEndpoint> endpointList = new ArrayList<OpenstackEndpoint>();
+        OpenstackEndpoint openstackEndpoint = new OpenstackEndpoint();
+        List<CloudBaseUrl> cloudBaseUrlList = new ArrayList<CloudBaseUrl>();
+        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
+        cloudBaseUrl.setBaseUrlId(1);
+        cloudBaseUrl.setPublicUrl("publicUrl");
+        cloudBaseUrl.setDef(true);
+        cloudBaseUrlList.add(cloudBaseUrl);
+        openstackEndpoint.setBaseUrls(cloudBaseUrlList);
+        endpointList.add(openstackEndpoint);
         com.rackspacecloud.docs.auth.api.v1.User jaxbUser = userConverterCloudV11.toCloudV11User(user, endpointList);
         assertThat("username", jaxbUser.getId(), equalTo("username"));
         assertThat("id", jaxbUser.getBaseURLRefs().getBaseURLRef().get(0).getId(), equalTo(1));
         assertThat("v1default", jaxbUser.getBaseURLRefs().getBaseURLRef().get(0).isV1Default(), equalTo(true));
-        assertThat("reference string", jaxbUser.getBaseURLRefs().getBaseURLRef().get(0).getHref(), equalTo("https://idm.rackspace.com/idm/rest/cloud/v1.1/baseurls/1"));
+        assertThat("reference string", jaxbUser.getBaseURLRefs().getBaseURLRef().get(0).getHref(), equalTo("publicUrl"));
     }
 
     @Test
@@ -144,12 +145,11 @@ public class UserConverterCloudV11Test {
         endpointList.add(openstackEndpoint);
         User user = new User();
         user.setUsername("username");
-        when(config.getString("cloud.baseurl.ref.string")).thenReturn("https://idm.rackspace.com/idm/rest/cloud/v1.1/baseurls/%s");
         com.rackspacecloud.docs.auth.api.v1.User jaxbUser = userConverterCloudV11.openstackToCloudV11User(user, endpointList);
         assertThat("username", jaxbUser.getId(), equalTo("username"));
         assertThat("id", jaxbUser.getBaseURLRefs().getBaseURLRef().get(0).getId(), equalTo(1));
         assertThat("v1default", jaxbUser.getBaseURLRefs().getBaseURLRef().get(0).isV1Default(), equalTo(true));
-        assertThat("reference string", jaxbUser.getBaseURLRefs().getBaseURLRef().get(0).getHref(), equalTo("https://idm.rackspace.com/idm/rest/cloud/v1.1/baseurls/1"));
+        assertThat("reference string", jaxbUser.getBaseURLRefs().getBaseURLRef().get(0).getHref(), equalTo(cloudBaseUrl.getPublicUrl()));
     }
 
     @Test

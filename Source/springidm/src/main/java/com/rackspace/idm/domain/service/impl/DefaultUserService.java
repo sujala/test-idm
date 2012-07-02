@@ -27,7 +27,7 @@ public class DefaultUserService implements UserService {
     private final ApplicationService clientService;
     private final TokenService oauthService;
     private final Configuration config;
-    // private final CustomerDao customerDao;
+
     private final PasswordComplexityService passwordComplexityService;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -38,6 +38,15 @@ public class DefaultUserService implements UserService {
     @Autowired
     private ScopeAccessService scopeAccessService;
 
+    @Autowired
+    private TenantService tenantService;
+
+    @Autowired
+    private EndpointService endpointService;
+
+    @Autowired
+    private AuthorizationService authorizationService;
+
     public DefaultUserService(UserDao userDao, AuthDao rackerDao,
                               ScopeAccessDao scopeAccessDao,
                               ApplicationService clientService, Configuration config, TokenService oauthService,
@@ -45,7 +54,6 @@ public class DefaultUserService implements UserService {
 
         this.userDao = userDao;
         this.authDao = rackerDao;
-        //this.customerDao = customerDao;
         this.scopeAccessDao = scopeAccessDao;
         this.clientService = clientService;
         this.config = config;
@@ -135,26 +143,24 @@ public class DefaultUserService implements UserService {
 
 
     @Override
-    public UserAuthenticationResult authenticateWithMossoIdAndApiKey(
-            int mossoId, String apiKey) {
-        logger
-                .debug("Authenticating User with MossoId {} and Api Key", mossoId);
-        UserAuthenticationResult authenticated = userDao
-                .authenticateByMossoIdAndAPIKey(mossoId, apiKey);
-        logger.debug("Authenticated User with MossoId {} and API Key - {}",
-                mossoId, authenticated);
+    public UserAuthenticationResult authenticateWithMossoIdAndApiKey(int mossoId, String apiKey) {
+        logger.debug("Authenticating User with MossoId {} and Api Key", mossoId);
+        User user = getUserByMossoId(mossoId);
+        UserAuthenticationResult authenticated = userDao.authenticateByAPIKey(user.getUsername(), apiKey);
+        logger.debug("Authenticated User with MossoId {} and API Key - {}", mossoId, authenticated);
         return authenticated;
     }
 
 
     @Override
-    public UserAuthenticationResult authenticateWithNastIdAndApiKey(
-            String nastId, String apiKey) {
+    public UserAuthenticationResult authenticateWithNastIdAndApiKey(String nastId, String apiKey) {
         logger.debug("Authenticating User with NastId {} and API Key", nastId);
-        UserAuthenticationResult authenticated = userDao
-                .authenticateByNastIdAndAPIKey(nastId, apiKey);
-        logger.debug("Authenticated User with NastId {} and API Key - {}",
-                nastId, authenticated);
+
+        User user = getUserByNastId(nastId);
+
+        UserAuthenticationResult authenticated = userDao.authenticateByAPIKey(user.getUsername(), apiKey);
+
+        logger.debug("Authenticated User with NastId {} and API Key - {}", nastId, authenticated);
         return authenticated;
     }
 
@@ -300,13 +306,21 @@ public class DefaultUserService implements UserService {
         return user;
     }
 
-
     @Override
-    public User getUserByMossoId(int mossoId) {
+    public User getUserByMossoId(int mossoId) { // Returns the first User-Admin it finds with matching mossoId
         logger.debug("Getting User: {}", mossoId);
-        User user = userDao.getUserByMossoId(mossoId);
-        logger.debug("Got User: {}", user);
-        return user;
+        Users users = userDao.getUsersByMossoId(mossoId);
+
+        if(users.getUsers().size() == 1) {
+            return users.getUsers().get(0);
+        }else if(users.getUsers().size() > 1) {
+            for(User user : users.getUsers()) {
+                UserScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), getCloudAuthClientId());
+                if(authorizationService.authorizeCloudUserAdmin(sa))
+                    return user;
+            }
+        }
+        return null;
     }
 
     @Override
@@ -318,11 +332,20 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public User getUserByNastId(String nastId) {
+    public User getUserByNastId(String nastId) { // Returns the first User-Admin it finds with matching nastId
         logger.debug("Getting User: {}", nastId);
-        User user = userDao.getUserByNastId(nastId);
-        logger.debug("Got User: {}", user);
-        return user;
+        Users users = userDao.getUsersByNastId(nastId);
+
+        if(users.getUsers().size() == 1) {
+            return users.getUsers().get(0);
+        }else if(users.getUsers().size() > 1) {
+            for(User user : users.getUsers()) {
+                UserScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), getCloudAuthClientId());
+                if(authorizationService.authorizeCloudUserAdmin(sa))
+                    return user;
+            }
+        }
+        return null;
     }
 
     @Override
@@ -423,6 +446,26 @@ public class DefaultUserService implements UserService {
     @Override
     public boolean isUsernameUnique(String username) {
         return userDao.isUsernameUnique(username);
+    }
+
+    @Override
+    public boolean hasSubUsers(String userId) {
+        User user = userDao.getUserById(userId);
+        if(user==null){
+            return false;
+        }
+        Users users = userDao.getUsersByDomainId(user.getDomainId());
+        if(users==null || users.getUsers()==null || users.getUsers().size()==0){
+            return false;
+        }
+        for(User userInList: users.getUsers()){
+            ScopeAccess scopeAccess = scopeAccessDao.getScopeAccessByUserId(userInList.getId());
+            boolean isDefaultUser = authorizationService.hasDefaultUserRole(scopeAccess);
+            if(isDefaultUser){
+                return true;
+            }
+        }
+        return false;
     }
 
 
@@ -527,15 +570,17 @@ public class DefaultUserService implements UserService {
     private void validateUsername(User user) {
         boolean isUsernameUnique = userDao.isUsernameUnique(user.getUsername());
         if (!isUsernameUnique) {
-            logger.warn("Couldn't add user {} because username already taken", user);
+            logger.warn("Couldn't add/update user {} because username already taken", user);
             throw new DuplicateUsernameException(String.format("Username %s already exists", user.getUsername()));
         }
     }
 
     void validateMossoId(int mossoId) {
-        User userByMossoId = userDao.getUserByMossoId(mossoId);
-        if (userByMossoId != null) {
-            throw new BadRequestException("User with Mosso Account ID: " + mossoId + " already exists.");
+        Users usersByMossoId = userDao.getUsersByMossoId(mossoId);
+        if(usersByMossoId != null) {
+            if (usersByMossoId.getUsers().size() > 0) {
+                throw new BadRequestException("User with Mosso Account ID: " + mossoId + " already exists.");
+            }
         }
     }
 
@@ -663,6 +708,41 @@ public class DefaultUserService implements UserService {
         return user;
     }
 
+    @Override
+    public void addBaseUrlToUser(Integer baseUrlId, User user) {
+        CloudBaseUrl baseUrl = endpointService.getBaseUrlById(baseUrlId);
+        String tenantId;
+        if(baseUrl.getOpenstackType().equals("NAST"))
+            tenantId = user.getNastId();
+        else
+            tenantId = String.valueOf(user.getMossoId());
+
+        Tenant tenant = tenantService.getTenant(tenantId);
+
+        // Check for existing BaseUrl
+        for (String bId : tenant.getBaseUrlIds()){
+            if(bId.equals(String.valueOf(baseUrl.getBaseUrlId())))
+                throw new BadRequestException("BaseUrl already exists.");
+        }
+
+        tenant.addBaseUrlId(String.valueOf(baseUrl.getBaseUrlId()));
+        this.tenantService.updateTenant(tenant);
+    }
+
+    @Override
+    public void removeBaseUrlFromUser(Integer baseUrlId, User user) {
+        CloudBaseUrl baseUrl = endpointService.getBaseUrlById(baseUrlId);
+        String tenantId;
+        if(baseUrl.getOpenstackType().equals("NAST"))
+            tenantId = user.getNastId();
+        else
+            tenantId = String.valueOf(user.getMossoId());
+
+        Tenant tenant = this.tenantService.getTenant(tenantId);
+        tenant.removeBaseUrlId(String.valueOf(baseUrl.getBaseUrlId()));
+        this.tenantService.updateTenant(tenant);
+    }
+
     private boolean isPasswordRulesEnforced() {
         return config.getBoolean("password.rules.enforced", true);
     }
@@ -675,4 +755,19 @@ public class DefaultUserService implements UserService {
         return config.getInt("ldap.paging.limit.default");
     }
 
+    public void setScopeAccessService(ScopeAccessService scopeAccessService) {
+        this.scopeAccessService = scopeAccessService;
+    }
+
+    public void setTenantService(TenantService tenantService) {
+        this.tenantService = tenantService;
+    }
+
+    public void setEndpointService(EndpointService endpointService) {
+        this.endpointService = endpointService;
+    }
+
+    public void setAuthorizationService(AuthorizationService authorizationService) {
+        this.authorizationService = authorizationService;
+    }
 }

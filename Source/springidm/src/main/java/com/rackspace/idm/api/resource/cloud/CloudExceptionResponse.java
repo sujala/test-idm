@@ -29,10 +29,6 @@ public class CloudExceptionResponse extends WebApplicationException {
     public CloudExceptionResponse() {
     }
 
-    public CloudExceptionResponse(Throwable cause) {
-        super(cause);
-    }
-
     public Response.ResponseBuilder exceptionResponse(Exception ex) {
         if (ex instanceof NotFoundException) {
             return notFoundExceptionResponse(ex.getMessage());
@@ -72,7 +68,6 @@ public class CloudExceptionResponse extends WebApplicationException {
         UnauthorizedFault fault = OBJ_FACTORY.createUnauthorizedFault();
         fault.setCode(HttpServletResponse.SC_UNAUTHORIZED);
         fault.setMessage(errMsg);
-        fault.setDetails("AuthErrorHandler");
         return Response.status(HttpServletResponse.SC_UNAUTHORIZED).entity(OBJ_FACTORY.createUnauthorized(fault));
     }
 

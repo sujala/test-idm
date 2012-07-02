@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.unboundid.ldap.sdk.LDAPConnectionPool;
+import com.unboundid.ldap.sdk.LDAPInterface;
 
 /**
  * Wraps two connection pools to reduce insanity.

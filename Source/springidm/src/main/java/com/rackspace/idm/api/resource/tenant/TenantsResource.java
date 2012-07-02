@@ -82,6 +82,10 @@ public class TenantsResource extends ParentResource {
         @QueryParam("applicationId") String applicationId,
         Tenant tenant) {
 
+        if(tenant == null){
+            throw new IllegalArgumentException("Tenant cannot be null");
+        }
+
         ScopeAccess scopeAccess = scopeAccessService.getAccessTokenByAuthHeader(authHeader);
         authorizationService.authorizeIdmSuperAdminOrRackspaceClient(scopeAccess);
 
@@ -147,6 +151,10 @@ public class TenantsResource extends ParentResource {
         @PathParam("tenantId") String tenantId,
         Tenant tenant) {
 
+        if(tenant == null){
+            throw new IllegalArgumentException("Tenant cannot be null");
+        }
+
         ScopeAccess scopeAccess = scopeAccessService.getAccessTokenByAuthHeader(authHeader);
         authorizationService.authorizeIdmSuperAdminOrRackspaceClient(scopeAccess);
 
@@ -163,7 +171,7 @@ public class TenantsResource extends ParentResource {
         return Response.ok(objectFactory.createTenant(tenantConverter.toTenant(tenantObject))).build();
     }
 
-    private void validateTenantId(String tenantId) {
+    void validateTenantId(String tenantId) {
         if(tenantId != null) {
             int index = tenantId.indexOf(":");
 
@@ -187,7 +195,7 @@ public class TenantsResource extends ParentResource {
         }
 	}
 
-    private void updateTenantFields(Tenant tenant, String tenantId) {
+    void updateTenantFields(Tenant tenant, String tenantId) {
         tenant.setId(tenantId);
         tenant.setName(tenantId);
 

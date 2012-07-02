@@ -17,8 +17,8 @@ public class RSAClient {
 
 	@Autowired
 	private Configuration config;
-    
-	public boolean authenticate(String userID, String passCode) {
+
+    public boolean authenticate(String userID, String passCode) {
 		try {
 			String rsaHost = config.getString("rsa.host");
 			String rsaSecret = config.getString("rsa.sharedSecret");
@@ -31,4 +31,8 @@ public class RSAClient {
 			return false;
 		}
 	}
+
+    public void setConfig(Configuration config) {
+        this.config = config;
+    }
 }

@@ -52,4 +52,5 @@ public interface Cloud11Service {
 
     //extensions
     Response.ResponseBuilder extensions(HttpHeaders httpHeaders) throws IOException;
+    Response.ResponseBuilder getExtension(HttpHeaders httpHeaders, String alias) throws IOException;
 }

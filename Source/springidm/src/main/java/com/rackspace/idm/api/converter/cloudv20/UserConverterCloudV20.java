@@ -19,9 +19,6 @@ import java.util.List;
 @Component
 public class UserConverterCloudV20 {
     
-    @Autowired
-    private JAXBObjectFactories OBJ_FACTORIES;
-
     ObjectFactory objectFactory = new ObjectFactory();
 
     @Autowired
@@ -44,7 +41,7 @@ public class UserConverterCloudV20 {
     }
 
     public UserForAuthenticateResponse toUserForAuthenticateResponse(com.rackspace.idm.domain.entity.User user, List<TenantRole> roles) {
-        UserForAuthenticateResponse jaxbUser = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUserForAuthenticateResponse();
+        UserForAuthenticateResponse jaxbUser = objectFactory.createUserForAuthenticateResponse();
 
         jaxbUser.setId(user.getId());
         jaxbUser.setName(user.getUsername());
@@ -64,6 +61,43 @@ public class UserConverterCloudV20 {
         return userForAuthenticateResponse;
     }
 
+    public UserForCreate toUserForCreate(com.rackspace.idm.domain.entity.User user) {
+        org.openstack.docs.identity.api.ext.os_ksadm.v1.ObjectFactory v1ObjectFactory = new org.openstack.docs.identity.api.ext.os_ksadm.v1.ObjectFactory();
+        UserForCreate jaxbUser = v1ObjectFactory.createUserForCreate();
+
+        jaxbUser.setDisplayName(user.getDisplayName());
+        jaxbUser.setEmail(user.getEmail());
+        jaxbUser.setEnabled(user.isEnabled());
+        jaxbUser.setId(user.getId());
+        jaxbUser.setUsername(user.getUsername());
+        if (user.getPassword() != null) {
+            jaxbUser.setPassword(user.getPassword());
+        }
+        if(user.getRegion() != null){
+            jaxbUser.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","defaultRegion"),user.getRegion());
+        }
+
+        try {
+            if (user.getCreated() != null) {
+
+                jaxbUser.setCreated(DatatypeFactory.newInstance()
+                        .newXMLGregorianCalendar(
+                                user.getCreated().toGregorianCalendar()));
+            }
+
+            if (user.getUpdated() != null) {
+                jaxbUser.setUpdated(DatatypeFactory.newInstance()
+                        .newXMLGregorianCalendar(
+                                user.getUpdated().toGregorianCalendar()));
+            }
+
+        }   catch (DatatypeConfigurationException e) {
+                e.printStackTrace();
+        }
+
+        return jaxbUser;
+    }
+
     public User toUser(com.rackspace.idm.domain.entity.User user) {
         User jaxbUser = objectFactory.createUser();
 
@@ -72,7 +106,9 @@ public class UserConverterCloudV20 {
         jaxbUser.setEnabled(user.isEnabled());
         jaxbUser.setId(user.getId());
         jaxbUser.setUsername(user.getUsername());
-        jaxbUser.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","defaultRegion"),user.getRegion());
+        if(user.getRegion() != null){
+            jaxbUser.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","defaultRegion"),user.getRegion());
+        }
 
         try {
             if (user.getCreated() != null) {
@@ -98,7 +134,7 @@ public class UserConverterCloudV20 {
 
     public UserList toUserList(List<com.rackspace.idm.domain.entity.User> users) {
 
-        UserList list = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUserList();
+        UserList list = objectFactory.createUserList();
 
         for (com.rackspace.idm.domain.entity.User user : users) {
             list.getUser().add(this.toUser(user));
@@ -107,16 +143,8 @@ public class UserConverterCloudV20 {
         return list;
     }
 
-    public ObjectFactory getObjectFactory() {
-        return objectFactory;
-    }
-
     public void setObjectFactory(ObjectFactory objectFactory) {
         this.objectFactory = objectFactory;
-    }
-
-    public RoleConverterCloudV20 getRoleConverterCloudV20() {
-        return roleConverterCloudV20;
     }
 
     public void setRoleConverterCloudV20(RoleConverterCloudV20 roleConverterCloudV20) {

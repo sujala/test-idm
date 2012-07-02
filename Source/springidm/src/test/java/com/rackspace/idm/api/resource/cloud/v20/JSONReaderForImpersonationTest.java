@@ -1,6 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.docs.identity.api.ext.rax_ga.v1.ImpersonationRequest;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
 import com.rackspace.idm.exception.BadRequestException;
 import org.junit.Test;
 
@@ -21,7 +21,7 @@ import static org.junit.Assert.assertTrue;
 public class JSONReaderForImpersonationTest {
 
     String impersonationRequestJSON = "{\n" +
-            "  \"RAX-GA:impersonation\" : {\n" +
+            "  \"RAX-AUTH:impersonation\" : {\n" +
             "      \"user\": {\n" +
             "          \"username\": \"john.smith\"\n" +
             "      },\n" +
@@ -30,7 +30,7 @@ public class JSONReaderForImpersonationTest {
             "}";
 
     String emptyImpersonationRequestJSON = "{\n" +
-            "  \"RAX-GA:impersonation\" : {\n" +
+            "  \"RAX-AUTH:impersonation\" : {\n" +
             "  }\n" +
             "}";
     @Test
@@ -83,7 +83,7 @@ public class JSONReaderForImpersonationTest {
     @Test
     public void getImpersonationFromJSONString_withUserAndNoUsername_setsNullUser() throws Exception {
         ImpersonationRequest impersonationRequest = JSONReaderForImpersonation.getImpersonationFromJSONString("{\n" +
-                "  \"RAX-GA:impersonation\" : {\n" +
+                "  \"RAX-AUTH:impersonation\" : {\n" +
                 "      \"user\": {\n" +
                 "      },\n" +
                 "      \"expire-in-seconds\": \"5000\"\n" +
@@ -95,7 +95,7 @@ public class JSONReaderForImpersonationTest {
     @Test
     public void getImpersonationFromJSONString_withNoExpireInSeconds_setsNullExpireInSeconds() throws Exception {
         ImpersonationRequest impersonationRequest = JSONReaderForImpersonation.getImpersonationFromJSONString("{\n" +
-                "  \"RAX-GA:impersonation\" : {\n" +
+                "  \"RAX-AUTH:impersonation\" : {\n" +
                 "      \"user\": {\n" +
                 "      },\n" +
                 "  }\n" +
@@ -119,18 +119,18 @@ public class JSONReaderForImpersonationTest {
 
     @Test(expected = BadRequestException.class)
     public void getImpersonationFromJSONString_withExpireInElementIsEmptyString_throwsBadRequestException() throws Exception {
-        JSONReaderForImpersonation.getImpersonationFromJSONString("{\"RAX-GA:impersonation\":{\"user\":{\"username\":\"john.smith\"},\"expire-in-seconds\":\"\"}}");
+        JSONReaderForImpersonation.getImpersonationFromJSONString("{\"RAX-AUTH:impersonation\":{\"user\":{\"username\":\"john.smith\"},\"expire-in-seconds\":\"\"}}");
     }
 
     @Test(expected = BadRequestException.class)
     public void getImpersonationFromJSONString_withExpireInElementContainsNonIntValue_throwsBadRequestException() throws Exception {
-        JSONReaderForImpersonation.getImpersonationFromJSONString("{\"RAX-GA:impersonation\":{\"user\":{\"username\":\"john.smith\"},\"expire-in-seconds\":\"abc\"}}");
+        JSONReaderForImpersonation.getImpersonationFromJSONString("{\"RAX-AUTH:impersonation\":{\"user\":{\"username\":\"john.smith\"},\"expire-in-seconds\":\"abc\"}}");
     }
 
     @Test
     public void getImpersonationFromJSONString_withExpireInElementContainsDecimalValue_throwsBadRequestException() throws Exception {
         try {
-            JSONReaderForImpersonation.getImpersonationFromJSONString("{\"RAX-GA:impersonation\":{\"user\":{\"username\":\"john.smith\"},\"expire-in-seconds\":\".1\"}}");
+            JSONReaderForImpersonation.getImpersonationFromJSONString("{\"RAX-AUTH:impersonation\":{\"user\":{\"username\":\"john.smith\"},\"expire-in-seconds\":\".1\"}}");
             assertTrue("expected and exception to be thrown", false);
         } catch (Exception e) {
             assertThat("expected message", e.getMessage(), equalTo("Expire-in element should be an integer."));
