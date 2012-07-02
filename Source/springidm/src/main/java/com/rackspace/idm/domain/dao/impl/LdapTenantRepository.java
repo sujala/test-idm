@@ -393,7 +393,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
 
     List<TenantRole> getMultipleTenantRoles(String parentUniqueId,
         Filter searchFilter) throws LDAPPersistException {
-        List<SearchResultEntry> entries = this.getMultipleEntries(parentUniqueId, SearchScope.SUB, searchFilter, "*");
+        List<SearchResultEntry> entries = this.getMultipleEntries(parentUniqueId, SearchScope.SUB, searchFilter, "*"); //TODO: Dont use wildcard
 
         List<TenantRole> roles = new ArrayList<TenantRole>();
         for (SearchResultEntry entry : entries) {
