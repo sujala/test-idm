@@ -23,27 +23,30 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
     public ScopeAccess addDelegateScopeAccess(String parentUniqueId, ScopeAccess scopeAccess) {
         getLogger().info("Adding Delegate ScopeAccess: {}", scopeAccess);
         Audit audit = Audit.log(scopeAccess).add();
-        SearchResultEntry entry = getContainer( parentUniqueId, CONTAINER_DELEGATE);
+        try{
+            SearchResultEntry entry = getContainer( parentUniqueId, CONTAINER_DELEGATE);
+            if (entry == null) {
+                addContainer( parentUniqueId, CONTAINER_DELEGATE);
+                entry = getContainer( parentUniqueId, CONTAINER_DELEGATE);
+            }
 
-        if (entry == null) {
-            addContainer( parentUniqueId, CONTAINER_DELEGATE);
-            entry = getContainer( parentUniqueId, CONTAINER_DELEGATE);
+            audit.succeed();
+            getLogger().debug("Added Delegate ScopeAccess: {}", scopeAccess);
+            return addScopeAccess(entry.getDN(), scopeAccess);
+        } catch (IllegalStateException e){
+            getLogger().error("Error adding scope access object", e);
+            audit.fail();
+            throw new IllegalStateException(e);
         }
-
-        audit.succeed();
-        getLogger().debug("Added Delegate ScopeAccess: {}", scopeAccess);
-        return addScopeAccess(entry.getDN(), scopeAccess);
     }
 
     @Override
     public ScopeAccess addImpersonatedScopeAccess(String parentUniqueId, ScopeAccess scopeAccess) {
         getLogger().info("Adding Impersonated ScopeAccess: {}", scopeAccess);
         Audit audit = Audit.log(scopeAccess).add();
-        LDAPConnection conn = null;
 
         String dn = new LdapDnBuilder(parentUniqueId).build();
-        try {
-            conn = getAppConnPool().getConnection();
+        try{
             SearchResultEntry entry = getContainer( dn, CONTAINER_IMPERSONATED);
             if (entry == null) {
                 addContainer( dn, CONTAINER_IMPERSONATED);
@@ -52,12 +55,10 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
             audit.succeed();
             getLogger().debug("Added Impersonated ScopeAccess: {}", scopeAccess);
             return addScopeAccess(entry.getDN(), scopeAccess);
-        } catch (final LDAPException e) {
-            getLogger().error("Error adding scope acccess object", e);
+        } catch (final IllegalStateException e) {
+            getLogger().error("Error adding scope access object", e);
             audit.fail();
             throw new IllegalStateException(e);
-        } finally {
-            getAppConnPool().releaseConnection(conn);
         }
     }
 
@@ -65,9 +66,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
     public ScopeAccess addDirectScopeAccess(String parentUniqueId, ScopeAccess scopeAccess) {
         getLogger().info("Adding Delegate ScopeAccess: {}", scopeAccess);
         Audit audit = Audit.log(scopeAccess).add();
-        LDAPConnection conn = null;
         try {
-            conn = getAppConnPool().getConnection();
             SearchResultEntry entry = getContainer( parentUniqueId, CONTAINER_DIRECT);
             if (entry == null) {
                 addContainer( parentUniqueId, CONTAINER_DIRECT);
@@ -77,12 +76,10 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
             audit.succeed();
             getLogger().debug("Added Delegate ScopeAccess: {}", scopeAccess);
             return addScopeAccess(entry.getDN(), scopeAccess);
-        } catch (final LDAPException e) {
+        } catch (final IllegalStateException e) {
             getLogger().error("Error adding scope acccess object", e);
             audit.fail();
             throw new IllegalStateException(e);
-        } finally {
-            getAppConnPool().releaseConnection(conn);
         }
     }
 
@@ -90,29 +87,23 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
     public DefinedPermission definePermission(String scopeAccessUniqueId,
         DefinedPermission permission) {
         getLogger().debug("Defining Permission: {}", permission);
-        LDAPConnection conn = null;
         Audit audit = Audit.log(permission).add();
         try {
             final LDAPPersister<DefinedPermission> persister = LDAPPersister.getInstance(DefinedPermission.class);
-            conn = getAppConnPool().getConnection();
             try {
-                persister.add(permission, conn, scopeAccessUniqueId);
+                persister.add(permission, getAppInterface(), scopeAccessUniqueId);
             } catch (final LDAPException e) {
-                if (e.getResultCode() == ResultCode.ENTRY_ALREADY_EXISTS) {
-                    // noop
-                } else {
+                if (e.getResultCode() != ResultCode.ENTRY_ALREADY_EXISTS) {
                     throw e;
                 }
             }
             getLogger().debug("Defined Permission: {}", permission);
             audit.succeed();
-            return persister.get(permission, conn, scopeAccessUniqueId);
+            return persister.get(permission, getAppInterface(), scopeAccessUniqueId);
         } catch (final LDAPException e) {
             getLogger().error("Error defining permission", e);
             audit.fail();
             throw new IllegalStateException(e);
-        } finally {
-            getAppConnPool().releaseConnection(conn);
         }
     }
 
@@ -120,29 +111,23 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
     public DelegatedPermission delegatePermission(String scopeAccessUniqueId,
         DelegatedPermission permission) {
         getLogger().debug("Delegating Permission: {}", permission);
-        LDAPConnection conn = null;
         Audit audit = Audit.log(permission).add();
         try {
             final LDAPPersister<DelegatedPermission> persister = LDAPPersister.getInstance(DelegatedPermission.class);
-            conn = getAppConnPool().getConnection();
             try {
-                persister.add(permission, conn, scopeAccessUniqueId);
+                persister.add(permission, getAppInterface(), scopeAccessUniqueId);
             } catch (final LDAPException e) {
-                if (e.getResultCode() == ResultCode.ENTRY_ALREADY_EXISTS) {
-                    // noop
-                } else {
+                if (e.getResultCode() != ResultCode.ENTRY_ALREADY_EXISTS) {
                     throw e;
                 }
             }
             getLogger().debug("Delegated Permission: {}", permission);
             audit.succeed();
-            return persister.get(permission, conn, scopeAccessUniqueId);
+            return persister.get(permission, getAppInterface(), scopeAccessUniqueId);
         } catch (final LDAPException e) {
             getLogger().error("Error delegating permission", e);
             audit.fail();
             throw new IllegalStateException(e);
-        } finally {
-            getAppConnPool().releaseConnection(conn);
         }
     }
 
@@ -160,65 +145,51 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
     @Override
     public boolean doesAccessTokenHavePermission(ScopeAccess token, Permission permission) {
         getLogger().debug("Checking Permission: {}", permission);
-        LDAPConnection conn = null;
 
         Permission perm = new Permission(permission.getCustomerId(), permission.getClientId(), permission.getPermissionId());
         try {
             String dn = token instanceof DelegatedClientScopeAccess ? token
                 .getUniqueId() : token.getLDAPEntry().getParentDNString();
 
-            conn = getAppConnPool().getConnection();
-
             final Permission result = LDAPPersister.getInstance(Permission.class)
-                    .searchForObject(perm, conn, dn, SearchScope.SUB);
-            getLogger().debug("{} : {}", result == null ? "Found" : "Did not find", perm);
+                    .searchForObject(perm, getAppInterface(), dn, SearchScope.SUB);
+            getLogger().debug("{} : {}", result != null ? "Found" : "Did not find", perm);
             return result != null;
         } catch (final LDAPException e) {
             getLogger().error("Error checking permission", e);
             throw new IllegalStateException(e);
-        } finally {
-            getAppConnPool().releaseConnection(conn);
         }
     }
 
     @Override
     public boolean doesParentHaveScopeAccess(String parentUniqueId, ScopeAccess scopeAccess) {
-        LDAPConnection conn = null;
-
         ScopeAccess sa = new ScopeAccess();
         sa.setClientId(scopeAccess.getClientId());
 
         try {
-            conn = getAppConnPool().getConnection();
-
             final ScopeAccess result = LDAPPersister.getInstance(
-                ScopeAccess.class).searchForObject(sa, conn, parentUniqueId, SearchScope.ONE);
+                ScopeAccess.class).searchForObject(sa, getAppInterface(), parentUniqueId, SearchScope.ONE);
             getLogger().debug("{} : {}",
                 result == null ? "Found" : "Did not find", sa);
             return result != null;
         } catch (final LDAPException e) {
             getLogger().error("Error checking permission", e);
             throw new IllegalStateException(e);
-        } finally {
-            getAppConnPool().releaseConnection(conn);
         }
     }
 
     @Override
     public ScopeAccess getDelegateScopeAccessForParentByClientId(String parentUniqueId, String clientId) {
         getLogger().debug("Find ScopeAccess for Parent: {} by ClientId: {}", parentUniqueId, clientId);
-        LDAPConnection conn = null;
 
         String dn = new LdapDnBuilder(parentUniqueId).addAttribute(ATTR_NAME, CONTAINER_DELEGATE).build();
 
         try {
-            conn = getAppConnPool().getConnection();
             final Filter filter = new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_SCOPEACCESS)
                 .addEqualAttribute(ATTR_CLIENT_ID, clientId).build();
-            final SearchResult searchResult = conn.search(dn, SearchScope.SUB, filter);
 
-            final List<SearchResultEntry> searchEntries = searchResult.getSearchEntries();
+            final List<SearchResultEntry> searchEntries = getMultipleEntries(dn, SearchScope.SUB, filter);
             getLogger().debug(
                 "Found {} ScopeAccess(s) for Parent: {} by ClientId: {}",
                 new Object[]{searchEntries.size(), parentUniqueId, clientId});
@@ -226,13 +197,10 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
                 return decodeScopeAccess(searchResultEntry);
             }
         } catch (final LDAPException e) {
-            if (e.getResultCode() == ResultCode.NO_SUCH_OBJECT) {
-                return null;
+            if (e.getResultCode() != ResultCode.NO_SUCH_OBJECT) {
+                getLogger().error("Error reading scope access by clientId", e);
+                throw new IllegalStateException(e);
             }
-            getLogger().error("Error reading scope access by clientId", e);
-            throw new IllegalStateException(e);
-        } finally {
-            getAppConnPool().releaseConnection(conn);
         }
         return null;
     }
@@ -780,7 +748,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
         return object;
     }
 
-    private ScopeAccess decodeScopeAccess(
+    ScopeAccess decodeScopeAccess(
         final SearchResultEntry searchResultEntry) throws LDAPPersistException {
         ScopeAccess object = null;
         if (searchResultEntry.getAttribute(ATTR_OBJECT_CLASS).hasValue(OBJECTCLASS_USERSCOPEACCESS)) {
