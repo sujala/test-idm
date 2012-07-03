@@ -66,7 +66,7 @@ public class DefaultUserService implements UserService {
         logger.info("Adding Racker {}", racker);
         Racker exists = this.userDao.getRackerByRackerId(racker.getRackerId());
         if (exists != null) {
-            throw new DuplicateException("Racker Already Exsits");
+            throw new DuplicateException("Racker Already Exists");
         }
         this.userDao.addRacker(racker);
         logger.info("Added Racker {}", racker);

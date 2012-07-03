@@ -492,8 +492,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             logger.warn(errorMsg);
             throw new BadRequestException(errorMsg);
         }
-        Pattern alphaNumberic = Pattern.compile("[a-zA-z0-9]*");
-        if (!alphaNumberic.matcher(username).matches()) {
+        Pattern alphaNumeric = Pattern.compile("[a-zA-z0-9]*");
+        if (!alphaNumeric.matcher(username).matches()) {
             throw new BadRequestException("Username has invalid characters; only alphanumeric characters are allowed.");
         }
         if (!CharUtils.isAsciiAlpha(username.charAt(0))) {
@@ -573,6 +573,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 userService.updateUser(user, false);
             } else if (credentials.getValue() instanceof ApiKeyCredentials) {
                 ApiKeyCredentials userCredentials = (ApiKeyCredentials) credentials.getValue();
+                //TODO validate username breaks authenticate call
                 validateApiKeyCredentials(userCredentials);
                 user = checkAndGetUser(userId);
                 if (!userCredentials.getUsername().equals(user.getUsername())) {
@@ -638,6 +639,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 user = this.checkAndGetUser(usa.getUserRsId());
             } else if (authenticationRequest.getCredential().getDeclaredType().isAssignableFrom(PasswordCredentialsRequiredUsername.class)) {
                 PasswordCredentialsRequiredUsername creds = (PasswordCredentialsRequiredUsername) authenticationRequest.getCredential().getValue();
+                //TODO username validation breaks validate call
                 validatePasswordCredentials(creds);
                 String username = creds.getUsername();
                 String password = creds.getPassword();
