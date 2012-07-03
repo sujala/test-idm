@@ -133,7 +133,7 @@ public class LdapEndpointRepositoryTest {
         endPoints.setEndpoints(endpointList);
         doReturn(new CloudBaseUrl()).when(spy).getBaseUrlById(1);
         doReturn(endPoints).when(spy).getRawEndpointsForUser("username");
-        spy.addBaseUrlToUser(1, false, "username");
+        spy.addBaseUrlToUser(1, true, "username");
     }
 
     @Test (expected = BaseUrlConflictException.class)

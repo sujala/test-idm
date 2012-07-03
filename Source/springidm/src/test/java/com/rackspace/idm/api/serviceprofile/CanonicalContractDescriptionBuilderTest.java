@@ -47,4 +47,9 @@ public class CanonicalContractDescriptionBuilderTest {
     public void buildPublicVersionPage_throwsNotFound() throws Exception {
         canonicalContractDescriptionBuilder.buildPublicVersionPage(null, null);
     }
+
+    @Test
+    public void build_doesTemplateBuild() throws Exception {
+        canonicalContractDescriptionBuilder.build("patern", (UriInfo)null);
+    }
 }
