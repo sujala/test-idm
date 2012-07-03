@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.dao.impl;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.exception.DuplicateClientGroupException;
+import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.CryptHelper;
 import com.unboundid.ldap.sdk.*;
@@ -32,11 +33,15 @@ import static org.mockito.Mockito.*;
 public class LdapApplicationRepositoryTest {
     private LdapApplicationRepository ldapApplicationRepository;
     private LdapApplicationRepository spy;
+    private LDAPInterface ldapInterface;
 
     @Before
     public void setUp() throws Exception {
         ldapApplicationRepository = new LdapApplicationRepository(mock(LdapConnectionPools.class), mock(Configuration.class));
+        ldapInterface = mock(LDAPInterface.class);
         spy = spy(ldapApplicationRepository);
+
+        doReturn(ldapInterface).when(spy).getAppInterface();
     }
 
     @Test (expected = IllegalArgumentException.class)
@@ -98,18 +103,43 @@ public class LdapApplicationRepositoryTest {
     }
 
     @Test (expected = IllegalArgumentException.class)
-    public void addUserToclientGroup_uniqueIdIsBlank_throwsIllegalArgument() throws Exception {
+    public void addUserToClientGroup_uniqueIdIsBlank_throwsIllegalArgument() throws Exception {
         ldapApplicationRepository.addUserToClientGroup("", null);
     }
 
     @Test (expected = IllegalArgumentException.class)
-    public void addUserToclientGroup_clientGropuIsNUll_throwsIllegalArgument() throws Exception {
+    public void addUserToClientGroup_clientGropuIsNUll_throwsIllegalArgument() throws Exception {
         ldapApplicationRepository.addUserToClientGroup("uniqueId", null);
     }
 
     @Test (expected = IllegalArgumentException.class)
-    public void addUserToclientGroup_clientGropuUniqueIdIsNUll_throwsIllegalArgument() throws Exception {
+    public void addUserToClientGroup_clientGropuUniqueIdIsNUll_throwsIllegalArgument() throws Exception {
         ldapApplicationRepository.addUserToClientGroup("uniqueId", new ClientGroup());
+    }
+
+    @Test (expected = DuplicateException.class)
+    public void addUserToClientGroup_callsLDAPInterfaceModify_throwsDuplicateException() throws Exception {
+        ClientGroup clientGroup = new ClientGroup();
+        clientGroup.setUniqueId("uniqueId");
+        doThrow(new LDAPException(ResultCode.ATTRIBUTE_OR_VALUE_EXISTS)).when(ldapInterface).modify(anyString(), any(List.class));
+        spy.addUserToClientGroup("uniqueId",clientGroup);
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void addUserToClientGroup_callsLDAPInterfaceModify_throwsIllegalStateException() throws Exception {
+        ClientGroup clientGroup = new ClientGroup();
+        clientGroup.setUniqueId("uniqueId");
+        doThrow(new LDAPException(ResultCode.LOCAL_ERROR)).when(ldapInterface).modify(anyString(), any(List.class));
+        spy.addUserToClientGroup("uniqueId",clientGroup);
+    }
+
+    @Test
+    public void addUserToClientGroup_callsLDAPInterface_modify() throws Exception {
+        ClientGroup clientGroup = new ClientGroup();
+        clientGroup.setUniqueId("uniqueId");
+        when(ldapInterface.modify(anyString(), any(List.class))).thenReturn(new LDAPResult(1, ResultCode.SUCCESS));
+        spy.addUserToClientGroup("uniqueId",clientGroup);
+        verify(ldapInterface).modify(anyString(), any(List.class));
     }
 
     @Test
@@ -382,6 +412,31 @@ public class LdapApplicationRepositoryTest {
         ldapApplicationRepository.removeUserFromGroup("uniqueId", new ClientGroup());
     }
 
+    @Test (expected = NotFoundException.class)
+    public void removeUserFromGroup_callsLDAPInterfaceModify_throwsNotFoundException() throws Exception {
+        ClientGroup clientGroup = new ClientGroup();
+        clientGroup.setUniqueId("uniqueId");
+        doThrow(new LDAPException(ResultCode.NO_SUCH_ATTRIBUTE)).when(ldapInterface).modify(anyString(), any(List.class));
+        spy.removeUserFromGroup("uniqueId",clientGroup);
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void removeUserFromGroup_callsLDAPInterfaceModify_throwsIllegalStateException() throws Exception {
+        ClientGroup clientGroup = new ClientGroup();
+        clientGroup.setUniqueId("uniqueId");
+        doThrow(new LDAPException(ResultCode.LOCAL_ERROR)).when(ldapInterface).modify(anyString(), any(List.class));
+        spy.removeUserFromGroup("uniqueId",clientGroup);
+    }
+
+    @Test
+    public void removeUserFromGroup_callsLDAPInterface_modify() throws Exception {
+        ClientGroup clientGroup = new ClientGroup();
+        clientGroup.setUniqueId("uniqueId");
+        when(ldapInterface.modify(anyString(), any(List.class))).thenReturn(new LDAPResult(1, ResultCode.SUCCESS));
+        spy.removeUserFromGroup("uniqueId",clientGroup);
+        verify(ldapInterface).modify(anyString(), any(List.class));
+    }
+
     @Test (expected = IllegalArgumentException.class)
     public void updateClient_clientIsNull_throwsIllegalArgument() throws Exception {
         ldapApplicationRepository.updateClient(null);
@@ -509,6 +564,35 @@ public class LdapApplicationRepositoryTest {
         assertThat("modification type", value.get(0).getModificationType().toString(), equalTo("REPLACE"));
     }
 
+    @Test (expected = IllegalStateException.class)
+    public void getAvailableScopes_callsLDAPInterfaceSearch_throwsLDAPSearchException() throws Exception {
+        doThrow(new LDAPSearchException(ResultCode.LOCAL_ERROR, "error")).when(ldapInterface).search(anyString(), any(SearchScope.class), any(Filter.class));
+        spy.getAvailableScopes();
+    }
+
+    @Test
+    public void getAvailableScopes_foundClient_returnsClientList() throws Exception {
+        Application client = new Application();
+        SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0]);
+        List<SearchResultEntry> searchResultEntryList = new ArrayList<SearchResultEntry>();
+        searchResultEntryList.add(searchResultEntry);
+        SearchResult searchResult = new SearchResult(1, ResultCode.SUCCESS, "diag", "matchDN", null, searchResultEntryList, null, 1, 1, null);
+        when(ldapInterface.search(anyString(), any(SearchScope.class), any(Filter.class))).thenReturn(searchResult);
+        doReturn(client).when(spy).getClient(searchResultEntry);
+        List<Application> result = spy.getAvailableScopes();
+        assertThat("client", result.get(0), equalTo(client));
+    }
+
+    @Test
+    public void getAvailableScopes_ZeroEntries_returnsEmptyClientList() throws Exception {
+        List<SearchResultEntry> searchResultEntryList = new ArrayList<SearchResultEntry>();
+        SearchResult searchResult = new SearchResult(1, ResultCode.SUCCESS, "diag", "matchDN", null, searchResultEntryList, null, 1, 1, null);
+        when(ldapInterface.search(anyString(), any(SearchScope.class), any(Filter.class))).thenReturn(searchResult);
+        List<Application> result = spy.getAvailableScopes();
+        assertThat("client", result.isEmpty(), equalTo(true));
+    }
+
+
     @Test
     public void getAddAttributesForClientGroup_addsAllAttributes_returnsArray() throws Exception {
         ClientGroup clientGroup = new ClientGroup();
@@ -609,6 +693,40 @@ public class LdapApplicationRepositoryTest {
         assertThat("client id", result.getClientId(), equalTo("clientId"));
         assertThat("name", result.getName(), equalTo("name"));
         assertThat("type", result.getType(), equalTo("type"));
+    }
+
+    @Test
+    public void getMultipleClients_contentCountLessThanOffset_setClientsToEmptyList() throws Exception {
+        List<SearchResultEntry> searchResultEntryList = new ArrayList<SearchResultEntry>();
+        doReturn(1).when(spy).getLdapPagingLimitMax();
+        doReturn(searchResultEntryList).when(spy).getMultipleEntries(LdapRepository.APPLICATIONS_BASE_DN, SearchScope.SUB, null, LdapRepository.ATTR_NAME);
+        Applications result = spy.getMultipleClients(null, 2, 2);
+        assertThat("client", result.getClients().isEmpty(), equalTo(true));
+    }
+
+    @Test
+    public void getMultipleClients_subListIsEmpty_setClientsToEmptyList() throws Exception {
+        SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0]);
+        List<SearchResultEntry> searchResultEntryList = new ArrayList<SearchResultEntry>();
+        searchResultEntryList.add(searchResultEntry);
+        doReturn(0).when(spy).getLdapPagingOffsetDefault();
+        doReturn(0).when(spy).getLdapPagingLimitDefault();
+        doReturn(3).when(spy).getLdapPagingLimitMax();
+        doReturn(searchResultEntryList).when(spy).getMultipleEntries(LdapRepository.APPLICATIONS_BASE_DN, SearchScope.SUB, null, LdapRepository.ATTR_NAME);
+        Applications result = spy.getMultipleClients(null, -1, 0);
+        assertThat("client", result.getClients().isEmpty(), equalTo(true));
+    }
+
+    @Test
+    public void getMultipleClients_callsGetClient_returnsClientsWithAddedClient() throws Exception {
+        SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0]);
+        List<SearchResultEntry> searchResultEntryList = new ArrayList<SearchResultEntry>();
+        searchResultEntryList.add(searchResultEntry);
+        searchResultEntryList.add(searchResultEntry);
+        doReturn(3).when(spy).getLdapPagingLimitMax();
+        doReturn(searchResultEntryList).when(spy).getMultipleEntries(LdapRepository.APPLICATIONS_BASE_DN, SearchScope.SUB, null, LdapRepository.ATTR_NAME);
+        Applications result = spy.getMultipleClients(null, 1, 2);
+        assertThat("client", result.getClients().size(), equalTo(1));
     }
 
     @Test
@@ -830,6 +948,22 @@ public class LdapApplicationRepositoryTest {
         ldapApplicationRepository.addClientRole("uniqueId", null);
     }
 
+    @Test (expected = IllegalStateException.class)
+    public void addClientRole_entryIsNull_throwsLDAPException() throws Exception {
+        ClientRole clientRole = new ClientRole();
+        doNothing().when(spy).addContainer("uniqueId", LdapRepository.CONTAINER_ROLES);
+        doReturn(null).doReturn(new SearchResultEntry("", new Attribute[0])).when(spy).getContainer("uniqueId", LdapRepository.CONTAINER_ROLES);
+        spy.addClientRole("uniqueId", clientRole);
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void addClientRole_entryNotNull_throwsLDAPException() throws Exception {
+        ClientRole clientRole = new ClientRole();
+        doNothing().when(spy).addContainer("uniqueId", LdapRepository.CONTAINER_ROLES);
+        doReturn(new SearchResultEntry("", new Attribute[0])).when(spy).getContainer("uniqueId", LdapRepository.CONTAINER_ROLES);
+        spy.addClientRole("uniqueId", clientRole);
+    }
+
     @Test (expected = IllegalArgumentException.class)
     public void deleteClientRole_roleIsNull_throwsIllegalArgument() throws Exception {
         ldapApplicationRepository.deleteClientRole(null);
@@ -889,6 +1023,34 @@ public class LdapApplicationRepositoryTest {
     }
 
     @Test (expected = IllegalStateException.class)
+    public void getAllClientRoles_withFiltersParam_CallsGetMultipleClientRoles_throwsLDAPPersistException() throws Exception {
+        doThrow(new LDAPPersistException("error")).when(spy).getMultipleClientRoles(anyString(), any(Filter.class));
+        spy.getAllClientRoles(null);
+    }
+
+    @Test
+    public void getAllClientRoles_withFiltersParam_emptyFilterList_returnsRoles() throws Exception {
+        doReturn(new ArrayList<ClientRole>()).when(spy).getMultipleClientRoles(anyString(), any(Filter.class));
+        List<ClientRole> result = spy.getAllClientRoles(new ArrayList<FilterParam>());
+        assertThat("roles", result.isEmpty(), equalTo(true));
+    }
+
+    @Test
+    public void getAllClientRoles_withFiltersParam_addsFiltersToSearchBuilder() throws Exception {
+        ArgumentCaptor<Filter> argumentCaptor = ArgumentCaptor.forClass(Filter.class);
+        List<FilterParam> filterParamList = new ArrayList<FilterParam>();
+        filterParamList.add(new FilterParam(FilterParam.FilterParamName.ROLE_NAME, "roleName"));
+        filterParamList.add(new FilterParam(FilterParam.FilterParamName.APPLICATION_ID, "applicationId"));
+        filterParamList.add(new FilterParam(FilterParam.FilterParamName.TENANT_ID, "tenantId"));
+        doReturn(new ArrayList<ClientRole>()).when(spy).getMultipleClientRoles(anyString(), argumentCaptor.capture());
+        spy.getAllClientRoles(filterParamList);
+        Filter[] result = argumentCaptor.getValue().getComponents();
+        assertThat("role name", result[1].getAssertionValue(), equalTo("roleName"));
+        assertThat("application id", result[2].getAssertionValue(), equalTo("applicationId"));
+        assertThat("filter size", result.length, equalTo(3));
+    }
+
+    @Test (expected = IllegalStateException.class)
     public void getAllClientRoles_callsGetMultipleClientRoles_throwsLDAPPersistException() throws Exception {
         doThrow(new LDAPPersistException("error")).when(spy).getMultipleClientRoles(anyString(), any(Filter.class));
         spy.getAllClientRoles();
@@ -912,6 +1074,13 @@ public class LdapApplicationRepositoryTest {
     @Test (expected = IllegalArgumentException.class)
     public void updateClientRole_roleUniqueIdIsBlank_throwsIllegalArgument() throws Exception {
         ldapApplicationRepository.updateClientRole(new ClientRole());
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void updateClientRole_callsLDAPPersister_throwsLDAPException() throws Exception {
+        ClientRole role = mock(ClientRole.class);
+        when(role.getUniqueId()).thenReturn("uniqueId");
+        spy.updateClientRole(role);
     }
 
     @Test
@@ -956,6 +1125,13 @@ public class LdapApplicationRepositoryTest {
         assertThat("client role", result.getUniqueId(), equalTo("uniqueId"));
     }
 
+    @Test
+    public void getNextRoleId_callsGetNextId() throws Exception {
+        doReturn("").when(spy).getNextId(LdapRepository.NEXT_ROLE_ID);
+        spy.getNextRoleId();
+        verify(spy).getNextId(LdapRepository.NEXT_ROLE_ID);
+    }
+
     @Test (expected = IllegalArgumentException.class)
     public void getClientRoleById_idIsBlank_throwsIllegalArgument() throws Exception {
         ldapApplicationRepository.getClientRoleById("");
@@ -987,6 +1163,25 @@ public class LdapApplicationRepositoryTest {
         assertThat("client", result.get(0), equalTo(client));
     }
 
+    @Test (expected = IllegalStateException.class)
+    public void softDeleteApplication_callsLDAPInterfaceModify_throwsIllegalStateException() throws Exception {
+        Application application = new Application();
+        application.setUniqueId("uniqueId");
+        application.setClientId("clientId");
+        doThrow(new LDAPException(ResultCode.LOCAL_ERROR)).when(ldapInterface).modify(anyString(), any(Modification.class));
+        spy.softDeleteApplication(application);
+    }
+
+    @Test
+    public void softDeleteApplications_callsLDAPInterface_modify() throws Exception {
+        Application application = new Application();
+        application.setUniqueId("uniqueId");
+        application.setClientId("clientId");
+        doReturn(new LDAPResult(1, ResultCode.SUCCESS)).when(ldapInterface).modify(anyString(), any(Modification.class));
+        spy.softDeleteApplication(application);
+        verify(ldapInterface).modify(anyString(), any(Modification.class));
+    }
+
     @Test (expected = IllegalArgumentException.class)
     public void getSoftDeletedApplicationById_idIsBlank_throwsIllegalArgument() throws Exception {
         ldapApplicationRepository.getSoftDeletedApplicationById("");
@@ -1011,5 +1206,24 @@ public class LdapApplicationRepositoryTest {
         doReturn(application).when(spy).getSingleSoftDeletedClient(any(Filter.class));
         Application result = spy.getSoftDeletedClientByName("clientName");
         assertThat("application", result, equalTo(application));
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void unSoftDeleteApplication_callsLDAPInterfaceModify_throwsIllegalStateException() throws Exception {
+        Application application = new Application();
+        application.setUniqueId("uniqueId");
+        application.setClientId("clientId");
+        doThrow(new LDAPException(ResultCode.LOCAL_ERROR)).when(ldapInterface).modify(anyString(), any(Modification.class));
+        spy.unSoftDeleteApplication(application);
+    }
+
+    @Test
+    public void unSoftDeleteApplications_callsLDAPInterface_modify() throws Exception {
+        Application application = new Application();
+        application.setUniqueId("uniqueId");
+        application.setClientId("clientId");
+        doReturn(new LDAPResult(1, ResultCode.SUCCESS)).when(ldapInterface).modify(anyString(), any(Modification.class));
+        spy.unSoftDeleteApplication(application);
+        verify(ldapInterface).modify(anyString(), any(Modification.class));
     }
 }
