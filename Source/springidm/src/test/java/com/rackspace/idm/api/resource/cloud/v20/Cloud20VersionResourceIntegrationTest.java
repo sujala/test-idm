@@ -118,6 +118,24 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     }
 
     @Test
+    public void authenticate_invalidUsername_returns404(){
+         WebResource resource = resource().path("cloud/v2.0/tokens");
+
+        ClientResponse clientResponse = resource
+                .type(MediaType.APPLICATION_JSON_TYPE)
+                .post(ClientResponse.class,
+                        "{\n" +
+                                "    \"auth\":{\n" +
+                                "        \"passwordCredentials\":{\n" +
+                                "            \"username\":\"bad-user\",\n" +
+                                "            \"password\":\"Password1\"\n" +
+                                "        }\n" +
+                                "    }\n" +
+                                "}");
+        assertThat("response code", clientResponse.getStatus(), equalTo(404));
+    }
+
+    @Test
     public void validateToken_returns200() throws Exception {
         String token = getAuthToken("hectorServiceAdmin", "Password1");
         WebResource resource = resource().path("cloud/v2.0/tokens/"+token);
