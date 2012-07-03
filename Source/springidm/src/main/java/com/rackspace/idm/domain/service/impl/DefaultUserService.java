@@ -83,12 +83,12 @@ public class DefaultUserService implements UserService {
 //        }
         setPasswordIfNecessary(user);
 
-        if(user.isEnabled() == null)
+        if (user.isEnabled() == null)
             user.setEnabled(user.isEnabled());
 
-        if(user.getId() == null)
+        if (user.getId() == null)
             user.setId(this.userDao.getNextUserId());
-        
+
         if (user.getDomainId() == null)
             user.setDomainId(user.getId());
 
@@ -311,12 +311,12 @@ public class DefaultUserService implements UserService {
         logger.debug("Getting User: {}", mossoId);
         Users users = userDao.getUsersByMossoId(mossoId);
 
-        if(users.getUsers().size() == 1) {
+        if (users.getUsers().size() == 1) {
             return users.getUsers().get(0);
-        }else if(users.getUsers().size() > 1) {
-            for(User user : users.getUsers()) {
+        } else if (users.getUsers().size() > 1) {
+            for (User user : users.getUsers()) {
                 UserScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), getCloudAuthClientId());
-                if(authorizationService.authorizeCloudUserAdmin(sa))
+                if (authorizationService.authorizeCloudUserAdmin(sa))
                     return user;
             }
         }
@@ -336,12 +336,12 @@ public class DefaultUserService implements UserService {
         logger.debug("Getting User: {}", nastId);
         Users users = userDao.getUsersByNastId(nastId);
 
-        if(users.getUsers().size() == 1) {
+        if (users.getUsers().size() == 1) {
             return users.getUsers().get(0);
-        }else if(users.getUsers().size() > 1) {
-            for(User user : users.getUsers()) {
+        } else if (users.getUsers().size() > 1) {
+            for (User user : users.getUsers()) {
                 UserScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), getCloudAuthClientId());
-                if(authorizationService.authorizeCloudUserAdmin(sa))
+                if (authorizationService.authorizeCloudUserAdmin(sa))
                     return user;
             }
         }
@@ -451,17 +451,17 @@ public class DefaultUserService implements UserService {
     @Override
     public boolean hasSubUsers(String userId) {
         User user = userDao.getUserById(userId);
-        if(user==null){
+        if (user == null) {
             return false;
         }
         Users users = userDao.getUsersByDomainId(user.getDomainId());
-        if(users==null || users.getUsers()==null || users.getUsers().size()==0){
+        if (users == null || users.getUsers() == null || users.getUsers().size() == 0) {
             return false;
         }
-        for(User userInList: users.getUsers()){
+        for (User userInList : users.getUsers()) {
             ScopeAccess scopeAccess = scopeAccessDao.getScopeAccessByUserId(userInList.getId());
             boolean isDefaultUser = authorizationService.hasDefaultUserRole(scopeAccess);
-            if(isDefaultUser){
+            if (isDefaultUser) {
                 return true;
             }
         }
@@ -577,7 +577,7 @@ public class DefaultUserService implements UserService {
 
     void validateMossoId(int mossoId) {
         Users usersByMossoId = userDao.getUsersByMossoId(mossoId);
-        if(usersByMossoId != null) {
+        if (usersByMossoId != null) {
             if (usersByMossoId.getUsers().size() > 0) {
                 throw new BadRequestException("User with Mosso Account ID: " + mossoId + " already exists.");
             }
@@ -603,16 +603,16 @@ public class DefaultUserService implements UserService {
     @Override
     public boolean userExistsById(String userId) {
         com.rackspace.idm.domain.entity.User userById = userDao.getUserById(userId);
-        if (userById == null){
+        if (userById == null) {
             return false;
         }
-        if (userById.getInMigration()== null){
+        if (userById.getInMigration() == null) {
             return true;
         }
-        if(userById.getInMigration()){
+        if (userById.getInMigration()) {
             return false;
         }
-        if(userById.getInMigration()==false){
+        if (userById.getInMigration() == false) {
             return true;
         }
         return true;
@@ -621,16 +621,16 @@ public class DefaultUserService implements UserService {
     @Override
     public boolean userExistsByUsername(String username) {
         com.rackspace.idm.domain.entity.User userByUsername = userDao.getUserByUsername(username);
-        if (userByUsername == null){
+        if (userByUsername == null) {
             return false;
         }
-        if (userByUsername.getInMigration()== null){
+        if (userByUsername.getInMigration() == null) {
             return true;
         }
-        if(userByUsername.getInMigration()){
+        if (userByUsername.getInMigration()) {
             return false;
         }
-        if(userByUsername.getInMigration()==false){
+        if (userByUsername.getInMigration() == false) {
             return true;
         }
         return true;
@@ -638,11 +638,11 @@ public class DefaultUserService implements UserService {
 
     @Override
     public boolean isMigratedUser(User user) {
-        if(user == null)
+        if (user == null)
             return false;
-        else if(user.getInMigration() == null)
+        else if (user.getInMigration() == null)
             return false;
-        else if(!user.getInMigration())
+        else if (!user.getInMigration())
             return true;
         else
             return false;
@@ -676,8 +676,9 @@ public class DefaultUserService implements UserService {
             }
         }
     }
+
     @Override
-    public User getUserByScopeAccess(ScopeAccess scopeAccess) throws Exception{
+    public User getUserByScopeAccess(ScopeAccess scopeAccess) throws Exception {
         User user = null;
         if (scopeAccess instanceof RackerScopeAccess) {
             RackerScopeAccess rackerScopeAccess = (RackerScopeAccess) scopeAccess;
@@ -694,13 +695,13 @@ public class DefaultUserService implements UserService {
                 user = getUser(impersonatedScopeAccess.getUsername());
             }
         } else if (scopeAccess instanceof UserScopeAccess) {
-             UserScopeAccess userScopeAccess = (UserScopeAccess) scopeAccess;
+            UserScopeAccess userScopeAccess = (UserScopeAccess) scopeAccess;
             user = getUser(userScopeAccess.getUsername());
-        }else{
+        } else {
             throw new Exception("Invalid getUserByScopeAccess, scopeAccess cannot provide information to get a user");
         }
-        if(user == null){
-            throw  new NotFoundException("User not found with scopeAccess: " + scopeAccess.toString());
+        if (user == null) {
+            throw new NotFoundException("User not found with scopeAccess: " + scopeAccess.toString());
         }
         if (user.isDisabled()) {
             throw new NotFoundException("Token not found.");
@@ -712,7 +713,7 @@ public class DefaultUserService implements UserService {
     public void addBaseUrlToUser(Integer baseUrlId, User user) {
         CloudBaseUrl baseUrl = endpointService.getBaseUrlById(baseUrlId);
         String tenantId;
-        if(baseUrl.getOpenstackType().equals("NAST"))
+        if (baseUrl.getOpenstackType().equals("NAST"))
             tenantId = user.getNastId();
         else
             tenantId = String.valueOf(user.getMossoId());
@@ -720,8 +721,8 @@ public class DefaultUserService implements UserService {
         Tenant tenant = tenantService.getTenant(tenantId);
 
         // Check for existing BaseUrl
-        for (String bId : tenant.getBaseUrlIds()){
-            if(bId.equals(String.valueOf(baseUrl.getBaseUrlId())))
+        for (String bId : tenant.getBaseUrlIds()) {
+            if (bId.equals(String.valueOf(baseUrl.getBaseUrlId())))
                 throw new BadRequestException("BaseUrl already exists.");
         }
 
@@ -733,7 +734,7 @@ public class DefaultUserService implements UserService {
     public void removeBaseUrlFromUser(Integer baseUrlId, User user) {
         CloudBaseUrl baseUrl = endpointService.getBaseUrlById(baseUrlId);
         String tenantId;
-        if(baseUrl.getOpenstackType().equals("NAST"))
+        if (baseUrl.getOpenstackType().equals("NAST"))
             tenantId = user.getNastId();
         else
             tenantId = String.valueOf(user.getMossoId());

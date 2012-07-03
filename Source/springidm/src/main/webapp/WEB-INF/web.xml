@@ -95,6 +95,10 @@
     </filter>
     <filter-mapping>
         <filter-name>ResponseHeaderFilter10</filter-name>
+        <url-pattern>/cloud/auth</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>ResponseHeaderFilter10</filter-name>
         <url-pattern>/cloud/v1.0/*</url-pattern>
     </filter-mapping>
     <filter-mapping>
