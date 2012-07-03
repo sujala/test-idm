@@ -231,7 +231,7 @@ public class AcceptServlet extends HttpServlet {
         return UUID.randomUUID().toString().replace("-", "");
     }
 
-    private int getAuthCodeExpirationSeconds() {
+    int getAuthCodeExpirationSeconds() {
         if (config == null) {
             WebApplicationContext context = WebApplicationContextUtils
                 .getWebApplicationContext(getServletContext());
