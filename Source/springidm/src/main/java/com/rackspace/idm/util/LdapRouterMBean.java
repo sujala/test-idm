@@ -17,7 +17,8 @@ import com.unboundid.ldap.sdk.LDAPException;
 
 @ManagedResource
 public class LdapRouterMBean {
-	@Autowired
+
+    @Autowired
     private LdapConnectionPools connPools;
 	
 	@ManagedAttribute
@@ -60,29 +61,27 @@ public class LdapRouterMBean {
 	public Map<String,String> getServerConnectionStatus() {
 		String s = connPools.getAppConnPool().toString();
 		// Sample: LDAPConnectionPool(name='bind', serverSet=RoundRobinServerSet(servers={server1:389, server2:389}), maxConnections=1000)
-		Matcher matcher = Pattern.compile(".*\\{(.*)\\}.*").matcher(s);
+		Matcher matcher = Pattern.compile("((?:[\\w-]+\\.)*[\\w-]*)\\:(\\d+)").matcher(s); //Group 1 is server, group 2 is port.
 		
 		Map<String,String> result = new HashMap<String, String>();
 		
-		boolean found = matcher.find();
-		if(found) {
-			String serverList = matcher.group(1);
-			String[] servers = serverList.split(",");
-			for (String server : servers) {
-				String[] hostPort = server.split(":");
-				try {
-					LDAPConnection con;
-					con = new LDAPConnection(StringUtils.strip(hostPort[0]), Integer.parseInt(hostPort[1]));
-					connPools.getAppConnPool().getHealthCheck().ensureConnectionValidForContinuedUse(con);
-					result.put(server, "up");
-					con.close();
-				} catch (LDAPException e) {
-					result.put(server, "down");
-				}
-			}
-		}
-		
+        while(matcher.find()){
+            try {
+                LDAPConnection con;
+                con = new LDAPConnection(StringUtils.strip(matcher.group(1)), Integer.parseInt(matcher.group(2)));
+                connPools.getAppConnPool().getHealthCheck().ensureConnectionValidForContinuedUse(con);
+                result.put(matcher.group(1), "up");
+                con.close();
+            } catch (LDAPException e) {
+                result.put(matcher.group(1), "down");
+            }
+        }
+
 		return result;
 		
 	}
+
+    public void setConnPools(LdapConnectionPools connPools) {
+        this.connPools = connPools;
+    }
 }
