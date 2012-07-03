@@ -34,7 +34,7 @@ public class CredentialProvider implements MessageBodyReader<JAXBElement<? exten
     }
 
     @Override
-    public boolean isReadable(Class<?> type, Type genericType,
+    public boolean isReadable(Class<?> type,  Type genericType,
                               Annotation[] annotations, MediaType mediaType) {
 
         //
@@ -58,7 +58,7 @@ public class CredentialProvider implements MessageBodyReader<JAXBElement<? exten
         Type[] upperBounds = ((WildcardType) args[0]).getUpperBounds();
         
         return upperBounds.length == 1 && upperBounds[0] instanceof Class
-                && ((Class<?>) upperBounds[0]).getCanonicalName().equals("com.rackspace.idm.cloudv11.jaxb.Credentials");
+                && ((Class<?>) upperBounds[0]).getCanonicalName().equals("com.rackspacecloud.docs.auth.api.v1.Credentials");
 
     }
 

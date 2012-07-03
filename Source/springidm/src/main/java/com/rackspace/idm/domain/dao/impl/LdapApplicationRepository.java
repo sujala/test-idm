@@ -392,7 +392,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
                 ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENTGROUP).build();
 
         List<SearchResultEntry> entries = this.getMultipleEntries(searchDN,
-                SearchScope.ONE, searchFilter, ATTR_NAME,
+                SearchScope.ONE, ATTR_NAME, searchFilter,
                 ATTR_GROUP_SEARCH_ATTRIBUTES);
 
         if (entries.size() > 0) {

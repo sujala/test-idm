@@ -26,12 +26,15 @@ public class LdapCustomerRepositoryTest {
 
     LdapCustomerRepository ldapCustomerRepository;
     LdapCustomerRepository spy;
+    LDAPInterface ldapInterface;
 
     @Before
     public void setUp() throws Exception {
         ldapCustomerRepository = new LdapCustomerRepository(mock(LdapConnectionPools.class),mock(Configuration.class));
-
+        ldapInterface = mock(LDAPInterface.class);
         spy = spy(ldapCustomerRepository);
+
+        doReturn(ldapInterface).when(spy).getAppInterface();
     }
 
     @Test
@@ -67,15 +70,12 @@ public class LdapCustomerRepositoryTest {
     }
 
     @Test
-    public void addCustomer_callsGetAppConnPool() throws Exception {
-        try {
-            Customer customer = new Customer();
-            customer.setId("id");
-            doReturn(null).when(spy).getAppConnPool();
-            spy.addCustomer(customer);
-        } catch(Exception e) {
-            verify(spy).addEntry(anyString(), any(Attribute[].class), any(Audit.class));
-        }
+    public void addCustomer_callsAddEntry() throws Exception {
+        Customer customer = new Customer();
+        customer.setId("id");
+        doNothing().when(spy).addEntry(anyString(), any(Attribute[].class), any(Audit.class));
+        spy.addCustomer(customer);
+        verify(spy).addEntry(anyString(), any(Attribute[].class), any(Audit.class));
     }
 
     @Test (expected = IllegalArgumentException.class)
@@ -262,6 +262,33 @@ public class LdapCustomerRepositoryTest {
         assertThat("list length", result.isEmpty(), equalTo(true));
     }
 
+    @Test
+    public void getNextCustomerId_callsGetNextId() throws Exception {
+        doReturn("").when(spy).getNextId(LdapRepository.NEXT_CUSTOMER_ID);
+        spy.getNextCustomerId();
+        verify(spy).getNextId(LdapRepository.NEXT_CUSTOMER_ID);
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void softDeleteCustomer_callsLDAPInterfaceModifyDN_throwsLDAPException() throws Exception {
+        Customer customer = new Customer();
+        customer.setUniqueId("uniqueId");
+        customer.setId("id");
+        doThrow(new LDAPException(ResultCode.LOCAL_ERROR)).when(ldapInterface).modifyDN(anyString(), anyString(), anyBoolean(), anyString());
+        spy.softDeleteCustomer(customer);
+    }
+
+    @Test
+    public void softDeleteCustomer_callsLDAPInterface_modify() throws Exception {
+        Customer customer = new Customer();
+        customer.setUniqueId("uniqueId");
+        customer.setId("id");
+        when(ldapInterface.modifyDN(anyString(), anyString(), anyBoolean(), anyString())).thenReturn(new LDAPResult(1, ResultCode.SUCCESS));
+        when(ldapInterface.modify(anyString(), any(Modification.class))).thenReturn(new LDAPResult(1, ResultCode.SUCCESS));
+        spy.softDeleteCustomer(customer);
+        verify(ldapInterface).modify(anyString(), any(Modification.class));
+    }
+
     @Test (expected = IllegalArgumentException.class)
     public void getSoftDeletedCustomerById_idIsBlank_throwsIllegalArgument() throws Exception {
         ldapCustomerRepository.getSoftDeletedCustomerById("");
@@ -304,5 +331,25 @@ public class LdapCustomerRepositoryTest {
         doReturn(null).when(spy).getSingleEntry(anyString(), any(SearchScope.class), any(Filter.class));
         Customer result = spy.getSoftDeletedUserByCustomerId("customerId");
         assertThat("customer", result, equalTo(null));
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void unSoftDeleteCustomer_callsLDAPInterfaceModifyDN_throwsLDAPException() throws Exception {
+        Customer customer = new Customer();
+        customer.setUniqueId("uniqueId");
+        customer.setId("id");
+        doThrow(new LDAPException(ResultCode.LOCAL_ERROR)).when(ldapInterface).modifyDN(anyString(), anyString(), anyBoolean(), anyString());
+        spy.unSoftDeleteCustomer(customer);
+    }
+
+    @Test
+    public void unSoftDeleteCustomer_callsLDAPInterface_modify() throws Exception {
+        Customer customer = new Customer();
+        customer.setUniqueId("uniqueId");
+        customer.setId("id");
+        when(ldapInterface.modifyDN(anyString(), anyString(), anyBoolean(), anyString())).thenReturn(new LDAPResult(1, ResultCode.SUCCESS));
+        when(ldapInterface.modify(anyString(), any(Modification.class))).thenReturn(new LDAPResult(1, ResultCode.SUCCESS));
+        spy.unSoftDeleteCustomer(customer);
+        verify(ldapInterface).modify(anyString(), any(Modification.class));
     }
 }

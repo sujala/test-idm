@@ -5,21 +5,14 @@ import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.util.CryptHelper;
 import com.unboundid.ldap.sdk.*;
-import com.unboundid.ldap.sdk.LDAPConnection;
-import com.unboundid.ldap.sdk.migrate.ldapjdk.*;
-import com.unboundid.ldap.sdk.migrate.ldapjdk.LDAPException;
 import com.unboundid.util.StaticUtils;
 import org.apache.commons.configuration.Configuration;
 import org.bouncycastle.crypto.InvalidCipherTextException;
-import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.tz.DateTimeZoneBuilder;
 import org.joda.time.tz.FixedDateTimeZone;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.powermock.api.mockito.PowerMockito;
 
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
@@ -30,7 +23,6 @@ import java.util.Locale;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
-import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.*;
 
 /**
@@ -43,11 +35,16 @@ public class LdapUserRepositoryTest {
 
     LdapUserRepository ldapUserRepository;
     LdapUserRepository spy;
+    LDAPInterface ldapInterface;
 
     @Before
     public void setUp() throws Exception {
         ldapUserRepository = new LdapUserRepository(mock(LdapConnectionPools.class),mock(Configuration.class));
         spy = spy(ldapUserRepository);
+
+        ldapInterface = mock(LDAPInterface.class);
+
+        doReturn(ldapInterface).when(spy).getAppInterface();
     }
 
     @Test (expected = IllegalArgumentException.class)
@@ -674,9 +671,117 @@ public class LdapUserRepositoryTest {
         spy.updateUser(newUser, oldUser, false);
     }
 
+    @Test (expected = IllegalStateException.class)
+    public void updateUser_callsLDAPInterfaceModify_throwsLDAPException() throws Exception {
+        User newUser = new User();
+        newUser.setUsername("newUser");
+        User oldUser = new User();
+        oldUser.setUsername("oldUser");
+        oldUser.setUniqueId("uniqueId");
+        List<Modification> mods = new ArrayList<Modification>();
+        mods.add(new Modification(ModificationType.ADD, "add"));
+        doReturn(mods).when(spy).getModifications(oldUser, newUser, false);
+        doThrow(new LDAPException(ResultCode.LOCAL_ERROR)).when(ldapInterface).modify("uniqueId", mods);
+        spy.updateUser(newUser, oldUser, false);
+    }
+
+    @Test
+    public void updateUser_updatesPasswordObj_toExisting() throws Exception {
+        Password password = new Password();
+        User newUser = new User();
+        newUser.setUsername("newUser");
+        newUser.setPasswordObj(password);
+        User oldUser = new User();
+        oldUser.setUsername("oldUser");
+        oldUser.setUniqueId("uniqueId");
+        List<Modification> mods = new ArrayList<Modification>();
+        mods.add(new Modification(ModificationType.ADD, "add"));
+        doReturn(mods).when(spy).getModifications(oldUser, newUser, false);
+        when(ldapInterface.modify("uniqueId", mods)).thenReturn(new LDAPResult(1, ResultCode.SUCCESS));
+        spy.updateUser(newUser, oldUser, false);
+        assertThat("password object", newUser.getPasswordObj().isNew(), equalTo(false));
+    }
+
     @Test (expected = IllegalArgumentException.class)
     public void removeUsersFromClientGroup_groupIsNull_throwsIllegalArgument() throws Exception {
         ldapUserRepository.removeUsersFromClientGroup(null);
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void removeUsersFromClientGroup_callsLDAPInterfaceSearch_throwsLDAPException() throws Exception {
+        ClientGroup clientGroup = new ClientGroup();
+        clientGroup.setUniqueId("uniqueId");
+        doThrow(new LDAPSearchException(ResultCode.LOCAL_ERROR, "error")).when(ldapInterface).search(any(SearchRequest.class));
+        spy.removeUsersFromClientGroup(clientGroup);
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void removeUsersFromClientGroup_callsGetUser_throwsGeneralSecurityException() throws Exception {
+        ClientGroup clientGroup = new ClientGroup();
+        clientGroup.setUniqueId("uniqueId");
+        SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0]);
+        List<SearchResultEntry> searchEntries = new ArrayList<SearchResultEntry>();
+        searchEntries.add(searchResultEntry);
+        SearchResult searchResult = new SearchResult(1, ResultCode.SUCCESS, "diag", "matchDN", null, searchEntries, null, 1, 0, null);
+        when(ldapInterface.search(any(SearchRequest.class))).thenReturn(searchResult);
+        doThrow(new GeneralSecurityException()).when(spy).getUser(searchResultEntry);
+        spy.removeUsersFromClientGroup(clientGroup);
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void removeUsersFromClientGroup_callsGetUser_throwsInvalidCipherTextException() throws Exception {
+        ClientGroup clientGroup = new ClientGroup();
+        clientGroup.setUniqueId("uniqueId");
+        SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0]);
+        List<SearchResultEntry> searchEntries = new ArrayList<SearchResultEntry>();
+        searchEntries.add(searchResultEntry);
+        SearchResult searchResult = new SearchResult(1, ResultCode.SUCCESS, "diag", "matchDN", null, searchEntries, null, 1, 0, null);
+        when(ldapInterface.search(any(SearchRequest.class))).thenReturn(searchResult);
+        doThrow(new InvalidCipherTextException()).when(spy).getUser(searchResultEntry);
+        spy.removeUsersFromClientGroup(clientGroup);
+    }
+
+    @Test
+    public void removeUsersFromClientGroup_userListIsEmpty() throws Exception {
+        ClientGroup clientGroup = new ClientGroup();
+        clientGroup.setUniqueId("uniqueId");
+        List<SearchResultEntry> searchEntries = new ArrayList<SearchResultEntry>();
+        SearchResult searchResult = new SearchResult(1, ResultCode.SUCCESS, "diag", "matchDN", null, searchEntries, null, 1, 0, null);
+        when(ldapInterface.search(any(SearchRequest.class))).thenReturn(searchResult);
+        spy.removeUsersFromClientGroup(clientGroup);
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void removeUsersFromClientGroup_callsLDAPInterfaceModify_throwsLDAPException() throws Exception {
+        ClientGroup clientGroup = new ClientGroup();
+        clientGroup.setUniqueId("uniqueId");
+        SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0]);
+        List<SearchResultEntry> searchEntries = new ArrayList<SearchResultEntry>();
+        searchEntries.add(searchResultEntry);
+        User user = new User();
+        user.setUniqueId("uniqueId");
+        SearchResult searchResult = new SearchResult(1, ResultCode.SUCCESS, "diag", "matchDN", null, searchEntries, null, 1, 0, null);
+        when(ldapInterface.search(any(SearchRequest.class))).thenReturn(searchResult);
+        doReturn(user).when(spy).getUser(searchResultEntry);
+        doThrow(new LDAPException(ResultCode.LOCAL_ERROR)).when(ldapInterface).modify(anyString(), any(List.class));
+        spy.removeUsersFromClientGroup(clientGroup);
+    }
+
+    @Test
+    public void removeUsersFromClientGroup_removeSucceeds() throws Exception {
+        ClientGroup clientGroup = new ClientGroup();
+        clientGroup.setUniqueId("uniqueId");
+        SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0]);
+        List<SearchResultEntry> searchEntries = new ArrayList<SearchResultEntry>();
+        searchEntries.add(searchResultEntry);
+        User user = new User();
+        user.setUniqueId("uniqueId");
+        SearchResult searchResult = new SearchResult(1, ResultCode.SUCCESS, "diag", "matchDN", null, searchEntries, null, 1, 0, null);
+        when(ldapInterface.search(any(SearchRequest.class))).thenReturn(searchResult);
+        doReturn(user).when(spy).getUser(searchResultEntry);
+        when(ldapInterface.modify(anyString(), any(List.class))).thenReturn(new LDAPResult(1, ResultCode.SUCCESS));
+        spy.removeUsersFromClientGroup(clientGroup);
+        verify(ldapInterface).modify(anyString(), any(List.class));
     }
 
     @Test (expected = IllegalArgumentException.class)
@@ -889,6 +994,68 @@ public class LdapUserRepositoryTest {
         assertThat("list size", result.length, equalTo(2));
     }
 
+    @Test
+    public void getMultipleUsers_offsetMoreThanContentCount_setsUsersToEmptyList() throws Exception {
+        doReturn(1).when(spy).getLdapPagingOffsetDefault();
+        doReturn(1).when(spy).getLdapPagingLimitDefault();
+        doReturn(new ArrayList<SearchResultEntry>()).when(spy).getMultipleEntries(LdapRepository.USERS_BASE_DN, SearchScope.SUB, LdapRepository.ATTR_UID, null, null);
+        Users result = spy.getMultipleUsers(null, null, -1, 0);
+        assertThat("user list", result.getUsers().isEmpty(), equalTo(true));
+    }
+
+    @Test
+    public void getMultipleUsers_emptySubList_setsUsersToEmptyList() throws Exception {
+        doReturn(0).when(spy).getLdapPagingOffsetDefault();
+        doReturn(0).when(spy).getLdapPagingLimitDefault();
+        SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0]);
+        ArrayList<SearchResultEntry> entries = new ArrayList<SearchResultEntry>();
+        entries.add(searchResultEntry);
+        doReturn(entries).when(spy).getMultipleEntries(LdapRepository.USERS_BASE_DN, SearchScope.SUB, LdapRepository.ATTR_UID, null, null);
+        Users result = spy.getMultipleUsers(null, null, -1, 0);
+        assertThat("user list", result.getUsers().isEmpty(), equalTo(true));
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void getMultipleUsers_callsGetUser_throwsGeneralSecurityException() throws Exception {
+        doReturn(0).when(spy).getLdapPagingOffsetDefault();
+        doReturn(3).when(spy).getLdapPagingLimitDefault();
+        doReturn(5).when(spy).getLdapPagingLimitMax();
+        SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0]);
+        ArrayList<SearchResultEntry> entries = new ArrayList<SearchResultEntry>();
+        entries.add(searchResultEntry);
+        doReturn(entries).when(spy).getMultipleEntries(LdapRepository.USERS_BASE_DN, SearchScope.SUB, LdapRepository.ATTR_UID, null, null);
+        doThrow(new GeneralSecurityException()).when(spy).getUser(searchResultEntry);
+        spy.getMultipleUsers(null, null, -1, 0);
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void getMultipleUsers_addsUserToList_setsUsersToList() throws Exception {
+        doReturn(0).when(spy).getLdapPagingOffsetDefault();
+        doReturn(3).when(spy).getLdapPagingLimitDefault();
+        doReturn(5).when(spy).getLdapPagingLimitMax();
+        SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0]);
+        ArrayList<SearchResultEntry> entries = new ArrayList<SearchResultEntry>();
+        entries.add(searchResultEntry);
+        doReturn(entries).when(spy).getMultipleEntries(LdapRepository.USERS_BASE_DN, SearchScope.SUB, LdapRepository.ATTR_UID, null, null);
+        doThrow(new InvalidCipherTextException()).when(spy).getUser(searchResultEntry);
+        spy.getMultipleUsers(null, null, -1, 0);
+
+    }
+
+    @Test
+    public void getMultipleUsers_callsGetUser_throwsInvalidCipherTextException() throws Exception {
+        doReturn(0).when(spy).getLdapPagingOffsetDefault();
+        doReturn(3).when(spy).getLdapPagingLimitDefault();
+        doReturn(5).when(spy).getLdapPagingLimitMax();
+        SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0]);
+        ArrayList<SearchResultEntry> entries = new ArrayList<SearchResultEntry>();
+        entries.add(searchResultEntry);
+        doReturn(entries).when(spy).getMultipleEntries(LdapRepository.USERS_BASE_DN, SearchScope.SUB, LdapRepository.ATTR_UID, null, null);
+        doReturn(new User()).when(spy).getUser(searchResultEntry);
+        Users result = spy.getMultipleUsers(null, null, -1, 0);
+        assertThat("user list", result.getUsers().size(), equalTo(1));
+    }
+
     @Test (expected = IllegalStateException.class)
     public void getSingleUser_getUser_throwsGeneralSecurityException() throws Exception {
         String[] searchAttributes = new String[0];
@@ -910,6 +1077,14 @@ public class LdapUserRepositoryTest {
     }
 
     @Test
+    public void getSingleUser_entryIsNull_returnsNull() throws Exception {
+        String[] searchAttributes = new String[0];
+        doReturn(null).when(spy).getSingleEntry("ou=users,o=rackspace,dc=rackspace,dc=com", SearchScope.SUB, null, searchAttributes);
+        User result = spy.getSingleUser(null, searchAttributes);
+        assertThat("user", result, equalTo(null));
+    }
+
+    @Test
     public void getSingleUser_foundUser_returnsUser() throws Exception {
         String[] searchAttributes = new String[0];
         Filter filter = null;
@@ -919,6 +1094,14 @@ public class LdapUserRepositoryTest {
         doReturn(user).when(spy).getUser(searchResultEntry);
         User result = spy.getSingleUser(filter, searchAttributes);
         assertThat("user", result, equalTo(user));
+    }
+
+    @Test
+    public void getSingleSoftDeletedUser_entryIsNull_returnsNull() throws Exception {
+        String[] searchAttributes = new String[0];
+        doReturn(null).when(spy).getSingleEntry("ou=users,o=rackspace,dc=rackspace,dc=com", SearchScope.SUB, null, searchAttributes);
+        User result = spy.getSingleSoftDeletedUser(null, searchAttributes);
+        assertThat("user", result, equalTo(null));
     }
 
     @Test (expected = IllegalStateException.class)
@@ -995,6 +1178,51 @@ public class LdapUserRepositoryTest {
         SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId", newAttributes, new Control[0]);
         User result = ldapUserRepository.getUser(searchResultEntry);
         assertThat("user", result.toString(), equalTo(user.toString()));
+    }
+
+    @Test
+    public void getNextUserId_callsGetNextId() throws Exception {
+        doReturn("").when(spy).getNextId(anyString());
+        spy.getNextUserId();
+        verify(spy).getNextId(anyString());
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void softDeleteUser_callsLDAPInterfaceModify_throwsLDAPException() throws Exception {
+        User user = new User();
+        user.setUniqueId("uniqueId");
+        user.setId("id");
+        doThrow(new LDAPException(ResultCode.LOCAL_ERROR)).when(ldapInterface).modify(anyString(), any(Modification.class));
+        spy.softDeleteUser(user);
+    }
+
+    @Test
+    public void softDeleteUser_callsLDAPInterface_modify() throws Exception {
+        User user = new User();
+        user.setUniqueId("uniqueId");
+        user.setId("id");
+        doReturn(new LDAPResult(1, ResultCode.SUCCESS)).when(ldapInterface).modify(anyString(), any(Modification.class));
+        spy.softDeleteUser(user);
+        verify(ldapInterface).modify(anyString(), any(Modification.class));
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void unSoftDeleteUser_callsLDAPInterfaceModify_throwsLDAPException() throws Exception {
+        User user = new User();
+        user.setUniqueId("uniqueId");
+        user.setId("id");
+        doThrow(new LDAPException(ResultCode.LOCAL_ERROR)).when(ldapInterface).modify(anyString(), any(Modification.class));
+        spy.unSoftDeleteUser(user);
+    }
+
+    @Test
+    public void unSoftDeleteUser_callsLDAPInterface_modify() throws Exception {
+        User user = new User();
+        user.setUniqueId("uniqueId");
+        user.setId("id");
+        doReturn(new LDAPResult(1, ResultCode.SUCCESS)).when(ldapInterface).modify(anyString(), any(Modification.class));
+        spy.unSoftDeleteUser(user);
+        verify(ldapInterface).modify(anyString(), any(Modification.class));
     }
 
     @Test
