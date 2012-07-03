@@ -25,6 +25,7 @@ public class VersionChoiceListTest {
         versionChoiceList = new VersionChoiceList();
         VersionChoice versionChoice = new VersionChoice();
         versionChoice.setId("id");
+        versionChoice.getOtherAttributes();
     }
 
     @Test
