@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<jmeterTestPlan version="1.2" properties="2.2">
+<jmeterTestPlan version="1.2" properties="2.1">
   <hashTree>
     <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="Auth and Validate Performance" enabled="true">
       <stringProp name="TestPlan.comments"></stringProp>
@@ -1946,12 +1946,12 @@
           <boolProp name="LoopController.continue_forever">false</boolProp>
           <stringProp name="LoopController.loops">1</stringProp>
         </elementProp>
-        <stringProp name="ThreadGroup.num_threads">5</stringProp>
-        <stringProp name="ThreadGroup.ramp_time">5</stringProp>
+        <stringProp name="ThreadGroup.num_threads">1</stringProp>
+        <stringProp name="ThreadGroup.ramp_time">1</stringProp>
         <longProp name="ThreadGroup.start_time">1327375014000</longProp>
         <longProp name="ThreadGroup.end_time">1327375014000</longProp>
-        <boolProp name="ThreadGroup.scheduler">true</boolProp>
-        <stringProp name="ThreadGroup.duration">7200</stringProp>
+        <boolProp name="ThreadGroup.scheduler">false</boolProp>
+        <stringProp name="ThreadGroup.duration">1</stringProp>
         <stringProp name="ThreadGroup.delay"></stringProp>
       </ThreadGroup>
       <hashTree>
@@ -2087,7 +2087,7 @@
               <stringProp name="0"></stringProp>
             </collectionProp>
             <collectionProp name="UserParameters.thread_values">
-              <collectionProp name="373825305">
+              <collectionProp name="-535209570">
                 <stringProp name="-2126772429">https://dfw.rackidm.api.rackspace.com</stringProp>
                 <stringProp name="1349710559">https://ord.rackidm.api.rackspace.com</stringProp>
                 <stringProp name="1215921518">https://identity.api.rackspacecloud.com</stringProp>
@@ -2117,7 +2117,7 @@
                 <stringProp name="-560617505">rackspacefoundationtestuser</stringProp>
                 <stringProp name="-2013988127">817W5jO4w52W50r</stringProp>
                 <stringProp name="-749075546">shan0433</stringProp>
-                <stringProp name="-384640052">Water1098!</stringProp>
+                <stringProp name="2125611077">Ocean1098!</stringProp>
                 <stringProp name="1503465806">mtNJny9mKj4JE</stringProp>
                 <stringProp name="-1657423355">18e7a7032733486cd32f472d7bd58f709ac0d221</stringProp>
                 <stringProp name="-893241125">bde1268ebabeeabb70a0e702a4626977c331d5c4</stringProp>
@@ -2160,7 +2160,7 @@
                 <stringProp name="0"></stringProp>
                 <stringProp name="0"></stringProp>
                 <stringProp name="0"></stringProp>
-                <stringProp name="1666706719">b-int-api1.cidm.dfw1.corp.rackspace.com</stringProp>
+                <stringProp name="655416422">rackidentity.api.rackspacecloud.com</stringProp>
                 <stringProp name="51635">443</stringProp>
                 <stringProp name="99617003">https</stringProp>
                 <stringProp name="0"></stringProp>
@@ -2295,7 +2295,7 @@
               <stringProp name="0"></stringProp>
             </collectionProp>
             <collectionProp name="UserParameters.thread_values">
-              <collectionProp name="208828219">
+              <collectionProp name="873040779">
                 <stringProp name="-2126772429">https://dfw.rackidm.api.rackspace.com</stringProp>
                 <stringProp name="1349710559">https://ord.rackidm.api.rackspace.com</stringProp>
                 <stringProp name="1215921518">https://identity.api.rackspacecloud.com</stringProp>
@@ -2380,7 +2380,7 @@
                 <stringProp name="0"></stringProp>
                 <stringProp name="0"></stringProp>
                 <stringProp name="0"></stringProp>
-                <stringProp name="-1612874128">b-ext-api2.cidm.dfw1.corp.rackspace.com</stringProp>
+                <stringProp name="-1695956451">identity.api.rackspacecloud.com</stringProp>
                 <stringProp name="51635">443</stringProp>
                 <stringProp name="99617003">https</stringProp>
                 <stringProp name="0"></stringProp>

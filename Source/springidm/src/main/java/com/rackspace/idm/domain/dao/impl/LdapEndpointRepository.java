@@ -313,7 +313,7 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
         return point;
     }
 
-    private void appendTenantToBaseUrl(String tenantId, CloudBaseUrl baseUrl) {
+    void appendTenantToBaseUrl(String tenantId, CloudBaseUrl baseUrl) {
         String publicUrl = baseUrl.getPublicUrl();
         if(publicUrl != null) {
             publicUrl = publicUrl.substring(0, publicUrl.length() - (publicUrl.endsWith("/") ? 1 : 0)) + "/" + tenantId;
@@ -420,7 +420,7 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
         audit.succeed();
     }
 
-    private CloudBaseUrl getBaseUrl(SearchResultEntry resultEntry) {
+    CloudBaseUrl getBaseUrl(SearchResultEntry resultEntry) {
         getLogger().debug("Inside getBaseUrl");
         CloudBaseUrl baseUrl = new CloudBaseUrl();
         baseUrl.setUniqueId(resultEntry.getDN());
@@ -444,7 +444,7 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
         return baseUrl;
     }
 
-    private EndPoints getRawEndpointsForUser(String username) {
+    EndPoints getRawEndpointsForUser(String username) {
         getLogger().debug("Inside getRawEndpointsForUser {}", username);
         List<String> userEndpoints = new ArrayList<String>();
         String userDN = null;
