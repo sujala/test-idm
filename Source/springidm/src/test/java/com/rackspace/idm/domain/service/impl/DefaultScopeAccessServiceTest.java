@@ -1491,7 +1491,7 @@ public class DefaultScopeAccessServiceTest {
             defaultScopeAccessService.handleAuthenticationFailure(null,result);
             assertTrue("should throw exception",false);
         } catch (NotAuthenticatedException ex){
-            assertThat("exception message", ex.getMessage(), equalTo("Invalid username or password."));
+            assertThat("exception message", ex.getMessage(), equalTo("Unable to authenticate user with credentials provided."));
         }
     }
 }

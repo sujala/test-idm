@@ -1077,6 +1077,7 @@ public class DefaultCloud20ServiceTest {
     public void addUser_userPasswordIsNull_generateRandomPassword() throws Exception {
         UriBuilder uriBuilder = mock(UriBuilder.class);
         UserForCreate userNullPassword = new UserForCreate();
+        userNullPassword.setUsername("testUser");
         User user = new User();
         ArgumentCaptor<UserForCreate> argumentCaptor = ArgumentCaptor.forClass(UserForCreate.class);
         doNothing().when(spy).assignProperRole(any(HttpHeaders.class), anyString(), any(ScopeAccess.class), any(User.class));
@@ -1096,6 +1097,7 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void addUser_withNoRegion_RegionIsNull() throws Exception {
         UserForCreate userNoRegion = new UserForCreate();
+        userNoRegion.setUsername("testUser");
         ArgumentCaptor<User> argumentCaptor = ArgumentCaptor.forClass(User.class);
         doNothing().when(spy).verifyUserAdminLevelAccess(authToken);
         doNothing().when(spy).validateUser(org.mockito.Matchers.any(org.openstack.docs.identity.api.v2.User.class));
@@ -3634,17 +3636,17 @@ public class DefaultCloud20ServiceTest {
 
     @Test(expected = BadRequestException.class)
     public void validateUsername_withNonAlphChara_throwBadRequestException() throws Exception {
-        defaultCloud20Service.validateUsername("12nogood");
+        defaultCloud20Service.validateUsernameForUpdateOrCreate("12nogood");
     }
 
     @Test(expected = BadRequestException.class)
     public void validateUsername_withSpecialChara_throwBadRequestException() throws Exception {
-        defaultCloud20Service.validateUsername("jorgenogood!");
+        defaultCloud20Service.validateUsernameForUpdateOrCreate("jorgenogood!");
     }
 
     @Test
     public void validateUsername_validUserName() throws Exception {
-        defaultCloud20Service.validateUsername("jorgegood");
+        defaultCloud20Service.validateUsernameForUpdateOrCreate("jorgegood");
     }
 
     @Test
