@@ -602,14 +602,12 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
     @Override
     public boolean updatePermissionForScopeAccess(Permission permission) {
         getLogger().debug("Updating Permission: {}", permission);
-        LDAPConnection conn = null;
         Audit audit = Audit.log(permission).modify();
         try {
             final Permission po = permission;
             final LDAPPersister persister = LDAPPersister
                 .getInstance(permission.getClass());
-            conn = getAppConnPool().getConnection();
-            final LDAPResult result = persister.modify(po, conn, null, true);
+            final LDAPResult result = persister.modify(po, getAppInterface(), null, true);
             getLogger().debug("Updated Permission: {}", permission);
             audit.succeed();
             return result.getResultCode().intValue() == ResultCode.SUCCESS_INT_VALUE;
@@ -617,23 +615,19 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
             getLogger().error("Error updating permission", e);
             audit.fail();
             throw new IllegalStateException(e);
-        } finally {
-            getAppConnPool().releaseConnection(conn);
         }
     }
 
     @Override
     public boolean updateScopeAccess(ScopeAccess scopeAccess) {
         getLogger().debug("Updating ScopeAccess: {}", scopeAccess);
-        LDAPConnection conn = null;
         Audit audit = Audit.log(scopeAccess);
         try {
-            conn = getAppConnPool().getConnection();
             final LDAPPersister persister = LDAPPersister.getInstance(scopeAccess.getClass());
             List<Modification> modifications = persister.getModifications(scopeAccess, true);
 
             audit.modify(modifications);
-            persister.modify(scopeAccess, conn, null, true);
+            persister.modify(scopeAccess, getAppInterface(), null, true);
             getLogger().debug("Updated ScopeAccess: {}", scopeAccess);
             audit.succeed();
             return true;
@@ -643,8 +637,6 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
             throw new IllegalStateException(e);
         } catch (final LDAPSDKRuntimeException e) {
             // noop
-        } finally {
-            getAppConnPool().releaseConnection(conn);
         }
         return false;
     }
