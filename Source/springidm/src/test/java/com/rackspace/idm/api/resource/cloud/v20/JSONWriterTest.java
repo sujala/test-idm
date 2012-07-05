@@ -345,6 +345,16 @@ public class JSONWriterTest {
     }
 
     @Test
+    public void writeTo_JAXBElementTypeCredentialListTypeNullValue_runsSuccessfully() throws Exception {
+        JAXBElement<ApiKeyCredentials> apiKeyCredentialsJAXBElement = new JAXBElement<ApiKeyCredentials>(QName.valueOf("fee"), ApiKeyCredentials.class, null);
+        CredentialListType credentialListType = new CredentialListType();
+        credentialListType.getCredential().add(apiKeyCredentialsJAXBElement);
+        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JAXBElement<CredentialListType> jaxbElement = new JAXBElement<CredentialListType>(QName.valueOf("foo"), CredentialListType.class, credentialListType);
+        spy.writeTo(jaxbElement, CredentialListType.class, null, null, null, null, myOut);
+    }
+
+    @Test
     public void writeTo_JAXBElementTypeCredentialListTypeApiKeyCredentials_callsGetApiKeyCredentials() throws Exception {
         ApiKeyCredentials apiKeyCredentials = new ApiKeyCredentials();
         JAXBElement<ApiKeyCredentials> apiKeyCredentialsJAXBElement = new JAXBElement<ApiKeyCredentials>(QName.valueOf("fee"), ApiKeyCredentials.class, apiKeyCredentials);

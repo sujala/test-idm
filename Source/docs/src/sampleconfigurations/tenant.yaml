@@ -1,8 +1,0 @@
----
-Tenant:
-    __type: http://idm.api.rackspace.com/v1.0/tenant 
-    __overwrite_json: true   
-    id: hybrid:45389
-    name: star_wars
-    description: Used to managed the Star Wars games
-    display-name: EA Star Wars

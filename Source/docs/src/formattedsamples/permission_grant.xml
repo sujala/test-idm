@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-
-<permission xmlns="http://idm.api.rackspace.com/v1.0"
-    clientId="IDM" 
-    customerId="RCN-000-000-000"
-    permissionId="addCustomer" />
-    
