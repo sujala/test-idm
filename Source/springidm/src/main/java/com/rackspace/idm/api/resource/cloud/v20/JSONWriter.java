@@ -46,7 +46,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.List;
 
 @Provider
@@ -267,7 +266,10 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
             JSONObject access = new JSONObject();
             AuthenticateResponse authenticateResponse = (AuthenticateResponse) object.getValue();
             access.put(JSONConstants.TOKEN, getToken(authenticateResponse.getToken()));
-            access.put(JSONConstants.SERVICECATALOG, getServiceCatalog(authenticateResponse.getServiceCatalog()));
+
+            if(authenticateResponse.getServiceCatalog() != null)
+                access.put(JSONConstants.SERVICECATALOG, getServiceCatalog(authenticateResponse.getServiceCatalog()));
+
             if (authenticateResponse.getUser() != null) {
                 access.put(JSONConstants.USER, getTokenUser(authenticateResponse.getUser()));
             }
