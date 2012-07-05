@@ -177,11 +177,8 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
             String jsonText = JSONValue.toJSONString(endpointTemplate);
             outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
 
-        } else if (object.getDeclaredType().isAssignableFrom(
-                CredentialType.class) || object.getDeclaredType().isAssignableFrom(ApiKeyCredentials.class)) {
-
+        } else if (object.getDeclaredType().isAssignableFrom(CredentialType.class)) {
             CredentialType cred = (CredentialType) object.getValue();
-
             if (cred instanceof ApiKeyCredentials) {
                 ApiKeyCredentials creds = (ApiKeyCredentials) cred;
                 String jsonText = JSONValue.toJSONString(getApiKeyCredentials(creds));
@@ -197,12 +194,10 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
             } else {
                 throw new BadRequestException("Credential Type must be API Key Credentials, Password Credentials, or SecretQA.");
             }
-
         } else if (object.getDeclaredType().isAssignableFrom(Groups.class)) {
             Groups groups = (Groups) object.getValue();
             String jsonText = JSONValue.toJSONString(getGroups(groups));
             outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
-
         } else if (object.getDeclaredType().isAssignableFrom(Group.class)) {
             Group group = (Group) object.getValue();
             String jsonText = JSONValue.toJSONString(getGroup(group));
@@ -212,27 +207,20 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
             String jsonText = JSONValue.toJSONString(getGroupsList(groupsList));
             outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
         } else if (object.getDeclaredType().isAssignableFrom(CredentialListType.class)) {
-
             JSONObject outer = new JSONObject();
             JSONArray list = new JSONArray();
-
             CredentialListType credsList = (CredentialListType) object.getValue();
             outer.put(JSONConstants.CREDENTIALS, list);
-
-            for (JAXBElement<? extends CredentialType> cred : credsList
-                    .getCredential()) {
-                if (cred.getDeclaredType().isAssignableFrom(
-                        ApiKeyCredentials.class)) {
+            for (JAXBElement<? extends CredentialType> cred : credsList .getCredential()) {
+                CredentialType credential = cred.getValue();
+                if (credential instanceof ApiKeyCredentials) {
                     list.add(getApiKeyCredentials((ApiKeyCredentials) cred.getValue()));
-                } else if (cred.getDeclaredType().isAssignableFrom(
-                        PasswordCredentialsBase.class)) {
+                } else if (credential instanceof PasswordCredentialsBase) {
                     list.add(getPasswordCredentials((PasswordCredentialsBase) cred.getValue()));
                 }
             }
-
             String jsonText = JSONValue.toJSONString(outer);
             outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
-
         } else if (object.getDeclaredType().isAssignableFrom(RoleList.class)) {
             JSONObject outer = new JSONObject();
             JSONArray list = new JSONArray();
