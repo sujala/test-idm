@@ -131,7 +131,9 @@ public class Cloud10VersionResourceTest {
 
     @Test
     public void getCloud10VersionInfo_notRouting_withNotAuthenticatedUser_returns401Status() throws Exception {
-        when(userService.getUser("username")).thenReturn(new User());
+        User user = new User();
+        when(userService.getUser("username")).thenReturn(user);
+        when(userService.isMigratedUser(user)).thenReturn(true);
         when(config.getBoolean("useCloudAuth", false)).thenReturn(false);
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString())).thenThrow(new NotAuthenticatedException());
         Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password");
@@ -190,6 +192,27 @@ public class Cloud10VersionResourceTest {
 
         Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password");
         assertThat("response header", response.getMetadata().getFirst("X-CDN-Management-Url").toString(), equalTo("publicUrl"));
+    }
+
+    @Test
+    public void getCloud10VersionInfo_notRouting_withNonNullUser_withCloudFilesCdnService_withEndpoints_withEmptyPublicUrl_doesNotAddHeader() throws Exception {
+        when(userService.getUser("username")).thenReturn(new User());
+        when(config.getBoolean("useCloudAuth", false)).thenReturn(false);
+        UserScopeAccess userScopeAccess = mock(UserScopeAccess.class);
+        when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString())).thenReturn(userScopeAccess);
+        when(userScopeAccess.getAccessTokenString()).thenReturn("token");
+        ServiceCatalog serviceCatalog = new ServiceCatalog();
+        Service service = new Service();
+        Endpoint endpoint = new Endpoint();
+        endpoint.setPublicURL("");
+        service.getEndpoint().add(endpoint);
+        service.setName("cloudFilesCDN");
+        serviceCatalog.getService().add(service);
+        when(endpointConverterCloudV11.toServiceCatalog(anyList())).thenReturn(serviceCatalog);
+
+
+        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password");
+        assertThat("response header", response.getMetadata().toString().contains("X-CDN-Management-Url"), equalTo(false));
     }
 
     @Test
