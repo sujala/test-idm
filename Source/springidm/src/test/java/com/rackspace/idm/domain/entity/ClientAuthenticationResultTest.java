@@ -84,6 +84,15 @@ public class ClientAuthenticationResultTest {
     }
 
     @Test
+    public void equals_clientNotNullAndEqualClient_returnsTrue() throws Exception {
+        Application client = new Application();
+        clientAuthenticationResult.setClient(client);
+        AuthenticationResult test = new ClientAuthenticationResult(client, true);
+        boolean result = clientAuthenticationResult.equals(test);
+        assertThat("boolean", result, equalTo(true));
+    }
+
+    @Test
     public void toString_returnsString() throws Exception {
         String result = clientAuthenticationResult.toString();
         assertThat("string", result, equalTo("ClientAuthenticationResult [client=null, authenticated=true]"));
