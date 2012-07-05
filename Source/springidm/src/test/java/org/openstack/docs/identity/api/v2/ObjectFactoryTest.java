@@ -40,6 +40,7 @@ public class ObjectFactoryTest {
     ServiceCatalog serviceCatalog;
     Token token;
     ServiceForCatalog serviceForCatalog;
+    PasswordCredentialsBase passwordCredentialsBase;
 
     @Before
     public void setUp() throws Exception {
@@ -65,6 +66,7 @@ public class ObjectFactoryTest {
         serviceCatalog = objectFactory.createServiceCatalog();
         token = objectFactory.createToken();
         serviceForCatalog = objectFactory.createServiceForCatalog();
+        passwordCredentialsBase = objectFactory.createPasswordCredentialsRequiredUsername();
     }
 
     @Test
@@ -279,9 +281,23 @@ public class ObjectFactoryTest {
     }
 
     @Test
-    public void createPasswordCredentialsRequiredUsername_returnsNewCreatedObject() throws Exception {
-        PasswordCredentialsRequiredUsername result = objectFactory.createPasswordCredentialsRequiredUsername();
-        assertThat("password cred req username", result.password, equalTo(null));
+    public void passwordCredentialsBase_callsGetAny_returnsEmptyList() throws Exception {
+        List<Object> result = passwordCredentialsBase.getAny();
+        assertThat("list", result.isEmpty(), equalTo(true));
+    }
+
+    @Test
+    public void passwordCredentialsBase_callsGetAny_returnsExistingList() throws Exception {
+        List<Object> any = passwordCredentialsBase.getAny();
+        any.add("test");
+        List<Object> result = passwordCredentialsBase.getAny();
+        assertThat("list", result.get(0).toString(), equalTo("test"));
+    }
+
+    @Test
+    public void passwordCredentialsBase_callsGetOtherAttributes_returnsOtherAttributes() throws Exception {
+        Map<QName,String> result = passwordCredentialsBase.getOtherAttributes();
+        assertThat("list", result.isEmpty(), equalTo(true));
     }
 
     @Test
