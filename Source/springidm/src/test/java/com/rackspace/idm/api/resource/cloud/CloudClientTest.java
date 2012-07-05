@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.util.HashMap;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.*;
@@ -457,4 +458,10 @@ public class CloudClientTest {
         assertThat("transfer-encoding header", builtResponse.getMetadata().containsKey("transfer-encoding"), equalTo(false));
     }
 
+
+    @Test
+    public void getHttpClient_returnsHttpClient() throws Exception {
+
+        assertThat("HttpClient", cloudClient.getHttpClient(), instanceOf(HttpClient.class));
+    }
 }

@@ -249,8 +249,20 @@ public abstract class LdapRepository {
         }
     }
 
-    protected List<SearchResultEntry> getMultipleEntries(String baseDN,
-        SearchScope scope, Filter searchFilter, String sortAttribute, String... attributes) {
+    protected List<SearchResultEntry> getMultipleEntries(String baseDN, SearchScope scope, Filter searchFilter, String... attributes) {
+        SearchResult searchResult = null;
+        try {
+            SearchRequest request = new SearchRequest(baseDN, scope, searchFilter, attributes);
+            searchResult = getAppInterface().search(request);
+        } catch (LDAPException ldapEx) {
+            getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
+            throw new IllegalStateException(ldapEx);
+        }
+
+        return searchResult.getSearchEntries();
+    }
+
+    protected List<SearchResultEntry> getMultipleEntries(String baseDN, SearchScope scope, String sortAttribute, Filter searchFilter, String... attributes) {
         SearchResult searchResult = null;
 
         ServerSideSortRequestControl sortRequest = new ServerSideSortRequestControl(new SortKey(sortAttribute));
@@ -266,6 +278,8 @@ public abstract class LdapRepository {
 
         return searchResult.getSearchEntries();
     }
+
+
 
     protected SearchResultEntry getSingleEntry(String baseDN,
         SearchScope scope, Filter searchFilter, String... attributes) {

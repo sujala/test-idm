@@ -614,11 +614,22 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     public ScopeAccess getScopeAccessByUserId(String userId) {
         logger.debug("Getting ScopeAccess by user id {}", userId);
         if (userId == null) {
-            throw new NotFoundException("Invalid accessToken; Token cannot be null");
+            throw new NotFoundException("Invalid user id; user id cannot be null");
         }
         final ScopeAccess scopeAccess = this.scopeAccessDao.getScopeAccessByUserId(userId);
         logger.debug("Got ScopeAccess {} by user id {}", scopeAccess, userId);
         return scopeAccess;
+    }
+
+    @Override
+    public List<ScopeAccess> getScopeAccessListByUserId(String userId) {
+        logger.debug("Getting ScopeAccess list by user id {}", userId);
+        if (userId == null) {
+            throw new NotFoundException("Invalid user id; user id cannot be null");
+        }
+        final List<ScopeAccess> scopeAccessList = this.scopeAccessDao.getScopeAccessListByUserId(userId);
+        logger.debug("Got ScopeAccess {} by user id {}", scopeAccessList, userId);
+        return scopeAccessList;
     }
 
     @Override
@@ -1025,7 +1036,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     void handleAuthenticationFailure(String username, final UserAuthenticationResult result) {
         if (!result.isAuthenticated()) {
-            String errorMessage = String.format("Invalid username or password.", username);
+            String errorMessage = String.format("Unable to authenticate user with credentials provided.", username);
             logger.warn(errorMessage);
             throw new NotAuthenticatedException(errorMessage);
         }

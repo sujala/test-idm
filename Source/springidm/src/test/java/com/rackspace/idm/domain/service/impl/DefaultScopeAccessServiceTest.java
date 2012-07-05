@@ -1074,7 +1074,7 @@ public class DefaultScopeAccessServiceTest {
             assertTrue("should throw exception",false);
         } catch (Exception ex){
             assertThat("exception type",ex.getClass().getName(),equalTo("com.rackspace.idm.exception.NotFoundException"));
-            assertThat("exception message", ex.getMessage(),equalTo("Invalid accessToken; Token cannot be null"));
+            assertThat("exception message", ex.getMessage(),equalTo("Invalid user id; user id cannot be null"));
         }
     }
 
@@ -1491,7 +1491,7 @@ public class DefaultScopeAccessServiceTest {
             defaultScopeAccessService.handleAuthenticationFailure(null,result);
             assertTrue("should throw exception",false);
         } catch (NotAuthenticatedException ex){
-            assertThat("exception message", ex.getMessage(), equalTo("Invalid username or password."));
+            assertThat("exception message", ex.getMessage(), equalTo("Unable to authenticate user with credentials provided."));
         }
     }
 }

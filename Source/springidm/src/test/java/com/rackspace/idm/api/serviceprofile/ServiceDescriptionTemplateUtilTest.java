@@ -32,6 +32,7 @@ public class ServiceDescriptionTemplateUtilTest {
         config = new Configuration();
         uriInfo = mock(UriInfo.class);
         serviceDescriptionTemplateUtil = new ServiceDescriptionTemplateUtil(config);
+        ServiceDescriptionTemplateUtil temp = new ServiceDescriptionTemplateUtil();
     }
 
     @Test
@@ -50,7 +51,7 @@ public class ServiceDescriptionTemplateUtilTest {
 
     @Test
     public void build_invalidPatternAndUri_returnsBlankString() throws Exception {
-        String build = serviceDescriptionTemplateUtil.build("", "");
+        String build = serviceDescriptionTemplateUtil.build(null, (String)null);
         assertThat("string", build, equalTo(""));
     }
 

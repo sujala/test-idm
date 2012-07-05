@@ -19,7 +19,7 @@ import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
-import com.sun.jersey.server.wadl.generators.resourcedoc.xhtml.Elements;
+import freemarker.template.utility.StringUtil;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.CharUtils;
 import org.joda.time.DateTime;
@@ -328,6 +328,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             verifyUserAdminLevelAccess(authToken);
             validateUser(user);
+            validateUsernameForUpdateOrCreate(user.getUsername());
             ScopeAccess scopeAccessByAccessToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
             if (user.getPassword() != null) {
                 validatePassword(user.getPassword());
@@ -426,6 +427,10 @@ public class DefaultCloud20Service implements Cloud20Service {
                 verifyDomain(retrievedUser, caller);
             }
 
+            if (!StringUtils.isBlank(user.getUsername())) {
+                validateUsernameForUpdateOrCreate(user.getUsername());
+            }
+
             if (!user.isEnabled()) {
                 User caller = userService.getUserByAuthToken(authToken);
                 if (caller.getId().equals(user.getId())) {
@@ -492,6 +497,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             logger.warn(errorMsg);
             throw new BadRequestException(errorMsg);
         }
+    }
+
+    void validateUsernameForUpdateOrCreate(String username) {
         Pattern alphaNumberic = Pattern.compile("[a-zA-z0-9]*");
         if (!alphaNumberic.matcher(username).matches()) {
             throw new BadRequestException("Username has invalid characters; only alphanumeric characters are allowed.");
@@ -573,6 +581,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 userService.updateUser(user, false);
             } else if (credentials.getValue() instanceof ApiKeyCredentials) {
                 ApiKeyCredentials userCredentials = (ApiKeyCredentials) credentials.getValue();
+                //TODO validate username breaks authenticate call
                 validateApiKeyCredentials(userCredentials);
                 user = checkAndGetUser(userId);
                 if (!userCredentials.getUsername().equals(user.getUsername())) {
@@ -638,6 +647,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 user = this.checkAndGetUser(usa.getUserRsId());
             } else if (authenticationRequest.getCredential().getDeclaredType().isAssignableFrom(PasswordCredentialsRequiredUsername.class)) {
                 PasswordCredentialsRequiredUsername creds = (PasswordCredentialsRequiredUsername) authenticationRequest.getCredential().getValue();
+                //TODO username validation breaks validate call
                 validatePasswordCredentials(creds);
                 String username = creds.getUsername();
                 String password = creds.getPassword();
@@ -704,9 +714,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder checkToken(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo)
-            throws IOException {
-
+    public ResponseBuilder checkToken(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo) throws IOException {
         try {
             verifyServiceAdminLevelAccess(authToken);
 
@@ -775,8 +783,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder deleteRoleFromUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId,
-                                                      String userId, String roleId) {
+    public ResponseBuilder deleteRoleFromUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String userId, String roleId) {
         try {
             verifyUserAdminLevelAccess(authToken);
             verifyTokenHasTenantAccess(authToken, tenantId);
@@ -858,9 +865,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder deleteUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String credentialType)
-            throws IOException {
-
+    public ResponseBuilder deleteUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String credentialType) throws IOException {
         try {
             verifyServiceAdminLevelAccess(authToken);
 
@@ -896,7 +901,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder deleteUserRole(HttpHeaders httpHeaders, String authToken, String userId, String roleId) {
-
         try {
             verifyUserAdminLevelAccess(authToken);
 
@@ -950,7 +954,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getEndpointTemplate(HttpHeaders httpHeaders, String authToken, String endpointTemplateId) {
-
         try {
             verifyServiceAdminLevelAccess(authToken);
 
@@ -1004,7 +1007,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getRole(HttpHeaders httpHeaders, String authToken, String roleId) {
-
         try {
             verifyServiceAdminLevelAccess(authToken);
             ClientRole role = checkAndGetClientRole(roleId);
@@ -1017,7 +1019,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getSecretQA(HttpHeaders httpHeaders, String authToken, String userId) throws IOException {
-
         try {
             verifyServiceAdminLevelAccess(authToken);
             User user = checkAndGetUser(userId);
@@ -1057,7 +1058,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getTenantByName(HttpHeaders httpHeaders, String authToken, String name) throws IOException {
-
         try {
             verifyServiceAdminLevelAccess(authToken);
 
@@ -1129,9 +1129,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String credentialType)
-            throws IOException {
-
+    public ResponseBuilder getUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String credentialType) throws IOException {
         try {
             verifyUserLevelAccess(authToken);
 
@@ -1186,7 +1184,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getUserRole(HttpHeaders httpHeaders, String authToken, String userId, String roleId) {
-
         try {
             verifyServiceAdminLevelAccess(authToken);
 
@@ -1222,9 +1219,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listCredentials(HttpHeaders httpHeaders, String authToken, String userId, String marker, Integer limit)
-            throws Exception {
-
+    public ResponseBuilder listCredentials(HttpHeaders httpHeaders, String authToken, String userId, String marker, Integer limit) throws Exception {
         try {
             verifyUserLevelAccess(authToken);
             ScopeAccess callersScopeAccess = scopeAccessService.getScopeAccessByAccessToken(authToken);
@@ -1384,8 +1379,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 roles = this.clientService.getClientRolesByClientId(serviceId);
             }
 
-            return Response.ok(
-                    OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListFromClientRoles(roles)));
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListFromClientRoles(roles)));
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }

@@ -200,30 +200,16 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
     public CloudBaseUrl getBaseUrlById(int baseUrlId) {
         getLogger().debug("Get baseurl by Id {}", baseUrlId);
         CloudBaseUrl baseUrl = null;
-        SearchResult searchResult = null;
 
         Filter searchFilter = new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_ID, String.valueOf(baseUrlId))
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_BASEURL).build();
 
-        try {
-            searchResult = getAppInterface().search(BASEURL_BASE_DN, SearchScope.ONE, searchFilter);
-            getLogger().debug("Got baseurl by Id {}", baseUrlId);
-        } catch (LDAPSearchException ldapEx) {
-            getLogger().error("Error searching for baseUrl - {}", ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
 
-        if (searchResult.getEntryCount() == 1) {
-            SearchResultEntry e = searchResult.getSearchEntries().get(0);
-            baseUrl = getBaseUrl(e);
-        } else if (searchResult.getEntryCount() > 1) {
-            String errMsg = String.format("More than one entry was found for baseUrl - %s", baseUrlId);
-            getLogger().error(errMsg);
-            throw new IllegalStateException(errMsg);
-        }
+        SearchResultEntry searchResult = this.getSingleEntry(BASEURL_BASE_DN, SearchScope.ONE, searchFilter);
+        baseUrl = getBaseUrl(searchResult);
+        getLogger().debug("Got baseurl by Id {}", baseUrlId);
 
-        getLogger().debug("Get baseurl by Id {}", baseUrlId);
         return baseUrl;
     }
 
@@ -231,21 +217,16 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
     public List<CloudBaseUrl> getBaseUrlsByService(String service) {
         getLogger().debug("Getting baseurls by service {}", service);
         List<CloudBaseUrl> cloudBaseUrls = new ArrayList<CloudBaseUrl>();
-        SearchResult searchResult = null;
+        List<SearchResultEntry> searchResultEntries = null;
 
         Filter searchFilter = new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_SERVICE, service)
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_BASEURL).build();
 
-        try {
-            searchResult = getAppInterface().search(BASEURL_BASE_DN, SearchScope.ONE, searchFilter);
-            getLogger().info("Got baseurls by Id {}", service);
-        } catch (LDAPSearchException ldapEx) {
-            getLogger().error("Error searching for baseUrl - {}", ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
+        searchResultEntries = getMultipleEntries(BASEURL_BASE_DN, SearchScope.ONE, searchFilter);
+        getLogger().info("Got baseurls by Id {}", service);
 
-        for (SearchResultEntry e : searchResult.getSearchEntries()) {
+        for (SearchResultEntry e : searchResultEntries) {
             cloudBaseUrls.add(getBaseUrl(e));
         }
         return cloudBaseUrls;
@@ -257,22 +238,17 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
         getLogger().debug("Getting baseurls");
 
         List<CloudBaseUrl> baseUrls = new ArrayList<CloudBaseUrl>();
-        SearchResult searchResult = null;
+        List<SearchResultEntry> searchResultEntries = null;
 
         Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(
                 ATTR_OBJECT_CLASS, OBJECTCLASS_BASEURL).build();
 
-        try {
-            searchResult = getAppInterface().search(BASEURL_BASE_DN,
-                    SearchScope.ONE, searchFilter);
-            getLogger().info("Got baseurls");
-        } catch (LDAPSearchException ldapEx) {
-            getLogger().error("Error searching for baseUrls - {}", ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
 
-        if (searchResult.getEntryCount() > 0) {
-            for (SearchResultEntry entry : searchResult.getSearchEntries()) {
+        searchResultEntries = getMultipleEntries(BASEURL_BASE_DN, SearchScope.ONE, searchFilter);
+        getLogger().info("Got baseurls");
+
+        if (searchResultEntries.size() > 0) {
+            for (SearchResultEntry entry : searchResultEntries) {
                 baseUrls.add(getBaseUrl(entry));
             }
         }
@@ -337,7 +313,7 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
         return point;
     }
 
-    private void appendTenantToBaseUrl(String tenantId, CloudBaseUrl baseUrl) {
+    void appendTenantToBaseUrl(String tenantId, CloudBaseUrl baseUrl) {
         String publicUrl = baseUrl.getPublicUrl();
         if(publicUrl != null) {
             publicUrl = publicUrl.substring(0, publicUrl.length() - (publicUrl.endsWith("/") ? 1 : 0)) + "/" + tenantId;
@@ -392,21 +368,12 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
             String[] points = newEndpoints.toArray(new String[newEndpoints.size()]);
             mods.add(new Modification(ModificationType.REPLACE, ATTR_ENDPOINT, points));
         }
+        Audit audit = Audit.log("dn="+endpoints.getUserDN()).modify(mods);
 
-        LDAPResult result = null;
-        try {
-            result = getAppInterface().modify(endpoints.getUserDN(), mods);
-            getLogger().info("Removed baseurl {} from user {}", baseUrlId, username);
-        } catch (LDAPException ldapEx) {
-            getLogger().error("Error updating user {} endpoints - {}", username, ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
+        this.updateEntry(endpoints.getUserDN(), mods, audit);
 
-        if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
-            getLogger().error("Error updating user {} endpoints - {}", username, result.getResultCode());
-            throw new IllegalArgumentException(String.format(
-                    "LDAP error encountered when updating user %s endpoints - %s", username, result.getResultCode().toString()));
-        }
+        audit.succeed();
+
         getLogger().debug("Removed baseurl {} from user {}", baseUrlId, username);
     }
 
@@ -443,23 +410,17 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
         }
         getLogger().debug("Updating BaseURL: {}", cloudBaseUrl);
         Audit audit = Audit.log(cloudBaseUrl);
-        try {
-            CloudBaseUrl oldBaseUrl = getBaseUrlById(cloudBaseUrl.getBaseUrlId());
-            List<Modification> modifications = getModifications(oldBaseUrl, cloudBaseUrl);
-            audit.modify(modifications);
-            if (modifications.size() > 0) {
-                getAppInterface().modify(oldBaseUrl.getUniqueId(), modifications);
-            }
-            getLogger().debug("Updated CloudBaseUrl: {}", cloudBaseUrl);
-            audit.succeed();
-        } catch (final LDAPException e) {
-            getLogger().error("Error updating CloudBaseUrl", e);
-            audit.fail();
-            throw new IllegalStateException(e);
+        CloudBaseUrl oldBaseUrl = getBaseUrlById(cloudBaseUrl.getBaseUrlId());
+        List<Modification> modifications = getModifications(oldBaseUrl, cloudBaseUrl);
+        audit.modify(modifications);
+        if (modifications.size() > 0) {
+            updateEntry(oldBaseUrl.getUniqueId(), modifications, audit);
         }
+        getLogger().debug("Updated CloudBaseUrl: {}", cloudBaseUrl);
+        audit.succeed();
     }
 
-    private CloudBaseUrl getBaseUrl(SearchResultEntry resultEntry) {
+    CloudBaseUrl getBaseUrl(SearchResultEntry resultEntry) {
         getLogger().debug("Inside getBaseUrl");
         CloudBaseUrl baseUrl = new CloudBaseUrl();
         baseUrl.setUniqueId(resultEntry.getDN());
@@ -483,50 +444,34 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
         return baseUrl;
     }
 
-    private EndPoints getRawEndpointsForUser(String username) {
+    EndPoints getRawEndpointsForUser(String username) {
         getLogger().debug("Inside getRawEndpointsForUser {}", username);
         List<String> userEndpoints = new ArrayList<String>();
         String userDN = null;
         String nastId = null;
         Integer mossoId = null;
-        SearchResult searchResult = null;
+        SearchResultEntry searchResult = null;
 
         Filter searchFilter = new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_UID, username)
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
                 .build();
 
-        try {
-            searchResult = getAppInterface().search(
-                    BASE_DN,
-                    SearchScope.SUB,
-                    searchFilter,
-                    new String[]{ATTR_ENDPOINT, ATTR_UID, ATTR_NAST_ID,
-                            ATTR_MOSSO_ID});
-        } catch (LDAPSearchException ldapEx) {
-            getLogger().error("Error searching for baseUrls - {}", ldapEx);
-            throw new IllegalStateException(ldapEx);
-        }
+        searchResult = getSingleEntry(BASE_DN, SearchScope.SUB, searchFilter, new String[]{ATTR_ENDPOINT, ATTR_UID, ATTR_NAST_ID, ATTR_MOSSO_ID});
 
-        if (searchResult.getEntryCount() == 0) {
+        if (searchResult == null) {
             String errMsg = String.format("User %s not found.", username);
             getLogger().error(errMsg);
             throw new NotFoundException(errMsg);
-        } else if (searchResult.getEntryCount() == 1) {
-            SearchResultEntry e = searchResult.getSearchEntries().get(0);
-            String[] list = e.getAttributeValues(ATTR_ENDPOINT);
-            if (list != null && list.length > 0) {
-                userEndpoints = Arrays.asList(list);
-            }
-            userDN = e.getDN();
-            nastId = e.getAttributeValue(ATTR_NAST_ID);
-            mossoId = e.getAttributeValueAsInteger(ATTR_MOSSO_ID);
-        } else if (searchResult.getEntryCount() > 1) {
-            String errMsg = String.format(
-                    "More than one entry was found for user - %s", username);
-            getLogger().error(errMsg);
-            throw new IllegalStateException(errMsg);
         }
+
+        String[] list = searchResult.getAttributeValues(ATTR_ENDPOINT);
+        if (list != null && list.length > 0) {
+            userEndpoints = Arrays.asList(list);
+        }
+        userDN = searchResult.getDN();
+        nastId = searchResult.getAttributeValue(ATTR_NAST_ID);
+        mossoId = searchResult.getAttributeValueAsInteger(ATTR_MOSSO_ID);
 
         EndPoints points = new EndPoints();
         points.setMossoId(mossoId);

@@ -3,10 +3,7 @@ package com.rackspace.idm.domain.dao.impl;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.exception.NotFoundException;
-import com.unboundid.ldap.sdk.Attribute;
-import com.unboundid.ldap.sdk.Filter;
-import com.unboundid.ldap.sdk.SearchResultEntry;
-import com.unboundid.ldap.sdk.SearchScope;
+import com.unboundid.ldap.sdk.*;
 import com.unboundid.ldap.sdk.persist.LDAPPersistException;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
@@ -31,17 +28,25 @@ import static org.mockito.Mockito.*;
 public class LdapTenantRepositoryTest {
     LdapTenantRepository ldapTenantRepository;
     LdapTenantRepository spy;
+    LDAPInterface ldapInterface;
 
     @Before
     public void setUp() throws Exception {
         ldapTenantRepository = new LdapTenantRepository(mock(LdapConnectionPools.class), mock(Configuration.class));
-
+        ldapInterface = mock(LDAPInterface.class);
         spy = spy(ldapTenantRepository);
+
+        doReturn(ldapInterface).when(spy).getAppInterface();
     }
 
     @Test (expected = IllegalArgumentException.class)
     public void addTenant_tenantIsNull_throwsIllegalArgument() throws Exception {
         ldapTenantRepository.addTenant(null);
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void addTenant_callsLDAPPersister_throwsIllegalStateException() throws Exception {
+        spy.addTenant(new Tenant());
     }
 
     @Test (expected = IllegalArgumentException.class)
@@ -126,13 +131,20 @@ public class LdapTenantRepositoryTest {
         ldapTenantRepository.updateTenant(new Tenant());
     }
 
+    @Test (expected = IllegalStateException.class)
+    public void updateTenant_callsLDAPPersister_throwsIllegalStateException() throws Exception {
+        Tenant tenant = mock(Tenant.class);
+        when(tenant.getUniqueId()).thenReturn("uniqueId");
+        spy.updateTenant(tenant);
+    }
+
     @Test
     public void getMultipleTenants_foundTenants_returnsTenantList() throws Exception {
         Tenant tenant = new Tenant();
         SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0]);
         List<SearchResultEntry> entries = new ArrayList<SearchResultEntry>();
         entries.add(searchResultEntry);
-        doReturn(entries).when(spy).getMultipleEntries(LdapRepository.TENANT_BASE_DN, SearchScope.ONE, null, LdapRepository.ATTR_ID, LdapRepository.ATTR_TENANT_SEARCH_ATTRIBUTES);
+        doReturn(entries).when(spy).getMultipleEntries(LdapRepository.TENANT_BASE_DN, SearchScope.ONE, LdapRepository.ATTR_ID, null, LdapRepository.ATTR_TENANT_SEARCH_ATTRIBUTES);
         doReturn(tenant).when(spy).getTenant(searchResultEntry);
         List<Tenant> result = spy.getMultipleTenants(null);
         assertThat("tenant", result.get(0), equalTo(tenant));
@@ -141,7 +153,7 @@ public class LdapTenantRepositoryTest {
     @Test
     public void getMultipleTenants_tenantsNotFound_returnsEmptyList() throws Exception {
         List<SearchResultEntry> entries = new ArrayList<SearchResultEntry>();
-        doReturn(entries).when(spy).getMultipleEntries(LdapRepository.TENANT_BASE_DN, SearchScope.ONE, null, LdapRepository.ATTR_ID, LdapRepository.ATTR_TENANT_SEARCH_ATTRIBUTES);
+        doReturn(entries).when(spy).getMultipleEntries(LdapRepository.TENANT_BASE_DN, SearchScope.ONE, LdapRepository.ATTR_ID, null, LdapRepository.ATTR_TENANT_SEARCH_ATTRIBUTES);
         List<Tenant> result = spy.getMultipleTenants(null);
         assertThat("tenant", result.isEmpty(), equalTo(true));
     }
@@ -177,6 +189,11 @@ public class LdapTenantRepositoryTest {
     @Test (expected = IllegalArgumentException.class)
     public void addTenantRoleToParent_tenantRoleIsNull_throwsIllegalArgument() throws Exception {
         ldapTenantRepository.addTenantRoleToParent("uniqueId", null);
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void addTenantRoleToParent_callsLDAPPersister_throwsIllegalStateException() throws Exception {
+        spy.addTenantRoleToParent("uniqueId", new TenantRole());
     }
 
     @Test (expected = IllegalArgumentException.class)
@@ -393,6 +410,13 @@ public class LdapTenantRepositoryTest {
     @Test (expected = IllegalArgumentException.class)
     public void updateTenantRole_roleUniqueIdIsBlank_throwsIllegalArgument() throws Exception {
         ldapTenantRepository.updateTenantRole(new TenantRole());
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void updateTenantRole_callsLDAPPersisterModify_throwsIllegalStateException() throws Exception {
+        TenantRole role = mock(TenantRole.class);
+        when(role.getUniqueId()).thenReturn("uniqueId");
+        spy.updateTenantRole(role);
     }
 
     @Test (expected = IllegalArgumentException.class)
