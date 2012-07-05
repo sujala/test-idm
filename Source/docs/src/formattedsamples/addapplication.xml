@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
-<application xmlns="http://idm.api.rackspace.com/v1.0"
-    name="Test Application2" 
-    customerId="RCN-000-000-000"
-    description="Used for adding all applications in Rackspace" />
-    

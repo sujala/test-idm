@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<ns4:auth daysUntilPasswordExpiration="0"
-     isPasswordResetOnlyToken="false"
-     xmlns:ns2="http://www.w3.org/2005/Atom"
-     xmlns:ns3="http://fault.common.api.rackspace.com/v1.0" xmlns:ns4="http://idm.api.rackspace.com/v1.0">
-     <access_token expires="2012-04-18T07:24:13.000-05:00" id="ec3b38d2251e46e2b235f5247bb94db9"/>
-     <refresh_token id="fc3b38d2251e46e2b235fs2fdbb94dbT"/>
-     <user customerId="RCN-123-456-999" username="testuser"/>
-</ns4:auth>

@@ -1,4 +1,0 @@
-POST /v1/users HTTP/1.1
-Host: rackidentity.api.rackspacecloud.com
-Accept: application/xml
-X-Auth-Token: ab48a9efdfedb23ty3494
