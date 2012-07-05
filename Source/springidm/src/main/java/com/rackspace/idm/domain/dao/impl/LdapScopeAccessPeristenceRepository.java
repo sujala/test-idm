@@ -342,15 +342,34 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
                     .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_SCOPEACCESS)
                     .addEqualAttribute(ATTR_USER_RS_ID, userId).build();
             final List<SearchResultEntry> searchEntries = getMultipleEntries(BASE_DN, SearchScope.SUB, filter);
-            getLogger().debug("Found {} ScopeAccess by AccessToken: {}", searchEntries.size(), userId);
+            getLogger().debug("Found {} ScopeAccess by user id: {}", searchEntries.size(), userId);
             for (final SearchResultEntry searchResultEntry : searchEntries) {
                 return decodeScopeAccess(searchResultEntry);
             }
         } catch (final LDAPException e) {
-            getLogger().error("Error reading ScopeAccess by AccessToken: " + userId, e);
+            getLogger().error("Error reading ScopeAccess by user id: " + userId, e);
             throw new IllegalStateException(e);
         }
         return null;
+    }
+
+    public List<ScopeAccess> getScopeAccessListByUserId(String userId) {
+        getLogger().debug("Find ScopeAccess by user id: {}", userId);
+        List<ScopeAccess> scopeAccessList = new ArrayList<ScopeAccess>();
+        try {
+            final Filter filter = new LdapSearchBuilder()
+                    .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_SCOPEACCESS)
+                    .addEqualAttribute(ATTR_USER_RS_ID, userId).build();
+            final List<SearchResultEntry> searchEntries = getMultipleEntries(BASE_DN, SearchScope.SUB, filter);
+            getLogger().debug("Found {} ScopeAccess by user id: {}", searchEntries.size(), userId);
+            for (final SearchResultEntry searchResultEntry : searchEntries) {
+                scopeAccessList.add(decodeScopeAccess(searchResultEntry));
+            }
+        } catch (final LDAPException e) {
+            getLogger().error("Error reading ScopeAccess by user id: " + userId, e);
+            throw new IllegalStateException(e);
+        }
+        return scopeAccessList;
     }
 
     @Override

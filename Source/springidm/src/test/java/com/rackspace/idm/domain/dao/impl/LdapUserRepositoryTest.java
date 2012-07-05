@@ -1269,7 +1269,7 @@ public class LdapUserRepositoryTest {
         User oldUser = new User();
         newUser.setUsername("");
         List<Modification> modificationList = new ArrayList<Modification>();
-        ldapUserRepository.checkForUserNameModificiation(oldUser, newUser, modificationList);
+        ldapUserRepository.checkForUserNameModification(oldUser, newUser, modificationList);
         assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("DELETE"));
     }
 

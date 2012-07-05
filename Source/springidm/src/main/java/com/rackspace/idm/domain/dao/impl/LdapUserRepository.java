@@ -993,14 +993,14 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         checkForNastIdModification(uOld, uNew, mods);
         checkForMossoIdModification(uOld, uNew, mods);
         checkForMigrationStatusModification(uOld, uNew, mods);
-        checkForUserNameModificiation(uOld, uNew, mods);
+        checkForUserNameModification(uOld, uNew, mods);
 
         getLogger().debug("Found {} mods.", mods.size());
 
         return mods;
     }
 
-    void checkForUserNameModificiation(User uOld, User uNew, List<Modification> mods) {
+    void checkForUserNameModification(User uOld, User uNew, List<Modification> mods) {
         if (uNew.getUsername() != null) {
             if (StringUtils.isBlank(uNew.getUsername())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_UID));
