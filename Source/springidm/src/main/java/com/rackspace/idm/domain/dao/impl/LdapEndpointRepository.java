@@ -421,6 +421,9 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
     }
 
     CloudBaseUrl getBaseUrl(SearchResultEntry resultEntry) {
+        if(resultEntry == null){
+            return null;
+        }
         getLogger().debug("Inside getBaseUrl");
         CloudBaseUrl baseUrl = new CloudBaseUrl();
         baseUrl.setUniqueId(resultEntry.getDN());
