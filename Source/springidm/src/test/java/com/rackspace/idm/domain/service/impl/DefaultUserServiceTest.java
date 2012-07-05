@@ -102,7 +102,9 @@ public class DefaultUserServiceTest {
         users.setUsers(userArrayList);
         when(userDao.getUsersByDomainId(anyString())).thenReturn(users);
         ScopeAccess scopeAccess = new ScopeAccess();
-        when(scopeAccessDao.getScopeAccessByUserId(anyString())).thenReturn(scopeAccess);
+        ArrayList<ScopeAccess> list = new ArrayList<ScopeAccess>();
+        list.add(scopeAccess);
+        when(scopeAccessDao.getScopeAccessListByUserId(anyString())).thenReturn(list);
         when(authorizationService.hasDefaultUserRole(scopeAccess)).thenReturn(true);
         defaultUserService.hasSubUsers("id");
         verify(authorizationService).hasDefaultUserRole(scopeAccess);
@@ -124,7 +126,9 @@ public class DefaultUserServiceTest {
         users.setUsers(userArrayList);
         when(userDao.getUsersByDomainId(anyString())).thenReturn(users);
         ScopeAccess scopeAccess = new ScopeAccess();
-        when(scopeAccessDao.getScopeAccessByUserId(anyString())).thenReturn(scopeAccess);
+        ArrayList<ScopeAccess> list = new ArrayList<ScopeAccess>();
+        list.add(scopeAccess);
+        when(scopeAccessDao.getScopeAccessListByUserId(anyString())).thenReturn(list);
         when(authorizationService.hasDefaultUserRole(scopeAccess)).thenReturn(true);
         boolean hasUsers = defaultUserService.hasSubUsers("id");
         assertThat("User has subusers", hasUsers, equalTo(true));
@@ -243,6 +247,25 @@ public class DefaultUserServiceTest {
         }catch (Exception e){
             assertThat("exception message", e.getMessage(), Matchers.equalTo("User with Mosso Account ID: 1 already exists."));
         }
+    }
+
+    @Test
+    public void updateUserById_callsScopeService_getScopeAccessList() throws Exception {
+        User user = new User("test");
+        user.setId("foo");
+        defaultUserService.updateUserById(user, true);
+        verify(scopeAccessService).getScopeAccessListByUserId("foo");
+    }
+
+    @Test
+    public void updateUserById_callsScopeService_updateScopeAccess() throws Exception {
+        User user = new User("test");
+        user.setId("foo");
+        ArrayList<ScopeAccess> list = new ArrayList<ScopeAccess>();
+        list.add(new UserScopeAccess());
+        when(scopeAccessService.getScopeAccessListByUserId("foo")).thenReturn(list);
+        defaultUserService.updateUserById(user, true);
+        verify(scopeAccessService).updateScopeAccess(any(ScopeAccess.class));
     }
 
     @Test

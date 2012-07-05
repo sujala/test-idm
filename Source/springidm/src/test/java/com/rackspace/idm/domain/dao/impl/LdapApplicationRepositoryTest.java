@@ -1096,6 +1096,15 @@ public class LdapApplicationRepositoryTest {
     }
 
     @Test
+    public void getMultipleClientRoles_usesCorrectParams_whenCallingGetMultipleEntries() throws Exception {
+        Filter searchFilter = new LdapRepository.LdapSearchBuilder()
+                .addEqualAttribute(LdapRepository.ATTR_OBJECT_CLASS,LdapRepository.OBJECTCLASS_CLIENT_ROLE).build();
+        doReturn(null).when(spy).getMultipleEntries("base", SearchScope.SUB, searchFilter, null);
+        spy.getMultipleClientRoles("base", searchFilter);
+        verify(spy).getMultipleEntries("base", SearchScope.SUB, searchFilter, null);
+    }
+
+    @Test
     public void getMultipleClientRoles_noEntries_returnsEmptyList() throws Exception {
         ArrayList<SearchResultEntry> entries = new ArrayList<SearchResultEntry>();
         doReturn(entries).when(spy).getMultipleEntries(anyString(), any(SearchScope.class), any(Filter.class), anyString());

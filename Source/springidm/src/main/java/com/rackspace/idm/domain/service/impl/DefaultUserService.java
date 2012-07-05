@@ -459,10 +459,12 @@ public class DefaultUserService implements UserService {
             return false;
         }
         for (User userInList : users.getUsers()) {
-            ScopeAccess scopeAccess = scopeAccessDao.getScopeAccessByUserId(userInList.getId());
-            boolean isDefaultUser = authorizationService.hasDefaultUserRole(scopeAccess);
-            if (isDefaultUser) {
-                return true;
+            List<ScopeAccess> scopeAccessList = scopeAccessDao.getScopeAccessListByUserId(userInList.getId());
+            for (ScopeAccess scopeAccess : scopeAccessList) {
+                boolean isDefaultUser = authorizationService.hasDefaultUserRole(scopeAccess);
+                if (isDefaultUser) {
+                    return true;
+                }
             }
         }
         return false;
@@ -533,6 +535,11 @@ public class DefaultUserService implements UserService {
         logger.info("Updating User: {}", user);
         validateUserEmailAddress(user);
         userDao.updateUserById(user, hasSelfUpdatedPassword);
+        List<ScopeAccess> scopeAccessList = scopeAccessService.getScopeAccessListByUserId(user.getId());
+        for (ScopeAccess scopeAccess : scopeAccessList) {
+            ((UserScopeAccess)scopeAccess).setUsername(user.getUsername());
+            scopeAccessService.updateScopeAccess(scopeAccess);
+        }
         logger.info("Updated User: {}", user);
     }
 

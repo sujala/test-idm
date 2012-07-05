@@ -48,7 +48,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         Audit audit = Audit.log(racker).add();
 
-        Attribute[] attributes = getRackerAddAtrributes(racker);
+        Attribute[] attributes = getRackerAddAttributes(racker);
 
         addEntry(userDN, attributes, audit);
 
@@ -830,7 +830,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return users;
     }
 
-    Attribute[] getRackerAddAtrributes(Racker racker) {
+    Attribute[] getRackerAddAttributes(Racker racker) {
 
         List<Attribute> atts = new ArrayList<Attribute>();
         atts.add(new Attribute(ATTR_OBJECT_CLASS, ATTR_RACKER_OBJECT_CLASS_VALUES));
@@ -993,14 +993,14 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         checkForNastIdModification(uOld, uNew, mods);
         checkForMossoIdModification(uOld, uNew, mods);
         checkForMigrationStatusModification(uOld, uNew, mods);
-        checkForUserNameModificiation(uOld, uNew, mods);
+        checkForUserNameModification(uOld, uNew, mods);
 
         getLogger().debug("Found {} mods.", mods.size());
 
         return mods;
     }
 
-    void checkForUserNameModificiation(User uOld, User uNew, List<Modification> mods) {
+    void checkForUserNameModification(User uOld, User uNew, List<Modification> mods) {
         if (uNew.getUsername() != null) {
             if (StringUtils.isBlank(uNew.getUsername())) {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_UID));

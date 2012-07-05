@@ -249,8 +249,7 @@ public abstract class LdapRepository {
         }
     }
 
-    protected List<SearchResultEntry> getMultipleEntries(String baseDN,
-                                                         SearchScope scope, Filter searchFilter, String... attributes) {
+    protected List<SearchResultEntry> getMultipleEntries(String baseDN, SearchScope scope, Filter searchFilter, String... attributes) {
         SearchResult searchResult = null;
         try {
             SearchRequest request = new SearchRequest(baseDN, scope, searchFilter, attributes);
@@ -263,8 +262,7 @@ public abstract class LdapRepository {
         return searchResult.getSearchEntries();
     }
 
-    protected List<SearchResultEntry> getMultipleEntries(String baseDN,
-                                                         SearchScope scope, String sortAttribute, Filter searchFilter, String... attributes) {
+    protected List<SearchResultEntry> getMultipleEntries(String baseDN, SearchScope scope, String sortAttribute, Filter searchFilter, String... attributes) {
         SearchResult searchResult = null;
 
         ServerSideSortRequestControl sortRequest = new ServerSideSortRequestControl(new SortKey(sortAttribute));

@@ -53,7 +53,9 @@ public interface ScopeAccessService {
 
     ScopeAccess getScopeAccessByAccessToken(String accessToken);
 
-    ScopeAccess getScopeAccessByUserId(String accessToken);
+    ScopeAccess getScopeAccessByUserId(String userId);
+
+    List<ScopeAccess> getScopeAccessListByUserId(String userId);
     
     ScopeAccess loadScopeAccessByAccessToken(String accessToken);
 
