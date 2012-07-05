@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
@@ -206,6 +207,8 @@ public class LdapEndpointRepositoryTest {
         CloudBaseUrl result = spy.getBaseUrlById(1);
         assertThat("cloud base url", result, equalTo(cloudBaseUrl));
     }
+
+
 
     @Test
     public void getBaseUrlsByService_foundBaseUrl_returnsList() throws Exception {
@@ -444,6 +447,12 @@ public class LdapEndpointRepositoryTest {
         SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0]);
         CloudBaseUrl result = spy.getBaseUrl(searchResultEntry);
         assertThat("cloud base url", result.toString(), equalTo("baseUrl=null"));
+    }
+
+    @Test
+    public void getBaseUrl_WithNullSearchResult_returnsNull() throws Exception {
+        CloudBaseUrl result = spy.getBaseUrl(null);
+        assertThat("cloud base url", result, nullValue());
     }
 
     @Test (expected = NotFoundException.class)
