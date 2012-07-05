@@ -2,7 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
-import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
+import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.*;
 import com.rackspace.idm.api.converter.cloudv20.*;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
@@ -29,6 +29,7 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.*;
+import org.openstack.docs.identity.api.v2.ObjectFactory;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import javax.ws.rs.core.*;
@@ -1227,6 +1228,32 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void addUser_adminRoleUserSizeNotGreaterThanNumSubUsersThrowsBadRequest_returns201() throws Exception {
+        UriBuilder uriBuilder = mock(UriBuilder.class);
+        URI uri = new URI("");
+        User caller = new User();
+        users = mock(Users.class);
+        List<User> userList = new ArrayList();
+        User tempUser = new User();
+        tempUser.setId("1");
+        tempUser.setUsername("tempUser");
+        userList.add(tempUser);
+        users.setUsers(userList);
+        when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(new User());
+        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
+        when(userService.getAllUsers(org.mockito.Matchers.<FilterParam[]>any())).thenReturn(users);
+        when(config.getInt("numberOfSubUsers")).thenReturn(2);
+        doNothing().when(spy).setDomainId(any(ScopeAccess.class), any(User.class));
+        doNothing().when(spy).assignProperRole(eq(httpHeaders), eq(authToken), any(ScopeAccess.class), any(User.class));
+        when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
+        doReturn(uriBuilder).when(uriBuilder).path(anyString());
+        doReturn(uri).when(uriBuilder).build();
+        Response.ResponseBuilder responseBuilder = spy.addUser(httpHeaders, uriInfo, authToken, userOS);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(201));
+    }
+
+    @Test
     public void addUser_responseCreated_returns201() throws Exception {
         UriBuilder uriBuilder = mock(UriBuilder.class);
         URI uri = new URI("");
@@ -1750,6 +1777,37 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void addUserCredential_apiKeyCredentialsUserCredentialNotMatchUserName_returns400() throws Exception {
+        String jsonBody = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<apiKeyCredentials\n" +
+                "    xmlns=\"http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0\"\n" +
+                "    username=\"jsmith\"\n" +
+                "    apiKey=\"aaaaa-bbbbb-ccccc-12345678\"/>";
+        MediaType mediaType = mock(MediaType.class);
+        user.setUsername("wrong_user");
+        when(httpHeaders.getMediaType()).thenReturn(mediaType);
+        when(mediaType.isCompatible(MediaType.APPLICATION_XML_TYPE)).thenReturn(true);
+        doReturn(user).when(spy).checkAndGetUser(anyString());
+        Response.ResponseBuilder responseBuilder = spy.addUserCredential(httpHeaders, authToken, userId, jsonBody);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
+    public void addUserCredential_apiKeyCredentialsOkResponse_returns200() throws Exception {
+        String jsonBody = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<apiKeyCredentials\n" +
+                "    xmlns=\"http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0\"\n" +
+                "    username=\"id\"\n" +
+                "    apiKey=\"aaaaa-bbbbb-ccccc-12345678\"/>";
+        MediaType mediaType = mock(MediaType.class);
+        when(httpHeaders.getMediaType()).thenReturn(mediaType);
+        when(mediaType.isCompatible(MediaType.APPLICATION_XML_TYPE)).thenReturn(true);
+        doReturn(user).when(spy).checkAndGetUser(anyString());
+        Response.ResponseBuilder responseBuilder = spy.addUserCredential(httpHeaders, authToken, userId, jsonBody);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
     public void addUserRole_callsVerifyUserAdminLevelAccess() throws Exception {
         spy.addUserRole(null, authToken, authToken, null);
         verify(spy).verifyUserAdminLevelAccess(authToken);
@@ -2060,6 +2118,23 @@ public class DefaultCloud20ServiceTest {
     public void getRole_responseOk_returns200() throws Exception {
         Response.ResponseBuilder responseBuilder = spy.getRole(httpHeaders, authToken, roleId);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void getSecretQA_getsUsername() throws Exception {
+        User user = new User();
+        user.setSecretAnswer("secret");
+        user.setSecretQuestion("question");
+        user.setUsername("username");
+        doNothing().when(spy).verifyServiceAdminLevelAccess("authToken");
+        doReturn(user).when(spy).checkAndGetUser("userId");
+        com.rackspace.docs.identity.api.ext.rax_ksqa.v1.ObjectFactory objectFactory = mock(com.rackspace.docs.identity.api.ext.rax_ksqa.v1.ObjectFactory.class);
+        when(jaxbObjectFactories.getRackspaceIdentityExtKsqaV1Factory()).thenReturn(objectFactory);
+        JAXBElement<SecretQA> jaxbElement = new JAXBElement<SecretQA>(new QName(""), SecretQA.class, secretQA);
+        when(objectFactory.createSecretQA(any(SecretQA.class))).thenReturn(jaxbElement);
+        spy.getSecretQA(null, "authToken", "userId");
+        SecretQA result = jaxbElement.getValue();
+        assertThat("username", result.getUsername(), equalTo("username"));
     }
 
     @Test
@@ -2778,6 +2853,22 @@ public class DefaultCloud20ServiceTest {
         when(userService.getUserByAuthToken(authToken)).thenReturn(user);
         Response.ResponseBuilder responseBuilder = spy.updateUser(null, authToken, userId, userOS);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(403));
+    }
+
+    @Test
+    public void updateUser_authorizationServiceAuthorizeCloudUserIsTrueIdMatch_returns200() throws Exception {
+        userOS.setEnabled(false);
+        User user1 = new User();
+        user1.setId("123");
+        userOS.setId("123");
+        user.setId("123");
+        User user2 = new User();
+        user2.setId("456");
+        doReturn(user1).when(spy).checkAndGetUser("123");
+        when(authorizationService.authorizeCloudUser(any(ScopeAccess.class))).thenReturn(true);
+        when(userService.getUserByAuthToken(authToken)).thenReturn(user).thenReturn(user2);
+        Response.ResponseBuilder responseBuilder = spy.updateUser(null, authToken, "123", userOS);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
     @Test

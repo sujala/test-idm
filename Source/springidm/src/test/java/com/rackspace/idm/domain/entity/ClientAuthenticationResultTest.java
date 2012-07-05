@@ -55,13 +55,6 @@ public class ClientAuthenticationResultTest {
     }
 
     @Test
-    public void equals_classNotSame_returnsFalse() throws Exception {
-        AuthenticationResult test = new UserAuthenticationResult(null, true);
-        boolean result = clientAuthenticationResult.equals(test);
-        assertThat("boolean", result, equalTo(false));
-    }
-
-    @Test
     public void equals_clientNullOtherClientNull_returnsTrue() throws Exception {
         AuthenticationResult test = new ClientAuthenticationResult(null, true);
         boolean result = clientAuthenticationResult.equals(test);
