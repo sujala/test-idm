@@ -1,13 +1,9 @@
-package step_definitions
+package step_definitions.cloud
 
 import com.sun.jersey.api.client.Client
+import com.sun.jersey.api.client.ClientResponse
 import org.junit.Before
 
-/**
- * User: alan.erwin
- * Date: 6/28/12
- * Time: 12:07 PM
- */
 this.metaClass.mixin(cucumber.runtime.groovy.Hooks)
 this.metaClass.mixin(cucumber.runtime.groovy.EN)
 Client client
@@ -17,7 +13,7 @@ Before() {
     client = Client.create()
     jetty_host = System.properties.get("jetty.host")
 }
-
+//Version steps
 Given(~'^a auth (\\d+).(\\d+) endpoint$') { int version, int release ->
     // Express the Regexp above with the code you wish you had
     version_path = ""
@@ -32,7 +28,6 @@ Given(~'^a auth (\\d+).(\\d+) endpoint$') { int version, int release ->
     auth_endpoint.get(String.class)
 }
 
-
 When(~'^GET version call is made$') {->
     // Express the Regexp above with the code you wish you had
   response = auth_endpoint.accept("application/xml").get(ClientResponse.class)
@@ -43,4 +38,3 @@ Then(~'^the response status should be (\\d+)$') { int status ->
    assert response.getStatus() == status
 
 }
-

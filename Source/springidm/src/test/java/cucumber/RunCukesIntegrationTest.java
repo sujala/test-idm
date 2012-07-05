@@ -11,6 +11,6 @@ import org.junit.runner.RunWith;
 */
 @RunWith(Cucumber.class)
 @Cucumber.Options(glue = ("src/test/groovy/step_definitions"), format = {"pretty", "html:target/cucumber-html-report"}, features = "src/test/resources/features")
-public class RunCukesIT {
+public class RunCukesIntegrationTest {
 
 }
