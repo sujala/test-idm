@@ -58,7 +58,7 @@ public class LdapUserRepositoryTest {
         racker.setRackerId("rackerId");
         doNothing().when(spy).addEntry(anyString(), any(Attribute[].class), any(Audit.class));
         spy.addRacker(racker);
-        verify(spy).getRackerAddAtrributes(racker);
+        verify(spy).getRackerAddAttributes(racker);
     }
 
     @Test

@@ -1072,12 +1072,13 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         }
     }
 
-    List<ClientRole> getMultipleClientRoles(String baseDN,
-                                                    Filter searchFilter) throws LDAPPersistException {
-        List<SearchResultEntry> entries = this.getMultipleEntries(baseDN,
-                SearchScope.SUB, searchFilter, ATTR_NAME);
+    List<ClientRole> getMultipleClientRoles(String baseDN, Filter searchFilter) throws LDAPPersistException {
+        List<SearchResultEntry> entries = this.getMultipleEntries(baseDN, SearchScope.SUB, searchFilter, null);
 
         List<ClientRole> roles = new ArrayList<ClientRole>();
+        if(entries==null || entries.size()==0){
+            return roles;
+        }
         for (SearchResultEntry entry : entries) {
             roles.add(getClientRole(entry));
         }

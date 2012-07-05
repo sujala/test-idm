@@ -30,8 +30,7 @@ public class AuthRepositoryLdapConfiguration {
 
     @Autowired
     private Configuration config;
-    private final Logger logger = LoggerFactory
-    .getLogger(AuthRepositoryLdapConfiguration.class);
+    private final Logger logger = LoggerFactory.getLogger(AuthRepositoryLdapConfiguration.class);
 
     public AuthRepositoryLdapConfiguration() {
         this(false);

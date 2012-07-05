@@ -48,7 +48,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         Audit audit = Audit.log(racker).add();
 
-        Attribute[] attributes = getRackerAddAtrributes(racker);
+        Attribute[] attributes = getRackerAddAttributes(racker);
 
         addEntry(userDN, attributes, audit);
 
@@ -830,7 +830,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return users;
     }
 
-    Attribute[] getRackerAddAtrributes(Racker racker) {
+    Attribute[] getRackerAddAttributes(Racker racker) {
 
         List<Attribute> atts = new ArrayList<Attribute>();
         atts.add(new Attribute(ATTR_OBJECT_CLASS, ATTR_RACKER_OBJECT_CLASS_VALUES));

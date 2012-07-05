@@ -1379,8 +1379,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 roles = this.clientService.getClientRolesByClientId(serviceId);
             }
 
-            return Response.ok(
-                    OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListFromClientRoles(roles)));
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListFromClientRoles(roles)));
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
