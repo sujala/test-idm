@@ -256,7 +256,7 @@ public abstract class LdapRepository {
             searchResult = getAppInterface().search(request);
         } catch (LDAPException ldapEx) {
             getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
-            throw new IllegalStateException(ldapEx);
+            return new ArrayList<SearchResultEntry>();
         }
 
         return searchResult.getSearchEntries();
