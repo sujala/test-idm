@@ -346,7 +346,7 @@ public class CloudMigrationService {
         return subUsers;
     }
 
-    private UserType validateUser(User user, CredentialListType credentialListType, String apiKey,
+    UserType validateUser(User user, CredentialListType credentialListType, String apiKey,
                                   String password, SecretQA secretQA, RoleList newRoles, Groups groups, List<BaseURLRef> baseUrlRefs) {
 
         UserType result = new UserType();
@@ -408,46 +408,6 @@ public class CloudMigrationService {
 
             EndpointType endpointResponse = new EndpointType();
             endpointResponse.setName(newEndpointId);
-
-            String comment = StringUtils.join(commentList, ",");
-            endpointResponse.setComment(comment);
-            endpointResponse.setValid(StringUtils.isBlank(comment));
-
-            result.getEndpoints().add(endpointResponse);
-        }
-    }
-
-    private void validateEndpoints(EndpointList endpoints, EndpointList newEndpoints, UserType result) {
-        List<String> commentList;
-
-        for (Endpoint endpoint : endpoints.getEndpoint()) {
-            commentList = new ArrayList<String>();
-
-            String newEndpointName = null;
-            String newEndpointType = null;
-            String newEndpointTenantId = null;
-            String newEndpointRegion = null;
-
-            for (Endpoint newEndpoint : newEndpoints.getEndpoint()) {
-                if (endpoint.getName().equals(newEndpoint.getName())) {
-                    newEndpointName = newEndpoint.getName();
-                    newEndpointType = newEndpoint.getType();
-                    newEndpointTenantId = newEndpoint.getTenantId();
-                    newEndpointRegion = newEndpoint.getRegion();
-                    break;
-                }
-            }
-
-            checkIfEqual(endpoint.getName(), newEndpointName, commentList, "name");
-            checkIfEqual(endpoint.getType(), newEndpointType, commentList, "type");
-            checkIfEqual(endpoint.getTenantId(), newEndpointTenantId, commentList, "id");
-            checkIfEqual(endpoint.getRegion(), newEndpointRegion, commentList, "region");
-
-            EndpointType endpointResponse = new EndpointType();
-            endpointResponse.setName(newEndpointName);
-            endpointResponse.setType(newEndpointType);
-            endpointResponse.setTenantId(newEndpointTenantId);
-            endpointResponse.setRegion(newEndpointRegion);
 
             String comment = StringUtils.join(commentList, ",");
             endpointResponse.setComment(comment);
@@ -568,7 +528,7 @@ public class CloudMigrationService {
         return password;
     }
 
-    private AuthenticateResponse authenticate(String username, String apiKey,
+    AuthenticateResponse authenticate(String username, String apiKey,
                                               String password) throws Exception {
         AuthenticateResponse authenticateResponse;
         try {
@@ -586,7 +546,7 @@ public class CloudMigrationService {
         return authenticateResponse;
     }
 
-    private boolean isUserAdmin(RoleList roles) {
+    boolean isUserAdmin(RoleList roles) {
         for (Role role : roles.getRole()) {
             if ("identity:user-admin".equalsIgnoreCase(role.getName())) {
                 return true;
@@ -688,7 +648,7 @@ public class CloudMigrationService {
         }
     }
 
-    private com.rackspace.idm.domain.entity.User addMigrationUser(User user,
+    com.rackspace.idm.domain.entity.User addMigrationUser(User user,
                                                                   int mossoId,
                                                                   String nastId,
                                                                   String apiKey,
@@ -739,7 +699,7 @@ public class CloudMigrationService {
         }
     }
 
-    private void addUserGlobalRoles(com.rackspace.idm.domain.entity.User user, RoleList roleList) {
+    void addUserGlobalRoles(com.rackspace.idm.domain.entity.User user, RoleList roleList) {
 
         List<ClientRole> clientRoles = applicationService.getAllClientRoles(null);
         for (Role role : roleList.getRole()) {
@@ -941,32 +901,16 @@ public class CloudMigrationService {
         this.client = client;
     }
 
-    public UserService getUserService() {
-        return userService;
-    }
-
     public void setUserService(UserService userService) {
         this.userService = userService;
-    }
-
-    public TenantService getTenantService() {
-        return tenantService;
     }
 
     public void setTenantService(TenantService tenantService) {
         this.tenantService = tenantService;
     }
 
-    public ApplicationService getApplicationService() {
-        return applicationService;
-    }
-
     public void setApplicationService(ApplicationService applicationService) {
         this.applicationService = applicationService;
-    }
-
-    public EndpointService getEndpointService() {
-        return endpointService;
     }
 
     public void setEndpointService(EndpointService endpointService) {
@@ -977,48 +921,24 @@ public class CloudMigrationService {
         this.cloudGroupService = cloudGroupService;
     }
 
-    public ScopeAccessService getScopeAccessService() {
-        return scopeAccessService;
-    }
-
     public void setScopeAccessService(ScopeAccessService scopeAccessService) {
         this.scopeAccessService = scopeAccessService;
-    }
-
-    public Configuration getConfig() {
-        return config;
     }
 
     public void setConfig(Configuration config) {
         this.config = config;
     }
 
-    public JAXBObjectFactories getOBJ_FACTORIES() {
-        return OBJ_FACTORIES;
-    }
-
     public void setOBJ_FACTORIES(JAXBObjectFactories OBJ_FACTORIES) {
         this.OBJ_FACTORIES = OBJ_FACTORIES;
-    }
-
-    public UserConverterCloudV20 getUserConverterCloudV20() {
-        return userConverterCloudV20;
     }
 
     public void setUserConverterCloudV20(UserConverterCloudV20 userConverterCloudV20) {
         this.userConverterCloudV20 = userConverterCloudV20;
     }
 
-    public RoleConverterCloudV20 getRoleConverterCloudV20() {
-        return roleConverterCloudV20;
-    }
-
     public void setRoleConverterCloudV20(RoleConverterCloudV20 roleConverterCloudV20) {
         this.roleConverterCloudV20 = roleConverterCloudV20;
-    }
-
-    public EndpointConverterCloudV20 getEndpointConverterCloudV20() {
-        return endpointConverterCloudV20;
     }
 
     public void setEndpointConverterCloudV20(EndpointConverterCloudV20 endpointConverterCloudV20) {
@@ -1027,5 +947,9 @@ public class CloudMigrationService {
 
     public void setCloudKsGroupBuilder(CloudKsGroupBuilder cloudKsGroupBuilder) {
         this.cloudKsGroupBuilder = cloudKsGroupBuilder;
+    }
+
+    public void setAtomHopperClient(AtomHopperClient atomHopperClient) {
+        this.atomHopperClient = atomHopperClient;
     }
 }
