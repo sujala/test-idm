@@ -116,6 +116,19 @@ public class UserPasswordCredentialsResourceTest {
     }
 
     @Test
+    public void setUserPassword_updateUserThrowsExceptionNotInstanceOfIllegalStateExpcetion_returns204() throws Exception {
+        UserPasswordCredentials userPasswordCredentials = new UserPasswordCredentials();
+        UserPassword password = new UserPassword();
+        password.setPassword("password");
+        userPasswordCredentials.setNewPassword(password);
+        EntityHolder<UserPasswordCredentials> userCredentials = new EntityHolder<UserPasswordCredentials>(userPasswordCredentials);
+        when(userService.getUserById("userId")).thenReturn(new User());
+        doThrow(new RuntimeException()).when(userService).updateUser(any(User.class), eq(false));
+        Response result = userPasswordCredentialsResource.setUserPassword("authHeader", "userId", userCredentials);
+        assertThat("response code", result.getStatus(), equalTo(204));
+    }
+
+    @Test
     public void setUserPassword_responseNoContent_returns204() throws Exception {
         UserPasswordCredentials userPasswordCredentials = new UserPasswordCredentials();
         UserPassword password = new UserPassword();

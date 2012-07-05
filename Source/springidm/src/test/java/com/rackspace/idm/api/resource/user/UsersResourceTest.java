@@ -51,7 +51,7 @@ public class UsersResourceTest {
 
     @Test
     public void getUsers_callsScopeAccessService_getAccessTokenByAuthHeader() throws Exception {
-        usersResource.getUsers("username", 1, 1, "authHeader");
+        usersResource.getUsers("username", null, null, "authHeader");
         verify(scopeAccessService).getAccessTokenByAuthHeader("authHeader");
     }
 
@@ -69,7 +69,7 @@ public class UsersResourceTest {
 
     @Test
     public void getUsers_callsUserService_getAllUsers() throws Exception {
-        usersResource.getUsers("username", 1, 1, "authHeader");
+        usersResource.getUsers("username", null, null, "authHeader");
         verify(userService).getAllUsers(any(FilterParam[].class), anyInt(), anyInt());
     }
 

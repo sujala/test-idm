@@ -32,23 +32,17 @@ public class AuthConverter {
     }
 
     public JAXBElement<com.rackspace.api.idm.v1.AuthData> toAuthDataJaxb(AuthData authData) {
-        com.rackspace.api.idm.v1.AuthData authJaxb = objectFactory
-            .createAuthData();
+        com.rackspace.api.idm.v1.AuthData authJaxb = objectFactory.createAuthData();
 
-        JAXBElement<Token> accessToken = tokenConverter.toTokenJaxb(
-            authData.getAccessToken(), authData.getAccessTokenExpiration());
+        JAXBElement<Token> accessToken = tokenConverter.toTokenJaxb(authData.getAccessToken(), authData.getAccessTokenExpiration());
 
-        JAXBElement<Token> refreshToken = tokenConverter.toTokenJaxb(
-            authData.getRefreshToken(), null);
+        JAXBElement<Token> refreshToken = tokenConverter.toTokenJaxb(authData.getRefreshToken(), null);
 
-        JAXBElement<Application> application = clientConverter
-            .toApplicationJaxbFromApplication(authData.getApplication());
+        JAXBElement<Application> application = clientConverter.toApplicationJaxbFromApplication(authData.getApplication());
 
-        JAXBElement<User> user = userConverter.toUserJaxbFromUser(authData
-            .getUser());
+        JAXBElement<User> user = userConverter.toUserJaxbFromUser(authData.getUser());
 
-        JAXBElement<Racker> racker = userConverter
-            .toRackerJaxbFromRacker(authData.getRacker());
+        JAXBElement<Racker> racker = userConverter.toRackerJaxbFromRacker(authData.getRacker());
 
         if (accessToken != null) {
             authJaxb.setAccessToken(accessToken.getValue());
@@ -65,14 +59,11 @@ public class AuthConverter {
         if (racker != null) {
             authJaxb.setRacker(racker.getValue());
         }
-        authJaxb.setIsPasswordResetOnlyToken(authData
-            .isPasswordResetOnlyToken());
+        authJaxb.setIsPasswordResetOnlyToken(authData.isPasswordResetOnlyToken());
         if (authData.getPasswordExpirationDate() != null) {
-            authJaxb.setPasswordExpirationDate(toXmlGregorianCalender(authData
-                .getPasswordExpirationDate()));
+            authJaxb.setPasswordExpirationDate(toXmlGregorianCalender(authData.getPasswordExpirationDate()));
         }
-        authJaxb.setDaysUntilPasswordExpiration(authData
-            .getDaysUntilPasswordExpiration());
+        authJaxb.setDaysUntilPasswordExpiration(authData.getDaysUntilPasswordExpiration());
 
         return objectFactory.createAuth(authJaxb);
     }

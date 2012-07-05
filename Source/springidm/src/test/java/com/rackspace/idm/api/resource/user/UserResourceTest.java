@@ -141,7 +141,9 @@ public class UserResourceTest {
     public void updateUser_callsUserService_updateUserById() throws Exception {
         com.rackspace.api.idm.v1.User user = new com.rackspace.api.idm.v1.User();
         EntityHolder<com.rackspace.api.idm.v1.User> holder = new EntityHolder<com.rackspace.api.idm.v1.User>(user);
-        when(userConverter.toUserDO(any(com.rackspace.api.idm.v1.User.class))).thenReturn(new User());
+        User testUser = new User();
+        testUser.setEnabled(true);
+        when(userConverter.toUserDO(any(com.rackspace.api.idm.v1.User.class))).thenReturn(testUser);
         when(userService.loadUser("userId")).thenReturn(new User());
         userResource.updateUser("authHeader", "userId", holder);
         verify(userService).updateUserById(any(User.class), eq(false));
