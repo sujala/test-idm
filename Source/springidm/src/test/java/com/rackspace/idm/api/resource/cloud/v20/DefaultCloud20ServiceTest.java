@@ -1025,7 +1025,6 @@ public class DefaultCloud20ServiceTest {
     public void updateUser_userCannotDisableOwnAccount_throwsBadRequest() throws Exception {
         UserForCreate userForCreate = new UserForCreate();
         userForCreate.setEnabled(false);
-        userForCreate.setId(userId);
         User user = new User();
         user.setEnabled(true);
         user.setId(userId);
@@ -1039,7 +1038,6 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void updateUser_withNoRegionAndPreviousRegionsExists_previousRegionRemains() throws Exception {
         UserForCreate userNoRegion = new UserForCreate();
-        userNoRegion.setId(userId);
         doNothing().when(spy).verifyUserAdminLevelAccess(authToken);
         doNothing().when(spy).validateUser(org.mockito.Matchers.any(org.openstack.docs.identity.api.v2.User.class));
         when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(new User());

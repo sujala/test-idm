@@ -410,7 +410,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 validatePassword(user.getPassword());
             }
             User retrievedUser = checkAndGetUser(userId);
-            if (!userId.equals(user.getId())) {
+            if (!userId.equals(user.getId()) && user.getId() != null) {
                 throw new BadRequestException("Id in url does not match id in body.");
             }
             ScopeAccess scopeAccessByAccessToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
@@ -433,7 +433,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             if (!user.isEnabled()) {
                 User caller = userService.getUserByAuthToken(authToken);
-                if (caller.getId().equals(user.getId())) {
+                if (caller.getId().equals(userId)) {
                     throw new BadRequestException("User cannot enable/disable his/her own account.");
                 }
             }
