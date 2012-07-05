@@ -1,29 +1,33 @@
 package com.rackspace.idm.api.resource.cloud.migration;
 
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.*;
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.ObjectFactory;
+import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.api.converter.cloudv20.EndpointConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.RoleConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.api.resource.cloud.MigrationClient;
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.v20.CloudKsGroupBuilder;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Group;
+import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotFoundException;
+import com.rackspacecloud.docs.auth.api.v1.BaseURLRef;
+import com.rackspacecloud.docs.auth.api.v1.BaseURLRefList;
 import com.sun.jersey.api.ConflictException;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.openstack.docs.identity.api.v2.CredentialListType;
-import org.openstack.docs.identity.api.v2.EndpointList;
-import org.openstack.docs.identity.api.v2.Role;
-import org.openstack.docs.identity.api.v2.RoleList;
+import org.openstack.docs.identity.api.v2.*;
 
 import javax.ws.rs.core.Response;
+import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeFactory;
 import java.util.ArrayList;
 import java.util.Date;
@@ -33,6 +37,7 @@ import java.util.List;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
 
 /**
  * Created by IntelliJ IDEA.
@@ -62,8 +67,8 @@ public class CloudMigrationServiceTest {
     private CloudBaseUrl cloudBaseUrl;
     private User user;
     private org.openstack.docs.identity.api.v2.User cloudUser;
-    private String adminToken;
     private CloudKsGroupBuilder cloudKsGroupBuilder;
+    AtomHopperClient atomHopperClient;
 
     @Before
     public void setUp() throws Exception {
@@ -84,6 +89,7 @@ public class CloudMigrationServiceTest {
         roleConverterCloudV20 = mock(RoleConverterCloudV20.class);
         scopeAccessService = mock(ScopeAccessService.class);
         cloudKsGroupBuilder = mock(CloudKsGroupBuilder.class);
+        atomHopperClient = mock(AtomHopperClient.class);
 
         //setting mocks
         cloudMigrationService.setApplicationService(applicationService);
@@ -99,6 +105,7 @@ public class CloudMigrationServiceTest {
         cloudMigrationService.setScopeAccessService(scopeAccessService);
         cloudMigrationService.setEndpointConverterCloudV20(endpointConverterCloudV20);
         cloudMigrationService.setCloudKsGroupBuilder(cloudKsGroupBuilder);
+        cloudMigrationService.setAtomHopperClient(atomHopperClient);
         gc.setTimeInMillis(new Date().getTime());
 
         //setting mocks for endpointconverter
@@ -151,14 +158,14 @@ public class CloudMigrationServiceTest {
         when(config.getString("migration.apikey")).thenReturn("0f97f489c848438090250d50c7e1ea88");
 
         spy = spy(cloudMigrationService);
-        adminToken = spy.getAdminToken();
+
+        doReturn(client).when(spy).getMigrationClientInstance();
     }
 
     @Test
     public void migratedBaseURLs_callsAddOrUpdateEndpointTemplates() throws Exception {
-        when(config.getString("cloudAuth20url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v2.0/");
-        when(config.getString("migration.username")).thenReturn("migration_user");
-        when(config.getString("migration.apikey")).thenReturn("0f97f489c848438090250d50c7e1ea88");
+        doNothing().when(spy).addOrUpdateEndpointTemplates(anyString());
+        doReturn("").when(spy).getAdminToken();
         spy.migrateBaseURLs();
         verify(spy).addOrUpdateEndpointTemplates(anyString());
     }
@@ -234,9 +241,7 @@ public class CloudMigrationServiceTest {
     public void migrateGroups_callsAddOrUpdateGroups() throws Exception {
         Group group = new Group();
         group.setName("group");
-        when(config.getString("cloudAuth20url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v2.0/");
-        when(config.getString("migration.username")).thenReturn("migration_user");
-        when(config.getString("migration.apikey")).thenReturn("0f97f489c848438090250d50c7e1ea88");
+        doReturn("").when(spy).getAdminToken();
         when(groupService.getGroupById(anyInt())).thenReturn(group);
         spy.migrateGroups();
         verify(spy).addOrUpdateGroups(anyString());
@@ -269,9 +274,9 @@ public class CloudMigrationServiceTest {
 
     @Test (expected = NotFoundException.class)
     public void migrateUserByUsername_client11UsernameCanNotBeFound_throwsNotFoundException() throws Exception {
-        when(config.getString("cloudAuth20url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v2.0/");
-        when(config.getString("migration.username")).thenReturn("migration_user");
-        when(config.getString("migration.apikey")).thenReturn("0f97f489c848438090250d50c7e1ea88");
+        doReturn(client).doReturn(client11).when(spy).getMigrationClientInstance();
+        doReturn("asdf").when(spy).getAdminToken();
+        when(client11.getUserTenantsBaseUrls(anyString(), anyString(), anyString())).thenThrow(new JAXBException("EXCEPTION"));
         spy.migrateUserByUsername("userNotExist", false, null);
     }
 
@@ -279,24 +284,21 @@ public class CloudMigrationServiceTest {
     public void migrateUserByUsername_clientGetUserAndUsernameCanNotBeFound_throwsNotFoundException() throws Exception {
         doReturn(client).doReturn(client11).when(spy).getMigrationClientInstance();
         doReturn("token").when(spy).getAdminToken();
-        when(config.getString("cloudAuth11url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v1.1/");
-        when(config.getString("cloudAuth20url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v2.0/");
-        when(config.getString("ga.username")).thenReturn("auth");
-        when(config.getString("ga.password")).thenReturn("auth123");
         doThrow(new NotFoundException()).when(client).getUser(anyString(), anyString());
         spy.migrateUserByUsername("cmarin2", false, null);
     }
 
     @Test (expected = ConflictException.class)
-    public void migrateUserByUsername_usernameALreadyExists_throwsConflictException() throws Exception {
-        when(config.getString("migration.username")).thenReturn("migration_user");
-        when(config.getString("migration.apikey")).thenReturn("0f97f489c848438090250d50c7e1ea88");
-        when(config.getString("cloudAuth11url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v1.1/");
-        when(config.getString("cloudAuth20url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v2.0/");
-        when(config.getString("ga.username")).thenReturn("auth");
-        when(config.getString("ga.password")).thenReturn("auth123");
+    public void migrateUserByUsername_usernameAlreadyExists_throwsConflictException() throws Exception {
+        doReturn(client).doReturn(client11).when(spy).getMigrationClientInstance();
+        when(client.getUser(anyString(), anyString())).thenReturn(new org.openstack.docs.identity.api.v2.User());
+        when(client11.getUserTenantsBaseUrls(anyString(), anyString(), anyString())).thenReturn(new com.rackspacecloud.docs.auth.api.v1.User());
+        doReturn("asdf").when(spy).getAdminToken();
         when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
         when(userService.getUser(anyString())).thenReturn(user);
+        ArrayList<String> roles = new ArrayList<String>();
+        roles.add("role1");
+        doReturn(roles).when(spy).getSubUsers(any(org.openstack.docs.identity.api.v2.User.class), anyString(), anyString(), any(RoleList.class));
         when(userService.userExistsByUsername(anyString())).thenReturn(false).thenReturn(true);
         doReturn(true).when(spy).isSubUser(any(RoleList.class));
         spy.migrateUserByUsername("cmarin2", true, "1");
@@ -304,12 +306,10 @@ public class CloudMigrationServiceTest {
 
     @Test (expected = BadRequestException.class)
     public void migrateUserByUsername_domainIdIsNullAndIsSubUser_throwsBadRequestException() throws Exception {
-        when(config.getString("migration.username")).thenReturn("migration_user");
-        when(config.getString("migration.apikey")).thenReturn("0f97f489c848438090250d50c7e1ea88");
-        when(config.getString("cloudAuth11url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v1.1/");
-        when(config.getString("cloudAuth20url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v2.0/");
-        when(config.getString("ga.username")).thenReturn("auth");
-        when(config.getString("ga.password")).thenReturn("auth123");
+        doReturn(client).doReturn(client11).when(spy).getMigrationClientInstance();
+        when(client.getUser(anyString(), anyString())).thenReturn(new org.openstack.docs.identity.api.v2.User());
+        when(client11.getUserTenantsBaseUrls(anyString(), anyString(), anyString())).thenReturn(new com.rackspacecloud.docs.auth.api.v1.User());
+        doReturn("token").when(spy).getAdminToken();
         when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
         when(userService.getUser(anyString())).thenReturn(user);
         doReturn(true).when(spy).isSubUser(any(RoleList.class));
@@ -318,28 +318,42 @@ public class CloudMigrationServiceTest {
 
     @Test
     public void migrateUserByUsername_enableIsTrue_callsUserServiceUpdateUserById() throws Exception {
-        when(config.getString("migration.username")).thenReturn("migration_user");
-        when(config.getString("migration.apikey")).thenReturn("0f97f489c848438090250d50c7e1ea88");
-        when(config.getString("cloudAuth11url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v1.1/");
-        when(config.getString("cloudAuth20url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v2.0/");
-        when(config.getString("ga.username")).thenReturn("auth");
-        when(config.getString("ga.password")).thenReturn("auth123");
+        doReturn(client).doReturn(client11).when(spy).getMigrationClientInstance();
+        when(client.getUser(anyString(), anyString())).thenReturn(new org.openstack.docs.identity.api.v2.User());
+        com.rackspacecloud.docs.auth.api.v1.User user11 = new com.rackspacecloud.docs.auth.api.v1.User();
+        user11.setMossoId(1);
+        user11.setBaseURLRefs(new BaseURLRefList());
+        when(client11.getUserTenantsBaseUrls(anyString(), anyString(), anyString())).thenReturn(user11);
+        doReturn("token").when(spy).getAdminToken();
+        doReturn(new ArrayList<String>()).when(spy).getSubUsers(any(org.openstack.docs.identity.api.v2.User.class), anyString(), anyString(), any(RoleList.class));
+        doReturn(new User()).when(spy).addMigrationUser(any(org.openstack.docs.identity.api.v2.User.class), anyInt(), anyString(), anyString(), anyString(), any(SecretQA.class), anyString());
+        doNothing().when(spy).addUserGlobalRoles(any(User.class), any(RoleList.class));
         when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
         when(userService.getUser(anyString())).thenReturn(user);
         when(userService.userExistsById(anyString())).thenReturn(true);
+        doReturn(new UserType()).when(spy).validateUser(any(org.openstack.docs.identity.api.v2.User.class), any(CredentialListType.class), anyString(), anyString(), any(SecretQA.class),any(RoleList.class), any(Groups.class), anyList());
         spy.migrateUserByUsername("cmarin2", true, "1");
-        verify(userService, times(2)).updateUserById(any(User.class), eq(false));
+        verify(userService).updateUserById(any(User.class), eq(false));
     }
 
     @Test
     public void migrateUserByUsername_CloudBaseUrlBaseUrlTypeIsNAST_succeedsWithNoExceptions() throws Exception {
+        doReturn(client).doReturn(client11).when(spy).getMigrationClientInstance();
+        when(client.getUser(anyString(), anyString())).thenReturn(new org.openstack.docs.identity.api.v2.User());
+        com.rackspacecloud.docs.auth.api.v1.User user11 = new com.rackspacecloud.docs.auth.api.v1.User();
+        user11.setMossoId(1);
+        user11.setBaseURLRefs(new BaseURLRefList());
+        user11.getBaseURLRefs().getBaseURLRef().add(new BaseURLRef());
+        when(client11.getUserTenantsBaseUrls(anyString(), anyString(), anyString())).thenReturn(user11);
+        doReturn("token").when(spy).getAdminToken();
+        doReturn(new ArrayList<String>()).when(spy).getSubUsers(any(org.openstack.docs.identity.api.v2.User.class), anyString(), anyString(), any(RoleList.class));
+        doReturn(new User()).when(spy).addMigrationUser(any(org.openstack.docs.identity.api.v2.User.class), anyInt(), anyString(), anyString(), anyString(), any(SecretQA.class), anyString());
+        doNothing().when(spy).addUserGlobalRoles(any(User.class), any(RoleList.class));
+        when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
+        when(userService.getUser(anyString())).thenReturn(user);
+        when(userService.userExistsById(anyString())).thenReturn(true);
+        doReturn(new UserType()).when(spy).validateUser(any(org.openstack.docs.identity.api.v2.User.class), any(CredentialListType.class), anyString(), anyString(), any(SecretQA.class), any(RoleList.class), any(Groups.class), anyList());
         cloudBaseUrl.setBaseUrlType("NAST");
-        when(config.getString("migration.username")).thenReturn("migration_user");
-        when(config.getString("migration.apikey")).thenReturn("0f97f489c848438090250d50c7e1ea88");
-        when(config.getString("cloudAuth11url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v1.1/");
-        when(config.getString("cloudAuth20url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v2.0/");
-        when(config.getString("ga.username")).thenReturn("auth");
-        when(config.getString("ga.password")).thenReturn("auth123");
         when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
         when(userService.getUser(anyString())).thenReturn(user);
         spy.migrateUserByUsername("cmarin2", false, "1");
@@ -347,13 +361,22 @@ public class CloudMigrationServiceTest {
 
     @Test
     public void migrateUserByUsername_CloudBaseUrlGetBaseUrlTypeIsMOSSO_succeedsWithNoExceptions() throws Exception {
+        doReturn(client).doReturn(client11).when(spy).getMigrationClientInstance();
+        when(client.getUser(anyString(), anyString())).thenReturn(new org.openstack.docs.identity.api.v2.User());
+        com.rackspacecloud.docs.auth.api.v1.User user11 = new com.rackspacecloud.docs.auth.api.v1.User();
+        user11.setMossoId(1);
+        user11.setBaseURLRefs(new BaseURLRefList());
+        user11.getBaseURLRefs().getBaseURLRef().add(new BaseURLRef());
+        when(client11.getUserTenantsBaseUrls(anyString(), anyString(), anyString())).thenReturn(user11);
+        doReturn("token").when(spy).getAdminToken();
+        doReturn(new ArrayList<String>()).when(spy).getSubUsers(any(org.openstack.docs.identity.api.v2.User.class), anyString(), anyString(), any(RoleList.class));
+        doReturn(new User()).when(spy).addMigrationUser(any(org.openstack.docs.identity.api.v2.User.class), anyInt(), anyString(), anyString(), anyString(), any(SecretQA.class), anyString());
+        doNothing().when(spy).addUserGlobalRoles(any(User.class), any(RoleList.class));
+        when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
+        when(userService.getUser(anyString())).thenReturn(user);
+        when(userService.userExistsById(anyString())).thenReturn(true);
+        doReturn(new UserType()).when(spy).validateUser(any(org.openstack.docs.identity.api.v2.User.class), any(CredentialListType.class), anyString(), anyString(), any(SecretQA.class), any(RoleList.class), any(Groups.class), anyList());
         cloudBaseUrl.setBaseUrlType("MOSSO");
-        when(config.getString("migration.username")).thenReturn("migration_user");
-        when(config.getString("migration.apikey")).thenReturn("0f97f489c848438090250d50c7e1ea88");
-        when(config.getString("cloudAuth11url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v1.1/");
-        when(config.getString("cloudAuth20url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v2.0/");
-        when(config.getString("ga.username")).thenReturn("auth");
-        when(config.getString("ga.password")).thenReturn("auth123");
         when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
         when(userService.getUser(anyString())).thenReturn(user);
         spy.migrateUserByUsername("cmarin2", false, "1");
@@ -361,29 +384,91 @@ public class CloudMigrationServiceTest {
 
     @Test
     public void migrateUserByUsername_userDoesNotExist_returnsWithNoExceptions() throws Exception {
-        when(config.getString("migration.username")).thenReturn("migration_user");
-        when(config.getString("migration.apikey")).thenReturn("0f97f489c848438090250d50c7e1ea88");
-        when(config.getString("cloudAuth11url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v1.1/");
-        when(config.getString("cloudAuth20url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v2.0/");
-        when(config.getString("ga.username")).thenReturn("auth");
-        when(config.getString("ga.password")).thenReturn("auth123");
+        doReturn(client).doReturn(client11).when(spy).getMigrationClientInstance();
+        when(client.getUser(anyString(), anyString())).thenReturn(new org.openstack.docs.identity.api.v2.User());
+        com.rackspacecloud.docs.auth.api.v1.User user11 = new com.rackspacecloud.docs.auth.api.v1.User();
+        user11.setMossoId(1);
+        user11.setBaseURLRefs(new BaseURLRefList());
+        user11.getBaseURLRefs().getBaseURLRef().add(new BaseURLRef());
+        when(client11.getUserTenantsBaseUrls(anyString(), anyString(), anyString())).thenReturn(user11);
+        doReturn("token").when(spy).getAdminToken();
+        doReturn(new ArrayList<String>()).when(spy).getSubUsers(any(org.openstack.docs.identity.api.v2.User.class), anyString(), anyString(), any(RoleList.class));
+        doReturn(new User()).when(spy).addMigrationUser(any(org.openstack.docs.identity.api.v2.User.class), anyInt(), anyString(), anyString(), anyString(), any(SecretQA.class), anyString());
+        doNothing().when(spy).addUserGlobalRoles(any(User.class), any(RoleList.class));
         when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
         when(userService.getUser(anyString())).thenReturn(user);
         when(userService.userExistsById(anyString())).thenReturn(true);
+        doReturn(new UserType()).when(spy).validateUser(any(org.openstack.docs.identity.api.v2.User.class), any(CredentialListType.class), anyString(), anyString(), any(SecretQA.class), any(RoleList.class), any(Groups.class), anyList());
         spy.migrateUserByUsername("cmarin2", false, "1");
     }
 
     @Test
     public void migrateUserByUsername_succeedsWithNoExceptions() throws Exception {
-        when(config.getString("migration.username")).thenReturn("migration_user");
-        when(config.getString("migration.apikey")).thenReturn("0f97f489c848438090250d50c7e1ea88");
-        when(config.getString("cloudAuth11url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v1.1/");
-        when(config.getString("cloudAuth20url")).thenReturn("https://auth.staging.us.ccp.rackspace.net/v2.0/");
-        when(config.getString("ga.username")).thenReturn("auth");
-        when(config.getString("ga.password")).thenReturn("auth123");
+        doReturn(client).doReturn(client11).when(spy).getMigrationClientInstance();
+        when(client.getUser(anyString(), anyString())).thenReturn(new org.openstack.docs.identity.api.v2.User());
+        com.rackspacecloud.docs.auth.api.v1.User user11 = new com.rackspacecloud.docs.auth.api.v1.User();
+        user11.setMossoId(1);
+        user11.setBaseURLRefs(new BaseURLRefList());
+        user11.getBaseURLRefs().getBaseURLRef().add(new BaseURLRef());
+        when(client11.getUserTenantsBaseUrls(anyString(), anyString(), anyString())).thenReturn(user11);
+        doReturn("token").when(spy).getAdminToken();
+        doReturn(new ArrayList<String>()).when(spy).getSubUsers(any(org.openstack.docs.identity.api.v2.User.class), anyString(), anyString(), any(RoleList.class));
+        doReturn(new User()).when(spy).addMigrationUser(any(org.openstack.docs.identity.api.v2.User.class), anyInt(), anyString(), anyString(), anyString(), any(SecretQA.class), anyString());
+        doNothing().when(spy).addUserGlobalRoles(any(User.class), any(RoleList.class));
         when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
         when(userService.getUser(anyString())).thenReturn(user);
+        when(userService.userExistsById(anyString())).thenReturn(true);
+        doReturn(new UserType()).when(spy).validateUser(any(org.openstack.docs.identity.api.v2.User.class), any(CredentialListType.class), anyString(), anyString(), any(SecretQA.class), any(RoleList.class), any(Groups.class), anyList());
         spy.migrateUserByUsername("cmarin2", false, "1");
+    }
+
+    @Test( expected = ConflictException.class)
+    public void migrateUserByUsername_throwsConflictExceptions() throws Exception {
+        doThrow(new ConflictException()).when(spy).migrateUserByUsername("user", false, null);
+        spy.migrateUserByUsername("user", false);
+    }
+
+    @Test
+    public void migrateUserByUsername_NonClinflictException_UnmigratesUser() throws Exception {
+        doThrow(new Exception()).when(spy).migrateUserByUsername("user", false, null);
+        try {
+            spy.migrateUserByUsername("user", false);
+        } catch (Exception e) {}
+        verify(spy).unmigrateUserByUsername("user");
+    }
+
+    @Test
+    public void migrateUserByUsername_getsUserFromUserService() throws Exception {
+        doReturn("asdf").when(spy).getAdminToken();
+        when(userService.getUser(anyString())).thenReturn(new User());
+        MigrateUserResponseType toBeReturned = new MigrateUserResponseType();
+        toBeReturned.getUsers().add(new UserType());
+        doReturn(toBeReturned).when(spy).migrateUserByUsername("user", false, null);
+        spy.migrateUserByUsername("user", false);
+        verify(userService).getUser(anyString());
+    }
+
+    @Test
+    public void migrateUserByUsername_callsAtomHopper_postAsync() throws Exception {
+        doReturn("asdf").when(spy).getAdminToken();
+        when(userService.getUser(anyString())).thenReturn(new User());
+        MigrateUserResponseType toBeReturned = new MigrateUserResponseType();
+        toBeReturned.getUsers().add(new UserType());
+        doReturn(toBeReturned).when(spy).migrateUserByUsername("user", false, null);
+        spy.migrateUserByUsername("user", false);
+        verify(atomHopperClient).asyncPost(any(User.class), anyString(), anyString(), anyString());
+    }
+
+    @Test
+    public void migrateUserByUsername_withNoUserCredentials_GeneratesRandomPassword() throws Exception {
+        doReturn("asdf").when(spy).getAdminToken();
+        when(userService.getUser(anyString())).thenReturn(new User());
+        MigrateUserResponseType toBeReturned = new MigrateUserResponseType();
+        toBeReturned.getUsers().add(new UserType());
+        doReturn(toBeReturned).when(spy).migrateUserByUsername("user", false, null);
+        doThrow(new RuntimeException()).when(spy).getApiKey(any(CredentialListType.class));
+        spy.migrateUserByUsername("user", false);
+        verify(spy, never()).getPassword(any(CredentialListType.class));
     }
 
     @Test
@@ -449,7 +534,6 @@ public class CloudMigrationServiceTest {
         role.setName("identity:default");
         roles.add(role);
         spy.setClient(client);
-        doReturn(adminToken).when(spy).getAdminToken();
         when(client.getUserCredentials(anyString(), anyString())).thenReturn(new CredentialListType());
         doReturn("").when(spy).getPassword(any(CredentialListType.class));
         doReturn("").when(spy).getApiKey(any(CredentialListType.class));
@@ -475,5 +559,25 @@ public class CloudMigrationServiceTest {
         when(groupService.getGroups("", 0)).thenReturn(groups);
         Response.ResponseBuilder result = spy.getGroups();
         assertThat("response code", result.build().getStatus(), equalTo(200));
+    }
+
+    @Test(expected = ConflictException.class)
+    public void getSubUsers_withDisabledUserAdmin_throwsConflictException() throws Exception {
+        doReturn(true).when(spy).isUserAdmin(any(RoleList.class));
+        org.openstack.docs.identity.api.v2.User user = mock(org.openstack.docs.identity.api.v2.User.class);
+        when(user.isEnabled()).thenReturn(false);
+        spy.getSubUsers(user, "", "", new RoleList());
+    }
+
+    @Test(expected = ConflictException.class)
+    public void getSubUsers_clientException_throwsConflictException() throws Exception {
+        doReturn(true).when(spy).isUserAdmin(any(RoleList.class));
+        org.openstack.docs.identity.api.v2.User user = mock(org.openstack.docs.identity.api.v2.User.class);
+        when(user.isEnabled()).thenReturn(true);
+        AuthenticateResponse authResponse = new AuthenticateResponse();
+        authResponse.setToken(new Token());
+        doReturn(authResponse).when(spy).authenticate(anyString(), anyString(), anyString());
+        when(client.getUsers(anyString())).thenThrow(new JAXBException("EXCEPTION"));
+        spy.getSubUsers(user, "", "", new RoleList());
     }
 }
