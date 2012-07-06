@@ -63,7 +63,8 @@ public class Cloud20VersionResource {
         JAXBElement<VersionChoice> versionChoice = (JAXBElement<VersionChoice>) unmarshaller.unmarshal(new StringReader(responseXml));
         return Response.ok(versionChoice).build();
     }
-
+    // Methods are currently not being used
+    /*
     public Response getInternalCloud20VersionInfo() {
         final String responseXml =
                 cloudContractDescriptionBuilder.buildInternalVersionPage(CloudContractDescriptionBuilder.VERSION_2_0, uriInfo);
@@ -73,7 +74,7 @@ public class Cloud20VersionResource {
     private String getCloudAuthV20Url() {
         return config.getString("cloudAuth20url");
     }
-
+    */
     @POST
     @Path("tokens")
     public Response authenticate(@Context HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest)
@@ -701,7 +702,7 @@ public class Cloud20VersionResource {
         }
     }
 
-    private Cloud20Service getCloud20Service() {
+    Cloud20Service getCloud20Service() {
         if (config.getBoolean("useCloudAuth")) {
             return delegateCloud20Service;
         } else {
