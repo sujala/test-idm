@@ -5,6 +5,9 @@ import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.exception.BaseUrlConflictException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.unboundid.ldap.sdk.*;
+import com.unboundid.ldap.sdk.LDAPException;
+import com.unboundid.ldap.sdk.controls.ServerSideSortRequestControl;
+import com.unboundid.ldap.sdk.migrate.ldapjdk.*;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Test;
@@ -13,10 +16,11 @@ import org.mockito.ArgumentCaptor;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
 
 /**
  * Created with IntelliJ IDEA.
@@ -30,10 +34,12 @@ public class LdapEndpointRepositoryTest {
     LdapEndpointRepository spy;
     LDAPInterface ldapInterface;
     EndPoints endPoints;
+    LdapConnectionPools connPools = mock(LdapConnectionPools.class);
+    Configuration config = mock(Configuration.class);
 
     @Before
     public void setUp() throws Exception {
-        ldapEndpointRepository = new LdapEndpointRepository(mock(LdapConnectionPools.class), mock(Configuration.class));
+        ldapEndpointRepository = new LdapEndpointRepository(connPools, config);
         ldapInterface = mock(LDAPInterface.class);
 
         //setup fields
@@ -47,6 +53,128 @@ public class LdapEndpointRepositoryTest {
         String s = endPoints.toString();
         spy = spy(ldapEndpointRepository);
         doReturn(ldapInterface).when(spy).getAppInterface();
+    }
+
+
+    @Test
+    public void getAppConnPool_callsConnectionPoolMethod() throws Exception {
+        ldapEndpointRepository.getAppConnPool();
+        verify(connPools).getAppConnPool();
+    }
+
+    @Test
+    public void getAppInterface_callsConnectionPoolMethod() throws Exception {
+        ldapEndpointRepository.getAppInterface();
+        verify(connPools).getAppConnPool();
+    }
+
+    @Test
+    public void getBindConnPool_callsConnectionPool() throws Exception {
+        ldapEndpointRepository.getBindConnPool();
+        verify(connPools).getBindConnPool();
+    }
+
+    @Test
+    public void deleteEntryAndSubtree_setsFilterAttributeToTop() throws Exception {
+        Audit audit = mock(Audit.class);
+        ArgumentCaptor<Filter> argumentCaptor = ArgumentCaptor.forClass(Filter.class);
+        SearchResult searchResult = new SearchResult(123,ResultCode.SUCCESS,"woohoo","matchedDN",new String[0],new ArrayList<SearchResultEntry>(),null,0,0,new Control[0]);
+        doReturn(ldapInterface).when(spy).getAppInterface();
+        doReturn(searchResult).when(ldapInterface).search(eq("dn"),eq(SearchScope.ONE),argumentCaptor.capture(),eq(LdapEndpointRepository.ATTR_NO_ATTRIBUTES));
+        spy.deleteEntryAndSubtree("dn",audit);
+        assertThat("sets filter attribute",argumentCaptor.getValue().getAssertionValue(),equalTo("top"));
+        assertThat("sets attribute name",argumentCaptor.getValue().getAttributeName(),equalTo("objectClass"));
+    }
+
+    @Test
+    public void deleteEntryAndSubtree_SearchResultsExist_callsDeleteEntryAndSubtree() throws Exception {
+        Audit audit = mock(Audit.class);
+        ArrayList<SearchResultEntry> arrayList = new ArrayList<SearchResultEntry>();
+        arrayList.add(new SearchResultEntry("dn",new Attribute[0]));
+        SearchResult searchResult = new SearchResult(123,ResultCode.SUCCESS,"woohoo","matchedDN",new String[0],arrayList,null,0,0,new Control[0]);
+
+        doReturn(ldapInterface).when(spy).getAppInterface();
+        doReturn(searchResult).when(ldapInterface).search(eq("dn"), eq(SearchScope.ONE), any(Filter.class), eq(LdapEndpointRepository.ATTR_NO_ATTRIBUTES));
+        doCallRealMethod().doNothing().when(spy).deleteEntryAndSubtree("dn",audit);
+
+        spy.deleteEntryAndSubtree("dn",audit);
+        verify(spy,times(2)).deleteEntryAndSubtree("dn",audit);
+    }
+
+    @Test
+    public void deleteEntryAndSubtree_callsDelete() throws Exception {
+        Audit audit = mock(Audit.class);
+        SearchResult searchResult = new SearchResult(123,ResultCode.SUCCESS,"woohoo","matchedDN",new String[0],new ArrayList<SearchResultEntry>(),null,0,0,new Control[0]);
+
+        doReturn(ldapInterface).when(spy).getAppInterface();
+        doReturn(searchResult).when(ldapInterface).search(eq("dn"), eq(SearchScope.ONE), any(Filter.class), eq(LdapEndpointRepository.ATTR_NO_ATTRIBUTES));
+
+        spy.deleteEntryAndSubtree("dn",audit);
+        verify(ldapInterface).delete("dn");
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void deleteEntryAndSubtree_throwsLDAPException_auditFailsAndThrowsIllegalStateException() throws Exception {
+        Audit audit = mock(Audit.class);
+        SearchResult searchResult = new SearchResult(123,ResultCode.SUCCESS,"woohoo","matchedDN",new String[0],new ArrayList<SearchResultEntry>(),null,0,0,new Control[0]);
+
+        doReturn(ldapInterface).when(spy).getAppInterface();
+        doReturn(searchResult).when(ldapInterface).search(eq("dn"), eq(SearchScope.ONE), any(Filter.class), eq(LdapEndpointRepository.ATTR_NO_ATTRIBUTES));
+        doThrow(new LDAPException(ResultCode.INVALID_DN_SYNTAX)).when(ldapInterface).delete("dn");
+
+        spy.deleteEntryAndSubtree("dn",audit);
+        verify(audit).fail();
+    }
+
+    @Test
+    public void getMultipleEntriesThreeParameters_doesNotThrowException_returnsSearchResultEntryList() throws Exception {
+        Filter filter = Filter.createEqualityFilter("objectClass","filter");
+        List<SearchResultEntry> searchResultList = new ArrayList<SearchResultEntry>();
+        SearchResult searchResult = new SearchResult(123,ResultCode.SUCCESS,"woohoo","matchedDN",new String[0],searchResultList,null,0,0,new Control[0]);
+        doReturn(ldapInterface).when(spy).getAppInterface();
+        doReturn(searchResult).when(ldapInterface).search(any(SearchRequest.class));
+        assertThat("returns search result entry list", spy.getMultipleEntries("dn", SearchScope.SUB, filter), equalTo(searchResultList));
+    }
+
+    @Test
+    public void getMultipleEntriesFourParameters_doesNotThrowException_returnsSearchResultEntryList() throws Exception {
+        Filter filter = Filter.createEqualityFilter("objectClass","filter");
+        List<SearchResultEntry> searchResultList = new ArrayList<SearchResultEntry>();
+        SearchResult searchResult = new SearchResult(123,ResultCode.SUCCESS,"woohoo","matchedDN",new String[0],searchResultList,null,0,0,new Control[0]);
+        doReturn(ldapInterface).when(spy).getAppInterface();
+        doReturn(searchResult).when(ldapInterface).search(any(SearchRequest.class));
+        assertThat("returns search result entry list", spy.getMultipleEntries("dn", SearchScope.SUB, "sortAttribute", filter), equalTo(searchResultList));
+    }
+
+    @Test
+    public void getMultipleEntriesFourParameters_setsRequestControls() throws Exception {
+        ArgumentCaptor<SearchRequest> argumentCaptor = ArgumentCaptor.forClass(SearchRequest.class);
+        Filter filter = Filter.createEqualityFilter("objectClass","filter");
+        List<SearchResultEntry> searchResultList = new ArrayList<SearchResultEntry>();
+        SearchResult searchResult = new SearchResult(123,ResultCode.SUCCESS,"woohoo","matchedDN",new String[0],searchResultList,null,0,0,new Control[0]);
+        doReturn(ldapInterface).when(spy).getAppInterface();
+        doReturn(searchResult).when(ldapInterface).search(argumentCaptor.capture());
+        spy.getMultipleEntries("dn", SearchScope.SUB, "sortAttribute", filter);
+        ServerSideSortRequestControl control = (ServerSideSortRequestControl) argumentCaptor.getValue().getControls()[0];
+        assertThat("returns search result entry list",control.getSortKeys()[0].getAttributeName(), equalTo("sortAttribute"));
+    }
+
+    @Test
+    public void getMultipleEntriesFourParameters_throwsException_returnsEmptyArrayList() throws Exception {
+        Filter filter = Filter.createEqualityFilter("objectClass","filter");
+        doReturn(ldapInterface).when(spy).getAppInterface();
+        doThrow(new LDAPSearchException(ResultCode.INVALID_DN_SYNTAX,"testing")).when(ldapInterface).search(any(SearchRequest.class));
+        List<SearchResultEntry> list = spy.getMultipleEntries("dn", SearchScope.SUB, "sortAttribute", filter);
+        assertThat("returns empty list", list.size(), equalTo(0));
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void getSingleEntry_throwsLDAPException_throwsIllegalStateException() throws Exception {
+        Filter searchFilter = Filter.createEqualityFilter("attributeName","assertionValue");
+        doReturn(ldapInterface).when(spy).getAppInterface();
+        String[] attributes = {"test"};
+        doThrow(new LDAPSearchException(ResultCode.INVALID_DN_SYNTAX,"testing")).when(ldapInterface).searchForEntry("baseDN", SearchScope.SUB, searchFilter,attributes);
+        spy.getSingleEntry("baseDN", SearchScope.SUB, searchFilter, attributes);
     }
 
     @Test (expected = IllegalArgumentException.class)
