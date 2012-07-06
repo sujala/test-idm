@@ -32,7 +32,7 @@ public class FileSystemApiDocRepository implements ApiDocDao {
         }
     }
 
-    private String convertStreamToString(InputStream is) throws IOException {
+    String convertStreamToString(InputStream is) throws IOException {
         if (is != null) {
             Writer writer = new StringWriter();
 
