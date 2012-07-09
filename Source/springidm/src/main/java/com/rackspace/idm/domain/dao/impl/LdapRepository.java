@@ -385,7 +385,7 @@ public abstract class LdapRepository {
         return String.valueOf(nextId);
     }
 
-    private static class QueryPair {
+    static class QueryPair {
         private final String comparer;
         private final String attribute;
         private final String value;

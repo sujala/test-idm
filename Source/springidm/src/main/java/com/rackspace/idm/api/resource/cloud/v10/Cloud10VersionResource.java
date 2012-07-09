@@ -90,7 +90,7 @@ public class Cloud10VersionResource {
         @HeaderParam(HEADER_AUTH_KEY) String key) throws IOException {
 
         Response.ResponseBuilder builder = Response.noContent();
-        builder.header("Vary", "Accept, Accept-Encoding, X-Auth-Token, X-Auth-Key, X-Storage-User, X-Storage-Pass");
+        builder.header("vary", "Accept, Accept-Encoding, X-Auth-Token, X-Auth-Key, X-Storage-User, X-Storage-Pass");
 
         if(StringUtils.isBlank(username)){
             return builder.status(HttpServletResponse.SC_UNAUTHORIZED).entity("Bad username or password").build();
