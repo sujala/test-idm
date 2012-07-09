@@ -841,6 +841,74 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void authenticate_withPasswordCredentialsWithInvalidTenant_returns401() throws Exception {
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
+        passwordCredentialsRequiredUsername.setUsername("test_user");
+        passwordCredentialsRequiredUsername.setPassword("123");
+        JAXBElement<? extends PasswordCredentialsRequiredUsername> credentialType = new JAXBElement(QName.valueOf("foo"), PasswordCredentialsRequiredUsername.class, passwordCredentialsRequiredUsername);
+        authenticationRequest.setToken(null);
+        authenticationRequest.setCredential(credentialType);
+        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
+        Token token = new Token();
+        token.setId("token");
+        UserForAuthenticateResponse userForAuthenticateResponse = new UserForAuthenticateResponse();
+        RoleList roleList = mock(RoleList.class);
+        userForAuthenticateResponse.setRoles(roleList);
+        authenticateResponse.setToken(token);
+        authenticateResponse.setUser(userForAuthenticateResponse);
+        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
+        tokenForAuthenticationRequest.setId("tokenId");
+        authenticationRequest.setTenantId("tenantId");
+        UserScopeAccess scopeAccess = new UserScopeAccess();
+        scopeAccess.setAccessTokenExp(new Date(5000, 1, 1));
+        scopeAccess.setAccessTokenString("foo");
+        when(userService.getUser("test_user")).thenReturn(user);
+        when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
+        doReturn(new User()).when(spy).checkAndGetUser(anyString());
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(tenantService.hasTenantAccess(any(ScopeAccess.class), eq("tenantId"))).thenReturn(false);
+        when(authConverterCloudV20.toAuthenticationResponse(any(User.class), any(ScopeAccess.class), any(List.class), any(List.class))).thenReturn(authenticateResponse);
+        doNothing().when(spy).verifyTokenHasTenantAccessForAuthenticate(anyString(), anyString());
+        Response.ResponseBuilder responseBuilder = spy.authenticate(null, authenticationRequest);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(401));
+    }
+
+    @Test
+    public void authenticate_withApiKeyCredentialsWithInvalidTenant_returns401() throws Exception {
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        ApiKeyCredentials keyCredentials = new ApiKeyCredentials();
+        keyCredentials.setUsername("test_user");
+        keyCredentials.setApiKey("123");
+        JAXBElement<? extends PasswordCredentialsRequiredUsername> credentialType = new JAXBElement(QName.valueOf("foo"), ApiKeyCredentials.class, keyCredentials);
+        authenticationRequest.setToken(null);
+        authenticationRequest.setCredential(credentialType);
+        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
+        Token token = new Token();
+        token.setId("token");
+        UserForAuthenticateResponse userForAuthenticateResponse = new UserForAuthenticateResponse();
+        RoleList roleList = mock(RoleList.class);
+        userForAuthenticateResponse.setRoles(roleList);
+        authenticateResponse.setToken(token);
+        authenticateResponse.setUser(userForAuthenticateResponse);
+        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
+        tokenForAuthenticationRequest.setId("tokenId");
+        authenticationRequest.setTenantId("tenantId");
+        UserScopeAccess scopeAccess = new UserScopeAccess();
+        scopeAccess.setAccessTokenExp(new Date(5000, 1, 1));
+        scopeAccess.setAccessTokenString("foo");
+        when(userService.getUser("test_user")).thenReturn(user);
+        when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
+        doReturn(new User()).when(spy).checkAndGetUser(anyString());
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(tenantService.hasTenantAccess(any(ScopeAccess.class), eq("tenantId"))).thenReturn(false);
+        when(authConverterCloudV20.toAuthenticationResponse(any(User.class), any(ScopeAccess.class), any(List.class), any(List.class))).thenReturn(authenticateResponse);
+        doNothing().when(spy).verifyTokenHasTenantAccessForAuthenticate(anyString(), anyString());
+        Response.ResponseBuilder responseBuilder = spy.authenticate(null, authenticationRequest);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(401));
+    }
+
+    @Test
     public void authenticate_withTenantName_callsTenantService_hasTenantAccess() throws Exception {
         AuthenticationRequest authenticationRequest = new AuthenticationRequest();
         TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();

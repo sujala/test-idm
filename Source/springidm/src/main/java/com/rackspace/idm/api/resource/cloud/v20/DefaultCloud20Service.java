@@ -628,10 +628,9 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             User user = null;
             UserScopeAccess usa = null;
-
-            if (authenticationRequest.getCredential() == null && authenticationRequest.getToken() == null)
+            if (authenticationRequest.getCredential() == null && authenticationRequest.getToken() == null){
                 throw new BadRequestException("Invalid request body: unable to parse Auth data. Please review XML or JSON formatting.");
-
+            }
             if (authenticationRequest.getToken() != null) {
                 if (StringUtils.isBlank(authenticationRequest.getToken().getId())) {
                     throw new BadRequestException("Invalid Token Id");
@@ -645,6 +644,16 @@ public class DefaultCloud20Service implements Cloud20Service {
                 usa = (UserScopeAccess) sa;
                 scopeAccessService.updateExpiredUserScopeAccess(usa);
                 user = this.checkAndGetUser(usa.getUserRsId());
+                if (authenticationRequest.getTenantName() != null && !tenantService.hasTenantAccess(usa, authenticationRequest.getTenantName())) {
+                    String errMsg = "Token doesn't belong to Tenant with Id/Name: '" + authenticationRequest.getTenantName() + "'";
+                    logger.warn(errMsg);
+                    throw new NotFoundException(errMsg);
+                }
+                if (authenticationRequest.getTenantId() != null && !tenantService.hasTenantAccess(usa, authenticationRequest.getTenantId())) {
+                    String errMsg = "Token doesn't belong to Tenant with Id/Name: '" + authenticationRequest.getTenantId() + "'";
+                    logger.warn(errMsg);
+                    throw new NotFoundException(errMsg);
+                }
             } else if (authenticationRequest.getCredential().getDeclaredType().isAssignableFrom(PasswordCredentialsRequiredUsername.class)) {
                 PasswordCredentialsRequiredUsername creds = (PasswordCredentialsRequiredUsername) authenticationRequest.getCredential().getValue();
                 //TODO username validation breaks validate call
@@ -662,38 +671,33 @@ public class DefaultCloud20Service implements Cloud20Service {
                 user = checkAndGetUserByName(username);
                 usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(username, key, getCloudAuthClientId());
                 //Check if authentication is within 12hrs of experation if so create a new one
-
             }
-            List<TenantRole> roles = tenantService.getTenantRolesForScopeAccess(usa);
             if (authenticationRequest.getTenantName() != null && !tenantService.hasTenantAccess(usa, authenticationRequest.getTenantName())) {
-                String errMsg = "Token doesn't belong to Tenant with Id/Name: '" + authenticationRequest.getTenantName() + "'";
+                String errMsg = "Tenant with Name/Id: '"+authenticationRequest.getTenantName()+"' is not valid for User '"+user.getUsername()+"' (id: '"+user.getId()+"')";
                 logger.warn(errMsg);
-                throw new NotFoundException(errMsg);
+                throw new NotAuthenticatedException(errMsg);
             }
             if (authenticationRequest.getTenantId() != null && !tenantService.hasTenantAccess(usa, authenticationRequest.getTenantId())) {
-                String errMsg = "Token doesn't belong to Tenant with Id/Name: '" + authenticationRequest.getTenantId() + "'";
+                String errMsg = "Tenant with Name/Id: '"+authenticationRequest.getTenantId()+"' is not valid for User '"+user.getUsername()+"' (id: '"+user.getId()+"')";
                 logger.warn(errMsg);
-                throw new NotFoundException(errMsg);
+                throw new NotAuthenticatedException(errMsg);
             }
             List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
-
             // Remove Admin URLs if non admin token
             if (!this.authorizationService.authorizeCloudIdentityAdmin(usa)) {
                 stripEndpoints(endpoints);
             }
+            List<TenantRole> roles = tenantService.getTenantRolesForScopeAccess(usa);
             AuthenticateResponse auth = authConverterCloudV20.toAuthenticationResponse(user, usa, roles, endpoints);
             //This just verifies that the token has access to the tenant. It does not create a token with ONLY access to a specific tenant.
             String tenantId = authenticationRequest.getTenantId();
             try {
-
                 if (tenantId != null) {
                     if (tenantId.isEmpty()) {
                         throw new BadRequestException("Invalid tenantId, not allowed to be blank.");
                     }
                     verifyTokenHasTenantAccessForAuthenticate(auth.getToken().getId(), tenantId);
                 }
-
-
             } catch (ForbiddenException ex) {
                 String errMsg = String.format("Tenant with Name/Id: '%s', is not valid for User '%s' (id: '%s')", tenantId, user.getUsername(), user.getId());
                 logger.warn(errMsg);
@@ -706,7 +710,6 @@ public class DefaultCloud20Service implements Cloud20Service {
                     r.setServiceId(null);
                 }
             }
-
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createAccess(auth));
         } catch (Exception ex) {
             return exceptionResponse(ex);
