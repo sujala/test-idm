@@ -709,6 +709,14 @@ public class Cloud20VersionResource {
             return defaultCloud20Service;
         }
     }
+
+    public void setDefaultCloud20Service(DefaultCloud20Service defaultCloud20Service) {
+        this.defaultCloud20Service = defaultCloud20Service;
+    }
+
+    public void setDelegateCloud20Service(DelegateCloud20Service delegateCloud20Service) {
+        this.delegateCloud20Service = delegateCloud20Service;
+    }
 }
 
 
