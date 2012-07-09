@@ -35,6 +35,9 @@ public class UserResource extends ParentResource {
 	private final AuthorizationService authorizationService;
 	private final UserGlobalRolesResource globalRolesResource;
 
+    @Autowired
+    private UserValidatorFoundation userValidator;
+
 	@Autowired
 	public UserResource(UserApplicationsResource userApplicationsResource,
 			ScopeAccessService scopeAccessService,
@@ -112,6 +115,9 @@ public class UserResource extends ParentResource {
         validateRequestBody(holder);
 
 		com.rackspace.api.idm.v1.User inputUser = holder.getEntity();
+
+        userValidator.validateUsername(inputUser.getUsername());
+
 		User updatedUser = userConverter.toUserDO(inputUser);
 
         if(updatedUser.isDisabled()){
@@ -189,4 +195,8 @@ public class UserResource extends ParentResource {
 	public UserGlobalRolesResource getGlobalRolesResource() {
 		return globalRolesResource;
 	}
+
+    public void setUserValidator(UserValidatorFoundation userValidator) {
+        this.userValidator = userValidator;
+    }
 }

@@ -310,7 +310,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
         try {
             authenticateCloudAdminUser(request);
-            userValidator.validateUserName(user.getId());
+            userValidator.validateUsername(user.getId());
 
             if (StringUtils.isBlank(user.getId())) {
                 String errorMsg = "Expecting username";
@@ -845,7 +845,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         try {
             authenticateCloudAdminUser(request);
             userValidator.validate(user);
-            userValidator.validateUserName(user.getId());
+            userValidator.validateUsername(user.getId());
 
             if(user.getId().equals(""))
                 throw new BadRequestException("User Id can not be null.");

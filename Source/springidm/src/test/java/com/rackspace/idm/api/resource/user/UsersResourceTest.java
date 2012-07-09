@@ -37,6 +37,7 @@ public class UsersResourceTest {
     private UserConverter userConverter;
     private AuthorizationService authorizationService;
     private ScopeAccessService scopeAccessService;
+    private UserValidatorFoundation userValidator;
 
     @Before
     public void setUp() throws Exception {
@@ -46,7 +47,9 @@ public class UsersResourceTest {
         userConverter = mock(UserConverter.class);
         authorizationService = mock(AuthorizationService.class);
         scopeAccessService = mock(ScopeAccessService.class);
+        userValidator = mock(UserValidatorFoundation.class);
         usersResource = new UsersResource(singleUserResource, userService, inputValidator,  userConverter, authorizationService, scopeAccessService);
+        usersResource.setUserValidator(userValidator);
     }
 
     @Test

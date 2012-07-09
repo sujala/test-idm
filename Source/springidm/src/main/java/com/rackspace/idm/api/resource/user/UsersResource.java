@@ -31,6 +31,9 @@ public class UsersResource extends ParentResource {
     private final AuthorizationService authorizationService;
     private final ScopeAccessService scopeAccessService;
 
+    @Autowired
+    private UserValidatorFoundation userValidator;
+
     @Autowired(required = true)
     public UsersResource(
     	UserResource userResource,UserService userService,
@@ -84,6 +87,8 @@ public class UsersResource extends ParentResource {
         @HeaderParam("X-Auth-Token") String authHeader,
         com.rackspace.api.idm.v1.User user) {
 
+        userValidator.validateUsername(user.getUsername());
+
         ScopeAccess scopeAccess = scopeAccessService.getAccessTokenByAuthHeader(authHeader);
         authorizationService.authorizeIdmSuperAdminOrRackspaceClient(scopeAccess);
 
@@ -103,5 +108,9 @@ public class UsersResource extends ParentResource {
     @Path("{userId}")
     public UserResource getUserResource() {
         return userResource;
+    }
+
+    public void setUserValidator(UserValidatorFoundation userValidator) {
+        this.userValidator = userValidator;
     }
 }
