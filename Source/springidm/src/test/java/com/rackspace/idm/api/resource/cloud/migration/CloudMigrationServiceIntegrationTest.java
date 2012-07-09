@@ -431,13 +431,13 @@ public class CloudMigrationServiceIntegrationTest {
 
     @Test (expected = NotFoundException.class)
     public void unmigrateUserByUsername_userIsNull_throwsNotFoundException() throws Exception {
-        spy.unmigrateUserByUsername(null, true);
+        spy.unmigrateUserByUsername(null);
     }
 
     @Test (expected = NotFoundException.class)
     public void unmigrateUserByUsername_userGetInMigrationIsNull_throwsNotFoundException() throws Exception {
         when(userService.getUser("username")).thenReturn(new User());
-        spy.unmigrateUserByUsername("username", true);
+        spy.unmigrateUserByUsername("username");
     }
 
     @Ignore // Ignored due to code being removed...
@@ -455,7 +455,7 @@ public class CloudMigrationServiceIntegrationTest {
         doReturn("").when(spy).getApiKey(any(CredentialListType.class));
         when(client.getRolesForUser(anyString(), anyString())).thenReturn(roleList);
         when(userService.getUser("username")).thenReturn(user);
-        spy.unmigrateUserByUsername("username", true);
+        spy.unmigrateUserByUsername("username");
     }
 
     @Test
