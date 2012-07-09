@@ -293,7 +293,7 @@ public class CloudMigrationService {
             newUser.setInMigration(false);
             userService.updateUserById(newUser, false);
 
-            UserType userResponse = validateUser(user, credentialListType, apiKey, cloudPassword, secretQA, roles, groups, user11.getBaseURLRefs().getBaseURLRef());
+            UserType userResponse = validateUser(user, apiKey, cloudPassword, secretQA, roles, groups, user11.getBaseURLRefs().getBaseURLRef());
             MigrateUserResponseType result = new MigrateUserResponseType();
 
             if(subUsers != null) {
@@ -335,7 +335,7 @@ public class CloudMigrationService {
 
             if (users != null) {
                 for (User childUser : users.getUser()) {
-                    if (user.getUsername().equalsIgnoreCase(childUser.getUsername())) {
+                    if (StringUtils.equalsIgnoreCase(user.getUsername(), childUser.getUsername())) {
                         continue;
                     }
                     subUsers.add(childUser.getUsername());
@@ -346,8 +346,7 @@ public class CloudMigrationService {
         return subUsers;
     }
 
-    UserType validateUser(User user, CredentialListType credentialListType, String apiKey,
-                                  String password, SecretQA secretQA, RoleList newRoles, Groups groups, List<BaseURLRef> baseUrlRefs) {
+    UserType validateUser(User user, String apiKey, String password, SecretQA secretQA, RoleList newRoles, Groups groups, List<BaseURLRef> baseUrlRefs) {
 
         UserType result = new UserType();
         com.rackspace.idm.domain.entity.User newUser = userService.getUser(user.getUsername());
@@ -390,7 +389,7 @@ public class CloudMigrationService {
         return result;
     }
 
-    private void validateBaseUrlRefs(List<BaseURLRef> baseUrlRefs, EndpointList newEndpoints, UserType result) {
+    void validateBaseUrlRefs(List<BaseURLRef> baseUrlRefs, EndpointList newEndpoints, UserType result) {
         List<String> commentList;
 
         for (BaseURLRef baseUrlRef : baseUrlRefs) {
@@ -417,7 +416,7 @@ public class CloudMigrationService {
         }
     }
 
-    private void validateGroups(Groups groups, List<com.rackspace.idm.domain.entity.Group> newGroups, UserType user) {
+    void validateGroups(Groups groups, List<com.rackspace.idm.domain.entity.Group> newGroups, UserType user) {
         List<String> commentList;
 
         for (Group group : groups.getGroup()) {
@@ -449,7 +448,7 @@ public class CloudMigrationService {
         }
     }
 
-    private void validateRoles(List<TenantRole> roles, RoleList newRoles, UserType user) {
+    void validateRoles(List<TenantRole> roles, RoleList newRoles, UserType user) {
         List<String> commentList;
 
         for (Role role : newRoles.getRole()) {
@@ -458,8 +457,8 @@ public class CloudMigrationService {
             String newRoleId = null;
             for (TenantRole newRole : roles) {
                 if (role.getName().equals(newRole.getName())) {
-                    newRoleName = role.getName();
-                    newRoleId = role.getId();
+                    newRoleName = newRole.getName();
+                    newRoleId = newRole.getRoleRsId();
                     break;
                 }
             }

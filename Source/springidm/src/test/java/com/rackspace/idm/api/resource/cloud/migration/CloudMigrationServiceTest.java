@@ -1,7 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.migration;
 
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.*;
-import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.ObjectFactory;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.api.converter.cloudv20.EndpointConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.RoleConverterCloudV20;
@@ -22,7 +21,6 @@ import com.rackspacecloud.docs.auth.api.v1.BaseURLRefList;
 import com.sun.jersey.api.ConflictException;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.openstack.docs.identity.api.v2.*;
 
@@ -35,6 +33,7 @@ import java.util.GregorianCalendar;
 import java.util.List;
 
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.any;
@@ -331,7 +330,7 @@ public class CloudMigrationServiceTest {
         when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
         when(userService.getUser(anyString())).thenReturn(user);
         when(userService.userExistsById(anyString())).thenReturn(true);
-        doReturn(new UserType()).when(spy).validateUser(any(org.openstack.docs.identity.api.v2.User.class), any(CredentialListType.class), anyString(), anyString(), any(SecretQA.class),any(RoleList.class), any(Groups.class), anyList());
+        doReturn(new UserType()).when(spy).validateUser(any(org.openstack.docs.identity.api.v2.User.class), anyString(), anyString(), any(SecretQA.class),any(RoleList.class), any(Groups.class), anyList());
         spy.migrateUserByUsername("cmarin2", true, "1");
         verify(userService).updateUserById(any(User.class), eq(false));
     }
@@ -352,7 +351,7 @@ public class CloudMigrationServiceTest {
         when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
         when(userService.getUser(anyString())).thenReturn(user);
         when(userService.userExistsById(anyString())).thenReturn(true);
-        doReturn(new UserType()).when(spy).validateUser(any(org.openstack.docs.identity.api.v2.User.class), any(CredentialListType.class), anyString(), anyString(), any(SecretQA.class), any(RoleList.class), any(Groups.class), anyList());
+        doReturn(new UserType()).when(spy).validateUser(any(org.openstack.docs.identity.api.v2.User.class), anyString(), anyString(), any(SecretQA.class), any(RoleList.class), any(Groups.class), anyList());
         cloudBaseUrl.setBaseUrlType("NAST");
         when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
         when(userService.getUser(anyString())).thenReturn(user);
@@ -375,7 +374,7 @@ public class CloudMigrationServiceTest {
         when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
         when(userService.getUser(anyString())).thenReturn(user);
         when(userService.userExistsById(anyString())).thenReturn(true);
-        doReturn(new UserType()).when(spy).validateUser(any(org.openstack.docs.identity.api.v2.User.class), any(CredentialListType.class), anyString(), anyString(), any(SecretQA.class), any(RoleList.class), any(Groups.class), anyList());
+        doReturn(new UserType()).when(spy).validateUser(any(org.openstack.docs.identity.api.v2.User.class), anyString(), anyString(), any(SecretQA.class), any(RoleList.class), any(Groups.class), anyList());
         cloudBaseUrl.setBaseUrlType("MOSSO");
         when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
         when(userService.getUser(anyString())).thenReturn(user);
@@ -398,7 +397,7 @@ public class CloudMigrationServiceTest {
         when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
         when(userService.getUser(anyString())).thenReturn(user);
         when(userService.userExistsById(anyString())).thenReturn(true);
-        doReturn(new UserType()).when(spy).validateUser(any(org.openstack.docs.identity.api.v2.User.class), any(CredentialListType.class), anyString(), anyString(), any(SecretQA.class), any(RoleList.class), any(Groups.class), anyList());
+        doReturn(new UserType()).when(spy).validateUser(any(org.openstack.docs.identity.api.v2.User.class), anyString(), anyString(), any(SecretQA.class), any(RoleList.class), any(Groups.class), anyList());
         spy.migrateUserByUsername("cmarin2", false, "1");
     }
 
@@ -418,7 +417,7 @@ public class CloudMigrationServiceTest {
         when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
         when(userService.getUser(anyString())).thenReturn(user);
         when(userService.userExistsById(anyString())).thenReturn(true);
-        doReturn(new UserType()).when(spy).validateUser(any(org.openstack.docs.identity.api.v2.User.class), any(CredentialListType.class), anyString(), anyString(), any(SecretQA.class), any(RoleList.class), any(Groups.class), anyList());
+        doReturn(new UserType()).when(spy).validateUser(any(org.openstack.docs.identity.api.v2.User.class), anyString(), anyString(), any(SecretQA.class), any(RoleList.class), any(Groups.class), anyList());
         spy.migrateUserByUsername("cmarin2", false, "1");
     }
 
@@ -525,23 +524,6 @@ public class CloudMigrationServiceTest {
         spy.unmigrateUserByUsername("username", true);
     }
 
-    @Ignore // Ignored due to code being removed...
-    @Test (expected = BadRequestException.class)
-    public void unmigrateUserByUsername_isRootUserAndIsSubUser_throwsBadRequest() throws Exception {
-        RoleList roleList = new RoleList();
-        List<Role> roles = roleList.getRole();
-        Role role = new Role();
-        role.setName("identity:default");
-        roles.add(role);
-        spy.setClient(client);
-        when(client.getUserCredentials(anyString(), anyString())).thenReturn(new CredentialListType());
-        doReturn("").when(spy).getPassword(any(CredentialListType.class));
-        doReturn("").when(spy).getApiKey(any(CredentialListType.class));
-        when(client.getRolesForUser(anyString(), anyString())).thenReturn(roleList);
-        when(userService.getUser("username")).thenReturn(user);
-        spy.unmigrateUserByUsername("username", true);
-    }
-
     @Test
     public void getGroups_callsCloudKsGroupBuilder_reponseOk() throws Exception {
         Group group = new Group();
@@ -564,20 +546,329 @@ public class CloudMigrationServiceTest {
     @Test(expected = ConflictException.class)
     public void getSubUsers_withDisabledUserAdmin_throwsConflictException() throws Exception {
         doReturn(true).when(spy).isUserAdmin(any(RoleList.class));
-        org.openstack.docs.identity.api.v2.User user = mock(org.openstack.docs.identity.api.v2.User.class);
-        when(user.isEnabled()).thenReturn(false);
+        org.openstack.docs.identity.api.v2.User user = new org.openstack.docs.identity.api.v2.User();
+        user.setEnabled(false);
         spy.getSubUsers(user, "", "", new RoleList());
     }
 
     @Test(expected = ConflictException.class)
     public void getSubUsers_clientException_throwsConflictException() throws Exception {
         doReturn(true).when(spy).isUserAdmin(any(RoleList.class));
-        org.openstack.docs.identity.api.v2.User user = mock(org.openstack.docs.identity.api.v2.User.class);
-        when(user.isEnabled()).thenReturn(true);
+        org.openstack.docs.identity.api.v2.User user = new org.openstack.docs.identity.api.v2.User();
+        user.setEnabled(true);
         AuthenticateResponse authResponse = new AuthenticateResponse();
         authResponse.setToken(new Token());
         doReturn(authResponse).when(spy).authenticate(anyString(), anyString(), anyString());
         when(client.getUsers(anyString())).thenThrow(new JAXBException("EXCEPTION"));
         spy.getSubUsers(user, "", "", new RoleList());
+    }
+
+    @Test
+    public void getSubUsers_withNullUsers_returnsEmptyArray() throws Exception {
+        doReturn(true).when(spy).isUserAdmin(any(RoleList.class));
+        org.openstack.docs.identity.api.v2.User user = new org.openstack.docs.identity.api.v2.User();
+        user.setEnabled(true);
+        AuthenticateResponse authResponse = new AuthenticateResponse();
+        authResponse.setToken(new Token());
+        doReturn(authResponse).when(spy).authenticate(anyString(), anyString(), anyString());
+        when(client.getUsers(anyString())).thenReturn(null);
+        List<String> subUsers = spy.getSubUsers(user, "", "", new RoleList());
+        assertThat("sub users", subUsers.size(), equalTo(0));
+    }
+
+    @Test
+    public void getSubUsers_withUsers_returnsArrayOfSubUsers() throws Exception {
+        doReturn(true).when(spy).isUserAdmin(any(RoleList.class));
+        org.openstack.docs.identity.api.v2.User user = new org.openstack.docs.identity.api.v2.User();
+        user.setEnabled(true);
+        AuthenticateResponse authResponse = new AuthenticateResponse();
+        authResponse.setToken(new Token());
+        doReturn(authResponse).when(spy).authenticate(anyString(), anyString(), anyString());
+        UserList userList = new UserList();
+        when(client.getUsers(anyString())).thenReturn(userList);
+        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
+        user1.setUsername("someUserName");
+        userList.getUser().add(user1);
+        List<String> subUsers = spy.getSubUsers(user, "", "", new RoleList());
+        assertThat("sub users", subUsers.size(), equalTo(1));
+    }
+
+    @Test
+    public void getSubUsers_withUsers_returnsArrayOfSubUsers_withoutAdminUser() throws Exception {
+        doReturn(true).when(spy).isUserAdmin(any(RoleList.class));
+        org.openstack.docs.identity.api.v2.User user = new org.openstack.docs.identity.api.v2.User();
+        user.setEnabled(true);
+        user.setUsername("adminUser");
+        AuthenticateResponse authResponse = new AuthenticateResponse();
+        authResponse.setToken(new Token());
+        doReturn(authResponse).when(spy).authenticate(anyString(), anyString(), anyString());
+        UserList userList = new UserList();
+        when(client.getUsers(anyString())).thenReturn(userList);
+        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
+        user1.setUsername("someUserName");
+        org.openstack.docs.identity.api.v2.User user2 = new org.openstack.docs.identity.api.v2.User();
+        user1.setUsername("adminUser");
+        userList.getUser().add(user1);
+        userList.getUser().add(user2);
+        List<String> subUsers = spy.getSubUsers(user, "", "", new RoleList());
+        assertThat("sub users", subUsers.size(), equalTo(1));
+    }
+
+    @Test
+    public void getSubUsers_withNonAdminUser_returnsEmptyList() throws Exception {
+        doReturn(false).when(spy).isUserAdmin(any(RoleList.class));
+        List<String> subUsers = spy.getSubUsers(null, "", "", new RoleList());
+        assertThat("sub users", subUsers.size(), equalTo(0));
+    }
+
+    @Test
+    public void validateBaseUrlRefs_withBaseUrls_withCorrospondingEndpoint_setsValidEndpoint() throws Exception {
+        ArrayList<BaseURLRef> baseUrlRefs = new ArrayList<BaseURLRef>();
+        BaseURLRef baseURLRef = new BaseURLRef();
+        baseURLRef.setId(12345);
+        baseUrlRefs.add(baseURLRef);
+        EndpointList newEndpoints = new EndpointList();
+        Endpoint endpoint = new Endpoint();
+        endpoint.setId(12345);
+        newEndpoints.getEndpoint().add(endpoint);
+        UserType result = new UserType();
+        spy.validateBaseUrlRefs(baseUrlRefs, newEndpoints, result);
+        assertThat("result endpoints", result.getEndpoints().get(0).isValid(), equalTo(true));
+    }
+
+    @Test
+    public void validateBaseUrlRefs_withBaseUrls_withOutCorrospondingEndpoint_setsInvalidEndpoint() throws Exception {
+        ArrayList<BaseURLRef> baseUrlRefs = new ArrayList<BaseURLRef>();
+        BaseURLRef baseURLRef = new BaseURLRef();
+        baseURLRef.setId(123456);
+        baseUrlRefs.add(baseURLRef);
+        EndpointList newEndpoints = new EndpointList();
+        Endpoint endpoint = new Endpoint();
+        endpoint.setId(12345);
+        newEndpoints.getEndpoint().add(endpoint);
+        UserType result = new UserType();
+        spy.validateBaseUrlRefs(baseUrlRefs, newEndpoints, result);
+        assertThat("result endpoints", result.getEndpoints().get(0).isValid(), equalTo(false));
+        assertThat("result endpoints", result.getEndpoints().get(0).getName(), nullValue());
+    }
+
+    @Test
+    public void validateBaseUrlRefs_withBaseUrls_withEmptyEndpointList_returnsInvalidEndpointForEachBaseUrl() throws Exception {
+        ArrayList<BaseURLRef> baseUrlRefs = new ArrayList<BaseURLRef>();
+        BaseURLRef baseURLRef = new BaseURLRef();
+        BaseURLRef baseURLRef2 = new BaseURLRef();
+        baseURLRef.setId(123456);
+        baseURLRef2.setId(123457);
+        baseUrlRefs.add(baseURLRef);
+        baseUrlRefs.add(baseURLRef2);
+        EndpointList newEndpoints = new EndpointList();
+        UserType result = new UserType();
+        spy.validateBaseUrlRefs(baseUrlRefs, newEndpoints, result);
+        assertThat("result endpoints", result.getEndpoints().size(), equalTo(2));
+        assertThat("result endpoints", result.getEndpoints().get(1).isValid(), equalTo(false));
+    }
+
+    @Test
+    public void validateBaseUrlRefs_withNoBaseUrls_returnsEmptyEndpointList() throws Exception {
+        ArrayList<BaseURLRef> baseUrlRefs = new ArrayList<BaseURLRef>();
+        EndpointList newEndpoints = new EndpointList();
+        UserType result = new UserType();
+        spy.validateBaseUrlRefs(baseUrlRefs, newEndpoints, result);
+        assertThat("result endpoints", result.getEndpoints().size(), equalTo(0));
+    }
+
+    @Test
+    public void validateUser_withValidUser_setsIsValidToTrue() throws Exception {
+        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
+        user1.setId("userId");
+        user1.setUsername("userName");
+        user1.setEmail("userEmail");
+        User user2 = new User();
+        user2.setId("userId");
+        user2.setUsername("userName");
+        user2.setEmail("userEmail");
+        user2.setApiKey("apiKey");
+        user2.setPassword("password");
+        user2.setSecretAnswer("secretAnswer");
+        user2.setSecretQuestion("secretQuestion");
+        when(userService.getUser(anyString())).thenReturn(user2);
+        SecretQA secretQA = new SecretQA();
+        secretQA.setAnswer("secretAnswer");
+        secretQA.setQuestion("secretQuestion");
+        doNothing().when(spy).validateRoles(anyList(), any(RoleList.class), any(UserType.class));
+        doNothing().when(spy).validateGroups(any(Groups.class), anyList(), any(UserType.class));
+        doReturn(null).when(spy).getEndpointsForUser(anyString());
+        doNothing().when(spy).validateBaseUrlRefs(anyList(), any(EndpointList.class), any(UserType.class));
+        UserType userType = spy.validateUser(user1, "apiKey", "password", secretQA, null, null, null);
+        assertThat("userType result", userType.isValid(), equalTo(true));
+    }
+
+    @Test
+    public void validateUser_withDifferingUsers_setsValidToFalse() throws Exception {
+        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
+        user1.setId("asfwefawefa");
+        user1.setUsername("userName");
+        user1.setEmail("userEmail");
+        User user2 = new User();
+        user2.setId("userId");
+        user2.setUsername("userName");
+        user2.setEmail("userEmail");
+        user2.setApiKey("apiKey");
+        user2.setPassword("password");
+        user2.setSecretAnswer("secretAnswer");
+        user2.setSecretQuestion("secretQuestion");
+        when(userService.getUser(anyString())).thenReturn(user2);
+        SecretQA secretQA = new SecretQA();
+        secretQA.setAnswer("secretAnswer");
+        secretQA.setQuestion("secretQuestion");
+        doNothing().when(spy).validateRoles(anyList(), any(RoleList.class), any(UserType.class));
+        doNothing().when(spy).validateGroups(any(Groups.class), anyList(), any(UserType.class));
+        doReturn(null).when(spy).getEndpointsForUser(anyString());
+        doNothing().when(spy).validateBaseUrlRefs(anyList(), any(EndpointList.class), any(UserType.class));
+        UserType userType = spy.validateUser(user1, "apiKey", "password", secretQA, null, null, null);
+        assertThat("userType result", userType.isValid(), equalTo(false));
+    }
+
+    @Test
+    public void validateUser_callsOtherValidates() throws Exception {
+        when(userService.getUser(anyString())).thenReturn(new User());
+        SecretQA secretQA = new SecretQA();
+        doNothing().when(spy).validateRoles(anyList(), any(RoleList.class), any(UserType.class));
+        doNothing().when(spy).validateGroups(any(Groups.class), anyList(), any(UserType.class));
+        doReturn(null).when(spy).getEndpointsForUser(anyString());
+        doNothing().when(spy).validateBaseUrlRefs(anyList(), any(EndpointList.class), any(UserType.class));
+
+        UserType userType = spy.validateUser(new org.openstack.docs.identity.api.v2.User(), "apiKey", "password", secretQA, null, null, null);
+        verify(spy).validateRoles(anyList(), any(RoleList.class), eq(userType));
+        verify(spy).validateGroups(any(Groups.class), anyList(), eq(userType));
+        verify(spy).validateBaseUrlRefs(anyList(), any(EndpointList.class), eq(userType));
+        assertThat("userType result", userType.isValid(), equalTo(false));
+    }
+
+    @Test
+    public void validateGroups_withNewGroupSameAsOld_returnsValidGroupResponse() throws Exception {
+        Groups groups = new Groups();
+        com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group();
+        groups.getGroup().add(group);
+        ArrayList<Group> newGroups = new ArrayList<Group>();
+        Group newGroup = new Group();
+        newGroups.add(newGroup);
+        group.setName("groupName");
+        group.setId("123456");
+        newGroup.setName("groupName");
+        newGroup.setGroupId(123456);
+
+        UserType result = new UserType();
+        spy.validateGroups(groups, newGroups, result);
+        assertThat("userType result", result.getGroups().get(0).isValid(), equalTo(true));
+    }
+
+    @Test
+    public void validateGroups_withNewGroupDifferentFromOld_returnsNotValidGroupResponse() throws Exception {
+        Groups groups = new Groups();
+        com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group();
+        groups.getGroup().add(group);
+        ArrayList<Group> newGroups = new ArrayList<Group>();
+        Group newGroup = new Group();
+        newGroups.add(newGroup);
+        group.setName("groupName");
+        group.setId("12345");
+        newGroup.setName("groupName");
+        newGroup.setGroupId(123456);
+
+        UserType result = new UserType();
+        spy.validateGroups(groups, newGroups, result);
+        assertThat("userType result", result.getGroups().get(0).isValid(), equalTo(false));
+    }
+
+    @Test
+    public void validateGroups_withNoNewGroups_returnsNotValidGroupResponseForEachOldGroup() throws Exception {
+        Groups groups = new Groups();
+        com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group();
+        com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group2 = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group();
+        groups.getGroup().add(group);
+        groups.getGroup().add(group2);
+        group.setName("groupName");
+        group.setId("12345");
+        group.setName("groupName2");
+        group.setId("123456");
+
+        ArrayList<Group> newGroups = new ArrayList<Group>();
+
+
+        UserType result = new UserType();
+        spy.validateGroups(groups, newGroups, result);
+        assertThat("userType result", result.getGroups().get(0).isValid(), equalTo(false));
+        assertThat("userType result", result.getGroups().size(), equalTo(2));
+    }
+
+
+
+    @Test
+    public void validateGroups_withNoOldGroups_returnsEmptyList() throws Exception {
+        Groups groups = new Groups();
+        ArrayList<Group> newGroups = new ArrayList<Group>();
+
+
+        UserType result = new UserType();
+        spy.validateGroups(groups, newGroups, result);
+        assertThat("userType result", result.getGroups().size(), equalTo(0));
+    }
+
+    @Test
+    public void validateRoles_withValidRole_setsIsValidTrue() throws Exception {
+        RoleList newRoles = new RoleList();
+        Role role = new Role();
+        role.setName("roleName");
+        role.setId("roleId");
+        newRoles.getRole().add(role);
+        ArrayList<TenantRole> roles = new ArrayList<TenantRole>();
+        TenantRole tenantRole = new TenantRole();
+        tenantRole.setName("roleName");
+        tenantRole.setRoleRsId("roleId");
+        roles.add(tenantRole);
+
+
+        UserType userType = new UserType();
+        spy.validateRoles(roles, newRoles, userType);
+        assertThat("usertype result", userType.getRoles().get(0).isValid(), equalTo(true));
+    }
+
+    @Test
+    public void validateRoles_withDifferentRoleName_returnsNotValidRole() throws Exception {
+        RoleList newRoles = new RoleList();
+        Role role = new Role();
+        role.setName("roleName");
+        role.setId("roleId");
+        newRoles.getRole().add(role);
+        ArrayList<TenantRole> roles = new ArrayList<TenantRole>();
+        TenantRole tenantRole = new TenantRole();
+        tenantRole.setName("roleName2");
+        tenantRole.setRoleRsId("roleId");
+        roles.add(tenantRole);
+
+
+        UserType userType = new UserType();
+        spy.validateRoles(roles, newRoles, userType);
+        assertThat("usertype result", userType.getRoles().get(0).isValid(), equalTo(false));
+    }
+
+    @Test
+    public void validateRoles_withDifferentRoleId_returnsNotValidRole() throws Exception {
+        RoleList newRoles = new RoleList();
+        Role role = new Role();
+        role.setName("roleName");
+        role.setId("roleId");
+        newRoles.getRole().add(role);
+        ArrayList<TenantRole> roles = new ArrayList<TenantRole>();
+        TenantRole tenantRole = new TenantRole();
+        tenantRole.setName("roleName");
+        tenantRole.setRoleRsId("roleId2");
+        roles.add(tenantRole);
+
+
+        UserType userType = new UserType();
+        spy.validateRoles(roles, newRoles, userType);
+        assertThat("usertype result", userType.getRoles().get(0).isValid(), equalTo(false));
     }
 }
