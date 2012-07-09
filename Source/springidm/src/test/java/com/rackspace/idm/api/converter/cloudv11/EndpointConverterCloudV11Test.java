@@ -13,6 +13,7 @@ import java.util.List;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -207,10 +208,11 @@ public class EndpointConverterCloudV11Test {
         urlList.add(cloudBaseUrl);
         openstackEndpoint.setBaseUrls(urlList);
         endpointList.add(openstackEndpoint);
+        when(config.getString(anyString())).thenReturn("http://identity.api.rackspacecloud.com/v1.1/%s");
         BaseURLRefList refList = endpointConverterCloudV11.openstackToBaseUrlRefs(endpointList);
         assertThat("id", refList.getBaseURLRef().get(0).getId(), equalTo(1));
         assertThat("v1default", refList.getBaseURLRef().get(0).isV1Default(), equalTo(true));
-        assertThat("reference string", refList.getBaseURLRef().get(0).getHref(), equalTo(cloudBaseUrl.getPublicUrl()));
+        assertThat("reference string", refList.getBaseURLRef().get(0).getHref(), equalTo("http://identity.api.rackspacecloud.com/v1.1/1"));
     }
 
     @Test
@@ -226,10 +228,11 @@ public class EndpointConverterCloudV11Test {
         List<CloudBaseUrl> urlList = new ArrayList<CloudBaseUrl>();
         urlList.add(cloudBaseUrl);
         openstackEndpoint.setBaseUrls(urlList);
+        when(config.getString(anyString())).thenReturn("http://identity.api.rackspacecloud.com/v1.1/%s");
         List<BaseURLRef> refList = endpointConverterCloudV11.toBaseUrlRef(openstackEndpoint);
         assertThat("id", refList.get(0).getId(), equalTo(1));
         assertThat("v1deafult", refList.get(0).isV1Default(), equalTo(true));
-        assertThat("reference string", refList.get(0).getHref(), equalTo(cloudBaseUrl.getPublicUrl()));
+        assertThat("reference string", refList.get(0).getHref(), equalTo("http://identity.api.rackspacecloud.com/v1.1/1"));
     }
 
     @Test

@@ -107,12 +107,10 @@ public class EndpointConverterCloudV11 {
         }
     	
     	for (CloudBaseUrl baseUrl : endpoint.getBaseUrls()) {
-    		
             BaseURLRef baseUrlRef = of.createBaseURLRef();
             baseUrlRef.setId(baseUrl.getBaseUrlId());
             baseUrlRef.setV1Default(baseUrl.getDef());
-            baseUrlRef.setHref(String.format(baseUrl.getPublicUrl(), baseUrl.getBaseUrlId()));
-            
+            baseUrlRef.setHref(String.format(getBaseUrlReferenceString(), baseUrl.getBaseUrlId()));
             result.add(baseUrlRef);
     	}
     	
