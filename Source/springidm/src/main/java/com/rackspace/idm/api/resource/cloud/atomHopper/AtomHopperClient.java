@@ -7,8 +7,15 @@ import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.conn.scheme.Scheme;
+import org.apache.http.conn.scheme.SchemeRegistry;
+import org.apache.http.conn.ssl.SSLSocketFactory;
+import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.conn.SingleClientConnManager;
+import org.apache.http.params.BasicHttpParams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +27,8 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import java.io.*;
 import java.net.URISyntaxException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 
 
 /**
@@ -41,7 +50,24 @@ public class AtomHopperClient {
 
 
     public AtomHopperClient() {
-        httpClient = new DefaultHttpClient();
+        try {
+            SSLSocketFactory sslsf = new SSLSocketFactory(new TrustStrategy() {
+                @Override
+                public boolean isTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+                    return true;
+                }
+            });
+            Scheme httpsScheme = new Scheme("https", 443, sslsf);
+            SchemeRegistry schemeRegistry = new SchemeRegistry();
+            schemeRegistry.register(httpsScheme);
+
+            ClientConnectionManager cm = new SingleClientConnManager(new BasicHttpParams(), schemeRegistry);
+            httpClient = new DefaultHttpClient(cm);
+        } catch (Exception e) {
+            logger.error("unabled to setup SSL trust manager: {}", e.getMessage());
+            httpClient = new DefaultHttpClient();
+        }
+
     }
 
     /* Created new thread to run the atom hopper post call to make it
