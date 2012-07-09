@@ -1,15 +1,12 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import gherkin.deps.net.iharder.Base64;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
 /**

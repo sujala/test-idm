@@ -42,6 +42,7 @@ public class UserResourceTest {
     private AuthorizationService authorizationService;
     private UserGlobalRolesResource userGlobalRolesResource;
     private InputValidator inputValidator;
+    private UserValidatorFoundation userValidator;
 
     @Before
     public void setUp() throws Exception {
@@ -56,8 +57,10 @@ public class UserResourceTest {
         authorizationService = mock(AuthorizationService.class);
         userGlobalRolesResource = mock(UserGlobalRolesResource.class);
         inputValidator = mock(InputValidator.class);
+        userValidator = mock(UserValidatorFoundation.class);
         userResource = new UserResource(userApplicationsResource, scopeAccessService, userPasswordCredentialsResource, userTenantsResource,
                 userSecretResource, userDelegatedRefreshTokensResource, userService, userConverter, inputValidator, authorizationService, userGlobalRolesResource);
+        userResource.setUserValidator(userValidator);
     }
 
     @Test

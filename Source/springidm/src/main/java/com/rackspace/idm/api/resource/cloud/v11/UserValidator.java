@@ -34,7 +34,7 @@ public class UserValidator {
         }
     }
 
-    public void validateUserName(String username){
+    public void validateUsername(String username){
         Pattern alphaNumberic = Pattern.compile("[a-zA-z0-9]*");
         if(!alphaNumberic.matcher(username).matches()){
             throw new BadRequestException("Username has invalid characters; only alphanumeric characters are allowed.");
