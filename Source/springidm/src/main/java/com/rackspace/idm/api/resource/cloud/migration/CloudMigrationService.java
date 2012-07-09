@@ -485,7 +485,7 @@ public class CloudMigrationService {
         String defaultOldValue = StringUtils.defaultString(oldValue);
         String defaultNewValue = StringUtils.defaultString(newValue);
 
-        if (!defaultOldValue.equals(defaultNewValue)) {
+        if (!StringUtils.equals(defaultOldValue, defaultNewValue)) {
             if (mask)
                 commentList.add(id + ":*****");
             else
@@ -499,12 +499,12 @@ public class CloudMigrationService {
         try {
             List<JAXBElement<? extends CredentialType>> creds = credentialListType.getCredential();
             for (JAXBElement<? extends CredentialType> cred : creds) {
-                if (cred.getDeclaredType().isAssignableFrom(ApiKeyCredentials.class)) {
+                if (cred.getValue() instanceof ApiKeyCredentials) {
                     ApiKeyCredentials apiKeyCredentials = (ApiKeyCredentials) cred.getValue();
                     apiKey = apiKeyCredentials.getApiKey();
                 }
             }
-        } catch (Exception cex) {
+        } catch (Exception cex) {   // catches null pointer exceptions.
 
         }
         return apiKey;
@@ -516,12 +516,12 @@ public class CloudMigrationService {
         try {
             List<JAXBElement<? extends CredentialType>> creds = credentialListType.getCredential();
             for (JAXBElement<? extends CredentialType> cred : creds) {
-                if (cred.getDeclaredType().isAssignableFrom(PasswordCredentialsRequiredUsername.class)) {
+                if (cred.getValue() instanceof PasswordCredentialsRequiredUsername) {
                     PasswordCredentialsRequiredUsername passwordCredentials = (PasswordCredentialsRequiredUsername) cred.getValue();
                     password = passwordCredentials.getPassword();
                 }
             }
-        } catch (Exception cex) {
+        } catch (Exception cex) {  // catches null pointer exceptions.
 
         }
         return password;
@@ -531,9 +531,9 @@ public class CloudMigrationService {
                                               String password) throws Exception {
         AuthenticateResponse authenticateResponse;
         try {
-            if (!apiKey.equals(""))
+            if (!StringUtils.isEmpty(apiKey))
                 authenticateResponse = client.authenticateWithApiKey(username, apiKey);
-            else if (!password.equals(""))
+            else if (!StringUtils.isEmpty(password))
                 authenticateResponse = client.authenticateWithPassword(username, password);
             else {
                 throw new BadRequestException("Failed migration with incomplete credential information.");
@@ -574,10 +574,6 @@ public class CloudMigrationService {
     }
 
     public void unmigrateUserByUsername(String username) throws Exception {
-        unmigrateUserByUsername(username, true);
-    }
-
-    void unmigrateUserByUsername(String username, boolean rootUser) throws Exception {
         com.rackspace.idm.domain.entity.User user = userService.getUser(username);
         if (user == null)
             throw new NotFoundException("User not found.");
@@ -599,50 +595,16 @@ public class CloudMigrationService {
         
         for (com.rackspace.idm.domain.entity.User u : users.getUsers())
             userService.deleteUser(u.getUsername());
-        
-        /*
-        String adminToken = getAdminToken();
-
-        User cloudUser;
-        try {
-            cloudUser = client.getUser(adminToken, username);
-        } catch (Exception ex) {
-            throw new ConflictException("useradmin with username " + username + " is disabled.");
-        }
-
-        CredentialListType credentialListType = client.getUserCredentials(adminToken, user.getId());
-        String apiKey = getApiKey(credentialListType);
-        String password = getPassword(credentialListType);
-
-        RoleList roles = client.getRolesForUser(adminToken, user.getId());
-
-        if (rootUser && isSubUser(roles)) {
-            throw new BadRequestException("Migration is not allowed for subusers");
-        }
-
-        List<String> subUsers = getSubUsers(cloudUser, apiKey, password, roles);
-
-        for (String subUser : subUsers) {
-            try {
-                unmigrateUserByUsername(subUser, false);
-            } catch (Exception e) {
-            }
-        }
-
-        userService.deleteUser(username);
-        */
     }
 
     String getAdminToken() throws URISyntaxException, HttpException, IOException, JAXBException {
         try {
-            client = getMigrationClientInstance();
             client.setCloud20Host(config.getString("cloudAuth20url"));
             String adminUsername = config.getString("migration.username");
             String adminApiKey = config.getString("migration.apikey");
             AuthenticateResponse authenticateResponse = client.authenticateWithApiKey(adminUsername, adminApiKey);
             return authenticateResponse.getToken().getId();
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             throw new NotAuthenticatedException("Admin credentials are invalid");
         }
     }
@@ -661,13 +623,15 @@ public class CloudMigrationService {
         newUser.setMossoId(mossoId);
         newUser.setNastId(nastId);
 
-        if (!user.getEmail().equals(""))
+        if (!StringUtils.isEmpty(user.getEmail()))
             newUser.setEmail(user.getEmail());
 
         newUser.setApiKey(apiKey);
         newUser.setPassword(password);
         newUser.setEnabled(user.isEnabled());
-        newUser.setCreated(new DateTime(user.getCreated().toGregorianCalendar().getTime()));
+
+        if(user.getCreated() != null)
+            newUser.setCreated(new DateTime(user.getCreated().toGregorianCalendar().getTime()));
 
         if (user.getUpdated() != null)
             newUser.setUpdated(new DateTime(user.getUpdated().toGregorianCalendar().getTime()));
@@ -688,7 +652,7 @@ public class CloudMigrationService {
         return newUser;
     }
 
-    private void addUserGroups(String userId, Groups groups) throws Exception {
+    void addUserGroups(String userId, Groups groups) throws Exception {
         try {
             for (Group group : groups.getGroup()) {
                 cloudGroupService.addGroupToUser(Integer.parseInt(group.getId()), userId);
@@ -703,7 +667,7 @@ public class CloudMigrationService {
         List<ClientRole> clientRoles = applicationService.getAllClientRoles(null);
         for (Role role : roleList.getRole()) {
             for (ClientRole cRole : clientRoles) {
-                if (cRole.getName().equals(role.getName())) {
+                if (StringUtils.equals(cRole.getName(), role.getName())) {
                     TenantRole newRole = new TenantRole();
                     newRole.setName(cRole.getName());
                     newRole.setClientId(cRole.getClientId());
@@ -762,16 +726,6 @@ public class CloudMigrationService {
         }
     }
 
-    private String[] getBaseUrlsForTenant(String tenantId, EndpointList endpoints) {
-        List<String> baseUrls = new ArrayList<String>();
-        for (Endpoint endpoint : endpoints.getEndpoint()) {
-            if (endpoint.getTenantId().equals(tenantId))
-                baseUrls.add(String.valueOf(endpoint.getId()));
-        }
-        String[] strResult = new String[baseUrls.size()];
-        return baseUrls.toArray(strResult);
-    }
-
     private SecretQA getSecretQA(String adminToken, String userId) throws Exception {
         try {
             client.setCloud20Host(config.getString("cloudAuth20url"));
@@ -799,7 +753,7 @@ public class CloudMigrationService {
 
                 try {
                     com.rackspace.idm.domain.entity.Group oldGroup = cloudGroupService.getGroupById(Integer.parseInt(group.getId()));
-                    if (!newGroup.getName().equals(oldGroup.getName()) || !newGroup.getDescription().equals(oldGroup.getDescription()))
+                    if (!StringUtils.equals(newGroup.getName(), oldGroup.getName()) || !StringUtils.equals(newGroup.getDescription(), oldGroup.getDescription()))
                         cloudGroupService.updateGroup(newGroup);
                 }
                 catch (NotFoundException ex) {
@@ -817,7 +771,6 @@ public class CloudMigrationService {
         //Get V1.1 BaseURLs for extra info
         BaseURLList baseURLs;
         try {
-            client = getMigrationClientInstance();
             client.setCloud11Host(config.getString("cloudAuth11url"));
             baseURLs = client.getBaseUrls(config.getString("ga.username"), config.getString("ga.password"));
         }

@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.migration;
 
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.*;
+import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.api.converter.cloudv20.EndpointConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.RoleConverterCloudV20;
@@ -19,20 +20,26 @@ import com.rackspace.idm.exception.NotFoundException;
 import com.rackspacecloud.docs.auth.api.v1.BaseURLRef;
 import com.rackspacecloud.docs.auth.api.v1.BaseURLRefList;
 import com.sun.jersey.api.ConflictException;
+import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.openstack.docs.identity.api.v2.*;
 
 import javax.ws.rs.core.Response;
+import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeFactory;
+import javax.xml.namespace.QName;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
 
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.*;
@@ -515,13 +522,22 @@ public class CloudMigrationServiceTest {
 
     @Test (expected = NotFoundException.class)
     public void unmigrateUserByUsername_userIsNull_throwsNotFoundException() throws Exception {
-        spy.unmigrateUserByUsername(null, true);
+        spy.unmigrateUserByUsername(null);
     }
 
     @Test (expected = NotFoundException.class)
     public void unmigrateUserByUsername_userGetInMigrationIsNull_throwsNotFoundException() throws Exception {
         when(userService.getUser("username")).thenReturn(new User());
-        spy.unmigrateUserByUsername("username", true);
+        spy.unmigrateUserByUsername("username");
+    }
+
+    @Test (expected = NotFoundException.class)
+    public void unmigrateUserByUsername_usersSubUsersNull_throwsNotFoundException() throws Exception {
+        User user1 = new User();
+        user1.setInMigration(true);
+        when(userService.getUser("username")).thenReturn(user1);
+        when(userService.getAllUsers(any(FilterParam[].class), eq(0), eq(0))).thenReturn(new Users());
+        spy.unmigrateUserByUsername("username");
     }
 
     @Test
@@ -870,5 +886,353 @@ public class CloudMigrationServiceTest {
         UserType userType = new UserType();
         spy.validateRoles(roles, newRoles, userType);
         assertThat("usertype result", userType.getRoles().get(0).isValid(), equalTo(false));
+    }
+
+    @Ignore
+    @Test
+    public void validateRoles_withNoNewRoles_returnsNotValidForEachOldRole() throws Exception {
+        RoleList newRoles = new RoleList();
+        ArrayList<TenantRole> roles = new ArrayList<TenantRole>();
+        TenantRole tenantRole = new TenantRole();
+        tenantRole.setName("roleName");
+        tenantRole.setRoleRsId("roleId2");
+        roles.add(tenantRole);
+        roles.add(tenantRole);
+
+
+        UserType userType = new UserType();
+        spy.validateRoles(roles, newRoles, userType);
+        assertThat("usertype result size", userType.getRoles().size(), equalTo(2));
+    }
+
+    @Test
+    public void validateRoles_withNoOldRoles_returnsNoRoles() throws Exception {
+        RoleList newRoles = new RoleList();
+        ArrayList<TenantRole> roles = new ArrayList<TenantRole>();
+
+
+        UserType userType = new UserType();
+        spy.validateRoles(roles, newRoles, userType);
+        assertThat("usertype result size", userType.getRoles().size(), equalTo(0));
+    }
+
+    @Test
+    public void getApiKey_withEmptyCredsList_returnsEmptyString() throws Exception {
+        CredentialListType credentialListType = mock(CredentialListType.class);
+        when(credentialListType.getCredential()).thenReturn(new ArrayList<JAXBElement<? extends CredentialType>>());
+        String apiKey = cloudMigrationService.getApiKey(credentialListType);
+        assertThat("apikey", apiKey, equalTo(""));
+    }
+
+    @Test
+    public void getApiKey_withNoApiCredsList_returnsEmptyString() throws Exception {
+        CredentialListType credentialListType = mock(CredentialListType.class);
+        ArrayList<JAXBElement<? extends CredentialType>> jaxbElements = new ArrayList<JAXBElement<? extends CredentialType>>();
+        JAXBObjectFactories jaxbObjectFactories1 = new JAXBObjectFactories();
+        jaxbElements.add(jaxbObjectFactories1.getOpenStackIdentityV2Factory().createCredential(new PasswordCredentialsRequiredUsername()));
+        when(credentialListType.getCredential()).thenReturn(jaxbElements);
+        String apiKey = cloudMigrationService.getApiKey(credentialListType);
+        assertThat("apikey", apiKey, equalTo(""));
+    }
+
+    @Test
+    public void getApiKey_withApiCredsList_returnsApiKey() throws Exception {
+        CredentialListType credentialListType = mock(CredentialListType.class);
+        ArrayList<JAXBElement<? extends CredentialType>> jaxbElements = new ArrayList<JAXBElement<? extends CredentialType>>();
+        JAXBObjectFactories jaxbObjectFactories1 = new JAXBObjectFactories();
+        ApiKeyCredentials apiKeyCredentials = new ApiKeyCredentials();
+        apiKeyCredentials.setApiKey("apiKey");
+
+        jaxbElements.add(jaxbObjectFactories1.getOpenStackIdentityV2Factory().createCredential(new PasswordCredentialsRequiredUsername()));
+        jaxbElements.add(jaxbObjectFactories1.getOpenStackIdentityV2Factory().createCredential(apiKeyCredentials));
+        when(credentialListType.getCredential()).thenReturn(jaxbElements);
+        String apiKey = cloudMigrationService.getApiKey(credentialListType);
+        assertThat("apikey", apiKey, equalTo("apiKey"));
+    }
+
+    @Test
+    public void getApiKey_withNull_returnsEmptyApiKey() throws Exception {
+        CredentialListType credentialListType = null;
+        String apiKey = cloudMigrationService.getApiKey(credentialListType);
+        assertThat("apikey", apiKey, equalTo(""));
+    }
+
+    @Test
+    public void getPassword_withEmptyCredsList_returnsEmptyString() throws Exception {
+        CredentialListType credentialListType = mock(CredentialListType.class);
+        when(credentialListType.getCredential()).thenReturn(new ArrayList<JAXBElement<? extends CredentialType>>());
+        String apiKey = cloudMigrationService.getPassword(credentialListType);
+        assertThat("password", apiKey, equalTo(""));
+    }
+
+    @Test
+    public void getPassword_withNoPasswordCreds_returnsEmptyString() throws Exception {
+        CredentialListType credentialListType = mock(CredentialListType.class);
+        ArrayList<JAXBElement<? extends CredentialType>> jaxbElements = new ArrayList<JAXBElement<? extends CredentialType>>();
+        JAXBObjectFactories jaxbObjectFactories1 = new JAXBObjectFactories();
+        jaxbElements.add(jaxbObjectFactories1.getOpenStackIdentityV2Factory().createCredential(new ApiKeyCredentials()));
+        when(credentialListType.getCredential()).thenReturn(jaxbElements);
+        String apiKey = cloudMigrationService.getPassword(credentialListType);
+        assertThat("password", apiKey, equalTo(""));
+    }
+
+    @Test
+    public void getPassword_withPasswordCreds_returnsApiKey() throws Exception {
+        CredentialListType credentialListType = mock(CredentialListType.class);
+        ArrayList<JAXBElement<? extends CredentialType>> jaxbElements = new ArrayList<JAXBElement<? extends CredentialType>>();
+        JAXBObjectFactories jaxbObjectFactories1 = new JAXBObjectFactories();
+        PasswordCredentialsRequiredUsername passwordCredentials = new PasswordCredentialsRequiredUsername();
+        passwordCredentials.setPassword("password");
+
+        jaxbElements.add(jaxbObjectFactories1.getOpenStackIdentityV2Factory().createCredential(new ApiKeyCredentials()));
+        jaxbElements.add(jaxbObjectFactories1.getOpenStackIdentityV2Factory().createCredential(passwordCredentials));
+        when(credentialListType.getCredential()).thenReturn(jaxbElements);
+        String apiKey = cloudMigrationService.getPassword(credentialListType);
+        assertThat("password", apiKey, equalTo("password"));
+    }
+
+    @Test
+    public void getPassword_withNull_returnsEmptyPassword() throws Exception {
+        CredentialListType credentialListType = null;
+        String apiKey = cloudMigrationService.getPassword(credentialListType);
+        assertThat("password", apiKey, equalTo(""));
+    }
+
+    @Test
+    public void authenticate_withApiKey_callsClientAuthWithApi() throws Exception {
+        cloudMigrationService.authenticate("username", "apiKey", "password");
+        verify(client).authenticateWithApiKey("username", "apiKey");
+    }
+
+    @Test
+    public void authenticate_withPasswordWithoutApiKey_callsClientAuthWithPassword() throws Exception {
+        cloudMigrationService.authenticate("username", "", "password");
+        verify(client).authenticateWithPassword("username", "password");
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void authenticate_withNeitherPasswordNorApiKey_throwsBadRequestException() throws Exception {
+        cloudMigrationService.authenticate("username", "", "");
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void
+    authenticate_withClientException_throwsBadRequestException() throws Exception {
+        when(client.authenticateWithApiKey("username", "apiKey")).thenThrow(new IOException());
+        cloudMigrationService.authenticate("username", "apiKey", "");
+    }
+
+    @Test
+    public void getAdminToken_callsConfig_getString() throws Exception {
+        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
+        authenticateResponse.setToken(new Token());
+        when(client.authenticateWithApiKey(anyString(), anyString())).thenReturn(authenticateResponse);
+        cloudMigrationService.getAdminToken();
+        verify(config).getString("cloudAuth20url");
+        verify(config).getString("migration.username");
+        verify(config).getString("migration.apikey");
+    }
+
+    @Test
+    public void getAdminToken_callsClient_authenticateWithApiKey() throws Exception {
+        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
+        authenticateResponse.setToken(new Token());
+        when(client.authenticateWithApiKey(anyString(), anyString())).thenReturn(authenticateResponse);
+        cloudMigrationService.getAdminToken();
+        verify(client).authenticateWithApiKey(anyString(), anyString());
+    }
+
+    @Test
+    public void getAdminToken_returnsTokenId() throws Exception {
+        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
+        Token token = new Token();
+        token.setId("tokenId");
+        authenticateResponse.setToken(token);
+        when(client.authenticateWithApiKey(anyString(), anyString())).thenReturn(authenticateResponse);
+        String adminToken = cloudMigrationService.getAdminToken();
+        assertThat("admin token", adminToken, equalTo("tokenId"));
+    }
+
+    @Test(expected = NotAuthenticatedException.class)
+    public void getAdminToken_throwsNotAuthenticatedExceptionOnException() throws Exception {
+        when(client.authenticateWithApiKey(anyString(), anyString())).thenThrow(new IOException());
+        cloudMigrationService.getAdminToken();
+    }
+
+    @Test
+    public void addMigrationUser_returnsNewUserSetCorrectly() throws Exception {
+        SecretQA secretQA = new SecretQA();
+        secretQA.setAnswer("answer");
+        secretQA.setQuestion("question");
+        org.openstack.docs.identity.api.v2.User user2 = new org.openstack.docs.identity.api.v2.User();
+        user2.setCreated(new XMLGregorianCalendarImpl());
+        user2.setUpdated(new XMLGregorianCalendarImpl());
+        user2.setEmail("email");
+        User user1 = cloudMigrationService.addMigrationUser(user2, 12345, "nastId", "apiKey", "password", secretQA, "domainId");
+        assertThat("user mosso id", user1.getMossoId(), equalTo(12345));
+        assertThat("user nast id", user1.getNastId(), equalTo("nastId"));
+        assertThat("user apiKey", user1.getApiKey(), equalTo("apiKey"));
+        assertThat("user password", user1.getPassword(), equalTo("password"));
+        assertThat("user secret answer", user1.getSecretAnswer(), equalTo("answer"));
+        assertThat("user secret question", user1.getSecretQuestion(), equalTo("question"));
+        assertThat("user domain id", user1.getDomainId(), equalTo("domainId"));
+        assertThat("user email", user1.getEmail(), equalTo("email"));
+        assertThat("user created", user1.getCreated(), not(nullValue()));
+        assertThat("user updated", user1.getUpdated(), not(nullValue()));
+    }
+
+    @Test
+    public void addMigrationUser_WithNulls_callsAddUser() throws Exception {
+        cloudMigrationService.addMigrationUser(new org.openstack.docs.identity.api.v2.User(), 12345, "nastId", "apiKey","password", null, null);
+        verify(userService).addUser(any(User.class));
+    }
+
+    @Test
+    public void addMigrationUser_callsUserService_addUser() throws Exception {
+        cloudMigrationService.addMigrationUser(new org.openstack.docs.identity.api.v2.User(), 12345, "nastId", "apiKey","password", new SecretQA(), "domainId");
+        verify(userService).addUser(any(User.class));
+    }
+
+    @Test
+    public void addUserGroups_callsCloudGroupService_addGroupToUser_forEachGroup() throws Exception {
+        Groups groups = new Groups();
+        com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group();
+        group.setId("123456");
+        groups.getGroup().add(group);
+        groups.getGroup().add(group);
+        groups.getGroup().add(group);
+        cloudMigrationService.addUserGroups("userId", groups);
+        verify(groupService, times(3)).addGroupToUser(anyInt(), eq("userId"));
+    }
+
+    @Test
+    public void addUserGroups_withZeroGroups_callsGroupServiceZeroTimes() throws Exception {
+        Groups groups = new Groups();
+        cloudMigrationService.addUserGroups("userId", groups);
+        verify(groupService, never()).addGroupToUser(anyInt(), eq("userId"));
+    }
+
+    @Test
+    public void addUserGroups_withException_consumesException() throws Exception {
+        Groups groups = new Groups();
+        groups.getGroup().add(new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group());
+        cloudMigrationService.addUserGroups("userId", groups);
+        verify(groupService, never()).addGroupToUser(anyInt(), eq("userId"));
+    }
+
+    @Test
+    public void addUserGlobalRoles_withMatchingGlobalAndClientRoles_addsRole() throws Exception {
+        ArrayList<ClientRole> clientRoles = new ArrayList<ClientRole>();
+        ClientRole clientRole = new ClientRole();
+        clientRole.setName("Role");
+        clientRoles.add(clientRole);
+        RoleList roleList = new RoleList();
+        Role role = new Role();
+        role.setName("Role");
+        roleList.getRole().add(role);
+        when(applicationService.getAllClientRoles(null)).thenReturn(clientRoles);
+        cloudMigrationService.addUserGlobalRoles(new User(), roleList);
+        verify(tenantService).addTenantRoleToUser(any(User.class), any(TenantRole.class));
+    }
+
+    @Test
+    public void addUserGlobalRoles_withNotMatchingGlobalAndClientRoles_addsNoRoles() throws Exception {
+        ArrayList<ClientRole> clientRoles = new ArrayList<ClientRole>();
+        ClientRole clientRole = new ClientRole();
+        clientRole.setName("Role");
+        clientRoles.add(clientRole);
+        RoleList roleList = new RoleList();
+        Role role = new Role();
+        role.setName("Role2");
+        roleList.getRole().add(role);
+        when(applicationService.getAllClientRoles(null)).thenReturn(clientRoles);
+        cloudMigrationService.addUserGlobalRoles(new User(), roleList);
+        verify(tenantService, never()).addTenantRoleToUser(any(User.class), any(TenantRole.class));
+    }
+
+    @Test
+    public void addUserGlobalRoles_withNoClientRoles_addsNoRoles() throws Exception {
+        RoleList roleList = new RoleList();
+        Role role = new Role();
+        role.setName("Role2");
+        roleList.getRole().add(role);
+        when(applicationService.getAllClientRoles(null)).thenReturn(new ArrayList<ClientRole>());
+        cloudMigrationService.addUserGlobalRoles(new User(), roleList);
+        verify(tenantService, never()).addTenantRoleToUser(any(User.class), any(TenantRole.class));
+    }
+
+    @Test
+    public void addUserGlobalRoles_withNoRoleList_addsNoRoles() throws Exception {
+        when(applicationService.getAllClientRoles(null)).thenReturn(new ArrayList<ClientRole>());
+        cloudMigrationService.addUserGlobalRoles(new User(), new RoleList());
+        verify(tenantService, never()).addTenantRoleToUser(any(User.class), any(TenantRole.class));
+    }
+
+    @Test
+    public void addOrUpdateGroups_withPreExistingGroup_withDifferences_callsCloudGroupService_updateGroup() throws Exception {
+        Groups groups = new Groups();
+        com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group();
+        group.setId("123456");
+        group.setName("groupNameNew");
+        group.setDescription("groupDescriptionNew");
+        groups.getGroup().add(group);
+        when(client.getGroups("adminToken")).thenReturn(groups);
+        Group group1 = new Group();
+        group1.setName("groupName");
+        group1.setDescription("groupDescription");
+        when(groupService.getGroupById(123456)).thenReturn(group1);
+        cloudMigrationService.addOrUpdateGroups("adminToken");
+        verify(groupService).updateGroup(any(Group.class));
+    }
+
+    @Test
+    public void addOrUpdateGroups_withPreExistingGroup_withNameDifferences_callsCloudGroupService_updateGroup() throws Exception {
+        Groups groups = new Groups();
+        com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group();
+        group.setId("123456");
+        group.setName("groupNameNew");
+        group.setDescription("groupDescription");
+        groups.getGroup().add(group);
+        when(client.getGroups("adminToken")).thenReturn(groups);
+        Group group1 = new Group();
+        group1.setName("groupName");
+        group1.setDescription("groupDescription");
+        when(groupService.getGroupById(123456)).thenReturn(group1);
+        cloudMigrationService.addOrUpdateGroups("adminToken");
+        verify(groupService).updateGroup(any(Group.class));
+    }
+
+    @Test
+    public void addOrUpdateGroups_withPreExistingGroup_withDescriptionDifferences_callsCloudGroupService_updateGroup() throws Exception {
+        Groups groups = new Groups();
+        com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group();
+        group.setId("123456");
+        group.setName("groupName");
+        group.setDescription("groupDescriptionNew");
+        groups.getGroup().add(group);
+        when(client.getGroups("adminToken")).thenReturn(groups);
+        Group group1 = new Group();
+        group1.setName("groupName");
+        group1.setDescription("groupDescription");
+        when(groupService.getGroupById(123456)).thenReturn(group1);
+        cloudMigrationService.addOrUpdateGroups("adminToken");
+        verify(groupService).updateGroup(any(Group.class));
+    }
+
+    @Test
+    public void addOrUpdateGroups_withPreExistingGroup_withNoChanges_doesNotUpdateGroup() throws Exception {
+        Groups groups = new Groups();
+        com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group();
+        group.setId("123456");
+        group.setName("groupName");
+        group.setDescription("groupDescription");
+        groups.getGroup().add(group);
+        when(client.getGroups("adminToken")).thenReturn(groups);
+        Group group1 = new Group();
+        group1.setName("groupName");
+        group1.setDescription("groupDescription");
+        when(groupService.getGroupById(123456)).thenReturn(group1);
+        cloudMigrationService.addOrUpdateGroups("adminToken");
+        verify(groupService, never()).updateGroup(any(Group.class));
     }
 }
