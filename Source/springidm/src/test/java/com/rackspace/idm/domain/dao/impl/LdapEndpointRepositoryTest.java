@@ -16,6 +16,7 @@ import org.mockito.ArgumentCaptor;
 import java.util.ArrayList;
 import java.util.List;
 
+import static junit.framework.Assert.assertTrue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
@@ -175,6 +176,29 @@ public class LdapEndpointRepositoryTest {
         String[] attributes = {"test"};
         doThrow(new LDAPSearchException(ResultCode.INVALID_DN_SYNTAX,"testing")).when(ldapInterface).searchForEntry("baseDN", SearchScope.SUB, searchFilter,attributes);
         spy.getSingleEntry("baseDN", SearchScope.SUB, searchFilter, attributes);
+    }
+
+    @Test
+    public void updateEntry_throwsNoExceptions_callsModify() throws Exception {
+        Audit audit = mock(Audit.class);
+        List<Modification> list = new ArrayList<Modification>();
+        doReturn(ldapInterface).when(spy).getAppInterface();
+        spy.updateEntry("entryDn", list, audit);
+        verify(ldapInterface).modify("entryDn",list);
+    }
+
+    @Test
+    public void updateEntry_throwsLDAPException_throwsIllegalStateExceptionAndAuditFails() throws Exception {
+        Audit audit = mock(Audit.class);
+        try{
+            List<Modification> list = new ArrayList<Modification>();
+            doReturn(ldapInterface).when(spy).getAppInterface();
+            doThrow(new LDAPException(ResultCode.INVALID_DN_SYNTAX)).when(ldapInterface).modify("entryDn",list);
+            spy.updateEntry("entryDn", list, audit);
+            assertTrue("should throw exception",false);
+        } catch (IllegalStateException ex){
+            verify(audit).fail();
+        }
     }
 
     @Test (expected = IllegalArgumentException.class)
