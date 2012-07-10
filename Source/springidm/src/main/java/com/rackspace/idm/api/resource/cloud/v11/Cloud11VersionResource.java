@@ -341,7 +341,7 @@ public class Cloud11VersionResource {
         return getCloud11Service().getUserGroups(request, userId, httpHeaders).build();
     }
 
-    private Cloud11Service getCloud11Service() {
+    Cloud11Service getCloud11Service() {
         if (config.getBoolean("useCloudAuth")) {
             return delegateCloud11Service;
         } else {
@@ -351,5 +351,13 @@ public class Cloud11VersionResource {
 
     private String getCloudAuthV11Url() {
         return config.getString("cloudAuth11url");
+    }
+
+    public void setDefaultCloud11Service(DefaultCloud11Service defaultCloud11Service) {
+        this.defaultCloud11Service = defaultCloud11Service;
+    }
+
+    public void setDelegateCloud11Service(DelegateCloud11Service delegateCloud11Service) {
+        this.delegateCloud11Service = delegateCloud11Service;
     }
 }

@@ -357,7 +357,7 @@ public class LdapApplicationRepositoryTest {
     }
 
     @Test
-    public void getAllClients_filtersNotNull_returnsApplications() throws Exception {
+    public void getAllClients_filtersNotNullAndParamNameIsApplicationName_returnsApplications() throws Exception {
         FilterParam filterParam = new FilterParam(FilterParam.FilterParamName.APPLICATION_NAME, "1");
         List<FilterParam> filters = new ArrayList<FilterParam>();
         filters.add(filterParam);
@@ -365,6 +365,20 @@ public class LdapApplicationRepositoryTest {
         doReturn(clients).when(spy).getMultipleClients(any(Filter.class), eq(1), eq(1));
         Applications result = spy.getAllClients(filters, 1, 1);
         assertThat("clients", result, equalTo(clients));
+    }
+
+
+    @Test
+    public void getAllClients_filtersNotNullAndParamNameIsNotApplicationName_onlyAddsOneFilter() throws Exception {
+        ArgumentCaptor<Filter> argumentCapture = ArgumentCaptor.forClass(Filter.class);
+        FilterParam filterParam = new FilterParam(FilterParam.FilterParamName.ROLE_NAME, "1");
+        List<FilterParam> filters = new ArrayList<FilterParam>();
+        filters.add(filterParam);
+        Applications clients = new Applications();
+        doReturn(clients).when(spy).getMultipleClients(argumentCapture.capture(), eq(1), eq(1));
+        spy.getAllClients(filters, 1, 1);
+        Filter[] filtersCaptured = argumentCapture.getValue().getComponents();
+        assertThat("only one filter was added, so no components",filtersCaptured.length,equalTo(0));
     }
 
     @Test
