@@ -17,6 +17,8 @@ import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotFoundException;
+import com.rackspacecloud.docs.auth.api.v1.BaseURL;
+import com.rackspacecloud.docs.auth.api.v1.BaseURLList;
 import com.rackspacecloud.docs.auth.api.v1.BaseURLRef;
 import com.rackspacecloud.docs.auth.api.v1.BaseURLRefList;
 import com.sun.jersey.api.ConflictException;
@@ -25,13 +27,15 @@ import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplateList;
 import org.openstack.docs.identity.api.v2.*;
 
 import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeFactory;
-import javax.xml.namespace.QName;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -561,10 +565,13 @@ public class CloudMigrationServiceTest {
 
     @Test(expected = ConflictException.class)
     public void getSubUsers_withDisabledUserAdmin_throwsConflictException() throws Exception {
-        doReturn(true).when(spy).isUserAdmin(any(RoleList.class));
+        RoleList roles = new RoleList();
+        Role role = new Role();
+        role.setName("identity:user-admin");
+        roles.getRole().add(role);
         org.openstack.docs.identity.api.v2.User user = new org.openstack.docs.identity.api.v2.User();
         user.setEnabled(false);
-        spy.getSubUsers(user, "", "", new RoleList());
+        spy.getSubUsers(user, "", "", roles);
     }
 
     @Test(expected = ConflictException.class)
@@ -632,7 +639,6 @@ public class CloudMigrationServiceTest {
 
     @Test
     public void getSubUsers_withNonAdminUser_returnsEmptyList() throws Exception {
-        doReturn(false).when(spy).isUserAdmin(any(RoleList.class));
         List<String> subUsers = spy.getSubUsers(null, "", "", new RoleList());
         assertThat("sub users", subUsers.size(), equalTo(0));
     }
@@ -1235,4 +1241,117 @@ public class CloudMigrationServiceTest {
         cloudMigrationService.addOrUpdateGroups("adminToken");
         verify(groupService, never()).updateGroup(any(Group.class));
     }
+
+
+    @Test
+    public void addOrUpdateGroups_withNoExistingGroup_addsNewGroup() throws Exception {
+        Groups groups = new Groups();
+        com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group();
+        group.setId("123456");
+        group.setName("groupName");
+        group.setDescription("groupDescription");
+        groups.getGroup().add(group);
+        when(client.getGroups("adminToken")).thenReturn(groups);
+        when(groupService.getGroupById(123456)).thenThrow(new NotFoundException());
+        cloudMigrationService.addOrUpdateGroups("adminToken");
+        verify(groupService).insertGroup(any(Group.class));
+    }
+
+    @Test
+    public void addOrUpdateGroups_withNoDescription_setsDescriptionToName() throws Exception {
+        Groups groups = new Groups();
+        com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group();
+        group.setId("123456");
+        group.setName("groupName");
+        groups.getGroup().add(group);
+        when(client.getGroups("adminToken")).thenReturn(groups);
+        when(groupService.getGroupById(123456)).thenThrow(new NotFoundException());
+        cloudMigrationService.addOrUpdateGroups("adminToken");
+        ArgumentCaptor<Group> groupArgumentCaptor = ArgumentCaptor.forClass(Group.class);
+        verify(groupService).insertGroup(groupArgumentCaptor.capture());
+        assertThat("group description", groupArgumentCaptor.getValue().getDescription(), equalTo("groupName"));
+    }
+
+    @Test
+    public void addOrUpdateEndpointTemplates_withNullCloudBaseUrl_withNullBaseUrl() throws Exception {
+        EndpointTemplateList endpointTemplateList = new EndpointTemplateList();
+        EndpointTemplate endpointTemplate = new EndpointTemplate();
+        endpointTemplate.setVersion(new VersionForService());
+        endpointTemplateList.getEndpointTemplate().add(endpointTemplate);
+        when(client.getEndpointTemplates(anyString())).thenReturn(endpointTemplateList);
+        when(client.getBaseUrls(anyString(), anyString())).thenThrow(new NotFoundException());
+        when(endpointService.getBaseUrlById(anyInt())).thenReturn(null);
+
+        cloudMigrationService.addOrUpdateEndpointTemplates(null);
+        verify(endpointService).addBaseUrl(any(CloudBaseUrl.class));
+    }
+
+    @Test
+    public void addOrUpdateEndpointTemplates_withNullCloudBaseUrl_withBaseUrl() throws Exception {
+        EndpointTemplateList endpointTemplateList = new EndpointTemplateList();
+        EndpointTemplate endpointTemplate = new EndpointTemplate();
+        endpointTemplate.setVersion(new VersionForService());
+        endpointTemplateList.getEndpointTemplate().add(endpointTemplate);
+        when(client.getEndpointTemplates(anyString())).thenReturn(endpointTemplateList);
+        BaseURLList baseURLList = new BaseURLList();
+        BaseURL baseURL = new BaseURL();
+        baseURL.setId(0);
+        baseURL.setUserType(com.rackspacecloud.docs.auth.api.v1.UserType.CLOUD);
+        baseURL.setDefault(true);
+        baseURLList.getBaseURL().add(baseURL);
+        when(client.getBaseUrls(anyString(), anyString())).thenReturn(baseURLList);
+        when(endpointService.getBaseUrlById(anyInt())).thenReturn(null);
+
+        cloudMigrationService.addOrUpdateEndpointTemplates(null);
+        ArgumentCaptor<CloudBaseUrl> cloudBaseUrlArgumentCaptor = ArgumentCaptor.forClass(CloudBaseUrl.class);
+        verify(endpointService).addBaseUrl(cloudBaseUrlArgumentCaptor.capture());
+        assertThat("cloud base Url type", cloudBaseUrlArgumentCaptor.getValue().getBaseUrlType(), equalTo("CLOUD"));
+    }
+
+    @Test
+    public void addOrUpdateEndpointTemplates_withCloudBaseUrl_withBaseUrl_preservesUid() throws Exception {
+        EndpointTemplateList endpointTemplateList = new EndpointTemplateList();
+        EndpointTemplate endpointTemplate = new EndpointTemplate();
+        endpointTemplate.setVersion(new VersionForService());
+        endpointTemplateList.getEndpointTemplate().add(endpointTemplate);
+        when(client.getEndpointTemplates(anyString())).thenReturn(endpointTemplateList);
+        BaseURLList baseURLList = new BaseURLList();
+        BaseURL baseURL = new BaseURL();
+        baseURL.setId(0);
+        baseURL.setUserType(com.rackspacecloud.docs.auth.api.v1.UserType.CLOUD);
+        baseURL.setDefault(true);
+        baseURLList.getBaseURL().add(baseURL);
+        when(client.getBaseUrls(anyString(), anyString())).thenReturn(baseURLList);
+        CloudBaseUrl cloudBaseUrl1 = new CloudBaseUrl();
+        cloudBaseUrl1.setUniqueId("someUniqueId");
+        when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl1);
+
+        cloudMigrationService.addOrUpdateEndpointTemplates(null);
+        ArgumentCaptor<CloudBaseUrl> cloudBaseUrlArgumentCaptor = ArgumentCaptor.forClass(CloudBaseUrl.class);
+        verify(endpointService).updateBaseUrl(cloudBaseUrlArgumentCaptor.capture());
+        assertThat("cloud base Url type", cloudBaseUrlArgumentCaptor.getValue().getBaseUrlType(), equalTo("CLOUD"));
+        assertThat("cloud base UID", cloudBaseUrlArgumentCaptor.getValue().getUniqueId(), equalTo("someUniqueId"));
+    }
+
+    @Test
+    public void addOrUpdateEndpointTemplates_withCloudBaseUrl_withNullBaseUrl_preservesUid() throws Exception {
+        EndpointTemplateList endpointTemplateList = new EndpointTemplateList();
+        EndpointTemplate endpointTemplate = new EndpointTemplate();
+        endpointTemplate.setVersion(new VersionForService());
+        endpointTemplate.setPublicURL("http://www.public.com");
+        endpointTemplateList.getEndpointTemplate().add(endpointTemplate);
+        when(client.getEndpointTemplates(anyString())).thenReturn(endpointTemplateList);
+        BaseURLList baseURLList = new BaseURLList();
+        when(client.getBaseUrls(anyString(), anyString())).thenReturn(baseURLList);
+        CloudBaseUrl cloudBaseUrl1 = new CloudBaseUrl();
+        cloudBaseUrl1.setUniqueId("someUniqueId");
+        when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl1);
+
+        cloudMigrationService.addOrUpdateEndpointTemplates(null);
+        ArgumentCaptor<CloudBaseUrl> cloudBaseUrlArgumentCaptor = ArgumentCaptor.forClass(CloudBaseUrl.class);
+        verify(endpointService).updateBaseUrl(cloudBaseUrlArgumentCaptor.capture());
+        assertThat("cloud base Url type", cloudBaseUrlArgumentCaptor.getValue().getBaseUrlType(), equalTo("MOSSO"));
+        assertThat("cloud base UID", cloudBaseUrlArgumentCaptor.getValue().getUniqueId(), equalTo("someUniqueId"));
+    }
+
 }

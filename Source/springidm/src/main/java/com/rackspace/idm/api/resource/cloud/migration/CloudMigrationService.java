@@ -845,10 +845,6 @@ public class CloudMigrationService {
         return null;
     }
 
-    public MigrationClient getClient() {
-        return client;
-    }
-
     public void setClient(MigrationClient client) {
         this.client = client;
     }
