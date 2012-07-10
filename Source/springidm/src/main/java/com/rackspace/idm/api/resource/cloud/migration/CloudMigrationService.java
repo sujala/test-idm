@@ -246,8 +246,8 @@ public class CloudMigrationService {
             if(processSubUsers) {
                 subUsers = getSubUsers(user, apiKey, password, roles);
                 for (String subUser : subUsers) {
-                    if (userService.userExistsByUsername(username)) {
-                        throw new ConflictException("A user with username " + username + " already exists.");
+                    if (userService.userExistsByUsername(subUser)) {
+                        throw new ConflictException("A user with username " + subUser + " already exists.");
                     }
                 }
             }
@@ -704,7 +704,7 @@ public class CloudMigrationService {
         tenantService.addTenant(newTenant);
     }
 
-    private void addTenantRole(com.rackspace.idm.domain.entity.User user, String tenantId, int endpointId) {
+    void addTenantRole(com.rackspace.idm.domain.entity.User user, String tenantId, int endpointId) {
         CloudBaseUrl cloudBaseUrl = endpointService.getBaseUrlById(endpointId);
         Application application = applicationService.getByName(cloudBaseUrl.getServiceName());
         if (application == null) {

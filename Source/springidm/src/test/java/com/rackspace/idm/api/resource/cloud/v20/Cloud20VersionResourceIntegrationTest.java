@@ -286,7 +286,6 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
 
     @Test
     public void impersonate_withNoAuth_returns403() throws Exception {
-        String token = getAuthToken("hectorServiceAdmin", "Password1");
         WebResource resource = resource().path("cloud/v2.0/RAX-AUTH/impersonation-tokens");
         ClientResponse clientResponse = resource.type(MediaType.APPLICATION_XML_TYPE).post(ClientResponse.class , "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" +
                 "<impersonation\n" +
