@@ -324,69 +324,6 @@ public class Cloud11VersionResourceTest {
     }
 
     @Test
-    public void migrate_callsGetCloud11Service() throws Exception {
-        when(delegateCloud11Service.migrate(null, null, null, null)).thenReturn(Response.ok());
-        spy.migrate(null, null, null, null);
-        verify(spy).getCloud11Service();
-    }
-
-    @Test
-    public void migrate_callsGetCloud11Service_callsMigrate() throws Exception {
-        when(delegateCloud11Service.migrate(null, null, null, null)).thenReturn(Response.ok());
-        spy.migrate(null, null, null, null);
-        verify(delegateCloud11Service).migrate(null, null, null, null);
-    }
-
-    @Test
-    public void migrate_responseOk_returns200() throws Exception {
-        when(delegateCloud11Service.migrate(null, null, null, null)).thenReturn(Response.ok());
-        Response result = spy.migrate(null, null, null, null);
-        assertThat("response code", result.getStatus(), equalTo(200));
-    }
-
-    @Test
-    public void unmigrate_callsGetCloud11Service() throws Exception {
-        when(delegateCloud11Service.unmigrate(null, null, null, null)).thenReturn(Response.ok());
-        spy.unmigrate(null, null, null, null);
-        verify(spy).getCloud11Service();
-    }
-
-    @Test
-    public void unmigrate_callsGetCloud11Service_callsUnmigrate() throws Exception {
-        when(delegateCloud11Service.unmigrate(null, null, null, null)).thenReturn(Response.ok());
-        spy.unmigrate(null, null, null, null);
-        verify(delegateCloud11Service).unmigrate(null, null, null, null);
-    }
-
-    @Test
-    public void unmigrate_responseOk_returns200() throws Exception {
-        when(delegateCloud11Service.unmigrate(null, null, null, null)).thenReturn(Response.ok());
-        Response result = spy.unmigrate(null, null, null, null);
-        assertThat("response code", result.getStatus(), equalTo(200));
-    }
-
-    @Test
-    public void all_callsGetCloud11Service() throws Exception {
-        when(delegateCloud11Service.all(null, null, null)).thenReturn(Response.ok());
-        spy.all(null, null, null);
-        verify(spy).getCloud11Service();
-    }
-
-    @Test
-    public void all_callsGetCloud11Service_callsAll() throws Exception {
-        when(delegateCloud11Service.all(null, null, null)).thenReturn(Response.ok());
-        spy.all(null, null, null);
-        verify(delegateCloud11Service).all(null, null, null);
-    }
-
-    @Test
-    public void all_responseOk_returns200() throws Exception {
-        when(delegateCloud11Service.all(null, null, null)).thenReturn(Response.ok());
-        Response result = spy.all(null, null, null);
-        assertThat("response code", result.getStatus(), equalTo(200));
-    }
-
-    @Test
     public void createUser_callsGetCloud11Service() throws Exception {
         when(delegateCloud11Service.createUser(null, null, null, null)).thenReturn(Response.ok());
         spy.createUser(null, null, null, null);

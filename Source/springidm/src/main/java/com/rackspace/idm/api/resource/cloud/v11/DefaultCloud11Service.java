@@ -1048,23 +1048,6 @@ public class DefaultCloud11Service implements Cloud11Service {
         return Response.ok(extensionMap.get(normalizedAlias));
     }
 
-    // Migration Methods
-    @Override
-    public Response.ResponseBuilder all(HttpServletRequest request, HttpHeaders httpHeaders, String body) throws IOException {
-        throw new IOException("Not Implemented");
-    }
-
-    @Override
-    public Response.ResponseBuilder migrate(HttpServletRequest request, String user, HttpHeaders httpHeaders, String body) throws IOException {
-        throw new IOException("Not Implemented");
-    }
-
-    @Override
-    public Response.ResponseBuilder unmigrate(HttpServletRequest request, String user, HttpHeaders httpHeaders, String body)
-            throws IOException {
-        throw new IOException("Not Implemented");
-    }
-
     // Private Methods
     Response.ResponseBuilder adminAuthenticateResponse(JAXBElement<? extends Credentials> cred, HttpServletResponse response)
             throws IOException {

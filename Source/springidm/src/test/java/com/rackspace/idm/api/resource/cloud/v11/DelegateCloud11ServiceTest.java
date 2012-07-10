@@ -52,7 +52,6 @@ public class DelegateCloud11ServiceTest {
     List<com.rackspace.idm.domain.entity.User> userList;
     DelegateCloud11Service delegateCloud11Service;
     DefaultCloud11Service defaultCloud11Service;
-    DummyCloud11Service dummyCloud11Service = new DummyCloud11Service();
     com.rackspacecloud.docs.auth.api.v1.ObjectFactory OBJ_FACTORY;
     Configuration config;
     CloudClient cloudClient;
@@ -85,7 +84,6 @@ public class DelegateCloud11ServiceTest {
         scopeAccessService = mock(ScopeAccessService.class);
         delegateCloud11Service.setCredentialUnmarshaller(credentialUnmarshaller);
         delegateCloud11Service.setDefaultCloud11Service(defaultCloud11Service);
-        delegateCloud11Service.setDummyCloud11Service(dummyCloud11Service);
         delegateCloud11Service.setCloudUserExtractor(cloudUserExtractor);
         delegateCloud11Service.setDefaultUserService(defaultUserService);
         delegateCloud11Service.setScopeAccessService(scopeAccessService);
@@ -117,33 +115,6 @@ public class DelegateCloud11ServiceTest {
 
         okResponse = Response.ok();
         notFoundResponse = Response.status(404);
-    }
-
-    //TODO remove ignore once code is in place
-    @Ignore
-    @Test
-    public void authenticate_routingTrue_callsClient() throws Exception {
-        when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
-        delegateCloud11Service.authenticate(null,null,null,null);
-        verify(cloudClient).post(eq(url + "token"), Matchers.<javax.ws.rs.core.HttpHeaders>any(), anyString());
-    }
-
-    //TODO remove ignore once code is in place
-    @Ignore
-    @Test
-    public void authenticate_routingFalse_DoesNotCallClient() throws Exception {
-        when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
-        delegateCloud11Service.authenticate(null,null,null,null);
-        verify(cloudClient,times(0)).post(eq(url+"token"),Matchers.<javax.ws.rs.core.HttpHeaders>any(),anyString());
-    }
-    
-    //TODO remove ignore once code is in place
-    @Ignore
-    @Test
-    public void authenticate_routingFalse_CallsDefaultService() throws Exception {
-        when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
-        delegateCloud11Service.authenticate(null,null,null,null);
-        verify(defaultCloud11Service).authenticate(null,null,null,null);
     }
 
     @Test
@@ -1131,78 +1102,6 @@ public class DelegateCloud11ServiceTest {
     }
 
     @Test
-    public void migrate_httpServletResponseNotFound_callsCloudClientPost() throws Exception {
-        Response.ResponseBuilder serviceResponse = Response.status(404);
-        when(defaultCloud11Service.migrate(request, "user", httpHeaders, "body")).thenReturn(serviceResponse);
-        delegateCloud11Service.migrate(request, "user", httpHeaders, "body");
-        verify(cloudClient).post(url + "migration/user/migrate", httpHeaders, "body");
-    }
-
-    @Test
-    public void migrate_httpServletResponseNotAuthorized_callsCloudClientPost() throws Exception {
-        Response.ResponseBuilder serviceResponse = Response.status(401);
-        when(defaultCloud11Service.migrate(request, "user", httpHeaders, "body")).thenReturn(serviceResponse);
-        delegateCloud11Service.migrate(request, "user", httpHeaders, "body");
-        verify(cloudClient).post(url + "migration/user/migrate", httpHeaders, "body");
-    }
-
-    @Test
-    public void migrate_httpServletResponseOk_callsServiceResponse() throws Exception {
-        Response.ResponseBuilder serviceResponse = Response.status(200);
-        when(defaultCloud11Service.migrate(request, "user", httpHeaders, "body")).thenReturn(serviceResponse);
-        Response.ResponseBuilder migrate = delegateCloud11Service.migrate(request, "user", httpHeaders, "body");
-        assertThat("Response Code", migrate, equalTo(serviceResponse));
-    }
-
-    @Test
-    public void unmigrate_httpServletResponseNotFound_callsCloudClientPost() throws Exception {
-        Response.ResponseBuilder serviceResponse = Response.status(404);
-        when(defaultCloud11Service.unmigrate(request, "user", httpHeaders, "body")).thenReturn(serviceResponse);
-        delegateCloud11Service.unmigrate(request, "user", httpHeaders, "body");
-        verify(cloudClient).post(url + "migration/user/unmigrate", httpHeaders, "body");
-    }
-
-    @Test
-    public void unmigrate_httpServletResponseNotAuthorized_callsCloudClientPost() throws Exception {
-        Response.ResponseBuilder serviceResponse = Response.status(401);
-        when(defaultCloud11Service.unmigrate(request, "user", httpHeaders, "body")).thenReturn(serviceResponse);
-        delegateCloud11Service.unmigrate(request, "user", httpHeaders, "body");
-        verify(cloudClient).post(url + "migration/user/unmigrate", httpHeaders, "body");
-    }
-
-    @Test
-    public void unmigrate_httpServletResponseOk_callsServiceResponse() throws Exception {
-        Response.ResponseBuilder serviceResponse = Response.status(200);
-        when(defaultCloud11Service.unmigrate(request, "user", httpHeaders, "body")).thenReturn(serviceResponse);
-        Response.ResponseBuilder unmigrate = delegateCloud11Service.unmigrate(request, "user", httpHeaders, "body");
-        assertThat("Response Code", unmigrate, equalTo(serviceResponse));
-    }
-
-    @Test
-    public void all_httpServletResponseNotFound_callsCloudClientPost() throws Exception {
-        Response.ResponseBuilder serviceResponse = Response.status(404);
-        when(defaultCloud11Service.all(request, httpHeaders, "body")).thenReturn(serviceResponse);
-        delegateCloud11Service.all(request, httpHeaders, "body");
-        verify(cloudClient).post(url + "migration/all", httpHeaders, "body");
-    }
-
-    @Test
-    public void all_httpServletResponseNotAuthorized_callsCloudClientPost() throws Exception {
-        Response.ResponseBuilder serviceResponse = Response.status(401);
-        when(defaultCloud11Service.all(request, httpHeaders, "body")).thenReturn(serviceResponse);
-        delegateCloud11Service.all(request, httpHeaders, "body");
-        verify(cloudClient).post(url + "migration/all", httpHeaders, "body");
-    }
-
-    @Test
-    public void all_httpServletResponseOk_callsServiceResponse() throws Exception {
-        Response.ResponseBuilder serviceResponse = Response.status(200);
-        when(defaultCloud11Service.all(request, httpHeaders, "body")).thenReturn(serviceResponse);
-        Response.ResponseBuilder all = delegateCloud11Service.all(request, httpHeaders, "body");
-        assertThat("Response Code", all, equalTo(serviceResponse));
-    }
-
-    @Test
     public void extensions_cloudRoutingEnabledAndGASourceOfTruthNotEnabled_callsCloudClient() throws Exception {
         when(config.getBoolean("useCloudAuth")).thenReturn(true);
         when(config.getBoolean("gaIsSourceOfTruth")).thenReturn(false);
@@ -1264,12 +1163,5 @@ public class DelegateCloud11ServiceTest {
         when(config.getBoolean("gaIsSourceOfTruth")).thenReturn(false);
         delegateCloud11Service.getExtension(httpHeaders,"EXAMPLE");
         verify(defaultCloud11Service).extensions(httpHeaders);
-    }
-
-    @Test
-    public void getCloud11Service_GAKeystoneDisabled_returnsDummyCloud11Service() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(true);
-        Cloud11Service cloud11Service = delegateCloud11Service.getCloud11Service();
-        assertThat("Service", cloud11Service, equalTo((Cloud11Service)dummyCloud11Service));
     }
 }
