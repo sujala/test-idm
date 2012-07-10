@@ -15,9 +15,11 @@ import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.domain.service.impl.DefaultUserService;
 import com.rackspace.idm.exception.ApiException;
 import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.DuplicateUsernameException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.sun.jersey.core.spi.factory.ResponseBuilderImpl;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory;
+import com.sun.jersey.core.util.MultivaluedMapImpl;
 import com.sun.jersey.spi.container.ContainerRequest;
 import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
 import org.apache.commons.configuration.Configuration;
@@ -26,6 +28,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Matchers;
+import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.v2.*;
 import org.springframework.web.bind.annotation.RequestHeader;
 
@@ -69,6 +72,7 @@ public class DelegateCloud20ServiceTest {
     private final Configuration config = mock(Configuration.class);
     AuthenticationRequest authenticationRequest = mock(AuthenticationRequest.class);
     String url = "http://url.com/";
+    String ukUrl = "http://ukurl.com/";
     Boolean disabled = true;
     private String roleId = "roleId";
     private String userId = "userId";
@@ -92,7 +96,11 @@ public class DelegateCloud20ServiceTest {
         delegateCloud20Service.setScopeAccessService(scopeAccessService);
         delegateCloud20Service.setTenantService(tenantService);
         when(config.getString("cloudAuth20url")).thenReturn(url);
+        when(config.getString("cloudAuthUK20url")).thenReturn(url);
         when(config.getBoolean("GAKeystoneDisabled")).thenReturn(disabled);
+        when(httpHeaders.getRequestHeaders()).thenReturn(new MultivaluedMapImpl());
+        when(config.getString("ga.username")).thenReturn("user");
+        when(config.getString("ga.password")).thenReturn("password");
         delegateCloud20Service.setConfig(config);
         when(cloudClient.post(anyString(), Matchers.<HttpHeaders>any(), anyString())).thenReturn(Response.ok());
         spy = spy(delegateCloud20Service);
@@ -104,6 +112,30 @@ public class DelegateCloud20ServiceTest {
         when(scopeAccessService.getAccessTokenByAuthHeader("token")).thenReturn(new ScopeAccess());
         spy.addUser(null,null,"token",null);
         verify(defaultCloud20Service).addUser(null,null,"token",null);
+    }
+
+    @Test(expected = DuplicateUsernameException.class)
+    public void addUser_routingTrueAndCallerExistsInGAButNameExistsInCloudAuth_throwsConflictException() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(scopeAccessService.getAccessTokenByAuthHeader("token")).thenReturn(new ScopeAccess());
+        when(cloudClient.get(anyString(),any(HttpHeaders.class))).thenReturn(Response.ok());
+        UserForCreate user = new UserForCreate();
+        user.setUsername("username");
+        spy.addUser(httpHeaders, null, "token", user);
+    }
+
+    @Test
+    public void addUser_routingTrueAndCallerExistsInGAButNameExistsInCloudAuth_callsClientGetUsers() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(scopeAccessService.getAccessTokenByAuthHeader("token")).thenReturn(new ScopeAccess());
+        when(cloudClient.get(anyString(), any(HttpHeaders.class))).thenReturn(Response.status(400));
+        when(cloudClient.get(anyString(),any(HttpHeaders.class))).thenReturn(Response.status(400));
+
+
+        UserForCreate user = new UserForCreate();
+        user.setUsername("username");
+        spy.addUser(httpHeaders, null, "token", user);
+        verify(cloudClient,times(2)).get(contains("users/username"),any(HttpHeaders.class));
     }
 
     @Test
