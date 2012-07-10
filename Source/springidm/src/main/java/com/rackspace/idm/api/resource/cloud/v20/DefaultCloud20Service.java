@@ -19,7 +19,6 @@ import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
-import freemarker.template.utility.StringUtil;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.CharUtils;
 import org.joda.time.DateTime;
@@ -182,19 +181,18 @@ public class DefaultCloud20Service implements Cloud20Service {
                 logger.warn(errMsg);
                 throw new BadRequestException(errMsg);
             }
-            if (StringUtils.isBlank(role.getServiceId())) {
-                String errMsg = "Expecting serviceId";
-                logger.warn(errMsg);
-                throw new BadRequestException(errMsg);
+            if (StringUtils.isBlank(role.getServiceId())) { // ToDo: We now default to an application for all roles not specifying one
+                role.setServiceId(config.getString("cloudAuth.clientId"));
+                //String errMsg = "Expecting serviceId";
+                //logger.warn(errMsg);
+                //throw new BadRequestException(errMsg);
             }
-
 
             if (StringUtils.isBlank(role.getName())) {
                 String errMsg = "Expecting name";
                 logger.warn(errMsg);
                 throw new BadRequestException(errMsg);
             }
-
 
             Application service = checkAndGetApplication(role.getServiceId());
 
