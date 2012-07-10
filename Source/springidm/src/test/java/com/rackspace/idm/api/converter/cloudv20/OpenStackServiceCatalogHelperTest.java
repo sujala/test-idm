@@ -12,9 +12,7 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.notNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -25,10 +23,15 @@ import static org.mockito.Mockito.when;
  */
 public class OpenStackServiceCatalogHelperTest {
     ServiceCatalog serviceCatalog;
+    OpenStackServiceCatalogHelper openStackServiceCatalogHelper;
+    OpenStackServiceCatalogHelper spy;
 
     @Before
     public void setUp() throws Exception {
         serviceCatalog = mock(ServiceCatalog.class);
+        openStackServiceCatalogHelper = new OpenStackServiceCatalogHelper(serviceCatalog);
+
+        spy = spy(openStackServiceCatalogHelper);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -103,5 +106,18 @@ public class OpenStackServiceCatalogHelperTest {
 
         ServiceForCatalog endPointService = new OpenStackServiceCatalogHelper(serviceCatalog).getEndPointService("serviceName", "serviceType");
         assertThat("service", endPointService, equalTo(serviceForCatalog));
+    }
+
+    @Test
+    public void contains_returnsFalse() throws Exception {
+        Boolean result = openStackServiceCatalogHelper.contains("test");
+        assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
+    public void contains_returnsTrue() throws Exception {
+        doReturn(new ServiceForCatalog()).when(spy).getService("test");
+        Boolean result = spy.contains("test");
+        assertThat("boolean", result, equalTo(true));
     }
 }

@@ -1076,30 +1076,59 @@ public class DelegateCloud11ServiceTest {
     }
 
     @Test
-    public void revokeToken_httpServletResponseNotFound_callsCloudClientDelete() throws Exception {
-        Response.ResponseBuilder serviceResponse = mock(Response.ResponseBuilder.class);
-        when(defaultCloud11Service.revokeToken(request, "tokenId", httpHeaders)).thenReturn(serviceResponse);
-        when(serviceResponse.clone()).thenReturn(Response.status(404));
-        delegateCloud11Service.revokeToken(request, "tokenId", httpHeaders);
-        verify(cloudClient).delete(url+"token/tokenId", httpHeaders);
-    }
-    @Test
-    public void revokeToken_httpServletResponseUnauthorized_callsCloudClientDelete() throws Exception {
-        Response.ResponseBuilder serviceResponse = mock(Response.ResponseBuilder.class);
-        when(defaultCloud11Service.revokeToken(request, "tokenId", httpHeaders)).thenReturn(serviceResponse);
-        when(serviceResponse.clone()).thenReturn(Response.status(401));
-        delegateCloud11Service.revokeToken(request, "tokenId", httpHeaders);
-        verify(cloudClient).delete(url+"token/tokenId", httpHeaders);
+    public void revokeToken_callsCloudClient_delete() throws Exception {
+        when(cloudClient.delete(url+"token/null", null)).thenReturn(Response.ok());
+        spy.revokeToken(null, null, null);
+        verify(cloudClient).delete(url+"token/null", null);
     }
 
     @Test
-    public void revokeToken_httpServletOK_returnsServiceResponse() throws Exception {
-        Response.ResponseBuilder serviceResponse = mock(Response.ResponseBuilder.class);
-        when(defaultCloud11Service.revokeToken(request, "tokenId", httpHeaders)).thenReturn(serviceResponse);
-        when(serviceResponse.clone()).thenReturn(Response.status(200));
-        Response.ResponseBuilder revokeToken = delegateCloud11Service.revokeToken(request, "tokenId", httpHeaders);
-        assertThat("Response Code", revokeToken, equalTo(serviceResponse));
+    public void revokeToken_callsDefaultCloud11Service_revokeToken() throws Exception {
+        when(cloudClient.delete(url+"token/null", null)).thenReturn(Response.ok());
+        spy.revokeToken(null, null, null);
+        verify(defaultCloud11Service).revokeToken(null, null, null);
     }
+
+    @Test
+    public void revokeToken_httpServletResponseNoContent_returnsCloudResponse() throws Exception {
+        when(cloudClient.delete(url+"token/null", null)).thenReturn(Response.status(204));
+        Response.ResponseBuilder result = spy.revokeToken(null, null, null);
+        assertThat("response code", result.build().getStatus(), equalTo(204));
+    }
+
+    @Test
+    public void revokeToken_httpServletResponseNotNoContent_returnsDefaultResponse() throws Exception {
+        when(cloudClient.delete(url+"token/null", null)).thenReturn(Response.status(401));
+        doReturn(Response.ok()).when(spy).revokeToken(null, null, null);
+        Response.ResponseBuilder result = spy.revokeToken(null, null, null);
+        assertThat("response code", result.build().getStatus(), equalTo(200));
+    }
+
+//    @Test
+//    public void revokeToken_httpServletResponseNotFound_callsCloudClientDelete() throws Exception {
+//        Response.ResponseBuilder serviceResponse = mock(Response.ResponseBuilder.class);
+//        when(defaultCloud11Service.revokeToken(request, "tokenId", httpHeaders)).thenReturn(serviceResponse);
+//        when(serviceResponse.clone()).thenReturn(Response.status(404));
+//        delegateCloud11Service.revokeToken(request, "tokenId", httpHeaders);
+//        verify(cloudClient).delete(url+"token/tokenId", httpHeaders);
+//    }
+//    @Test
+//    public void revokeToken_httpServletResponseUnauthorized_callsCloudClientDelete() throws Exception {
+//        Response.ResponseBuilder serviceResponse = mock(Response.ResponseBuilder.class);
+//        when(defaultCloud11Service.revokeToken(request, "tokenId", httpHeaders)).thenReturn(serviceResponse);
+//        when(serviceResponse.clone()).thenReturn(Response.status(401));
+//        delegateCloud11Service.revokeToken(request, "tokenId", httpHeaders);
+//        verify(cloudClient).delete(url+"token/tokenId", httpHeaders);
+//    }
+//
+//    @Test
+//    public void revokeToken_httpServletOK_returnsServiceResponse() throws Exception {
+//        Response.ResponseBuilder serviceResponse = mock(Response.ResponseBuilder.class);
+//        when(defaultCloud11Service.revokeToken(request, "tokenId", httpHeaders)).thenReturn(serviceResponse);
+//        when(serviceResponse.clone()).thenReturn(Response.status(200));
+//        Response.ResponseBuilder revokeToken = delegateCloud11Service.revokeToken(request, "tokenId", httpHeaders);
+//        assertThat("Response Code", revokeToken, equalTo(serviceResponse));
+//    }
 
     @Test
     public void extensions_cloudRoutingEnabledAndGASourceOfTruthNotEnabled_callsCloudClient() throws Exception {
