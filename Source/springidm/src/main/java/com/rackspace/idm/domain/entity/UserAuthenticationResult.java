@@ -29,9 +29,7 @@ public class UserAuthenticationResult extends AuthenticationResult {
         if (!super.equals(obj)) {
             return false;
         }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
+
         UserAuthenticationResult other = (UserAuthenticationResult) obj;
         if (user == null) {
             if (other.user != null) {
