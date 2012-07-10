@@ -98,6 +98,10 @@ public class DefinedPermission extends Permission implements Auditable {
         this.enabled = enabled;
     }
 
+    public void setLdapEntry(ReadOnlyEntry ldapEntry) {
+        this.ldapEntry = ldapEntry;
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -124,9 +128,7 @@ public class DefinedPermission extends Permission implements Auditable {
         if (!super.equals(obj)) {
             return false;
         }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
+
         DefinedPermission other = (DefinedPermission) obj;
         if (description == null) {
             if (other.description != null) {
@@ -183,19 +185,16 @@ public class DefinedPermission extends Permission implements Auditable {
     public void copyChanges(DefinedPermission modified) {
 
         if (modified.getPermissionType() != null) {
-            String pt = modified.getPermissionType().equals("") ? null : modified.getPermissionType();
-            setPermissionType(pt);
+            setPermissionType(modified.getPermissionType());
         }
         if (modified.getValue() != null) {
-            String v = modified.getValue().equals("") ? null : modified.getValue();
-            setValue(v);
+            setValue(modified.getValue());
         }
         if (modified.getDescription() != null) {
-            String d = modified.getDescription().equals("") ? null : modified.getDescription();
-            setDescription(d);
+            setDescription(modified.getDescription());
         }
         if (modified.getTitle() != null) {
-            String t = modified.getTitle().equals("") ? null : modified.getTitle();
+            String t = modified.getTitle();
             setTitle(t);
         }
         if (modified.getEnabled() != null) {
