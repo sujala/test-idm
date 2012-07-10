@@ -3,6 +3,8 @@ package org.w3._2005.atom;
 import org.junit.Before;
 import org.junit.Test;
 
+import javax.xml.bind.JAXBElement;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
@@ -65,5 +67,11 @@ public class ObjectFactoryTest {
         link.setLang("test");
         String result = link.getLang();
         assertThat("Lang", result, equalTo("test"));
+    }
+
+    @Test
+    public void createLink_returnsNewJAXBElement() throws Exception {
+        JAXBElement<Link> result = objectFactory.createLink(link);
+        assertThat("base", result.getValue().base, equalTo(null));
     }
 }
