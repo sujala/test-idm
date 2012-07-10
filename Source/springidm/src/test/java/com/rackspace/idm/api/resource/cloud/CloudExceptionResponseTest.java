@@ -1,5 +1,7 @@
 package com.rackspace.idm.api.resource.cloud;
 
+import com.rackspace.idm.exception.BaseUrlConflictException;
+import com.rackspace.idm.exception.DuplicateException;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -26,7 +28,7 @@ public class CloudExceptionResponseTest {
 
     @Test
     public void usernameConflictExceptionResponse_returns409() throws Exception {
-        Response.ResponseBuilder builder = cloudExceptionResponse.usernameConflictExceptionResponse("foo");
+        Response.ResponseBuilder builder = cloudExceptionResponse.exceptionResponse(new DuplicateException("Duplicate username."));
         assertThat("response code", builder.build().getStatus(), equalTo(409));
     }
 
@@ -35,5 +37,17 @@ public class CloudExceptionResponseTest {
         Response.ResponseBuilder responseBuilder = cloudExceptionResponse.methodNotAllowedExceptionResponse("foo");
         assertThat("response code",responseBuilder.build().getStatus(), equalTo(405));
 
+    }
+
+    @Test
+    public void exceptionResponse_exceptionIsInstanceOfNumberFormatException_returns400() throws Exception {
+        Response.ResponseBuilder responseBuilder = cloudExceptionResponse.exceptionResponse(new NumberFormatException());
+        assertThat("response code",responseBuilder.build().getStatus(), equalTo(400));
+    }
+    
+    @Test
+    public void exceptionResponse_exceptionIsInstanceOfBaseUrlConflictException_returns400() throws Exception {
+        Response.ResponseBuilder responseBuilder = cloudExceptionResponse.exceptionResponse(new BaseUrlConflictException());
+        assertThat("response code",responseBuilder.build().getStatus(), equalTo(400));
     }
 }

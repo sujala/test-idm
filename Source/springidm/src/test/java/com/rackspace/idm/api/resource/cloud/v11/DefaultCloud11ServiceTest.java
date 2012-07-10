@@ -2146,25 +2146,6 @@ public class DefaultCloud11ServiceTest {
         verify(userService).removeBaseUrlFromUser(anyInt(), Matchers.<com.rackspace.idm.domain.entity.User>anyObject());
     }
 
-    @Ignore
-    @Test
-    public void updateUser_userHasEndpoints_newEndpointsAreAdded() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUser(request);
-        doNothing().when(userValidator).validate(user);
-        user.setId("userId");
-        BaseURLRefList baseURLRefList = new BaseURLRefList();
-        baseURLRefList.getBaseURLRef().add(new BaseURLRef());
-        user.setBaseURLRefs(baseURLRefList);
-        when(userService.getUser("userId")).thenReturn(userDO);
-
-        List<OpenstackEndpoint> currentEndpoints = new ArrayList<OpenstackEndpoint>();
-        when(scopeAccessService.getOpenstackEndpointsForScopeAccess(null)).thenReturn(currentEndpoints);
-
-        spy.updateUser(request, "userId", null, user);
-        verify(userService).addBaseUrlToUser(anyInt(), userDO);
-    }
-
-    //TODO
     @Test
     public void updateUser_userIsDisabled_callsAtomHopperClient_postUser() throws Exception {
         doNothing().when(spy).authenticateCloudAdminUser(request);

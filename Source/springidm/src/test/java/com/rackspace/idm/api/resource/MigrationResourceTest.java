@@ -133,4 +133,18 @@ public class MigrationResourceTest {
         Response response = migrationResource.migrateGroups();
         assertThat("response code", response.getStatus(), equalTo(202));
     }
+
+    @Test
+    public void getGroups_callsCloudMigrationService_getGroups() throws Exception {
+        when(cloudMigrationService.getGroups()).thenReturn(Response.ok());
+        migrationResource.getGroups();
+        verify(cloudMigrationService).getGroups();
+    }
+
+    @Test
+    public void getGroups_responseOk_returns200() throws Exception {
+        when(cloudMigrationService.getGroups()).thenReturn(Response.ok());
+        Response result = migrationResource.getGroups();
+        assertThat("response code", result.getStatus(), equalTo(200));
+    }
 }
