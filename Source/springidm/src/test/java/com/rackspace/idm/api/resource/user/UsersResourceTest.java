@@ -8,6 +8,7 @@ import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.validation.InputValidator;
+import org.apache.commons.configuration.Configuration;
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
@@ -38,6 +39,7 @@ public class UsersResourceTest {
     private AuthorizationService authorizationService;
     private ScopeAccessService scopeAccessService;
     private UserValidatorFoundation userValidator;
+    private Configuration config;
 
     @Before
     public void setUp() throws Exception {
@@ -48,8 +50,10 @@ public class UsersResourceTest {
         authorizationService = mock(AuthorizationService.class);
         scopeAccessService = mock(ScopeAccessService.class);
         userValidator = mock(UserValidatorFoundation.class);
+        config = mock(Configuration.class);
         usersResource = new UsersResource(singleUserResource, userService, inputValidator,  userConverter, authorizationService, scopeAccessService);
         usersResource.setUserValidator(userValidator);
+        usersResource.setConfig(config);
     }
 
     @Test
@@ -90,6 +94,16 @@ public class UsersResourceTest {
         when(userConverter.toUserDO(user)).thenReturn(new com.rackspace.idm.domain.entity.User());
         usersResource.addUser("authHeader", user);
         verify(authorizationService).authorizeIdmSuperAdminOrRackspaceClient(any(ScopeAccess.class));
+    }
+
+    @Test
+    public void addUser_callsUserValidatorFoundation_checkUsername() throws Exception {
+        User user = new User();
+        user.setUsername("username");
+        when(config.getBoolean("useCloudAuth")).thenReturn(true);
+        when(userConverter.toUserDO(user)).thenReturn(new com.rackspace.idm.domain.entity.User());
+        usersResource.addUser("authHeader", user);
+        verify(userValidator).checkCloudAuthForUsername(user.getUsername());
     }
 
     @Test
