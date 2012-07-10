@@ -119,6 +119,13 @@ public class UserConverterCloudV20Test {
     }
 
     @Test
+    public void toUserDO_otherAttributesIsNull_returnsUserDo() throws Exception {
+        final UserForCreate user = new UserForCreate();
+        final User userDO = userConverterCloudV20.toUserDO(user);
+        assertThat("user region", userDO.getRegion(), equalTo(null));
+    }
+
+    @Test
     public void toUser_domainUserHasRegion_setsJaxbObjectsRegion() throws Exception {
         final User user = new User();
         user.setRegion("myRegion");

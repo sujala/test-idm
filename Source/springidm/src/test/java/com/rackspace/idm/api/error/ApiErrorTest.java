@@ -16,16 +16,18 @@ import static org.hamcrest.Matchers.equalTo;
  */
 public class ApiErrorTest {
     ApiError apiError;
+    GlobalConstants xmlNameSpace;
 
     @Before
     public void setUp() throws Exception {
         apiError = new ApiError();
+        xmlNameSpace = new GlobalConstants();
     }
 
     @Test
     public void getXmlNamespace_returnsXMLNS() throws Exception {
         String result = apiError.getXmlNamespace();
-        assertThat("xml ns", result, equalTo(GlobalConstants.API_NAMESPACE_LOCATION));
+        assertThat("xml ns", result, equalTo(xmlNameSpace.API_NAMESPACE_LOCATION));
     }
 
     @Test

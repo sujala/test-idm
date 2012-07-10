@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud;
 
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomFeed;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.api.resource.cloud.atomHopper.FeedUser;
 import junit.framework.TestCase;
 import org.apache.commons.configuration.Configuration;
@@ -192,12 +193,13 @@ public class AtomHopperClientTest {
 
     @Test
     public void postMigrateUser_withResponseStatusNot201_throwsNoErrors() throws Exception {
+        AtomHopperConstants migrated = new AtomHopperConstants();
         AtomFeed atomFeed = new AtomFeed();
         doReturn(atomFeed).when(spy).createAtomFeed(any(User.class), eq("migrationStatus"));
         HttpResponse response = mock(HttpResponse.class);
         when(response.getStatusLine()).thenReturn(new BasicStatusLine(new ProtocolVersion("http", 1,1), 404, "not found"));
         doReturn(response).when(spy).executePostRequest(eq("token"), any(Writer.class), anyString());
-        spy.postMigrateUser(new User(),  "token", "migrated", "migrationStatus");
+        spy.postMigrateUser(new User(),  "token", migrated.MIGRATED, "migrationStatus");
         verify(spy).executePostRequest(eq("token"), any(Writer.class), anyString());
     }
 
