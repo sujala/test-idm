@@ -85,10 +85,6 @@ public class CloudExceptionResponse extends WebApplicationException {
         return Response.status(HttpServletResponse.SC_CONFLICT).entity(OBJ_FACTORY.createUsernameConflict(fault));
     }
 
-    public Response.ResponseBuilder redirect(HttpServletRequest request, String id) {
-        return Response.status(Response.Status.MOVED_PERMANENTLY).header("Location", request.getContextPath() + "/users/" + id);
-    }
-
     public Response.ResponseBuilder serviceExceptionResponse() {
         AuthFault fault = OBJ_FACTORY.createAuthFault();
         fault.setCode(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);

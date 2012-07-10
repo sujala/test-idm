@@ -12,31 +12,24 @@ import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.TokenService;
 import com.rackspace.idm.domain.service.UserService;
-import com.rackspace.idm.domain.service.impl.DefaultUserService;
 import com.rackspace.idm.exception.ApiException;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateUsernameException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.sun.jersey.core.spi.factory.ResponseBuilderImpl;
-import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
-import com.sun.jersey.spi.container.ContainerRequest;
 import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
 import org.apache.commons.configuration.Configuration;
-import org.joda.time.DateTime;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Matchers;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.v2.*;
-import org.springframework.web.bind.annotation.RequestHeader;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
-import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.util.*;
@@ -56,7 +49,6 @@ import static org.mockito.Mockito.*;
  */
 public class DelegateCloud20ServiceTest {
 
-    DummyCloud20Service dummyCloud20Service;
     DelegateCloud20Service delegateCloud20Service;
     DefaultCloud20Service defaultCloud20Service = mock(DefaultCloud20Service.class);
     UserService userService = mock(UserService.class);
@@ -83,9 +75,7 @@ public class DelegateCloud20ServiceTest {
 
     @Before
     public void setUp() throws IOException, JAXBException {
-        dummyCloud20Service = new DummyCloud20Service();
         delegateCloud20Service = new DelegateCloud20Service();
-        delegateCloud20Service.setDummyCloud20Service(dummyCloud20Service);
         delegateCloud20Service.setCloudClient(cloudClient);
         delegateCloud20Service.setDefaultCloud20Service(defaultCloud20Service);
         delegateCloud20Service.setUserService(userService);
@@ -223,6 +213,7 @@ public class DelegateCloud20ServiceTest {
         User user = new User();
         when(cloudUserExtractor.getUserByV20CredentialType(authenticationRequest)).thenReturn(user);
         when(cloudClient.post(anyString(), any(HttpHeaders.class), anyString())).thenReturn(Response.status(123));
+        when(defaultCloud20Service.authenticate(httpHeaders, authenticationRequest)).thenReturn(Response.status(123));
         assertThat("response", delegateCloud20Service.authenticate(httpHeaders, authenticationRequest), instanceOf(Response.ResponseBuilder.class));
     }
 
@@ -1350,26 +1341,35 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
-    public void deleteRoleFromUserOnTenant_defaultServiceReturns401_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.deleteRoleFromUserOnTenant(null, null, tenantId, userId, roleId)).thenReturn(Response.status(401));
+    public void deleteRoleFromUserOnTenant_RoutingFalse_userExistsFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(userService.userExistsById(userId)).thenReturn(false);
         delegateCloud20Service.deleteRoleFromUserOnTenant(null, null, tenantId, userId, roleId);
-        verify(cloudClient).delete(url + "tenants/" + tenantId + "/users/" + userId + "/roles/OS-KSADM/" + roleId, null);
+        verify(defaultCloud20Service).deleteRoleFromUserOnTenant(null, null, tenantId, userId, roleId);
     }
 
     @Test
-    public void deleteRoleFromUserOnTenant_defaultServiceReturns404_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.deleteRoleFromUserOnTenant(null, null, tenantId, userId, roleId)).thenReturn(Response.status(404));
+    public void deleteRoleFromUserOnTenant_RoutingFalse_userExistsTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(userService.userExistsById(userId)).thenReturn(true);
         delegateCloud20Service.deleteRoleFromUserOnTenant(null, null, tenantId, userId, roleId);
-        verify(cloudClient).delete(url + "tenants/" + tenantId + "/users/" + userId + "/roles/OS-KSADM/" + roleId, null);
+        verify(defaultCloud20Service).deleteRoleFromUserOnTenant(null, null, tenantId, userId, roleId);
     }
 
     @Test
-    public void deleteRoleFromUserOnTenant_defaultServiceReturns200_returnsResponseBuilder() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.deleteRoleFromUserOnTenant(null, null, tenantId, userId, roleId)).thenReturn(Response.status(200));
-        assertThat("response", delegateCloud20Service.deleteRoleFromUserOnTenant(null, null, tenantId, userId, roleId).build().getStatus(), equalTo(200));
+    public void deleteRoleFromUserOnTenant_RoutingTrue_userExistsFalse_callsClient() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(userService.userExistsById(userId)).thenReturn(false);
+        delegateCloud20Service.deleteRoleFromUserOnTenant(null, null, tenantId, userId, roleId);
+        verify(cloudClient).delete(eq(url + "tenants/" + tenantId + "/users/" + userId + "/roles/OS-KSADM/" + roleId), any(HttpHeaders.class));
+    }
+
+    @Test
+    public void deleteRoleFromUserOnTenant_RoutingTrue_userExistsTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(userService.userExistsById(userId)).thenReturn(true);
+        delegateCloud20Service.deleteRoleFromUserOnTenant(null, null, tenantId, userId, roleId);
+        verify(defaultCloud20Service).deleteRoleFromUserOnTenant(null, null, tenantId, userId, roleId);
     }
 
     @Test

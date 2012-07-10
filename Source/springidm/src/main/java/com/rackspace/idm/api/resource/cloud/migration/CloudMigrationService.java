@@ -56,8 +56,6 @@ public class CloudMigrationService {
 
     private MigrationClient client;
 
-    private MigrationClient client11;
-
     @Autowired
     private UserService userService;
 
@@ -99,6 +97,10 @@ public class CloudMigrationService {
 
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
+
+    public CloudMigrationService() {
+        client = new MigrationClient();
+    }
 
     public void migrateBaseURLs() throws Exception {
         addOrUpdateEndpointTemplates(getAdminToken());
@@ -197,12 +199,8 @@ public class CloudMigrationService {
     }
 
     public MigrateUserResponseType migrateUserByUsername(String username, boolean processSubUsers, String domainId) throws Exception {
-        client = getMigrationClientInstance();
         client.setCloud20Host(config.getString("cloudAuth20url"));
-
-        client11 = getMigrationClientInstance();
-        client11.setCloud11Host(config.getString("cloudAuth11url"));
-
+        client.setCloud11Host(config.getString("cloudAuth11url"));
         if (userService.userExistsByUsername(username))
             throw new ConflictException("A user with username " + username + " already exists.");
 
@@ -212,7 +210,7 @@ public class CloudMigrationService {
             com.rackspacecloud.docs.auth.api.v1.User user11;
             User user;
             try {
-                user11 = client11.getUserTenantsBaseUrls(config.getString("ga.username"), config.getString("ga.password"), username);
+                user11 = client.getUserTenantsBaseUrls(config.getString("ga.username"), config.getString("ga.password"), username);
                 user = client.getUser(adminToken, username);
             }
             catch (Exception ex) {
@@ -248,8 +246,8 @@ public class CloudMigrationService {
             if(processSubUsers) {
                 subUsers = getSubUsers(user, apiKey, password, roles);
                 for (String subUser : subUsers) {
-                    if (userService.userExistsByUsername(username)) {
-                        throw new ConflictException("A user with username " + username + " already exists.");
+                    if (userService.userExistsByUsername(subUser)) {
+                        throw new ConflictException("A user with username " + subUser + " already exists.");
                     }
                 }
             }
@@ -310,11 +308,9 @@ public class CloudMigrationService {
         throw new NotAuthenticatedException("Not Authorized.");
     }
 
-    MigrationClient getMigrationClientInstance() {
-        return new MigrationClient();
-    }
-
     List<String> getSubUsers(User user, String apiKey, String password, RoleList roles) throws Exception {
+        client.setCloud20Host(config.getString("cloudAuth20url"));
+        client.setCloud11Host(config.getString("cloudAuth11url"));
         List<String> subUsers = new ArrayList<String>();
 
         if (isUserAdmin(roles)) {
@@ -529,6 +525,8 @@ public class CloudMigrationService {
 
     AuthenticateResponse authenticate(String username, String apiKey,
                                               String password) throws Exception {
+        client.setCloud20Host(config.getString("cloudAuth20url"));
+        client.setCloud11Host(config.getString("cloudAuth11url"));
         AuthenticateResponse authenticateResponse;
         try {
             if (!StringUtils.isEmpty(apiKey))
@@ -598,8 +596,9 @@ public class CloudMigrationService {
     }
 
     String getAdminToken() throws URISyntaxException, HttpException, IOException, JAXBException {
+        client.setCloud20Host(config.getString("cloudAuth20url"));
+        client.setCloud11Host(config.getString("cloudAuth11url"));
         try {
-            client.setCloud20Host(config.getString("cloudAuth20url"));
             String adminUsername = config.getString("migration.username");
             String adminApiKey = config.getString("migration.apikey");
             AuthenticateResponse authenticateResponse = client.authenticateWithApiKey(adminUsername, adminApiKey);
@@ -705,7 +704,7 @@ public class CloudMigrationService {
         tenantService.addTenant(newTenant);
     }
 
-    private void addTenantRole(com.rackspace.idm.domain.entity.User user, String tenantId, int endpointId) {
+    void addTenantRole(com.rackspace.idm.domain.entity.User user, String tenantId, int endpointId) {
         CloudBaseUrl cloudBaseUrl = endpointService.getBaseUrlById(endpointId);
         Application application = applicationService.getByName(cloudBaseUrl.getServiceName());
         if (application == null) {
@@ -727,8 +726,9 @@ public class CloudMigrationService {
     }
 
     private SecretQA getSecretQA(String adminToken, String userId) throws Exception {
+        client.setCloud20Host(config.getString("cloudAuth20url"));
+        client.setCloud11Host(config.getString("cloudAuth11url"));
         try {
-            client.setCloud20Host(config.getString("cloudAuth20url"));
             SecretQA secretQA = client.getSecretQA(adminToken, userId);
             return secretQA;
         }
@@ -739,6 +739,7 @@ public class CloudMigrationService {
 
     void addOrUpdateGroups(String adminToken) throws Exception {
         client.setCloud20Host(config.getString("cloudAuth20url"));
+        client.setCloud11Host(config.getString("cloudAuth11url"));
         Groups groups = client.getGroups(adminToken);
         if (groups != null) {
             for (Group group : groups.getGroup()) {
@@ -764,14 +765,14 @@ public class CloudMigrationService {
     }
 
     void addOrUpdateEndpointTemplates(String adminToken) throws Exception {
-        // Using Endpoints call to get Keystone Endpoint
         client.setCloud20Host(config.getString("cloudAuth20url"));
+        client.setCloud11Host(config.getString("cloudAuth11url"));
+        // Using Endpoints call to get Keystone Endpoint
         EndpointTemplateList endpoints = client.getEndpointTemplates(adminToken);
 
         //Get V1.1 BaseURLs for extra info
         BaseURLList baseURLs;
         try {
-            client.setCloud11Host(config.getString("cloudAuth11url"));
             baseURLs = client.getBaseUrls(config.getString("ga.username"), config.getString("ga.password"));
         }
         catch (Exception ex) {
@@ -843,10 +844,6 @@ public class CloudMigrationService {
                 return b;
         }
         return null;
-    }
-
-    public MigrationClient getClient() {
-        return client;
     }
 
     public void setClient(MigrationClient client) {

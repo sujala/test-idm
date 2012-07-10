@@ -55,9 +55,7 @@ public class DelegatedPermission extends Permission implements Auditable {
         if (!super.equals(obj)) {
             return false;
         }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
+
         DelegatedPermission other = (DelegatedPermission) obj;
         if (ldapEntry == null) {
             if (other.ldapEntry != null) {
@@ -76,5 +74,9 @@ public class DelegatedPermission extends Permission implements Auditable {
         if (modified.getResourceGroups() != null) {
             setResourceGroups(modified.getResourceGroups());
         }
+    }
+
+    public void setLdapEntry(ReadOnlyEntry ldapEntry) {
+        this.ldapEntry = ldapEntry;
     }
 }

@@ -52,7 +52,7 @@ public class LdapConfiguration {
      * 
      * @return
      */
-    private LDAPConnectionPool connection() {
+    LDAPConnectionPool connection() {
         String[] serverList = config.getStringArray("ldap.serverList");
         String[] hosts = new String[0];
         int[] ports = new int[0];

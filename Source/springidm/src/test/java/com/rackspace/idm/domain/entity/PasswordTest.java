@@ -1,11 +1,16 @@
 package com.rackspace.idm.domain.entity;
 
+import com.rackspace.idm.validation.MessageTexts;
+import com.rackspace.idm.validation.RegexPatterns;
 import junit.framework.Assert;
 
 import org.joda.time.DateTime;
 import org.junit.Test;
+import org.tuckey.web.filters.urlrewrite.utils.RegexPattern;
 
 public class PasswordTest {
+    MessageTexts messageTexts = new MessageTexts();
+    RegexPatterns regexPatterns = new RegexPatterns();
 
     @Test
     public void shouldGenerateRandomPassword() {

@@ -54,7 +54,7 @@ public class ApplicationsResourceTest {
 
     @Test
     public void getApplications_callsAuthorizationService_verifyIdmSuperAdminAccess() throws Exception {
-        applicationsResource.getApplications(null, null, null, null);
+        applicationsResource.getApplications(null, 1, 1, null);
         verify(authorizationService).verifyIdmSuperAdminAccess(anyString());
     }
 

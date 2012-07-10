@@ -90,9 +90,6 @@ public class DelegateCloud20Service implements Cloud20Service {
     private JAXBObjectFactories OBJ_FACTORIES;
 
     @Autowired
-    private DummyCloud20Service dummyCloud20Service;
-
-    @Autowired
     private CloudUserExtractor cloudUserExtractor;
 
     public static final String CLOUD_AUTH_ROUTING = "useCloudAuth";
@@ -119,7 +116,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         com.rackspace.idm.domain.entity.User user = cloudUserExtractor.getUserByV20CredentialType(authenticationRequest);
         // ToDo: verify this is what we want to do with Migrated users.
         if (userService.isMigratedUser(user))
-            return getCloud20Service().authenticate(httpHeaders, authenticationRequest);
+            return defaultCloud20Service.authenticate(httpHeaders, authenticationRequest);
 
         //Get Cloud Auth response
         String body = marshallObjectToString(objectFactory.createAuth(authenticationRequest));
@@ -138,7 +135,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         } else if (user == null) { //If "user" is null return cloud response
             return serviceResponse;
         } else { //If we get this far, return Default Service Response
-            return getCloud20Service().authenticate(httpHeaders, authenticationRequest);
+            return defaultCloud20Service.authenticate(httpHeaders, authenticationRequest);
         }
 
         /*
@@ -753,25 +750,13 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder deleteRoleFromUserOnTenant(HttpHeaders httpHeaders,
-                                                      String authToken, String tenantId, String userId, String roleId)
+    public ResponseBuilder deleteRoleFromUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String userId, String roleId)
             throws IOException {
-
-        Response.ResponseBuilder serviceResponse = getCloud20Service()
-                .deleteRoleFromUserOnTenant(httpHeaders, authToken, tenantId,
-                        userId, roleId);
-        // We have to clone the ResponseBuilder from above because once we build
-        // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse
-                .clone();
-        int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
-
-            String request = getCloudAuthV20Url() + "tenants/" + tenantId
-                    + "/users/" + userId + "/roles/OS-KSADM/" + roleId;
+        if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
+            String request = getCloudAuthV20Url() + "tenants/" + tenantId + "/users/" + userId + "/roles/OS-KSADM/" + roleId;
             return cloudClient.delete(request, httpHeaders);
         }
-        return serviceResponse;
+        return defaultCloud20Service.deleteRoleFromUserOnTenant(httpHeaders, authToken, tenantId, userId, roleId);
     }
 
     @Override
@@ -1016,10 +1001,6 @@ public class DelegateCloud20Service implements Cloud20Service {
         this.config = config;
     }
 
-    public void setDummyCloud20Service(DummyCloud20Service dummyCloud20Service) {
-        this.dummyCloud20Service = dummyCloud20Service;
-    }
-
     private String getCloudAuthV20Url() {
         return config.getString("cloudAuth20url");
     }
@@ -1058,14 +1039,6 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     private boolean isCloudAuthRoutingEnabled() {
         return config.getBoolean(CLOUD_AUTH_ROUTING);
-    }
-
-    private Cloud20Service getCloud20Service() {
-        if (config.getBoolean("GAKeystoneDisabled")) {
-            return dummyCloud20Service;
-        } else {
-            return defaultCloud20Service;
-        }
     }
 
     public void setCloudUserExtractor(CloudUserExtractor cloudUserExtractor) {

@@ -1493,4 +1493,25 @@ public class Cloud20VersionResourceTest {
         Cloud20Service result = cloud20VersionResource.getCloud20Service();
         assertThat("service", result instanceof DefaultCloud20Service, equalTo(true));
     }
+
+    @Test
+    public void getUserById_callsGetCloud20Service() throws Exception {
+        when(delegateCloud20Service.getUserById(httpHeaders, null, null)).thenReturn(Response.ok());
+        spy.getUserById(httpHeaders, null, null);
+        verify(spy).getCloud20Service();
+    }
+
+    @Test
+    public void getUserById_callsCloud20Service_callsgetUserById() throws Exception {
+        when(delegateCloud20Service.getUserById(httpHeaders, null, null)).thenReturn(Response.ok());
+        spy.getUserById(httpHeaders, null, null);
+        verify(delegateCloud20Service).getUserById(httpHeaders, null, null);
+    }
+
+    @Test
+    public void getUserById_responseOk_returns200() throws Exception {
+        when(delegateCloud20Service.getUserById(httpHeaders, null, null)).thenReturn(Response.ok());
+        Response result = spy.getUserById(httpHeaders, null, null);
+        assertThat("response code", result.getStatus(), equalTo(200));
+    }
 }

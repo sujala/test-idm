@@ -6,6 +6,8 @@ import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11;
 import com.rackspace.idm.api.resource.cloud.CloudExceptionResponse;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
+import com.rackspace.idm.api.serviceprofile.ServiceDescriptionTemplateUtil;
+import com.rackspace.idm.domain.dao.impl.FileSystemApiDocRepository;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.service.*;
@@ -153,11 +155,21 @@ public class DefaultCloud11ServiceTest {
 
     @Test
     public void getVersion_callsCloudContractDescriptionBuilder() throws Exception {
-        doReturn("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<version></version>").when(cloudContratDescriptionBuilder).buildVersion11Page();
+        doReturn("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<version>1.0</version>").when(cloudContratDescriptionBuilder).buildVersion11Page();
         try {
             defaultCloud11Service.getVersion(null);
         } catch (Exception e){ }
         verify(cloudContratDescriptionBuilder).buildVersion11Page();
+    }
+
+    @Test
+    public void getVersion_responseOk_returns200() throws Exception {
+        FileSystemApiDocRepository fileSystemApiDocRepository = new FileSystemApiDocRepository();
+        ServiceDescriptionTemplateUtil serviceDescriptionTemplateUtil = new ServiceDescriptionTemplateUtil();
+        CloudContractDescriptionBuilder cloudContractDescriptionBuilder = new CloudContractDescriptionBuilder(fileSystemApiDocRepository, serviceDescriptionTemplateUtil);
+        spy.setCloudContractDescriptionBuilder(cloudContractDescriptionBuilder);
+        Response.ResponseBuilder result = spy.getVersion(null);
+        assertThat("response code", result.build().getStatus(), equalTo(200));
     }
 
     @Test
@@ -2134,25 +2146,6 @@ public class DefaultCloud11ServiceTest {
         verify(userService).removeBaseUrlFromUser(anyInt(), Matchers.<com.rackspace.idm.domain.entity.User>anyObject());
     }
 
-    @Ignore
-    @Test
-    public void updateUser_userHasEndpoints_newEndpointsAreAdded() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUser(request);
-        doNothing().when(userValidator).validate(user);
-        user.setId("userId");
-        BaseURLRefList baseURLRefList = new BaseURLRefList();
-        baseURLRefList.getBaseURLRef().add(new BaseURLRef());
-        user.setBaseURLRefs(baseURLRefList);
-        when(userService.getUser("userId")).thenReturn(userDO);
-
-        List<OpenstackEndpoint> currentEndpoints = new ArrayList<OpenstackEndpoint>();
-        when(scopeAccessService.getOpenstackEndpointsForScopeAccess(null)).thenReturn(currentEndpoints);
-
-        spy.updateUser(request, "userId", null, user);
-        verify(userService).addBaseUrlToUser(anyInt(), userDO);
-    }
-
-    //TODO
     @Test
     public void updateUser_userIsDisabled_callsAtomHopperClient_postUser() throws Exception {
         doNothing().when(spy).authenticateCloudAdminUser(request);

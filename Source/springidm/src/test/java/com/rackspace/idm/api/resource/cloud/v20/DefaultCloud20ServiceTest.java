@@ -2,7 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
-import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.*;
+import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.api.converter.cloudv20.*;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
@@ -20,7 +20,6 @@ import com.unboundid.ldap.sdk.SearchResultEntry;
 import org.apache.commons.configuration.Configuration;
 import org.hamcrest.Matchers;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.openstack.docs.common.api.v1.Extension;
@@ -29,7 +28,6 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.*;
-import org.openstack.docs.identity.api.v2.ObjectFactory;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import javax.ws.rs.core.*;
@@ -47,7 +45,6 @@ import java.util.List;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.*;
 
@@ -1580,12 +1577,13 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void addRole_roleWithNullServiceId_returns400() throws Exception {
+    public void addRole_roleWithNullServiceId_returnsDefaults() throws Exception {
         Role role1 = new Role();
         role1.setName("roleName");
         role1.setServiceId(null);
-        Response.ResponseBuilder responseBuilder = spy.addRole(null, null, authToken, role1);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+        when(clientService.getById(anyString())).thenReturn(application);
+        spy.addRole(null, null, authToken, role1);
+        verify(clientService).addClientRole(any(ClientRole.class));
     }
 
     @Test

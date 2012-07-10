@@ -150,4 +150,13 @@ public class ApplicationGlobalRoleResourceTest {
         Response response = applicationGlobalRoleResource.deleteTenantRoleFromApplication(null, null, null, null);
         assertThat("Response status", response.getStatus(), equalTo(204));
     }
+
+    @Test (expected = BadRequestException.class)
+    public void createTenantRole_roleIsNull_throwsBadRequest() throws Exception {
+        doNothing().when(authorizationService).verifyIdmSuperAdminAccess(null);
+        when(applicationService.loadApplication(anyString())).thenReturn(new Application());
+        when(applicationService.getClientRoleById(anyString())).thenReturn(null);
+        applicationGlobalRoleResource.deleteTenantRoleFromApplication(null, null, null, null);
+    }
+
 }
