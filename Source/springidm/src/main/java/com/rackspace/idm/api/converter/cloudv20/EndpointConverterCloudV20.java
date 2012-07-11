@@ -21,7 +21,7 @@ public class EndpointConverterCloudV20 {
     @Autowired
     private JAXBObjectFactories OBJ_FACTORIES;
 
-    private final OpenStackServiceCatalogFactory sf = new OpenStackServiceCatalogFactory();
+    private OpenStackServiceCatalogFactory sf = new OpenStackServiceCatalogFactory();
 
     public ServiceCatalog toServiceCatalog(List<OpenstackEndpoint> endpoints) {
         ServiceCatalog catalog = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
@@ -50,9 +50,10 @@ public class EndpointConverterCloudV20 {
                 version.setId(baseUrl.getVersionId());
                 version.setInfo(baseUrl.getVersionInfo());
                 version.setList(baseUrl.getVersionList());
+
                 Endpoint endpoint = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createEndpoint();
                 endpoint.setAdminURL(baseUrl.getAdminUrl());
-                endpoint.setId(baseUrl.getBaseUrlId());
+                endpoint.setId(baseUrl.getBaseUrlId());     //TODO: throws null pointer of Id is not set.
                 endpoint.setInternalURL(baseUrl.getInternalUrl());
                 endpoint.setName(baseUrl.getServiceName());
                 endpoint.setPublicURL(baseUrl.getPublicUrl());
@@ -84,7 +85,7 @@ public class EndpointConverterCloudV20 {
 
             Endpoint endpoint = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createEndpoint();
             endpoint.setAdminURL(baseUrl.getAdminUrl());
-            endpoint.setId(baseUrl.getBaseUrlId());
+            endpoint.setId(baseUrl.getBaseUrlId());     //TODO: throws null pointer of Id is not set. Only going from Endpoints to BaseUrls throws the NPE
             endpoint.setInternalURL(baseUrl.getInternalUrl());
             endpoint.setName(baseUrl.getServiceName());
             endpoint.setPublicURL(baseUrl.getPublicUrl());
@@ -177,5 +178,13 @@ public class EndpointConverterCloudV20 {
             baseUrl.setVersionList(template.getVersion().getList());
         }
         return baseUrl;
+    }
+
+    public void setOBJ_FACTORIES(JAXBObjectFactories OBJ_FACTORIES) {
+        this.OBJ_FACTORIES = OBJ_FACTORIES;
+    }
+
+    public void setSf(OpenStackServiceCatalogFactory sf) {
+        this.sf = sf;
     }
 }

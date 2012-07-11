@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud;
 
+import com.rackspace.idm.api.filter.UriExtensionFilter;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
@@ -49,11 +50,17 @@ abstract public class AbstractAroundClassJerseyTest {
                 for (Class<?> aClass : clientConfigProviderClasses) {
                     clientConfig.getClasses().add(aClass);
                 }
+
                 return new WebAppDescriptor.Builder()
                         .contextListenerClass(org.springframework.web.context.ContextLoaderListener.class)
+                        .requestListenerClass(org.springframework.web.context.request.RequestContextListener.class)
                         .contextParam("contextConfigLocation", contextConfigLocation)
                         .clientConfig(clientConfig)
                         .servletClass(SpringServlet.class)
+                        .initParam("com.sun.jersey.spi.container.ContainerRequestFilters",
+                        "com.rackspace.idm.api.filter.UriExtensionFilter")
+                        .initParam("com.sun.jersey.config.property.packages",
+                        "com.rackspace.idm;org.codehaus.jackson.jaxrs")
                         .contextPath("")
                         .build();
             }

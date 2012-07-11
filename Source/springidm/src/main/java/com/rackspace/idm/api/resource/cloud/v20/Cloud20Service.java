@@ -1,6 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.docs.identity.api.ext.rax_ga.v1.ImpersonationRequest;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
@@ -161,11 +161,11 @@ public interface Cloud20Service {
 
     ResponseBuilder deleteGroup(HttpHeaders httpHeaders, String authToken, String groupId) throws IOException;
 
-    ResponseBuilder addGroupToUser(HttpHeaders httpHeaders, String authToken, String groupId, String userId) throws IOException;
+    ResponseBuilder addUserToGroup(HttpHeaders httpHeaders, String authToken, String groupId, String userId) throws IOException;
 
-    ResponseBuilder removeGroupFromUser(HttpHeaders httpHeaders, String authToken, String groupId, String userId) throws IOException;
+    ResponseBuilder removeUserFromGroup(HttpHeaders httpHeaders, String authToken, String groupId, String userId) throws IOException;
 
-    ResponseBuilder listUsersWithGroup(HttpHeaders httpHeaders, String authToken, String groupId, String marker, Integer limit) throws IOException;
+    ResponseBuilder getUsersForGroup(HttpHeaders httpHeaders, String authToken, String groupId, String marker, Integer limit) throws IOException;
 
     ResponseBuilder getGroup(HttpHeaders httpHeaders, String authToken, String groupName) throws IOException;
 

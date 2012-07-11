@@ -67,19 +67,30 @@ public class RoleConverterCloudV20 {
     }
 
     public Role toRole(com.rackspace.idm.domain.entity.TenantRole role) {
-        Role jaxbRole = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRole();
-        jaxbRole.setDescription(role.getDescription());
-        jaxbRole.setId(role.getRoleRsId());
-        //jaxbRole.setServiceId(role.getClientId()); // ToDo: Removed from displaying for now.
+        if(role == null){
+            throw new IllegalArgumentException("TenantRole cannot be null");
+        }
+            Role jaxbRole = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRole();
+            jaxbRole.setDescription(role.getDescription());
+            jaxbRole.setId(role.getRoleRsId());
+            //jaxbRole.setServiceId(role.getClientId()); // ToDo: Removed from displaying for now.
+
         return jaxbRole;
     }
 
     public Role toRoleFromClientRole(
         com.rackspace.idm.domain.entity.ClientRole role) {
+        if(role == null){
+            throw new IllegalArgumentException("TenantRole cannot be null");
+        }
         Role jaxbRole = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRole();
         jaxbRole.setDescription(role.getDescription());
         jaxbRole.setId(role.getId());
         //jaxbRole.setServiceId(role.getClientId()); // ToDo: Removed from displaying for now.
         return jaxbRole;
+    }
+
+    public void setOBJ_FACTORIES(JAXBObjectFactories OBJ_FACTORIES) {
+        this.OBJ_FACTORIES = OBJ_FACTORIES;
     }
 }

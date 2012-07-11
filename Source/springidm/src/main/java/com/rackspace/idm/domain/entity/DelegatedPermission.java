@@ -14,8 +14,6 @@ public class DelegatedPermission extends Permission implements Auditable {
     @LDAPField(attribute = LdapRepository.ATTR_RESOURCE_GROUP, objectClass = LdapRepository.OBJECTCLASS_DELEGATEDPERMISSION, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String[] resourceGroups;
 
-    public DelegatedPermission() {}
-
     @Override
     @LDAPGetter(attribute = LdapRepository.ATTR_NAME, inRDN = true, filterUsage = FilterUsage.ALWAYS_ALLOWED)
     public String getPermissionId() {
@@ -57,9 +55,7 @@ public class DelegatedPermission extends Permission implements Auditable {
         if (!super.equals(obj)) {
             return false;
         }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
+
         DelegatedPermission other = (DelegatedPermission) obj;
         if (ldapEntry == null) {
             if (other.ldapEntry != null) {
@@ -78,5 +74,9 @@ public class DelegatedPermission extends Permission implements Auditable {
         if (modified.getResourceGroups() != null) {
             setResourceGroups(modified.getResourceGroups());
         }
+    }
+
+    public void setLdapEntry(ReadOnlyEntry ldapEntry) {
+        this.ldapEntry = ldapEntry;
     }
 }

@@ -108,6 +108,12 @@ public class Cloud11VersionResource {
     }
 
     @GET
+    @Path("extensions/{alias}")
+    public Response extensions(@PathParam("alias") String alias,@Context HttpHeaders httpHeaders) throws IOException {
+        return getCloud11Service().getExtension(httpHeaders,alias).build();
+    }
+
+    @GET
     @Path("nast/{nastId}")
     public Response getUserFromNastId(@Context HttpServletRequest request,
                                       @PathParam("nastId") String nastId,
@@ -162,37 +168,6 @@ public class Cloud11VersionResource {
     ) throws IOException {
         serviceName = Encoder.encode(serviceName);
         return getCloud11Service().getEnabledBaseURL(request, serviceName, httpHeaders).build();
-    }
-
-    @POST
-    @Path("migration/{userId}/migrate")
-    public Response migrate(@Context HttpServletRequest request,
-                            @PathParam("userId") String user,
-                            @Context HttpHeaders httpHeaders,
-                            String body
-    ) throws IOException {
-        user = Encoder.encode(user);
-        return getCloud11Service().migrate(request, user, httpHeaders, body).build();
-    }
-
-    @POST
-    @Path("migration/{userId}/unmigrate")
-    public Response unmigrate(@Context HttpServletRequest request,
-                              @PathParam("userId") String user,
-                              @Context HttpHeaders httpHeaders,
-                              String body
-    ) throws IOException {
-        user = Encoder.encode(user);
-        return getCloud11Service().unmigrate(request, user, httpHeaders, body).build();
-    }
-
-    @POST
-    @Path("migration/all")
-    public Response all(@Context HttpServletRequest request,
-                        @Context HttpHeaders httpHeaders,
-                        String body
-    ) throws IOException {
-        return getCloud11Service().all(request, httpHeaders, body).build();
     }
 
     @POST
@@ -335,7 +310,7 @@ public class Cloud11VersionResource {
         return getCloud11Service().getUserGroups(request, userId, httpHeaders).build();
     }
 
-    private Cloud11Service getCloud11Service() {
+    Cloud11Service getCloud11Service() {
         if (config.getBoolean("useCloudAuth")) {
             return delegateCloud11Service;
         } else {
@@ -345,5 +320,13 @@ public class Cloud11VersionResource {
 
     private String getCloudAuthV11Url() {
         return config.getString("cloudAuth11url");
+    }
+
+    public void setDefaultCloud11Service(DefaultCloud11Service defaultCloud11Service) {
+        this.defaultCloud11Service = defaultCloud11Service;
+    }
+
+    public void setDelegateCloud11Service(DelegateCloud11Service delegateCloud11Service) {
+        this.delegateCloud11Service = delegateCloud11Service;
     }
 }

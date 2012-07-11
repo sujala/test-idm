@@ -133,7 +133,7 @@
         </jaxb:bindings>
     </jaxb:bindings>
 
-    <jaxb:bindings schemaLocation="RAX-GA.xsd" node="/xs:schema">
+    <jaxb:bindings schemaLocation="RAX-AUTH.xsd" node="/xs:schema">
         <jaxb:bindings node="xs:complexType[@name='ImpersonationRequest']">
             <annox:annotate>
                 <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="impersonation"/>
@@ -207,6 +207,11 @@
                 <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="access"/>
             </annox:annotate>
         </jaxb:bindings>
+        <jaxb:bindings node="xs:complexType[@name='UserForAuthenticateResponse']">
+            <annox:annotate>
+                <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="access"/>
+            </annox:annotate>
+        </jaxb:bindings>
     </jaxb:bindings>
 
     <jaxb:bindings schemaLocation="user.xsd" node="/xs:schema">
@@ -253,3 +258,4 @@
         </jaxb:bindings>
     </jaxb:bindings>
 </jaxb:bindings>
+

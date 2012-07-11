@@ -1,8 +1,8 @@
 package com.rackspace.idm.api.converter;
 
-import com.rackspace.api.idm.v1.RSACredentials;
 import com.rackspace.idm.domain.entity.AuthCredentials;
 import com.rackspace.idm.domain.entity.Credentials;
+import com.rackspace.idm.domain.entity.RSACredentials;
 import com.rackspace.idm.domain.entity.RackerCredentials;
 
 public class CredentialsConverter {
@@ -14,8 +14,8 @@ public class CredentialsConverter {
         Credentials credentialsDO;
         if (credentials instanceof com.rackspace.api.idm.v1.RackerCredentials) {
             credentialsDO = new RackerCredentials();
-        } else if (credentials instanceof RSACredentials) {
-            credentialsDO = new com.rackspace.idm.domain.entity.RSACredentials();
+        } else if (credentials instanceof com.rackspace.api.idm.v1.RSACredentials) {
+            credentialsDO = new RSACredentials();
         } else {
             credentialsDO = new AuthCredentials();
         }

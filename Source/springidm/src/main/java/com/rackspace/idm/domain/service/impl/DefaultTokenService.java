@@ -62,8 +62,7 @@ public class DefaultTokenService implements TokenService {
 	}
 
 	@Override
-	public boolean doesTokenHaveAplicationRole(String token,
-			String applicationId, String roleId) {
+	public boolean doesTokenHaveApplicationRole(String token,String applicationId, String roleId) {
 		ScopeAccess scopeAccess = this.scopeAccessService
 				.loadScopeAccessByAccessToken(token);
 
@@ -162,7 +161,7 @@ public class DefaultTokenService implements TokenService {
         logger.debug("Deleted all access tokens for user {}.", username);
     }
 
-    private List<Application> getAllClientsForCustomerId(final String customerId) {
+    List<Application> getAllClientsForCustomerId(final String customerId) {
         logger.debug("Finding Clients from CustomerId: {}", customerId);
         final List<Application> clientsList = new ArrayList<Application>();
         int total = 1; // This gets overwritten, just needs to be greater than
@@ -178,7 +177,7 @@ public class DefaultTokenService implements TokenService {
         return clientsList;
     }
 
-    private List<User> getAllUsersForCustomerId(final String customerId) {
+    List<User> getAllUsersForCustomerId(final String customerId) {
     	FilterParam[] filters = new FilterParam[] { new FilterParam(FilterParamName.RCN, customerId)};
         logger.debug("Finding Users for CustomerId: {}", customerId);
         
@@ -195,7 +194,7 @@ public class DefaultTokenService implements TokenService {
         return usersList;
     }
 
-    private int getPagingLimit() {
+    int getPagingLimit() {
         return config.getInt("ldap.paging.limit.max");
     }
 }

@@ -14,6 +14,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyReader;
 import javax.ws.rs.ext.Provider;
+import javax.xml.namespace.QName;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
@@ -25,15 +26,15 @@ public class JSONReaderForUserForCreate implements MessageBodyReader<UserForCrea
 
     @Override
     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations,
-        MediaType mediaType) {
+                              MediaType mediaType) {
         return type == UserForCreate.class;
     }
 
     @Override
     public UserForCreate readFrom(Class<UserForCreate> type,
-        Type genericType, Annotation[] annotations, MediaType mediaType,
-        MultivaluedMap<String, String> httpHeaders, InputStream inputStream)
-        throws IOException, WebApplicationException {
+                                  Type genericType, Annotation[] annotations, MediaType mediaType,
+                                  MultivaluedMap<String, String> httpHeaders, InputStream inputStream)
+            throws IOException, WebApplicationException {
 
         String jsonBody = IOUtils.toString(inputStream, JSONConstants.UTF_8);
 
@@ -60,8 +61,13 @@ public class JSONReaderForUserForCreate implements MessageBodyReader<UserForCrea
                 Object displayname = obj3.get(JSONConstants.DISPLAY_NAME_CLOUD);
                 Object enabled = obj3.get(JSONConstants.ENABLED);
                 Object password = obj3.get(JSONConstants.OS_KSADM_PASSWORD);
+                Object defaultRegion = obj3.get(JSONConstants.RAX_AUTH_DEFAULT_REGION);
 
-                if(password != null){
+                if (defaultRegion != null) {
+                    user.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","defaultRegion"), defaultRegion.toString());
+                }
+
+                if (password != null) {
                     user.setPassword(password.toString());
                 }
                 if (id != null) {
@@ -79,6 +85,7 @@ public class JSONReaderForUserForCreate implements MessageBodyReader<UserForCrea
                 if (displayname != null) {
                     user.setDisplayName(displayname.toString());
                 }
+
 
             }
         } catch (ParseException e) {

@@ -14,7 +14,7 @@ public class ServiceConverterCloudV20 {
     
     @Autowired
     private JAXBObjectFactories OBJ_FACTORIES;
-    
+
     public Service toService(Application client) {
         Service service = OBJ_FACTORIES.getOpenStackIdentityExtKsadmnV1Factory().createService();
         
@@ -33,5 +33,9 @@ public class ServiceConverterCloudV20 {
             list.getService().add(this.toService(client));
         }
         return list;
+    }
+
+    public void setOBJ_FACTORIES(JAXBObjectFactories OBJ_FACTORIES) {
+        this.OBJ_FACTORIES = OBJ_FACTORIES;
     }
 }

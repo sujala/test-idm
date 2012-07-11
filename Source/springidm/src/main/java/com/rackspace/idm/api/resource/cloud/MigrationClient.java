@@ -109,16 +109,41 @@ public class MigrationClient {
         ObjectMarshaller<User> unmarshaller = new ObjectMarshaller<User>();
         return unmarshaller.unmarshal(response, User.class);
     }
+
+    public RoleList getRolesForUser(String token, String userId) throws URISyntaxException, HttpException, IOException, JAXBException {
+
+        String response = client.url(cloud20Host + "users/" + userId + "/roles")
+            .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML)
+            .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML)
+            .header(X_AUTH_TOKEN, token)
+            .get();
+
+    	ObjectMarshaller<RoleList> unmarshaller = new ObjectMarshaller<RoleList>();
+        return unmarshaller.unmarshal(response, RoleList.class);
+    }
     
     public UserList getUsers(String token) throws URISyntaxException, HttpException, IOException, JAXBException {
+        UserList userList = new UserList();
     	String response = client.url(cloud20Host + "users")
     	    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML)
     	    .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML)
     	    .header(X_AUTH_TOKEN, token)
     	    .get();
-    	
-    	ObjectMarshaller<UserList> unmarshaller = new ObjectMarshaller<UserList>();
-    	return unmarshaller.unmarshal(response, UserList.class);
+
+    	try {
+            ObjectMarshaller<User> unmarshaller = new ObjectMarshaller<User>();
+            User user = unmarshaller.unmarshal(response, User.class);
+            userList.getUser().add(user);
+        }catch(Exception ex1){
+            try {
+                ObjectMarshaller<UserList> unmarshaller = new ObjectMarshaller<UserList>();
+                userList = unmarshaller.unmarshal(response, UserList.class);
+            }catch (Exception ex2){
+
+            }
+        }
+
+    	return userList;
     }
 
     public SecretQA getSecretQA(String token, String userId) throws URISyntaxException, HttpException, IOException, JAXBException {
@@ -168,6 +193,16 @@ public class MigrationClient {
         ObjectMarshaller<CredentialListType> unmarshaller = new ObjectMarshaller<CredentialListType>();
         credentialListType = unmarshaller.unmarshal(response, CredentialListType.class);
         return credentialListType;
+    }
+
+    public com.rackspacecloud.docs.auth.api.v1.User getUserTenantsBaseUrls(String username, String password, String userId) throws URISyntaxException, HttpException, IOException, JAXBException {
+
+        String response = client.url(cloud11Host + "users/" + userId + ".xml")
+            .header(HttpHeaders.AUTHORIZATION, getBasicAuth(username, password))
+            .get();
+
+        ObjectMarshaller<com.rackspacecloud.docs.auth.api.v1.User> unmarshaller = new ObjectMarshaller<com.rackspacecloud.docs.auth.api.v1.User>();
+        return unmarshaller.unmarshal(response, com.rackspacecloud.docs.auth.api.v1.User.class);
     }
 
     public BaseURLList getBaseUrls(String username, String password) throws URISyntaxException, HttpException, IOException, JAXBException {

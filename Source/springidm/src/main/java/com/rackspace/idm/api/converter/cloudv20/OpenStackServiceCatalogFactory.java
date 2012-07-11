@@ -50,33 +50,7 @@ public class OpenStackServiceCatalogFactory {
                 endpointItem.setVersion(version);
             }
             
-            setEndpointUrls(endpointItem, endPoint.getTenantName());
-            
             currentService.getEndpoint().add(endpointItem);
         }
-    }
-
-    static void setEndpointUrls(EndpointForService endpoint, String accountId) {
-        endpoint.setAdminURL(createUrl(endpoint.getAdminURL(), accountId));
-        endpoint.setInternalURL(createUrl(endpoint.getInternalURL(), accountId));
-        endpoint.setPublicURL(createUrl(endpoint.getPublicURL(), accountId));
-    }
-
-    static String createUrl(String urlBase, String accountId) {
-        if (StringUtils.isBlank(accountId)) {
-            throw new IllegalArgumentException("accountId can not be null or empty");
-        }
-
-        String url = null;
-
-        if (!StringUtils.isBlank(urlBase)) {
-            url = urlBase + getUrlDelimiter(urlBase) + accountId;
-        }
-
-        return url;
-    }
-
-    static String getUrlDelimiter(String urlBase) {
-        return urlBase.charAt(urlBase.length() - 1) == '/' ? "" : "/";
     }
 }

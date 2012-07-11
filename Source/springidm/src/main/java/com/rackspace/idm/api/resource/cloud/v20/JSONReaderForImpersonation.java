@@ -1,6 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.docs.identity.api.ext.rax_ga.v1.ImpersonationRequest;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.exception.BadRequestException;
 import org.apache.commons.io.IOUtils;
@@ -29,7 +29,7 @@ import java.lang.reflect.Type;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
-public class JSONReaderForImpersonation  implements MessageBodyReader<ImpersonationRequest> {
+public class JSONReaderForImpersonation implements MessageBodyReader<ImpersonationRequest> {
 
     @Override
     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
@@ -54,20 +54,28 @@ public class JSONReaderForImpersonation  implements MessageBodyReader<Impersonat
             JSONObject outer = (JSONObject) parser.parse(jsonBody);
 
             if (outer.containsKey(JSONConstants.IMPERSONATION)) {
-                JSONObject obj1  = (JSONObject) parser.parse(outer.get(JSONConstants.IMPERSONATION).toString());
-                JSONObject obj2  = (JSONObject) parser.parse(obj1.get(JSONConstants.USER).toString());
-                Object username = obj2.get(JSONConstants.USERNAME);
+                JSONObject jsonImpersonation = (JSONObject) parser.parse(outer.get(JSONConstants.IMPERSONATION).toString());
+                JSONObject jsonUser = (JSONObject) parser.parse(jsonImpersonation.get(JSONConstants.USER).toString());
+                Object username = jsonUser.get(JSONConstants.USERNAME);
 
                 User user = new User();
                 if (username != null) {
                     user.setUsername(username.toString());
                 }
+
+                Object expireInSecondsObject = jsonImpersonation.get(JSONConstants.IMPERSONATION_EXPIRE_IN_SECONDS);
+                if (expireInSecondsObject != null) {
+                    String expireInSeconds = expireInSecondsObject.toString();
+                    if (expireInSeconds != null) {
+                        request.setExpireInSeconds(Integer.parseInt(expireInSeconds));
+                    }
+                }
                 request.setUser(user);
             }
+        } catch (NumberFormatException e) {
+            throw new BadRequestException("Expire-in element should be an integer.");
         } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-            throw new BadRequestException("Invalid request body");
+            throw new BadRequestException("Invalid json request body");
         }
 
         return request;

@@ -11,6 +11,7 @@ import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.validation.InputValidator;
+import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
@@ -18,6 +19,7 @@ import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
+import java.io.IOException;
 import java.net.URI;
 
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
@@ -30,6 +32,12 @@ public class UsersResource extends ParentResource {
     private final UserConverter userConverter;
     private final AuthorizationService authorizationService;
     private final ScopeAccessService scopeAccessService;
+
+    @Autowired
+    private UserValidatorFoundation userValidator;
+
+    @Autowired
+    private Configuration config;
 
     @Autowired(required = true)
     public UsersResource(
@@ -51,7 +59,7 @@ public class UsersResource extends ParentResource {
      *
      *
      * @param authHeader HTTP Authorization header for authenticating the caller.
-     * @param username 
+     * @param username
      */
     @GET
     public Response getUsers(
@@ -67,22 +75,26 @@ public class UsersResource extends ParentResource {
     	if (!StringUtils.isBlank(username)) {
     		filters = new FilterParam[] { new FilterParam(FilterParamName.USERNAME, username)};
     	}
-    	
+
     	Users users = this.userService.getAllUsers(filters, (offset == null ? -1 : offset), (limit == null ? -1 : limit));
-    	
+
     	return Response.ok(userConverter.toUserListJaxb(users)).build();
     }
 
     /**
-     * Adds a user. 
-     * 
+     * Adds a user.
+     *
      * @param authHeader HTTP Authorization header for authenticating the caller.
      * @param user New User
      */
     @POST
     public Response addUser(
-        @HeaderParam("X-Auth-Token") String authHeader,
-        com.rackspace.api.idm.v1.User user) {
+        @HeaderParam("X-Auth-Token") String authHeader, com.rackspace.api.idm.v1.User user) throws IOException {
+
+        userValidator.validateUsername(user.getUsername());
+        if(config.getBoolean("useCloudAuth")){
+            userValidator.checkCloudAuthForUsername(user.getUsername());
+        }
 
         ScopeAccess scopeAccess = scopeAccessService.getAccessTokenByAuthHeader(authHeader);
         authorizationService.authorizeIdmSuperAdminOrRackspaceClient(scopeAccess);
@@ -103,5 +115,17 @@ public class UsersResource extends ParentResource {
     @Path("{userId}")
     public UserResource getUserResource() {
         return userResource;
+    }
+
+    public void setUserValidator(UserValidatorFoundation userValidator) {
+        this.userValidator = userValidator;
+    }
+
+    public Configuration getConfig() {
+        return config;
+    }
+
+    public void setConfig(Configuration config) {
+        this.config = config;
     }
 }

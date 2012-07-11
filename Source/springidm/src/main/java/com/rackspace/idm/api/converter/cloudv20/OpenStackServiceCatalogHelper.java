@@ -36,7 +36,7 @@ public class OpenStackServiceCatalogHelper {
     }
 
     public ServiceForCatalog getEndPointService(String serviceName, String serviceType) {
-        if (serviceName == null) {
+        if (serviceType == null) {
             throw new IllegalArgumentException("endPoint can not be null");
         }
 

@@ -1,11 +1,10 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.docs.identity.api.ext.rax_ga.v1.ImpersonationRequest;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.JSONConstants;
-import com.rackspace.idm.api.resource.cloud.CloudClient;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.configuration.Configuration;
@@ -36,7 +35,6 @@ import java.io.StringReader;
 public class Cloud20VersionResource {
 
     private final Configuration config;
-    private final CloudClient cloudClient;
     private final CloudContractDescriptionBuilder cloudContractDescriptionBuilder;
 
     private final String X_AUTH_TOKEN = "X-AUTH-TOKEN";
@@ -52,10 +50,8 @@ public class Cloud20VersionResource {
 
     @Autowired
     public Cloud20VersionResource(Configuration config,
-        CloudClient cloudClient,
         CloudContractDescriptionBuilder cloudContractDescriptionBuilder) {
         this.config = config;
-        this.cloudClient = cloudClient;
         this.cloudContractDescriptionBuilder = cloudContractDescriptionBuilder;
     }
 
@@ -67,7 +63,8 @@ public class Cloud20VersionResource {
         JAXBElement<VersionChoice> versionChoice = (JAXBElement<VersionChoice>) unmarshaller.unmarshal(new StringReader(responseXml));
         return Response.ok(versionChoice.getValue()).build();
     }
-
+    // Methods are currently not being used
+    /*
     public Response getInternalCloud20VersionInfo() {
         final String responseXml =
                 cloudContractDescriptionBuilder.buildInternalVersionPage(CloudContractDescriptionBuilder.VERSION_2_0, uriInfo);
@@ -77,7 +74,7 @@ public class Cloud20VersionResource {
     private String getCloudAuthV20Url() {
         return config.getString("cloudAuth20url");
     }
-
+    */
     @POST
     @Path("tokens")
     public Response authenticate(@Context HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest)
@@ -115,7 +112,7 @@ public class Cloud20VersionResource {
     }
 
     @POST
-    @Path("RAX-GA/impersonation-tokens")
+    @Path("RAX-AUTH/impersonation-tokens")
     public Response impersonate(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
@@ -328,8 +325,7 @@ public class Cloud20VersionResource {
     public Response getUserCredentialKey(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("userId") String userId,
-            @PathParam("credentialType") String credentialType) throws IOException {
+            @PathParam("userId") String userId) throws IOException {
         return getCloud20Service().getUserCredential(httpHeaders, authToken, userId, JSONConstants.APIKEY_CREDENTIALS).build();
     }
 
@@ -347,8 +343,7 @@ public class Cloud20VersionResource {
     public Response deleteUserKeyCredential(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("userId") String userId,
-            @PathParam("credentialType") String credentialType) throws IOException {
+            @PathParam("userId") String userId) throws IOException {
         return getCloud20Service().deleteUserCredential(httpHeaders, authToken, userId, JSONConstants.APIKEY_CREDENTIALS).build();
     }
 
@@ -562,7 +557,6 @@ public class Cloud20VersionResource {
     @Path("/tenants/{tenantId}/OS-KSCATALOG/endpoints")
     public Response addEndpoint(
             @Context HttpHeaders httpHeaders,
-            @Context UriInfo uriInfo,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("tenantId") String tenantId, EndpointTemplate endpoint) throws IOException, JAXBException {
         return getCloud20Service().addEndpoint(httpHeaders, authToken, tenantId, endpoint).build();
@@ -670,7 +664,7 @@ public class Cloud20VersionResource {
             @PathParam("groupId") String groupId,
             @QueryParam("marker") String marker,
             @QueryParam("limit") Integer limit) throws IOException {
-        return getCloud20Service().listUsersWithGroup(httpHeaders, authToken, groupId, marker, limit).build();
+        return getCloud20Service().getUsersForGroup(httpHeaders, authToken, groupId, marker, limit).build();
     }
 
     @PUT
@@ -680,7 +674,7 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("groupId") String groupId,
             @PathParam("userId") String userId) throws IOException {
-        return getCloud20Service().addGroupToUser(httpHeaders, authToken, groupId, userId).build();
+        return getCloud20Service().addUserToGroup(httpHeaders, authToken, groupId, userId).build();
     }
 
     @DELETE
@@ -690,7 +684,7 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("groupId") String groupId,
             @PathParam("userId") String userId) throws IOException {
-        return getCloud20Service().removeGroupFromUser(httpHeaders, authToken, groupId, userId).build();
+        return getCloud20Service().removeUserFromGroup(httpHeaders, authToken, groupId, userId).build();
     }
 
 
@@ -708,12 +702,20 @@ public class Cloud20VersionResource {
         }
     }
 
-    private Cloud20Service getCloud20Service() {
+    Cloud20Service getCloud20Service() {
         if (config.getBoolean("useCloudAuth")) {
             return delegateCloud20Service;
         } else {
             return defaultCloud20Service;
         }
+    }
+
+    public void setDefaultCloud20Service(DefaultCloud20Service defaultCloud20Service) {
+        this.defaultCloud20Service = defaultCloud20Service;
+    }
+
+    public void setDelegateCloud20Service(DelegateCloud20Service delegateCloud20Service) {
+        this.delegateCloud20Service = delegateCloud20Service;
     }
 }
 

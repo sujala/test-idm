@@ -29,10 +29,6 @@ public class CloudExceptionResponse extends WebApplicationException {
     public CloudExceptionResponse() {
     }
 
-    public CloudExceptionResponse(Throwable cause) {
-        super(cause);
-    }
-
     public Response.ResponseBuilder exceptionResponse(Exception ex) {
         if (ex instanceof NotFoundException) {
             return notFoundExceptionResponse(ex.getMessage());
@@ -88,10 +84,6 @@ public class CloudExceptionResponse extends WebApplicationException {
         fault.setCode(HttpServletResponse.SC_CONFLICT);
         fault.setMessage(message);
         return Response.status(HttpServletResponse.SC_CONFLICT).entity(OBJ_FACTORY.createUsernameConflict(fault).getValue());
-    }
-
-    public Response.ResponseBuilder redirect(HttpServletRequest request, String id) {
-        return Response.status(Response.Status.MOVED_PERMANENTLY).header("Location", request.getContextPath() + "/users/" + id);
     }
 
     public Response.ResponseBuilder serviceExceptionResponse() {

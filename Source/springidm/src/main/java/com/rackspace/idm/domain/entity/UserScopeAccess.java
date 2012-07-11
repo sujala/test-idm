@@ -134,6 +134,13 @@ public class UserScopeAccess extends ScopeAccess implements HasAccessToken, HasR
         || new DateTime(this.accessTokenExp).isBefore(time);
     }
 
+    public boolean isAccessTokenWithinRefreshWindow(int refreshTokenWindow){
+        DateTime accessToken = new DateTime(this.getAccessTokenExp());
+        Date refreshWindowStart = accessToken.minusHours(refreshTokenWindow).toDate();
+        Date now = new DateTime().toDate();
+        return now.after(refreshWindowStart);
+    }
+
     @Override
     public boolean isRefreshTokenExpired(DateTime time) {
         return StringUtils.isBlank(this.refreshTokenString)

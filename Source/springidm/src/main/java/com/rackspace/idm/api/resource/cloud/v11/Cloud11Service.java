@@ -44,12 +44,8 @@ public interface Cloud11Service {
     Response.ResponseBuilder getBaseURLId(HttpServletRequest request, int baseURLId, String serviceName, HttpHeaders httpHeaders) throws IOException;
     Response.ResponseBuilder getEnabledBaseURL(HttpServletRequest request, String serviceName, HttpHeaders httpHeaders) throws IOException;
     Response.ResponseBuilder addBaseURL(HttpServletRequest request, HttpHeaders httpHeaders, BaseURL baseUrl) throws JAXBException, IOException;
-    
-    // Migration Methods
-    Response.ResponseBuilder migrate(HttpServletRequest request, String user, HttpHeaders httpHeaders, String body) throws IOException;
-    Response.ResponseBuilder unmigrate(HttpServletRequest request, String user, HttpHeaders httpHeaders, String body) throws IOException;
-    Response.ResponseBuilder all(HttpServletRequest request, HttpHeaders httpHeaders, String body) throws IOException;
 
     //extensions
     Response.ResponseBuilder extensions(HttpHeaders httpHeaders) throws IOException;
+    Response.ResponseBuilder getExtension(HttpHeaders httpHeaders, String alias) throws IOException;
 }

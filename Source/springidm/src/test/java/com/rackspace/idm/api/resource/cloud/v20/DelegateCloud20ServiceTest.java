@@ -1,25 +1,39 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
+import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
 import com.rackspace.idm.api.resource.cloud.CloudClient;
 import com.rackspace.idm.api.resource.cloud.CloudUserExtractor;
-import com.rackspace.idm.domain.entity.ScopeAccess;
+import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Tenant;
+import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.TokenService;
 import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.exception.ApiException;
+import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.DuplicateUsernameException;
+import com.rackspace.idm.exception.NotFoundException;
+import com.sun.jersey.core.spi.factory.ResponseBuilderImpl;
+import com.sun.jersey.core.util.MultivaluedMapImpl;
+import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Matchers;
-import org.openstack.docs.identity.api.v2.AuthenticationRequest;
+import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
+import org.openstack.docs.identity.api.v2.*;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.*;
+
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.assertThat;
@@ -35,7 +49,6 @@ import static org.mockito.Mockito.*;
  */
 public class DelegateCloud20ServiceTest {
 
-    DummyCloud20Service dummyCloud20Service;
     DelegateCloud20Service delegateCloud20Service;
     DefaultCloud20Service defaultCloud20Service = mock(DefaultCloud20Service.class);
     UserService userService = mock(UserService.class);
@@ -44,10 +57,14 @@ public class DelegateCloud20ServiceTest {
     ScopeAccessService scopeAccessService = mock(ScopeAccessService.class);
     TenantService tenantService = mock(TenantService.class);
     CloudUserExtractor cloudUserExtractor = mock(CloudUserExtractor.class);
+    UserConverterCloudV20 userConverterCloudV20 = mock(UserConverterCloudV20.class);
+    JAXBObjectFactories OBJ_FACTORIES = new JAXBObjectFactories();
+    org.openstack.docs.identity.api.v2.ObjectFactory objectFactory = mock(org.openstack.docs.identity.api.v2.ObjectFactory.class);
     HttpHeaders httpHeaders = mock(HttpHeaders.class);
     private final Configuration config = mock(Configuration.class);
     AuthenticationRequest authenticationRequest = mock(AuthenticationRequest.class);
     String url = "http://url.com/";
+    String ukUrl = "http://ukurl.com/";
     Boolean disabled = true;
     private String roleId = "roleId";
     private String userId = "userId";
@@ -58,21 +75,81 @@ public class DelegateCloud20ServiceTest {
 
     @Before
     public void setUp() throws IOException, JAXBException {
-        dummyCloud20Service = new DummyCloud20Service();
         delegateCloud20Service = new DelegateCloud20Service();
-        delegateCloud20Service.setDummyCloud20Service(dummyCloud20Service);
         delegateCloud20Service.setCloudClient(cloudClient);
         delegateCloud20Service.setDefaultCloud20Service(defaultCloud20Service);
         delegateCloud20Service.setUserService(userService);
         delegateCloud20Service.setTokenService(tokenService);
         delegateCloud20Service.setCloudUserExtractor(cloudUserExtractor);
+        delegateCloud20Service.setUserConverterCloudV20(userConverterCloudV20);
+        delegateCloud20Service.setOBJ_FACTORIES(OBJ_FACTORIES);
         delegateCloud20Service.setScopeAccessService(scopeAccessService);
         delegateCloud20Service.setTenantService(tenantService);
         when(config.getString("cloudAuth20url")).thenReturn(url);
+        when(config.getString("cloudAuthUK20url")).thenReturn(url);
         when(config.getBoolean("GAKeystoneDisabled")).thenReturn(disabled);
+        when(httpHeaders.getRequestHeaders()).thenReturn(new MultivaluedMapImpl());
+        when(config.getString("ga.username")).thenReturn("user");
+        when(config.getString("ga.password")).thenReturn("password");
         delegateCloud20Service.setConfig(config);
         when(cloudClient.post(anyString(), Matchers.<HttpHeaders>any(), anyString())).thenReturn(Response.ok());
         spy = spy(delegateCloud20Service);
+    }
+
+    @Test
+    public void addUser_routingTrueAndCallerExistsInGA_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(scopeAccessService.getAccessTokenByAuthHeader("token")).thenReturn(new ScopeAccess());
+        spy.addUser(null,null,"token",null);
+        verify(defaultCloud20Service).addUser(null,null,"token",null);
+    }
+
+    @Test(expected = DuplicateUsernameException.class)
+    public void addUser_routingTrueAndCallerExistsInGAButNameExistsInCloudAuth_throwsConflictException() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(scopeAccessService.getAccessTokenByAuthHeader("token")).thenReturn(new ScopeAccess());
+        when(cloudClient.get(anyString(),any(HttpHeaders.class))).thenReturn(Response.ok());
+        UserForCreate user = new UserForCreate();
+        user.setUsername("username");
+        spy.addUser(httpHeaders, null, "token", user);
+    }
+
+    @Test
+    public void addUser_routingTrueAndCallerExistsInGAButNameExistsInCloudAuth_callsClientGetUsers() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(scopeAccessService.getAccessTokenByAuthHeader("token")).thenReturn(new ScopeAccess());
+        when(cloudClient.get(anyString(), any(HttpHeaders.class))).thenReturn(Response.status(400));
+        when(cloudClient.get(anyString(),any(HttpHeaders.class))).thenReturn(Response.status(400));
+
+
+        UserForCreate user = new UserForCreate();
+        user.setUsername("username");
+        spy.addUser(httpHeaders, null, "token", user);
+        verify(cloudClient,times(2)).get(contains("users/username"),any(HttpHeaders.class));
+    }
+
+    @Test
+    public void addUser_routingTrueAndCallerDoesNotExistInGA_callsClient() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(scopeAccessService.getAccessTokenByAuthHeader("token")).thenReturn(null);
+        spy.addUser(null,null,"token",null);
+        verify(cloudClient).post(anyString(), any(HttpHeaders.class), anyString());
+    }
+
+    @Test
+    public void listTenants_tokenDoesNotExistInGA_callsClient() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(scopeAccessService.getScopeAccessByAccessToken("token")).thenReturn(null);
+        spy.listTenants(null,"token",null,null);
+        verify(cloudClient).get(anyString(),any(HttpHeaders.class));
+    }
+
+    @Test
+    public void listTenants_tokenExistsInGA_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(scopeAccessService.getScopeAccessByAccessToken("token")).thenReturn(new ScopeAccess());
+        spy.listTenants(null,"token",null,null);
+        verify(scopeAccessService).getScopeAccessByAccessToken("token");
     }
 
     @Test
@@ -94,6 +171,50 @@ public class DelegateCloud20ServiceTest {
         when(scopeAccessService.getScopeAccessByAccessToken("tokenId")).thenReturn(new ScopeAccess());
         spy.listEndpointsForToken(null,null,"tokenId");
         verify(defaultCloud20Service).listEndpointsForToken(null,null,"tokenId");
+    }
+
+    @Test
+    public void authenticate_userIsMigrated_returnsDefaultServiceResponse() throws Exception {
+        when(userService.isMigratedUser(any(User.class))).thenReturn(true);
+        when(defaultCloud20Service.authenticate(httpHeaders, authenticationRequest)).thenReturn(Response.noContent());
+        assertThat("response", delegateCloud20Service.authenticate(httpHeaders, authenticationRequest), instanceOf(Response.ResponseBuilder.class));
+    }
+
+    @Test
+    public void authenticate_userNotMigratedAndNotNullAndCloudClientResponse200AndAuthenticateResponseIsNull_returnsResponse200() throws Exception {
+        User user = new User();
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
+        responseBuilder.status(200);
+        responseBuilder.entity(new Object());
+        when(cloudUserExtractor.getUserByV20CredentialType(authenticationRequest)).thenReturn(user);
+        when(cloudClient.post(anyString(), any(HttpHeaders.class), anyString())).thenReturn(responseBuilder);
+        assertThat("response", delegateCloud20Service.authenticate(httpHeaders, authenticationRequest).build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void authenticate_userNotMigratedAndNotNullAndCloudClientResponse200AndAuthenticateResponseNotNull_scopeAcessUpdated() throws Exception {
+        User user = new User();
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
+        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
+        Token token = mock(Token.class);
+        authenticateResponse.setToken(token);
+        responseBuilder.status(200);
+        responseBuilder.entity(new Object());
+        when(cloudUserExtractor.getUserByV20CredentialType(authenticationRequest)).thenReturn(user);
+        when(cloudClient.post(anyString(), any(HttpHeaders.class), anyString())).thenReturn(responseBuilder);
+        doReturn(authenticateResponse).when(spy).unmarshallResponse(anyString(), eq(AuthenticateResponse.class));
+        when(token.getExpires()).thenReturn(new XMLGregorianCalendarImpl());
+        spy.authenticate(httpHeaders, authenticationRequest);
+        verify(scopeAccessService).updateUserScopeAccessTokenForClientIdByUser(any(User.class), anyString(), anyString(), any(Date.class));
+    }
+
+    @Test
+    public void authenticate_userNotMigratedAndNotNullAndCloudClientResponseNot200_returnsDefaultServiceResponse() throws Exception {
+        User user = new User();
+        when(cloudUserExtractor.getUserByV20CredentialType(authenticationRequest)).thenReturn(user);
+        when(cloudClient.post(anyString(), any(HttpHeaders.class), anyString())).thenReturn(Response.status(123));
+        when(defaultCloud20Service.authenticate(httpHeaders, authenticationRequest)).thenReturn(Response.status(123));
+        assertThat("response", delegateCloud20Service.authenticate(httpHeaders, authenticationRequest), instanceOf(Response.ResponseBuilder.class));
     }
 
     @Test
@@ -151,6 +272,22 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
+    public void unmarshallResponse_inputStartsWithBracket_returnsCorrectAPIKeyCredentials() throws Exception {
+        String body = "{\n" +
+                "    \"RAX-KSKEY:apiKeyCredentials\":{\n" +
+                "        \"username\":\"jsmith\",\n" +
+                "        \"apiKey\":\"aaaaa-bbbbb-ccccc-12345678\"\n" +
+                "    }\n" +
+                "}";
+        assertThat(delegateCloud20Service.unmarshallResponse(body, ApiKeyCredentials.class), not(nullValue()));
+    }
+
+    @Test (expected = JAXBException.class)
+    public void marshallObjectToString_nullValues_throwsJAXBException() throws Exception {
+        delegateCloud20Service.marshallObjectToString(null);
+    }
+
+    @Test
     public void listExtensions_useCloudAuthIsTrue_callsCloudClient() throws Exception {
         when(config.getBoolean("useCloudAuth")).thenReturn(true);
         HttpHeaders mockHeaders = mock(HttpHeaders.class);
@@ -195,14 +332,6 @@ public class DelegateCloud20ServiceTest {
         HttpHeaders mockHeaders = mock(HttpHeaders.class);
         delegateCloud20Service.listTenants(mockHeaders, null, null, null);
         verify(cloudClient).get(url + "tenants", mockHeaders);
-    }
-
-    @Test
-    public void listTenants_RoutingTrueAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
-        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
-        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
-        delegateCloud20Service.listTenants(null, null, null, null);
-        verify(defaultCloud20Service).listTenants(null, null, null, null);
     }
 
     @Test
@@ -267,16 +396,47 @@ public class DelegateCloud20ServiceTest {
     public void validateToken_RoutingFalseAndTokenDoesNotExist_callsDefaultService() throws Exception {
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(tokenService.doesTokenHaveAccessToApplication(null, null)).thenReturn(false);
-        delegateCloud20Service.validateToken(null, null, null, null);
-        verify(defaultCloud20Service).validateToken(null, null, null, null);
+        delegateCloud20Service.validateToken(null, "token", "token", null);
+        verify(defaultCloud20Service).validateToken(null, "token", "token", null);
     }
 
     @Test
     public void validateToken_RoutingFalseAndTokenDoesExist_callsDefaultService() throws Exception {
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(tokenService.doesTokenHaveAccessToApplication(null, null)).thenReturn(true);
-        delegateCloud20Service.validateToken(null, null, null, null);
-        verify(defaultCloud20Service).validateToken(null, null, null, null);
+        delegateCloud20Service.validateToken(null, "token", "token", null);
+        verify(defaultCloud20Service).validateToken(null, "token", "token", null);
+    }
+
+    @Test
+    public void validateToken_RoutingFalseAndTokenIsImpersonatedUserWithNoAccess_callsValidateImpersonatedTokenFromCloud() throws Exception {
+
+        ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(scopeAccessService.getScopeAccessByAccessToken("token")).thenReturn(impersonatedScopeAccess);
+        doReturn(new ResponseBuilderImpl()).when(spy).validateImpersonatedTokenFromCloud(null, null, null, impersonatedScopeAccess);
+        spy.validateToken(null, "token", "token", null);
+        verify(spy).validateImpersonatedTokenFromCloud(null, null, null, impersonatedScopeAccess);
+    }
+
+    @Test
+    public void validateToken_RoutingFalseAndTokenIsImpersonatedUserWithAccess_callsDefaultCloud20ServiceValidateToken() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(scopeAccessService.getScopeAccessByAccessToken("token")).thenReturn(new ImpersonatedScopeAccess());
+        when(scopeAccessService.getScopeAccessByAccessToken(null)).thenReturn(new ScopeAccess());
+        when(defaultCloud20Service.validateToken(null, "token", "token", null)).thenReturn(new ResponseBuilderImpl());
+        delegateCloud20Service.validateToken(null, "token", "token", null);
+        verify(defaultCloud20Service).validateToken(null, "token", "token", null);
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void validateToken_nullToken_throwsBadRequestException() throws Exception {
+        delegateCloud20Service.validateToken(null,null,null,null);
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void validateToken_emptyToken_throwsBadRequestException() throws Exception {
+        delegateCloud20Service.validateToken(null,null,"  ",null);
     }
 
     @Test
@@ -298,28 +458,112 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
-    public void listEndpointsForToken_RoutingFalseAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+    public void validateImpersonatedTokenFromCloud_SCOkFalseAndSCNonAuthoritativeInformationFalse_returns123Response() throws Exception{
+       AuthenticateResponse authenticateResponse = new AuthenticateResponse();
+       authenticateResponse.setToken(new Token());
+       ArrayList<String> dummy = new ArrayList<String>();
+       dummy.add("foo");
+       MultivaluedMap<String,String> requestHeaders = mock(MultivaluedMap.class);
+       doReturn(authenticateResponse).when(spy).getXAuthToken_byPassword(anyString(), anyString());
+       when(httpHeaders.getRequestHeaders()).thenReturn(requestHeaders);
+       when(requestHeaders.get("x-auth-token")).thenReturn(dummy);
+       when(requestHeaders.get("accept")).thenReturn(dummy);
+       doReturn(Response.status(123)).when(spy).checkToken(eq(httpHeaders), anyString(), eq("token"), eq("foo"));
+       assertThat("response", spy.validateImpersonatedTokenFromCloud(httpHeaders, "token", "foo", null).build().getStatus(), equalTo(123));
+    }
+
+    @Test
+    public void validateImpersonatedTokenFromCloud_SCOkTrueAndSCNonAuthoritativeInformationFalse_returns200Response() throws Exception{
+        AuthenticateResponse authenticateResponse = mock(AuthenticateResponse.class);
+        Response.ResponseBuilder responseBuilder = mock(Response.ResponseBuilder.class);
+        Response response = mock(Response.class);
+        ImpersonatedScopeAccess impersonatedScopeAccess = mock(ImpersonatedScopeAccess.class);
+        ArrayList<String> dummy = new ArrayList<String>();
+        dummy.add("foo");
+        User user = new User();
+        MultivaluedMap<String,String> requestHeaders = mock(MultivaluedMap.class);
+        List<TenantRole> list = new ArrayList<TenantRole>();
+        UserForAuthenticateResponse userForAuthenticateResponse = mock(UserForAuthenticateResponse.class);
+
+        doReturn(authenticateResponse).when(spy).getXAuthToken_byPassword(anyString(), anyString());
+        when(authenticateResponse.getToken()).thenReturn(new Token());
+        when(httpHeaders.getRequestHeaders()).thenReturn(requestHeaders);
+        when(requestHeaders.get("x-auth-token")).thenReturn(dummy);
+        when(requestHeaders.get("accept")).thenReturn(dummy);
+        doReturn(responseBuilder).when(spy).checkToken(eq(httpHeaders), anyString(), eq("token"), eq("foo"));
+        when(responseBuilder.build()).thenReturn(response);
+        when(response.getStatus()).thenReturn(200);
+        when(response.getEntity()).thenReturn(new Object());
+        doReturn(authenticateResponse).when(spy).unmarshallResponse(anyString(), eq(AuthenticateResponse.class));
+        when(authenticateResponse.getToken()).thenReturn(new Token());
+        when(impersonatedScopeAccess.getAccessTokenString()).thenReturn(null);
+        when(userService.getUserByScopeAccess(impersonatedScopeAccess)).thenReturn(user);
+        when(tenantService.getGlobalRolesForUser(user, null)).thenReturn(list) ;
+        when(userConverterCloudV20.toUserForAuthenticateResponse(user, list)).thenReturn(userForAuthenticateResponse);
+        assertThat("response", spy.validateImpersonatedTokenFromCloud(httpHeaders, "token", "foo", impersonatedScopeAccess).build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void validateImpersonatedTokenFromCloud_SCOkFalseAndSCNonAuthoritativeInformationTrue_returns200Response() throws Exception{
+        AuthenticateResponse authenticateResponse = mock(AuthenticateResponse.class);
+        Response.ResponseBuilder responseBuilder = mock(Response.ResponseBuilder.class);
+        Response response = mock(Response.class);
+        ImpersonatedScopeAccess impersonatedScopeAccess = mock(ImpersonatedScopeAccess.class);
+        ArrayList<String> dummy = new ArrayList<String>();
+        dummy.add("foo");
+        User user = new User();
+        MultivaluedMap<String,String> requestHeaders = mock(MultivaluedMap.class);
+        List<TenantRole> list = new ArrayList<TenantRole>();
+        UserForAuthenticateResponse userForAuthenticateResponse = mock(UserForAuthenticateResponse.class);
+
+        doReturn(authenticateResponse).when(spy).getXAuthToken_byPassword(anyString(), anyString());
+        when(authenticateResponse.getToken()).thenReturn(new Token());
+        when(httpHeaders.getRequestHeaders()).thenReturn(requestHeaders);
+        when(requestHeaders.get("x-auth-token")).thenReturn(dummy);
+        when(requestHeaders.get("accept")).thenReturn(dummy);
+        doReturn(responseBuilder).when(spy).checkToken(eq(httpHeaders), anyString(), eq("token"), eq("foo"));
+        when(responseBuilder.build()).thenReturn(response);
+        when(response.getStatus()).thenReturn(203);
+        when(response.getEntity()).thenReturn(new Object());
+        doReturn(authenticateResponse).when(spy).unmarshallResponse(anyString(), eq(AuthenticateResponse.class));
+        when(authenticateResponse.getToken()).thenReturn(new Token());
+        when(impersonatedScopeAccess.getAccessTokenString()).thenReturn(null);
+        when(userService.getUserByScopeAccess(impersonatedScopeAccess)).thenReturn(user);
+        when(tenantService.getGlobalRolesForUser(user, null)).thenReturn(list) ;
+        when(userConverterCloudV20.toUserForAuthenticateResponse(user, list)).thenReturn(userForAuthenticateResponse);
+        assertThat("response", spy.validateImpersonatedTokenFromCloud(httpHeaders, "token", "foo", impersonatedScopeAccess).build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void listEndpointsForToken_RoutingFalseAndScopeAccessNull_callsDefaultService() throws Exception {
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
-        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
         delegateCloud20Service.listEndpointsForToken(null, null, null);
         verify(defaultCloud20Service).listEndpointsForToken(null, null, null);
     }
 
     @Test
-    public void listEndpointsForToken_RoutingFalseAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+    public void listEndpointsForToken_RoutingFalseAndScopeAccessNotNull_callsDefaultService() throws Exception {
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
-        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        when(scopeAccessService.getScopeAccessByAccessToken(null)).thenReturn(new ScopeAccess());
         delegateCloud20Service.listEndpointsForToken(null, null, null);
         verify(defaultCloud20Service).listEndpointsForToken(null, null, null);
     }
 
     @Test
-    public void listEndpointsForToken_RoutingTrueAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+    public void listEndpointsForToken_RoutingTrueAndScopeAccessNull_callsCloudClient() throws Exception {
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
-        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
         HttpHeaders mockHeaders = mock(HttpHeaders.class);
         delegateCloud20Service.listEndpointsForToken(mockHeaders, null, "1");
         verify(cloudClient).get(url + "tokens/1/endpoints", mockHeaders);
+    }
+
+    @Test
+    public void listEndpointsForToken_RoutingTrueAndScopeAccessNotNull_callsDefaultService() throws Exception {
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(scopeAccessService.getScopeAccessByAccessToken(null)).thenReturn(new ScopeAccess());
+        HttpHeaders mockHeaders = mock(HttpHeaders.class);
+        delegateCloud20Service.listEndpointsForToken(null, null, null);
+        verify(defaultCloud20Service).listEndpointsForToken(null, null, null);
     }
 
     @Test
@@ -1097,19 +1341,35 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
-    public void deleteRoleFromUserOnTenant_defaultServiceReturns401_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.deleteRoleFromUserOnTenant(null, null, tenantId, userId, roleId)).thenReturn(Response.status(401));
+    public void deleteRoleFromUserOnTenant_RoutingFalse_userExistsFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(userService.userExistsById(userId)).thenReturn(false);
         delegateCloud20Service.deleteRoleFromUserOnTenant(null, null, tenantId, userId, roleId);
-        verify(cloudClient).delete(url + "tenants/" + tenantId + "/users/" + userId + "/roles/OS-KSADM/" + roleId, null);
+        verify(defaultCloud20Service).deleteRoleFromUserOnTenant(null, null, tenantId, userId, roleId);
     }
 
     @Test
-    public void deleteRoleFromUserOnTenant_defaultServiceReturns404_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.deleteRoleFromUserOnTenant(null, null, tenantId, userId, roleId)).thenReturn(Response.status(404));
+    public void deleteRoleFromUserOnTenant_RoutingFalse_userExistsTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(userService.userExistsById(userId)).thenReturn(true);
         delegateCloud20Service.deleteRoleFromUserOnTenant(null, null, tenantId, userId, roleId);
-        verify(cloudClient).delete(url + "tenants/" + tenantId + "/users/" + userId + "/roles/OS-KSADM/" + roleId, null);
+        verify(defaultCloud20Service).deleteRoleFromUserOnTenant(null, null, tenantId, userId, roleId);
+    }
+
+    @Test
+    public void deleteRoleFromUserOnTenant_RoutingTrue_userExistsFalse_callsClient() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(userService.userExistsById(userId)).thenReturn(false);
+        delegateCloud20Service.deleteRoleFromUserOnTenant(null, null, tenantId, userId, roleId);
+        verify(cloudClient).delete(eq(url + "tenants/" + tenantId + "/users/" + userId + "/roles/OS-KSADM/" + roleId), any(HttpHeaders.class));
+    }
+
+    @Test
+    public void deleteRoleFromUserOnTenant_RoutingTrue_userExistsTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(userService.userExistsById(userId)).thenReturn(true);
+        delegateCloud20Service.deleteRoleFromUserOnTenant(null, null, tenantId, userId, roleId);
+        verify(defaultCloud20Service).deleteRoleFromUserOnTenant(null, null, tenantId, userId, roleId);
     }
 
     @Test
@@ -1385,7 +1645,38 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
-    public void addUserCredential_RoutingFalse_UserExistsFalse_callsDefaultService() throws Exception {
+    public void listGroups_RoutingTrueAndGASourceOfTruthFalse_callsCloudClient() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.listGroups(httpHeaders,null,"foo","group",1);
+        verify(cloudClient).get(url + "RAX-GRPADM/groups?limit=1&marker=foo&name=group",httpHeaders);
+    }
+
+    @Test
+    public void listGroups_RoutingTrueAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.listGroups(null,null,null,null,null);
+        verify(defaultCloud20Service).listGroups(null,null,null,null,null);
+    }
+    @Test
+    public void listGroups_RoutingFalseAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.listGroups(null,null,null,null,null);
+        verify(defaultCloud20Service).listGroups(null,null,null,null,null);
+    }
+
+    @Test
+    public void listGroups_RoutingFalseAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.listGroups(null,null,null,null,null);
+        verify(defaultCloud20Service).listGroups(null,null,null,null,null);
+    }
+
+    @Test
+    public void addUserCredential_RoutingFalseAndUserExistsFalse_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(userService.userExistsById(userId)).thenReturn(false);
         delegateCloud20Service.addUserCredential(null, null, userId, null);
@@ -1393,7 +1684,7 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
-    public void addUserCredential_RoutingFalse_UserExistsTrue_callsDefaultService() throws Exception {
+    public void addUserCredential_RoutingFalseAndUserExistsTrue_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(userService.userExistsById(userId)).thenReturn(true);
         delegateCloud20Service.addUserCredential(null, null, userId, null);
@@ -1401,7 +1692,7 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
-    public void addUserCredential_RoutingTrue_UserExistsFalse_callsClient() throws Exception {
+    public void addUserCredential_RoutingTrueAndUserExistsFalseAndHeaderNotCompatible_callsClient() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(userService.userExistsById(userId)).thenReturn(false);
         when(httpHeaders.getMediaType()).thenReturn(MediaType.APPLICATION_XML_TYPE);
@@ -1410,16 +1701,69 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
-    public void addUserCredential_RoutingTrue_UserExistsTrue_callsDefaultService() throws Exception {
+    public void addUserCredential_RoutingTrueAndUserExistsFalseAndHeaderCompatible_callsClient() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(userService.userExistsById(userId)).thenReturn(false);
+        when(httpHeaders.getMediaType()).thenReturn(MediaType.APPLICATION_JSON_TYPE);
+        doReturn("foo").when(spy).convertCredentialToXML(anyString());
+        spy.addUserCredential(httpHeaders, null, userId, null);
+        verify(spy).convertCredentialToXML(anyString());
+    }
+
+    @Test
+    public void addUserCredential_RoutingTrueAndUserExistsTrue_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(userService.userExistsById(userId)).thenReturn(true);
         delegateCloud20Service.addUserCredential(null, null, userId, null);
         verify(defaultCloud20Service).addUserCredential(null, null, userId, null);
     }
 
+    @Test
+    public void convertCredentialToXML_PasswordCredentialsRequiredUsername_callsCreatePasswordCredentials() throws Exception {
+        spy.setObjectFactory(objectFactory);
+        String body = "{\n" +
+                "    \"passwordCredentials\": {\n" +
+                "        \"username\": \"test_user\",\n" +
+                "        \"password\": \"resetpass\"\n" +
+                "    }\n" +
+                "}";
+        when(objectFactory.createPasswordCredentials(any(PasswordCredentialsRequiredUsername.class))).thenReturn(null);
+        doReturn("foo").when(spy).marshallObjectToString(null);
+        spy.convertCredentialToXML(body);
+        verify(objectFactory).createPasswordCredentials(any(PasswordCredentialsRequiredUsername.class));
+    }
 
     @Test
-    public void listCredentials_RoutingFalse_userExistsFalse_callsDefaultService() throws Exception {
+    public void convertCredentialToXML_APIKeyCredentials_callsCreateAPIKeyCredentials() throws Exception {
+        com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory objectFactoryRAXKSKEY = mock(com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory.class);
+        spy.setObjectFactoryRAXKSKEY(objectFactoryRAXKSKEY);
+        String body = "{\n" +
+                "    \"RAX-KSKEY:apiKeyCredentials\":{\n" +
+                "        \"username\":\"jsmith\",\n" +
+                "        \"apiKey\":\"aaaaa-bbbbb-ccccc-12345678\"\n" +
+                "    }\n" +
+                "}";
+        when(objectFactoryRAXKSKEY.createApiKeyCredentials(any(ApiKeyCredentials.class))).thenReturn(null);
+        doReturn("foo").when(spy).marshallObjectToString(null);
+        spy.convertCredentialToXML(body);
+        verify(objectFactoryRAXKSKEY).createApiKeyCredentials(any(ApiKeyCredentials.class));
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void convertCredentialToXML_invalidCredentials_throwsIllegalStateException() throws Exception {
+        delegateCloud20Service.setObjectFactory(objectFactory);
+        String body = "{\n" +
+                "    \"passwordCredentials\": {\n" +
+                "        \"username\": \"test_user\",\n" +
+                "        \"password\": \"resetpass\"\n" +
+                "    }\n" +
+                "}";
+        when(objectFactory.createPasswordCredentials(any(PasswordCredentialsRequiredUsername.class))).thenReturn(null);
+        delegateCloud20Service.convertCredentialToXML(body);
+    }
+
+    @Test
+    public void listCredentials_RoutingFalseAndUserExistsFalse_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(userService.userExistsById(userId)).thenReturn(false);
         delegateCloud20Service.listCredentials(null, null, userId, null, null);
@@ -1427,7 +1771,7 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
-    public void listCredentials_RoutingFalse_userExistsTrue_callsDefaultService() throws Exception {
+    public void listCredentials_RoutingFalseAndUserExistsTrue_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(userService.userExistsById(userId)).thenReturn(true);
         delegateCloud20Service.listCredentials(null, null, userId, null, null);
@@ -1435,7 +1779,7 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
-    public void listCredentials_RoutingTrue_userExistsFalse_callsClient() throws Exception {
+    public void listCredentials_RoutingTrueAndUserExistsFalse_callsClient() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(userService.userExistsById(userId)).thenReturn(false);
         HttpHeaders mockHeaders = mock(HttpHeaders.class);
@@ -1444,7 +1788,7 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
-    public void listCredentials_RoutingTrue_userExistsTrue_callsDefaultService() throws Exception {
+    public void listCredentials_RoutingTrueAndUserExistsTrue_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(userService.userExistsById(userId)).thenReturn(true);
         delegateCloud20Service.listCredentials(null, null, userId, null, null);
@@ -1452,7 +1796,7 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
-    public void updateUserPasswordCredentials_RoutingFalse_UserExistsFalse_callsDefaultService() throws Exception {
+    public void updateUserPasswordCredentials_RoutingFalseAndUserExistsFalse_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(userService.userExistsById(userId)).thenReturn(false);
         delegateCloud20Service.updateUserPasswordCredentials(null, null, userId, null, null);
@@ -1460,7 +1804,7 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
-    public void updateUserPasswordCredentials_RoutingFalse_UserExistsTrue_callsDefaultService() throws Exception {
+    public void updateUserPasswordCredentials_RoutingFalseAndUserExistsTrue_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(userService.userExistsById(userId)).thenReturn(true);
         delegateCloud20Service.updateUserPasswordCredentials(null, null, userId, null, null);
@@ -1663,22 +2007,6 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
-    public void addUser_RoutingTrue_GASourceOfTruthFalse_callsClient() throws Exception {
-        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
-        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
-        delegateCloud20Service.addUser(null, null, null, null);
-        verify(cloudClient).post(eq(url + "users"), Matchers.<HttpHeaders>any(), anyString());
-    }
-
-    @Test
-    public void addUser_RoutingTrue_GASourceOfTruthTrue_callsDefaultService() throws Exception {
-        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
-        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
-        delegateCloud20Service.addUser(null, null, null, null);
-        verify(defaultCloud20Service).addUser(null, null, null, null);
-    }
-
-    @Test
     public void updateUser_RoutingFalse_UserExistsFalse_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(userService.userExistsById(userId)).thenReturn(false);
@@ -1727,7 +2055,7 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
-    public void deleteUserUser_RoutingTrue_UserExistsFalse_callsClient() throws Exception {
+    public void deleteUser_RoutingTrue_UserExistsFalse_callsClient() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(userService.userExistsById(userId)).thenReturn(false);
         delegateCloud20Service.deleteUser(null, null, userId);
@@ -1735,11 +2063,24 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
-    public void deleteUserUser_RoutingTrue_UserExistsTrue_callsDefaultService() throws Exception {
+    public void deleteUser_RoutingTrue_UserExistsTrue_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(userService.userExistsById(userId)).thenReturn(true);
         delegateCloud20Service.deleteUser(null, null, userId);
         verify(defaultCloud20Service).deleteUser(null, null, userId);
+    }
+
+    @Test
+    public void deleteUserFromSoftDeleted_allowSoftDeleteTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean("allowSoftDeleteDeletion")).thenReturn(true);
+        delegateCloud20Service.deleteUserFromSoftDeleted(null,null,null);
+        verify(defaultCloud20Service).deleteUserFromSoftDeleted(null,null,null);
+    }
+
+    @Test (expected = NotFoundException.class)
+    public void deleteUserFromSoftDeleted_allowSoftDeleteFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean("allowSoftDeleteDeletion")).thenReturn(false);
+        delegateCloud20Service.deleteUserFromSoftDeleted(null, null, null);
     }
 
     @Test
@@ -1973,17 +2314,526 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
-    public void getTenantById_TenantService_getTenantByIdReturnsTenant_callsDefaultService() throws Exception {
+    public void getTenantById_RoutingFalseAndTenantNotNull_callsDefaultService() throws Exception {
         when(tenantService.getTenant("tenantId")).thenReturn(new Tenant());
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         delegateCloud20Service.getTenantById(null, null, "tenantId");
         verify(defaultCloud20Service).getTenantById(null,null,"tenantId");
     }
 
     @Test
-    public void getTenantById_TenantService_getTenantByIdReturnsNull_callsCloudClient() throws Exception {
+    public void getTenantById_RoutingTrueAndTenantNull_callsCloudClient() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(tenantService.getTenant("tenantId")).thenReturn(null);
         delegateCloud20Service.getTenantById(null, null, "tenantId");
         verify(cloudClient).get(anyString(), any(HttpHeaders.class));
     }
+
+    @Test
+    public void getTenantById_RoutingTrueAndTenantNotNull() throws Exception {
+        when(tenantService.getTenant("tenantId")).thenReturn(new Tenant());
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        delegateCloud20Service.getTenantById(null, null, "tenantId");
+        verify(defaultCloud20Service).getTenantById(null,null,"tenantId");
+    }
+
+    @Test
+    public void getGroupById_routingEnabledAndNotSourceOfTruth_callsCloudClient() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.getGroupById(null, null, "groupId");
+        verify(cloudClient).get(eq(url + "RAX-GRPADM/groups/groupId"), any(HttpHeaders.class));
+    }
+
+    @Test
+    public void getGroupById_routingNotEnabledAndNotSourceOfTruth_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.getGroupById(null, null, "groupId");
+        verify(defaultCloud20Service).getGroupById(null, null, "groupId");
+    }
+
+    @Test
+    public void getGroupById_routingEnabledAndSourceOfTruthEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.getGroupById(null, null, "groupId");
+        verify(defaultCloud20Service).getGroupById(null, null, "groupId");
+    }
+
+    @Test
+    public void getGroupById_routingNotEnabledAndSourceOfTruthEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.getGroupById(null, null, "groupId");
+        verify(defaultCloud20Service).getGroupById(null, null, "groupId");
+    }
+
+    @Test
+    public void addGroup_routingEnabledAndNotSourceOfTruth_callsCloudClient() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.addGroup(null, null, null, null);
+        verify(cloudClient).post(eq(url + "RAX-GRPADM/groups"), any(HttpHeaders.class), anyString());
+    }
+
+    @Test
+    public void addGroup_routingNotEnabledAndNotSourceOfTruth_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.addGroup(null, null, null, null);
+        verify(defaultCloud20Service).addGroup(null, null, null, null);
+    }
+
+    @Test
+    public void addGroup_routingEnabledAndSourceOfTruthEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.addGroup(null, null, null, null);
+        verify(defaultCloud20Service).addGroup(null, null, null, null);
+    }
+
+    @Test
+    public void addGroup_routingNotEnabledAndSourceOfTruthEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.addGroup(null, null, null, null);
+        verify(defaultCloud20Service).addGroup(null, null, null, null);
+    }
+
+    @Test
+    public void updateGroup_routingEnabledAndNotSourceOfTruthEnabled_callsCloudClient() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.updateGroup(null, null, "groupId", null);
+        verify(cloudClient).put(eq(url + "RAX-GRPADM/groups/groupId"), any(HttpHeaders.class), anyString());
+    }
+
+    @Test
+    public void updateGroup_routingNotEnabledAndNotSourceOfTruth_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.updateGroup(null, null, "groupId", null);
+        verify(defaultCloud20Service).updateGroup(null, null, "groupId", null);
+    }
+
+    @Test
+    public void updateGroup_routingEnabledAndSourceOfTruthEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.updateGroup(null, null, "groupId", null);
+        verify(defaultCloud20Service).updateGroup(null, null, "groupId", null);
+    }
+
+    @Test
+    public void updateGroup_routingNotEnabledAndSourceOfTruthEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.updateGroup(null, null, "groupId", null);
+        verify(defaultCloud20Service).updateGroup(null, null, "groupId", null);
+    }
+
+    @Test
+    public void deleteGroup_routingEnabledAndNotSourceOfTruthEnabled_callsCloudClient() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.deleteGroup(null, null, "groupId");
+        verify(cloudClient).delete(eq(url + "RAX-GRPADM/groups/groupId"), any(HttpHeaders.class));
+    }
+
+    @Test
+    public void deleteGroup_routingNotEnabledAndNotSourceOfTruth_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.deleteGroup(null, null, "groupId");
+        verify(defaultCloud20Service).deleteGroup(null, null, "groupId");
+    }
+
+    @Test
+    public void deleteGroup_routingEnabledAndSourceOfTruthEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.deleteGroup(null, null, "groupId");
+        verify(defaultCloud20Service).deleteGroup(null, null, "groupId");
+    }
+
+    @Test
+    public void deleteGroup_routingNotEnabledAndSourceOfTruthEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.deleteGroup(null, null, "groupId");
+        verify(defaultCloud20Service).deleteGroup(null, null, "groupId");
+    }
+
+    @Test
+    public void addUserToGroup_routingEnabledAndNotUserInGAbyIdEnabled_callsCloudClient() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        doReturn(false).when(spy).isUserInGAbyId("userId");
+        spy.addUserToGroup(null, null, "groupId", "userId");
+        verify(cloudClient).put(eq(url + "RAX-GRPADM/groups/groupId/users/userId"), any(HttpHeaders.class), anyString());
+    }
+
+    @Test
+    public void addUserToGroup_routingNotEnabledAndNotUserInGAbyIdEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        doReturn(false).when(spy).isUserInGAbyId("userId");
+        spy.addUserToGroup(null, null, "groupId", "userId");
+        verify(defaultCloud20Service).addUserToGroup(null, null, "groupId", "userId");
+    }
+
+    @Test
+    public void addUserToGroup_routingEnabledAndUserInGAbyIdEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        doReturn(true).when(spy).isUserInGAbyId("userId");
+        spy.addUserToGroup(null, null, "groupId", "userId");
+        verify(defaultCloud20Service).addUserToGroup(null, null, "groupId", "userId");
+    }
+
+    @Test
+    public void addUserToGroup_routingNotEnabledAndUserInGAbyIdEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        doReturn(true).when(spy).isUserInGAbyId("userId");
+        spy.addUserToGroup(null, null, "groupId", "userId");
+        verify(defaultCloud20Service).addUserToGroup(null, null, "groupId", "userId");
+    }
+
+    @Test
+    public void removeUserFromGroup_routingEnabledAndNotUserInGAbyIdEnabled_callsCloudClient() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        doReturn(false).when(spy).isUserInGAbyId("userId");
+        spy.removeUserFromGroup(null, null, "groupId", "userId");
+        verify(cloudClient).delete(eq(url + "RAX-GRPADM/groups/groupId/users/userId"), any(HttpHeaders.class));
+    }
+
+    @Test
+    public void removeUserFromGroup_routingNotEnabledAndNotUserInGAbyIdEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        doReturn(false).when(spy).isUserInGAbyId("userId");
+        spy.removeUserFromGroup(null, null, "groupId", "userId");
+        verify(defaultCloud20Service).removeUserFromGroup(null, null, "groupId", "userId");
+    }
+
+    @Test
+    public void removeUserFromGroup_routingEnabledAndUserInGAbyIdEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        doReturn(true).when(spy).isUserInGAbyId("userId");
+        spy.removeUserFromGroup(null, null, "groupId", "userId");
+        verify(defaultCloud20Service).removeUserFromGroup(null, null, "groupId", "userId");
+    }
+
+    @Test
+    public void removeUserFromGroup_routingNotEnabledAndUserInGAbyIdEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        doReturn(true).when(spy).isUserInGAbyId("userId");
+        spy.removeUserFromGroup(null, null, "groupId", "userId");
+        verify(defaultCloud20Service).removeUserFromGroup(null, null, "groupId", "userId");
+    }
+
+    @Test
+    public void getUsersForGroup_routingEnabledAndNotSourceOfTruthEnabled_callsCloudClient() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.getUsersForGroup(null, null, "groupId", "marker", 0);
+        verify(cloudClient).get(eq(url + "RAX-GRPADM/groups/groupId/users?limit=0&marker=marker"), any(HttpHeaders.class));
+    }
+
+    @Test
+    public void getUsersForGroup_routingNotEnabledAndNotSourceOfTruth_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.getUsersForGroup(null, null, "groupId", "marker", 0);
+        verify(defaultCloud20Service).getUsersForGroup(null, null, "groupId", "marker", 0);
+    }
+
+    @Test
+    public void getUsersForGroup_routingEnabledAndSourceOfTruthEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.getUsersForGroup(null, null, "groupId", "marker", 0);
+        verify(defaultCloud20Service).getUsersForGroup(null, null, "groupId", "marker", 0);
+    }
+
+    @Test
+    public void getUsersForGroup_routingNotEnabledAndSourceOfTruthEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.getUsersForGroup(null, null, "groupId", "marker", 0);
+        verify(defaultCloud20Service).getUsersForGroup(null, null, "groupId", "marker", 0);
+    }
+
+    @Test
+    public void getGroup_routingEnabledAndNotSourceOfTruthEnabled_callsCloudClient() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.getGroup(null, null, "groupName");
+        verify(cloudClient).get(eq(url + "RAX-GRPADM/groups?name=groupName"), any(HttpHeaders.class));
+    }
+
+    @Test
+    public void getGroup_routingNotEnabledAndNotSourceOfTruth_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
+        delegateCloud20Service.getGroup(null, null, "groupName");
+        verify(defaultCloud20Service).listGroups(null, null, "groupName", null, null);
+    }
+
+    @Test
+    public void getGroup_routingEnabledAndSourceOfTruthEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.getGroup(null, null, "groupName");
+        verify(defaultCloud20Service).listGroups(null, null, "groupName", null, null);
+    }
+
+    @Test
+    public void getGroup_routingNotEnabledAndSourceOfTruthEnabled_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.getGroup(null, null, "groupName");
+        verify(defaultCloud20Service).listGroups(null, null, "groupName", null, null);
+    }
+
+    @Test (expected = ApiException.class)
+    public void getXAuthToken_ResponseNot200AndNot203_throwsApiException() throws Exception {
+        when(cloudClient.post(anyString(),any(HashMap.class),anyString())).thenReturn(Response.status(123));
+        delegateCloud20Service.getXAuthToken(null, null);
+    }
+
+    @Test
+    public void getXAuthToken_Response200_returnsResponse() throws Exception {
+        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
+        ResponseBuilderImpl responseBuilder = new ResponseBuilderImpl();
+        responseBuilder.entity(new Object());
+        responseBuilder.status(200);
+        when(cloudClient.post(anyString(), any(HashMap.class), anyString())).thenReturn(responseBuilder);
+        doReturn(authenticateResponse).when(spy).unmarshallResponse(anyString(),eq(AuthenticateResponse.class));
+
+        assertThat("response",spy.getXAuthToken(null, null),equalTo(authenticateResponse));
+    }
+
+    @Test
+    public void getXAuthToken_Response203_returnsResponse() throws Exception {
+        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
+        ResponseBuilderImpl responseBuilder = new ResponseBuilderImpl();
+        responseBuilder.entity(new Object());
+        responseBuilder.status(203);
+        when(cloudClient.post(anyString(), any(HashMap.class), anyString())).thenReturn(responseBuilder);
+        doReturn(authenticateResponse).when(spy).unmarshallResponse(anyString(),eq(AuthenticateResponse.class));
+
+        assertThat("response",spy.getXAuthToken(null, null),equalTo(authenticateResponse));
+    }
+
+    @Test (expected = ApiException.class)
+    public void getXAuthTokenByPassword_ResponseNot200AndNot203_throwsApiException() throws Exception {
+        when(cloudClient.post(anyString(),any(HashMap.class),anyString())).thenReturn(Response.status(123));
+        delegateCloud20Service.getXAuthToken_byPassword(null, null);
+    }
+
+    @Test
+    public void getXAuthTokenByPassword_Response200_returnsResponse() throws Exception {
+        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
+        ResponseBuilderImpl responseBuilder = new ResponseBuilderImpl();
+        responseBuilder.entity(new Object());
+        responseBuilder.status(200);
+        when(cloudClient.post(anyString(), any(HashMap.class), anyString())).thenReturn(responseBuilder);
+        doReturn(authenticateResponse).when(spy).unmarshallResponse(anyString(),eq(AuthenticateResponse.class));
+
+        assertThat("response",spy.getXAuthToken_byPassword(null, null),equalTo(authenticateResponse));
+    }
+
+    @Test
+    public void getXAuthTokenByPassword_Response203_returnsResponse() throws Exception {
+        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
+        ResponseBuilderImpl responseBuilder = new ResponseBuilderImpl();
+        responseBuilder.entity(new Object());
+        responseBuilder.status(203);
+        when(cloudClient.post(anyString(), any(HashMap.class), anyString())).thenReturn(responseBuilder);
+        doReturn(authenticateResponse).when(spy).unmarshallResponse(anyString(),eq(AuthenticateResponse.class));
+
+        assertThat("response",spy.getXAuthToken_byPassword(null, null),equalTo(authenticateResponse));
+    }
+
+    @Test (expected = ApiException.class)
+    public void getUserApiCredentials_ResponseNot200AndNot203_throwsAPIException() throws Exception {
+        when(cloudClient.get(anyString(),any(HashMap.class))).thenReturn(Response.status(123));
+        delegateCloud20Service.getUserApiCredentials(null, null);
+    }
+
+    @Test
+    public void getUserApiCredentials_Response200__returnsAPICredentials() throws Exception {
+        ApiKeyCredentials apiKeyCredentials = new ApiKeyCredentials();
+        ResponseBuilderImpl responseBuilder = new ResponseBuilderImpl();
+        responseBuilder.entity(new Object());
+        responseBuilder.status(200);
+        when(cloudClient.get(anyString(), any(HashMap.class))).thenReturn(responseBuilder);
+        doReturn(apiKeyCredentials).when(spy).unmarshallResponse(anyString(),eq(ApiKeyCredentials.class));
+
+        assertThat("response", spy.getUserApiCredentials(null, null), equalTo(apiKeyCredentials));
+    }
+
+    @Test
+    public void getUserApiCredentials_Response203__returnsAPICredentials() throws Exception {
+        ApiKeyCredentials apiKeyCredentials = new ApiKeyCredentials();
+        ResponseBuilderImpl responseBuilder = new ResponseBuilderImpl();
+        responseBuilder.entity(new Object());
+        responseBuilder.status(203);
+        when(cloudClient.get(anyString(), any(HashMap.class))).thenReturn(responseBuilder);
+        doReturn(apiKeyCredentials).when(spy).unmarshallResponse(anyString(),eq(ApiKeyCredentials.class));
+
+        assertThat("response", spy.getUserApiCredentials(null, null), equalTo(apiKeyCredentials));
+    }
+
+    @Test (expected = ApiException.class)
+    public void getCloudUserByName_ResponseNot200AndNot203_throwsAPIException() throws Exception {
+        when(cloudClient.get(anyString(),any(HashMap.class))).thenReturn(Response.status(123));
+        delegateCloud20Service.getCloudUserByName(null,null);
+    }
+
+    @Test
+    public void getCloudUserByName_Response200_returnsUser() throws Exception {
+        ResponseBuilderImpl responseBuilder = new ResponseBuilderImpl();
+        org.openstack.docs.identity.api.v2.User user = new org.openstack.docs.identity.api.v2.User();
+        responseBuilder.status(200);
+        responseBuilder.entity(new Object());
+        when(cloudClient.get(anyString(), any(HashMap.class))).thenReturn(responseBuilder);
+        doReturn(user).when(spy).unmarshallResponse(anyString(),eq(org.openstack.docs.identity.api.v2.User.class));
+        assertThat("user", spy.getCloudUserByName(null, null), equalTo(user));
+    }
+
+    @Test
+    public void getCloudUserByName_Response203_returnsUser() throws Exception {
+        ResponseBuilderImpl responseBuilder = new ResponseBuilderImpl();
+        org.openstack.docs.identity.api.v2.User user = new org.openstack.docs.identity.api.v2.User();
+        responseBuilder.status(203);
+        responseBuilder.entity(new Object());
+        when(cloudClient.get(anyString(), any(HashMap.class))).thenReturn(responseBuilder);
+        doReturn(user).when(spy).unmarshallResponse(anyString(),eq(org.openstack.docs.identity.api.v2.User.class));
+        assertThat("user", spy.getCloudUserByName(null, null), equalTo(user));
+    }
+
+    @Test(expected = ApiException.class)
+    public void getGlobalRolesForCloudUser_ResponseNot200AndNot203_throwsAPIException() throws Exception {
+        when(cloudClient.get(anyString(),any(HashMap.class))).thenReturn(Response.status(123));
+        delegateCloud20Service.getGlobalRolesForCloudUser(null,null);
+    }
+
+    @Test
+    public void getGlobalRolesForCloudUser_Response200_throwsAPIException() throws Exception {
+        ResponseBuilderImpl responseBuilder = new ResponseBuilderImpl();
+        RoleList roleList = new RoleList();
+        responseBuilder.status(200);
+        responseBuilder.entity(new Object());
+        when(cloudClient.get(anyString(), any(HashMap.class))).thenReturn(responseBuilder);
+        doReturn(roleList).when(spy).unmarshallResponse(anyString(), eq(RoleList.class));
+        assertThat("rolelist", spy.getGlobalRolesForCloudUser(null, null), equalTo(roleList));
+    }
+
+    @Test
+    public void getGlobalRolesForCloudUser_Response203_throwsAPIException() throws Exception {
+        ResponseBuilderImpl responseBuilder = new ResponseBuilderImpl();
+        RoleList roleList = new RoleList();
+        responseBuilder.status(203);
+        responseBuilder.entity(new Object());
+        when(cloudClient.get(anyString(), any(HashMap.class))).thenReturn(responseBuilder);
+        doReturn(roleList).when(spy).unmarshallResponse(anyString(), eq(RoleList.class));
+        assertThat("rolelist",spy.getGlobalRolesForCloudUser(null,null),equalTo(roleList));
+    }
+
+    @Test (expected = BadRequestException.class)
+    public void impersonateUser_validCloudImpersonateFalse_throwsBadRequestException() throws Exception {
+        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
+        authenticateResponse.setToken(new Token());
+        org.openstack.docs.identity.api.v2.User user = mock(org.openstack.docs.identity.api.v2.User.class);
+        doReturn(authenticateResponse).when(spy).getXAuthToken_byPassword(null, null);
+        doReturn(user).when(spy).getCloudUserByName(null,null);
+        doReturn(new RoleList()).when(spy).getGlobalRolesForCloudUser(null,null);
+        doReturn(false).when(spy).isValidCloudImpersonatee(any(RoleList.class));
+        spy.impersonateUser(null,null,null);
+    }
+
+    @Test
+    public void impersonateUser_validCloudImpersonateTrue_returnsUserXAuthToken() throws Exception {
+        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
+        authenticateResponse.setToken(new Token());
+        org.openstack.docs.identity.api.v2.User user = mock(org.openstack.docs.identity.api.v2.User.class);
+        doReturn(authenticateResponse).when(spy).getXAuthToken_byPassword(null, null);
+        doReturn(user).when(spy).getCloudUserByName(null,null);
+        doReturn(new RoleList()).when(spy).getGlobalRolesForCloudUser(null,null);
+        doReturn(true).when(spy).isValidCloudImpersonatee(any(RoleList.class));
+        doReturn(new ApiKeyCredentials()).when(spy).getUserApiCredentials(null,null);
+        doReturn(authenticateResponse).when(spy).getXAuthToken(null,null);
+
+        assertThat("token", spy.impersonateUser(null, null, null), equalTo(null));
+    }
+
+    @Test
+    public void isValidCloudImpersonatee_userRolesEmpty_returnsFalse() throws Exception {
+        assertThat("bool", delegateCloud20Service.isValidCloudImpersonatee(new RoleList()), equalTo(false));
+    }
+
+    @Test
+    public void isValidCloudImpersonatee_noRolesDefaultOrUserAdmin_returnsFalse() throws Exception {
+        RoleList roleList = new RoleList();
+        Role role1 = new Role();
+        role1.setName("role1");
+        Role role2 = new Role();
+        role2.setName("role2");
+        Role role3 = new Role();
+        role3.setName("role3");
+        roleList.getRole().add(role1);
+        roleList.getRole().add(role2);
+        roleList.getRole().add(role3);
+        assertThat("bool", delegateCloud20Service.isValidCloudImpersonatee(roleList), equalTo(false));
+    }
+
+    @Test
+    public void isValidCloudImpersonatee_RoleDefault_returnsTrue() throws Exception {
+        RoleList roleList = new RoleList();
+        Role role1 = new Role();
+        role1.setName("role1");
+        Role role2 = new Role();
+        role2.setName("role2");
+        Role role3 = new Role();
+        role3.setName("identity:default");
+        roleList.getRole().add(role1);
+        roleList.getRole().add(role2);
+        roleList.getRole().add(role3);
+        assertThat("bool", delegateCloud20Service.isValidCloudImpersonatee(roleList), equalTo(true));
+    }
+
+    @Test
+    public void isValidCloudImpersonatee_RoleUserAdmin_returnsTrue() throws Exception {
+        RoleList roleList = new RoleList();
+        Role role1 = new Role();
+        role1.setName("role1");
+        Role role2 = new Role();
+        role2.setName("role2");
+        Role role3 = new Role();
+        role3.setName("identity:user-admin");
+        roleList.getRole().add(role1);
+        roleList.getRole().add(role2);
+        roleList.getRole().add(role3);
+        assertThat("bool", delegateCloud20Service.isValidCloudImpersonatee(roleList), equalTo(true));
+    }
+
+    @Test
+    public void impersonate_returnsNull() throws Exception{
+        assertThat("returns", delegateCloud20Service.impersonate(null,null,null), equalTo(null));
+    }
+
+    @Test
+    public void getTokenService_returnsTokenService() throws Exception{
+        assertThat("tokenService",delegateCloud20Service.getTokenService(),equalTo(tokenService));
+    }
+
+    @Test
+    public void getTenantService_returnsTenetService() throws Exception {
+        assertThat("tenantService",delegateCloud20Service.getTenantService(),equalTo(tenantService));
+    }
+
+    @Test
+    public void getUserConverterCloudV20_returnsUserConverterCloudV20() throws Exception {
+        assertThat("UserConverterCloudV20",delegateCloud20Service.getUserConverterCloudV20(),equalTo(userConverterCloudV20));
+    }
 }
+

@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
-<roles xmlns="http://idm.api.rackspace.com/v1.0">
-    <role name="network_admin" description="Role for networking related functionality, like routing servers, etc"/>
-    <role name="technical_reviewer" description="Reviews technical related stuff" />
-    <role name="admin"  />
-</roles>

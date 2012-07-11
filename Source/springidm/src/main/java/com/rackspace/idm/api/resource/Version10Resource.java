@@ -2,7 +2,7 @@ package com.rackspace.idm.api.resource;
 
 import com.rackspace.idm.api.resource.application.ApplicationsResource;
 import com.rackspace.idm.api.resource.cloud.CloudVersionsResource;
-import com.rackspace.idm.api.resource.customeridentityprofile.CustomerIdenityProfilesResource;
+import com.rackspace.idm.api.resource.customeridentityprofile.CustomerIdentityProfilesResource;
 import com.rackspace.idm.api.resource.passwordrule.PasswordRulesResource;
 import com.rackspace.idm.api.resource.roles.RolesResource;
 import com.rackspace.idm.api.resource.tenant.TenantsResource;
@@ -33,7 +33,7 @@ public class Version10Resource {
 	private final ApiDocService apiDocService;
 	private final RolesResource rolesResource;
     private final UsersResource usersResource;
-    private final CustomerIdenityProfilesResource customerIdentityProfilesResource;
+    private final CustomerIdentityProfilesResource customerIdentityProfilesResource;
     private final PasswordRulesResource passwordRulesResource;
     private final TokensResource tokenResource;
     private final ApplicationsResource applicationsResource;
@@ -46,7 +46,7 @@ public class Version10Resource {
     
     @Autowired
     public Version10Resource(UsersResource usersResource,
-        CustomerIdenityProfilesResource customersResource, PasswordRulesResource passwordRulesResource,
+        CustomerIdentityProfilesResource customersResource, PasswordRulesResource passwordRulesResource,
         TokensResource tokenResource, RolesResource rolesResource,
         CloudVersionsResource cloudVersionsResource, ApiDocService apiDocService,
         Configuration config,
@@ -98,7 +98,7 @@ public class Version10Resource {
     }
     
     @Path("customeridentityprofiles")
-    public CustomerIdenityProfilesResource getCustomerIdentityProfilesResource() {
+    public CustomerIdentityProfilesResource getCustomerIdentityProfilesResource() {
         return customerIdentityProfilesResource;
     }
 

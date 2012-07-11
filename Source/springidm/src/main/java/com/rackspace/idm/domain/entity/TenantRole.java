@@ -95,7 +95,7 @@ public class TenantRole implements Auditable {
 
     public void addTenantId(String tenantId) {
         List<String> tenants = new ArrayList<String>();
-        if (tenantIds != null || tenantIds.length > 0) {
+        if (tenantIds != null) {
             Collections.addAll(tenants, tenantIds);
         }
         if (!tenants.contains(tenantId)) {

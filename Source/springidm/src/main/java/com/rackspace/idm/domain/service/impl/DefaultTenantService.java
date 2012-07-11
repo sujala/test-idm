@@ -9,14 +9,19 @@ import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.exception.ClientConflictException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
+import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class DefaultTenantService implements TenantService {
+
+    @Autowired
+    private Configuration config;
 
     private final TenantDao tenantDao;
     private final ApplicationDao clientDao;
@@ -35,6 +40,9 @@ public class DefaultTenantService implements TenantService {
     @Override
     public void addTenant(Tenant tenant) {
         logger.info("Adding Tenant {}", tenant);
+        if(tenant == null){
+            throw new IllegalArgumentException("Tenant cannot be null");
+        }
         Tenant exists = this.tenantDao.getTenant(tenant.getName());
         if (exists != null) {
             String errMsg = String.format("Tenant with name %s already exists", tenant.getName());
@@ -159,6 +167,11 @@ public class DefaultTenantService implements TenantService {
     public void addTenantRole(String parentUniqueId, TenantRole role) {
         // Adding a tenantRole has multiple paths depending on whether
         // the user already has that role on not.
+
+        if(role == null){
+            throw new IllegalArgumentException("Role cannot be null");
+        }
+
         logger.info("Adding Tenant Role {}", role);
         TenantRole existingRole = this.tenantDao.getTenantRoleForParentById(parentUniqueId, role.getRoleRsId());
         if (existingRole == null) {
@@ -190,6 +203,11 @@ public class DefaultTenantService implements TenantService {
 
     @Override
     public void deleteTenantRole(String parentUniqueId, TenantRole role) {
+
+        if(role == null){
+            throw new IllegalArgumentException("Role cannot be null");
+        }
+
         logger.info("Deleted Tenant Role {}", role);
         TenantRole existingRole = this.tenantDao.getTenantRoleForParentById(
             parentUniqueId, role.getRoleRsId());
@@ -298,9 +316,9 @@ public class DefaultTenantService implements TenantService {
 
     @Override
     public void addTenantRoleToUser(User user, TenantRole role) {
-        if (user == null || StringUtils.isBlank(user.getUniqueId())) {
+        if (user == null || StringUtils.isBlank(user.getUniqueId()) || role == null) {
             throw new IllegalArgumentException(
-                "User cannot be null and must have uniqueID");
+                "User cannot be null and must have uniqueID; role cannot be null");
         }
 
         Application client = this.clientDao.getClientByClientId(role.getClientId());
@@ -342,10 +360,30 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
+    public void addTenantRolesToUser(ScopeAccess userAdminScopeAccess, User subUser) {
+        List<TenantRole> tenantRoles = this.getTenantRolesForScopeAccess(userAdminScopeAccess);
+        for (TenantRole tenantRole : tenantRoles) {
+            if (!tenantRole.getName().equalsIgnoreCase(config.getString("cloudAuth.adminRole"))
+                    && !tenantRole.getName().equalsIgnoreCase(config.getString("cloudAuth.serviceAdminRole"))
+                    && !tenantRole.getName().equalsIgnoreCase(config.getString("cloudAuth.userAdminRole"))
+                    && !tenantRole.getName().equalsIgnoreCase(config.getString("cloudAuth.userRole"))) {
+                TenantRole role = new TenantRole();
+                role.setClientId(tenantRole.getClientId());
+                role.setDescription(tenantRole.getDescription());
+                role.setName(tenantRole.getName());
+                role.setRoleRsId(tenantRole.getRoleRsId());
+                role.setTenantIds(tenantRole.getTenantIds());
+                tenantRole.setUserId(subUser.getId());
+                this.addTenantRoleToUser(subUser, role);
+            }
+        }
+    }
+
+    @Override
     public void addTenantRoleToClient(Application client, TenantRole role) {
-        if (client == null || StringUtils.isBlank(client.getUniqueId())) {
+        if (client == null || StringUtils.isBlank(client.getUniqueId()) || role == null) {
             throw new IllegalArgumentException(
-                "Client cannont be null and must have uniqueID");
+                "Client cannot be null and must have uniqueID; role cannot be null");
         }
 
         Application owner = this.clientDao.getClientByClientId(role.getClientId());
@@ -378,6 +416,10 @@ public class DefaultTenantService implements TenantService {
 
     @Override
     public List<TenantRole> getGlobalRolesForUser(User user) {
+        if (user == null) {
+            throw new IllegalArgumentException(
+                    "User cannot be null.");
+        }
         logger.debug("Getting Global Roles for user {}", user.getUsername());
         List<TenantRole> roles = this.tenantDao.getTenantRolesForUser(user);
         return getGlobalRoles(roles);
@@ -392,6 +434,10 @@ public class DefaultTenantService implements TenantService {
 
     @Override
     public List<TenantRole> getGlobalRolesForApplication(Application application, FilterParam[] filters) {
+        if (application == null) {
+            throw new IllegalArgumentException(
+                    "Application cannot be null.");
+        }
         logger.debug("Getting Global Roles for application {}", application.getName());
         List<TenantRole> roles = this.tenantDao.getTenantRolesForApplication(application, filters);
         return getGlobalRoles(roles);
@@ -399,6 +445,11 @@ public class DefaultTenantService implements TenantService {
 
     @Override
     public List<TenantRole> getTenantRolesForUserOnTenant(User user, Tenant tenant) {
+        if (tenant == null) {
+            throw new IllegalArgumentException(
+                    "Tenant cannot be null.");
+        }
+
         logger.debug("Getting Tenant Roles");
         List<TenantRole> roles = this.tenantDao.getTenantRolesForUser(user);
         List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
@@ -499,7 +550,7 @@ public class DefaultTenantService implements TenantService {
      * get roles in this list that are non-tenant specific
      * @param roles
      */
-    private List<TenantRole> getGlobalRoles(List<TenantRole> roles) {
+    List<TenantRole> getGlobalRoles(List<TenantRole> roles) {
         List<TenantRole> globalRoles = new ArrayList<TenantRole>();
         for (TenantRole role : roles) {
             if (role != null
@@ -518,7 +569,7 @@ public class DefaultTenantService implements TenantService {
      * get roles in this list that are tenant specific
      * @param roles
      */
-    private List<TenantRole> getTenantOnlyRoles(List<TenantRole> roles) {
+    List<TenantRole> getTenantOnlyRoles(List<TenantRole> roles) {
         List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
         for (TenantRole role : roles) {
             // we only want to include roles on a tenant, and not global roles

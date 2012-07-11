@@ -2,7 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v10;
 
 import com.rackspace.idm.api.converter.cloudv11.EndpointConverterCloudV11;
 import com.rackspace.idm.api.resource.cloud.CloudClient;
-import com.rackspace.idm.domain.entity.CloudEndpoint;
+import com.rackspace.idm.domain.entity.OpenstackEndpoint;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.service.EndpointService;
@@ -90,9 +90,8 @@ public class Cloud10VersionResource {
         @HeaderParam(HEADER_AUTH_KEY) String key) throws IOException {
 
         Response.ResponseBuilder builder = Response.noContent();
-        builder.header("Vary", "Accept, Accept-Encoding, X-Auth-Token, X-Auth-Key, X-Storage-User, X-Storage-Pass");
 
-        if(username==null || username.trim().length() == 0){
+        if(StringUtils.isBlank(username)){
             return builder.status(HttpServletResponse.SC_UNAUTHORIZED).entity("Bad username or password").build();
         }
 
@@ -114,7 +113,7 @@ public class Cloud10VersionResource {
 
         try {
             UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(username, key, getCloudAuthClientId());
-            List<CloudEndpoint> endpointlist = endpointService.getEndpointsForUser(username);
+            List<OpenstackEndpoint> endpointlist = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
 
             ServiceCatalog catalog = endpointConverterCloudV11.toServiceCatalog(endpointlist);
 
@@ -191,7 +190,7 @@ public class Cloud10VersionResource {
      */
     public static void addValuetoHeather(final String headerName,
         final String value, Response.ResponseBuilder builder) {
-        if (value != null && !StringUtils.isEmpty(value)) {
+        if (!StringUtils.isEmpty(value)) {
             builder.header(headerName, value);
         }
 

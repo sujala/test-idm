@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-
-<usernameConflict xmlns="http://idm.api.rackspace.com/v1.0"
-    code="409">
-    <message>Conflict.</message>
-    <details>Error Details...</details>
-</usernameConflict>

@@ -33,18 +33,64 @@ public class UserValidatorTest {
     }
 
     @Test(expected = BadRequestException.class)
-    public void validate_UserWithNEmptyId_throwsBadRequestException() throws Exception {
+    public void validate_UserWithEmptyId_throwsBadRequestException() throws Exception {
         User user = new User();
         user.setId("");
         userValidator.validate(user);
     }
 
     @Test
+    public void validate_UserWithNastIdAndKey() throws Exception {
+        User user = new User();
+        user.setNastId("nastId");
+        user.setKey("key");
+        user.setId("id");
+        userValidator.validate(user);
+    }
+
+    @Test
+    public void validate_UserWithOnlyId() throws Exception {
+        User user = new User();
+        user.setId("Id");
+        userValidator.validate(user);
+    }
+
+    @Test
     public void validate_validUser() throws Exception {
         User user = new User();
+        user.setId("id");
         user.setNastId("nastId");
         user.setMossoId(1);
         user.setKey("key");
         userValidator.validate(user);
     }
+
+    @Test
+    public void validateUsername_validName() throws Exception {
+        User user = new User();
+        user.setId("test12");
+        userValidator.validateUsername(user.getId());
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void validateUsername_invalidName() throws Exception {
+        User user = new User();
+        user.setId("test12?");
+        userValidator.validateUsername(user.getId());
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void validateUsername_validNameOther() throws Exception {
+        User user = new User();
+        user.setId("123nogood");
+        userValidator.validateUsername(user.getId());
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void validateUsername_validNameLast() throws Exception {
+        User user = new User();
+        user.setId("test/");
+        userValidator.validateUsername(user.getId());
+    }
+
 }

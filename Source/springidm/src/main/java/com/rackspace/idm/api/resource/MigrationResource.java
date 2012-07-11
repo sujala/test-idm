@@ -52,8 +52,9 @@ public class MigrationResource {
 
     @POST
     @Path("cloud/users/{username}")
-    public Response migrateCloudUserByUsername(@PathParam("username") String username) throws Exception {
-    	MigrateUserResponseType migrateUserResponseType = cloudMigrationService.migrateUserByUsername(username, true, null);
+    public Response migrateCloudUserByUsername(@PathParam("username") String username,
+                                               @DefaultValue("false") @QueryParam("subusers") boolean processSubUsers) throws Exception {
+    	MigrateUserResponseType migrateUserResponseType = cloudMigrationService.migrateUserByUsername(username, processSubUsers);
     	return Response.status(Response.Status.OK).entity(migrateUserResponseType).build();
     }
 
@@ -109,6 +110,16 @@ public class MigrationResource {
     public Response migrateGroups() throws Exception {
         cloudMigrationService.migrateGroups();
         return Response.status(Response.Status.ACCEPTED).build();
+    }
+
+    @GET
+    @Path("cloud/groups")
+    public Response getGroups() throws Exception {
+        return cloudMigrationService.getGroups().build();
+    }
+
+    public void setCloudMigrationService(CloudMigrationService cloudMigrationService) {
+        this.cloudMigrationService = cloudMigrationService;
     }
 
 }

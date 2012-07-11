@@ -1,11 +1,14 @@
 package com.rackspace.idm.api.resource.cloud.v11;
 
 import com.rackspace.idm.JSONConstants;
+import com.rackspace.idm.exception.BadRequestException;
 import com.rackspacecloud.docs.auth.api.v1.BaseURLRef;
 import org.apache.commons.io.IOUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.WebApplicationException;
@@ -21,6 +24,8 @@ import java.lang.reflect.Type;
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
 public class JSONReaderForBaseUrlRef implements MessageBodyReader<BaseURLRef> {
+
+    private static final Logger logger = LoggerFactory.getLogger(JSONReaderForBaseUrlRef.class);
 
     @Override
     public boolean isReadable(Class<?> type, Type genericType,
@@ -67,7 +72,8 @@ public class JSONReaderForBaseUrlRef implements MessageBodyReader<BaseURLRef> {
             }
         } catch (ParseException e) {
             // TODO Auto-generated catch block
-            e.printStackTrace();
+            logger.info(e.toString());
+            throw new BadRequestException("Bad JSON request");
         }
 
         return baseUrlRef;
@@ -97,7 +103,8 @@ public class JSONReaderForBaseUrlRef implements MessageBodyReader<BaseURLRef> {
 
         } catch (ParseException e) {
             // TODO Auto-generated catch block
-            e.printStackTrace();
+            logger.info(e.toString());
+            throw new BadRequestException("Bad JSON request");
         }
 
         return baseUrlRef;

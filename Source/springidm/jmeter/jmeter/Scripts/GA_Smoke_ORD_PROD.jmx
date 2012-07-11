@@ -9,7 +9,7 @@
         <collectionProp name="Arguments.arguments">
           <elementProp name="env" elementType="Argument">
             <stringProp name="Argument.name">env</stringProp>
-            <stringProp name="Argument.value">${__P(Env,PROD-EXTERNAL)}</stringProp>
+            <stringProp name="Argument.value">${__P(Env,PROD-INTERNAL)}</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
           <elementProp name="format" elementType="Argument">
@@ -122,12 +122,12 @@
         <collectionProp name="Arguments.arguments">
           <elementProp name="ThreadCount" elementType="Argument">
             <stringProp name="Argument.name">ThreadCount</stringProp>
-            <stringProp name="Argument.value">${__P(threadCount,2)}</stringProp>
+            <stringProp name="Argument.value">${__P(threadCount,5)}</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
           <elementProp name="RampPeriod" elementType="Argument">
             <stringProp name="Argument.name">RampPeriod</stringProp>
-            <stringProp name="Argument.value">${__P(rampPeriod,2)}</stringProp>
+            <stringProp name="Argument.value">${__P(rampPeriod,5)}</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
           <elementProp name="LoopCount" elementType="Argument">
@@ -137,7 +137,7 @@
           </elementProp>
           <elementProp name="Duration" elementType="Argument">
             <stringProp name="Argument.name">Duration</stringProp>
-            <stringProp name="Argument.value">${__P(duration,30)}</stringProp>
+            <stringProp name="Argument.value">${__P(duration,7200)}</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
         </collectionProp>
@@ -1271,7 +1271,7 @@
                   <collectionProp name="Arguments.arguments">
                     <elementProp name="" elementType="HTTPArgument">
                       <boolProp name="HTTPArgument.always_encode">false</boolProp>
-                      <stringProp name="Argument.value">&lt;authCredentials xmlns=&quot;http://idm.api.rackspace.com/v1.0&quot; password=&quot;${foundationApi_customerPassword}&quot; username=&quot;${foundationApi_customerUserName}&quot; client_secret=&quot;${foundationApi_clientSecretCustomer}&quot; client_id=&quot;${foundationApi_adminClientId}&quot; grant_type=&quot;PASSWORD&quot; /&gt;</stringProp>
+                      <stringProp name="Argument.value">&lt;authCredentials xmlns=&quot;http://idm.api.rackspace.com/v1.0&quot; password=&quot;${foundationApi_customerPassword}&quot; username=&quot;${foundationApi_customerUserName}&quot; client_secret=&quot;${foundationApi_clientSecret}&quot; client_id=&quot;${foundationApi_adminClientId}&quot; grant_type=&quot;PASSWORD&quot; /&gt;</stringProp>
                       <stringProp name="Argument.metadata">=</stringProp>
                       <boolProp name="HTTPArgument.use_equals">true</boolProp>
                     </elementProp>
@@ -1944,14 +1944,14 @@
         <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
         <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
           <boolProp name="LoopController.continue_forever">false</boolProp>
-          <intProp name="LoopController.loops">-1</intProp>
+          <stringProp name="LoopController.loops">1</stringProp>
         </elementProp>
-        <stringProp name="ThreadGroup.num_threads">${ThreadCount}</stringProp>
-        <stringProp name="ThreadGroup.ramp_time">${RampPeriod}</stringProp>
+        <stringProp name="ThreadGroup.num_threads">1</stringProp>
+        <stringProp name="ThreadGroup.ramp_time">1</stringProp>
         <longProp name="ThreadGroup.start_time">1327375014000</longProp>
         <longProp name="ThreadGroup.end_time">1327375014000</longProp>
-        <boolProp name="ThreadGroup.scheduler">true</boolProp>
-        <stringProp name="ThreadGroup.duration">${Duration}</stringProp>
+        <boolProp name="ThreadGroup.scheduler">false</boolProp>
+        <stringProp name="ThreadGroup.duration">1</stringProp>
         <stringProp name="ThreadGroup.delay"></stringProp>
       </ThreadGroup>
       <hashTree>
@@ -2087,7 +2087,7 @@
               <stringProp name="0"></stringProp>
             </collectionProp>
             <collectionProp name="UserParameters.thread_values">
-              <collectionProp name="922388134">
+              <collectionProp name="-535209570">
                 <stringProp name="-2126772429">https://dfw.rackidm.api.rackspace.com</stringProp>
                 <stringProp name="1349710559">https://ord.rackidm.api.rackspace.com</stringProp>
                 <stringProp name="1215921518">https://identity.api.rackspacecloud.com</stringProp>
@@ -2109,16 +2109,16 @@
                 <stringProp name="0"></stringProp>
                 <stringProp name="0"></stringProp>
                 <stringProp name="655416422">rackidentity.api.rackspacecloud.com</stringProp>
-                <stringProp name="655416422">rackidentity.api.rackspacecloud.com</stringProp>
+                <stringProp name="1666706719">b-int-api1.cidm.dfw1.corp.rackspace.com</stringProp>
                 <stringProp name="51635">443</stringProp>
                 <stringProp name="99617003">https</stringProp>
-                <stringProp name="1847601885">/v1.0/tokens</stringProp>
+                <stringProp name="-1784288161">/v1/tokens</stringProp>
                 <stringProp name="1216985755">password</stringProp>
                 <stringProp name="-560617505">rackspacefoundationtestuser</stringProp>
                 <stringProp name="-2013988127">817W5jO4w52W50r</stringProp>
                 <stringProp name="-749075546">shan0433</stringProp>
-                <stringProp name="-384640052">Water1098!</stringProp>
-                <stringProp name="1216985755">password</stringProp>
+                <stringProp name="2125611077">Ocean1098!</stringProp>
+                <stringProp name="1503465806">mtNJny9mKj4JE</stringProp>
                 <stringProp name="-1657423355">18e7a7032733486cd32f472d7bd58f709ac0d221</stringProp>
                 <stringProp name="-893241125">bde1268ebabeeabb70a0e702a4626977c331d5c4</stringProp>
                 <stringProp name="-749075546">shan0433</stringProp>
@@ -2164,9 +2164,9 @@
                 <stringProp name="51635">443</stringProp>
                 <stringProp name="99617003">https</stringProp>
                 <stringProp name="0"></stringProp>
-                <stringProp name="0"></stringProp>
-                <stringProp name="0"></stringProp>
-                <stringProp name="0"></stringProp>
+                <stringProp name="694358666">a-int-api1.cidm.ord1.corp.rackspace.com</stringProp>
+                <stringProp name="655416422">rackidentity.api.rackspacecloud.com</stringProp>
+                <stringProp name="1678022846">b-int-api2.cidm.dfw1.corp.rackspace.com</stringProp>
                 <stringProp name="0"></stringProp>
                 <stringProp name="0"></stringProp>
                 <stringProp name="0"></stringProp>
@@ -2295,7 +2295,7 @@
               <stringProp name="0"></stringProp>
             </collectionProp>
             <collectionProp name="UserParameters.thread_values">
-              <collectionProp name="1788649575">
+              <collectionProp name="873040779">
                 <stringProp name="-2126772429">https://dfw.rackidm.api.rackspace.com</stringProp>
                 <stringProp name="1349710559">https://ord.rackidm.api.rackspace.com</stringProp>
                 <stringProp name="1215921518">https://identity.api.rackspacecloud.com</stringProp>
@@ -2384,8 +2384,8 @@
                 <stringProp name="51635">443</stringProp>
                 <stringProp name="99617003">https</stringProp>
                 <stringProp name="0"></stringProp>
-                <stringProp name="0"></stringProp>
-                <stringProp name="0"></stringProp>
+                <stringProp name="1709745115">a-ext-api2.cidm.ord1.corp.rackspace.com</stringProp>
+                <stringProp name="-1612874128">b-ext-api2.cidm.dfw1.corp.rackspace.com</stringProp>
                 <stringProp name="0"></stringProp>
                 <stringProp name="0"></stringProp>
                 <stringProp name="0"></stringProp>

@@ -4,12 +4,16 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.exception.BadRequestException;
 
 public class JSONReaderForPasswordCredentials {
+
+    private static Logger logger = LoggerFactory.getLogger(JSONReaderForPasswordCredentials.class);
 
     public static PasswordCredentialsRequiredUsername getPasswordCredentialsFromJSONString(String jsonBody) {
         PasswordCredentialsRequiredUsername creds = new PasswordCredentialsRequiredUsername();
@@ -29,13 +33,14 @@ public class JSONReaderForPasswordCredentials {
                 if (username != null) {
                     creds.setUsername(username.toString());
                 }
+
                 if (password != null) {
                     creds.setPassword(password.toString());
                 }
             }
         } catch (ParseException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            logger.info(e.toString());
+            throw new BadRequestException("JSON Parsing error");
         }
 
         return creds;

@@ -1,0 +1,56 @@
+### addroles.ldif ###
+dn: rsId=2,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+rsId: 2
+objectClass: top
+objectClass: clientRole
+cn: identity:default
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+description: A Role that allows a user access to keystone Service methods
+
+dn: rsId=3,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+rsId: 3
+objectClass: top
+objectClass: clientRole
+cn: identity:user-admin
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+description: A Role that allows a user access to keystone Service methods
+
+dn: rsId=4,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+rsId: 4
+objectClass: top
+objectClass: clientRole
+cn: identity:service-admin
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+description: A Role that allows a user access to keystone Service methods
+
+dn: rsId=5,cn=CLIENT ROLES,clientId=6047d506862b81d6d99273b4853adfe81e0478c1,ou=applications,o=rackspace,dc=rackspace,dc=com
+rsId: 5
+objectClass: top
+objectClass: clientRole
+cn: object-store:default
+clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+description: A Role that allows a user access to keystone Service methods
+
+dn: rsId=6,cn=CLIENT ROLES,clientId=a45b14e394a57e3fd4e45d59ff3693ead204998b,ou=applications,o=rackspace,dc=rackspace,dc=com
+rsId: 6
+objectClass: top
+objectClass: clientRole
+cn: compute:default
+clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+description: A Role that allows a user access to keystone Service methods
+
+dn: rsId=10,cn=CLIENT ROLES,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou=applications,o=rackspace,dc=rackspace,dc=com
+rsId: 10
+objectClass: top
+objectClass: clientRole
+cn: Super Admin
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+description: A role that allows a user/application full access to Global Auth
+
+dn: rsId=11,cn=CLIENT ROLES,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou=applications,o=rackspace,dc=rackspace,dc=com
+rsId: 11
+objectClass: top
+objectClass: clientRole
+cn: Customer Admin
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+description: A role that allows a user to admin other users in his customer

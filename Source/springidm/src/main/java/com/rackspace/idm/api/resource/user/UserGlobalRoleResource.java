@@ -178,7 +178,7 @@ public class UserGlobalRoleResource {
 		return Response.noContent().build();
 	}
 	
-	private TenantRole createTenantRole(String tenantId, String roleId) {
+	TenantRole createTenantRole(String tenantId, String roleId) {
 		ClientRole role = applicationService.getClientRoleById(roleId);
         if (role == null) {
             String errMsg = String.format("Role %s not found", roleId);

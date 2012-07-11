@@ -6,15 +6,7 @@ public class PasswordValidationException extends IdmException {
         super();
     }
 
-    public PasswordValidationException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
     public PasswordValidationException(String message) {
         super(message);
-    }
-
-    public PasswordValidationException(Throwable cause) {
-        super(cause);
     }
 }

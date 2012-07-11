@@ -24,7 +24,7 @@ public class LdapAuthRepository implements AuthDao {
         this.config = config;
     }
 
-    
+
     @Override
     public boolean authenticate(String userName, String password) {
         logger.debug("Authenticating racker {}", userName);
@@ -40,11 +40,11 @@ public class LdapAuthRepository implements AuthDao {
             if (ResultCode.INVALID_CREDENTIALS.equals(e.getResultCode())) {
                 logger.info("Invalid login attempt by racker {}", userName);
                 audit.fail("Incorrect Credentials");
-                return false;
+            } else {
+                logger.error("Bind operation on username " + userName + " failed.", e);
+                logger.error(e.getMessage());
             }
-            logger.error("Bind operation on username " + userName + " failed.",
-                e);
-            throw new IllegalStateException(e);
+            return false;
         }
         if (result == null) {
             audit.fail();
@@ -55,22 +55,20 @@ public class LdapAuthRepository implements AuthDao {
         audit.succeed();
         return ResultCode.SUCCESS.equals(result.getResultCode());
     }
-    
+
     @Override
     public List<String> getRackerRoles(String username) {
         List<String> roles = new ArrayList<String>();
-        
-        Filter searchFilter = new LdapSearchBuilder()
-        .addEqualAttribute(LdapRepository.ATTR_UID, username).build();
+
+        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(LdapRepository.ATTR_UID, username).build();
 
         SearchResultEntry entry = null;
         try {
-            entry = connPool.searchForEntry(BASE_DN, SearchScope.ONE,
-                searchFilter);
+            entry = getLdapInterface().searchForEntry(BASE_DN, SearchScope.ONE, searchFilter);
         } catch (LDAPSearchException ldapEx) {
             throw new IllegalStateException(ldapEx);
         }
-        
+
         if (entry == null) {
             String errMsg = String.format("Racker %s not found", username);
             logger.warn(errMsg);
@@ -78,16 +76,20 @@ public class LdapAuthRepository implements AuthDao {
         }
 
         String[] groups = entry.getAttributeValues("groupMembership");
-        
+
         for (String group : groups) {
             String[] split1 = group.split(",");
             roles.add(split1[0].split("=")[1]);
         }
-        
+
         return roles;
     }
 
     private String getBaseDn() {
         return config.getString("auth.ldap.base.dn", BASE_DN);
+    }
+
+    protected LDAPInterface getLdapInterface() {
+        return connPool;
     }
 }

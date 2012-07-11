@@ -9,7 +9,7 @@
         <collectionProp name="Arguments.arguments">
           <elementProp name="env" elementType="Argument">
             <stringProp name="Argument.name">env</stringProp>
-            <stringProp name="Argument.value">${__P(Env,UK-STG-EXTERNAL)}</stringProp>
+            <stringProp name="Argument.value">${__P(Env,UK-STG-INTERNAL)}</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
           <elementProp name="format" elementType="Argument">
@@ -1205,14 +1205,14 @@
                 </hashTree>
               </hashTree>
             </hashTree>
-            <GenericController guiclass="LogicControllerGui" testclass="GenericController" testname="Authenticate As Application - Non Admin Token - XML" enabled="false"/>
+            <GenericController guiclass="LogicControllerGui" testclass="GenericController" testname="Authenticate As Application - Non Admin Token - XML" enabled="true"/>
             <hashTree>
               <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="${__machineName()} - Foundation API - Authenticate As Application with non admin client id" enabled="true">
                 <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
                   <collectionProp name="Arguments.arguments">
                     <elementProp name="" elementType="HTTPArgument">
                       <boolProp name="HTTPArgument.always_encode">false</boolProp>
-                      <stringProp name="Argument.value">&lt;authCredentials xmlns=&quot;http://idm.api.rackspace.com/v1.0&quot; client_secret=&quot;${foundationApi_clientSecretCustomer}&quot; client_id=&quot;${foundationApi_nonAdminClientId}&quot; grant_type=&quot;CLIENT_CREDENTIALS&quot; /&gt; </stringProp>
+                      <stringProp name="Argument.value">&lt;authCredentials xmlns=&quot;http://idm.api.rackspace.com/v1.0&quot; client_secret=&quot;${foundationApi_nonAdminClientSecret}&quot; client_id=&quot;${foundationApi_nonAdminClientId}&quot; grant_type=&quot;CLIENT_CREDENTIALS&quot; /&gt; </stringProp>
                       <stringProp name="Argument.metadata">=</stringProp>
                       <boolProp name="HTTPArgument.use_equals">true</boolProp>
                     </elementProp>
@@ -1254,7 +1254,7 @@
                 <hashTree/>
               </hashTree>
             </hashTree>
-            <LoopController guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller - Validate Non Admin Token - XML" enabled="false">
+            <LoopController guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller - Validate Non Admin Token - XML" enabled="true">
               <boolProp name="LoopController.continue_forever">true</boolProp>
               <stringProp name="LoopController.loops">5</stringProp>
             </LoopController>
@@ -1680,14 +1680,14 @@
                 </hashTree>
               </hashTree>
             </hashTree>
-            <GenericController guiclass="LogicControllerGui" testclass="GenericController" testname="Authenticate As Application - Non Admin Token - JSON" enabled="false"/>
+            <GenericController guiclass="LogicControllerGui" testclass="GenericController" testname="Authenticate As Application - Non Admin Token - JSON" enabled="true"/>
             <hashTree>
               <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="${__machineName()} - Foundation API - Authenticate As Application" enabled="true">
                 <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
                   <collectionProp name="Arguments.arguments">
                     <elementProp name="" elementType="HTTPArgument">
                       <boolProp name="HTTPArgument.always_encode">false</boolProp>
-                      <stringProp name="Argument.value">{&quot;authCredentials&quot;:{ &quot;grant_type&quot;: &quot;CLIENT_CREDENTIALS&quot;, &quot;client_id&quot;: &quot;${foundationApi_nonAdminClientId}&quot;, &quot;client_secret&quot;: &quot;${foundationApi_clientSecretCustomer}&quot; }  }</stringProp>
+                      <stringProp name="Argument.value">{&quot;authCredentials&quot;:{ &quot;grant_type&quot;: &quot;CLIENT_CREDENTIALS&quot;, &quot;client_id&quot;: &quot;${foundationApi_nonAdminClientId}&quot;, &quot;client_secret&quot;: &quot;${foundationApi_nonAdminClientSecret}&quot; }  }</stringProp>
                       <stringProp name="Argument.metadata">=</stringProp>
                       <boolProp name="HTTPArgument.use_equals">true</boolProp>
                     </elementProp>
@@ -1729,7 +1729,7 @@
                 <hashTree/>
               </hashTree>
             </hashTree>
-            <LoopController guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller - Validate Non Admin Token - JSON" enabled="false">
+            <LoopController guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller - Validate Non Admin Token - JSON" enabled="true">
               <boolProp name="LoopController.continue_forever">true</boolProp>
               <stringProp name="LoopController.loops">10</stringProp>
             </LoopController>
@@ -2069,7 +2069,7 @@
         <longProp name="ThreadGroup.start_time">1327375014000</longProp>
         <longProp name="ThreadGroup.end_time">1327375014000</longProp>
         <boolProp name="ThreadGroup.scheduler">false</boolProp>
-        <stringProp name="ThreadGroup.duration">${Duration}</stringProp>
+        <stringProp name="ThreadGroup.duration">7200</stringProp>
         <stringProp name="ThreadGroup.delay"></stringProp>
       </ThreadGroup>
       <hashTree>
@@ -2167,7 +2167,7 @@
               <stringProp name="-607686825">foundationApi_rackerPassword</stringProp>
               <stringProp name="1496193073">foundationApi_clientSecretCustomer</stringProp>
               <stringProp name="1673612509">foundationApi_adminClientId</stringProp>
-              <stringProp name="0"></stringProp>
+              <stringProp name="1880785109">foundationApi_nonAdminClientSecret</stringProp>
               <stringProp name="0"></stringProp>
               <stringProp name="0"></stringProp>
               <stringProp name="1773394275">GA_10_host</stringProp>
@@ -2222,7 +2222,7 @@
               <stringProp name="0"></stringProp>
             </collectionProp>
             <collectionProp name="UserParameters.thread_values">
-              <collectionProp name="121020881">
+              <collectionProp name="-1128779532">
                 <stringProp name="0"></stringProp>
                 <stringProp name="0"></stringProp>
                 <stringProp name="0"></stringProp>
@@ -2261,18 +2261,18 @@
                 <stringProp name="0"></stringProp>
                 <stringProp name="898363973">lon.staging.rackidm.api.rackspace.com</stringProp>
                 <stringProp name="-893241125">bde1268ebabeeabb70a0e702a4626977c331d5c4</stringProp>
-                <stringProp name="658008291">s-int-api2.cidm.lon3.corp.rackspace.com</stringProp>
+                <stringProp name="1405215248">lon.staging.rackidentity.api.rackspacecloud.com</stringProp>
                 <stringProp name="51635">443</stringProp>
                 <stringProp name="99617003">https</stringProp>
                 <stringProp name="1847601885">/v1.0/tokens</stringProp>
                 <stringProp name="-928147210">password1</stringProp>
                 <stringProp name="1420374010">GA_IMP_1000001</stringProp>
                 <stringProp name="1075820758">Password1</stringProp>
-                <stringProp name="-749075546">shan0433</stringProp>
-                <stringProp name="-384640052">Water1098!</stringProp>
+                <stringProp name="139127841">mant0623</stringProp>
+                <stringProp name="6293322">Racker39</stringProp>
                 <stringProp name="-928147210">password1</stringProp>
                 <stringProp name="-1657423355">18e7a7032733486cd32f472d7bd58f709ac0d221</stringProp>
-                <stringProp name="1420374010">GA_IMP_1000001</stringProp>
+                <stringProp name="-1729570826">7z8IyHqwSjg2A</stringProp>
                 <stringProp name="1075820758">Password1</stringProp>
                 <stringProp name="-1172414052">routing-internal url no implementation in staging</stringProp>
                 <stringProp name="658008291">s-int-api2.cidm.lon3.corp.rackspace.com</stringProp>
@@ -2316,11 +2316,11 @@
                 <stringProp name="0"></stringProp>
                 <stringProp name="0"></stringProp>
                 <stringProp name="0"></stringProp>
-                <stringProp name="1405215248">lon.staging.rackidentity.api.rackspacecloud.com</stringProp>
+                <stringProp name="658008291">s-int-api2.cidm.lon3.corp.rackspace.com</stringProp>
                 <stringProp name="51635">443</stringProp>
                 <stringProp name="99617003">https</stringProp>
                 <stringProp name="0"></stringProp>
-                <stringProp name="0"></stringProp>
+                <stringProp name="1405215248">lon.staging.rackidentity.api.rackspacecloud.com</stringProp>
                 <stringProp name="0"></stringProp>
                 <stringProp name="0"></stringProp>
                 <stringProp name="0"></stringProp>
@@ -2451,7 +2451,7 @@
               <stringProp name="0"></stringProp>
             </collectionProp>
             <collectionProp name="UserParameters.thread_values">
-              <collectionProp name="1819943936">
+              <collectionProp name="-1759947090">
                 <stringProp name="1073177961">auth.staging.us.ccp.rackspace.net</stringProp>
                 <stringProp name="51635">443</stringProp>
                 <stringProp name="99617003">https</stringProp>
@@ -2551,7 +2551,7 @@
                 <stringProp name="0"></stringProp>
                 <stringProp name="0"></stringProp>
                 <stringProp name="0"></stringProp>
-                <stringProp name="-981193529">lon.staging.identity.api.rackspacecloud.com</stringProp>
+                <stringProp name="1684710867">s-ext-api4.cidm.lon3.corp.rackspace.com</stringProp>
                 <stringProp name="51635">443</stringProp>
                 <stringProp name="99617003">https</stringProp>
                 <stringProp name="0"></stringProp>
@@ -2602,6 +2602,18 @@
             <boolProp name="displayJMeterVariables">true</boolProp>
             <boolProp name="displaySystemProperties">true</boolProp>
           </DebugSampler>
+          <hashTree/>
+          <AuthManager guiclass="AuthPanel" testclass="AuthManager" testname="HTTP Authorization Manager" enabled="true">
+            <collectionProp name="AuthManager.auth_list">
+              <elementProp name="" elementType="Authorization">
+                <stringProp name="Authorization.url"></stringProp>
+                <stringProp name="Authorization.username">auth</stringProp>
+                <stringProp name="Authorization.password">auth123</stringProp>
+                <stringProp name="Authorization.domain"></stringProp>
+                <stringProp name="Authorization.realm"></stringProp>
+              </elementProp>
+            </collectionProp>
+          </AuthManager>
           <hashTree/>
           <ModuleController guiclass="ModuleControllerGui" testclass="ModuleController" testname="Module Controller - Auth1.1-GA-Authenticate - apiKey Credentials - XML" enabled="true">
             <collectionProp name="ModuleController.node_path">

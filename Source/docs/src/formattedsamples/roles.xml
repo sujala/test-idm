@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
-<roles xmlns="http://idm.api.rackspace.com/v1.0">
-    <role id="23" name="network_admin" applicationId="compute"/>
-    <role id="24" name="technical_reviewer" applicationId="swift"/>
-    <role id="56" name="admin" />     
-</roles>
-

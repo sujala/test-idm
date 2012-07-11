@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.entity;
 import org.junit.Test;
 
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasItemInArray;
 import static org.junit.Assert.assertThat;
 
 /**
@@ -24,4 +25,20 @@ public class TenantRoleTest {
         assertThat("[0]", tenantRole.getTenantIds()[3],equalTo("4"));
         assertThat("[0]", tenantRole.getTenantIds()[4],equalTo("5"));
     }
+
+    @Test
+    public void addTenantId_tenantIdsIsNull_addsId() throws Exception {
+        tenantRole.setTenantIds(null);
+        tenantRole.addTenantId("id");
+        String[] tenantIds = tenantRole.getTenantIds();
+        assertThat("tenantIds", tenantIds, hasItemInArray("id"));
+    }
+
+    @Test
+        public void addTenantId_tenantIdsIsEmpty_addsId() throws Exception {
+            tenantRole.setTenantIds(new String[]{});
+            tenantRole.addTenantId("id");
+            String[] tenantIds = tenantRole.getTenantIds();
+            assertThat("tenantIds", tenantIds, hasItemInArray("id"));
+        }
 }

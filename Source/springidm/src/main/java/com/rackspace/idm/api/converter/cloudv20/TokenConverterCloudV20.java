@@ -18,7 +18,7 @@ import java.util.List;
 
 @Component
 public class TokenConverterCloudV20 {
-    
+
     @Autowired
     private JAXBObjectFactories OBJ_FACTORIES;
 
@@ -28,37 +28,35 @@ public class TokenConverterCloudV20 {
 
     public Token toToken(ScopeAccess scopeAccess, List<TenantRole> roles) {
         Token token = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createToken();
-        
+
         if (scopeAccess instanceof HasAccessToken) {
-            
-            token.setId(((HasAccessToken)scopeAccess).getAccessTokenString());
 
-            if(roles != null)
+            token.setId(((HasAccessToken) scopeAccess).getAccessTokenString());
+
+            if (roles != null) {
                 token.setTenant(toTenantForAuthenticateResponse(roles));
-                //token.getTenant().addAll(toTenantsForAuthenticateResponse(roles));
-
-            Date expires = ((HasAccessToken)scopeAccess).getAccessTokenExp();
+            }
+            Date expires = ((HasAccessToken) scopeAccess).getAccessTokenExp();
             GregorianCalendar gc = new GregorianCalendar();
             gc.setTime(expires);
-            
+
             XMLGregorianCalendar expiresDate = null;
             try {
                 expiresDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(gc);
             } catch (DatatypeConfigurationException e) {
-                
                 e.printStackTrace();
             }
             token.setExpires(expiresDate);
         }
-        
+
         return token;
     }
 
     // TODO: Used for single tenant (mosso) in the response, future may be a list -- see below
-    private TenantForAuthenticateResponse toTenantForAuthenticateResponse(List<TenantRole> tenantRoleList) {
-        for(TenantRole tenant : tenantRoleList) {
+    TenantForAuthenticateResponse toTenantForAuthenticateResponse(List<TenantRole> tenantRoleList) {
+        for (TenantRole tenant : tenantRoleList) {
             // TODO: Check for other names? This is to match the Mosso Type
-            if(tenant.getName().equals("compute:default")) {
+            if (tenant.getName().equals("compute:default")) {
                 TenantForAuthenticateResponse tenantForAuthenticateResponse = new TenantForAuthenticateResponse();
                 tenantForAuthenticateResponse.setId(tenant.getTenantIds()[0]);
                 tenantForAuthenticateResponse.setName(tenant.getTenantIds()[0]);
@@ -87,4 +85,8 @@ public class TokenConverterCloudV20 {
         return tenantForAuthenticateResponseList;
     }
     */
+
+    public void setOBJ_FACTORIES(JAXBObjectFactories OBJ_FACTORIES) {
+        this.OBJ_FACTORIES = OBJ_FACTORIES;
+    }
 }

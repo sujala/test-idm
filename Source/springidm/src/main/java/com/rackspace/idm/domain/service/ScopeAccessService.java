@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
 import com.rackspace.idm.domain.entity.*;
 
 import java.util.Date;
@@ -16,7 +17,7 @@ public interface ScopeAccessService {
     
     ScopeAccess addDelegateScopeAccess(String parentUniqueId, ScopeAccess scopeAccess);
 
-    ScopeAccess addImpersonatedScopeAccess(User user, String clientId, String impersonatingUsername, String impersonatingToken);
+    ScopeAccess addImpersonatedScopeAccess(User user, String clientId, String impersonatingToken, ImpersonationRequest impersonationRequest);
     
     ScopeAccess addScopeAccess(String parentUniqueId, ScopeAccess scopeAccess);
 
@@ -51,6 +52,10 @@ public interface ScopeAccessService {
     RackerScopeAccess getRackerScopeAccessForClientId(String rackerUniqueId, String clientId);
 
     ScopeAccess getScopeAccessByAccessToken(String accessToken);
+
+    ScopeAccess getScopeAccessByUserId(String userId);
+
+    List<ScopeAccess> getScopeAccessListByUserId(String userId);
     
     ScopeAccess loadScopeAccessByAccessToken(String accessToken);
 
@@ -61,14 +66,12 @@ public interface ScopeAccessService {
     void updateUserScopeAccessTokenForClientIdByUser(User user, String clientId, String token, Date expires);
 
     UserScopeAccess getUserScopeAccessForClientId(String userUniqueId, String clientId);
+
+    UserScopeAccess getValidUserScopeAccessForClientId(String userUniqueId, String clientId);
     
     DelegatedClientScopeAccess getDelegatedScopeAccessByRefreshToken(User user, String accessToken);
     
     List<DelegatedClientScopeAccess> getDelegatedUserScopeAccessForUsername(String userUniqueId);
-
-    UserScopeAccess getUserScopeAccessForClientIdByMossoIdAndApiCredentials(int mossoId, String apiKey, String clientId);
-
-    UserScopeAccess getUserScopeAccessForClientIdByNastIdAndApiCredentials(String nastId, String apiKey, String clientId);
 
     UserScopeAccess getUserScopeAccessForClientIdByUsernameAndApiCredentials(String username, String apiKey, String clientId);
 

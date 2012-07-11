@@ -75,7 +75,7 @@ public class ApplicationConverter {
      * should be retrieved directly from teh resource
      */
     public JAXBElement<com.rackspace.api.idm.v1.ApplicationList> toApplicationJaxbMin(com.rackspace.idm.domain.entity.Applications applications) {
-        if (applications == null) {
+        if (applications == null || applications.getClients() == null) {
             return null;
         }
 
@@ -91,7 +91,7 @@ public class ApplicationConverter {
         return objectFactory.createApplications(returnedClients);
     }
 
-    private JAXBElement<com.rackspace.api.idm.v1.Application> toClientJaxbMin(Application application) {
+    JAXBElement<com.rackspace.api.idm.v1.Application> toClientJaxbMin(Application application) {
         
     	com.rackspace.api.idm.v1.Application returnedApplication = objectFactory.createApplication();
 
@@ -102,7 +102,7 @@ public class ApplicationConverter {
 
         return objectFactory.createApplication(returnedApplication);
     }
-    private JAXBElement<com.rackspace.api.idm.v1.Application> toClientJaxb(Application client, boolean includeCredentials) {
+    JAXBElement<com.rackspace.api.idm.v1.Application> toClientJaxb(Application client, boolean includeCredentials) {
        
     	com.rackspace.api.idm.v1.Application returnedApplication = objectFactory.createApplication();
 
@@ -128,16 +128,6 @@ public class ApplicationConverter {
         return objectFactory.createApplication(returnedApplication);
     }
 
-    public JAXBElement<com.rackspace.api.idm.v1.Application> toClientJaxbFromClient(
-        String clientId, String customerId) {
-        com.rackspace.api.idm.v1.Application returnedClient = objectFactory.createApplication();
-
-        returnedClient.setClientId(clientId);
-        returnedClient.setCustomerId(customerId);
-
-        return objectFactory.createApplication(returnedClient);
-    }
-    
     public JAXBElement<com.rackspace.api.idm.v1.Application> toApplicationJaxbFromApplication(Application client) {
     	if (client == null) {
     		return null;

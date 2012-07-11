@@ -1,6 +1,5 @@
 package com.rackspace.idm.domain.service.impl;
 
-import com.rackspace.idm.api.converter.TenantRoleConverter;
 import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.AuthDao;
@@ -40,7 +39,6 @@ public class DefaultAuthenticationService implements AuthenticationService {
     private final UserDao userDao;
     private final CustomerDao customerDao;
     private final InputValidator inputValidator;
-    private final TenantRoleConverter tenantRoleConverter;
 
     @Autowired
     private RSAClient rsaClient;
@@ -52,8 +50,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
                                         ScopeAccessService scopeAccessService,
                                         ApplicationDao clientDao,
                                         Configuration config, UserDao userDao,
-                                        CustomerDao customerDao, InputValidator inputValidator,
-                                        TenantRoleConverter tenantRoleConverter) {
+                                        CustomerDao customerDao, InputValidator inputValidator) {
         this.authDao = authDao;
         this.tenantService = tenantService;
         this.scopeAccessService = scopeAccessService;
@@ -62,7 +59,6 @@ public class DefaultAuthenticationService implements AuthenticationService {
         this.userDao = userDao;
         this.customerDao = customerDao;
         this.inputValidator = inputValidator;
-        this.tenantRoleConverter = tenantRoleConverter;
     }
 
     @Override
@@ -90,7 +86,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
      * @param scopeAccess
      * @return AuthData with roles
      */
-    private AuthData getAuthDataWithClientRoles(ScopeAccess scopeAccess) {
+    AuthData getAuthDataWithClientRoles(ScopeAccess scopeAccess) {
         AuthData authData = getAuthData(scopeAccess);
 
         if (authData.getUser() != null) {
@@ -117,7 +113,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
      * @param scopeAccess
      * @return AuthData
      */
-    private AuthData getAuthData(ScopeAccess scopeAccess) {
+    AuthData getAuthData(ScopeAccess scopeAccess) {
         AuthData authData = new AuthData();
 
         if (scopeAccess instanceof HasAccessToken) {
@@ -156,7 +152,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
      * @param scopeAccess
      * @param authData
      */
-    private void setClient(ScopeAccess scopeAccess, AuthData authData) {
+    void setClient(ScopeAccess scopeAccess, AuthData authData) {
         if (scopeAccess instanceof ClientScopeAccess) {
             // TODO: consider getting from client dao, so can retrieve more info
             // about client
@@ -199,9 +195,14 @@ public class DefaultAuthenticationService implements AuthenticationService {
         }
     }
 
-    private ScopeAccess getTokens(final Credentials trParam, final DateTime currentTime) throws NotAuthenticatedException {
+    ScopeAccess getTokens(final Credentials trParam, final DateTime currentTime) throws NotAuthenticatedException {
+
+        if(trParam.getGrantType() == null){
+            throw new BadRequestException("grant_type cannot be null");
+        }
 
         OAuthGrantType grantType = trParam.getOAuthGrantType();
+
         if (StringUtils.isBlank(trParam.getClientId())) {
             String msg = "client_id cannot be blank";
             logger.warn(msg);
@@ -333,13 +334,17 @@ public class DefaultAuthenticationService implements AuthenticationService {
         throw new NotAuthenticatedException(message);
     }
 
-    private UserScopeAccess getAndUpdateUserScopeAccessForClientId(User user, Application client) {
+    UserScopeAccess getAndUpdateUserScopeAccessForClientId(User user, Application client) {
+
+        if(user == null || client == null){
+            throw new IllegalArgumentException("Argument(s) cannot be null.");
+        }
 
         logger.debug("Get and Update ScopeAccess for User: {} and ClientId: {}", user.getUsername(), client.getClientId());
-
-        UserScopeAccess scopeAccess = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), client.getClientId());
-
-        if (scopeAccess == null) {
+        UserScopeAccess scopeAccess = null;
+        try{
+            scopeAccess = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), client.getClientId());
+        }catch(NotFoundException ex){
             // Auto-Provision Scope Access Objects for Users
             scopeAccess = new UserScopeAccess();
             scopeAccess.setUsername(user.getUsername());
@@ -360,8 +365,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
             scopeAccess.setAccessTokenExp(current.plusSeconds(this.getDefaultTokenExpirationSeconds()).toDate());
         }
 
-        DateTime refreshExpiration = scopeAccess.getRefreshTokenExp() == null ? new DateTime()
-                .minusDays(1)
+        DateTime refreshExpiration = scopeAccess.getRefreshTokenExp() == null ? new DateTime().minusDays(1)
                 : new DateTime(scopeAccess.getRefreshTokenExp());
 
         if (refreshExpiration.isBefore(current)) {
@@ -376,8 +380,12 @@ public class DefaultAuthenticationService implements AuthenticationService {
         return scopeAccess;
     }
 
-    private ClientScopeAccess getAndUpdateClientScopeAccessForClientId(
+    ClientScopeAccess getAndUpdateClientScopeAccessForClientId(
             Application client) {
+
+        if(client == null){
+            throw new IllegalArgumentException("Argument cannot be null.");
+        }
 
         logger.debug("Get and Update Client ScopeAccess for ClientId: {}",
                 client.getClientId());
@@ -420,6 +428,10 @@ public class DefaultAuthenticationService implements AuthenticationService {
 
     RackerScopeAccess getAndUpdateRackerScopeAccessForClientId(Racker racker, Application client) {
 
+        if(racker == null || client == null){
+            throw new IllegalArgumentException("Argument(s) cannot be null.");
+        }
+
         logger.debug("Get and Update ScopeAccess for Racker: {} and ClientId: {}", racker.getRackerId(), client.getClientId());
 
         RackerScopeAccess scopeAccess = scopeAccessService.getRackerScopeAccessForClientId(racker.getUniqueId(), client.getClientId());
@@ -461,7 +473,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
         return scopeAccess;
     }
 
-    private void validateRackerHasRackerRole(Racker racker, RackerScopeAccess scopeAccess, Application client) {
+    void validateRackerHasRackerRole(Racker racker, RackerScopeAccess scopeAccess, Application client) {
         List<TenantRole> tenantRolesForScopeAccess = tenantService.getTenantRolesForScopeAccess(scopeAccess);
         boolean hasRackerRole = false;
         for (TenantRole tenantRole : tenantRolesForScopeAccess) {
@@ -517,7 +529,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
         return new UserAuthenticationResult(racker, authenticated);
     }
 
-    private DateTime getUserPasswordExpirationDate(String userName) {
+    DateTime getUserPasswordExpirationDate(String userName) {
         User user = this.userDao.getUserByUsername(userName);
         if (user == null) {
             logger.debug("No user found, returning null.");
@@ -543,7 +555,8 @@ public class DefaultAuthenticationService implements AuthenticationService {
 
     void validateCredentials(final Credentials trParam) {
         ApiError error = null;
-        if (trParam.getGrantType() == null) {
+
+        if (trParam == null || trParam.getGrantType() == null) {
             throw new BadRequestException("Invalid request: Missing or malformed parameter(s).");
         }
 
@@ -571,11 +584,11 @@ public class DefaultAuthenticationService implements AuthenticationService {
         }
     }
 
-    private String generateToken() {
+    String generateToken() {
         return UUID.randomUUID().toString().replace("-", "");
     }
 
-    private int getDefaultTokenExpirationSeconds() {
+    int getDefaultTokenExpirationSeconds() {
         return config.getInt("token.expirationSeconds");
     }
 
@@ -586,6 +599,8 @@ public class DefaultAuthenticationService implements AuthenticationService {
     protected DateTime getCurrentTime() {
         return new DateTime();
     }
+
+
 
     public void setRsaClient(RSAClient rsaClient) {
         this.rsaClient = rsaClient;

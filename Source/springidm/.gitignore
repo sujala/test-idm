@@ -9,3 +9,4 @@ target/*
 *.iws
 tags
 .project
+.idea/*

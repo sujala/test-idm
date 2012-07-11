@@ -42,7 +42,6 @@ public class LdapConfiguration {
      * Use for unit testing.
      * 
      * @param config
-     * @param logger
      */
     public LdapConfiguration(Configuration config) {
         this.config = config;
@@ -53,7 +52,7 @@ public class LdapConfiguration {
      * 
      * @return
      */
-    private LDAPConnectionPool connection() {
+    LDAPConnectionPool connection() {
         String[] serverList = config.getStringArray("ldap.serverList");
         String[] hosts = new String[0];
         int[] ports = new int[0];
@@ -74,17 +73,12 @@ public class LdapConfiguration {
                 ports = ArrayUtils.add(ports, port);
             }
         }
-        int initPoolSize = config.getInt("ldap.server.pool.size.init",
-            SERVER_POOL_SIZE_INIT);
-        int maxPoolSize = config.getInt("ldap.server.pool.size.max",
-            SERVER_POOL_SIZE_MAX);
+        int initPoolSize = config.getInt("ldap.server.pool.size.init", SERVER_POOL_SIZE_INIT);
+        int maxPoolSize = config.getInt("ldap.server.pool.size.max", SERVER_POOL_SIZE_MAX);
         String bindDn = config.getString("ldap.bind.dn");
         String password = config.getString("ldap.bind.password");
         Object[] params = {hosts, ports, initPoolSize, maxPoolSize};
-        logger
-            .debug(
-                "LDAP Config [address={}, port={}, connection_pool_init={}, connection_pool_max={}",
-                params);
+        logger.debug("LDAP Config [address={}, port={}, connection_pool_init={}, connection_pool_max={}", params);
 
         LDAPConnectionPool connPool = null;
         try {
