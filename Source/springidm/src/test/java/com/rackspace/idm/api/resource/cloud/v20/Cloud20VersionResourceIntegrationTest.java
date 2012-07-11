@@ -118,7 +118,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     }
 
     @Test
-    public void authenticate_invalidUsername_returns404(){
+    public void authenticate_invalidUsername_returns401(){
          WebResource resource = resource().path("cloud/v2.0/tokens");
 
         ClientResponse clientResponse = resource
@@ -132,7 +132,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
                                 "        }\n" +
                                 "    }\n" +
                                 "}");
-        assertThat("response code", clientResponse.getStatus(), equalTo(404));
+        assertThat("response code", clientResponse.getStatus(), equalTo(401));
     }
 
     @Test

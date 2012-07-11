@@ -135,4 +135,10 @@ public class UsersResourceTest {
         UserResource resource = usersResource.getUserResource();
         assertThat("users resource", resource, equalTo(singleUserResource));
     }
+
+    @Test
+    public void getConfig_returnsConfig() throws Exception {
+        Configuration result = usersResource.getConfig();
+        assertThat("config", result, equalTo(config));
+    }
 }
