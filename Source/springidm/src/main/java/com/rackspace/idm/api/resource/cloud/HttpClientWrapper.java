@@ -154,6 +154,7 @@ public class HttpClientWrapper {
 
     public HttpClientWrapper url(String url)
     {
+        this.headers = new HashMap<String, String>();
         this.url = url;
         return this;
     }
