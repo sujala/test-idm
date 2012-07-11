@@ -644,7 +644,9 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
                 usa = (UserScopeAccess) sa;
                 scopeAccessService.updateExpiredUserScopeAccess(usa);
-                user = this.checkAndGetUser(usa.getUserRsId());
+
+                user = getUserByIdForAuthentication(usa.getUserRsId());
+
                 if (!StringUtils.isBlank(authenticationRequest.getTenantName()) && !tenantService.hasTenantAccess(usa, authenticationRequest.getTenantName())) {
                     String errMsg = "Token doesn't belong to Tenant with Id/Name: '" + authenticationRequest.getTenantName() + "'";
                     logger.warn(errMsg);
@@ -661,7 +663,10 @@ public class DefaultCloud20Service implements Cloud20Service {
                 validatePasswordCredentials(creds);
                 String username = creds.getUsername();
                 String password = creds.getPassword();
-                user = checkAndGetUserByName(username);
+
+                user = getUserByUsernameForAuthentication(username);
+
+
                 usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(username, password, getCloudAuthClientId());
 
             } else if (authenticationRequest.getCredential().getDeclaredType().isAssignableFrom(ApiKeyCredentials.class)) {
@@ -669,7 +674,10 @@ public class DefaultCloud20Service implements Cloud20Service {
                 validateApiKeyCredentials(creds);
                 String username = creds.getUsername();
                 String key = creds.getApiKey();
-                user = checkAndGetUserByName(username);
+
+                user = getUserByUsernameForAuthentication(username);
+
+
                 usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(username, key, getCloudAuthClientId());
                 //Check if authentication is within 12hrs of experation if so create a new one
             }
@@ -727,6 +735,31 @@ public class DefaultCloud20Service implements Cloud20Service {
             return exceptionResponse(ex);
         }
     }
+
+	private User getUserByUsernameForAuthentication(String username) {
+		User user = null;
+		try {
+		    user = checkAndGetUserByName(username);
+		} catch (NotFoundException e) {
+			String errorMessage = String.format("Unable to authenticate user with credentials provided.");
+			logger.warn(errorMessage);
+			throw new NotAuthenticatedException(errorMessage);
+		}
+		return user;
+	}
+
+	private User getUserByIdForAuthentication(String id) {		
+		User user = null;
+		
+		try {
+			user = this.checkAndGetUser(id);
+		} catch (NotFoundException e) {
+			String errorMessage = String.format("Unable to authenticate user with credentials provided.");
+			logger.warn(errorMessage);
+			throw new NotAuthenticatedException(errorMessage);
+		}
+		return user;
+	}
 
     @Override
     public ResponseBuilder checkToken(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo) throws IOException {
