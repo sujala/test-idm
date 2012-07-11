@@ -781,6 +781,7 @@ public class DefaultCloud20ServiceTest {
         scopeAccess.setAccessTokenString("foo");
         when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
         doReturn(new User()).when(spy).checkAndGetUser(anyString());
+        when(tokenConverterCloudV20.toToken(any(ScopeAccess.class))).thenReturn(token);
         when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(tenantService.hasTenantAccess(any(ScopeAccess.class), eq("tenantId"))).thenReturn(true);
         when(authConverterCloudV20.toAuthenticationResponse(any(User.class), any(ScopeAccess.class), any(List.class), any(List.class))).thenReturn(authenticateResponse);
@@ -791,6 +792,8 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void authenticate_withTenantId_returnsOnlyTenantEndpoints() throws Exception {
+        Token token = new Token();
+        token.setId("token");
         AuthenticationRequest authenticationRequest = new AuthenticationRequest();
         AuthenticateResponse authenticateResponse = new AuthenticateResponse();
         UserForAuthenticateResponse userForAuthenticateResponse = new UserForAuthenticateResponse();
@@ -804,6 +807,7 @@ public class DefaultCloud20ServiceTest {
         UserScopeAccess scopeAccess = new UserScopeAccess();
         scopeAccess.setAccessTokenExp(new Date(5000, 1, 1));
         scopeAccess.setAccessTokenString("foo");
+        when(tokenConverterCloudV20.toToken(any(ScopeAccess.class))).thenReturn(token);
         when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
         doReturn(new User()).when(spy).checkAndGetUser(anyString());
         when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
@@ -4150,5 +4154,15 @@ public class DefaultCloud20ServiceTest {
         when(objectFactory.createBadRequestFault()).thenReturn(badRequestFault);
         defaultCloud20Service.badRequestExceptionResponse("message");
         verify(badRequestFault, never()).setDetails(anyString());
+    }
+
+    @Test
+    public void convertTenantEntityToApi_returnsTenantForAuthenticateResponse(){
+        Tenant test = new Tenant();
+        test.setName("test");
+        test.setTenantId("test");
+        TenantForAuthenticateResponse testTenant = defaultCloud20Service.convertTenantEntityToApi(test);
+        assertThat("Verify Tenant",testTenant.getId(),equalTo(test.getTenantId()));
+        assertThat("Verify Tenant",testTenant.getName(),equalTo(test.getName()));
     }
 }

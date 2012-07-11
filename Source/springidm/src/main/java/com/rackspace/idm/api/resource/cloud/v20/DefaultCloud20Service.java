@@ -701,11 +701,13 @@ public class DefaultCloud20Service implements Cloud20Service {
             String tenantName = authenticationRequest.getTenantName();
             List<TenantRole> roles = tenantService.getTenantRolesForScopeAccess(usa);
             AuthenticateResponse auth;
+            org.openstack.docs.identity.api.v2.Token convertedToken = tokenConverterCloudV20.toToken(usa);
 
             //tenant was specified
             if (!StringUtils.isBlank(tenantId) || !StringUtils.isBlank(tenantName)) {
                 List<OpenstackEndpoint> tenantEndpoints = new ArrayList<OpenstackEndpoint>();
                 if (!StringUtils.isBlank(tenantId)) {
+                    convertedToken.setTenant(convertTenantEntityToApi(tenantService.getTenant(tenantId)));
                     for (OpenstackEndpoint endpoint : endpoints) {
                         if (tenantId.equals(endpoint.getTenantId())) {
                             tenantEndpoints.add(endpoint);
@@ -713,14 +715,15 @@ public class DefaultCloud20Service implements Cloud20Service {
                     }
                 }
                 if (!StringUtils.isBlank(tenantName)) {
+                    convertedToken.setTenant(convertTenantEntityToApi(tenantService.getTenantByName(tenantName)));
                     for (OpenstackEndpoint endpoint : endpoints) {
                         if (tenantName.equals(endpoint.getTenantName())) {
                             tenantEndpoints.add(endpoint);
                         }
                     }
                 }
-
                 auth = authConverterCloudV20.toAuthenticationResponse(user, usa, roles, tenantEndpoints);
+                auth.setToken(convertedToken);
             } else {
                 auth = authConverterCloudV20.toAuthenticationResponse(user, usa, roles, endpoints);
             }
@@ -736,30 +739,30 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
-	private User getUserByUsernameForAuthentication(String username) {
-		User user = null;
-		try {
-		    user = checkAndGetUserByName(username);
-		} catch (NotFoundException e) {
-			String errorMessage = String.format("Unable to authenticate user with credentials provided.");
-			logger.warn(errorMessage);
-			throw new NotAuthenticatedException(errorMessage);
-		}
-		return user;
-	}
+    private User getUserByUsernameForAuthentication(String username) {
+        User user = null;
+        try {
+            user = checkAndGetUserByName(username);
+        } catch (NotFoundException e) {
+            String errorMessage = String.format("Unable to authenticate user with credentials provided.");
+            logger.warn(errorMessage);
+            throw new NotAuthenticatedException(errorMessage);
+        }
+        return user;
+    }
 
-	private User getUserByIdForAuthentication(String id) {		
-		User user = null;
-		
-		try {
-			user = this.checkAndGetUser(id);
-		} catch (NotFoundException e) {
-			String errorMessage = String.format("Unable to authenticate user with credentials provided.");
-			logger.warn(errorMessage);
-			throw new NotAuthenticatedException(errorMessage);
-		}
-		return user;
-	}
+    private User getUserByIdForAuthentication(String id) {
+        User user = null;
+
+        try {
+            user = this.checkAndGetUser(id);
+        } catch (NotFoundException e) {
+            String errorMessage = String.format("Unable to authenticate user with credentials provided.");
+            logger.warn(errorMessage);
+            throw new NotAuthenticatedException(errorMessage);
+        }
+        return user;
+    }
 
     @Override
     public ResponseBuilder checkToken(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo) throws IOException {
@@ -2555,6 +2558,13 @@ public class DefaultCloud20Service implements Cloud20Service {
         fault.setDetails(MDC.get(Audit.GUUID));
         return Response.status(HttpServletResponse.SC_INTERNAL_SERVER_ERROR)
                 .entity(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createIdentityFault(fault));
+    }
+
+    TenantForAuthenticateResponse convertTenantEntityToApi(Tenant tenant) {
+        TenantForAuthenticateResponse tenantForAuthenticateResponse = new TenantForAuthenticateResponse();
+        tenantForAuthenticateResponse.setId(tenant.getTenantId());
+        tenantForAuthenticateResponse.setName(tenant.getName());
+        return tenantForAuthenticateResponse;
     }
 
     Response.ResponseBuilder tenantConflictExceptionResponse(String message) {
