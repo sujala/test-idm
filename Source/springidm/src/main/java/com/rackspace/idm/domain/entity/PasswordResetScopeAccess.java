@@ -125,4 +125,8 @@ HasAccessToken {
     public String getUserRsId() {
         return userRsId;
     }
+
+    public void setLdapEntry(ReadOnlyEntry ldapEntry) {
+        this.ldapEntry = ldapEntry;
+    }
 }
