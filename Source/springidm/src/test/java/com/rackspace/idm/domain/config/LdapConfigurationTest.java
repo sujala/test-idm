@@ -30,6 +30,11 @@ public class LdapConfigurationTest {
     }
 
     @Test
+    public void constructor_succeeds() throws Exception {
+        new LdapConfiguration();
+    }
+
+    @Test
     public void connection_callsCongifMethodGetStringArray() throws Exception {
         try{
             when(configuration.getStringArray("ldap.serverList")).thenReturn(new String[]{"one:123", "two:345"});

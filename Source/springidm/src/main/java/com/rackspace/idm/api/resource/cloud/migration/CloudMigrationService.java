@@ -54,6 +54,8 @@ import java.util.List;
 @Component
 public class CloudMigrationService {
 
+    private static final int UK_BASEURL_OFFSET = 1000;
+    
     private MigrationClient client;
 
     @Autowired
@@ -780,8 +782,11 @@ public class CloudMigrationService {
         }
         if (endpoints != null) {
             for (EndpointTemplate endpoint : endpoints.getEndpointTemplate()) {
-                CloudBaseUrl cloudBaseUrl = endpointService.getBaseUrlById(endpoint.getId());
+                if (isUkCloudRegion()) {
+                    endpoint.setId(endpoint.getId() + UK_BASEURL_OFFSET);
+                }
 
+                CloudBaseUrl cloudBaseUrl = endpointService.getBaseUrlById(endpoint.getId());
                 BaseURL baseURL = getBaseUrlFromEndpoint(endpoint.getId(), baseURLs.getBaseURL());
 
                 if (cloudBaseUrl == null) {
@@ -844,6 +849,14 @@ public class CloudMigrationService {
                 return b;
         }
         return null;
+    }
+
+    private boolean isUkCloudRegion() {
+        if ("UK".equalsIgnoreCase(config.getString("cloud.region"))) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     public void setClient(MigrationClient client) {

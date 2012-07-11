@@ -2489,7 +2489,7 @@ public class JSONWriterTest {
         final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
         JAXBElement jaxbElement = new JAXBElement<AuthenticateResponse>(QName.valueOf("foo"), AuthenticateResponse.class, authenticateResponse);
         writer.writeTo(jaxbElement, AuthenticateResponse.class, null, null, null, null, myOut);
-        Assert.assertEquals("{\"access\":{\"token\":{\"id\":\"id\",\"expires\":\"2012-01-01\",\"tenant\":\"name\"},\"serviceCatalog\":[],\"user\":{\"id\":\"id\",\"roles\":[],\"name\":\"name\"}}}", myOut.toString());
+        Assert.assertEquals("{\"access\":{\"token\":{\"id\":\"id\",\"expires\":\"2012-01-01\",\"tenant\":{\"id\":\"id\",\"name\":\"name\"}},\"serviceCatalog\":[],\"user\":{\"id\":\"id\",\"roles\":[],\"name\":\"name\"}}}", myOut.toString());
     }
 
     @Test
