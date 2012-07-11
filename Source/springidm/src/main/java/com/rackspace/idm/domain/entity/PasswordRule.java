@@ -5,9 +5,6 @@ public abstract class PasswordRule {
     private String ruleName = "";
     private String message = "";
 
-    public PasswordRule() {
-    }
-
     public PasswordRule(int ruleId, String ruleName, String message) {
         this.ruleId = ruleId;
         this.ruleName = ruleName;
