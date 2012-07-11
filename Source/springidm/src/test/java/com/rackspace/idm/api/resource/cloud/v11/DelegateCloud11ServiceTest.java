@@ -1104,32 +1104,6 @@ public class DelegateCloud11ServiceTest {
         assertThat("response code", result.build().getStatus(), equalTo(200));
     }
 
-//    @Test
-//    public void revokeToken_httpServletResponseNotFound_callsCloudClientDelete() throws Exception {
-//        Response.ResponseBuilder serviceResponse = mock(Response.ResponseBuilder.class);
-//        when(defaultCloud11Service.revokeToken(request, "tokenId", httpHeaders)).thenReturn(serviceResponse);
-//        when(serviceResponse.clone()).thenReturn(Response.status(404));
-//        delegateCloud11Service.revokeToken(request, "tokenId", httpHeaders);
-//        verify(cloudClient).delete(url+"token/tokenId", httpHeaders);
-//    }
-//    @Test
-//    public void revokeToken_httpServletResponseUnauthorized_callsCloudClientDelete() throws Exception {
-//        Response.ResponseBuilder serviceResponse = mock(Response.ResponseBuilder.class);
-//        when(defaultCloud11Service.revokeToken(request, "tokenId", httpHeaders)).thenReturn(serviceResponse);
-//        when(serviceResponse.clone()).thenReturn(Response.status(401));
-//        delegateCloud11Service.revokeToken(request, "tokenId", httpHeaders);
-//        verify(cloudClient).delete(url+"token/tokenId", httpHeaders);
-//    }
-//
-//    @Test
-//    public void revokeToken_httpServletOK_returnsServiceResponse() throws Exception {
-//        Response.ResponseBuilder serviceResponse = mock(Response.ResponseBuilder.class);
-//        when(defaultCloud11Service.revokeToken(request, "tokenId", httpHeaders)).thenReturn(serviceResponse);
-//        when(serviceResponse.clone()).thenReturn(Response.status(200));
-//        Response.ResponseBuilder revokeToken = delegateCloud11Service.revokeToken(request, "tokenId", httpHeaders);
-//        assertThat("Response Code", revokeToken, equalTo(serviceResponse));
-//    }
-
     @Test
     public void extensions_cloudRoutingEnabledAndGASourceOfTruthNotEnabled_callsCloudClient() throws Exception {
         when(config.getBoolean("useCloudAuth")).thenReturn(true);

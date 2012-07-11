@@ -70,4 +70,12 @@ public class UserValidatorFoundation {
         byte[] base = usernamePassword.getBytes();
         return (new StringBuffer("Basic ").append(Base64.encode(base))).toString();
     }
+
+    public void setConfig(Configuration config) {
+        this.config = config;
+    }
+
+    public void setCloudClient(CloudClient cloudClient) {
+        this.cloudClient = cloudClient;
+    }
 }
