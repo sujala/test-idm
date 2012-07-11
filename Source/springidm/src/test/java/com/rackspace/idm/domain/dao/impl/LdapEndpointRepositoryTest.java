@@ -100,15 +100,14 @@ public class LdapEndpointRepositoryTest {
     }
 
     @Test
-    public void deleteEntryAndSubtree_setsFilterAttributeToTop() throws Exception {
+    public void deleteEntryAndSubtree_setsFilterAttributeToWildCard() throws Exception {
         Audit audit = mock(Audit.class);
-        ArgumentCaptor<Filter> argumentCaptor = ArgumentCaptor.forClass(Filter.class);
+        ArgumentCaptor<String> argumentCaptor = ArgumentCaptor.forClass(String.class);
         SearchResult searchResult = new SearchResult(123,ResultCode.SUCCESS,"woohoo","matchedDN",new String[0],new ArrayList<SearchResultEntry>(),null,0,0,new Control[0]);
         doReturn(ldapInterface).when(spy).getAppInterface();
         doReturn(searchResult).when(ldapInterface).search(eq("dn"),eq(SearchScope.ONE),argumentCaptor.capture(),eq(LdapEndpointRepository.ATTR_NO_ATTRIBUTES));
         spy.deleteEntryAndSubtree("dn",audit);
-        assertThat("sets filter attribute",argumentCaptor.getValue().getAssertionValue(),equalTo("top"));
-        assertThat("sets attribute name",argumentCaptor.getValue().getAttributeName(),equalTo("objectClass"));
+        assertThat("sets filter attribute",argumentCaptor.getValue(),equalTo("(objectClass=*)"));
     }
 
     @Test
@@ -119,8 +118,8 @@ public class LdapEndpointRepositoryTest {
         SearchResult searchResult = new SearchResult(123,ResultCode.SUCCESS,"woohoo","matchedDN",new String[0],arrayList,null,0,0,new Control[0]);
 
         doReturn(ldapInterface).when(spy).getAppInterface();
-        doReturn(searchResult).when(ldapInterface).search(eq("dn"), eq(SearchScope.ONE), any(Filter.class), eq(LdapEndpointRepository.ATTR_NO_ATTRIBUTES));
-        doCallRealMethod().doNothing().when(spy).deleteEntryAndSubtree("dn",audit);
+        doReturn(searchResult).when(ldapInterface).search(anyString(), eq(SearchScope.ONE), anyString(), eq(LdapEndpointRepository.ATTR_NO_ATTRIBUTES));
+        doCallRealMethod().doNothing().when(spy).deleteEntryAndSubtree("dn", audit);
 
         spy.deleteEntryAndSubtree("dn",audit);
         verify(spy,times(2)).deleteEntryAndSubtree("dn",audit);
@@ -132,7 +131,7 @@ public class LdapEndpointRepositoryTest {
         SearchResult searchResult = new SearchResult(123,ResultCode.SUCCESS,"woohoo","matchedDN",new String[0],new ArrayList<SearchResultEntry>(),null,0,0,new Control[0]);
 
         doReturn(ldapInterface).when(spy).getAppInterface();
-        doReturn(searchResult).when(ldapInterface).search(eq("dn"), eq(SearchScope.ONE), any(Filter.class), eq(LdapEndpointRepository.ATTR_NO_ATTRIBUTES));
+        doReturn(searchResult).when(ldapInterface).search(eq("dn"), eq(SearchScope.ONE), anyString(), eq(LdapEndpointRepository.ATTR_NO_ATTRIBUTES));
 
         spy.deleteEntryAndSubtree("dn",audit);
         verify(ldapInterface).delete("dn");
@@ -144,7 +143,7 @@ public class LdapEndpointRepositoryTest {
         SearchResult searchResult = new SearchResult(123,ResultCode.SUCCESS,"woohoo","matchedDN",new String[0],new ArrayList<SearchResultEntry>(),null,0,0,new Control[0]);
 
         doReturn(ldapInterface).when(spy).getAppInterface();
-        doReturn(searchResult).when(ldapInterface).search(eq("dn"), eq(SearchScope.ONE), any(Filter.class), eq(LdapEndpointRepository.ATTR_NO_ATTRIBUTES));
+        doReturn(searchResult).when(ldapInterface).search(eq("dn"), eq(SearchScope.ONE), anyString(), eq(LdapEndpointRepository.ATTR_NO_ATTRIBUTES));
         doThrow(new LDAPException(ResultCode.INVALID_DN_SYNTAX)).when(ldapInterface).delete("dn");
 
         spy.deleteEntryAndSubtree("dn",audit);
