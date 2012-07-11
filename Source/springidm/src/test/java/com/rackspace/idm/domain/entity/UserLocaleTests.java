@@ -30,7 +30,7 @@ public class UserLocaleTests {
     public void shouldReturnHashCode() {
         UserLocale loc = getTestLocale();
         
-        Assert.assertEquals(-1884654543, loc.hashCode());
+        Assert.assertEquals(-559752948, loc.hashCode());
         
         loc.setLocale(null);
         loc.setTimeZone(null);
