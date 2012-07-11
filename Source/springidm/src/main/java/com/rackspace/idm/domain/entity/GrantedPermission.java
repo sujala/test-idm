@@ -43,6 +43,10 @@ public class GrantedPermission extends Permission implements Auditable {
         this.resourceGroups = resourceGroups;
     }
 
+    public void setLdapEntry(ReadOnlyEntry ldapEntry) {
+        this.ldapEntry = ldapEntry;
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -61,9 +65,7 @@ public class GrantedPermission extends Permission implements Auditable {
         if (!super.equals(obj)) {
             return false;
         }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
+
         GrantedPermission other = (GrantedPermission) obj;
         if (ldapEntry == null) {
             if (other.ldapEntry != null) {
