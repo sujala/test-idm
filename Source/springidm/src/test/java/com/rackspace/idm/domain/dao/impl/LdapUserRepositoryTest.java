@@ -31,7 +31,7 @@ import static org.mockito.Mockito.*;
  * Date: 3/20/12
  * Time: 3:29 PM
  */
-public class LdapUserRepositoryTest {
+public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
 
     LdapUserRepository ldapUserRepository;
     LdapUserRepository spy;

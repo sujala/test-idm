@@ -25,7 +25,7 @@ import static org.mockito.Mockito.*;
  * Time: 8:07 AM
  * To change this template use File | Settings | File Templates.
  */
-public class LdapTenantRepositoryTest {
+public class LdapTenantRepositoryTest extends InMemoryLdapIntegrationTest{
     LdapTenantRepository ldapTenantRepository;
     LdapTenantRepository spy;
     LDAPInterface ldapInterface;
