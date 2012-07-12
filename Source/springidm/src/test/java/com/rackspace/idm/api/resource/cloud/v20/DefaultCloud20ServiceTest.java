@@ -557,10 +557,12 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void exceptionResponse_whenUserDisabledException_detailsNotSet() throws Exception {
         UserDisabledFault userDisabledFault = mock(UserDisabledFault.class);
+        JAXBElement<UserDisabledFault> someFault = new JAXBElement(new QName("http://docs.openstack.org/identity/api/v2.0", "userDisabled"), UserDisabledFault.class, null, userDisabledFault);
         ObjectFactory objectFactory = mock(ObjectFactory.class);
         when(jaxbObjectFactories.getOpenStackIdentityV2Factory()).thenReturn(objectFactory);
+        when(objectFactory.createUserDisabled(userDisabledFault)).thenReturn(someFault);
         when(objectFactory.createUserDisabledFault()).thenReturn(userDisabledFault);
-        UserDisabledException userDisabledException = new UserDisabledException();
+        UserDisabledException userDisabledException = new UserDisabledException("User is Disabled");
         spy.exceptionResponse(userDisabledException);
         verify(userDisabledFault, never()).setDetails(anyString());
     }
@@ -568,8 +570,10 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void exceptionResponse_whenNotFoundException_detailsNotSet() throws Exception {
         ItemNotFoundFault itemNotFoundFault = mock(ItemNotFoundFault.class);
+        JAXBElement<ItemNotFoundFault> someFault = new JAXBElement(new QName("http://docs.openstack.org/identity/api/v2.0", "itemNotFound"), ItemNotFoundFault.class, null, itemNotFoundFault);
         ObjectFactory objectFactory = mock(ObjectFactory.class);
         when(jaxbObjectFactories.getOpenStackIdentityV2Factory()).thenReturn(objectFactory);
+        when(objectFactory.createItemNotFound(itemNotFoundFault)).thenReturn(someFault);
         when(objectFactory.createItemNotFoundFault()).thenReturn(itemNotFoundFault);
         spy.exceptionResponse(new NotFoundException());
         verify(itemNotFoundFault, never()).setDetails(anyString());
@@ -1352,8 +1356,8 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void userDisabledExceptionResponse_setsMessage() throws Exception {
         Response.ResponseBuilder responseBuilder = defaultCloud20Service.userDisabledExceptionResponse("userName");
-        JAXBElement<UserDisabledFault> jaxbElement = ((JAXBElement<UserDisabledFault>) (responseBuilder.build().getEntity()));
-        assertThat("message", jaxbElement.getValue().getMessage(), equalTo("userName"));
+        UserDisabledFault object = (UserDisabledFault)responseBuilder.build().getEntity();
+        assertThat("message", object.getMessage(), equalTo("userName"));
     }
 
     @Test
@@ -1365,8 +1369,8 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void tenantConflictExceptionResponse_setsMessage() throws Exception {
         Response.ResponseBuilder responseBuilder = defaultCloud20Service.tenantConflictExceptionResponse("responseMessage");
-        JAXBElement<TenantConflictFault> jaxbElement = ((JAXBElement<TenantConflictFault>) (responseBuilder.build().getEntity()));
-        assertThat("message", jaxbElement.getValue().getMessage(), equalTo("responseMessage"));
+        TenantConflictFault object = (TenantConflictFault)responseBuilder.build().getEntity();
+        assertThat("message", object.getMessage(), equalTo("responseMessage"));
     }
 
     @Test
@@ -1378,8 +1382,8 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void userConflictExceptionResponse_setsMessage() throws Exception {
         Response.ResponseBuilder responseBuilder = defaultCloud20Service.userConflictExceptionResponse("responseMessage");
-        JAXBElement<BadRequestFault> jaxbElement = ((JAXBElement<BadRequestFault>) (responseBuilder.build().getEntity()));
-        assertThat("message", jaxbElement.getValue().getMessage(), equalTo("responseMessage"));
+        BadRequestFault object = (BadRequestFault)responseBuilder.build().getEntity();
+        assertThat("message", object.getMessage(), equalTo("responseMessage"));
     }
 
     @Test
@@ -1482,6 +1486,8 @@ public class DefaultCloud20ServiceTest {
         UriBuilder uriBuilder = mock(UriBuilder.class);
         URI uri = new URI("");
         Tenant domainTenant = mock(Tenant.class);
+        org.openstack.docs.identity.api.v2.Tenant tenant = new org.openstack.docs.identity.api.v2.Tenant();
+        JAXBElement<org.openstack.docs.identity.api.v2.Tenant> someValue = new JAXBElement(new QName("http://docs.openstack.org/identity/api/v2.0", "tenant"), org.openstack.docs.identity.api.v2.Tenant.class, null, tenant);
         org.openstack.docs.identity.api.v2.ObjectFactory objectFactory = mock(org.openstack.docs.identity.api.v2.ObjectFactory.class);
         doReturn(domainTenant).when(tenantConverterCloudV20).toTenantDO(any(org.openstack.docs.identity.api.v2.Tenant.class));
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
@@ -1490,6 +1496,7 @@ public class DefaultCloud20ServiceTest {
         doReturn(tenantId).when(domainTenant).getTenantId();
         when(jaxbObjectFactories.getOpenStackIdentityV2Factory()).thenReturn(objectFactory);
         when(tenantConverterCloudV20.toTenant(any(Tenant.class))).thenReturn(tenantOS);
+        when(objectFactory.createTenant(tenantOS)).thenReturn(someValue);
         Response.ResponseBuilder responseBuilder = spy.addTenant(httpHeaders, uriInfo, authToken, tenantOS);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(201));
     }
@@ -1538,10 +1545,12 @@ public class DefaultCloud20ServiceTest {
         UriBuilder uriBuilder = mock(UriBuilder.class);
         URI uri = new URI("");
         org.openstack.docs.identity.api.ext.os_ksadm.v1.ObjectFactory objectFactory = mock(org.openstack.docs.identity.api.ext.os_ksadm.v1.ObjectFactory.class);
+        JAXBElement<Service> someValue = new JAXBElement(new QName("http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0", "service"), Service.class, null, service);
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         doReturn(uriBuilder).when(uriBuilder).path(anyString());
         doReturn(uri).when(uriBuilder).build();
         when(jaxbObjectFactories.getOpenStackIdentityExtKsadmnV1Factory()).thenReturn(objectFactory);
+        when(objectFactory.createService(service)).thenReturn(someValue);
         Response.ResponseBuilder responseBuilder = spy.addService(httpHeaders, uriInfo, authToken, service);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(201));
     }
@@ -1597,11 +1606,13 @@ public class DefaultCloud20ServiceTest {
         UriBuilder uriBuilder = mock(UriBuilder.class);
         URI uri = new URI("");
         org.openstack.docs.identity.api.v2.ObjectFactory objectFactory = mock(org.openstack.docs.identity.api.v2.ObjectFactory.class);
+        JAXBElement<Role> someValue = new JAXBElement(new QName("http://docs.openstack.org/identity/api/v2.0", "role"), Role.class, null, role);
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         doReturn(uriBuilder).when(uriBuilder).path(anyString());
         doReturn(uri).when(uriBuilder).build();
         when(jaxbObjectFactories.getOpenStackIdentityV2Factory()).thenReturn(objectFactory);
         when(roleConverterCloudV20.toRoleFromClientRole(any(ClientRole.class))).thenReturn(role);
+        when(objectFactory.createRole(role)).thenReturn(someValue);
         Response.ResponseBuilder responseBuilder = spy.addRole(httpHeaders, uriInfo, authToken, role);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(201));
     }
@@ -1639,7 +1650,7 @@ public class DefaultCloud20ServiceTest {
         when(userGroupService.getGroupById(config.getInt(org.mockito.Matchers.<String>any()))).thenReturn(group);
         when(cloudKsGroupBuilder.build(org.mockito.Matchers.<Group>any())).thenReturn(groupKs);
         Response.ResponseBuilder responseBuilder = defaultCloud20Service.listUserGroups(null, authToken, userId);
-        assertThat("Default Group added", ((com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups) ((JAXBElement) responseBuilder.build().getEntity()).getValue()).getGroup().get(0).getName(), equalTo("Group1"));
+        assertThat("Default Group added", ((com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups)responseBuilder.build().getEntity()).getGroup().get(0).getName(), equalTo("Group1"));
     }
 
     @Test
@@ -1670,10 +1681,10 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void listUserGroups_withValidUser_returnsAJaxbElement() throws Exception {
+    public void listUserGroups_withValidUser_returnsGroups() throws Exception {
         when(userService.getUserById(userId)).thenReturn(user);
         Response.ResponseBuilder responseBuilder = spy.listUserGroups(null, authToken, userId);
-        assertThat("code", responseBuilder.build().getEntity(), instanceOf(javax.xml.bind.JAXBElement.class));
+        assertThat("code", responseBuilder.build().getEntity(), instanceOf(com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups.class));
     }
 
     @Test
@@ -1740,12 +1751,14 @@ public class DefaultCloud20ServiceTest {
         UriBuilder uriBuilder = mock(UriBuilder.class);
         URI uri = new URI("101");
         org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory objectFactory = mock(org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory.class);
+        JAXBElement<EndpointTemplate> someValue = new JAXBElement(new QName("http://docs.openstack.org/identity/api/ext/OS-KSCATALOG/v1.0", "endpointTemplate"), EndpointTemplate.class, null, endpointTemplate);
         when(endpointConverterCloudV20.toCloudBaseUrl(endpointTemplate)).thenReturn(cloudBaseUrl);
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         doReturn(uriBuilder).when(uriBuilder).path("101");
         doReturn(uri).when(uriBuilder).build();
         when(endpointConverterCloudV20.toEndpointTemplate(cloudBaseUrl)).thenReturn(endpointTemplate);
         when(jaxbObjectFactories.getOpenStackIdentityExtKscatalogV1Factory()).thenReturn(objectFactory);
+        when(objectFactory.createEndpointTemplate(endpointTemplate)).thenReturn(someValue);
         Response.ResponseBuilder responseBuilder = spy.addEndpointTemplate(httpHeaders, uriInfo, authToken, endpointTemplate);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(201));
     }
@@ -2058,7 +2071,7 @@ public class DefaultCloud20ServiceTest {
         doReturn(user).when(spy).checkAndGetUser("userId");
         Response response = spy.deleteUserCredential(null, authToken, "userId", credentialType).build();
         assertThat("status", response.getStatus(), equalTo(404));
-        assertThat("message", ((JAXBElement<ItemNotFoundFault>) response.getEntity()).getValue().getMessage(),
+        assertThat("message", ((ItemNotFoundFault)response.getEntity()).getMessage(),
                 equalTo("Credential type RAX-KSKEY:apiKeyCredentials was not found for User with Id: 123"));
     }
 
@@ -3878,9 +3891,12 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void getExtension_extensionMapNotNullResponseOk_returns200() throws Exception {
+        Extension extension = new Extension();
+        JAXBElement<Extension> someValue = new JAXBElement(new QName("http://docs.openstack.org/common/api/v1.0", "extension"), Extension.class, null, extension);
         extensionMap = mock(HashMap.class);
         defaultCloud20Service.setExtensionMap(extensionMap);
         when(extensionMap.containsKey(anyObject())).thenReturn(true);
+        when(extensionMap.get(any())).thenReturn(someValue);
         Response.ResponseBuilder responseBuilder = defaultCloud20Service.getExtension(null, "RAX-KSKEY");
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
