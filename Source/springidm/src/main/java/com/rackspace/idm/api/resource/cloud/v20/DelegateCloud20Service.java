@@ -200,7 +200,9 @@ public class DelegateCloud20Service implements Cloud20Service {
         List<TenantRole> impRoles = tenantService.getGlobalRolesForUser(impersonator, null);
         UserForAuthenticateResponse userForAuthenticateResponse = userConverterCloudV20.toUserForAuthenticateResponse(impersonator, impRoles);
 
-        validateResponse.getAny().add(userForAuthenticateResponse);
+        com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = OBJ_FACTORIES.getRackspaceIdentityExtRaxgaV1Factory();
+        JAXBElement<UserForAuthenticateResponse> impersonatorJAXBElement = raxAuthObjectFactory.createImpersonator(userForAuthenticateResponse);
+        validateResponse.getAny().add(impersonatorJAXBElement);
 
         return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createAccess(validateResponse));
     }

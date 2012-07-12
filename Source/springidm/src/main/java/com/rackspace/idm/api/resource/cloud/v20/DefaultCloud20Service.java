@@ -2104,11 +2104,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
                 access.setUser(userConverterCloudV20.toUserForAuthenticateResponse(racker, roleList));
             } else if (sa instanceof UserScopeAccess || sa instanceof ImpersonatedScopeAccess) {
-                String username = "";
-                String impersonatedToken = "";
-                User impersonator = null;
-                User user = null;
-                List<TenantRole> roles = null;
+                User impersonator;
+                User user;
+                List<TenantRole> roles;
                 if (sa instanceof UserScopeAccess) {
                     UserScopeAccess usa = (UserScopeAccess) sa;
                     user = userService.getUserByScopeAccess(usa);
@@ -2125,8 +2123,9 @@ public class DefaultCloud20Service implements Cloud20Service {
                     access.setUser(userConverterCloudV20.toUserForAuthenticateResponse(user, roles));
                     List<TenantRole> impRoles = this.tenantService.getGlobalRolesForUser(impersonator, null);
                     UserForAuthenticateResponse userForAuthenticateResponse = userConverterCloudV20.toUserForAuthenticateResponse(impersonator, impRoles);
-
-                    access.getAny().add(userForAuthenticateResponse);
+                    com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = OBJ_FACTORIES.getRackspaceIdentityExtRaxgaV1Factory();
+                    JAXBElement<UserForAuthenticateResponse> impersonatorJAXBElement = raxAuthObjectFactory.createImpersonator(userForAuthenticateResponse);
+                    access.getAny().add(impersonatorJAXBElement);
                 }
             }
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createAccess(access).getValue());

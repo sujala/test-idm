@@ -288,11 +288,12 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             outer.put(JSONConstants.ACCESS, access);
             if (authenticateResponse.getAny().size() > 0) {
                 for (Object response : authenticateResponse.getAny()) {
-                    if (response instanceof UserForAuthenticateResponse) {
-                        UserForAuthenticateResponse userForAuthenticateResponse = (UserForAuthenticateResponse) response;
+                    if (response instanceof JAXBElement && ((JAXBElement) response).getDeclaredType().isAssignableFrom(UserForAuthenticateResponse.class)) {
+                        UserForAuthenticateResponse userForAuthenticateResponse = (UserForAuthenticateResponse)((JAXBElement) response).getValue();
 
                         JSONObject subAccess = new JSONObject();
                         subAccess.put(JSONConstants.ID, userForAuthenticateResponse.getId());
+                        subAccess.put(JSONConstants.NAME,userForAuthenticateResponse.getName());
 
                         JSONArray subRoles = new JSONArray();
 
@@ -307,7 +308,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
                         }
 
                         subAccess.put(JSONConstants.ROLES, subRoles);
-                        access.put(JSONConstants.ACCESS, subAccess);
+                        access.put(JSONConstants.IMPERSONATOR, subAccess);
                         break;
                     }
                 }

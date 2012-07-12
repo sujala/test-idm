@@ -231,10 +231,8 @@ public abstract class LdapRepository {
     protected void deleteEntryAndSubtree(String dn, Audit audit) {
         try {
 
-            Filter filter = Filter.createEqualityFilter(ATTR_OBJECT_CLASS,
-                    "top");
             SearchResult searchResult = getAppInterface().search(dn, SearchScope.ONE,
-                    filter, ATTR_NO_ATTRIBUTES);
+                    "(objectClass=*)", ATTR_NO_ATTRIBUTES);
 
             for (SearchResultEntry entry : searchResult.getSearchEntries()) {
                 deleteEntryAndSubtree(entry.getDN(), audit);
