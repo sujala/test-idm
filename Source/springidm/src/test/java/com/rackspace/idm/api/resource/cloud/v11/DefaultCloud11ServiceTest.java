@@ -212,8 +212,8 @@ public class DefaultCloud11ServiceTest {
 
         Response response = defaultCloud11Service.adminAuthenticateResponse(jaxbElement, null).build();
         assertThat("response status", response.getStatus(), equalTo(401));
-        assertThat("response message",((UnauthorizedFault) ((JAXBElement<UnauthorizedFault>) response.getEntity()).getValue()).getMessage(),equalTo("Username or api key is invalid"));
-        assertThat("response message",((UnauthorizedFault) ((JAXBElement<UnauthorizedFault>) response.getEntity()).getValue()).getDetails(),nullValue());
+        assertThat("response message",((UnauthorizedFault) (response.getEntity())).getMessage(),equalTo("Username or api key is invalid"));
+        assertThat("response message",((UnauthorizedFault) (response.getEntity())).getDetails(),nullValue());
 
     }
 
@@ -2421,7 +2421,7 @@ public class DefaultCloud11ServiceTest {
         doNothing().when(spy).authenticateCloudAdminUser(request);
         when(userService.getUser("username")).thenReturn(new com.rackspace.idm.domain.entity.User());
         Response.ResponseBuilder responseBuilder = spy.createUser(request, httpHeaders, uriInfo, user);
-        UsernameConflictFault conflictFault =(UsernameConflictFault)((JAXBElement)responseBuilder.build().getEntity()).getValue();
+        UsernameConflictFault conflictFault =(UsernameConflictFault)responseBuilder.build().getEntity();
         assertThat("message", conflictFault.getMessage(), equalTo("Username username already exists"));
     }
 
@@ -2432,7 +2432,7 @@ public class DefaultCloud11ServiceTest {
         doNothing().when(spy).authenticateCloudAdminUser(request);
         when(userService.getUser("username")).thenReturn(new com.rackspace.idm.domain.entity.User());
         Response.ResponseBuilder responseBuilder = spy.createUser(request, httpHeaders, uriInfo, user);
-        UsernameConflictFault conflictFault =(UsernameConflictFault)((JAXBElement)responseBuilder.build().getEntity()).getValue();
+        UsernameConflictFault conflictFault =(UsernameConflictFault)responseBuilder.build().getEntity();
         assertThat("message", conflictFault.getCode(), equalTo(409));
     }
 
@@ -2443,7 +2443,7 @@ public class DefaultCloud11ServiceTest {
         doNothing().when(spy).authenticateCloudAdminUser(request);
         when(userService.getUser("username")).thenReturn(new com.rackspace.idm.domain.entity.User());
         Response.ResponseBuilder responseBuilder = spy.createUser(request, httpHeaders, uriInfo, user);
-        UsernameConflictFault conflictFault =(UsernameConflictFault)((JAXBElement)responseBuilder.build().getEntity()).getValue();
+        UsernameConflictFault conflictFault =(UsernameConflictFault)responseBuilder.build().getEntity();
         assertThat("details", conflictFault.getDetails(), equalTo(null));
     }
 
