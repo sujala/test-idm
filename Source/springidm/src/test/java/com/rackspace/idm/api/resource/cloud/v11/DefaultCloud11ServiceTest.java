@@ -252,11 +252,11 @@ public class DefaultCloud11ServiceTest {
     }
 
     @Test
-    public void getUserGroups_notAuthorized_entityDetailsShouldMatchCloudResponse() throws Exception {
+    public void getUserGroups_notAuthorized_entityDetailsShouldBeNull() throws Exception {
         doThrow(new NotAuthorizedException("You are not authorized to access this resource.")).when(spy).authenticateCloudAdminUserForGetRequests(request);
         Response.ResponseBuilder responseBuilder = spy.getUserGroups(request, "testUser", httpHeaders);
         UnauthorizedFault entity = (UnauthorizedFault) responseBuilder.build().getEntity();
-        assertThat("code", entity.getDetails(), equalTo("AuthErrorHandler"));
+        assertThat("code", entity.getDetails(), nullValue());
     }
 
     @Test

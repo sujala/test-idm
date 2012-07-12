@@ -67,9 +67,8 @@ public class Cloud20VersionResourceTest {
     @Test
     public void getCloud20VersionInfo_returnsVersionInfo() throws Exception {
         Response response = cloud20VersionResource.getCloud20VersionInfo();
-        JAXBElement<VersionChoice> jaxbElement = (JAXBElement)response.getEntity();
-        VersionChoice result = jaxbElement.getValue();
-        assertThat("version", result.getId(), equalTo("v2.0"));
+        VersionChoice object =  (VersionChoice)response.getEntity();
+        assertThat("version", object.getId(), equalTo("v2.0"));
     }
 
     @Test
