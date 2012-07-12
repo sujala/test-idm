@@ -1,6 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.api.converter.cloudv20.*;
@@ -28,6 +28,7 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.*;
+import org.openstack.docs.identity.api.v2.ObjectFactory;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import javax.ws.rs.core.*;
@@ -510,6 +511,7 @@ public class DefaultCloud20ServiceTest {
         impersonatedScopeAccess.setAccessTokenString("impToken");
         doReturn(impersonatedScopeAccess).when(spy).checkAndGetToken("token");
         doNothing().when(spy).validateBelongsTo(eq("belongsTo"), any(List.class));
+        when(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory());
         Response.ResponseBuilder responseBuilder = spy.validateToken(httpHeaders, authToken, "token", "belongsTo");
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
@@ -781,6 +783,7 @@ public class DefaultCloud20ServiceTest {
         scopeAccess.setAccessTokenString("foo");
         when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
         doReturn(new User()).when(spy).checkAndGetUser(anyString());
+        when(tokenConverterCloudV20.toToken(any(ScopeAccess.class))).thenReturn(token);
         when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(tenantService.hasTenantAccess(any(ScopeAccess.class), eq("tenantId"))).thenReturn(true);
         when(authConverterCloudV20.toAuthenticationResponse(any(User.class), any(ScopeAccess.class), any(List.class), any(List.class))).thenReturn(authenticateResponse);
@@ -791,6 +794,8 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void authenticate_withTenantId_returnsOnlyTenantEndpoints() throws Exception {
+        Token token = new Token();
+        token.setId("token");
         AuthenticationRequest authenticationRequest = new AuthenticationRequest();
         AuthenticateResponse authenticateResponse = new AuthenticateResponse();
         UserForAuthenticateResponse userForAuthenticateResponse = new UserForAuthenticateResponse();
@@ -804,6 +809,7 @@ public class DefaultCloud20ServiceTest {
         UserScopeAccess scopeAccess = new UserScopeAccess();
         scopeAccess.setAccessTokenExp(new Date(5000, 1, 1));
         scopeAccess.setAccessTokenString("foo");
+        when(tokenConverterCloudV20.toToken(any(ScopeAccess.class))).thenReturn(token);
         when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
         doReturn(new User()).when(spy).checkAndGetUser(anyString());
         when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
@@ -4150,5 +4156,15 @@ public class DefaultCloud20ServiceTest {
         when(objectFactory.createBadRequestFault()).thenReturn(badRequestFault);
         defaultCloud20Service.badRequestExceptionResponse("message");
         verify(badRequestFault, never()).setDetails(anyString());
+    }
+
+    @Test
+    public void convertTenantEntityToApi_returnsTenantForAuthenticateResponse(){
+        Tenant test = new Tenant();
+        test.setName("test");
+        test.setTenantId("test");
+        TenantForAuthenticateResponse testTenant = defaultCloud20Service.convertTenantEntityToApi(test);
+        assertThat("Verify Tenant",testTenant.getId(),equalTo(test.getTenantId()));
+        assertThat("Verify Tenant",testTenant.getName(),equalTo(test.getName()));
     }
 }

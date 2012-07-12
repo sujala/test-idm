@@ -18,10 +18,7 @@ import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.TokenService;
 import com.rackspace.idm.domain.service.UserService;
-import com.rackspace.idm.exception.ApiException;
-import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.DuplicateUsernameException;
-import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.exception.*;
 import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.api.json.JSONJAXBContext;
 import com.sun.jersey.api.json.JSONUnmarshaller;
@@ -200,7 +197,9 @@ public class DelegateCloud20Service implements Cloud20Service {
         List<TenantRole> impRoles = tenantService.getGlobalRolesForUser(impersonator, null);
         UserForAuthenticateResponse userForAuthenticateResponse = userConverterCloudV20.toUserForAuthenticateResponse(impersonator, impRoles);
 
-        validateResponse.getAny().add(userForAuthenticateResponse);
+        com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = OBJ_FACTORIES.getRackspaceIdentityExtRaxgaV1Factory();
+        JAXBElement<UserForAuthenticateResponse> impersonatorJAXBElement = raxAuthObjectFactory.createImpersonator(userForAuthenticateResponse);
+        validateResponse.getAny().add(impersonatorJAXBElement);
 
         return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createAccess(validateResponse));
     }
@@ -1146,6 +1145,9 @@ public class DelegateCloud20Service implements Cloud20Service {
     public String impersonateUser(String userName, String impersonatorName, String impersonatorPassword) throws JAXBException, IOException {
         String impersonatorXAuthToken = getXAuthToken_byPassword(impersonatorName, impersonatorPassword).getToken().getId();
         User user = getCloudUserByName(userName, impersonatorXAuthToken);
+        if (!user.isEnabled()) {
+            throw new ForbiddenException("User cannot be impersonated; User is not enabled");
+        }
         RoleList globalRolesForCloudUser = getGlobalRolesForCloudUser(user.getId(), impersonatorXAuthToken);
         if (!isValidCloudImpersonatee(globalRolesForCloudUser)) {
             throw new BadRequestException("User cannot be impersonated; No valid impersonation roles");
