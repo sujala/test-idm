@@ -8,7 +8,6 @@ import com.rackspace.idm.exception.UserDisabledException;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,12 +23,13 @@ import static org.mockito.Mockito.*;
  */
 public class DefaultApplicationServiceTest {
 
-    DefaultApplicationService service;
+    private DefaultApplicationService defaultApplicationService;
     private ApplicationDao clientDao;
     private CustomerDao customerDao;
     private UserDao userDao;
     private ScopeAccessDao scopeAccessDao;
     private TenantDao tenantDao;
+    private DefaultApplicationService spy;
 
     @Before
     public void setUp() throws Exception {
@@ -38,14 +38,16 @@ public class DefaultApplicationServiceTest {
         userDao = mock(UserDao.class);
         scopeAccessDao = mock(ScopeAccessDao.class);
         tenantDao = mock(TenantDao.class);
-        service = new DefaultApplicationService(scopeAccessDao, clientDao,customerDao,userDao,tenantDao);
+        defaultApplicationService = new DefaultApplicationService(scopeAccessDao, clientDao,customerDao,userDao,tenantDao);
+
+        spy = spy(defaultApplicationService);
     }
 
     @Test (expected = IllegalStateException.class)
     public void addDefinedPermission_customerIsNull_throwsIllegalStateException() throws Exception {
         DefinedPermission definedPermission = new DefinedPermission();
         when(customerDao.getCustomerByCustomerId(anyString())).thenReturn(null);
-        service.addDefinedPermission(definedPermission);
+        defaultApplicationService.addDefinedPermission(definedPermission);
     }
 
     @Test (expected = IllegalStateException.class)
@@ -53,7 +55,7 @@ public class DefaultApplicationServiceTest {
         DefinedPermission definedPermission = new DefinedPermission();
         when(customerDao.getCustomerByCustomerId(anyString())).thenReturn(new Customer());
         when(clientDao.getClientByClientId(anyString())).thenReturn(null);
-        service.addDefinedPermission(definedPermission);
+        defaultApplicationService.addDefinedPermission(definedPermission);
     }
 
     @Test
@@ -67,7 +69,7 @@ public class DefaultApplicationServiceTest {
         when(clientDao.getClientByClientId(anyString())).thenReturn(client);
         when(scopeAccessDao.getDirectScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(null);
         when(scopeAccessDao.addDirectScopeAccess(anyString(), any(ScopeAccess.class))).thenReturn(new ScopeAccess());
-        service.addDefinedPermission(definedPermission);
+        defaultApplicationService.addDefinedPermission(definedPermission);
         verify(scopeAccessDao).addDirectScopeAccess(anyString(), any(ScopeAccess.class));
     }
 
@@ -80,10 +82,10 @@ public class DefaultApplicationServiceTest {
         client.setRCN("rcn");
         when(customerDao.getCustomerByCustomerId(anyString())).thenReturn(new Customer());
         when(clientDao.getClientByClientId(anyString())).thenReturn(client);
-        when(scopeAccessDao.getDirectScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(null);
+        when(scopeAccessDao.getDirectScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(new ClientScopeAccess());
         when(scopeAccessDao.addDirectScopeAccess(anyString(), any(ScopeAccess.class))).thenReturn(new ScopeAccess());
         when(scopeAccessDao.getPermissionByParentAndPermission(anyString(), eq(definedPermission))).thenReturn(new DefinedPermission());
-        service.addDefinedPermission(definedPermission);
+        defaultApplicationService.addDefinedPermission(definedPermission);
     }
 
     @Test
@@ -98,7 +100,7 @@ public class DefaultApplicationServiceTest {
         when(scopeAccessDao.getDirectScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(null);
         when(scopeAccessDao.addDirectScopeAccess(anyString(), any(ScopeAccess.class))).thenReturn(new ScopeAccess());
         when(scopeAccessDao.getPermissionByParentAndPermission(anyString(), eq(definedPermission))).thenReturn(null);
-        service.addDefinedPermission(definedPermission);
+        defaultApplicationService.addDefinedPermission(definedPermission);
         verify(scopeAccessDao).definePermission(anyString(), any(DefinedPermission.class));
     }
 
@@ -109,7 +111,7 @@ public class DefaultApplicationServiceTest {
         definedPermission.setCustomerId("customerId");
         definedPermission.setPermissionId("permissionId");
         when(scopeAccessDao.getPermissionsByPermission(definedPermission)).thenReturn(new ArrayList<Permission>());
-        service.deleteDefinedPermission(definedPermission);
+        defaultApplicationService.deleteDefinedPermission(definedPermission);
         verify(scopeAccessDao).getPermissionsByPermission(definedPermission);
     }
 
@@ -123,19 +125,19 @@ public class DefaultApplicationServiceTest {
         definedPermission.setCustomerId("customerId");
         definedPermission.setPermissionId("permissionId");
         when(scopeAccessDao.getPermissionsByPermission(definedPermission)).thenReturn(permissionList);
-        service.deleteDefinedPermission(definedPermission);
+        defaultApplicationService.deleteDefinedPermission(definedPermission);
         verify(scopeAccessDao).removePermissionFromScopeAccess(permission);
     }
 
     @Test
     public void getAllApplications_callsClientDao_getAllClients() throws Exception {
-        service.getAllApplications(null, 0, 0);
+        defaultApplicationService.getAllApplications(null, 0, 0);
         verify(clientDao).getAllClients(null, 0, 0);
     }
 
     @Test
     public void getClientByScope_callsClientDao_getClientByScope() throws Exception {
-        service.getClientByScope(null);
+        defaultApplicationService.getClientByScope(null);
         verify(clientDao).getClientByScope(null);
     }
 
@@ -146,7 +148,7 @@ public class DefaultApplicationServiceTest {
         client.setClientId("clientId");
         client.setUniqueId("uniqueId");
         when(clientDao.getClientByClientId("clientId")).thenReturn(client);
-        service.getDefinedPermissionByClientIdAndPermissionId("clientId", "permissionId");
+        defaultApplicationService.getDefinedPermissionByClientIdAndPermissionId("clientId", "permissionId");
         verify(scopeAccessDao).getPermissionByParentAndPermission(anyString(), any(Permission.class));
     }
 
@@ -158,76 +160,76 @@ public class DefaultApplicationServiceTest {
         client.setUniqueId("uniqueId");
         when(clientDao.getClientByClientId("clientId")).thenReturn(client);
         when(scopeAccessDao.getPermissionByParentAndPermission(anyString(), any(Permission.class))).thenReturn(new DefinedPermission());
-        DefinedPermission permission = service.getDefinedPermissionByClientIdAndPermissionId("clientId", "permissionId");
+        DefinedPermission permission = defaultApplicationService.getDefinedPermissionByClientIdAndPermissionId("clientId", "permissionId");
         assertThat("permission", permission.toString(), equalTo("Permission [ldapEntry=null, permissionId=null, clientId=null, customerId=null]"));
     }
 
     @Test (expected = NotFoundException.class)
     public void getDefinedPermissionByClientIdAndPermissionId_clientIdNotFound_throwsNotFoundException() throws Exception {
-        service.getDefinedPermissionByClientIdAndPermissionId("clientId", "permissionId");
+        defaultApplicationService.getDefinedPermissionByClientIdAndPermissionId("clientId", "permissionId");
     }
 
     @Test
     public void updateDefinedPermission_callsScopeAccessDao_updatePermissionForScopeAccess() throws Exception {
-        service.updateDefinedPermission(null);
+        defaultApplicationService.updateDefinedPermission(null);
         verify(scopeAccessDao).updatePermissionForScopeAccess(null);
     }
 
     @Test
     public void getAvailableScopes_callsClientDAO_getAvailableScopes() throws Exception {
-        service.getAvailableScopes();
+        defaultApplicationService.getAvailableScopes();
         verify(clientDao).getAvailableScopes();
     }
 
     @Test(expected = NotFoundException.class)
     public void getAvailableScopes_throwsNotFoundException_whenNotScopesWhereFound() throws Exception {
         when(clientDao.getAvailableScopes()).thenReturn(null);
-        service.getAvailableScopes();
+        defaultApplicationService.getAvailableScopes();
     }
 
     @Test(expected = NotFoundException.class)
     public void addClientGroup_throwsNotFoundException_whenClientDoesNotExist() throws Exception {
         when(clientDao.getClientByClientId("id")).thenReturn(null);
-        service.addClientGroup(new ClientGroup("id",null,null,null));
+        defaultApplicationService.addClientGroup(new ClientGroup("id", null, null, null));
     }
 
     @Test(expected = NotFoundException.class)
     public void addClientGroup_throwsNotFoundException_whenCustomerDoesNotExist() throws Exception {
         when(clientDao.getClientByClientId("id")).thenReturn(new Application());
         when(customerDao.getCustomerByCustomerId("id")).thenReturn(null);
-        service.addClientGroup(new ClientGroup("id", "id", null, null));
+        defaultApplicationService.addClientGroup(new ClientGroup("id", "id", null, null));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void deleteClientGroup_throwsIllegalArgumentException_whenClientIdIsNull() throws Exception {
-        service.deleteClientGroup("id", null, "name");
+        defaultApplicationService.deleteClientGroup("id", null, "name");
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void deleteClientGroup_throwsIllegalArgumentException_whenClientIdIsBlank() throws Exception {
-        service.deleteClientGroup("id", "", "name");
+        defaultApplicationService.deleteClientGroup("id", "", "name");
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void deleteClientGroup_throwsIllegalArgumentException_whenGroupNameNull() throws Exception {
-        service.deleteClientGroup("id", "id", null);
+        defaultApplicationService.deleteClientGroup("id", "id", null);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void deleteClientGroup_throwsIllegalArgumentException_whenGroupNameIsBlank() throws Exception {
-        service.deleteClientGroup("id", "id", "");
+        defaultApplicationService.deleteClientGroup("id", "id", "");
     }
 
     @Test(expected = NotFoundException.class)
     public void deleteClientGroup_throwsNotFoundException_whenGroupIsNotFound() throws Exception {
         when(clientDao.getClientGroup("customerId", "clientId", "groupName")).thenReturn(null);
-        service.deleteClientGroup("customerId", "clientId", "groupName");
+        defaultApplicationService.deleteClientGroup("customerId", "clientId", "groupName");
     }
 
     @Test (expected = NotFoundException.class)
     public void checkAndGetPermission_permissionIsNull_throwsNotFoundException() throws Exception {
         when(clientDao.getClientByClientId(null)).thenReturn(new Application());
-        service.checkAndGetPermission(null, null, null);
+        defaultApplicationService.checkAndGetPermission(null, null, null);
     }
 
     @Test (expected = NotFoundException.class)
@@ -241,7 +243,7 @@ public class DefaultApplicationServiceTest {
         permission.setPermissionId("permissionId");
         when(scopeAccessDao.getPermissionByParentAndPermission(anyString(), any(Permission.class))).thenReturn(permission);
         when(clientDao.getClientByClientId(anyString())).thenReturn(client);
-        service.checkAndGetPermission("notMatch", "clientId", "permissionId");
+        defaultApplicationService.checkAndGetPermission("notMatch", "clientId", "permissionId");
     }
 
     @Test (expected = NotFoundException.class)
@@ -255,7 +257,7 @@ public class DefaultApplicationServiceTest {
         permission.setPermissionId("permissionId");
         when(scopeAccessDao.getPermissionByParentAndPermission(anyString(), any(Permission.class))).thenReturn(permission);
         when(clientDao.getClientByClientId(anyString())).thenReturn(client);
-        service.checkAndGetPermission("customerId", "notMatch", "permissionId");
+        defaultApplicationService.checkAndGetPermission("customerId", "notMatch", "permissionId");
     }
 
     @Test (expected = NotFoundException.class)
@@ -270,7 +272,7 @@ public class DefaultApplicationServiceTest {
         permission.setEnabled(false);
         when(scopeAccessDao.getPermissionByParentAndPermission(anyString(), any(Permission.class))).thenReturn(permission);
         when(clientDao.getClientByClientId(anyString())).thenReturn(client);
-        service.checkAndGetPermission("customerId", "clientId", "permissionId");
+        defaultApplicationService.checkAndGetPermission("customerId", "clientId", "permissionId");
     }
 
     @Test
@@ -285,13 +287,13 @@ public class DefaultApplicationServiceTest {
         permission.setEnabled(true);
         when(scopeAccessDao.getPermissionByParentAndPermission(anyString(), any(Permission.class))).thenReturn(permission);
         when(clientDao.getClientByClientId(anyString())).thenReturn(client);
-        DefinedPermission definedPermission = service.checkAndGetPermission("customerId", "clientId", "permissionId");
+        DefinedPermission definedPermission = defaultApplicationService.checkAndGetPermission("customerId", "clientId", "permissionId");
         assertThat("permission id", definedPermission.getPermissionId(), equalTo("permissionId"));
     }
 
     @Test
     public void updateClientRole_callsClientDao_updateClientRole() throws Exception {
-        service.updateClientRole(null);
+        defaultApplicationService.updateClientRole(null);
         verify(clientDao).updateClientRole(null);
     }
 
@@ -299,7 +301,7 @@ public class DefaultApplicationServiceTest {
     public void getClientRolesByClientId_callsClientDao_getClientRolesByClientId() throws Exception {
         List<ClientRole> roles = new ArrayList<ClientRole>();
         when(clientDao.getClientRolesByClientId("clientId")).thenReturn(roles);
-        service.getClientRolesByClientId("clientId");
+        defaultApplicationService.getClientRolesByClientId("clientId");
         verify(clientDao).getClientRolesByClientId("clientId");
     }
 
@@ -307,27 +309,27 @@ public class DefaultApplicationServiceTest {
     public void getAllClientRoles_callsClientDao_getAllClientRoles() throws Exception {
         List<ClientRole> roles = new ArrayList<ClientRole>();
         when(clientDao.getAllClientRoles(null)).thenReturn(roles);
-        service.getAllClientRoles(null);
+        defaultApplicationService.getAllClientRoles(null);
     }
 
     @Test
     public void getClientRoleByClientIdAndRoleName_callsClientDao_getClientRoleByClientIdAndRoleName() throws Exception {
         when(clientDao.getClientRoleByClientIdAndRoleName("clientId", "roleName")).thenReturn(new ClientRole());
-        service.getClientRoleByClientIdAndRoleName("clientId", "roleName");
+        defaultApplicationService.getClientRoleByClientIdAndRoleName("clientId", "roleName");
         verify(clientDao).getClientRoleByClientIdAndRoleName("clientId", "roleName");
     }
 
     @Test
     public void getClientRoleById_callsClientDao_getClientRoleById() throws Exception {
         when(clientDao.getClientRoleById("id")).thenReturn(new ClientRole());
-        service.getClientRoleById("id");
+        defaultApplicationService.getClientRoleById("id");
         verify(clientDao).getClientRoleById("id");
     }
 
     @Test
     public void getOpenStackService_callsClientDao_getOpenStackService() throws Exception {
         when(clientDao.getOpenStackServices()).thenReturn(new ArrayList<Application>());
-        service.getOpenStackServices();
+        defaultApplicationService.getOpenStackServices();
         verify(clientDao).getOpenStackServices();
     }
 
@@ -336,13 +338,13 @@ public class DefaultApplicationServiceTest {
         ClientGroup clientGroup = new ClientGroup("clientId", "customerId", "name", "type");
         when(userDao.getUserByUsername("username")).thenReturn(new User());
         when(customerDao.getCustomerByCustomerId("customerId")).thenReturn(null);
-        service.removeUserFromClientGroup("username", clientGroup);
+        defaultApplicationService.removeUserFromClientGroup("username", clientGroup);
     }
 
     @Test
     public void updateClient_callsClientDao_updateClient() throws Exception {
         Application client = new Application();
-        service.updateClient(client);
+        defaultApplicationService.updateClient(client);
         verify(clientDao).updateClient(client);
     }
 
@@ -351,7 +353,7 @@ public class DefaultApplicationServiceTest {
         ClientRole role = new ClientRole();
         role.setClientId("clientId");
         when(clientDao.getClientByClientId("clientId")).thenReturn(null);
-        service.addClientRole(role);
+        defaultApplicationService.addClientRole(role);
     }
 
     @Test(expected = DuplicateException.class)
@@ -361,7 +363,7 @@ public class DefaultApplicationServiceTest {
         role.setName("role");
         when(clientDao.getClientByClientId("clientId")).thenReturn(new Application());
         when(clientDao.getClientRoleByClientIdAndRoleName("clientId","role")).thenReturn(new ClientRole());
-        service.addClientRole(role);
+        defaultApplicationService.addClientRole(role);
     }
 
     @Test
@@ -371,14 +373,14 @@ public class DefaultApplicationServiceTest {
         role.setName("role");
         when(clientDao.getClientByClientId("clientId")).thenReturn(new Application());
         when(clientDao.getClientRoleByClientIdAndRoleName("clientId","role")).thenReturn(null);
-        service.addClientRole(role);
+        defaultApplicationService.addClientRole(role);
         verify(clientDao).addClientRole(anyString(), eq(role));
     }
 
     @Test (expected = NotFoundException.class)
     public void loadApplication_clientIsNull_throwsNotFoundException() throws Exception {
         when(clientDao.getClientByClientId(null)).thenReturn(null);
-        service.loadApplication(null);
+        defaultApplicationService.loadApplication(null);
     }
 
     @Test
@@ -386,7 +388,7 @@ public class DefaultApplicationServiceTest {
         Application client = new Application();
         client.setClientId("correctClientId");
         when(clientDao.getClientByClientId("clientId")).thenReturn(client);
-        Application applicationClient = service.loadApplication("clientId");
+        Application applicationClient = defaultApplicationService.loadApplication("clientId");
         assertThat("client id", applicationClient.getClientId(), equalTo("correctClientId"));
     }
 
@@ -397,7 +399,7 @@ public class DefaultApplicationServiceTest {
         TenantRole tenantRole = new TenantRole();
         tenantRoles.add(tenantRole);
         when(tenantDao.getAllTenantRolesForClientRole(role)).thenReturn(tenantRoles);
-        service.deleteClientRole(role);
+        defaultApplicationService.deleteClientRole(role);
         verify(tenantDao).deleteTenantRole(tenantRole);
     }
 
@@ -406,13 +408,19 @@ public class DefaultApplicationServiceTest {
         ClientRole role = new ClientRole();
         List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
         when(tenantDao.getAllTenantRolesForClientRole(role)).thenReturn(tenantRoles);
-        service.deleteClientRole(role);
+        defaultApplicationService.deleteClientRole(role);
         verify(clientDao).deleteClientRole(role);
     }
 
     @Test (expected = IllegalArgumentException.class)
+    public void getClientServices_clientIsNull_throwsIllegalArgumentException() throws Exception {
+        Application client = mock(Application.class);
+        defaultApplicationService.getClientServices(client);
+    }
+
+    @Test (expected = IllegalArgumentException.class)
     public void getClientServices_clientUniqueIdIsNull_throwsIllegalArgumentException() throws Exception {
-        service.getClientServices(new Application());
+        defaultApplicationService.getClientServices(new Application());
     }
 
     @Test
@@ -424,7 +432,7 @@ public class DefaultApplicationServiceTest {
         scopeAccess.setClientId("clientId");
         services.add(scopeAccess);
         when(scopeAccessDao.getScopeAccessesByParent("uniqueId")).thenReturn(services);
-        service.getClientServices(client);
+        defaultApplicationService.getClientServices(client);
         verify(clientDao).getClientByClientId("clientId");
     }
 
@@ -437,25 +445,25 @@ public class DefaultApplicationServiceTest {
         scopeAccess.setClientId("clientId");
         services.add(scopeAccess);
         when(scopeAccessDao.getScopeAccessesByParent("uniqueId")).thenReturn(services);
-        Applications clientServices = service.getClientServices(client);
+        Applications clientServices = defaultApplicationService.getClientServices(client);
         assertThat("total records", clientServices.getTotalRecords(), equalTo(1));
     }
 
     @Test (expected = IllegalArgumentException.class)
     public void addUserToClientGroup_usernameIsBlank_throwsIllegalArgument() throws Exception {
-        service.addUserToClientGroup("", null);
+        defaultApplicationService.addUserToClientGroup("", null);
     }
 
     @Test (expected = NotFoundException.class)
     public void addUserToClientGroup_userIsNull_throwsNotFoundException() throws Exception {
         when(userDao.getUserByUsername("username")).thenReturn(null);
-        service.addUserToClientGroup("username", null);
+        defaultApplicationService.addUserToClientGroup("username", null);
     }
 
     @Test (expected = UserDisabledException.class)
     public void addUserToClientGroup_userIsDisabled_throwsUserDisabled() throws Exception {
         when(userDao.getUserByUsername("username")).thenReturn(new User());
-        service.addUserToClientGroup("username", null);
+        defaultApplicationService.addUserToClientGroup("username", null);
     }
 
     @Test
@@ -466,7 +474,72 @@ public class DefaultApplicationServiceTest {
         user.setUniqueId("uniqueId");
         when(userDao.getUserByUsername("username")).thenReturn(user);
         doThrow(new DuplicateException()).when(clientDao).addUserToClientGroup("uniqueId", clientGroup);
-        service.addUserToClientGroup("username", clientGroup);
+        defaultApplicationService.addUserToClientGroup("username", clientGroup);
         verify(clientDao).addUserToClientGroup("uniqueId", clientGroup);
+    }
+
+    @Test (expected = NotFoundException.class)
+    public void delete_clientIdIsNull_throwsNotFoundException() throws Exception {
+        defaultApplicationService.delete(null);
+    }
+
+    @Test
+    public void delete_callsDeleteDefinedPermission() throws Exception {
+        Application client = new Application();
+        DefinedPermission definedPermission = new DefinedPermission();
+        List<DefinedPermission> definedPermissionList = new ArrayList<DefinedPermission>();
+        definedPermissionList.add(definedPermission);
+        when(clientDao.getClientByClientId("clientId")).thenReturn(client);
+        doReturn(definedPermissionList).when(spy).getDefinedPermissionsByClient(client);
+        spy.delete("clientId");
+        verify(spy).deleteDefinedPermission(definedPermission);
+    }
+
+    @Test
+    public void delete_callsDeleteClientRole() throws Exception {
+        Application client = new Application();
+        ClientRole clientRole = new ClientRole();
+        List<ClientRole> clientRoleList = new ArrayList<ClientRole>();
+        clientRoleList.add(clientRole);
+        when(clientDao.getClientByClientId("clientId")).thenReturn(client);
+        when(clientDao.getClientRolesByClientId("clientId")).thenReturn(clientRoleList);
+        spy.delete("clientId");
+        verify(spy).deleteClientRole(clientRole);
+    }
+
+    @Test
+    public void getDefinedPermissionsByClient_foundPermissions_returnsDefinedPermissionsList() throws Exception {
+        Application client = new Application();
+        client.setClientId("clientId");
+        client.setRCN("rcn");
+        client.setUniqueId("uniqueId");
+        Permission permission = new DefinedPermission();
+        List<Permission> permissionList = new ArrayList<Permission>();
+        permissionList.add(permission);
+        when(scopeAccessDao.getPermissionsByParentAndPermission(eq("uniqueId"), any(Permission.class))).thenReturn(permissionList);
+        List<DefinedPermission> result = defaultApplicationService.getDefinedPermissionsByClient(client);
+        assertThat("permission", result.get(0), equalTo(permission));
+        assertThat("list", result.size(), equalTo(1));
+    }
+
+    @Test
+    public void getClientGroupsForUserByClientIdAndType_groupNotNullAndFilterByClientAndClientIdNotMatch_returnsEmptyList() throws Exception {
+        String[] groupIds = {"groupId"};
+        ClientGroup group = new ClientGroup();
+        group.setClientId("notMatch");
+        group.setType("type");
+        when(userDao.getGroupIdsForUser("username")).thenReturn(groupIds);
+        when(clientDao.getClientGroupByUniqueId("groupId")).thenReturn(group);
+        List<ClientGroup> result = defaultApplicationService.getClientGroupsForUserByClientIdAndType("username", "clientId", "type");
+        assertThat("list", result.isEmpty(), equalTo(true));
+    }
+
+    @Test
+    public void getClientGroupsForUser_clientGroupIsNull_returnsEmptyList() throws Exception {
+        String[] groupIds = {"groupId"};
+        when(userDao.getGroupIdsForUser("username")).thenReturn(groupIds);
+        when(clientDao.getClientGroupByUniqueId("groupId")).thenReturn(null);
+        List<ClientGroup> result = defaultApplicationService.getClientGroupsForUser("username");
+        assertThat("list", result.isEmpty(), equalTo(true));
     }
 }

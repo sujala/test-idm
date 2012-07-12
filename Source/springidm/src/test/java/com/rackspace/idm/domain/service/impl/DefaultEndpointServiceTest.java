@@ -23,7 +23,7 @@ public class DefaultEndpointServiceTest {
     DefaultEndpointService defaultEndpointService;
     EndpointDao endpointDao;
     int baseUrlId = 1;
-    private String service = "service";
+    private String service = "defaultApplicationService";
     private String user = "user";
 
     @Before
@@ -35,7 +35,7 @@ public class DefaultEndpointServiceTest {
         CloudBaseUrl cloudBaseUrl2 = new CloudBaseUrl();
         cloudBaseUrl.setServiceName(service);
         CloudBaseUrl cloudBaseUrl3 = new CloudBaseUrl();
-        cloudBaseUrl.setServiceName("service");
+        cloudBaseUrl.setServiceName("defaultApplicationService");
         when(endpointDao.getBaseUrlById(baseUrlId)).thenReturn(cloudBaseUrl);
         List<CloudBaseUrl> cloudBaseUrls = new ArrayList<CloudBaseUrl>();
         cloudBaseUrls.add(cloudBaseUrl);
@@ -154,18 +154,18 @@ public class DefaultEndpointServiceTest {
 
     @Test
     public void getBaseUrlsByServiceId_callsEndpointDao_getBaseUrls() throws Exception {
-        defaultEndpointService.getBaseUrlsByServiceId("service");
+        defaultEndpointService.getBaseUrlsByServiceId("defaultApplicationService");
         verify(endpointDao).getBaseUrls();
     }
 
     @Test
     public void getBaseUrlsByServiceId_baseUrlOpenStackTypeEqualsServiceType_addsBaseUrl() throws Exception {
         CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
-        cloudBaseUrl.setOpenstackType("service");
+        cloudBaseUrl.setOpenstackType("defaultApplicationService");
         List<CloudBaseUrl> cloudBaseUrlList = new ArrayList<CloudBaseUrl>();
         cloudBaseUrlList.add(cloudBaseUrl);
         when(endpointDao.getBaseUrls()).thenReturn(cloudBaseUrlList);
-        List<CloudBaseUrl> result = defaultEndpointService.getBaseUrlsByServiceId("service");
+        List<CloudBaseUrl> result = defaultEndpointService.getBaseUrlsByServiceId("defaultApplicationService");
         assertThat("cloud base url", result.get(0), equalTo(cloudBaseUrl));
     }
 
@@ -176,7 +176,7 @@ public class DefaultEndpointServiceTest {
         List<CloudBaseUrl> cloudBaseUrlList = new ArrayList<CloudBaseUrl>();
         cloudBaseUrlList.add(cloudBaseUrl);
         when(endpointDao.getBaseUrls()).thenReturn(cloudBaseUrlList);
-        List<CloudBaseUrl> result = defaultEndpointService.getBaseUrlsByServiceId("service");
+        List<CloudBaseUrl> result = defaultEndpointService.getBaseUrlsByServiceId("defaultApplicationService");
         assertThat("list", result.size(), equalTo(0));
     }
 }

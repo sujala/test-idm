@@ -1488,5 +1488,88 @@ public class CloudMigrationServiceTest {
         verify(tenantService, never()).addTenantRoleToUser(any(User.class), any(TenantRole.class));
     }
 
+    @Test
+    public void migrateRoles_callsMigrationClient_getRoles() throws Exception {
+        RoleList roleList = new RoleList();
+        doReturn("adminToken").when(spy).getAdminToken();
+        when(client.getRoles("adminToken")).thenReturn(roleList);
+        spy.migrateRoles();
+        verify(client).getRoles("adminToken");
+    }
 
+    @Test
+    public void migrateRoles_callsAdminToken_throwsException_doesNothing() throws Exception {
+        spy.migrateRoles();
+        verify(spy).getAdminToken();
+    }
+
+    @Test
+    public void migrateRoles_callsApplicationService_getClientRoleById() throws Exception {
+        RoleList roleList = new RoleList();
+        Role role = new Role();
+        role.setId("id");
+        List<Role> roles = roleList.getRole();
+        roles.add(role);
+        doReturn("adminToken").when(spy).getAdminToken();
+        when(client.getRoles("adminToken")).thenReturn(roleList);
+        spy.migrateRoles();
+        verify(applicationService).getClientRoleById("id");
+    }
+
+    @Test
+    public void migrateRoles_foundClientRoleAndDescriptionMatchesAndNameMatches_doesNotUpdateClientRole() throws Exception {
+        RoleList roleList = new RoleList();
+        Role role = new Role();
+        role.setId("id");
+        role.setName("name");
+        role.setDescription("description");
+        List<Role> roles = roleList.getRole();
+        roles.add(role);
+        ClientRole clientRole = new ClientRole();
+        clientRole.setDescription("description");
+        clientRole.setName("name");
+        doReturn("adminToken").when(spy).getAdminToken();
+        when(client.getRoles("adminToken")).thenReturn(roleList);
+        when(applicationService.getClientRoleById("id")).thenReturn(clientRole);
+        spy.migrateRoles();
+        verify(applicationService, times(0)).updateClientRole(any(ClientRole.class));
+    }
+
+    @Test
+    public void migrateRoles_foundClientRoleAndDescriptionNotMatch_callsApplicationServiceUpdateClientRole() throws Exception {
+        RoleList roleList = new RoleList();
+        Role role = new Role();
+        role.setId("id");
+        role.setName("name");
+        role.setDescription("notDescription");
+        List<Role> roles = roleList.getRole();
+        roles.add(role);
+        ClientRole clientRole = new ClientRole();
+        clientRole.setDescription("description");
+        clientRole.setName("name");
+        doReturn("adminToken").when(spy).getAdminToken();
+        when(client.getRoles("adminToken")).thenReturn(roleList);
+        when(applicationService.getClientRoleById("id")).thenReturn(clientRole);
+        spy.migrateRoles();
+        verify(applicationService).updateClientRole(clientRole);
+    }
+
+    @Test
+    public void migrateRoles_foundClientRoleAndNameNotMatch_callsApplicationServiceUpdateClientRole() throws Exception {
+        RoleList roleList = new RoleList();
+        Role role = new Role();
+        role.setId("id");
+        role.setName("notName");
+        role.setDescription("description");
+        List<Role> roles = roleList.getRole();
+        roles.add(role);
+        ClientRole clientRole = new ClientRole();
+        clientRole.setDescription("description");
+        clientRole.setName("name");
+        doReturn("adminToken").when(spy).getAdminToken();
+        when(client.getRoles("adminToken")).thenReturn(roleList);
+        when(applicationService.getClientRoleById("id")).thenReturn(clientRole);
+        spy.migrateRoles();
+        verify(applicationService).updateClientRole(clientRole);
+    }
 }
