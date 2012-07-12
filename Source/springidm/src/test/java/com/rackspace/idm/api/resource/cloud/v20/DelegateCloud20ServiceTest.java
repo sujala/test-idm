@@ -12,10 +12,7 @@ import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.TokenService;
 import com.rackspace.idm.domain.service.UserService;
-import com.rackspace.idm.exception.ApiException;
-import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.DuplicateUsernameException;
-import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.exception.*;
 import com.sun.jersey.core.spi.factory.ResponseBuilderImpl;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
 import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
@@ -2743,7 +2740,8 @@ public class DelegateCloud20ServiceTest {
     public void impersonateUser_validCloudImpersonateFalse_throwsBadRequestException() throws Exception {
         AuthenticateResponse authenticateResponse = new AuthenticateResponse();
         authenticateResponse.setToken(new Token());
-        org.openstack.docs.identity.api.v2.User user = mock(org.openstack.docs.identity.api.v2.User.class);
+        org.openstack.docs.identity.api.v2.User user = new org.openstack.docs.identity.api.v2.User();
+        user.setEnabled(true);
         doReturn(authenticateResponse).when(spy).getXAuthToken_byPassword(null, null);
         doReturn(user).when(spy).getCloudUserByName(null,null);
         doReturn(new RoleList()).when(spy).getGlobalRolesForCloudUser(null,null);
@@ -2755,15 +2753,29 @@ public class DelegateCloud20ServiceTest {
     public void impersonateUser_validCloudImpersonateTrue_returnsUserXAuthToken() throws Exception {
         AuthenticateResponse authenticateResponse = new AuthenticateResponse();
         authenticateResponse.setToken(new Token());
-        org.openstack.docs.identity.api.v2.User user = mock(org.openstack.docs.identity.api.v2.User.class);
+        org.openstack.docs.identity.api.v2.User user = new org.openstack.docs.identity.api.v2.User();
+        user.setEnabled(true);
         doReturn(authenticateResponse).when(spy).getXAuthToken_byPassword(null, null);
         doReturn(user).when(spy).getCloudUserByName(null,null);
         doReturn(new RoleList()).when(spy).getGlobalRolesForCloudUser(null,null);
         doReturn(true).when(spy).isValidCloudImpersonatee(any(RoleList.class));
         doReturn(new ApiKeyCredentials()).when(spy).getUserApiCredentials(null,null);
         doReturn(authenticateResponse).when(spy).getXAuthToken(null,null);
-
         assertThat("token", spy.impersonateUser(null, null, null), equalTo(null));
+    }
+
+    @Test(expected = ForbiddenException.class)
+    public void impersonateUser_withInvalidUser_throwsForbiddenException() throws Exception {
+        AuthenticateResponse response = new AuthenticateResponse();
+        Token token = new Token();
+        token.setId("token");
+        response.setToken(token);
+        doReturn(response).when(spy).getXAuthToken_byPassword("impersonator", "password");
+        org.openstack.docs.identity.api.v2.User user = new org.openstack.docs.identity.api.v2.User();
+        user.setEnabled(false);
+        doReturn(user).when(spy).getCloudUserByName("user","token");
+        doReturn(new RoleList()).when(spy).getGlobalRolesForCloudUser(any(String.class),any(String.class));
+        spy.impersonateUser("user", "impersonator", "password");
     }
 
     @Test
