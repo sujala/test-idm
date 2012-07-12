@@ -545,6 +545,11 @@ public class DefaultApplicationService implements ApplicationService {
 
     @Override
     public void addClientRole(ClientRole role) {
+        addClientRole(role, clientDao.getNextRoleId());
+    }
+
+    @Override
+    public void addClientRole(ClientRole role, String roleId) {
         logger.info("Adding Client Role: {}", role);
         Application client = clientDao.getClientByClientId(role.getClientId());
         if (client == null) {
@@ -558,7 +563,7 @@ public class DefaultApplicationService implements ApplicationService {
             logger.warn(errMsg);
             throw new DuplicateException(errMsg);
         }
-        role.setId(clientDao.getNextRoleId());
+        role.setId(roleId);
         clientDao.addClientRole(client.getUniqueId(), role);
         logger.info("Added Client Role: {}", role);
     }

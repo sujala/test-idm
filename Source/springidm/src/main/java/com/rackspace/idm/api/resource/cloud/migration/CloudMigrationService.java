@@ -108,6 +108,39 @@ public class CloudMigrationService {
         addOrUpdateEndpointTemplates(getAdminToken());
     }
 
+    public void migrateRoles() {
+        RoleList roles;
+        try {
+            String adminToken = getAdminToken();
+            roles = client.getRoles(adminToken);
+        }
+        catch (Exception ex) {
+            roles = new RoleList();
+        }
+
+        for (Role role : roles.getRole()) {
+            ClientRole clientRole = applicationService.getClientRoleById(role.getId());
+
+            if (clientRole == null) {
+                clientRole = new ClientRole();
+                clientRole.setId(role.getId());
+                clientRole.setDescription(role.getDescription());
+                clientRole.setName(role.getName());
+                clientRole.setClientId(config.getString("cloudAuth.clientId"));
+
+                applicationService.addClientRole(clientRole, clientRole.getId());
+            } else { 
+                if (!role.getDescription().equals(clientRole.getDescription()) ||
+                    !role.getName().equals(clientRole.getName())) {
+                    clientRole.setDescription(role.getDescription());
+                    clientRole.setName(role.getName());
+
+                    applicationService.updateClientRole(clientRole);
+                }
+            }
+        }
+    }
+
     public void migrateGroups() throws Exception {
         addOrUpdateGroups(getAdminToken());
     }

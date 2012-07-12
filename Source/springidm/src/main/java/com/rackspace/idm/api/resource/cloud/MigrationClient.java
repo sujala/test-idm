@@ -214,6 +214,16 @@ public class MigrationClient {
         return unmarshaller.unmarshal(response, BaseURLList.class);
     }
 
+    public RoleList getRoles(String adminToken) throws URISyntaxException, HttpException, IOException, JAXBException {
+        String response = client.url(cloud20Host + "OS-KSADM/roles")
+            .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML)
+            .header(X_AUTH_TOKEN, adminToken)
+            .get();
+
+    	ObjectMarshaller<RoleList> unmarshaller = new ObjectMarshaller<RoleList>();
+        return unmarshaller.unmarshal(response, RoleList.class);
+    }
+
     public EndpointTemplateList getEndpointTemplates(String adminToken) throws URISyntaxException, HttpException, IOException, JAXBException {
         String response = client.url(cloud20Host + "OS-KSCATALOG/endpointTemplates")
             .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML)
