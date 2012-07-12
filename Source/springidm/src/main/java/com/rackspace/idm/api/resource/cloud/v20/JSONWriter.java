@@ -214,8 +214,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
                 endpoints.add(templateItem);
             }
             jsonText = JSONValue.toJSONString(endpointTemplate);
-        } else if (object.getClass().equals(
-            CredentialType.class) || object.getClass().equals(ApiKeyCredentials.class)) {
+        } else if (object instanceof CredentialType) {
             CredentialType cred = (CredentialType) object;
             if (cred instanceof ApiKeyCredentials) {
                 ApiKeyCredentials creds = (ApiKeyCredentials) cred;
@@ -224,7 +223,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
                 SecretQA secrets = (SecretQA) object;
                 jsonText = JSONValue.toJSONString(getSecretQA(secrets));
             } else if( cred instanceof PasswordCredentialsBase){
-                PasswordCredentialsRequiredUsername creds = (PasswordCredentialsRequiredUsername) cred;
+                PasswordCredentialsBase creds = (PasswordCredentialsBase) cred;
                 jsonText = JSONValue.toJSONString(getPasswordCredentials(creds));
             } else {
                 throw new BadRequestException("Credential Type must be API Key Credentials, Password Credentials, or SecretQA.");

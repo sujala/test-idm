@@ -27,7 +27,7 @@ public class PackageClassDiscoverer {
     public static Set<Class<?>> findClassesIn(String... packages) throws ClassNotFoundException, IOException {
         Set<Class<?>> classes = new HashSet<Class<?>>();
         for (String thePackage : packages) {
-            String resourcePath = "classpath:" + thePackage.replace(".", "/") + "/*.class";
+            String resourcePath = "classpath*:" + thePackage.replace(".", "/") + "/*.class";
             loadResources(resourcePath, classes, metadataReaderFactory);
         }
 
