@@ -368,7 +368,7 @@
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
-            <version>4.1.2</version>
+            <version>4.2.1</version>
         </dependency>
         <dependency>
             <groupId>org.hamcrest</groupId>
@@ -848,6 +848,19 @@
                 </plugins>
             </build>
         </profile>
+
+        <!--<profile>-->
+            <!--<id>local-dev</id>-->
+            <!--<activation>-->
+                <!--<property>-->
+                    <!--<name>local-dev</name>-->
+                <!--</property>-->
+                <!--<activeByDefault>false</activeByDefault>-->
+            <!--</activation>-->
+            <!--<properties>-->
+                <!--<ldap.isTest>true</ldap.isTest>-->
+            <!--</properties>-->
+        <!--</profile>-->
     </profiles>
 
     <repositories>
@@ -1367,6 +1380,32 @@
                                 </resource>
                                 <resource>
                                     <directory>${basedir}/src/main/config/DEV</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-local-dev-resources</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/target/config/LOCAL-DEV</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <filtering>true</filtering>
+                                    <directory>${basedir}/src/main/config</directory>
+                                    <includes>
+                                        <include>base.idm.properties</include>
+                                        <include>log4j.xml</include>
+                                        <include>rsa_api.properties</include>
+                                        <include>sdconf.rec</include>
+                                        <include>securid</include>
+                                    </includes>
+                                </resource>
+                                <resource>
+                                    <directory>${basedir}/src/main/config/LOCAL-DEV</directory>
                                 </resource>
                             </resources>
                         </configuration>
