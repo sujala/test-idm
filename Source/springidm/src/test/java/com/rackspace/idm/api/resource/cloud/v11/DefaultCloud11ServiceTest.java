@@ -2521,30 +2521,31 @@ public class DefaultCloud11ServiceTest {
         assertThat("response code", responseBuilder.build().getStatus(), org.hamcrest.Matchers.equalTo(200));
     }
 
-    @Test(expected = BadRequestException.class)
+    @Test
     public void getExtension_blankExtensionAlias_throwsBadRequestException() throws IOException{
-        defaultCloud11Service.getExtension(httpHeaders, "");
-        assertTrue("expecting exception", false);
-    }
-
-    @Test(expected = NotFoundException.class)
-    public void getExtension_withCurrentExtensions_throwsNotFoundException() throws IOException{  //There are no extensions at this time.
-        defaultCloud11Service.extensions(httpHeaders);
-        defaultCloud11Service.getExtension(httpHeaders, "123");
-        assertTrue("expecting exception", false);
-
-    }
-
-    @Test(expected = NotFoundException.class)
-    public void getExtension_withExtensionMap_throwsNotFoundException() throws IOException{
-        defaultCloud11Service.getExtension(httpHeaders, "123");
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.getExtension(httpHeaders, "123");
+        Response.ResponseBuilder responseBuilder = defaultCloud11Service.getExtension(httpHeaders, "");
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(400));
     }
 
-    @Test(expected = NotFoundException.class)
+    @Test
+    public void getExtension_withCurrentExtensions_throwsNotFoundException() throws IOException{  //There are no extensions at this time.
+        defaultCloud11Service.extensions(httpHeaders);
+        Response.ResponseBuilder responseBuilder = defaultCloud11Service.getExtension(httpHeaders, "123");
+        assertThat("response status", responseBuilder.build().getStatus(), equalTo(404));
+
+    }
+
+    @Test
+    public void getExtension_withExtensionMap_throwsNotFoundException() throws IOException{
+        defaultCloud11Service.getExtension(httpHeaders, "123");
+        Response.ResponseBuilder responseBuilder = defaultCloud11Service.getExtension(httpHeaders, "123");
+        assertThat("response status", responseBuilder.build().getStatus(), equalTo(404));
+    }
+
+    @Test
     public void getExtension_invalidExtension_throwsNotFoundException() throws IOException{
-        defaultCloud11Service.getExtension(httpHeaders, "INVALID");
+        Response.ResponseBuilder responseBuilder = defaultCloud11Service.getExtension(httpHeaders, "INVALID");
+        assertThat("response status", responseBuilder.build().getStatus(), equalTo(404));
     }
 
     @Test(expected = CloudAdminAuthorizationException.class)
