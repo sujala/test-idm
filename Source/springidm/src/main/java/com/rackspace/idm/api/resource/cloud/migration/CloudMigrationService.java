@@ -245,11 +245,11 @@ public class CloudMigrationService {
             com.rackspacecloud.docs.auth.api.v1.User user11;
             User user;
             try {
-                user11 = client.getUserTenantsBaseUrls(config.getString("ga.username"), config.getString("ga.password"), username);
                 user = client.getUser(adminToken, username);
+                user11 = client.getUserTenantsBaseUrls(config.getString("ga.username"), config.getString("ga.password"), username);
             }
             catch (Exception ex) {
-                throw new NotFoundException("User with username " + username + " could not be found.");
+                throw new NotFoundException("User with username " + username + " could not be found." + ex.getMessage());
             }
             String legacyId = user.getId();
 
