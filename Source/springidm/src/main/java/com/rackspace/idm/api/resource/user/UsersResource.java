@@ -92,9 +92,11 @@ public class UsersResource extends ParentResource {
         @HeaderParam("X-Auth-Token") String authHeader, com.rackspace.api.idm.v1.User user) throws IOException {
 
         userValidator.validateUsername(user.getUsername());
-        if(config.getBoolean("useCloudAuth")){
-            userValidator.checkCloudAuthForUsername(user.getUsername());
-        }
+        //TODO enable if we want to check cloud auth for username conflicts
+        //By adding this we can no longer create service accounts that already exist in Cloud Auth
+//        if(config.getBoolean("useCloudAuth")){
+//            userValidator.checkCloudAuthForUsername(user.getUsername());
+//        }
 
         ScopeAccess scopeAccess = scopeAccessService.getAccessTokenByAuthHeader(authHeader);
         authorizationService.authorizeIdmSuperAdminOrRackspaceClient(scopeAccess);

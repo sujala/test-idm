@@ -106,6 +106,13 @@ public class MigrationResource {
     }
 
     @POST
+    @Path("cloud/roles")
+    public Response migrateRoles() throws Exception {
+        cloudMigrationService.migrateRoles();
+        return Response.status(Response.Status.ACCEPTED).build();
+    }
+
+    @POST
     @Path("cloud/groups")
     public Response migrateGroups() throws Exception {
         cloudMigrationService.migrateGroups();

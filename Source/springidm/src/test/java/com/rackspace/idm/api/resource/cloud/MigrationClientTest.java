@@ -118,6 +118,13 @@ public class MigrationClientTest {
         BaseURLList baseURLList = client.getBaseUrls(username, password);
         assertThat("baseURLList", baseURLList, notNullValue());
     }
+   
+    @Test
+    public void getRoles_validToken_returnsRoles() throws URISyntaxException, HttpException, IOException, JAXBException {
+        String token = getAdminToken();
+        RoleList roles = client.getRoles(token);
+        assertThat("roles", roles, notNullValue());
+    }
 
     @Test
     public void getEndpoints() throws URISyntaxException, HttpException, IOException, JAXBException {

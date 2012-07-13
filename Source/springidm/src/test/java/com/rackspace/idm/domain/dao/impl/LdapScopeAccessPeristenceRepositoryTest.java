@@ -31,7 +31,7 @@ import static org.mockito.Mockito.any;
  * Time: 5:20 PM
  * To change this template use File | Settings | File Templates.
  */
-public class LdapScopeAccessPeristenceRepositoryTest {
+public class LdapScopeAccessPeristenceRepositoryTest extends InMemoryLdapIntegrationTest{
 
     Configuration config = mock(Configuration.class);
     LdapConnectionPools ldapConnectionPools = mock(LdapConnectionPools.class);

@@ -38,6 +38,8 @@ public class DefaultUserServiceTest {
     private PasswordComplexityService passwordComplexityService;
     private ScopeAccessService scopeAccessService;
     private AuthorizationService authorizationService;
+    private TenantService tenantService;
+    private EndpointService endpointService;
 
     @Before
     public void setUp() throws Exception {
@@ -50,11 +52,15 @@ public class DefaultUserServiceTest {
         passwordComplexityService = mock(PasswordComplexityService.class);
         scopeAccessService = mock(ScopeAccessService.class);
         authorizationService = mock(AuthorizationService.class);
+        tenantService = mock(TenantService.class);
+        endpointService = mock(EndpointService.class);
 
         defaultUserService = new DefaultUserService(userDao, authDao, scopeAccessDao, applicationService, config, tokenService, passwordComplexityService);
 
         defaultUserService.setAuthorizationService(authorizationService);
         defaultUserService.setScopeAccessService(scopeAccessService);
+        defaultUserService.setTenantService(tenantService);
+        defaultUserService.setEndpointService(endpointService);
     }
 
     @Test
@@ -79,9 +85,22 @@ public class DefaultUserServiceTest {
     }
 
     @Test
+    public void hasSubUsers_noUsersList_returnsFalse() throws Exception {
+        User user = new User();
+        Users users = new Users();
+        when(userDao.getUserById("id")).thenReturn(user);
+        when(userDao.getUsersByDomainId(anyString())).thenReturn(users);
+        boolean hasUsers = defaultUserService.hasSubUsers("id");
+        assertThat("User has subusers", hasUsers, equalTo(false));
+    }
+
+    @Test
     public void hasSubUsers_NoUsersWithGivenDomainId_emptyList_returnsFalse() throws Exception {
-        when(userDao.getUserById("id")).thenReturn(new User());
-        when(userDao.getUsersByDomainId(anyString())).thenReturn(new Users());
+        User user = new User();
+        Users users = new Users();
+        users.setUsers(new ArrayList<User>());
+        when(userDao.getUserById("id")).thenReturn(user);
+        when(userDao.getUsersByDomainId(anyString())).thenReturn(users);
         boolean hasUsers = defaultUserService.hasSubUsers("id");
         assertThat("User has subusers", hasUsers, equalTo(false));
     }
@@ -132,6 +151,51 @@ public class DefaultUserServiceTest {
         when(authorizationService.hasDefaultUserRole(scopeAccess)).thenReturn(true);
         boolean hasUsers = defaultUserService.hasSubUsers("id");
         assertThat("User has subusers", hasUsers, equalTo(true));
+    }
+
+    @Test
+    public void hasSubUsers_HasSubUsersAndNotDefaultUser_returnsFalse() throws Exception {
+        User userAdmin = new User();
+        userAdmin.setDomainId("domainId");
+        when(userDao.getUserById("id")).thenReturn(userAdmin);
+        Users users = new Users();
+        ArrayList<User> userArrayList = new ArrayList<User>();
+        User defaultUser = new User();
+        defaultUser.setDomainId("domainId");
+        userArrayList.add(defaultUser);
+        User defaultUser2 = new User();
+        defaultUser2.setDomainId("domainId");
+        userArrayList.add(defaultUser2);
+        users.setUsers(userArrayList);
+        when(userDao.getUsersByDomainId(anyString())).thenReturn(users);
+        ScopeAccess scopeAccess = new ScopeAccess();
+        ArrayList<ScopeAccess> list = new ArrayList<ScopeAccess>();
+        list.add(scopeAccess);
+        when(scopeAccessDao.getScopeAccessListByUserId(anyString())).thenReturn(list);
+        when(authorizationService.hasDefaultUserRole(scopeAccess)).thenReturn(false);
+        boolean hasUsers = defaultUserService.hasSubUsers("id");
+        assertThat("User has subusers", hasUsers, equalTo(false));
+    }
+
+    @Test
+    public void hasSubUsers_HasNoSubUsers_returnsFalse() throws Exception {
+        User userAdmin = new User();
+        userAdmin.setDomainId("domainId");
+        when(userDao.getUserById("id")).thenReturn(userAdmin);
+        Users users = new Users();
+        ArrayList<User> userArrayList = new ArrayList<User>();
+        User defaultUser = new User();
+        defaultUser.setDomainId("domainId");
+        userArrayList.add(defaultUser);
+        User defaultUser2 = new User();
+        defaultUser2.setDomainId("domainId");
+        userArrayList.add(defaultUser2);
+        users.setUsers(userArrayList);
+        when(userDao.getUsersByDomainId(anyString())).thenReturn(users);
+        ArrayList<ScopeAccess> list = new ArrayList<ScopeAccess>();
+        when(scopeAccessDao.getScopeAccessListByUserId(anyString())).thenReturn(list);
+        boolean hasUsers = defaultUserService.hasSubUsers("id");
+        assertThat("User has subusers", hasUsers, equalTo(false));
     }
 
     @Test
@@ -635,6 +699,21 @@ public class DefaultUserServiceTest {
         defaultUserService.setUserPassword("userId", passwordCredentials, scopeAccess);
     }
 
+    @Test (expected = BadRequestException.class)
+    public void setUserPassword_currentPasswordIsBlank_throwsBadRequest() throws Exception {
+        PasswordCredentials passwordCredentials = mock(PasswordCredentials.class);
+        ScopeAccess scopeAccess = mock(ScopeAccess.class);
+        Password password = new Password();
+        password.setValue("aZ23Afdkadzsd");
+        Password password1 = new Password();
+        password1.setValue("");
+        when(passwordCredentials.getNewPassword()).thenReturn(password);
+        when(passwordCredentials.isVerifyCurrentPassword()).thenReturn(true);
+        when(passwordCredentials.getCurrentPassword()).thenReturn(password1);
+        when(userDao.getUserById("userId")).thenReturn(new User());
+        defaultUserService.setUserPassword("userId", passwordCredentials, scopeAccess);
+    }
+
     @Test (expected = NotAuthenticatedException.class)
     public void setUserPassword_notAuthenticated_throwsNotAuthenticated() throws Exception {
         User user = new User();
@@ -756,12 +835,28 @@ public class DefaultUserServiceTest {
     }
 
     @Test
+    public void isMigratedUser_userIsNull_returnsFalse() throws Exception {
+        boolean result = defaultUserService.isMigratedUser(null);
+        assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
+    public void isMigratedUser_userInMigrationIsNull_returnsFalse() throws Exception {
+        User user = new User();
+        boolean result = defaultUserService.isMigratedUser(user);
+        assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
     public void setPasswordIfNecessary_emptyPassword_setsNewPassword() throws Exception {
         Password password = new Password();
         User user = new User();
         user.setEmail("email@email.com");
         user.setUsername("username");
         user.setPasswordObj(password);
+        user.setEnabled(true);
+        user.setId("id");
+        user.setDomainId("domainId");
         when(userDao.isUsernameUnique("username")).thenReturn(true);
         defaultUserService.addUser(user);
         assertThat("password", user.getPasswordObj().toString().length(), not(0));
@@ -876,5 +971,90 @@ public class DefaultUserServiceTest {
         when(config.getInt("ldap.paging.limit.default")).thenReturn(25);
         int result = defaultUserService.getLdapPagingLimitDefault();
         assertThat("ldap limit default", result, equalTo(25));
+    }
+
+    @Test
+    public void addBaseUrlToUser_callsEndpointService_getBaseUrlById() throws Exception {
+        User user = new User();
+        user.setNastId("nastId");
+        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
+        cloudBaseUrl.setOpenstackType("NAST");
+        Tenant tenant = new Tenant();
+        tenant.setBaseUrlIds(new String[0]);
+        when(endpointService.getBaseUrlById(1)).thenReturn(cloudBaseUrl);
+        when(tenantService.getTenant("nastId")).thenReturn(tenant);
+        defaultUserService.addBaseUrlToUser(1, user);
+        verify(endpointService).getBaseUrlById(1);
+    }
+
+    @Test
+    public void addBaseUrlToUser_callsTenantService_getTenant() throws Exception {
+        User user = new User();
+        user.setMossoId(1);
+        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
+        cloudBaseUrl.setOpenstackType("MOSSO");
+        Tenant tenant = new Tenant();
+        tenant.setBaseUrlIds(new String[0]);
+        when(endpointService.getBaseUrlById(1)).thenReturn(cloudBaseUrl);
+        when(tenantService.getTenant("1")).thenReturn(tenant);
+        defaultUserService.addBaseUrlToUser(1, user);
+        verify(tenantService).getTenant("1");
+    }
+
+    @Test (expected = BadRequestException.class)
+    public void addBaseUrlToUser_tenantBaseUrlIdMatchesCloudBaseUrlId_throwsBadRequestException() throws Exception {
+        User user = new User();
+        user.setMossoId(1);
+        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
+        cloudBaseUrl.setOpenstackType("MOSSO");
+        cloudBaseUrl.setBaseUrlId(1);
+        Tenant tenant = new Tenant();
+        String[] ids = {"1"};
+        tenant.setBaseUrlIds(ids);
+        when(endpointService.getBaseUrlById(1)).thenReturn(cloudBaseUrl);
+        when(tenantService.getTenant("1")).thenReturn(tenant);
+        defaultUserService.addBaseUrlToUser(1, user);
+    }
+
+    @Test
+    public void addBaseUrlToUser_callsTenantService_updateTenant() throws Exception {
+        User user = new User();
+        user.setMossoId(1);
+        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
+        cloudBaseUrl.setOpenstackType("MOSSO");
+        cloudBaseUrl.setBaseUrlId(2);
+        Tenant tenant = new Tenant();
+        String[] ids = {"1"};
+        tenant.setBaseUrlIds(ids);
+        when(endpointService.getBaseUrlById(1)).thenReturn(cloudBaseUrl);
+        when(tenantService.getTenant("1")).thenReturn(tenant);
+        defaultUserService.addBaseUrlToUser(1, user);
+        verify(tenantService).updateTenant(tenant);
+    }
+
+    @Test
+    public void removeBaseUrlFromUser_callsEndpointService_getBaseUrlById() throws Exception {
+        User user = new User();
+        user.setNastId("nastId");
+        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
+        cloudBaseUrl.setOpenstackType("NAST");
+        Tenant tenant = new Tenant();
+        when(endpointService.getBaseUrlById(1)).thenReturn(cloudBaseUrl);
+        when(tenantService.getTenant("nastId")).thenReturn(tenant);
+        defaultUserService.removeBaseUrlFromUser(1, user);
+        verify(endpointService).getBaseUrlById(1);
+    }
+
+    @Test
+    public void removeBaseUrlFromUser_callsTenantService_updateTenant() throws Exception {
+        User user = new User();
+        user.setMossoId(1);
+        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
+        cloudBaseUrl.setOpenstackType("MOSSO");
+        Tenant tenant = new Tenant();
+        when(endpointService.getBaseUrlById(1)).thenReturn(cloudBaseUrl);
+        when(tenantService.getTenant("1")).thenReturn(tenant);
+        defaultUserService.removeBaseUrlFromUser(1, user);
+        verify(tenantService).updateTenant(tenant);
     }
 }

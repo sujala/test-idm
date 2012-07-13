@@ -51,7 +51,7 @@
         <init-param>
             <param-name>Headers</param-name>
             <param-value>
-                Vary: X-Auth-Token, X-Auth-Key, X-Storage-User, X-Storage-Pass, X-Auth-User
+                Vary: Accept, Accept-Encoding, X-Auth-Token, X-Auth-Key, X-Storage-User, X-Storage-Pass, X-Auth-User
             </param-value>
         </init-param>
     </filter>

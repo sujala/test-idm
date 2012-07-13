@@ -72,6 +72,8 @@ public interface ApplicationService {
     List<Application> getAvailableScopes();
     
     void addClientRole(ClientRole role);
+
+    void addClientRole(ClientRole role, String roleId);
     
     void deleteClientRole(ClientRole role);
     

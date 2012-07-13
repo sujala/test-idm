@@ -1,5 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.migration;
 
+import javax.xml.namespace.QName;
+
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
@@ -108,6 +110,39 @@ public class CloudMigrationService {
         addOrUpdateEndpointTemplates(getAdminToken());
     }
 
+    public void migrateRoles() {
+        RoleList roles;
+        try {
+            String adminToken = getAdminToken();
+            roles = client.getRoles(adminToken);
+        }
+        catch (Exception ex) {
+            roles = new RoleList();
+        }
+
+        for (Role role : roles.getRole()) {
+            ClientRole clientRole = applicationService.getClientRoleById(role.getId());
+
+            if (clientRole == null) {
+                clientRole = new ClientRole();
+                clientRole.setId(role.getId());
+                clientRole.setDescription(role.getDescription());
+                clientRole.setName(role.getName());
+                clientRole.setClientId(config.getString("cloudAuth.clientId"));
+
+                applicationService.addClientRole(clientRole, clientRole.getId());
+            } else { 
+                if (!role.getDescription().equals(clientRole.getDescription()) ||
+                    !role.getName().equals(clientRole.getName())) {
+                    clientRole.setDescription(role.getDescription());
+                    clientRole.setName(role.getName());
+
+                    applicationService.updateClientRole(clientRole);
+                }
+            }
+        }
+    }
+
     public void migrateGroups() throws Exception {
         addOrUpdateGroups(getAdminToken());
     }
@@ -212,11 +247,11 @@ public class CloudMigrationService {
             com.rackspacecloud.docs.auth.api.v1.User user11;
             User user;
             try {
-                user11 = client.getUserTenantsBaseUrls(config.getString("ga.username"), config.getString("ga.password"), username);
                 user = client.getUser(adminToken, username);
+                user11 = client.getUserTenantsBaseUrls(config.getString("ga.username"), config.getString("ga.password"), username);
             }
             catch (Exception ex) {
-                throw new NotFoundException("User with username " + username + " could not be found.");
+                throw new NotFoundException("User with username " + username + " could not be found." + ex.getMessage());
             }
             String legacyId = user.getId();
 
@@ -274,12 +309,18 @@ public class CloudMigrationService {
 
             for (BaseURLRef baseUrlRef : user11.getBaseURLRefs().getBaseURLRef()) {
                 CloudBaseUrl cloudBaseUrl = endpointService.getBaseUrlById(baseUrlRef.getId());
+
+                int baseUrlId = baseUrlRef.getId();
+                if (isUkCloudRegion()) {
+                    baseUrlId += UK_BASEURL_OFFSET;
+                }
+
                 if ("MOSSO".equals(cloudBaseUrl.getBaseUrlType())) {
-                    mossoBaseUrlRef.add(String.valueOf(baseUrlRef.getId()));
+                    mossoBaseUrlRef.add(String.valueOf(baseUrlId));
                 }
 
                 if ("NAST".equals(cloudBaseUrl.getBaseUrlType())) {
-                    nastBaseUrlRef.add(String.valueOf(baseUrlRef.getId()));
+                    nastBaseUrlRef.add(String.valueOf(baseUrlId));
                 }
             }
 
@@ -309,6 +350,17 @@ public class CloudMigrationService {
         }
         throw new NotAuthenticatedException("Not Authorized.");
     }
+
+	private String getDefaultRegion(User user) {
+		String defaultRegion = null;
+		QName defaultRegionQName = new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","defaultRegion");
+		for (QName qname : user.getOtherAttributes().keySet()) {
+		    if (qname.equals(defaultRegionQName)) {
+		        defaultRegion = user.getOtherAttributes().get(qname);
+		    }
+		}
+		return defaultRegion;
+	}
 
     List<String> getSubUsers(User user, String apiKey, String password, RoleList roles) throws Exception {
         client.setCloud20Host(config.getString("cloudAuth20url"));
@@ -647,6 +699,11 @@ public class CloudMigrationService {
 
         if (domainId != null) {
             newUser.setDomainId(domainId);
+        }
+
+        String defaultRegion = getDefaultRegion(user);
+        if (defaultRegion != null) {
+            newUser.setRegion(defaultRegion);
         }
 
         userService.addUser(newUser);
