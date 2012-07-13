@@ -8,6 +8,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.conn.scheme.PlainSocketFactory;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.conn.ssl.SSLSocketFactory;
@@ -58,11 +59,11 @@ public class AtomHopperClient {
                 }
             });
             Scheme httpsScheme = new Scheme("https", 443, sslsf);
-            SchemeRegistry schemeRegistry = new SchemeRegistry();
-            schemeRegistry.register(httpsScheme);
+            Scheme httpScheme = new Scheme("http", 80, PlainSocketFactory.getSocketFactory());
 
-            ClientConnectionManager cm = new SingleClientConnManager(new BasicHttpParams(), schemeRegistry);
-            httpClient = new DefaultHttpClient(cm);
+            httpClient = new DefaultHttpClient();
+            httpClient.getConnectionManager().getSchemeRegistry().register(httpScheme);
+            httpClient.getConnectionManager().getSchemeRegistry().register(httpsScheme);
         } catch (Exception e) {
             logger.error("unabled to setup SSL trust manager: {}", e.getMessage());
             httpClient = new DefaultHttpClient();
