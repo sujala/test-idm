@@ -161,7 +161,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     @Override
     public boolean authorizeCloudServiceAdmin(ScopeAccess scopeAccess) {
-        logger.debug("Authorizing {} as cloud service admin", scopeAccess);
+        logger.debug("Authorizing {} as cloud defaultApplicationService admin", scopeAccess);
 
         if (scopeAccess == null || ((HasAccessToken) scopeAccess).isAccessTokenExpired(new DateTime())) {
             return false;
@@ -174,7 +174,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
         boolean authorized = this.tenantDao.doesScopeAccessHaveTenantRole(scopeAccess, CLOUD_SERVICE_ADMIN_ROLE);
 
-        logger.debug("Authorized {} as cloud service admin - {}", scopeAccess, authorized);
+        logger.debug("Authorized {} as cloud defaultApplicationService admin - {}", scopeAccess, authorized);
         return authorized;
     }
 

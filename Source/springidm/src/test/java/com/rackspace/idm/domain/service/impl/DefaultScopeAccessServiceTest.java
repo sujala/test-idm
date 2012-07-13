@@ -1494,4 +1494,26 @@ public class DefaultScopeAccessServiceTest {
             assertThat("exception message", ex.getMessage(), equalTo("Unable to authenticate user with credentials provided."));
         }
     }
+
+    @Test (expected = NotFoundException.class)
+    public void getScopeAccessListByUserId_userIdIsNull_throwsNotFoundException() throws Exception {
+        defaultScopeAccessService.getScopeAccessListByUserId(null);
+    }
+
+    @Test
+    public void getScopeAccessListByUserId_callsScopeAccessDao_getScopeAccessListByUserId() throws Exception {
+        defaultScopeAccessService.getScopeAccessListByUserId("userId");
+        verify(scopeAccessDao).getScopeAccessListByUserId("userId");
+    }
+
+    @Test
+    public void getScopeAccessListByUserId_returnsScopeAccessList() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        List<ScopeAccess> scopeAccessList = new ArrayList<ScopeAccess>();
+        scopeAccessList.add(scopeAccess);
+        when(scopeAccessDao.getScopeAccessListByUserId("userId")).thenReturn(scopeAccessList);
+        List<ScopeAccess> result = defaultScopeAccessService.getScopeAccessListByUserId("userId");
+        assertThat("scope access", result.get(0), equalTo(scopeAccess));
+        assertThat("list", result.size(), equalTo(1));
+    }
 }
