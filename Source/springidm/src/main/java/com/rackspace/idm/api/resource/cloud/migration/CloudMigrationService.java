@@ -1,5 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.migration;
 
+import javax.xml.namespace.QName;
+
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
@@ -349,6 +351,17 @@ public class CloudMigrationService {
         throw new NotAuthenticatedException("Not Authorized.");
     }
 
+	private String getDefaultRegion(User user) {
+		String defaultRegion = null;
+		QName defaultRegionQName = new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","defaultRegion");
+		for (QName qname : user.getOtherAttributes().keySet()) {
+		    if (qname.equals(defaultRegionQName)) {
+		        defaultRegion = user.getOtherAttributes().get(qname);
+		    }
+		}
+		return defaultRegion;
+	}
+
     List<String> getSubUsers(User user, String apiKey, String password, RoleList roles) throws Exception {
         client.setCloud20Host(config.getString("cloudAuth20url"));
         client.setCloud11Host(config.getString("cloudAuth11url"));
@@ -686,6 +699,11 @@ public class CloudMigrationService {
 
         if (domainId != null) {
             newUser.setDomainId(domainId);
+        }
+
+        String defaultRegion = getDefaultRegion(user);
+        if (defaultRegion != null) {
+            newUser.setRegion(defaultRegion);
         }
 
         userService.addUser(newUser);
