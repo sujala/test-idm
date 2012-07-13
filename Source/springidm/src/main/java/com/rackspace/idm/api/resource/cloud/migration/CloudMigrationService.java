@@ -307,12 +307,18 @@ public class CloudMigrationService {
 
             for (BaseURLRef baseUrlRef : user11.getBaseURLRefs().getBaseURLRef()) {
                 CloudBaseUrl cloudBaseUrl = endpointService.getBaseUrlById(baseUrlRef.getId());
+
+                int baseUrlId = baseUrlRef.getId();
+                if (isUkCloudRegion()) {
+                    baseUrlId += UK_BASEURL_OFFSET;
+                }
+
                 if ("MOSSO".equals(cloudBaseUrl.getBaseUrlType())) {
-                    mossoBaseUrlRef.add(String.valueOf(baseUrlRef.getId()));
+                    mossoBaseUrlRef.add(String.valueOf(baseUrlId));
                 }
 
                 if ("NAST".equals(cloudBaseUrl.getBaseUrlType())) {
-                    nastBaseUrlRef.add(String.valueOf(baseUrlRef.getId()));
+                    nastBaseUrlRef.add(String.valueOf(baseUrlId));
                 }
             }
 
