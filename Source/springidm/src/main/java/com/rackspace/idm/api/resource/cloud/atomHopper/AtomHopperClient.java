@@ -4,10 +4,11 @@ import com.rackspace.idm.domain.entity.User;
 import org.apache.commons.configuration.Configuration;
 import org.apache.http.HttpException;
 import org.apache.http.HttpHeaders;
+import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.conn.routing.HttpRoute;
 import org.apache.http.conn.scheme.PlainSocketFactory;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
@@ -15,8 +16,7 @@ import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.conn.SingleClientConnManager;
-import org.apache.http.params.BasicHttpParams;
+import org.apache.http.impl.conn.PoolingClientConnectionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,12 +58,19 @@ public class AtomHopperClient {
                     return true;
                 }
             });
-            Scheme httpsScheme = new Scheme("https", 443, sslsf);
-            Scheme httpScheme = new Scheme("http", 80, PlainSocketFactory.getSocketFactory());
+            SchemeRegistry schemeRegistry = new SchemeRegistry();
+            schemeRegistry.register(
+                    new Scheme("http", 80, PlainSocketFactory.getSocketFactory()));
+            schemeRegistry.register(
+                    new Scheme("https", 443, sslsf));
 
-            httpClient = new DefaultHttpClient();
-            httpClient.getConnectionManager().getSchemeRegistry().register(httpScheme);
-            httpClient.getConnectionManager().getSchemeRegistry().register(httpsScheme);
+            PoolingClientConnectionManager cm = new PoolingClientConnectionManager(schemeRegistry);
+// Increase max total connection to 200
+            cm.setMaxTotal(200);
+// Increase default max connection per route to 20
+            cm.setDefaultMaxPerRoute(200);
+
+            httpClient = new DefaultHttpClient(cm);
         } catch (Exception e) {
             logger.error("unabled to setup SSL trust manager: {}", e.getMessage());
             httpClient = new DefaultHttpClient();
