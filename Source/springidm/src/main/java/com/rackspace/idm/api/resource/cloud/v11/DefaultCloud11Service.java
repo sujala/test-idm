@@ -279,7 +279,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             }
 
             String tenantId;
-            if(baseUrl.getBaseUrlType().equals("NAST"))
+            if (baseUrl.getBaseUrlType().equals("NAST"))
                 tenantId = user.getNastId();
             else
                 tenantId = String.valueOf(user.getMossoId());
@@ -287,8 +287,8 @@ public class DefaultCloud11Service implements Cloud11Service {
             Tenant tenant = this.tenantService.getTenant(tenantId);
 
             // Check for existing BaseUrl
-            for (String bId : tenant.getBaseUrlIds()){
-                if(bId.equals(String.valueOf(baseUrl.getBaseUrlId())))
+            for (String bId : tenant.getBaseUrlIds()) {
+                if (bId.equals(String.valueOf(baseUrl.getBaseUrlId())))
                     throw new BadRequestException("Attempt to add existing BaseURL!");
             }
 
@@ -355,7 +355,8 @@ public class DefaultCloud11Service implements Cloud11Service {
                 for (BaseURLRef ref : user.getBaseURLRefs().getBaseURLRef()) {
                     try { // ToDo: throw error
                         this.userService.addBaseUrlToUser(ref.getId(), userDO);
-                    } catch(Exception e){}
+                    } catch (Exception e) {
+                    }
                 }
             }
 
@@ -482,7 +483,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 throw new BadRequestException(String.format("Cannot delete default BaseUrlId %s.", baseUrl.getBaseUrlId()));
 
             String tenantId;
-            if(baseUrl.getBaseUrlType().equals("NAST"))
+            if (baseUrl.getBaseUrlType().equals("NAST"))
                 tenantId = user.getNastId();
             else
                 tenantId = String.valueOf(user.getMossoId());
@@ -490,8 +491,8 @@ public class DefaultCloud11Service implements Cloud11Service {
             Tenant tenant = this.tenantService.getTenant(tenantId);
 
             boolean found = false;
-            for (String currentId : tenant.getBaseUrlIds()){
-                if(currentId.equals(String.valueOf(baseUrl.getBaseUrlId())))
+            for (String currentId : tenant.getBaseUrlIds()) {
+                if (currentId.equals(String.valueOf(baseUrl.getBaseUrlId())))
                     found = true;
             }
 
@@ -522,10 +523,10 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByUserId(userId);
             boolean isDefaultUser = authorizationService.authorizeCloudUser(scopeAccess);
-            if(isDefaultUser){
+            if (isDefaultUser) {
                 throw new BadRequestException("Cannot delete Sub-Users via Auth v1.1. Please use v2.0");
             }
-            if(userService.hasSubUsers(userId)){
+            if (userService.hasSubUsers(userId)) {
                 throw new BadRequestException("Cannot delete a User-Admin with Sub-Users. Please use v2.0 contract to remove Sub-Users then try again");
             }
 
@@ -574,8 +575,8 @@ public class DefaultCloud11Service implements Cloud11Service {
             UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), config.getString("cloudAuth.clientId"));
             List<OpenstackEndpoint> endpointsForUser = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
             for (OpenstackEndpoint openstackEndpoint : endpointsForUser) {
-                for (CloudBaseUrl baseUrl : openstackEndpoint.getBaseUrls()){
-                    if(String.valueOf(baseUrl.getBaseUrlId()).equals(baseURLId)) {
+                for (CloudBaseUrl baseUrl : openstackEndpoint.getBaseUrls()) {
+                    if (String.valueOf(baseUrl.getBaseUrlId()).equals(baseURLId)) {
                         baseURLRef.setHref(baseUrl.getPublicUrl());
                         baseURLRef.setId(baseUrl.getBaseUrlId());
                         baseURLRef.setV1Default(baseUrl.getDef());
@@ -844,9 +845,9 @@ public class DefaultCloud11Service implements Cloud11Service {
             userValidator.validate(user);
             userValidator.validateUsername(user.getId());
 
-            if(user.getId().equals(""))
+            if (user.getId().equals(""))
                 throw new BadRequestException("User Id can not be null.");
-            
+
             if (!user.getId().equals(userId) && !user.getId().equals("")) { //ToDO: Move to user validator?
                 throw new BadRequestException("User Id does not match.");
             }
@@ -874,7 +875,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
                 // Delete all old baseUrls
                 for (OpenstackEndpoint endpoint : currentEndpoints) {
-                    for (CloudBaseUrl baseUrl : endpoint.getBaseUrls()){
+                    for (CloudBaseUrl baseUrl : endpoint.getBaseUrls()) {
                         userService.removeBaseUrlFromUser(baseUrl.getBaseUrlId(), gaUser);
                     }
 
@@ -989,7 +990,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     }
 
     @Override
-    public ResponseBuilder extensions(HttpHeaders httpHeaders) throws IOException{
+    public ResponseBuilder extensions(HttpHeaders httpHeaders) throws IOException {
         try {
             if (currentExtensions == null) {
                 JAXBContext jaxbContext = JAXBContextResolver.get();
@@ -1000,7 +1001,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
                 currentExtensions = unmarshaller.unmarshal(ss, Extensions.class);
             }
-            return Response.ok(currentExtensions);
+            return Response.ok(currentExtensions.getValue());
         } catch (Exception e) {
             // Return 500 error. Is WEB-IN/extensions.xml malformed?
             return cloudExceptionResponse.exceptionResponse(e);
@@ -1009,16 +1010,17 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     @Override
     public ResponseBuilder getExtension(HttpHeaders httpHeaders, String alias) throws IOException {
-        if (org.tuckey.web.filters.urlrewrite.utils.StringUtils.isBlank(alias)) {
-            throw new BadRequestException("Invalid extension alias '" + alias + "'.");
-        }
+        try {
+            if (org.tuckey.web.filters.urlrewrite.utils.StringUtils.isBlank(alias)) {
+                throw new BadRequestException("Invalid extension alias '" + alias + "'.");
+            }
 
-        final String normalizedAlias = alias.trim().toUpperCase();
+            final String normalizedAlias = alias.trim().toUpperCase();
 
-        if (extensionMap == null) {
-            extensionMap = new HashMap<String, JAXBElement<Extension>>();
+            if (extensionMap == null) {
+                extensionMap = new HashMap<String, JAXBElement<Extension>>();
 
-            try {
+
                 if (currentExtensions == null) {
                     JAXBContext jaxbContext = JAXBContextResolver.get();
                     Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
@@ -1032,17 +1034,18 @@ public class DefaultCloud11Service implements Cloud11Service {
                 for (Extension e : exts.getExtension()) {
                     extensionMap.put(e.getAlias().trim().toUpperCase(), objectFactory.createExtension(e));
                 }
-            } catch (Exception e) {
-                // Return 500 error. Is WEB-IN/extensions.xml malformed?
-                return cloudExceptionResponse.exceptionResponse(e);
+
             }
-        }
 
-        if (!extensionMap.containsKey(normalizedAlias)) {
-            throw new NotFoundException("Extension with alias '" + normalizedAlias + "' is not available.");
-        }
+            if (!extensionMap.containsKey(normalizedAlias)) {
+                throw new NotFoundException("Extension with alias '" + normalizedAlias + "' is not available.");
+            }
 
-        return Response.ok(extensionMap.get(normalizedAlias));
+            return Response.ok(extensionMap.get(normalizedAlias).getValue());
+        } catch (Exception e) {
+            // Return 500 error. Is WEB-IN/extensions.xml malformed?
+            return cloudExceptionResponse.exceptionResponse(e);
+        }
     }
 
     // Private Methods
@@ -1055,7 +1058,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         User user = null;
         UserScopeAccess usa = null;
 
-       credentialValidator.validateCredential(cred.getValue());
+        credentialValidator.validateCredential(cred.getValue());
         try {
             if (cred.getValue() instanceof MossoCredentials) {
                 MossoCredentials mossoCreds = (MossoCredentials) cred.getValue();
@@ -1183,7 +1186,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                     return cloudExceptionResponse.badRequestExceptionResponse("Expecting mosso id");
                 }
                 user = userService.getUserByMossoId(mossoId);
-                if(user == null)
+                if (user == null)
                     throw new NotAuthenticatedException("MossoId or api key is invalid.");
                 usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(user.getUsername(), key, cloudAuthClientId);
             } else if (value instanceof NastCredentials) {
@@ -1193,7 +1196,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                     return cloudExceptionResponse.badRequestExceptionResponse("Expecting nast id");
                 }
                 user = userService.getUserByNastId(nastId);
-                if(user == null)
+                if (user == null)
                     throw new NotAuthenticatedException("NastId or api key is invalid.");
                 usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(user.getUsername(), key, cloudAuthClientId);
             }
