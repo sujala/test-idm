@@ -147,4 +147,16 @@ public class MigrationResourceTest {
         Response result = migrationResource.getGroups();
         assertThat("response code", result.getStatus(), equalTo(200));
     }
+
+    @Test
+    public void migrateRoles_callsCloudMigrationService_migrateRoles() throws Exception {
+        migrationResource.migrateRoles();
+        verify(cloudMigrationService).migrateRoles();
+    }
+
+    @Test
+    public void migrateRoles_statusAccepted_returns202() throws Exception {
+        Response result = migrationResource.migrateRoles();
+        assertThat("response code", result.getStatus(), equalTo(202));
+    }
 }

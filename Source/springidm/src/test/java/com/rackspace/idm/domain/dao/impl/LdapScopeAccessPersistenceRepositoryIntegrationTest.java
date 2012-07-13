@@ -14,24 +14,16 @@ import java.util.List;
 
 import static org.junit.Assert.fail;
 
-public class LdapScopeAccessPersistenceRepositoryIntegrationTest {
+public class LdapScopeAccessPersistenceRepositoryIntegrationTest extends InMemoryLdapIntegrationTest{
     private LdapCustomerRepository customerRepo;
     private ScopeAccessDao repo;
     private LdapApplicationRepository clientRepo;
     private LdapConnectionPools connPools;
 
     static String customerId = "DELETE_My_CustomerId";
-    String customerName = "DELETE_My_Name";
-    String inum = "@!FFFF.FFFF.FFFF.FFFF!CCCC.CCCC";
-    String iname = "@Rackspae.TESTING";
-    String seeAlso = "inum=@!FFFF.FFFF.FFFF.FFFF!CCCC.CCCC";
-    String owner = "inum=@!FFFF.FFFF.FFFF.FFFF!CCCC.CCCC";
-    String country = "USA";
-    boolean softDeleted = false;
 
     String clientId = "XXX";
     String clientId2 = "YYY";
-    String RCN = "RACKSPACE";
 
     String permissionId = "PermissionName";
 
@@ -45,10 +37,6 @@ public class LdapScopeAccessPersistenceRepositoryIntegrationTest {
     Customer customer = null;
 
     String id = "XXXX";
-
-    @AfterClass
-    public static void tearDownAfterClass() throws Exception {
-    }
 
     @Before
     public void setUp() throws Exception {

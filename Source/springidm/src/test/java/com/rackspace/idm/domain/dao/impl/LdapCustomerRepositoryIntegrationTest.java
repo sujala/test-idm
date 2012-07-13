@@ -11,7 +11,7 @@ import org.junit.*;
 
 import java.util.List;
 
-public class LdapCustomerRepositoryIntegrationTest {
+public class LdapCustomerRepositoryIntegrationTest extends InMemoryLdapIntegrationTest{
 
     private LdapCustomerRepository repo;
     private LdapConnectionPools connPools;

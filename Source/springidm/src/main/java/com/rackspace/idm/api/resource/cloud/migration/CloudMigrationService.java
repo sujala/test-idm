@@ -245,11 +245,11 @@ public class CloudMigrationService {
             com.rackspacecloud.docs.auth.api.v1.User user11;
             User user;
             try {
-                user11 = client.getUserTenantsBaseUrls(config.getString("ga.username"), config.getString("ga.password"), username);
                 user = client.getUser(adminToken, username);
+                user11 = client.getUserTenantsBaseUrls(config.getString("ga.username"), config.getString("ga.password"), username);
             }
             catch (Exception ex) {
-                throw new NotFoundException("User with username " + username + " could not be found.");
+                throw new NotFoundException("User with username " + username + " could not be found." + ex.getMessage());
             }
             String legacyId = user.getId();
 
@@ -307,12 +307,18 @@ public class CloudMigrationService {
 
             for (BaseURLRef baseUrlRef : user11.getBaseURLRefs().getBaseURLRef()) {
                 CloudBaseUrl cloudBaseUrl = endpointService.getBaseUrlById(baseUrlRef.getId());
+
+                int baseUrlId = baseUrlRef.getId();
+                if (isUkCloudRegion()) {
+                    baseUrlId += UK_BASEURL_OFFSET;
+                }
+
                 if ("MOSSO".equals(cloudBaseUrl.getBaseUrlType())) {
-                    mossoBaseUrlRef.add(String.valueOf(baseUrlRef.getId()));
+                    mossoBaseUrlRef.add(String.valueOf(baseUrlId));
                 }
 
                 if ("NAST".equals(cloudBaseUrl.getBaseUrlType())) {
-                    nastBaseUrlRef.add(String.valueOf(baseUrlRef.getId()));
+                    nastBaseUrlRef.add(String.valueOf(baseUrlId));
                 }
             }
 

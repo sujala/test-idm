@@ -1,12 +1,10 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.idm.api.config.ConverterConfiguration;
 import com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import org.hamcrest.Matchers;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.openstack.docs.identity.api.v2.AuthenticateResponse;
 
