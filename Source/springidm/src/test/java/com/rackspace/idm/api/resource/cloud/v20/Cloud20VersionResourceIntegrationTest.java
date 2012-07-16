@@ -57,7 +57,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
                 .type(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML_TYPE)
                 .post(ClientResponse.class,
-                        "<auth xmlns=\"http://docs.openstack.org/identity/api/v2.0\"><passwordCredentials username=\"cmarin2\" password=\"Password1\"/></auth>");
+                        "<auth xmlns=\"http://docs.openstack.org/identity/api/v2.0\"><passwordCredentials username=\"hectorServiceAdmin\" password=\"Password1\"/></auth>");
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
     }
 
@@ -88,7 +88,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .accept(MediaType.APPLICATION_JSON_TYPE)
                 .post(ClientResponse.class,
-                        "{" + "\"auth\":{" + "\"passwordCredentials\":{" + "\"username\":\"cmarin2\",\"password\":\"Password1\"},\"tenantId\":\"1234\" }");
+                        "{" + "\"auth\":{" + "\"passwordCredentials\":{" + "\"username\":\"hectorServiceAdmin\",\"password\":\"Password1\"},\"tenantId\":\"1234\" }");
         assertThat("response code", clientResponse.getStatus(), equalTo(400));
     }
 
@@ -101,7 +101,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .accept(MediaType.APPLICATION_JSON_TYPE)
                 .post(ClientResponse.class,
-                        "{" + "\"auth\":{" + "\"passwordCredentials\":{" + "\"username\":\"cmarin2\"},\"tenantId\":\"1234\" }}");
+                        "{" + "\"auth\":{" + "\"passwordCredentials\":{" + "\"username\":\"hectorServiceAdmin\"},\"tenantId\":\"1234\" }}");
         assertThat("response code", clientResponse.getStatus(), equalTo(400));
     }
 
