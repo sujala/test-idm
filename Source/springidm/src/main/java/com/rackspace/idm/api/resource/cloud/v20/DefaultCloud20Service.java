@@ -2157,7 +2157,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         fault.setCode(HttpServletResponse.SC_BAD_REQUEST);
         fault.setMessage(message);
         return Response.status(HttpServletResponse.SC_BAD_REQUEST).entity(
-                OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequest(fault));
+                OBJ_FACTORIES.getOpenStackIdentityV2Factory().createBadRequest(fault).getValue());
     }
 
     Response.ResponseBuilder exceptionResponse(Exception ex) {
