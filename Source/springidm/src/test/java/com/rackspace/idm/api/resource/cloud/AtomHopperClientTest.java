@@ -80,7 +80,7 @@ public class AtomHopperClientTest {
 
         //spy
         spy = spy(atomHopperClient);
-        doReturn(httpResponse).when(spy).executePostRequest(Matchers.<String>any(), Matchers.<Writer>any(), Matchers.<String>any());
+        doReturn(httpResponse).when(spy).executePostRequest(anyString(), any(Writer.class), anyString());
     }
 
     @Test
@@ -196,9 +196,17 @@ public class AtomHopperClientTest {
         AtomHopperConstants migrated = new AtomHopperConstants();
         AtomFeed atomFeed = new AtomFeed();
         doReturn(atomFeed).when(spy).createAtomFeed(any(User.class), eq("migrationStatus"));
-        HttpResponse response = mock(HttpResponse.class);
-        when(response.getStatusLine()).thenReturn(new BasicStatusLine(new ProtocolVersion("http", 1,1), 404, "not found"));
-        doReturn(response).when(spy).executePostRequest(eq("token"), any(Writer.class), anyString());
+        when(httpResponse.getStatusLine()).thenReturn(new BasicStatusLine(new ProtocolVersion("http", 1,1), 404, "not found"));
+        spy.postMigrateUser(new User(),  "token", migrated.MIGRATED, "migrationStatus");
+        verify(spy).executePostRequest(eq("token"), any(Writer.class), anyString());
+    }
+
+    @Test
+    public void postMigrateUser_withResponseStatus201_throwsNoErrors() throws Exception {
+        AtomHopperConstants migrated = new AtomHopperConstants();
+        AtomFeed atomFeed = new AtomFeed();
+        doReturn(atomFeed).when(spy).createAtomFeed(any(User.class), eq("migrationStatus"));
+        when(httpResponse.getStatusLine()).thenReturn(new BasicStatusLine(new ProtocolVersion("http", 1,1), 201, "not found"));
         spy.postMigrateUser(new User(),  "token", migrated.MIGRATED, "migrationStatus");
         verify(spy).executePostRequest(eq("token"), any(Writer.class), anyString());
     }
@@ -212,4 +220,40 @@ public class AtomHopperClientTest {
         verify(spy).executePostRequest(eq("token"), any(Writer.class), anyString());
     }
 
+    @Test
+    public void asyncPost_callsPostMigrateUser() throws Exception {
+        AtomHopperConstants migrated = new AtomHopperConstants();
+        AtomFeed atomFeed = new AtomFeed();
+        doReturn(atomFeed).when(spy).createAtomFeed(any(User.class), eq("migrationStatus"));
+        when(httpResponse.getStatusLine()).thenReturn(new BasicStatusLine(new ProtocolVersion("http", 1, 1), 404, "not found"));
+        spy.asyncPost(user, "token", migrated.MIGRATED, "migrationStatus");
+        verify(spy, timeout(100)).postMigrateUser(any(User.class), eq("token"),eq(migrated.MIGRATED), eq("migrationStatus"));
+    }
+
+    @Test
+    public void asyncPost_callsPostUser() throws Exception {
+        AtomFeed atomFeed = new AtomFeed();
+        doReturn(atomFeed).when(spy).createAtomFeed(any(User.class), eq("migrationStatus"));
+        when(httpResponse.getStatusLine()).thenReturn(new BasicStatusLine(new ProtocolVersion("http", 1,1), 404, "not found"));
+        spy.asyncPost(user, "token", "notMigrated", "migrationStatus");
+        verify(spy, timeout(100)).postUser(user, "token", "notMigrated");
+    }
+
+    @Test
+    public void postUser_statusIs201_doesNotThrowException() throws Exception {
+        when(httpResponse.getStatusLine()).thenReturn(statusLine);
+        when(statusLine.getStatusCode()).thenReturn(201);
+        when(config.getString(Matchers.<String>any())).thenReturn("http://localhost:8080/test");
+        spy.postUser(user, "token", "");
+        assertThat("Post to Atom Hopper", httpResponse.getStatusLine().getStatusCode(), equalTo(201));
+    }
+
+    @Test
+    public void createAtomFeed_returnsAtomFeed() throws Exception {
+        AtomFeed atomFeed = atomHopperClient.createAtomFeed(user, "migrated");
+        FeedUser result = atomFeed.getUser();
+        assertThat("username", result.getUsername(), equalTo(user.getUsername()));
+        assertThat("id", result.getId(), equalTo(user.getId()));
+        assertThat("display name", result.getDisplayName(), equalTo(user.getDisplayName()));
+    }
 }
