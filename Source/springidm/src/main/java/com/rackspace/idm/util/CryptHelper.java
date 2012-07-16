@@ -24,7 +24,7 @@ public class CryptHelper {
 	private static byte[] salt = { (byte) 0xc7, (byte) 0x73, (byte) 0x21, (byte) 0x8c, (byte) 0x7e, (byte) 0xc8,
 			(byte) 0xee, (byte) 0x99 };
 
-	// TODO: get this from config.properties
+	// TODO: get this from secrets.idm.properties
 	private static char[] password = "this is a super secret key!".toCharArray();
 
 	private static PBEParametersGenerator keyGenerator;

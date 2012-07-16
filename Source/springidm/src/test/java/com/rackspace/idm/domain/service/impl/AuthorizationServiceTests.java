@@ -1,23 +1,19 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.AuthorizationService;
-import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService;
 import com.rackspace.idm.util.WadlTrie;
 import junit.framework.Assert;
 import org.apache.commons.configuration.Configuration;
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.commons.configuration.PropertiesConfiguration;
 import org.easymock.EasyMock;
-import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Matchers;
 
-import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.UriInfo;
 import java.util.ArrayList;
 import java.util.Date;
@@ -25,7 +21,6 @@ import java.util.List;
 
 import static org.powermock.api.mockito.PowerMockito.doReturn;
 import static org.powermock.api.mockito.PowerMockito.mock;
-import static org.powermock.api.mockito.PowerMockito.when;
 
 public class AuthorizationServiceTests {
     TenantDao mockTenantDao;
@@ -35,17 +30,10 @@ public class AuthorizationServiceTests {
     WadlTrie mockWadlTrie;
     UriInfo mockUriInfo;
     
-    UriInfo uriInfo = null;
-
-    String authHeader = "OAuth XXXX";
-    
     String uniqueId = "uniqueId";
-    
-    String methodName = "methodName";
 
     String rackerId = "rackerId";
     String tokenString = "XXXX";
-    DateTime tokenExpiration;
 
     String customerId = "RACKSPACE";
     String otherCustomerId = "RCN-000-000-000";
@@ -57,26 +45,11 @@ public class AuthorizationServiceTests {
     String verb = "GET";
     String uri = "/resource";
     
-    List<PathSegment> segments = null;
-
     String permissionId = "Permission";
-    String permissionValue = verb + " " + uri;
-
-    Application authorizedClient;
-    Application notAuthorizedClient;
-    Application nonRackspaceClient;
-    Application idmClient;
-
-    User authorizedUser;
-    User otherCompanyUser;
-
-    User authorizedAdmin;
-    User otherCompanyAdmin;
 
     Permission perm;
     List<Permission> permissions;
     ClientGroup admin;
-    List<ClientGroup> groups;
 
     String adminGroupName = "Idm Admin";
 
@@ -97,13 +70,7 @@ public class AuthorizationServiceTests {
         mockScopeAccessDao = EasyMock.createMock(ScopeAccessDao.class);
         mockWadlTrie = EasyMock.createMock(WadlTrie.class);
         mockUriInfo = EasyMock.createMock(UriInfo.class);
-        Configuration appConfig = null;
-        try {
-            appConfig = new PropertiesConfiguration("config.properties");
-
-        } catch (ConfigurationException e) {
-            System.out.println(e);
-        }
+        Configuration appConfig = new PropertyFileConfiguration().getConfig();
         service = new DefaultAuthorizationService(mockScopeAccessDao,
             mockClientDao, mockTenantDao, mockWadlTrie, appConfig);
         setUpObjects();

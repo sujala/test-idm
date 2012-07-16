@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.ScopeAccessService;
@@ -29,13 +30,7 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
 
     @Before
     public void setUp() throws Exception {
-        Configuration appConfig = null;
-        try {
-            appConfig = new PropertiesConfiguration("config.properties");
-
-        } catch (ConfigurationException e) {
-            System.out.println(e);
-        }
+        Configuration appConfig = new PropertyFileConfiguration().getConfig();
         authHeaderHelper = new AuthHeaderHelper();
 
         mockUserDao = EasyMock.createMock(UserDao.class);

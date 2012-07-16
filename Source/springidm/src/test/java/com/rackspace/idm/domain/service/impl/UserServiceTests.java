@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
@@ -7,8 +8,6 @@ import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.DuplicateUsernameException;
 import junit.framework.Assert;
 import org.apache.commons.configuration.Configuration;
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.commons.configuration.PropertiesConfiguration;
 import org.easymock.EasyMock;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -23,7 +22,6 @@ public class UserServiceTests {
 
     UserDao mockUserDao;
     CustomerDao mockCustomerDao;
-    ApplicationDao mockClientDao;
     UserService userService;
     UserService trustedUserService;
     AuthDao mockRackerDao;
@@ -42,7 +40,6 @@ public class UserServiceTests {
     String email = "test@example.com";
     String apiKey = "1234567890";
 
-    String uniqueId = "uniqueId";
     String middlename = "middle";
     String secretQuestion = "question";
     String secretAnswer = "answer";
@@ -55,20 +52,10 @@ public class UserServiceTests {
 
     String customerDN = "o=@!FFFF.FFFF.FFFF.FFFF!AAAA.AAAA,o=rackspace,dc=rackspace,dc=com";
 
-    String userUniqueId = "uniqueId";
-
-    String tokenString = "XXXX";
-    String callbackUrl = "www.cp.com";
-
     String nastId = "nastId";
     int mossoId = 6676;
 
     int limit = 100;
-    int offset = 1;
-    int totalRecords = 0;
-
-    Customer testCustomer;
-    User testUser;
 
     String rackerId = "rackerId";
 
@@ -84,26 +71,14 @@ public class UserServiceTests {
         mockTokenService = EasyMock.createMock(TokenService.class);
         mockPasswordComplexityService = EasyMock.createMock(PasswordComplexityService.class);
         
-        Configuration appConfig = null;
-        try {
-            appConfig = new PropertiesConfiguration("config.properties");
-
-        } catch (ConfigurationException e) {
-            System.out.println(e);
-        }
+        Configuration appConfig = new PropertyFileConfiguration().getConfig();
         appConfig.setProperty("ldap.server.trusted", false);
 
         userService = new DefaultUserService(mockUserDao, mockRackerDao,
                 mockScopeAccessObjectDao,
                 mockClientService, appConfig, mockTokenService, mockPasswordComplexityService);
         
-        Configuration appConfig2 = null;
-        try {
-            appConfig2 = new PropertiesConfiguration("config.properties");
-
-        } catch (ConfigurationException e) {
-            System.out.println(e);
-        }
+        Configuration appConfig2 = new PropertyFileConfiguration().getConfig();
         
         appConfig2.setProperty("ldap.server.trusted", true);
         trustedUserService =  new DefaultUserService(mockUserDao, mockRackerDao,

@@ -1,12 +1,10 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.domain.config.LdapConfiguration;
+import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.entity.*;
 import junit.framework.Assert;
-import org.apache.commons.configuration.Configuration;
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.commons.configuration.PropertiesConfiguration;
 import org.junit.*;
 
 import java.util.Date;
@@ -14,11 +12,11 @@ import java.util.List;
 
 import static org.junit.Assert.fail;
 
-public class LdapScopeAccessPersistenceRepositoryIntegrationTest extends InMemoryLdapIntegrationTest{
-    private LdapCustomerRepository customerRepo;
-    private ScopeAccessDao repo;
-    private LdapApplicationRepository clientRepo;
-    private LdapConnectionPools connPools;
+public class LdapScopeAccessPeristenceRepositoryIntegrationTest extends InMemoryLdapIntegrationTest{
+    private static LdapCustomerRepository customerRepo;
+    private static ScopeAccessDao repo;
+    private static LdapApplicationRepository clientRepo;
+    private static LdapConnectionPools connPools;
 
     static String customerId = "DELETE_My_CustomerId";
 
@@ -38,28 +36,44 @@ public class LdapScopeAccessPersistenceRepositoryIntegrationTest extends InMemor
 
     String id = "XXXX";
 
-    @Before
-    public void setUp() throws Exception {
-        LdapConnectionPools pools = getConnPools();
-        LdapApplicationRepository cleanUpRepo = getClientRepo(pools);
-        Application deleteme = cleanUpRepo.getClientByClientId("XXX");
-        Application deleteme2 = cleanUpRepo.getClientByClientId("YYY");
-        LdapCustomerRepository customerRepository = getCustomerRepo(pools);
-        Customer deleteCustomer = customerRepository.getCustomerByCustomerId(customerId);
-        if(deleteCustomer !=null){
-            customerRepository.deleteCustomer(customerId);
-        }
-        if (deleteme != null) {
-            cleanUpRepo.deleteClient(deleteme);
-        }
-        if (deleteme2 != null) {
-            cleanUpRepo.deleteClient(deleteme2);
-        }
-        pools.close();
+    @BeforeClass
+    public static void setUp() {
         connPools = getConnPools();
         repo = getSaRepo(connPools);
         customerRepo = getCustomerRepo(connPools);
         clientRepo = getClientRepo(connPools);
+    }
+
+    private static LdapApplicationRepository getClientRepo(LdapConnectionPools connPools) {
+        return new LdapApplicationRepository(connPools, new PropertyFileConfiguration().getConfig());
+    }
+
+    private static ScopeAccessDao getSaRepo(LdapConnectionPools connPools) {
+        return new LdapScopeAccessPeristenceRepository(connPools, new PropertyFileConfiguration().getConfig());
+    }
+
+    private static LdapCustomerRepository getCustomerRepo(LdapConnectionPools connPools) {
+        return new LdapCustomerRepository(connPools, new PropertyFileConfiguration().getConfig());
+    }
+
+    private static LdapConnectionPools getConnPools() {
+        return new LdapConfiguration(new PropertyFileConfiguration().getConfig()).connectionPools();
+    }
+
+    @Before
+    public void preTestSetUp() throws Exception {
+        Application deleteme = clientRepo.getClientByClientId("XXX");
+        Application deleteme2 = clientRepo.getClientByClientId("YYY");
+        Customer deleteCustomer = customerRepo.getCustomerByCustomerId(customerId);
+        if(deleteCustomer !=null){
+            customerRepo.deleteCustomer(customerId);
+        }
+        if (deleteme != null) {
+            clientRepo.deleteClient(deleteme);
+        }
+        if (deleteme2 != null) {
+            clientRepo.deleteClient(deleteme2);
+        }
 
         try {
             customer = addNewTestCustomer(customerId);
@@ -71,10 +85,14 @@ public class LdapScopeAccessPersistenceRepositoryIntegrationTest extends InMemor
     }
 
     @After
-    public void tearDown() throws Exception {
+    public void postTestTearDown() throws Exception {
         customerRepo.deleteCustomer(customer.getRCN());
         clientRepo.deleteClient(client);
         clientRepo.deleteClient(client2);
+    }
+
+    @AfterClass
+    public static void tearDown() {
         connPools.close();
     }
 
@@ -640,50 +658,6 @@ public class LdapScopeAccessPersistenceRepositoryIntegrationTest extends InMemor
         sa.setAccessTokenString(accessToken);
         sa.setAccessTokenExp(new Date());
         ScopeAccess scopeAccess = repo.addImpersonatedScopeAccess(client.getUniqueId(), sa);
-    }
-
-    private static LdapApplicationRepository getClientRepo(LdapConnectionPools connPools) {
-        Configuration appConfig = null;
-        try {
-            appConfig = new PropertiesConfiguration("config.properties");
-
-        } catch (ConfigurationException e) {
-            System.out.println(e);
-        }
-        return new LdapApplicationRepository(connPools, appConfig);
-    }
-
-    private static ScopeAccessDao getSaRepo(LdapConnectionPools connPools) {
-        Configuration appConfig = null;
-        try {
-            appConfig = new PropertiesConfiguration("config.properties");
-
-        } catch (ConfigurationException e) {
-            System.out.println(e);
-        }
-        return new LdapScopeAccessPeristenceRepository(connPools, appConfig);
-    }
-
-    private static LdapCustomerRepository getCustomerRepo(LdapConnectionPools connPools) {
-        Configuration appConfig = null;
-        try {
-            appConfig = new PropertiesConfiguration("config.properties");
-
-        } catch (ConfigurationException e) {
-            System.out.println(e);
-        }
-        return new LdapCustomerRepository(connPools, appConfig);
-    }
-
-    private static LdapConnectionPools getConnPools() {
-        Configuration appConfig = null;
-        try {
-            appConfig = new PropertiesConfiguration("config.properties");
-
-        } catch (ConfigurationException e) {
-            System.out.println(e);
-        }
-        return new LdapConfiguration(appConfig).connectionPools();
     }
 
     private Customer addNewTestCustomer(String customerId) {

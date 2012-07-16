@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.domain.config.LdapConfiguration;
+import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateUsernameException;
@@ -26,78 +27,47 @@ import static org.mockito.Mockito.*;
 
 public class LdapUserRepositoryIntegrationTest extends InMemoryLdapIntegrationTest{
 
-    private LdapUserRepository repo;
-    private LdapConnectionPools connPools;
+    private static LdapUserRepository repo;
+    private static LdapConnectionPools connPools;
 
     String rackerId = "racker";
     
     String id = "XXXX";
 
-    @BeforeClass
-    public static void cleanUpData() {
-        final LdapConnectionPools pools = getConnPools();
-        LdapUserRepository cleanUpRepo = getRepo(pools);
-        User deleteme = cleanUpRepo.getUserByUsername("deleteme");
-        if (deleteme != null) {
-            cleanUpRepo.deleteUser("deleteme");
-        }
-        User deleteme2 = cleanUpRepo.getUserByUsername("delete.me");
-        if (deleteme2 != null) {
-            cleanUpRepo.deleteUser("delete.me");
-        }
-        User deleteme3 = cleanUpRepo.getUserByUsername("delete,me");
-        if (deleteme3 != null) {
-            cleanUpRepo.deleteUser("delete,me");
-        }
-        pools.close();
-    }
-
-    @Before
-    public void makeUserUserIsDelete(){
-        LdapConnectionPools pools = getConnPools();
-        LdapUserRepository cleanUpRepo = getRepo(pools);
-        User deleteme = cleanUpRepo.getUserByUsername("deleteme");
-        if (deleteme != null) {
-            cleanUpRepo.deleteUser("deleteme");
-        }
-                User deleteme2 = cleanUpRepo.getUserByUsername("delete.me");
-        if (deleteme2 != null) {
-            cleanUpRepo.deleteUser("delete.me");
-        }
-        User deleteme3 = cleanUpRepo.getUserByUsername("delete,me");
-        if (deleteme3 != null) {
-            cleanUpRepo.deleteUser("delete,me");
-        }
-        pools.close();
-    }
-
     private static LdapUserRepository getRepo(LdapConnectionPools connPools) {
-        Configuration appConfig = null;
-        try {
-            appConfig = new PropertiesConfiguration("config.properties");
-
-        } catch (ConfigurationException e) {
-            System.out.println(e);
-        }
-        return new LdapUserRepository(connPools, appConfig);
+        return new LdapUserRepository(connPools, new PropertyFileConfiguration().getConfig());
     }
 
     private static LdapConnectionPools getConnPools() {
-        Configuration appConfig = null;
-        try {
-            appConfig = new PropertiesConfiguration("config.properties");
-
-        } catch (ConfigurationException e) {
-            System.out.println(e);
-        }
-        LdapConfiguration config = new LdapConfiguration(appConfig);
+        LdapConfiguration config = new LdapConfiguration(new PropertyFileConfiguration().getConfig());
         return config.connectionPools();
     }
 
-    @Before
-    public void setUp() {
+    @BeforeClass
+    public static void setUp() {
         connPools = getConnPools();
         repo = getRepo(connPools);
+    }
+
+    @Before
+    public void preTestSetUp(){
+        User deleteme = repo.getUserByUsername("deleteme");
+        if (deleteme != null) {
+            repo.deleteUser("deleteme");
+        }
+        User deleteme2 = repo.getUserByUsername("delete.me");
+        if (deleteme2 != null) {
+            repo.deleteUser("delete.me");
+        }
+        User deleteme3 = repo.getUserByUsername("delete,me");
+        if (deleteme3 != null) {
+            repo.deleteUser("delete,me");
+        }
+    }
+
+    @AfterClass
+    public static void tearDown() {
+        connPools.close();
     }
 
     @Test
@@ -591,8 +561,4 @@ public class LdapUserRepositoryIntegrationTest extends InMemoryLdapIntegrationTe
         return newUser;
     }
 
-    @After
-    public void tearDown() {
-        connPools.close();
-    }
 }

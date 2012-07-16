@@ -3,7 +3,6 @@ package com.rackspace.idm.api.resource.cloud.v20;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import com.rackspace.idm.api.serviceprofile.ServiceDescriptionTemplateUtil;
-import com.rackspace.idm.domain.dao.ApiDocDao;
 import com.rackspace.idm.domain.dao.impl.FileSystemApiDocRepository;
 import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.configuration.Configuration;
@@ -18,7 +17,6 @@ import javax.xml.bind.JAXBElement;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.instanceOf;
 import static org.mockito.Mockito.*;
 
 /**

@@ -22,6 +22,10 @@ public abstract class InMemoryLdapIntegrationTest {
     @BeforeClass
     public static void setUpServer() throws Exception {
         Configuration config = new PropertiesConfiguration(System.getProperty("idm.properties.location") + "/idm.properties");
+        if(!config.containsKey("ldap.testServer.port") || !config.containsKey("ldap.testServer.ldif")){
+            return;
+        }
+
         InMemoryDirectoryServerConfig serverConfig = new InMemoryDirectoryServerConfig("dc=com");
         serverConfig.setSchema(null);
 
@@ -44,7 +48,9 @@ public abstract class InMemoryLdapIntegrationTest {
 
     @AfterClass
     public static void tearDownServer() throws Exception {
-        server.shutDown(true);
-        server = null;
+        if(server != null){
+            server.shutDown(true);
+            server = null;
+        }
     }
 }
