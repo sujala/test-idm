@@ -1,14 +1,12 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.domain.config.LdapConfiguration;
+import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.exception.DuplicateClientGroupException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.unboundid.ldap.sdk.Modification;
-import org.apache.commons.configuration.Configuration;
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.commons.configuration.PropertiesConfiguration;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.joda.time.DateTimeZone;
 import org.junit.*;
@@ -19,68 +17,43 @@ import java.util.Locale;
 
 public class LdapApplicationRepositoryIntegrationTest extends InMemoryLdapIntegrationTest{
 
-    private LdapUserRepository userRepo;
-    private LdapApplicationRepository repo;
-    private LdapConnectionPools connPools;
+    private static LdapUserRepository userRepo;
+    private static LdapApplicationRepository repo;
+    private static LdapConnectionPools connPools;
     
     String id = "XXXX";
     
     String userDN = "inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!1111,ou=users,o=rackspace,dc=rackspace,dc=com";
 
-    @Before
-    public void cleanUpData() {
-        final LdapConnectionPools pools = getConnPools();
-        LdapApplicationRepository cleanUpRepo = getRepo(pools);
-        LdapUserRepository cleanUpRepo2 = getUserRepo(pools);
-        Application deleteme = cleanUpRepo.getClientByClientId("DELETE_My_ClientId");
-        User deleteme2 = cleanUpRepo2.getUserById("XXXX");
-        if (deleteme != null) {
-            cleanUpRepo.deleteClient(deleteme);
-        }
-        if (deleteme2 != null) {
-            cleanUpRepo2.deleteUser(deleteme2.getUsername());
-        }
-        pools.close();
-    }
-
-    private static LdapApplicationRepository getRepo(LdapConnectionPools connPools) {
-        Configuration appConfig = null;
-        try {
-            appConfig = new PropertiesConfiguration("config.properties");
-
-        } catch (ConfigurationException e) {
-            System.out.println(e);
-        }
-        return new LdapApplicationRepository(connPools, appConfig);
-    }
-    
-    private static LdapUserRepository getUserRepo(LdapConnectionPools connPools) {
-        Configuration appConfig = null;
-        try {
-            appConfig = new PropertiesConfiguration("config.properties");
-
-        } catch (ConfigurationException e) {
-            System.out.println(e);
-        }
-        return new LdapUserRepository(connPools, appConfig);
-    }
-
-    private static LdapConnectionPools getConnPools() {
-        Configuration appConfig = null;
-        try {
-            appConfig = new PropertiesConfiguration("config.properties");
-
-        } catch (ConfigurationException e) {
-            System.out.println(e);
-        }
-        return new LdapConfiguration(appConfig).connectionPools();
-    }
-
-    @Before
-    public void setUp() {
+    @BeforeClass
+    public static void setUpRepos(){
         connPools = getConnPools();
         repo = getRepo(connPools);
         userRepo = getUserRepo(connPools);
+    }
+
+    private static LdapApplicationRepository getRepo(LdapConnectionPools connPools) {
+        return new LdapApplicationRepository(connPools, new PropertyFileConfiguration().getConfig());
+    }
+    
+    private static LdapUserRepository getUserRepo(LdapConnectionPools connPools) {
+        return new LdapUserRepository(connPools, new PropertyFileConfiguration().getConfig());
+    }
+
+    private static LdapConnectionPools getConnPools() {
+        return new LdapConfiguration(new PropertyFileConfiguration().getConfig()).connectionPools();
+    }
+
+    @Before
+    public void preTestCleanUp() {
+        Application deleteme = repo.getClientByClientId("DELETE_My_ClientId");
+        User deleteme2 = userRepo.getUserById("XXXX");
+        if (deleteme != null) {
+            repo.deleteClient(deleteme);
+        }
+        if (deleteme2 != null) {
+            userRepo.deleteUser(deleteme2.getUsername());
+        }
     }
 
     @Test
@@ -522,8 +495,8 @@ public class LdapApplicationRepositoryIntegrationTest extends InMemoryLdapIntegr
     }
     
 
-    @After
-    public void tearDown() {
+    @AfterClass
+    public static void tearDown() {
         connPools.close();
     }
 

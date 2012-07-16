@@ -1,16 +1,13 @@
 package com.rackspace.idm.api.resource.user;
 
 import com.rackspace.idm.api.resource.cloud.CloudClient;
-import com.rackspace.idm.api.resource.cloud.v11.UserValidator;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateUsernameException;
 import com.rackspacecloud.docs.auth.api.v1.User;
-import junit.framework.TestCase;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Test;
 
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 
 import java.util.HashMap;

@@ -21,12 +21,19 @@ public abstract class InMemoryLdapIntegrationTest {
 
     @BeforeClass
     public static void setUpServer() throws Exception {
-        Configuration config = new PropertiesConfiguration("config.properties");
+        Configuration config = new PropertiesConfiguration(System.getProperty("idm.properties.location") + "/idm.properties");
+        if(!config.containsKey("ldap.testServer.port") || !config.containsKey("ldap.testServer.ldif")){
+            return;
+        }
+
         InMemoryDirectoryServerConfig serverConfig = new InMemoryDirectoryServerConfig("dc=com");
         serverConfig.setSchema(null);
 
         serverConfig.setListenerConfigs(InMemoryListenerConfig.createLDAPConfig("LDAP", config.getInt("ldap.testServer.port")));
         serverConfig.addAdditionalBindCredentials(config.getString("ldap.bind.dn"), config.getString("ldap.bind.password"));
+        serverConfig.addAdditionalBindCredentials("rsId=10013387,ou=users,o=rackspace,dc=rackspace,dc=com", "Password1"); //hectorServiceAdmin
+        serverConfig.addAdditionalBindCredentials("rsid=10022622,ou=users,o=rackspace,dc=rackspace,dc=com", "Password1"); //kurtUserAdmin
+        serverConfig.addAdditionalBindCredentials("rsid=10022623,ou=users,o=rackspace,dc=rackspace,dc=com", "Password1"); //kurtDefaultUser
 
         server = new InMemoryDirectoryServer(serverConfig);
         server.startListening();
@@ -41,7 +48,9 @@ public abstract class InMemoryLdapIntegrationTest {
 
     @AfterClass
     public static void tearDownServer() throws Exception {
-        server.shutDown(true);
-        server = null;
+        if(server != null){
+            server.shutDown(true);
+            server = null;
+        }
     }
 }

@@ -10,7 +10,6 @@ import com.rackspacecloud.docs.auth.api.v1.*;
 import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Matchers;
 import org.mockito.internal.verification.VerificationModeFactory;

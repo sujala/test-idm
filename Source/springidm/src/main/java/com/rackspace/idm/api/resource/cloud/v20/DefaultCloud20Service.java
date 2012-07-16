@@ -231,7 +231,11 @@ public class DefaultCloud20Service implements Cloud20Service {
             User user = checkAndGetUser(userId);
 
             ClientRole role = checkAndGetClientRole(roleId);
-
+            String roleName = role.getName();
+            if (roleName.equals(getCloudAuthServiceAdminRole()) || roleName.equals(getCloudAuthUserAdminRole())
+                    || roleName.equals(config.getString("cloudAuth.adminRole"))) {
+                throw new BadRequestException("Cannot add admin role to tenant.");
+            }
             TenantRole tenantrole = new TenantRole();
             tenantrole.setName(role.getName());
             tenantrole.setClientId(role.getClientId());
