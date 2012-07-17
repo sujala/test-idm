@@ -233,6 +233,45 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void listDefaultRegionServices_callsApplicationService_getOSServices() throws Exception {
+        defaultCloud20Service.listDefaultRegionServices(authToken);
+        verify(clientService).getOpenStackServices();
+    }
+
+    @Test
+    public void listDefaultRegionServices_returnsNotNullResponseBuilder() throws Exception {
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.listDefaultRegionServices(authToken);
+        assertThat("response builder", responseBuilder, Matchers.<Response.ResponseBuilder>notNullValue());
+    }
+
+    @Test
+    public void listDefaultRegionServices_returnsNotNullEntity() throws Exception {
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.listDefaultRegionServices(authToken);
+        assertThat("response builder", responseBuilder.build().getEntity(), Matchers.notNullValue());
+    }
+
+    @Test
+    public void listDefaultRegionServices_returnsApplicationListEntity() throws Exception {
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.listDefaultRegionServices(authToken);
+        assertThat("response builder", responseBuilder.build().getEntity(), instanceOf(List.class));
+    }
+
+    @Test
+    public void listDefaultRegionServices_filtersByUseForDefaultRegionFlag() throws Exception {
+        ArrayList<Application> applications = new ArrayList<Application>();
+        Application application1 = new Application();
+        applications.add(application1);
+        Application application2 = new Application("cloudFiles", ClientSecret.newInstance("foo"), "cloudFiles", "rcn", ClientStatus.ACTIVE);
+        applications.add(application2);
+        Application application3 = new Application("cloudFilesCDN", ClientSecret.newInstance("foo"), "cloudFilesCDN", "rcn", ClientStatus.ACTIVE);
+        application3.setUsedForDefaultRegion(true);
+        applications.add(application3);
+        when(clientService.getOpenStackServices()).thenReturn(applications);
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.listDefaultRegionServices(authToken);
+        assertThat("response builder", ((List<Application>)responseBuilder.build().getEntity()).size(), equalTo(1));
+    }
+
+    @Test
     public void addUser_withUserAdminCaller_callsTenantService_addTenantRolesToUser() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         doNothing().when(spy).verifyUserAdminLevelAccess(authToken);
@@ -2637,7 +2676,7 @@ public class DefaultCloud20ServiceTest {
         List<CloudBaseUrl> cloudBaseUrlList = new ArrayList<CloudBaseUrl>();
         when(jaxbObjectFactories.getOpenStackIdentityExtKscatalogV1Factory()).thenReturn(new org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory());
         doReturn(new Application()).when(spy).checkAndGetApplication("serviceId");
-        when(endpointService.getBaseUrlsByServiceId(anyString())).thenReturn(cloudBaseUrlList);
+        when(endpointService.getBaseUrlsByServiceType(anyString())).thenReturn(cloudBaseUrlList);
         Response.ResponseBuilder responseBuilder = spy.listEndpointTemplates(httpHeaders, authToken, "serviceId");
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }

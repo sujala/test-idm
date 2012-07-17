@@ -360,6 +360,11 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
+    public ResponseBuilder listDefaultRegionServices(String authToken) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
     public ResponseBuilder getUserByName(HttpHeaders httpHeaders, String authToken, String name) throws IOException {
         if (isCloudAuthRoutingEnabled() && !userService.userExistsByUsername(name)) {
             String request = getCloudAuthV20Url() + "users";

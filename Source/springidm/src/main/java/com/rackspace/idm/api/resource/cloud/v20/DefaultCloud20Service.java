@@ -1119,7 +1119,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             verifyServiceAdminLevelAccess(authToken);
 
-            Tenant tenant = this.tenantService.getTenantByName(name);
+            Tenant tenant = tenantService.getTenantByName(name);
             if (tenant == null) {
                 String errMsg = String.format("Tenant with id/name: '%s' was not found.", name);
                 logger.warn(errMsg);
@@ -1128,7 +1128,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
                     .createTenant(this.tenantConverterCloudV20.toTenant(tenant)).getValue());
-
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
@@ -1392,7 +1391,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 baseUrls = this.endpointService.getBaseUrls();
             } else {
                 Application client = checkAndGetApplication(serviceId);
-                baseUrls = this.endpointService.getBaseUrlsByServiceId(client.getOpenStackType());
+                baseUrls = this.endpointService.getBaseUrlsByServiceType(client.getOpenStackType());
             }
 
             return Response.ok(
@@ -1655,6 +1654,20 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         ImpersonationResponse auth = authConverterCloudV20.toImpersonationResponse(usa);
         return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtRaxgaV1Factory().createAccess(auth).getValue());
+    }
+
+    @Override
+    public ResponseBuilder listDefaultRegionServices(String authToken) {
+        List<Application> openStackServices = clientService.getOpenStackServices();
+        List<Application> regionServices = new ArrayList<Application>();
+        if(openStackServices!=null){
+            for(Application application: openStackServices){
+                if(application.getUsedForDefaultRegion()){
+                    regionServices.add(application);
+                }
+            }
+        }
+        return Response.ok(regionServices);
     }
 
     void validateImpersonationRequest(ImpersonationRequest impersonationRequest) {

@@ -19,7 +19,9 @@ public interface EndpointService {
 
     void setBaseUrlEnabled(int baseUrlId, boolean enabled);
 
-    List<CloudBaseUrl> getBaseUrlsByServiceId(String serviceType);
+    List<CloudBaseUrl> getBaseUrlsByServiceType(String serviceType);
+
+    List<CloudBaseUrl> getBaseUrlsByServiceName(String serviceName);
     
     List<CloudBaseUrl> getBaseUrlsByBaseUrlType(String baseUrlType);
 

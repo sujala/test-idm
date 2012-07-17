@@ -63,6 +63,13 @@ public class Cloud20VersionResourceTest {
     }
 
     @Test
+    public void defaultCloud20Service_callsDefaultService_listDefaultRegionServices() throws Exception {
+        when(defaultCloud20Service.listDefaultRegionServices("token")).thenReturn(Response.ok());
+        cloud20VersionResource.listDefaultRegionServices("token");
+        verify(defaultCloud20Service).listDefaultRegionServices("token");
+    }
+
+    @Test
     public void getCloud20VersionInfo_returnsVersionInfo() throws Exception {
         Response response = cloud20VersionResource.getCloud20VersionInfo();
         VersionChoice object =  (VersionChoice)response.getEntity();

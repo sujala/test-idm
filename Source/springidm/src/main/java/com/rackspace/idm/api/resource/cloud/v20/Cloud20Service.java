@@ -11,6 +11,7 @@ import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.*;
 
 import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.JAXBException;
@@ -170,4 +171,6 @@ public interface Cloud20Service {
     ResponseBuilder getGroup(HttpHeaders httpHeaders, String authToken, String groupName) throws IOException;
 
     ResponseBuilder impersonate(HttpHeaders httpHeaders, String authToken, ImpersonationRequest impersonationRequest) throws IOException, JAXBException;
+
+    ResponseBuilder listDefaultRegionServices(String authToken);
 }
