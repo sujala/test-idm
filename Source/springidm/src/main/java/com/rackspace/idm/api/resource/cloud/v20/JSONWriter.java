@@ -12,6 +12,7 @@ import com.rackspace.idm.exception.BadRequestException;
 import com.rackspacecloud.docs.auth.api.v1.*;
 import com.sun.jersey.api.json.JSONJAXBContext;
 import com.sun.jersey.api.json.JSONMarshaller;
+import org.apache.cxf.common.util.StringUtils;
 import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -116,23 +117,22 @@ public class JSONWriter implements MessageBodyWriter<Object> {
     @Override
     public void writeTo(Object object, Class<?> type, Type genericType, Annotation[] annotations,
                         MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream outputStream)
-        throws IOException, WebApplicationException {
+            throws IOException, WebApplicationException {
         String jsonText = "";
         if (object.getClass().equals(Extension.class)) {
             Extension extension = (Extension) object;
             jsonText = JSONValue.toJSONString(getExtension(extension));
-        }else  if (object.getClass().equals(VersionChoice.class)) {
+        } else if (object.getClass().equals(VersionChoice.class)) {
             VersionChoice versionChoice = (VersionChoice) object;
             jsonText = JSONValue.toJSONString(getVersionChoice(versionChoice));
-        }
-        else if (object.getClass().equals(Extensions.class)) {
+        } else if (object.getClass().equals(Extensions.class)) {
             Extensions extensions = (Extensions) object;
             jsonText = JSONValue.toJSONString(getExtensionList(extensions));
         } else if (object.getClass().equals(Tenants.class)) {
             JSONObject outer = new JSONObject();
             JSONArray list = new JSONArray();
-            Tenants tenants = (Tenants)object;
-            for (Tenant tenant : tenants.getTenant()){
+            Tenants tenants = (Tenants) object;
+            for (Tenant tenant : tenants.getTenant()) {
                 list.add(getTenantWithoutWrapper(tenant));
             }
             outer.put(JSONConstants.TENANTS, list);
@@ -145,8 +145,8 @@ public class JSONWriter implements MessageBodyWriter<Object> {
         } else if (object.getClass().equals(ServiceList.class)) {
             JSONObject outer = new JSONObject();
             JSONArray list = new JSONArray();
-            ServiceList serviceList = (ServiceList)object;
-            for (Service service : serviceList.getService()){
+            ServiceList serviceList = (ServiceList) object;
+            for (Service service : serviceList.getService()) {
                 list.add(getServiceWithoutWrapper(service));
             }
             outer.put(JSONConstants.SERVICES, list);
@@ -161,12 +161,12 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             jsonText = JSONValue.toJSONString(getEndpointTemplate(template));
         } else if (object.getClass().equals(Endpoint.class)) {
             JSONObject outer = new JSONObject();
-            outer.put(JSONConstants.ENDPOINT, getEndpoint((Endpoint)object));
+            outer.put(JSONConstants.ENDPOINT, getEndpoint((Endpoint) object));
             jsonText = JSONValue.toJSONString(outer);
         } else if (object.getClass().equals(EndpointList.class)) {
             JSONObject outerList = new JSONObject();
             JSONArray endpoints = new JSONArray();
-            EndpointList endpointList = (EndpointList)object;
+            EndpointList endpointList = (EndpointList) object;
             outerList.put(JSONConstants.ENDPOINTS, endpoints);
             for (Endpoint endpoint : endpointList.getEndpoint()) {
                 endpoints.add(getEndpoint(endpoint));
@@ -176,8 +176,8 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             JSONObject endpointTemplate = new JSONObject();
             JSONArray endpoints = new JSONArray();
             endpointTemplate.put(JSONConstants.ENDPOINT_TEMPLATES, endpoints);
-            EndpointTemplateList templateList = (EndpointTemplateList)object;
-            for(EndpointTemplate template : templateList.getEndpointTemplate()){
+            EndpointTemplateList templateList = (EndpointTemplateList) object;
+            for (EndpointTemplate template : templateList.getEndpointTemplate()) {
                 JSONObject templateItem = new JSONObject();
                 templateItem.put(JSONConstants.ID, template.getId());
                 templateItem.put(JSONConstants.ENABLED, template.isEnabled());
@@ -218,7 +218,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             } else if (cred instanceof SecretQA) {
                 SecretQA secrets = (SecretQA) object;
                 jsonText = JSONValue.toJSONString(getSecretQA(secrets));
-            } else if( cred instanceof PasswordCredentialsBase){
+            } else if (cred instanceof PasswordCredentialsBase) {
                 PasswordCredentialsBase creds = (PasswordCredentialsBase) cred;
                 jsonText = JSONValue.toJSONString(getPasswordCredentials(creds));
             } else {
@@ -231,11 +231,10 @@ public class JSONWriter implements MessageBodyWriter<Object> {
         } else if (object.getClass().equals(Group.class)) {
             Group group = (Group) object;
             jsonText = JSONValue.toJSONString(getGroup(group));
-        } else  if(object.getClass().equals(GroupsList.class)){
+        } else if (object.getClass().equals(GroupsList.class)) {
             GroupsList groupsList = (GroupsList) object;
             jsonText = JSONValue.toJSONString(getGroupsList(groupsList));
-        }
-        else if (object.getClass().equals(CredentialListType.class)) {
+        } else if (object.getClass().equals(CredentialListType.class)) {
             JSONObject outer = new JSONObject();
             JSONArray list = new JSONArray();
 
@@ -253,7 +252,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
         } else if (object.getClass().equals(RoleList.class)) {
             JSONObject outer = new JSONObject();
             JSONArray list = new JSONArray();
-            RoleList roleList = (RoleList)object;
+            RoleList roleList = (RoleList) object;
             for (Role role : roleList.getRole()) {
                 list.add(getRole(role));
             }
@@ -262,7 +261,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
         } else if (object.getClass().equals(UserList.class)) {
             JSONObject outer = new JSONObject();
             JSONArray list = new JSONArray();
-            UserList userList = (UserList)object;
+            UserList userList = (UserList) object;
             for (User user : userList.getUser()) {
                 list.add(getUser(user));
             }
@@ -271,7 +270,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
         } else if (object.getClass().equals(AuthenticateResponse.class)) {
             JSONObject outer = new JSONObject();
             JSONObject access = new JSONObject();
-            AuthenticateResponse authenticateResponse = (AuthenticateResponse)object;
+            AuthenticateResponse authenticateResponse = (AuthenticateResponse) object;
             access.put(JSONConstants.TOKEN, getToken(authenticateResponse.getToken()));
 
             if (authenticateResponse.getServiceCatalog() != null)
@@ -284,11 +283,11 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             if (authenticateResponse.getAny().size() > 0) {
                 for (Object response : authenticateResponse.getAny()) {
                     if (response instanceof JAXBElement && ((JAXBElement) response).getDeclaredType().isAssignableFrom(UserForAuthenticateResponse.class)) {
-                        UserForAuthenticateResponse userForAuthenticateResponse = (UserForAuthenticateResponse)((JAXBElement) response).getValue();
+                        UserForAuthenticateResponse userForAuthenticateResponse = (UserForAuthenticateResponse) ((JAXBElement) response).getValue();
 
                         JSONObject subAccess = new JSONObject();
                         subAccess.put(JSONConstants.ID, userForAuthenticateResponse.getId());
-                        subAccess.put(JSONConstants.NAME,userForAuthenticateResponse.getName());
+                        subAccess.put(JSONConstants.NAME, userForAuthenticateResponse.getName());
 
                         JSONArray subRoles = new JSONArray();
 
@@ -312,7 +311,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
         } else if (object.getClass().equals(ImpersonationResponse.class)) {
             JSONObject outer = new JSONObject();
             JSONObject access = new JSONObject();
-            ImpersonationResponse authenticateResponse = (ImpersonationResponse)object;
+            ImpersonationResponse authenticateResponse = (ImpersonationResponse) object;
             access.put(JSONConstants.TOKEN, getToken(authenticateResponse.getToken()));
 
             outer.put(JSONConstants.ACCESS, access);
@@ -326,9 +325,9 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             }
             outer.put(JSONConstants.BASE_URLS, list);
             jsonText = JSONValue.toJSONString(outer);
-        // Version 1.1 specific
+            // Version 1.1 specific
         } else if (object.getClass().equals(com.rackspacecloud.docs.auth.api.v1.User.class)) {
-            com.rackspacecloud.docs.auth.api.v1.User user = (com.rackspacecloud.docs.auth.api.v1.User)object;
+            com.rackspacecloud.docs.auth.api.v1.User user = (com.rackspacecloud.docs.auth.api.v1.User) object;
             JSONObject outer = new JSONObject();
             JSONObject inner = new JSONObject();
             inner.put(JSONConstants.ID, user.getId());
@@ -510,8 +509,8 @@ public class JSONWriter implements MessageBodyWriter<Object> {
         if (token.getTenant() != null) {
             JSONObject tenantInner = new JSONObject();
             tokenInner.put(JSONConstants.TENANT, tenantInner);
-            tenantInner.put(JSONConstants.ID,token.getTenant().getId());
-            tenantInner.put(JSONConstants.NAME,token.getTenant().getName());
+            tenantInner.put(JSONConstants.ID, token.getTenant().getId());
+            tenantInner.put(JSONConstants.NAME, token.getTenant().getName());
         }
         return tokenInner;
     }
@@ -606,8 +605,15 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             outer.put(JSONConstants.UPDATED, user.getUpdated().toString());
         }
         if (user.getOtherAttributes().size() != 0) {
-            outer.put(JSONConstants.RAX_AUTH_DEFAULT_REGION, user.getOtherAttributes().get(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "defaultRegion")));
-            outer.put(JSONConstants.OS_KSADM_PASSWORD, user.getOtherAttributes().get(new QName("http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0", "password")));
+
+            String defaultRegion = user.getOtherAttributes().get(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "defaultRegion"));
+            if (!StringUtils.isEmpty(defaultRegion)) {
+                outer.put(JSONConstants.RAX_AUTH_DEFAULT_REGION, defaultRegion);
+            }
+            String password = user.getOtherAttributes().get(new QName("http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0", "password"));
+            if (!StringUtils.isEmpty(password)) {
+                outer.put(JSONConstants.OS_KSADM_PASSWORD, password);
+            }
         }
         return outer;
     }

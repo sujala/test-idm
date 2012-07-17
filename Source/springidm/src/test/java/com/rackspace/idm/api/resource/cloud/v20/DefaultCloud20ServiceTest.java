@@ -1339,6 +1339,7 @@ public class DefaultCloud20ServiceTest {
         userList.add(tempUser);
         users.setUsers(userList);
         when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(new User());
+        when(userConverterCloudV20.toUser(any(User.class))).thenReturn(new org.openstack.docs.identity.api.v2.User());
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
         when(userService.getAllUsers(org.mockito.Matchers.<FilterParam[]>any())).thenReturn(users);
@@ -1356,7 +1357,9 @@ public class DefaultCloud20ServiceTest {
     public void addUser_responseCreated_returns201() throws Exception {
         UriBuilder uriBuilder = mock(UriBuilder.class);
         URI uri = new URI("");
-        when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(new User());
+        User user = new User();
+        when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(user);
+        when(userConverterCloudV20.toUser(any(User.class))).thenReturn(new org.openstack.docs.identity.api.v2.User());
         doNothing().when(spy).assignProperRole(eq(httpHeaders), eq(authToken), any(ScopeAccess.class), any(User.class));
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         doReturn(uriBuilder).when(uriBuilder).path(anyString());
