@@ -390,9 +390,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             List<CloudBaseUrl> nastBaseUrls = endpointService.getBaseUrlsByBaseUrlType("NAST");
             for (CloudBaseUrl baseUrl : nastBaseUrls) {
-                if (baseUrl.getDef()) {
-                    tenant.addBaseUrlId(baseUrl.getBaseUrlId().toString());
-                }
+                addbaseUrlToTenant(tenant, baseUrl);
             }
             try {
                 tenantService.addTenant(tenant);
@@ -425,9 +423,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             tenant.setEnabled(true);
             List<CloudBaseUrl> nastBaseUrls = endpointService.getBaseUrlsByBaseUrlType("MOSSO");
             for (CloudBaseUrl baseUrl : nastBaseUrls) {
-                if (baseUrl.getDef()) {
-                    tenant.addBaseUrlId(baseUrl.getBaseUrlId().toString());
-                }
+                addbaseUrlToTenant(tenant, baseUrl);
             }
             try {
                 tenantService.addTenant(tenant);
@@ -445,6 +441,24 @@ public class DefaultCloud11Service implements Cloud11Service {
             tenantRole.setTenantIds(new String[]{tenant.getTenantId()});
             User storedUser = userService.getUser(user.getId());
             tenantService.addTenantRoleToUser(storedUser, tenantRole);
+        }
+    }
+
+	private void addbaseUrlToTenant(Tenant tenant, CloudBaseUrl baseUrl) {
+		if (baseUrl.getDef()) {
+		    if (isUkCloudRegion() && "lon".equalsIgnoreCase(baseUrl.getRegion())) {
+		        tenant.addBaseUrlId(baseUrl.getBaseUrlId().toString());
+		    } else if (!isUkCloudRegion() && !"lon".equalsIgnoreCase(baseUrl.getRegion())) {
+		        tenant.addBaseUrlId(baseUrl.getBaseUrlId().toString());
+		    }
+		}
+	}
+
+    private boolean isUkCloudRegion() {
+        if ("UK".equalsIgnoreCase(config.getString("cloud.region"))) {
+            return true;
+        } else {
+            return false;
         }
     }
 

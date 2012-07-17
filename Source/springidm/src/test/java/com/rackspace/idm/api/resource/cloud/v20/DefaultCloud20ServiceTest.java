@@ -46,6 +46,7 @@ import java.util.List;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.*;
 
@@ -1496,6 +1497,55 @@ public class DefaultCloud20ServiceTest {
     public void addUserRole_callsTenantService_addTenantRoleToUserMethod() throws Exception {
         spy.addUserRole(null, authToken, userId, tenantRole.getRoleRsId());
         verify(tenantService).addTenantRoleToUser(any(User.class), any(TenantRole.class));
+    }
+
+    @Test
+    public void addUserRole_callsCheckForMultipleIdentityRoles() throws Exception {
+        spy.addUserRole(null, authToken, userId, tenantRole.getRoleRsId());
+        verify(spy).checkForMultipleIdentityRoles(any(User.class), any(ClientRole.class));
+    }
+
+    @Test
+    public void checkForMultipleIdentityRoles_doesNothing_withNullRoles() throws Exception {
+        spy.checkForMultipleIdentityRoles(new User(), null);
+        assertTrue("method threw no errors", true);
+    }
+
+    @Test
+    public void checkForMultipleIdentityRoles_doesNothing_withNonIdentityRole() throws Exception {
+        User user1 = new User();
+        user1.setRoles(new ArrayList<TenantRole>());
+        ClientRole roleToAdd = new ClientRole();
+        roleToAdd.setName("notIdentity:role");
+        spy.checkForMultipleIdentityRoles(user1, roleToAdd);
+        assertTrue("method threw no errors", true);
+    }
+
+    @Test
+    public void checkForMultipleIdentityRoles_doesNothing_withAddingIdentityRoleToUserWithoutIdentityRole() throws Exception {
+        User user1 = new User();
+        ArrayList<TenantRole> roles = new ArrayList<TenantRole>();
+        TenantRole tenantRole1 = new TenantRole();
+        tenantRole.setName("notIdentity:role");
+        roles.add(tenantRole1);
+        user1.setRoles(roles);
+        ClientRole roleToAdd = new ClientRole();
+        roleToAdd.setName("Identity:role");
+        spy.checkForMultipleIdentityRoles(user1, roleToAdd);
+        assertTrue("method threw no errors", true);
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void checkForMultipleIdentityRoles_throwsBadRequestException_withIdentityRoleAddedToUserWithIdentityRole() throws Exception {
+        User user1 = new User();
+        ArrayList<TenantRole> roles = new ArrayList<TenantRole>();
+        TenantRole tenantRole1 = new TenantRole();
+        tenantRole1.setName("identity:role");
+        roles.add(tenantRole1);
+        user1.setRoles(roles);
+        ClientRole roleToAdd = new ClientRole();
+        roleToAdd.setName("Identity:role");
+        spy.checkForMultipleIdentityRoles(user1, roleToAdd);
     }
 
     @Test
