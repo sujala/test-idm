@@ -1116,16 +1116,14 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             verifyServiceAdminLevelAccess(authToken);
 
-            Tenant tenant = this.tenantService.getTenantByName(name);
+            Tenant tenant = tenantService.getTenantByName(name);
             if (tenant == null) {
                 String errMsg = String.format("Tenant with id/name: '%s' was not found.", name);
                 logger.warn(errMsg);
                 throw new NotFoundException(errMsg);
             }
 
-            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
-                    .createTenant(this.tenantConverterCloudV20.toTenant(tenant)));
-
+            return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createTenant(tenantConverterCloudV20.toTenant(tenant)));
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
