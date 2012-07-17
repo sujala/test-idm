@@ -21,6 +21,7 @@ import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.CharUtils;
+import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.openstack.docs.common.api.v1.Extension;
 import org.openstack.docs.common.api.v1.Extensions;
@@ -34,7 +35,6 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.*;
@@ -607,11 +607,13 @@ public class DefaultCloud20Service implements Cloud20Service {
             verifyUserAdminLevelAccess(authToken);
             User user = checkAndGetUser(userId);
             ClientRole cRole = checkAndGetClientRole(roleId);
+            checkForMultipleIdentityRoles(user, cRole);
             ScopeAccess scopeAccessByAccessToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
             if (!authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken)
                     && config.getString("cloudAuth.adminRole").equals(cRole.getName())) {
                 throw new ForbiddenException("Not authorized.");
             }
+
             TenantRole role = new TenantRole();
             role.setClientId(cRole.getClientId());
             role.setName(cRole.getName());
@@ -2321,7 +2323,17 @@ public class DefaultCloud20Service implements Cloud20Service {
         return user;
     }
 
-    //method verifies that caller has the identity admin
+    void checkForMultipleIdentityRoles(User user, ClientRole roleToAdd) {
+        if(user.getRoles() == null || !StringUtils.startsWithIgnoreCase(roleToAdd.getName(), "identity:"))
+            return;
+
+        for(TenantRole userRole : user.getRoles()){
+            if(StringUtils.startsWithIgnoreCase(userRole.getName(), "identity:"))
+                throw new BadRequestException("You are not allowed to add more than one Identity role.");
+        }
+    }
+
+        //method verifies that caller has the identity admin
 
     void verifyIdentityAdminLevelAccess(String authToken) {
         ScopeAccess authScopeAccess = getScopeAccessForValidToken(authToken);
