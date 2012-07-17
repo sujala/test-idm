@@ -764,7 +764,7 @@ public class DefaultCloud20ServiceTest {
         Response.ResponseBuilder authenticate = spy.authenticate(httpHeaders, authenticationRequest);
         Response response = authenticate.build();
         assertThat("response code", response.getStatus(), equalTo(400));
-        assertThat("message",((JAXBElement<BadRequestFault>) response.getEntity()).getValue().getMessage(),equalTo("Invalid request. Specify tenantId OR tenantName, not both."));
+        assertThat("message",((org.openstack.docs.identity.api.v2.BadRequestFault)response.getEntity()).getMessage(),equalTo("Invalid request. Specify tenantId OR tenantName, not both."));
     }
 
     @Test
@@ -987,7 +987,7 @@ public class DefaultCloud20ServiceTest {
         authenticationRequest.setToken(null);
         Response response = spy.authenticate(null, authenticationRequest).build();
         assertThat("response status", response.getStatus(), equalTo(400));
-        assertThat("response message", ((JAXBElement<BadRequestFault>) response.getEntity()).getValue().getMessage(), equalTo("Invalid request body: unable to parse Auth data. Please review XML or JSON formatting."));
+        assertThat("response message", ((org.openstack.docs.identity.api.v2.BadRequestFault) response.getEntity()).getMessage(), equalTo("Invalid request body: unable to parse Auth data. Please review XML or JSON formatting."));
     }
 
     @Test
@@ -4218,8 +4218,10 @@ public class DefaultCloud20ServiceTest {
     public void badRequestExceptionResponse_doesNotSetDetails() throws Exception {
         BadRequestFault badRequestFault = mock(BadRequestFault.class);
         ObjectFactory objectFactory = mock(ObjectFactory.class);
+        JAXBElement<BadRequestFault> someFault = new JAXBElement(new QName("http://docs.openstack.org/identity/api/v2.0", "badRequest"), BadRequestFault.class, null, badRequestFault);
         when(jaxbObjectFactories.getOpenStackIdentityV2Factory()).thenReturn(objectFactory);
         when(objectFactory.createBadRequestFault()).thenReturn(badRequestFault);
+        when(objectFactory.createBadRequest(badRequestFault)).thenReturn(someFault);
         defaultCloud20Service.badRequestExceptionResponse("message");
         verify(badRequestFault, never()).setDetails(anyString());
     }
