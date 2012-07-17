@@ -62,11 +62,11 @@
             <type>jar</type>
             <version>1.0</version>
         </dependency>
-        <dependency>
-            <groupId>commons-httpclient</groupId>
-            <artifactId>commons-httpclient</artifactId>
-            <version>3.1</version>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>commons-httpclient</groupId>-->
+            <!--<artifactId>commons-httpclient</artifactId>-->
+            <!--<version>3.1</version>-->
+        <!--</dependency>-->
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
@@ -368,7 +368,12 @@
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
-            <version>4.1.2</version>
+            <version>4.2.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpcore</artifactId>
+            <version>4.2.1</version>
         </dependency>
         <dependency>
             <groupId>org.hamcrest</groupId>
@@ -759,6 +764,10 @@
                             <projectProperties>
                                 <property>endpoint=http://d-api2.cidm.iad2.corp.rackspace.com:4931</property>
                                 <property>endpointjson=http://d-api2.cidm.iad2.corp.rackspace.com</property>
+                                <property>softDeletePath=cloud/v2.0</property>
+                                <property>path=v1</property>
+                                <property>v2.0path=cloud/v2.0</property>
+                                <property>newPath=v1</property>
                             </projectProperties>
                         </configuration>
                         <dependencies>
@@ -840,7 +849,6 @@
                 </plugins>
             </build>
         </profile>
-
         <profile>
             <id>soapui-test</id>
             <activation>
@@ -865,6 +873,10 @@
                             <projectProperties>
                                 <property>endpoint=http://t-api2.cidm.iad2.corp.rackspace.com:4931</property>
                                 <property>endpointjson=http://t-api2.cidm.iad2.corp.rackspace.com</property>
+                                <property>softDeletePath=cloud/v2.0</property>
+                                <property>path=v1</property>
+                                <property>v2.0path=cloud/v2.0</property>
+                                <property>newPath=v1</property>
                             </projectProperties>
                         </configuration>
                         <dependencies>
@@ -893,6 +905,19 @@
                 </plugins>
             </build>
         </profile>
+
+        <!--<profile>-->
+            <!--<id>local-dev</id>-->
+            <!--<activation>-->
+                <!--<property>-->
+                    <!--<name>local-dev</name>-->
+                <!--</property>-->
+                <!--<activeByDefault>false</activeByDefault>-->
+            <!--</activation>-->
+            <!--<properties>-->
+                <!--<ldap.isTest>true</ldap.isTest>-->
+            <!--</properties>-->
+        <!--</profile>-->
     </profiles>
 
     <repositories>
@@ -1414,6 +1439,32 @@
                                 </resource>
                                 <resource>
                                     <directory>${basedir}/src/main/config/DEV</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-local-dev-resources</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/target/config/LOCAL-DEV</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <filtering>true</filtering>
+                                    <directory>${basedir}/src/main/config</directory>
+                                    <includes>
+                                        <include>base.idm.properties</include>
+                                        <include>log4j.xml</include>
+                                        <include>rsa_api.properties</include>
+                                        <include>sdconf.rec</include>
+                                        <include>securid</include>
+                                    </includes>
+                                </resource>
+                                <resource>
+                                    <directory>${basedir}/src/main/config/LOCAL-DEV</directory>
                                 </resource>
                             </resources>
                         </configuration>

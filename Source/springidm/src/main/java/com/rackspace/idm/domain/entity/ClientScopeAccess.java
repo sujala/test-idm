@@ -67,6 +67,10 @@ public class ClientScopeAccess extends ScopeAccess implements HasAccessToken {
         this.accessTokenExp = new DateTime().minusDays(1).toDate();
     }
 
+    public void setLdapEntry(ReadOnlyEntry ldapEntry) {
+        this.ldapEntry = ldapEntry;
+    }
+
     @Override
     public boolean isAccessTokenExpired(DateTime time) {
         return StringUtils.isBlank(this.accessTokenString)

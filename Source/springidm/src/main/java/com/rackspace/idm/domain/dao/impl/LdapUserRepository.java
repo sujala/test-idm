@@ -1217,12 +1217,11 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().info("SoftDeleting user - {}", user.getUsername());
         try {
             String oldDn = user.getUniqueId();
-            String newRdn = new LdapDnBuilder("").addAttribute(ATTR_ID,
-                user.getId()).build();
+            String newRdn = ATTR_ID + "=" + user.getId();
             String newDn = new LdapDnBuilder(SOFT_DELETED_USERS_BASE_DN)
                 .addAttribute(ATTR_ID, user.getId()).build();
             // Move the User
-            getAppInterface().modifyDN(oldDn, newRdn, false, SOFT_DELETED_USERS_BASE_DN);
+            getAppInterface().modifyDN(oldDn, newRdn, true, SOFT_DELETED_USERS_BASE_DN);
             user.setUniqueId(newDn);
             // Disabled the User
             getAppInterface().modify(user.getUniqueId(), new Modification(
@@ -1281,11 +1280,10 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
     @Override
     public void unSoftDeleteUser(User user) {
-        getLogger().info("SoftDeleting user - {}", user.getUsername());
+        getLogger().info("unSoftDeleting user - {}", user.getUsername());
         try {
             String oldDn = user.getUniqueId();
-            String newRdn = new LdapDnBuilder("").addAttribute(ATTR_ID,
-                user.getId()).build();
+            String newRdn = ATTR_ID + "=" + user.getId();
             String newDn = new LdapDnBuilder(USERS_BASE_DN)
             .addAttribute(ATTR_ID, user.getId()).build();
             // Modify the User
@@ -1295,10 +1293,10 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             getAppInterface().modify(user.getUniqueId(), new Modification(
                     ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(true)));
         } catch (LDAPException e) {
-            getLogger().error("Error soft deleting user", e);
+            getLogger().error("Error unsoft deleting user", e);
             throw new IllegalStateException(e);
         }
-        getLogger().info("SoftDeleted user - {}", user.getUsername());
+        getLogger().info("unSoftDeleted user - {}", user.getUsername());
     }
 
     protected int getLdapPagingOffsetDefault() {

@@ -310,7 +310,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
         try {
             authenticateCloudAdminUser(request);
-            userValidator.validateUserName(user.getId());
+            userValidator.validateUsername(user.getId());
 
             if (StringUtils.isBlank(user.getId())) {
                 String errorMsg = "Expecting username";
@@ -389,9 +389,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             List<CloudBaseUrl> nastBaseUrls = endpointService.getBaseUrlsByBaseUrlType("NAST");
             for (CloudBaseUrl baseUrl : nastBaseUrls) {
-                if (baseUrl.getDef()) {
-                    tenant.addBaseUrlId(baseUrl.getBaseUrlId().toString());
-                }
+                addbaseUrlToTenant(tenant, baseUrl);
             }
             try {
                 tenantService.addTenant(tenant);
@@ -424,9 +422,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             tenant.setEnabled(true);
             List<CloudBaseUrl> nastBaseUrls = endpointService.getBaseUrlsByBaseUrlType("MOSSO");
             for (CloudBaseUrl baseUrl : nastBaseUrls) {
-                if (baseUrl.getDef()) {
-                    tenant.addBaseUrlId(baseUrl.getBaseUrlId().toString());
-                }
+                addbaseUrlToTenant(tenant, baseUrl);
             }
             try {
                 tenantService.addTenant(tenant);
@@ -444,6 +440,24 @@ public class DefaultCloud11Service implements Cloud11Service {
             tenantRole.setTenantIds(new String[]{tenant.getTenantId()});
             User storedUser = userService.getUser(user.getId());
             tenantService.addTenantRoleToUser(storedUser, tenantRole);
+        }
+    }
+
+	private void addbaseUrlToTenant(Tenant tenant, CloudBaseUrl baseUrl) {
+		if (baseUrl.getDef()) {
+		    if (isUkCloudRegion() && "lon".equalsIgnoreCase(baseUrl.getRegion())) {
+		        tenant.addBaseUrlId(baseUrl.getBaseUrlId().toString());
+		    } else if (!isUkCloudRegion() && !"lon".equalsIgnoreCase(baseUrl.getRegion())) {
+		        tenant.addBaseUrlId(baseUrl.getBaseUrlId().toString());
+		    }
+		}
+	}
+
+    private boolean isUkCloudRegion() {
+        if ("UK".equalsIgnoreCase(config.getString("cloud.region"))) {
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -845,7 +859,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         try {
             authenticateCloudAdminUser(request);
             userValidator.validate(user);
-            userValidator.validateUserName(user.getId());
+            userValidator.validateUsername(user.getId());
 
             if(user.getId().equals(""))
                 throw new BadRequestException("User Id can not be null.");
@@ -1046,23 +1060,6 @@ public class DefaultCloud11Service implements Cloud11Service {
         }
 
         return Response.ok(extensionMap.get(normalizedAlias));
-    }
-
-    // Migration Methods
-    @Override
-    public Response.ResponseBuilder all(HttpServletRequest request, HttpHeaders httpHeaders, String body) throws IOException {
-        throw new IOException("Not Implemented");
-    }
-
-    @Override
-    public Response.ResponseBuilder migrate(HttpServletRequest request, String user, HttpHeaders httpHeaders, String body) throws IOException {
-        throw new IOException("Not Implemented");
-    }
-
-    @Override
-    public Response.ResponseBuilder unmigrate(HttpServletRequest request, String user, HttpHeaders httpHeaders, String body)
-            throws IOException {
-        throw new IOException("Not Implemented");
     }
 
     // Private Methods

@@ -358,7 +358,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
         if (definedPermission.getGrantedByDefault()) {
             // Granted by default, but has the user been provisioned for this
-            // service?
+            // defaultApplicationService?
             ScopeAccess provisionedSa = scopeAccessDao
                     .getDirectScopeAccessForParentByClientId(user.getUniqueId(),
                             client.getClientId());

@@ -14,6 +14,7 @@ import com.sun.jersey.api.json.JSONMarshaller;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
+import org.mortbay.util.ajax.JSON;
 import org.openstack.docs.common.api.v1.Extension;
 import org.openstack.docs.common.api.v1.Extensions;
 import org.openstack.docs.common.api.v1.MediaTypeList;
@@ -181,7 +182,6 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
                 CredentialType.class) || object.getDeclaredType().isAssignableFrom(ApiKeyCredentials.class)) {
 
             CredentialType cred = (CredentialType) object.getValue();
-
             if (cred instanceof ApiKeyCredentials) {
                 ApiKeyCredentials creds = (ApiKeyCredentials) cred;
                 String jsonText = JSONValue.toJSONString(getApiKeyCredentials(creds));
@@ -197,12 +197,10 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
             } else {
                 throw new BadRequestException("Credential Type must be API Key Credentials, Password Credentials, or SecretQA.");
             }
-
         } else if (object.getDeclaredType().isAssignableFrom(Groups.class)) {
             Groups groups = (Groups) object.getValue();
             String jsonText = JSONValue.toJSONString(getGroups(groups));
             outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
-
         } else if (object.getDeclaredType().isAssignableFrom(Group.class)) {
             Group group = (Group) object.getValue();
             String jsonText = JSONValue.toJSONString(getGroup(group));
@@ -212,27 +210,20 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
             String jsonText = JSONValue.toJSONString(getGroupsList(groupsList));
             outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
         } else if (object.getDeclaredType().isAssignableFrom(CredentialListType.class)) {
-
             JSONObject outer = new JSONObject();
             JSONArray list = new JSONArray();
-
             CredentialListType credsList = (CredentialListType) object.getValue();
             outer.put(JSONConstants.CREDENTIALS, list);
-
-            for (JAXBElement<? extends CredentialType> cred : credsList
-                    .getCredential()) {
-                if (cred.getDeclaredType().isAssignableFrom(
-                        ApiKeyCredentials.class)) {
+            for (JAXBElement<? extends CredentialType> cred : credsList.getCredential()) {
+                CredentialType credential = cred.getValue();
+                if (credential instanceof ApiKeyCredentials) {
                     list.add(getApiKeyCredentials((ApiKeyCredentials) cred.getValue()));
-                } else if (cred.getDeclaredType().isAssignableFrom(
-                        PasswordCredentialsBase.class)) {
+                } else if (credential instanceof PasswordCredentialsBase) {
                     list.add(getPasswordCredentials((PasswordCredentialsBase) cred.getValue()));
                 }
             }
-
             String jsonText = JSONValue.toJSONString(outer);
             outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
-
         } else if (object.getDeclaredType().isAssignableFrom(RoleList.class)) {
             JSONObject outer = new JSONObject();
             JSONArray list = new JSONArray();
@@ -267,7 +258,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
             AuthenticateResponse authenticateResponse = (AuthenticateResponse) object.getValue();
             access.put(JSONConstants.TOKEN, getToken(authenticateResponse.getToken()));
 
-            if(authenticateResponse.getServiceCatalog() != null)
+            if (authenticateResponse.getServiceCatalog() != null)
                 access.put(JSONConstants.SERVICECATALOG, getServiceCatalog(authenticateResponse.getServiceCatalog()));
 
             if (authenticateResponse.getUser() != null) {
@@ -277,11 +268,12 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
 
             if (authenticateResponse.getAny().size() > 0) {
                 for (Object response : authenticateResponse.getAny()) {
-                    if (response instanceof UserForAuthenticateResponse) {
-                        UserForAuthenticateResponse userForAuthenticateResponse = (UserForAuthenticateResponse) response;
+                    if (response instanceof JAXBElement && ((JAXBElement) response).getDeclaredType().isAssignableFrom(UserForAuthenticateResponse.class)) {
+                        UserForAuthenticateResponse userForAuthenticateResponse = (UserForAuthenticateResponse)((JAXBElement) response).getValue();
 
                         JSONObject subAccess = new JSONObject();
                         subAccess.put(JSONConstants.ID, userForAuthenticateResponse.getId());
+                        subAccess.put(JSONConstants.NAME,userForAuthenticateResponse.getName());
 
                         JSONArray subRoles = new JSONArray();
 
@@ -296,7 +288,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
                         }
 
                         subAccess.put(JSONConstants.ROLES, subRoles);
-                        access.put(JSONConstants.ACCESS, subAccess);
+                        access.put(JSONConstants.IMPERSONATOR, subAccess);
                         break;
                     }
                 }
@@ -395,7 +387,7 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
                     if (l.getType() != null) {
                         jlink.put("type", l.getType());
                     }
-                    if (l.getHref() != null){
+                    if (l.getHref() != null) {
                         jlink.put("href", l.getHref());
                     }
                     linkArray.add(jlink);
@@ -504,14 +496,19 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
     @SuppressWarnings("unchecked")
     JSONObject getToken(Token token) {
         JSONObject tokenInner = new JSONObject();
-        try{
+        try {
             tokenInner.put(JSONConstants.ID, token.getId());
             tokenInner.put(JSONConstants.EXPIRES, token.getExpires().toString());
-        } catch (NullPointerException e){
+        } catch (NullPointerException e) {
             throw new BadRequestException("Expected \"id\" and \"expired\" to not be null.");
         }
 
-        if (token.getTenant() != null) { tokenInner.put(JSONConstants.TENANT, token.getTenant().getName()); }
+        if (token.getTenant() != null) {
+            JSONObject tenantInner = new JSONObject();
+            tokenInner.put(JSONConstants.TENANT, tenantInner);
+            tenantInner.put(JSONConstants.ID,token.getTenant().getId());
+            tenantInner.put(JSONConstants.NAME,token.getTenant().getName());
+        }
         return tokenInner;
     }
 
@@ -597,14 +594,14 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
                 outer.put(JSONConstants.OS_KSADM_PASSWORD, ((UserForCreate) user).getPassword());
             }
         }
-        if(user.getCreated() != null){
-            outer.put(JSONConstants.CREATED,user.getCreated().toString());
+        if (user.getCreated() != null) {
+            outer.put(JSONConstants.CREATED, user.getCreated().toString());
 
         }
-        if(user.getUpdated() != null){
-            outer.put(JSONConstants.UPDATED,user.getUpdated().toString());
+        if (user.getUpdated() != null) {
+            outer.put(JSONConstants.UPDATED, user.getUpdated().toString());
         }
-        if(user.getOtherAttributes().size() != 0){
+        if (user.getOtherAttributes().size() != 0) {
             outer.put(JSONConstants.RAX_AUTH_DEFAULT_REGION, user.getOtherAttributes().get(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "defaultRegion")));
         }
         return outer;
@@ -846,14 +843,14 @@ public class JSONWriter implements MessageBodyWriter<JAXBElement<?>> {
         outer.put(JSONConstants.NAME, extension.getName());
         outer.put(JSONConstants.NAMESPACE, extension.getNamespace());
         outer.put(JSONConstants.ALIAS, extension.getAlias());
-        if(extension.getUpdated() != null){
+        if (extension.getUpdated() != null) {
             outer.put(JSONConstants.UPDATED, extension.getUpdated().toString());
         }
         outer.put(JSONConstants.DESCRIPTION, extension.getDescription());
 
         if (extension.getAny().size() > 0) {
             JSONArray links = JSONWriter.getLinks(extension.getAny());
-            if(links.size() > 0){
+            if (links.size() > 0) {
                 outer.put(JSONConstants.LINKS, links);
             }
         }

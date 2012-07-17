@@ -141,7 +141,7 @@ public class ClientGroup implements Serializable, Auditable{
      *
      * @return The proxy instance of the Token class
      */
-    private Object writeReplace() {
+    Object writeReplace() {
         return new SerializationProxy(this);
     }
 
@@ -152,7 +152,7 @@ public class ClientGroup implements Serializable, Auditable{
      * @param stream Used by Java serialization API
      * @throws java.io.InvalidObjectException By the Java serialization API
      */
-    private void readObject(ObjectInputStream stream)
+    void readObject(ObjectInputStream stream)
         throws InvalidObjectException {
         throw new InvalidObjectException("Serialization proxy is required.");
     }
@@ -164,7 +164,7 @@ public class ClientGroup implements Serializable, Auditable{
      * I.e., this is what actually gets serialized.
      *
      */
-    private static class SerializationProxy implements Serializable {
+     static class SerializationProxy implements Serializable {
         private static final long serialVersionUID = -5052183110369433550L;
         private String name = null;
         private String clientId = null;
@@ -178,7 +178,7 @@ public class ClientGroup implements Serializable, Auditable{
             this.type = clientGroup.type;
         }
 
-        private Object readResolve() {
+        Object readResolve() {
             return new ClientGroup(clientId, customerId, name, type);
         }
 

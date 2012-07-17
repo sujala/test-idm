@@ -7,6 +7,8 @@ import org.junit.Test;
 
 import javax.ws.rs.core.UriInfo;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.not;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -51,5 +53,11 @@ public class CanonicalContractDescriptionBuilderTest {
     @Test
     public void build_doesTemplateBuild() throws Exception {
         canonicalContractDescriptionBuilder.build("patern", (UriInfo)null);
+    }
+
+    @Test
+    public void build_validPatternAndUri_returnTemplate() throws Exception {
+        String build = canonicalContractDescriptionBuilder.build("pattern", "uri");
+        assertThat("string", build, not(""));
     }
 }

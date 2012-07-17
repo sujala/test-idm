@@ -32,8 +32,9 @@ public class Application implements Auditable {
     private String description = null;
     private Boolean enabled = null;
 
+    private Boolean usedForDefaultRegion = false;
+
     private List<TenantRole> roles = null;
-    
     public Application() {
     }
 
@@ -58,19 +59,19 @@ public class Application implements Auditable {
     public String getClientId() {
         return clientId;
     }
-    
+
     public void setClientId(String clientId) {
         this.clientId = clientId;
     }
-    
+
     public String getRCN() {
         return rcn;
     }
-    
+
     public void setRCN(String rcn) {
         this.rcn = rcn;
     }
-    
+
     public String getOpenStackType() {
         return openStackType;
     }
@@ -108,7 +109,7 @@ public class Application implements Auditable {
     public String getName() {
         return name;
     }
-    
+
     public String getScope() {
         return scope;
     }
@@ -140,21 +141,21 @@ public class Application implements Auditable {
     public void setDescription(String description) {
         this.description = description;
     }
-    
+
     public void setDefaults() {
         this.setEnabled(true);
     }
-    
+
     public void copyChanges(Application modifiedClient) {
 
     	if (modifiedClient.getRCN() != null) {
     		setRCN(modifiedClient.getRCN());
     	}
-    	
+
     	if (modifiedClient.isEnabled() != null) {
     		setEnabled(modifiedClient.isEnabled());
     	}
-    	
+
         if (modifiedClient.getCallBackUrl() != null) {
             setCallBackUrl(modifiedClient.getCallBackUrl());
         }
@@ -162,7 +163,7 @@ public class Application implements Auditable {
         if (modifiedClient.getDescription() != null) {
             setDescription(modifiedClient.getDescription());
         }
-        
+
         if (modifiedClient.getScope() != null) {
             setScope(modifiedClient.getScope());
         }
@@ -171,7 +172,7 @@ public class Application implements Auditable {
             setTitle(modifiedClient.getTitle());
         }
     }
-    
+
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -321,5 +322,13 @@ public class Application implements Auditable {
 
     public Boolean isEnabled() {
         return enabled;
+    }
+
+    public Boolean getUsedForDefaultRegion() {
+        return usedForDefaultRegion;
+    }
+
+    public void setUsedForDefaultRegion(Boolean usedForDefaultRegion) {
+        this.usedForDefaultRegion = usedForDefaultRegion;
     }
 }

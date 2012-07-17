@@ -47,6 +47,17 @@ public class PasswordRotationPolicyResourceTest {
     }
 
     @Test
+    public void getPasswordRotationPolicy_passwordRotationDurationNotNull_returns200Status() throws Exception {
+        doNothing().when(authorizationService).verifyIdmSuperAdminAccess(null);
+        Customer customer = new Customer();
+        customer.setEnabled(false);
+        customer.setPasswordRotationDuration(1);
+        when(customerService.loadCustomer(null)).thenReturn(customer);
+        Response response = passwordRotationPolicyResource.getPasswordRotationPolicy(null, null);
+        assertThat("response status", response.getStatus(), equalTo(200));
+    }
+
+    @Test
     public void getPasswordRotationPolicy_returns200Status() throws Exception {
         doNothing().when(authorizationService).verifyIdmSuperAdminAccess(null);
         Customer customer = new Customer();

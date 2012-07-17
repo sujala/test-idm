@@ -1,12 +1,10 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.idm.api.config.ConverterConfiguration;
 import com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import org.hamcrest.Matchers;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.openstack.docs.identity.api.v2.AuthenticateResponse;
 
@@ -59,7 +57,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
                 .type(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML_TYPE)
                 .post(ClientResponse.class,
-                        "<auth xmlns=\"http://docs.openstack.org/identity/api/v2.0\"><passwordCredentials username=\"cmarin2\" password=\"Password1\"/></auth>");
+                        "<auth xmlns=\"http://docs.openstack.org/identity/api/v2.0\"><passwordCredentials username=\"hectorServiceAdmin\" password=\"Password1\"/></auth>");
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
     }
 
@@ -90,7 +88,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .accept(MediaType.APPLICATION_JSON_TYPE)
                 .post(ClientResponse.class,
-                        "{" + "\"auth\":{" + "\"passwordCredentials\":{" + "\"username\":\"cmarin2\",\"password\":\"Password1\"},\"tenantId\":\"1234\" }");
+                        "{" + "\"auth\":{" + "\"passwordCredentials\":{" + "\"username\":\"hectorServiceAdmin\",\"password\":\"Password1\"},\"tenantId\":\"1234\" }");
         assertThat("response code", clientResponse.getStatus(), equalTo(400));
     }
 
@@ -103,7 +101,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .accept(MediaType.APPLICATION_JSON_TYPE)
                 .post(ClientResponse.class,
-                        "{" + "\"auth\":{" + "\"passwordCredentials\":{" + "\"username\":\"cmarin2\"},\"tenantId\":\"1234\" }}");
+                        "{" + "\"auth\":{" + "\"passwordCredentials\":{" + "\"username\":\"hectorServiceAdmin\"},\"tenantId\":\"1234\" }}");
         assertThat("response code", clientResponse.getStatus(), equalTo(400));
     }
 
@@ -118,7 +116,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     }
 
     @Test
-    public void authenticate_invalidUsername_returns404(){
+    public void authenticate_invalidUsername_returns401(){
          WebResource resource = resource().path("cloud/v2.0/tokens");
 
         ClientResponse clientResponse = resource
@@ -132,7 +130,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
                                 "        }\n" +
                                 "    }\n" +
                                 "}");
-        assertThat("response code", clientResponse.getStatus(), equalTo(404));
+        assertThat("response code", clientResponse.getStatus(), equalTo(401));
     }
 
     @Test
@@ -286,7 +284,6 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
 
     @Test
     public void impersonate_withNoAuth_returns403() throws Exception {
-        String token = getAuthToken("hectorServiceAdmin", "Password1");
         WebResource resource = resource().path("cloud/v2.0/RAX-AUTH/impersonation-tokens");
         ClientResponse clientResponse = resource.type(MediaType.APPLICATION_XML_TYPE).post(ClientResponse.class , "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" +
                 "<impersonation\n" +

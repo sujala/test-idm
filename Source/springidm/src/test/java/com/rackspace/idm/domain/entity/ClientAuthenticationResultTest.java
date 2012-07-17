@@ -55,13 +55,6 @@ public class ClientAuthenticationResultTest {
     }
 
     @Test
-    public void equals_classNotSame_returnsFalse() throws Exception {
-        AuthenticationResult test = new UserAuthenticationResult(null, true);
-        boolean result = clientAuthenticationResult.equals(test);
-        assertThat("boolean", result, equalTo(false));
-    }
-
-    @Test
     public void equals_clientNullOtherClientNull_returnsTrue() throws Exception {
         AuthenticationResult test = new ClientAuthenticationResult(null, true);
         boolean result = clientAuthenticationResult.equals(test);
@@ -81,6 +74,15 @@ public class ClientAuthenticationResultTest {
         AuthenticationResult test = new ClientAuthenticationResult(null, true);
         boolean result = clientAuthenticationResult.equals(test);
         assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
+    public void equals_clientNotNullAndEqualClient_returnsTrue() throws Exception {
+        Application client = new Application();
+        clientAuthenticationResult.setClient(client);
+        AuthenticationResult test = new ClientAuthenticationResult(client, true);
+        boolean result = clientAuthenticationResult.equals(test);
+        assertThat("boolean", result, equalTo(true));
     }
 
     @Test

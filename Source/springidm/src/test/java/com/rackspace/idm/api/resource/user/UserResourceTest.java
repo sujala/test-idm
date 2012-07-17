@@ -42,6 +42,7 @@ public class UserResourceTest {
     private AuthorizationService authorizationService;
     private UserGlobalRolesResource userGlobalRolesResource;
     private InputValidator inputValidator;
+    private UserValidatorFoundation userValidator;
 
     @Before
     public void setUp() throws Exception {
@@ -56,8 +57,10 @@ public class UserResourceTest {
         authorizationService = mock(AuthorizationService.class);
         userGlobalRolesResource = mock(UserGlobalRolesResource.class);
         inputValidator = mock(InputValidator.class);
+        userValidator = mock(UserValidatorFoundation.class);
         userResource = new UserResource(userApplicationsResource, scopeAccessService, userPasswordCredentialsResource, userTenantsResource,
                 userSecretResource, userDelegatedRefreshTokensResource, userService, userConverter, inputValidator, authorizationService, userGlobalRolesResource);
+        userResource.setUserValidator(userValidator);
     }
 
     @Test
@@ -141,7 +144,9 @@ public class UserResourceTest {
     public void updateUser_callsUserService_updateUserById() throws Exception {
         com.rackspace.api.idm.v1.User user = new com.rackspace.api.idm.v1.User();
         EntityHolder<com.rackspace.api.idm.v1.User> holder = new EntityHolder<com.rackspace.api.idm.v1.User>(user);
-        when(userConverter.toUserDO(any(com.rackspace.api.idm.v1.User.class))).thenReturn(new User());
+        User testUser = new User();
+        testUser.setEnabled(true);
+        when(userConverter.toUserDO(any(com.rackspace.api.idm.v1.User.class))).thenReturn(testUser);
         when(userService.loadUser("userId")).thenReturn(new User());
         userResource.updateUser("authHeader", "userId", holder);
         verify(userService).updateUserById(any(User.class), eq(false));

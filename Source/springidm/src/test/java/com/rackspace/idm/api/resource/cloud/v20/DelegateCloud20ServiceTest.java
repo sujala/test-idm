@@ -12,28 +12,21 @@ import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.TokenService;
 import com.rackspace.idm.domain.service.UserService;
-import com.rackspace.idm.domain.service.impl.DefaultUserService;
-import com.rackspace.idm.exception.ApiException;
-import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.exception.*;
 import com.sun.jersey.core.spi.factory.ResponseBuilderImpl;
-import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory;
-import com.sun.jersey.spi.container.ContainerRequest;
+import com.sun.jersey.core.util.MultivaluedMapImpl;
 import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
 import org.apache.commons.configuration.Configuration;
-import org.joda.time.DateTime;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Matchers;
+import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.v2.*;
-import org.springframework.web.bind.annotation.RequestHeader;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
-import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.util.*;
@@ -53,7 +46,6 @@ import static org.mockito.Mockito.*;
  */
 public class DelegateCloud20ServiceTest {
 
-    DummyCloud20Service dummyCloud20Service;
     DelegateCloud20Service delegateCloud20Service;
     DefaultCloud20Service defaultCloud20Service = mock(DefaultCloud20Service.class);
     UserService userService = mock(UserService.class);
@@ -69,6 +61,7 @@ public class DelegateCloud20ServiceTest {
     private final Configuration config = mock(Configuration.class);
     AuthenticationRequest authenticationRequest = mock(AuthenticationRequest.class);
     String url = "http://url.com/";
+    String ukUrl = "http://ukurl.com/";
     Boolean disabled = true;
     private String roleId = "roleId";
     private String userId = "userId";
@@ -79,9 +72,7 @@ public class DelegateCloud20ServiceTest {
 
     @Before
     public void setUp() throws IOException, JAXBException {
-        dummyCloud20Service = new DummyCloud20Service();
         delegateCloud20Service = new DelegateCloud20Service();
-        delegateCloud20Service.setDummyCloud20Service(dummyCloud20Service);
         delegateCloud20Service.setCloudClient(cloudClient);
         delegateCloud20Service.setDefaultCloud20Service(defaultCloud20Service);
         delegateCloud20Service.setUserService(userService);
@@ -92,7 +83,11 @@ public class DelegateCloud20ServiceTest {
         delegateCloud20Service.setScopeAccessService(scopeAccessService);
         delegateCloud20Service.setTenantService(tenantService);
         when(config.getString("cloudAuth20url")).thenReturn(url);
+        when(config.getString("cloudAuthUK20url")).thenReturn(url);
         when(config.getBoolean("GAKeystoneDisabled")).thenReturn(disabled);
+        when(httpHeaders.getRequestHeaders()).thenReturn(new MultivaluedMapImpl());
+        when(config.getString("ga.username")).thenReturn("user");
+        when(config.getString("ga.password")).thenReturn("password");
         delegateCloud20Service.setConfig(config);
         when(cloudClient.post(anyString(), Matchers.<HttpHeaders>any(), anyString())).thenReturn(Response.ok());
         spy = spy(delegateCloud20Service);
@@ -104,6 +99,30 @@ public class DelegateCloud20ServiceTest {
         when(scopeAccessService.getAccessTokenByAuthHeader("token")).thenReturn(new ScopeAccess());
         spy.addUser(null,null,"token",null);
         verify(defaultCloud20Service).addUser(null,null,"token",null);
+    }
+
+    @Test(expected = DuplicateUsernameException.class)
+    public void addUser_routingTrueAndCallerExistsInGAButNameExistsInCloudAuth_throwsConflictException() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(scopeAccessService.getAccessTokenByAuthHeader("token")).thenReturn(new ScopeAccess());
+        when(cloudClient.get(anyString(),any(HttpHeaders.class))).thenReturn(Response.ok());
+        UserForCreate user = new UserForCreate();
+        user.setUsername("username");
+        spy.addUser(httpHeaders, null, "token", user);
+    }
+
+    @Test
+    public void addUser_routingTrueAndCallerExistsInGAButNameExistsInCloudAuth_callsClientGetUsers() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(scopeAccessService.getAccessTokenByAuthHeader("token")).thenReturn(new ScopeAccess());
+        when(cloudClient.get(anyString(), any(HttpHeaders.class))).thenReturn(Response.status(400));
+        when(cloudClient.get(anyString(),any(HttpHeaders.class))).thenReturn(Response.status(400));
+
+
+        UserForCreate user = new UserForCreate();
+        user.setUsername("username");
+        spy.addUser(httpHeaders, null, "token", user);
+        verify(cloudClient,times(2)).get(contains("users/username"),any(HttpHeaders.class));
     }
 
     @Test
@@ -191,6 +210,7 @@ public class DelegateCloud20ServiceTest {
         User user = new User();
         when(cloudUserExtractor.getUserByV20CredentialType(authenticationRequest)).thenReturn(user);
         when(cloudClient.post(anyString(), any(HttpHeaders.class), anyString())).thenReturn(Response.status(123));
+        when(defaultCloud20Service.authenticate(httpHeaders, authenticationRequest)).thenReturn(Response.status(123));
         assertThat("response", delegateCloud20Service.authenticate(httpHeaders, authenticationRequest), instanceOf(Response.ResponseBuilder.class));
     }
 
@@ -1318,26 +1338,35 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
-    public void deleteRoleFromUserOnTenant_defaultServiceReturns401_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.deleteRoleFromUserOnTenant(null, null, tenantId, userId, roleId)).thenReturn(Response.status(401));
+    public void deleteRoleFromUserOnTenant_RoutingFalse_userExistsFalse_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(userService.userExistsById(userId)).thenReturn(false);
         delegateCloud20Service.deleteRoleFromUserOnTenant(null, null, tenantId, userId, roleId);
-        verify(cloudClient).delete(url + "tenants/" + tenantId + "/users/" + userId + "/roles/OS-KSADM/" + roleId, null);
+        verify(defaultCloud20Service).deleteRoleFromUserOnTenant(null, null, tenantId, userId, roleId);
     }
 
     @Test
-    public void deleteRoleFromUserOnTenant_defaultServiceReturns404_callsClient() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.deleteRoleFromUserOnTenant(null, null, tenantId, userId, roleId)).thenReturn(Response.status(404));
+    public void deleteRoleFromUserOnTenant_RoutingFalse_userExistsTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(userService.userExistsById(userId)).thenReturn(true);
         delegateCloud20Service.deleteRoleFromUserOnTenant(null, null, tenantId, userId, roleId);
-        verify(cloudClient).delete(url + "tenants/" + tenantId + "/users/" + userId + "/roles/OS-KSADM/" + roleId, null);
+        verify(defaultCloud20Service).deleteRoleFromUserOnTenant(null, null, tenantId, userId, roleId);
     }
 
     @Test
-    public void deleteRoleFromUserOnTenant_defaultServiceReturns200_returnsResponseBuilder() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(false);
-        when(defaultCloud20Service.deleteRoleFromUserOnTenant(null, null, tenantId, userId, roleId)).thenReturn(Response.status(200));
-        assertThat("response", delegateCloud20Service.deleteRoleFromUserOnTenant(null, null, tenantId, userId, roleId).build().getStatus(), equalTo(200));
+    public void deleteRoleFromUserOnTenant_RoutingTrue_userExistsFalse_callsClient() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(userService.userExistsById(userId)).thenReturn(false);
+        delegateCloud20Service.deleteRoleFromUserOnTenant(null, null, tenantId, userId, roleId);
+        verify(cloudClient).delete(eq(url + "tenants/" + tenantId + "/users/" + userId + "/roles/OS-KSADM/" + roleId), any(HttpHeaders.class));
+    }
+
+    @Test
+    public void deleteRoleFromUserOnTenant_RoutingTrue_userExistsTrue_callsDefaultService() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(userService.userExistsById(userId)).thenReturn(true);
+        delegateCloud20Service.deleteRoleFromUserOnTenant(null, null, tenantId, userId, roleId);
+        verify(defaultCloud20Service).deleteRoleFromUserOnTenant(null, null, tenantId, userId, roleId);
     }
 
     @Test
@@ -2711,7 +2740,8 @@ public class DelegateCloud20ServiceTest {
     public void impersonateUser_validCloudImpersonateFalse_throwsBadRequestException() throws Exception {
         AuthenticateResponse authenticateResponse = new AuthenticateResponse();
         authenticateResponse.setToken(new Token());
-        org.openstack.docs.identity.api.v2.User user = mock(org.openstack.docs.identity.api.v2.User.class);
+        org.openstack.docs.identity.api.v2.User user = new org.openstack.docs.identity.api.v2.User();
+        user.setEnabled(true);
         doReturn(authenticateResponse).when(spy).getXAuthToken_byPassword(null, null);
         doReturn(user).when(spy).getCloudUserByName(null,null);
         doReturn(new RoleList()).when(spy).getGlobalRolesForCloudUser(null,null);
@@ -2723,15 +2753,29 @@ public class DelegateCloud20ServiceTest {
     public void impersonateUser_validCloudImpersonateTrue_returnsUserXAuthToken() throws Exception {
         AuthenticateResponse authenticateResponse = new AuthenticateResponse();
         authenticateResponse.setToken(new Token());
-        org.openstack.docs.identity.api.v2.User user = mock(org.openstack.docs.identity.api.v2.User.class);
+        org.openstack.docs.identity.api.v2.User user = new org.openstack.docs.identity.api.v2.User();
+        user.setEnabled(true);
         doReturn(authenticateResponse).when(spy).getXAuthToken_byPassword(null, null);
         doReturn(user).when(spy).getCloudUserByName(null,null);
         doReturn(new RoleList()).when(spy).getGlobalRolesForCloudUser(null,null);
         doReturn(true).when(spy).isValidCloudImpersonatee(any(RoleList.class));
         doReturn(new ApiKeyCredentials()).when(spy).getUserApiCredentials(null,null);
         doReturn(authenticateResponse).when(spy).getXAuthToken(null,null);
-
         assertThat("token", spy.impersonateUser(null, null, null), equalTo(null));
+    }
+
+    @Test(expected = ForbiddenException.class)
+    public void impersonateUser_withInvalidUser_throwsForbiddenException() throws Exception {
+        AuthenticateResponse response = new AuthenticateResponse();
+        Token token = new Token();
+        token.setId("token");
+        response.setToken(token);
+        doReturn(response).when(spy).getXAuthToken_byPassword("impersonator", "password");
+        org.openstack.docs.identity.api.v2.User user = new org.openstack.docs.identity.api.v2.User();
+        user.setEnabled(false);
+        doReturn(user).when(spy).getCloudUserByName("user","token");
+        doReturn(new RoleList()).when(spy).getGlobalRolesForCloudUser(any(String.class),any(String.class));
+        spy.impersonateUser("user", "impersonator", "password");
     }
 
     @Test

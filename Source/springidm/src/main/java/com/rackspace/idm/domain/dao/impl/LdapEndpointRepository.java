@@ -215,7 +215,7 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
 
     @Override
     public List<CloudBaseUrl> getBaseUrlsByService(String service) {
-        getLogger().debug("Getting baseurls by service {}", service);
+        getLogger().debug("Getting baseUrls by service {}", service);
         List<CloudBaseUrl> cloudBaseUrls = new ArrayList<CloudBaseUrl>();
         List<SearchResultEntry> searchResultEntries = null;
 
@@ -224,7 +224,7 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_BASEURL).build();
 
         searchResultEntries = getMultipleEntries(BASEURL_BASE_DN, SearchScope.ONE, searchFilter);
-        getLogger().info("Got baseurls by Id {}", service);
+        getLogger().info("Got baseUrls by Id {}", service);
 
         for (SearchResultEntry e : searchResultEntries) {
             cloudBaseUrls.add(getBaseUrl(e));
@@ -421,6 +421,9 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
     }
 
     CloudBaseUrl getBaseUrl(SearchResultEntry resultEntry) {
+        if(resultEntry == null){
+            return null;
+        }
         getLogger().debug("Inside getBaseUrl");
         CloudBaseUrl baseUrl = new CloudBaseUrl();
         baseUrl.setUniqueId(resultEntry.getDN());

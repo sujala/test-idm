@@ -52,7 +52,7 @@ public class LdapConfiguration {
      * 
      * @return
      */
-    private LDAPConnectionPool connection() {
+    LDAPConnectionPool connection() {
         String[] serverList = config.getStringArray("ldap.serverList");
         String[] hosts = new String[0];
         int[] ports = new int[0];
@@ -67,7 +67,7 @@ public class LdapConfiguration {
                 hosts = (String[]) ArrayUtils.add(hosts, parts[0]);
                 // default LDAP port is 636
                 int port = parts.length > 1 && StringUtils.isNotBlank(parts[1]) ? Integer.valueOf(parts[1]) : DEFAULT_SERVER_PORT;
-                if(port != 389) {
+                if(port != 389 && config.getBoolean("ldap.server.useSSL")) {
                 	isSSL = true;
                 }
                 ports = ArrayUtils.add(ports, port);

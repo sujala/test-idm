@@ -31,7 +31,7 @@ import static org.mockito.Mockito.any;
  * Time: 5:20 PM
  * To change this template use File | Settings | File Templates.
  */
-public class LdapScopeAccessPeristenceRepositoryTest {
+public class LdapScopeAccessPeristenceRepositoryTest extends InMemoryLdapIntegrationTest{
 
     Configuration config = mock(Configuration.class);
     LdapConnectionPools ldapConnectionPools = mock(LdapConnectionPools.class);
@@ -42,6 +42,20 @@ public class LdapScopeAccessPeristenceRepositoryTest {
     public void setUp() throws Exception {
         ldapScopeAccessPeristenceRepository = new LdapScopeAccessPeristenceRepository(ldapConnectionPools,config);
         spy = spy(ldapScopeAccessPeristenceRepository);
+    }
+
+    @Test
+    public void getMultipleEntries_throwsLDAPException_returnsEmptyList() throws Exception {
+
+        final Filter filter = new LdapRepository.LdapSearchBuilder()
+                .addEqualAttribute(ldapScopeAccessPeristenceRepository.ATTR_OBJECT_CLASS, ldapScopeAccessPeristenceRepository.OBJECTCLASS_SCOPEACCESS)
+                .addEqualAttribute(ldapScopeAccessPeristenceRepository.ATTR_CLIENT_ID, "clientId").build();
+
+        LDAPInterface ldapInterface = mock(LDAPInterface.class);
+        doReturn(ldapInterface).when(spy).getAppInterface();
+        doThrow(new LDAPSearchException(ResultCode.INVALID_DN_SYNTAX,"error")).when(ldapInterface).search(any(SearchRequest.class));
+        List<SearchResultEntry> list = spy.getMultipleEntries("baseDN",SearchScope.SUB,filter);
+        assertThat("list size",list.size(),equalTo(0));
     }
 
     @Test
@@ -635,6 +649,12 @@ public class LdapScopeAccessPeristenceRepositoryTest {
         assertThat("returns scope access", spy.getScopeAccessByAccessToken("accessToken"), equalTo(scopeAccess));
     }
 
+    @Test
+    public void getScopeAccessByAccessToken_searchEntriesDoNotExists_returnsNull() throws Exception {
+        doReturn(new ArrayList<SearchResultEntry>()).when(spy).getMultipleEntries(eq("o=rackspace,dc=rackspace,dc=com"),eq(SearchScope.SUB),any(Filter.class));
+        assertThat("returns scope access", spy.getScopeAccessByAccessToken("accessToken"), nullValue());
+    }
+
     @Test (expected = IllegalStateException.class)
     public void getScopeAccessByAccessToken_throwsLdapException_throwsIllegalStateException() throws Exception {
         SearchResultEntry searchEntry = new SearchResultEntry("uniqueId",new Attribute[0]);
@@ -684,6 +704,44 @@ public class LdapScopeAccessPeristenceRepositoryTest {
         doReturn(searchEntries).when(spy).getMultipleEntries(eq("o=rackspace,dc=rackspace,dc=com"),eq(SearchScope.SUB),any(Filter.class));
         doThrow(new LDAPPersistException(new LDAPException(ResultCode.INVALID_DN_SYNTAX))).when(spy).decodeScopeAccess(searchResultEntry);
         spy.getScopeAccessByUserId("userId");
+    }
+
+    @Test
+    public void getScopeAccessListByUserId_setsFilterAttributeToUserRsId() throws Exception {
+        ArgumentCaptor<Filter> argumentCaptor = ArgumentCaptor.forClass(Filter.class);
+        doReturn(new ArrayList<SearchResultEntry>()).when(spy).getMultipleEntries(eq("o=rackspace,dc=rackspace,dc=com"),eq(SearchScope.SUB),argumentCaptor.capture());
+        spy.getScopeAccessListByUserId("userId");
+        Filter[] filters = argumentCaptor.getValue().getComponents();
+        assertThat("filter attribute name",filters[1].getAttributeName(),equalTo("userRsId"));
+    }
+
+    @Test
+    public void getScopeAccessListByUserId_searchEntriesExist_returnsPopulatedScopeAccessList() throws Exception {
+        SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId", new Attribute[0]);
+        List<SearchResultEntry> searchEntries = new ArrayList<SearchResultEntry>();
+        searchEntries.add(searchResultEntry);
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(searchEntries).when(spy).getMultipleEntries(eq("o=rackspace,dc=rackspace,dc=com"),eq(SearchScope.SUB), any(Filter.class));
+        doReturn(scopeAccess).when(spy).decodeScopeAccess(searchResultEntry);
+        List<ScopeAccess> list = spy.getScopeAccessListByUserId("userId");
+        assertThat("list size",list.size(),equalTo(1));
+        assertThat("list has scope access",list.get(0),equalTo(scopeAccess));
+    }
+
+    @Test
+    public void getScopeAccessListByUserId_searchEntriesDoNotExist_returnsEmptyScopeAccessList() throws Exception {
+        doReturn(new ArrayList<SearchResultEntry>()).when(spy).getMultipleEntries(eq("o=rackspace,dc=rackspace,dc=com"),eq(SearchScope.SUB), any(Filter.class));
+        assertThat("list size",spy.getScopeAccessListByUserId("userId").size(),equalTo(0));
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void getScopeAccessListByUserId_throwsLdapException_throwsIllegalStateException() throws Exception {
+        SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId", new Attribute[0]);
+        List<SearchResultEntry> searchEntries = new ArrayList<SearchResultEntry>();
+        searchEntries.add(searchResultEntry);
+        doReturn(searchEntries).when(spy).getMultipleEntries(eq("o=rackspace,dc=rackspace,dc=com"),eq(SearchScope.SUB), any(Filter.class));
+        doThrow(new LDAPPersistException(new LDAPException(ResultCode.INVALID_DN_SYNTAX))).when(spy).decodeScopeAccess(searchResultEntry);
+        spy.getScopeAccessListByUserId("userId");
     }
 
     @Test
@@ -1034,22 +1092,169 @@ public class LdapScopeAccessPeristenceRepositoryTest {
 
 
     @Test
-    public void testRemovePermissionFromScopeAccess() throws Exception {
-
+    public void removePermissionFromScopeAccess_callsDeleteEntryAndSubtree() throws Exception {
+        doNothing().when(spy).deleteEntryAndSubtree((String) eq(null), any(Audit.class));
+        spy.removePermissionFromScopeAccess(new Permission());
+        verify(spy).deleteEntryAndSubtree((String) eq(null), any(Audit.class));
     }
 
     @Test
-    public void testUpdatePermissionForScopeAccess() throws Exception {
+    public void removePermissionFromScopeAccess_returnsTrue() throws Exception {
+        doNothing().when(spy).deleteEntryAndSubtree((String) eq(null), any(Audit.class));
+        assertThat("returns true", spy.removePermissionFromScopeAccess(new Permission()), equalTo(true));
+    }
 
+
+    @Test (expected = IllegalStateException.class)
+    public void updatePermissionForScopeAccess_throwsLdapPersistException_throwsIllegalStateException() throws Exception {
+        LDAPInterface ldapInterface = mock(LDAPInterface.class);
+        doReturn(ldapInterface).when(spy).getAppInterface();
+        spy.updatePermissionForScopeAccess(new Permission());
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void updateScopeAccess_throwsLDAPException_throwsIllegalStateException() throws Exception {
+        LDAPInterface ldapInterface = mock(LDAPInterface.class);
+        doReturn(ldapInterface).when(spy).getAppInterface();
+        spy.updateScopeAccess(new ScopeAccess());
     }
 
     @Test
-    public void testUpdateScopeAccess() throws Exception {
-
+    public void updateScopeAccess_throwsLDAPSDKRuntimeException_returnsFalse() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        scopeAccess.setLdapEntry(new ReadOnlyEntry("uniqueId",new Attribute[0]));
+        LDAPInterface ldapInterface = mock(LDAPInterface.class);
+        doReturn(ldapInterface).when(spy).getAppInterface();
+        assertThat("returns false", spy.updateScopeAccess(scopeAccess), equalTo(false));
     }
 
     @Test
-    public void testAddScopeAccess() throws Exception {
+    public void addScopeAccess_runsSuccessfully() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        scopeAccess.setLdapEntry(new ReadOnlyEntry("uniqueId",new Attribute[0]));
+        scopeAccess.setClientId("clientId");
+        LDAPInterface ldapInterface = mock(LDAPInterface.class);
+        doReturn(ldapInterface).when(spy).getAppInterface();
+        assertThat("runs and returns null", spy.addScopeAccess("uniqueId", scopeAccess), nullValue());
+    }
 
+    @Test (expected = IllegalStateException.class)
+    public void addScopeAccess_throwsLDAPException_throwsIllegalStateException() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        LDAPInterface ldapInterface = mock(LDAPInterface.class);
+        doReturn(ldapInterface).when(spy).getAppInterface();
+        spy.addScopeAccess("foo", scopeAccess);
+    }
+
+    @Test
+    public void decodePermission_attributeIsDefinedPermission_returnsDefinedPermission() throws Exception {
+        Attribute attribute = new Attribute("objectClass","definedPermission");
+        Attribute[] attributes = {attribute};
+        SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId",attributes);
+        assertThat("permission type",ldapScopeAccessPeristenceRepository.decodePermission(searchResultEntry),instanceOf(DefinedPermission.class));
+    }
+
+    @Test
+    public void decodePermission_attributeIsGrantedPermission_returnsGrantedPermission() throws Exception {
+        Attribute attribute = new Attribute("objectClass","grantedPermission");
+        Attribute[] attributes = {attribute};
+        SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId",attributes);
+        assertThat("permission type",ldapScopeAccessPeristenceRepository.decodePermission(searchResultEntry),instanceOf(GrantedPermission.class));
+    }
+
+    @Test
+    public void decodePermission_attributeIsDelegatedPermission_returnsDelegatedPermission() throws Exception {
+        Attribute attribute = new Attribute("objectClass","delegatedPermission");
+        Attribute[] attributes = {attribute};
+        SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId",attributes);
+        assertThat("permission type",ldapScopeAccessPeristenceRepository.decodePermission(searchResultEntry),instanceOf(DelegatedPermission.class));
+    }
+
+    @Test
+    public void decodePermission_attributeIsPermission_returnsPermission() throws Exception {
+        Attribute attribute = new Attribute("objectClass","rsPermission");
+        Attribute[] attributes = {attribute};
+        SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId",attributes);
+        assertThat("permission type",ldapScopeAccessPeristenceRepository.decodePermission(searchResultEntry),instanceOf(Permission.class));
+    }
+
+    @Test
+    public void decodePermission_attributeIsNotPermission_returnsNull() throws Exception {
+        Attribute attribute = new Attribute("objectClass","scopeAccess");
+        Attribute[] attributes = {attribute};
+        SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId",attributes);
+        assertThat("null",ldapScopeAccessPeristenceRepository.decodePermission(searchResultEntry),nullValue());
+    }
+
+    @Test
+    public void decodeScopeAccess_attributeIsUserScopeAccess_returnsUserScopeAccess() throws Exception {
+        Attribute attribute = new Attribute("objectClass","userScopeAccess");
+        Attribute[] attributes = {attribute};
+        SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId",attributes);
+        assertThat("scope access type",ldapScopeAccessPeristenceRepository.decodeScopeAccess(searchResultEntry),instanceOf(UserScopeAccess.class));
+    }
+
+    @Test
+    public void decodeScopeAccess_attributeIsClientScopeAccess_returnsClientScopeAccess() throws Exception {
+        Attribute attribute = new Attribute("objectClass","clientScopeAccess");
+        Attribute[] attributes = {attribute};
+        SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId",attributes);
+        assertThat("scope access type",ldapScopeAccessPeristenceRepository.decodeScopeAccess(searchResultEntry),instanceOf(ClientScopeAccess.class));
+    }
+
+    @Test
+    public void decodeScopeAccess_attributeIsPasswordResetScopeAccess_returnsClientScopeAccess() throws Exception {
+        Attribute attribute = new Attribute("objectClass","passwordResetScopeAccess");
+        Attribute[] attributes = {attribute};
+        SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId",attributes);
+        assertThat("scope access type",ldapScopeAccessPeristenceRepository.decodeScopeAccess(searchResultEntry),instanceOf(PasswordResetScopeAccess.class));
+    }
+
+    @Test
+    public void decodeScopeAccess_attributeIsRackerScopeAccess_returnsRackerScopeAccess() throws Exception {
+        Attribute attribute = new Attribute("objectClass","rackerScopeAccess");
+        Attribute[] attributes = {attribute};
+        SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId",attributes);
+        assertThat("scope access type",ldapScopeAccessPeristenceRepository.decodeScopeAccess(searchResultEntry),instanceOf(RackerScopeAccess.class));
+    }
+
+    @Test
+    public void decodeScopeAccess_attributeIsDelegatedClientScopeAccess_returnsDelegatedClientScopeAccess() throws Exception {
+        Attribute attribute = new Attribute("objectClass","delegatedClientScopeAccess");
+        Attribute[] attributes = {attribute};
+        SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId",attributes);
+        assertThat("scope access type",ldapScopeAccessPeristenceRepository.decodeScopeAccess(searchResultEntry),instanceOf(DelegatedClientScopeAccess.class));
+    }
+
+    @Test
+    public void decodeScopeAccess_attributeIsScopeAccess_returnsScopeAccess() throws Exception {
+        Attribute attribute = new Attribute("objectClass","scopeAccess");
+        Attribute[] attributes = {attribute};
+        SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId",attributes);
+        assertThat("scope access type",ldapScopeAccessPeristenceRepository.decodeScopeAccess(searchResultEntry),instanceOf(ScopeAccess.class));
+    }
+
+    @Test
+    public void decodeScopeAccess_attributeIsNotScopeAccess_returnsNull() throws Exception {
+        Attribute attribute = new Attribute("objectClass","rsPermission");
+        Attribute[] attributes = {attribute};
+        SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId",attributes);
+        assertThat("scope access type",ldapScopeAccessPeristenceRepository.decodeScopeAccess(searchResultEntry),nullValue());
+    }
+
+    @Test
+    public void getFilterForPermission_runsWithNoExceptions_returnsFilterWithNullAssertionValue() throws Exception {
+        DelegatedPermission delegatedPermission = new DelegatedPermission();
+        delegatedPermission.setClientId("clientId");
+        delegatedPermission.setCustomerId("customerId");
+        delegatedPermission.setPermissionId("permissionId");
+        Filter filter = ldapScopeAccessPeristenceRepository.getFilterForPermission(delegatedPermission);
+        assertThat("filter for delegated permission",filter.getAssertionValue(),nullValue());
+    }
+
+    @Test
+    public void getFilterForPermission_runsWithNoExceptions_returnsFilterWithRsPermissionAssertionValue() throws Exception {
+        Filter filter = ldapScopeAccessPeristenceRepository.getFilterForPermission(new DelegatedPermission());
+        assertThat("filter for delegated permission",filter.getAssertionValue(),equalTo("rsPermission"));
     }
 }

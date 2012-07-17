@@ -10,7 +10,6 @@ import com.rackspacecloud.docs.auth.api.v1.*;
 import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Matchers;
 import org.mockito.internal.verification.VerificationModeFactory;
@@ -52,7 +51,6 @@ public class DelegateCloud11ServiceTest {
     List<com.rackspace.idm.domain.entity.User> userList;
     DelegateCloud11Service delegateCloud11Service;
     DefaultCloud11Service defaultCloud11Service;
-    DummyCloud11Service dummyCloud11Service = new DummyCloud11Service();
     com.rackspacecloud.docs.auth.api.v1.ObjectFactory OBJ_FACTORY;
     Configuration config;
     CloudClient cloudClient;
@@ -85,7 +83,6 @@ public class DelegateCloud11ServiceTest {
         scopeAccessService = mock(ScopeAccessService.class);
         delegateCloud11Service.setCredentialUnmarshaller(credentialUnmarshaller);
         delegateCloud11Service.setDefaultCloud11Service(defaultCloud11Service);
-        delegateCloud11Service.setDummyCloud11Service(dummyCloud11Service);
         delegateCloud11Service.setCloudUserExtractor(cloudUserExtractor);
         delegateCloud11Service.setDefaultUserService(defaultUserService);
         delegateCloud11Service.setScopeAccessService(scopeAccessService);
@@ -117,33 +114,6 @@ public class DelegateCloud11ServiceTest {
 
         okResponse = Response.ok();
         notFoundResponse = Response.status(404);
-    }
-
-    //TODO remove ignore once code is in place
-    @Ignore
-    @Test
-    public void authenticate_routingTrue_callsClient() throws Exception {
-        when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
-        delegateCloud11Service.authenticate(null,null,null,null);
-        verify(cloudClient).post(eq(url + "token"), Matchers.<javax.ws.rs.core.HttpHeaders>any(), anyString());
-    }
-
-    //TODO remove ignore once code is in place
-    @Ignore
-    @Test
-    public void authenticate_routingFalse_DoesNotCallClient() throws Exception {
-        when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
-        delegateCloud11Service.authenticate(null,null,null,null);
-        verify(cloudClient,times(0)).post(eq(url+"token"),Matchers.<javax.ws.rs.core.HttpHeaders>any(),anyString());
-    }
-    
-    //TODO remove ignore once code is in place
-    @Ignore
-    @Test
-    public void authenticate_routingFalse_CallsDefaultService() throws Exception {
-        when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
-        delegateCloud11Service.authenticate(null,null,null,null);
-        verify(defaultCloud11Service).authenticate(null,null,null,null);
     }
 
     @Test
@@ -1105,101 +1075,32 @@ public class DelegateCloud11ServiceTest {
     }
 
     @Test
-    public void revokeToken_httpServletResponseNotFound_callsCloudClientDelete() throws Exception {
-        Response.ResponseBuilder serviceResponse = mock(Response.ResponseBuilder.class);
-        when(defaultCloud11Service.revokeToken(request, "tokenId", httpHeaders)).thenReturn(serviceResponse);
-        when(serviceResponse.clone()).thenReturn(Response.status(404));
-        delegateCloud11Service.revokeToken(request, "tokenId", httpHeaders);
-        verify(cloudClient).delete(url+"token/tokenId", httpHeaders);
-    }
-    @Test
-    public void revokeToken_httpServletResponseUnauthorized_callsCloudClientDelete() throws Exception {
-        Response.ResponseBuilder serviceResponse = mock(Response.ResponseBuilder.class);
-        when(defaultCloud11Service.revokeToken(request, "tokenId", httpHeaders)).thenReturn(serviceResponse);
-        when(serviceResponse.clone()).thenReturn(Response.status(401));
-        delegateCloud11Service.revokeToken(request, "tokenId", httpHeaders);
-        verify(cloudClient).delete(url+"token/tokenId", httpHeaders);
+    public void revokeToken_callsCloudClient_delete() throws Exception {
+        when(cloudClient.delete(url+"token/null", null)).thenReturn(Response.ok());
+        spy.revokeToken(null, null, null);
+        verify(cloudClient).delete(url+"token/null", null);
     }
 
     @Test
-    public void revokeToken_httpServletOK_returnsServiceResponse() throws Exception {
-        Response.ResponseBuilder serviceResponse = mock(Response.ResponseBuilder.class);
-        when(defaultCloud11Service.revokeToken(request, "tokenId", httpHeaders)).thenReturn(serviceResponse);
-        when(serviceResponse.clone()).thenReturn(Response.status(200));
-        Response.ResponseBuilder revokeToken = delegateCloud11Service.revokeToken(request, "tokenId", httpHeaders);
-        assertThat("Response Code", revokeToken, equalTo(serviceResponse));
+    public void revokeToken_callsDefaultCloud11Service_revokeToken() throws Exception {
+        when(cloudClient.delete(url+"token/null", null)).thenReturn(Response.ok());
+        spy.revokeToken(null, null, null);
+        verify(defaultCloud11Service).revokeToken(null, null, null);
     }
 
     @Test
-    public void migrate_httpServletResponseNotFound_callsCloudClientPost() throws Exception {
-        Response.ResponseBuilder serviceResponse = Response.status(404);
-        when(defaultCloud11Service.migrate(request, "user", httpHeaders, "body")).thenReturn(serviceResponse);
-        delegateCloud11Service.migrate(request, "user", httpHeaders, "body");
-        verify(cloudClient).post(url + "migration/user/migrate", httpHeaders, "body");
+    public void revokeToken_httpServletResponseNoContent_returnsCloudResponse() throws Exception {
+        when(cloudClient.delete(url+"token/null", null)).thenReturn(Response.status(204));
+        Response.ResponseBuilder result = spy.revokeToken(null, null, null);
+        assertThat("response code", result.build().getStatus(), equalTo(204));
     }
 
     @Test
-    public void migrate_httpServletResponseNotAuthorized_callsCloudClientPost() throws Exception {
-        Response.ResponseBuilder serviceResponse = Response.status(401);
-        when(defaultCloud11Service.migrate(request, "user", httpHeaders, "body")).thenReturn(serviceResponse);
-        delegateCloud11Service.migrate(request, "user", httpHeaders, "body");
-        verify(cloudClient).post(url + "migration/user/migrate", httpHeaders, "body");
-    }
-
-    @Test
-    public void migrate_httpServletResponseOk_callsServiceResponse() throws Exception {
-        Response.ResponseBuilder serviceResponse = Response.status(200);
-        when(defaultCloud11Service.migrate(request, "user", httpHeaders, "body")).thenReturn(serviceResponse);
-        Response.ResponseBuilder migrate = delegateCloud11Service.migrate(request, "user", httpHeaders, "body");
-        assertThat("Response Code", migrate, equalTo(serviceResponse));
-    }
-
-    @Test
-    public void unmigrate_httpServletResponseNotFound_callsCloudClientPost() throws Exception {
-        Response.ResponseBuilder serviceResponse = Response.status(404);
-        when(defaultCloud11Service.unmigrate(request, "user", httpHeaders, "body")).thenReturn(serviceResponse);
-        delegateCloud11Service.unmigrate(request, "user", httpHeaders, "body");
-        verify(cloudClient).post(url + "migration/user/unmigrate", httpHeaders, "body");
-    }
-
-    @Test
-    public void unmigrate_httpServletResponseNotAuthorized_callsCloudClientPost() throws Exception {
-        Response.ResponseBuilder serviceResponse = Response.status(401);
-        when(defaultCloud11Service.unmigrate(request, "user", httpHeaders, "body")).thenReturn(serviceResponse);
-        delegateCloud11Service.unmigrate(request, "user", httpHeaders, "body");
-        verify(cloudClient).post(url + "migration/user/unmigrate", httpHeaders, "body");
-    }
-
-    @Test
-    public void unmigrate_httpServletResponseOk_callsServiceResponse() throws Exception {
-        Response.ResponseBuilder serviceResponse = Response.status(200);
-        when(defaultCloud11Service.unmigrate(request, "user", httpHeaders, "body")).thenReturn(serviceResponse);
-        Response.ResponseBuilder unmigrate = delegateCloud11Service.unmigrate(request, "user", httpHeaders, "body");
-        assertThat("Response Code", unmigrate, equalTo(serviceResponse));
-    }
-
-    @Test
-    public void all_httpServletResponseNotFound_callsCloudClientPost() throws Exception {
-        Response.ResponseBuilder serviceResponse = Response.status(404);
-        when(defaultCloud11Service.all(request, httpHeaders, "body")).thenReturn(serviceResponse);
-        delegateCloud11Service.all(request, httpHeaders, "body");
-        verify(cloudClient).post(url + "migration/all", httpHeaders, "body");
-    }
-
-    @Test
-    public void all_httpServletResponseNotAuthorized_callsCloudClientPost() throws Exception {
-        Response.ResponseBuilder serviceResponse = Response.status(401);
-        when(defaultCloud11Service.all(request, httpHeaders, "body")).thenReturn(serviceResponse);
-        delegateCloud11Service.all(request, httpHeaders, "body");
-        verify(cloudClient).post(url + "migration/all", httpHeaders, "body");
-    }
-
-    @Test
-    public void all_httpServletResponseOk_callsServiceResponse() throws Exception {
-        Response.ResponseBuilder serviceResponse = Response.status(200);
-        when(defaultCloud11Service.all(request, httpHeaders, "body")).thenReturn(serviceResponse);
-        Response.ResponseBuilder all = delegateCloud11Service.all(request, httpHeaders, "body");
-        assertThat("Response Code", all, equalTo(serviceResponse));
+    public void revokeToken_httpServletResponseNotNoContent_returnsDefaultResponse() throws Exception {
+        when(cloudClient.delete(url+"token/null", null)).thenReturn(Response.status(401));
+        doReturn(Response.ok()).when(spy).revokeToken(null, null, null);
+        Response.ResponseBuilder result = spy.revokeToken(null, null, null);
+        assertThat("response code", result.build().getStatus(), equalTo(200));
     }
 
     @Test
@@ -1264,12 +1165,5 @@ public class DelegateCloud11ServiceTest {
         when(config.getBoolean("gaIsSourceOfTruth")).thenReturn(false);
         delegateCloud11Service.getExtension(httpHeaders,"EXAMPLE");
         verify(defaultCloud11Service).extensions(httpHeaders);
-    }
-
-    @Test
-    public void getCloud11Service_GAKeystoneDisabled_returnsDummyCloud11Service() throws Exception {
-        when(config.getBoolean("GAKeystoneDisabled")).thenReturn(true);
-        Cloud11Service cloud11Service = delegateCloud11Service.getCloud11Service();
-        assertThat("Service", cloud11Service, equalTo((Cloud11Service)dummyCloud11Service));
     }
 }

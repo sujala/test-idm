@@ -9,8 +9,8 @@ import com.rackspace.idm.api.converter.cloudv20.RoleConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.api.resource.cloud.MigrationClient;
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
-
 import com.rackspace.idm.api.resource.cloud.v20.CloudKsGroupBuilder;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
@@ -33,11 +33,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 
 import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
+import javax.xml.namespace.QName;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -54,9 +54,9 @@ import java.util.List;
 @Component
 public class CloudMigrationService {
 
+    private static final int UK_BASEURL_OFFSET = 1000;
+    
     private MigrationClient client;
-
-    private MigrationClient client11;
 
     @Autowired
     private UserService userService;
@@ -100,11 +100,50 @@ public class CloudMigrationService {
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
 
+    public CloudMigrationService() {
+        client = new MigrationClient();
+    }
+
     public void migrateBaseURLs() throws Exception {
         addOrUpdateEndpointTemplates(getAdminToken());
     }
 
+    public void migrateRoles() {
+        RoleList roles;
+        try {
+            String adminToken = getAdminToken();
+            roles = client.getRoles(adminToken);
+        }
+        catch (Exception ex) {
+            roles = new RoleList();
+        }
+
+        for (Role role : roles.getRole()) {
+            ClientRole clientRole = applicationService.getClientRoleById(role.getId());
+
+            if (clientRole == null) {
+                clientRole = new ClientRole();
+                clientRole.setId(role.getId());
+                clientRole.setDescription(role.getDescription());
+                clientRole.setName(role.getName());
+                clientRole.setClientId(config.getString("cloudAuth.clientId"));
+
+                applicationService.addClientRole(clientRole, clientRole.getId());
+            } else { 
+                if (!role.getDescription().equals(clientRole.getDescription()) ||
+                    !role.getName().equals(clientRole.getName())) {
+                    clientRole.setDescription(role.getDescription());
+                    clientRole.setName(role.getName());
+
+                    applicationService.updateClientRole(clientRole);
+                }
+            }
+        }
+    }
+
     public void migrateGroups() throws Exception {
+        if(isUkCloudRegion())
+            throw new NotFoundException("Method not found.");
         addOrUpdateGroups(getAdminToken());
     }
 
@@ -197,12 +236,8 @@ public class CloudMigrationService {
     }
 
     public MigrateUserResponseType migrateUserByUsername(String username, boolean processSubUsers, String domainId) throws Exception {
-        client = getMigrationClientInstance();
         client.setCloud20Host(config.getString("cloudAuth20url"));
-
-        client11 = getMigrationClientInstance();
-        client11.setCloud11Host(config.getString("cloudAuth11url"));
-
+        client.setCloud11Host(config.getString("cloudAuth11url"));
         if (userService.userExistsByUsername(username))
             throw new ConflictException("A user with username " + username + " already exists.");
 
@@ -212,11 +247,11 @@ public class CloudMigrationService {
             com.rackspacecloud.docs.auth.api.v1.User user11;
             User user;
             try {
-                user11 = client11.getUserTenantsBaseUrls(config.getString("ga.username"), config.getString("ga.password"), username);
                 user = client.getUser(adminToken, username);
+                user11 = client.getUserTenantsBaseUrls(config.getString("ga.username"), config.getString("ga.password"), username);
             }
             catch (Exception ex) {
-                throw new NotFoundException("User with username " + username + " could not be found.");
+                throw new NotFoundException("User with username " + username + " could not be found." + ex.getMessage());
             }
             String legacyId = user.getId();
 
@@ -248,8 +283,8 @@ public class CloudMigrationService {
             if(processSubUsers) {
                 subUsers = getSubUsers(user, apiKey, password, roles);
                 for (String subUser : subUsers) {
-                    if (userService.userExistsByUsername(username)) {
-                        throw new ConflictException("A user with username " + username + " already exists.");
+                    if (userService.userExistsByUsername(subUser)) {
+                        throw new ConflictException("A user with username " + subUser + " already exists.");
                     }
                 }
             }
@@ -274,12 +309,18 @@ public class CloudMigrationService {
 
             for (BaseURLRef baseUrlRef : user11.getBaseURLRefs().getBaseURLRef()) {
                 CloudBaseUrl cloudBaseUrl = endpointService.getBaseUrlById(baseUrlRef.getId());
+
+                int baseUrlId = baseUrlRef.getId();
+                if (isUkCloudRegion()) {
+                    baseUrlId += UK_BASEURL_OFFSET;
+                }
+
                 if ("MOSSO".equals(cloudBaseUrl.getBaseUrlType())) {
-                    mossoBaseUrlRef.add(String.valueOf(baseUrlRef.getId()));
+                    mossoBaseUrlRef.add(String.valueOf(baseUrlId));
                 }
 
                 if ("NAST".equals(cloudBaseUrl.getBaseUrlType())) {
-                    nastBaseUrlRef.add(String.valueOf(baseUrlRef.getId()));
+                    nastBaseUrlRef.add(String.valueOf(baseUrlId));
                 }
             }
 
@@ -293,7 +334,7 @@ public class CloudMigrationService {
             newUser.setInMigration(false);
             userService.updateUserById(newUser, false);
 
-            UserType userResponse = validateUser(user, credentialListType, apiKey, cloudPassword, secretQA, roles, groups, user11.getBaseURLRefs().getBaseURLRef());
+            UserType userResponse = validateUser(user, apiKey, cloudPassword, secretQA, roles, groups, user11.getBaseURLRefs().getBaseURLRef());
             MigrateUserResponseType result = new MigrateUserResponseType();
 
             if(subUsers != null) {
@@ -310,11 +351,20 @@ public class CloudMigrationService {
         throw new NotAuthenticatedException("Not Authorized.");
     }
 
-    MigrationClient getMigrationClientInstance() {
-        return new MigrationClient();
-    }
+	private String getDefaultRegion(User user) {
+		String defaultRegion = null;
+		QName defaultRegionQName = new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","defaultRegion");
+		for (QName qname : user.getOtherAttributes().keySet()) {
+		    if (qname.equals(defaultRegionQName)) {
+		        defaultRegion = user.getOtherAttributes().get(qname);
+		    }
+		}
+		return defaultRegion;
+	}
 
     List<String> getSubUsers(User user, String apiKey, String password, RoleList roles) throws Exception {
+        client.setCloud20Host(config.getString("cloudAuth20url"));
+        client.setCloud11Host(config.getString("cloudAuth11url"));
         List<String> subUsers = new ArrayList<String>();
 
         if (isUserAdmin(roles)) {
@@ -335,7 +385,7 @@ public class CloudMigrationService {
 
             if (users != null) {
                 for (User childUser : users.getUser()) {
-                    if (user.getUsername().equalsIgnoreCase(childUser.getUsername())) {
+                    if (StringUtils.equalsIgnoreCase(user.getUsername(), childUser.getUsername())) {
                         continue;
                     }
                     subUsers.add(childUser.getUsername());
@@ -346,8 +396,7 @@ public class CloudMigrationService {
         return subUsers;
     }
 
-    private UserType validateUser(User user, CredentialListType credentialListType, String apiKey,
-                                  String password, SecretQA secretQA, RoleList newRoles, Groups groups, List<BaseURLRef> baseUrlRefs) {
+    UserType validateUser(User user, String apiKey, String password, SecretQA secretQA, RoleList newRoles, Groups groups, List<BaseURLRef> baseUrlRefs) {
 
         UserType result = new UserType();
         com.rackspace.idm.domain.entity.User newUser = userService.getUser(user.getUsername());
@@ -390,7 +439,7 @@ public class CloudMigrationService {
         return result;
     }
 
-    private void validateBaseUrlRefs(List<BaseURLRef> baseUrlRefs, EndpointList newEndpoints, UserType result) {
+    void validateBaseUrlRefs(List<BaseURLRef> baseUrlRefs, EndpointList newEndpoints, UserType result) {
         List<String> commentList;
 
         for (BaseURLRef baseUrlRef : baseUrlRefs) {
@@ -417,47 +466,7 @@ public class CloudMigrationService {
         }
     }
 
-    private void validateEndpoints(EndpointList endpoints, EndpointList newEndpoints, UserType result) {
-        List<String> commentList;
-
-        for (Endpoint endpoint : endpoints.getEndpoint()) {
-            commentList = new ArrayList<String>();
-
-            String newEndpointName = null;
-            String newEndpointType = null;
-            String newEndpointTenantId = null;
-            String newEndpointRegion = null;
-
-            for (Endpoint newEndpoint : newEndpoints.getEndpoint()) {
-                if (endpoint.getName().equals(newEndpoint.getName())) {
-                    newEndpointName = newEndpoint.getName();
-                    newEndpointType = newEndpoint.getType();
-                    newEndpointTenantId = newEndpoint.getTenantId();
-                    newEndpointRegion = newEndpoint.getRegion();
-                    break;
-                }
-            }
-
-            checkIfEqual(endpoint.getName(), newEndpointName, commentList, "name");
-            checkIfEqual(endpoint.getType(), newEndpointType, commentList, "type");
-            checkIfEqual(endpoint.getTenantId(), newEndpointTenantId, commentList, "id");
-            checkIfEqual(endpoint.getRegion(), newEndpointRegion, commentList, "region");
-
-            EndpointType endpointResponse = new EndpointType();
-            endpointResponse.setName(newEndpointName);
-            endpointResponse.setType(newEndpointType);
-            endpointResponse.setTenantId(newEndpointTenantId);
-            endpointResponse.setRegion(newEndpointRegion);
-
-            String comment = StringUtils.join(commentList, ",");
-            endpointResponse.setComment(comment);
-            endpointResponse.setValid(StringUtils.isBlank(comment));
-
-            result.getEndpoints().add(endpointResponse);
-        }
-    }
-
-    private void validateGroups(Groups groups, List<com.rackspace.idm.domain.entity.Group> newGroups, UserType user) {
+    void validateGroups(Groups groups, List<com.rackspace.idm.domain.entity.Group> newGroups, UserType user) {
         List<String> commentList;
 
         for (Group group : groups.getGroup()) {
@@ -489,7 +498,7 @@ public class CloudMigrationService {
         }
     }
 
-    private void validateRoles(List<TenantRole> roles, RoleList newRoles, UserType user) {
+    void validateRoles(List<TenantRole> roles, RoleList newRoles, UserType user) {
         List<String> commentList;
 
         for (Role role : newRoles.getRole()) {
@@ -498,8 +507,8 @@ public class CloudMigrationService {
             String newRoleId = null;
             for (TenantRole newRole : roles) {
                 if (role.getName().equals(newRole.getName())) {
-                    newRoleName = role.getName();
-                    newRoleId = role.getId();
+                    newRoleName = newRole.getName();
+                    newRoleId = newRole.getRoleRsId();
                     break;
                 }
             }
@@ -526,7 +535,7 @@ public class CloudMigrationService {
         String defaultOldValue = StringUtils.defaultString(oldValue);
         String defaultNewValue = StringUtils.defaultString(newValue);
 
-        if (!defaultOldValue.equals(defaultNewValue)) {
+        if (!StringUtils.equals(defaultOldValue, defaultNewValue)) {
             if (mask)
                 commentList.add(id + ":*****");
             else
@@ -540,12 +549,12 @@ public class CloudMigrationService {
         try {
             List<JAXBElement<? extends CredentialType>> creds = credentialListType.getCredential();
             for (JAXBElement<? extends CredentialType> cred : creds) {
-                if (cred.getDeclaredType().isAssignableFrom(ApiKeyCredentials.class)) {
+                if (cred.getValue() instanceof ApiKeyCredentials) {
                     ApiKeyCredentials apiKeyCredentials = (ApiKeyCredentials) cred.getValue();
                     apiKey = apiKeyCredentials.getApiKey();
                 }
             }
-        } catch (Exception cex) {
+        } catch (Exception cex) {   // catches null pointer exceptions.
 
         }
         return apiKey;
@@ -557,24 +566,26 @@ public class CloudMigrationService {
         try {
             List<JAXBElement<? extends CredentialType>> creds = credentialListType.getCredential();
             for (JAXBElement<? extends CredentialType> cred : creds) {
-                if (cred.getDeclaredType().isAssignableFrom(PasswordCredentialsRequiredUsername.class)) {
+                if (cred.getValue() instanceof PasswordCredentialsRequiredUsername) {
                     PasswordCredentialsRequiredUsername passwordCredentials = (PasswordCredentialsRequiredUsername) cred.getValue();
                     password = passwordCredentials.getPassword();
                 }
             }
-        } catch (Exception cex) {
+        } catch (Exception cex) {  // catches null pointer exceptions.
 
         }
         return password;
     }
 
-    private AuthenticateResponse authenticate(String username, String apiKey,
+    AuthenticateResponse authenticate(String username, String apiKey,
                                               String password) throws Exception {
+        client.setCloud20Host(config.getString("cloudAuth20url"));
+        client.setCloud11Host(config.getString("cloudAuth11url"));
         AuthenticateResponse authenticateResponse;
         try {
-            if (!apiKey.equals(""))
+            if (!StringUtils.isEmpty(apiKey))
                 authenticateResponse = client.authenticateWithApiKey(username, apiKey);
-            else if (!password.equals(""))
+            else if (!StringUtils.isEmpty(password))
                 authenticateResponse = client.authenticateWithPassword(username, password);
             else {
                 throw new BadRequestException("Failed migration with incomplete credential information.");
@@ -586,7 +597,7 @@ public class CloudMigrationService {
         return authenticateResponse;
     }
 
-    private boolean isUserAdmin(RoleList roles) {
+    boolean isUserAdmin(RoleList roles) {
         for (Role role : roles.getRole()) {
             if ("identity:user-admin".equalsIgnoreCase(role.getName())) {
                 return true;
@@ -615,10 +626,6 @@ public class CloudMigrationService {
     }
 
     public void unmigrateUserByUsername(String username) throws Exception {
-        unmigrateUserByUsername(username, true);
-    }
-
-    void unmigrateUserByUsername(String username, boolean rootUser) throws Exception {
         com.rackspace.idm.domain.entity.User user = userService.getUser(username);
         if (user == null)
             throw new NotFoundException("User not found.");
@@ -640,55 +647,22 @@ public class CloudMigrationService {
         
         for (com.rackspace.idm.domain.entity.User u : users.getUsers())
             userService.deleteUser(u.getUsername());
-        
-        /*
-        String adminToken = getAdminToken();
-
-        User cloudUser;
-        try {
-            cloudUser = client.getUser(adminToken, username);
-        } catch (Exception ex) {
-            throw new ConflictException("useradmin with username " + username + " is disabled.");
-        }
-
-        CredentialListType credentialListType = client.getUserCredentials(adminToken, user.getId());
-        String apiKey = getApiKey(credentialListType);
-        String password = getPassword(credentialListType);
-
-        RoleList roles = client.getRolesForUser(adminToken, user.getId());
-
-        if (rootUser && isSubUser(roles)) {
-            throw new BadRequestException("Migration is not allowed for subusers");
-        }
-
-        List<String> subUsers = getSubUsers(cloudUser, apiKey, password, roles);
-
-        for (String subUser : subUsers) {
-            try {
-                unmigrateUserByUsername(subUser, false);
-            } catch (Exception e) {
-            }
-        }
-
-        userService.deleteUser(username);
-        */
     }
 
     String getAdminToken() throws URISyntaxException, HttpException, IOException, JAXBException {
+        client.setCloud20Host(config.getString("cloudAuth20url"));
+        client.setCloud11Host(config.getString("cloudAuth11url"));
         try {
-            client = getMigrationClientInstance();
-            client.setCloud20Host(config.getString("cloudAuth20url"));
             String adminUsername = config.getString("migration.username");
             String adminApiKey = config.getString("migration.apikey");
             AuthenticateResponse authenticateResponse = client.authenticateWithApiKey(adminUsername, adminApiKey);
             return authenticateResponse.getToken().getId();
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             throw new NotAuthenticatedException("Admin credentials are invalid");
         }
     }
 
-    private com.rackspace.idm.domain.entity.User addMigrationUser(User user,
+    com.rackspace.idm.domain.entity.User addMigrationUser(User user,
                                                                   int mossoId,
                                                                   String nastId,
                                                                   String apiKey,
@@ -702,13 +676,15 @@ public class CloudMigrationService {
         newUser.setMossoId(mossoId);
         newUser.setNastId(nastId);
 
-        if (!user.getEmail().equals(""))
+        if (!StringUtils.isEmpty(user.getEmail()))
             newUser.setEmail(user.getEmail());
 
         newUser.setApiKey(apiKey);
         newUser.setPassword(password);
         newUser.setEnabled(user.isEnabled());
-        newUser.setCreated(new DateTime(user.getCreated().toGregorianCalendar().getTime()));
+
+        if(user.getCreated() != null)
+            newUser.setCreated(new DateTime(user.getCreated().toGregorianCalendar().getTime()));
 
         if (user.getUpdated() != null)
             newUser.setUpdated(new DateTime(user.getUpdated().toGregorianCalendar().getTime()));
@@ -725,11 +701,16 @@ public class CloudMigrationService {
             newUser.setDomainId(domainId);
         }
 
+        String defaultRegion = getDefaultRegion(user);
+        if (defaultRegion != null) {
+            newUser.setRegion(defaultRegion);
+        }
+
         userService.addUser(newUser);
         return newUser;
     }
 
-    private void addUserGroups(String userId, Groups groups) throws Exception {
+    void addUserGroups(String userId, Groups groups) throws Exception {
         try {
             for (Group group : groups.getGroup()) {
                 cloudGroupService.addGroupToUser(Integer.parseInt(group.getId()), userId);
@@ -739,12 +720,12 @@ public class CloudMigrationService {
         }
     }
 
-    private void addUserGlobalRoles(com.rackspace.idm.domain.entity.User user, RoleList roleList) {
+    void addUserGlobalRoles(com.rackspace.idm.domain.entity.User user, RoleList roleList) {
 
         List<ClientRole> clientRoles = applicationService.getAllClientRoles(null);
         for (Role role : roleList.getRole()) {
             for (ClientRole cRole : clientRoles) {
-                if (cRole.getName().equals(role.getName())) {
+                if (StringUtils.equals(cRole.getName(), role.getName())) {
                     TenantRole newRole = new TenantRole();
                     newRole.setName(cRole.getName());
                     newRole.setClientId(cRole.getClientId());
@@ -782,7 +763,7 @@ public class CloudMigrationService {
         tenantService.addTenant(newTenant);
     }
 
-    private void addTenantRole(com.rackspace.idm.domain.entity.User user, String tenantId, int endpointId) {
+    void addTenantRole(com.rackspace.idm.domain.entity.User user, String tenantId, int endpointId) {
         CloudBaseUrl cloudBaseUrl = endpointService.getBaseUrlById(endpointId);
         Application application = applicationService.getByName(cloudBaseUrl.getServiceName());
         if (application == null) {
@@ -803,19 +784,10 @@ public class CloudMigrationService {
         }
     }
 
-    private String[] getBaseUrlsForTenant(String tenantId, EndpointList endpoints) {
-        List<String> baseUrls = new ArrayList<String>();
-        for (Endpoint endpoint : endpoints.getEndpoint()) {
-            if (endpoint.getTenantId().equals(tenantId))
-                baseUrls.add(String.valueOf(endpoint.getId()));
-        }
-        String[] strResult = new String[baseUrls.size()];
-        return baseUrls.toArray(strResult);
-    }
-
     private SecretQA getSecretQA(String adminToken, String userId) throws Exception {
+        client.setCloud20Host(config.getString("cloudAuth20url"));
+        client.setCloud11Host(config.getString("cloudAuth11url"));
         try {
-            client.setCloud20Host(config.getString("cloudAuth20url"));
             SecretQA secretQA = client.getSecretQA(adminToken, userId);
             return secretQA;
         }
@@ -826,6 +798,7 @@ public class CloudMigrationService {
 
     void addOrUpdateGroups(String adminToken) throws Exception {
         client.setCloud20Host(config.getString("cloudAuth20url"));
+        client.setCloud11Host(config.getString("cloudAuth11url"));
         Groups groups = client.getGroups(adminToken);
         if (groups != null) {
             for (Group group : groups.getGroup()) {
@@ -840,7 +813,7 @@ public class CloudMigrationService {
 
                 try {
                     com.rackspace.idm.domain.entity.Group oldGroup = cloudGroupService.getGroupById(Integer.parseInt(group.getId()));
-                    if (!newGroup.getName().equals(oldGroup.getName()) || !newGroup.getDescription().equals(oldGroup.getDescription()))
+                    if (!StringUtils.equals(newGroup.getName(), oldGroup.getName()) || !StringUtils.equals(newGroup.getDescription(), oldGroup.getDescription()))
                         cloudGroupService.updateGroup(newGroup);
                 }
                 catch (NotFoundException ex) {
@@ -851,15 +824,14 @@ public class CloudMigrationService {
     }
 
     void addOrUpdateEndpointTemplates(String adminToken) throws Exception {
-        // Using Endpoints call to get Keystone Endpoint
         client.setCloud20Host(config.getString("cloudAuth20url"));
+        client.setCloud11Host(config.getString("cloudAuth11url"));
+        // Using Endpoints call to get Keystone Endpoint
         EndpointTemplateList endpoints = client.getEndpointTemplates(adminToken);
 
         //Get V1.1 BaseURLs for extra info
         BaseURLList baseURLs;
         try {
-            client = getMigrationClientInstance();
-            client.setCloud11Host(config.getString("cloudAuth11url"));
             baseURLs = client.getBaseUrls(config.getString("ga.username"), config.getString("ga.password"));
         }
         catch (Exception ex) {
@@ -867,8 +839,11 @@ public class CloudMigrationService {
         }
         if (endpoints != null) {
             for (EndpointTemplate endpoint : endpoints.getEndpointTemplate()) {
-                CloudBaseUrl cloudBaseUrl = endpointService.getBaseUrlById(endpoint.getId());
+                if (isUkCloudRegion()) {
+                    endpoint.setId(endpoint.getId() + UK_BASEURL_OFFSET);
+                }
 
+                CloudBaseUrl cloudBaseUrl = endpointService.getBaseUrlById(endpoint.getId());
                 BaseURL baseURL = getBaseUrlFromEndpoint(endpoint.getId(), baseURLs.getBaseURL());
 
                 if (cloudBaseUrl == null) {
@@ -933,40 +908,28 @@ public class CloudMigrationService {
         return null;
     }
 
-    public MigrationClient getClient() {
-        return client;
+    private boolean isUkCloudRegion() {
+        if ("UK".equalsIgnoreCase(config.getString("cloud.region"))) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     public void setClient(MigrationClient client) {
         this.client = client;
     }
 
-    public UserService getUserService() {
-        return userService;
-    }
-
     public void setUserService(UserService userService) {
         this.userService = userService;
-    }
-
-    public TenantService getTenantService() {
-        return tenantService;
     }
 
     public void setTenantService(TenantService tenantService) {
         this.tenantService = tenantService;
     }
 
-    public ApplicationService getApplicationService() {
-        return applicationService;
-    }
-
     public void setApplicationService(ApplicationService applicationService) {
         this.applicationService = applicationService;
-    }
-
-    public EndpointService getEndpointService() {
-        return endpointService;
     }
 
     public void setEndpointService(EndpointService endpointService) {
@@ -977,48 +940,24 @@ public class CloudMigrationService {
         this.cloudGroupService = cloudGroupService;
     }
 
-    public ScopeAccessService getScopeAccessService() {
-        return scopeAccessService;
-    }
-
     public void setScopeAccessService(ScopeAccessService scopeAccessService) {
         this.scopeAccessService = scopeAccessService;
-    }
-
-    public Configuration getConfig() {
-        return config;
     }
 
     public void setConfig(Configuration config) {
         this.config = config;
     }
 
-    public JAXBObjectFactories getOBJ_FACTORIES() {
-        return OBJ_FACTORIES;
-    }
-
     public void setOBJ_FACTORIES(JAXBObjectFactories OBJ_FACTORIES) {
         this.OBJ_FACTORIES = OBJ_FACTORIES;
-    }
-
-    public UserConverterCloudV20 getUserConverterCloudV20() {
-        return userConverterCloudV20;
     }
 
     public void setUserConverterCloudV20(UserConverterCloudV20 userConverterCloudV20) {
         this.userConverterCloudV20 = userConverterCloudV20;
     }
 
-    public RoleConverterCloudV20 getRoleConverterCloudV20() {
-        return roleConverterCloudV20;
-    }
-
     public void setRoleConverterCloudV20(RoleConverterCloudV20 roleConverterCloudV20) {
         this.roleConverterCloudV20 = roleConverterCloudV20;
-    }
-
-    public EndpointConverterCloudV20 getEndpointConverterCloudV20() {
-        return endpointConverterCloudV20;
     }
 
     public void setEndpointConverterCloudV20(EndpointConverterCloudV20 endpointConverterCloudV20) {
@@ -1027,5 +966,9 @@ public class CloudMigrationService {
 
     public void setCloudKsGroupBuilder(CloudKsGroupBuilder cloudKsGroupBuilder) {
         this.cloudKsGroupBuilder = cloudKsGroupBuilder;
+    }
+
+    public void setAtomHopperClient(AtomHopperClient atomHopperClient) {
+        this.atomHopperClient = atomHopperClient;
     }
 }

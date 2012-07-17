@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v10;
 import com.rackspace.api.idm.v1.Tenant;
 import com.rackspace.idm.exception.BadRequestException;
 import org.apache.commons.lang.StringUtils;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.BufferedInputStream;
@@ -22,20 +23,28 @@ import static org.junit.Assert.assertThat;
  */
 public class JSONReaderForTenantTest {
 
-    String tenantJSON = "{" +
-            "   \"tenant\" : {" +
-            "       \"id\" : \"tenantId\"," +
-            "       \"name\" : \"tenantName\"," +
-            "       \"description\" : \"tenantDescription\"," +
-            "       \"enabled\" : false," +
-            "       \"display-name\" : \"tenantDisplayName\"" +
-            "   }" +
-            "}";
+    JSONReaderForTenant jsonReaderForTenant;
+    String tenantJSON;
+    String emptyTenantJSON;
 
-    String emptyTenantJSON = "{" +
-            "   \"tenant\" : {" +
-            "   }" +
-            "}";
+    @Before
+    public void setUp() throws Exception {
+        jsonReaderForTenant = new JSONReaderForTenant();
+        tenantJSON = "{" +
+                "   \"tenant\" : {" +
+                "       \"id\" : \"tenantId\"," +
+                "       \"name\" : \"tenantName\"," +
+                "       \"description\" : \"tenantDescription\"," +
+                "       \"enabled\" : false," +
+                "       \"display-name\" : \"tenantDisplayName\"" +
+                "   }" +
+                "}";
+
+        emptyTenantJSON = "{" +
+                "   \"tenant\" : {" +
+                "   }" +
+                "}";
+    }
 
     @Test
     public void isReadable_forValidClass_returnsTrue() throws Exception {

@@ -31,7 +31,7 @@ import static org.mockito.Mockito.*;
  * Date: 3/20/12
  * Time: 3:29 PM
  */
-public class LdapUserRepositoryTest {
+public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
 
     LdapUserRepository ldapUserRepository;
     LdapUserRepository spy;
@@ -995,6 +995,22 @@ public class LdapUserRepositoryTest {
     }
 
     @Test
+    public void getMultipleUsers_offsetGreaterThanZero_doesNotCallGetLdapPagingOffsetDefault() throws Exception {
+        doReturn(1).when(spy).getLdapPagingLimitDefault();
+        doReturn(new ArrayList<SearchResultEntry>()).when(spy).getMultipleEntries(LdapRepository.USERS_BASE_DN, SearchScope.SUB, LdapRepository.ATTR_UID, null, null);
+        spy.getMultipleUsers(null, null, 1, 0);
+        verify(spy,never()).getLdapPagingOffsetDefault();
+    }
+
+    @Test
+    public void getMultipleUsers_limitGreaterThan0_doesNotCallGetLdapPagingLimitDefault() throws Exception {
+        doReturn(1).when(spy).getLdapPagingOffsetDefault();
+        doReturn(new ArrayList<SearchResultEntry>()).when(spy).getMultipleEntries(LdapRepository.USERS_BASE_DN, SearchScope.SUB, LdapRepository.ATTR_UID, null, null);
+        spy.getMultipleUsers(null, null, -1, 1);
+        verify(spy,never()).getLdapPagingLimitDefault();
+    }
+
+    @Test
     public void getMultipleUsers_offsetMoreThanContentCount_setsUsersToEmptyList() throws Exception {
         doReturn(1).when(spy).getLdapPagingOffsetDefault();
         doReturn(1).when(spy).getLdapPagingLimitDefault();
@@ -1174,10 +1190,397 @@ public class LdapUserRepositoryTest {
         attributeList.add(new Attribute("createTimestamp", StaticUtils.encodeGeneralizedTime(user.getCreated().toDate())));
         attributeList.add(new Attribute("modifyTimestamp", StaticUtils.encodeGeneralizedTime(user.getUpdated().toDate())));
         attributeList.add(new Attribute("dxPwdFailedTime", StaticUtils.encodeGeneralizedTime(new DateTime().toDate())));
+        doReturn(100).when(spy).getLdapPasswordFailureLockoutMin();
         Attribute[] newAttributes = attributeList.toArray(new Attribute[0]);
         SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId", newAttributes, new Control[0]);
-        User result = ldapUserRepository.getUser(searchResultEntry);
-        assertThat("user", result.toString(), equalTo(user.toString()));
+        User result = spy.getUser(searchResultEntry);
+        assertThat("user id",result.getId(),equalTo(user.getId()));
+        assertThat("user unique id",result.getUniqueId(),equalTo("uniqueId"));
+        assertThat("user username",result.getUsername(),equalTo(user.getUsername()));
+        assertThat("user country",result.getCountry(),equalTo(user.getCountry()));
+        assertThat("user display name",result.getDisplayName(),equalTo(user.getDisplayName()));
+        assertThat("user first name",result.getFirstname(),equalTo(user.getFirstname()));
+        assertThat("user email",result.getEmail(),equalTo(user.getEmail()));
+        assertThat("user middle name",result.getMiddlename(),equalTo(user.getMiddlename()));
+        assertThat("user preferred language",result.getPreferredLang(),equalTo(user.getPreferredLang()));
+        assertThat("user customer id",result.getCustomerId(),equalTo(user.getCustomerId()));
+        assertThat("user person id",result.getPersonId(),equalTo(user.getPersonId()));
+        assertThat("user api key",result.getApiKey(),equalTo(user.getApiKey()));
+        assertThat("user secret question",result.getSecretQuestion(),equalTo(user.getSecretQuestion()));
+        assertThat("user secret answer",result.getSecretAnswer(),equalTo(user.getSecretAnswer()));
+        assertThat("user last name",result.getLastname(),equalTo(user.getLastname()));
+        assertThat("user time zone", result.getTimeZone(),equalTo(user.getTimeZone()));
+        assertThat("user domain id", result.getDomainId(),equalTo(user.getDomainId()));
+        assertThat("user in migration",result.getInMigration(),equalTo(user.getInMigration()));
+        assertThat("user migration date", result.getMigrationDate(),equalTo(user.getMigrationDate()));
+        assertThat("user password object",result.getPasswordObj(),equalTo(user.getPasswordObj()));
+        assertThat("user region", result.getRegion(),equalTo(user.getRegion()));
+        assertThat("user soft delete time stamp",result.getSoftDeleteTimestamp(),equalTo(user.getSoftDeleteTimestamp()));
+        assertThat("user enabled",result.isEnabled(),equalTo(user.isEnabled()));
+        assertThat("user mosso id",result.getMossoId(),equalTo(user.getMossoId()));
+        assertThat("user nast id",result.getNastId(),equalTo(user.getNastId()));
+        assertThat("user created date",result.getCreated(),equalTo(user.getCreated()));
+        assertThat("user updated date",result.getUpdated(),equalTo(user.getUpdated()));
+        assertThat("user max login failures exceeded",result.isMaxLoginFailuresExceded(),equalTo(true));
+        assertThat("user secure id",result.getSecureId(),equalTo(user.getSecureId()));
+    }
+
+
+    @Test
+    public void getUser_userMigrationNull_returnsUserWithNullMigrationDate() throws Exception {
+        Password password = new Password();
+        password.setValue("secret");
+        User user = new User();
+        user.setId("123");
+        user.setCountry("us");
+        user.setDisplayName("test");
+        user.setFirstname("john");
+        user.setEmail("john.smith@email.com");
+        user.setMiddlename("jon");
+        user.setLocale(new Locale("en"));
+        user.setCustomerId("456");
+        user.setPersonId("789");
+        user.setApiKey("aaa-bbb-ccc");
+        user.setSecretAnswer("pass");
+        user.setSecretQuestion("tests");
+        user.setLastname("smith");
+        user.setTimeZoneObj(new FixedDateTimeZone("UTC", "UTC", 0, 0));
+        user.setUsername("jsmith");
+        user.setPasswordObj(password);
+        user.setRegion("central");
+        user.setEnabled(true);
+        user.setNastId("012");
+        user.setMossoId(123);
+        user.setDomainId("345");
+        user.setMigrationDate(new DateTime());
+        user.setSoftDeletedTimestamp(new DateTime());
+        user.setCreated(new DateTime());
+        user.setUpdated(new DateTime());
+        Attribute[] attributes = ldapUserRepository.getAddAttributes(user);
+        List<Attribute> attributeList = new ArrayList<Attribute>();
+        Collections.addAll(attributeList, attributes);
+        attributeList.add(new Attribute("softDeletedTimestamp", StaticUtils.encodeGeneralizedTime(user.getSoftDeleteTimestamp().toDate())));
+        attributeList.add(new Attribute("createTimestamp", StaticUtils.encodeGeneralizedTime(user.getCreated().toDate())));
+        attributeList.add(new Attribute("modifyTimestamp", StaticUtils.encodeGeneralizedTime(user.getUpdated().toDate())));
+        attributeList.add(new Attribute("dxPwdFailedTime", StaticUtils.encodeGeneralizedTime(new DateTime().toDate())));
+        doReturn(100).when(spy).getLdapPasswordFailureLockoutMin();
+        Attribute[] newAttributes = attributeList.toArray(new Attribute[0]);
+        SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId", newAttributes, new Control[0]);
+        User result = spy.getUser(searchResultEntry);
+        assertThat("user id",result.getId(),equalTo(user.getId()));
+        assertThat("user unique id",result.getUniqueId(),equalTo("uniqueId"));
+        assertThat("user username",result.getUsername(),equalTo(user.getUsername()));
+        assertThat("user country",result.getCountry(),equalTo(user.getCountry()));
+        assertThat("user display name",result.getDisplayName(),equalTo(user.getDisplayName()));
+        assertThat("user first name",result.getFirstname(),equalTo(user.getFirstname()));
+        assertThat("user email",result.getEmail(),equalTo(user.getEmail()));
+        assertThat("user middle name",result.getMiddlename(),equalTo(user.getMiddlename()));
+        assertThat("user preferred language",result.getPreferredLang(),equalTo(user.getPreferredLang()));
+        assertThat("user customer id",result.getCustomerId(),equalTo(user.getCustomerId()));
+        assertThat("user person id",result.getPersonId(),equalTo(user.getPersonId()));
+        assertThat("user api key",result.getApiKey(),equalTo(user.getApiKey()));
+        assertThat("user secret question",result.getSecretQuestion(),equalTo(user.getSecretQuestion()));
+        assertThat("user secret answer",result.getSecretAnswer(),equalTo(user.getSecretAnswer()));
+        assertThat("user last name",result.getLastname(),equalTo(user.getLastname()));
+        assertThat("user time zone", result.getTimeZone(),equalTo(user.getTimeZone()));
+        assertThat("user domain id", result.getDomainId(),equalTo(user.getDomainId()));
+        assertThat("user in migration",result.getInMigration(),equalTo(user.getInMigration()));
+        assertThat("user migration date", result.getMigrationDate(),equalTo(null));
+        assertThat("user password object",result.getPasswordObj(),equalTo(user.getPasswordObj()));
+        assertThat("user region", result.getRegion(),equalTo(user.getRegion()));
+        assertThat("user soft delete time stamp",result.getSoftDeleteTimestamp(),equalTo(user.getSoftDeleteTimestamp()));
+        assertThat("user enabled",result.isEnabled(),equalTo(user.isEnabled()));
+        assertThat("user mosso id",result.getMossoId(),equalTo(user.getMossoId()));
+        assertThat("user nast id",result.getNastId(),equalTo(user.getNastId()));
+        assertThat("user created date",result.getCreated(),equalTo(user.getCreated()));
+        assertThat("user updated date",result.getUpdated(),equalTo(user.getUpdated()));
+        assertThat("user max login failures exceeded",result.isMaxLoginFailuresExceded(),equalTo(true));
+        assertThat("user secure id",result.getSecureId(),equalTo(user.getSecureId()));
+    }
+
+    @Test
+    public void getUser_nullSoftDeleteTimeStamp_returnsUserWithNullSoftDeleteTimeStamp() throws Exception {
+        Password password = new Password();
+        password.setValue("secret");
+        User user = new User();
+        user.setId("123");
+        user.setCountry("us");
+        user.setDisplayName("test");
+        user.setFirstname("john");
+        user.setEmail("john.smith@email.com");
+        user.setMiddlename("jon");
+        user.setLocale(new Locale("en"));
+        user.setCustomerId("456");
+        user.setPersonId("789");
+        user.setApiKey("aaa-bbb-ccc");
+        user.setSecretAnswer("pass");
+        user.setSecretQuestion("tests");
+        user.setLastname("smith");
+        user.setTimeZoneObj(new FixedDateTimeZone("UTC", "UTC", 0, 0));
+        user.setUsername("jsmith");
+        user.setPasswordObj(password);
+        user.setRegion("central");
+        user.setEnabled(true);
+        user.setNastId("012");
+        user.setMossoId(123);
+        user.setDomainId("345");
+        user.setInMigration(true);
+        user.setMigrationDate(new DateTime());
+        user.setCreated(new DateTime());
+        user.setUpdated(new DateTime());
+        Attribute[] attributes = ldapUserRepository.getAddAttributes(user);
+        List<Attribute> attributeList = new ArrayList<Attribute>();
+        Collections.addAll(attributeList, attributes);
+        attributeList.add(new Attribute("createTimestamp", StaticUtils.encodeGeneralizedTime(user.getCreated().toDate())));
+        attributeList.add(new Attribute("modifyTimestamp", StaticUtils.encodeGeneralizedTime(user.getUpdated().toDate())));
+        attributeList.add(new Attribute("dxPwdFailedTime", StaticUtils.encodeGeneralizedTime(new DateTime().toDate())));
+        doReturn(100).when(spy).getLdapPasswordFailureLockoutMin();
+        Attribute[] newAttributes = attributeList.toArray(new Attribute[0]);
+        SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId", newAttributes, new Control[0]);
+        User result = spy.getUser(searchResultEntry);
+        assertThat("user id",result.getId(),equalTo(user.getId()));
+        assertThat("user unique id",result.getUniqueId(),equalTo("uniqueId"));
+        assertThat("user username",result.getUsername(),equalTo(user.getUsername()));
+        assertThat("user country",result.getCountry(),equalTo(user.getCountry()));
+        assertThat("user display name",result.getDisplayName(),equalTo(user.getDisplayName()));
+        assertThat("user first name",result.getFirstname(),equalTo(user.getFirstname()));
+        assertThat("user email",result.getEmail(),equalTo(user.getEmail()));
+        assertThat("user middle name",result.getMiddlename(),equalTo(user.getMiddlename()));
+        assertThat("user preferred language",result.getPreferredLang(),equalTo(user.getPreferredLang()));
+        assertThat("user customer id",result.getCustomerId(),equalTo(user.getCustomerId()));
+        assertThat("user person id",result.getPersonId(),equalTo(user.getPersonId()));
+        assertThat("user api key",result.getApiKey(),equalTo(user.getApiKey()));
+        assertThat("user secret question",result.getSecretQuestion(),equalTo(user.getSecretQuestion()));
+        assertThat("user secret answer",result.getSecretAnswer(),equalTo(user.getSecretAnswer()));
+        assertThat("user last name",result.getLastname(),equalTo(user.getLastname()));
+        assertThat("user time zone", result.getTimeZone(),equalTo(user.getTimeZone()));
+        assertThat("user domain id", result.getDomainId(),equalTo(user.getDomainId()));
+        assertThat("user in migration",result.getInMigration(),equalTo(user.getInMigration()));
+        assertThat("user migration date", result.getMigrationDate(),equalTo(user.getMigrationDate()));
+        assertThat("user password object",result.getPasswordObj(),equalTo(user.getPasswordObj()));
+        assertThat("user region", result.getRegion(),equalTo(user.getRegion()));
+        assertThat("user soft delete time stamp",result.getSoftDeleteTimestamp(),equalTo(user.getSoftDeleteTimestamp()));
+        assertThat("user enabled",result.isEnabled(),equalTo(user.isEnabled()));
+        assertThat("user mosso id",result.getMossoId(),equalTo(user.getMossoId()));
+        assertThat("user nast id",result.getNastId(),equalTo(user.getNastId()));
+        assertThat("user created date",result.getCreated(),equalTo(user.getCreated()));
+        assertThat("user updated date",result.getUpdated(),equalTo(user.getUpdated()));
+        assertThat("user max login failures exceeded",result.isMaxLoginFailuresExceded(),equalTo(true));
+        assertThat("user secure id",result.getSecureId(),equalTo(user.getSecureId()));
+    }
+
+    @Test
+    public void getUser_nullCreatedDate_returnsUserWithNullCreatedDate() throws Exception {
+        Password password = new Password();
+        password.setValue("secret");
+        User user = new User();
+        user.setId("123");
+        user.setCountry("us");
+        user.setDisplayName("test");
+        user.setFirstname("john");
+        user.setEmail("john.smith@email.com");
+        user.setMiddlename("jon");
+        user.setLocale(new Locale("en"));
+        user.setCustomerId("456");
+        user.setPersonId("789");
+        user.setApiKey("aaa-bbb-ccc");
+        user.setSecretAnswer("pass");
+        user.setSecretQuestion("tests");
+        user.setLastname("smith");
+        user.setTimeZoneObj(new FixedDateTimeZone("UTC", "UTC", 0, 0));
+        user.setUsername("jsmith");
+        user.setPasswordObj(password);
+        user.setRegion("central");
+        user.setEnabled(true);
+        user.setNastId("012");
+        user.setMossoId(123);
+        user.setDomainId("345");
+        user.setInMigration(true);
+        user.setMigrationDate(new DateTime());
+        user.setSoftDeletedTimestamp(new DateTime());
+        user.setUpdated(new DateTime());
+        Attribute[] attributes = ldapUserRepository.getAddAttributes(user);
+        List<Attribute> attributeList = new ArrayList<Attribute>();
+        Collections.addAll(attributeList, attributes);
+        attributeList.add(new Attribute("softDeletedTimestamp", StaticUtils.encodeGeneralizedTime(user.getSoftDeleteTimestamp().toDate())));
+        attributeList.add(new Attribute("modifyTimestamp", StaticUtils.encodeGeneralizedTime(user.getUpdated().toDate())));
+        attributeList.add(new Attribute("dxPwdFailedTime", StaticUtils.encodeGeneralizedTime(new DateTime().toDate())));
+        doReturn(100).when(spy).getLdapPasswordFailureLockoutMin();
+        Attribute[] newAttributes = attributeList.toArray(new Attribute[0]);
+        SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId", newAttributes, new Control[0]);
+        User result = spy.getUser(searchResultEntry);
+        assertThat("user id",result.getId(),equalTo(user.getId()));
+        assertThat("user unique id",result.getUniqueId(),equalTo("uniqueId"));
+        assertThat("user username",result.getUsername(),equalTo(user.getUsername()));
+        assertThat("user country",result.getCountry(),equalTo(user.getCountry()));
+        assertThat("user display name",result.getDisplayName(),equalTo(user.getDisplayName()));
+        assertThat("user first name",result.getFirstname(),equalTo(user.getFirstname()));
+        assertThat("user email",result.getEmail(),equalTo(user.getEmail()));
+        assertThat("user middle name",result.getMiddlename(),equalTo(user.getMiddlename()));
+        assertThat("user preferred language",result.getPreferredLang(),equalTo(user.getPreferredLang()));
+        assertThat("user customer id",result.getCustomerId(),equalTo(user.getCustomerId()));
+        assertThat("user person id",result.getPersonId(),equalTo(user.getPersonId()));
+        assertThat("user api key",result.getApiKey(),equalTo(user.getApiKey()));
+        assertThat("user secret question",result.getSecretQuestion(),equalTo(user.getSecretQuestion()));
+        assertThat("user secret answer",result.getSecretAnswer(),equalTo(user.getSecretAnswer()));
+        assertThat("user last name",result.getLastname(),equalTo(user.getLastname()));
+        assertThat("user time zone", result.getTimeZone(),equalTo(user.getTimeZone()));
+        assertThat("user domain id", result.getDomainId(),equalTo(user.getDomainId()));
+        assertThat("user in migration",result.getInMigration(),equalTo(user.getInMigration()));
+        assertThat("user migration date", result.getMigrationDate(),equalTo(user.getMigrationDate()));
+        assertThat("user password object",result.getPasswordObj(),equalTo(user.getPasswordObj()));
+        assertThat("user region", result.getRegion(),equalTo(user.getRegion()));
+        assertThat("user soft delete time stamp",result.getSoftDeleteTimestamp(),equalTo(user.getSoftDeleteTimestamp()));
+        assertThat("user enabled",result.isEnabled(),equalTo(user.isEnabled()));
+        assertThat("user mosso id",result.getMossoId(),equalTo(user.getMossoId()));
+        assertThat("user nast id",result.getNastId(),equalTo(user.getNastId()));
+        assertThat("user created date",result.getCreated(),equalTo(user.getCreated()));
+        assertThat("user updated date",result.getUpdated(),equalTo(user.getUpdated()));
+        assertThat("user max login failures exceeded",result.isMaxLoginFailuresExceded(),equalTo(true));
+        assertThat("user secure id",result.getSecureId(),equalTo(user.getSecureId()));
+    }
+
+    @Test
+    public void getUser_nullUpdatedDate_returnsUserWithNullUpdatedDate() throws Exception {
+        Password password = new Password();
+        password.setValue("secret");
+        User user = new User();
+        user.setId("123");
+        user.setCountry("us");
+        user.setDisplayName("test");
+        user.setFirstname("john");
+        user.setEmail("john.smith@email.com");
+        user.setMiddlename("jon");
+        user.setLocale(new Locale("en"));
+        user.setCustomerId("456");
+        user.setPersonId("789");
+        user.setApiKey("aaa-bbb-ccc");
+        user.setSecretAnswer("pass");
+        user.setSecretQuestion("tests");
+        user.setLastname("smith");
+        user.setTimeZoneObj(new FixedDateTimeZone("UTC", "UTC", 0, 0));
+        user.setUsername("jsmith");
+        user.setPasswordObj(password);
+        user.setRegion("central");
+        user.setEnabled(true);
+        user.setNastId("012");
+        user.setMossoId(123);
+        user.setDomainId("345");
+        user.setInMigration(true);
+        user.setMigrationDate(new DateTime());
+        user.setSoftDeletedTimestamp(new DateTime());
+        user.setCreated(new DateTime());
+        Attribute[] attributes = ldapUserRepository.getAddAttributes(user);
+        List<Attribute> attributeList = new ArrayList<Attribute>();
+        Collections.addAll(attributeList, attributes);
+        attributeList.add(new Attribute("softDeletedTimestamp", StaticUtils.encodeGeneralizedTime(user.getSoftDeleteTimestamp().toDate())));
+        attributeList.add(new Attribute("createTimestamp", StaticUtils.encodeGeneralizedTime(user.getCreated().toDate())));
+        attributeList.add(new Attribute("dxPwdFailedTime", StaticUtils.encodeGeneralizedTime(new DateTime().toDate())));
+        doReturn(100).when(spy).getLdapPasswordFailureLockoutMin();
+        Attribute[] newAttributes = attributeList.toArray(new Attribute[0]);
+        SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId", newAttributes, new Control[0]);
+        User result = spy.getUser(searchResultEntry);
+        assertThat("user id",result.getId(),equalTo(user.getId()));
+        assertThat("user unique id",result.getUniqueId(),equalTo("uniqueId"));
+        assertThat("user username",result.getUsername(),equalTo(user.getUsername()));
+        assertThat("user country",result.getCountry(),equalTo(user.getCountry()));
+        assertThat("user display name",result.getDisplayName(),equalTo(user.getDisplayName()));
+        assertThat("user first name",result.getFirstname(),equalTo(user.getFirstname()));
+        assertThat("user email",result.getEmail(),equalTo(user.getEmail()));
+        assertThat("user middle name",result.getMiddlename(),equalTo(user.getMiddlename()));
+        assertThat("user preferred language",result.getPreferredLang(),equalTo(user.getPreferredLang()));
+        assertThat("user customer id",result.getCustomerId(),equalTo(user.getCustomerId()));
+        assertThat("user person id",result.getPersonId(),equalTo(user.getPersonId()));
+        assertThat("user api key",result.getApiKey(),equalTo(user.getApiKey()));
+        assertThat("user secret question",result.getSecretQuestion(),equalTo(user.getSecretQuestion()));
+        assertThat("user secret answer",result.getSecretAnswer(),equalTo(user.getSecretAnswer()));
+        assertThat("user last name",result.getLastname(),equalTo(user.getLastname()));
+        assertThat("user time zone", result.getTimeZone(),equalTo(user.getTimeZone()));
+        assertThat("user domain id", result.getDomainId(),equalTo(user.getDomainId()));
+        assertThat("user in migration",result.getInMigration(),equalTo(user.getInMigration()));
+        assertThat("user migration date", result.getMigrationDate(),equalTo(user.getMigrationDate()));
+        assertThat("user password object",result.getPasswordObj(),equalTo(user.getPasswordObj()));
+        assertThat("user region", result.getRegion(),equalTo(user.getRegion()));
+        assertThat("user soft delete time stamp",result.getSoftDeleteTimestamp(),equalTo(user.getSoftDeleteTimestamp()));
+        assertThat("user enabled",result.isEnabled(),equalTo(user.isEnabled()));
+        assertThat("user mosso id",result.getMossoId(),equalTo(user.getMossoId()));
+        assertThat("user nast id",result.getNastId(),equalTo(user.getNastId()));
+        assertThat("user created date",result.getCreated(),equalTo(user.getCreated()));
+        assertThat("user updated date",result.getUpdated(),equalTo(user.getUpdated()));
+        assertThat("user max login failures exceeded",result.isMaxLoginFailuresExceded(),equalTo(true));
+        assertThat("user secure id",result.getSecureId(),equalTo(user.getSecureId()));
+    }
+
+    @Test
+    public void getUser_nullPasswordFailureDate_returnsUserWithMaxLoginFailuresExceededFalse() throws Exception {
+        Password password = new Password();
+        password.setValue("secret");
+        User user = new User();
+        user.setId("123");
+        user.setCountry("us");
+        user.setDisplayName("test");
+        user.setFirstname("john");
+        user.setEmail("john.smith@email.com");
+        user.setMiddlename("jon");
+        user.setLocale(new Locale("en"));
+        user.setCustomerId("456");
+        user.setPersonId("789");
+        user.setApiKey("aaa-bbb-ccc");
+        user.setSecretAnswer("pass");
+        user.setSecretQuestion("tests");
+        user.setLastname("smith");
+        user.setTimeZoneObj(new FixedDateTimeZone("UTC", "UTC", 0, 0));
+        user.setUsername("jsmith");
+        user.setPasswordObj(password);
+        user.setRegion("central");
+        user.setEnabled(true);
+        user.setNastId("012");
+        user.setMossoId(123);
+        user.setDomainId("345");
+        user.setInMigration(true);
+        user.setMigrationDate(new DateTime());
+        user.setSoftDeletedTimestamp(new DateTime());
+        user.setCreated(new DateTime());
+        user.setUpdated(new DateTime());
+        Attribute[] attributes = ldapUserRepository.getAddAttributes(user);
+        List<Attribute> attributeList = new ArrayList<Attribute>();
+        Collections.addAll(attributeList, attributes);
+        attributeList.add(new Attribute("softDeletedTimestamp", StaticUtils.encodeGeneralizedTime(user.getSoftDeleteTimestamp().toDate())));
+        attributeList.add(new Attribute("createTimestamp", StaticUtils.encodeGeneralizedTime(user.getCreated().toDate())));
+        attributeList.add(new Attribute("modifyTimestamp", StaticUtils.encodeGeneralizedTime(user.getUpdated().toDate())));
+        doReturn(100).when(spy).getLdapPasswordFailureLockoutMin();
+        Attribute[] newAttributes = attributeList.toArray(new Attribute[0]);
+        SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId", newAttributes, new Control[0]);
+        User result = spy.getUser(searchResultEntry);
+        assertThat("user id",result.getId(),equalTo(user.getId()));
+        assertThat("user unique id",result.getUniqueId(),equalTo("uniqueId"));
+        assertThat("user username",result.getUsername(),equalTo(user.getUsername()));
+        assertThat("user country",result.getCountry(),equalTo(user.getCountry()));
+        assertThat("user display name",result.getDisplayName(),equalTo(user.getDisplayName()));
+        assertThat("user first name",result.getFirstname(),equalTo(user.getFirstname()));
+        assertThat("user email",result.getEmail(),equalTo(user.getEmail()));
+        assertThat("user middle name",result.getMiddlename(),equalTo(user.getMiddlename()));
+        assertThat("user preferred language",result.getPreferredLang(),equalTo(user.getPreferredLang()));
+        assertThat("user customer id",result.getCustomerId(),equalTo(user.getCustomerId()));
+        assertThat("user person id",result.getPersonId(),equalTo(user.getPersonId()));
+        assertThat("user api key",result.getApiKey(),equalTo(user.getApiKey()));
+        assertThat("user secret question",result.getSecretQuestion(),equalTo(user.getSecretQuestion()));
+        assertThat("user secret answer",result.getSecretAnswer(),equalTo(user.getSecretAnswer()));
+        assertThat("user last name",result.getLastname(),equalTo(user.getLastname()));
+        assertThat("user time zone", result.getTimeZone(),equalTo(user.getTimeZone()));
+        assertThat("user domain id", result.getDomainId(),equalTo(user.getDomainId()));
+        assertThat("user in migration",result.getInMigration(),equalTo(user.getInMigration()));
+        assertThat("user migration date", result.getMigrationDate(),equalTo(user.getMigrationDate()));
+        assertThat("user password object",result.getPasswordObj(),equalTo(user.getPasswordObj()));
+        assertThat("user region", result.getRegion(),equalTo(user.getRegion()));
+        assertThat("user soft delete time stamp",result.getSoftDeleteTimestamp(),equalTo(user.getSoftDeleteTimestamp()));
+        assertThat("user enabled",result.isEnabled(),equalTo(user.isEnabled()));
+        assertThat("user mosso id",result.getMossoId(),equalTo(user.getMossoId()));
+        assertThat("user nast id",result.getNastId(),equalTo(user.getNastId()));
+        assertThat("user created date",result.getCreated(),equalTo(user.getCreated()));
+        assertThat("user updated date",result.getUpdated(),equalTo(user.getUpdated()));
+        assertThat("user max login failures exceeded",result.isMaxLoginFailuresExceded(),equalTo(false));
+        assertThat("user secure id",result.getSecureId(),equalTo(user.getSecureId()));
     }
 
     @Test
@@ -1249,6 +1652,14 @@ public class LdapUserRepositoryTest {
     public void validateUserStatus_userIsDisabled_returnsUserAuthenticationResult() throws Exception {
         User user = new User();
         user.setEnabled(false);
+        UserAuthenticationResult result = ldapUserRepository.validateUserStatus(user, false);
+        assertThat("user authentication result", result.getUser(), equalTo(user));
+    }
+
+    @Test
+    public void validateUserStatus_userIsEnabledAndNotAuthenticated_returnsUserAuthenticationResult() throws Exception {
+        User user = new User();
+        user.setEnabled(true);
         UserAuthenticationResult result = ldapUserRepository.validateUserStatus(user, false);
         assertThat("user authentication result", result.getUser(), equalTo(user));
     }

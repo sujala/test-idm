@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
@@ -345,6 +346,16 @@ public class JSONWriterTest {
     }
 
     @Test
+    public void writeTo_JAXBElementTypeCredentialListTypeNullValue_runsSuccessfully() throws Exception {
+        JAXBElement<ApiKeyCredentials> apiKeyCredentialsJAXBElement = new JAXBElement<ApiKeyCredentials>(QName.valueOf("fee"), ApiKeyCredentials.class, null);
+        CredentialListType credentialListType = new CredentialListType();
+        credentialListType.getCredential().add(apiKeyCredentialsJAXBElement);
+        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JAXBElement<CredentialListType> jaxbElement = new JAXBElement<CredentialListType>(QName.valueOf("foo"), CredentialListType.class, credentialListType);
+        spy.writeTo(jaxbElement, CredentialListType.class, null, null, null, null, myOut);
+    }
+
+    @Test
     public void writeTo_JAXBElementTypeCredentialListTypeApiKeyCredentials_callsGetApiKeyCredentials() throws Exception {
         ApiKeyCredentials apiKeyCredentials = new ApiKeyCredentials();
         JAXBElement<ApiKeyCredentials> apiKeyCredentialsJAXBElement = new JAXBElement<ApiKeyCredentials>(QName.valueOf("fee"), ApiKeyCredentials.class, apiKeyCredentials);
@@ -455,9 +466,8 @@ public class JSONWriterTest {
     }
 
     @Test
-    public void writeTo_JAXBElementTypeAuthenticateResponseWithSubRoles_writesToOutputStreamCorrectSubRole() throws Exception {
+    public void writeTo_JAXBElementTypeAuthenticateResponseImpersonator_writesImpersonator() throws Exception {
         Token token = new Token();
-        ServiceCatalog serviceCatalog = new ServiceCatalog();
 
         Role role = new Role();
         role.setServiceId("123");
@@ -469,13 +479,15 @@ public class JSONWriterTest {
         roleList.getRole().add(role);
 
         UserForAuthenticateResponse userForAuthenticateResponse = new UserForAuthenticateResponse();
+        userForAuthenticateResponse.setName("impersonatorName");
         userForAuthenticateResponse.setId("789");
         userForAuthenticateResponse.setRoles(roleList);
 
         AuthenticateResponse authenticateResponse = new AuthenticateResponse();
         authenticateResponse.setToken(token);
-        authenticateResponse.setServiceCatalog(serviceCatalog);
-        authenticateResponse.getAny().add(userForAuthenticateResponse);
+        com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory objectFactory = new ObjectFactory();
+        JAXBElement<UserForAuthenticateResponse> impersonator = objectFactory.createImpersonator(userForAuthenticateResponse);
+        authenticateResponse.getAny().add(impersonator);
 
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("success", "This test worked!");
@@ -487,46 +499,10 @@ public class JSONWriterTest {
         JAXBElement<AuthenticateResponse> jaxbElement = new JAXBElement<AuthenticateResponse>(QName.valueOf("foo"), AuthenticateResponse.class, authenticateResponse);
 
         doReturn(jsonObject).when(spy).getToken(token);
-        doReturn(jsonArray).when(spy).getServiceCatalog(serviceCatalog);
 
         spy.writeTo(jaxbElement, ServiceCatalog.class, null, null, null, null, myOut);
 
-        assertThat("string", myOut.toString(), equalTo("{\"access\":{\"token\":{\"success\":\"This test worked!\"}," +
-                "\"access\":{\"id\":\"789\",\"roles\":[{\"id\":\"456\",\"serviceId\":\"123\",\"description\":\"description\",\"name\":\"name\"" +
-                "}]},\"serviceCatalog\":[{\"success\":\"This test worked!\"}]}}"));
-    }
-
-    @Test
-    public void writeTo_JAXBElementTypeAuthenticateResponseWithUserForAuthenticateResponse_writesToOutputStreamCorrectAccessID() throws Exception {
-        Token token = new Token();
-        ServiceCatalog serviceCatalog = new ServiceCatalog();
-        RoleList roleList = new RoleList();
-
-        UserForAuthenticateResponse userForAuthenticateResponse = new UserForAuthenticateResponse();
-        userForAuthenticateResponse.setId("789");
-        userForAuthenticateResponse.setRoles(roleList);
-
-        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
-        authenticateResponse.setToken(token);
-        authenticateResponse.setServiceCatalog(serviceCatalog);
-        authenticateResponse.getAny().add(userForAuthenticateResponse);
-
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("success", "This test worked!");
-
-        JSONArray jsonArray = new JSONArray();
-        jsonArray.add(jsonObject);
-
-        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-        JAXBElement<AuthenticateResponse> jaxbElement = new JAXBElement<AuthenticateResponse>(QName.valueOf("foo"), AuthenticateResponse.class, authenticateResponse);
-
-        doReturn(jsonObject).when(spy).getToken(token);
-        doReturn(jsonArray).when(spy).getServiceCatalog(serviceCatalog);
-
-        spy.writeTo(jaxbElement, ServiceCatalog.class, null, null, null, null, myOut);
-
-        assertThat("string", myOut.toString(), equalTo("{\"access\":{\"token\":{\"success\":\"This test worked!\"}," +
-                "\"access\":{\"id\":\"789\",\"roles\":[]},\"serviceCatalog\":[{\"success\":\"This test worked!\"}]}}"));
+        assertThat("string", myOut.toString(), equalTo("{\"access\":{\"token\":{\"success\":\"This test worked!\"},\"RAX-AUTH:impersonator\":{\"id\":\"789\",\"roles\":[{\"id\":\"456\",\"serviceId\":\"123\",\"description\":\"description\",\"name\":\"name\"}],\"name\":\"impersonatorName\"}}}"));
     }
 
     @Test
@@ -2513,7 +2489,7 @@ public class JSONWriterTest {
         final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
         JAXBElement jaxbElement = new JAXBElement<AuthenticateResponse>(QName.valueOf("foo"), AuthenticateResponse.class, authenticateResponse);
         writer.writeTo(jaxbElement, AuthenticateResponse.class, null, null, null, null, myOut);
-        Assert.assertEquals("{\"access\":{\"token\":{\"id\":\"id\",\"expires\":\"2012-01-01\",\"tenant\":\"name\"},\"serviceCatalog\":[],\"user\":{\"id\":\"id\",\"roles\":[],\"name\":\"name\"}}}", myOut.toString());
+        Assert.assertEquals("{\"access\":{\"token\":{\"id\":\"id\",\"expires\":\"2012-01-01\",\"tenant\":{\"id\":\"id\",\"name\":\"name\"}},\"serviceCatalog\":[],\"user\":{\"id\":\"id\",\"roles\":[],\"name\":\"name\"}}}", myOut.toString());
     }
 
     @Test

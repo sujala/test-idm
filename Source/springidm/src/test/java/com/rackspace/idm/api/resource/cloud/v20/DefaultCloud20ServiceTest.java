@@ -1,6 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.api.converter.cloudv20.*;
@@ -20,7 +20,6 @@ import com.unboundid.ldap.sdk.SearchResultEntry;
 import org.apache.commons.configuration.Configuration;
 import org.hamcrest.Matchers;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.openstack.docs.common.api.v1.Extension;
@@ -29,6 +28,7 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.*;
+import org.openstack.docs.identity.api.v2.ObjectFactory;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import javax.ws.rs.core.*;
@@ -46,7 +46,6 @@ import java.util.List;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.*;
 
@@ -231,6 +230,45 @@ public class DefaultCloud20ServiceTest {
         spy = spy(defaultCloud20Service);
         doNothing().when(spy).checkXAUTHTOKEN(eq(authToken), anyBoolean(), any(String.class));
         doNothing().when(spy).checkXAUTHTOKEN(eq(authToken), anyBoolean(), eq(tenantId));
+    }
+
+    @Test
+    public void listDefaultRegionServices_callsApplicationService_getOSServices() throws Exception {
+        defaultCloud20Service.listDefaultRegionServices(authToken);
+        verify(clientService).getOpenStackServices();
+    }
+
+    @Test
+    public void listDefaultRegionServices_returnsNotNullResponseBuilder() throws Exception {
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.listDefaultRegionServices(authToken);
+        assertThat("response builder", responseBuilder, Matchers.<Response.ResponseBuilder>notNullValue());
+    }
+
+    @Test
+    public void listDefaultRegionServices_returnsNotNullEntity() throws Exception {
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.listDefaultRegionServices(authToken);
+        assertThat("response builder", responseBuilder.build().getEntity(), Matchers.notNullValue());
+    }
+
+    @Test
+    public void listDefaultRegionServices_returnsApplicationListEntity() throws Exception {
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.listDefaultRegionServices(authToken);
+        assertThat("response builder", responseBuilder.build().getEntity(), instanceOf(List.class));
+    }
+
+    @Test
+    public void listDefaultRegionServices_filtersByUseForDefaultRegionFlag() throws Exception {
+        ArrayList<Application> applications = new ArrayList<Application>();
+        Application application1 = new Application();
+        applications.add(application1);
+        Application application2 = new Application("cloudFiles", ClientSecret.newInstance("foo"), "cloudFiles", "rcn", ClientStatus.ACTIVE);
+        applications.add(application2);
+        Application application3 = new Application("cloudFilesCDN", ClientSecret.newInstance("foo"), "cloudFilesCDN", "rcn", ClientStatus.ACTIVE);
+        application3.setUsedForDefaultRegion(true);
+        applications.add(application3);
+        when(clientService.getOpenStackServices()).thenReturn(applications);
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.listDefaultRegionServices(authToken);
+        assertThat("response builder", ((List<Application>)responseBuilder.build().getEntity()).size(), equalTo(1));
     }
 
     @Test
@@ -512,6 +550,7 @@ public class DefaultCloud20ServiceTest {
         impersonatedScopeAccess.setAccessTokenString("impToken");
         doReturn(impersonatedScopeAccess).when(spy).checkAndGetToken("token");
         doNothing().when(spy).validateBelongsTo(eq("belongsTo"), any(List.class));
+        when(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory());
         Response.ResponseBuilder responseBuilder = spy.validateToken(httpHeaders, authToken, "token", "belongsTo");
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
@@ -667,7 +706,7 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void authenticate_withTenantIdAndNoTenantAccess_returns404() throws Exception {
+    public void authenticate_withTenantIdAndNoTenantAccess_returns401() throws Exception {
         AuthenticationRequest authenticationRequest = new AuthenticationRequest();
         TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
         tokenForAuthenticationRequest.setId("tokenId");
@@ -680,11 +719,11 @@ public class DefaultCloud20ServiceTest {
         when(tenantService.hasTenantAccess(any(ScopeAccess.class), eq("tenantId"))).thenReturn(false);
         doReturn(new User()).when(spy).checkAndGetUser(anyString());
         Response.ResponseBuilder responseBuilder = spy.authenticate(null, authenticationRequest);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(404));
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(401));
     }
 
     @Test
-    public void authenticate_withTenantNameAndNoTenantAccess_returns404() throws Exception {
+    public void authenticate_withTenantNameAndNoTenantAccess_returns401() throws Exception {
         AuthenticationRequest authenticationRequest = new AuthenticationRequest();
         TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
         tokenForAuthenticationRequest.setId("tokenId");
@@ -697,7 +736,7 @@ public class DefaultCloud20ServiceTest {
         when(tenantService.hasTenantAccess(any(ScopeAccess.class), eq("tenantName"))).thenReturn(false);
         doReturn(new User()).when(spy).checkAndGetUser(anyString());
         Response.ResponseBuilder responseBuilder = spy.authenticate(null, authenticationRequest);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(404));
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(401));
     }
 
     @Test
@@ -747,68 +786,20 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void authenticate_withTenantId_callsVerifyTokenHasAccessForAuthenticate() throws Exception {
+    public void authenticate_withBothTenantIdAndTenantName_returns400() throws Exception {
         AuthenticationRequest authenticationRequest = new AuthenticationRequest();
-        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
-        Token token = new Token();
-        token.setId("token");
-        authenticateResponse.setToken(token);
-        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
-        tokenForAuthenticationRequest.setId("tokenId");
-        authenticationRequest.setTenantId("tenantId");
-        authenticationRequest.setToken(tokenForAuthenticationRequest);
-        UserScopeAccess scopeAccess = new UserScopeAccess();
-        scopeAccess.setAccessTokenExp(new Date(5000, 1, 1));
-        scopeAccess.setAccessTokenString("foo");
-        when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
-        doReturn(new User()).when(spy).checkAndGetUser(anyString());
-        when(tenantService.hasTenantAccess(any(ScopeAccess.class), eq("tenantId"))).thenReturn(true);
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
-        when(authConverterCloudV20.toAuthenticationResponse(any(User.class), any(ScopeAccess.class), any(List.class), any(List.class))).thenReturn(authenticateResponse);
-        spy.authenticate(null, authenticationRequest);
-        verify(spy).verifyTokenHasTenantAccessForAuthenticate("token", "tenantId");
-    }
-
-    @Test
-    public void authenticate_withEmptyTenantId_returns400() throws Exception {
-        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
-        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
-        tokenForAuthenticationRequest.setId("tokenId");
-        authenticationRequest.setTenantId("");
-        authenticationRequest.setToken(tokenForAuthenticationRequest);
-        UserScopeAccess scopeAccess = new UserScopeAccess();
-        scopeAccess.setAccessTokenExp(new Date(5000, 1, 1));
-        scopeAccess.setAccessTokenString("foo");
-        when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
-        doReturn(new User()).when(spy).checkAndGetUser(anyString());
-        when(tenantService.hasTenantAccess(any(ScopeAccess.class), eq(""))).thenReturn(true);
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
-        Response.ResponseBuilder responseBuilder = spy.authenticate(null, authenticationRequest);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
-    }
-
-    @Test
-    public void authenticate_getTenantIdThrowForbiddenException_returns401() throws Exception {
-        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
-        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
-        Token token = new Token();
-        token.setId("token");
-        authenticateResponse.setToken(token);
-        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
-        tokenForAuthenticationRequest.setId("tokenId");
-        authenticationRequest.setTenantId("tenantId");
-        authenticationRequest.setToken(tokenForAuthenticationRequest);
-        UserScopeAccess scopeAccess = new UserScopeAccess();
-        scopeAccess.setAccessTokenExp(new Date(5000, 1, 1));
-        scopeAccess.setAccessTokenString("foo");
-        when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
-        doReturn(new User()).when(spy).checkAndGetUser(anyString());
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
-        when(tenantService.hasTenantAccess(any(ScopeAccess.class), eq("tenantId"))).thenReturn(true);
-        when(authConverterCloudV20.toAuthenticationResponse(any(User.class), any(ScopeAccess.class), any(List.class), any(List.class))).thenReturn(authenticateResponse);
-        doThrow(new ForbiddenException()).when(spy).verifyTokenHasTenantAccessForAuthenticate("tokenId", "tenantId");
-        Response.ResponseBuilder responseBuilder = spy.authenticate(null, authenticationRequest);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(401));
+        PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
+        passwordCredentialsRequiredUsername.setUsername("test_user");
+        passwordCredentialsRequiredUsername.setPassword("123");
+        JAXBElement<? extends PasswordCredentialsRequiredUsername> credentialType = new JAXBElement(QName.valueOf("foo"), PasswordCredentialsRequiredUsername.class, passwordCredentialsRequiredUsername);
+        authenticationRequest.setToken(null);
+        authenticationRequest.setCredential(credentialType);
+        authenticationRequest.setTenantName("1");
+        authenticationRequest.setTenantId("id");
+        Response.ResponseBuilder authenticate = spy.authenticate(httpHeaders, authenticationRequest);
+        Response response = authenticate.build();
+        assertThat("response code", response.getStatus(), equalTo(400));
+        assertThat("message",((JAXBElement<BadRequestFault>) response.getEntity()).getValue().getMessage(),equalTo("Invalid request. Specify tenantId OR tenantName, not both."));
     }
 
     @Test
@@ -831,12 +822,117 @@ public class DefaultCloud20ServiceTest {
         scopeAccess.setAccessTokenString("foo");
         when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
         doReturn(new User()).when(spy).checkAndGetUser(anyString());
+        when(tokenConverterCloudV20.toToken(any(ScopeAccess.class))).thenReturn(token);
         when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(tenantService.hasTenantAccess(any(ScopeAccess.class), eq("tenantId"))).thenReturn(true);
         when(authConverterCloudV20.toAuthenticationResponse(any(User.class), any(ScopeAccess.class), any(List.class), any(List.class))).thenReturn(authenticateResponse);
         doNothing().when(spy).verifyTokenHasTenantAccessForAuthenticate(anyString(), anyString());
         Response.ResponseBuilder responseBuilder = spy.authenticate(null, authenticationRequest);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void authenticate_withTenantId_returnsOnlyTenantEndpoints() throws Exception {
+        Token token = new Token();
+        token.setId("token");
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
+        UserForAuthenticateResponse userForAuthenticateResponse = new UserForAuthenticateResponse();
+        RoleList roleList = mock(RoleList.class);
+        userForAuthenticateResponse.setRoles(roleList);
+        authenticateResponse.setUser(userForAuthenticateResponse);
+        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
+        tokenForAuthenticationRequest.setId("tokenId");
+        authenticationRequest.setTenantId("tenantId");
+        authenticationRequest.setToken(tokenForAuthenticationRequest);
+        UserScopeAccess scopeAccess = new UserScopeAccess();
+        scopeAccess.setAccessTokenExp(new Date(5000, 1, 1));
+        scopeAccess.setAccessTokenString("foo");
+        when(tokenConverterCloudV20.toToken(any(ScopeAccess.class))).thenReturn(token);
+        when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
+        doReturn(new User()).when(spy).checkAndGetUser(anyString());
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(tenantService.hasTenantAccess(any(ScopeAccess.class), eq("tenantId"))).thenReturn(true);
+        ArrayList<OpenstackEndpoint> openstackEndpoints = new ArrayList<OpenstackEndpoint>();
+        OpenstackEndpoint endpoint = new OpenstackEndpoint();
+        endpoint.setTenantId("tenantId");
+        openstackEndpoints.add(endpoint);
+        OpenstackEndpoint endpoint2 = new OpenstackEndpoint();
+        openstackEndpoints.add(endpoint2);
+        when(scopeAccessService.getOpenstackEndpointsForScopeAccess(scopeAccess)).thenReturn(openstackEndpoints);
+        ArgumentCaptor<List> argument = ArgumentCaptor.forClass(List.class);
+        when(authConverterCloudV20.toAuthenticationResponse(any(User.class), any(ScopeAccess.class), any(List.class), any(ArrayList.class))).thenReturn(authenticateResponse);
+        spy.authenticate(null, authenticationRequest);
+        verify(authConverterCloudV20).toAuthenticationResponse(any(User.class), any(ScopeAccess.class), any(List.class), argument.capture());
+        assertThat("response code", argument.getValue().size(), equalTo(1));
+    }
+
+    @Test
+    public void authenticate_withPasswordCredentialsWithInvalidTenant_returns401() throws Exception {
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
+        passwordCredentialsRequiredUsername.setUsername("test_user");
+        passwordCredentialsRequiredUsername.setPassword("123");
+        JAXBElement<? extends PasswordCredentialsRequiredUsername> credentialType = new JAXBElement(QName.valueOf("foo"), PasswordCredentialsRequiredUsername.class, passwordCredentialsRequiredUsername);
+        authenticationRequest.setToken(null);
+        authenticationRequest.setCredential(credentialType);
+        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
+        Token token = new Token();
+        token.setId("token");
+        UserForAuthenticateResponse userForAuthenticateResponse = new UserForAuthenticateResponse();
+        RoleList roleList = mock(RoleList.class);
+        userForAuthenticateResponse.setRoles(roleList);
+        authenticateResponse.setToken(token);
+        authenticateResponse.setUser(userForAuthenticateResponse);
+        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
+        tokenForAuthenticationRequest.setId("tokenId");
+        authenticationRequest.setTenantId("tenantId");
+        UserScopeAccess scopeAccess = new UserScopeAccess();
+        scopeAccess.setAccessTokenExp(new Date(5000, 1, 1));
+        scopeAccess.setAccessTokenString("foo");
+        when(userService.getUser("test_user")).thenReturn(user);
+        when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
+        doReturn(new User()).when(spy).checkAndGetUser(anyString());
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(tenantService.hasTenantAccess(any(ScopeAccess.class), eq("tenantId"))).thenReturn(false);
+        when(authConverterCloudV20.toAuthenticationResponse(any(User.class), any(ScopeAccess.class), any(List.class), any(List.class))).thenReturn(authenticateResponse);
+        doNothing().when(spy).verifyTokenHasTenantAccessForAuthenticate(anyString(), anyString());
+        Response.ResponseBuilder responseBuilder = spy.authenticate(null, authenticationRequest);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(401));
+    }
+
+    @Test
+    public void authenticate_withApiKeyCredentialsWithInvalidTenant_returns401() throws Exception {
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        ApiKeyCredentials keyCredentials = new ApiKeyCredentials();
+        keyCredentials.setUsername("test_user");
+        keyCredentials.setApiKey("123");
+        JAXBElement<? extends PasswordCredentialsRequiredUsername> credentialType = new JAXBElement(QName.valueOf("foo"), ApiKeyCredentials.class, keyCredentials);
+        authenticationRequest.setToken(null);
+        authenticationRequest.setCredential(credentialType);
+        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
+        Token token = new Token();
+        token.setId("token");
+        UserForAuthenticateResponse userForAuthenticateResponse = new UserForAuthenticateResponse();
+        RoleList roleList = mock(RoleList.class);
+        userForAuthenticateResponse.setRoles(roleList);
+        authenticateResponse.setToken(token);
+        authenticateResponse.setUser(userForAuthenticateResponse);
+        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
+        tokenForAuthenticationRequest.setId("tokenId");
+        authenticationRequest.setTenantId("tenantId");
+        UserScopeAccess scopeAccess = new UserScopeAccess();
+        scopeAccess.setAccessTokenExp(new Date(5000, 1, 1));
+        scopeAccess.setAccessTokenString("foo");
+        when(userService.getUser("test_user")).thenReturn(user);
+        when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
+        doReturn(new User()).when(spy).checkAndGetUser(anyString());
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(tenantService.hasTenantAccess(any(ScopeAccess.class), eq("tenantId"))).thenReturn(false);
+        when(authConverterCloudV20.toAuthenticationResponse(any(User.class), any(ScopeAccess.class), any(List.class), any(List.class))).thenReturn(authenticateResponse);
+        doNothing().when(spy).verifyTokenHasTenantAccessForAuthenticate(anyString(), anyString());
+        Response.ResponseBuilder responseBuilder = spy.authenticate(null, authenticationRequest);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(401));
     }
 
     @Test
@@ -1025,7 +1121,6 @@ public class DefaultCloud20ServiceTest {
     public void updateUser_userCannotDisableOwnAccount_throwsBadRequest() throws Exception {
         UserForCreate userForCreate = new UserForCreate();
         userForCreate.setEnabled(false);
-        userForCreate.setId(userId);
         User user = new User();
         user.setEnabled(true);
         user.setId(userId);
@@ -1039,7 +1134,6 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void updateUser_withNoRegionAndPreviousRegionsExists_previousRegionRemains() throws Exception {
         UserForCreate userNoRegion = new UserForCreate();
-        userNoRegion.setId(userId);
         doNothing().when(spy).verifyUserAdminLevelAccess(authToken);
         doNothing().when(spy).validateUser(org.mockito.Matchers.any(org.openstack.docs.identity.api.v2.User.class));
         when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(new User());
@@ -1226,6 +1320,32 @@ public class DefaultCloud20ServiceTest {
         when(config.getInt("numberOfSubUsers")).thenReturn(-1);
         Response.ResponseBuilder responseBuilder = spy.addUser(null, null, authToken, userOS);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
+    public void addUser_adminRoleUserSizeNotGreaterThanNumSubUsersThrowsBadRequest_returns201() throws Exception {
+        UriBuilder uriBuilder = mock(UriBuilder.class);
+        URI uri = new URI("");
+        User caller = new User();
+        users = mock(Users.class);
+        List<User> userList = new ArrayList();
+        User tempUser = new User();
+        tempUser.setId("1");
+        tempUser.setUsername("tempUser");
+        userList.add(tempUser);
+        users.setUsers(userList);
+        when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(new User());
+        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
+        when(userService.getAllUsers(org.mockito.Matchers.<FilterParam[]>any())).thenReturn(users);
+        when(config.getInt("numberOfSubUsers")).thenReturn(2);
+        doNothing().when(spy).setDomainId(any(ScopeAccess.class), any(User.class));
+        doNothing().when(spy).assignProperRole(eq(httpHeaders), eq(authToken), any(ScopeAccess.class), any(User.class));
+        when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
+        doReturn(uriBuilder).when(uriBuilder).path(anyString());
+        doReturn(uri).when(uriBuilder).build();
+        Response.ResponseBuilder responseBuilder = spy.addUser(httpHeaders, uriInfo, authToken, userOS);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(201));
     }
 
     @Test
@@ -1502,12 +1622,13 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void addRole_roleWithNullServiceId_returns400() throws Exception {
+    public void addRole_roleWithNullServiceId_returnsDefaults() throws Exception {
         Role role1 = new Role();
         role1.setName("roleName");
         role1.setServiceId(null);
-        Response.ResponseBuilder responseBuilder = spy.addRole(null, null, authToken, role1);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+        when(clientService.getById(anyString())).thenReturn(application);
+        spy.addRole(null, null, authToken, role1);
+        verify(clientService).addClientRole(any(ClientRole.class));
     }
 
     @Test
@@ -1533,10 +1654,60 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void addRolesToUserOnTenant_callsTenantService_addTenantRoleToUser() throws Exception {
-        doNothing().when(spy).verifyServiceAdminLevelAccess(anyString());
+        clientRole.setName("name");
+        doNothing().when(spy).verifyUserAdminLevelAccess(anyString());
         doNothing().when(spy).verifyTokenHasTenantAccess(authToken, tenantId);
+        doReturn(clientRole).when(spy).checkAndGetClientRole(role.getId());
+        when(config.getString("cloudAuth.serviceAdminRole")).thenReturn("identity:service-admin");
+        when(config.getString("cloudAuth.adminRole")).thenReturn("identity:admin");
+        when(config.getString("cloudAuth.userAdminRole")).thenReturn("identity:user-admin");
         spy.addRolesToUserOnTenant(null, authToken, tenantId, userId, role.getId());
         verify(tenantService).addTenantRoleToUser(any(User.class), any(TenantRole.class));
+    }
+
+    @Test
+    public void addRolesToUserOnTenant_roleNameEqualsCloudServiceAdmin_returns400() throws Exception {
+        clientRole.setName("identity:service-admin");
+        doNothing().when(spy).verifyUserAdminLevelAccess(null);
+        doNothing().when(spy).verifyTokenHasTenantAccess(null, null);
+        doReturn(new Tenant()).when(spy).checkAndGetTenant(null);
+        doReturn(new User()).when(spy).checkAndGetUser(null);
+        doReturn(clientRole).when(spy).checkAndGetClientRole(null);
+        when(config.getString("cloudAuth.serviceAdminRole")).thenReturn("identity:service-admin");
+        when(config.getString("cloudAuth.adminRole")).thenReturn("identity:admin");
+        when(config.getString("cloudAuth.userAdminRole")).thenReturn("identity:user-admin");
+        Response.ResponseBuilder responseBuilder = spy.addRolesToUserOnTenant(null, null, null, null, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
+    public void addRolesToUserOnTenant_roleNameEqualsUserAdmin_returns400() throws Exception {
+        clientRole.setName("identity:user-admin");
+        doNothing().when(spy).verifyUserAdminLevelAccess(null);
+        doNothing().when(spy).verifyTokenHasTenantAccess(null, null);
+        doReturn(new Tenant()).when(spy).checkAndGetTenant(null);
+        doReturn(new User()).when(spy).checkAndGetUser(null);
+        doReturn(clientRole).when(spy).checkAndGetClientRole(null);
+        when(config.getString("cloudAuth.serviceAdminRole")).thenReturn("identity:service-admin");
+        when(config.getString("cloudAuth.adminRole")).thenReturn("identity:admin");
+        when(config.getString("cloudAuth.userAdminRole")).thenReturn("identity:user-admin");
+        Response.ResponseBuilder responseBuilder = spy.addRolesToUserOnTenant(null, null, null, null, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
+    public void addRolesToUserOnTenant_roleNameEqualsAdmin_returns400() throws Exception {
+        clientRole.setName("identity:admin");
+        doNothing().when(spy).verifyUserAdminLevelAccess(null);
+        doNothing().when(spy).verifyTokenHasTenantAccess(null, null);
+        doReturn(new Tenant()).when(spy).checkAndGetTenant(null);
+        doReturn(new User()).when(spy).checkAndGetUser(null);
+        doReturn(clientRole).when(spy).checkAndGetClientRole(null);
+        when(config.getString("cloudAuth.serviceAdminRole")).thenReturn("identity:service-admin");
+        when(config.getString("cloudAuth.adminRole")).thenReturn("identity:admin");
+        when(config.getString("cloudAuth.userAdminRole")).thenReturn("identity:user-admin");
+        Response.ResponseBuilder responseBuilder = spy.addRolesToUserOnTenant(null, null, null, null, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
     }
 
     @Test
@@ -1746,6 +1917,37 @@ public class DefaultCloud20ServiceTest {
         when(mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)).thenReturn(true);
         doNothing().when(spy).validatePasswordCredentials(any(PasswordCredentialsRequiredUsername.class));
         doNothing().when(spy).validatePassword(anyString());
+        doReturn(user).when(spy).checkAndGetUser(anyString());
+        Response.ResponseBuilder responseBuilder = spy.addUserCredential(httpHeaders, authToken, userId, jsonBody);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void addUserCredential_apiKeyCredentialsUserCredentialNotMatchUserName_returns400() throws Exception {
+        String jsonBody = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<apiKeyCredentials\n" +
+                "    xmlns=\"http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0\"\n" +
+                "    username=\"jsmith\"\n" +
+                "    apiKey=\"aaaaa-bbbbb-ccccc-12345678\"/>";
+        MediaType mediaType = mock(MediaType.class);
+        user.setUsername("wrong_user");
+        when(httpHeaders.getMediaType()).thenReturn(mediaType);
+        when(mediaType.isCompatible(MediaType.APPLICATION_XML_TYPE)).thenReturn(true);
+        doReturn(user).when(spy).checkAndGetUser(anyString());
+        Response.ResponseBuilder responseBuilder = spy.addUserCredential(httpHeaders, authToken, userId, jsonBody);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
+    public void addUserCredential_apiKeyCredentialsOkResponse_returns200() throws Exception {
+        String jsonBody = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<apiKeyCredentials\n" +
+                "    xmlns=\"http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0\"\n" +
+                "    username=\"id\"\n" +
+                "    apiKey=\"aaaaa-bbbbb-ccccc-12345678\"/>";
+        MediaType mediaType = mock(MediaType.class);
+        when(httpHeaders.getMediaType()).thenReturn(mediaType);
+        when(mediaType.isCompatible(MediaType.APPLICATION_XML_TYPE)).thenReturn(true);
         doReturn(user).when(spy).checkAndGetUser(anyString());
         Response.ResponseBuilder responseBuilder = spy.addUserCredential(httpHeaders, authToken, userId, jsonBody);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
@@ -2062,6 +2264,23 @@ public class DefaultCloud20ServiceTest {
     public void getRole_responseOk_returns200() throws Exception {
         Response.ResponseBuilder responseBuilder = spy.getRole(httpHeaders, authToken, roleId);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void getSecretQA_getsUsername() throws Exception {
+        User user = new User();
+        user.setSecretAnswer("secret");
+        user.setSecretQuestion("question");
+        user.setUsername("username");
+        doNothing().when(spy).verifyServiceAdminLevelAccess("authToken");
+        doReturn(user).when(spy).checkAndGetUser("userId");
+        com.rackspace.docs.identity.api.ext.rax_ksqa.v1.ObjectFactory objectFactory = mock(com.rackspace.docs.identity.api.ext.rax_ksqa.v1.ObjectFactory.class);
+        when(jaxbObjectFactories.getRackspaceIdentityExtKsqaV1Factory()).thenReturn(objectFactory);
+        JAXBElement<SecretQA> jaxbElement = new JAXBElement<SecretQA>(new QName(""), SecretQA.class, secretQA);
+        when(objectFactory.createSecretQA(any(SecretQA.class))).thenReturn(jaxbElement);
+        spy.getSecretQA(null, "authToken", "userId");
+        SecretQA result = jaxbElement.getValue();
+        assertThat("username", result.getUsername(), equalTo("username"));
     }
 
     @Test
@@ -2444,7 +2663,7 @@ public class DefaultCloud20ServiceTest {
         List<CloudBaseUrl> cloudBaseUrlList = new ArrayList<CloudBaseUrl>();
         when(jaxbObjectFactories.getOpenStackIdentityExtKscatalogV1Factory()).thenReturn(new org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory());
         doReturn(new Application()).when(spy).checkAndGetApplication("serviceId");
-        when(endpointService.getBaseUrlsByServiceId(anyString())).thenReturn(cloudBaseUrlList);
+        when(endpointService.getBaseUrlsByServiceType(anyString())).thenReturn(cloudBaseUrlList);
         Response.ResponseBuilder responseBuilder = spy.listEndpointTemplates(httpHeaders, authToken, "serviceId");
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
@@ -2780,6 +2999,22 @@ public class DefaultCloud20ServiceTest {
         when(userService.getUserByAuthToken(authToken)).thenReturn(user);
         Response.ResponseBuilder responseBuilder = spy.updateUser(null, authToken, userId, userOS);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(403));
+    }
+
+    @Test
+    public void updateUser_authorizationServiceAuthorizeCloudUserIsTrueIdMatch_returns200() throws Exception {
+        userOS.setEnabled(false);
+        User user1 = new User();
+        user1.setId("123");
+        userOS.setId("123");
+        user.setId("123");
+        User user2 = new User();
+        user2.setId("456");
+        doReturn(user1).when(spy).checkAndGetUser("123");
+        when(authorizationService.authorizeCloudUser(any(ScopeAccess.class))).thenReturn(true);
+        when(userService.getUserByAuthToken(authToken)).thenReturn(user).thenReturn(user2);
+        Response.ResponseBuilder responseBuilder = spy.updateUser(null, authToken, "123", userOS);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
     @Test
@@ -4010,5 +4245,15 @@ public class DefaultCloud20ServiceTest {
         when(objectFactory.createBadRequestFault()).thenReturn(badRequestFault);
         defaultCloud20Service.badRequestExceptionResponse("message");
         verify(badRequestFault, never()).setDetails(anyString());
+    }
+
+    @Test
+    public void convertTenantEntityToApi_returnsTenantForAuthenticateResponse(){
+        Tenant test = new Tenant();
+        test.setName("test");
+        test.setTenantId("test");
+        TenantForAuthenticateResponse testTenant = defaultCloud20Service.convertTenantEntityToApi(test);
+        assertThat("Verify Tenant",testTenant.getId(),equalTo(test.getTenantId()));
+        assertThat("Verify Tenant",testTenant.getName(),equalTo(test.getName()));
     }
 }

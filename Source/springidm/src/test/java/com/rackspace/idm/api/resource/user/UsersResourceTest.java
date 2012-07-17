@@ -8,8 +8,9 @@ import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.validation.InputValidator;
-import org.hamcrest.Matchers;
+import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.ws.rs.core.Response;
@@ -37,6 +38,8 @@ public class UsersResourceTest {
     private UserConverter userConverter;
     private AuthorizationService authorizationService;
     private ScopeAccessService scopeAccessService;
+    private UserValidatorFoundation userValidator;
+    private Configuration config;
 
     @Before
     public void setUp() throws Exception {
@@ -46,12 +49,16 @@ public class UsersResourceTest {
         userConverter = mock(UserConverter.class);
         authorizationService = mock(AuthorizationService.class);
         scopeAccessService = mock(ScopeAccessService.class);
+        userValidator = mock(UserValidatorFoundation.class);
+        config = mock(Configuration.class);
         usersResource = new UsersResource(singleUserResource, userService, inputValidator,  userConverter, authorizationService, scopeAccessService);
+        usersResource.setUserValidator(userValidator);
+        usersResource.setConfig(config);
     }
 
     @Test
     public void getUsers_callsScopeAccessService_getAccessTokenByAuthHeader() throws Exception {
-        usersResource.getUsers("username", 1, 1, "authHeader");
+        usersResource.getUsers("username", null, null, "authHeader");
         verify(scopeAccessService).getAccessTokenByAuthHeader("authHeader");
     }
 
@@ -69,7 +76,7 @@ public class UsersResourceTest {
 
     @Test
     public void getUsers_callsUserService_getAllUsers() throws Exception {
-        usersResource.getUsers("username", 1, 1, "authHeader");
+        usersResource.getUsers("username", null, null, "authHeader");
         verify(userService).getAllUsers(any(FilterParam[].class), anyInt(), anyInt());
     }
 
@@ -87,6 +94,18 @@ public class UsersResourceTest {
         when(userConverter.toUserDO(user)).thenReturn(new com.rackspace.idm.domain.entity.User());
         usersResource.addUser("authHeader", user);
         verify(authorizationService).authorizeIdmSuperAdminOrRackspaceClient(any(ScopeAccess.class));
+    }
+
+    //TODO
+    @Ignore
+    @Test
+    public void addUser_callsUserValidatorFoundation_checkUsername() throws Exception {
+        User user = new User();
+        user.setUsername("username");
+        when(config.getBoolean("useCloudAuth")).thenReturn(true);
+        when(userConverter.toUserDO(user)).thenReturn(new com.rackspace.idm.domain.entity.User());
+        usersResource.addUser("authHeader", user);
+        verify(userValidator).checkCloudAuthForUsername(user.getUsername());
     }
 
     @Test
@@ -117,5 +136,11 @@ public class UsersResourceTest {
     public void getUserResource_returnsUserResource() throws Exception {
         UserResource resource = usersResource.getUserResource();
         assertThat("users resource", resource, equalTo(singleUserResource));
+    }
+
+    @Test
+    public void getConfig_returnsConfig() throws Exception {
+        Configuration result = usersResource.getConfig();
+        assertThat("config", result, equalTo(config));
     }
 }

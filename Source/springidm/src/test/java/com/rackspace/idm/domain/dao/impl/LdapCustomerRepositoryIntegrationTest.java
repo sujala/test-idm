@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.domain.config.LdapConfiguration;
+import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.entity.CustomerStatus;
 import com.unboundid.ldap.sdk.Modification;
@@ -11,10 +12,10 @@ import org.junit.*;
 
 import java.util.List;
 
-public class LdapCustomerRepositoryIntegrationTest {
+public class LdapCustomerRepositoryIntegrationTest extends InMemoryLdapIntegrationTest{
 
-    private LdapCustomerRepository repo;
-    private LdapConnectionPools connPools;
+    private static LdapCustomerRepository repo;
+    private static LdapConnectionPools connPools;
 
     static String customerId = "DELETE_My_CustomerId";
     String customerName = "DELETE_My_Name";
@@ -24,45 +25,30 @@ public class LdapCustomerRepositoryIntegrationTest {
     String id = "XXXX";
 
     private static LdapCustomerRepository getRepo(LdapConnectionPools connPools) {
-        Configuration appConfig = null;
-        try {
-            appConfig = new PropertiesConfiguration("config.properties");
-
-        } catch (ConfigurationException e) {
-            System.out.println(e);
-        }
-        return new LdapCustomerRepository(connPools, appConfig);
+        return new LdapCustomerRepository(connPools, new PropertyFileConfiguration().getConfig());
     }
 
     private static LdapConnectionPools getConnPools() {
-        Configuration appConfig = null;
-        try {
-            appConfig = new PropertiesConfiguration("config.properties");
+        return new LdapConfiguration(new PropertyFileConfiguration().getConfig()).connectionPools();
+    }
 
-        } catch (ConfigurationException e) {
-            System.out.println(e);
-        }
-        return new LdapConfiguration(appConfig).connectionPools();
+    @BeforeClass
+    public static void setUp() {
+        connPools = getConnPools();
+        repo = getRepo(connPools);
     }
 
     @Before
-    public void setUp() {
-        final LdapConnectionPools pools = getConnPools();
-        LdapCustomerRepository cleanUpRepo = getRepo(pools);
-        Customer deleteme = cleanUpRepo.getCustomerByCustomerId(customerId);
+    public void preTestSetUp() throws Exception {
+        Customer deleteme = repo.getCustomerByCustomerId(customerId);
         if (deleteme != null) {
-            cleanUpRepo.deleteCustomer(customerId);
+            repo.deleteCustomer(customerId);
         }
-        pools.close();
-
-        connPools = getConnPools();
-        repo = getRepo(connPools);
-
         addNewTestCustomer(customerId, customerName, status, country);
     }
 
-    @After
-    public void tearDown() {
+    @AfterClass
+    public static void tearDown() {
         connPools.close();
     }
 

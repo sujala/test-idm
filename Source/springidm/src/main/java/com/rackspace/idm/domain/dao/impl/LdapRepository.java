@@ -48,28 +48,17 @@ public abstract class LdapRepository {
 
     protected static final String OBJECTCLASS_TOP = "top";
 
-    protected static final String[] ATTR_GROUP_OBJECT_CLASS_VALUES = {
-        OBJECTCLASS_TOP, OBJECTCLASS_CLOUDGROUP};
-    protected static final String[] ATTR_BASEURL_OBJECT_CLASS_VALUES = {
-        OBJECTCLASS_TOP, OBJECTCLASS_BASEURL};
-    protected static final String[] ATTR_CLIENT_GROUP_OBJECT_CLASS_VALUES = {
-        OBJECTCLASS_TOP, OBJECTCLASS_GROUPOFNAMES, OBJECTCLASS_CLIENTGROUP};
-    protected static final String[] ATTR_CLIENT_OBJECT_CLASS_VALUES = {
-        OBJECTCLASS_TOP, OBJECTCLASS_RACKSPACEAPPLICATION};
-    protected static final String[] ATTR_CUSTOMER_OBJECT_CLASS_VALUES = {
-        OBJECTCLASS_TOP, OBJECTCLASS_RACKSPACEORGANIZATION};
-    protected static final String[] ATTR_OBJECT_CLASS_OU_VALUES = {
-        OBJECTCLASS_TOP, OBJECTCLASS_ORGANIZATIONALUNIT};
-    protected static final String[] ATTR_PERMISSION_OBJECT_CLASS_VALUES = {
-        OBJECTCLASS_TOP, OBJECTCLASS_CLIENTPERMISSION};
-    protected static final String[] ATTR_RACKER_OBJECT_CLASS_VALUES = {
-        OBJECTCLASS_TOP, OBJECTCLASS_RACKER};
-    protected static final String[] ATTR_SCOPE_ACCESS_OBJECT_CLASS_VALUES = {
-        OBJECTCLASS_TOP, OBJECTCLASS_SCOPEACCESS};
-    protected static final String[] ATTR_TOKEN_OBJECT_CLASS_VALUES = {
-        OBJECTCLASS_TOP, OBJECTCLASS_RACKSPACETOKEN};
-    protected static final String[] ATTR_USER_OBJECT_CLASS_VALUES = {
-        OBJECTCLASS_TOP, OBJECTCLASS_RACKSPACEPERSON};
+    protected static final String[] ATTR_GROUP_OBJECT_CLASS_VALUES = {OBJECTCLASS_TOP, OBJECTCLASS_CLOUDGROUP};
+    protected static final String[] ATTR_BASEURL_OBJECT_CLASS_VALUES = {OBJECTCLASS_TOP, OBJECTCLASS_BASEURL};
+    protected static final String[] ATTR_CLIENT_GROUP_OBJECT_CLASS_VALUES = {OBJECTCLASS_TOP, OBJECTCLASS_GROUPOFNAMES, OBJECTCLASS_CLIENTGROUP};
+    protected static final String[] ATTR_CLIENT_OBJECT_CLASS_VALUES = {OBJECTCLASS_TOP, OBJECTCLASS_RACKSPACEAPPLICATION};
+    protected static final String[] ATTR_CUSTOMER_OBJECT_CLASS_VALUES = {OBJECTCLASS_TOP, OBJECTCLASS_RACKSPACEORGANIZATION};
+    protected static final String[] ATTR_OBJECT_CLASS_OU_VALUES = {OBJECTCLASS_TOP, OBJECTCLASS_ORGANIZATIONALUNIT};
+    protected static final String[] ATTR_PERMISSION_OBJECT_CLASS_VALUES = {OBJECTCLASS_TOP, OBJECTCLASS_CLIENTPERMISSION};
+    protected static final String[] ATTR_RACKER_OBJECT_CLASS_VALUES = {OBJECTCLASS_TOP, OBJECTCLASS_RACKER};
+    protected static final String[] ATTR_SCOPE_ACCESS_OBJECT_CLASS_VALUES = {OBJECTCLASS_TOP, OBJECTCLASS_SCOPEACCESS};
+    protected static final String[] ATTR_TOKEN_OBJECT_CLASS_VALUES = {OBJECTCLASS_TOP, OBJECTCLASS_RACKSPACETOKEN};
+    protected static final String[] ATTR_USER_OBJECT_CLASS_VALUES = {OBJECTCLASS_TOP, OBJECTCLASS_RACKSPACEPERSON};
 
     // Definitions for LDAP Attributes
     public static final String ATTR_ACCESS_TOKEN = "accessToken";
@@ -145,6 +134,7 @@ public abstract class LdapRepository {
     public static final String ATTR_TOKEN_REQUESTOR = "tokenRequestor";
     public static final String ATTR_UID = "uid";
     public static final String ATTR_USER_RCN = "userRCN";
+    public static final String ATTR_USER_FOR_DEFAULT_REGION = "userForDefaultRegion";
     public static final String ATTR_UPDATED_DATE = "modifyTimestamp";
     public static final String ATTR_SOFT_DELETED_DATE = "softDeletedTimestamp";
     public static final String ATTR_PASSWORD_UPDATED_TIMESTAMP = "passwordUpdatedTimestamp";
@@ -184,13 +174,9 @@ public abstract class LdapRepository {
     protected static final String CONTAINER_ROLES = "CLIENT ROLES";
 
     // Search Attributes
-    protected static final String[] ATTR_GROUP_SEARCH_ATTRIBUTES = {
-        ATTR_OBJECT_CLASS, ATTR_RACKSPACE_CUSTOMER_NUMBER, ATTR_CLIENT_ID,
-        ATTR_GROUP_TYPE, ATTR_NAME};
-    protected static final String[] ATTR_USER_SEARCH_ATTRIBUTES = {"*",
-        ATTR_CREATED_DATE, ATTR_UPDATED_DATE, ATTR_PWD_ACCOUNT_LOCKOUT_TIME};
-    protected static final String[] ATTR_TENANT_SEARCH_ATTRIBUTES = {"*",
-        ATTR_CREATED_DATE, ATTR_UPDATED_DATE};
+    protected static final String[] ATTR_GROUP_SEARCH_ATTRIBUTES = {ATTR_OBJECT_CLASS, ATTR_RACKSPACE_CUSTOMER_NUMBER, ATTR_CLIENT_ID, ATTR_GROUP_TYPE, ATTR_NAME};
+    protected static final String[] ATTR_USER_SEARCH_ATTRIBUTES = {"*", ATTR_CREATED_DATE, ATTR_UPDATED_DATE, ATTR_PWD_ACCOUNT_LOCKOUT_TIME};
+    protected static final String[] ATTR_TENANT_SEARCH_ATTRIBUTES = {"*", ATTR_CREATED_DATE, ATTR_UPDATED_DATE};
 
     private final LdapConnectionPools connPools;
 
@@ -231,10 +217,8 @@ public abstract class LdapRepository {
     protected void deleteEntryAndSubtree(String dn, Audit audit) {
         try {
 
-            Filter filter = Filter.createEqualityFilter(ATTR_OBJECT_CLASS,
-                    "top");
             SearchResult searchResult = getAppInterface().search(dn, SearchScope.ONE,
-                    filter, ATTR_NO_ATTRIBUTES);
+                    "(objectClass=*)", ATTR_NO_ATTRIBUTES);
 
             for (SearchResultEntry entry : searchResult.getSearchEntries()) {
                 deleteEntryAndSubtree(entry.getDN(), audit);
@@ -256,7 +240,7 @@ public abstract class LdapRepository {
             searchResult = getAppInterface().search(request);
         } catch (LDAPException ldapEx) {
             getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
-            throw new IllegalStateException(ldapEx);
+            return new ArrayList<SearchResultEntry>();
         }
 
         return searchResult.getSearchEntries();
@@ -273,7 +257,7 @@ public abstract class LdapRepository {
             searchResult = getAppInterface().search(request);
         } catch (LDAPException ldapEx) {
             getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
-            throw new IllegalStateException(ldapEx);
+            return new ArrayList<SearchResultEntry>();
         }
 
         return searchResult.getSearchEntries();
@@ -385,7 +369,7 @@ public abstract class LdapRepository {
         return String.valueOf(nextId);
     }
 
-    private static class QueryPair {
+    static class QueryPair {
         private final String comparer;
         private final String attribute;
         private final String value;
