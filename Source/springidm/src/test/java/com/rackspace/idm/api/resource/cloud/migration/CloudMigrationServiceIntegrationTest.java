@@ -1,7 +1,5 @@
 package com.rackspace.idm.api.resource.cloud.migration;
 
-import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.*;
-import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.ObjectFactory;
 import com.rackspace.idm.api.converter.cloudv20.EndpointConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.RoleConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;

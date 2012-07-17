@@ -8,8 +8,7 @@ import com.rackspace.idm.exception.BadRequestException;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.powermock.api.mockito.PowerMockito.mock;
-import static org.powermock.api.mockito.PowerMockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * User: alan.erwin
@@ -20,11 +19,26 @@ public class UserPasswordCredentialsValidatorTest {
     User user;
 
     UserPasswordCredentialsValidator userPasswordCredentialsValidator;
+    UserPasswordCredentialsValidator spy;
 
     @Before
     public void setUp() throws Exception {
         userPasswordCredentialsValidator = new UserPasswordCredentialsValidator();
         user = mock(User.class);
+
+        spy = spy(userPasswordCredentialsValidator);
+    }
+
+    @Test
+    public void validateUserPasswordCredentials_callsValidateNewPassword() throws Exception {
+        UserPassword userPassword = new UserPassword();
+        userPassword.setPassword("wrongPassword");
+        UserPasswordCredentials userPasswordCredentials = new UserPasswordCredentials();
+        userPasswordCredentials.setVerifyCurrentPassword(false);
+        userPasswordCredentials.setCurrentPassword(userPassword);
+        doNothing().when(spy).validateNewPassword(userPasswordCredentials);
+        spy.validateUserPasswordCredentials(userPasswordCredentials, user);
+        verify(spy).validateNewPassword(userPasswordCredentials);
     }
 
     @Test (expected = BadRequestException.class)
@@ -75,6 +89,18 @@ public class UserPasswordCredentialsValidatorTest {
         User user = new User();
         user.setPassword("rightPassword");
         userPasswordCredentialsValidator.validateUserPasswordCredentials(userPasswordCredentials, user);
+    }
+
+    @Test
+    public void validateCurrentPassword_userPasswordMatchCurrentPassword_doesNothing() throws Exception {
+        UserPassword userPassword = new UserPassword();
+        userPassword.setPassword("Password");
+        UserPasswordCredentials userPasswordCredentials = new UserPasswordCredentials();
+        userPasswordCredentials.setVerifyCurrentPassword(true);
+        userPasswordCredentials.setCurrentPassword(userPassword);
+        User user = new User();
+        user.setPassword("Password");
+        userPasswordCredentialsValidator.validateCurrentPassword(userPasswordCredentials, user);
     }
 
     @Test(expected = BadRequestException.class)
@@ -142,6 +168,16 @@ public class UserPasswordCredentialsValidatorTest {
         userPasswordCredentialsValidator.validateCurrentPassword(userPasswordCredentials);
     }
 
+    @Test
+    public void validateCurrentPassword_withOnlyUserPasswordCredentialsParamCurrentPasswordNotBlank_doesNothing() throws Exception {
+        UserPassword userPassword = new UserPassword();
+        userPassword.setPassword("password");
+        UserPasswordCredentials userPasswordCredentials = new UserPasswordCredentials();
+        userPasswordCredentials.setVerifyCurrentPassword(true);
+        userPasswordCredentials.setCurrentPassword(userPassword);
+        userPasswordCredentialsValidator.validateCurrentPassword(userPasswordCredentials);
+    }
+
     @Test (expected = BadRequestException.class)
     public void validateNewPassword_passwordIsNull_throwsBadRequest() throws Exception {
         UserPassword userPassword = new UserPassword();
@@ -155,6 +191,16 @@ public class UserPasswordCredentialsValidatorTest {
     public void validateNewPassword_passwordIsBlank_throwsBadRequest() throws Exception {
         UserPassword userPassword = new UserPassword();
         userPassword.setPassword("");
+        UserPasswordCredentials userPasswordCredentials = new UserPasswordCredentials();
+        userPasswordCredentials.setVerifyCurrentPassword(true);
+        userPasswordCredentials.setNewPassword(userPassword);
+        userPasswordCredentialsValidator.validateNewPassword(userPasswordCredentials);
+    }
+
+    @Test
+    public void validateNewPassword_passwordNotBlank_doesNothing() throws Exception {
+        UserPassword userPassword = new UserPassword();
+        userPassword.setPassword("password");
         UserPasswordCredentials userPasswordCredentials = new UserPasswordCredentials();
         userPasswordCredentials.setVerifyCurrentPassword(true);
         userPasswordCredentials.setNewPassword(userPassword);

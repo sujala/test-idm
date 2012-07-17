@@ -10,11 +10,11 @@ import org.junit.*;
 import java.util.List;
 
 public class LdapAuthRepositoryIntegrationTest {
-    private LdapAuthRepository repo;
-    private LDAPConnectionPool connPool;
+    private static LdapAuthRepository repo;
+    private static LDAPConnectionPool connPool;
 
-    @Before
-    public void setUp() {
+    @BeforeClass
+    public static void setUp() {
         connPool = getConnPool();
         repo = getRepo(connPool);
     }
@@ -67,8 +67,8 @@ public class LdapAuthRepositoryIntegrationTest {
         Assert.assertTrue(roles.size()>0);
     }
 
-    @After
-    public void tearDown() {
+    @AfterClass
+    public static void tearDown() {
         connPool.close();
     }
 }

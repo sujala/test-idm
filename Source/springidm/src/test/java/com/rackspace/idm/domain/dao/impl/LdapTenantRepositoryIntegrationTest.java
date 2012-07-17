@@ -1,25 +1,19 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.domain.config.LdapConfiguration;
+import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
-import org.apache.commons.configuration.Configuration;
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.commons.configuration.PropertiesConfiguration;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
 import java.util.List;
 
-import com.rackspace.idm.GlobalConstants;
 
 public class LdapTenantRepositoryIntegrationTest extends InMemoryLdapIntegrationTest{
-    private LdapTenantRepository repo;
-    private LdapConnectionPools connPools;
+    private static LdapTenantRepository repo;
+    private static LdapConnectionPools connPools;
     
     private final String clientId = "YYYY";
     private final String tenantId = "XXXX";
@@ -33,32 +27,22 @@ public class LdapTenantRepositoryIntegrationTest extends InMemoryLdapIntegration
     private final String userId = "1";
     
     private static LdapTenantRepository getRepo(LdapConnectionPools connPools) {
-        Configuration appConfig = null;
-        try {
-            appConfig = new PropertiesConfiguration("config.properties");
-
-        } catch (ConfigurationException e) {
-            System.out.println(e);
-        }
-        return new LdapTenantRepository(connPools, appConfig);
+        return new LdapTenantRepository(connPools, new PropertyFileConfiguration().getConfig());
     }
 
     private static LdapConnectionPools getConnPools() {
-        Configuration appConfig = null;
-        try {
-            appConfig = new PropertiesConfiguration("config.properties");
-
-        } catch (ConfigurationException e) {
-            System.out.println(e);
-        }
-        LdapConfiguration config = new LdapConfiguration(appConfig);
+        LdapConfiguration config = new LdapConfiguration(new PropertyFileConfiguration().getConfig());
         return config.connectionPools();
     }
     
-    @Before
-    public void setUp() {
+    @BeforeClass
+    public static void setUp() {
         connPools = getConnPools();
         repo = getRepo(connPools);
+    }
+
+    @Before
+    public void preTestSetUp() throws Exception {
         //cleanup before test
         try{
             repo.deleteTenant(tenantId);
@@ -66,9 +50,9 @@ public class LdapTenantRepositoryIntegrationTest extends InMemoryLdapIntegration
             System.out.println("failed to delete tenant");
         }
     }
-    
-    @After
-    public void tearDown() {
+
+    @AfterClass
+    public static void tearDown() {
         connPools.close();
     }
     

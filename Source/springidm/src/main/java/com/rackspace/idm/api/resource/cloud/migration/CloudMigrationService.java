@@ -1,7 +1,5 @@
 package com.rackspace.idm.api.resource.cloud.migration;
 
-import javax.xml.namespace.QName;
-
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
@@ -11,8 +9,8 @@ import com.rackspace.idm.api.converter.cloudv20.RoleConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.api.resource.cloud.MigrationClient;
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
-
 import com.rackspace.idm.api.resource.cloud.v20.CloudKsGroupBuilder;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
@@ -35,11 +33,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 
 import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
+import javax.xml.namespace.QName;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -144,6 +142,8 @@ public class CloudMigrationService {
     }
 
     public void migrateGroups() throws Exception {
+        if(isUkCloudRegion())
+            throw new NotFoundException("Method not found.");
         addOrUpdateGroups(getAdminToken());
     }
 

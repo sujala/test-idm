@@ -1654,10 +1654,60 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void addRolesToUserOnTenant_callsTenantService_addTenantRoleToUser() throws Exception {
-        doNothing().when(spy).verifyServiceAdminLevelAccess(anyString());
+        clientRole.setName("name");
+        doNothing().when(spy).verifyUserAdminLevelAccess(anyString());
         doNothing().when(spy).verifyTokenHasTenantAccess(authToken, tenantId);
+        doReturn(clientRole).when(spy).checkAndGetClientRole(role.getId());
+        when(config.getString("cloudAuth.serviceAdminRole")).thenReturn("identity:service-admin");
+        when(config.getString("cloudAuth.adminRole")).thenReturn("identity:admin");
+        when(config.getString("cloudAuth.userAdminRole")).thenReturn("identity:user-admin");
         spy.addRolesToUserOnTenant(null, authToken, tenantId, userId, role.getId());
         verify(tenantService).addTenantRoleToUser(any(User.class), any(TenantRole.class));
+    }
+
+    @Test
+    public void addRolesToUserOnTenant_roleNameEqualsCloudServiceAdmin_returns400() throws Exception {
+        clientRole.setName("identity:service-admin");
+        doNothing().when(spy).verifyUserAdminLevelAccess(null);
+        doNothing().when(spy).verifyTokenHasTenantAccess(null, null);
+        doReturn(new Tenant()).when(spy).checkAndGetTenant(null);
+        doReturn(new User()).when(spy).checkAndGetUser(null);
+        doReturn(clientRole).when(spy).checkAndGetClientRole(null);
+        when(config.getString("cloudAuth.serviceAdminRole")).thenReturn("identity:service-admin");
+        when(config.getString("cloudAuth.adminRole")).thenReturn("identity:admin");
+        when(config.getString("cloudAuth.userAdminRole")).thenReturn("identity:user-admin");
+        Response.ResponseBuilder responseBuilder = spy.addRolesToUserOnTenant(null, null, null, null, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
+    public void addRolesToUserOnTenant_roleNameEqualsUserAdmin_returns400() throws Exception {
+        clientRole.setName("identity:user-admin");
+        doNothing().when(spy).verifyUserAdminLevelAccess(null);
+        doNothing().when(spy).verifyTokenHasTenantAccess(null, null);
+        doReturn(new Tenant()).when(spy).checkAndGetTenant(null);
+        doReturn(new User()).when(spy).checkAndGetUser(null);
+        doReturn(clientRole).when(spy).checkAndGetClientRole(null);
+        when(config.getString("cloudAuth.serviceAdminRole")).thenReturn("identity:service-admin");
+        when(config.getString("cloudAuth.adminRole")).thenReturn("identity:admin");
+        when(config.getString("cloudAuth.userAdminRole")).thenReturn("identity:user-admin");
+        Response.ResponseBuilder responseBuilder = spy.addRolesToUserOnTenant(null, null, null, null, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
+    public void addRolesToUserOnTenant_roleNameEqualsAdmin_returns400() throws Exception {
+        clientRole.setName("identity:admin");
+        doNothing().when(spy).verifyUserAdminLevelAccess(null);
+        doNothing().when(spy).verifyTokenHasTenantAccess(null, null);
+        doReturn(new Tenant()).when(spy).checkAndGetTenant(null);
+        doReturn(new User()).when(spy).checkAndGetUser(null);
+        doReturn(clientRole).when(spy).checkAndGetClientRole(null);
+        when(config.getString("cloudAuth.serviceAdminRole")).thenReturn("identity:service-admin");
+        when(config.getString("cloudAuth.adminRole")).thenReturn("identity:admin");
+        when(config.getString("cloudAuth.userAdminRole")).thenReturn("identity:user-admin");
+        Response.ResponseBuilder responseBuilder = spy.addRolesToUserOnTenant(null, null, null, null, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
     }
 
     @Test
