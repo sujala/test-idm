@@ -111,6 +111,12 @@ public class Cloud20VersionResource {
         return getCloud20Service().listEndpointsForToken(httpHeaders, authToken, tokenId).build();
     }
 
+    @GET
+    @Path("RAX-AUTH/default-region-services")
+    public Response listDefaultRegionServices(@HeaderParam(X_AUTH_TOKEN) String authToken){
+        return defaultCloud20Service.listDefaultRegionServices(authToken).build();
+    }
+
     @POST
     @Path("RAX-AUTH/impersonation-tokens")
     public Response impersonate(

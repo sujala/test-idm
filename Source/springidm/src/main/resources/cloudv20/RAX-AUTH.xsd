@@ -12,24 +12,25 @@
         xmlns:xsd="http://www.w3.org/2001/XMLSchema"
         targetNamespace="http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0">
 
-    <import namespace="http://docs.openstack.org/identity/api/v2.0" schemaLocation="token.xsd" />
-    <import namespace="http://docs.openstack.org/identity/api/v2.0" schemaLocation="user.xsd" />
+    <import namespace="http://docs.openstack.org/identity/api/v2.0" schemaLocation="token.xsd"/>
+    <import namespace="http://docs.openstack.org/identity/api/v2.0" schemaLocation="user.xsd"/>
 
     <!--<import namespace="http://docs.openstack.org/identity/api/v2.0" schemaLocation="https://raw.github.com/openstack/identity-api/master/openstack-identity-api/src/docbkx/common/xsd/api.xsd" />-->
 
-    <attribute name="defaultRegion" type="xsd:string" />
-    <attribute name="domainId" type="xsd:string" />
+    <attribute name="defaultRegion" type="xsd:string"/>
+    <attribute name="domainId" type="xsd:string"/>
 
-    <element name="impersonation" type="RAX-AUTH:ImpersonationRequest" />
-    <element name="access" type="RAX-AUTH:ImpersonationResponse" />
-    <element name="impersonator" type="identity:UserForAuthenticateResponse" >
+    <element name="defaultRegionServices" type="RAX-AUTH:DefaultRegionServices"/>
+    <element name="impersonation" type="RAX-AUTH:ImpersonationRequest"/>
+    <element name="access" type="RAX-AUTH:ImpersonationResponse"/>
+    <element name="impersonator" type="identity:UserForAuthenticateResponse">
         <annotation>
             <xsd:documentation>
                 <p>The user impersonating.</p>
             </xsd:documentation>
         </annotation>
     </element>
-    <element name="domain" type="RAX-AUTH:Domain" >
+    <element name="domain" type="RAX-AUTH:Domain">
         <annotation>
             <xsd:documentation>
                 <p>A domain represents an administrative boundary for identity management.</p>
@@ -38,9 +39,22 @@
     </element>
 
     <!-- Complex Types -->
+    <complexType name="DefaultRegionServices">
+        <sequence>
+            <element name="serviceName" type="xsd:string" minOccurs="0" maxOccurs="unbounded">
+                <annotation>
+                    <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                        <p>
+                            Service name.
+                        </p>
+                    </xsd:documentation>
+                </annotation>
+            </element>
+        </sequence>
+    </complexType>
     <complexType name="ImpersonationRequest">
         <sequence>
-            <element name="user" type="identity:User" >
+            <element name="user" type="identity:User">
                 <annotation>
                     <xsd:documentation>
                         <p>The user being impersonated.</p>

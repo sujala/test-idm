@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
+import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -24,7 +25,6 @@ public class DefaultEndpointServiceTest {
     EndpointDao endpointDao;
     int baseUrlId = 1;
     private String service = "defaultApplicationService";
-    private String user = "user";
 
     @Before
     public void setUp() throws Exception {
@@ -42,6 +42,12 @@ public class DefaultEndpointServiceTest {
         cloudBaseUrls.add(cloudBaseUrl2);
         cloudBaseUrls.add(cloudBaseUrl3);
         when(endpointDao.getBaseUrlsByService(service)).thenReturn(cloudBaseUrls);
+    }
+
+    @Test
+    public void getBaseUrlsByServiceName_callsEndpointDao() throws Exception {
+        defaultEndpointService.getBaseUrlsByServiceName("cloudFiles");
+        verify(endpointDao).getBaseUrlsByService("cloudFiles");
     }
 
     @Test
@@ -154,7 +160,7 @@ public class DefaultEndpointServiceTest {
 
     @Test
     public void getBaseUrlsByServiceId_callsEndpointDao_getBaseUrls() throws Exception {
-        defaultEndpointService.getBaseUrlsByServiceId("defaultApplicationService");
+        defaultEndpointService.getBaseUrlsByServiceType("defaultApplicationService");
         verify(endpointDao).getBaseUrls();
     }
 
@@ -165,7 +171,7 @@ public class DefaultEndpointServiceTest {
         List<CloudBaseUrl> cloudBaseUrlList = new ArrayList<CloudBaseUrl>();
         cloudBaseUrlList.add(cloudBaseUrl);
         when(endpointDao.getBaseUrls()).thenReturn(cloudBaseUrlList);
-        List<CloudBaseUrl> result = defaultEndpointService.getBaseUrlsByServiceId("defaultApplicationService");
+        List<CloudBaseUrl> result = defaultEndpointService.getBaseUrlsByServiceType("defaultApplicationService");
         assertThat("cloud base url", result.get(0), equalTo(cloudBaseUrl));
     }
 
@@ -176,7 +182,7 @@ public class DefaultEndpointServiceTest {
         List<CloudBaseUrl> cloudBaseUrlList = new ArrayList<CloudBaseUrl>();
         cloudBaseUrlList.add(cloudBaseUrl);
         when(endpointDao.getBaseUrls()).thenReturn(cloudBaseUrlList);
-        List<CloudBaseUrl> result = defaultEndpointService.getBaseUrlsByServiceId("defaultApplicationService");
+        List<CloudBaseUrl> result = defaultEndpointService.getBaseUrlsByServiceType("defaultApplicationService");
         assertThat("list", result.size(), equalTo(0));
     }
 }

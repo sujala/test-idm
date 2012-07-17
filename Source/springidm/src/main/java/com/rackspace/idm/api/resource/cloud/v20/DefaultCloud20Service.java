@@ -1385,7 +1385,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 baseUrls = this.endpointService.getBaseUrls();
             } else {
                 Application client = checkAndGetApplication(serviceId);
-                baseUrls = this.endpointService.getBaseUrlsByServiceId(client.getOpenStackType());
+                baseUrls = this.endpointService.getBaseUrlsByServiceType(client.getOpenStackType());
             }
 
             return Response.ok(
@@ -1648,6 +1648,20 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         ImpersonationResponse auth = authConverterCloudV20.toImpersonationResponse(usa);
         return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtRaxgaV1Factory().createAccess(auth));
+    }
+
+    @Override
+    public ResponseBuilder listDefaultRegionServices(String authToken) {
+        List<Application> openStackServices = clientService.getOpenStackServices();
+        List<Application> regionServices = new ArrayList<Application>();
+        if(openStackServices!=null){
+            for(Application application: openStackServices){
+                if(application.getUsedForDefaultRegion()){
+                    regionServices.add(application);
+                }
+            }
+        }
+        return Response.ok(regionServices);
     }
 
     void validateImpersonationRequest(ImpersonationRequest impersonationRequest) {

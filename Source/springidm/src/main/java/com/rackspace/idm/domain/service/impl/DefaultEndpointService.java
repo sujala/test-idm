@@ -94,7 +94,7 @@ public class DefaultEndpointService implements EndpointService {
     }
 
     @Override
-    public List<CloudBaseUrl> getBaseUrlsByServiceId(String serviceType) {
+    public List<CloudBaseUrl> getBaseUrlsByServiceType(String serviceType) {
         logger.debug("Getting baseurls by serviceId");
         List<CloudBaseUrl> allBaseUrls = this.endpointDao.getBaseUrls();
         List<CloudBaseUrl> filteredBaseUrls = new ArrayList<CloudBaseUrl>();
@@ -105,6 +105,12 @@ public class DefaultEndpointService implements EndpointService {
         }
         logger.debug("Got {} baseurls", filteredBaseUrls.size());
         return filteredBaseUrls;
+    }
+
+    @Override
+    public List<CloudBaseUrl> getBaseUrlsByServiceName(String serviceName) {
+        logger.debug("Getting baseUrls by service name");
+        return endpointDao.getBaseUrlsByService(serviceName);
     }
 
     @Override
