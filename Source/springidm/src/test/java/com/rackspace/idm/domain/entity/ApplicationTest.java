@@ -173,6 +173,15 @@ public class ApplicationTest {
     }
 
     @Test
+    public void equals_enabledNotNullAndNotEqualsObjectEnabled_returnsFalse() throws Exception {
+        Application object = new Application();
+        object.setEnabled(true);
+        application.setEnabled(false);
+        boolean result = application.equals(object);
+        assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
     public void equals_openStackTypeIsNullAndObjectOpenStackTypeNotNull_returnsFalse() throws Exception {
         Application object = new Application();
         object.setOpenStackType("notNull");
@@ -266,8 +275,44 @@ public class ApplicationTest {
     }
 
     @Test
-    public void equals_returnsTrue() throws Exception {
+    public void equals_nameIsNullAndObjectNameNotNull_returnsFalse() throws Exception {
         Application object = new Application();
+        object.setName("notNull");
+        application.setName(null);
+        boolean result = application.equals(object);
+        assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
+    public void equals_returnsTrue() throws Exception {
+        ArrayList<TenantRole> roles = new ArrayList<TenantRole>();
+        Application object = new Application();
+        object.setCallBackUrl("callBackUrl");
+        object.setClientSecret("clientSecret");
+        object.setClientId("clientId");
+        object.setDescription("description");
+        object.setEnabled(true);
+        object.setName("name");
+        object.setOpenStackType("openStackType");
+        object.setRCN("rcn");
+        object.setTitle("title");
+        object.setRoles(roles);
+        object.setScope("scope");
+        object.setUniqueId("uniqueId");
+
+        application.setCallBackUrl("callBackUrl");
+        application.setClientSecret("clientSecret");
+        application.setClientId("clientId");
+        application.setDescription("description");
+        application.setEnabled(true);
+        application.setName("name");
+        application.setOpenStackType("openStackType");
+        application.setRCN("rcn");
+        application.setTitle("title");
+        application.setRoles(roles);
+        application.setScope("scope");
+        application.setUniqueId("uniqueId");
+
         boolean result = application.equals(object);
         assertThat("boolean", result, equalTo(true));
     }
