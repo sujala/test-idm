@@ -12,13 +12,10 @@ import com.rackspace.idm.exception.BadRequestException;
 import com.rackspacecloud.docs.auth.api.v1.*;
 import com.sun.jersey.api.json.JSONJAXBContext;
 import com.sun.jersey.api.json.JSONMarshaller;
-import com.sun.org.apache.xerces.internal.dom.ElementNSImpl;
 import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
-import org.mortbay.jetty.security.Password;
-import org.mortbay.util.ajax.JSON;
 import org.openstack.docs.common.api.v1.Extension;
 import org.openstack.docs.common.api.v1.Extensions;
 import org.openstack.docs.common.api.v1.MediaTypeList;
@@ -51,7 +48,6 @@ import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -611,6 +607,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
         }
         if (user.getOtherAttributes().size() != 0) {
             outer.put(JSONConstants.RAX_AUTH_DEFAULT_REGION, user.getOtherAttributes().get(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "defaultRegion")));
+            outer.put(JSONConstants.OS_KSADM_PASSWORD, user.getOtherAttributes().get(new QName("http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0", "password")));
         }
         return outer;
     }

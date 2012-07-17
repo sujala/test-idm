@@ -117,6 +117,10 @@
             <value>rax-ksqa</value>
         </entry>
 
+        <entry key="http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0">
+            <value>rax-auth</value>
+        </entry>
+
     </util:map>
 
     <util:map id="osksadmNsPrefixMap"

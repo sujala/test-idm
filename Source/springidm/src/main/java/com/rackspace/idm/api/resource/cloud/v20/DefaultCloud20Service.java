@@ -44,6 +44,7 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
+import javax.xml.namespace.QName;
 import javax.xml.transform.stream.StreamSource;
 import java.io.IOException;
 import java.io.InputStream;
@@ -334,10 +335,13 @@ public class DefaultCloud20Service implements Cloud20Service {
             validateUser(user);
             validateUsernameForUpdateOrCreate(user.getUsername());
             ScopeAccess scopeAccessByAccessToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
-            if (user.getPassword() != null) {
+            String password = user.getPassword();
+            boolean emptyPassword = StringUtils.isBlank(password);
+
+            if (password != null) {
                 validatePassword(user.getPassword());
             } else {
-                String password = Password.generateRandom(false).getValue();
+                password = Password.generateRandom(false).getValue();
                 user.setPassword(password);
             }
             User userDO = this.userConverterCloudV20.toUserDO(user);
@@ -372,7 +376,13 @@ public class DefaultCloud20Service implements Cloud20Service {
             URI build = requestUriBuilder.path(id).build();
 
             org.openstack.docs.identity.api.v2.ObjectFactory openStackIdentityV2Factory = OBJ_FACTORIES.getOpenStackIdentityV2Factory();
-            UserForCreate value = userConverterCloudV20.toUserForCreate(userDO);
+            org.openstack.docs.identity.api.v2.User value = userConverterCloudV20.toUser(userDO);
+
+            //Will only print password if not provided
+            if (emptyPassword) {
+                value.getOtherAttributes().put(new QName("http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0", "password"),
+                        password);
+            }
             ResponseBuilder created = Response.created(build);
             return created.entity(openStackIdentityV2Factory.createUser(value).getValue());
         } catch (DuplicateException de) {
