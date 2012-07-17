@@ -454,7 +454,8 @@ public class Cloud20VersionResource {
     public Response addRole(
             @Context HttpHeaders httpHeaders,
             @Context UriInfo uriInfo,
-            @HeaderParam(X_AUTH_TOKEN) String authToken, Role role) throws IOException, JAXBException {
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            Role role) throws IOException, JAXBException {
         return getCloud20Service().addRole(httpHeaders, uriInfo, authToken, role).build();
     }
 
