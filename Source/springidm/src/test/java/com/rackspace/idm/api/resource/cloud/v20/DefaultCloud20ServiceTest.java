@@ -1713,6 +1713,7 @@ public class DefaultCloud20ServiceTest {
     public void addRole_roleWithIdentityNameWithIdentityAdmin_returns201Status() throws Exception {
         Role role1 = new Role();
         role1.setName("Identity:role");
+        JAXBElement<Role> someValue = new JAXBElement(new QName("http://docs.openstack.org/identity/api/v2.0", "role"), Role.class, null, role);
         doNothing().when(spy).verifyIdentityAdminLevelAccess(authToken);
         doReturn(application).when(spy).checkAndGetApplication(anyString());
         UriBuilder uriBuilder = mock(UriBuilder.class);
@@ -1722,6 +1723,7 @@ public class DefaultCloud20ServiceTest {
         doReturn(uriBuilder).when(uriBuilder).path(anyString());
         doReturn(uri).when(uriBuilder).build();
         when(jaxbObjectFactories.getOpenStackIdentityV2Factory()).thenReturn(objectFactory);
+        when(objectFactory.createRole(any(Role.class))).thenReturn(someValue);
         when(roleConverterCloudV20.toRoleFromClientRole(any(ClientRole.class))).thenReturn(role1);
         Response.ResponseBuilder responseBuilder = spy.addRole(httpHeaders, uriInfo, authToken, role1);
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(201));
