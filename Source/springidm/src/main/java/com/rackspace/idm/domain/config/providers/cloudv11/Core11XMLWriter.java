@@ -130,7 +130,7 @@ public class Core11XMLWriter extends NamespacePrefixMapper implements
     }
 
     //for testing purposes
-    public void setCorev11NsPrefixMap(Map<String, String> corev11NsPrefixMap) {
+    public void setNsPrefixMap(Map<String, String> corev11NsPrefixMap) {
         this.corev11NsPrefixMap = corev11NsPrefixMap;
     }
 }

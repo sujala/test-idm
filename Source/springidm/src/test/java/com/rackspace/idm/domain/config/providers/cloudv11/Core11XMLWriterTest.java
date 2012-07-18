@@ -44,12 +44,6 @@ public class Core11XMLWriterTest {
     }
 
     @Test
-    public void isWriteable_withTypeOfNon11Class_returnsFalse() throws Exception {
-        boolean writeable = core11XMLWriter.isWriteable(null, Object.class, null, null);
-        assertThat("BaseURL is writeable", writeable, equalTo(false));
-    }
-
-    @Test
     public void isWriteable_withParameterizedTypeOf11Class_returnsTrue() throws Exception {
         ParameterizedType type = mock(ParameterizedType.class);
         when(type.getActualTypeArguments()).thenReturn(new Type[]{BaseURL.class});
@@ -58,11 +52,17 @@ public class Core11XMLWriterTest {
     }
 
     @Test
+    public void isWriteable_withTypeOfNon11Class_returnsFalse() throws Exception {
+        boolean writeable = core11XMLWriter.isWriteable(null, Object.class, null, null);
+        assertThat("BaseURL is not writeable", writeable, equalTo(false));
+    }
+
+    @Test
     public void isWriteable_withParameterizedTypeOfMultipleClasses_returnsFalse() throws Exception {
         ParameterizedType type = mock(ParameterizedType.class);
         when(type.getActualTypeArguments()).thenReturn(new Type[]{BaseURL.class, BaseURLRef.class});
         boolean writeable = core11XMLWriter.isWriteable(null, type, null, null);
-        assertThat("BaseURL is writeable", writeable, equalTo(false));
+        assertThat("BaseURL is not writeable", writeable, equalTo(false));
     }
 
     @Test
@@ -70,7 +70,7 @@ public class Core11XMLWriterTest {
         ParameterizedType type = mock(ParameterizedType.class);
         when(type.getActualTypeArguments()).thenReturn(new Type[]{Object.class});
         boolean writeable = core11XMLWriter.isWriteable(null, type, null, null);
-        assertThat("BaseURL is writeable", writeable, equalTo(false));
+        assertThat("BaseURL is not writeable", writeable, equalTo(false));
     }
 
     @Test
@@ -89,7 +89,7 @@ public class Core11XMLWriterTest {
     public void getPreferredPrefix_usesCorev11NsPrefixMap() throws Exception {
         HashMap<String, String> corev11NsPrefixMap = new HashMap<String, String>();
         corev11NsPrefixMap.put("http://www.w3.org/2005/Atom", "atom");
-        core11XMLWriter.setCorev11NsPrefixMap(corev11NsPrefixMap);
+        core11XMLWriter.setNsPrefixMap(corev11NsPrefixMap);
         String preferredPrefix = core11XMLWriter.getPreferredPrefix("http://www.w3.org/2005/Atom", "", true);
         assertThat("preferred prefix", preferredPrefix, equalTo("atom"));
     }
