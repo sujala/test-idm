@@ -177,6 +177,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         try {
             verifyServiceAdminLevelAccess(authToken);
+
             if (role == null) {
                 String errMsg = "role cannot be null";
                 logger.warn(errMsg);
@@ -192,10 +193,8 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException(errMsg);
             }
 
-            if(!StringUtils.equals(role.getServiceId(), config.getString("cloudAuth.clientId")) &&
-                StringUtils.startsWithIgnoreCase(role.getName(), "identity:")){
-                    logger.warn("Attempt to make \"Identity:*\" role");
-                    throw new BadRequestException("Invalid role name");
+            if(StringUtils.startsWithIgnoreCase(role.getName(), "identity:")){
+                verifyIdentityAdminLevelAccess(authToken);
             }
 
             Application service = checkAndGetApplication(role.getServiceId());

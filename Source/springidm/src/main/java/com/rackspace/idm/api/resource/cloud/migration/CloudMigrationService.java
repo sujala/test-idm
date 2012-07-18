@@ -324,8 +324,10 @@ public class CloudMigrationService {
                 }
             }
 
-            addTenantsForUserByToken(newUser, user11.getMossoId().toString(), mossoBaseUrlRef);
-            addTenantsForUserByToken(newUser, user11.getNastId(), nastBaseUrlRef);
+            if(user11.getMossoId() != null)
+                addTenantsForUserByToken(newUser, user11.getMossoId().toString(), mossoBaseUrlRef);
+            if(user11.getNastId() != null)
+                addTenantsForUserByToken(newUser, user11.getNastId(), nastBaseUrlRef);
 
             // Groups
             Groups groups = client.getGroupsForUser(adminToken, legacyId);

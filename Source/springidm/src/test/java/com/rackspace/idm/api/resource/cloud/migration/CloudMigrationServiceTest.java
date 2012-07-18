@@ -429,6 +429,7 @@ public class CloudMigrationServiceTest {
         when(client.getUser(anyString(), anyString())).thenReturn(new org.openstack.docs.identity.api.v2.User());
         com.rackspacecloud.docs.auth.api.v1.User user11 = new com.rackspacecloud.docs.auth.api.v1.User();
         user11.setMossoId(1);
+        user11.setNastId("abc");
         user11.setBaseURLRefs(new BaseURLRefList());
         user11.getBaseURLRefs().getBaseURLRef().add(new BaseURLRef());
         when(client.getUserTenantsBaseUrls(anyString(), anyString(), anyString())).thenReturn(user11);
