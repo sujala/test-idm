@@ -1357,6 +1357,20 @@
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>cobertura-maven-plugin</artifactId>
                 <version>2.5.1</version>
+                <configuration>
+                    <check>
+                        <totalLineRate>98</totalLineRate>
+                        <totalBranchRate>92</totalBranchRate>
+                    </check>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
 
             <!--maven-resource-->
