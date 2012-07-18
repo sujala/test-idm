@@ -1499,6 +1499,12 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void checkForMultipleIdentityRoles_callsTenantService_getGlobalRoles() throws Exception {
+        spy.checkForMultipleIdentityRoles(new User(), null);
+        verify(tenantService).getGlobalRolesForUser(any(User.class));
+    }
+
+    @Test
     public void checkForMultipleIdentityRoles_doesNothing_withNullRoles() throws Exception {
         spy.checkForMultipleIdentityRoles(new User(), null);
         assertTrue("method threw no errors", true);
@@ -1535,9 +1541,9 @@ public class DefaultCloud20ServiceTest {
         TenantRole tenantRole1 = new TenantRole();
         tenantRole1.setName("identity:role");
         roles.add(tenantRole1);
-        user1.setRoles(roles);
         ClientRole roleToAdd = new ClientRole();
         roleToAdd.setName("Identity:role");
+        when(tenantService.getGlobalRolesForUser(user1)).thenReturn(roles);
         spy.checkForMultipleIdentityRoles(user1, roleToAdd);
     }
 
@@ -1682,22 +1688,31 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void addRole_roleWithIdentityName_forIdentityService_succeeds() throws Exception {
+    public void addRole_roleWithIdentityNameWithNotIdenityAdmin_returns403Status() throws Exception {
         Role role1 = new Role();
         role1.setName("Identity:role");
         role1.setServiceId(null);
-        when(clientService.getById(anyString())).thenReturn(application);
-        spy.addRole(null, null, authToken, role1);
-        verify(clientService).addClientRole(any(ClientRole.class));
+        doThrow(new ForbiddenException()).when(spy).verifyIdentityAdminLevelAccess(authToken);
+        Response.ResponseBuilder responseBuilder = spy.addRole(null, null, authToken, role1);
+        assertThat("response status", responseBuilder.build().getStatus(), equalTo(403));
     }
 
     @Test
-    public void addRole_roleWithIdentityName_forNonIdentityService_returns400Status() throws Exception {
+    public void addRole_roleWithIdentityNameWithIdentityAdmin_returns201Status() throws Exception {
         Role role1 = new Role();
         role1.setName("Identity:role");
-        role1.setServiceId("someOtherServce");
-        Response.ResponseBuilder responseBuilder = spy.addRole(null, null, authToken, role1);
-        assertThat("response status", responseBuilder.build().getStatus(), equalTo(400));
+        doNothing().when(spy).verifyIdentityAdminLevelAccess(authToken);
+        doReturn(application).when(spy).checkAndGetApplication(anyString());
+        UriBuilder uriBuilder = mock(UriBuilder.class);
+        URI uri = new URI("");
+        org.openstack.docs.identity.api.v2.ObjectFactory objectFactory = mock(org.openstack.docs.identity.api.v2.ObjectFactory.class);
+        when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
+        doReturn(uriBuilder).when(uriBuilder).path(anyString());
+        doReturn(uri).when(uriBuilder).build();
+        when(jaxbObjectFactories.getOpenStackIdentityV2Factory()).thenReturn(objectFactory);
+        when(roleConverterCloudV20.toRoleFromClientRole(any(ClientRole.class))).thenReturn(role1);
+        Response.ResponseBuilder responseBuilder = spy.addRole(httpHeaders, uriInfo, authToken, role1);
+        assertThat("response status", responseBuilder.build().getStatus(), equalTo(201));
     }
 
     @Test

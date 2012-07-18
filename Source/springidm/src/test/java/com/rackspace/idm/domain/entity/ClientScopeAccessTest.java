@@ -47,14 +47,41 @@ public class ClientScopeAccessTest {
     }
 
     @Test
-    public void isAccessTokenExpired_accessTokenStringBlankAndTokenExpNull_returnTrue() throws Exception {
+    public void isAccessTokenExpired_accessTokenStringIsBlank_returnsTrue() throws Exception {
         clientScopeAccess.setAccessTokenString("");
-        clientScopeAccess.setAccessTokenExp(null);
-        assertThat("is expired",clientScopeAccess.isAccessTokenExpired(new DateTime()),equalTo(true));
+        boolean result = clientScopeAccess.isAccessTokenExpired(new DateTime());
+        assertThat("boolean", result, equalTo(true));
     }
 
     @Test
-    public void testGetAuditContext() throws Exception {
+    public void isAccessTokenExpired_accessTokenExpIsNull_returnsTrue() throws Exception {
+        clientScopeAccess.setAccessTokenString("notBlank");
+        clientScopeAccess.setAccessTokenExp(null);
+        boolean result = clientScopeAccess.isAccessTokenExpired(new DateTime());
+        assertThat("boolean", result, equalTo(true));
+    }
 
+    @Test
+    public void isAccessTokenExpired_accessTokenExpIsBeforeTime_returnsTrue() throws Exception {
+        clientScopeAccess.setAccessTokenString("notBlank");
+        clientScopeAccess.setAccessTokenExp(new DateTime().minusDays(1).toDate());
+        boolean result = clientScopeAccess.isAccessTokenExpired(new DateTime());
+        assertThat("boolean", result, equalTo(true));
+    }
+
+    @Test
+    public void isAccessTokenExpired_accessTokenExpIsNotBeforeTime_returnsFalse() throws Exception {
+        clientScopeAccess.setAccessTokenString("notBlank");
+        clientScopeAccess.setAccessTokenExp(new DateTime().plusDays(1).toDate());
+        boolean result = clientScopeAccess.isAccessTokenExpired(new DateTime());
+        assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
+    public void getAuditContext_returnsAuditString() throws Exception {
+        clientScopeAccess.setClientId("clientId");
+        clientScopeAccess.setClientRCN("clientRCN");
+        String result = clientScopeAccess.getAuditContext();
+        assertThat("audit string", result, equalTo("Client(clientId=clientId,customerId=clientRCN)"));
     }
 }
