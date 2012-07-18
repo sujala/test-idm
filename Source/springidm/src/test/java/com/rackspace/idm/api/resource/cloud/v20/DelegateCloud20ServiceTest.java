@@ -8,10 +8,7 @@ import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.domain.service.TenantService;
-import com.rackspace.idm.domain.service.TokenService;
-import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import com.sun.jersey.core.spi.factory.ResponseBuilderImpl;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
@@ -51,6 +48,7 @@ public class DelegateCloud20ServiceTest {
     UserService userService = mock(UserService.class);
     TokenService tokenService = mock(TokenService.class);
     CloudClient cloudClient = mock(CloudClient.class);
+    AuthorizationService authorizationService = mock(AuthorizationService.class);
     ScopeAccessService scopeAccessService = mock(ScopeAccessService.class);
     TenantService tenantService = mock(TenantService.class);
     CloudUserExtractor cloudUserExtractor = mock(CloudUserExtractor.class);
@@ -82,6 +80,7 @@ public class DelegateCloud20ServiceTest {
         delegateCloud20Service.setOBJ_FACTORIES(OBJ_FACTORIES);
         delegateCloud20Service.setScopeAccessService(scopeAccessService);
         delegateCloud20Service.setTenantService(tenantService);
+        delegateCloud20Service.setAuthorizationService(authorizationService);
         when(config.getString("cloudAuth20url")).thenReturn(url);
         when(config.getString("cloudAuthUK20url")).thenReturn(url);
         when(config.getBoolean("GAKeystoneDisabled")).thenReturn(disabled);
@@ -126,9 +125,31 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
+    public void addUser_checksIfUserExistsInGA() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(scopeAccessService.getAccessTokenByAuthHeader("token")).thenReturn(null);
+        when(userService.userExistsByUsername("username")).thenReturn(false);
+        UserForCreate userForCreate = new UserForCreate();
+        userForCreate.setUsername("username");
+        spy.addUser(null, null, "token", userForCreate);
+        verify(userService).userExistsByUsername("username");
+    }
+
+    @Test(expected = DuplicateUsernameException.class)
+    public void addUser_routingTrueAndUserExistInGA_throwsDuplicateUsernameException() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(scopeAccessService.getAccessTokenByAuthHeader("token")).thenReturn(null);
+        when(userService.userExistsByUsername("username")).thenReturn(true);
+        UserForCreate userForCreate = new UserForCreate();
+        userForCreate.setUsername("username");
+        spy.addUser(null, null, "token", userForCreate);
+    }
+
+    @Test
     public void addUser_routingTrueAndCallerDoesNotExistInGA_callsClient() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(scopeAccessService.getAccessTokenByAuthHeader("token")).thenReturn(null);
+        when(userService.userExistsByUsername(any(String.class))).thenReturn(false);
         spy.addUser(null,null,"token",null);
         verify(cloudClient).post(anyString(), any(HttpHeaders.class), anyString());
     }

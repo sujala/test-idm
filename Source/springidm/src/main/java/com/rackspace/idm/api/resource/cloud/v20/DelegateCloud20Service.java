@@ -14,10 +14,7 @@ import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.TenantRole;
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.domain.service.TenantService;
-import com.rackspace.idm.domain.service.TokenService;
-import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.api.json.JSONJAXBContext;
@@ -78,6 +75,9 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Autowired
     private UserConverterCloudV20 userConverterCloudV20;
+
+    @Autowired
+    private AuthorizationService authorizationService;
 
     @Autowired
     private TokenConverterCloudV20 tokenConverterCloudV20;
@@ -177,7 +177,6 @@ public class DelegateCloud20Service implements Cloud20Service {
         return defaultCloud20Service.validateToken(httpHeaders, authToken, tokenId, belongsTo);
     }
 
-
     ResponseBuilder validateImpersonatedTokenFromCloud(HttpHeaders httpHeaders, String impersonatedCloudToken, String belongsTo, ImpersonatedScopeAccess impersonatedScopeAccess) throws Exception, JAXBException {
         String gaXAuthToken = getXAuthToken_byPassword(config.getString("ga.username"), config.getString("ga.password")).getToken().getId();
         httpHeaders.getRequestHeaders().get("x-auth-token").set(0, gaXAuthToken);
@@ -203,6 +202,7 @@ public class DelegateCloud20Service implements Cloud20Service {
 
         return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createAccess(validateResponse));
     }
+
 
     @Override
     public ResponseBuilder checkToken(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo)
@@ -565,10 +565,14 @@ public class DelegateCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder addUser(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, UserForCreate user)
             throws IOException, JAXBException {
+
         ScopeAccess accessTokenByAuthHeader = scopeAccessService.getAccessTokenByAuthHeader(authToken);
         if (isCloudAuthRoutingEnabled() && accessTokenByAuthHeader == null) {
             String request = getCloudAuthV20Url() + "users";
             String body = marshallObjectToString(objectFactory.createUser(user));
+            if(user!=null && userService.userExistsByUsername(user.getUsername())){
+                throw new DuplicateUsernameException(String.format("Username %s already exists", user.getUsername()));
+            }
             return cloudClient.post(request, httpHeaders, body);
         }
         if (user != null && !StringUtils.isBlank(user.getUsername())) {
@@ -1146,7 +1150,6 @@ public class DelegateCloud20Service implements Cloud20Service {
         return (RoleList) unmarshallResponse(userResponse.getEntity().toString(), RoleList.class);
     }
 
-
     public String impersonateUser(String userName, String impersonatorName, String impersonatorPassword) throws JAXBException, IOException {
         String impersonatorXAuthToken = getXAuthToken_byPassword(impersonatorName, impersonatorPassword).getToken().getId();
         User user = getCloudUserByName(userName, impersonatorXAuthToken);
@@ -1161,6 +1164,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         String userXAuthToken = getXAuthToken(userName, userApiKey).getToken().getId();
         return userXAuthToken;
     }
+
 
     public boolean isValidCloudImpersonatee(RoleList userRoles) {
         for (Role role : userRoles.getRole()) {
@@ -1180,10 +1184,10 @@ public class DelegateCloud20Service implements Cloud20Service {
         this.tenantService = tenantService;
     }
 
-
     public UserConverterCloudV20 getUserConverterCloudV20() {
         return userConverterCloudV20;
     }
+
 
     public void setUserConverterCloudV20(UserConverterCloudV20 userConverterCloudV20) {
         this.userConverterCloudV20 = userConverterCloudV20;
@@ -1195,5 +1199,9 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     public void setObjectFactoryRAXKSKEY(com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory objectFactoryRAXKSKEY) {
         this.objectFactoryRAXKSKEY = objectFactoryRAXKSKEY;
+    }
+
+    public void setAuthorizationService(AuthorizationService authorizationService) {
+        this.authorizationService = authorizationService;
     }
 }
