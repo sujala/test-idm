@@ -485,7 +485,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
             return res.getValue().getToken().getId();
         }
         else{
-            return response.toString();
+            return "BadToken";
         }
     }
 }
