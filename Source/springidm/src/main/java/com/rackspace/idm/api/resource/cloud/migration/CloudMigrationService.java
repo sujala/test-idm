@@ -251,7 +251,7 @@ public class CloudMigrationService {
                 user11 = client.getUserTenantsBaseUrls(config.getString("ga.username"), config.getString("ga.password"), username);
             }
             catch (Exception ex) {
-                throw new NotFoundException("User with username " + username + " could not be found." + ex.getMessage());
+                throw new NotFoundException("User with username " + username + " could not be found.");
             }
             String legacyId = user.getId();
 
