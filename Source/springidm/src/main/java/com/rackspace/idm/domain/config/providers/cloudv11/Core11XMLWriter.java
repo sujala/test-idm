@@ -128,4 +128,9 @@ public class Core11XMLWriter extends NamespacePrefixMapper implements
                                      boolean requirePrefix) {
         return corev11NsPrefixMap.get(namespaceUri);
     }
+
+    //for testing purposes
+    public void setCorev11NsPrefixMap(Map<String, String> corev11NsPrefixMap) {
+        this.corev11NsPrefixMap = corev11NsPrefixMap;
+    }
 }
