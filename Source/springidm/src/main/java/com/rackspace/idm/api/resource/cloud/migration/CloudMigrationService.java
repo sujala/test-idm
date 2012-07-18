@@ -841,12 +841,12 @@ public class CloudMigrationService {
         }
         if (endpoints != null) {
             for (EndpointTemplate endpoint : endpoints.getEndpointTemplate()) {
+                BaseURL baseURL = getBaseUrlFromEndpoint(endpoint.getId(), baseURLs.getBaseURL());
                 if (isUkCloudRegion()) {
                     endpoint.setId(endpoint.getId() + UK_BASEURL_OFFSET);
                 }
 
                 CloudBaseUrl cloudBaseUrl = endpointService.getBaseUrlById(endpoint.getId());
-                BaseURL baseURL = getBaseUrlFromEndpoint(endpoint.getId(), baseURLs.getBaseURL());
 
                 if (cloudBaseUrl == null) {
                     cloudBaseUrl = copyCloudBaseUrlFromEndpointTemplate(endpoint);
