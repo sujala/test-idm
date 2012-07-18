@@ -252,9 +252,9 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void listDefaultRegionServices_returnsApplicationListEntity() throws Exception {
+    public void listDefaultRegionServices_returnsDefaultRegionServicesType() throws Exception {
         Response.ResponseBuilder responseBuilder = defaultCloud20Service.listDefaultRegionServices(authToken);
-        assertThat("response builder", responseBuilder.build().getEntity(), instanceOf(List.class));
+        assertThat("response builder", responseBuilder.build().getEntity(), instanceOf(DefaultRegionServices.class));
     }
 
     @Test
@@ -269,7 +269,7 @@ public class DefaultCloud20ServiceTest {
         applications.add(application3);
         when(clientService.getOpenStackServices()).thenReturn(applications);
         Response.ResponseBuilder responseBuilder = defaultCloud20Service.listDefaultRegionServices(authToken);
-        assertThat("response builder", ((List<Application>)responseBuilder.build().getEntity()).size(), equalTo(1));
+        assertThat("response builder", ((DefaultRegionServices)responseBuilder.build().getEntity()).getServiceName().size(), equalTo(1));
     }
 
     @Test

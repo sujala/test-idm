@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
@@ -122,6 +123,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private AtomHopperClient atomHopperClient;
+
+    com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
 
     private HashMap<String, JAXBElement<Extension>> extensionMap;
 
@@ -1660,15 +1663,15 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder listDefaultRegionServices(String authToken) {
         List<Application> openStackServices = clientService.getOpenStackServices();
-        List<Application> regionServices = new ArrayList<Application>();
+        DefaultRegionServices defaultRegionServices = raxAuthObjectFactory.createDefaultRegionServices();
         if(openStackServices!=null){
             for(Application application: openStackServices){
                 if(application.getUsedForDefaultRegion()){
-                    regionServices.add(application);
+                    defaultRegionServices.getServiceName().add(application.getName());
                 }
             }
         }
-        return Response.ok(regionServices);
+        return Response.ok(defaultRegionServices);
     }
 
     void validateImpersonationRequest(ImpersonationRequest impersonationRequest) {
