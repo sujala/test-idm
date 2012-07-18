@@ -1,16 +1,13 @@
 package com.rackspace.idm.domain.config.providers.cloudv11;
 
 import com.rackspacecloud.docs.auth.api.v1.BaseURL;
-import com.rackspacecloud.docs.auth.api.v1.BaseURLList;
 import com.rackspacecloud.docs.auth.api.v1.BaseURLRef;
 import org.junit.Before;
 import org.junit.Test;
 
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
 
 import java.io.ByteArrayOutputStream;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.HashMap;
