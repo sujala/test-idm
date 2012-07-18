@@ -1499,6 +1499,12 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void checkForMultipleIdentityRoles_callsTenantService_getGlobalRoles() throws Exception {
+        spy.checkForMultipleIdentityRoles(new User(), null);
+        verify(tenantService).getGlobalRolesForUser(any(User.class));
+    }
+
+    @Test
     public void checkForMultipleIdentityRoles_doesNothing_withNullRoles() throws Exception {
         spy.checkForMultipleIdentityRoles(new User(), null);
         assertTrue("method threw no errors", true);
@@ -1535,9 +1541,9 @@ public class DefaultCloud20ServiceTest {
         TenantRole tenantRole1 = new TenantRole();
         tenantRole1.setName("identity:role");
         roles.add(tenantRole1);
-        user1.setRoles(roles);
         ClientRole roleToAdd = new ClientRole();
         roleToAdd.setName("Identity:role");
+        when(tenantService.getGlobalRolesForUser(user1)).thenReturn(roles);
         spy.checkForMultipleIdentityRoles(user1, roleToAdd);
     }
 

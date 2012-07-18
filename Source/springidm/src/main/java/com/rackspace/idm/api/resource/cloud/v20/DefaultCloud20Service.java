@@ -2327,7 +2327,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     void checkForMultipleIdentityRoles(User user, ClientRole roleToAdd) {
-        if(user.getRoles() == null || !StringUtils.startsWithIgnoreCase(roleToAdd.getName(), "identity:"))
+        user.setRoles(tenantService.getGlobalRolesForUser(user));
+        if(user.getRoles() == null || roleToAdd == null || !StringUtils.startsWithIgnoreCase(roleToAdd.getName(), "identity:"))
             return;
 
         for(TenantRole userRole : user.getRoles()){
