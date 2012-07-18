@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest;
+import com.rackspace.idm.domain.config.JAXBXMLContextResolver;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import org.hamcrest.Matchers;
@@ -9,8 +10,16 @@ import org.junit.Test;
 import org.openstack.docs.identity.api.v2.AuthenticateResponse;
 
 import javax.ws.rs.core.MediaType;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import javax.xml.transform.Result;
+
+import java.io.OutputStream;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.Assert.assertThat;
 
 /**
@@ -24,7 +33,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
 
     @Before
     public void setUp() throws Exception {
-        ensureGrizzlyStarted("classpath:app-config.xml");
+        ensureGrizzlyStarted("classpath:app-config.xml", JAXBXMLContextResolver.class);
     }
 
     @Test
@@ -470,6 +479,13 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
                 .accept(MediaType.APPLICATION_XML_TYPE)
                 .post(ClientResponse.class,
                         "<auth xmlns=\"http://docs.openstack.org/identity/api/v2.0\"><passwordCredentials username=\""+username+"\" password=\""+password+"\"/></auth>");
-        return clientResponse.getEntity(AuthenticateResponse.class).getToken().getId();
+        Object response =  clientResponse.getEntity(AuthenticateResponse.class);
+        if(((JAXBElement) response).getDeclaredType() == AuthenticateResponse.class){
+            JAXBElement<AuthenticateResponse> res = (JAXBElement<AuthenticateResponse>)response;
+            return res.getValue().getToken().getId();
+        }
+        else{
+            return response.toString();
+        }
     }
 }
