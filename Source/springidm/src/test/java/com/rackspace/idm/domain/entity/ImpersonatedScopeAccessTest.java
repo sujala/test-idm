@@ -27,4 +27,11 @@ public class ImpersonatedScopeAccessTest {
         String result = impersonatedScopeAccess.getClientId();
         assertThat("client id", result, equalTo("clientId"));
     }
+
+    @Test
+    public void getUniqueId_ldapEntryIsNull_returnsNull() throws Exception {
+        impersonatedScopeAccess.setLdapEntry(null);
+        String result = impersonatedScopeAccess.getUniqueId();
+        assertThat("unique id", result, equalTo(null));
+    }
 }
