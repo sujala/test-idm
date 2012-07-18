@@ -2292,7 +2292,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     User checkAndGetUser(String id) {
         User user = this.userService.getUserById(id);
-        user.setRoles(tenantService.getGlobalRolesForUser(user));
 
         if (user == null) {
             String errMsg = String.format("User %s not found", id);
@@ -2328,7 +2327,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     void checkForMultipleIdentityRoles(User user, ClientRole roleToAdd) {
-        if(user.getRoles() == null || !StringUtils.startsWithIgnoreCase(roleToAdd.getName(), "identity:"))
+        user.setRoles(tenantService.getGlobalRolesForUser(user));
+        if(user.getRoles() == null || roleToAdd == null || !StringUtils.startsWithIgnoreCase(roleToAdd.getName(), "identity:"))
             return;
 
         for(TenantRole userRole : user.getRoles()){
