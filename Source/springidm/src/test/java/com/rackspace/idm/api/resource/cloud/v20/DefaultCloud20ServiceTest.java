@@ -1694,6 +1694,25 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void addRole_roleWithIdentityName_forIdentityService_succeeds() throws Exception {
+        Role role1 = new Role();
+        role1.setName("Identity:role");
+        role1.setServiceId(null);
+        when(clientService.getById(anyString())).thenReturn(application);
+        spy.addRole(null, null, authToken, role1);
+        verify(clientService).addClientRole(any(ClientRole.class));
+    }
+
+    @Test
+    public void addRole_roleWithIdentityName_forNonIdentityService_returns400Status() throws Exception {
+        Role role1 = new Role();
+        role1.setName("Identity:role");
+        role1.setServiceId("someOtherServce");
+        Response.ResponseBuilder responseBuilder = spy.addRole(null, null, authToken, role1);
+        assertThat("response status", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
     public void addRole_responseCreated() throws Exception {
         UriBuilder uriBuilder = mock(UriBuilder.class);
         URI uri = new URI("");

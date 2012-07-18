@@ -184,15 +184,18 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
             if (StringUtils.isBlank(role.getServiceId())) { // ToDo: We now default to an application for all roles not specifying one
                 role.setServiceId(config.getString("cloudAuth.clientId"));
-                //String errMsg = "Expecting serviceId";
-                //logger.warn(errMsg);
-                //throw new BadRequestException(errMsg);
             }
 
             if (StringUtils.isBlank(role.getName())) {
                 String errMsg = "Expecting name";
                 logger.warn(errMsg);
                 throw new BadRequestException(errMsg);
+            }
+
+            if(!StringUtils.equals(role.getServiceId(), config.getString("cloudAuth.clientId")) &&
+                StringUtils.startsWithIgnoreCase(role.getName(), "identity:")){
+                    logger.warn("Attempt to make \"Identity:*\" role");
+                    throw new BadRequestException("Invalid role name");
             }
 
             Application service = checkAndGetApplication(role.getServiceId());

@@ -11,9 +11,20 @@ import junit.framework.Assert;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.junit.Before;
 import org.junit.Test;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+
 public class UserTest {
+
+    User user;
+
+    @Before
+    public void setUp() throws Exception {
+        user = new User();
+    }
 
     private User getTestUser() {
         Password pwd = Password.newInstance("delete_my_password");
@@ -262,5 +273,42 @@ public class UserTest {
         Assert.assertEquals(0, violations.size());
 
         System.out.println(violations);
+    }
+
+    @Test
+    public void setUniqueId_uniqueIdIsNull_doesNotSet() throws Exception {
+        user.setUniqueId("uniqueId");
+        user.setUniqueId(null);
+        String result = user.getUniqueId();
+        assertThat("unique id", result, equalTo("uniqueId"));
+    }
+
+    @Test
+    public void hasEmptyPassword_passwordObjIsNull_returnsTrue() throws Exception {
+        user.setPasswordObj(null);
+        boolean result = user.hasEmptyPassword();
+        assertThat("boolean", result, equalTo(true));
+    }
+
+    @Test
+    public void hasEmptyPassword_passwordObjValueIsBlank_returnsTrue() throws Exception {
+        Password password = new Password();
+        user.setPasswordObj(password);
+        boolean result = user.hasEmptyPassword();
+        assertThat("boolean", result, equalTo(true));
+    }
+
+    @Test
+    public void hasEmptyPassword_passwordObjNotNullAndValueNotBlank_returnsFalse() throws Exception {
+        Password password = new Password();
+        password.setValue("password");
+        user.setPasswordObj(password);
+        boolean result = user.hasEmptyPassword();
+        assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
+    public void setDefaults_localeNotNullAndTimeZoneObjNotNull_setsEnabledToTrue() throws Exception {
+        user.setLocale(new Locale("", "", ""));
     }
 }
