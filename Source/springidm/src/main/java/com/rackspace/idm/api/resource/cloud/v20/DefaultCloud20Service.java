@@ -2292,6 +2292,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     User checkAndGetUser(String id) {
         User user = this.userService.getUserById(id);
+        user.setRoles(tenantService.getGlobalRolesForUser(user));
 
         if (user == null) {
             String errMsg = String.format("User %s not found", id);
