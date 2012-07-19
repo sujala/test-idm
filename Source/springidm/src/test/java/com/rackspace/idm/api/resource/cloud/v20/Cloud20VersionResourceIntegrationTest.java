@@ -44,6 +44,13 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     }
 
     @Test
+    public void fetDefaultRegionServices_returns200() throws Exception {
+        WebResource resource = resource().path("cloud/v2.0/RAX-AUTH/default-region/services");
+        ClientResponse clientResponse = resource.get(ClientResponse.class);
+        assertThat("response code", clientResponse.getStatus(), equalTo(200));
+    }
+
+    @Test
     public void getVersion_acceptsXml_returnsVersion() throws Exception {
         WebResource resource = resource().path("cloud/v2.0");
         ClientResponse clientResponse = resource.accept(MediaType.APPLICATION_XML_TYPE).get(ClientResponse.class);
