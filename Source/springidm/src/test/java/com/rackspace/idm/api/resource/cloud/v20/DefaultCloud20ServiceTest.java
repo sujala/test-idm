@@ -234,6 +234,12 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void listDefaultRegionServices_callsVerifyServiceAdminAccess() throws Exception {
+        spy.listDefaultRegionServices(authToken);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
+    }
+
+    @Test
     public void listDefaultRegionServices_callsApplicationService_getOSServices() throws Exception {
         defaultCloud20Service.listDefaultRegionServices(authToken);
         verify(clientService).getOpenStackServices();

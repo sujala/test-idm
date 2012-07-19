@@ -1675,6 +1675,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder listDefaultRegionServices(String authToken) {
+        verifyServiceAdminLevelAccess(authToken);
         List<Application> openStackServices = clientService.getOpenStackServices();
         DefaultRegionServices defaultRegionServices = raxAuthObjectFactory.createDefaultRegionServices();
         if(openStackServices!=null){
