@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.entity;
 
 import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.ReadOnlyEntry;
+import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -45,5 +46,44 @@ public class ImpersonatedScopeAccessTest {
         impersonatedScopeAccess.setLdapEntry(new ReadOnlyEntry("uniqueId",new Attribute[0]));
         String result = impersonatedScopeAccess.getUniqueId();
         assertThat("unique id", result, equalTo("uniqueId"));
+    }
+
+    @Test
+    public void getUserPasswordExpirationDate_returnsUserPasswordExpirationDate() throws Exception {
+        DateTime dateTime = new DateTime(1);
+        impersonatedScopeAccess.setUserPasswordExpirationDate(dateTime);
+        DateTime result = impersonatedScopeAccess.getUserPasswordExpirationDate();
+        assertThat("user password expiration date", result, equalTo(dateTime));
+    }
+
+    @Test
+    public void isAccessTokenExpired_accessTokenStringIsBlank_returnsTrue() throws Exception {
+        impersonatedScopeAccess.setAccessTokenString("");
+        boolean result = impersonatedScopeAccess.isAccessTokenExpired(new DateTime());
+        assertThat("boolean", result, equalTo(true));
+    }
+
+    @Test
+    public void isAccessTokenExpired_accessTokenExpIsNull_returnsTrue() throws Exception {
+        impersonatedScopeAccess.setAccessTokenString("notBlank");
+        impersonatedScopeAccess.setAccessTokenExp(null);
+        boolean result = impersonatedScopeAccess.isAccessTokenExpired(new DateTime());
+        assertThat("boolean", result, equalTo(true));
+    }
+
+    @Test
+    public void isAccessTokenExpired_accessTokenExpIsBeforeTime_returnsTrue() throws Exception {
+        impersonatedScopeAccess.setAccessTokenString("notBlank");
+        impersonatedScopeAccess.setAccessTokenExp(new DateTime().minusDays(1).toDate());
+        boolean result = impersonatedScopeAccess.isAccessTokenExpired(new DateTime());
+        assertThat("boolean", result, equalTo(true));
+    }
+
+    @Test
+    public void isAccessTokenExpired_accessTokenExpIsNotBeforeTime_returnsFalse() throws Exception {
+        impersonatedScopeAccess.setAccessTokenString("notBlank");
+        impersonatedScopeAccess.setAccessTokenExp(new DateTime().plusDays(1).toDate());
+        boolean result = impersonatedScopeAccess.isAccessTokenExpired(new DateTime());
+        assertThat("boolean", result, equalTo(false));
     }
 }

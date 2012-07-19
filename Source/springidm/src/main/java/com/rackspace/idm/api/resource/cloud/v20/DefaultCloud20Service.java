@@ -763,7 +763,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
-    private User getUserByUsernameForAuthentication(String username) {
+    User getUserByUsernameForAuthentication(String username) {
         User user = null;
         try {
             user = checkAndGetUserByName(username);
@@ -775,7 +775,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         return user;
     }
 
-    private User getUserByIdForAuthentication(String id) {
+    User getUserByIdForAuthentication(String id) {
         User user = null;
 
         try {
