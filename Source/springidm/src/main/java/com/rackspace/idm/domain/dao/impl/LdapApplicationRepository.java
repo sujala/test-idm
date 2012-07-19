@@ -21,8 +21,7 @@ import java.util.List;
 
 public class LdapApplicationRepository extends LdapRepository implements ApplicationDao {
 
-    public LdapApplicationRepository(LdapConnectionPools connPools,
-                                     Configuration config) {
+    public LdapApplicationRepository(LdapConnectionPools connPools, Configuration config) {
         super(connPools, config);
     }
 
@@ -41,8 +40,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         Attribute[] attributes;
         try {
             attributes = getAddAttributesForClient(client);
-            String clientDN = new LdapDnBuilder(APPLICATIONS_BASE_DN).addAttribute(
-                    ATTR_CLIENT_ID, client.getClientId()).build();
+            String clientDN = new LdapDnBuilder(APPLICATIONS_BASE_DN).addAttribute(ATTR_CLIENT_ID, client.getClientId()).build();
             client.setUniqueId(clientDN);
             addEntry(clientDN, attributes, audit);
         } catch (GeneralSecurityException e) {
@@ -87,8 +85,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
         Attribute[] atts = getAddAttributesForClientGroup(clientGroup);
 
-        String groupDN = new LdapDnBuilder(clientUniqueId).addAttribute(
-                ATTR_NAME, clientGroup.getName()).build();
+        String groupDN = new LdapDnBuilder(clientUniqueId).addAttribute(ATTR_NAME, clientGroup.getName()).build();
 
         clientGroup.setUniqueId(groupDN);
 
@@ -117,19 +114,16 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         }
 
         List<Modification> mods = new ArrayList<Modification>();
-        mods.add(new Modification(ModificationType.ADD, ATTR_MEMBER_OF, group
-                .getUniqueId()));
+        mods.add(new Modification(ModificationType.ADD, ATTR_MEMBER_OF, group.getUniqueId()));
 
         Audit audit = Audit.log(group).modify(mods);
 
         try {
             getAppInterface().modify(userUniqueId, mods);
         } catch (LDAPException ldapEx) {
-            getLogger().error("Error adding user to group {} - {}", group,
-                    ldapEx);
+            getLogger().error("Error adding user to group {} - {}", group, ldapEx);
 
-            if (ldapEx.getResultCode().equals(
-                    ResultCode.ATTRIBUTE_OR_VALUE_EXISTS)) {
+            if (ldapEx.getResultCode().equals(ResultCode.ATTRIBUTE_OR_VALUE_EXISTS)) {
                 audit.fail("User already in group");
                 throw new DuplicateException("User already in group");
             }
@@ -144,8 +138,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
     }
 
     @Override
-    public ClientAuthenticationResult authenticate(String clientId,
-                                                   String clientSecret) {
+    public ClientAuthenticationResult authenticate(String clientId, String clientSecret) {
         BindResult result;
         Application client = getClientByClientId(clientId);
 
@@ -164,13 +157,11 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
             if (ResultCode.INVALID_CREDENTIALS.equals(e.getResultCode())) {
                 return new ClientAuthenticationResult(client, false);
             }
-            getLogger().error(
-                    "Bind operation on clientId " + clientId + " failed.", e);
+            getLogger().error("Bind operation on clientId " + clientId + " failed.", e);
             throw new IllegalStateException(e);
         }
 
-        boolean isAuthenticated = ResultCode.SUCCESS.equals(result
-                .getResultCode());
+        boolean isAuthenticated = ResultCode.SUCCESS.equals(result.getResultCode());
         getLogger().debug("Client {} authenticated == {}", isAuthenticated);
         return new ClientAuthenticationResult(client, isAuthenticated);
     }
@@ -204,14 +195,11 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
     public List<Application> getAllClients() {
         getLogger().debug("Search all clients");
 
-        Filter searchFilter = new LdapSearchBuilder()
-                .addEqualAttribute(ATTR_OBJECT_CLASS,
-                        OBJECTCLASS_RACKSPACEAPPLICATION).build();
+        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION).build();
 
         List<Application> clients = new ArrayList<Application>();
 
-        List<SearchResultEntry> entries = this.getMultipleEntries(
-                APPLICATIONS_BASE_DN, SearchScope.SUB, searchFilter, ATTR_NAME);
+        List<SearchResultEntry> entries = this.getMultipleEntries(APPLICATIONS_BASE_DN, SearchScope.SUB, searchFilter, ATTR_NAME);
 
         for (SearchResultEntry entry : entries) {
             clients.add(getClient(entry));
@@ -228,14 +216,13 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
         if (StringUtils.isBlank(clientId)) {
             getLogger().error("Null or Empty clientId parameter");
-            throw new IllegalArgumentException(
-                    "Null or Empty clientId parameter.");
+            throw new IllegalArgumentException("Null or Empty clientId parameter.");
         }
 
         Filter searchFilter = new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_CLIENT_ID, clientId)
-                .addEqualAttribute(ATTR_OBJECT_CLASS,
-                        OBJECTCLASS_RACKSPACEAPPLICATION).build();
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION)
+                .build();
 
         Application client = getSingleClient(searchFilter);
 
@@ -250,14 +237,13 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
         if (StringUtils.isBlank(clientName)) {
             getLogger().error("Null or Empty client name parameter");
-            throw new IllegalArgumentException(
-                    "Null or Empty client name parameter.");
+            throw new IllegalArgumentException("Null or Empty client name parameter.");
         }
 
         Filter searchFilter = new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_NAME, clientName)
-                .addEqualAttribute(ATTR_OBJECT_CLASS,
-                        OBJECTCLASS_RACKSPACEAPPLICATION).build();
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION)
+                .build();
 
         Application client = getSingleClient(searchFilter);
 
@@ -272,15 +258,14 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
         if (StringUtils.isBlank(clientId)) {
             getLogger().error("Null or Empty clientId parameter");
-            throw new IllegalArgumentException(
-                    "Null or Empty clientId parameter.");
+            throw new IllegalArgumentException("Null or Empty clientId parameter.");
         }
 
         Filter searchFilter = new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_CLIENT_ID, clientId)
                 .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
-                .addEqualAttribute(ATTR_OBJECT_CLASS,
-                        OBJECTCLASS_RACKSPACEAPPLICATION).build();
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION)
+                .build();
 
         Application client = getSingleClient(searchFilter);
 
@@ -300,8 +285,8 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
         Filter searchFilter = new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_ID, id)
-                .addEqualAttribute(ATTR_OBJECT_CLASS,
-                        OBJECTCLASS_RACKSPACEAPPLICATION).build();
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION)
+                .build();
 
         Application client = getSingleClient(searchFilter);
 
@@ -321,8 +306,8 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
         Filter searchFilter = new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_TOKEN_SCOPE, scope)
-                .addEqualAttribute(ATTR_OBJECT_CLASS,
-                        OBJECTCLASS_RACKSPACEAPPLICATION).build();
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION)
+                .build();
 
         Application client = getSingleClient(searchFilter);
 
@@ -720,6 +705,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         client.setTitle(resultEntry.getAttributeValue(ATTR_TITLE));
         client.setDescription(resultEntry.getAttributeValue(ATTR_DESCRIPTION));
         client.setScope(resultEntry.getAttributeValue(ATTR_TOKEN_SCOPE));
+        client.setUseForDefaultRegion(resultEntry.getAttributeValueAsBoolean(ATTR_USE_FOR_DEFAULT_REGION));
 
         getLogger().debug("Materialized Client object {}.", client);
         return client;
@@ -747,7 +733,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
         List<Application> clientList = new ArrayList<Application>();
 
-        List<SearchResultEntry> entries = this.getMultipleEntries(APPLICATIONS_BASE_DN, SearchScope.SUB, searchFilter, ATTR_NAME);
+        List<SearchResultEntry> entries = this.getMultipleEntries(APPLICATIONS_BASE_DN, SearchScope.SUB, searchFilter, null);
 
         contentCount = entries.size();
 
@@ -756,8 +742,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
             int toIndex = offset + limit > contentCount ? contentCount : offset + limit;
             int fromIndex = offset;
 
-            List<SearchResultEntry> subList = entries.subList(fromIndex,
-                    toIndex);
+            List<SearchResultEntry> subList = entries.subList(fromIndex, toIndex);
 
             for (SearchResultEntry entry : subList) {
                 clientList.add(getClient(entry));
@@ -1140,8 +1125,8 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
         Filter searchFilter = new LdapSearchBuilder()
                 .addPresenceAttribute(ATTR_OPENSTACK_TYPE)
-                .addEqualAttribute(ATTR_OBJECT_CLASS,
-                        OBJECTCLASS_RACKSPACEAPPLICATION).build();
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION)
+                .build();
 
         Applications clients = getMultipleClients(searchFilter, 0, 400);
 

@@ -1679,7 +1679,8 @@ public class DefaultCloud20Service implements Cloud20Service {
         DefaultRegionServices defaultRegionServices = raxAuthObjectFactory.createDefaultRegionServices();
         if(openStackServices!=null){
             for(Application application: openStackServices){
-                if(application.getUsedForDefaultRegion()){
+                Boolean useForDefaultRegion = application.getUseForDefaultRegion();
+                if(useForDefaultRegion!=null && useForDefaultRegion==true){
                     defaultRegionServices.getServiceName().add(application.getName());
                 }
             }

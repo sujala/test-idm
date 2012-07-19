@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
@@ -116,6 +117,16 @@ public class JSONWriterTest {
         spy.writeTo(tenants, VersionChoice.class, null, null, null, null, myOut);
         doReturn(new JSONObject()).when(spy).getTenantWithoutWrapper(tenant);
         verify(spy).getTenantWithoutWrapper(tenant);
+    }
+
+    @Test
+    public void writeTo_DefaultRegionServices_writesToOutputStream() throws Exception {
+        DefaultRegionServices defaultRegionServices = new DefaultRegionServices();
+        defaultRegionServices.getServiceName().add("cloudServers");
+        defaultRegionServices.getServiceName().add("cloudServersOpenstack");
+        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        spy.writeTo(defaultRegionServices, DefaultRegionServices.class, null, null, null, null, myOut);
+        assertThat("string", myOut.toString(), equalTo("{\""+"defaultRegionServices"+"\":{\"serviceName\":[\"cloudServers\",\"cloudServersOpenstack\"]}}"));
     }
 
     @Test

@@ -134,7 +134,7 @@ public abstract class LdapRepository {
     public static final String ATTR_TOKEN_REQUESTOR = "tokenRequestor";
     public static final String ATTR_UID = "uid";
     public static final String ATTR_USER_RCN = "userRCN";
-    public static final String ATTR_USER_FOR_DEFAULT_REGION = "userForDefaultRegion";
+    public static final String ATTR_USE_FOR_DEFAULT_REGION = "useForDefaultRegion";
     public static final String ATTR_UPDATED_DATE = "modifyTimestamp";
     public static final String ATTR_SOFT_DELETED_DATE = "softDeletedTimestamp";
     public static final String ATTR_PASSWORD_UPDATED_TIMESTAMP = "passwordUpdatedTimestamp";
@@ -234,7 +234,7 @@ public abstract class LdapRepository {
     }
 
     protected List<SearchResultEntry> getMultipleEntries(String baseDN, SearchScope scope, Filter searchFilter, String... attributes) {
-        SearchResult searchResult = null;
+        SearchResult searchResult;
         try {
             SearchRequest request = new SearchRequest(baseDN, scope, searchFilter, attributes);
             searchResult = getAppInterface().search(request);
@@ -247,7 +247,7 @@ public abstract class LdapRepository {
     }
 
     protected List<SearchResultEntry> getMultipleEntries(String baseDN, SearchScope scope, String sortAttribute, Filter searchFilter, String... attributes) {
-        SearchResult searchResult = null;
+        SearchResult searchResult;
 
         ServerSideSortRequestControl sortRequest = new ServerSideSortRequestControl(new SortKey(sortAttribute));
 

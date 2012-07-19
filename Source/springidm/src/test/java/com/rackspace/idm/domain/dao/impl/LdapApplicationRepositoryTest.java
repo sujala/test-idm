@@ -676,6 +676,7 @@ public class LdapApplicationRepositoryTest extends InMemoryLdapIntegrationTest{
         client.setDescription("description");
         client.setScope("scope");
         client.setCallBackUrl("url");
+        client.setUseForDefaultRegion(true);
         Attribute[] attributesForClient = ldapApplicationRepository.getAddAttributesForClient(client);
         SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId", attributesForClient);
         Application result = ldapApplicationRepository.getClient(searchResultEntry);
@@ -690,6 +691,7 @@ public class LdapApplicationRepositoryTest extends InMemoryLdapIntegrationTest{
         assertThat("description", result.getDescription(), equalTo("description"));
         assertThat("scope",result.getScope(), equalTo("scope"));
         assertThat("url", result.getCallBackUrl(), equalTo("url"));
+        assertThat("useForDefaultRegion", result.getUseForDefaultRegion(), equalTo(true));
     }
 
     @Test
