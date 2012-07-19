@@ -734,10 +734,12 @@ public class CloudMigrationService {
     void addUserGroups(String userId, Groups groups) throws Exception {
         try {
             for (Group group : groups.getGroup()) {
+                if (isUkCloudRegion() && group.getId().equals("1")) // Set Default (1) to Default (0)
+                    group.setId("0");
                 cloudGroupService.addGroupToUser(Integer.parseInt(group.getId()), userId);
             }
         } catch (Exception ex) {
-            // TODO: what to do?
+        
         }
     }
 
