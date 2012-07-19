@@ -134,4 +134,8 @@ public class ImpersonatedScopeAccess extends ScopeAccess implements HasAccessTok
     public void setImpersonatingToken(String impersonatingToken) {
         this.impersonatingToken = impersonatingToken;
     }
+
+    public void setLdapEntry(ReadOnlyEntry ldapEntry) {
+        this.ldapEntry = ldapEntry;
+    }
 }

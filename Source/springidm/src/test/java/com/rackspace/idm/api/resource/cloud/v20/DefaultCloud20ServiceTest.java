@@ -46,6 +46,7 @@ import java.util.List;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.*;
 
@@ -251,9 +252,9 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void listDefaultRegionServices_returnsApplicationListEntity() throws Exception {
+    public void listDefaultRegionServices_returnsDefaultRegionServicesType() throws Exception {
         Response.ResponseBuilder responseBuilder = defaultCloud20Service.listDefaultRegionServices(authToken);
-        assertThat("response builder", responseBuilder.build().getEntity(), instanceOf(List.class));
+        assertThat("response builder", responseBuilder.build().getEntity(), instanceOf(DefaultRegionServices.class));
     }
 
     @Test
@@ -268,7 +269,7 @@ public class DefaultCloud20ServiceTest {
         applications.add(application3);
         when(clientService.getOpenStackServices()).thenReturn(applications);
         Response.ResponseBuilder responseBuilder = defaultCloud20Service.listDefaultRegionServices(authToken);
-        assertThat("response builder", ((List<Application>)responseBuilder.build().getEntity()).size(), equalTo(1));
+        assertThat("response builder", ((DefaultRegionServices)responseBuilder.build().getEntity()).getServiceName().size(), equalTo(1));
     }
 
     @Test
@@ -290,6 +291,20 @@ public class DefaultCloud20ServiceTest {
         when(authorizationService.hasUserAdminRole(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(true);
         spy.deleteUser(httpHeaders, authToken, userId);
         verify(userService).hasSubUsers(userId);
+    }
+
+    @Test
+    public void deleteUser_userServiceHasSubUsersWithUserId_returns400() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doNothing().when(spy).verifyUserAdminLevelAccess(authToken);
+        doReturn(new User()).when(spy).checkAndGetUser("userId");
+        when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(scopeAccess);
+        when(authorizationService.authorizeCloudUserAdmin(scopeAccess)).thenReturn(false);
+        when(scopeAccessService.getScopeAccessByUserId("userId")).thenReturn(scopeAccess);
+        when(authorizationService.hasUserAdminRole(scopeAccess)).thenReturn(true);
+        when(userService.hasSubUsers("userId")).thenReturn(true);
+        Response.ResponseBuilder responseBuilder = spy.deleteUser(null, authToken, "userId");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
     }
 
     @Test
@@ -596,10 +611,12 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void exceptionResponse_whenUserDisabledException_detailsNotSet() throws Exception {
         UserDisabledFault userDisabledFault = mock(UserDisabledFault.class);
+        JAXBElement<UserDisabledFault> someFault = new JAXBElement(new QName("http://docs.openstack.org/identity/api/v2.0", "userDisabled"), UserDisabledFault.class, null, userDisabledFault);
         ObjectFactory objectFactory = mock(ObjectFactory.class);
         when(jaxbObjectFactories.getOpenStackIdentityV2Factory()).thenReturn(objectFactory);
+        when(objectFactory.createUserDisabled(userDisabledFault)).thenReturn(someFault);
         when(objectFactory.createUserDisabledFault()).thenReturn(userDisabledFault);
-        UserDisabledException userDisabledException = new UserDisabledException();
+        UserDisabledException userDisabledException = new UserDisabledException("User is Disabled");
         spy.exceptionResponse(userDisabledException);
         verify(userDisabledFault, never()).setDetails(anyString());
     }
@@ -607,8 +624,10 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void exceptionResponse_whenNotFoundException_detailsNotSet() throws Exception {
         ItemNotFoundFault itemNotFoundFault = mock(ItemNotFoundFault.class);
+        JAXBElement<ItemNotFoundFault> someFault = new JAXBElement(new QName("http://docs.openstack.org/identity/api/v2.0", "itemNotFound"), ItemNotFoundFault.class, null, itemNotFoundFault);
         ObjectFactory objectFactory = mock(ObjectFactory.class);
         when(jaxbObjectFactories.getOpenStackIdentityV2Factory()).thenReturn(objectFactory);
+        when(objectFactory.createItemNotFound(itemNotFoundFault)).thenReturn(someFault);
         when(objectFactory.createItemNotFoundFault()).thenReturn(itemNotFoundFault);
         spy.exceptionResponse(new NotFoundException());
         verify(itemNotFoundFault, never()).setDetails(anyString());
@@ -799,7 +818,7 @@ public class DefaultCloud20ServiceTest {
         Response.ResponseBuilder authenticate = spy.authenticate(httpHeaders, authenticationRequest);
         Response response = authenticate.build();
         assertThat("response code", response.getStatus(), equalTo(400));
-        assertThat("message",((JAXBElement<BadRequestFault>) response.getEntity()).getValue().getMessage(),equalTo("Invalid request. Specify tenantId OR tenantName, not both."));
+        assertThat("message",((org.openstack.docs.identity.api.v2.BadRequestFault)response.getEntity()).getMessage(),equalTo("Invalid request. Specify tenantId OR tenantName, not both."));
     }
 
     @Test
@@ -1022,7 +1041,7 @@ public class DefaultCloud20ServiceTest {
         authenticationRequest.setToken(null);
         Response response = spy.authenticate(null, authenticationRequest).build();
         assertThat("response status", response.getStatus(), equalTo(400));
-        assertThat("response message", ((JAXBElement<BadRequestFault>) response.getEntity()).getValue().getMessage(), equalTo("Invalid request body: unable to parse Auth data. Please review XML or JSON formatting."));
+        assertThat("response message", ((org.openstack.docs.identity.api.v2.BadRequestFault) response.getEntity()).getMessage(), equalTo("Invalid request body: unable to parse Auth data. Please review XML or JSON formatting."));
     }
 
     @Test
@@ -1220,9 +1239,11 @@ public class DefaultCloud20ServiceTest {
         when(userService.getAllUsers(org.mockito.Matchers.<FilterParam[]>any())).thenReturn(users);
         when(config.getInt("numberOfSubUsers")).thenReturn(100);
         doNothing().when(spy).setDomainId(any(ScopeAccess.class), any(User.class));
+        doNothing().when(spy).validatePassword("password");
         UserForCreate userForCreate = new UserForCreate();
         userForCreate.setUsername("userforcreate");
         userForCreate.setEmail("user@rackspace.com");
+        userForCreate.setPassword("password");
         spy.addUser(null, null, authToken, userForCreate);
         verify(userService).addUser(argument.capture());
         assertThat("nast id", argument.getValue().getNastId(), equalTo("nastId"));
@@ -1335,6 +1356,7 @@ public class DefaultCloud20ServiceTest {
         userList.add(tempUser);
         users.setUsers(userList);
         when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(new User());
+        when(userConverterCloudV20.toUser(any(User.class))).thenReturn(new org.openstack.docs.identity.api.v2.User());
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
         when(userService.getAllUsers(org.mockito.Matchers.<FilterParam[]>any())).thenReturn(users);
@@ -1352,7 +1374,9 @@ public class DefaultCloud20ServiceTest {
     public void addUser_responseCreated_returns201() throws Exception {
         UriBuilder uriBuilder = mock(UriBuilder.class);
         URI uri = new URI("");
-        when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(new User());
+        User user = new User();
+        when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(user);
+        when(userConverterCloudV20.toUser(any(User.class))).thenReturn(new org.openstack.docs.identity.api.v2.User());
         doNothing().when(spy).assignProperRole(eq(httpHeaders), eq(authToken), any(ScopeAccess.class), any(User.class));
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         doReturn(uriBuilder).when(uriBuilder).path(anyString());
@@ -1391,8 +1415,8 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void userDisabledExceptionResponse_setsMessage() throws Exception {
         Response.ResponseBuilder responseBuilder = defaultCloud20Service.userDisabledExceptionResponse("userName");
-        JAXBElement<UserDisabledFault> jaxbElement = ((JAXBElement<UserDisabledFault>) (responseBuilder.build().getEntity()));
-        assertThat("message", jaxbElement.getValue().getMessage(), equalTo("userName"));
+        UserDisabledFault object = (UserDisabledFault)responseBuilder.build().getEntity();
+        assertThat("message", object.getMessage(), equalTo("userName"));
     }
 
     @Test
@@ -1404,8 +1428,8 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void tenantConflictExceptionResponse_setsMessage() throws Exception {
         Response.ResponseBuilder responseBuilder = defaultCloud20Service.tenantConflictExceptionResponse("responseMessage");
-        JAXBElement<TenantConflictFault> jaxbElement = ((JAXBElement<TenantConflictFault>) (responseBuilder.build().getEntity()));
-        assertThat("message", jaxbElement.getValue().getMessage(), equalTo("responseMessage"));
+        TenantConflictFault object = (TenantConflictFault)responseBuilder.build().getEntity();
+        assertThat("message", object.getMessage(), equalTo("responseMessage"));
     }
 
     @Test
@@ -1417,8 +1441,8 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void userConflictExceptionResponse_setsMessage() throws Exception {
         Response.ResponseBuilder responseBuilder = defaultCloud20Service.userConflictExceptionResponse("responseMessage");
-        JAXBElement<BadRequestFault> jaxbElement = ((JAXBElement<BadRequestFault>) (responseBuilder.build().getEntity()));
-        assertThat("message", jaxbElement.getValue().getMessage(), equalTo("responseMessage"));
+        BadRequestFault object = (BadRequestFault)responseBuilder.build().getEntity();
+        assertThat("message", object.getMessage(), equalTo("responseMessage"));
     }
 
     @Test
@@ -1492,6 +1516,61 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void addUserRole_callsCheckForMultipleIdentityRoles() throws Exception {
+        spy.addUserRole(null, authToken, userId, tenantRole.getRoleRsId());
+        verify(spy).checkForMultipleIdentityRoles(any(User.class), any(ClientRole.class));
+    }
+
+    @Test
+    public void checkForMultipleIdentityRoles_callsTenantService_getGlobalRoles() throws Exception {
+        spy.checkForMultipleIdentityRoles(new User(), null);
+        verify(tenantService).getGlobalRolesForUser(any(User.class));
+    }
+
+    @Test
+    public void checkForMultipleIdentityRoles_doesNothing_withNullRoles() throws Exception {
+        spy.checkForMultipleIdentityRoles(new User(), null);
+        assertTrue("method threw no errors", true);
+    }
+
+    @Test
+    public void checkForMultipleIdentityRoles_doesNothing_withNonIdentityRole() throws Exception {
+        User user1 = new User();
+        user1.setRoles(new ArrayList<TenantRole>());
+        ClientRole roleToAdd = new ClientRole();
+        roleToAdd.setName("notIdentity:role");
+        spy.checkForMultipleIdentityRoles(user1, roleToAdd);
+        assertTrue("method threw no errors", true);
+    }
+
+    @Test
+    public void checkForMultipleIdentityRoles_doesNothing_withAddingIdentityRoleToUserWithoutIdentityRole() throws Exception {
+        User user1 = new User();
+        ArrayList<TenantRole> roles = new ArrayList<TenantRole>();
+        TenantRole tenantRole1 = new TenantRole();
+        tenantRole.setName("notIdentity:role");
+        roles.add(tenantRole1);
+        user1.setRoles(roles);
+        ClientRole roleToAdd = new ClientRole();
+        roleToAdd.setName("Identity:role");
+        spy.checkForMultipleIdentityRoles(user1, roleToAdd);
+        assertTrue("method threw no errors", true);
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void checkForMultipleIdentityRoles_throwsBadRequestException_withIdentityRoleAddedToUserWithIdentityRole() throws Exception {
+        User user1 = new User();
+        ArrayList<TenantRole> roles = new ArrayList<TenantRole>();
+        TenantRole tenantRole1 = new TenantRole();
+        tenantRole1.setName("identity:role");
+        roles.add(tenantRole1);
+        ClientRole roleToAdd = new ClientRole();
+        roleToAdd.setName("Identity:role");
+        when(tenantService.getGlobalRolesForUser(user1)).thenReturn(roles);
+        spy.checkForMultipleIdentityRoles(user1, roleToAdd);
+    }
+
+    @Test
     public void addTenant_callsverifyServiceAdminLevelAccess() throws Exception {
         spy.addTenant(null, null, authToken, null);
         verify(spy).verifyServiceAdminLevelAccess(authToken);
@@ -1521,6 +1600,8 @@ public class DefaultCloud20ServiceTest {
         UriBuilder uriBuilder = mock(UriBuilder.class);
         URI uri = new URI("");
         Tenant domainTenant = mock(Tenant.class);
+        org.openstack.docs.identity.api.v2.Tenant tenant = new org.openstack.docs.identity.api.v2.Tenant();
+        JAXBElement<org.openstack.docs.identity.api.v2.Tenant> someValue = new JAXBElement(new QName("http://docs.openstack.org/identity/api/v2.0", "tenant"), org.openstack.docs.identity.api.v2.Tenant.class, null, tenant);
         org.openstack.docs.identity.api.v2.ObjectFactory objectFactory = mock(org.openstack.docs.identity.api.v2.ObjectFactory.class);
         doReturn(domainTenant).when(tenantConverterCloudV20).toTenantDO(any(org.openstack.docs.identity.api.v2.Tenant.class));
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
@@ -1529,6 +1610,7 @@ public class DefaultCloud20ServiceTest {
         doReturn(tenantId).when(domainTenant).getTenantId();
         when(jaxbObjectFactories.getOpenStackIdentityV2Factory()).thenReturn(objectFactory);
         when(tenantConverterCloudV20.toTenant(any(Tenant.class))).thenReturn(tenantOS);
+        when(objectFactory.createTenant(tenantOS)).thenReturn(someValue);
         Response.ResponseBuilder responseBuilder = spy.addTenant(httpHeaders, uriInfo, authToken, tenantOS);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(201));
     }
@@ -1577,10 +1659,12 @@ public class DefaultCloud20ServiceTest {
         UriBuilder uriBuilder = mock(UriBuilder.class);
         URI uri = new URI("");
         org.openstack.docs.identity.api.ext.os_ksadm.v1.ObjectFactory objectFactory = mock(org.openstack.docs.identity.api.ext.os_ksadm.v1.ObjectFactory.class);
+        JAXBElement<Service> someValue = new JAXBElement(new QName("http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0", "service"), Service.class, null, service);
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         doReturn(uriBuilder).when(uriBuilder).path(anyString());
         doReturn(uri).when(uriBuilder).build();
         when(jaxbObjectFactories.getOpenStackIdentityExtKsadmnV1Factory()).thenReturn(objectFactory);
+        when(objectFactory.createService(service)).thenReturn(someValue);
         Response.ResponseBuilder responseBuilder = spy.addService(httpHeaders, uriInfo, authToken, service);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(201));
     }
@@ -1632,7 +1716,22 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void addRole_responseCreated() throws Exception {
+    public void addRole_roleWithIdentityNameWithNotIdenityAdmin_returns403Status() throws Exception {
+        Role role1 = new Role();
+        role1.setName("Identity:role");
+        role1.setServiceId(null);
+        doThrow(new ForbiddenException()).when(spy).verifyIdentityAdminLevelAccess(authToken);
+        Response.ResponseBuilder responseBuilder = spy.addRole(null, null, authToken, role1);
+        assertThat("response status", responseBuilder.build().getStatus(), equalTo(403));
+    }
+
+    @Test
+    public void addRole_roleWithIdentityNameWithIdentityAdmin_returns201Status() throws Exception {
+        Role role1 = new Role();
+        role1.setName("Identity:role");
+        JAXBElement<Role> someValue = new JAXBElement(new QName("http://docs.openstack.org/identity/api/v2.0", "role"), Role.class, null, role);
+        doNothing().when(spy).verifyIdentityAdminLevelAccess(authToken);
+        doReturn(application).when(spy).checkAndGetApplication(anyString());
         UriBuilder uriBuilder = mock(UriBuilder.class);
         URI uri = new URI("");
         org.openstack.docs.identity.api.v2.ObjectFactory objectFactory = mock(org.openstack.docs.identity.api.v2.ObjectFactory.class);
@@ -1640,7 +1739,24 @@ public class DefaultCloud20ServiceTest {
         doReturn(uriBuilder).when(uriBuilder).path(anyString());
         doReturn(uri).when(uriBuilder).build();
         when(jaxbObjectFactories.getOpenStackIdentityV2Factory()).thenReturn(objectFactory);
+        when(objectFactory.createRole(any(Role.class))).thenReturn(someValue);
+        when(roleConverterCloudV20.toRoleFromClientRole(any(ClientRole.class))).thenReturn(role1);
+        Response.ResponseBuilder responseBuilder = spy.addRole(httpHeaders, uriInfo, authToken, role1);
+        assertThat("response status", responseBuilder.build().getStatus(), equalTo(201));
+    }
+
+    @Test
+    public void addRole_responseCreated() throws Exception {
+        UriBuilder uriBuilder = mock(UriBuilder.class);
+        URI uri = new URI("");
+        org.openstack.docs.identity.api.v2.ObjectFactory objectFactory = mock(org.openstack.docs.identity.api.v2.ObjectFactory.class);
+        JAXBElement<Role> someValue = new JAXBElement(new QName("http://docs.openstack.org/identity/api/v2.0", "role"), Role.class, null, role);
+        when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
+        doReturn(uriBuilder).when(uriBuilder).path(anyString());
+        doReturn(uri).when(uriBuilder).build();
+        when(jaxbObjectFactories.getOpenStackIdentityV2Factory()).thenReturn(objectFactory);
         when(roleConverterCloudV20.toRoleFromClientRole(any(ClientRole.class))).thenReturn(role);
+        when(objectFactory.createRole(role)).thenReturn(someValue);
         Response.ResponseBuilder responseBuilder = spy.addRole(httpHeaders, uriInfo, authToken, role);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(201));
     }
@@ -1728,7 +1844,7 @@ public class DefaultCloud20ServiceTest {
         when(userGroupService.getGroupById(config.getInt(org.mockito.Matchers.<String>any()))).thenReturn(group);
         when(cloudKsGroupBuilder.build(org.mockito.Matchers.<Group>any())).thenReturn(groupKs);
         Response.ResponseBuilder responseBuilder = defaultCloud20Service.listUserGroups(null, authToken, userId);
-        assertThat("Default Group added", ((com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups) ((JAXBElement) responseBuilder.build().getEntity()).getValue()).getGroup().get(0).getName(), equalTo("Group1"));
+        assertThat("Default Group added", ((com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups)responseBuilder.build().getEntity()).getGroup().get(0).getName(), equalTo("Group1"));
     }
 
     @Test
@@ -1759,10 +1875,10 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void listUserGroups_withValidUser_returnsAJaxbElement() throws Exception {
+    public void listUserGroups_withValidUser_returnsGroups() throws Exception {
         when(userService.getUserById(userId)).thenReturn(user);
         Response.ResponseBuilder responseBuilder = spy.listUserGroups(null, authToken, userId);
-        assertThat("code", responseBuilder.build().getEntity(), instanceOf(javax.xml.bind.JAXBElement.class));
+        assertThat("code", responseBuilder.build().getEntity(), instanceOf(com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups.class));
     }
 
     @Test
@@ -1829,12 +1945,14 @@ public class DefaultCloud20ServiceTest {
         UriBuilder uriBuilder = mock(UriBuilder.class);
         URI uri = new URI("101");
         org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory objectFactory = mock(org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory.class);
+        JAXBElement<EndpointTemplate> someValue = new JAXBElement(new QName("http://docs.openstack.org/identity/api/ext/OS-KSCATALOG/v1.0", "endpointTemplate"), EndpointTemplate.class, null, endpointTemplate);
         when(endpointConverterCloudV20.toCloudBaseUrl(endpointTemplate)).thenReturn(cloudBaseUrl);
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         doReturn(uriBuilder).when(uriBuilder).path("101");
         doReturn(uri).when(uriBuilder).build();
         when(endpointConverterCloudV20.toEndpointTemplate(cloudBaseUrl)).thenReturn(endpointTemplate);
         when(jaxbObjectFactories.getOpenStackIdentityExtKscatalogV1Factory()).thenReturn(objectFactory);
+        when(objectFactory.createEndpointTemplate(endpointTemplate)).thenReturn(someValue);
         Response.ResponseBuilder responseBuilder = spy.addEndpointTemplate(httpHeaders, uriInfo, authToken, endpointTemplate);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(201));
     }
@@ -2147,7 +2265,7 @@ public class DefaultCloud20ServiceTest {
         doReturn(user).when(spy).checkAndGetUser("userId");
         Response response = spy.deleteUserCredential(null, authToken, "userId", credentialType).build();
         assertThat("status", response.getStatus(), equalTo(404));
-        assertThat("message", ((JAXBElement<ItemNotFoundFault>) response.getEntity()).getValue().getMessage(),
+        assertThat("message", ((ItemNotFoundFault)response.getEntity()).getMessage(),
                 equalTo("Credential type RAX-KSKEY:apiKeyCredentials was not found for User with Id: 123"));
     }
 
@@ -3967,9 +4085,12 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void getExtension_extensionMapNotNullResponseOk_returns200() throws Exception {
+        Extension extension = new Extension();
+        JAXBElement<Extension> someValue = new JAXBElement(new QName("http://docs.openstack.org/common/api/v1.0", "extension"), Extension.class, null, extension);
         extensionMap = mock(HashMap.class);
         defaultCloud20Service.setExtensionMap(extensionMap);
         when(extensionMap.containsKey(anyObject())).thenReturn(true);
+        when(extensionMap.get(any())).thenReturn(someValue);
         Response.ResponseBuilder responseBuilder = defaultCloud20Service.getExtension(null, "RAX-KSKEY");
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
@@ -4241,8 +4362,10 @@ public class DefaultCloud20ServiceTest {
     public void badRequestExceptionResponse_doesNotSetDetails() throws Exception {
         BadRequestFault badRequestFault = mock(BadRequestFault.class);
         ObjectFactory objectFactory = mock(ObjectFactory.class);
+        JAXBElement<BadRequestFault> someFault = new JAXBElement(new QName("http://docs.openstack.org/identity/api/v2.0", "badRequest"), BadRequestFault.class, null, badRequestFault);
         when(jaxbObjectFactories.getOpenStackIdentityV2Factory()).thenReturn(objectFactory);
         when(objectFactory.createBadRequestFault()).thenReturn(badRequestFault);
+        when(objectFactory.createBadRequest(badRequestFault)).thenReturn(someFault);
         defaultCloud20Service.badRequestExceptionResponse("message");
         verify(badRequestFault, never()).setDetails(anyString());
     }
@@ -4255,5 +4378,17 @@ public class DefaultCloud20ServiceTest {
         TenantForAuthenticateResponse testTenant = defaultCloud20Service.convertTenantEntityToApi(test);
         assertThat("Verify Tenant",testTenant.getId(),equalTo(test.getTenantId()));
         assertThat("Verify Tenant",testTenant.getName(),equalTo(test.getName()));
+    }
+
+    @Test (expected = NotAuthenticatedException.class)
+    public void getUserByUsernameForAuthentication_throwsNotAuthenticatedException() throws Exception {
+        doThrow(new NotFoundException()).when(spy).checkAndGetUserByName("username");
+        spy.getUserByUsernameForAuthentication("username");
+    }
+
+    @Test (expected = NotAuthenticatedException.class)
+    public void getUserByIdForAuthentication_throwsNotAuthenticatedException() throws Exception {
+        doThrow(new NotFoundException()).when(spy).checkAndGetUser("id");
+        spy.getUserByIdForAuthentication("id");
     }
 }

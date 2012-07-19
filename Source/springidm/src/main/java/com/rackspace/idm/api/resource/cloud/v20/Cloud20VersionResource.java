@@ -61,7 +61,7 @@ public class Cloud20VersionResource {
         JAXBContext context = JAXBContext.newInstance("org.openstack.docs.common.api.v1:org.w3._2005.atom");
         Unmarshaller unmarshaller = context.createUnmarshaller();
         JAXBElement<VersionChoice> versionChoice = (JAXBElement<VersionChoice>) unmarshaller.unmarshal(new StringReader(responseXml));
-        return Response.ok(versionChoice).build();
+        return Response.ok(versionChoice.getValue()).build();
     }
     // Methods are currently not being used
     /*
@@ -454,7 +454,8 @@ public class Cloud20VersionResource {
     public Response addRole(
             @Context HttpHeaders httpHeaders,
             @Context UriInfo uriInfo,
-            @HeaderParam(X_AUTH_TOKEN) String authToken, Role role) throws IOException, JAXBException {
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            Role role) throws IOException, JAXBException {
         return getCloud20Service().addRole(httpHeaders, uriInfo, authToken, role).build();
     }
 

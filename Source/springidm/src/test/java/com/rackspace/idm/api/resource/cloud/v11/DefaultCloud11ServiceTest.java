@@ -212,8 +212,8 @@ public class DefaultCloud11ServiceTest {
 
         Response response = defaultCloud11Service.adminAuthenticateResponse(jaxbElement, null).build();
         assertThat("response status", response.getStatus(), equalTo(401));
-        assertThat("response message",((UnauthorizedFault) ((JAXBElement<UnauthorizedFault>) response.getEntity()).getValue()).getMessage(),equalTo("Username or api key is invalid"));
-        assertThat("response message",((UnauthorizedFault) ((JAXBElement<UnauthorizedFault>) response.getEntity()).getValue()).getDetails(),nullValue());
+        assertThat("response message",((UnauthorizedFault) (response.getEntity())).getMessage(),equalTo("Username or api key is invalid"));
+        assertThat("response message",((UnauthorizedFault) (response.getEntity())).getDetails(),nullValue());
 
     }
 
@@ -239,7 +239,7 @@ public class DefaultCloud11ServiceTest {
     public void getUserGroups_notAuthorized_returnsCorrectErrorMessage() throws Exception {
         doThrow(new NotAuthorizedException("You are not authorized to access this resource.")).when(spy).authenticateCloudAdminUserForGetRequests(request);
         Response.ResponseBuilder responseBuilder = spy.getUserGroups(request, "testUser", httpHeaders);
-        UnauthorizedFault entity = (UnauthorizedFault)((JAXBElement)responseBuilder.build().getEntity()).getValue();
+        UnauthorizedFault entity = (UnauthorizedFault) responseBuilder.build().getEntity();
         assertThat("message", entity.getMessage(), equalTo("You are not authorized to access this resource."));
     }
 
@@ -247,8 +247,16 @@ public class DefaultCloud11ServiceTest {
     public void getUserGroups_notAuthorized_returnsCorrectErrorCode() throws Exception {
         doThrow(new NotAuthorizedException("You are not authorized to access this resource.")).when(spy).authenticateCloudAdminUserForGetRequests(request);
         Response.ResponseBuilder responseBuilder = spy.getUserGroups(request, "testUser", httpHeaders);
-        UnauthorizedFault entity = (UnauthorizedFault)((JAXBElement)responseBuilder.build().getEntity()).getValue();
+        UnauthorizedFault entity = (UnauthorizedFault) responseBuilder.build().getEntity();
         assertThat("code", entity.getCode(), equalTo(401));
+    }
+
+    @Test
+    public void getUserGroups_notAuthorized_entityDetailsShouldBeNull() throws Exception {
+        doThrow(new NotAuthorizedException("You are not authorized to access this resource.")).when(spy).authenticateCloudAdminUserForGetRequests(request);
+        Response.ResponseBuilder responseBuilder = spy.getUserGroups(request, "testUser", httpHeaders);
+        UnauthorizedFault entity = (UnauthorizedFault) responseBuilder.build().getEntity();
+        assertThat("code", entity.getDetails(), nullValue());
     }
 
     @Test
@@ -256,7 +264,7 @@ public class DefaultCloud11ServiceTest {
         doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
         when(userService.getUser("testUser")).thenReturn(null);
         Response.ResponseBuilder responseBuilder = spy.getUserGroups(request, "testUser", httpHeaders);
-        ItemNotFoundFault entity = (ItemNotFoundFault)((JAXBElement)responseBuilder.build().getEntity()).getValue();
+        ItemNotFoundFault entity = (ItemNotFoundFault)responseBuilder.build().getEntity();
         assertThat("message", entity.getMessage(), equalTo("User not found :testUser"));
     }
 
@@ -265,7 +273,7 @@ public class DefaultCloud11ServiceTest {
         doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
         when(userService.getUser("testUser")).thenReturn(null);
         Response.ResponseBuilder responseBuilder = spy.getUserGroups(request, "testUser", httpHeaders);
-        ItemNotFoundFault entity = (ItemNotFoundFault)((JAXBElement)responseBuilder.build().getEntity()).getValue();
+        ItemNotFoundFault entity = (ItemNotFoundFault)responseBuilder.build().getEntity();
         assertThat("code", entity.getCode(), equalTo(404));
     }
 
@@ -274,7 +282,7 @@ public class DefaultCloud11ServiceTest {
         doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
         when(userService.getUser("testUser")).thenReturn(null);
         Response.ResponseBuilder responseBuilder = spy.getUserGroups(request, "testUser", httpHeaders);
-        ItemNotFoundFault entity = (ItemNotFoundFault)((JAXBElement)responseBuilder.build().getEntity()).getValue();
+        ItemNotFoundFault entity = (ItemNotFoundFault)responseBuilder.build().getEntity();
         assertThat("code", entity.getDetails(), equalTo(null));
     }
 
@@ -2413,7 +2421,7 @@ public class DefaultCloud11ServiceTest {
         doNothing().when(spy).authenticateCloudAdminUser(request);
         when(userService.getUser("username")).thenReturn(new com.rackspace.idm.domain.entity.User());
         Response.ResponseBuilder responseBuilder = spy.createUser(request, httpHeaders, uriInfo, user);
-        UsernameConflictFault conflictFault =(UsernameConflictFault)((JAXBElement)responseBuilder.build().getEntity()).getValue();
+        UsernameConflictFault conflictFault =(UsernameConflictFault)responseBuilder.build().getEntity();
         assertThat("message", conflictFault.getMessage(), equalTo("Username username already exists"));
     }
 
@@ -2424,7 +2432,7 @@ public class DefaultCloud11ServiceTest {
         doNothing().when(spy).authenticateCloudAdminUser(request);
         when(userService.getUser("username")).thenReturn(new com.rackspace.idm.domain.entity.User());
         Response.ResponseBuilder responseBuilder = spy.createUser(request, httpHeaders, uriInfo, user);
-        UsernameConflictFault conflictFault =(UsernameConflictFault)((JAXBElement)responseBuilder.build().getEntity()).getValue();
+        UsernameConflictFault conflictFault =(UsernameConflictFault)responseBuilder.build().getEntity();
         assertThat("message", conflictFault.getCode(), equalTo(409));
     }
 
@@ -2435,7 +2443,7 @@ public class DefaultCloud11ServiceTest {
         doNothing().when(spy).authenticateCloudAdminUser(request);
         when(userService.getUser("username")).thenReturn(new com.rackspace.idm.domain.entity.User());
         Response.ResponseBuilder responseBuilder = spy.createUser(request, httpHeaders, uriInfo, user);
-        UsernameConflictFault conflictFault =(UsernameConflictFault)((JAXBElement)responseBuilder.build().getEntity()).getValue();
+        UsernameConflictFault conflictFault =(UsernameConflictFault)responseBuilder.build().getEntity();
         assertThat("details", conflictFault.getDetails(), equalTo(null));
     }
 
@@ -2513,30 +2521,31 @@ public class DefaultCloud11ServiceTest {
         assertThat("response code", responseBuilder.build().getStatus(), org.hamcrest.Matchers.equalTo(200));
     }
 
-    @Test(expected = BadRequestException.class)
+    @Test
     public void getExtension_blankExtensionAlias_throwsBadRequestException() throws IOException{
-        defaultCloud11Service.getExtension(httpHeaders, "");
-        assertTrue("expecting exception", false);
-    }
-
-    @Test(expected = NotFoundException.class)
-    public void getExtension_withCurrentExtensions_throwsNotFoundException() throws IOException{  //There are no extensions at this time.
-        defaultCloud11Service.extensions(httpHeaders);
-        defaultCloud11Service.getExtension(httpHeaders, "123");
-        assertTrue("expecting exception", false);
-
-    }
-
-    @Test(expected = NotFoundException.class)
-    public void getExtension_withExtensionMap_throwsNotFoundException() throws IOException{
-        defaultCloud11Service.getExtension(httpHeaders, "123");
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.getExtension(httpHeaders, "123");
+        Response.ResponseBuilder responseBuilder = defaultCloud11Service.getExtension(httpHeaders, "");
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(400));
     }
 
-    @Test(expected = NotFoundException.class)
+    @Test
+    public void getExtension_withCurrentExtensions_throwsNotFoundException() throws IOException{  //There are no extensions at this time.
+        defaultCloud11Service.extensions(httpHeaders);
+        Response.ResponseBuilder responseBuilder = defaultCloud11Service.getExtension(httpHeaders, "123");
+        assertThat("response status", responseBuilder.build().getStatus(), equalTo(404));
+
+    }
+
+    @Test
+    public void getExtension_withExtensionMap_throwsNotFoundException() throws IOException{
+        defaultCloud11Service.getExtension(httpHeaders, "123");
+        Response.ResponseBuilder responseBuilder = defaultCloud11Service.getExtension(httpHeaders, "123");
+        assertThat("response status", responseBuilder.build().getStatus(), equalTo(404));
+    }
+
+    @Test
     public void getExtension_invalidExtension_throwsNotFoundException() throws IOException{
-        defaultCloud11Service.getExtension(httpHeaders, "INVALID");
+        Response.ResponseBuilder responseBuilder = defaultCloud11Service.getExtension(httpHeaders, "INVALID");
+        assertThat("response status", responseBuilder.build().getStatus(), equalTo(404));
     }
 
     @Test(expected = CloudAdminAuthorizationException.class)

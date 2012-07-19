@@ -59,10 +59,10 @@ public class CloudVersionsResource {
     @GET
     public Response getInternalCloudVersionsInfo() throws JAXBException {
         final String responseXml = cloudContractDescriptionBuilder.buildInternalRootPage();
-        JAXBContext context = JAXBContext.newInstance("org.openstack.docs.common.api.v1:org.w3._2005.atom");
+        JAXBContext context = JAXBContext.newInstance(VersionChoiceList.class);
         Unmarshaller unmarshaller = context.createUnmarshaller();
         JAXBElement<VersionChoiceList> versionChoice = (JAXBElement<VersionChoiceList>) unmarshaller.unmarshal(new StringReader(responseXml));
-        return Response.ok(versionChoice).build();
+        return Response.ok(versionChoice.getValue()).build();
     }
 
     public Response getPublicCloudVersionsInfo(@Context HttpHeaders httpHeaders) throws IOException {

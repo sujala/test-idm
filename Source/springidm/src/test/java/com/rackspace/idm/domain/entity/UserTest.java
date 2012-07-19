@@ -7,13 +7,25 @@ import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
 import javax.validation.Validator;
 
+import com.rackspace.idm.GlobalConstants;
 import junit.framework.Assert;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.junit.Before;
 import org.junit.Test;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+
 public class UserTest {
+
+    User user;
+
+    @Before
+    public void setUp() throws Exception {
+        user = new User();
+    }
 
     private User getTestUser() {
         Password pwd = Password.newInstance("delete_my_password");
@@ -262,5 +274,532 @@ public class UserTest {
         Assert.assertEquals(0, violations.size());
 
         System.out.println(violations);
+    }
+
+    @Test
+    public void setUniqueId_uniqueIdIsNull_doesNotSet() throws Exception {
+        user.setUniqueId("uniqueId");
+        user.setUniqueId(null);
+        String result = user.getUniqueId();
+        assertThat("unique id", result, equalTo("uniqueId"));
+    }
+
+    @Test
+    public void hasEmptyPassword_passwordObjIsNull_returnsTrue() throws Exception {
+        user.setPasswordObj(null);
+        boolean result = user.hasEmptyPassword();
+        assertThat("boolean", result, equalTo(true));
+    }
+
+    @Test
+    public void hasEmptyPassword_passwordObjValueIsBlank_returnsTrue() throws Exception {
+        Password password = new Password();
+        user.setPasswordObj(password);
+        boolean result = user.hasEmptyPassword();
+        assertThat("boolean", result, equalTo(true));
+    }
+
+    @Test
+    public void hasEmptyPassword_passwordObjNotNullAndValueNotBlank_returnsFalse() throws Exception {
+        Password password = new Password();
+        password.setValue("password");
+        user.setPasswordObj(password);
+        boolean result = user.hasEmptyPassword();
+        assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
+    public void setDefaults_localeNotNullAndTimeZoneObjNotNull_setsEnabledToTrue() throws Exception {
+        user.setPreferredLang(GlobalConstants.USER_PREFERRED_LANG_DEFAULT);
+        user.setTimeZone(GlobalConstants.USER_TIME_ZONE_DEFAULT);
+        user.setEnabled(false);
+        user.setDefaults();
+        Boolean result = user.isEnabled();
+        assertThat("enabled", result, equalTo(true));
+    }
+    
+    @Test
+    public void copyChanges_modifiedUserAttributesNotNull_copyChanges() throws Exception {
+        User modifiedUser = new User();
+        modifiedUser.setCustomerId("newCustomerId");
+        modifiedUser.setEnabled(true);
+        modifiedUser.setPersonId("newPersonId");
+        modifiedUser.setFirstname("newFirstName");
+        modifiedUser.setMiddlename("newMiddleName");
+        modifiedUser.setLastname("newLastName");
+        modifiedUser.setDisplayName("newDisplayName");
+        modifiedUser.setEmail("newEmail");
+        modifiedUser.setPreferredLang("newPreferredLang");
+        modifiedUser.setTimeZone(GlobalConstants.USER_TIME_ZONE_DEFAULT);
+        modifiedUser.setCountry("newCountry");
+        modifiedUser.setRegion("newRegion");
+        modifiedUser.setPassword("newPassword");
+        modifiedUser.setUsername("newUsername");
+        
+        user.copyChanges(modifiedUser);
+        
+        assertThat("customer id", user.getCustomerId(), equalTo("newCustomerId"));
+        assertThat("enabled", user.isEnabled(), equalTo(true));
+        assertThat("person id", user.getPersonId(), equalTo("newPersonId"));
+        assertThat("first anme", user.getFirstname(), equalTo("newFirstName"));
+        assertThat("middle name", user.getMiddlename(), equalTo("newMiddleName"));
+        assertThat("last name", user.getLastname(), equalTo("newLastName"));
+        assertThat("display name", user.getDisplayName(), equalTo("newDisplayName"));
+        assertThat("email", user.getEmail(), equalTo("newEmail"));
+        assertThat("pref lang", user.getPreferredLang(), equalTo("newpreferredlang"));
+        assertThat("time zone", user.getTimeZone(), equalTo(GlobalConstants.USER_TIME_ZONE_DEFAULT));
+        assertThat("country", user.getCountry(), equalTo("newCountry"));
+        assertThat("region", user.getRegion(), equalTo("newRegion"));
+        assertThat("password", user.getPassword(), equalTo("newPassword"));
+        assertThat("username", user.getUsername(), equalTo("newUsername"));
+    }
+    
+    @Test
+    public void equals_allAttributesMatches_returnsTrue() throws Exception {
+        DateTime dateTime = new DateTime();
+        User object = new User();
+        object.setCustomerId("customerId");
+        object.setEnabled(true);
+        object.setPersonId("personId");
+        object.setFirstname("firstName");
+        object.setMiddlename("middleName");
+        object.setLastname("lastName");
+        object.setDisplayName("displayName");
+        object.setEmail("email");
+        object.setPreferredLang("preferredLang");
+        object.setTimeZone(GlobalConstants.USER_TIME_ZONE_DEFAULT);
+        object.setCountry("country");
+        object.setRegion("region");
+        object.setPassword("password");
+        object.setUsername("username");
+        object.setApiKey("apiKey");
+        object.setCreated(dateTime);
+        object.setId("id");
+        object.setMaxLoginFailuresExceded(true);
+        object.setMossoId(1);
+        object.setNastId("nastId");
+        object.setSecureId("secureId");
+        object.setSoftDeletedTimestamp(dateTime);
+        object.setUpdated(dateTime);
+
+        user.setCustomerId("customerId");
+        user.setEnabled(true);
+        user.setPersonId("personId");
+        user.setFirstname("firstName");
+        user.setMiddlename("middleName");
+        user.setLastname("lastName");
+        user.setDisplayName("displayName");
+        user.setEmail("email");
+        user.setPreferredLang("preferredLang");
+        user.setTimeZone(GlobalConstants.USER_TIME_ZONE_DEFAULT);
+        user.setCountry("country");
+        user.setRegion("region");
+        user.setPassword("password");
+        user.setUsername("username");
+        user.setApiKey("apiKey");
+        user.setCreated(dateTime);
+        user.setId("id");
+        user.setMaxLoginFailuresExceded(true);
+        user.setMossoId(1);
+        user.setNastId("nastId");
+        user.setSecureId("secureId");
+        user.setSoftDeletedTimestamp(dateTime);
+        user.setUpdated(dateTime);
+
+        boolean result = user.equals(object);
+        assertThat("boolean", result, equalTo(true));
+    }
+
+    @Test
+    public void equals_createdIsNullAndObjectCreatedNotNull_returnsFalse() throws Exception {
+        User object = new User();
+        object.setCreated(new DateTime());
+        user.setCreated(null);
+        boolean result = user.equals(object);
+        assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
+    public void equals_createdNotNullAndNotEqualsObjectCreated_returnsFalse() throws Exception {
+        User object = new User();
+        object.setCreated(new DateTime());
+        user.setCreated(new DateTime(1));
+        boolean result = user.equals(object);
+        assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
+    public void equals_credentialIsNullAndObjectCredentialNotNull_returnsFalse() throws Exception {
+        User object = new User();
+        object.setPassword("notNull");
+        user.setPassword(null);
+        boolean result = user.equals(object);
+        assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
+    public void equals_credentialNotNullAndNotEqualsObjectCredential_returnsFalse() throws Exception {
+        User object = new User();
+        object.setPassword("notNull");
+        user.setPassword("notSame");
+        boolean result = user.equals(object);
+        assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
+    public void equals_idIsNullAndObjectIdNotNull_returnsFalse() throws Exception {
+        User object = new User();
+        object.setId("notNull");
+        user.setId(null);
+        boolean result = user.equals(object);
+        assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
+    public void equals_idNotNullAndNotEqualsObjectId_returnsFalse() throws Exception {
+        User object = new User();
+        object.setId("notNull");
+        user.setId("notSame");
+        boolean result = user.equals(object);
+        assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
+    public void equals_maxLoginFailuresExcededIsNullAndObjectMaxLoginFailuresExcededNotNull_returnsFalse() throws Exception {
+        User object = new User();
+        object.setMaxLoginFailuresExceded(true);
+        user.setMaxLoginFailuresExceded(null);
+        boolean result = user.equals(object);
+        assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
+    public void equals_maxLoginFailuresExcededNotNullAndNotEqualsObjectMaxLoginFailuresExceded_returnsFalse() throws Exception {
+        User object = new User();
+        object.setMaxLoginFailuresExceded(true);
+        user.setMaxLoginFailuresExceded(false);
+        boolean result = user.equals(object);
+        assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
+    public void equals_mossoIdIsNullAndObjectMossoIdNotNull_returnsFalse() throws Exception {
+        User object = new User();
+        object.setMossoId(1);
+        user.setMossoId(null);
+        boolean result = user.equals(object);
+        assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
+    public void equals_mossoIdNotNullAndNotEqualsObjectMossoId_returnsFalse() throws Exception {
+        User object = new User();
+        object.setMossoId(1);
+        user.setMossoId(2);
+        boolean result = user.equals(object);
+        assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
+    public void equals_nameIsNullAndObjectNameNotNull_returnsFalse() throws Exception {
+        User object = new User();
+        object.setFirstname("notNull");
+        object.setMiddlename("notNull");
+        object.setLastname("notNull");
+        user.setFirstname(null);
+        user.setLastname(null);
+        user.setMiddlename(null);
+        boolean result = user.equals(object);
+        assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
+    public void equals_nameNotNullAndNotEqualsObjectName_returnsFalse() throws Exception {
+        User object = new User();
+        object.setFirstname("notNull");
+        object.setMiddlename("notNull");
+        object.setLastname("notNull");
+        user.setFirstname("notSame");
+        user.setLastname("notSame");
+        user.setMiddlename("notSame");
+        boolean result = user.equals(object);
+        assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
+    public void equals_nastIdIsNullAndObjectNastIdNotNull_returnsFalse() throws Exception {
+        User object = new User();
+        object.setNastId("notNull");
+        user.setNastId(null);
+        boolean result = user.equals(object);
+        assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
+    public void equals_nastIdNotNullAndNotEqualsObjectNastId_returnsFalse() throws Exception {
+        User object = new User();
+        object.setNastId("notNull");
+        user.setNastId("notSame");
+        boolean result = user.equals(object);
+        assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
+    public void equals_personIdIsNullAndObjectPersonIdNotNull_returnsFalse() throws Exception {
+        User object = new User();
+        object.setPersonId("notNull");
+        user.setPersonId(null);
+        boolean result = user.equals(object);
+        assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
+    public void equals_personIdNotNullAndNotEqualsObjectPersonId_returnsFalse() throws Exception {
+        User object = new User();
+        object.setPersonId("notNull");
+        user.setPersonId("notSame");
+        boolean result = user.equals(object);
+        assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
+    public void equals_preferenceIsNullAndObjectPreferenceNotNull_returnsFalse() throws Exception {
+        User object = new User();
+        object.setPreferredLang("notNull");
+        user.setPreferredLang(null);
+        boolean result = user.equals(object);
+        assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
+    public void equals_preferenceNotNullAndNotEqualsObjectPreference_returnsFalse() throws Exception {
+        User object = new User();
+        object.setPreferredLang("notNull");
+        user.setPreferredLang("notSame");
+        boolean result = user.equals(object);
+        assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
+    public void equals_regionIsNullAndObjectRegionNotNull_returnsFalse() throws Exception {
+        User object = new User();
+        object.setRegion("notNull");
+        user.setRegion(null);
+        boolean result = user.equals(object);
+        assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
+    public void equals_regionNotNullAndNotEqualsObjectRegion_returnsFalse() throws Exception {
+        User object = new User();
+        object.setRegion("notNull");
+        user.setRegion("notSame");
+        boolean result = user.equals(object);
+        assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
+    public void equals_secureIdIsNullAndObjectSecureIdNotNull_returnsFalse() throws Exception {
+        User object = new User();
+        object.setSecureId("notNull");
+        user.setSecureId(null);
+        boolean result = user.equals(object);
+        assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
+    public void equals_secureIdNotNullAndNotEqualsObjectSecureId_returnsFalse() throws Exception {
+        User object = new User();
+        object.setSecureId("notNull");
+        user.setSecureId("notSame");
+        boolean result = user.equals(object);
+        assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
+    public void equals_softDeletedTimeStampIsNullAndObjectSoftDeletedTimeStampNotNull_returnsFalse() throws Exception {
+        User object = new User();
+        object.setSoftDeletedTimestamp(new DateTime());
+        user.setSoftDeletedTimestamp(null);
+        boolean result = user.equals(object);
+        assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
+    public void equals_softDeletedTimeStampNotNullAndNotEqualsObjectSoftDeletedTimeStamp_returnsFalse() throws Exception {
+        User object = new User();
+        object.setSoftDeletedTimestamp(new DateTime());
+        user.setSoftDeletedTimestamp(new DateTime(1));
+        boolean result = user.equals(object);
+        assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
+    public void equals_uniqueIdIsNullAndObjectUniqueIdNotNull_returnsFalse() throws Exception {
+        User object = new User();
+        object.setUniqueId("notNull");
+        user.setUniqueId(null);
+        boolean result = user.equals(object);
+        assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
+    public void equals_uniqueIdNotNullAndNotEqualsObjectUniqueId_returnsFalse() throws Exception {
+        User object = new User();
+        object.setUniqueId("notNull");
+        user.setUniqueId("notSame");
+        boolean result = user.equals(object);
+        assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
+    public void equals_updatedIsNullAndObjectUpdatedNotNull_returnsFalse() throws Exception {
+        User object = new User();
+        object.setUpdated(new DateTime());
+        user.setUpdated(null);
+        boolean result = user.equals(object);
+        assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
+    public void equals_updatedNotNullAndNotEqualsObjectUpdated_returnsFalse() throws Exception {
+        User object = new User();
+        object.setUpdated(new DateTime());
+        user.setUpdated(new DateTime(1));
+        boolean result = user.equals(object);
+        assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
+    public void equals_usernameIsNullAndObjectUsernameNotNull_returnsFalse() throws Exception {
+        User object = new User();
+        object.setUsername("notNull");
+        user.setUsername(null);
+        boolean result = user.equals(object);
+        assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
+    public void equals_usernameNotNullAndNotEqualsObjectUsername_returnsFalse() throws Exception {
+        User object = new User();
+        object.setUsername("notNull");
+        user.setUsername("notSame");
+        boolean result = user.equals(object);
+        assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
+    public void hashCode_attributesNotNull_returnsHashCode() throws Exception {
+        DateTime dateTime = new DateTime(1);
+        user.setCustomerId("customerId");
+        user.setEnabled(true);
+        user.setPersonId("personId");
+        user.setFirstname("firstName");
+        user.setMiddlename("middleName");
+        user.setLastname("lastName");
+        user.setDisplayName("displayName");
+        user.setEmail("email");
+        user.setPreferredLang("preferredLang");
+        user.setTimeZone(GlobalConstants.USER_TIME_ZONE_DEFAULT);
+        user.setCountry("country");
+        user.setRegion("region");
+        user.setPassword("password");
+        user.setUsername("username");
+        user.setApiKey("apiKey");
+        user.setCreated(dateTime);
+        user.setId("id");
+        user.setMaxLoginFailuresExceded(true);
+        user.setMossoId(1);
+        user.setNastId("nastId");
+        user.setSecureId("secureId");
+        user.setSoftDeletedTimestamp(dateTime);
+        user.setUpdated(dateTime);
+        int result = user.hashCode();
+        assertThat("hash code", result, equalTo(-1007885678));
+    }
+
+    @Test
+    public void hashCode_attributesIsNull_returnsHashCode() throws Exception {
+        user.setCustomerId(null);
+        user.setEnabled(null);
+        user.setPersonId(null);
+        user.setFirstname(null);
+        user.setMiddlename(null);
+        user.setLastname(null);
+        user.setDisplayName(null);
+        user.setEmail(null);
+        user.setPreferredLang(null);
+        user.setTimeZone(null);
+        user.setCountry(null);
+        user.setRegion(null);
+        user.setPassword(null);
+        user.setUsername(null);
+        user.setApiKey(null);
+        user.setCreated(null);
+        user.setId(null);
+        user.setMaxLoginFailuresExceded(null);
+        user.setMossoId(null);
+        user.setNastId(null);
+        user.setSecureId(null);
+        user.setSoftDeletedTimestamp(null);
+        user.setUpdated(null);
+        int result = user.hashCode();
+        assertThat("hash code", result, equalTo(714443561));
+    }
+
+    @Test
+    public void builder_build_returnsUser() throws Exception {
+        User.Builder builder = new User.Builder();
+        builder.setUsername("username");
+        builder.setEmail("email");
+        builder.setCisIds("customerId", "personId");
+        builder.setUniqueIds("username", "inum", "iname", "uniqueId");
+        builder.setNames("firstName", "middleName", "lastName", "displayName");
+        builder.setLocale("preferredLang", GlobalConstants.USER_TIME_ZONE_DEFAULT, "country");
+        builder.setApiKey("apiKey");
+        builder.setSecurityInfo("password", "question", "answer");
+        User result = builder.build();
+        assertThat("customer id", result.getCustomerId(), equalTo("customerId"));
+        assertThat("person id", result.getPersonId(), equalTo("personId"));
+        assertThat("first anme", result.getFirstname(), equalTo("firstName"));
+        assertThat("middle name", result.getMiddlename(), equalTo("middleName"));
+        assertThat("last name", result.getLastname(), equalTo("lastName"));
+        assertThat("display name", result.getDisplayName(), equalTo("displayName"));
+        assertThat("email", result.getEmail(), equalTo("email"));
+        assertThat("pref lang", result.getPreferredLang(), equalTo("preferredlang"));
+        assertThat("time zone", result.getTimeZone(), equalTo(GlobalConstants.USER_TIME_ZONE_DEFAULT));
+        assertThat("country", result.getCountry(), equalTo("country"));
+        assertThat("password", result.getPassword(), equalTo("password"));
+        assertThat("username", result.getUsername(), equalTo("username"));
+        assertThat("apikey", result.getApiKey(), equalTo("apiKey"));
+        assertThat("secret answer", result.getSecretAnswer(), equalTo("answer"));
+        assertThat("secret question", result.getSecretQuestion(), equalTo("question"));
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void builder_build_customerIdIsBlank_throwsIllegalStateExpcetion() throws Exception {
+        User.Builder builder = new User.Builder();
+        builder.setUsername("username");
+        builder.setEmail("email");
+        builder.setCisIds("", "personId");
+        builder.build();
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void builder_build_usernameIsBlank_throwsIllegalStateExpcetion() throws Exception {
+        User.Builder builder = new User.Builder();
+        builder.setUsername("");
+        builder.setEmail("email");
+        builder.setCisIds("customerId", "personId");
+        builder.build();
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void builder_build_emailIsBlank_throwsIllegalStateExpcetion() throws Exception {
+        User.Builder builder = new User.Builder();
+        builder.setUsername("username");
+        builder.setEmail("");
+        builder.setCisIds("customerId", "personId");
+        builder.build();
     }
 }

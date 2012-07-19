@@ -1,13 +1,15 @@
 package com.rackspace.idm.domain.config;
 
+import com.sun.jersey.api.json.JSONConfiguration;
+import com.sun.jersey.api.json.JSONJAXBContext;
+
+import javax.ws.rs.Produces;
 import javax.ws.rs.ext.ContextResolver;
 import javax.ws.rs.ext.Provider;
 import javax.xml.bind.JAXBContext;
 
-import com.sun.jersey.api.json.JSONConfiguration;
-import com.sun.jersey.api.json.JSONJAXBContext;
-
 @Provider
+@Produces("application/json")
 public class JAXBContextResolver implements ContextResolver<JAXBContext> {
 
     private static JAXBContext context;

@@ -1110,6 +1110,12 @@
                             <bindingDirectory>target/generated-resources/cloud11/xml/xslt</bindingDirectory>
                             <generateDirectory>target/generated-sources/xjc</generateDirectory>
                             <forceRegenerate>true</forceRegenerate>
+                            <bindingIncludes>
+                                <include>*.xjb</include>
+                            </bindingIncludes>
+                            <args>
+                                <arg>-Xannotate</arg>
+                            </args>
                         </configuration>
                     </execution>
                 </executions>
@@ -1411,6 +1417,13 @@
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>cobertura-maven-plugin</artifactId>
                 <version>2.5.1</version>
+                <configuration>
+                    <check>
+                    </check>
+                    <formats>
+                        <format>xml</format>
+                    </formats>
+                </configuration>
             </plugin>
 
             <!--maven-resource-->
