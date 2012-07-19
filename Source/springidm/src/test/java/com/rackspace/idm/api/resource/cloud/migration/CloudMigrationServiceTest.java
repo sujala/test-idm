@@ -302,7 +302,7 @@ public class CloudMigrationServiceTest {
         ArrayList<String> subUsers = new ArrayList<String>();
         subUsers.add("subUserName1");
         subUsers.add("subUserName2");
-        doReturn(subUsers).when(spy).getSubUsers(any(org.openstack.docs.identity.api.v2.User.class), anyString(), anyString(), any(RoleList.class));
+        doReturn(subUsers).when(spy).getSubUsers(any(org.openstack.docs.identity.api.v2.User.class), anyString(), any(RoleList.class));
         when(userService.userExistsByUsername(anyString())).thenReturn(false).thenReturn(false).thenReturn(true);
         doReturn(true).when(spy).isSubUser(any(RoleList.class));
         spy.migrateUserByUsername("cmarin2", true, "1");
@@ -327,7 +327,7 @@ public class CloudMigrationServiceTest {
         user11.setBaseURLRefs(new BaseURLRefList());
         when(client.getUserTenantsBaseUrls(anyString(), anyString(), anyString())).thenReturn(user11);
         doReturn("token").when(spy).getAdminToken();
-        doReturn(new ArrayList<String>()).when(spy).getSubUsers(any(org.openstack.docs.identity.api.v2.User.class), anyString(), anyString(), any(RoleList.class));
+        doReturn(new ArrayList<String>()).when(spy).getSubUsers(any(org.openstack.docs.identity.api.v2.User.class), anyString(), any(RoleList.class));
         doReturn(new User()).when(spy).addMigrationUser(any(org.openstack.docs.identity.api.v2.User.class), anyInt(), anyString(), anyString(), anyString(), any(SecretQA.class), anyString());
         doNothing().when(spy).addUserGlobalRoles(any(User.class), any(RoleList.class));
         when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
@@ -347,7 +347,7 @@ public class CloudMigrationServiceTest {
         user11.getBaseURLRefs().getBaseURLRef().add(new BaseURLRef());
         when(client.getUserTenantsBaseUrls(anyString(), anyString(), anyString())).thenReturn(user11);
         doReturn("token").when(spy).getAdminToken();
-        doReturn(new ArrayList<String>()).when(spy).getSubUsers(any(org.openstack.docs.identity.api.v2.User.class), anyString(), anyString(), any(RoleList.class));
+        doReturn(new ArrayList<String>()).when(spy).getSubUsers(any(org.openstack.docs.identity.api.v2.User.class), anyString(), any(RoleList.class));
         doReturn(new User()).when(spy).addMigrationUser(any(org.openstack.docs.identity.api.v2.User.class), anyInt(), anyString(), anyString(), anyString(), any(SecretQA.class), anyString());
         doNothing().when(spy).addUserGlobalRoles(any(User.class), any(RoleList.class));
         when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
@@ -369,7 +369,7 @@ public class CloudMigrationServiceTest {
         user11.getBaseURLRefs().getBaseURLRef().add(new BaseURLRef());
         when(client.getUserTenantsBaseUrls(anyString(), anyString(), anyString())).thenReturn(user11);
         doReturn("token").when(spy).getAdminToken();
-        doReturn(new ArrayList<String>()).when(spy).getSubUsers(any(org.openstack.docs.identity.api.v2.User.class), anyString(), anyString(), any(RoleList.class));
+        doReturn(new ArrayList<String>()).when(spy).getSubUsers(any(org.openstack.docs.identity.api.v2.User.class), anyString(), any(RoleList.class));
         doReturn(new User()).when(spy).addMigrationUser(any(org.openstack.docs.identity.api.v2.User.class), anyInt(), anyString(), anyString(), anyString(), any(SecretQA.class), anyString());
         doNothing().when(spy).addUserGlobalRoles(any(User.class), any(RoleList.class));
         when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
@@ -391,7 +391,7 @@ public class CloudMigrationServiceTest {
         user11.getBaseURLRefs().getBaseURLRef().add(new BaseURLRef());
         when(client.getUserTenantsBaseUrls(anyString(), anyString(), anyString())).thenReturn(user11);
         doReturn("token").when(spy).getAdminToken();
-        doReturn(new ArrayList<String>()).when(spy).getSubUsers(any(org.openstack.docs.identity.api.v2.User.class), anyString(), anyString(), any(RoleList.class));
+        doReturn(new ArrayList<String>()).when(spy).getSubUsers(any(org.openstack.docs.identity.api.v2.User.class), anyString(), any(RoleList.class));
         doReturn(new User()).when(spy).addMigrationUser(any(org.openstack.docs.identity.api.v2.User.class), anyInt(), anyString(), anyString(), anyString(), any(SecretQA.class), anyString());
         doNothing().when(spy).addUserGlobalRoles(any(User.class), any(RoleList.class));
         when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
@@ -413,7 +413,7 @@ public class CloudMigrationServiceTest {
         doReturn("token").when(spy).getAdminToken();
         ArrayList<String> subUsers = new ArrayList<String>();
         subUsers.add("subUserName");
-        doReturn(subUsers).when(spy).getSubUsers(any(org.openstack.docs.identity.api.v2.User.class), anyString(), anyString(), any(RoleList.class));
+        doReturn(subUsers).when(spy).getSubUsers(any(org.openstack.docs.identity.api.v2.User.class), anyString(), any(RoleList.class));
         when(userService.userExistsByUsername(anyString())).thenReturn(false);
         doReturn(new User()).when(spy).addMigrationUser(any(org.openstack.docs.identity.api.v2.User.class), anyInt(), anyString(), anyString(), anyString(), any(SecretQA.class), anyString());
         doNothing().when(spy).addUserGlobalRoles(any(User.class), any(RoleList.class));
@@ -436,7 +436,7 @@ public class CloudMigrationServiceTest {
         doReturn("token").when(spy).getAdminToken();
         when(client.getUserCredentials(anyString(), anyString())).thenReturn(new CredentialListType());
         doReturn("password").when(spy).getPassword(any(CredentialListType.class));
-        doReturn(new ArrayList<String>()).when(spy).getSubUsers(any(org.openstack.docs.identity.api.v2.User.class), anyString(), anyString(), any(RoleList.class));
+        doReturn(new ArrayList<String>()).when(spy).getSubUsers(any(org.openstack.docs.identity.api.v2.User.class), anyString(), any(RoleList.class));
         doReturn(new User()).when(spy).addMigrationUser(any(org.openstack.docs.identity.api.v2.User.class), anyInt(), anyString(), anyString(), anyString(), any(SecretQA.class), anyString());
         doNothing().when(spy).addUserGlobalRoles(any(User.class), any(RoleList.class));
         when(tenantService.getTenant(anyString())).thenReturn(null);
@@ -633,7 +633,7 @@ public class CloudMigrationServiceTest {
         roles.getRole().add(role);
         org.openstack.docs.identity.api.v2.User user = new org.openstack.docs.identity.api.v2.User();
         user.setEnabled(false);
-        spy.getSubUsers(user, "", "", roles);
+        spy.getSubUsers(user, "", roles);
     }
 
     @Test
@@ -644,7 +644,7 @@ public class CloudMigrationServiceTest {
         roles.getRole().add(role);
         org.openstack.docs.identity.api.v2.User user = new org.openstack.docs.identity.api.v2.User();
         user.setEnabled(false);
-        List<String> subUsers = spy.getSubUsers(user, "", "", roles);
+        List<String> subUsers = spy.getSubUsers(user, "", roles);
         assertThat("returned sub users", subUsers.size(), equalTo(0));
     }
 
@@ -657,7 +657,7 @@ public class CloudMigrationServiceTest {
         authResponse.setToken(new Token());
         doReturn(authResponse).when(spy).authenticate(anyString(), anyString(), anyString());
         when(client.getUsers(anyString())).thenThrow(new JAXBException("EXCEPTION"));
-        spy.getSubUsers(user, "", "", new RoleList());
+        spy.getSubUsers(user, "", new RoleList());
     }
 
     @Test
@@ -669,7 +669,7 @@ public class CloudMigrationServiceTest {
         authResponse.setToken(new Token());
         doReturn(authResponse).when(spy).authenticate(anyString(), anyString(), anyString());
         when(client.getUsers(anyString())).thenReturn(null);
-        List<String> subUsers = spy.getSubUsers(user, "", "", new RoleList());
+        List<String> subUsers = spy.getSubUsers(user, "", new RoleList());
         assertThat("sub users", subUsers.size(), equalTo(0));
     }
 
@@ -686,7 +686,7 @@ public class CloudMigrationServiceTest {
         org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
         user1.setUsername("someUserName");
         userList.getUser().add(user1);
-        List<String> subUsers = spy.getSubUsers(user, "", "", new RoleList());
+        List<String> subUsers = spy.getSubUsers(user, "", new RoleList());
         assertThat("sub users", subUsers.size(), equalTo(1));
     }
 
@@ -707,13 +707,13 @@ public class CloudMigrationServiceTest {
         user1.setUsername("adminUser");
         userList.getUser().add(user1);
         userList.getUser().add(user2);
-        List<String> subUsers = spy.getSubUsers(user, "", "", new RoleList());
+        List<String> subUsers = spy.getSubUsers(user, "", new RoleList());
         assertThat("sub users", subUsers.size(), equalTo(1));
     }
 
     @Test
     public void getSubUsers_withNonAdminUser_returnsEmptyList() throws Exception {
-        List<String> subUsers = spy.getSubUsers(null, "", "", new RoleList());
+        List<String> subUsers = spy.getSubUsers(null, "", new RoleList());
         assertThat("sub users", subUsers.size(), equalTo(0));
     }
 
