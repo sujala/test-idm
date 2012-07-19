@@ -45,8 +45,9 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
 
     @Test
     public void fetDefaultRegionServices_returns200() throws Exception {
+        String token = getAuthToken("hectorServiceAdmin", "Password1");
         WebResource resource = resource().path("cloud/v2.0/RAX-AUTH/default-region/services");
-        ClientResponse clientResponse = resource.get(ClientResponse.class);
+        ClientResponse clientResponse = resource.header("x-auth-token", token).get(ClientResponse.class);
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
     }
 
