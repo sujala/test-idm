@@ -25,7 +25,10 @@ Given(~'^a auth (\\d+).(\\d+) endpoint$') { int version, int release ->
         version_path = "cloud/v2.0"
     }
     auth_endpoint = client.resource(jetty_host+version_path)
-    auth_endpoint.get(String.class)
+}
+
+Given(~'^the request type is "([^"]*)"$') { String request_type ->
+    auth_endpoint.header("content-type", request_type)
 }
 
 When(~'^GET version call is made$') {->

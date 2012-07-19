@@ -10,7 +10,7 @@ import org.junit.runner.RunWith;
 * Time: 2:08 PM
 */
 @RunWith(Cucumber.class)
-@Cucumber.Options(glue = ("src/test/groovy/step_definitions"), format = {"pretty", "html:target/cucumber-html-report"}, features = "src/test/resources/features")
+@Cucumber.Options(glue = ("src/test/groovy/step_definitions"), format = {"pretty", "html:target/cucumber-html-report"}, features = "src/test/resources/features", tags = {"@token"})
 public class RunCukesIntegrationTest {
 
 }
