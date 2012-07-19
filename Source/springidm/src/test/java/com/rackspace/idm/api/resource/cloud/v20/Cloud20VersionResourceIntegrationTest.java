@@ -33,7 +33,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
 
     @Before
     public void setUp() throws Exception {
-        ensureGrizzlyStarted("classpath:app-config.xml", JAXBXMLContextResolver.class);
+        ensureGrizzlyStarted("classpath:app-config.xml");
     }
 
     @Test
