@@ -41,6 +41,7 @@ import javax.xml.namespace.QName;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -279,9 +280,19 @@ public class CloudMigrationService {
             }
 
 
+            String userToken = "";
+            Date expireToken = new Date();
+            try {
+                AuthenticateResponse authenticateResponse = authenticate(username, apiKey, password);
+                userToken = authenticateResponse.getToken().getId();
+                expireToken = authenticateResponse.getToken().getExpires().toGregorianCalendar().getTime();
+            }catch (Exception e){
+                userToken = "";
+            }
+
             List<String> subUsers = null;
             if(processSubUsers) {
-                subUsers = getSubUsers(user, apiKey, password, roles);
+                subUsers = getSubUsers(user, userToken, roles);
                 for (String subUser : subUsers) {
                     if (userService.userExistsByUsername(subUser)) {
                         throw new ConflictException("A user with username " + subUser + " already exists.");
@@ -300,6 +311,15 @@ public class CloudMigrationService {
             com.rackspace.idm.domain.entity.User newUser = addMigrationUser(user, user11.getMossoId(),
                     user11.getNastId(), apiKey, password, secretQA, domainId);
 
+            //Add CA token to GA User
+            if(userToken != "") {
+                try {
+                    scopeAccessService.updateUserScopeAccessTokenForClientIdByUser(newUser, config.getString("cloudAuth.clientId"), userToken, expireToken);
+                }catch(Exception e){
+
+                }
+            }
+            
             // Get Roles
             addUserGlobalRoles(newUser, roles);
 
@@ -364,7 +384,7 @@ public class CloudMigrationService {
 		return defaultRegion;
 	}
 
-    List<String> getSubUsers(User user, String apiKey, String password, RoleList roles) throws Exception {
+    List<String> getSubUsers(User user, String userToken, RoleList roles) throws Exception {
         client.setCloud20Host(config.getString("cloudAuth20url"));
         client.setCloud11Host(config.getString("cloudAuth11url"));
         List<String> subUsers = new ArrayList<String>();
@@ -374,8 +394,7 @@ public class CloudMigrationService {
                 throw new ConflictException("useradmin with username " + user.getUsername() + " is disabled.");
             }
 
-            AuthenticateResponse authenticateResponse = authenticate(user.getUsername(), apiKey, password);
-            String userToken = authenticateResponse.getToken().getId();
+
 
             UserList users = null;
 
