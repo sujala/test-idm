@@ -1056,6 +1056,7 @@
                             <excludes>
                                 <exclude>**/*IntegrationTest*.java</exclude>
                                 <exclude>**/*IT.java</exclude>
+                                <exclude>**/*Cukes*.java</exclude>
                             </excludes>
                             <includes>
                                 <include>**/*Test*.java</include>
@@ -1072,6 +1073,7 @@
                             <skip>false</skip>
                             <excludes>
                                 <exclude>none</exclude>
+                                <exclude>**/*Cukes*.java</exclude>
                             </excludes>
                             <includes>
                                 <include>**/*IntegrationTest*.java</include>
