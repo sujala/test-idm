@@ -265,6 +265,26 @@ public class DefinedPermissionTest {
     }
 
     @Test
+    public void equals_withAllFieldsSetAndEqual_returnsTrue() throws Exception {
+        definedPermission1.setDescription("aDescription");
+        definedPermission.setDescription("aDescription");
+        definedPermission1.setEnabled(true);
+        definedPermission.setEnabled(true);
+        definedPermission1.setGrantedByDefault(true);
+        definedPermission.setGrantedByDefault(true);
+        definedPermission1.setLdapEntry(new ReadOnlyEntry("uniqueId",new Attribute[0]));
+        definedPermission.setLdapEntry(new ReadOnlyEntry("uniqueId",new Attribute[0]));
+        definedPermission1.setPermissionType("permissionType");
+        definedPermission.setPermissionType("permissionType");
+        definedPermission1.setTitle("title");
+        definedPermission.setTitle("title");
+        definedPermission1.setValue("value");
+        definedPermission.setValue("value");
+
+        assertThat("equals", definedPermission.equals(definedPermission1), equalTo(true));
+    }
+
+    @Test
     public void copyChanges_modifiedPermissionTypeNotNullAndNotBlank_copiesPermissionType() throws Exception {
         definedPermission1.setPermissionType("permissionType");
         spy.copyChanges(definedPermission1);
