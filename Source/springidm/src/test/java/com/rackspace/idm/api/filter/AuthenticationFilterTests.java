@@ -1,12 +1,11 @@
 package com.rackspace.idm.api.filter;
 
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.HttpHeaders;
 
 import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess;
@@ -34,6 +33,7 @@ public class AuthenticationFilterTests {
     private AuthenticationFilter authFilter;
     private ContainerRequest request;
     private ContainerRequest requestMock;
+    private HttpServletRequest httpServletRequest;
     ScopeAccessService scopeAccessServiceMock;
     UserService userService;
     Configuration configuration;
@@ -358,5 +358,45 @@ public class AuthenticationFilterTests {
         EasyMock.replay(request, oauthService);
         ContainerRequest containerRequest = authFilter.filter(request);
         assertThat("request", containerRequest, notNullValue());
+    }
+
+    @Test
+    public void filter_notEqualToNull_returnsRequest() throws Exception {
+        httpServletRequest = mock(HttpServletRequest.class);
+        EasyMock.expect(request.getPath()).andReturn("cloud/v1.0");
+        EasyMock.replay(request, oauthService);
+        authFilter.setHttpServletRequest(httpServletRequest);
+        when(httpServletRequest.getRemoteAddr()).thenReturn("http://remoteAddress/");
+        when(httpServletRequest.getLocalAddr()).thenReturn("http://localhost:9998/");
+        ContainerRequest containerRequest = authFilter.filter(request);
+        assertThat("request", containerRequest, notNullValue());
+    }
+
+    @Test
+    public void filter_pathStartsWithXsd_ReturnsRequest() throws Exception {
+        when(requestMock.getMethod()).thenReturn("GET");
+        when(requestMock.getPath()).thenReturn("somePath/xsdUsers.xsd");
+        ContainerRequest containerRequest = authFilter.filter(requestMock);
+        assertThat("request", containerRequest, notNullValue());
+    }
+
+    @Test
+    public void filter_pathStartsWithXslt_ReturnsRequest() throws Exception {
+        when(requestMock.getMethod()).thenReturn("GET");
+        when(requestMock.getPath()).thenReturn("somePath/xsltUsers.xslt");
+        ContainerRequest containerRequest = authFilter.filter(requestMock);
+        assertThat("request", containerRequest, notNullValue());
+    }
+
+    @Test(expected = NotAuthenticatedException.class)
+    public void shouldNotPassAuthentication_throwNotAuthenticatedException() {
+        EasyMock.expect(request.getPath()).andReturn("v1.0/foo");
+        EasyMock.expect(request.getMethod()).andReturn("GET");
+        final String tokenString = "hiiamatoken";
+        EasyMock.expect(request.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER))
+        .andReturn(tokenString);
+        EasyMock.expect(oauthService.authenticateAccessToken(tokenString)).andReturn(
+                false);
+        replayAndRunFilter();
     }
 }
