@@ -629,4 +629,16 @@ public class User implements Auditable {
     public void setDomainId(String domainId) {
         this.domainId = domainId;
     }
+
+    public void setCredential(UserCredential credential) {
+        this.credential = credential;
+    }
+
+    public void setName(UserHumanName name) {
+        this.name = name;
+    }
+
+    public void setPreference(UserLocale preference) {
+        this.preference = preference;
+    }
 }

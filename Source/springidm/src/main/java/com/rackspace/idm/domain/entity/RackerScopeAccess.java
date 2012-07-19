@@ -127,4 +127,8 @@ public class RackerScopeAccess extends ScopeAccess implements HasAccessToken, Ha
         final String format = "Racker(rackerId=%s)";
         return String.format(format, getRackerId());
     }
+
+    public void setLdapEntry(ReadOnlyEntry ldapEntry) {
+        this.ldapEntry = ldapEntry;
+    }
 }
