@@ -30,6 +30,7 @@ import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -126,5 +127,9 @@ public class OSKSADM_XMLWriter extends NamespacePrefixMapper implements
     public String getPreferredPrefix(String namespaceUri, String suggestion,
                                      boolean requirePrefix) {
         return osksadmNsPrefixMap.get(namespaceUri);
+    }
+
+    public void setNsPrefixMap(HashMap<String, String> nsPrefixMap) {
+        this.osksadmNsPrefixMap = nsPrefixMap;
     }
 }
