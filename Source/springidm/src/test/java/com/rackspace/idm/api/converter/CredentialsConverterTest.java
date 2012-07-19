@@ -3,8 +3,10 @@ package com.rackspace.idm.api.converter;
 import com.rackspace.api.idm.v1.AuthCredentials;
 import com.rackspace.api.idm.v1.AuthGrantType;
 import com.rackspace.idm.domain.entity.Credentials;
+import com.rackspace.idm.domain.entity.RackerCredentials;
 import org.junit.Before;
 import org.junit.Test;
+import org.mortbay.jetty.security.Credential;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
@@ -87,5 +89,21 @@ public class CredentialsConverterTest {
     public void toCredentialsDO_withApiAuthCredentialsAndNoGrantType_hasNullGrantType() throws Exception {
         Credentials credentials = credentialsConverter.toCredentialsDO(authCredentials);
         assertThat("grant type", credentials.getGrantType(), nullValue());
+    }
+
+    @Test
+    public void toCredentialsDO_instanceOf_RackerCredentials() throws Exception {
+        com.rackspace.api.idm.v1.Credentials credential = new com.rackspace.api.idm.v1.RackerCredentials();
+        credential.setGrantType(AuthGrantType.RACKER);
+        Credentials credentials = credentialsConverter.toCredentialsDO(credential);
+        assertThat("grant Type", credentials.getGrantType(), equalTo(AuthGrantType.RACKER.toString()));
+    }
+
+    @Test
+    public void toCredentialsDO_instanceOf_RSACredentials() throws Exception {
+        com.rackspace.api.idm.v1.Credentials credential = new com.rackspace.api.idm.v1.RSACredentials();
+        credential.setGrantType(AuthGrantType.RACKER);
+        Credentials credentials = credentialsConverter.toCredentialsDO(credential);
+        assertThat("grant Type", credentials.getGrantType(), equalTo(AuthGrantType.RACKER.toString()));
     }
 }

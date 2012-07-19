@@ -234,6 +234,12 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void listDefaultRegionServices_callsVerifyServiceAdminAccess() throws Exception {
+        spy.listDefaultRegionServices(authToken);
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
+    }
+
+    @Test
     public void listDefaultRegionServices_callsApplicationService_getOSServices() throws Exception {
         defaultCloud20Service.listDefaultRegionServices(authToken);
         verify(clientService).getOpenStackServices();
@@ -265,7 +271,23 @@ public class DefaultCloud20ServiceTest {
         Application application2 = new Application("cloudFiles", ClientSecret.newInstance("foo"), "cloudFiles", "rcn", ClientStatus.ACTIVE);
         applications.add(application2);
         Application application3 = new Application("cloudFilesCDN", ClientSecret.newInstance("foo"), "cloudFilesCDN", "rcn", ClientStatus.ACTIVE);
-        application3.setUsedForDefaultRegion(true);
+        application3.setUseForDefaultRegion(true);
+        applications.add(application3);
+        when(clientService.getOpenStackServices()).thenReturn(applications);
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.listDefaultRegionServices(authToken);
+        assertThat("response builder", ((DefaultRegionServices)responseBuilder.build().getEntity()).getServiceName().size(), equalTo(1));
+    }
+
+    @Test
+    public void listDefaultRegionServices_handlesNullValueForUseForDefaultRegion_filtersByUseForDefaultRegionFlag() throws Exception {
+        ArrayList<Application> applications = new ArrayList<Application>();
+        Application application1 = new Application();
+        application1.setUseForDefaultRegion(null);
+        applications.add(application1);
+        Application application2 = new Application("cloudFiles", ClientSecret.newInstance("foo"), "cloudFiles", "rcn", ClientStatus.ACTIVE);
+        applications.add(application2);
+        Application application3 = new Application("cloudFilesCDN", ClientSecret.newInstance("foo"), "cloudFilesCDN", "rcn", ClientStatus.ACTIVE);
+        application3.setUseForDefaultRegion(true);
         applications.add(application3);
         when(clientService.getOpenStackServices()).thenReturn(applications);
         Response.ResponseBuilder responseBuilder = defaultCloud20Service.listDefaultRegionServices(authToken);
@@ -291,6 +313,20 @@ public class DefaultCloud20ServiceTest {
         when(authorizationService.hasUserAdminRole(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(true);
         spy.deleteUser(httpHeaders, authToken, userId);
         verify(userService).hasSubUsers(userId);
+    }
+
+    @Test
+    public void deleteUser_userServiceHasSubUsersWithUserId_returns400() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doNothing().when(spy).verifyUserAdminLevelAccess(authToken);
+        doReturn(new User()).when(spy).checkAndGetUser("userId");
+        when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(scopeAccess);
+        when(authorizationService.authorizeCloudUserAdmin(scopeAccess)).thenReturn(false);
+        when(scopeAccessService.getScopeAccessByUserId("userId")).thenReturn(scopeAccess);
+        when(authorizationService.hasUserAdminRole(scopeAccess)).thenReturn(true);
+        when(userService.hasSubUsers("userId")).thenReturn(true);
+        Response.ResponseBuilder responseBuilder = spy.deleteUser(null, authToken, "userId");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
     }
 
     @Test
@@ -1225,9 +1261,11 @@ public class DefaultCloud20ServiceTest {
         when(userService.getAllUsers(org.mockito.Matchers.<FilterParam[]>any())).thenReturn(users);
         when(config.getInt("numberOfSubUsers")).thenReturn(100);
         doNothing().when(spy).setDomainId(any(ScopeAccess.class), any(User.class));
+        doNothing().when(spy).validatePassword("password");
         UserForCreate userForCreate = new UserForCreate();
         userForCreate.setUsername("userforcreate");
         userForCreate.setEmail("user@rackspace.com");
+        userForCreate.setPassword("password");
         spy.addUser(null, null, authToken, userForCreate);
         verify(userService).addUser(argument.capture());
         assertThat("nast id", argument.getValue().getNastId(), equalTo("nastId"));
@@ -4362,5 +4400,17 @@ public class DefaultCloud20ServiceTest {
         TenantForAuthenticateResponse testTenant = defaultCloud20Service.convertTenantEntityToApi(test);
         assertThat("Verify Tenant",testTenant.getId(),equalTo(test.getTenantId()));
         assertThat("Verify Tenant",testTenant.getName(),equalTo(test.getName()));
+    }
+
+    @Test (expected = NotAuthenticatedException.class)
+    public void getUserByUsernameForAuthentication_throwsNotAuthenticatedException() throws Exception {
+        doThrow(new NotFoundException()).when(spy).checkAndGetUserByName("username");
+        spy.getUserByUsernameForAuthentication("username");
+    }
+
+    @Test (expected = NotAuthenticatedException.class)
+    public void getUserByIdForAuthentication_throwsNotAuthenticatedException() throws Exception {
+        doThrow(new NotFoundException()).when(spy).checkAndGetUser("id");
+        spy.getUserByIdForAuthentication("id");
     }
 }

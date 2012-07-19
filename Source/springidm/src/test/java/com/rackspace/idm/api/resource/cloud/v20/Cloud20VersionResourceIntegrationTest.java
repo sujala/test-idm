@@ -33,13 +33,21 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
 
     @Before
     public void setUp() throws Exception {
-        ensureGrizzlyStarted("classpath:app-config.xml", JAXBXMLContextResolver.class);
+        ensureGrizzlyStarted("classpath:app-config.xml");
     }
 
     @Test
     public void getVersion_withValidPath_returns200() throws Exception {
         WebResource resource = resource().path("cloud/v2.0");
         ClientResponse clientResponse = resource.get(ClientResponse.class);
+        assertThat("response code", clientResponse.getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void fetDefaultRegionServices_returns200() throws Exception {
+        String token = getAuthToken("hectorServiceAdmin", "Password1");
+        WebResource resource = resource().path("cloud/v2.0/RAX-AUTH/default-region/services");
+        ClientResponse clientResponse = resource.header("x-auth-token", token).get(ClientResponse.class);
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
     }
 

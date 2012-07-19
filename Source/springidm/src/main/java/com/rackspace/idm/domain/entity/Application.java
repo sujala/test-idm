@@ -32,7 +32,7 @@ public class Application implements Auditable {
     private String description = null;
     private Boolean enabled = null;
 
-    private Boolean usedForDefaultRegion = false;
+    private Boolean useForDefaultRegion = null;
 
     private List<TenantRole> roles = null;
     public Application() {
@@ -324,11 +324,11 @@ public class Application implements Auditable {
         return enabled;
     }
 
-    public Boolean getUsedForDefaultRegion() {
-        return usedForDefaultRegion;
+    public Boolean getUseForDefaultRegion() {
+        return useForDefaultRegion;
     }
 
-    public void setUsedForDefaultRegion(Boolean usedForDefaultRegion) {
-        this.usedForDefaultRegion = usedForDefaultRegion;
+    public void setUseForDefaultRegion(Boolean useForDefaultRegion) {
+        this.useForDefaultRegion = useForDefaultRegion;
     }
 }

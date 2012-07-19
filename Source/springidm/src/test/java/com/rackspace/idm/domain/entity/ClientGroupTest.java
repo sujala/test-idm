@@ -1,6 +1,5 @@
 package com.rackspace.idm.domain.entity;
 
-import flex.messaging.io.SerializationProxy;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -8,7 +7,6 @@ import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;

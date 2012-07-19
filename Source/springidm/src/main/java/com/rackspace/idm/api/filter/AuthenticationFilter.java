@@ -194,4 +194,8 @@ public class AuthenticationFilter implements ContainerRequestFilter,
     protected String getMigrationAdminGroup() {
         return config.getString("migrationAdminGroup");
     }
+
+    public void setHttpServletRequest(HttpServletRequest httpServletRequest) {
+        this.req = httpServletRequest;
+    }
 }

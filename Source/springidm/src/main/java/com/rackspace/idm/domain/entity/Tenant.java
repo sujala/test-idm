@@ -163,9 +163,9 @@ public class Tenant implements Auditable {
 
         if (modifiedTenant.getName() != null) {
             if (StringUtils.isBlank(modifiedTenant.getName())) {
-                setDescription(null);
+                setName(null);
             } else {
-                setDescription(modifiedTenant.getName());
+                setName(modifiedTenant.getName());
             }
         }
 
@@ -183,5 +183,9 @@ public class Tenant implements Auditable {
     @Override
     public String toString() {
         return getAuditContext();
+    }
+
+    public void setLdapEntry(ReadOnlyEntry ldapEntry) {
+        this.ldapEntry = ldapEntry;
     }
 }

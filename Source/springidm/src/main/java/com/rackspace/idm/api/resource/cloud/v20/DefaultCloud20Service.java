@@ -240,7 +240,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             String roleName = role.getName();
             if (roleName.equals(getCloudAuthServiceAdminRole()) || roleName.equals(getCloudAuthUserAdminRole())
                     || roleName.equals(config.getString("cloudAuth.adminRole"))) {
-                throw new BadRequestException("Cannot add admin role to tenant.");
+                throw new BadRequestException("Cannot add identity roles to tenant.");
             }
             TenantRole tenantrole = new TenantRole();
             tenantrole.setName(role.getName());
@@ -763,7 +763,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
-    private User getUserByUsernameForAuthentication(String username) {
+    User getUserByUsernameForAuthentication(String username) {
         User user = null;
         try {
             user = checkAndGetUserByName(username);
@@ -775,7 +775,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         return user;
     }
 
-    private User getUserByIdForAuthentication(String id) {
+    User getUserByIdForAuthentication(String id) {
         User user = null;
 
         try {
@@ -1675,11 +1675,13 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder listDefaultRegionServices(String authToken) {
+        verifyServiceAdminLevelAccess(authToken);
         List<Application> openStackServices = clientService.getOpenStackServices();
         DefaultRegionServices defaultRegionServices = raxAuthObjectFactory.createDefaultRegionServices();
         if(openStackServices!=null){
             for(Application application: openStackServices){
-                if(application.getUsedForDefaultRegion()){
+                Boolean useForDefaultRegion = application.getUseForDefaultRegion();
+                if(useForDefaultRegion!=null && useForDefaultRegion==true){
                     defaultRegionServices.getServiceName().add(application.getName());
                 }
             }

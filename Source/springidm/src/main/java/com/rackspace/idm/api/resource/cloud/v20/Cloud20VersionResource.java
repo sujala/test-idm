@@ -112,7 +112,7 @@ public class Cloud20VersionResource {
     }
 
     @GET
-    @Path("RAX-AUTH/default-region-services")
+    @Path("RAX-AUTH/default-region/services")
     public Response listDefaultRegionServices(@HeaderParam(X_AUTH_TOKEN) String authToken){
         return defaultCloud20Service.listDefaultRegionServices(authToken).build();
     }
