@@ -670,6 +670,10 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
             atts.add(new Attribute(ATTR_CALLBACK_URL, client.getCallBackUrl()));
         }
 
+        if (client.getUseForDefaultRegion() != null) {
+            atts.add(new Attribute(ATTR_USE_FOR_DEFAULT_REGION, String.valueOf(client.getUseForDefaultRegion())));
+        }
+
         Attribute[] attributes = atts.toArray(new Attribute[0]);
         getLogger().debug("Found {} attributes for client {}.", attributes.length, client);
         return attributes;

@@ -20,6 +20,7 @@ import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasEntry;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.*;
 
@@ -628,7 +629,7 @@ public class LdapApplicationRepositoryTest extends InMemoryLdapIntegrationTest{
     }
 
     @Test
-    public void getAddAttributesForclient_addsAllAttributes_returnsArray() throws Exception {
+    public void getAddAttributesForClient_addsAllAttributes_returnsArray() throws Exception {
         Application client = new Application();
         client.setClientId("clientId");
         client.setOpenStackType("openStack");
@@ -640,6 +641,7 @@ public class LdapApplicationRepositoryTest extends InMemoryLdapIntegrationTest{
         client.setDescription("description");
         client.setScope("scope");
         client.setCallBackUrl("url");
+        client.setUseForDefaultRegion(true);
         CryptHelper cryptHelper = new CryptHelper();
         Attribute[] result = ldapApplicationRepository.getAddAttributesForClient(client);
         assertThat("client id", result[1].getValue(), equalTo("clientId"));
@@ -653,10 +655,11 @@ public class LdapApplicationRepositoryTest extends InMemoryLdapIntegrationTest{
         assertThat("description", result[9].getValue(), equalTo("description"));
         assertThat("scope", result[10].getValue(), equalTo("scope"));
         assertThat("url", result[11].getValue(), equalTo("url"));
+        assertThat("userForDefaultRegion", result[12].getValue(), equalTo("true"));
     }
 
     @Test
-    public void getAddAttributesForclient_addsNoAttributes_returnsArray() throws Exception {
+    public void getAddAttributesForClient_addsNoAttributes_returnsArray() throws Exception {
         Application client = new Application();
         client.setClientSecretObj(ClientSecret.newInstance(null));
         Attribute[] result = ldapApplicationRepository.getAddAttributesForClient(client);
@@ -715,7 +718,7 @@ public class LdapApplicationRepositoryTest extends InMemoryLdapIntegrationTest{
     public void getMultipleClients_contentCountLessThanOffset_setClientsToEmptyList() throws Exception {
         List<SearchResultEntry> searchResultEntryList = new ArrayList<SearchResultEntry>();
         doReturn(1).when(spy).getLdapPagingLimitMax();
-        doReturn(searchResultEntryList).when(spy).getMultipleEntries(LdapRepository.APPLICATIONS_BASE_DN, SearchScope.SUB, null, LdapRepository.ATTR_NAME);
+        doReturn(searchResultEntryList).when(spy).getMultipleEntries(LdapRepository.APPLICATIONS_BASE_DN, SearchScope.SUB, null, null);
         Applications result = spy.getMultipleClients(null, 2, 2);
         assertThat("client", result.getClients().isEmpty(), equalTo(true));
     }
@@ -728,7 +731,7 @@ public class LdapApplicationRepositoryTest extends InMemoryLdapIntegrationTest{
         doReturn(0).when(spy).getLdapPagingOffsetDefault();
         doReturn(0).when(spy).getLdapPagingLimitDefault();
         doReturn(3).when(spy).getLdapPagingLimitMax();
-        doReturn(searchResultEntryList).when(spy).getMultipleEntries(LdapRepository.APPLICATIONS_BASE_DN, SearchScope.SUB, null, LdapRepository.ATTR_NAME);
+        doReturn(searchResultEntryList).when(spy).getMultipleEntries(LdapRepository.APPLICATIONS_BASE_DN, SearchScope.SUB, null, null);
         Applications result = spy.getMultipleClients(null, -1, 0);
         assertThat("client", result.getClients().isEmpty(), equalTo(true));
     }
@@ -740,7 +743,7 @@ public class LdapApplicationRepositoryTest extends InMemoryLdapIntegrationTest{
         searchResultEntryList.add(searchResultEntry);
         searchResultEntryList.add(searchResultEntry);
         doReturn(3).when(spy).getLdapPagingLimitMax();
-        doReturn(searchResultEntryList).when(spy).getMultipleEntries(LdapRepository.APPLICATIONS_BASE_DN, SearchScope.SUB, null, LdapRepository.ATTR_NAME);
+        doReturn(searchResultEntryList).when(spy).getMultipleEntries(LdapRepository.APPLICATIONS_BASE_DN, SearchScope.SUB, null, null);
         Applications result = spy.getMultipleClients(null, 1, 2);
         assertThat("client", result.getClients().size(), equalTo(1));
     }

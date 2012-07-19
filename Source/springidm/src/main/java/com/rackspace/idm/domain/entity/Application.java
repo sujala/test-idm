@@ -32,7 +32,7 @@ public class Application implements Auditable {
     private String description = null;
     private Boolean enabled = null;
 
-    private Boolean useForDefaultRegion = false;
+    private Boolean useForDefaultRegion = null;
 
     private List<TenantRole> roles = null;
     public Application() {
