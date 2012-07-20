@@ -10,6 +10,7 @@ import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.validation.InputValidator;
 import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -90,7 +91,7 @@ public class UsersResource extends ParentResource {
     @POST
     public Response addUser(
         @HeaderParam("X-Auth-Token") String authHeader, com.rackspace.api.idm.v1.User user) throws IOException {
-
+        userValidator.isUsernameEmpty(user.getUsername());
         userValidator.validateUsername(user.getUsername());
         //TODO enable if we want to check cloud auth for username conflicts
         //By adding this we can no longer create service accounts that already exist in Cloud Auth

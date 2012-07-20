@@ -31,11 +31,14 @@ public class UserValidatorFoundation {
     @Autowired
     private CloudClient cloudClient;
 
-    public void validateUsername(String username) {
-        Pattern alphaNumeric = Pattern.compile("[a-zA-z0-9]*");
+    public void isUsernameEmpty(String username){
         if(username.isEmpty()){
             throw new BadRequestException("Username cannot be empty.");
         }
+    }
+
+    public void validateUsername(String username) {
+        Pattern alphaNumeric = Pattern.compile("[a-zA-z0-9]*");
         if (!alphaNumeric.matcher(username).matches()) {
             throw new BadRequestException("Username has invalid characters; only alphanumeric characters are allowed.");
         }
