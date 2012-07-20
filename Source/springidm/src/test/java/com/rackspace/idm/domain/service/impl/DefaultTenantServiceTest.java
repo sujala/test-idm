@@ -8,10 +8,8 @@ import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.exception.ClientConflictException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
-import com.unboundid.ldap.sdk.DN;
-import com.unboundid.ldap.sdk.Entry;
-import com.unboundid.ldap.sdk.RDN;
-import com.unboundid.ldap.sdk.ReadOnlyEntry;
+import com.unboundid.ldap.sdk.*;
+import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -37,10 +35,13 @@ public class DefaultTenantServiceTest {
     private ScopeAccessDao scopeAccessDao = mock(ScopeAccessDao.class);
     private UserDao userDao = mock(UserDao.class);
     DefaultTenantService spy;
+    private Configuration config;
 
     @Before
     public void setUp() throws Exception {
         defaultTenantService = new DefaultTenantService(tenantDao, clientDao, userDao, scopeAccessDao);
+        config = mock(Configuration.class);
+        defaultTenantService.setConfig(config);
         spy = spy(defaultTenantService);
 
 
@@ -65,7 +66,40 @@ public class DefaultTenantServiceTest {
     }
 
     @Test
-    public void getTenantsForParentsByTenantRoles_tenantIdFound_returnsTenantListWithNoDuplicates() throws Exception {
+    public void getTenantsForParentByTenantRoles_tenantRoleGetTenantIdIsNullAndTenantIdsLengthIs0_doesNotAddTenantId() throws Exception {
+        TenantRole tenantRole = mock(TenantRole.class);
+        List<TenantRole> tenantRoleList = new ArrayList<TenantRole>();
+        tenantRoleList.add(tenantRole);
+        when(tenantRole.getTenantIds()).thenReturn(null).thenReturn(new String[0]);
+        when(tenantDao.getTenantRolesByParent("parentUniqueId")).thenReturn(tenantRoleList);
+        List<Tenant> result = defaultTenantService.getTenantsForParentByTenantRoles("parentUniqueId");
+        assertThat("list", result.isEmpty(), equalTo(true));
+    }
+
+    @Test
+    public void getTenantsForParentByTenantRoles_tenantRoleGetTenantIdIsNullAndTenantIdsLengthGreaterThan0_doesNotAddTenantId() throws Exception {
+        TenantRole tenantRole = mock(TenantRole.class);
+        List<TenantRole> tenantRoleList = new ArrayList<TenantRole>();
+        tenantRoleList.add(tenantRole);
+        when(tenantRole.getTenantIds()).thenReturn(null).thenReturn(new String[2]);
+        when(tenantDao.getTenantRolesByParent("parentUniqueId")).thenReturn(tenantRoleList);
+        List<Tenant> result = defaultTenantService.getTenantsForParentByTenantRoles("parentUniqueId");
+        assertThat("list", result.isEmpty(), equalTo(true));
+    }
+
+    @Test
+    public void getTenantsForParentByTenantRoles_tenantRoleGetTenantIdNotNullAndTenantIdsLengthIs0_doesNotAddTenantId() throws Exception {
+        TenantRole tenantRole = new TenantRole();
+        tenantRole.setTenantIds(new String[0]);
+        List<TenantRole> tenantRoleList = new ArrayList<TenantRole>();
+        tenantRoleList.add(tenantRole);
+        when(tenantDao.getTenantRolesByParent("parentUniqueId")).thenReturn(tenantRoleList);
+        List<Tenant> result = defaultTenantService.getTenantsForParentByTenantRoles("parentUniqueId");
+        assertThat("list", result.isEmpty(), equalTo(true));
+    }
+
+    @Test
+    public void getTenantsForParentByTenantRoles_tenantIdFound_returnsTenantListWithNoDuplicates() throws Exception {
         String[] tenantIds = {"123","123","123"};
         TenantRole tenantRole = new TenantRole();
         tenantRole.setTenantIds(tenantIds);
@@ -79,7 +113,7 @@ public class DefaultTenantServiceTest {
     }
 
     @Test
-    public void getTenantsForParentsByTenantRoles_tenantNotEnabled_returnsEmptyTenantList() throws Exception {
+    public void getTenantsForParentByTenantRoles_tenantNotEnabled_returnsEmptyTenantList() throws Exception {
         String[] tenantIds = {"123"};
         TenantRole tenantRole = new TenantRole();
         tenantRole.setTenantIds(tenantIds);
@@ -93,7 +127,7 @@ public class DefaultTenantServiceTest {
     }
 
     @Test
-    public void getTenantsForParentsByTenantRoles_tenantNull_returnsEmptyTenantList() throws Exception {
+    public void getTenantsForParentByTenantRoles_tenantNull_returnsEmptyTenantList() throws Exception {
         String[] tenantIds = {"123"};
         TenantRole tenantRole = new TenantRole();
         tenantRole.setTenantIds(tenantIds);
@@ -109,6 +143,16 @@ public class DefaultTenantServiceTest {
     @Test (expected = IllegalStateException.class)
     public void getTenantsForScopeAccessByTenantRoles_actionFails_throwsIllegalStateException() throws Exception {
         defaultTenantService.getTenantsForScopeAccessByTenantRoles(null);
+    }
+
+    @Test
+    public void getTenantsForScopeAccessByTenantRoles_callsGetTenantsForParentByTenantRoles() throws Exception {
+        DN dn = new DN("");
+        ScopeAccess scopeAccess = new ScopeAccess();
+        scopeAccess.setLdapEntry(new ReadOnlyEntry(dn, new Attribute[0]));
+        doReturn(null).when(spy).getTenantsForParentByTenantRoles(null);
+        spy.getTenantsForScopeAccessByTenantRoles(scopeAccess);
+        verify(spy).getTenantsForParentByTenantRoles(null);
     }
 
     @Test
@@ -253,6 +297,50 @@ public class DefaultTenantServiceTest {
     @Test (expected = IllegalArgumentException.class)
     public void deleteTenantRole_nullRole_throwsIllegalArgumentException() throws Exception {
         defaultTenantService.deleteTenantRole(null, null);
+    }
+
+    @Test
+    public void deleteTenantRole_getTenantIdsIsNullAndTenantIdsIs0_callDeleteTenantRoleOnParameterTenantRole() throws Exception {
+        TenantRole tenantRole = mock(TenantRole.class);
+        when(tenantRole.getRoleRsId()).thenReturn("rsId");
+        when(tenantDao.getTenantRoleForParentById("parentUniqueId", "rsId")).thenReturn(new TenantRole());
+        when(tenantRole.getTenantIds()).thenReturn(null).thenReturn(new String[0]);
+        doNothing().when(tenantDao).deleteTenantRole(tenantRole);
+        defaultTenantService.deleteTenantRole("parentUniqueId", tenantRole);
+        verify(tenantDao).deleteTenantRole(tenantRole);
+    }
+
+    @Test
+    public void deleteTenantRole_getTenantIdsIsNullAndTenantIdsNot0_callDeleteTenantRoleOnParameterTenantRole() throws Exception {
+        TenantRole tenantRole = mock(TenantRole.class);
+        when(tenantRole.getRoleRsId()).thenReturn("rsId");
+        when(tenantDao.getTenantRoleForParentById("parentUniqueId", "rsId")).thenReturn(new TenantRole());
+        when(tenantRole.getTenantIds()).thenReturn(null).thenReturn(new String[2]);
+        doNothing().when(tenantDao).deleteTenantRole(tenantRole);
+        defaultTenantService.deleteTenantRole("parentUniqueId", tenantRole);
+        verify(tenantDao).deleteTenantRole(tenantRole);
+    }
+
+    @Test
+    public void deleteTenantRole_getTenantIdsNotNullAndTenantIdsIs0_callDeleteTenantRoleOnParameterTenantRole() throws Exception {
+        TenantRole tenantRole = mock(TenantRole.class);
+        when(tenantRole.getRoleRsId()).thenReturn("rsId");
+        when(tenantDao.getTenantRoleForParentById("parentUniqueId", "rsId")).thenReturn(new TenantRole());
+        when(tenantRole.getTenantIds()).thenReturn(new String[0]);
+        doNothing().when(tenantDao).deleteTenantRole(tenantRole);
+        defaultTenantService.deleteTenantRole("parentUniqueId", tenantRole);
+        verify(tenantDao).deleteTenantRole(tenantRole);
+    }
+
+    @Test
+    public void deleteTenantRole_getTenantIdsNotNullAndTenantIdsNot0_doesNotCallDeleteTenantRoleOnParameterTenantRole() throws Exception {
+        TenantRole tenantRole = mock(TenantRole.class);
+        when(tenantRole.getRoleRsId()).thenReturn("rsId");
+        when(tenantDao.getTenantRoleForParentById("parentUniqueId", "rsId")).thenReturn(new TenantRole());
+        when(tenantRole.getTenantIds()).thenReturn(new String[2]);
+        doNothing().when(tenantDao).deleteTenantRole(tenantRole);
+        defaultTenantService.deleteTenantRole("parentUniqueId", tenantRole);
+        verify(tenantDao, times(0)).deleteTenantRole(tenantRole);
     }
 
     @Test
@@ -973,5 +1061,157 @@ public class DefaultTenantServiceTest {
         when(tenantDao.getAllTenantRolesForTenantAndRole(null,null)).thenReturn(roles);
         when(userDao.getUserById("123")).thenReturn(null);
         assertThat("number of users",defaultTenantService.getUsersWithTenantRole(tenant,cRole).size(),equalTo(0));
+    }
+
+    @Test
+    public void getTenantRolesByParent_roleIsNull_doesNotCallClientDao() throws Exception {
+        List<TenantRole> tenantRoleList = new ArrayList<TenantRole>();
+        tenantRoleList.add(null);
+        when(tenantDao.getTenantRolesByParent("parentUniqueId")).thenReturn(tenantRoleList);
+        defaultTenantService.getTenantRolesByParent("parentUniqueId");
+        verify(clientDao, times(0)).getClientRoleById(anyString());
+    }
+
+    @Test
+    public void getTenantRolesForScopeAccess_roleIsNull_doesNotCallClientDao() throws Exception {
+        DelegatedClientScopeAccess delegatedClientScopeAccess = new DelegatedClientScopeAccess();
+        delegatedClientScopeAccess.setLdapEntry(new ReadOnlyEntry("uniqueId", new Attribute[0]));
+        List<TenantRole> tenantRoleList = new ArrayList<TenantRole>();
+        tenantRoleList.add(null);
+        when(tenantDao.getTenantRolesByParent("uniqueId")).thenReturn(tenantRoleList);
+        defaultTenantService.getTenantRolesForScopeAccess(delegatedClientScopeAccess);
+        verify(clientDao, times(0)).getClientRoleById(anyString());
+    }
+
+    @Test
+    public void getTenantRolesByParentAndClientId_rolesIsNull_doesNotCallClientDao() throws Exception {
+        List<TenantRole> tenantRoleList = new ArrayList<TenantRole>();
+        tenantRoleList.add(null);
+        when(tenantDao.getTenantRolesByParentAndClientId("parentUniqueId", "clientId")).thenReturn(tenantRoleList);
+        defaultTenantService.getTenantRolesByParentAndClientId("parentUniqueId", "clientId");
+        verify(clientDao, times(0)).getClientRoleById(anyString());
+    }
+
+    @Test
+    public void addTenantRolesToUser_callsGetTenantRolesForScopeAccess() throws Exception {
+        doReturn(new ArrayList<TenantRole>()).when(spy).getTenantRolesForScopeAccess(null);
+        spy.addTenantRolesToUser(null, null);
+        verify(spy).getTenantRolesForScopeAccess(null);
+    }
+
+    @Test
+    public void getTenantRolesToUser_tenantRoleGetNameDoesNotMatchAnyIdentityRole_callsAddTenantRoleToUser() throws Exception {
+        User user = new User();
+        user.setId("userId");
+        TenantRole tenantRole = new TenantRole();
+        tenantRole.setName("notmatch");
+        tenantRole.setClientId("clientId");
+        tenantRole.setDescription("description");
+        tenantRole.setRoleRsId("rsId");
+        tenantRole.setTenantIds(new String[0]);
+        ArrayList<TenantRole> tenantRoles = new ArrayList<TenantRole>();
+        tenantRoles.add(tenantRole);
+        doReturn(tenantRoles).when(spy).getTenantRolesForScopeAccess(null);
+        when(config.getString("cloudAuth.adminRole")).thenReturn("identity:admin");
+        when(config.getString("cloudAuth.serviceAdminRole")).thenReturn("identity:service-admin");
+        when(config.getString("cloudAuth.userAdminRole")).thenReturn("identity:user-admin");
+        when(config.getString("cloudAuth.userRole")).thenReturn("identity:default");
+        doNothing().when(spy).addTenantRoleToUser(eq(user), any(TenantRole.class));
+        spy.addTenantRolesToUser(null, user);
+        verify(spy).addTenantRoleToUser(eq(user), any(TenantRole.class));
+    }
+
+    @Test
+    public void getTenantRolesToUser_tenantRoleGetNameOnlyMatchIdentityAdmin_doesNotCallAddTenantRoleToUser() throws Exception {
+        User user = new User();
+        user.setId("userId");
+        TenantRole tenantRole = new TenantRole();
+        tenantRole.setName("identity:admin");
+        tenantRole.setClientId("clientId");
+        tenantRole.setDescription("description");
+        tenantRole.setRoleRsId("rsId");
+        tenantRole.setTenantIds(new String[0]);
+        ArrayList<TenantRole> tenantRoles = new ArrayList<TenantRole>();
+        tenantRoles.add(tenantRole);
+        doReturn(tenantRoles).when(spy).getTenantRolesForScopeAccess(null);
+        when(config.getString("cloudAuth.adminRole")).thenReturn("identity:admin");
+        when(config.getString("cloudAuth.serviceAdminRole")).thenReturn("identity:service-admin");
+        when(config.getString("cloudAuth.userAdminRole")).thenReturn("identity:user-admin");
+        when(config.getString("cloudAuth.userRole")).thenReturn("identity:default");
+        spy.addTenantRolesToUser(null, user);
+        verify(spy, times(0)).addTenantRoleToUser(eq(user), any(TenantRole.class));
+    }
+
+    @Test
+    public void getTenantRolesToUser_tenantRoleGetNameOnlyMatchIdentityServiceAdmin_doesNotCallAddTenantRoleToUser() throws Exception {
+        User user = new User();
+        user.setId("userId");
+        TenantRole tenantRole = new TenantRole();
+        tenantRole.setName("identity:service-admin");
+        tenantRole.setClientId("clientId");
+        tenantRole.setDescription("description");
+        tenantRole.setRoleRsId("rsId");
+        tenantRole.setTenantIds(new String[0]);
+        ArrayList<TenantRole> tenantRoles = new ArrayList<TenantRole>();
+        tenantRoles.add(tenantRole);
+        doReturn(tenantRoles).when(spy).getTenantRolesForScopeAccess(null);
+        when(config.getString("cloudAuth.adminRole")).thenReturn("identity:admin");
+        when(config.getString("cloudAuth.serviceAdminRole")).thenReturn("identity:service-admin");
+        when(config.getString("cloudAuth.userAdminRole")).thenReturn("identity:user-admin");
+        when(config.getString("cloudAuth.userRole")).thenReturn("identity:default");
+        spy.addTenantRolesToUser(null, user);
+        verify(spy, times(0)).addTenantRoleToUser(eq(user), any(TenantRole.class));
+    }
+
+    @Test
+    public void getTenantRolesToUser_tenantRoleGetNameOnlyMatchIdentityUserAdmin_doesNotCallAddTenantRoleToUser() throws Exception {
+        User user = new User();
+        user.setId("userId");
+        TenantRole tenantRole = new TenantRole();
+        tenantRole.setName("identity:user-admin");
+        tenantRole.setClientId("clientId");
+        tenantRole.setDescription("description");
+        tenantRole.setRoleRsId("rsId");
+        tenantRole.setTenantIds(new String[0]);
+        ArrayList<TenantRole> tenantRoles = new ArrayList<TenantRole>();
+        tenantRoles.add(tenantRole);
+        doReturn(tenantRoles).when(spy).getTenantRolesForScopeAccess(null);
+        when(config.getString("cloudAuth.adminRole")).thenReturn("identity:admin");
+        when(config.getString("cloudAuth.serviceAdminRole")).thenReturn("identity:service-admin");
+        when(config.getString("cloudAuth.userAdminRole")).thenReturn("identity:user-admin");
+        when(config.getString("cloudAuth.userRole")).thenReturn("identity:default");
+        spy.addTenantRolesToUser(null, user);
+        verify(spy, times(0)).addTenantRoleToUser(eq(user), any(TenantRole.class));
+    }
+
+    @Test
+    public void getTenantRolesToUser_tenantRoleGetNameOnlyMatchIdentityDefault_doesNotCallAddTenantRoleToUser() throws Exception {
+        User user = new User();
+        user.setId("userId");
+        TenantRole tenantRole = new TenantRole();
+        tenantRole.setName("identity:default");
+        tenantRole.setClientId("clientId");
+        tenantRole.setDescription("description");
+        tenantRole.setRoleRsId("rsId");
+        tenantRole.setTenantIds(new String[0]);
+        ArrayList<TenantRole> tenantRoles = new ArrayList<TenantRole>();
+        tenantRoles.add(tenantRole);
+        doReturn(tenantRoles).when(spy).getTenantRolesForScopeAccess(null);
+        when(config.getString("cloudAuth.adminRole")).thenReturn("identity:admin");
+        when(config.getString("cloudAuth.serviceAdminRole")).thenReturn("identity:service-admin");
+        when(config.getString("cloudAuth.userAdminRole")).thenReturn("identity:user-admin");
+        when(config.getString("cloudAuth.userRole")).thenReturn("identity:default");
+        spy.addTenantRolesToUser(null, user);
+        verify(spy, times(0)).addTenantRoleToUser(eq(user), any(TenantRole.class));
+    }
+
+    @Test
+    public void getTenantRolesForUser_roleIsNull_doesNotCallClientDao() throws Exception {
+        List<TenantRole> tenantRoleList = new ArrayList<TenantRole>();
+        tenantRoleList.add(null);
+        when(tenantDao.getTenantRolesForUser(null, null)).thenReturn(tenantRoleList);
+        doReturn(null).when(spy).getTenantOnlyRoles(tenantRoleList);
+        spy.getTenantRolesForUser(null, null);
+        verify(clientDao, times(0)).getClientRoleById(anyString());
     }
 }

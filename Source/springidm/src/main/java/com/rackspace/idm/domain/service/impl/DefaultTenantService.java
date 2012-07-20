@@ -616,4 +616,8 @@ public class DefaultTenantService implements TenantService {
 
     }
 
+    public void setConfig(Configuration config) {
+        this.config = config;
+    }
+
 }
