@@ -211,7 +211,6 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
-    @Ignore  //Remove - User for a dev env test
     public void authenticate_userNotMigratedAndNotNullAndCloudClientResponse200AndAuthenticateResponseNotNull_scopeAcessUpdated() throws Exception {
         User user = new User();
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
