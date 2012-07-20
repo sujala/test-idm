@@ -15,6 +15,7 @@ import com.sun.jersey.core.util.MultivaluedMapImpl;
 import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Matchers;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
@@ -210,6 +211,7 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
+    @Ignore  //Remove - User for a dev env test
     public void authenticate_userNotMigratedAndNotNullAndCloudClientResponse200AndAuthenticateResponseNotNull_scopeAcessUpdated() throws Exception {
         User user = new User();
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();

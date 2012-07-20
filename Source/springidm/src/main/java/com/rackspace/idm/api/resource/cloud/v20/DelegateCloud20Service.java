@@ -21,6 +21,7 @@ import com.sun.jersey.api.json.JSONJAXBContext;
 import com.sun.jersey.api.json.JSONUnmarshaller;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
 import org.apache.ws.commons.util.Base64;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
@@ -34,12 +35,14 @@ import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.*;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.xml.bind.*;
+import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.transform.stream.StreamSource;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.URLEncoder;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 
@@ -104,6 +107,8 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     private com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.ObjectFactory objectFactoryRAXGRP = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.ObjectFactory();
 
+    public static final Logger LOG = Logger.getLogger(DelegateCloud20Service.class);
+
     @Override
     public Response.ResponseBuilder authenticate(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest)
             throws IOException, JAXBException {
@@ -124,7 +129,12 @@ public class DelegateCloud20Service implements Cloud20Service {
             AuthenticateResponse authenticateResponse = (AuthenticateResponse) unmarshallResponse(dummyResponse.getEntity().toString(), AuthenticateResponse.class);
             if (authenticateResponse != null) {
                 String token = authenticateResponse.getToken().getId();
-                Date expires = authenticateResponse.getToken().getExpires().toGregorianCalendar().getTime();
+                XMLGregorianCalendar authResExpires = authenticateResponse.getToken().getExpires();
+                LOG.info("authResExpires = " + authResExpires);
+                GregorianCalendar gregorianCalendar = authResExpires.toGregorianCalendar();
+                LOG.info("GregorianCalander = " + gregorianCalendar);
+                Date expires = gregorianCalendar.getTime();
+                LOG.info("expires = " + expires);
                     scopeAccessService.updateUserScopeAccessTokenForClientIdByUser(user, getCloudAuthClientId(), token, expires);
             }
             return serviceResponse;
