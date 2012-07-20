@@ -15,7 +15,7 @@ public class Permission implements Auditable {
     
     @LDAPField(attribute = LdapRepository.ATTR_NAME, objectClass = LdapRepository.OBJECTCLASS_PERMISSION, inRDN = true, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)
     private String            permissionId;
-    
+
     @LDAPField(attribute = LdapRepository.ATTR_CLIENT_ID, objectClass = LdapRepository.OBJECTCLASS_PERMISSION, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)
     private String            clientId;
     
@@ -139,5 +139,9 @@ public class Permission implements Auditable {
         return "Permission [ldapEntry=" + ldapEntry + ", permissionId="
             + permissionId + ", clientId=" + clientId + ", customerId="
             + customerId + "]";
+    }
+
+    public void setLdapEntry(ReadOnlyEntry ldapEntry) {
+        this.ldapEntry = ldapEntry;
     }
 }
