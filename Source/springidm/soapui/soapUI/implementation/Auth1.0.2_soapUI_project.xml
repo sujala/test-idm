@@ -67,7 +67,7 @@ for(item in 0..versionList2.size()-1)
 	//log.info versionList2[item]
 	def vers2 = versionList2[item]
 	testRunner.testCase.setPropertyValue("jversion", vers2)
-	def status2 = context.expand( '${getVersion - json#ResponseAsXml#declare namespace ns1=\'${#Project#stagingEndpoint}/${#Project#path}\'; //ns1:Response[1]/ns1:versions[1]/ns1:version[1]/ns1:e[ns1:id="${#TestCase#jversion}"]/ns1:status}' )
+	def status2 = context.expand( '${getVersion - json#ResponseAsXml#declare namespace ns1=\'${#Project#USstaginEndpoint}/${#Project#path}\'; //ns1:Response[1]/ns1:versions[1]/ns1:version[1]/ns1:e[ns1:id="${#TestCase#jversion}"]/ns1:status}' )
 	log.info "Json: " + vers2 + " - " + status2
 }
 
