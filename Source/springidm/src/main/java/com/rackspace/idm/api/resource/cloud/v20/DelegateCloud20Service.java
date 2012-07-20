@@ -21,6 +21,7 @@ import com.sun.jersey.api.json.JSONJAXBContext;
 import com.sun.jersey.api.json.JSONUnmarshaller;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
 import org.apache.ws.commons.util.Base64;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
@@ -104,6 +105,8 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     private com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.ObjectFactory objectFactoryRAXGRP = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.ObjectFactory();
 
+    public static final Logger LOG = Logger.getLogger(DelegateCloud20Service.class);
+
     @Override
     public Response.ResponseBuilder authenticate(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest)
             throws IOException, JAXBException {
@@ -124,8 +127,12 @@ public class DelegateCloud20Service implements Cloud20Service {
             AuthenticateResponse authenticateResponse = (AuthenticateResponse) unmarshallResponse(dummyResponse.getEntity().toString(), AuthenticateResponse.class);
             if (authenticateResponse != null) {
                 String token = authenticateResponse.getToken().getId();
-                Date expires = authenticateResponse.getToken().getExpires().toGregorianCalendar().getTime();
-                    scopeAccessService.updateUserScopeAccessTokenForClientIdByUser(user, getCloudAuthClientId(), token, expires);
+                LOG.info("Token value - " + token.toString());
+                Token authToken = authenticateResponse.getToken();
+                LOG.info("AuthToken value Id - " + authToken.getId());
+                Date expires = authToken.getExpires().toGregorianCalendar().getTime();
+                LOG.info("expires value - " + expires);
+                scopeAccessService.updateUserScopeAccessTokenForClientIdByUser(user, getCloudAuthClientId(), token, expires);
             }
             return serviceResponse;
         } else if (user == null) { //If "user" is null return cloud response
