@@ -17,6 +17,8 @@ import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
 
 public class UserTest {
 
@@ -286,8 +288,11 @@ public class UserTest {
 
     @Test
     public void hasEmptyPassword_passwordObjIsNull_returnsTrue() throws Exception {
-        user.setPasswordObj(null);
-        boolean result = user.hasEmptyPassword();
+        Password password = new Password();
+        password.setValue("password");
+        User spy = spy(user);
+        doReturn(null).doReturn(password).when(spy).getPasswordObj();
+        boolean result = spy.hasEmptyPassword();
         assertThat("boolean", result, equalTo(true));
     }
 
