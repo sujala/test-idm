@@ -81,7 +81,7 @@ public class CloudMigrationService {
     private GroupService cloudGroupService;
 
     @Autowired
-    private JAXBObjectFactories OBJ_FACTORIES;
+    private JAXBObjectFactories obj_factories;
 
     @Autowired
     private UserConverterCloudV20 userConverterCloudV20;
@@ -98,15 +98,20 @@ public class CloudMigrationService {
     @Autowired
     private AtomHopperClient atomHopperClient;
 
-    final private Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
 
     public CloudMigrationService() {
         client = new MigrationClient();
     }
 
-    public void migrateBaseURLs() throws Exception {
-        addOrUpdateEndpointTemplates(getAdminToken());
+    public void migrateBaseURLs(){
+        try {
+            addOrUpdateEndpointTemplates(getAdminToken());
+        }
+        catch (Exception ex) {
+
+        }
     }
 
     public void migrateRoles() {
@@ -143,8 +148,9 @@ public class CloudMigrationService {
     }
 
     public void migrateGroups() throws Exception {
-        if(isUkCloudRegion())
+        if(isUkCloudRegion()) {
             throw new NotFoundException("Method not found.");
+        }
         addOrUpdateGroups(getAdminToken());
     }
 
@@ -158,7 +164,7 @@ public class CloudMigrationService {
             cloudGroups.getGroup().add(cloudGroup);
         }
 
-        return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtKsgrpV1Factory().createGroups(cloudGroups));
+        return Response.ok(obj_factories.getRackspaceIdentityExtKsgrpV1Factory().createGroups(cloudGroups));
     }
 
     public Response.ResponseBuilder getMigratedUserList() throws Exception {
@@ -166,7 +172,7 @@ public class CloudMigrationService {
         com.rackspace.idm.domain.entity.Users users = userService.getAllUsers(filters);
         if (users == null)
             throw new NotFoundException("Users not found.");
-        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUsers(userConverterCloudV20.toUserList(users.getUsers())));
+        return Response.ok(obj_factories.getOpenStackIdentityV2Factory().createUsers(userConverterCloudV20.toUserList(users.getUsers())));
     }
 
     public Response.ResponseBuilder getInMigrationUserList() throws Exception {
@@ -174,14 +180,14 @@ public class CloudMigrationService {
         com.rackspace.idm.domain.entity.Users users = userService.getAllUsers(filters);
         if (users == null)
             throw new NotFoundException("Users not found.");
-        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUsers(userConverterCloudV20.toUserList(users.getUsers())));
+        return Response.ok(obj_factories.getOpenStackIdentityV2Factory().createUsers(userConverterCloudV20.toUserList(users.getUsers())));
     }
 
     public Response.ResponseBuilder getMigratedUser(String username) throws Exception {
         com.rackspace.idm.domain.entity.User user = userService.getUser(username);
         if (user == null)
             throw new NotFoundException("User not found.");
-        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(user)));
+        return Response.ok(obj_factories.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(user)));
     }
 
     public Response.ResponseBuilder getMigratedUserRoles(String username) throws Exception {
@@ -189,7 +195,7 @@ public class CloudMigrationService {
         if (user == null)
             throw new NotFoundException("User not found.");
         List<TenantRole> roles = tenantService.getGlobalRolesForUser(user);
-        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListJaxb(roles)));
+        return Response.ok(obj_factories.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListJaxb(roles)));
     }
 
     public Response.ResponseBuilder getMigratedUserEndpoints(String username) throws Exception {
@@ -197,7 +203,7 @@ public class CloudMigrationService {
         if (user == null)
             throw new NotFoundException("User not found.");
         EndpointList list = getEndpointsForUser(user.getUniqueId());
-        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createEndpoints(list));
+        return Response.ok(obj_factories.getOpenStackIdentityV2Factory().createEndpoints(list));
     }
 
     EndpointList getEndpointsForUser(String userId) {
@@ -239,8 +245,9 @@ public class CloudMigrationService {
     public MigrateUserResponseType migrateUserByUsername(String username, boolean processSubUsers, String domainId) throws Exception {
         client.setCloud20Host(config.getString("cloudAuth20url"));
         client.setCloud11Host(config.getString("cloudAuth11url"));
-        if (userService.userExistsByUsername(username))
+        if (userService.userExistsByUsername(username)) {
             throw new ConflictException("A user with username " + username + " already exists.");
+        }
 
         String adminToken = getAdminToken();
 
@@ -270,8 +277,9 @@ public class CloudMigrationService {
             }
             String password = cloudPassword;
 
-            if (password.equals(""))
+            if (password.equals("")) {
                 password = Password.generateRandom(false).getValue();
+            }
 
             RoleList roles = client.getRolesForUser(adminToken, user.getId());
 
@@ -304,15 +312,16 @@ public class CloudMigrationService {
             SecretQA secretQA = getSecretQA(adminToken, user.getId());
 
             // Set null so a new ID is given since ID exists.
-            if (userService.userExistsById(user.getId()))
+            if (userService.userExistsById(user.getId())) {
                 user.setId(null);
+            }
 
             // CREATE NEW USER
             com.rackspace.idm.domain.entity.User newUser = addMigrationUser(user, user11.getMossoId(),
                     user11.getNastId(), apiKey, password, secretQA, domainId);
 
             //Add CA token to GA User
-            if(userToken != "") {
+            if(!userToken.equals("")) {
                 try {
                     scopeAccessService.updateUserScopeAccessTokenForClientIdByUser(newUser, config.getString("cloudAuth.clientId"), userToken, expireToken);
                 }catch(Exception e){
@@ -344,10 +353,12 @@ public class CloudMigrationService {
                 }
             }
 
-            if(user11.getMossoId() != null)
+            if(user11.getMossoId() != null) {
                 addTenantsForUserByToken(newUser, user11.getMossoId().toString(), mossoBaseUrlRef);
-            if(user11.getNastId() != null)
+            }
+            if(user11.getNastId() != null) {
                 addTenantsForUserByToken(newUser, user11.getNastId(), nastBaseUrlRef);
+            }
 
             // Groups
             Groups groups = client.getGroupsForUser(adminToken, legacyId);
@@ -373,7 +384,7 @@ public class CloudMigrationService {
         throw new NotAuthenticatedException("Not Authorized.");
     }
 
-	private String getDefaultRegion(User user) {
+	String getDefaultRegion(User user) {
 		String defaultRegion = null;
 		QName defaultRegionQName = new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","defaultRegion");
 		for (QName qname : user.getOtherAttributes().keySet()) {
@@ -734,8 +745,9 @@ public class CloudMigrationService {
     void addUserGroups(String userId, Groups groups) throws Exception {
         try {
             for (Group group : groups.getGroup()) {
-                if (isUkCloudRegion() && group.getId().equals("1")) // Set Default (1) to Default (0)
+                if (isUkCloudRegion() && group.getId().equals("1"))  {// Set Default (1) to Default (0)
                     group.setId("0");
+                }
                 cloudGroupService.addGroupToUser(Integer.parseInt(group.getId()), userId);
             }
         } catch (Exception ex) {
@@ -761,7 +773,7 @@ public class CloudMigrationService {
         }
     }
 
-    private void addTenantsForUserByToken(com.rackspace.idm.domain.entity.User user, String tenantId, List<String> baseUrlRefs) throws Exception {
+    void addTenantsForUserByToken(com.rackspace.idm.domain.entity.User user, String tenantId, List<String> baseUrlRefs) throws Exception {
         if (baseUrlRefs != null) {
             com.rackspace.idm.domain.entity.Tenant newTenant = tenantService.getTenant(tenantId);
             // Add the Tenant if it doesn't exist.
@@ -777,7 +789,7 @@ public class CloudMigrationService {
         }
     }
 
-    private void addTenant(String tenantId, String[] baseUrls) {
+    void addTenant(String tenantId, String[] baseUrls) {
         com.rackspace.idm.domain.entity.Tenant newTenant = new com.rackspace.idm.domain.entity.Tenant();
         newTenant.setTenantId(tenantId);
         newTenant.setName(tenantId);
@@ -923,7 +935,7 @@ public class CloudMigrationService {
         return cloudBaseUrl;
     }
 
-    private BaseURL getBaseUrlFromEndpoint(int endpointId, List<BaseURL> baseURLs) {
+    BaseURL getBaseUrlFromEndpoint(int endpointId, List<BaseURL> baseURLs) {
         for (BaseURL b : baseURLs) {
             if (b.getId() == endpointId)
                 return b;
@@ -971,8 +983,8 @@ public class CloudMigrationService {
         this.config = config;
     }
 
-    public void setOBJ_FACTORIES(JAXBObjectFactories OBJ_FACTORIES) {
-        this.OBJ_FACTORIES = OBJ_FACTORIES;
+    public void setObj_factories(JAXBObjectFactories obj_factories) {
+        this.obj_factories = obj_factories;
     }
 
     public void setUserConverterCloudV20(UserConverterCloudV20 userConverterCloudV20) {

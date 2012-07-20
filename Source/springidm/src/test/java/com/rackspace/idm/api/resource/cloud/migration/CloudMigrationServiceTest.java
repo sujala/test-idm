@@ -12,6 +12,7 @@ import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.v20.CloudKsGroupBuilder;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Group;
+import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.BadRequestException;
@@ -36,11 +37,9 @@ import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeFactory;
+import javax.xml.namespace.QName;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.List;
+import java.util.*;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
@@ -104,7 +103,7 @@ public class CloudMigrationServiceTest {
         cloudMigrationService.setClient(client);
         cloudMigrationService.setConfig(config);
         cloudMigrationService.setEndpointService(endpointService);
-        cloudMigrationService.setOBJ_FACTORIES(jaxbObjectFactories);
+        cloudMigrationService.setObj_factories(jaxbObjectFactories);
         cloudMigrationService.setTenantService(tenantService);
         cloudMigrationService.setUserConverterCloudV20(userConverterCloudV20);
         cloudMigrationService.setUserService(userService);
@@ -249,8 +248,15 @@ public class CloudMigrationServiceTest {
         group.setName("group");
         doReturn("").when(spy).getAdminToken();
         when(groupService.getGroupById(anyInt())).thenReturn(group);
+        when(config.getString("cloud.region")).thenReturn("notUK");
         spy.migrateGroups();
         verify(spy).addOrUpdateGroups(anyString());
+    }
+
+    @Test (expected = NotFoundException.class)
+    public void migrateGroups_isUKCloudRegion_throwsNotFoundException() throws Exception {
+        when(config.getString("cloud.region")).thenReturn("UK");
+        spy.migrateGroups();
     }
 
     @Test(expected = NotFoundException.class)
@@ -330,6 +336,7 @@ public class CloudMigrationServiceTest {
         doReturn(new ArrayList<String>()).when(spy).getSubUsers(any(org.openstack.docs.identity.api.v2.User.class), anyString(), any(RoleList.class));
         doReturn(new User()).when(spy).addMigrationUser(any(org.openstack.docs.identity.api.v2.User.class), anyInt(), anyString(), anyString(), anyString(), any(SecretQA.class), anyString());
         doNothing().when(spy).addUserGlobalRoles(any(User.class), any(RoleList.class));
+        doReturn(true).when(spy).isSubUser(any(RoleList.class));
         when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
         when(userService.getUser(anyString())).thenReturn(user);
         when(userService.userExistsById(anyString())).thenReturn(true);
@@ -340,11 +347,12 @@ public class CloudMigrationServiceTest {
 
     @Test
     public void migrateUserByUsername_CloudBaseUrlBaseUrlTypeIsNAST_succeedsWithNoExceptions() throws Exception {
+        BaseURLRefList baseUrlrefList = new BaseURLRefList();
+        baseUrlrefList.getBaseURLRef().add(new BaseURLRef());
+        com.rackspacecloud.docs.auth.api.v1.User user11 = mock(com.rackspacecloud.docs.auth.api.v1.User.class);
+        when(user11.getMossoId()).thenReturn(1).thenReturn(null);
+        when(user11.getBaseURLRefs()).thenReturn(baseUrlrefList);
         when(client.getUser(anyString(), anyString())).thenReturn(new org.openstack.docs.identity.api.v2.User());
-        com.rackspacecloud.docs.auth.api.v1.User user11 = new com.rackspacecloud.docs.auth.api.v1.User();
-        user11.setMossoId(1);
-        user11.setBaseURLRefs(new BaseURLRefList());
-        user11.getBaseURLRefs().getBaseURLRef().add(new BaseURLRef());
         when(client.getUserTenantsBaseUrls(anyString(), anyString(), anyString())).thenReturn(user11);
         doReturn("token").when(spy).getAdminToken();
         doReturn(new ArrayList<String>()).when(spy).getSubUsers(any(org.openstack.docs.identity.api.v2.User.class), anyString(), any(RoleList.class));
@@ -352,16 +360,19 @@ public class CloudMigrationServiceTest {
         doNothing().when(spy).addUserGlobalRoles(any(User.class), any(RoleList.class));
         when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
         when(userService.getUser(anyString())).thenReturn(user);
-        when(userService.userExistsById(anyString())).thenReturn(true);
+        when(userService.userExistsById(anyString())).thenReturn(false);
         doReturn(new UserType()).when(spy).validateUser(any(org.openstack.docs.identity.api.v2.User.class), anyString(), anyString(), any(SecretQA.class), any(RoleList.class), any(Groups.class), anyList());
         cloudBaseUrl.setBaseUrlType("NAST");
         when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
         when(userService.getUser(anyString())).thenReturn(user);
+        doReturn(false).when(spy).isSubUser(any(RoleList.class));
+        when(config.getString("cloud.region")).thenReturn("UK");
         spy.migrateUserByUsername("cmarin2", false, "1");
     }
 
     @Test
     public void migrateUserByUsername_CloudBaseUrlGetBaseUrlTypeIsMOSSO_succeedsWithNoExceptions() throws Exception {
+        AuthenticateResponse authenticateResponse = mock(AuthenticateResponse.class);
         when(client.getUser(anyString(), anyString())).thenReturn(new org.openstack.docs.identity.api.v2.User());
         com.rackspacecloud.docs.auth.api.v1.User user11 = new com.rackspacecloud.docs.auth.api.v1.User();
         user11.setMossoId(1);
@@ -379,7 +390,13 @@ public class CloudMigrationServiceTest {
         cloudBaseUrl.setBaseUrlType("MOSSO");
         when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
         when(userService.getUser(anyString())).thenReturn(user);
-        spy.migrateUserByUsername("cmarin2", false, "1");
+        doReturn(authenticateResponse).when(spy).authenticate(anyString(), anyString(), anyString());
+        Token value = new Token();
+        value.setId("notBlank");
+        value.setExpires(new XMLGregorianCalendarImpl());
+        when(authenticateResponse.getToken()).thenReturn(value);
+        when(config.getString("cloud.region")).thenReturn("notUK");
+        spy.migrateUserByUsername("cmarin2", true, "1");
     }
 
     @Test
@@ -1189,6 +1206,8 @@ public class CloudMigrationServiceTest {
         user2.setCreated(new XMLGregorianCalendarImpl());
         user2.setUpdated(new XMLGregorianCalendarImpl());
         user2.setEmail("email");
+        Map<QName, String> otherAttributes = user2.getOtherAttributes();
+        otherAttributes.put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","defaultRegion"), "region");
         User user1 = cloudMigrationService.addMigrationUser(user2, 12345, "nastId", "apiKey", "password", secretQA, "domainId");
         assertThat("user mosso id", user1.getMossoId(), equalTo(12345));
         assertThat("user nast id", user1.getNastId(), equalTo("nastId"));
@@ -1200,6 +1219,7 @@ public class CloudMigrationServiceTest {
         assertThat("user email", user1.getEmail(), equalTo("email"));
         assertThat("user created", user1.getCreated(), not(nullValue()));
         assertThat("user updated", user1.getUpdated(), not(nullValue()));
+        assertThat("user default region", user1.getRegion(), equalTo("region"));
     }
 
     @Test
@@ -1224,6 +1244,50 @@ public class CloudMigrationServiceTest {
         groups.getGroup().add(group);
         cloudMigrationService.addUserGroups("userId", groups);
         verify(groupService, times(3)).addGroupToUser(anyInt(), eq("userId"));
+    }
+
+    @Test
+    public void addUserGroups_notUkCloudRegionAndIdIs1_callsCloudGroupServiceAddGroupToUser() throws Exception {
+        Groups groups = new Groups();
+        com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group();
+        group.setId("1");
+        groups.getGroup().add(group);
+        when(config.getString("cloud.region")).thenReturn("notUk");
+        cloudMigrationService.addUserGroups("userId", groups);
+        verify(groupService).addGroupToUser(1, "userId");
+    }
+
+    @Test
+    public void addUserGroups_isUkCloudRegionAndIs1_setsGroupIdTo0() throws Exception {
+        Groups groups = new Groups();
+        com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group();
+        group.setId("1");
+        groups.getGroup().add(group);
+        when(config.getString("cloud.region")).thenReturn("UK");
+        cloudMigrationService.addUserGroups("userId", groups);
+        verify(groupService).addGroupToUser(0, "userId");
+    }
+
+    @Test
+    public void addUserGroups_notUkCloudRegionAndIdNot1_callsCloudGroupServiceAddGroupToUser() throws Exception {
+        Groups groups = new Groups();
+        com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group();
+        group.setId("123");
+        groups.getGroup().add(group);
+        when(config.getString("cloud.region")).thenReturn("notUk");
+        cloudMigrationService.addUserGroups("userId", groups);
+        verify(groupService).addGroupToUser(123, "userId");
+    }
+
+    @Test
+    public void addUserGroups_isUkCloudRegionAndIdNot1_callsGroupdServiceAddGroupToUser() throws Exception {
+        Groups groups = new Groups();
+        com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group();
+        group.setId("123");
+        groups.getGroup().add(group);
+        when(config.getString("cloud.region")).thenReturn("UK");
+        cloudMigrationService.addUserGroups("userId", groups);
+        verify(groupService).addGroupToUser(123, "userId");
     }
 
     @Test
@@ -1388,6 +1452,13 @@ public class CloudMigrationServiceTest {
     }
 
     @Test
+    public void addOrUpdateEndpointTemplates_endpointsIsNull_doesNothing() throws Exception {
+        when(client.getEndpointTemplates("adminToken")).thenReturn(null);
+        cloudMigrationService.addOrUpdateEndpointTemplates("adminToken");
+        verify(endpointService, times(0)).getBaseUrlById(anyInt());
+    }
+
+    @Test
     public void addOrUpdateEndpointTemplates_withNullCloudBaseUrl_withNullBaseUrl() throws Exception {
         EndpointTemplateList endpointTemplateList = new EndpointTemplateList();
         EndpointTemplate endpointTemplate = new EndpointTemplate();
@@ -1396,7 +1467,7 @@ public class CloudMigrationServiceTest {
         when(client.getEndpointTemplates(anyString())).thenReturn(endpointTemplateList);
         when(client.getBaseUrls(anyString(), anyString())).thenThrow(new NotFoundException());
         when(endpointService.getBaseUrlById(anyInt())).thenReturn(null);
-
+        when(config.getString("cloud.region")).thenReturn("UK");
         cloudMigrationService.addOrUpdateEndpointTemplates(null);
         verify(endpointService).addBaseUrl(any(CloudBaseUrl.class));
     }
@@ -1416,7 +1487,7 @@ public class CloudMigrationServiceTest {
         baseURLList.getBaseURL().add(baseURL);
         when(client.getBaseUrls(anyString(), anyString())).thenReturn(baseURLList);
         when(endpointService.getBaseUrlById(anyInt())).thenReturn(null);
-
+        when(config.getString("cloud.region")).thenReturn("notUK");
         cloudMigrationService.addOrUpdateEndpointTemplates(null);
         ArgumentCaptor<CloudBaseUrl> cloudBaseUrlArgumentCaptor = ArgumentCaptor.forClass(CloudBaseUrl.class);
         verify(endpointService).addBaseUrl(cloudBaseUrlArgumentCaptor.capture());
@@ -1572,5 +1643,65 @@ public class CloudMigrationServiceTest {
         when(applicationService.getClientRoleById("id")).thenReturn(clientRole);
         spy.migrateRoles();
         verify(applicationService).updateClientRole(clientRole);
+    }
+
+    @Test
+    public void getDefaultRegion_defaultRegionSetToUserDefaultRegion_returnsDefaultRegion() throws Exception {
+        org.openstack.docs.identity.api.v2.User defaultRegionUser = new org.openstack.docs.identity.api.v2.User();
+        Map<QName,String> defaultRegionUserOtherAttributes = defaultRegionUser.getOtherAttributes();
+        defaultRegionUserOtherAttributes.put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","defaultRegion"), "region");
+        String result = cloudMigrationService.getDefaultRegion(defaultRegionUser);
+        assertThat("default region", result, equalTo("region"));
+    }
+
+    @Test
+    public void getDefaultRegion_qnameNotMatchUserQname_returnsNull() throws Exception {
+        org.openstack.docs.identity.api.v2.User defaultRegionUser = new org.openstack.docs.identity.api.v2.User();
+        Map<QName,String> defaultRegionUserOtherAttributes = defaultRegionUser.getOtherAttributes();
+        defaultRegionUserOtherAttributes.put(new QName("different"), "region");
+        String result = cloudMigrationService.getDefaultRegion(defaultRegionUser);
+        assertThat("default region", result, equalTo(null));
+    }
+
+    @Test
+    public void addTenantsForUserByToken_baseUrlRefsIsNull_doesNothing() throws Exception {
+        cloudMigrationService.addTenantsForUserByToken(user, null, null);
+        verify(tenantService, times(0)).getTenant(anyString());
+    }
+
+    @Test
+    public void addTenantsForUserByToken_newTenantIsNull_callsAddTenant() throws Exception {
+        ArrayList<String> baseUrlRefs = new ArrayList<String>();
+        when(tenantService.getTenant("tenantId")).thenReturn(null);
+        spy.addTenantsForUserByToken(user, "tenantId", baseUrlRefs);
+        verify(spy).addTenant("tenantId", baseUrlRefs.toArray(new String[0]));
+    }
+
+    @Test
+    public void addTenantsForUserByToken_newTenantNotNull_doesNotCallAddTenant() throws Exception {
+        ArrayList<String> baseUrlRefs = new ArrayList<String>();
+        when(tenantService.getTenant("tenantId")).thenReturn(new Tenant());
+        spy.addTenantsForUserByToken(user, "tenantId", baseUrlRefs);
+        verify(spy, times(0)).addTenant("tenantId", baseUrlRefs.toArray(new String[0]));
+    }
+
+    @Test
+    public void getBaseUrlFromEndpoint_baseUrlMatchesEndpointId_returnsBaseUrl() throws Exception {
+        BaseURL baseURL = new BaseURL();
+        baseURL.setId(1);
+        List<BaseURL> baseURLList = new ArrayList<BaseURL>();
+        baseURLList.add(baseURL);
+        BaseURL result = cloudMigrationService.getBaseUrlFromEndpoint(1, baseURLList);
+        assertThat("base url", result, equalTo(baseURL));
+    }
+
+    @Test
+    public void getBaseUrlFromEndpoint_baseUrlDoesNotMatchEndpointId_returnsNull() throws Exception {
+        BaseURL baseURL = new BaseURL();
+        baseURL.setId(123);
+        List<BaseURL> baseURLList = new ArrayList<BaseURL>();
+        baseURLList.add(baseURL);
+        BaseURL result = cloudMigrationService.getBaseUrlFromEndpoint(1, baseURLList);
+        assertThat("base url", result, equalTo(null));
     }
 }
