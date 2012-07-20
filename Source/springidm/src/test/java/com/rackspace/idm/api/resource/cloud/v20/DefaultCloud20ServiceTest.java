@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v20;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
+import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.converter.cloudv20.*;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
@@ -27,6 +28,7 @@ import org.openstack.docs.common.api.v1.Extensions;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
+import org.openstack.docs.identity.api.ext.os_ksec2.v1.Ec2CredentialsType;
 import org.openstack.docs.identity.api.v2.*;
 import org.openstack.docs.identity.api.v2.ObjectFactory;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
@@ -1265,7 +1267,6 @@ public class DefaultCloud20ServiceTest {
         UserForCreate userForCreate = new UserForCreate();
         userForCreate.setUsername("userforcreate");
         userForCreate.setEmail("user@rackspace.com");
-        userForCreate.setPassword("password");
         spy.addUser(null, null, authToken, userForCreate);
         verify(userService).addUser(argument.capture());
         assertThat("nast id", argument.getValue().getNastId(), equalTo("nastId"));
@@ -1367,6 +1368,7 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void addUser_adminRoleUserSizeNotGreaterThanNumSubUsersThrowsBadRequest_returns201() throws Exception {
+        userOS.setPassword("password");
         UriBuilder uriBuilder = mock(UriBuilder.class);
         URI uri = new URI("");
         User caller = new User();
@@ -1385,6 +1387,7 @@ public class DefaultCloud20ServiceTest {
         when(config.getInt("numberOfSubUsers")).thenReturn(2);
         doNothing().when(spy).setDomainId(any(ScopeAccess.class), any(User.class));
         doNothing().when(spy).assignProperRole(eq(httpHeaders), eq(authToken), any(ScopeAccess.class), any(User.class));
+        doNothing().when(spy).validatePassword("password");
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         doReturn(uriBuilder).when(uriBuilder).path(anyString());
         doReturn(uri).when(uriBuilder).build();
@@ -2094,6 +2097,16 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void addUserCredentials_notApiKeyCredentialsAndNotPasswordCredentials_returns200() throws Exception {
+        JAXBElement<Ec2CredentialsType> credentials = new JAXBElement<Ec2CredentialsType>(new QName("ec2"), Ec2CredentialsType.class, new Ec2CredentialsType());
+        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        when(httpHeaders.getMediaType()).thenReturn(MediaType.APPLICATION_XML_TYPE);
+        doReturn(credentials).when(spy).getXMLCredentials("body");
+        Response.ResponseBuilder responseBuilder = spy.addUserCredential(httpHeaders, authToken, "userId", "body");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
     public void addUserRole_callsVerifyUserAdminLevelAccess() throws Exception {
         spy.addUserRole(null, authToken, authToken, null);
         verify(spy).verifyUserAdminLevelAccess(authToken);
@@ -2115,6 +2128,51 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void addUserRole_userNotIdentityAdminAndRoleNotIdentityAdmin_returns200() throws Exception {
+        doNothing().when(spy).verifyUserAdminLevelAccess(authToken);
+        ScopeAccess scopeAccess = new ScopeAccess();
+        when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(scopeAccess);
+        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(false);
+        when(config.getString("cloudAuth.adminRole")).thenReturn("admin");
+        ClientRole clientRole1 = new ClientRole();
+        clientRole1.setName("notAdmin");
+        doReturn(clientRole1).when(spy).checkAndGetClientRole(roleId);
+        doReturn(new User()).when(spy).checkAndGetUser(null);
+        Response.ResponseBuilder responseBuilder = spy.addUserRole(null, authToken, null, roleId);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void addUserRole_userIsIdentityAdminAndRoleNotIdentityAdmin_returns200() throws Exception {
+        doNothing().when(spy).verifyUserAdminLevelAccess(authToken);
+        ScopeAccess scopeAccess = new ScopeAccess();
+        when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(scopeAccess);
+        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(true);
+        when(config.getString("cloudAuth.adminRole")).thenReturn("admin");
+        ClientRole clientRole1 = new ClientRole();
+        clientRole1.setName("notAdmin");
+        doReturn(clientRole1).when(spy).checkAndGetClientRole(roleId);
+        doReturn(new User()).when(spy).checkAndGetUser(null);
+        Response.ResponseBuilder responseBuilder = spy.addUserRole(null, authToken, null, roleId);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void addUserRole_userIsIdentityAdminAndRoleIsIdentityAdmin_returns200() throws Exception {
+        doNothing().when(spy).verifyUserAdminLevelAccess(authToken);
+        ScopeAccess scopeAccess = new ScopeAccess();
+        when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(scopeAccess);
+        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(true);
+        when(config.getString("cloudAuth.adminRole")).thenReturn("admin");
+        ClientRole clientRole1 = new ClientRole();
+        clientRole1.setName("admin");
+        doReturn(clientRole1).when(spy).checkAndGetClientRole(roleId);
+        doReturn(new User()).when(spy).checkAndGetUser(null);
+        Response.ResponseBuilder responseBuilder = spy.addUserRole(null, authToken, null, roleId);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
     public void checkToken_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.checkToken(null, authToken, authToken, null);
         verify(spy).verifyServiceAdminLevelAccess(authToken);
@@ -2128,12 +2186,21 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void checkToken_bleongsToNotBlankThrowsNotFoundException_returns404() throws Exception {
+    public void checkToken_belongsToNotBlankThrowsNotFoundException_returns404() throws Exception {
         doReturn(null).when(spy).checkAndGetToken("tokenId");
         when(tenantService.getTenantRolesForScopeAccess(any(ScopeAccess.class))).thenReturn(null);
         doReturn(false).when(spy).belongsTo("belongsTo", null);
         Response.ResponseBuilder responseBuilder = spy.checkToken(null, authToken, "tokenId", "belongsTo");
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(404));
+    }
+
+    @Test
+    public void checkToken_belongsToBlank_returns200() throws Exception {
+        doReturn(null).when(spy).checkAndGetToken("tokenId");
+        when(tenantService.getTenantRolesForScopeAccess(any(ScopeAccess.class))).thenReturn(null);
+        doReturn(true).when(spy).belongsTo("belongsTo", null);
+        Response.ResponseBuilder responseBuilder = spy.checkToken(null, authToken, "tokenId", "belongsTo");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
     @Test
@@ -2311,11 +2378,12 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void deleteUserRole_callsScopeAccessService() throws Exception {
+        tenantRole.setRoleRsId("id");
         List<TenantRole> globalRoles = new ArrayList<TenantRole>();
         globalRoles.add(tenantRole);
         when(tenantService.getGlobalRolesForUser(any(User.class))).thenReturn(globalRoles);
         spy.deleteUserRole(null, authToken, userId, "tenantRoleId");
-        verify(scopeAccessService, times(2)).getScopeAccessByAccessToken(authToken);
+        verify(scopeAccessService).getScopeAccessByAccessToken(authToken);
     }
 
     @Test
@@ -2329,6 +2397,45 @@ public class DefaultCloud20ServiceTest {
         when(config.getString("cloudAuth.adminRole")).thenReturn("identity:admin");
         Response.ResponseBuilder responseBuilder = spy.deleteUserRole(httpHeaders, authToken, userId, "tenantRoleId");
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(403));
+    }
+
+    @Test
+    public void deleteUserRole_notCloudIdentityAdminAndNotAdminRole_returns204() throws Exception {
+        List<TenantRole> globalRoles = new ArrayList<TenantRole>();
+        tenantRole.setName("notAdmin");
+        globalRoles.add(tenantRole);
+        when(tenantService.getGlobalRolesForUser(any(User.class))).thenReturn(globalRoles);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(config.getString("cloudAuth.adminRole")).thenReturn("identity:admin");
+        Response.ResponseBuilder responseBuilder = spy.deleteUserRole(httpHeaders, authToken, userId, "tenantRoleId");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(204));
+    }
+
+    @Test
+    public void deleteUserRole_isCloudIdentityAdminAndNotAdminRole_returns204() throws Exception {
+        List<TenantRole> globalRoles = new ArrayList<TenantRole>();
+        tenantRole.setName("notAdmin");
+        globalRoles.add(tenantRole);
+        when(tenantService.getGlobalRolesForUser(any(User.class))).thenReturn(globalRoles);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(config.getString("cloudAuth.adminRole")).thenReturn("identity:admin");
+        Response.ResponseBuilder responseBuilder = spy.deleteUserRole(httpHeaders, authToken, userId, "tenantRoleId");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(204));
+    }
+
+    @Test
+    public void deleteUserRole_isCloudIdentityAdminAndIsAdminRole_returns204() throws Exception {
+        List<TenantRole> globalRoles = new ArrayList<TenantRole>();
+        tenantRole.setName("identity:admin");
+        globalRoles.add(tenantRole);
+        when(tenantService.getGlobalRolesForUser(any(User.class))).thenReturn(globalRoles);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(config.getString("cloudAuth.adminRole")).thenReturn("identity:admin");
+        Response.ResponseBuilder responseBuilder = spy.deleteUserRole(httpHeaders, authToken, userId, "tenantRoleId");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(204));
     }
 
     @Test
@@ -2597,6 +2704,15 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void getUserCredential_userIsNull_returns404() throws Exception {
+        when(userService.getUserById("id")).thenReturn(null);
+        when(authorizationService.authorizeCloudUser(any(ScopeAccess.class))).thenReturn(true);
+        doReturn(user).when(spy).getUser(any(ScopeAccess.class));
+        Response.ResponseBuilder responseBuilder = spy.getUserCredential(null, authToken, "id", apiKeyCredentials);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(404));
+    }
+
+    @Test
     public void getUserCredential_cloudAdminUser_callsGetUser() throws Exception {
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
         spy.getUserCredential(null, authToken, userId, passwordCredentials);
@@ -2656,7 +2772,15 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void getUserRole_roleIsNullThrowsNotFoundException_returns404() throws Exception {
-        Response.ResponseBuilder responseBuilder = spy.getUserRole(null, authToken, userId, null);
+        User user = new User();
+        TenantRole tenantRole = new TenantRole();
+        tenantRole.setRoleRsId("different");
+        List<TenantRole> tenantRoleList = new ArrayList<TenantRole>();
+        tenantRoleList.add(tenantRole);
+        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(user).when(spy).checkAndGetUser("userId");
+        when(tenantService.getGlobalRolesForUser(user)).thenReturn(tenantRoleList);
+        Response.ResponseBuilder responseBuilder = spy.getUserRole(null, authToken, "userId", "roleId");
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(404));
     }
 
@@ -2745,6 +2869,15 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void isUserAdmin_nameNotIdentityUserAdmin_returnsFalse() throws Exception {
+        tenantRole.setName("notAdmin");
+        List<TenantRole> globalRoles = new ArrayList<TenantRole>();
+        globalRoles.add(tenantRole);
+        Boolean hasRole = spy.isUserAdmin(null, globalRoles);
+        assertThat("boolean value", hasRole, equalTo(false));
+    }
+
+    @Test
     public void isDefaultUser_tenantRolesIsNull_callsTenantService() throws Exception {
         spy.isDefaultUser(null, null);
         verify(tenantService).getTenantRolesForScopeAccess(null);
@@ -2766,6 +2899,15 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void isDefaultUser_nameNotIdentityDefault_returnsFalse() throws Exception {
+        tenantRole.setName("notDefault");
+        List<TenantRole> globalRoles = new ArrayList<TenantRole>();
+        globalRoles.add(tenantRole);
+        Boolean hasRole = spy.isDefaultUser(null, globalRoles);
+        assertThat("boolean value", hasRole, equalTo(false));
+    }
+
+    @Test
     public void listEndpoints_verifyServiceAdminLevelAccess() throws Exception {
         spy.listEndpoints(null, authToken, null);
         verify(spy).verifyServiceAdminLevelAccess(authToken);
@@ -2775,6 +2917,21 @@ public class DefaultCloud20ServiceTest {
     public void listEndpoints_baseUrlIdsIsNotNullResponseOk_returns200() throws Exception {
         Response.ResponseBuilder responseBuilder = spy.listEndpoints(httpHeaders, authToken, tenantId);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void listEndpoints_baseUrlIdsIsNotNullCallsEndpointService_getBaseUrlById() throws Exception {
+        String[] ids = {"1"};
+        tenant.setBaseUrlIds(ids);
+        ArrayList<CloudBaseUrl> cloudBaseUrlList = new ArrayList<CloudBaseUrl>();
+        cloudBaseUrlList.add(cloudBaseUrl);
+        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doNothing().when(spy).verifyTokenHasTenantAccess(authToken, tenantId);
+        doReturn(tenant).when(spy).checkAndGetTenant(tenantId);
+        when(endpointService.getGlobalBaseUrls()).thenReturn(cloudBaseUrlList);
+        when(endpointService.getBaseUrlById(1)).thenReturn(cloudBaseUrl);
+        spy.listEndpoints(httpHeaders, authToken, tenantId);
+        verify(endpointService).getBaseUrlById(1);
     }
 
     @Test
