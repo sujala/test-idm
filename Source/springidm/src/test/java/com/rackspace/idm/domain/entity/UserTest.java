@@ -511,7 +511,7 @@ public class UserTest {
         object.setPasswordObj(password);
         object.setSecretAnswer("secretAnswer");
         object.setSecretQuestion("secretQuestion");
-        user.setPassword(null);
+        user.setCredential(null);
         boolean result = user.equals(object);
         assertThat("boolean", result, equalTo(false));
     }
@@ -608,9 +608,7 @@ public class UserTest {
         object.setFirstname("notNull");
         object.setMiddlename("notNull");
         object.setLastname("notNull");
-        user.setFirstname(null);
-        user.setLastname(null);
-        user.setMiddlename(null);
+        user.setName(null);
         boolean result = user.equals(object);
         assertThat("boolean", result, equalTo(false));
     }
@@ -682,7 +680,7 @@ public class UserTest {
         User object = new User();
         object.setPreferredLang("notNull");
         object.setTimeZone(GlobalConstants.USER_TIME_ZONE_DEFAULT);
-        user.setPreferredLang(null);
+        user.setPreference(null);
         boolean result = user.equals(object);
         assertThat("boolean", result, equalTo(false));
     }
@@ -821,7 +819,13 @@ public class UserTest {
     public void equals_usernameIsNullAndObjectUsernameIsNull_returnsTrue() throws Exception {
         User object = new User();
         object.setUsername(null);
+        object.setName(null);
+        object.setCredential(null);
+        object.setPreference(null);
         user.setUsername(null);
+        user.setName(null);
+        user.setCredential(null);
+        user.setPreference(null);
         boolean result = user.equals(object);
         assertThat("boolean", result, equalTo(true));
     }
