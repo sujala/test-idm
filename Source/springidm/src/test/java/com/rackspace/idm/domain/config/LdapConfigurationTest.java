@@ -50,13 +50,14 @@ public class LdapConfigurationTest {
     }
 
     @Test
-    public void connection_portIsNot389AndThrowsLdapException_throwsIllegalStateException() throws Exception {
+    public void connection_portIsNot389AndUsingSSLAndThrowsLdapException_throwsIllegalStateException() throws Exception {
         try{
             when(configuration.getStringArray("ldap.serverList")).thenReturn(new String[]{"one:123", "two:345"});
             when(configuration.getInt("ldap.server.pool.size.init",1)).thenReturn(1);
             when(configuration.getInt("ldap.server.pool.size.max",100)).thenReturn(100);
             when(configuration.getString("ldap.bind.dn")).thenReturn("bindDn");
             when(configuration.getString("ldap.bind.password")).thenReturn("bindPassword");
+            when(configuration.getBoolean("ldap.server.useSSL")).thenReturn(true);
             ldapConfiguration.connection();
             assertTrue("should throw exception",false);
         }catch (IllegalStateException ex){
@@ -65,13 +66,46 @@ public class LdapConfigurationTest {
     }
 
     @Test
-    public void connection_portIs389AndThrowsLdapException_throwsIllegalStateException() throws Exception {
+    public void connection_portIsNot389AndNotUsingSSLAndThrowsLdapException_throwsIllegalStateException() throws Exception {
+        try{
+            when(configuration.getStringArray("ldap.serverList")).thenReturn(new String[]{"one:123", "two:345"});
+            when(configuration.getInt("ldap.server.pool.size.init",1)).thenReturn(1);
+            when(configuration.getInt("ldap.server.pool.size.max",100)).thenReturn(100);
+            when(configuration.getString("ldap.bind.dn")).thenReturn("bindDn");
+            when(configuration.getString("ldap.bind.password")).thenReturn("bindPassword");
+            when(configuration.getBoolean("ldap.server.useSSL")).thenReturn(false);
+            ldapConfiguration.connection();
+            assertTrue("should throw exception",false);
+        }catch (IllegalStateException ex){
+            assertThat("exception message",ex.getMessage(),equalTo("Could not connect/bind to the LDAP server instance. Make sure that the LDAP server is available and that the bind credential is correct."));
+        }
+    }
+
+    @Test
+    public void connection_portIs389AndUsingSSLAndThrowsLdapException_throwsIllegalStateException() throws Exception {
         try{
             when(configuration.getStringArray("ldap.serverList")).thenReturn(new String[]{"one:389", "two:389"});
             when(configuration.getInt("ldap.server.pool.size.init",1)).thenReturn(1);
             when(configuration.getInt("ldap.server.pool.size.max",100)).thenReturn(100);
             when(configuration.getString("ldap.bind.dn")).thenReturn("bindDn");
             when(configuration.getString("ldap.bind.password")).thenReturn("bindPassword");
+            when(configuration.getBoolean("ldap.server.useSSL")).thenReturn(true);
+            ldapConfiguration.connection();
+            assertTrue("should throw exception",false);
+        }catch (IllegalStateException ex){
+            assertThat("exception message",ex.getMessage(),equalTo("Could not connect/bind to the LDAP server instance. Make sure that the LDAP server is available and that the bind credential is correct."));
+        }
+    }
+
+    @Test
+    public void connection_portIs389AndNotUsingSSLAndThrowsLdapException_throwsIllegalStateException() throws Exception {
+        try{
+            when(configuration.getStringArray("ldap.serverList")).thenReturn(new String[]{"one:389", "two:389"});
+            when(configuration.getInt("ldap.server.pool.size.init",1)).thenReturn(1);
+            when(configuration.getInt("ldap.server.pool.size.max",100)).thenReturn(100);
+            when(configuration.getString("ldap.bind.dn")).thenReturn("bindDn");
+            when(configuration.getString("ldap.bind.password")).thenReturn("bindPassword");
+            when(configuration.getBoolean("ldap.server.useSSL")).thenReturn(false);
             ldapConfiguration.connection();
             assertTrue("should throw exception",false);
         }catch (IllegalStateException ex){
