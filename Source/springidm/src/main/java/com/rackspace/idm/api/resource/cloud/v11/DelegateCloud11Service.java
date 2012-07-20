@@ -440,7 +440,7 @@ public class DelegateCloud11Service implements Cloud11Service {
         return cloudClient.get(getCloudAuthV11Url().concat(path), httpHeaders);
     }
 
-    private String getPath(String path, HashMap<String, String> queryParams) {
+    String getPath(String path, HashMap<String, String> queryParams) {
         String result = path;
         String queryString = "";
 
@@ -532,7 +532,7 @@ public class DelegateCloud11Service implements Cloud11Service {
         this.scopeAccessService = scopeAccessService;
     }
 
-    private JAXBElement<? extends Credentials> extractCredentials(HttpHeaders httpHeaders, String body) {
+    JAXBElement<? extends Credentials> extractCredentials(HttpHeaders httpHeaders, String body) {
         if (httpHeaders.getMediaType().isCompatible(MediaType.APPLICATION_XML_TYPE)) {
                 return extractXMLCredentials(body);
             } else {
@@ -540,10 +540,10 @@ public class DelegateCloud11Service implements Cloud11Service {
             }
     }
 
-    private JAXBElement<? extends Credentials> extractJSONCredentials(String body) {
+    JAXBElement<? extends Credentials> extractJSONCredentials(String body) {
         return credentialUnmarshaller.unmarshallCredentialsFromJSON(body);
     }
-    private JAXBElement<? extends Credentials> extractXMLCredentials(String body) {
+    JAXBElement<? extends Credentials> extractXMLCredentials(String body) {
         JAXBElement<? extends Credentials> cred = null;
         try {
             JAXBContext context = JAXBContextResolver.get();

@@ -3,10 +3,13 @@ package com.rackspace.idm.api.resource.cloud.v11;
 import com.rackspace.idm.api.resource.cloud.CloudClient;
 import com.rackspace.idm.api.resource.cloud.CloudUserExtractor;
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository;
-import com.rackspace.idm.domain.entity.Users;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.impl.DefaultUserService;
 import com.rackspacecloud.docs.auth.api.v1.*;
+import com.rackspacecloud.docs.auth.api.v1.AuthData;
+import com.rackspacecloud.docs.auth.api.v1.Credentials;
+import com.rackspacecloud.docs.auth.api.v1.User;
 import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
@@ -600,6 +603,16 @@ public class DelegateCloud11ServiceTest {
     }
 
     @Test
+    public void deleteUser_userNotMigratedUser_callsDefaultCloud11DeleteUser() throws Exception {
+        com.rackspace.idm.domain.entity.User user = new com.rackspace.idm.domain.entity.User();
+        when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(defaultUserService.getUserById("userId")).thenReturn(user);
+        when(defaultUserService.isMigratedUser(user)).thenReturn(false);
+        delegateCloud11Service.deleteUser(null, "userId", httpHeaders);
+        verify(defaultCloud11Service).deleteUser(null, "userId", httpHeaders);
+    }
+
+    @Test
     public void getUserKey_routingFalse_userExistsFalse_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(ldapUserRepository.getUserByUsername(userId)).thenReturn(null);
@@ -1165,5 +1178,65 @@ public class DelegateCloud11ServiceTest {
         when(config.getBoolean("gaIsSourceOfTruth")).thenReturn(false);
         delegateCloud11Service.getExtension(httpHeaders,"EXAMPLE");
         verify(defaultCloud11Service).extensions(httpHeaders);
+    }
+
+    @Test
+    public void userExistsInGAByMossoId_getUsersIsNull_returnsFalse() throws Exception {
+        when(ldapUserRepository.getUsersByMossoId(1)).thenReturn(new Users());
+        boolean result = delegateCloud11Service.userExistsInGAByMossoId(1);
+        assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
+    public void userExistsInGAByMossoId_getUsersIsNull_returnsTrue() throws Exception {
+        Users users = new Users();
+        ArrayList<com.rackspace.idm.domain.entity.User> userList = new ArrayList<com.rackspace.idm.domain.entity.User>();
+        userList.add(new com.rackspace.idm.domain.entity.User());
+        users.setUsers(userList);
+        when(ldapUserRepository.getUsersByMossoId(1)).thenReturn(users);
+        boolean result = delegateCloud11Service.userExistsInGAByMossoId(1);
+        assertThat("boolean", result, equalTo(true));
+    }
+
+    @Test
+    public void userExistsInGAByNastId_usersSizeIs0_returnsFalse() throws Exception {
+        Users users = new Users();
+        users.setUsers(new ArrayList<com.rackspace.idm.domain.entity.User>());
+        when(ldapUserRepository.getUsersByNastId("nastId")).thenReturn(users);
+        boolean result = delegateCloud11Service.userExistsInGAByNastId("nastId");
+        assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
+    public void userExistsInGAByNastId_usersSizeNot0_returnsTrue() throws Exception {
+        Users users = new Users();
+        ArrayList<com.rackspace.idm.domain.entity.User> userList = new ArrayList<com.rackspace.idm.domain.entity.User>();
+        userList.add(new com.rackspace.idm.domain.entity.User());
+        users.setUsers(userList);
+        when(ldapUserRepository.getUsersByNastId("nastId")).thenReturn(users);
+        boolean result = delegateCloud11Service.userExistsInGAByNastId("nastId");
+        assertThat("boolean", result, equalTo(true));
+    }
+
+    @Test
+    public void getPath_queryParamsIsNull_returnsPathWithOutChanges() throws Exception {
+        String result = delegateCloud11Service.getPath("noChange", null);
+        assertThat("path", result, equalTo("noChange"));
+    }
+
+    @Test
+    public void extractCredentials_notXMLCompatibleType_callsExtractJSONCredentials() throws Exception {
+        when(httpHeaders.getMediaType()).thenReturn(MediaType.APPLICATION_JSON_TYPE);
+        doReturn(null).when(spy).extractJSONCredentials("body");
+        spy.extractCredentials(httpHeaders, "body");
+        verify(spy).extractJSONCredentials("body");
+    }
+
+    @Test
+    public void extractCredentials_isXMLCompatibleType_callsExtractXMLCredentials() throws Exception {
+        when(httpHeaders.getMediaType()).thenReturn(MediaType.APPLICATION_XML_TYPE);
+        doReturn(null).when(spy).extractXMLCredentials("body");
+        spy.extractCredentials(httpHeaders, "body");
+        verify(spy).extractXMLCredentials("body");
     }
 }
