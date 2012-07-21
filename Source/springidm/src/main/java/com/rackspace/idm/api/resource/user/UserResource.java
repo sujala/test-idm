@@ -116,7 +116,9 @@ public class UserResource extends ParentResource {
 
 		com.rackspace.api.idm.v1.User inputUser = holder.getEntity();
 
-        userValidator.validateUsername(inputUser.getUsername());
+        if(!inputUser.getUsername().isEmpty()){
+            userValidator.validateUsername(inputUser.getUsername());
+        }
 
 		User updatedUser = userConverter.toUserDO(inputUser);
 
