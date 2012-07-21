@@ -70,6 +70,103 @@ public class CredentialProviderTest {
     }
 
     @Test
+    public void isReadable_withXmlAndParameterizedTypeAndRawTypeNotClass_returnsFalse() throws Exception {
+        ParameterizedType type = mock(ParameterizedType.class);
+        when(type.getRawType()).thenReturn(null);
+        WildcardType wildcardType = mock(WildcardType.class);
+        when(wildcardType.getUpperBounds()).thenReturn(new Type[]{Credentials.class});
+        when(type.getActualTypeArguments()).thenReturn(new Type[]{wildcardType});
+        boolean readable = credentialProvider.isReadable(JAXBElement.class, type, null, MediaType.APPLICATION_XML_TYPE);
+        assertThat("readable", readable, equalTo(false));
+    }
+
+    @Test
+    public void isReadable_withXmlAndParameterizedTypeAndNotJAXBElement_returnsFalse() throws Exception {
+        ParameterizedType type = mock(ParameterizedType.class);
+        when(type.getRawType()).thenReturn(JAXBObjectFactories.class);
+        WildcardType wildcardType = mock(WildcardType.class);
+        when(wildcardType.getUpperBounds()).thenReturn(new Type[]{Credentials.class});
+        when(type.getActualTypeArguments()).thenReturn(new Type[]{wildcardType});
+        boolean readable = credentialProvider.isReadable(JAXBElement.class, type, null, MediaType.APPLICATION_XML_TYPE);
+        assertThat("readable", readable, equalTo(false));
+    }
+
+    @Test
+    public void isReadable_withXmlAndParameterizedTypeAndArgsLengthNotOne_returnsFalse() throws Exception {
+        ParameterizedType type = mock(ParameterizedType.class);
+        when(type.getRawType()).thenReturn(JAXBElement.class);
+        WildcardType wildcardType = mock(WildcardType.class);
+        when(wildcardType.getUpperBounds()).thenReturn(new Type[]{Credentials.class});
+        when(type.getActualTypeArguments()).thenReturn(new Type[]{wildcardType,wildcardType});
+        boolean readable = credentialProvider.isReadable(JAXBElement.class, type, null, MediaType.APPLICATION_XML_TYPE);
+        assertThat("readable", readable, equalTo(false));
+    }
+
+    @Test
+    public void isReadable_withXmlAndParameterizedTypeAndTypeNotInstanceOfWildcardType_returnsFalse() throws Exception {
+        ParameterizedType type = mock(ParameterizedType.class);
+        when(type.getRawType()).thenReturn(JAXBElement.class);
+        when(type.getActualTypeArguments()).thenReturn(new Type[]{type});
+        boolean readable = credentialProvider.isReadable(JAXBElement.class, type, null, MediaType.APPLICATION_XML_TYPE);
+        assertThat("readable", readable, equalTo(false));
+    }
+
+    @Test
+    public void isReadable_upperBoundLengthOneAndInstanceOfClassAndNotCalledCredentials_returnsFalse() throws Exception {
+        ParameterizedType type = mock(ParameterizedType.class);
+        when(type.getRawType()).thenReturn(JAXBElement.class);
+        WildcardType wildcardType = mock(WildcardType.class);
+        when(wildcardType.getUpperBounds()).thenReturn(new Type[]{PasswordCredentials.class});
+        when(type.getActualTypeArguments()).thenReturn(new Type[]{wildcardType});
+        boolean readable = credentialProvider.isReadable(JAXBElement.class, type, null, MediaType.APPLICATION_XML_TYPE);
+        assertThat("readable", readable, equalTo(false));
+    }
+
+    @Test
+    public void isReadable_upperBoundLengthOneAndNotInstanceOfClass_returnsFalse() throws Exception {
+        ParameterizedType type = mock(ParameterizedType.class);
+        when(type.getRawType()).thenReturn(JAXBElement.class);
+        WildcardType wildcardType = mock(WildcardType.class);
+        when(wildcardType.getUpperBounds()).thenReturn(new Type[]{null});
+        when(type.getActualTypeArguments()).thenReturn(new Type[]{wildcardType});
+        boolean readable = credentialProvider.isReadable(JAXBElement.class, type, null, MediaType.APPLICATION_XML_TYPE);
+        assertThat("readable", readable, equalTo(false));
+    }
+
+    @Test
+    public void isReadable_upperBoundLengthNotOneAndInstanceOfClassAndCalledCredentials_returnsFalse() throws Exception {
+        ParameterizedType type = mock(ParameterizedType.class);
+        when(type.getRawType()).thenReturn(JAXBElement.class);
+        WildcardType wildcardType = mock(WildcardType.class);
+        when(wildcardType.getUpperBounds()).thenReturn(new Type[]{Credentials.class,PasswordCredentials.class});
+        when(type.getActualTypeArguments()).thenReturn(new Type[]{wildcardType});
+        boolean readable = credentialProvider.isReadable(JAXBElement.class, type, null, MediaType.APPLICATION_XML_TYPE);
+        assertThat("readable", readable, equalTo(false));
+    }
+
+    @Test
+    public void isReadable_upperBoundLengthNotOneAndInstanceOfClassAndNotCalledCredentials_returnsFalse() throws Exception {
+        ParameterizedType type = mock(ParameterizedType.class);
+        when(type.getRawType()).thenReturn(JAXBElement.class);
+        WildcardType wildcardType = mock(WildcardType.class);
+        when(wildcardType.getUpperBounds()).thenReturn(new Type[]{PasswordCredentials.class,PasswordCredentials.class});
+        when(type.getActualTypeArguments()).thenReturn(new Type[]{wildcardType});
+        boolean readable = credentialProvider.isReadable(JAXBElement.class, type, null, MediaType.APPLICATION_XML_TYPE);
+        assertThat("readable", readable, equalTo(false));
+    }
+
+    @Test
+    public void isReadable_upperBoundLengthNotOneAndNotInstanceOfClass_returnsFalse() throws Exception {
+        ParameterizedType type = mock(ParameterizedType.class);
+        when(type.getRawType()).thenReturn(JAXBElement.class);
+        WildcardType wildcardType = mock(WildcardType.class);
+        when(wildcardType.getUpperBounds()).thenReturn(new Type[]{null,PasswordCredentials.class});
+        when(type.getActualTypeArguments()).thenReturn(new Type[]{wildcardType});
+        boolean readable = credentialProvider.isReadable(JAXBElement.class, type, null, MediaType.APPLICATION_XML_TYPE);
+        assertThat("readable", readable, equalTo(false));
+    }
+
+    @Test
     public void readFrom_withPasswordCredentials_withoutException() throws Exception {
         InputStream inputStream = new BufferedInputStream(new ByteArrayInputStream(("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                 " \n" +

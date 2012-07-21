@@ -34,32 +34,22 @@ public class UriExtensionFilter implements ContainerRequestFilter {
 
         final String extension = StringUtils.substringAfterLast(absolutePath,
             DOT);
-        if (shouldFilter(
-            "/"
-                + StringUtils.difference(request.getBaseUri().toString(),
-                    absolutePath), extension)) {
-            request.getRequestHeaders().putSingle(HttpHeaders.ACCEPT,
-                EXTENSION_TO_ACCEPT_HEADER.get(extension));
-            final String absolutePathWithoutExtension = StringUtils
-                .substringBeforeLast(absolutePath, DOT);
-            request.setUris(
-                request.getBaseUri(),
-                getRequestUri(absolutePathWithoutExtension,
-                    request.getQueryParameters()));
+        if (shouldFilter("/" + StringUtils.difference(request.getBaseUri().toString(),absolutePath), extension)) {
+            request.getRequestHeaders().putSingle(HttpHeaders.ACCEPT, EXTENSION_TO_ACCEPT_HEADER.get(extension));
+            final String absolutePathWithoutExtension = StringUtils.substringBeforeLast(absolutePath, DOT);
+            request.setUris(request.getBaseUri(),getRequestUri(absolutePathWithoutExtension,request.getQueryParameters()));
         }
         return request;
     }
 
-    private boolean shouldFilter(String restPath, String extension) {
+    boolean shouldFilter(String restPath, String extension) {
         return EXTENSION_TO_ACCEPT_HEADER.containsKey(extension);
     }
 
-    private URI getRequestUri(String absolutePathWithoutExtension,
+    URI getRequestUri(String absolutePathWithoutExtension,
         Map<String, List<String>> queryParams) {
-        final UriBuilder requestUriBuilder = UriBuilder
-            .fromPath(absolutePathWithoutExtension);
-        for (Map.Entry<String, List<String>> queryParamEntry : queryParams
-            .entrySet()) {
+        final UriBuilder requestUriBuilder = UriBuilder.fromPath(absolutePathWithoutExtension);
+        for (Map.Entry<String, List<String>> queryParamEntry : queryParams.entrySet()) {
             for (String value : queryParamEntry.getValue()) {
                 requestUriBuilder.queryParam(queryParamEntry.getKey(), value);
             }

@@ -85,7 +85,7 @@ public class XMLReader implements MessageBodyReader<Object> {
         }
     }
 
-    private JAXBContext getContext() throws JAXBException {
+    JAXBContext getContext() throws JAXBException {
         return jaxbContext;
     }
 

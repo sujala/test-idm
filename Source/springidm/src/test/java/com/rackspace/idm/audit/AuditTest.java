@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import com.rackspace.idm.domain.entity.Auditable;
 import org.apache.log4j.MDC;
 import org.junit.Before;
 import org.junit.Test;
@@ -11,6 +12,10 @@ import org.junit.Test;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.unboundid.ldap.sdk.Modification;
 import com.unboundid.ldap.sdk.ModificationType;
+
+import static org.hamcrest.Matchers.instanceOf;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.mock;
 
 
 public class AuditTest {
@@ -48,5 +53,31 @@ public class AuditTest {
 		MDC.put(Audit.WHO, "whoId");
 		Audit.log("clientId").delete().fail("failMsg");
 	}
-	
+
+    @Test
+    public void authClient_returnsAudit() throws Exception {
+        assertThat("client auth audit",Audit.authClient("string"),instanceOf(Audit.class));
+    }
+
+    @Test
+    public void authCloudAdmin_returnsAudit() throws Exception {
+        assertThat("cloud admin audit",Audit.authCloudAdmin("string"),instanceOf(Audit.class));
+    }
+
+    @Test
+    public void authRacker_returnsAudit() throws Exception {
+        assertThat("racker audit",Audit.authRacker("string"),instanceOf(Audit.class));
+    }
+
+    @Test
+    public void authClient_withAuditableParameter_returnsAudit() throws Exception {
+        Auditable auditable = mock(Auditable.class);
+        assertThat("client audit",Audit.authClient(auditable),instanceOf(Audit.class));
+    }
+
+    @Test
+    public void authRacker_withAuditableParameter_returnsAudit() throws Exception {
+        Auditable auditable = mock(Auditable.class);
+        assertThat("racker audit",Audit.authRacker(auditable),instanceOf(Audit.class));
+    }
 }

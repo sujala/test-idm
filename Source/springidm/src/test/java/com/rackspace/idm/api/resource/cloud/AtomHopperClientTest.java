@@ -111,12 +111,16 @@ public class AtomHopperClientTest {
     }
 
     @Test
-    public void postUser_withNon201Response_noExceptionIsThrown() throws Exception {
+    public void postUser_withNon201Response_logsUsernameAndId() throws Exception {
+        User mockUser = mock(User.class);
         when(httpResponse.getStatusLine()).thenReturn(statusLine);
         when(statusLine.getStatusCode()).thenReturn(401);
         when(config.getString(Matchers.<String>any())).thenReturn("http://localhost:8080/test");
-        spy.postUser(user, "token", "");
-        assertThat("Post to Atom Hopper", httpResponse.getStatusLine().getStatusCode(), equalTo(401));
+        doReturn(null).when(spy).createAtomFeed(mockUser,null);
+        doReturn(null).when(spy).marshalFeed(null);
+        spy.postUser(mockUser, "token", "deleted");
+        verify(mockUser).getUsername();
+        verify(mockUser).getId();
     }
 
     @Test
@@ -240,12 +244,16 @@ public class AtomHopperClientTest {
     }
 
     @Test
-    public void postUser_statusIs201_doesNotThrowException() throws Exception {
+    public void postUser_statusIs201_doesNotLogUsernameAndId() throws Exception {
+        User mockUser = mock(User.class);
         when(httpResponse.getStatusLine()).thenReturn(statusLine);
         when(statusLine.getStatusCode()).thenReturn(201);
         when(config.getString(Matchers.<String>any())).thenReturn("http://localhost:8080/test");
-        spy.postUser(user, "token", "");
-        assertThat("Post to Atom Hopper", httpResponse.getStatusLine().getStatusCode(), equalTo(201));
+        doReturn(null).when(spy).createAtomFeed(mockUser,null);
+        doReturn(null).when(spy).marshalFeed(null);
+        spy.postUser(mockUser, "token", "deleted");
+        verify(mockUser,never()).getUsername();
+        verify(mockUser,never()).getId();
     }
 
     @Test

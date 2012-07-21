@@ -24,6 +24,7 @@ import com.rackspace.idm.domain.service.AuthenticationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.sun.jersey.spi.container.ContainerRequest;
+import org.springframework.context.ApplicationContext;
 
 import java.util.ArrayList;
 
@@ -388,6 +389,26 @@ public class AuthenticationFilterTests {
         assertThat("request", containerRequest, notNullValue());
     }
 
+    @Test
+    public void filter_withoutMigrationAdminRole_returnsRequest() throws Exception {
+        try{
+            when(requestMock.getMethod()).thenReturn("GET");
+            when(requestMock.getPath()).thenReturn("migration/some/path");
+            when(requestMock.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER)).thenReturn("authToken");
+            when(scopeAccessServiceMock.getScopeAccessByAccessToken("authToken")).thenReturn(new RackerScopeAccess());
+            ArrayList<String> roles = new ArrayList<String>();
+            roles.add("migrationAdminGroup");
+            when(userService.getRackerRoles(anyString())).thenReturn(roles);
+            when(configuration.getString("migrationAdminGroup")).thenReturn("foo");
+            authenticationFilterWithMock.filter(requestMock);
+            assertTrue("should throw exception",false);
+
+        } catch (NotAuthenticatedException ex){
+            assertThat("exception message",ex.getMessage(),equalTo("Authentication Failed."));
+        }
+
+    }
+
     @Test(expected = NotAuthenticatedException.class)
     public void shouldNotPassAuthentication_throwNotAuthenticatedException() {
         EasyMock.expect(request.getPath()).andReturn("v1.0/foo");
@@ -399,4 +420,15 @@ public class AuthenticationFilterTests {
                 false);
         replayAndRunFilter();
     }
+
+    @Test
+    public void getScopeAccessService_scopeAccessServiceIsNull_callsGetBean() throws Exception {
+        AuthenticationFilter authenticationFilter = new AuthenticationFilter();
+        ApplicationContext applicationContext = mock(ApplicationContext.class);
+        authenticationFilter.setApplicationContext(applicationContext);
+        authenticationFilter.getScopeAccessService();
+        verify(applicationContext).getBean(ScopeAccessService.class);
+    }
+
+
 }

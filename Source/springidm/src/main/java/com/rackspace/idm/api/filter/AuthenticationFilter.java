@@ -175,7 +175,7 @@ public class AuthenticationFilter implements ContainerRequestFilter,
         springCtx = applicationContext;
     }
 
-    private ScopeAccessService getScopeAccessService() {
+    ScopeAccessService getScopeAccessService() {
         if (scopeAccessService == null) {
             scopeAccessService = springCtx.getBean(ScopeAccessService.class);
         }

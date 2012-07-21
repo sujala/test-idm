@@ -7,6 +7,7 @@ import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -55,8 +56,20 @@ public class ResponseFilterTest {
     }
 
     @Test
+    public void init_emptyToken_doesNothing() throws Exception {
+        when(filterConfig.getInitParameter(anyString())).thenReturn("   ");
+        responseFilter.init(filterConfig);
+    }
+
+    @Test
     public void init_headerTokenizerEquals2_succeeds() throws Exception {
         when(filterConfig.getInitParameter(anyString())).thenReturn("headerName: value");
+        responseFilter.init(filterConfig);
+    }
+
+    @Test
+    public void init_twoValuesForHeader_succeeds() throws Exception {
+        when(filterConfig.getInitParameter(anyString())).thenReturn("headerName: value \n headerName: anotherValue");
         responseFilter.init(filterConfig);
     }
 

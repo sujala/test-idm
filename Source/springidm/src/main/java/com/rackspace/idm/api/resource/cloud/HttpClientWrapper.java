@@ -96,14 +96,14 @@ public class HttpClientWrapper {
         return executeRequest(delete);
     }
 
-    private void setEntity(HttpEntityEnclosingRequestBase requestBase, String body) throws UnsupportedEncodingException {
+    void setEntity(HttpEntityEnclosingRequestBase requestBase, String body) throws UnsupportedEncodingException {
         StringEntity request = new StringEntity(body);
         request.setChunked(false);
 
         requestBase.setEntity(request);
     }
 
-    private String executeRequest(HttpRequestBase requestBase) throws URISyntaxException, HttpException, IOException {
+    String executeRequest(HttpRequestBase requestBase) throws URISyntaxException, HttpException, IOException {
 
         for (String key : headers.keySet()) {
             requestBase.addHeader(key, headers.get(key));
