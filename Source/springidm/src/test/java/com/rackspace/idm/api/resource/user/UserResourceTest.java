@@ -103,6 +103,7 @@ public class UserResourceTest {
     @Test
     public void updateUser_callsScopeAccessService_getAccessTokenByAuthHeader() throws Exception {
         com.rackspace.api.idm.v1.User user = new com.rackspace.api.idm.v1.User();
+        user.setUsername("");
         EntityHolder<com.rackspace.api.idm.v1.User> holder = new EntityHolder<com.rackspace.api.idm.v1.User>(user);
         when(userConverter.toUserDO(any(com.rackspace.api.idm.v1.User.class))).thenReturn(new User());
         when(userService.loadUser("userId")).thenReturn(new User());
@@ -113,6 +114,7 @@ public class UserResourceTest {
     @Test
     public void updateUser_callsAuthService_authorizeRackspaceClient() throws Exception {
         com.rackspace.api.idm.v1.User user = new com.rackspace.api.idm.v1.User();
+        user.setUsername("");
         EntityHolder<com.rackspace.api.idm.v1.User> holder = new EntityHolder<com.rackspace.api.idm.v1.User>(user);
         when(userConverter.toUserDO(any(com.rackspace.api.idm.v1.User.class))).thenReturn(new User());
         when(userService.loadUser("userId")).thenReturn(new User());
@@ -123,6 +125,7 @@ public class UserResourceTest {
     @Test
     public void updateUser_callsAuthService_verifyIdmSuperAdminAccess() throws Exception {
         com.rackspace.api.idm.v1.User user = new com.rackspace.api.idm.v1.User();
+        user.setUsername("");
         EntityHolder<com.rackspace.api.idm.v1.User> holder = new EntityHolder<com.rackspace.api.idm.v1.User>(user);
         when(userConverter.toUserDO(any(com.rackspace.api.idm.v1.User.class))).thenReturn(new User());
         when(userService.loadUser("userId")).thenReturn(new User());
@@ -133,6 +136,7 @@ public class UserResourceTest {
     @Test
     public void updateUser_callsScopeAccessService_expireAllTokensForUser() throws Exception {
         com.rackspace.api.idm.v1.User user = new com.rackspace.api.idm.v1.User();
+        user.setUsername("");
         EntityHolder<com.rackspace.api.idm.v1.User> holder = new EntityHolder<com.rackspace.api.idm.v1.User>(user);
         when(userConverter.toUserDO(any(com.rackspace.api.idm.v1.User.class))).thenReturn(new User());
         when(userService.loadUser("userId")).thenReturn(new User());
@@ -143,6 +147,7 @@ public class UserResourceTest {
     @Test
     public void updateUser_callsUserService_updateUserById() throws Exception {
         com.rackspace.api.idm.v1.User user = new com.rackspace.api.idm.v1.User();
+        user.setUsername("");
         EntityHolder<com.rackspace.api.idm.v1.User> holder = new EntityHolder<com.rackspace.api.idm.v1.User>(user);
         User testUser = new User();
         testUser.setEnabled(true);
@@ -155,6 +160,7 @@ public class UserResourceTest {
     @Test
     public void updateUser_callsUserConverter_toUserWithoutAnyAdditionalElements() throws Exception {
         com.rackspace.api.idm.v1.User user = new com.rackspace.api.idm.v1.User();
+        user.setUsername("");
         EntityHolder<com.rackspace.api.idm.v1.User> holder = new EntityHolder<com.rackspace.api.idm.v1.User>(user);
         when(userConverter.toUserDO(any(com.rackspace.api.idm.v1.User.class))).thenReturn(new User());
         when(userService.loadUser("userId")).thenReturn(new User());
@@ -165,6 +171,7 @@ public class UserResourceTest {
     @Test
     public void updateUser_responseOk_returns200() throws Exception {
         com.rackspace.api.idm.v1.User user = new com.rackspace.api.idm.v1.User();
+        user.setUsername("");
         User updatedUser = new User();
         updatedUser.setEnabled(false);
         EntityHolder<com.rackspace.api.idm.v1.User> holder = new EntityHolder<com.rackspace.api.idm.v1.User>(user);

@@ -310,13 +310,14 @@ public class DefaultCloud11Service implements Cloud11Service {
 
         try {
             authenticateCloudAdminUser(request);
-            userValidator.validateUsername(user.getId());
 
             if (StringUtils.isBlank(user.getId())) {
                 String errorMsg = "Expecting username";
                 logger.warn(errorMsg);
                 throw new BadRequestException(errorMsg);
             }
+
+            userValidator.validateUsername(user.getId());
 
             User existingUser = userService.getUser(user.getId());
             if (existingUser != null) {
