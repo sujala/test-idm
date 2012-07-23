@@ -292,8 +292,11 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder listUsers(HttpHeaders httpHeaders, String authToken, Integer marker, Integer limit) throws IOException {
+        ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByAccessToken(authToken);
+        if(scopeAccess != null)
+            return defaultCloud20Service.listUsers(httpHeaders, authToken, marker, limit);
+
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
-            // TODO: Implement routing to DefaultCloud20Service
             String request = getCloudAuthV20Url() + "users";
             HashMap<String, Object> params = new HashMap<String, Object>();
             params.put("marker", marker);
