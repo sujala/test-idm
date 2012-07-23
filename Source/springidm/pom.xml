@@ -1320,11 +1320,20 @@
                 <version>2.5.1</version>
                 <configuration>
                     <check>
+                        <totalLineRate>95</totalLineRate>
+                        <totalBranchRate>95</totalBranchRate>
                     </check>
                     <formats>
                         <format>xml</format>
                     </formats>
                 </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
 
             <!--maven-resource-->
