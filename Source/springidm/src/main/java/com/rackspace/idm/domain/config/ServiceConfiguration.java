@@ -44,7 +44,7 @@ import com.rackspace.idm.domain.service.impl.DefaultUserService;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.rackspace.idm.util.LdapRouterMBean;
 import com.rackspace.idm.util.LoggerMBean;
-import com.rackspace.idm.util.WadlTrie;
+import com.rackspace.idm.util.WadlTree;
 import com.rackspace.idm.validation.InputValidator;
 
 /**
@@ -133,8 +133,8 @@ public class  ServiceConfiguration {
     }
     
     @Bean
-    public WadlTrie wadlTrie() {
-        return new WadlTrie();
+    public WadlTree wadlTrie() {
+        return new WadlTree();
     }
 
     @Bean

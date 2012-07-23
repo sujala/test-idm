@@ -6,7 +6,7 @@ import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.AuthorizationService;
-import com.rackspace.idm.util.WadlTrie;
+import com.rackspace.idm.util.WadlTree;
 import junit.framework.Assert;
 import org.apache.commons.configuration.Configuration;
 import org.easymock.EasyMock;
@@ -27,7 +27,7 @@ public class AuthorizationServiceTests {
     ApplicationDao mockClientDao;
     ScopeAccessDao mockScopeAccessDao;
     AuthorizationService service;
-    WadlTrie mockWadlTrie;
+    WadlTree mockWadlTree;
     UriInfo mockUriInfo;
     
     String uniqueId = "uniqueId";
@@ -68,11 +68,11 @@ public class AuthorizationServiceTests {
         mockTenantDao = mock(TenantDao.class);
         mockClientDao = EasyMock.createMock(ApplicationDao.class);
         mockScopeAccessDao = EasyMock.createMock(ScopeAccessDao.class);
-        mockWadlTrie = EasyMock.createMock(WadlTrie.class);
+        mockWadlTree = EasyMock.createMock(WadlTree.class);
         mockUriInfo = EasyMock.createMock(UriInfo.class);
         Configuration appConfig = new PropertyFileConfiguration().getConfig();
         service = new DefaultAuthorizationService(mockScopeAccessDao,
-            mockClientDao, mockTenantDao, mockWadlTrie, appConfig);
+            mockClientDao, mockTenantDao, mockWadlTree, appConfig);
         setUpObjects();
     }
 
@@ -118,8 +118,8 @@ public class AuthorizationServiceTests {
         EasyMock.replay(mockScopeAccessDao);
 
         
-        EasyMock.expect(mockWadlTrie.getPermissionFor(verb, mockUriInfo)).andReturn(permissionId);
-        EasyMock.replay(mockWadlTrie);
+        EasyMock.expect(mockWadlTree.getPermissionFor(verb, mockUriInfo)).andReturn(permissionId);
+        EasyMock.replay(mockWadlTree);
 
 
         boolean authorized = service.authorizeClient(authorizedClientToken, verb, mockUriInfo);
@@ -134,8 +134,8 @@ public class AuthorizationServiceTests {
         EasyMock.replay(mockScopeAccessDao);
 
         
-        EasyMock.expect(mockWadlTrie.getPermissionFor(verb, mockUriInfo)).andReturn(null);
-        EasyMock.replay(mockWadlTrie);
+        EasyMock.expect(mockWadlTree.getPermissionFor(verb, mockUriInfo)).andReturn(null);
+        EasyMock.replay(mockWadlTree);
 
 
         boolean authorized = service.authorizeClient(authorizedClientToken, verb, mockUriInfo);
@@ -150,8 +150,8 @@ public class AuthorizationServiceTests {
         EasyMock.replay(mockScopeAccessDao);
         
 
-        EasyMock.expect(mockWadlTrie.getPermissionFor(verb, mockUriInfo)).andReturn(permissionId);
-        EasyMock.replay(mockWadlTrie);
+        EasyMock.expect(mockWadlTree.getPermissionFor(verb, mockUriInfo)).andReturn(permissionId);
+        EasyMock.replay(mockWadlTree);
         
         boolean authorized = service.authorizeClient(notAuthorizedClientToken, verb, mockUriInfo);
 

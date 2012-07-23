@@ -6,7 +6,7 @@ import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.ForbiddenException;
-import com.rackspace.idm.util.WadlTrie;
+import com.rackspace.idm.util.WadlTree;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -35,13 +35,13 @@ public class DefaultAuthorizationServiceTest {
     ScopeAccessDao scopeAccessDao = mock(ScopeAccessDao.class);
     ApplicationDao clientDao = mock(ApplicationDao.class);
     TenantDao tenantDao = mock(TenantDao.class);
-    WadlTrie wadlTrie = mock(WadlTrie.class);
+    WadlTree wadlTree = mock(WadlTree.class);
     Configuration config = mock(Configuration.class);
     DefaultAuthorizationService spy;
 
     @Before
     public void setUp() throws Exception {
-        defaultAuthorizationService = new DefaultAuthorizationService(scopeAccessDao,clientDao,tenantDao,wadlTrie,config);
+        defaultAuthorizationService = new DefaultAuthorizationService(scopeAccessDao,clientDao,tenantDao, wadlTree,config);
         spy = spy(defaultAuthorizationService);
 
     }
