@@ -1101,7 +1101,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             secrets.setAnswer(user.getSecretAnswer());
             secrets.setQuestion(user.getSecretQuestion());
-            secrets.setUsername(user.getUsername());
             return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtKsqaV1Factory().createSecretQA(secrets).getValue());
 
         } catch (Exception ex) {

@@ -1,12 +1,17 @@
 package com.rackspace.idm.util;
 
 import java.security.GeneralSecurityException;
+import java.security.InvalidParameterException;
 
 import junit.framework.Assert;
 
 import org.apache.commons.lang.RandomStringUtils;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.junit.Test;
+
+import static junit.framework.Assert.assertTrue;
+import static org.hamcrest.Matchers.equalTo;
+import static org.junit.Assert.assertThat;
 
 public class CryptHelperTests {
 
@@ -53,5 +58,15 @@ public class CryptHelperTests {
 
 		Assert.assertEquals(secret, decrypt);
 	}
-	
+
+    @Test
+    public void encrypt_nullPlainText_throwsInvalidParameterException() throws Exception {
+        try{
+            CryptHelper cryptHelper = new CryptHelper();
+            cryptHelper.encrypt(null);
+            assertTrue("should throw exception",false);
+        }catch (InvalidParameterException ex){
+            assertThat("message",ex.getMessage(),equalTo("Null argument is not valid"));
+        }
+    }
 }

@@ -10,6 +10,7 @@ import java.util.Map;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 public class AuthHeaderHelperTests {
     private AuthHeaderHelper authHeaderHelper = new AuthHeaderHelper();
@@ -17,7 +18,12 @@ public class AuthHeaderHelperTests {
     private String clientSecret = "SomeSecret";
     private String authHeader = "XXXX";
     private String blankTokenHeader = " ";
-    
+
+    @Test
+    public void parseTokenParams_emptyAuthHeader_returnsEmptyMap() throws Exception {
+        assertThat("empty map",authHeaderHelper.parseTokenParams("").isEmpty(),equalTo(true));
+    }
+
     @Test
     public void shouldReturnAuthParams() {
         String authHeader = "Basic " + Base64.encode(clientId + ":" + clientSecret);
@@ -40,7 +46,22 @@ public class AuthHeaderHelperTests {
         Assert.isTrue(params.containsKey("token"));
         Assert.isTrue(params.get("token").equals("XXXX"));
     }
-    
+
+    @Test
+    public void pareseTokenParams_firstHeaderNotOAuth_returnsEmptyMap() throws Exception {
+        assertThat("empty map",authHeaderHelper.parseTokenParams("NotOauth " + authHeader).isEmpty(),equalTo(true));
+    }
+
+    @Test
+    public void pareseTokenParams_onlyOneHeader_returnsEmptyMap() throws Exception {
+        assertThat("empty map",authHeaderHelper.parseTokenParams("Oauth ").isEmpty(),equalTo(true));
+    }
+
+    @Test
+    public void pareseTokenParams_invalidHeader_returnsEmptyMap() throws Exception {
+        assertThat("empty map",authHeaderHelper.parseTokenParams("test ").isEmpty(),equalTo(true));
+    }
+
     @Test
     public void shouldReturnTokenString() {
         
@@ -73,6 +94,16 @@ public class AuthHeaderHelperTests {
     public void getBase64EncodedString_withValidHeader_returnsKeyValue() throws Exception {
         String basicAuthKey = authHeaderHelper.getBase64EncodedString("Basic abc");
         assertThat("key", basicAuthKey, equalTo("abc"));
+    }
+
+    @Test
+    public void getBase64EncodedString_firstHeaderNotBasic_throwsCloudAdminAuthorizedException() throws Exception {
+        try{
+            authHeaderHelper.getBase64EncodedString("test test");
+            assertTrue("should throw exception",false);
+        } catch (CloudAdminAuthorizationException ex){
+            assertThat("message",ex.getMessage(),equalTo("Invalid Auth Header"));
+        }
     }
 
     @Test(expected = CloudAdminAuthorizationException.class)

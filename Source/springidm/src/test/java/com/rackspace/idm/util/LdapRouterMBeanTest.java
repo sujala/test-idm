@@ -1,8 +1,7 @@
 package com.rackspace.idm.util;
 
 import com.rackspace.idm.domain.dao.impl.LdapConnectionPools;
-import com.unboundid.ldap.sdk.LDAPConnection;
-import com.unboundid.ldap.sdk.LDAPConnectionPool;
+import com.unboundid.ldap.sdk.*;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -12,9 +11,7 @@ import java.util.Map;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * Created with IntelliJ IDEA.

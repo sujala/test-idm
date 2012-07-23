@@ -1,6 +1,9 @@
 package com.rackspace.idm.validation;
 
 import com.rackspace.idm.api.error.ApiError;
+import com.rackspace.idm.domain.entity.Auditable;
+import com.rackspace.idm.domain.entity.ScopeAccess;
+import com.rackspace.idm.domain.entity.User;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -9,6 +12,7 @@ import javax.validation.groups.Default;
 import java.util.ArrayList;
 
 import static org.hamcrest.CoreMatchers.nullValue;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -42,5 +46,11 @@ public class InputValidatorTest {
         Object paramObj = new Object();
         ApiError error = inputValidator.validate(paramObj, 400);
         assertThat("error", error, nullValue());
+    }
+
+    @Test
+    public void validate_validateSizeIsZero_returnsNull() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        assertNull("violation size is zero",inputValidator.validate(scopeAccess,0,Auditable.class));
     }
 }
