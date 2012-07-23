@@ -4,11 +4,18 @@ import com.rackspace.idm.exception.BadRequestException;
 import org.junit.Test;
 import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
 
+import javax.ws.rs.core.MediaType;
+
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 
 /**
  * Created with IntelliJ IDEA.
@@ -87,7 +94,17 @@ public class JSONReaderForPasswordCredentialsTest {
         JSONReaderForPasswordCredentials.getPasswordCredentialsFromJSONString("invalid JSON");
     }
 
+    @Test(expected = BadRequestException.class)
+    public void readFrom_callsGetPasswordCredentialsFromJSONString_andThrowsException() throws Exception {
+        JSONReaderForPasswordCredentials jsonReaderForPasswordCredentials = spy(new JSONReaderForPasswordCredentials());
+        jsonReaderForPasswordCredentials.readFrom(PasswordCredentialsRequiredUsername.class, getClass(), null, MediaType.APPLICATION_JSON_TYPE, null, new BufferedInputStream(new ByteArrayInputStream("invalid JSON".getBytes())));
+    }
 
+    @Test
+    public void isReadable_withPasswordCredentials_returnsTrue() throws Exception {
+        JSONReaderForPasswordCredentials jsonReaderForPasswordCredentials = new JSONReaderForPasswordCredentials();
+        boolean readable = jsonReaderForPasswordCredentials.isReadable(PasswordCredentialsRequiredUsername.class, PasswordCredentialsRequiredUsername.class, null, null);
+        assertThat("readable", readable, equalTo(true));
 
-
+    }
 }
