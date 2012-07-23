@@ -218,6 +218,18 @@
         <entry key="http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0">
             <value/>
         </entry>
+        <entry key="http://docs.openstack.org/identity/api/v2.0">
+            <value>v20</value>
+        </entry>
+        <entry key="http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0">
+            <value>os-ksadmn</value>
+        </entry>
+        <entry key="http://docs.openstack.org/identity/api/ext/OS-KSEC2/v1.0">
+            <value>os-ksec2</value>
+        </entry>
+        <entry key="http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0">
+            <value>rax-kskey</value>
+        </entry>
     </util:map>
 
 

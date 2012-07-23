@@ -612,7 +612,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 user.setApiKey(userCredentials.getApiKey());
                 userService.updateUser(user, false);
             }
-            return Response.ok(credentials).status(Status.OK);
+            return Response.ok(credentials.getValue()).status(Status.OK);
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
@@ -1121,7 +1121,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             secrets.setAnswer(user.getSecretAnswer());
             secrets.setQuestion(user.getSecretQuestion());
-            secrets.setUsername(user.getUsername());
             return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtKsqaV1Factory().createSecretQA(secrets).getValue());
 
         } catch (Exception ex) {

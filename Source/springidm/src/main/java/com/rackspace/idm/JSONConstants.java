@@ -101,6 +101,7 @@ public class JSONConstants {
     public static final Object VERIFY_CURRENT_PASSWORD = "verifyCurrentPassword";
     public static final Object OS_KSADM_PASSWORD = "OS-KSADM:password";
     public static final Object RAX_AUTH_DEFAULT_REGION = "RAX-AUTH:defaultRegion";
+    public static final Object RAX_AUTH_DEFAULT_REGION_SERVICES = "RAX-AUTH:defaultRegionServices";
     public static final Object IMPERSONATION = "RAX-AUTH:impersonation";
     public static final Object IMPERSONATOR = "RAX-AUTH:impersonator";
     public static final Object IMPERSONATION_EXPIRE_IN_SECONDS = "expire-in-seconds";
