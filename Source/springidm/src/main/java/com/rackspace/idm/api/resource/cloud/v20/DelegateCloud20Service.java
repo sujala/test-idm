@@ -1,5 +1,8 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
+
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.*;
@@ -7,6 +10,7 @@ import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.converter.cloudv20.TokenConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
+import com.rackspace.idm.api.resource.cloud.HttpHeadersAcceptXml;
 import com.rackspace.idm.api.resource.cloud.CloudClient;
 import com.rackspace.idm.api.resource.cloud.CloudUserExtractor;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
@@ -45,6 +49,8 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
+
+import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
 
 /**
  * Created by IntelliJ IDEA.
@@ -159,20 +165,28 @@ public class DelegateCloud20Service implements Cloud20Service {
         if(user == null) {
             authenticationRequest.getToken().setId(isa.getImpersonatingToken());
             String body = marshallObjectToString(objectFactory.createAuth(authenticationRequest));
-            Response.ResponseBuilder serviceResponse = cloudClient.post(getCloudAuthV20Url() + "tokens", httpHeaders, body);
+            
+            HttpHeadersAcceptXml httpHeadersAcceptXml = new HttpHeadersAcceptXml(httpHeaders);
+            
+            Response.ResponseBuilder serviceResponse = cloudClient.post(getCloudAuthV20Url() + "tokens", httpHeadersAcceptXml, body);
             Response dummyResponse = serviceResponse.clone().build();
             int status = dummyResponse.getStatus();
             if (status == HttpServletResponse.SC_OK) {
                 // Need to replace token info with original from sa
                 AuthenticateResponse authenticateResponse = (AuthenticateResponse) unmarshallResponse(dummyResponse.getEntity().toString(), AuthenticateResponse.class);
                 authenticateResponse.getToken().setId(isa.getAccessTokenString());
+                GregorianCalendar calendar = new GregorianCalendar();
+                calendar.setTime(isa.getAccessTokenExp());
+                try {
+					authenticateResponse.getToken().setExpires(DatatypeFactory.newInstance().newXMLGregorianCalendar(calendar));
+				} catch (DatatypeConfigurationException e) {
+					e.printStackTrace();
+				}
                 return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createAccess(authenticateResponse).getValue());
             }
             return serviceResponse;
         }
         return defaultCloud20Service.authenticate(httpHeaders, authenticationRequest);
-
-
     }
 
     @Override
