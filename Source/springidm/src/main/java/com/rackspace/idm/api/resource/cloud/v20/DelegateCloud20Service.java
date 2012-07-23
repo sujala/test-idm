@@ -113,9 +113,17 @@ public class DelegateCloud20Service implements Cloud20Service {
     public Response.ResponseBuilder authenticate(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest)
             throws IOException, JAXBException {
 
+        //Check for impersonated token if authenticating with token creds
+        if (authenticationRequest.getToken() != null && !StringUtils.isBlank(authenticationRequest.getToken().getId())) {
+            ScopeAccess sa = scopeAccessService.getScopeAccessByAccessToken(authenticationRequest.getToken().getId());
+            if(sa instanceof ImpersonatedScopeAccess){
+                //check expiration
+               return authenticateImpersonated(httpHeaders, authenticationRequest, sa);
+            }
+        }
+
         //Get "user" from LDAP
         com.rackspace.idm.domain.entity.User user = cloudUserExtractor.getUserByV20CredentialType(authenticationRequest);
-        // ToDo: verify this is what we want to do with Migrated users.
         if (userService.isMigratedUser(user))
             return defaultCloud20Service.authenticate(httpHeaders, authenticationRequest);
 
@@ -135,7 +143,7 @@ public class DelegateCloud20Service implements Cloud20Service {
                 LOG.info("GregorianCalander = " + gregorianCalendar);
                 Date expires = gregorianCalendar.getTime();
                 LOG.info("expires = " + expires);
-                    scopeAccessService.updateUserScopeAccessTokenForClientIdByUser(user, getCloudAuthClientId(), token, expires);
+                scopeAccessService.updateUserScopeAccessTokenForClientIdByUser(user, getCloudAuthClientId(), token, expires);
             }
             return serviceResponse;
         } else if (user == null) { //If "user" is null return cloud response
@@ -143,19 +151,28 @@ public class DelegateCloud20Service implements Cloud20Service {
         } else { //If we get this far, return Default Service Response
             return defaultCloud20Service.authenticate(httpHeaders, authenticationRequest);
         }
+    }
 
-        /*
-        Response.ResponseBuilder serviceResponse = getCloud20Service().authenticate(httpHeaders, authenticationRequest);
-        // We have to clone the ResponseBuilder from above because once we build
-        // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
-        int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
+    private ResponseBuilder authenticateImpersonated(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest, ScopeAccess sa) throws IOException, JAXBException {
+        ImpersonatedScopeAccess isa = (ImpersonatedScopeAccess)sa;
+        com.rackspace.idm.domain.entity.User user = cloudUserExtractor.getUserByV20CredentialType(authenticationRequest);
+        if(user == null) {
+            authenticationRequest.getToken().setId(isa.getImpersonatingToken());
             String body = marshallObjectToString(objectFactory.createAuth(authenticationRequest));
-            return cloudClient.post(getCloudAuthV20Url() + "tokens", httpHeaders, body);
+            Response.ResponseBuilder serviceResponse = cloudClient.post(getCloudAuthV20Url() + "tokens", httpHeaders, body);
+            Response dummyResponse = serviceResponse.clone().build();
+            int status = dummyResponse.getStatus();
+            if (status == HttpServletResponse.SC_OK) {
+                // Need to replace token info with original from sa
+                AuthenticateResponse authenticateResponse = (AuthenticateResponse) unmarshallResponse(dummyResponse.getEntity().toString(), AuthenticateResponse.class);
+                authenticateResponse.getToken().setId(isa.getAccessTokenString());
+                return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createAccess(authenticateResponse).getValue());
+            }
+            return serviceResponse;
         }
-        return serviceResponse;
-        */
+        return defaultCloud20Service.authenticate(httpHeaders, authenticationRequest);
+
+
     }
 
     @Override
