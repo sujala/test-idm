@@ -2170,7 +2170,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                     roles = getRolesForScopeAccess(sa);
                     validateBelongsTo(belongsTo, roles);
                     access.setUser(userConverterCloudV20.toUserForAuthenticateResponse(user, roles));
-                } else if (sa instanceof ImpersonatedScopeAccess) {
+                } else {
                     ImpersonatedScopeAccess isa = (ImpersonatedScopeAccess) sa;
                     impersonator = userService.getUserByScopeAccess(isa);
                     user = userService.getUser(isa.getImpersonatingUsername());
@@ -2365,12 +2365,14 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     void checkForMultipleIdentityRoles(User user, ClientRole roleToAdd) {
         user.setRoles(tenantService.getGlobalRolesForUser(user));
-        if(user.getRoles() == null || roleToAdd == null || !StringUtils.startsWithIgnoreCase(roleToAdd.getName(), "identity:"))
+        if(user.getRoles() == null || roleToAdd == null || !StringUtils.startsWithIgnoreCase(roleToAdd.getName(), "identity:")) {
             return;
+        }
 
         for(TenantRole userRole : user.getRoles()){
-            if(StringUtils.startsWithIgnoreCase(userRole.getName(), "identity:"))
+            if(StringUtils.startsWithIgnoreCase(userRole.getName(), "identity:")) {
                 throw new BadRequestException("You are not allowed to add more than one Identity role.");
+            }
         }
     }
 
@@ -2738,5 +2740,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     public void setDelegateCloud20Service(DelegateCloud20Service delegateCloud20Service) {
         this.delegateCloud20Service = delegateCloud20Service;
+    }
+
+    public void setCloudGroupService(GroupService cloudGroupService) {
+        this.cloudGroupService = cloudGroupService;
     }
 }
