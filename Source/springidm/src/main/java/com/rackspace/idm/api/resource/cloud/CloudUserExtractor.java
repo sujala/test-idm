@@ -51,7 +51,7 @@ public class CloudUserExtractor {
             User user = null;
             UserScopeAccess usa = null;
             if (authenticationRequest.getToken() != null && !StringUtils.isBlank(authenticationRequest.getToken().getId())) {
-                usa = (UserScopeAccess)scopeAccessService.getScopeAccessByAccessToken(authenticationRequest.getToken().getId());
+                usa = (UserScopeAccess) scopeAccessService.getScopeAccessByAccessToken(authenticationRequest.getToken().getId());
                 user = userService.getUser(usa.getUsername());
             } else if (authenticationRequest.getCredential().getDeclaredType().isAssignableFrom(PasswordCredentialsRequiredUsername.class)) {
                 PasswordCredentialsRequiredUsername creds = (PasswordCredentialsRequiredUsername) authenticationRequest.getCredential().getValue();
