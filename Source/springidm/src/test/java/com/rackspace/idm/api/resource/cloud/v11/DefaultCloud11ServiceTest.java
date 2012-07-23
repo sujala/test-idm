@@ -1401,6 +1401,8 @@ public class DefaultCloud11ServiceTest {
 
     @Test
     public void deleteBaseUrlRef_withValidData_callsEndpointService_removeBaseUrlFromUser() throws Exception {
+        Tenant tenant2 = new Tenant();
+        tenant2.setBaseUrlIds(new String[] {"1"});
         doNothing().when(spy).authenticateCloudAdminUser(null);
         when(userService.getUser(null)).thenReturn(new com.rackspace.idm.domain.entity.User());
         when(endpointService.getBaseUrlById(12345)).thenReturn(new CloudBaseUrl());
@@ -1409,9 +1411,76 @@ public class DefaultCloud11ServiceTest {
         when(cloudBaseUrl.getBaseUrlType()).thenReturn("NAST");
         when(cloudBaseUrl.getBaseUrlId()).thenReturn(1);
         tenant.setBaseUrlIds(new String[] {"1"});
-        when(tenantService.getTenant(anyString())).thenReturn(tenant);
+        when(tenantService.getTenant(anyString())).thenReturn(tenant).thenReturn(tenant2);
         spy.deleteBaseURLRef(null, null, "12345", null);
-        verify(tenantService).updateTenant(Matchers.<Tenant>anyObject());
+        verify(tenantService,times(2)).updateTenant(Matchers.<Tenant>anyObject());
+    }
+
+    @Test
+    public void deleteBaseUrlRef_nullTenantByMossoId_updatesTenantOnce() throws Exception {
+        com.rackspace.idm.domain.entity.User user1 = new com.rackspace.idm.domain.entity.User();
+        user1.setNastId("nast");
+        doNothing().when(spy).authenticateCloudAdminUser(null);
+        when(userService.getUser(null)).thenReturn(user1);
+        when(endpointService.getBaseUrlById(12345)).thenReturn(new CloudBaseUrl());
+        CloudBaseUrl cloudBaseUrl = mock(CloudBaseUrl.class);
+        when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
+        when(cloudBaseUrl.getBaseUrlType()).thenReturn("NAST");
+        when(cloudBaseUrl.getBaseUrlId()).thenReturn(1);
+        tenant.setBaseUrlIds(new String[] {"1"});
+        when(tenantService.getTenant("nast")).thenReturn(tenant);
+        spy.deleteBaseURLRef(null, null, "12345", null);
+        verify(tenantService,times(1)).updateTenant(Matchers.<Tenant>anyObject());
+    }
+
+    @Test
+    public void deleteBaseUrlRef_nullTenantByNastId_updatesTenantOnce() throws Exception {
+        com.rackspace.idm.domain.entity.User user1 = new com.rackspace.idm.domain.entity.User();
+        user1.setMossoId(123);
+        doNothing().when(spy).authenticateCloudAdminUser(null);
+        when(userService.getUser(null)).thenReturn(user1);
+        when(endpointService.getBaseUrlById(12345)).thenReturn(new CloudBaseUrl());
+        CloudBaseUrl cloudBaseUrl = mock(CloudBaseUrl.class);
+        when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
+        when(cloudBaseUrl.getBaseUrlType()).thenReturn("NAST");
+        when(cloudBaseUrl.getBaseUrlId()).thenReturn(1);
+        tenant.setBaseUrlIds(new String[] {"1"});
+        when(tenantService.getTenant("123")).thenReturn(tenant);
+        spy.deleteBaseURLRef(null, null, "12345", null);
+        verify(tenantService,times(1)).updateTenant(Matchers.<Tenant>anyObject());
+    }
+
+    @Test
+    public void deleteBaseUrlRef_nullBaseUrlRefs_doesNotUpdateTenant() throws Exception {
+        com.rackspace.idm.domain.entity.User user1 = new com.rackspace.idm.domain.entity.User();
+        user1.setMossoId(123);
+        doNothing().when(spy).authenticateCloudAdminUser(null);
+        when(userService.getUser(null)).thenReturn(user1);
+        when(endpointService.getBaseUrlById(12345)).thenReturn(new CloudBaseUrl());
+        CloudBaseUrl cloudBaseUrl = mock(CloudBaseUrl.class);
+        when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
+        when(cloudBaseUrl.getBaseUrlType()).thenReturn("NAST");
+        when(cloudBaseUrl.getBaseUrlId()).thenReturn(1);
+        when(tenantService.getTenant("123")).thenReturn(tenant);
+        spy.deleteBaseURLRef(null, null, "12345", null);
+        verify(tenantService,never()).updateTenant(Matchers.<Tenant>anyObject());
+    }
+
+    @Test
+    public void deleteBaseUrlRef_idsDoNotMatch_doesNotUpdateTenant() throws Exception {
+        com.rackspace.idm.domain.entity.User user1 = new com.rackspace.idm.domain.entity.User();
+        user1.setMossoId(123);
+        doNothing().when(spy).authenticateCloudAdminUser(null);
+        when(userService.getUser(null)).thenReturn(user1);
+        when(endpointService.getBaseUrlById(12345)).thenReturn(new CloudBaseUrl());
+        CloudBaseUrl cloudBaseUrl = mock(CloudBaseUrl.class);
+        when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
+        when(cloudBaseUrl.getBaseUrlType()).thenReturn("NAST");
+        when(cloudBaseUrl.getBaseUrlId()).thenReturn(1);
+        tenant.setBaseUrlIds(new String[] {"2"});
+        when(tenantService.getTenant("123")).thenReturn(tenant);
+        spy.deleteBaseURLRef(null, null, "12345", null);
+        verify(tenantService,never()).updateTenant(Matchers.<Tenant>anyObject());
     }
 
     @Test

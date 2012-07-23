@@ -19,7 +19,7 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-public class WadlTrie {
+public class WadlTree {
 
     private Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -70,10 +70,6 @@ public class WadlTrie {
 
         private boolean isWildcard() {
             return wildcard;
-        }
-
-        public Tree pop() {
-            return p;
         }
 
         @Override
@@ -133,21 +129,21 @@ public class WadlTrie {
     }
 
     // the primary data structure
-    private Tree trie  = new Tree("root", null);
+    private Tree tree = new Tree("root", null);
 
     // used only during wadl parsing
     private Deque<Tree> stack = new ArrayDeque<Tree>();
     {
-        stack.addFirst(trie);
+        stack.addFirst(tree);
     }
 
-    public WadlTrie() {
+    public WadlTree() {
         // use a class which is loaded by our application classloader, 
         // not the system or glassfish classloader
         this(StringUtils.class.getResourceAsStream("/idm.wadl"));
     }
 
-    public WadlTrie(final InputStream is) {
+    public WadlTree(final InputStream is) {
         try {
             SAXParserFactory.newInstance().newSAXParser().parse(is, new SaxHandler());
         } catch (final Exception e) {
@@ -158,7 +154,7 @@ public class WadlTrie {
     }
 
     public Object getPermissionFor(final Object... paths) {
-        return trie.find(0, paths);
+        return tree.find(0, paths);
     }
 
     public Object getPermissionFor(final String method, final UriInfo uriInfo) {
@@ -173,6 +169,6 @@ public class WadlTrie {
 
     @Override
     public String toString() {
-        return trie.toString();
+        return tree.toString();
     }
 }

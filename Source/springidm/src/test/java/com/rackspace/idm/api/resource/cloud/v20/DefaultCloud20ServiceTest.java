@@ -4570,4 +4570,147 @@ public class DefaultCloud20ServiceTest {
         doThrow(new NotFoundException()).when(spy).checkAndGetUser("id");
         spy.getUserByIdForAuthentication("id");
     }
+
+    @Test
+    public void authenticate_credentialTypeIsNeitherApiOrPassword_cannotGetUserInfo_throwsNullPointer_returns500() throws Exception {
+        Ec2CredentialsType ec2CredentialsType = new Ec2CredentialsType();
+        JAXBElement<Ec2CredentialsType> creds = new JAXBElement<Ec2CredentialsType>(new QName("http://docs.openstack.org/identity/api/v2.0", "pw"), Ec2CredentialsType.class, ec2CredentialsType);
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        authenticationRequest.setTenantName("tenantName");
+        authenticationRequest.setToken(null);
+        authenticationRequest.setCredential(creds);
+        UserScopeAccess userScopeAccess = new UserScopeAccess();
+        userScopeAccess.setUserRsId("rsId");
+        userScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
+        userScopeAccess.setAccessTokenString("notExpired");
+        when(scopeAccessService.getScopeAccessByAccessToken("tokenId")).thenReturn(userScopeAccess);
+        when(scopeAccessService.updateExpiredUserScopeAccess(userScopeAccess)).thenReturn(userScopeAccess);
+        doReturn(new User()).when(spy).getUserByIdForAuthentication("rsId");
+        when(tenantService.hasTenantAccess(userScopeAccess, "tenantName")).thenReturn(false);
+        Response.ResponseBuilder responseBuilder = spy.authenticate(httpHeaders, authenticationRequest);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(500));
+    }
+
+    @Test
+    public void authenticate_authenticationRequestTokenIsNull_tenantNameIsNotBlankAndHasNoAccess_returns401() throws Exception {
+        User userTest = new User();
+        userTest.setUsername("userTestUsername");
+        userTest.setId("userTestId");
+        PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
+        passwordCredentialsRequiredUsername.setPassword("password");
+        passwordCredentialsRequiredUsername.setUsername("username");
+        JAXBElement<PasswordCredentialsRequiredUsername> creds = new JAXBElement<PasswordCredentialsRequiredUsername>(new QName("http://docs.openstack.org/identity/api/v2.0", "pw"), PasswordCredentialsRequiredUsername.class, passwordCredentialsRequiredUsername);
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        authenticationRequest.setTenantName("tenantName");
+        authenticationRequest.setToken(null);
+        authenticationRequest.setCredential(creds);
+        UserScopeAccess userScopeAccess = new UserScopeAccess();
+        userScopeAccess.setUserRsId("rsId");
+        userScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
+        userScopeAccess.setAccessTokenString("notExpired");
+        when(tenantService.hasTenantAccess(userScopeAccess, "tenantName")).thenReturn(false);
+        doNothing().when(spy).validatePasswordCredentials(passwordCredentialsRequiredUsername);
+        doReturn(userTest).when(spy).getUserByUsernameForAuthentication("username");
+        when(config.getString("cloudAuth.clientId")).thenReturn("clientId");
+        when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword("username", "password", "clientId")).thenReturn(userScopeAccess);
+        Response.ResponseBuilder responseBuilder = spy.authenticate(httpHeaders, authenticationRequest);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(401));
+    }
+
+    @Test
+    public void authenticate_tenantNameNotBlank_tenantNameEqualsEndpointTenantName_addsEndpoint() throws Exception {
+        ArgumentCaptor<List> argumentCaptor = ArgumentCaptor.forClass(List.class);
+        RoleList roleList = new RoleList();
+        List<Role> listOfRoles = roleList.getRole();
+        UserForAuthenticateResponse userForAuthenticateResponse = new UserForAuthenticateResponse();
+        userForAuthenticateResponse.setRoles(roleList);
+        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
+        authenticateResponse.setUser(userForAuthenticateResponse);
+        Tenant tenant = new Tenant();
+        tenant.setName("tenantName");
+        tenant.setTenantId("tenantId");
+        Token token = new Token();
+        TenantRole tenantRole = new TenantRole();
+        List<TenantRole> roles = new ArrayList<TenantRole>();
+        roles.add(tenantRole);
+        OpenstackEndpoint openstackEndpoint = new OpenstackEndpoint();
+        openstackEndpoint.setTenantName("tenantName");
+        OpenstackEndpoint anotherOpenstackEndpoint = new OpenstackEndpoint();
+        anotherOpenstackEndpoint.setTenantName("differentTenantName");
+        List<OpenstackEndpoint> endpoints = new ArrayList<OpenstackEndpoint>();
+        endpoints.add(openstackEndpoint);
+        endpoints.add(anotherOpenstackEndpoint);
+        User userTest = new User();
+        userTest.setUsername("userTestUsername");
+        userTest.setId("userTestId");
+        PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
+        passwordCredentialsRequiredUsername.setPassword("password");
+        passwordCredentialsRequiredUsername.setUsername("username");
+        JAXBElement<PasswordCredentialsRequiredUsername> creds = new JAXBElement<PasswordCredentialsRequiredUsername>(new QName("http://docs.openstack.org/identity/api/v2.0", "pw"), PasswordCredentialsRequiredUsername.class, passwordCredentialsRequiredUsername);
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        authenticationRequest.setTenantName("tenantName");
+        authenticationRequest.setToken(null);
+        authenticationRequest.setCredential(creds);
+        UserScopeAccess userScopeAccess = new UserScopeAccess();
+        userScopeAccess.setUserRsId("rsId");
+        userScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
+        userScopeAccess.setAccessTokenString("notExpired");
+        when(tenantService.hasTenantAccess(userScopeAccess, "tenantName")).thenReturn(true);
+        doNothing().when(spy).validatePasswordCredentials(passwordCredentialsRequiredUsername);
+        doReturn(userTest).when(spy).getUserByUsernameForAuthentication("username");
+        when(config.getString("cloudAuth.clientId")).thenReturn("clientId");
+        when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword("username", "password", "clientId")).thenReturn(userScopeAccess);
+        when(scopeAccessService.getOpenstackEndpointsForScopeAccess(userScopeAccess)).thenReturn(endpoints);
+        when(authorizationService.authorizeCloudIdentityAdmin(userScopeAccess)).thenReturn(true);
+        when(tenantService.getTenantRolesForScopeAccess(userScopeAccess)).thenReturn(roles);
+        when(tokenConverterCloudV20.toToken(userScopeAccess)).thenReturn(token);
+        when(tenantService.getTenantByName("tenantName")).thenReturn(tenant);
+        when(authConverterCloudV20.toAuthenticationResponse(eq(userTest), eq(userScopeAccess), eq(roles), any(List.class))).thenReturn(authenticateResponse);
+        spy.authenticate(httpHeaders, authenticationRequest);
+        verify(authConverterCloudV20).toAuthenticationResponse(eq(userTest),  eq(userScopeAccess), eq(roles), argumentCaptor.capture());
+        List<OpenstackEndpoint> result = argumentCaptor.getValue();
+        assertThat("endpoint", result.get(0).getTenantName(), equalTo("tenantName"));
+    }
+
+    @Test
+    public void authenticate_tenantNameNotBlank_endpointsIsEmptyAndAuthGetUsersIsNull_returns200() throws Exception {
+        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
+        authenticateResponse.setUser(null);
+        Tenant tenant = new Tenant();
+        tenant.setName("tenantName");
+        tenant.setTenantId("tenantId");
+        Token token = new Token();
+        TenantRole tenantRole = new TenantRole();
+        List<TenantRole> roles = new ArrayList<TenantRole>();
+        roles.add(tenantRole);
+        List<OpenstackEndpoint> endpoints = new ArrayList<OpenstackEndpoint>();
+        User userTest = new User();
+        userTest.setUsername("userTestUsername");
+        userTest.setId("userTestId");
+        PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
+        passwordCredentialsRequiredUsername.setPassword("password");
+        passwordCredentialsRequiredUsername.setUsername("username");
+        JAXBElement<PasswordCredentialsRequiredUsername> creds = new JAXBElement<PasswordCredentialsRequiredUsername>(new QName("http://docs.openstack.org/identity/api/v2.0", "pw"), PasswordCredentialsRequiredUsername.class, passwordCredentialsRequiredUsername);
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        authenticationRequest.setTenantName("tenantName");
+        authenticationRequest.setToken(null);
+        authenticationRequest.setCredential(creds);
+        UserScopeAccess userScopeAccess = new UserScopeAccess();
+        userScopeAccess.setUserRsId("rsId");
+        userScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
+        userScopeAccess.setAccessTokenString("notExpired");
+        when(tenantService.hasTenantAccess(userScopeAccess, "tenantName")).thenReturn(true);
+        doNothing().when(spy).validatePasswordCredentials(passwordCredentialsRequiredUsername);
+        doReturn(userTest).when(spy).getUserByUsernameForAuthentication("username");
+        when(config.getString("cloudAuth.clientId")).thenReturn("clientId");
+        when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword("username", "password", "clientId")).thenReturn(userScopeAccess);
+        when(scopeAccessService.getOpenstackEndpointsForScopeAccess(userScopeAccess)).thenReturn(endpoints);
+        when(authorizationService.authorizeCloudIdentityAdmin(userScopeAccess)).thenReturn(true);
+        when(tenantService.getTenantRolesForScopeAccess(userScopeAccess)).thenReturn(roles);
+        when(tokenConverterCloudV20.toToken(userScopeAccess)).thenReturn(token);
+        when(tenantService.getTenantByName("tenantName")).thenReturn(tenant);
+        when(authConverterCloudV20.toAuthenticationResponse(eq(userTest), eq(userScopeAccess), eq(roles), any(List.class))).thenReturn(authenticateResponse);
+        Response.ResponseBuilder responseBuilder = spy.authenticate(httpHeaders, authenticationRequest);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
 }

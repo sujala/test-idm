@@ -808,13 +808,17 @@ public class CloudMigrationService {
             List<ClientRole> clientRoles = applicationService.getClientRolesByClientId(application.getClientId());
 
             for (ClientRole role : clientRoles) {
-                TenantRole tenantRole = new TenantRole();
-                tenantRole.setClientId(application.getClientId());
-                tenantRole.setUserId(user.getId());
-                tenantRole.setTenantIds(new String[]{tenantId}); //ToDo: does this overwrite a previous?
-                tenantRole.setName(role.getName());
-                tenantRole.setRoleRsId(role.getId());
-                tenantService.addTenantRoleToUser(user, tenantRole);
+                try{
+                    TenantRole tenantRole = new TenantRole();
+                    tenantRole.setClientId(application.getClientId());
+                    tenantRole.setUserId(user.getId());
+                    tenantRole.setTenantIds(new String[]{tenantId}); //ToDo: does this overwrite a previous?
+                    tenantRole.setName(role.getName());
+                    tenantRole.setRoleRsId(role.getId());
+                    tenantService.addTenantRoleToUser(user, tenantRole);
+                }catch(Exception ex) {
+                    logger.debug(ex.getMessage());
+                }
             }
         }
     }
