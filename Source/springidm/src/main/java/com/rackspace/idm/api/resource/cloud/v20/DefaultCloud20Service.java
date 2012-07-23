@@ -612,7 +612,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 user.setApiKey(userCredentials.getApiKey());
                 userService.updateUser(user, false);
             }
-            return Response.ok(credentials).status(Status.OK);
+            return Response.ok(credentials.getValue()).status(Status.OK);
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
@@ -650,6 +650,8 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             User user = null;
             UserScopeAccess usa = null;
+            ScopeAccess impsa = null;
+            org.openstack.docs.identity.api.v2.Token convertedToken = null;
             if (authenticationRequest.getCredential() == null && authenticationRequest.getToken() == null) {
                 throw new BadRequestException("Invalid request body: unable to parse Auth data. Please review XML or JSON formatting.");
             }
@@ -661,6 +663,18 @@ public class DefaultCloud20Service implements Cloud20Service {
                     throw new BadRequestException("Invalid Token Id");
                 }
                 ScopeAccess sa = scopeAccessService.getScopeAccessByAccessToken(authenticationRequest.getToken().getId());
+                // Check for impersonated token
+                if(sa instanceof ImpersonatedScopeAccess){
+                    impsa = sa;
+                    // Check Expiration of impersonated token
+                    if (((HasAccessToken) sa).isAccessTokenExpired(new DateTime())) {
+                        throw new NotAuthorizedException("Token not authenticated");
+                    }
+                    // Swap token out and Log
+                    String newToken = ((ImpersonatedScopeAccess) sa).getImpersonatingToken();
+                    logger.info("Impersonating token {} with token {} ", authenticationRequest.getToken(), newToken);
+                    sa = scopeAccessService.getScopeAccessByAccessToken(newToken);
+                }
                 if (sa == null || ((HasAccessToken) sa).isAccessTokenExpired(new DateTime()) || !(sa instanceof UserScopeAccess)) {
                     String errMsg = "Token not authenticated";
                     logger.warn(errMsg);
@@ -724,8 +738,14 @@ public class DefaultCloud20Service implements Cloud20Service {
             String tenantId = authenticationRequest.getTenantId();
             String tenantName = authenticationRequest.getTenantName();
             List<TenantRole> roles = tenantService.getTenantRolesForScopeAccess(usa);
+
+            if(impsa != null)
+                convertedToken = tokenConverterCloudV20.toToken(impsa);
+            else
+                convertedToken = tokenConverterCloudV20.toToken(usa);
+
+
             AuthenticateResponse auth;
-            org.openstack.docs.identity.api.v2.Token convertedToken = tokenConverterCloudV20.toToken(usa);
 
             //tenant was specified
             if (!StringUtils.isBlank(tenantId) || !StringUtils.isBlank(tenantName)) {

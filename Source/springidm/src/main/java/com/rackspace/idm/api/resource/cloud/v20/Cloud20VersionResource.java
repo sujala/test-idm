@@ -314,7 +314,7 @@ public class Cloud20VersionResource {
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("userId") String userId,
         PasswordCredentialsRequiredUsername creds) throws IOException, JAXBException {
-        return getCloud20Service().updateUserPasswordCredentials(httpHeaders, authToken, userId, "passwordCredentials", creds).build();
+        return getCloud20Service().updateUserPasswordCredentials(httpHeaders, authToken, userId, JSONConstants.PASSWORD_CREDENTIALS, creds).build();
     }
 
     @POST
