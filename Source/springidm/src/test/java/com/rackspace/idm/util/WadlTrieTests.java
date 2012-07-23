@@ -14,6 +14,11 @@ import junit.framework.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import static org.hamcrest.Matchers.equalTo;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+
 
 public class WadlTrieTests {
 
@@ -140,11 +145,18 @@ public class WadlTrieTests {
     }
 
     private WadlTrie trie;
+    WadlTrie spy;
 
 
     @Before
     public void setup() {
         trie = new WadlTrie();
+        spy = spy(trie);
+    }
+
+    @Test
+    public void constructor_throwsException_stillSucceeds() throws Exception {
+        new WadlTrie(null);
     }
 
     @Test
@@ -158,5 +170,12 @@ public class WadlTrieTests {
     public void shouldNotFindPermission() {
         final Object permissionFor = trie.getPermissionFor("root" , "/", "DELETE");
         Assert.assertNull(permissionFor);
+    }
+
+    @Test
+    public void getPermissionsFor__returnsRoot() {
+        UriInfo uriInfo = mock(UriInfo.class);
+        trie.getPermissionFor("method",uriInfo);
+        assertThat("returns root", (String) trie.getPermissionFor(), equalTo("root"));
     }
 }
