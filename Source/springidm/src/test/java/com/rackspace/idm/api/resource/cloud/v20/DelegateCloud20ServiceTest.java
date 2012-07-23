@@ -211,19 +211,19 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
-    @Ignore  //Remove - User for a dev env test
     public void authenticate_userNotMigratedAndNotNullAndCloudClientResponse200AndAuthenticateResponseNotNull_scopeAcessUpdated() throws Exception {
         User user = new User();
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         AuthenticateResponse authenticateResponse = new AuthenticateResponse();
-        Token token = mock(Token.class);
+        Token token = new Token();
         authenticateResponse.setToken(token);
         responseBuilder.status(200);
         responseBuilder.entity(new Object());
         when(cloudUserExtractor.getUserByV20CredentialType(authenticationRequest)).thenReturn(user);
         when(cloudClient.post(anyString(), any(HttpHeaders.class), anyString())).thenReturn(responseBuilder);
         doReturn(authenticateResponse).when(spy).unmarshallResponse(anyString(), eq(AuthenticateResponse.class));
-        when(token.getExpires()).thenReturn(new XMLGregorianCalendarImpl());
+        token.setId("someTokenId");
+        token.setExpires(new XMLGregorianCalendarImpl(new GregorianCalendar(1, 1, 1)));
         spy.authenticate(httpHeaders, authenticationRequest);
         verify(scopeAccessService).updateUserScopeAccessTokenForClientIdByUser(any(User.class), anyString(), anyString(), any(Date.class));
     }
