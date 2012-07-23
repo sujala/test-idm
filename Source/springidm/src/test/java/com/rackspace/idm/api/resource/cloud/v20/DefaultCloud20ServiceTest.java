@@ -4678,6 +4678,47 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void authenticate_scopeAccessInstanceOfImpersonatedAndTokenExpired_returns401() throws Exception {
+        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
+        tokenForAuthenticationRequest.setId("tokenId");
+        PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
+        passwordCredentialsRequiredUsername.setPassword("password");
+        passwordCredentialsRequiredUsername.setUsername("username");
+        JAXBElement<PasswordCredentialsRequiredUsername> creds = new JAXBElement<PasswordCredentialsRequiredUsername>(new QName("http://docs.openstack.org/identity/api/v2.0", "pw"), PasswordCredentialsRequiredUsername.class, passwordCredentialsRequiredUsername);
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        authenticationRequest.setTenantName("tenantName");
+        authenticationRequest.setToken(tokenForAuthenticationRequest);
+        authenticationRequest.setCredential(creds);
+        ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
+        impersonatedScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
+        when(scopeAccessService.getScopeAccessByAccessToken("tokenId")).thenReturn(impersonatedScopeAccess);
+        Response.ResponseBuilder responseBuilder = spy.authenticate(httpHeaders, authenticationRequest);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(401));
+    }
+
+    @Test
+    public void authenticate_scopeAccessWasImpersonatedScopeAccessThenCannotFindScopeAccessWithImpersonatingToken_returns401() throws Exception {
+        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
+        tokenForAuthenticationRequest.setId("tokenId");
+        PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
+        passwordCredentialsRequiredUsername.setPassword("password");
+        passwordCredentialsRequiredUsername.setUsername("username");
+        JAXBElement<PasswordCredentialsRequiredUsername> creds = new JAXBElement<PasswordCredentialsRequiredUsername>(new QName("http://docs.openstack.org/identity/api/v2.0", "pw"), PasswordCredentialsRequiredUsername.class, passwordCredentialsRequiredUsername);
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        authenticationRequest.setTenantName("tenantName");
+        authenticationRequest.setToken(tokenForAuthenticationRequest);
+        authenticationRequest.setCredential(creds);
+        ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
+        impersonatedScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
+        impersonatedScopeAccess.setAccessTokenString("notExpired");
+        impersonatedScopeAccess.setImpersonatingToken("impersonatingToken");
+        when(scopeAccessService.getScopeAccessByAccessToken("tokenId")).thenReturn(impersonatedScopeAccess);
+        when(scopeAccessService.getScopeAccessByAccessToken("impersonatingToken")).thenReturn(null);
+        Response.ResponseBuilder responseBuilder = spy.authenticate(httpHeaders, authenticationRequest);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(401));
+    }
+
+    @Test
     public void authenticate_tenantNameNotBlank_tenantNameEqualsEndpointTenantName_addsEndpoint() throws Exception {
         ArgumentCaptor<List> argumentCaptor = ArgumentCaptor.forClass(List.class);
         Role role = new Role();
