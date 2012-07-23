@@ -8,7 +8,7 @@ import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.ForbiddenException;
-import com.rackspace.idm.util.WadlTrie;
+import com.rackspace.idm.util.WadlTree;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -26,7 +26,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
     private final Configuration config;
     private final ScopeAccessDao scopeAccessDao;
     private final TenantDao tenantDao;
-    private final WadlTrie wadlTrie;
+    private final WadlTree wadlTree;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
     @Autowired
     private ScopeAccessService scopeAccessService;
@@ -40,12 +40,12 @@ public class DefaultAuthorizationService implements AuthorizationService {
     private static ClientRole RACKER_ROLE = null ;
 
     public DefaultAuthorizationService(ScopeAccessDao scopeAccessDao,
-        ApplicationDao clientDao, TenantDao tenantDao, WadlTrie wadlTrie,
+        ApplicationDao clientDao, TenantDao tenantDao, WadlTree wadlTree,
         Configuration config) {
         this.scopeAccessDao = scopeAccessDao;
         this.clientDao = clientDao;
         this.tenantDao = tenantDao;
-        this.wadlTrie = wadlTrie;
+        this.wadlTree = wadlTree;
         this.config = config;
     }
 
@@ -302,7 +302,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
             return false;
         }
 
-        Object o = wadlTrie.getPermissionFor(verb, uriInfo);
+        Object o = wadlTree.getPermissionFor(verb, uriInfo);
         String permissionId = o == null ? null : o.toString();
 
         boolean authorized = false;

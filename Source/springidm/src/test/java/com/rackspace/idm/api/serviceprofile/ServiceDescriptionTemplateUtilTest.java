@@ -1,6 +1,5 @@
 package com.rackspace.idm.api.serviceprofile;
 
-import com.rackspace.idm.util.WadlTrieTests;
 import freemarker.template.Configuration;
 import org.junit.Before;
 import org.junit.Test;
