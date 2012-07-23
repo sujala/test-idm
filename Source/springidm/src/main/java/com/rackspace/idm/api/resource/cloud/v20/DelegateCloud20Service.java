@@ -241,7 +241,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         JAXBElement<UserForAuthenticateResponse> impersonatorJAXBElement = raxAuthObjectFactory.createImpersonator(userForAuthenticateResponse);
         validateResponse.getAny().add(impersonatorJAXBElement);
 
-        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createAccess(validateResponse));
+        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createAccess(validateResponse).getValue());
     }
 
 

@@ -22,10 +22,8 @@ public class InputValidator {
             validationGroup);
     }
 
-    public <T> ApiError validate(T paramObj, int errorStatus,
-        Class<?>... validationGroup) {
-        Set<ConstraintViolation<T>> violations = validator.validate(paramObj,
-            validationGroup);
+    public <T> ApiError validate(T paramObj, int errorStatus, Class<?>... validationGroup) {
+        Set<ConstraintViolation<T>> violations = validator.validate(paramObj, validationGroup);
         if (violations.size() == 0) {
             return null;
         }
