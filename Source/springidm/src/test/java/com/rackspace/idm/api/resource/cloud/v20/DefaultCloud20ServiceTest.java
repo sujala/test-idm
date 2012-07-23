@@ -2515,20 +2515,20 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void getSecretQA_getsUsername() throws Exception {
+    public void getSecretQA_doesNotSetUsername() throws Exception {
         User user = new User();
         user.setSecretAnswer("secret");
         user.setSecretQuestion("question");
         user.setUsername("username");
+        SecretQA secretQA2 = new SecretQA();
         doNothing().when(spy).verifyServiceAdminLevelAccess("authToken");
         doReturn(user).when(spy).checkAndGetUser("userId");
         com.rackspace.docs.identity.api.ext.rax_ksqa.v1.ObjectFactory objectFactory = mock(com.rackspace.docs.identity.api.ext.rax_ksqa.v1.ObjectFactory.class);
         when(jaxbObjectFactories.getRackspaceIdentityExtKsqaV1Factory()).thenReturn(objectFactory);
-        JAXBElement<SecretQA> jaxbElement = new JAXBElement<SecretQA>(new QName(""), SecretQA.class, secretQA);
-        when(objectFactory.createSecretQA(any(SecretQA.class))).thenReturn(jaxbElement);
-        spy.getSecretQA(null, "authToken", "userId");
-        SecretQA result = jaxbElement.getValue();
-        assertThat("username", result.getUsername(), equalTo("username"));
+        when(objectFactory.createSecretQA()).thenReturn(secretQA2);
+        when(objectFactory.createSecretQA(secretQA2)).thenReturn(new JAXBElement<SecretQA>(QName.valueOf("foo"),SecretQA.class,secretQA2));
+        Response result = spy.getSecretQA(null, "authToken", "userId").build();
+        assertThat("username", ( (SecretQA) result.getEntity()).getUsername(), equalTo(null));
     }
 
     @Test

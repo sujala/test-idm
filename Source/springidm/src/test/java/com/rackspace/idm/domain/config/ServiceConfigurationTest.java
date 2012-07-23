@@ -1,6 +1,5 @@
 package com.rackspace.idm.domain.config;
 
-import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.service.ApiDocService;
 import com.rackspace.idm.domain.service.ApplicationService;
@@ -10,7 +9,7 @@ import com.rackspace.idm.domain.service.impl.*;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.rackspace.idm.util.LdapRouterMBean;
 import com.rackspace.idm.util.LoggerMBean;
-import com.rackspace.idm.util.WadlTrie;
+import com.rackspace.idm.util.WadlTree;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Test;
@@ -91,7 +90,7 @@ public class ServiceConfigurationTest {
 
     @Test
     public void wadlTrie_returnsWadlTrie() throws Exception {
-        assertThat("wadlTrie",serviceConfiguration.wadlTrie(),instanceOf(WadlTrie.class));
+        assertThat("wadlTrie",serviceConfiguration.wadlTrie(),instanceOf(WadlTree.class));
     }
 
     @Test

@@ -2,14 +2,12 @@ package com.rackspace.idm.api.serviceprofile;
 
 import com.rackspace.idm.domain.dao.ApiDocDao;
 import com.rackspace.idm.exception.NotFoundException;
-import com.rackspace.idm.util.WadlTrie;
 import org.junit.Before;
 import org.junit.Test;
 
 import javax.ws.rs.core.UriInfo;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;

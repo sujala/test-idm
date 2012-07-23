@@ -19,14 +19,4 @@ public class DefaultCloudKsGroupBuilder implements CloudKsGroupBuilder{
         groupKs.setId(group.getGroupId().toString());
         return groupKs;
     }
-
-    /**
-     * Created by IntelliJ IDEA.
-     * User: jorge
-     * Date: May 21, 2012
-     * Time: 1:39:53 PM
-     * To change this template use File | Settings | File Templates.
-     */
-    public static class JSONWriterNonJAXBElement {
-    }
 }

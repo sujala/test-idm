@@ -120,16 +120,6 @@ public class JSONWriterTest {
     }
 
     @Test
-    public void writeTo_DefaultRegionServices_writesToOutputStream() throws Exception {
-        DefaultRegionServices defaultRegionServices = new DefaultRegionServices();
-        defaultRegionServices.getServiceName().add("cloudServers");
-        defaultRegionServices.getServiceName().add("cloudServersOpenstack");
-        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
-        spy.writeTo(defaultRegionServices, DefaultRegionServices.class, null, null, null, null, myOut);
-        assertThat("string", myOut.toString(), equalTo("{\""+"defaultRegionServices"+"\":{\"serviceName\":[\"cloudServers\",\"cloudServersOpenstack\"]}}"));
-    }
-
-    @Test
     public void writeTo_typeTenants_writesToOutputStream() throws Exception {
         Tenants tenants = new Tenants();
         Tenant tenant = new Tenant();
@@ -2415,6 +2405,24 @@ public class JSONWriterTest {
         final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
         writer.writeTo(roles, RoleList.class, null, null, null, null, myOut);
         Assert.assertEquals("{\"roles\":[]}", myOut.toString());
+    }
+
+    @Test
+    public void getDefaultRegionServices() throws Exception {
+        DefaultRegionServices defaultRegionServices = new DefaultRegionServices();
+        defaultRegionServices.getServiceName().add("cloudFiles");
+        defaultRegionServices.getServiceName().add("openstackNova");
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        writer.writeTo(defaultRegionServices, DefaultRegionServices.class, null, null, null, null, myOut);
+        assertThat("services", myOut.toString(), equalTo("{\"RAX-AUTH:defaultRegionServices\":[\"cloudFiles\","+"\"openstackNova\"]}"));
+    }
+
+    @Test
+    public void getDefaultRegionServices_emptyList() throws Exception {
+        DefaultRegionServices defaultRegionServices = new DefaultRegionServices();
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        writer.writeTo(defaultRegionServices, DefaultRegionServices.class, null, null, null, null, myOut);
+        assertThat("services", myOut.toString(), equalTo("{\"RAX-AUTH:defaultRegionServices\":[]}"));
     }
 
     @Test
