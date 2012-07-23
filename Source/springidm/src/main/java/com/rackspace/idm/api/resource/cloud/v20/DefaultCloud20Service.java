@@ -612,7 +612,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 user.setApiKey(userCredentials.getApiKey());
                 userService.updateUser(user, false);
             }
-            return Response.ok(credentials).status(Status.OK);
+            return Response.ok(credentials.getValue()).status(Status.OK);
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
