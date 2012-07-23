@@ -41,4 +41,8 @@ public class InputValidator {
 
         return err;
     }
+
+    public void setValidator(Validator validator) {
+        this.validator = validator;
+    }
 }
