@@ -34,6 +34,11 @@ public class WadlTreeTests {
     }
 
     @Test
+    public void constructor_throwsException_stillSucceeds() throws Exception {
+        new WadlTree(null);
+    }
+
+    @Test
     public void shouldNotFindPermission() {
         final Object permissionFor = tree.getPermissionFor("root" , "/", "DELETE");
         Assert.assertNull(permissionFor);

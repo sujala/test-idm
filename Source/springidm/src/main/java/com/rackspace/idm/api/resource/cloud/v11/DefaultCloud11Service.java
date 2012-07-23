@@ -498,24 +498,30 @@ public class DefaultCloud11Service implements Cloud11Service {
                 throw new BadRequestException(String.format("Cannot delete default BaseUrlId %s.", baseUrl.getBaseUrlId()));
 
             String tenantId;
-            if (baseUrl.getBaseUrlType().equals("NAST"))
+            //if (baseUrl.getBaseUrlType().equals("NAST"))
                 tenantId = user.getNastId();
-            else
-                tenantId = String.valueOf(user.getMossoId());
-
-            Tenant tenant = this.tenantService.getTenant(tenantId);
+            //else
+                String tenantId2 = String.valueOf(user.getMossoId());
+            Tenant[] tenants = new Tenant[2];
+            tenants[0] = this.tenantService.getTenant(tenantId);
+            tenants[1] = this.tenantService.getTenant(tenantId2);
 
             boolean found = false;
-            for (String currentId : tenant.getBaseUrlIds()) {
-                if (currentId.equals(String.valueOf(baseUrl.getBaseUrlId())))
-                    found = true;
-            }
+            for(Tenant tenant : tenants)
+                if(tenant != null){
+                    for (String currentId : tenant.getBaseUrlIds()) {
+                        if (currentId.equals(String.valueOf(baseUrl.getBaseUrlId()))){
+                            tenant.removeBaseUrlId(String.valueOf(baseUrl.getBaseUrlId()));
+                            this.tenantService.updateTenant(tenant);
+                            found = true;
+                        }
+
+                    }
+                }
+
 
             if (!found)
                 throw new NotFoundException(String.format("Attempting to delete nonexisting baseUrl: %s", String.valueOf(baseUrl.getBaseUrlId())));
-
-            tenant.removeBaseUrlId(String.valueOf(baseUrl.getBaseUrlId()));
-            this.tenantService.updateTenant(tenant);
 
             return Response.noContent();
         } catch (Exception ex) {
