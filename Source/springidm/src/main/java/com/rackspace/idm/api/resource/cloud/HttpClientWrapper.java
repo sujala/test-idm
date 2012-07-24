@@ -10,6 +10,7 @@ import java.util.Map;
 
 import java.util.zip.GZIPInputStream;
 
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpGet;
@@ -35,6 +36,8 @@ import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpResponseInterceptor;
 
+import org.apache.http.impl.client.ContentEncodingHttpClient;
+import org.apache.http.impl.client.DecompressingHttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
 
 import org.apache.http.protocol.HttpContext;
@@ -47,28 +50,15 @@ public class HttpClientWrapper {
 
     private Map<String, String> headers;
     private String url = "";
-    private boolean useGzip;
-    private DefaultHttpClient client;
-    // Todo: create a property
-    private boolean ignoreSSLCert = true;
+    private HttpClient client;
 
     public HttpClientWrapper() {
-        this.useGzip = false;
         headers = new HashMap<String, String>();
-        client = new DefaultHttpClient();
-        
-        if (ignoreSSLCert) {
-            client = WebClientDevWrapper.wrapClient(client);
-        }
+        client = new DecompressingHttpClient(WebClientDevWrapper.wrapClient(new DefaultHttpClient()));
     }
 
     public HttpClientWrapper header(String key, String value) {
         headers.put(key, value);
-        return this;
-    }
-
-    public HttpClientWrapper gzip(boolean value) {
-        this.useGzip = value;
         return this;
     }
 
@@ -109,39 +99,6 @@ public class HttpClientWrapper {
             requestBase.addHeader(key, headers.get(key));
         }
 
-        client.addRequestInterceptor(new HttpRequestInterceptor() {
-
-            public void process(
-                    final HttpRequest request,
-                    final HttpContext context) throws HttpException, IOException {
-                if (useGzip && !request.containsHeader("Accept-Encoding")) {
-                    request.addHeader("Accept-Encoding", "gzip");
-                }
-            }
-
-        });
-
-        client.addResponseInterceptor(new HttpResponseInterceptor() {
-
-            public void process(
-                    final HttpResponse response,
-                    final HttpContext context) throws HttpException, IOException {
-                HttpEntity entity = response.getEntity();
-                Header ceheader = entity.getContentEncoding();
-                if (ceheader != null) {
-                    HeaderElement[] codecs = ceheader.getElements();
-                    for (int i = 0; i < codecs.length; i++) {
-                        if (codecs[i].getName().equalsIgnoreCase("gzip")) {
-                            response.setEntity(
-                                    new GzipDecompressingEntity(response.getEntity()));
-                            return;
-                        }
-                    }
-                }
-            }
-
-        });
-
         HttpResponse response = client.execute(requestBase);
         HttpEntity entity = response.getEntity();
 
@@ -157,28 +114,5 @@ public class HttpClientWrapper {
         this.headers = new HashMap<String, String>();
         this.url = url;
         return this;
-    }
-
-    static class GzipDecompressingEntity extends HttpEntityWrapper {
-
-        public GzipDecompressingEntity(final HttpEntity entity) {
-            super(entity);
-        }
-
-        @Override
-        public InputStream getContent()
-            throws IOException, IllegalStateException {
-
-            // the wrapped entity's getContent() decides about repeatability
-            InputStream wrappedin = wrappedEntity.getContent();
-
-            return new GZIPInputStream(wrappedin);
-        }
-
-        @Override
-        public long getContentLength() {
-            // length of ungzipped content is not known
-            return -1;
-        }
     }
 }
