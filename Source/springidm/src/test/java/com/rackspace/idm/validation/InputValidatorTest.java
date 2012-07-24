@@ -1,21 +1,23 @@
 package com.rackspace.idm.validation;
 
 import com.rackspace.idm.api.error.ApiError;
-import com.rackspace.idm.domain.entity.Auditable;
-import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.User;
+import org.hibernate.validator.engine.ConstraintViolationImpl;
 import org.junit.Before;
 import org.junit.Test;
 
+import javax.validation.ConstraintViolation;
+import javax.validation.Validator;
 import javax.validation.groups.Default;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -49,8 +51,19 @@ public class InputValidatorTest {
     }
 
     @Test
-    public void validate_validateSizeIsZero_returnsNull() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        assertNull("violation size is zero",inputValidator.validate(scopeAccess,0,Auditable.class));
+    public void validate_violationsExist_returnsError() throws Exception {
+        Validator validator = mock(Validator.class);
+        inputValidator.setValidator(validator);
+        Object paramObj = new Object();
+        Class[] group = new Class[0];
+        Set<ConstraintViolation<Object>> violations = new HashSet<ConstraintViolation<Object>>();
+        violations.add(new ConstraintViolationImpl<Object>("messageTemplate","message",Object.class,null,null,paramObj,null,null,null));
+        violations.add(new ConstraintViolationImpl<Object>("messageTemplate","second message",Object.class,null,null,paramObj,null,null,null));
+        when(validator.validate(paramObj,group)).thenReturn(violations);
+        ApiError error = inputValidator.validate(paramObj,0,group);
+        assertThat("error code",error.getCode(),equalTo(0));
+        assertThat("error message",error.getMessage(),equalTo("Invalid request: Missing or malformed parameter(s)."));
+        assertThat("error details",error.getDetails().contains("null second message;"), equalTo(true));
+        assertThat("error details",error.getDetails().contains("null message; "), equalTo(true));
     }
 }

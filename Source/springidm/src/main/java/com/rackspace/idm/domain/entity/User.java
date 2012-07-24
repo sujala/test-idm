@@ -83,8 +83,7 @@ public class User implements Auditable {
     @Deprecated
     public User(String username, String customerId, String email,
         UserHumanName name, UserLocale preference, UserCredential credential,
-        String country, String displayName, String inum, String iname,
-        String orgInum, String apiKey,
+        String country, String displayName, String apiKey,
         String personId) {
         this.username = username;
         this.customerId = customerId;
