@@ -147,7 +147,7 @@ public class UserResourceTest {
     @Test
     public void updateUser_callsUserService_updateUserById() throws Exception {
         com.rackspace.api.idm.v1.User user = new com.rackspace.api.idm.v1.User();
-        user.setUsername("");
+        user.setUsername("username");
         EntityHolder<com.rackspace.api.idm.v1.User> holder = new EntityHolder<com.rackspace.api.idm.v1.User>(user);
         User testUser = new User();
         testUser.setEnabled(true);
