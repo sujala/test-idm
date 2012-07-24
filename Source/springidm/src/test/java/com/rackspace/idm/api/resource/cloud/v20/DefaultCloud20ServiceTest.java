@@ -241,6 +241,99 @@ public class DefaultCloud20ServiceTest {
         doNothing().when(spy).checkXAUTHTOKEN(eq(authToken), anyBoolean(), eq(tenantId));
     }
 
+    @Test(expected = BadRequestException.class)
+    public void setDefaultRegionService_returns400WhenServiceIsNotFound() throws Exception {
+        ArrayList<Application> applications = new ArrayList<Application>();
+        Application application1 = new Application();
+        applications.add(application1);
+        Application application2 = new Application("cloudFiles", ClientSecret.newInstance("foo"), "cloudFiles", "rcn", ClientStatus.ACTIVE);
+        applications.add(application2);
+        Application application3 = new Application("cloudFilesCDN", ClientSecret.newInstance("foo"), "cloudFilesCDN", "rcn", ClientStatus.ACTIVE);
+        application3.setUseForDefaultRegion(true);
+        applications.add(application3);
+        when(clientService.getOpenStackServices()).thenReturn(applications);
+        DefaultRegionServices defaultRegionServices = new DefaultRegionServices();
+        defaultRegionServices.getServiceName().add("Foo");
+        defaultCloud20Service.setDefaultRegionServices("token", defaultRegionServices);
+    }
+
+    @Test
+    public void setDefaultRegionService_serviceFound_returns204() throws Exception {
+        ArrayList<Application> applications = new ArrayList<Application>();
+        Application application1 = new Application();
+        applications.add(application1);
+        Application application2 = new Application("cloudFiles", ClientSecret.newInstance("foo"), "cloudFiles", "rcn", ClientStatus.ACTIVE);
+        applications.add(application2);
+        Application application3 = new Application("cloudFilesCDN", ClientSecret.newInstance("foo"), "cloudFilesCDN", "rcn", ClientStatus.ACTIVE);
+        application3.setUseForDefaultRegion(true);
+        applications.add(application3);
+        when(clientService.getOpenStackServices()).thenReturn(applications);
+        when(clientService.getByName("cloudFiles")).thenReturn(application2);
+        when(clientService.getByName("cloudFilesCDN")).thenReturn(application3);
+        DefaultRegionServices defaultRegionServices = new DefaultRegionServices();
+        defaultRegionServices.getServiceName().add("cloudFiles");
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.setDefaultRegionServices("token", defaultRegionServices);
+        assertThat("code", responseBuilder.build().getStatus(), equalTo(204));
+    }
+
+    @Test
+    public void setDefaultRegionService_forEachService_callsClientService_getByName() throws Exception {
+        ArrayList<Application> applications = new ArrayList<Application>();
+        Application application1 = new Application();
+        applications.add(application1);
+        Application application2 = new Application("cloudFiles", ClientSecret.newInstance("foo"), "cloudFiles", "rcn", ClientStatus.ACTIVE);
+        applications.add(application2);
+        Application application3 = new Application("cloudFilesCDN", ClientSecret.newInstance("foo"), "cloudFilesCDN", "rcn", ClientStatus.ACTIVE);
+        application3.setUseForDefaultRegion(true);
+        applications.add(application3);
+        when(clientService.getOpenStackServices()).thenReturn(applications);
+        when(clientService.getByName("cloudFiles")).thenReturn(application2);
+        when(clientService.getByName("cloudFilesCDN")).thenReturn(application3);
+        DefaultRegionServices defaultRegionServices = new DefaultRegionServices();
+        defaultRegionServices.getServiceName().add("cloudFiles");
+        defaultRegionServices.getServiceName().add("cloudFilesCDN");
+        defaultCloud20Service.setDefaultRegionServices("token", defaultRegionServices);
+        verify(clientService,times(2)).getByName(anyString());
+    }
+
+    @Test
+    public void setDefaultRegionService_forEachService_callsClientService_updateClient() throws Exception {
+        ArrayList<Application> applications = new ArrayList<Application>();
+        Application application1 = new Application();
+        applications.add(application1);
+        Application application2 = new Application("cloudFiles", ClientSecret.newInstance("foo"), "cloudFiles", "rcn", ClientStatus.ACTIVE);
+        applications.add(application2);
+        Application application3 = new Application("cloudFilesCDN", ClientSecret.newInstance("foo"), "cloudFilesCDN", "rcn", ClientStatus.ACTIVE);
+        application3.setUseForDefaultRegion(true);
+        applications.add(application3);
+        when(clientService.getOpenStackServices()).thenReturn(applications);
+        when(clientService.getByName("cloudFiles")).thenReturn(application2);
+        when(clientService.getByName("cloudFilesCDN")).thenReturn(application3);
+        DefaultRegionServices defaultRegionServices = new DefaultRegionServices();
+        defaultRegionServices.getServiceName().add("cloudFiles");
+        defaultRegionServices.getServiceName().add("cloudFilesCDN");
+        defaultCloud20Service.setDefaultRegionServices("token", defaultRegionServices);
+        verify(clientService,times(2)).updateClient(any(Application.class));
+    }
+
+    @Test
+    public void setDefaultRegionServices_callsVerifyServiceAdminAccess() throws Exception {
+        spy.setDefaultRegionServices(authToken, new DefaultRegionServices());
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
+    }
+
+    @Test
+    public void setDefaultRegionServices_returnsNotNullResponseBuilder() throws Exception {
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.setDefaultRegionServices(authToken, new DefaultRegionServices());
+        assertThat("response builder", responseBuilder, Matchers.<Response.ResponseBuilder>notNullValue());
+    }
+
+    @Test
+    public void setDefaultRegionServices_callsApplicationService_getOSServices() throws Exception {
+        defaultCloud20Service.setDefaultRegionServices(authToken, new DefaultRegionServices());
+        verify(clientService).getOpenStackServices();
+    }
+
     @Test
     public void listDefaultRegionServices_callsVerifyServiceAdminAccess() throws Exception {
         spy.listDefaultRegionServices(authToken);
@@ -3677,10 +3770,16 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void checkXAUTHTOKEN_authorizationServiceReturnsTrue_doesNotThrowException() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(true);
-        spy.checkXAUTHTOKEN(authToken, false, "tenantId");
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
+        defaultCloud20Service.checkXAUTHTOKEN(authToken, false, "tenantId");
+        assertTrue("no exceptions", true);
+    }
+
+    @Test
+    public void checkXAUTHTOKEN_hasUserAdminAccessAndTenantIdIsNull_doesNotThrowException() throws Exception {
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
+        defaultCloud20Service.checkXAUTHTOKEN(authToken, false, null);
         assertTrue("no exceptions", true);
     }
 
@@ -3828,10 +3927,11 @@ public class DefaultCloud20ServiceTest {
         defaultCloud20Service.validateKsGroup(groupKs);
     }
 
-    @Test(expected = NullPointerException.class)
-    public void validateKsGroup_groupNameIsNull_throwsNullPointException() {
-        groupKs.setName(null);
-        defaultCloud20Service.validateKsGroup(groupKs);
+    @Test(expected = BadRequestException.class)
+    public void validateKsGroup_groupNameIsNull_throwsBadRequestException() {
+        com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group = mock(com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group.class);
+        when(group.getName()).thenReturn("1").thenReturn(null);
+        defaultCloud20Service.validateKsGroup(group);
     }
 
     @Test(expected = BadRequestException.class)
@@ -4719,6 +4819,44 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void authenticate_scopeAccessWasImpersonatedScopeAccessResponseOk_returns200() throws Exception {
+        ArrayList<OpenstackEndpoint> openstackEndpoints = new ArrayList<OpenstackEndpoint>();
+        ArrayList<TenantRole> tenantRoles = new ArrayList<TenantRole>();
+        User userTest = new User();
+        UserScopeAccess userScopeAccess = new UserScopeAccess();
+        userScopeAccess.setUserRsId("rsId");
+        userScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
+        userScopeAccess.setAccessTokenString("notExpired");
+        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
+        tokenForAuthenticationRequest.setId("tokenId");
+        PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
+        passwordCredentialsRequiredUsername.setPassword("password");
+        passwordCredentialsRequiredUsername.setUsername("username");
+        JAXBElement<PasswordCredentialsRequiredUsername> creds = new JAXBElement<PasswordCredentialsRequiredUsername>(new QName("http://docs.openstack.org/identity/api/v2.0", "pw"), PasswordCredentialsRequiredUsername.class, passwordCredentialsRequiredUsername);
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        authenticationRequest.setTenantName("tenantName");
+        authenticationRequest.setToken(tokenForAuthenticationRequest);
+        authenticationRequest.setCredential(creds);
+        ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
+        impersonatedScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
+        impersonatedScopeAccess.setAccessTokenString("notExpired");
+        impersonatedScopeAccess.setImpersonatingToken("impersonatingToken");
+        when(scopeAccessService.getScopeAccessByAccessToken("tokenId")).thenReturn(impersonatedScopeAccess);
+        when(scopeAccessService.getScopeAccessByAccessToken("impersonatingToken")).thenReturn(userScopeAccess);
+        when(scopeAccessService.updateExpiredUserScopeAccess(userScopeAccess)).thenReturn(userScopeAccess);
+        doReturn(userTest).when(spy).getUserByIdForAuthentication("rsId");
+        when(tenantService.hasTenantAccess(userScopeAccess, "tenantName")).thenReturn(true);
+        when(scopeAccessService.getOpenstackEndpointsForScopeAccess(userScopeAccess)).thenReturn(openstackEndpoints);
+        when(authorizationService.authorizeCloudIdentityAdmin(userScopeAccess)).thenReturn(true);
+        when(tenantService.getTenantRolesForScopeAccess(userScopeAccess)).thenReturn(tenantRoles);
+        when(tenantService.getTenantByName("tenantName")).thenReturn(new Tenant());
+        when(tokenConverterCloudV20.toToken(impersonatedScopeAccess)).thenReturn(new Token());
+        when(authConverterCloudV20.toAuthenticationResponse(userTest, userScopeAccess, tenantRoles, openstackEndpoints)).thenReturn(new AuthenticateResponse());
+        Response.ResponseBuilder responseBuilder = spy.authenticate(httpHeaders, authenticationRequest);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
     public void authenticate_tenantNameNotBlank_tenantNameEqualsEndpointTenantName_addsEndpoint() throws Exception {
         ArgumentCaptor<List> argumentCaptor = ArgumentCaptor.forClass(List.class);
         Role role = new Role();
@@ -4953,7 +5091,7 @@ public class DefaultCloud20ServiceTest {
         userTest.setUsername("username");
         ImpersonationRequest impersonationRequest = new ImpersonationRequest();
         impersonationRequest.setUser(userTest);
-        impersonationRequest.setExpireInSeconds(null);
+        impersonationRequest.setExpireInSeconds(2);
         spy.validateImpersonationRequest(impersonationRequest);
     }
 

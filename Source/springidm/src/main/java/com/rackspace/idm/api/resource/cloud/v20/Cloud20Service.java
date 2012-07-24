@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
@@ -173,4 +174,6 @@ public interface Cloud20Service {
     ResponseBuilder impersonate(HttpHeaders httpHeaders, String authToken, ImpersonationRequest impersonationRequest) throws IOException, JAXBException;
 
     ResponseBuilder listDefaultRegionServices(String authToken);
+
+    ResponseBuilder setDefaultRegionServices(String authToken, DefaultRegionServices defaultRegionServices);
 }

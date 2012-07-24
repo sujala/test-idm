@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
@@ -113,8 +114,16 @@ public class Cloud20VersionResource {
 
     @GET
     @Path("RAX-AUTH/default-region/services")
-    public Response listDefaultRegionServices(@HeaderParam(X_AUTH_TOKEN) String authToken){
+    public Response listDefaultRegionServices(
+            @HeaderParam(X_AUTH_TOKEN) String authToken){
         return defaultCloud20Service.listDefaultRegionServices(authToken).build();
+    }
+
+    @PUT
+    @Path("RAX-AUTH/default-region/services")
+    public Response setDefaultRegionServices(@HeaderParam(X_AUTH_TOKEN) String authToken,
+                                             DefaultRegionServices defaultRegionServices){
+        return defaultCloud20Service.setDefaultRegionServices(authToken,defaultRegionServices).build();
     }
 
     @POST

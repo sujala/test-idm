@@ -739,10 +739,12 @@ public class DefaultCloud20Service implements Cloud20Service {
             String tenantName = authenticationRequest.getTenantName();
             List<TenantRole> roles = tenantService.getTenantRolesForScopeAccess(usa);
 
-            if(impsa != null)
+            if(impsa != null) {
                 convertedToken = tokenConverterCloudV20.toToken(impsa);
-            else
+            }
+            else {
                 convertedToken = tokenConverterCloudV20.toToken(usa);
+            }
 
 
             AuthenticateResponse auth;
@@ -1708,6 +1710,33 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
         }
         return Response.ok(defaultRegionServices);
+    }
+
+    @Override
+    public ResponseBuilder setDefaultRegionServices(String authToken, DefaultRegionServices defaultRegionServices) {
+        verifyServiceAdminLevelAccess(authToken);
+        List<String> serviceNames = defaultRegionServices.getServiceName();
+        List<Application> openStackServices = clientService.getOpenStackServices();
+
+        for (String serviceName : serviceNames){
+            boolean found = false;
+            for (Application application : openStackServices){
+                if(serviceName.equals(application.getName())){
+                    found = true;
+                }
+            }
+            if(!found){
+                throw new BadRequestException("Service "+ serviceName+" does not exist.");
+            }
+
+        }
+        for (String serviceName : serviceNames){
+            Application application = clientService.getByName(serviceName);
+            application.setUseForDefaultRegion(true);
+            clientService.updateClient(application);
+        }
+
+        return Response.noContent();
     }
 
     void validateImpersonationRequest(ImpersonationRequest impersonationRequest) {
