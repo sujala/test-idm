@@ -9,6 +9,7 @@ import org.apache.http.client.params.ClientPNames;
 import org.apache.http.client.protocol.RequestAcceptEncoding;
 import org.apache.http.client.protocol.ResponseContentEncoding;
 import org.apache.http.entity.BasicHttpEntity;
+import org.apache.http.impl.client.DecompressingHttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHttpResponse;
 import org.slf4j.Logger;
@@ -150,9 +151,7 @@ public class CloudClient {
     }
 
     HttpClient getHttpClient() {
-        DefaultHttpClient client = new DefaultHttpClient();
-        client.addRequestInterceptor(new RequestAcceptEncoding());
-        client.addResponseInterceptor(new ResponseContentEncoding());
+        HttpClient client = new DecompressingHttpClient(new DefaultHttpClient());
 
         if (ignoreSSLCert) {
             client = WebClientDevWrapper.wrapClient(client);

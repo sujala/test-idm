@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.idm.exception.BadRequestException;
+import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
@@ -51,8 +52,9 @@ public class JSONReaderForApiKeyCredentialsTest {
 
     @Test
     public void readFrom_withValidCredentials_returnsCorrectCredentials() throws Exception {
+        MultivaluedMapImpl multivaluedMap = new MultivaluedMapImpl();
         InputStream inputStream = new BufferedInputStream(new ByteArrayInputStream(jsonBody.getBytes()));
-        ApiKeyCredentials apiKeyCredentials = jsonReaderForApiKey.readFrom(ApiKeyCredentials.class, null, null, null, null, inputStream);
+        ApiKeyCredentials apiKeyCredentials = jsonReaderForApiKey.readFrom(ApiKeyCredentials.class, null, null, null, multivaluedMap, inputStream);
         assertThat("returned credentials", apiKeyCredentials.getApiKey(), equalTo("aaaaa-bbbbb-ccccc-12345678"));
     }
 

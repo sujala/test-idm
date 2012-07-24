@@ -21,8 +21,6 @@ public interface AuthorizationService {
 
     boolean authorizeRackspaceClient(ScopeAccess scopeAccess);
 
-    boolean authorizeClient(ScopeAccess scopeAccess, String verb, UriInfo uriInfo);
-
     boolean authorizeCustomerUser(ScopeAccess scopeAccess, String customerId);
 
     boolean authorizeUser(ScopeAccess scopeAccess, String customerId, String username);

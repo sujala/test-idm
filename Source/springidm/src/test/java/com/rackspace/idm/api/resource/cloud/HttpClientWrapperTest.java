@@ -57,13 +57,6 @@ public class HttpClientWrapperTest {
     @Test
     public void delete_returnsExecuteRequest() throws Exception {
         doReturn("success").when(spy).executeRequest(any(HttpDelete.class));
-        assertThat("returns string",spy.put("body"),equalTo("success"));
-    }
-
-    @Test
-    public void getContentLength_returnsNegativeOne() throws Exception {
-        HttpEntity httpEntity = mock(HttpEntity.class);
-        HttpClientWrapper.GzipDecompressingEntity gzipDecompressingEntity = new HttpClientWrapper.GzipDecompressingEntity(httpEntity);
-        assertThat("return -1", gzipDecompressingEntity.getContentLength(), equalTo((long) -1));
+        assertThat("returns string",spy.delete(),equalTo("success"));
     }
 }
