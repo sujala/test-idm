@@ -739,10 +739,12 @@ public class DefaultCloud20Service implements Cloud20Service {
             String tenantName = authenticationRequest.getTenantName();
             List<TenantRole> roles = tenantService.getTenantRolesForScopeAccess(usa);
 
-            if(impsa != null)
+            if(impsa != null) {
                 convertedToken = tokenConverterCloudV20.toToken(impsa);
-            else
+            }
+            else {
                 convertedToken = tokenConverterCloudV20.toToken(usa);
+            }
 
 
             AuthenticateResponse auth;
