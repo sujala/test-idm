@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import com.rackspace.idm.api.serviceprofile.ServiceDescriptionTemplateUtil;
@@ -63,7 +64,15 @@ public class Cloud20VersionResourceTest {
     }
 
     @Test
-    public void defaultCloud20Service_callsDefaultService_listDefaultRegionServices() throws Exception {
+    public void setDefaultRegionServices_callsDefaultService_listDefaultRegionServices() throws Exception {
+        DefaultRegionServices defaultRegionServices = new DefaultRegionServices();
+        when(defaultCloud20Service.setDefaultRegionServices("token",defaultRegionServices)).thenReturn(Response.noContent());
+        cloud20VersionResource.setDefaultRegionServices("token", defaultRegionServices);
+        verify(defaultCloud20Service).setDefaultRegionServices("token", defaultRegionServices);
+    }
+
+    @Test
+    public void getDefaultRegionServices_callsDefaultService_listDefaultRegionServices() throws Exception {
         when(defaultCloud20Service.listDefaultRegionServices("token")).thenReturn(Response.ok());
         cloud20VersionResource.listDefaultRegionServices("token");
         verify(defaultCloud20Service).listDefaultRegionServices("token");

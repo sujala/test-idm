@@ -241,6 +241,99 @@ public class DefaultCloud20ServiceTest {
         doNothing().when(spy).checkXAUTHTOKEN(eq(authToken), anyBoolean(), eq(tenantId));
     }
 
+    @Test(expected = BadRequestException.class)
+    public void setDefaultRegionService_returns400WhenServiceIsNotFound() throws Exception {
+        ArrayList<Application> applications = new ArrayList<Application>();
+        Application application1 = new Application();
+        applications.add(application1);
+        Application application2 = new Application("cloudFiles", ClientSecret.newInstance("foo"), "cloudFiles", "rcn", ClientStatus.ACTIVE);
+        applications.add(application2);
+        Application application3 = new Application("cloudFilesCDN", ClientSecret.newInstance("foo"), "cloudFilesCDN", "rcn", ClientStatus.ACTIVE);
+        application3.setUseForDefaultRegion(true);
+        applications.add(application3);
+        when(clientService.getOpenStackServices()).thenReturn(applications);
+        DefaultRegionServices defaultRegionServices = new DefaultRegionServices();
+        defaultRegionServices.getServiceName().add("Foo");
+        defaultCloud20Service.setDefaultRegionServices("token", defaultRegionServices);
+    }
+
+    @Test
+    public void setDefaultRegionService_serviceFound_returns204() throws Exception {
+        ArrayList<Application> applications = new ArrayList<Application>();
+        Application application1 = new Application();
+        applications.add(application1);
+        Application application2 = new Application("cloudFiles", ClientSecret.newInstance("foo"), "cloudFiles", "rcn", ClientStatus.ACTIVE);
+        applications.add(application2);
+        Application application3 = new Application("cloudFilesCDN", ClientSecret.newInstance("foo"), "cloudFilesCDN", "rcn", ClientStatus.ACTIVE);
+        application3.setUseForDefaultRegion(true);
+        applications.add(application3);
+        when(clientService.getOpenStackServices()).thenReturn(applications);
+        when(clientService.getByName("cloudFiles")).thenReturn(application2);
+        when(clientService.getByName("cloudFilesCDN")).thenReturn(application3);
+        DefaultRegionServices defaultRegionServices = new DefaultRegionServices();
+        defaultRegionServices.getServiceName().add("cloudFiles");
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.setDefaultRegionServices("token", defaultRegionServices);
+        assertThat("code", responseBuilder.build().getStatus(), equalTo(204));
+    }
+
+    @Test
+    public void setDefaultRegionService_forEachService_callsClientService_getByName() throws Exception {
+        ArrayList<Application> applications = new ArrayList<Application>();
+        Application application1 = new Application();
+        applications.add(application1);
+        Application application2 = new Application("cloudFiles", ClientSecret.newInstance("foo"), "cloudFiles", "rcn", ClientStatus.ACTIVE);
+        applications.add(application2);
+        Application application3 = new Application("cloudFilesCDN", ClientSecret.newInstance("foo"), "cloudFilesCDN", "rcn", ClientStatus.ACTIVE);
+        application3.setUseForDefaultRegion(true);
+        applications.add(application3);
+        when(clientService.getOpenStackServices()).thenReturn(applications);
+        when(clientService.getByName("cloudFiles")).thenReturn(application2);
+        when(clientService.getByName("cloudFilesCDN")).thenReturn(application3);
+        DefaultRegionServices defaultRegionServices = new DefaultRegionServices();
+        defaultRegionServices.getServiceName().add("cloudFiles");
+        defaultRegionServices.getServiceName().add("cloudFilesCDN");
+        defaultCloud20Service.setDefaultRegionServices("token", defaultRegionServices);
+        verify(clientService,times(2)).getByName(anyString());
+    }
+
+    @Test
+    public void setDefaultRegionService_forEachService_callsClientService_updateClient() throws Exception {
+        ArrayList<Application> applications = new ArrayList<Application>();
+        Application application1 = new Application();
+        applications.add(application1);
+        Application application2 = new Application("cloudFiles", ClientSecret.newInstance("foo"), "cloudFiles", "rcn", ClientStatus.ACTIVE);
+        applications.add(application2);
+        Application application3 = new Application("cloudFilesCDN", ClientSecret.newInstance("foo"), "cloudFilesCDN", "rcn", ClientStatus.ACTIVE);
+        application3.setUseForDefaultRegion(true);
+        applications.add(application3);
+        when(clientService.getOpenStackServices()).thenReturn(applications);
+        when(clientService.getByName("cloudFiles")).thenReturn(application2);
+        when(clientService.getByName("cloudFilesCDN")).thenReturn(application3);
+        DefaultRegionServices defaultRegionServices = new DefaultRegionServices();
+        defaultRegionServices.getServiceName().add("cloudFiles");
+        defaultRegionServices.getServiceName().add("cloudFilesCDN");
+        defaultCloud20Service.setDefaultRegionServices("token", defaultRegionServices);
+        verify(clientService,times(2)).updateClient(any(Application.class));
+    }
+
+    @Test
+    public void setDefaultRegionServices_callsVerifyServiceAdminAccess() throws Exception {
+        spy.setDefaultRegionServices(authToken, new DefaultRegionServices());
+        verify(spy).verifyServiceAdminLevelAccess(authToken);
+    }
+
+    @Test
+    public void setDefaultRegionServices_returnsNotNullResponseBuilder() throws Exception {
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.setDefaultRegionServices(authToken, new DefaultRegionServices());
+        assertThat("response builder", responseBuilder, Matchers.<Response.ResponseBuilder>notNullValue());
+    }
+
+    @Test
+    public void setDefaultRegionServices_callsApplicationService_getOSServices() throws Exception {
+        defaultCloud20Service.setDefaultRegionServices(authToken, new DefaultRegionServices());
+        verify(clientService).getOpenStackServices();
+    }
+
     @Test
     public void listDefaultRegionServices_callsVerifyServiceAdminAccess() throws Exception {
         spy.listDefaultRegionServices(authToken);
