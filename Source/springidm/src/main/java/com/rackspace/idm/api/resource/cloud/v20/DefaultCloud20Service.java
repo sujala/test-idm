@@ -1711,6 +1711,33 @@ public class DefaultCloud20Service implements Cloud20Service {
         return Response.ok(defaultRegionServices);
     }
 
+    @Override
+    public ResponseBuilder setDefaultRegionServices(String authToken, DefaultRegionServices defaultRegionServices) {
+        verifyServiceAdminLevelAccess(authToken);
+        List<String> serviceNames = defaultRegionServices.getServiceName();
+        List<Application> openStackServices = clientService.getOpenStackServices();
+
+        for (String serviceName : serviceNames){
+            boolean found = false;
+            for (Application application : openStackServices){
+                if(serviceName.equals(application.getName())){
+                    found = true;
+                }
+            }
+            if(!found){
+                throw new BadRequestException("Service "+ serviceName+" does not exist.");
+            }
+
+        }
+        for (String serviceName : serviceNames){
+            Application application = clientService.getByName(serviceName);
+            application.setUseForDefaultRegion(true);
+            clientService.updateClient(application);
+        }
+
+        return Response.noContent();
+    }
+
     void validateImpersonationRequest(ImpersonationRequest impersonationRequest) {
         if (impersonationRequest.getUser() == null) {
             throw new BadRequestException("User cannot be null for impersonation request");
