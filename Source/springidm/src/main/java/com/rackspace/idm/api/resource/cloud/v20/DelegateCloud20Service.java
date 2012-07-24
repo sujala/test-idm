@@ -25,6 +25,7 @@ import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.api.json.JSONJAXBContext;
 import com.sun.jersey.api.json.JSONUnmarshaller;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.ws.commons.util.Base64;
@@ -406,12 +407,12 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder listDefaultRegionServices(String authToken) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        throw new NotImplementedException();  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
     public ResponseBuilder setDefaultRegionServices(String authToken, DefaultRegionServices defaultRegionServices) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        throw new NotImplementedException();  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
