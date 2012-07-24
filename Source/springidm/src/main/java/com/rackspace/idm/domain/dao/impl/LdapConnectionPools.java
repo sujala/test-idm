@@ -48,4 +48,12 @@ public class LdapConnectionPools {
             bindConnPool.close();
         }
     }
+
+    public void setAppConnPool(LDAPConnectionPool appConnPool) {
+        this.appConnPool = appConnPool;
+    }
+
+    public void setBindConnPool(LDAPConnectionPool bindConnPool) {
+        this.bindConnPool = bindConnPool;
+    }
 }
