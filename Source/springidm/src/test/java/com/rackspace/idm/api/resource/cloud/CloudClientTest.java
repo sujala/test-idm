@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud;
 
+import com.sun.jersey.core.spi.factory.ResponseBuilderImpl;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.apache.http.*;
 import org.apache.http.client.HttpClient;
@@ -9,6 +10,7 @@ import org.apache.http.message.BasicStatusLine;
 import org.apache.http.params.BasicHttpParams;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
@@ -437,6 +439,21 @@ public class CloudClientTest {
         },new Header() {
             @Override
             public String getName() {
+                return "host";
+            }
+
+            @Override
+            public String getValue() {
+                return "someHeaderValue";
+            }
+
+            @Override
+            public HeaderElement[] getElements() throws ParseException {
+                return new HeaderElement[0];  //To change body of implemented methods use File | Settings | File Templates.
+            }
+        },new Header() {
+            @Override
+            public String getName() {
                 return "transfer-encoding";
             }
 
@@ -461,7 +478,27 @@ public class CloudClientTest {
 
     @Test
     public void getHttpClient_returnsHttpClient() throws Exception {
-
         assertThat("HttpClient", cloudClient.getHttpClient(), instanceOf(HttpClient.class));
+    }
+
+    @Test
+    public void put_withNullBody_setsNullEntityInRequest() throws Exception {
+        HttpHeaders headers = mock(HttpHeaders.class);
+        when(headers.getRequestHeaders()).thenReturn(new MultivaluedMapImpl());
+        doReturn(new ResponseBuilderImpl()).when(spy).executeRequest(any(HttpRequestBase.class));
+        spy.put("someUrl", headers, null);
+        ArgumentCaptor<HttpPut> httpRequestArgumentCaptor = ArgumentCaptor.forClass(HttpPut.class);
+        verify(spy).executeRequest(httpRequestArgumentCaptor.capture());
+        assertThat("put entity", httpRequestArgumentCaptor.getValue().getEntity(), nullValue());
+    }
+
+    @Test
+    public void setHeaders_withEmptyHeaders_setsNoHeaders() throws Exception {
+        HashMap<String, String> headers = new HashMap<String, String>();
+        doReturn(new ResponseBuilderImpl()).when(spy).executeRequest(any(HttpRequestBase.class));
+        spy.post("url", headers, null);
+        ArgumentCaptor<HttpPost> httpRequestArgumentCaptor = ArgumentCaptor.forClass(HttpPost.class);
+        verify(spy).executeRequest(httpRequestArgumentCaptor.capture());
+        assertThat("request headers", httpRequestArgumentCaptor.getValue().getAllHeaders().length, equalTo(0));
     }
 }
