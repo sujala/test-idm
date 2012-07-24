@@ -1881,6 +1881,22 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
+    public void listUsers_withUserExistingInGA_callsDefaultService() throws Exception {
+        when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(new ScopeAccess());
+        delegateCloud20Service.listUsers(null, null, null, null);
+        verify(defaultCloud20Service).listUsers(null, null, null, null);
+    }
+
+    @Test
+    public void listUsers_withUserNotExistingInGA_withRoutingDisabled_callsDefaultService() throws Exception {
+        when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(new ScopeAccess());
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
+        delegateCloud20Service.listUsers(null, null, null, null);
+        verify(defaultCloud20Service).listUsers(null, null, null, null);
+    }
+
+    @Test
     public void updateUserApiKeyCredentials_RoutingFalse_UserExistsFalse_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(userService.userExistsById(userId)).thenReturn(false);

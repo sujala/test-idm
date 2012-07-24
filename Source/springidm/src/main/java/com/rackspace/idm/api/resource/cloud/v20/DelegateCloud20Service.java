@@ -242,7 +242,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         JAXBElement<UserForAuthenticateResponse> impersonatorJAXBElement = raxAuthObjectFactory.createImpersonator(userForAuthenticateResponse);
         validateResponse.getAny().add(impersonatorJAXBElement);
 
-        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createAccess(validateResponse));
+        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createAccess(validateResponse).getValue());
     }
 
 
@@ -293,8 +293,11 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder listUsers(HttpHeaders httpHeaders, String authToken, Integer marker, Integer limit) throws IOException {
+        ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByAccessToken(authToken);
+        if(scopeAccess != null)
+            return defaultCloud20Service.listUsers(httpHeaders, authToken, marker, limit);
+
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
-            // TODO: Implement routing to DefaultCloud20Service
             String request = getCloudAuthV20Url() + "users";
             HashMap<String, Object> params = new HashMap<String, Object>();
             params.put("marker", marker);

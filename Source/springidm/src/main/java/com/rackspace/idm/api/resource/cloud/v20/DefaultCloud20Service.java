@@ -612,7 +612,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 user.setApiKey(userCredentials.getApiKey());
                 userService.updateUser(user, false);
             }
-            return Response.ok(credentials).status(Status.OK);
+            return Response.ok(credentials.getValue()).status(Status.OK);
         } catch (Exception ex) {
             return exceptionResponse(ex);
         }
@@ -739,10 +739,12 @@ public class DefaultCloud20Service implements Cloud20Service {
             String tenantName = authenticationRequest.getTenantName();
             List<TenantRole> roles = tenantService.getTenantRolesForScopeAccess(usa);
 
-            if(impsa != null)
+            if(impsa != null) {
                 convertedToken = tokenConverterCloudV20.toToken(impsa);
-            else
+            }
+            else {
                 convertedToken = tokenConverterCloudV20.toToken(usa);
+            }
 
 
             AuthenticateResponse auth;
@@ -1121,7 +1123,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             secrets.setAnswer(user.getSecretAnswer());
             secrets.setQuestion(user.getSecretQuestion());
-            secrets.setUsername(user.getUsername());
             return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtKsqaV1Factory().createSecretQA(secrets).getValue());
 
         } catch (Exception ex) {
@@ -2198,7 +2199,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                     roles = getRolesForScopeAccess(sa);
                     validateBelongsTo(belongsTo, roles);
                     access.setUser(userConverterCloudV20.toUserForAuthenticateResponse(user, roles));
-                } else if (sa instanceof ImpersonatedScopeAccess) {
+                } else {
                     ImpersonatedScopeAccess isa = (ImpersonatedScopeAccess) sa;
                     impersonator = userService.getUserByScopeAccess(isa);
                     user = userService.getUser(isa.getImpersonatingUsername());
@@ -2393,12 +2394,14 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     void checkForMultipleIdentityRoles(User user, ClientRole roleToAdd) {
         user.setRoles(tenantService.getGlobalRolesForUser(user));
-        if(user.getRoles() == null || roleToAdd == null || !StringUtils.startsWithIgnoreCase(roleToAdd.getName(), "identity:"))
+        if(user.getRoles() == null || roleToAdd == null || !StringUtils.startsWithIgnoreCase(roleToAdd.getName(), "identity:")) {
             return;
+        }
 
         for(TenantRole userRole : user.getRoles()){
-            if(StringUtils.startsWithIgnoreCase(userRole.getName(), "identity:"))
+            if(StringUtils.startsWithIgnoreCase(userRole.getName(), "identity:")) {
                 throw new BadRequestException("You are not allowed to add more than one Identity role.");
+            }
         }
     }
 
@@ -2766,5 +2769,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     public void setDelegateCloud20Service(DelegateCloud20Service delegateCloud20Service) {
         this.delegateCloud20Service = delegateCloud20Service;
+    }
+
+    public void setCloudGroupService(GroupService cloudGroupService) {
+        this.cloudGroupService = cloudGroupService;
     }
 }

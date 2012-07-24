@@ -11,10 +11,12 @@ import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
+import com.rackspacecloud.docs.auth.api.v1.*;
 import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.Control;
 import com.unboundid.ldap.sdk.SearchResultEntry;
@@ -30,7 +32,11 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.ext.os_ksec2.v1.Ec2CredentialsType;
 import org.openstack.docs.identity.api.v2.*;
+import org.openstack.docs.identity.api.v2.BadRequestFault;
+import org.openstack.docs.identity.api.v2.ItemNotFoundFault;
 import org.openstack.docs.identity.api.v2.ObjectFactory;
+import org.openstack.docs.identity.api.v2.Token;
+import org.openstack.docs.identity.api.v2.UserDisabledFault;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import javax.ws.rs.core.*;
@@ -1646,32 +1652,27 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void checkForMultipleIdentityRoles_doesNothing_withNullRoles() throws Exception {
-        spy.checkForMultipleIdentityRoles(new User(), null);
+    public void checkForMultipleIdentityRoles_userGetRolesIsNull_returns() throws Exception {
+        ClientRole clientRole = new ClientRole();
+        clientRole.setName("identity:admin");
+        when(tenantService.getGlobalRolesForUser(user)).thenReturn(null);
+        spy.checkForMultipleIdentityRoles(user, clientRole);
         assertTrue("method threw no errors", true);
     }
 
     @Test
-    public void checkForMultipleIdentityRoles_doesNothing_withNonIdentityRole() throws Exception {
-        User user1 = new User();
-        user1.setRoles(new ArrayList<TenantRole>());
-        ClientRole roleToAdd = new ClientRole();
-        roleToAdd.setName("notIdentity:role");
-        spy.checkForMultipleIdentityRoles(user1, roleToAdd);
+    public void checkForMultipleIdentityRoles_roleToAddIsNull_returns() throws Exception {
+        when(tenantService.getGlobalRolesForUser(user)).thenReturn(new ArrayList<TenantRole>());
+        spy.checkForMultipleIdentityRoles(user, null);
         assertTrue("method threw no errors", true);
     }
 
     @Test
-    public void checkForMultipleIdentityRoles_doesNothing_withAddingIdentityRoleToUserWithoutIdentityRole() throws Exception {
-        User user1 = new User();
-        ArrayList<TenantRole> roles = new ArrayList<TenantRole>();
-        TenantRole tenantRole1 = new TenantRole();
-        tenantRole.setName("notIdentity:role");
-        roles.add(tenantRole1);
-        user1.setRoles(roles);
-        ClientRole roleToAdd = new ClientRole();
-        roleToAdd.setName("Identity:role");
-        spy.checkForMultipleIdentityRoles(user1, roleToAdd);
+    public void checkForMultipleIdentityRoles_roleToAddNameDoesNotStartWithIdentity_returns() throws Exception {
+        ClientRole clientRole = new ClientRole();
+        clientRole.setName("admin");
+        when(tenantService.getGlobalRolesForUser(user)).thenReturn(new ArrayList<TenantRole>());
+        spy.checkForMultipleIdentityRoles(user, clientRole);
         assertTrue("method threw no errors", true);
     }
 
@@ -2607,20 +2608,20 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void getSecretQA_getsUsername() throws Exception {
+    public void getSecretQA_doesNotSetUsername() throws Exception {
         User user = new User();
         user.setSecretAnswer("secret");
         user.setSecretQuestion("question");
         user.setUsername("username");
+        SecretQA secretQA2 = new SecretQA();
         doNothing().when(spy).verifyServiceAdminLevelAccess("authToken");
         doReturn(user).when(spy).checkAndGetUser("userId");
         com.rackspace.docs.identity.api.ext.rax_ksqa.v1.ObjectFactory objectFactory = mock(com.rackspace.docs.identity.api.ext.rax_ksqa.v1.ObjectFactory.class);
         when(jaxbObjectFactories.getRackspaceIdentityExtKsqaV1Factory()).thenReturn(objectFactory);
-        JAXBElement<SecretQA> jaxbElement = new JAXBElement<SecretQA>(new QName(""), SecretQA.class, secretQA);
-        when(objectFactory.createSecretQA(any(SecretQA.class))).thenReturn(jaxbElement);
-        spy.getSecretQA(null, "authToken", "userId");
-        SecretQA result = jaxbElement.getValue();
-        assertThat("username", result.getUsername(), equalTo("username"));
+        when(objectFactory.createSecretQA()).thenReturn(secretQA2);
+        when(objectFactory.createSecretQA(secretQA2)).thenReturn(new JAXBElement<SecretQA>(QName.valueOf("foo"),SecretQA.class,secretQA2));
+        Response result = spy.getSecretQA(null, "authToken", "userId").build();
+        assertThat("username", ( (SecretQA) result.getEntity()).getUsername(), equalTo(null));
     }
 
     @Test
@@ -3768,6 +3769,21 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void checkXAUTHTOKEN_authorizationServiceReturnsTrue_doesNotThrowException() throws Exception {
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
+        defaultCloud20Service.checkXAUTHTOKEN(authToken, false, "tenantId");
+        assertTrue("no exceptions", true);
+    }
+
+    @Test
+    public void checkXAUTHTOKEN_hasUserAdminAccessAndTenantIdIsNull_doesNotThrowException() throws Exception {
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
+        defaultCloud20Service.checkXAUTHTOKEN(authToken, false, null);
+        assertTrue("no exceptions", true);
+    }
+
+    @Test
     public void verifyTokenHasTenantAccessForAuthenticate_callsVerifyTokenHasTenant() throws Exception {
         List<Tenant> adminTenants = new ArrayList<Tenant>();
         adminTenants.add(tenant);
@@ -3858,6 +3874,24 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void verifyTokenHasTenantAccess_isIdentityAdmin_returns() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(false);
+        spy.verifyTokenHasTenantAccess(authToken, "tenantId");
+    }
+
+    @Test
+    public void verifyTokenHasTenantAccess_isServiceAdmin_returns() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(true);
+        spy.verifyTokenHasTenantAccess(authToken, "tenantId");
+    }
+
+    @Test
     public void verifyTokenHasTenantAccess_callsTenantService() throws Exception {
         ArrayList<Tenant> list = new ArrayList<Tenant>();
         Tenant tenant1 = new Tenant();
@@ -3893,10 +3927,11 @@ public class DefaultCloud20ServiceTest {
         defaultCloud20Service.validateKsGroup(groupKs);
     }
 
-    @Test(expected = NullPointerException.class)
-    public void validateKsGroup_groupNameIsNull_throwsNullPointException() {
-        groupKs.setName(null);
-        defaultCloud20Service.validateKsGroup(groupKs);
+    @Test(expected = BadRequestException.class)
+    public void validateKsGroup_groupNameIsNull_throwsBadRequestException() {
+        com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group = mock(com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group.class);
+        when(group.getName()).thenReturn("1").thenReturn(null);
+        defaultCloud20Service.validateKsGroup(group);
     }
 
     @Test(expected = BadRequestException.class)
@@ -4094,7 +4129,7 @@ public class DefaultCloud20ServiceTest {
         users.setUsers(userList);
         when(userGroupService.getGroupById(1)).thenReturn(group);
         when(userGroupService.getAllEnabledUsers(any(FilterParam[].class), anyString(), anyInt())).thenReturn(users);
-        Response.ResponseBuilder responseBuilder = spy.getUsersForGroup(null, authToken, "1", null, null);
+        Response.ResponseBuilder responseBuilder = spy.getUsersForGroup(null, authToken, "1", "1", 1);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(404));
     }
 
@@ -4129,14 +4164,15 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void listUsers_callerIsUserAdmin_callsGetAllUsers() throws Exception {
+    public void listUsers_callerIsIdentityAdmin_callsGetAllUsers() throws Exception {
         UserScopeAccess scopeAccess = new UserScopeAccess();
         doNothing().when(spy).verifyUserAdminLevelAccess(authToken);
         User user1 = new User();
         user1.setDomainId("testDomain");
         doReturn(user1).when(spy).getUser(any(ScopeAccess.class));
         when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(scopeAccess);
-        when(authorizationService.authorizeCloudUserAdmin(scopeAccess)).thenReturn(true);
+        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(false);
         spy.listUsers(null, authToken, null, null);
         verify(userService).getAllUsers(any(FilterParam[].class), any(Integer.class), any(Integer.class));
     }
@@ -4147,10 +4183,41 @@ public class DefaultCloud20ServiceTest {
         doNothing().when(spy).verifyUserAdminLevelAccess(authToken);
         doReturn(new User()).when(spy).getUser(any(ScopeAccess.class));
         when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(scopeAccess);
-        when(authorizationService.authorizeCloudUserAdmin(scopeAccess)).thenReturn(false);
+        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(false);
         when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(true);
         spy.listUsers(null, authToken, null, null);
         verify(userService).getAllUsers(null, null, null);
+    }
+
+    @Test
+    public void listUsers_callerIsNotServiceOrIdentityAdmin_domainIdIsNull_responseOk_returns200() throws Exception {
+        User userTest = new User();
+        userTest.setDomainId(null);
+        ScopeAccess scopeAccess = new ScopeAccess();
+        when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(scopeAccess);
+        doReturn(userTest).when(spy).getUser(scopeAccess);
+        doNothing().when(spy).verifyUserAdminLevelAccess(authToken);
+        when(authorizationService.authorizeCloudUser(scopeAccess)).thenReturn(false);
+        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(false);
+        Response.ResponseBuilder responseBuilder = spy.listUsers(httpHeaders, authToken, 1, 1);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void listUsers_callerIsNotServiceOrIdentityAdmin_domainIdNotNull_responseOk_returns200() throws Exception {
+        User userTest = new User();
+        userTest.setDomainId("domainId");
+        ScopeAccess scopeAccess = new ScopeAccess();
+        when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(scopeAccess);
+        doReturn(userTest).when(spy).getUser(scopeAccess);
+        doNothing().when(spy).verifyUserAdminLevelAccess(authToken);
+        when(authorizationService.authorizeCloudUser(scopeAccess)).thenReturn(false);
+        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(false);
+        when(userService.getAllUsers(any(FilterParam[].class), any(Integer.class), any(Integer.class))).thenReturn(new Users());
+        Response.ResponseBuilder responseBuilder = spy.listUsers(httpHeaders, authToken, 1, 1);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
     @Test
@@ -4711,10 +4778,91 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void authenticate_scopeAccessInstanceOfImpersonatedAndTokenExpired_returns401() throws Exception {
+        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
+        tokenForAuthenticationRequest.setId("tokenId");
+        PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
+        passwordCredentialsRequiredUsername.setPassword("password");
+        passwordCredentialsRequiredUsername.setUsername("username");
+        JAXBElement<PasswordCredentialsRequiredUsername> creds = new JAXBElement<PasswordCredentialsRequiredUsername>(new QName("http://docs.openstack.org/identity/api/v2.0", "pw"), PasswordCredentialsRequiredUsername.class, passwordCredentialsRequiredUsername);
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        authenticationRequest.setTenantName("tenantName");
+        authenticationRequest.setToken(tokenForAuthenticationRequest);
+        authenticationRequest.setCredential(creds);
+        ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
+        impersonatedScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
+        when(scopeAccessService.getScopeAccessByAccessToken("tokenId")).thenReturn(impersonatedScopeAccess);
+        Response.ResponseBuilder responseBuilder = spy.authenticate(httpHeaders, authenticationRequest);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(401));
+    }
+
+    @Test
+    public void authenticate_scopeAccessWasImpersonatedScopeAccessThenCannotFindScopeAccessWithImpersonatingToken_returns401() throws Exception {
+        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
+        tokenForAuthenticationRequest.setId("tokenId");
+        PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
+        passwordCredentialsRequiredUsername.setPassword("password");
+        passwordCredentialsRequiredUsername.setUsername("username");
+        JAXBElement<PasswordCredentialsRequiredUsername> creds = new JAXBElement<PasswordCredentialsRequiredUsername>(new QName("http://docs.openstack.org/identity/api/v2.0", "pw"), PasswordCredentialsRequiredUsername.class, passwordCredentialsRequiredUsername);
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        authenticationRequest.setTenantName("tenantName");
+        authenticationRequest.setToken(tokenForAuthenticationRequest);
+        authenticationRequest.setCredential(creds);
+        ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
+        impersonatedScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
+        impersonatedScopeAccess.setAccessTokenString("notExpired");
+        impersonatedScopeAccess.setImpersonatingToken("impersonatingToken");
+        when(scopeAccessService.getScopeAccessByAccessToken("tokenId")).thenReturn(impersonatedScopeAccess);
+        when(scopeAccessService.getScopeAccessByAccessToken("impersonatingToken")).thenReturn(null);
+        Response.ResponseBuilder responseBuilder = spy.authenticate(httpHeaders, authenticationRequest);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(401));
+    }
+
+    @Test
+    public void authenticate_scopeAccessWasImpersonatedScopeAccessResponseOk_returns200() throws Exception {
+        ArrayList<OpenstackEndpoint> openstackEndpoints = new ArrayList<OpenstackEndpoint>();
+        ArrayList<TenantRole> tenantRoles = new ArrayList<TenantRole>();
+        User userTest = new User();
+        UserScopeAccess userScopeAccess = new UserScopeAccess();
+        userScopeAccess.setUserRsId("rsId");
+        userScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
+        userScopeAccess.setAccessTokenString("notExpired");
+        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
+        tokenForAuthenticationRequest.setId("tokenId");
+        PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
+        passwordCredentialsRequiredUsername.setPassword("password");
+        passwordCredentialsRequiredUsername.setUsername("username");
+        JAXBElement<PasswordCredentialsRequiredUsername> creds = new JAXBElement<PasswordCredentialsRequiredUsername>(new QName("http://docs.openstack.org/identity/api/v2.0", "pw"), PasswordCredentialsRequiredUsername.class, passwordCredentialsRequiredUsername);
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        authenticationRequest.setTenantName("tenantName");
+        authenticationRequest.setToken(tokenForAuthenticationRequest);
+        authenticationRequest.setCredential(creds);
+        ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
+        impersonatedScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
+        impersonatedScopeAccess.setAccessTokenString("notExpired");
+        impersonatedScopeAccess.setImpersonatingToken("impersonatingToken");
+        when(scopeAccessService.getScopeAccessByAccessToken("tokenId")).thenReturn(impersonatedScopeAccess);
+        when(scopeAccessService.getScopeAccessByAccessToken("impersonatingToken")).thenReturn(userScopeAccess);
+        when(scopeAccessService.updateExpiredUserScopeAccess(userScopeAccess)).thenReturn(userScopeAccess);
+        doReturn(userTest).when(spy).getUserByIdForAuthentication("rsId");
+        when(tenantService.hasTenantAccess(userScopeAccess, "tenantName")).thenReturn(true);
+        when(scopeAccessService.getOpenstackEndpointsForScopeAccess(userScopeAccess)).thenReturn(openstackEndpoints);
+        when(authorizationService.authorizeCloudIdentityAdmin(userScopeAccess)).thenReturn(true);
+        when(tenantService.getTenantRolesForScopeAccess(userScopeAccess)).thenReturn(tenantRoles);
+        when(tenantService.getTenantByName("tenantName")).thenReturn(new Tenant());
+        when(tokenConverterCloudV20.toToken(impersonatedScopeAccess)).thenReturn(new Token());
+        when(authConverterCloudV20.toAuthenticationResponse(userTest, userScopeAccess, tenantRoles, openstackEndpoints)).thenReturn(new AuthenticateResponse());
+        Response.ResponseBuilder responseBuilder = spy.authenticate(httpHeaders, authenticationRequest);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
     public void authenticate_tenantNameNotBlank_tenantNameEqualsEndpointTenantName_addsEndpoint() throws Exception {
         ArgumentCaptor<List> argumentCaptor = ArgumentCaptor.forClass(List.class);
+        Role role = new Role();
         RoleList roleList = new RoleList();
         List<Role> listOfRoles = roleList.getRole();
+        listOfRoles.add(role);
         UserForAuthenticateResponse userForAuthenticateResponse = new UserForAuthenticateResponse();
         userForAuthenticateResponse.setRoles(roleList);
         AuthenticateResponse authenticateResponse = new AuthenticateResponse();
@@ -4805,5 +4953,302 @@ public class DefaultCloud20ServiceTest {
         when(authConverterCloudV20.toAuthenticationResponse(eq(userTest), eq(userScopeAccess), eq(roles), any(List.class))).thenReturn(authenticateResponse);
         Response.ResponseBuilder responseBuilder = spy.authenticate(httpHeaders, authenticationRequest);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void listRoles_verifyServiceAdmin_throwsForbiddenException_returns403() throws Exception {
+        doThrow(new ForbiddenException()).when(spy).verifyServiceAdminLevelAccess(authToken);
+        Response.ResponseBuilder responseBuilder = spy.listRoles(httpHeaders, authToken, null, null, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(403));
+    }
+
+    @Test
+    public void listTenants_scopeAccessServiceCallsGetScopeAccessByAccessTokenReturnsNull_responseIsOk_returns200() throws Exception {
+        doNothing().when(spy).verifyUserLevelAccess(authToken);
+        when(scopeAccessService.getAccessTokenByAuthHeader(authToken)).thenReturn(new ScopeAccess());
+        when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(null);
+        Response.ResponseBuilder responseBuilder = spy.listTenants(httpHeaders, authToken, "marker", 1);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void listUserGlobalRoles_notIdentityAdminAndIsServiceAdmin_responseOk_returns200() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doNothing().when(spy).verifyUserLevelAccess(authToken);
+        when(userService.getUserById("userId")).thenReturn(user);
+        when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(scopeAccess);
+        doReturn(new User()).when(spy).getUser(scopeAccess);
+        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(true);
+        when(tenantService.getGlobalRolesForUser(user)).thenReturn(new ArrayList<TenantRole>());
+        Response.ResponseBuilder responseBuilder = spy.listUserGlobalRoles(httpHeaders, authToken, "userId");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void listUserGlobalRoles_isIdentityAdminAndNotServiceAdmin_responseOk_returns200() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doNothing().when(spy).verifyUserLevelAccess(authToken);
+        when(userService.getUserById("userId")).thenReturn(user);
+        when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(scopeAccess);
+        doReturn(new User()).when(spy).getUser(scopeAccess);
+        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(false);
+        when(tenantService.getGlobalRolesForUser(user)).thenReturn(new ArrayList<TenantRole>());
+        Response.ResponseBuilder responseBuilder = spy.listUserGlobalRoles(httpHeaders, authToken, "userId");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void listGroups_verifyServiceAdmin_throwsForbiddenException_returns403() throws Exception {
+        doThrow(new ForbiddenException()).when(spy).verifyServiceAdminLevelAccess(authToken);
+        Response.ResponseBuilder responseBuilder = spy.listGroups(httpHeaders, authToken, null, null, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(403));
+    }
+
+    @Test
+    public void getGroup_verifyServiceAdmin_throwsForbiddenException_returns403() throws Exception {
+        doThrow(new ForbiddenException()).when(spy).verifyServiceAdminLevelAccess(authToken);
+        Response.ResponseBuilder responseBuilder = spy.getGroup(httpHeaders, authToken, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(403));
+    }
+
+    @Test (expected = BadRequestException.class)
+    public void impersonate_userIsEnabled_userScopeAccessTokenNotExpiredAndImpersonatingUsernameIsBlank_throwsBadRequestException() throws Exception {
+        user.setEnabled(true);
+        user.setUniqueId("uniqueId");
+        UserScopeAccess userScopeAccess = new UserScopeAccess();
+        userScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
+        userScopeAccess.setAccessTokenString("notExpired");
+        org.openstack.docs.identity.api.v2.User userTest = new org.openstack.docs.identity.api.v2.User();
+        userTest.setUsername("");
+        ImpersonationRequest impersonationRequest = new ImpersonationRequest();
+        impersonationRequest.setUser(userTest);
+        doNothing().when(spy).verifyRackerOrServiceAdminAccess(authToken);
+        doNothing().when(spy).validateImpersonationRequest(impersonationRequest);
+        when(userService.getUser("")).thenReturn(user);
+        doReturn(true).when(spy).isValidImpersonatee(user);
+        when(config.getString("cloudAuth.clientId")).thenReturn("clientId");
+        when(scopeAccessService.getDirectScopeAccessForParentByClientId("uniqueId", "clientId")).thenReturn(userScopeAccess);
+        spy.impersonate(httpHeaders, authToken, impersonationRequest);
+    }
+
+    @Test (expected = BadRequestException.class)
+    public void impersonate_userIsEnabled_userScopeAccessTokenExpiredAndImpersonatingTokenIsBlank_throwsBadRequestException() throws Exception {
+        user.setEnabled(true);
+        user.setUniqueId("uniqueId");
+        UserScopeAccess userScopeAccess = new UserScopeAccess();
+        userScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
+        userScopeAccess.setAccessTokenString("");
+        org.openstack.docs.identity.api.v2.User userTest = new org.openstack.docs.identity.api.v2.User();
+        userTest.setUsername("");
+        ImpersonationRequest impersonationRequest = new ImpersonationRequest();
+        impersonationRequest.setUser(userTest);
+        doNothing().when(spy).verifyRackerOrServiceAdminAccess(authToken);
+        doNothing().when(spy).validateImpersonationRequest(impersonationRequest);
+        when(userService.getUser("")).thenReturn(user);
+        doReturn(true).when(spy).isValidImpersonatee(user);
+        when(config.getString("cloudAuth.clientId")).thenReturn("clientId");
+        when(scopeAccessService.getDirectScopeAccessForParentByClientId("uniqueId", "clientId")).thenReturn(userScopeAccess);
+        spy.impersonate(httpHeaders, authToken, impersonationRequest);
+    }
+
+    @Test
+    public void listDefaultRegionServices_openStackServicesIsNull_responseOk_returns200() throws Exception {
+        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        when(clientService.getOpenStackServices()).thenReturn(null);
+        Response.ResponseBuilder responseBuilder = spy.listDefaultRegionServices(authToken);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void listDefaultRegionServices_userForDefaultRegionIsNull_responseOk_returns200() throws Exception {
+        Application application = new Application();
+        application.setUseForDefaultRegion(null);
+        List<Application> openStackServices = new ArrayList<Application>();
+        openStackServices.add(application);
+        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        when(clientService.getOpenStackServices()).thenReturn(openStackServices);
+        Response.ResponseBuilder responseBuilder = spy.listDefaultRegionServices(authToken);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void listDefaultRegionServices_userForDefaultRegionNotNullAndIsFalse_responseOk_returns200() throws Exception {
+        Application application = new Application();
+        application.setUseForDefaultRegion(false);
+        List<Application> openStackServices = new ArrayList<Application>();
+        openStackServices.add(application);
+        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        when(clientService.getOpenStackServices()).thenReturn(openStackServices);
+        Response.ResponseBuilder responseBuilder = spy.listDefaultRegionServices(authToken);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void validateImpersonationRequest_validRequest_doesNotThrowAnyExceptions() throws Exception {
+        org.openstack.docs.identity.api.v2.User userTest = new org.openstack.docs.identity.api.v2.User();
+        userTest.setUsername("username");
+        ImpersonationRequest impersonationRequest = new ImpersonationRequest();
+        impersonationRequest.setUser(userTest);
+        impersonationRequest.setExpireInSeconds(2);
+        spy.validateImpersonationRequest(impersonationRequest);
+    }
+
+    @Test
+    public void listUserGroups_groupsSizeNotZero_responseOk_returns200() throws Exception {
+        GroupService cloudGroupService = mock(GroupService.class);
+        spy.setCloudGroupService(cloudGroupService);
+        Group group = new Group();
+        List<Group> groups = new ArrayList<Group>();
+        groups.add(group);
+        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        when(cloudGroupService.getGroupsForUser("userId")).thenReturn(groups);
+        when(cloudKsGroupBuilder.build(group)).thenReturn(new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group());
+        Response.ResponseBuilder responseBuilder = spy.listUserGroups(httpHeaders, authToken, "userId");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test (expected = BadRequestException.class)
+    public void validateKsGroup_groupNameIsEmpty() throws Exception {
+        com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group();
+        group.setName("");
+        spy.validateKsGroup(group);
+    }
+
+    @Test
+    public void validateToken_scopeAccessInstanceOfRackerScopeAccess_rackerRolesIsNull_responseOk_returns200() throws Exception {
+        UserForAuthenticateResponse userForAuthenticateResponse = new UserForAuthenticateResponse();
+        List<TenantRole> roleList = new ArrayList<TenantRole>();
+        Token token = new Token();
+        Racker racker = new Racker();
+        racker.setRackerId("rackerId");
+        RackerScopeAccess rackerScopeAccess = new RackerScopeAccess();
+        rackerScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
+        rackerScopeAccess.setAccessTokenString("notExpired");
+        rackerScopeAccess.setRackerId("rackerId");
+        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(rackerScopeAccess).when(spy).checkAndGetToken("tokenId");
+        when(tokenConverterCloudV20.toToken(rackerScopeAccess)).thenReturn(token);
+        when(userService.getRackerByRackerId("rackerId")).thenReturn(racker);
+        when(tenantService.getTenantRolesForScopeAccess(rackerScopeAccess)).thenReturn(roleList);
+        when(userService.getRackerRoles("rackerId")).thenReturn(null);
+        when(userConverterCloudV20.toUserForAuthenticateResponse(racker, roleList)).thenReturn(userForAuthenticateResponse);
+        Response.ResponseBuilder responseBuilder = spy.validateToken(httpHeaders, authToken, "tokenId", "belongsTo");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void validateToken_scopeAccessNotInstanceOfUserRackerOrImpersonatedScopeAccess_responseOk_returns200() throws Exception {
+        Token token = new Token();
+        ClientScopeAccess clientScopeAccess = new ClientScopeAccess();
+        clientScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
+        clientScopeAccess.setAccessTokenString("notExpired");
+        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(clientScopeAccess).when(spy).checkAndGetToken("tokenId");
+        when(tokenConverterCloudV20.toToken(clientScopeAccess)).thenReturn(token);
+        Response.ResponseBuilder responseBuilder = spy.validateToken(httpHeaders, authToken, "tokenId", "belongsTo");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void getRolesForScopeAccess_scopeAccessNotInstanceOfUserOrImpersonatedScopeAccess_returnsNull() throws Exception {
+        RackerScopeAccess rackerScopeAccess = new RackerScopeAccess();
+        List<TenantRole> result = spy.getRolesForScopeAccess(rackerScopeAccess);
+        assertThat("list", result, equalTo(null));
+    }
+
+    @Test
+    public void checkForMultipleIdentityRoles_userRoleGetNameNotStartWithIdentity_throwsNoException() throws Exception {
+        ClientRole clientRole = new ClientRole();
+        clientRole.setName("identity:admin");
+        TenantRole tenantRole = new TenantRole();
+        tenantRole.setName("tenantName");
+        List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
+        tenantRoles.add(tenantRole);
+        when(tenantService.getGlobalRolesForUser(user)).thenReturn(tenantRoles);
+        spy.checkForMultipleIdentityRoles(user, clientRole);
+        assertTrue("no errors", true);
+    }
+
+    @Test (expected = NotAuthorizedException.class)
+    public void getScopeAccessForValidToken_scopeAccessIsNull_throwsNotAuthorizedException() throws Exception {
+        when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(null);
+        spy.getScopeAccessForValidToken(authToken);
+    }
+
+    @Test (expected = NotAuthorizedException.class)
+    public void getScopeAccessForValidToken_scopeAccessIsExpired_throwsNotAuthorizedException() throws Exception {
+        RackerScopeAccess rackerScopeAccess = new RackerScopeAccess();
+        rackerScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
+        when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(rackerScopeAccess);
+        spy.getScopeAccessForValidToken(authToken);
+    }
+
+    @Test
+    public void verifyUserLevelAccess_scopeAccessIsServiceAdmin_doesNotThrowException() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(true);
+        when(authorizationService.authorizeCloudUserAdmin(scopeAccess)).thenReturn(false);
+        when(authorizationService.authorizeCloudUser(scopeAccess)).thenReturn(false);
+        spy.verifyUserLevelAccess(authToken);
+        assertTrue("no exceptions", true);
+    }
+
+    @Test
+    public void verifyUserLevelAccess_scopeAccessIsUserAdmin_doesNotThrowException() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(false);
+        when(authorizationService.authorizeCloudUserAdmin(scopeAccess)).thenReturn(true);
+        when(authorizationService.authorizeCloudUser(scopeAccess)).thenReturn(false);
+        spy.verifyUserLevelAccess(authToken);
+        assertTrue("no exceptions", true);
+    }
+
+    @Test
+    public void verifyUserLevelAccess_scopeAccessIsUser_doesNotThrowException() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(false);
+        when(authorizationService.authorizeCloudUserAdmin(scopeAccess)).thenReturn(false);
+        when(authorizationService.authorizeCloudUser(scopeAccess)).thenReturn(true);
+        spy.verifyUserLevelAccess(authToken);
+        assertTrue("no exceptions", true);
+    }
+
+    @Test
+    public void verifyUserAdminLevelAccess_isUserAdmin_doesNotThrowException() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(false);
+        when(authorizationService.authorizeCloudUserAdmin(scopeAccess)).thenReturn(true);
+        spy.verifyUserAdminLevelAccess(authToken);
+    }
+
+    @Test (expected =  ForbiddenException.class)
+    public void verifyTokenHasTenant_tenantIdNotEquals_throwsForbiddenExcpetion() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        Tenant tenant = new Tenant();
+        tenant.setTenantId("notMatch");
+        List<Tenant> tenantList = new ArrayList<Tenant>();
+        tenantList.add(tenant);
+        when(tenantService.getTenantsForScopeAccessByTenantRoles(scopeAccess)).thenReturn(tenantList);
+        spy.verifyTokenHasTenant("tenantId", scopeAccess);
+    }
+
+    @Test
+    public void getJSONCredentials_credentialIsInstanceOfApiKeyCredentials_returnsJAXBElementOfApiKeyCredentials() throws Exception {
+        String jsonBody = "{\"RAX-KSKEY:apiKeyCredentials\":{\"username\":\"test_user\",\"apiKey\":\"aaaaa-bbbbb-ccccc-12345678\"}}";
+        when(jaxbObjectFactories.getRackspaceIdentityExtKskeyV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory());
+        JAXBElement<? extends CredentialType> jaxbElement = spy.getJSONCredentials(jsonBody);
+        ApiKeyCredentials result = (ApiKeyCredentials) jaxbElement.getValue();
+        assertThat("apikey", result.getApiKey(), equalTo("aaaaa-bbbbb-ccccc-12345678"));
+        assertThat("username", result.getUsername(), equalTo("test_user"));
     }
 }

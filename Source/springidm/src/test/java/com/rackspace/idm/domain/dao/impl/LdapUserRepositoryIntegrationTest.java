@@ -537,9 +537,7 @@ public class LdapUserRepositoryIntegrationTest extends InMemoryLdapIntegrationTe
                 "delete_my_middlename", "delete_my_lastname"), new UserLocale(
                 Locale.KOREA, DateTimeZone.UTC), new UserCredential(pwd,
                 "What is your favourite colur?", "Yellow. No, Blue! Arrrrgh!"),
-            "USA", "MY DISPLAY NAME", "@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE.5556",
-            "@Rackspace.TestCustomer*delete.me",
-            "@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE", "XXX", "RPN-111-222-333");
+            "USA", "MY DISPLAY NAME", "XXX", "RPN-111-222-333");
         newUser.setDefaults();
         newUser.setId(id);
         return newUser;
