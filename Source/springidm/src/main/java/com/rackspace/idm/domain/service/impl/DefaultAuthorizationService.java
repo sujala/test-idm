@@ -8,15 +8,12 @@ import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.ForbiddenException;
-import com.rackspace.idm.util.WadlTree;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
-import javax.ws.rs.core.UriInfo;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,7 +23,6 @@ public class DefaultAuthorizationService implements AuthorizationService {
     private final Configuration config;
     private final ScopeAccessDao scopeAccessDao;
     private final TenantDao tenantDao;
-    private final WadlTree wadlTree;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
     @Autowired
     private ScopeAccessService scopeAccessService;
@@ -40,12 +36,11 @@ public class DefaultAuthorizationService implements AuthorizationService {
     private static ClientRole RACKER_ROLE = null ;
 
     public DefaultAuthorizationService(ScopeAccessDao scopeAccessDao,
-        ApplicationDao clientDao, TenantDao tenantDao, WadlTree wadlTree,
+        ApplicationDao clientDao, TenantDao tenantDao,
         Configuration config) {
         this.scopeAccessDao = scopeAccessDao;
         this.clientDao = clientDao;
         this.tenantDao = tenantDao;
-        this.wadlTree = wadlTree;
         this.config = config;
     }
 
@@ -291,30 +286,6 @@ public class DefaultAuthorizationService implements AuthorizationService {
         }
         boolean authorized = scopeAccess.getClientRCN().equalsIgnoreCase(this.getRackspaceCustomerId());
         logger.debug("Authorized {} as rackspace client - {}", scopeAccess, authorized);
-        return authorized;
-    }
-
-    @Override
-    public boolean authorizeClient(ScopeAccess scopeAccess, String verb,
-        UriInfo uriInfo) {
-        logger.debug("Authorizing {} as client", scopeAccess);
-        if (!(scopeAccess instanceof ClientScopeAccess)) {
-            return false;
-        }
-
-        Object o = wadlTree.getPermissionFor(verb, uriInfo);
-        String permissionId = o == null ? null : o.toString();
-
-        boolean authorized = false;
-
-        if (!StringUtils.isBlank(permissionId)) {
-            Permission permission = new Permission();
-            permission.setClientId(getIdmClientId());
-            permission.setCustomerId(getRackspaceCustomerId());
-            permission.setPermissionId(permissionId);
-            authorized = this.scopeAccessDao.doesAccessTokenHavePermission(scopeAccess, permission);
-        }
-        logger.debug("Authorized {} as client - {}", scopeAccess, authorized);
         return authorized;
     }
 

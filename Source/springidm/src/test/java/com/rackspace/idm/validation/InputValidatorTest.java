@@ -11,6 +11,7 @@ import javax.validation.groups.Default;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -56,13 +57,13 @@ public class InputValidatorTest {
         inputValidator.setValidator(validator);
         Object paramObj = new Object();
         Class[] group = new Class[0];
-        Set<ConstraintViolation<Object>> violations = new HashSet<ConstraintViolation<Object>>();
+        Set<ConstraintViolation<Object>> violations = new LinkedHashSet<ConstraintViolation<Object>>();
         violations.add(new ConstraintViolationImpl<Object>("messageTemplate","message",Object.class,null,null,paramObj,null,null,null));
         violations.add(new ConstraintViolationImpl<Object>("messageTemplate","second message",Object.class,null,null,paramObj,null,null,null));
         when(validator.validate(paramObj,group)).thenReturn(violations);
         ApiError error = inputValidator.validate(paramObj,0,group);
         assertThat("error code",error.getCode(),equalTo(0));
         assertThat("error message",error.getMessage(),equalTo("Invalid request: Missing or malformed parameter(s)."));
-        assertThat("error details",error.getDetails(),equalTo("null second message; null message; "));
+        assertThat("error details",error.getDetails(),equalTo("null message; null second message; "));
     }
 }

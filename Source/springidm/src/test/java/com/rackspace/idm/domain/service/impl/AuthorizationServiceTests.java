@@ -6,7 +6,6 @@ import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.AuthorizationService;
-import com.rackspace.idm.util.WadlTree;
 import junit.framework.Assert;
 import org.apache.commons.configuration.Configuration;
 import org.easymock.EasyMock;
@@ -27,7 +26,6 @@ public class AuthorizationServiceTests {
     ApplicationDao mockClientDao;
     ScopeAccessDao mockScopeAccessDao;
     AuthorizationService service;
-    WadlTree mockWadlTree;
     UriInfo mockUriInfo;
     
     String uniqueId = "uniqueId";
@@ -42,9 +40,6 @@ public class AuthorizationServiceTests {
 
     String username = "username";
 
-    String verb = "GET";
-    String uri = "/resource";
-    
     String permissionId = "Permission";
 
     Permission perm;
@@ -68,11 +63,10 @@ public class AuthorizationServiceTests {
         mockTenantDao = mock(TenantDao.class);
         mockClientDao = EasyMock.createMock(ApplicationDao.class);
         mockScopeAccessDao = EasyMock.createMock(ScopeAccessDao.class);
-        mockWadlTree = EasyMock.createMock(WadlTree.class);
         mockUriInfo = EasyMock.createMock(UriInfo.class);
         Configuration appConfig = new PropertyFileConfiguration().getConfig();
         service = new DefaultAuthorizationService(mockScopeAccessDao,
-            mockClientDao, mockTenantDao, mockWadlTree, appConfig);
+            mockClientDao, mockTenantDao, appConfig);
         setUpObjects();
     }
 
@@ -107,53 +101,6 @@ public class AuthorizationServiceTests {
 
         boolean authorized = service
             .authorizeRackspaceClient(nonRackspaceClientToken);
-
-        Assert.assertTrue(!authorized);
-    }
-
-    @Test
-    public void ShouldReturnTrueForClient() {
-
-        EasyMock.expect(mockScopeAccessDao.doesAccessTokenHavePermission(authorizedClientToken, perm)).andReturn(true);
-        EasyMock.replay(mockScopeAccessDao);
-
-        
-        EasyMock.expect(mockWadlTree.getPermissionFor(verb, mockUriInfo)).andReturn(permissionId);
-        EasyMock.replay(mockWadlTree);
-
-
-        boolean authorized = service.authorizeClient(authorizedClientToken, verb, mockUriInfo);
-
-        Assert.assertTrue(authorized);
-    }
-    
-    @Test
-    public void ShouldReturnFalseForClientForMissingPermissionInWadl() {
-
-        EasyMock.expect(mockScopeAccessDao.doesAccessTokenHavePermission(authorizedClientToken, perm)).andReturn(true);
-        EasyMock.replay(mockScopeAccessDao);
-
-        
-        EasyMock.expect(mockWadlTree.getPermissionFor(verb, mockUriInfo)).andReturn(null);
-        EasyMock.replay(mockWadlTree);
-
-
-        boolean authorized = service.authorizeClient(authorizedClientToken, verb, mockUriInfo);
-
-        Assert.assertFalse(authorized);
-    }
-
-    @Test
-    public void ShouldReturnFalseForClient() {
-
-        EasyMock.expect(mockScopeAccessDao.doesAccessTokenHavePermission(notAuthorizedClientToken, perm)).andReturn(false);
-        EasyMock.replay(mockScopeAccessDao);
-        
-
-        EasyMock.expect(mockWadlTree.getPermissionFor(verb, mockUriInfo)).andReturn(permissionId);
-        EasyMock.replay(mockWadlTree);
-        
-        boolean authorized = service.authorizeClient(notAuthorizedClientToken, verb, mockUriInfo);
 
         Assert.assertTrue(!authorized);
     }
