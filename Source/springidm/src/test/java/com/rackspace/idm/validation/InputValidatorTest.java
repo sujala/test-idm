@@ -63,6 +63,7 @@ public class InputValidatorTest {
         ApiError error = inputValidator.validate(paramObj,0,group);
         assertThat("error code",error.getCode(),equalTo(0));
         assertThat("error message",error.getMessage(),equalTo("Invalid request: Missing or malformed parameter(s)."));
-        assertThat("error details",error.getDetails(),equalTo("null second message; null message; "));
+        assertThat("error details",error.getDetails().contains("null second message;"), equalTo(true));
+        assertThat("error details",error.getDetails().contains("null message; "), equalTo(true));
     }
 }
