@@ -279,17 +279,20 @@ public class DefaultCloud11Service implements Cloud11Service {
             }
 
             String tenantId;
-            if (baseUrl.getBaseUrlType().equals("NAST"))
+            if (baseUrl.getBaseUrlType().equals("NAST")) {
                 tenantId = user.getNastId();
-            else
+            }
+            else {
                 tenantId = String.valueOf(user.getMossoId());
+            }
 
             Tenant tenant = this.tenantService.getTenant(tenantId);
 
             // Check for existing BaseUrl
             for (String bId : tenant.getBaseUrlIds()) {
-                if (bId.equals(String.valueOf(baseUrl.getBaseUrlId())))
+                if (bId.equals(String.valueOf(baseUrl.getBaseUrlId()))) {
                     throw new BadRequestException("Attempt to add existing BaseURL!");
+                }
             }
 
             tenant.addBaseUrlId(String.valueOf(baseUrl.getBaseUrlId()));
@@ -445,7 +448,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         }
     }
 
-	private void addbaseUrlToTenant(Tenant tenant, CloudBaseUrl baseUrl) {
+	void addbaseUrlToTenant(Tenant tenant, CloudBaseUrl baseUrl) {
 		if (baseUrl.getDef()) {
 		    if (isUkCloudRegion() && "lon".equalsIgnoreCase(baseUrl.getRegion())) {
 		        tenant.addBaseUrlId(baseUrl.getBaseUrlId().toString());
@@ -494,8 +497,9 @@ public class DefaultCloud11Service implements Cloud11Service {
                 return cloudExceptionResponse.notFoundExceptionResponse(String.format("BaseUrlId %s not found for user %s", id, userId));
             }
 
-            if (baseUrl.getDef())
+            if (baseUrl.getDef()) {
                 throw new BadRequestException(String.format("Cannot delete default BaseUrlId %s.", baseUrl.getBaseUrlId()));
+            }
 
             String tenantId;
             //if (baseUrl.getBaseUrlType().equals("NAST"))

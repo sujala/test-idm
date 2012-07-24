@@ -5,9 +5,7 @@ import org.junit.Test;
 
 import javax.xml.bind.JAXBContext;
 
-import static org.hamcrest.Matchers.instanceOf;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
 
 /**
@@ -35,4 +33,10 @@ public class JAXBXMLContextResolverTest {
     public void get_returnsContext() throws Exception {
         assertThat("returns context",jaxbxmlContextResolver.get(),instanceOf(JAXBContext.class));
     }
+
+    @Test
+    public void get_withNullContext_callsInit() throws Exception {
+        assertThat("returns context",JAXBXMLContextResolver.get(), notNullValue(JAXBContext.class));
+    }
+
 }

@@ -160,7 +160,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         }
     }
 
-    private ResponseBuilder authenticateImpersonated(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest, ScopeAccess sa) throws IOException, JAXBException {
+    ResponseBuilder authenticateImpersonated(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest, ScopeAccess sa) throws IOException, JAXBException {
         ImpersonatedScopeAccess isa = (ImpersonatedScopeAccess)sa;
         com.rackspace.idm.domain.entity.User user = cloudUserExtractor.getUserByV20CredentialType(authenticationRequest);
         if(user == null) {
