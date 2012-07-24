@@ -15,6 +15,7 @@ import com.sun.jersey.core.spi.factory.ResponseBuilderImpl;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
 import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.NotImplementedException;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -2983,6 +2984,16 @@ public class DelegateCloud20ServiceTest {
         when(config.getString("cloudAuthUK11url")).thenReturn("cloudAuthUK11/");
         when(cloudClient.get("cloudAuthUK11/users/username", httpHeaders)).thenReturn(Response.status(200));
         spy.addUser(httpHeaders, uriInfo, "authToken", userForCreate);
+    }
+
+    @Test (expected = NotImplementedException.class)
+    public void listDefaultRegionServices_throwsNotImplementedException() throws Exception {
+        delegateCloud20Service.listDefaultRegionServices(null);
+    }
+
+    @Test (expected = NotImplementedException.class)
+    public void setDefaultRegionServices_throwsNotImplementedException() throws Exception {
+        delegateCloud20Service.setDefaultRegionServices(null, null);
     }
 }
 
