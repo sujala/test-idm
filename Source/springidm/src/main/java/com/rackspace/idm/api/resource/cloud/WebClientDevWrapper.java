@@ -17,7 +17,7 @@ import java.security.cert.X509Certificate;
 
 public class WebClientDevWrapper {
 
-    public static DefaultHttpClient wrapClient(DefaultHttpClient base) {
+    public static HttpClient wrapClient(HttpClient base) {
         try {
             SSLContext ctx = SSLContext.getInstance("TLS");
             X509TrustManager tm = new X509TrustManager() {
