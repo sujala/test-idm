@@ -9,11 +9,11 @@ import com.rackspacecloud.docs.auth.api.v1.Credentials;
 import com.rackspacecloud.docs.auth.api.v1.MossoCredentials;
 import com.rackspacecloud.docs.auth.api.v1.NastCredentials;
 import com.rackspacecloud.docs.auth.api.v1.UserCredentials;
+import org.apache.commons.lang.StringUtils;
 import org.openstack.docs.identity.api.v2.AuthenticationRequest;
 import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import javax.xml.bind.JAXBElement;
 import java.io.IOException;
@@ -73,20 +73,20 @@ public class CloudUserExtractor {
             UserCredentials userCreds = (UserCredentials) credentials.getValue();
             username = userCreds.getUsername();
             String apiKey = userCreds.getKey();
-            if (apiKey == null || apiKey.length() == 0) {
+            if (StringUtils.isBlank(apiKey)) {
                 throw new CloudExceptionResponse(cloudExceptionResponse.badRequestExceptionResponse("Expecting apiKey"));
             }
-            if (username == null || username.length() == 0) {
+            if (StringUtils.isBlank(username)) {
                 throw new CloudExceptionResponse(cloudExceptionResponse.badRequestExceptionResponse("Expecting username"));
             }
             user = userService.getUser(username);
         } else if (credentials.getValue() instanceof com.rackspacecloud.docs.auth.api.v1.PasswordCredentials) {
             username = ((com.rackspacecloud.docs.auth.api.v1.PasswordCredentials) credentials.getValue()).getUsername();
             String password = ((com.rackspacecloud.docs.auth.api.v1.PasswordCredentials) credentials.getValue()).getPassword();
-            if (password == null || password.length() == 0) {
+            if (StringUtils.isBlank(password)) {
                 throw new CloudExceptionResponse(cloudExceptionResponse.badRequestExceptionResponse("Expecting password"));
             }
-            if (username == null || username.length() == 0) {
+            if (StringUtils.isBlank(username)) {
                 throw new CloudExceptionResponse(cloudExceptionResponse.badRequestExceptionResponse("Expecting username"));
             }
             user = userService.getUser(username);
@@ -100,7 +100,7 @@ public class CloudUserExtractor {
         } else if (credentials.getValue() instanceof NastCredentials) {
             String nastId = ((NastCredentials) credentials.getValue()).getNastId();
             String key = ((NastCredentials) credentials.getValue()).getKey();
-            if (nastId == null || nastId.length() == 0) {
+            if (StringUtils.isBlank(nastId)) {
                 throw new CloudExceptionResponse(cloudExceptionResponse.badRequestExceptionResponse("Expecting nast id"));
             }
             user = userService.getUserByNastId(nastId);

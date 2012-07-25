@@ -41,7 +41,7 @@
     <!-- Complex Types -->
     <complexType name="DefaultRegionServices">
         <sequence>
-            <element name="serviceName" type="xsd:string" minOccurs="0" maxOccurs="unbounded">
+            <element name="serviceName" type="string" minOccurs="0" maxOccurs="unbounded">
                 <annotation>
                     <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
                         <p>

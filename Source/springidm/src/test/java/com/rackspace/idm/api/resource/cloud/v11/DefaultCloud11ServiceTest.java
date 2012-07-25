@@ -41,6 +41,7 @@ import javax.xml.namespace.QName;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -2621,5 +2622,205 @@ public class DefaultCloud11ServiceTest {
     public void authenticateCloudAdminUser_withInvalidAuthHeaders() throws Exception {
         when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn("Basic " + Base64.encode("auth"));
         defaultCloud11Service.authenticateCloudAdminUser(request);
+    }
+
+    @Test
+    public void validateToken_belongsToIsBlank_responseOk_returns200() throws Exception {
+        UserScopeAccess userScopeAccess = new UserScopeAccess();
+        userScopeAccess.setAccessTokenString("notExpired");
+        userScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
+        when(scopeAccessService.getScopeAccessByAccessToken("tokenId")).thenReturn(userScopeAccess);
+        when(request.getRequestURL()).thenReturn(new StringBuffer("url/token/tokenId"));
+        Response.ResponseBuilder responseBuilder = spy.validateToken(request, "tokenId", null, null, httpHeaders);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void addBaseURLRef_baseUrlTypeIsMosso_responseCreated_returns201() throws Exception {
+        Tenant tenant = new Tenant();
+        tenant.setBaseUrlIds(new String[0]);
+        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
+        cloudBaseUrl.setEnabled(true);
+        cloudBaseUrl.setBaseUrlType("MOSSO");
+        cloudBaseUrl.setBaseUrlId(1);
+        com.rackspace.idm.domain.entity.User userTest = new com.rackspace.idm.domain.entity.User();
+        userTest.setMossoId(1);
+        BaseURLRef baseUrlRef = new BaseURLRef();
+        baseUrlRef.setId(1);
+        doNothing().when(spy).authenticateCloudAdminUser(request);
+        when(userService.getUser("userId")).thenReturn(userTest);
+        when(endpointService.getBaseUrlById(1)).thenReturn(cloudBaseUrl);
+        when(tenantService.getTenant("1")).thenReturn(tenant);
+        doNothing().when(tenantService).updateTenant(tenant);
+        Response.ResponseBuilder responseBuilder = spy.addBaseURLRef(request, "userId", httpHeaders, uriInfo, baseUrlRef);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(201));
+    }
+
+    @Test
+    public void addBaseURLRef_tenantBaseUrlIdMatchesCloudBaseUrlId_returns400() throws Exception {
+        Tenant tenant = new Tenant();
+        String[] baseUrlIds = {"2", "1"};
+        tenant.setBaseUrlIds(baseUrlIds);
+        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
+        cloudBaseUrl.setEnabled(true);
+        cloudBaseUrl.setBaseUrlType("MOSSO");
+        cloudBaseUrl.setBaseUrlId(1);
+        com.rackspace.idm.domain.entity.User userTest = new com.rackspace.idm.domain.entity.User();
+        userTest.setMossoId(1);
+        BaseURLRef baseUrlRef = new BaseURLRef();
+        baseUrlRef.setId(1);
+        doNothing().when(spy).authenticateCloudAdminUser(request);
+        when(userService.getUser("userId")).thenReturn(userTest);
+        when(endpointService.getBaseUrlById(1)).thenReturn(cloudBaseUrl);
+        when(tenantService.getTenant("1")).thenReturn(tenant);
+        Response.ResponseBuilder responseBuilder = spy.addBaseURLRef(request, "userId", httpHeaders, uriInfo, baseUrlRef);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
+    public void createUser_callsUserService_addBaseUrlToUser_throwsException_responseCreated_returns201() throws Exception {
+        UserScopeAccess userScopeAccess = new UserScopeAccess();
+        ClientRole roleId = new ClientRole();
+        roleId.setId("roleId");
+        ClientRole clientRole = new ClientRole();
+        clientRole.setName("clientName");
+        clientRole.setClientId("clientId");
+        clientRole.setId("roleId");
+        BaseURLRef baseURLRef = new BaseURLRef();
+        baseURLRef.setId(1);
+        BaseURLRefList baseURLRefList = new BaseURLRefList();
+        List<BaseURLRef> baseURLRefs = baseURLRefList.getBaseURLRef();
+        baseURLRefs.add(baseURLRef);
+        com.rackspace.idm.domain.entity.User userTest = new com.rackspace.idm.domain.entity.User();
+        userTest.setUniqueId("uniqueId");
+        userTest.setId("userId");
+        User user = new User();
+        user.setId("userId");
+        user.setMossoId(1);
+        user.setBaseURLRefs(baseURLRefList);
+        doNothing().when(spy).authenticateCloudAdminUser(request);
+        doNothing().when(userValidator).validateUsername("userId");
+        when(userService.getUser("userId")).thenReturn(null);
+        when(userConverterCloudV11.toUserDO(user)).thenReturn(userTest);
+        doNothing().when(spy).validateMossoId(1);
+        doNothing().when(userService).addUser(userTest);
+        doNothing().when(spy).addMossoTenant(user);
+        doReturn("nastId").when(spy).addNastTenant(user);
+        doNothing().when(userService).updateUser(userTest, false);
+        when(config.getString("cloudAuth.clientId")).thenReturn("clientId");
+        when(config.getString("cloudAuth.userAdminRole")).thenReturn("userAdmin");
+        when(clientService.getClientRoleByClientIdAndRoleName("clientId", "userAdmin")).thenReturn(roleId);
+        when(clientService.getClientRoleById("roleId")).thenReturn(clientRole);
+        doNothing().when(tenantService).addTenantRoleToUser(eq(userTest), any(TenantRole.class));
+        doThrow(new BadRequestException()).when(userService).addBaseUrlToUser(1, userTest);
+        when(config.getString("cloudAuth.clientId")).thenReturn("clientId");
+        when(scopeAccessService.getUserScopeAccessForClientId("uniqueId", "clientId")).thenReturn(userScopeAccess);
+        when(scopeAccessService.getOpenstackEndpointsForScopeAccess(userScopeAccess)).thenReturn(new ArrayList<OpenstackEndpoint>());
+        Response.ResponseBuilder responseBuilder = spy.createUser(request, httpHeaders, uriInfo, user);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(201));
+    }
+
+    @Test
+    public void addMossoTenant_callsAddBaseUrlToTenant() throws Exception {
+        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
+        List<CloudBaseUrl> cloudBaseUrlList = new ArrayList<CloudBaseUrl>();
+        cloudBaseUrlList.add(cloudBaseUrl);
+        User user = new User();
+        user.setMossoId(1);
+        when(endpointService.getBaseUrlsByBaseUrlType("MOSSO")).thenReturn(cloudBaseUrlList);
+        doNothing().when(spy).addbaseUrlToTenant(any(Tenant.class), eq(cloudBaseUrl));
+        spy.addMossoTenant(user);
+        verify(spy).addbaseUrlToTenant(any(Tenant.class), eq(cloudBaseUrl));
+    }
+
+    @Test
+    public void addbaseUrlToTenant_isUkCloudRegionAndRegionIsLon_addsBaseUrlIdToTenant() throws Exception {
+        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
+        cloudBaseUrl.setDef(true);
+        cloudBaseUrl.setRegion("Lon");
+        cloudBaseUrl.setBaseUrlId(1);
+        Tenant tenant = new Tenant();
+        when(config.getString("cloud.region")).thenReturn("UK");
+        spy.addbaseUrlToTenant(tenant, cloudBaseUrl);
+        assertThat("base url id", tenant.containsBaseUrlId("1"), equalTo(true));
+    }
+
+    @Test
+    public void addBaseUrlToTenant_isUkCloudRegionAndRegionNotLon_doesNotAddBaseUrlIdToTenant() throws Exception {
+        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
+        cloudBaseUrl.setDef(true);
+        cloudBaseUrl.setRegion("notLon");
+        cloudBaseUrl.setBaseUrlId(1);
+        Tenant tenant = new Tenant();
+        when(config.getString("cloud.region")).thenReturn("UK");
+        spy.addbaseUrlToTenant(tenant, cloudBaseUrl);
+        assertThat("base url id", tenant.containsBaseUrlId("1"), equalTo(false));
+    }
+
+    @Test
+    public void addBaseUrlToTenant_notUkCloudRegionAndRegionIsLon_doesNotAddBaseUrlIdToTenant() throws Exception {
+        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
+        cloudBaseUrl.setDef(true);
+        cloudBaseUrl.setRegion("Lon");
+        cloudBaseUrl.setBaseUrlId(1);
+        Tenant tenant = new Tenant();
+        when(config.getString("cloud.region")).thenReturn("notUK");
+        spy.addbaseUrlToTenant(tenant, cloudBaseUrl);
+        assertThat("base url id", tenant.containsBaseUrlId("1"), equalTo(false));
+    }
+
+    @Test
+    public void addBaseUrlToTenant_notUkCloudRegionAndRegionNotLon_doesNotAddBaseUrlIdToTenant() throws Exception {
+        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
+        cloudBaseUrl.setDef(true);
+        cloudBaseUrl.setRegion("notLon");
+        cloudBaseUrl.setBaseUrlId(1);
+        Tenant tenant = new Tenant();
+        when(config.getString("cloud.region")).thenReturn("notUK");
+        spy.addbaseUrlToTenant(tenant, cloudBaseUrl);
+        assertThat("base url id", tenant.containsBaseUrlId("1"), equalTo(true));
+    }
+
+    @Test
+    public void deleteBaseURLRef_baseUrlDefaultIsTrue_throwsBadRequest_returns400() throws Exception {
+        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
+        cloudBaseUrl.setDef(true);
+        com.rackspace.idm.domain.entity.User user = new com.rackspace.idm.domain.entity.User();
+        doNothing().when(spy).authenticateCloudAdminUser(request);
+        when(userService.getUser("userId")).thenReturn(user);
+        when(endpointService.getBaseUrlById(1)).thenReturn(cloudBaseUrl);
+        Response.ResponseBuilder responseBuilder = spy.deleteBaseURLRef(request, "userId", "1", httpHeaders);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+    }
+
+    @Test
+    public void getBaseURLRef_baseUrlIdDoesNotMatchCloudBaseUrlId_responseNotFound_returns404() throws Exception {
+        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
+        cloudBaseUrl.setBaseUrlId(2);
+        List<CloudBaseUrl> cloudBaseUrlList = new ArrayList<CloudBaseUrl>();
+        cloudBaseUrlList.add(cloudBaseUrl);
+        OpenstackEndpoint openstackEndpoint = new OpenstackEndpoint();
+        openstackEndpoint.setBaseUrls(cloudBaseUrlList);
+        List<OpenstackEndpoint> openstackEndpointList = new ArrayList<OpenstackEndpoint>();
+        openstackEndpointList.add(openstackEndpoint);
+        UserScopeAccess userScopeAccess = new UserScopeAccess();
+        com.rackspace.idm.domain.entity.User user = new com.rackspace.idm.domain.entity.User();
+        user.setUniqueId("uniqueId");
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
+        when(userService.getUser("userId")).thenReturn(user);
+        when(config.getString("cloudAuth.clientId")).thenReturn("clientId");
+        when(scopeAccessService.getUserScopeAccessForClientId("uniqueId", "clientId")).thenReturn(userScopeAccess);
+        when(scopeAccessService.getOpenstackEndpointsForScopeAccess(userScopeAccess)).thenReturn(openstackEndpointList);
+        Response.ResponseBuilder responseBuilder = spy.getBaseURLRef(request, "userId", "1", httpHeaders);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(404));
+    }
+
+    @Test
+    public void getBaseURLRefs_userServiceGetUserReturnsNull_throwsNotFound_returns404() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
+        when(userService.getUser("userId")).thenReturn(null);
+        Response.ResponseBuilder responseBuilder = spy.getBaseURLRefs(request, "userId", httpHeaders);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(404));
     }
 }

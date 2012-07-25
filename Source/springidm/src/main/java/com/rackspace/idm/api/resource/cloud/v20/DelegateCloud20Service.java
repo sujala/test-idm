@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v20;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.*;
@@ -24,6 +25,7 @@ import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.api.json.JSONJAXBContext;
 import com.sun.jersey.api.json.JSONUnmarshaller;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.ws.commons.util.Base64;
@@ -159,7 +161,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         }
     }
 
-    private ResponseBuilder authenticateImpersonated(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest, ScopeAccess sa) throws IOException, JAXBException {
+    ResponseBuilder authenticateImpersonated(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest, ScopeAccess sa) throws IOException, JAXBException {
         ImpersonatedScopeAccess isa = (ImpersonatedScopeAccess)sa;
         com.rackspace.idm.domain.entity.User user = cloudUserExtractor.getUserByV20CredentialType(authenticationRequest);
         if(user == null) {
@@ -405,7 +407,12 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder listDefaultRegionServices(String authToken) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        throw new NotImplementedException();  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public ResponseBuilder setDefaultRegionServices(String authToken, DefaultRegionServices defaultRegionServices) {
+        throw new NotImplementedException();  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override

@@ -9,7 +9,6 @@ import com.rackspace.idm.domain.service.impl.*;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.rackspace.idm.util.LdapRouterMBean;
 import com.rackspace.idm.util.LoggerMBean;
-import com.rackspace.idm.util.WadlTree;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Test;
@@ -89,11 +88,6 @@ public class ServiceConfigurationTest {
     }
 
     @Test
-    public void wadlTrie_returnsWadlTrie() throws Exception {
-        assertThat("wadlTrie",serviceConfiguration.wadlTrie(),instanceOf(WadlTree.class));
-    }
-
-    @Test
     public void passwordComplexityService_returnsDefaultPasswordComplexityService() throws Exception {
         assertThat("password complexity", serviceConfiguration.passwordComplexityService(),instanceOf(DefaultPasswordComplexityService.class));
     }
@@ -159,12 +153,6 @@ public class ServiceConfigurationTest {
     @Test
     public void tokenService_returnDefaultTokenService() throws Exception {
         assertThat("default token service",serviceConfiguration.tokenService(),instanceOf(DefaultTokenService.class));
-    }
-
-    @Test
-    public void authorizationService_callsWadlTrie() throws Exception {
-        spy.authorizationService();
-        verify(spy).authorizationService();
     }
 
     @Test

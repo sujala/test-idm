@@ -12,6 +12,7 @@ import javax.ws.rs.core.Response;
 
 import java.util.HashMap;
 
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 
 /**
@@ -34,6 +35,17 @@ public class UserValidatorFoundationTest{
 
         userValidator.setConfig(config);
         userValidator.setCloudClient(cloudClient);
+    }
+
+    @Test (expected = BadRequestException.class)
+    public void isUsernameEmpty_usernameIsEmpty_throwsBadRequestException() throws Exception {
+        userValidator.isUsernameEmpty("");
+    }
+
+    @Test
+    public void isUsernameEmpty_usernameNotEmpty_doesNotThrowException() throws Exception {
+        userValidator.isUsernameEmpty("username");
+        assertTrue("no exception", true);
     }
 
     @Test

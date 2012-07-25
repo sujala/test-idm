@@ -2,10 +2,13 @@ package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.idm.exception.BadRequestException;
+import com.sun.jersey.api.representation.Form;
+import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 
+import javax.ws.rs.core.MultivaluedMap;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;

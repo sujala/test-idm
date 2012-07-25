@@ -138,7 +138,13 @@ public class MigrationClientTest {
     }
 
     private String getToken(String username, String password) throws URISyntaxException, HttpException, IOException, JAXBException {
-        AuthenticateResponse  authenticateResponse = client.authenticateWithPassword(username, password);
+        AuthenticateResponse authenticateResponse = client.authenticateWithPassword(username, password);
         return authenticateResponse.getToken().getId();
+    }
+
+    @Test
+    public void authenticateWithApiKey_returnsAuthenticateResponse() throws Exception {
+        AuthenticateResponse authenticateResponse = client.authenticateWithApiKey("auth", "aaaaa-bbbbb-ccccc-12345678");
+        assertThat("token", authenticateResponse.getToken(), notNullValue());
     }
 }

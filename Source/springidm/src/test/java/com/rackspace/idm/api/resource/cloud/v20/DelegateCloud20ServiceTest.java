@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
 import com.rackspace.idm.api.resource.cloud.CloudClient;
 import com.rackspace.idm.api.resource.cloud.CloudUserExtractor;
+import com.rackspace.idm.api.resource.cloud.HttpHeadersAcceptXml;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Tenant;
@@ -14,6 +15,7 @@ import com.sun.jersey.core.spi.factory.ResponseBuilderImpl;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
 import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.NotImplementedException;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -21,10 +23,7 @@ import org.mockito.Matchers;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.v2.*;
 
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
+import javax.ws.rs.core.*;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.util.*;
@@ -2885,6 +2884,116 @@ public class DelegateCloud20ServiceTest {
     @Test
     public void getUserConverterCloudV20_returnsUserConverterCloudV20() throws Exception {
         assertThat("UserConverterCloudV20",delegateCloud20Service.getUserConverterCloudV20(),equalTo(userConverterCloudV20));
+    }
+
+    @Test
+    public void authenticate_authenticationRequestTokenNotNullAndNotBlank_scopeAccessInstanceOfImpersonatedScopeAccess_callsAuthenticateImpersonated() throws Exception {
+        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
+        tokenForAuthenticationRequest.setId("tokenId");
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        authenticationRequest.setToken(tokenForAuthenticationRequest);
+        ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
+        when(scopeAccessService.getScopeAccessByAccessToken("tokenId")).thenReturn(impersonatedScopeAccess);
+        doReturn(Response.ok()).when(spy).authenticateImpersonated(httpHeaders, authenticationRequest, impersonatedScopeAccess);
+        spy.authenticate(httpHeaders, authenticationRequest);
+        verify(spy).authenticateImpersonated(httpHeaders, authenticationRequest, impersonatedScopeAccess);
+    }
+
+    @Test
+    public void authenticate_authenticationRequestTokenNotNullAndNotBlank_scopeAccessNotInstanceOfImpersonatedScopeAccess_doesNotCallAuthenticateImpersonated() throws Exception {
+        User user = new User();
+        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
+        tokenForAuthenticationRequest.setId("tokenId");
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        authenticationRequest.setToken(tokenForAuthenticationRequest);
+        RackerScopeAccess rackerScopeAccess = new RackerScopeAccess();
+        when(scopeAccessService.getScopeAccessByAccessToken("tokenId")).thenReturn(rackerScopeAccess);
+        when(cloudUserExtractor.getUserByV20CredentialType(authenticationRequest)).thenReturn(user);
+        when(userService.isMigratedUser(user)).thenReturn(true);
+        spy.authenticate(httpHeaders, authenticationRequest);
+        verify(spy, times(0)).authenticateImpersonated(httpHeaders, authenticationRequest, rackerScopeAccess);
+    }
+
+    @Test
+    public void authenticate_authenticationRequestTokenNotNullAndIsBlank_callsDefaultCloud20Service_authenticate() throws Exception {
+        User user = new User();
+        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
+        tokenForAuthenticationRequest.setId("");
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        authenticationRequest.setToken(tokenForAuthenticationRequest);
+        when(cloudUserExtractor.getUserByV20CredentialType(authenticationRequest)).thenReturn(user);
+        when(userService.isMigratedUser(user)).thenReturn(true);
+        spy.authenticate(httpHeaders, authenticationRequest);
+        verify(defaultCloud20Service).authenticate(httpHeaders, authenticationRequest);
+    }
+
+    @Test
+    public void authenticateImpersonated_cloudUserExtractorReturnsNotNullUser_callsDefaultCloud20Service_authenticate() throws Exception {
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
+        when(cloudUserExtractor.getUserByV20CredentialType(authenticationRequest)).thenReturn(new User());
+        spy.authenticateImpersonated(httpHeaders, authenticationRequest, impersonatedScopeAccess);
+        verify(defaultCloud20Service).authenticate(httpHeaders, authenticationRequest);
+    }
+
+    @Test
+    public void authenticateImpersonated_userIsNull_statusNot200_returnsServiceResponseStatus() throws Exception {
+        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        authenticationRequest.setToken(tokenForAuthenticationRequest);
+        ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
+        impersonatedScopeAccess.setImpersonatingToken("impersonatingToken");
+        when(cloudUserExtractor.getUserByV20CredentialType(authenticationRequest)).thenReturn(null);
+        when(config.getString("cloudAuth20url")).thenReturn("cloudAuth/");
+        when(cloudClient.post(eq("cloudAuth/tokens"), any(HttpHeadersAcceptXml.class), anyString())).thenReturn(Response.status(404));
+        Response.ResponseBuilder responseBuilder = spy.authenticateImpersonated(httpHeaders, authenticationRequest, impersonatedScopeAccess);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(404));
+    }
+
+    @Test
+    public void authenticateImpersonated_userIsNull_statusIs200_returnsOkResponseCode200() throws Exception {
+        Token token = new Token();
+        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
+        authenticateResponse.setToken(token);
+        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        authenticationRequest.setToken(tokenForAuthenticationRequest);
+        ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
+        impersonatedScopeAccess.setImpersonatingToken("impersonatingToken");
+        impersonatedScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
+        impersonatedScopeAccess.setAccessTokenString("notExpired");
+        when(cloudUserExtractor.getUserByV20CredentialType(authenticationRequest)).thenReturn(null);
+        when(config.getString("cloudAuth20url")).thenReturn("cloudAuth/");
+        when(cloudClient.post(eq("cloudAuth/tokens"), any(HttpHeadersAcceptXml.class), anyString())).thenReturn(Response.status(200).entity("test"));
+        doReturn(authenticateResponse).when(spy).unmarshallResponse("test", AuthenticateResponse.class);
+        Response.ResponseBuilder responseBuilder = spy.authenticateImpersonated(httpHeaders, authenticationRequest, impersonatedScopeAccess);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test (expected = DuplicateUsernameException.class)
+    public void addUser_cloudClientReturns200StatusForUKUri_throwsDuplicateUsernameException() throws Exception {
+        UserForCreate userForCreate = new UserForCreate();
+        userForCreate.setUsername("username");
+        UriInfo uriInfo = mock(UriInfo.class);
+        when(scopeAccessService.getAccessTokenByAuthHeader("authToken")).thenReturn(null);
+        when(httpHeaders.getRequestHeaders()).thenReturn(new MultivaluedMapImpl());
+        when(config.getString("ga.username")).thenReturn("gaUsername");
+        when(config.getString("ga.password")).thenReturn("gaPassword");
+        when(config.getString("cloudAuth11url")).thenReturn("cloudAuth11/");
+        when(cloudClient.get("cloudAuth11/users/username", httpHeaders)).thenReturn(Response.status(404));
+        when(config.getString("cloudAuthUK11url")).thenReturn("cloudAuthUK11/");
+        when(cloudClient.get("cloudAuthUK11/users/username", httpHeaders)).thenReturn(Response.status(200));
+        spy.addUser(httpHeaders, uriInfo, "authToken", userForCreate);
+    }
+
+    @Test (expected = NotImplementedException.class)
+    public void listDefaultRegionServices_throwsNotImplementedException() throws Exception {
+        delegateCloud20Service.listDefaultRegionServices(null);
+    }
+
+    @Test (expected = NotImplementedException.class)
+    public void setDefaultRegionServices_throwsNotImplementedException() throws Exception {
+        delegateCloud20Service.setDefaultRegionServices(null, null);
     }
 }
 
