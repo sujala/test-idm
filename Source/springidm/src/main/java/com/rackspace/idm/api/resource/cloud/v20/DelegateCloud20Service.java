@@ -97,6 +97,9 @@ public class DelegateCloud20Service implements Cloud20Service {
     private JAXBObjectFactories OBJ_FACTORIES;
 
     @Autowired
+    private  ExceptionHandler exceptionHandler;
+
+    @Autowired
     private CloudUserExtractor cloudUserExtractor;
 
     public static final String CLOUD_AUTH_ROUTING = "useCloudAuth";
@@ -162,32 +165,37 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     ResponseBuilder authenticateImpersonated(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest, ScopeAccess sa) throws IOException, JAXBException {
-        ImpersonatedScopeAccess isa = (ImpersonatedScopeAccess)sa;
-        com.rackspace.idm.domain.entity.User user = cloudUserExtractor.getUserByV20CredentialType(authenticationRequest);
-        if(user == null) {
-            authenticationRequest.getToken().setId(isa.getImpersonatingToken());
-            String body = marshallObjectToString(objectFactory.createAuth(authenticationRequest));
-            
-            HttpHeadersAcceptXml httpHeadersAcceptXml = new HttpHeadersAcceptXml(httpHeaders);
-            
-            Response.ResponseBuilder serviceResponse = cloudClient.post(getCloudAuthV20Url() + "tokens", httpHeadersAcceptXml, body);
-            Response dummyResponse = serviceResponse.clone().build();
-            int status = dummyResponse.getStatus();
-            if (status == HttpServletResponse.SC_OK) {
-                // Need to replace token info with original from sa
-                AuthenticateResponse authenticateResponse = (AuthenticateResponse) unmarshallResponse(dummyResponse.getEntity().toString(), AuthenticateResponse.class);
-                authenticateResponse.getToken().setId(isa.getAccessTokenString());
-                GregorianCalendar calendar = new GregorianCalendar();
-                calendar.setTime(isa.getAccessTokenExp());
-                try {
-					authenticateResponse.getToken().setExpires(DatatypeFactory.newInstance().newXMLGregorianCalendar(calendar));
-				} catch (DatatypeConfigurationException e) {
-					e.printStackTrace();
-				}
-                return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createAccess(authenticateResponse).getValue());
+        try{
+            ImpersonatedScopeAccess isa = (ImpersonatedScopeAccess)sa;
+            com.rackspace.idm.domain.entity.User user = cloudUserExtractor.getUserByV20CredentialType(authenticationRequest);
+            if(user == null) {
+                authenticationRequest.getToken().setId(isa.getImpersonatingToken());
+                String body = marshallObjectToString(objectFactory.createAuth(authenticationRequest));
+
+                HttpHeadersAcceptXml httpHeadersAcceptXml = new HttpHeadersAcceptXml(httpHeaders);
+
+                Response.ResponseBuilder serviceResponse = cloudClient.post(getCloudAuthV20Url() + "tokens", httpHeadersAcceptXml, body);
+                Response dummyResponse = serviceResponse.clone().build();
+                int status = dummyResponse.getStatus();
+                if (status == HttpServletResponse.SC_OK) {
+                    // Need to replace token info with original from sa
+                    AuthenticateResponse authenticateResponse = (AuthenticateResponse) unmarshallResponse(dummyResponse.getEntity().toString(), AuthenticateResponse.class);
+                    authenticateResponse.getToken().setId(isa.getAccessTokenString());
+                    GregorianCalendar calendar = new GregorianCalendar();
+                    calendar.setTime(isa.getAccessTokenExp());
+                    try {
+                        authenticateResponse.getToken().setExpires(DatatypeFactory.newInstance().newXMLGregorianCalendar(calendar));
+                    } catch (DatatypeConfigurationException e) {
+                        e.printStackTrace();
+                    }
+                    return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createAccess(authenticateResponse).getValue());
+                }
+                return serviceResponse;
             }
-            return serviceResponse;
+        } catch (Exception ex){
+            exceptionHandler.exceptionResponse(ex);
         }
+
         return defaultCloud20Service.authenticate(httpHeaders, authenticationRequest);
     }
 
@@ -1254,5 +1262,9 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     public void setAuthorizationService(AuthorizationService authorizationService) {
         this.authorizationService = authorizationService;
+    }
+
+    public void setExceptionHandler(ExceptionHandler exceptionHandler) {
+        this.exceptionHandler = exceptionHandler;
     }
 }

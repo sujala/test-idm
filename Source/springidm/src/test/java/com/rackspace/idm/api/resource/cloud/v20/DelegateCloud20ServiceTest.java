@@ -54,6 +54,7 @@ public class DelegateCloud20ServiceTest {
     CloudUserExtractor cloudUserExtractor = mock(CloudUserExtractor.class);
     UserConverterCloudV20 userConverterCloudV20 = mock(UserConverterCloudV20.class);
     JAXBObjectFactories OBJ_FACTORIES = new JAXBObjectFactories();
+    ExceptionHandler exceptionHandler = mock(ExceptionHandler.class);
     org.openstack.docs.identity.api.v2.ObjectFactory objectFactory = mock(org.openstack.docs.identity.api.v2.ObjectFactory.class);
     HttpHeaders httpHeaders = mock(HttpHeaders.class);
     private final Configuration config = mock(Configuration.class);
@@ -81,6 +82,8 @@ public class DelegateCloud20ServiceTest {
         delegateCloud20Service.setScopeAccessService(scopeAccessService);
         delegateCloud20Service.setTenantService(tenantService);
         delegateCloud20Service.setAuthorizationService(authorizationService);
+        delegateCloud20Service.setExceptionHandler(exceptionHandler);
+        delegateCloud20Service.setObjectFactory(objectFactory);
         when(config.getString("cloudAuth20url")).thenReturn(url);
         when(config.getString("cloudAuthUK20url")).thenReturn(url);
         when(config.getBoolean("GAKeystoneDisabled")).thenReturn(disabled);
@@ -2925,6 +2928,15 @@ public class DelegateCloud20ServiceTest {
         when(userService.isMigratedUser(user)).thenReturn(true);
         spy.authenticate(httpHeaders, authenticationRequest);
         verify(defaultCloud20Service).authenticate(httpHeaders, authenticationRequest);
+    }
+
+    @Test
+    public void authenticateImpersonated_cloudExtractorThrowsException_callsExceptionResponse() throws Exception {
+        JAXBException ex = new JAXBException("error");
+        doThrow(ex).when(spy).marshallObjectToString(null);
+        when(authenticationRequest.getToken()).thenReturn(new TokenForAuthenticationRequest());
+        spy.authenticateImpersonated(null, authenticationRequest, new ImpersonatedScopeAccess());
+        verify(exceptionHandler).exceptionResponse(ex);
     }
 
     @Test
