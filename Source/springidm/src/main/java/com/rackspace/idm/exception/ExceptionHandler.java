@@ -3,6 +3,7 @@ package com.rackspace.idm.exception;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import org.openstack.docs.identity.api.v2.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.Response;
@@ -14,6 +15,7 @@ import javax.ws.rs.core.Response;
  * Time: 9:21 AM
  * To change this template use File | Settings | File Templates.
  */
+@Component
 public class ExceptionHandler {
 
     @Autowired
