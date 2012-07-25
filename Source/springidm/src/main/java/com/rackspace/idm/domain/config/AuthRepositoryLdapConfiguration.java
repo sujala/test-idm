@@ -92,4 +92,8 @@ public class AuthRepositoryLdapConfiguration {
         logger.debug("LDAPConnectionPool:[{}]", connPool);
         return connPool;
     }
+
+    public Configuration getConfig() {
+        return config;
+    }
 }

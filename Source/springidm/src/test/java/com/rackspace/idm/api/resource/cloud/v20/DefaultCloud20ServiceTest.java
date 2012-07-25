@@ -17,6 +17,7 @@ import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import com.rackspacecloud.docs.auth.api.v1.*;
+import com.sun.jersey.core.spi.factory.ResponseBuilderImpl;
 import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.Control;
 import com.unboundid.ldap.sdk.SearchResultEntry;
@@ -71,6 +72,7 @@ public class DefaultCloud20ServiceTest {
     private DefaultCloud20Service defaultCloud20Service;
     private DefaultCloud20Service spy;
     private Configuration config;
+    private ExceptionHandler exceptionHandler;
     private UserService userService;
     private GroupService userGroupService;
     private JAXBObjectFactories jaxbObjectFactories;
@@ -96,6 +98,7 @@ public class DefaultCloud20ServiceTest {
     private TenantRole tenantRole;
     private ClientRole clientRole;
     private Service service;
+    private UserScopeAccess userScopeAccess;
     private org.openstack.docs.identity.api.v2.Tenant tenantOS;
     private UserForCreate userOS;
     private CloudBaseUrl cloudBaseUrl;
@@ -142,6 +145,7 @@ public class DefaultCloud20ServiceTest {
         authConverterCloudV20 = mock(AuthConverterCloudV20.class);
         serviceConverterCloudV20 = mock(ServiceConverterCloudV20.class);
         delegateCloud20Service = mock(DelegateCloud20Service.class);
+        exceptionHandler = mock(ExceptionHandler.class);
 
 
         //setting mocks
@@ -164,6 +168,7 @@ public class DefaultCloud20ServiceTest {
         defaultCloud20Service.setAuthConverterCloudV20(authConverterCloudV20);
         defaultCloud20Service.setServiceConverterCloudV20(serviceConverterCloudV20);
         defaultCloud20Service.setDelegateCloud20Service(delegateCloud20Service);
+        defaultCloud20Service.setExceptionHandler(exceptionHandler);
 
         //fields
         user = new User();
@@ -178,7 +183,7 @@ public class DefaultCloud20ServiceTest {
         tenantRole.setClientId("clientId");
         tenantRole.setUserId(userId);
         tenantRole.setRoleRsId("tenantRoleId");
-        UserScopeAccess userScopeAccess = new UserScopeAccess();
+        userScopeAccess = new UserScopeAccess();
         userScopeAccess.setAccessTokenString("access");
         userScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
         tenant = new Tenant();
@@ -1322,10 +1327,15 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void addUser_withUserMissingUsername_returns400() throws Exception {
+    public void addUser_withUserMissingUsername_returnsResponseBuilder() throws Exception {
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
+        BadRequestException badRequestException = new BadRequestException("missing username");
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doNothing().when(spy).verifyUserAdminLevelAccess(authToken);
+        doThrow(badRequestException).when(spy).validateUser(userOS);
+        when(exceptionHandler.exceptionResponse(badRequestException)).thenReturn(responseBuilder);
         userOS.setUsername(null);
-        Response.ResponseBuilder responseBuilder = spy.addUser(null, null, authToken, userOS);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+        assertThat("response code", spy.addUser(null, null, authToken, userOS), equalTo(responseBuilder));
     }
 
     @Test
@@ -1354,7 +1364,9 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void addUser_adminRoleUserSizeGreaterThanNumSubUsersThrowsBadRequest_returns400() throws Exception {
+    public void addUser_adminRoleUserSizeGreaterThanNumSubUsersThrowsBadRequest_returnsResponseBuilder() throws Exception {
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
+        ScopeAccess scopeAccess = new ScopeAccess();
         User caller = new User();
         users = mock(Users.class);
         List<User> userList = new ArrayList();
@@ -1363,13 +1375,17 @@ public class DefaultCloud20ServiceTest {
         tempUser.setUsername("tempUser");
         userList.add(tempUser);
         users.setUsers(userList);
-        when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(new User());
-        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
+
+        doNothing().when(spy).verifyUserAdminLevelAccess(authToken);
+        doNothing().when(spy).validateUser(userOS);
+        doNothing().when(spy).validateUsernameForUpdateOrCreate(userOS.getUsername());
+        when(userConverterCloudV20.toUserDO(userOS)).thenReturn(new User());
         when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
         when(userService.getAllUsers(org.mockito.Matchers.<FilterParam[]>any())).thenReturn(users);
         when(config.getInt("numberOfSubUsers")).thenReturn(-1);
-        Response.ResponseBuilder responseBuilder = spy.addUser(null, null, authToken, userOS);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+        when(exceptionHandler.exceptionResponse(any(BadRequestException.class))).thenReturn(responseBuilder);
+
+        assertThat("response builder", spy.addUser(null, null, authToken, userOS), equalTo(responseBuilder));
     }
 
     @Test
@@ -1417,17 +1433,33 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void addUser_userServiceDuplicateException_returns409() throws Exception {
-        doThrow(new DuplicateException()).when(userService).addUser(any(User.class));
-        Response.ResponseBuilder responseBuilder = spy.addUser(null, null, authToken, userOS);
-        assertThat("respone code", responseBuilder.build().getStatus(), equalTo(409));
+    public void addUser_userServiceDuplicateException_returnsResponseBuilder() throws Exception {
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
+        doNothing().when(spy).verifyUserAdminLevelAccess(authToken);
+        doNothing().when(spy).validateUser(userOS);
+        doNothing().when(spy).validateUsernameForUpdateOrCreate(userOS.getUsername());
+        when(userConverterCloudV20.toUserDO(userOS)).thenReturn(new User());
+        doThrow(new DuplicateException("duplicate")).when(userService).addUser(any(User.class));
+        when(exceptionHandler.conflictExceptionResponse("duplicate")).thenReturn(responseBuilder);
+        assertThat("response code", spy.addUser(null, null, authToken, userOS), equalTo(responseBuilder));
     }
 
     @Test
-    public void addUser_userServiceDuplicateUserNameException_returns409() throws Exception {
-        doThrow(new DuplicateUsernameException()).when(userService).addUser(any(User.class));
-        Response.ResponseBuilder responseBuilder = spy.addUser(null, null, authToken, userOS);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(409));
+    public void addUser_userServiceDuplicateUserNameException_returnsResponseBuilder() throws Exception {
+        User caller = new User();
+        DuplicateUsernameException duplicateUsernameException = new DuplicateUsernameException();
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
+        doNothing().when(spy).verifyUserAdminLevelAccess(authToken);
+        doNothing().when(spy).validateUser(userOS);
+        doNothing().when(spy).validateUsernameForUpdateOrCreate(userOS.getUsername());
+        when(userConverterCloudV20.toUserDO(userOS)).thenReturn(caller);
+        when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
+        when(userService.getAllUsers(any(FilterParam[].class))).thenReturn(null);
+        doNothing().when(spy).setDomainId(userScopeAccess,caller);
+        doThrow(duplicateUsernameException).when(userService).addUser(caller);
+        when(exceptionHandler.exceptionResponse(duplicateUsernameException)).thenReturn(responseBuilder);
+
+        assertThat("response code", spy.addUser(null, null, authToken, userOS), equalTo(responseBuilder));
     }
 
     @Test
@@ -1615,10 +1647,12 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void addTenant_withNullTenantName_returns400() throws Exception {
+    public void addTenant_withNullTenantName_returnsResponseBuilder() throws Exception {
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
+        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        when(exceptionHandler.exceptionResponse(any(BadRequestException.class))).thenReturn(responseBuilder);
         tenantOS.setName(null);
-        Response.ResponseBuilder responseBuilder = spy.addTenant(null, null, authToken, tenantOS);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+        assertThat("response builder", spy.addTenant(null, null, authToken, tenantOS), equalTo(responseBuilder));
     }
 
     @Test
@@ -1643,9 +1677,10 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void addTenant_tenantServiceDuplicateException_returns409() throws Exception {
-        doThrow(new DuplicateException()).when(tenantService).addTenant(any(Tenant.class));
-        Response.ResponseBuilder responseBuilder = spy.addTenant(null, null, authToken, tenantOS);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(409));
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
+        doThrow(new DuplicateException("duplicate")).when(tenantService).addTenant(any(Tenant.class));
+        when(exceptionHandler.tenantConflictExceptionResponse("duplicate")).thenReturn(responseBuilder);
+        assertThat("response code", spy.addTenant(null, null, authToken, tenantOS), equalTo(responseBuilder));
     }
 
     @Test
@@ -1661,23 +1696,29 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void addService_withNullService_returns400() throws Exception {
-        Response.ResponseBuilder responseBuilder = spy.addService(null, null, authToken, null);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+    public void addService_withNullService_returnsResponseBuilder() throws Exception {
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
+        doNothing().when(spy).checkXAUTHTOKEN(authToken, true, null);
+        when(exceptionHandler.exceptionResponse(any(BadRequestException.class))).thenReturn(responseBuilder);
+        assertThat("response builder", spy.addService(null, null, authToken, null), equalTo(responseBuilder));
     }
 
     @Test
-    public void addService_withNullServiceType_returns400() throws Exception {
+    public void addService_withNullServiceType_returnsResponseBuilder() throws Exception {
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
+        doNothing().when(spy).checkXAUTHTOKEN(authToken,true,null);
         service.setType(null);
-        Response.ResponseBuilder responseBuilder = spy.addService(null, null, authToken, service);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+        when(exceptionHandler.exceptionResponse(any(BadRequestException.class))).thenReturn(responseBuilder);
+        assertThat("response builder", spy.addService(null, null, authToken, service), equalTo(responseBuilder));
     }
 
     @Test
-    public void addService_withNullName_returns400() throws Exception {
+    public void addService_withNullName_returnsResponseBuilder() throws Exception {
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
+        doNothing().when(spy).checkXAUTHTOKEN(authToken,true,null);
+        when(exceptionHandler.exceptionResponse(any(BadRequestException.class))).thenReturn(responseBuilder);
         service.setName(null);
-        Response.ResponseBuilder responseBuilder = spy.addService(null, null, authToken, service);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+        assertThat("response builder", spy.addService(null, null, authToken, service), equalTo(responseBuilder));
     }
 
     @Test
@@ -1696,10 +1737,11 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void addService_clientServiceDuplicateException_returns409() throws Exception {
-        doThrow(new DuplicateException()).when(clientService).add(any(Application.class));
-        Response.ResponseBuilder responseBuilder = spy.addService(null, null, authToken, service);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(409));
+    public void addService_clientServiceDuplicateException_returnsResponseBuilder() throws Exception {
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
+        doThrow(new DuplicateException("duplicate")).when(clientService).add(any(Application.class));
+        when(exceptionHandler.conflictExceptionResponse("duplicate")).thenReturn(responseBuilder);
+        assertThat("response code", spy.addService(null, null, authToken, service), equalTo(responseBuilder));
     }
 
     @Test
@@ -1718,17 +1760,21 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void addRole_roleWithNullName_returns400() throws Exception {
+    public void addRole_roleWithNullName_returnsResponseBuilder() throws Exception {
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
+        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        when(exceptionHandler.exceptionResponse(any(BadRequestException.class))).thenReturn(responseBuilder);
         Role role1 = new Role();
         role1.setName(null);
-        Response.ResponseBuilder responseBuilder = spy.addRole(null, null, authToken, role1);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+        assertThat("response builder", spy.addRole(null, null, authToken, role1), equalTo(responseBuilder));
     }
 
     @Test
-    public void addRole_nullRole_returns400() throws Exception {
-        Response.ResponseBuilder responseBuilder = spy.addRole(null, null, authToken, null);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+    public void addRole_nullRole_returnsResponseBuilder() throws Exception {
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
+        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        when(exceptionHandler.exceptionResponse(any(BadRequestException.class))).thenReturn(responseBuilder);
+        assertThat("response bulider", spy.addRole(null, null, authToken, null), equalTo(responseBuilder));
     }
 
     @Test
@@ -1742,13 +1788,15 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void addRole_roleWithIdentityNameWithNotIdenityAdmin_returns403Status() throws Exception {
+    public void addRole_roleWithIdentityNameWithNotIdenityAdmin_returnsResponseBuilder() throws Exception {
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         Role role1 = new Role();
         role1.setName("Identity:role");
-        role1.setServiceId(null);
+        role1.setServiceId("serviceId");
+        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
         doThrow(new ForbiddenException()).when(spy).verifyIdentityAdminLevelAccess(authToken);
-        Response.ResponseBuilder responseBuilder = spy.addRole(null, null, authToken, role1);
-        assertThat("response status", responseBuilder.build().getStatus(), equalTo(403));
+        when(exceptionHandler.exceptionResponse(any(ForbiddenException.class))).thenReturn(responseBuilder);
+        assertThat("response builder", spy.addRole(null, null, authToken, role1), equalTo(responseBuilder));
     }
 
     @Test
@@ -1767,8 +1815,8 @@ public class DefaultCloud20ServiceTest {
         when(jaxbObjectFactories.getOpenStackIdentityV2Factory()).thenReturn(objectFactory);
         when(objectFactory.createRole(any(Role.class))).thenReturn(someValue);
         when(roleConverterCloudV20.toRoleFromClientRole(any(ClientRole.class))).thenReturn(role1);
-        Response.ResponseBuilder responseBuilder = spy.addRole(httpHeaders, uriInfo, authToken, role1);
-        assertThat("response status", responseBuilder.build().getStatus(), equalTo(201));
+        Response response = spy.addRole(httpHeaders, uriInfo, authToken, role1).build();
+        assertThat("response status", response.getStatus(), equalTo(201));
     }
 
     @Test
@@ -1788,10 +1836,13 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void addRole_roleConflictThrowsDuplicateException_returns409() throws Exception {
-        doThrow(new DuplicateException()).when(clientService).addClientRole(any(ClientRole.class));
-        Response.ResponseBuilder responseBuilder = spy.addRole(null, null, authToken, role);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(409));
+    public void addRole_roleConflictThrowsDuplicateException_returnsResponseBuilder() throws Exception {
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
+        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(new Application()).when(spy).checkAndGetApplication(role.getServiceId());
+        doThrow(new DuplicateException("role conflict")).when(clientService).addClientRole(any(ClientRole.class));
+        when(exceptionHandler.conflictExceptionResponse("role conflict")).thenReturn(responseBuilder);
+        assertThat("response builder", spy.addRole(null, null, authToken, role), equalTo(responseBuilder));
     }
 
     @Test
@@ -1808,7 +1859,8 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void addRolesToUserOnTenant_roleNameEqualsCloudServiceAdmin_returns400() throws Exception {
+    public void addRolesToUserOnTenant_roleNameEqualsCloudServiceAdmin_returnsResponseBuilder() throws Exception {
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         clientRole.setName("identity:service-admin");
         doNothing().when(spy).verifyUserAdminLevelAccess(null);
         doNothing().when(spy).verifyTokenHasTenantAccess(null, null);
@@ -1818,12 +1870,13 @@ public class DefaultCloud20ServiceTest {
         when(config.getString("cloudAuth.serviceAdminRole")).thenReturn("identity:service-admin");
         when(config.getString("cloudAuth.adminRole")).thenReturn("identity:admin");
         when(config.getString("cloudAuth.userAdminRole")).thenReturn("identity:user-admin");
-        Response.ResponseBuilder responseBuilder = spy.addRolesToUserOnTenant(null, null, null, null, null);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+        when(exceptionHandler.exceptionResponse(any(BadRequestException.class))).thenReturn(responseBuilder);
+        assertThat("response builder", spy.addRolesToUserOnTenant(null, null, null, null, null), equalTo(responseBuilder));
     }
 
     @Test
-    public void addRolesToUserOnTenant_roleNameEqualsUserAdmin_returns400() throws Exception {
+    public void addRolesToUserOnTenant_roleNameEqualsUserAdmin_returnsResponseBuilder() throws Exception {
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         clientRole.setName("identity:user-admin");
         doNothing().when(spy).verifyUserAdminLevelAccess(null);
         doNothing().when(spy).verifyTokenHasTenantAccess(null, null);
@@ -1833,12 +1886,13 @@ public class DefaultCloud20ServiceTest {
         when(config.getString("cloudAuth.serviceAdminRole")).thenReturn("identity:service-admin");
         when(config.getString("cloudAuth.adminRole")).thenReturn("identity:admin");
         when(config.getString("cloudAuth.userAdminRole")).thenReturn("identity:user-admin");
-        Response.ResponseBuilder responseBuilder = spy.addRolesToUserOnTenant(null, null, null, null, null);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+        when(exceptionHandler.exceptionResponse(any(BadRequestException.class))).thenReturn(responseBuilder);
+        assertThat("resonse builder", spy.addRolesToUserOnTenant(null, null, null, null, null), equalTo(responseBuilder));
     }
 
     @Test
-    public void addRolesToUserOnTenant_roleNameEqualsAdmin_returns400() throws Exception {
+    public void addRolesToUserOnTenant_roleNameEqualsAdmin_returnsResponseBuilder() throws Exception {
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         clientRole.setName("identity:admin");
         doNothing().when(spy).verifyUserAdminLevelAccess(null);
         doNothing().when(spy).verifyTokenHasTenantAccess(null, null);
@@ -1848,8 +1902,8 @@ public class DefaultCloud20ServiceTest {
         when(config.getString("cloudAuth.serviceAdminRole")).thenReturn("identity:service-admin");
         when(config.getString("cloudAuth.adminRole")).thenReturn("identity:admin");
         when(config.getString("cloudAuth.userAdminRole")).thenReturn("identity:user-admin");
-        Response.ResponseBuilder responseBuilder = spy.addRolesToUserOnTenant(null, null, null, null, null);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+        when(exceptionHandler.exceptionResponse(any(BadRequestException.class))).thenReturn(responseBuilder);
+        assertThat("response builder", spy.addRolesToUserOnTenant(null, null, null, null, null), equalTo(responseBuilder));
     }
 
     @Test
@@ -1859,10 +1913,14 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void addEndpoint_callsTenantService_updateTenant_throw400() throws Exception {
+    public void addEndpoint_Global_throwBadRequestExceptionAndReturnsResponseBuilder() throws Exception {
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
+        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(tenant).when(spy).checkAndGetTenant(tenantId);
+        doReturn(cloudBaseUrl).when(spy).checkAndGetEndpointTemplate(endpointTemplate.getId());
+        when(exceptionHandler.exceptionResponse(any(BadRequestException.class))).thenReturn(responseBuilder);
         cloudBaseUrl.setGlobal(true);
-        Response.ResponseBuilder responseBuilder = spy.addEndpoint(null, authToken, tenantId, endpointTemplate);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+        assertThat("response builder", spy.addEndpoint(null, authToken, tenantId, endpointTemplate), equalTo(responseBuilder));
     }
 
     @Test
@@ -1984,17 +2042,23 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void addEndpointTemplate_endPointServiceThrowsBaseUrlConflictException_returns409() throws Exception {
-        doThrow(new BaseUrlConflictException()).when(endpointService).addBaseUrl(any(CloudBaseUrl.class));
-        Response.ResponseBuilder responseBuilder = spy.addEndpointTemplate(null, null, authToken, endpointTemplate);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(409));
+    public void addEndpointTemplate_endPointServiceThrowsBaseUrlConflictException_returnsResponseBuilder() throws Exception {
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
+        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        when(endpointConverterCloudV20.toCloudBaseUrl(endpointTemplate)).thenReturn(cloudBaseUrl);
+        doThrow(new BaseUrlConflictException()).when(endpointService).addBaseUrl(cloudBaseUrl);
+        when(exceptionHandler.exceptionResponse(any(BaseUrlConflictException.class))).thenReturn(responseBuilder);
+        assertThat("response builder", spy.addEndpointTemplate(null, null, authToken, endpointTemplate), equalTo(responseBuilder));
     }
 
     @Test
-    public void addEndpointTemplate_endPointServiceThrowsDuplicateException_returns409() throws Exception {
-        doThrow(new DuplicateException()).when(endpointService).addBaseUrl(any(CloudBaseUrl.class));
-        Response.ResponseBuilder responseBuilder = spy.addEndpointTemplate(null, null, authToken, endpointTemplate);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(409));
+    public void addEndpointTemplate_endPointServiceThrowsDuplicateException_returnsResponseBuilder() throws Exception {
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
+        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        when(endpointConverterCloudV20.toCloudBaseUrl(endpointTemplate)).thenReturn(cloudBaseUrl);
+        when(exceptionHandler.conflictExceptionResponse("duplicate exception")).thenReturn(responseBuilder);
+        doThrow(new DuplicateException("duplicate exception")).when(endpointService).addBaseUrl(cloudBaseUrl);
+        assertThat("response builder", spy.addEndpointTemplate(null, null, authToken, endpointTemplate), equalTo(responseBuilder));
     }
 
     @Test
