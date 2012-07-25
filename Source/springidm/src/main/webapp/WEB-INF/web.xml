@@ -167,16 +167,4 @@
 		<servlet-name>DelegatePassThroughServlet</servlet-name>
 		<url-pattern>/docs/*</url-pattern>
 	</servlet-mapping>
-	<servlet-mapping>
-		<servlet-name>AuthorizeServlet</servlet-name>
-		<url-pattern>/web/authorize</url-pattern>
-	</servlet-mapping>
-	<servlet-mapping>
-		<servlet-name>AcceptServlet</servlet-name>
-		<url-pattern>/web/accept</url-pattern>
-	</servlet-mapping>
-	<servlet-mapping>
-		<servlet-name>DisplayCodeServlet</servlet-name>
-		<url-pattern>/web/displaycode</url-pattern>
-	</servlet-mapping>
 </web-app>
