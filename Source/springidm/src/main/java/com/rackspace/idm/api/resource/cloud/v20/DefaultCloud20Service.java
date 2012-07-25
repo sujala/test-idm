@@ -125,6 +125,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Autowired
     private AtomHopperClient atomHopperClient;
 
+    @Autowired
+    private ExceptionHandler exceptionHandler;
+
     com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
 
     private HashMap<String, JAXBElement<Extension>> extensionMap;
@@ -148,7 +151,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             return Response.ok(
                     OBJ_FACTORIES.getOpenStackIdentityV2Factory().createEndpoint(endpointConverterCloudV20.toEndpoint(baseUrl)).getValue());
         } catch (Exception ex) {
-            return exceptionResponse(ex);
+            return exceptionHandler.exceptionResponse(ex);
         }
     }
 
@@ -166,12 +169,10 @@ public class DefaultCloud20Service implements Cloud20Service {
             ObjectFactory openStackIdentityExtKscatalogV1Factory = OBJ_FACTORIES.getOpenStackIdentityExtKscatalogV1Factory();
             response.entity(openStackIdentityExtKscatalogV1Factory.createEndpointTemplate(value).getValue());
             return response;
-        } catch (BaseUrlConflictException buce) {
-            return endpointTemplateConflictException(buce.getMessage());
         } catch (DuplicateException dex) {
-            return endpointTemplateConflictException(dex.getMessage());
+            return exceptionHandler.conflictExceptionResponse(dex.getMessage());
         } catch (Exception ex) {
-            return exceptionResponse(ex);
+            return exceptionHandler.exceptionResponse(ex);
         }
     }
 
@@ -219,9 +220,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
 
         } catch (DuplicateException bre) {
-            return roleConflictExceptionResponse(bre.getMessage());
+            return exceptionHandler.conflictExceptionResponse(bre.getMessage());
         } catch (Exception ex) {
-            return exceptionResponse(ex);
+            return exceptionHandler.exceptionResponse(ex);
         }
     }
 
@@ -254,7 +255,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             return Response.ok();
 
         } catch (Exception ex) {
-            return exceptionResponse(ex);
+            return exceptionHandler.exceptionResponse(ex);
         }
     }
 
@@ -294,9 +295,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             return Response.created(build).entity(openStackIdentityExtKsadmnV1Factory.createService(service).getValue());
 
         } catch (DuplicateException de) {
-            return serviceConflictExceptionResponse(de.getMessage());
+            return exceptionHandler.conflictExceptionResponse(de.getMessage());
         } catch (Exception ex) {
-            return exceptionResponse(ex);
+            return exceptionHandler.exceptionResponse(ex);
         }
     }
 
@@ -327,9 +328,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             return Response.created(build).entity(openStackIdentityV2Factory.createTenant(value).getValue());
 
         } catch (DuplicateException de) {
-            return tenantConflictExceptionResponse(de.getMessage());
+            return exceptionHandler.tenantConflictExceptionResponse(de.getMessage());
         } catch (Exception ex) {
-            return exceptionResponse(ex);
+            return exceptionHandler.exceptionResponse(ex);
         }
     }
 
@@ -391,9 +392,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             ResponseBuilder created = Response.created(build);
             return created.entity(openStackIdentityV2Factory.createUser(value).getValue());
         } catch (DuplicateException de) {
-            return userConflictExceptionResponse(de.getMessage());
+            return exceptionHandler.conflictExceptionResponse(de.getMessage());
         } catch (Exception ex) {
-            return exceptionResponse(ex);
+            return exceptionHandler.exceptionResponse(ex);
         }
     }
 
@@ -2773,5 +2774,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     public void setCloudGroupService(GroupService cloudGroupService) {
         this.cloudGroupService = cloudGroupService;
+    }
+
+    public void setExceptionHandler(ExceptionHandler exceptionHandler) {
+        this.exceptionHandler = exceptionHandler;
     }
 }
