@@ -37,12 +37,14 @@ public class AcceptServlet extends HttpServlet {
 
     private ApplicationService clientService;
     private UserService userService;
+
     private ScopeAccessService scopeAccessService;
     private Configuration config;
-    
+
     private static final String INVALID_REQUEST = "invalid_request";
     private static final String ACCESS_DENIED = "access_denied";
     private static final String UNAUTHORIZED_CLIENT = "unauthorized_client";
+
     private static final String INVALID_SCOPE = "invalid_scope";
 
     @Override
@@ -202,8 +204,7 @@ public class AcceptServlet extends HttpServlet {
 
     synchronized ApplicationService getClientService() {
         if (clientService == null) {
-            WebApplicationContext context = WebApplicationContextUtils
-                .getWebApplicationContext(getServletContext());
+            WebApplicationContext context = getWebApplicationContext();
             clientService = context.getBean(ApplicationService.class);
         }
         return clientService;
@@ -211,8 +212,7 @@ public class AcceptServlet extends HttpServlet {
 
     synchronized UserService getUserService() {
         if (userService == null) {
-            WebApplicationContext context = WebApplicationContextUtils
-                .getWebApplicationContext(getServletContext());
+            WebApplicationContext context = getWebApplicationContext();
             userService = context.getBean(UserService.class);
         }
         return userService;
@@ -220,11 +220,14 @@ public class AcceptServlet extends HttpServlet {
 
     synchronized ScopeAccessService getScopeAccessService() {
         if (scopeAccessService == null) {
-            WebApplicationContext context = WebApplicationContextUtils
-                .getWebApplicationContext(getServletContext());
+            WebApplicationContext context = getWebApplicationContext();
             scopeAccessService = context.getBean(ScopeAccessService.class);
         }
         return scopeAccessService;
+    }
+
+    WebApplicationContext getWebApplicationContext() {
+        return WebApplicationContextUtils.getWebApplicationContext(getServletContext());
     }
 
     private String generateAuthCode() {
@@ -233,8 +236,7 @@ public class AcceptServlet extends HttpServlet {
 
     int getAuthCodeExpirationSeconds() {
         if (config == null) {
-            WebApplicationContext context = WebApplicationContextUtils
-                .getWebApplicationContext(getServletContext());
+            WebApplicationContext context = getWebApplicationContext();
             config = context.getBean(Configuration.class);
         }
         return config.getInt("authcode.expiration.seconds", 20);
@@ -247,5 +249,21 @@ public class AcceptServlet extends HttpServlet {
         response.setStatus(302);
         response.setHeader("Location", uri.toString());
         return;
+    }
+
+    public void setClientService(ApplicationService clientService) {
+        this.clientService = clientService;
+    }
+
+    public void setUserService(UserService userService) {
+        this.userService = userService;
+    }
+
+    public void setScopeAccessService(ScopeAccessService scopeAccessService) {
+        this.scopeAccessService = scopeAccessService;
+    }
+
+    public void setConfig(Configuration config) {
+        this.config = config;
     }
 }
