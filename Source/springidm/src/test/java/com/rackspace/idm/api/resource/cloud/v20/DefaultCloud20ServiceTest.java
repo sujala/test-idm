@@ -12,6 +12,7 @@ import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Group;
+import com.rackspace.idm.domain.entity.PasswordCredentials;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
@@ -1256,16 +1257,19 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void updateUser_userIdDoesNotMatchUriId_throwsBadRequest() throws Exception {
+    public void updateUser_userIdDoesNotMatchUriId_returnsResponseBuilder() throws Exception {
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         UserForCreate userForCreate = new UserForCreate();
         userForCreate.setId("notSameId");
+        doNothing().when(spy).verifyUserLevelAccess(authToken);
         doReturn(user).when(spy).checkAndGetUser("123");
-        Response.ResponseBuilder responseBuilder = spy.updateUser(httpHeaders, authToken, "123", userForCreate);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+        when(exceptionHandler.exceptionResponse(any(BadRequestException.class))).thenReturn(responseBuilder);
+        assertThat("response code", spy.updateUser(httpHeaders, authToken, "123", userForCreate), equalTo(responseBuilder));
     }
 
     @Test
     public void updateUser_userCannotDisableOwnAccount_throwsBadRequest() throws Exception {
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         UserForCreate userForCreate = new UserForCreate();
         userForCreate.setEnabled(false);
         User user = new User();
@@ -1274,8 +1278,8 @@ public class DefaultCloud20ServiceTest {
         doNothing().when(spy).verifyUserLevelAccess(authToken);
         doReturn(user).when(spy).checkAndGetUser(userId);
         when(userService.getUserByAuthToken(authToken)).thenReturn(user);
-        Response.ResponseBuilder responseBuilder = spy.updateUser(httpHeaders, authToken, userId, userForCreate);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+        when(exceptionHandler.exceptionResponse(any(BadRequestException.class))).thenReturn(responseBuilder);
+        assertThat("response code", spy.updateUser(httpHeaders, authToken, userId, userForCreate), equalTo(responseBuilder));
     }
 
     @Test
@@ -1423,7 +1427,6 @@ public class DefaultCloud20ServiceTest {
     public void addUser_withUserMissingUsername_returnsResponseBuilder() throws Exception {
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         BadRequestException badRequestException = new BadRequestException("missing username");
-        ScopeAccess scopeAccess = new ScopeAccess();
         doNothing().when(spy).verifyUserAdminLevelAccess(authToken);
         doThrow(badRequestException).when(spy).validateUser(userOS);
         when(exceptionHandler.exceptionResponse(badRequestException)).thenReturn(responseBuilder);
@@ -2198,16 +2201,22 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void addUserCredential_passwordCredentialsUserCredentialNotMatchUserName_returns400() throws Exception {
+    public void addUserCredential_passwordCredentialsUserCredentialNotMatchUserName_returnsResponseBuilder() throws Exception {
+        PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
+        passwordCredentialsRequiredUsername.setUsername("username");
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         MediaType mediaType = mock(MediaType.class);
         user.setUsername("wrong_user");
+        JAXBElement<PasswordCredentialsRequiredUsername> jaxbElement = new JAXBElement<PasswordCredentialsRequiredUsername>(QName.valueOf("credentials"),PasswordCredentialsRequiredUsername.class,passwordCredentialsRequiredUsername);
+        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(jaxbElement).when(spy).getJSONCredentials(jsonBody);
         when(httpHeaders.getMediaType()).thenReturn(mediaType);
         when(mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)).thenReturn(true);
-        doNothing().when(spy).validatePasswordCredentials(any(PasswordCredentialsRequiredUsername.class));
+        doNothing().when(spy).validatePasswordCredentials(passwordCredentialsRequiredUsername);
         doNothing().when(spy).validatePassword(anyString());
-        doReturn(user).when(spy).checkAndGetUser(anyString());
-        Response.ResponseBuilder responseBuilder = spy.addUserCredential(httpHeaders, authToken, userId, jsonBody);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+        doReturn(user).when(spy).checkAndGetUser(userId);
+        when(exceptionHandler.exceptionResponse(any(BadRequestException.class))).thenReturn(responseBuilder);
+        assertThat("response builder",spy.addUserCredential(httpHeaders, authToken, userId, jsonBody), equalTo(responseBuilder));
     }
 
     @Test
@@ -2224,19 +2233,22 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void addUserCredential_apiKeyCredentialsUserCredentialNotMatchUserName_returns400() throws Exception {
-        String jsonBody = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                "<apiKeyCredentials\n" +
-                "    xmlns=\"http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0\"\n" +
-                "    username=\"jsmith\"\n" +
-                "    apiKey=\"aaaaa-bbbbb-ccccc-12345678\"/>";
+    public void addUserCredential_apiKeyCredentialsUserCredentialNotMatchUserName_returnsBodyBuilder() throws Exception {
+        ApiKeyCredentials apiCredentials = new ApiKeyCredentials();
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
+        apiCredentials.setUsername("user");
+        String jsonBody = "body";
         MediaType mediaType = mock(MediaType.class);
         user.setUsername("wrong_user");
+        JAXBElement<ApiKeyCredentials> jaxbElement = new JAXBElement<ApiKeyCredentials>(QName.valueOf("credentials"),ApiKeyCredentials.class,apiCredentials);
+        doNothing().when(spy).verifyUserAdminLevelAccess(authToken);
+        doReturn(jaxbElement).when(spy).getXMLCredentials(jsonBody);
         when(httpHeaders.getMediaType()).thenReturn(mediaType);
         when(mediaType.isCompatible(MediaType.APPLICATION_XML_TYPE)).thenReturn(true);
+        doNothing().when(spy).validateApiKeyCredentials(apiCredentials);
         doReturn(user).when(spy).checkAndGetUser(anyString());
-        Response.ResponseBuilder responseBuilder = spy.addUserCredential(httpHeaders, authToken, userId, jsonBody);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+        when(exceptionHandler.exceptionResponse(any(BadRequestException.class))).thenReturn(responseBuilder);
+        assertThat("response builder", spy.addUserCredential(httpHeaders, authToken, userId, jsonBody), equalTo(responseBuilder));
     }
 
     @Test
@@ -3445,15 +3457,17 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void updateUser_authorizationServiceAuthorizeCloudUserIsTrueIdNotMatch_returns403() throws Exception {
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         User user1 = new User();
         user1.setId(userId);
         userOS.setId(userId);
         user.setId("notMatch");
+        doNothing().when(spy).verifyUserAdminLevelAccess(authToken);
         doReturn(user1).when(spy).checkAndGetUser(userId);
         when(authorizationService.authorizeCloudUser(any(ScopeAccess.class))).thenReturn(true);
         when(userService.getUserByAuthToken(authToken)).thenReturn(user);
-        Response.ResponseBuilder responseBuilder = spy.updateUser(null, authToken, userId, userOS);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(403));
+        when(exceptionHandler.exceptionResponse(any(ForbiddenException.class))).thenReturn(responseBuilder);
+        assertThat("response code", spy.updateUser(null, authToken, userId, userOS), equalTo(responseBuilder));
     }
 
     @Test
