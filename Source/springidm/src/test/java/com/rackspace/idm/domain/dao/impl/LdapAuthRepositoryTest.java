@@ -5,6 +5,10 @@ import com.unboundid.ldap.sdk.*;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.List;
 
@@ -22,6 +26,8 @@ import static org.mockito.Mockito.*;
  * Time: 1:32 PM
  * To change this template use File | Settings | File Templates.
  */
+@RunWith(PowerMockRunner.class)          //takes forever use only for small classes when absolutely necessary.
+@PrepareForTest(LDAPConnectionPool.class)
 public class LdapAuthRepositoryTest {
 
     LdapAuthRepository authRepo;
@@ -30,6 +36,8 @@ public class LdapAuthRepositoryTest {
     
     @Before
     public void setUp() throws Exception {
+        connPool = PowerMockito.mock(LDAPConnectionPool.class);
+        config = mock(Configuration.class);
         authRepo = new LdapAuthRepository(connPool, config);
         authRepo = spy(authRepo);
     }
@@ -49,7 +57,7 @@ public class LdapAuthRepositoryTest {
     public void getRackerRoles_withLdapException_throwsIllegalStateException() throws Exception {
         LDAPInterface ldapInterface = mock(LDAPInterface.class);
         when(authRepo.getLdapInterface()).thenReturn(ldapInterface);
-        when(ldapInterface.searchForEntry(anyString(), eq(SearchScope.ONE), any(Filter.class))).thenThrow(new IllegalStateException());
+        when(ldapInterface.searchForEntry(anyString(), eq(SearchScope.ONE), any(Filter.class))).thenThrow(new LDAPSearchException(ResultCode.NOT_SUPPORTED, "ERROR"));
         authRepo.getRackerRoles("");
     }
 
@@ -84,7 +92,37 @@ public class LdapAuthRepositoryTest {
 
     @Test
     public void getLdapInterface_returnsConnPool() throws Exception {
+        authRepo = new LdapAuthRepository(null, null);
         LDAPInterface ldapInterface = authRepo.getLdapInterface();
-        assertThat("ldap interface", ldapInterface, nullValue()); //Because we set it to null in the @Before
+        assertThat("ldap interface", ldapInterface, nullValue());
+    }
+
+    @Test
+    public void authenticate_callsConnPool_bind_and_callsConfig_getStringBaseDn() throws Exception {
+        when(connPool.bind(anyString(), anyString())).thenReturn(new BindResult(new LDAPResult(123, ResultCode.SUCCESS)));
+        authRepo.authenticate("someUser", "somePass");
+        verify(connPool).bind(anyString(), anyString());
+        verify(config).getString(eq("auth.ldap.base.dn"), anyString());
+    }
+
+    @Test
+    public void authenticate_withLdapException_returnsFalse() throws Exception {
+        when(connPool.bind(anyString(), anyString())).thenThrow(new LDAPSearchException(new LDAPException(ResultCode.NOT_SUPPORTED)));
+        boolean authenticated = authRepo.authenticate("someUser", "somePass");
+        assertThat("authenticated", authenticated, equalTo(false));
+    }
+
+    @Test
+    public void authenticate_withLdapException_withInvalidCredentialsResultCode_returnsFalse() throws Exception {
+        when(connPool.bind(anyString(), anyString())).thenThrow(new LDAPSearchException(new LDAPException(ResultCode.INVALID_CREDENTIALS)));
+        boolean authenticated = authRepo.authenticate("someUser", "somePass");
+        assertThat("authenticated", authenticated, equalTo(false));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void authenticate_withNullResult_throwsIllegalStateException() throws Exception {
+        when(connPool.bind(anyString(), anyString())).thenReturn(null);
+        authRepo.authenticate("someUser", "somePass");
+        verify(connPool).bind(anyString(), anyString());
     }
 }

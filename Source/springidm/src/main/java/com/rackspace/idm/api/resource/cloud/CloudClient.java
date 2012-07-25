@@ -33,8 +33,6 @@ import java.util.Set;
 public class CloudClient {
 
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
-    // Todo: create a property
-    private boolean ignoreSSLCert = true;
 
     public Response.ResponseBuilder get(String url, HttpHeaders httpHeaders)
             throws IOException {
@@ -151,11 +149,7 @@ public class CloudClient {
     }
 
     HttpClient getHttpClient() {
-        HttpClient client = new DecompressingHttpClient(new DefaultHttpClient());
-
-        if (ignoreSSLCert) {
-            client = WebClientDevWrapper.wrapClient(client);
-        }
+        HttpClient client = new DecompressingHttpClient(WebClientDevWrapper.wrapClient(new DefaultHttpClient()));
 
         return client;
     }
@@ -172,7 +166,7 @@ public class CloudClient {
         Set<String> keys = httpHeaders.getRequestHeaders().keySet();
         request.setHeaders(new Header[]{});
         for (String key : keys) {
-            if (!key.equalsIgnoreCase(HttpHeaders.CONTENT_LENGTH) && !key.equals(HttpHeaders.HOST)) {
+            if (!key.equalsIgnoreCase(HttpHeaders.CONTENT_LENGTH) && !key.equalsIgnoreCase(HttpHeaders.HOST)) {
                 if (key.equalsIgnoreCase(HttpHeaders.CONTENT_TYPE)) {
                     request.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML);
                 } else {
