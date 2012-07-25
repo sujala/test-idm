@@ -1,19 +1,28 @@
 package com.rackspace.idm.web;
 
 
+import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.domain.service.impl.DefaultApplicationService;
+import com.rackspace.idm.domain.service.impl.DefaultScopeAccessService;
+import com.rackspace.idm.domain.service.impl.DefaultUserService;
 import com.sun.grizzly.http.servlet.HttpServletResponseImpl;
+import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.context.support.WebApplicationContextUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import java.util.ArrayList;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.Mockito.*;
 
 /**
@@ -520,6 +529,77 @@ public class AcceptServletTest {
         verify(scopeAccessService, never()).delegatePermission(anyString(), any(DelegatedPermission.class));
     }
 
+    @Test
+    public void getClientService_clientServiceIsNotNull_returnsApplicationService() throws Exception {
+        DefaultApplicationService defaultApplicationService = mock(DefaultApplicationService.class);
+        acceptServlet.setClientService(defaultApplicationService);
+        ApplicationService result = acceptServlet.getClientService();
+        assertThat("application service", (DefaultApplicationService)result, equalTo(defaultApplicationService));
+    }
 
+    @Test
+    public void getClientService_clientServiceIsNull_returnsApplicationService() throws Exception {
+        DefaultApplicationService defaultApplicationService = mock(DefaultApplicationService.class);
+        WebApplicationContext webApplicationContext = mock(WebApplicationContext.class);
+        doReturn(webApplicationContext).when(spy).getWebApplicationContext();
+        when(webApplicationContext.getBean(ApplicationService.class)).thenReturn(defaultApplicationService);
+        ApplicationService result = spy.getClientService();
+        assertThat("application service", (DefaultApplicationService) result, equalTo(defaultApplicationService));
+    }
 
+    @Test
+    public void getUserService_UserServiceIsNotNull_returnsUserService() throws Exception {
+        DefaultUserService defaultUserService = mock(DefaultUserService.class);
+        acceptServlet.setUserService(defaultUserService);
+        UserService result = acceptServlet.getUserService();
+        assertThat("application service", (DefaultUserService)result, equalTo(defaultUserService));
+    }
+
+    @Test
+    public void getUserService_UserServiceIsNull_returnsApplicationService() throws Exception {
+        DefaultUserService defaultUserService = mock(DefaultUserService.class);
+        WebApplicationContext webApplicationContext = mock(WebApplicationContext.class);
+        doReturn(webApplicationContext).when(spy).getWebApplicationContext();
+        when(webApplicationContext.getBean(UserService.class)).thenReturn(defaultUserService);
+        UserService result = spy.getUserService();
+        assertThat("application service", (DefaultUserService) result, equalTo(defaultUserService));
+    }
+
+    @Test
+    public void getScopeAccessService_ScopeAccessServiceIsNotNull_returnsScopeAccessService() throws Exception {
+        DefaultScopeAccessService defaultScopeAccessService = mock(DefaultScopeAccessService.class);
+        acceptServlet.setScopeAccessService(defaultScopeAccessService);
+        ScopeAccessService result = acceptServlet.getScopeAccessService();
+        assertThat("application service", (DefaultScopeAccessService)result, equalTo(defaultScopeAccessService));
+    }
+
+    @Test
+    public void getScopeAccessService_ScopeAccessServiceIsNull_returnsApplicationService() throws Exception {
+        DefaultScopeAccessService defaultScopeAccessService = mock(DefaultScopeAccessService.class);
+        WebApplicationContext webApplicationContext = mock(WebApplicationContext.class);
+        doReturn(webApplicationContext).when(spy).getWebApplicationContext();
+        when(webApplicationContext.getBean(ScopeAccessService.class)).thenReturn(defaultScopeAccessService);
+        ScopeAccessService result = spy.getScopeAccessService();
+        assertThat("application service", (DefaultScopeAccessService) result, equalTo(defaultScopeAccessService));
+    }
+
+    @Test
+    public void getAuthCodeExpirationSeconds_configNotNull_returns20() throws Exception {
+        Configuration config = mock(Configuration.class);
+        acceptServlet.setConfig(config);
+        when(config.getInt("authcode.expiration.seconds", 20)).thenReturn(20);
+        int result = acceptServlet.getAuthCodeExpirationSeconds();
+        assertThat("seconds", result, equalTo(20));
+    }
+
+    @Test
+    public void getAuthCodeExpirationSeconds_configIsNull_returns20() throws Exception {
+        Configuration config = mock(Configuration.class);
+        WebApplicationContext webApplicationContext = mock(WebApplicationContext.class);
+        doReturn(webApplicationContext).when(spy).getWebApplicationContext();
+        when(webApplicationContext.getBean(Configuration.class)).thenReturn(config);
+        when(config.getInt("authcode.expiration.seconds", 20)).thenReturn(20);
+        int result = spy.getAuthCodeExpirationSeconds();
+        assertThat("configuration", result, equalTo(20));
+    }
 }

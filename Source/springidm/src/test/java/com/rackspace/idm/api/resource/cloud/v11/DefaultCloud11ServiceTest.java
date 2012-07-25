@@ -2783,6 +2783,14 @@ public class DefaultCloud11ServiceTest {
     }
 
     @Test
+    public void addBaseUrlToTenant_cloudBaseUrlGetDefIsFalse_doesNothing() throws Exception {
+        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
+        cloudBaseUrl.setDef(false);
+        spy.addbaseUrlToTenant(tenant, cloudBaseUrl);
+        assertTrue("does nothing", true);
+    }
+
+    @Test
     public void deleteBaseURLRef_baseUrlDefaultIsTrue_throwsBadRequest_returns400() throws Exception {
         CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
         cloudBaseUrl.setDef(true);
