@@ -83,7 +83,6 @@ public class DelegateCloud20ServiceTest {
         delegateCloud20Service.setTenantService(tenantService);
         delegateCloud20Service.setAuthorizationService(authorizationService);
         delegateCloud20Service.setExceptionHandler(exceptionHandler);
-        delegateCloud20Service.setObjectFactory(objectFactory);
         when(config.getString("cloudAuth20url")).thenReturn(url);
         when(config.getString("cloudAuthUK20url")).thenReturn(url);
         when(config.getBoolean("GAKeystoneDisabled")).thenReturn(disabled);
@@ -2932,6 +2931,7 @@ public class DelegateCloud20ServiceTest {
 
     @Test
     public void authenticateImpersonated_cloudExtractorThrowsException_callsExceptionResponse() throws Exception {
+        spy.setObjectFactory(objectFactory);
         JAXBException ex = new JAXBException("error");
         doThrow(ex).when(spy).marshallObjectToString(null);
         when(authenticationRequest.getToken()).thenReturn(new TokenForAuthenticationRequest());
