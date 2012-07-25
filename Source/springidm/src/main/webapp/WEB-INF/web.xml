@@ -144,18 +144,6 @@
         </init-param>
 	</servlet>
 	<servlet>
-		<servlet-name>AuthorizeServlet</servlet-name>
-		<servlet-class>com.rackspace.idm.web.AuthorizeServlet</servlet-class>
-	</servlet>
-	<servlet>
-		<servlet-name>AcceptServlet</servlet-name>
-		<servlet-class>com.rackspace.idm.web.AcceptServlet</servlet-class>
-	</servlet>
-	<servlet>
-		<servlet-name>DisplayCodeServlet</servlet-name>
-		<servlet-class>com.rackspace.idm.web.DisplayCodeServlet</servlet-class>
-	</servlet>
-	<servlet>
         <servlet-name>DelegatePassThroughServlet</servlet-name>
         <servlet-class>com.rackspace.idm.web.DelegatePassThroughServlet</servlet-class>
     </servlet>
