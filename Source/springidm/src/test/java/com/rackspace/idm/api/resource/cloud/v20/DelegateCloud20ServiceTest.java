@@ -2101,9 +2101,22 @@ public class DelegateCloud20ServiceTest {
 
     @Test
     public void deleteUser_RoutingTrue_UserExistsTrue_callsDefaultService() throws Exception {
+        User user = new User();
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
-        when(userService.userExistsById(userId)).thenReturn(true);
+        when(userService.getUserById(anyString())).thenReturn(user);
+        when(userService.isMigratedUser(user)).thenReturn(false);
         delegateCloud20Service.deleteUser(null, null, userId);
+        verify(defaultCloud20Service).deleteUser(null, null, userId);
+    }
+
+    @Test
+    public void deleteUser_RoutingTrue_UserExistsAndMigratedTrue_callsDefaultService() throws Exception {
+        User user = new User();
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(userService.getUserById(anyString())).thenReturn(user);
+        when(userService.isMigratedUser(user)).thenReturn(true);
+        delegateCloud20Service.deleteUser(null, null, userId);
+        verify(cloudClient).delete(eq(url + "users/" + userId), Matchers.<HttpHeaders>any());
         verify(defaultCloud20Service).deleteUser(null, null, userId);
     }
 

@@ -673,9 +673,16 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder deleteUser(HttpHeaders httpHeaders, String authToken, String userId) throws IOException {
-        if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
-            String request = getCloudAuthV20Url() + "users/" + userId;
-            return cloudClient.delete(request, httpHeaders);
+        if (isCloudAuthRoutingEnabled()) {
+            com.rackspace.idm.domain.entity.User user = userService.getUserById(userId);
+
+            if(user == null)
+                return cloudClient.delete(getCloudAuthV20Url() + "users/" + userId, httpHeaders);
+
+            if(userService.isMigratedUser(user)){
+                cloudClient.delete(getCloudAuthV20Url() + "users/" + userId, httpHeaders);
+                return defaultCloud20Service.deleteUser(httpHeaders, authToken, userId);
+            }
         }
         return defaultCloud20Service.deleteUser(httpHeaders, authToken, userId);
     }
