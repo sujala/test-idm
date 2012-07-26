@@ -399,9 +399,22 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         assertThat("user", result, equalTo(user));
     }
 
-    @Test (expected = IllegalArgumentException.class)
-    public void getUserByUsername_usernameIsBlank_throwsIllegalArgument() throws Exception {
-        ldapUserRepository.getUserByUsername("   ");
+    @Test
+    public void getUserByUsername_usernameIsBlank_returnsNull() throws Exception {
+        User userByUsername = ldapUserRepository.getUserByUsername("   ");
+        assertThat("user", userByUsername, equalTo(null));
+    }
+
+    @Test
+    public void getUserByUsername_usernameIsNull_returnsNull() throws Exception {
+        User userByUsername = ldapUserRepository.getUserByUsername(null);
+        assertThat("user", userByUsername, equalTo(null));
+    }
+
+    @Test
+    public void getUserByUsername_usernameIsEmptyString_returnsNull() throws Exception {
+        User userByUsername = ldapUserRepository.getUserByUsername("");
+        assertThat("user", userByUsername, equalTo(null));
     }
 
     @Test

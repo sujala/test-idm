@@ -623,11 +623,12 @@ public class DelegateCloud20Service implements Cloud20Service {
             throws IOException, JAXBException {
 
         ScopeAccess accessTokenByAuthHeader = scopeAccessService.getAccessTokenByAuthHeader(authToken);
-        boolean isUserAdmin = false;
-        if(accessTokenByAuthHeader!=null){
-            isUserAdmin = authorizationService.authorizeCloudUserAdmin(accessTokenByAuthHeader);
+        boolean isUserAdminInGA = false;
+
+        if (accessTokenByAuthHeader != null) {
+            isUserAdminInGA = authorizationService.authorizeCloudUserAdmin(accessTokenByAuthHeader);
         }
-        if (isCloudAuthRoutingEnabled() && !isUserAdmin) {
+        if (isCloudAuthRoutingEnabled() && !isUserAdminInGA) {
             String request = getCloudAuthV20Url() + "users";
             String body = marshallObjectToString(objectFactory.createUser(user));
             if (user != null && userService.userExistsByUsername(user.getUsername())) {

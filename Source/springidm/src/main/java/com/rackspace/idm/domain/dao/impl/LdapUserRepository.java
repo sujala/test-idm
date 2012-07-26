@@ -391,8 +391,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         // soft-deleted
         getLogger().debug("Doing search for username " + username);
         if (StringUtils.isBlank(username)) {
-            getLogger().error("Null or Empty username parameter");
-            throw new IllegalArgumentException("Null or Empty username parameter.");
+            return null;
         }
 
         Filter searchFilter = new LdapSearchBuilder()

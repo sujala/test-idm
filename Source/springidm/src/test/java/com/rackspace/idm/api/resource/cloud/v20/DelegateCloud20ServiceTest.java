@@ -95,6 +95,14 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
+    public void addUser_routingTrueAndCallerDoesNotExistInGA_callsCloudClient() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(scopeAccessService.getAccessTokenByAuthHeader("token")).thenReturn(null);
+        spy.addUser(null,null,"token",null);
+        verify(cloudClient).post(anyString(), any(HttpHeaders.class), anyString());
+    }
+
+    @Test
     public void addUser_routingTrueAndCallerExistsInGA_callerIsNotUserAdmin_callsCloudClient() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         when(authorizationService.authorizeCloudUserAdmin(scopeAccess)).thenReturn(false);
