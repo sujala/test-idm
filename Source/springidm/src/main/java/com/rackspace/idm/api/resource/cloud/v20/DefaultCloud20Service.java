@@ -469,7 +469,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             userService.updateUserById(retrievedUser, false);
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(retrievedUser)).getValue());
         } catch (Exception ex) {
-            return exceptionResponse(ex);
+            return exceptionHandler.exceptionResponse(ex);
         }
     }
 
@@ -615,7 +615,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
             return Response.ok(credentials.getValue()).status(Status.OK);
         } catch (Exception ex) {
-            return exceptionResponse(ex);
+            return exceptionHandler.exceptionResponse(ex);
         }
     }
 
