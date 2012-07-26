@@ -94,17 +94,15 @@ public class LdapUserRepositoryIntegrationTest extends InMemoryLdapIntegrationTe
         }
         
         try {
-            repo.getUserByUsername(null);
-            Assert.fail("Should have thrown an exception!");
+            Assert.assertNull(repo.getUserByUsername(null));
         } catch (IllegalArgumentException e) {
-            Assert.assertTrue(true);
+            Assert.fail("should have returned null!");
         }
 
         try {
-            repo.getUserByUsername("     ");
-            Assert.fail("Should have thrown an exception!");
+            Assert.assertNull(repo.getUserByUsername("     "));
         } catch (IllegalArgumentException e) {
-            Assert.assertTrue(true);
+            Assert.fail("should have returned null");
         }
 
         try {
