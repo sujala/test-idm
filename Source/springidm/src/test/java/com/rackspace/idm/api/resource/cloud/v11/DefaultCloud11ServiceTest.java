@@ -2129,7 +2129,7 @@ public class DefaultCloud11ServiceTest {
     @Test
     public void updateUser_userIdIsBlank_returns400() throws Exception {
         doNothing().when(spy).authenticateCloudAdminUser(request);
-        doNothing().when(userValidator).validate(user);
+        doThrow(new BadRequestException()).when(userValidator).validate(user);
         user.setId("");
         Response.ResponseBuilder responseBuilder = spy.updateUser(request, "", null, user);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
@@ -2620,6 +2620,14 @@ public class DefaultCloud11ServiceTest {
     @Test(expected = CloudAdminAuthorizationException.class)
     public void authenticateCloudAdminUser_withInvalidAuthHeaders() throws Exception {
         when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn("Basic " + Base64.encode("auth"));
+        defaultCloud11Service.authenticateCloudAdminUser(request);
+    }
+
+    @Test(expected = CloudAdminAuthorizationException.class)
+    public void authenticateCloudAdminUser_withServiceAndIdentityAdmin() throws Exception {
+        when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn("Basic " + Base64.encode("auth"));
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
         defaultCloud11Service.authenticateCloudAdminUser(request);
     }
 

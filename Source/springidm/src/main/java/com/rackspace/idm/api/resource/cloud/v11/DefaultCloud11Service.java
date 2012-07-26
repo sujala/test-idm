@@ -870,10 +870,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             userValidator.validate(user);
             userValidator.validateUsername(user.getId());
 
-            if (user.getId().equals(""))
-                throw new BadRequestException("User Id can not be null.");
-
-            if (!user.getId().equals(userId) && !user.getId().equals("")) { //ToDO: Move to user validator?
+            if (!StringUtils.equals(user.getId(), userId)) { //ToDO: Move to user validator?
                 throw new BadRequestException("User Id does not match.");
             }
             User gaUser = userService.getUser(userId);
@@ -940,7 +937,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 throw new NotFoundException(String.format("BaseUrlId %s not found", baseURLId));
             }
 
-            if (serviceName != null && !serviceName.equals(baseUrl.getServiceName())) {
+            if (!StringUtils.equals(serviceName, baseUrl.getServiceName())) {
                 throw new NotFoundException(String.format("BaseUrlId %s not found", baseURLId));
             }
 
@@ -965,7 +962,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             List<CloudBaseUrl> filteredBaseUrls = new ArrayList<CloudBaseUrl>();
             for (CloudBaseUrl url : baseUrls) {
                 String service = url.getServiceName();
-                if (service != null && service.equals(serviceName)) {
+                if (StringUtils.equals(service, serviceName)) {
                     filteredBaseUrls.add(url);
                 }
             }
