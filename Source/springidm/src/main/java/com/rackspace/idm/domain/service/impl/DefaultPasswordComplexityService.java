@@ -1,19 +1,12 @@
 package com.rackspace.idm.domain.service.impl;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.service.PasswordComplexityService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.rackspace.idm.domain.entity.LowercaseRule;
-import com.rackspace.idm.domain.entity.MinimumLengthRule;
-import com.rackspace.idm.domain.entity.NumberRule;
-import com.rackspace.idm.domain.entity.PasswordComplexityResult;
-import com.rackspace.idm.domain.entity.PasswordRule;
-import com.rackspace.idm.domain.entity.SpecialCharacterRule;
-import com.rackspace.idm.domain.entity.UppercaseRule;
-import com.rackspace.idm.domain.service.PasswordComplexityService;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DefaultPasswordComplexityService implements
     PasswordComplexityService {
@@ -32,7 +25,7 @@ public class DefaultPasswordComplexityService implements
         rules.add(minLengthRule);
         rules.add(uppercaseRule);
         rules.add(lowercaseRule);
-        rules.add(specialCharacterRule);
+        //rules.add(specialCharacterRule); //ToDo: Removed for migration since Cloud Auth doesn't check for special chars
         rules.add(numberRule);
     }
 
