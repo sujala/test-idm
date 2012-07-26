@@ -22,7 +22,6 @@ import com.sun.jersey.core.util.Base64;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Matchers;
@@ -81,7 +80,7 @@ public class DefaultCloud11ServiceTest {
     UserScopeAccess userScopeAccess;
     javax.ws.rs.core.HttpHeaders httpHeaders;
     CloudExceptionResponse cloudExceptionResponse;
-    Application application = new Application("id",null,"myApp", null, null);
+    Application application = new Application("id",null,"myApp", null);
     AtomHopperClient atomHopperClient;
     GroupService userGroupService, cloudGroupService;
     AuthConverterCloudV11 authConverterCloudv11;
@@ -136,7 +135,7 @@ public class DefaultCloud11ServiceTest {
         when(config.getString("serviceName.cloudServers")).thenReturn("cloudServers");
         when(config.getString("serviceName.cloudFiles")).thenReturn("cloudFiles");
         application.setOpenStackType("foo");
-        Application testService = new Application(null, null, "testService", null, null);
+        Application testService = new Application(null, null, "testService", null);
         testService.setOpenStackType("foo");
         when(clientService.getByName(any(String.class))).thenReturn(testService);
         when(clientService.getClientRoleByClientIdAndRoleName(anyString(), anyString())).thenReturn(new ClientRole());

@@ -512,7 +512,7 @@ public class LdapApplicationRepositoryIntegrationTest extends InMemoryLdapIntegr
 
     private Application createTestClientInstance() {
         Application newClient = new Application("DELETE_My_ClientId", ClientSecret
-            .newInstance("DELETE_My_Client_Secret"), "DELETE_My_Name", "RCN-123-456-789", ClientStatus.ACTIVE);
+            .newInstance("DELETE_My_Client_Secret"), "DELETE_My_Name", "RCN-123-456-789");
         return newClient;
     }
     
