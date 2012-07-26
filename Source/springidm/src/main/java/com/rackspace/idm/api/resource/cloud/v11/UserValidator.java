@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v11;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspacecloud.docs.auth.api.v1.User;
 import org.apache.commons.lang.CharUtils;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Component;
 
 import java.util.regex.Pattern;
@@ -24,13 +25,8 @@ public class UserValidator {
             throw new BadRequestException(USER_ID_NULL_MSG);
         //} else if (user.getNastId() != null && user.getKey() != null) {
             //no op
-        } else {
-            if (user.getId() == null) {
-                throw new BadRequestException(USER_ID_NULL_MSG);
-            }
-            if (user.getId().isEmpty()) {
-                throw new BadRequestException(USER_ID_NULL_MSG);
-            }
+        } else if (StringUtils.isBlank(user.getId())){
+                throw new BadRequestException(USER_ID_EMPTY_MSG);
         }
     }
 

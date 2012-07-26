@@ -15,13 +15,12 @@ public class ClientTests {
     private final String clientPassword = "Secret";
     private final String name = "Name";
     private final String customerId = "CustomerId";
-    private final ClientStatus status = ClientStatus.ACTIVE;
 
     private Application getTestClient() {
         ClientSecret clientSecret = ClientSecret.newInstance(clientPassword);
 
         return new Application(clientId, clientSecret, name,
-            customerId, status);
+            customerId);
     }
 
     @Test

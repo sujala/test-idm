@@ -15,13 +15,11 @@ import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.Applications;
 import com.rackspace.idm.domain.entity.Customer;
-import com.rackspace.idm.domain.entity.CustomerStatus;
 import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.service.CustomerService;
 import com.rackspace.idm.domain.service.TokenService;
-import com.rackspace.idm.domain.service.impl.DefaultCustomerService;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 
@@ -34,13 +32,6 @@ public class CustomerServiceTests {
     TokenService mockTokenService;
 
     String customerId = "CustomerId";
-    String customerName = "Name";
-    String customerInum = "Inum";
-    String customerIname = "Iname";
-    CustomerStatus customerStatus = CustomerStatus.ACTIVE;
-    String customerSeeAlso = "SeeAlso";
-    String customerOwner = "Owner";
-    String customerCountry = "USA";
     String username = "username";
     String clientId = "clientId";
     
