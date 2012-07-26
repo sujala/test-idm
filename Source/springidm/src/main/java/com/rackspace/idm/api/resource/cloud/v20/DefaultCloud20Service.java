@@ -640,7 +640,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             this.tenantService.addTenantRoleToUser(user, role);
             return Response.ok();
         } catch (Exception ex) {
-            return exceptionResponse(ex);
+            return exceptionHandler.exceptionResponse(ex);
         }
     }
 
@@ -782,7 +782,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createAccess(auth).getValue());
         } catch (Exception ex) {
-            return exceptionResponse(ex);
+            return exceptionHandler.exceptionResponse(ex);
         }
     }
 
@@ -849,7 +849,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             tenantService.updateTenant(tenant);
             return Response.noContent();
         } catch (Exception ex) {
-            return exceptionResponse(ex);
+            return exceptionHandler.exceptionResponse(ex);
         }
     }
 
@@ -861,7 +861,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             this.endpointService.deleteBaseUrl(baseUrl.getBaseUrlId());
             return Response.noContent();
         } catch (Exception ex) {
-            return exceptionResponse(ex);
+            return exceptionHandler.exceptionResponse(ex);
         }
     }
 
@@ -876,7 +876,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             this.clientService.deleteClientRole(role);
             return Response.noContent();
         } catch (Exception ex) {
-            return exceptionResponse(ex);
+            return exceptionHandler.exceptionResponse(ex);
         }
     }
 
@@ -896,7 +896,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             this.tenantService.deleteTenantRole(user.getUniqueId(), tenantrole);
             return Response.noContent();
         } catch (Exception ex) {
-            return exceptionResponse(ex);
+            return exceptionHandler.exceptionResponse(ex);
         }
     }
 
@@ -908,7 +908,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             this.clientService.delete(client.getClientId());
             return Response.noContent();
         } catch (Exception ex) {
-            return exceptionResponse(ex);
+            return exceptionHandler.exceptionResponse(ex);
         }
     }
 
@@ -920,7 +920,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             tenantService.deleteTenant(tenant.getTenantId());
             return Response.noContent();
         } catch (Exception ex) {
-            return exceptionResponse(ex);
+            return exceptionHandler.exceptionResponse(ex);
         }
     }
 
