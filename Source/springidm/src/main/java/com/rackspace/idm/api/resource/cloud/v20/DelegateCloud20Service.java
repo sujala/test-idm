@@ -93,7 +93,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     private JAXBObjectFactories OBJ_FACTORIES;
 
     @Autowired
-    private  ExceptionHandler exceptionHandler;
+    private ExceptionHandler exceptionHandler;
 
     @Autowired
     private CloudUserExtractor cloudUserExtractor;
@@ -123,9 +123,9 @@ public class DelegateCloud20Service implements Cloud20Service {
         //Check for impersonated token if authenticating with token creds
         if (authenticationRequest.getToken() != null && !StringUtils.isBlank(authenticationRequest.getToken().getId())) {
             ScopeAccess sa = scopeAccessService.getScopeAccessByAccessToken(authenticationRequest.getToken().getId());
-            if(sa instanceof ImpersonatedScopeAccess){
+            if (sa instanceof ImpersonatedScopeAccess) {
                 //check expiration
-               return authenticateImpersonated(httpHeaders, authenticationRequest, sa);
+                return authenticateImpersonated(httpHeaders, authenticationRequest, sa);
             }
         }
 
@@ -161,10 +161,10 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     ResponseBuilder authenticateImpersonated(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest, ScopeAccess sa) throws IOException, JAXBException {
-        try{
-            ImpersonatedScopeAccess isa = (ImpersonatedScopeAccess)sa;
+        try {
+            ImpersonatedScopeAccess isa = (ImpersonatedScopeAccess) sa;
             com.rackspace.idm.domain.entity.User user = userService.getUserByAuthToken(isa.getImpersonatingToken());
-            if(user == null) {
+            if (user == null) {
                 authenticationRequest.getToken().setId(isa.getImpersonatingToken());
                 String body = marshallObjectToString(objectFactory.createAuth(authenticationRequest));
 
@@ -188,7 +188,7 @@ public class DelegateCloud20Service implements Cloud20Service {
                 }
                 return serviceResponse;
             }
-        } catch (Exception ex){
+        } catch (Exception ex) {
             exceptionHandler.exceptionResponse(ex);
         }
 
@@ -300,7 +300,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder listUsers(HttpHeaders httpHeaders, String authToken, Integer marker, Integer limit) throws IOException {
         ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByAccessToken(authToken);
-        if(scopeAccess != null)
+        if (scopeAccess != null)
             return defaultCloud20Service.listUsers(httpHeaders, authToken, marker, limit);
 
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
@@ -623,31 +623,35 @@ public class DelegateCloud20Service implements Cloud20Service {
             throws IOException, JAXBException {
 
         ScopeAccess accessTokenByAuthHeader = scopeAccessService.getAccessTokenByAuthHeader(authToken);
-        if (isCloudAuthRoutingEnabled() && accessTokenByAuthHeader == null) {
+        boolean isUserAdmin = false;
+        if(accessTokenByAuthHeader!=null){
+            isUserAdmin = authorizationService.authorizeCloudUserAdmin(accessTokenByAuthHeader);
+        }
+        if (isCloudAuthRoutingEnabled() && !isUserAdmin) {
             String request = getCloudAuthV20Url() + "users";
             String body = marshallObjectToString(objectFactory.createUser(user));
-            if(user!=null && userService.userExistsByUsername(user.getUsername())){
+            if (user != null && userService.userExistsByUsername(user.getUsername())) {
                 throw new DuplicateUsernameException(String.format("Username %s already exists", user.getUsername()));
             }
             return cloudClient.post(request, httpHeaders, body);
         }
         if (user != null && !StringUtils.isBlank(user.getUsername())) {
-            MultivaluedMap<String,String> requestHeaders = httpHeaders.getRequestHeaders();
+            MultivaluedMap<String, String> requestHeaders = httpHeaders.getRequestHeaders();
             String gaUserUsername = config.getString("ga.username");
             String gaUserPassword = config.getString("ga.password");
             requestHeaders.add(org.apache.http.HttpHeaders.AUTHORIZATION, getBasicAuth(gaUserUsername, gaUserPassword));
             //search for user in US Cloud Auth
-            String uri = getCloudAuthV11Url() + "users/"+user.getUsername();
+            String uri = getCloudAuthV11Url() + "users/" + user.getUsername();
             ResponseBuilder cloudAuthUSResponse = cloudClient.get(uri, httpHeaders);
             int status = cloudAuthUSResponse.build().getStatus();
-            if(status==200){
+            if (status == 200) {
                 throw new DuplicateUsernameException(String.format("Username %s already exists", user.getUsername()));
             }
             //search for user in UK Cloud Auth
-            String ukUri = getCloudAuthUKV11Url() + "users/"+user.getUsername();
+            String ukUri = getCloudAuthUKV11Url() + "users/" + user.getUsername();
             ResponseBuilder cloudAuthUKResponse = cloudClient.get(ukUri, httpHeaders);
             status = cloudAuthUKResponse.build().getStatus();
-            if(status==200){
+            if (status == 200) {
                 throw new DuplicateUsernameException(String.format("Username %s already exists", user.getUsername()));
             }
         }
@@ -676,10 +680,10 @@ public class DelegateCloud20Service implements Cloud20Service {
         if (isCloudAuthRoutingEnabled()) {
             com.rackspace.idm.domain.entity.User user = userService.getUserById(userId);
 
-            if(user == null)
+            if (user == null)
                 return cloudClient.delete(getCloudAuthV20Url() + "users/" + userId, httpHeaders);
 
-            if(userService.isMigratedUser(user)){
+            if (userService.isMigratedUser(user)) {
                 cloudClient.delete(getCloudAuthV20Url() + "users/" + userId, httpHeaders);
                 return defaultCloud20Service.deleteUser(httpHeaders, authToken, userId);
             }
