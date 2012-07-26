@@ -269,7 +269,7 @@ public class DelegateCloud11Service implements Cloud11Service {
                 return cloudClient.delete(getCloudAuthV11Url().concat("users/" + userId), httpHeaders);
 
             if(defaultUserService.isMigratedUser(user)){
-                ResponseBuilder resp = cloudClient.delete(getCloudAuthV11Url().concat("users/" + userId), httpHeaders);
+                cloudClient.delete(getCloudAuthV11Url().concat("users/" + userId), httpHeaders);
                 return defaultCloud11Service.deleteUser(request, userId, httpHeaders);
             }
         }
