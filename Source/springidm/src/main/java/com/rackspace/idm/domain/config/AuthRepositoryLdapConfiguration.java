@@ -96,4 +96,8 @@ public class AuthRepositoryLdapConfiguration {
     public Configuration getConfig() {
         return config;
     }
+
+    public void setConfig(Configuration config) {
+        this.config = config;
+    }
 }
