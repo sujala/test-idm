@@ -38,8 +38,7 @@ public class Application implements Auditable {
     public Application() {
     }
 
-    public Application(String clientId, ClientSecret clientSecret, String name,
-        String rcn, ClientStatus status) {
+    public Application(String clientId, ClientSecret clientSecret, String name, String rcn) {
         this.clientId = clientId;
         this.rcn = rcn;
         this.clientSecret = clientSecret;

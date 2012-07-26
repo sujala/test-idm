@@ -77,12 +77,11 @@ public class ClientRole implements Auditable {
     
     public void copyChanges(ClientRole modifiedClient) {
         
-        if (modifiedClient.getDescription() != null) {
-            if (StringUtils.isBlank(modifiedClient.getDescription())) {
-                setDescription(null);
-            } else {
-                setDescription(modifiedClient.getDescription());
-            }
+        if (StringUtils.isBlank(modifiedClient.getDescription())) {
+            setDescription(null);
+        }
+        else {
+            setDescription(modifiedClient.getDescription());
         }
     }
 

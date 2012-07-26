@@ -19,14 +19,11 @@ import com.rackspace.idm.domain.entity.Applications;
 import com.rackspace.idm.domain.entity.ClientGroup;
 import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.ClientSecret;
-import com.rackspace.idm.domain.entity.ClientStatus;
 import com.rackspace.idm.domain.entity.Customer;
-import com.rackspace.idm.domain.entity.CustomerStatus;
 import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.ApplicationService;
-import com.rackspace.idm.domain.service.impl.DefaultApplicationService;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 
@@ -41,23 +38,7 @@ public class ApplicationServiceTests {
     String clientId = "ClientId";
     ClientSecret clientSecret = ClientSecret.newInstance("Secret");
     String name = "Name";
-    String inum = "Inum";
-    String iname = "Iname";
     String customerId = "CustomerId";
-    ClientStatus status = ClientStatus.ACTIVE;
-    String seeAlso = "SeeAlso";
-    String owner = "Owner";
-
-    String customerName = "Name";
-    String customerInum = "Inum";
-    String customerIname = "Iname";
-    CustomerStatus customerStatus = CustomerStatus.ACTIVE;
-    String customerSeeAlso = "SeeAlso";
-    String customerOwner = "Owner";
-    String customerCountry = "USA";
-
-    String resourceId = "resource";
-    String resourceValue = "resourceValue";
 
     String groupName = "groupName";
     String groupType = "groupType";
@@ -150,20 +131,6 @@ public class ApplicationServiceTests {
         Assert.assertNull(retrievedClient);
         EasyMock.verify(mockApplicationDao);
     }
-
-//    @Test
-//    public void shouldAuthenticateClient() {
-//        EasyMock.expect(
-//            mockClientDao.authenticate(clientId, clientSecret.getValue()))
-//            .andReturn(new ClientAuthenticationResult(getFakeClient(), true));
-//        EasyMock.replay(mockClientDao);
-//
-//        ClientAuthenticationResult authenticated = clientService.authenticate(
-//            clientId, clientSecret.getValue());
-//
-//        Assert.assertTrue(authenticated.isAuthenticated());
-//        EasyMock.verify(mockClientDao);
-//    }
 
     @Test
     public void shouldAddClient() {
@@ -672,7 +639,7 @@ public class ApplicationServiceTests {
 
     private Application getFakeClient() {
         Application client = new Application(clientId, clientSecret, name,
-            customerId, status);
+            customerId);
         client.setUniqueId(uniqueId);
         return client;
     }
