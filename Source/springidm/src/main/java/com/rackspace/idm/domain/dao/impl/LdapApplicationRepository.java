@@ -861,7 +861,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
     private void checkForClientSecretModification(Application cNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
         //TODO null pointer?
-        if (cNew.getClientSecretObj().isNew()) {
+        if (cNew.getClientSecretObj() != null && cNew.getClientSecretObj().isNew()) {
             mods.add(new Modification(ModificationType.REPLACE, ATTR_CLIENT_SECRET, cNew.getClientSecretObj().getValue()));
             mods.add(new Modification(ModificationType.REPLACE, ATTR_CLEAR_PASSWORD, cryptHelper.encrypt(cNew.getClientSecretObj().getValue())));
         }
