@@ -853,18 +853,17 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         }
     }
 
-    private void checkForUseForDefaultRegionModification(Application cOld, Application cNew, List<Modification> mods) {
+    void checkForUseForDefaultRegionModification(Application cOld, Application cNew, List<Modification> mods) {
         if (cNew.getUseForDefaultRegion() != null && !cNew.getUseForDefaultRegion().equals(cOld.getUseForDefaultRegion())) {
             mods.add(new Modification(ModificationType.REPLACE, ATTR_USE_FOR_DEFAULT_REGION, String.valueOf(cNew.getUseForDefaultRegion())));
         }
     }
 
     private void checkForClientSecretModification(Application cNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
+        //TODO null pointer?
         if (cNew.getClientSecretObj().isNew()) {
-            mods.add(new Modification(ModificationType.REPLACE,
-                    ATTR_CLIENT_SECRET, cNew.getClientSecretObj().getValue()));
-            mods.add(new Modification(ModificationType.REPLACE,
-                    ATTR_CLEAR_PASSWORD, cryptHelper.encrypt(cNew.getClientSecretObj().getValue())));
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_CLIENT_SECRET, cNew.getClientSecretObj().getValue()));
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_CLEAR_PASSWORD, cryptHelper.encrypt(cNew.getClientSecretObj().getValue())));
         }
     }
 

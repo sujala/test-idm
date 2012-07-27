@@ -8,6 +8,7 @@ import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.CryptHelper;
 import com.unboundid.ldap.sdk.*;
 import com.unboundid.ldap.sdk.persist.LDAPPersistException;
+import org.apache.commons.collections.list.AbstractLinkedList;
 import org.apache.commons.configuration.Configuration;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.junit.Before;
@@ -788,6 +789,12 @@ public class LdapApplicationRepositoryTest extends InMemoryLdapIntegrationTest{
         client.setClientSecretObj(ClientSecret.existingInstance(null));
         List<Modification> result = spy.getModifications(client, client);
         assertThat("mods", result.isEmpty(), equalTo(true));
+    }
+
+    @Test
+    public void getModifications_callsCheckForUseForDefaultRegionModification() throws Exception {
+        spy.getModifications(new Application(), new Application());
+        verify(spy).checkForUseForDefaultRegionModification(any(Application.class), any(Application.class), any(List.class));
     }
 
     @Test
