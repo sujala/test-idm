@@ -47,32 +47,6 @@ public class TokenConverter {
         return of.createToken(jaxbToken);
     }
 
-//    public com.rackspace.api.idm.v1.Token toTokenJaxb(String tokenString,
-//        Date expiration, Permissions permList) {
-//        com.rackspace.api.idm.v1.Token jaxbToken = of.createToken();
-//
-//        jaxbToken.setId(tokenString);
-//
-//        try {
-//            if (expiration != null) {
-//
-//                jaxbToken.setExpires(DatatypeFactory.newInstance()
-//                    .newXMLGregorianCalendar(
-//                        new DateTime(expiration).toGregorianCalendar()));
-//            }
-//
-//        } catch (DatatypeConfigurationException e) {
-//            // TODO Auto-generated catch block
-//            e.printStackTrace();
-//        }
-//
-//        if (permList != null) {
-//            jaxbToken.setPermissionList(permList);
-//        }
-//
-//        return jaxbToken;
-//    }
-
     public com.rackspace.api.idm.v1.DelegatedToken toDelegatedTokenJaxb(
         DelegatedClientScopeAccess token, List<Permission> perms) {
         com.rackspace.api.idm.v1.DelegatedToken jaxbToken = of

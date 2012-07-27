@@ -317,7 +317,7 @@ public class DefaultCloud20ServiceTest {
         defaultRegionServices.getServiceName().add("cloudFiles");
         defaultRegionServices.getServiceName().add("cloudFilesCDN");
         defaultCloud20Service.setDefaultRegionServices("token", defaultRegionServices);
-        verify(clientService,times(2)).updateClient(any(Application.class));
+        verify(clientService,times(5)).updateClient(any(Application.class));
     }
 
     @Test
@@ -1525,9 +1525,7 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void addUser_adminRoleUserSizeGreaterThanNumSubUsersThrowsBadRequest_returnsResponseBuilder() throws Exception {
-        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        ScopeAccess scopeAccess = new ScopeAccess();
+    public void addUser_adminRoleUserSizeGreaterThanNumSubUsersThrowsBadRequest_returns400() throws Exception {
         User caller = new User();
         users = mock(Users.class);
         List<User> userList = new ArrayList();
@@ -1540,17 +1538,21 @@ public class DefaultCloud20ServiceTest {
         doNothing().when(spy).verifyUserAdminLevelAccess(authToken);
         doNothing().when(spy).validateUser(userOS);
         doNothing().when(spy).validateUsernameForUpdateOrCreate(userOS.getUsername());
+        when(authorizationService.authorizeCloudUserAdmin(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(true);
         when(userConverterCloudV20.toUserDO(userOS)).thenReturn(new User());
         when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
         when(userService.getAllUsers(org.mockito.Matchers.<FilterParam[]>any())).thenReturn(users);
         when(config.getInt("numberOfSubUsers")).thenReturn(-1);
-        when(exceptionHandler.exceptionResponse(any(BadRequestException.class))).thenReturn(responseBuilder);
+        ExceptionHandler handler = new ExceptionHandler();
+        handler.setOBJ_FACTORIES(new JAXBObjectFactories());
+        spy.setExceptionHandler(handler);
 
-        assertThat("response builder", spy.addUser(null, null, authToken, userOS), equalTo(responseBuilder));
+        Response.ResponseBuilder builder = spy.addUser(null, null, authToken, userOS);
+        assertThat("response builder", builder.build().getStatus(), equalTo(400));
     }
 
     @Test
-    public void addUser_adminRoleUserSizeNotGreaterThanNumSubUsersThrowsBadRequest_returns201() throws Exception {
+    public void addUser_adminRoleUserSizeNotGreaterThanNumSubUsers_returns201() throws Exception {
         userOS.setPassword("password");
         UriBuilder uriBuilder = mock(UriBuilder.class);
         URI uri = new URI("");
@@ -5624,5 +5626,22 @@ public class DefaultCloud20ServiceTest {
         ApiKeyCredentials result = (ApiKeyCredentials) jaxbElement.getValue();
         assertThat("apikey", result.getApiKey(), equalTo("aaaaa-bbbbb-ccccc-12345678"));
         assertThat("username", result.getUsername(), equalTo("test_user"));
+    }
+
+    @Test
+    public void getJSONCredentials_credentialIsInstanceOfDifferentCredentials_returnsNull() throws Exception {
+        String jsonBody = "{\"RAX-KSKEY:apiKeyCredentials\":{\"username\":\"test_user\",\"apiKey\":\"aaaaa-bbbbb-ccccc-12345678\"}}";
+        when(jaxbObjectFactories.getRackspaceIdentityExtKskeyV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory());
+        JAXBElement<? extends CredentialType> jaxbElement = spy.getJSONCredentials(jsonBody);
+        ApiKeyCredentials result = (ApiKeyCredentials) jaxbElement.getValue();
+        assertThat("apikey", result.getApiKey(), equalTo("aaaaa-bbbbb-ccccc-12345678"));
+        assertThat("username", result.getUsername(), equalTo("test_user"));
+    }
+
+    @Test(expected = ForbiddenException.class)
+    public void verifyIdentityAdminLevelAccess_withoutAdminLevelAccess_throwsForbiddenException() throws Exception {
+        doReturn(new ScopeAccess()).when(spy).getScopeAccessForValidToken(anyString());
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
+        spy.verifyIdentityAdminLevelAccess("someString");
     }
 }

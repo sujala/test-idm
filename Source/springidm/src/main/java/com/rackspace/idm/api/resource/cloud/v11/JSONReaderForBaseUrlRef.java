@@ -71,7 +71,6 @@ public class JSONReaderForBaseUrlRef implements MessageBodyReader<BaseURLRef> {
                 }
             }
         } catch (ParseException e) {
-            // TODO Auto-generated catch block
             logger.info(e.toString());
             throw new BadRequestException("Bad JSON request");
         }
@@ -102,7 +101,6 @@ public class JSONReaderForBaseUrlRef implements MessageBodyReader<BaseURLRef> {
             }
 
         } catch (ParseException e) {
-            // TODO Auto-generated catch block
             logger.info(e.toString());
             throw new BadRequestException("Bad JSON request");
         }

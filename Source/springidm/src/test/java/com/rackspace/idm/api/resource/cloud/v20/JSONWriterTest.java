@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.rackspace.api.idm.v1.Application;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory;
@@ -42,6 +43,7 @@ import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.namespace.QName;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
@@ -88,6 +90,20 @@ public class JSONWriterTest {
     @Test
     public void isWritable_typeIsNotJAXBElement_returnsTrue() throws Exception {
         assertThat("bool", writer.isWriteable(null, PasswordCredentialsRequiredUsername.class, null, null), equalTo(true));
+    }
+
+    @Test
+    public void isWritable_typeIsParameterizedTypeWithTwoParameters_returnsFalse() throws Exception {
+        ParameterizedType type = mock(ParameterizedType.class);
+        when(type.getActualTypeArguments()).thenReturn(new Type[]{Object.class, Object.class});
+        assertThat("bool", writer.isWriteable(null, type, null, null), equalTo(false));
+    }
+
+    @Test
+    public void isWritable_typeIsParameterizedTypeWithOneCorrectParameters_returnsTrue() throws Exception {
+        ParameterizedType type = mock(ParameterizedType.class);
+        when(type.getActualTypeArguments()).thenReturn(new Type[]{Application.class});
+        assertThat("bool", writer.isWriteable(null, type, null, null), equalTo(true));
     }
 
     @Test
@@ -223,7 +239,7 @@ public class JSONWriterTest {
         CredentialType secretQA = new SecretQA();
         ByteArrayOutputStream myOut = new ByteArrayOutputStream();
         doReturn(new JSONObject()).when(spy).getSecretQA((SecretQA) secretQA);
-        spy.writeTo(secretQA, CredentialType.class, null, null, null, null, myOut);
+        spy.writeTo(secretQA, SecretQA.class, null, null, null, null, myOut);
         verify(spy).getSecretQA((SecretQA) secretQA);
     }
 
@@ -234,7 +250,7 @@ public class JSONWriterTest {
         ByteArrayOutputStream myOut = new ByteArrayOutputStream();
         jsonObject.put("success", "This test worked!");
         doReturn(jsonObject).when(spy).getSecretQA((SecretQA) secretQA);
-        spy.writeTo(secretQA, CredentialType.class, null, null, null, null, myOut);
+        spy.writeTo(secretQA, SecretQA.class, null, null, null, null, myOut);
         assertThat("string", myOut.toString(), equalTo("{\"success\":\"This test worked!\"}"));
     }
 
@@ -1381,6 +1397,21 @@ public class JSONWriterTest {
     }
 
     @Test
+    public void getUser_instanceOfUserForCreate_withOutPassword_returnsJSONObjectWithOutPassword() throws Exception {
+        User user = new UserForCreate();
+        user.setId("10019805");
+        user.setUsername("kurt");
+        user.setEmail("myEmail");
+        user.setCreated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getUser(user);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("user", myOut.toString().startsWith("{\"id\":\"10019805\",\"enabled\":true,\"username\":\"kurt\",\"created\":\"0001-02-01T00:00:00.000-"), equalTo(true));
+        assertThat("user", myOut.toString().endsWith("\",\"email\":\"myEmail\"}"),equalTo(true));
+    }
+
+    @Test
     public void getUser_fullyPopulated_returnsJSONObjectWithDefaultRegion() throws Exception {
         final User user = new User();
         user.setId("10019805");
@@ -1389,23 +1420,43 @@ public class JSONWriterTest {
         user.setCreated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
         user.setUpdated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
         user.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "defaultRegion"), "myRegion");
+        user.getOtherAttributes().put(new QName("http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0", "password"), "myPassword");
 
         final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
         JSONObject result = writer.getUser(user);
         String jsonText = JSONValue.toJSONString(result);
         myOut.write(jsonText.getBytes());
-        assertThat("user", myOut.toString().startsWith("{\"id\":\"10019805\",\"enabled\":true," +"\"username\":\"kurt\",\"updated\":\"0001-02-01T00:00:00.000-"), equalTo(true));
+        assertThat("user", myOut.toString().startsWith("{\"id\":\"10019805\",\"enabled\":true," +"\"username\":\"kurt\",\"OS-KSADM:password\":\"myPassword\",\"updated\":\"0001-02-01T00:00:00.000-"), equalTo(true));
         assertThat("user", myOut.toString().endsWith("\",\"email\":\"myEmail\",\"RAX-AUTH:defaultRegion\":\"myRegion\"}"), equalTo(true));
     }
 
     @Test
-    public void getUser_nullDefaultRegion_returnsJSONObject() throws Exception {
+    public void getUser_NoDefaultRegion_returnsJSONObject() throws Exception {
         final User user = new User();
         user.setId("10019805");
         user.setUsername("kurt");
         user.setEmail("myEmail");
         user.setCreated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
         user.setUpdated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = writer.getUser(user);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("user", myOut.toString().startsWith("{\"id\":\"10019805\",\"enabled\":true,\"username\":\"kurt\",\"updated\":\"0001-02-01T00:00:00.000-"), equalTo(true));
+        assertThat("user", myOut.toString().contains("\",\"created\":\"0001-02-01T00:00:00.000-"), equalTo(true));
+        assertThat("user", myOut.toString().endsWith("\"email\":\"myEmail\"}"), equalTo(true));
+    }
+
+    @Test
+    public void getUser_EmptyDefaultRegion_returnsJSONObject() throws Exception {
+        final User user = new User();
+        user.setId("10019805");
+        user.setUsername("kurt");
+        user.setEmail("myEmail");
+        user.setCreated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
+        user.setUpdated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
+        user.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "defaultRegion"), "");
 
         final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
         JSONObject result = writer.getUser(user);

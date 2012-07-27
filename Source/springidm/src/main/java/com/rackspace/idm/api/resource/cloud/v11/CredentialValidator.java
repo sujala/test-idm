@@ -1,6 +1,5 @@
 package com.rackspace.idm.api.resource.cloud.v11;
 
-import com.rackspace.idm.exception.CloudAdminAuthorizationException;
 import com.rackspacecloud.docs.auth.api.v1.Credentials;
 import com.rackspacecloud.docs.auth.api.v1.NastCredentials;
 import org.apache.commons.lang.StringUtils;

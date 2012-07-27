@@ -1086,7 +1086,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 MossoCredentials mossoCreds = (MossoCredentials) cred.getValue();
                 int mossoId = mossoCreds.getMossoId();
                 String apiKey = mossoCreds.getKey();
-                if (apiKey == null || apiKey.length() == 0) {
+                if (StringUtils.isEmpty(apiKey)) {
                     return cloudExceptionResponse.badRequestExceptionResponse("Expecting apiKey");
                 }
                 user = this.userService.getUserByMossoId(mossoId);

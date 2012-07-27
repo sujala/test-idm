@@ -163,7 +163,7 @@ public class LdapApplicationRepositoryIntegrationTest extends InMemoryLdapIntegr
     @Ignore //TODO: use correct client id
     @Test
     public void shouldAuthenticateForCorrectCredentials() {
-        ClientAuthenticationResult authenticated = repo.authenticate("18e7a7032733486cd32f472d7bd58f709ac0d221", "password1");
+        ClientAuthenticationResult authenticated = repo.authenticate("18e7a7032733486cd32f472d7bd58f709ac0d221", "Password1");
         Assert.assertTrue(authenticated.isAuthenticated());
     }
 
@@ -179,11 +179,7 @@ public class LdapApplicationRepositoryIntegrationTest extends InMemoryLdapIntegr
         try {
             mods = repo.getModifications(client, cClient);
         } catch (InvalidCipherTextException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
         } catch (GeneralSecurityException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
         }
 
         Assert.assertEquals(2, mods.size());

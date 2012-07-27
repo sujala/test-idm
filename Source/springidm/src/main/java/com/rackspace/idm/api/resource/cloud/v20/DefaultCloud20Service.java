@@ -187,7 +187,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 logger.warn(errMsg);
                 throw new BadRequestException(errMsg);
             }
-            if (StringUtils.isBlank(role.getServiceId())) { // ToDo: We now default to an application for all roles not specifying one
+            if (StringUtils.isBlank(role.getServiceId())) { // We now default to an application for all roles not specifying one
                 role.setServiceId(config.getString("cloudAuth.clientId"));
             }
 
@@ -774,7 +774,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             } else {
                 auth = authConverterCloudV20.toAuthenticationResponse(user, usa, roles, endpoints);
             }
-            // ToDo: removing serviceId from response for now
+            // removing serviceId from response for now
             if (auth.getUser() != null && auth.getUser().getRoles() != null) {
                 for (Role r : auth.getUser().getRoles().getRole()) {
                     r.setServiceId(null);
@@ -1731,6 +1731,10 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
         }
+        for (Application application: openStackServices){
+            application.setUseForDefaultRegion(false);
+            clientService.updateClient(application);
+        }
         for (String serviceName : serviceNames){
             Application application = clientService.getByName(serviceName);
             application.setUseForDefaultRegion(true);
@@ -2615,7 +2619,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         if (creds instanceof ApiKeyCredentials) {
             jaxbCreds = OBJ_FACTORIES.getRackspaceIdentityExtKskeyV1Factory().createApiKeyCredentials((ApiKeyCredentials) creds);
-        } else if (creds instanceof PasswordCredentialsRequiredUsername) {
+        } if (creds instanceof PasswordCredentialsRequiredUsername) {
             jaxbCreds = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createPasswordCredentials((PasswordCredentialsRequiredUsername) creds);
         }
 

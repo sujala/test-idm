@@ -67,7 +67,6 @@ public class JSONReaderForUserPassword implements
 
             }
         } catch (ParseException e) {
-            // TODO Auto-generated catch block
             logger.info(e.toString());
             throw new BadRequestException("Bad JSON request");
         }
@@ -89,7 +88,6 @@ public class JSONReaderForUserPassword implements
                 userPassword.setPassword(password.toString());
             }
         } catch (ParseException e) {
-            // TODO Auto-generated catch block
             logger.info(e.toString());
             throw new BadRequestException("Bad JSON request");
         }

@@ -74,8 +74,8 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         getLogger().debug("Doing search for tenantId " + tenantId);
         if (StringUtils.isBlank(tenantId)) {
             getLogger().error("Null or Empty tenantId parameter");
-            throw new IllegalArgumentException(
-                "Null or Empty tenantId parameter.");
+            getLogger().info("Invalid tenantId parameter.");
+            return null;
         }
 
         Filter searchFilter = new LdapSearchBuilder()
@@ -100,7 +100,8 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         getLogger().debug("Doing search for name " + name);
         if (StringUtils.isBlank(name)) {
             getLogger().error("Null or Empty name parameter");
-            throw new IllegalArgumentException("Null or Empty name parameter.");
+            getLogger().info("Invalid name parameter.");
+            return null;
         }
 
         Filter searchFilter = new LdapSearchBuilder()
@@ -243,11 +244,13 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         if (StringUtils.isBlank(parentUniqueId)) {
             String errmsg = "ParentUniqueId cannot be blank";
             getLogger().error(errmsg);
-            throw new IllegalArgumentException(errmsg);
+            getLogger().info("Invalid parentUniqueId paramater.");
+            return null;
         }
         if (StringUtils.isBlank(id)) {
             getLogger().error("Null or Empty id parameter");
-            throw new IllegalArgumentException("Null or Empty id parameter.");
+            getLogger().info("Invalid id parameter.");
+            return null;
         }
         getLogger().debug("Doing search for TenantRole " + id);
 
@@ -274,7 +277,8 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         if (StringUtils.isBlank(parentUniqueId)) {
             String errmsg = "ParentUniqueId cannot be blank";
             getLogger().error(errmsg);
-            throw new IllegalArgumentException(errmsg);
+            getLogger().info("Invalid parentUniqueId parameter.");
+            return new ArrayList<TenantRole>();
         }
 
         getLogger().debug("Getting tenantRoles");
@@ -330,13 +334,14 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         if (StringUtils.isBlank(parentUniqueId)) {
             String errmsg = "ParentUniqueId cannot be blank";
             getLogger().error(errmsg);
-            throw new IllegalArgumentException(errmsg);
+            getLogger().info("Invalid parentUniqueId parameter");
+            return new ArrayList<TenantRole>();
         }
 
         if (StringUtils.isBlank(clientId)) {
             getLogger().error("Null or Empty clientId parameter");
-            throw new IllegalArgumentException(
-                "Null or Empty clientId parameter.");
+            getLogger().info("Invalid parentUniqueId parameter");
+            return new ArrayList<TenantRole>();
         }
 
         getLogger().debug("Getting tenantRoles by clientId");
@@ -445,8 +450,8 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
     public List<TenantRole> getAllTenantRolesForTenant(String tenantId) {
         if (StringUtils.isBlank(tenantId)) {
             getLogger().error("Null or Empty tenantId parameter");
-            throw new IllegalArgumentException(
-                "Null or Empty tenantId parameter.");
+            getLogger().info("Invalid tenantId parameter.");
+            return new ArrayList<TenantRole>();
         }
 
         getLogger().debug("Getting tenantRoles by tenantId");
@@ -470,7 +475,8 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
     public List<TenantRole> getAllTenantRolesForClientRole(ClientRole role) {
         if (role == null) {
             getLogger().error("Null or Empty role parameter");
-            throw new IllegalArgumentException("Null or Empty role parameter.");
+            getLogger().info("Invalid role parameter.");
+            return new ArrayList<TenantRole>();
         }
 
         getLogger().debug("Getting tenantRoles by client role");
@@ -495,14 +501,14 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         String roleId) {
         if (StringUtils.isBlank(tenantId)) {
             getLogger().error("Null or Empty tenantId parameter");
-            throw new IllegalArgumentException(
-                "Null or Empty tenantId parameter.");
+            getLogger().info("Invalid tenantId parameter.");
+            return new ArrayList<TenantRole>();
         }
 
         if (StringUtils.isBlank(roleId)) {
             getLogger().error("Null or Empty roleId parameter");
-            throw new IllegalArgumentException(
-                "Null or Empty roleId parameter.");
+            getLogger().info("Invalid roleId parameter.");
+            return new ArrayList<TenantRole>();
         }
 
         getLogger().debug("Getting tenantRoles by tenantId");
