@@ -99,6 +99,14 @@ public class GrantedPermissionTest {
     }
 
     @Test
+    public void equals_bothResourceGroupsAreDifferent_returnsFalse() throws Exception {
+        GrantedPermission grantedPermission1 = new GrantedPermission("customerId","clientId","permissionId");
+        grantedPermission1.setResourceGroups(new String[]{});
+        grantedPermission.setResourceGroups(new String[]{"something"});
+        assertThat("equals", grantedPermission.equals(grantedPermission1), equalTo(false));
+    }
+
+    @Test
     public void copyChanges_modifiedResourceGroupNull_doesNotSetResourceGroup() throws Exception {
         spy.copyChanges(new GrantedPermission());
         verify(spy,never()).setResourceGroups(any(String[].class));
