@@ -83,7 +83,6 @@ public class JSONReaderForUser implements MessageBodyReader<User> {
                 }
             }
         } catch (ParseException e) {
-            // TODO Auto-generated catch block
             logger.info(e.toString());
             throw new BadRequestException("Bad JSON request");
         }
