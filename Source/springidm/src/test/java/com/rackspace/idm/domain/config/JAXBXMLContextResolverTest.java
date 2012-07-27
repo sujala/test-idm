@@ -7,6 +7,9 @@ import javax.xml.bind.JAXBContext;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 
 /**
  * Created with IntelliJ IDEA.
@@ -35,8 +38,9 @@ public class JAXBXMLContextResolverTest {
     }
 
     @Test
-    public void get_withNullContext_callsInit() throws Exception {
-        assertThat("returns context",JAXBXMLContextResolver.get(), notNullValue(JAXBContext.class));
+    public void get_withNullContext_setsNewContext() throws Exception {
+        jaxbxmlContextResolver.setContext(null);
+        JAXBContext result = jaxbxmlContextResolver.get();
+        assertThat("jaxbcontext", result, notNullValue());
     }
-
 }
