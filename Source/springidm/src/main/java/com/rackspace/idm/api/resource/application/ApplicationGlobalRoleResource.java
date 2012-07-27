@@ -27,7 +27,6 @@ import javax.ws.rs.core.Response;
 @Component("applicationGlobalRoleResource")
 public class ApplicationGlobalRoleResource {
 
-    private final ScopeAccessService scopeAccessService;
     private final ApplicationService applicationService;
     private final AuthorizationService authorizationService;
     private final TenantService tenantService;
@@ -36,10 +35,8 @@ public class ApplicationGlobalRoleResource {
 
     @Autowired
     public ApplicationGlobalRoleResource(
-        AuthorizationService authorizationService, ApplicationService applicationService,
-        ScopeAccessService scopeAccessService, TenantService tenantService) {
+        AuthorizationService authorizationService, ApplicationService applicationService, TenantService tenantService) {
         this.applicationService = applicationService;
-        this.scopeAccessService = scopeAccessService;
         this.authorizationService = authorizationService;
         this.tenantService = tenantService;
     }
@@ -85,14 +82,7 @@ public class ApplicationGlobalRoleResource {
         
         Application application = this.applicationService.loadApplication(applicationId);
 
-        if(application==null){
-            throw new BadRequestException("Application with id: " + applicationId + " not found.");
-        }
-
     	TenantRole tenantRole = this.tenantService.getTenantRoleForParentById(application.getUniqueId(), roleId);
-        if(tenantRole==null){
-            throw new NotFoundException("Role with id: " + roleId + " not found.");
-        }
 		this.tenantService.deleteTenantRole(application.getUniqueId(), tenantRole);
 
         return Response.noContent().build();
