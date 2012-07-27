@@ -2615,7 +2615,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         if (creds instanceof ApiKeyCredentials) {
             jaxbCreds = OBJ_FACTORIES.getRackspaceIdentityExtKskeyV1Factory().createApiKeyCredentials((ApiKeyCredentials) creds);
-        } else if (creds instanceof PasswordCredentialsRequiredUsername) {
+        } if (creds instanceof PasswordCredentialsRequiredUsername) {
             jaxbCreds = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createPasswordCredentials((PasswordCredentialsRequiredUsername) creds);
         }
 
