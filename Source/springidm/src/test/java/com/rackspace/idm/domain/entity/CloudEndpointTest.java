@@ -175,4 +175,28 @@ public class CloudEndpointTest {
         cloudEndpoint1.setV1preferred(true);
         assertThat("equals", cloudEndpoint.equals(cloudEndpoint1), equalTo(true));
     }
+
+    @Test
+    public void equals_NonNullMosso_returnsTrue() throws Exception {
+        cloudEndpoint.setMossoId(123456);
+        CloudEndpoint cloudEndpoint1 = new CloudEndpoint();
+        cloudEndpoint1.setMossoId(123456);
+        assertThat("equals", cloudEndpoint.equals(cloudEndpoint1), equalTo(true));
+    }
+
+    @Test
+    public void equals_DifferentMosso_returnsFalse() throws Exception {
+        cloudEndpoint.setMossoId(null);
+        CloudEndpoint cloudEndpoint1 = new CloudEndpoint();
+        cloudEndpoint1.setMossoId(654321);
+        assertThat("equals", cloudEndpoint.equals(cloudEndpoint1), equalTo(false));
+    }
+
+    @Test
+    public void equals_DifferentMosso2_returnsFalse() throws Exception {
+        cloudEndpoint.setMossoId(123456);
+        CloudEndpoint cloudEndpoint1 = new CloudEndpoint();
+        cloudEndpoint1.setMossoId(654321);
+        assertThat("equals", cloudEndpoint.equals(cloudEndpoint1), equalTo(false));
+    }
 }
