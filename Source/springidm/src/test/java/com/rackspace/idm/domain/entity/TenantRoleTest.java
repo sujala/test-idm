@@ -45,6 +45,15 @@ public class TenantRoleTest {
     }
 
     @Test
+    public void addTenantId_withSameIdTwice_addsIdOnce() throws Exception {
+        tenantRole.setTenantIds(new String[]{});
+        tenantRole.addTenantId("id");
+        tenantRole.addTenantId("id");
+        String[] tenantIds = tenantRole.getTenantIds();
+        assertThat("tenantIds", tenantIds.length, equalTo(1));
+    }
+
+    @Test
     public void getLdapEntry_returnsLdapEntry() throws Exception {
         ReadOnlyEntry result = tenantRole.getLDAPEntry();
         assertThat("ldap", result, equalTo(null));
