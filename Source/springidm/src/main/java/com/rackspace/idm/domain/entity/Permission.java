@@ -41,10 +41,6 @@ public class Permission implements Auditable {
             return ldapEntry.getDN();
         }
     }
-    
-    public ReadOnlyEntry getLdapEntry() {
-        return ldapEntry;
-    }
 
     public String getClientId() {
         return clientId;
