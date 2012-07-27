@@ -47,13 +47,6 @@ public class ApplicationGlobalRoleResourceTest {
     }
 
     @Test
-    public void grantGlobalRoleToApplication_callsTenantService_getTenantRoleForParentById() throws Exception {
-        doNothing().when(authorizationService).verifyIdmSuperAdminAccess(anyString());
-        applicationGlobalRoleResource.grantGlobalRoleToApplication(null, null, null);
-        verify(tenantService).getTenantRoleForParentById(null, null);
-    }
-
-    @Test
     public void grantGlobalRoleToApplication_callsTenantService_addTenantRoleToClient() throws Exception {
         doNothing().when(authorizationService).verifyIdmSuperAdminAccess(anyString());
         when(applicationService.getClientRoleById(anyString())).thenReturn(new ClientRole());
@@ -70,6 +63,22 @@ public class ApplicationGlobalRoleResourceTest {
     }
 
 
+    @Test(expected = NotFoundException.class)
+    public void deleteGlobalRoleFromUser_throwsNotFoundExceptionWhenRoleIsNotFound() throws Exception {
+        doNothing().when(authorizationService).verifyIdmSuperAdminAccess(anyString());
+        when(applicationService.loadApplication(anyString())).thenReturn(new Application());
+        when(tenantService.getTenantRoleForParentById(anyString(), anyString())).thenThrow(new NotFoundException());
+        applicationGlobalRoleResource.deleteGlobalRoleFromApplication(null, null, null);
+    }
+
+    @Test(expected = NotFoundException.class)
+    public void deleteGlobalRoleFromApplication_throwsBadRequestExceptionWhenApplicationIsNotFound() throws Exception {
+        doNothing().when(authorizationService).verifyIdmSuperAdminAccess(anyString());
+        when(applicationService.loadApplication(anyString())).thenThrow(new NotFoundException());
+        when(tenantService.getTenantRoleForParentById(anyString(), anyString())).thenReturn(null);
+        applicationGlobalRoleResource.deleteGlobalRoleFromApplication(null, null, null);
+    }
+
     @Test
     public void deleteGlobalRoleFromApplication_callsTenantService_deleteTenantRole() throws Exception {
         doNothing().when(authorizationService).verifyIdmSuperAdminAccess(anyString());
@@ -78,25 +87,6 @@ public class ApplicationGlobalRoleResourceTest {
         applicationGlobalRoleResource.deleteGlobalRoleFromApplication(null, null, null);
         verify(tenantService).deleteTenantRole(anyString(), any(TenantRole.class));
     }
-
-    @Test
-    public void deleteGlobalRoleFromApplication_callsTenantService_getTenantRoleForParentById() throws Exception {
-        doNothing().when(authorizationService).verifyIdmSuperAdminAccess(anyString());
-        when(applicationService.loadApplication(anyString())).thenReturn(new Application());
-        when(tenantService.getTenantRoleForParentById(anyString(), anyString())).thenReturn(new TenantRole());
-        applicationGlobalRoleResource.deleteGlobalRoleFromApplication(null, null, null);
-        verify(tenantService).getTenantRoleForParentById(anyString(),anyString());
-    }
-
-    @Test
-    public void deleteGlobalRoleFromApplication_callsApplicationService_loadApplication() throws Exception {
-        doNothing().when(authorizationService).verifyIdmSuperAdminAccess(anyString());
-        when(applicationService.loadApplication(anyString())).thenReturn(new Application());
-        when(tenantService.getTenantRoleForParentById(anyString(), anyString())).thenReturn(new TenantRole());
-        applicationGlobalRoleResource.deleteGlobalRoleFromApplication(null, null, null);
-        verify(applicationService).loadApplication(anyString());
-    }
-
     @Test
     public void deleteGlobalRoleFromApplication_returnsNoContentResponse() throws Exception {
         doNothing().when(authorizationService).verifyIdmSuperAdminAccess(anyString());
