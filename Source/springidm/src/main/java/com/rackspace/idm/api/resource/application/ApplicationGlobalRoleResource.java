@@ -56,9 +56,20 @@ public class ApplicationGlobalRoleResource {
         @PathParam("roleId") String roleId) {
 
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
-        
-        TenantRole tenantRole = tenantService.getTenantRoleForParentById(applicationId, roleId);
+
+        // TODO: Refactor. This logic should be in the tenant role service
         Application application = this.applicationService.loadApplication(applicationId);
+        ClientRole role = this.applicationService.getClientRoleById(roleId);
+        if (role == null) {
+            String errMsg = String.format("Role %s not found", roleId);
+            logger.warn(errMsg);
+            throw new BadRequestException(errMsg);
+        }
+
+        TenantRole tenantRole = new TenantRole();
+        tenantRole.setClientId(role.getClientId());
+        tenantRole.setRoleRsId(role.getId());
+        tenantRole.setName(role.getName());
 
 		this.tenantService.addTenantRoleToClient(application, tenantRole);
 
