@@ -46,10 +46,11 @@ public class ApplicationGlobalRoleResourceTest {
         verify(authorizationService).verifyIdmSuperAdminAccess(null);
     }
 
-    @Test(expected = BadRequestException.class)
-    public void grantGlobalRoleToApplication_ThrowsBadRequestWhenClientRoleNotFound() throws Exception {
+    @Test
+    public void grantGlobalRoleToApplication_callsTenantService_getTenantRoleForParentById() throws Exception {
         doNothing().when(authorizationService).verifyIdmSuperAdminAccess(anyString());
         applicationGlobalRoleResource.grantGlobalRoleToApplication(null, null, null);
+        verify(tenantService).getTenantRoleForParentById(null, null);
     }
 
     @Test
