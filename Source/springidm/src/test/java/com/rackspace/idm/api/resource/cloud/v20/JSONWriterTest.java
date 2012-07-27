@@ -47,6 +47,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import java.util.GregorianCalendar;
+
+import static org.hamcrest.CoreMatchers.any;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
@@ -1194,7 +1196,8 @@ public class JSONWriterTest {
         JSONObject result = writer.getToken(token);
         String jsonText = JSONValue.toJSONString(result);
         myOut.write(jsonText.getBytes());
-        assertThat("string", myOut.toString(), equalTo("{\"id\":\"123\",\"expires\":\"0001-02-01T00:00:00.000-06:00\"}"));
+        assertThat("string", myOut.toString().startsWith("{\"id\":\"123\",\"expires\":\"0001-02-01T00:00:00.000-"), equalTo(true));
+        assertThat("string", myOut.toString().endsWith("\"}"), equalTo(true));
 
     }
 
@@ -1373,8 +1376,8 @@ public class JSONWriterTest {
         JSONObject result = writer.getUser(user);
         String jsonText = JSONValue.toJSONString(result);
         myOut.write(jsonText.getBytes());
-        assertThat("user", myOut.toString(), equalTo(
-                "{\"id\":\"10019805\",\"enabled\":true,\"username\":\"kurt\",\"OS-KSADM:password\":\"myPassword\",\"created\":\"0001-02-01T00:00:00.000-06:00\",\"email\":\"myEmail\"}"));
+        assertThat("user", myOut.toString().startsWith("{\"id\":\"10019805\",\"enabled\":true,\"username\":\"kurt\",\"OS-KSADM:password\":\"myPassword\",\"created\":\"0001-02-01T00:00:00.000-"), equalTo(true));
+        assertThat("user", myOut.toString().endsWith("\",\"email\":\"myEmail\"}"),equalTo(true));
     }
 
     @Test
@@ -1391,9 +1394,8 @@ public class JSONWriterTest {
         JSONObject result = writer.getUser(user);
         String jsonText = JSONValue.toJSONString(result);
         myOut.write(jsonText.getBytes());
-        assertThat("user", myOut.toString(), equalTo(
-                "{\"id\":\"10019805\",\"enabled\":true," +"\"username\":\"kurt\",\"updated\":\"0001-02-01T00:00:00.000-06:00\",\"created\":\"0001-02-01T00:00:00.000-06:00\",\"email\":\"myEmail\",\"RAX-AUTH:defaultRegion\":\"myRegion\"" +
-                        "}"));
+        assertThat("user", myOut.toString().startsWith("{\"id\":\"10019805\",\"enabled\":true," +"\"username\":\"kurt\",\"updated\":\"0001-02-01T00:00:00.000-"), equalTo(true));
+        assertThat("user", myOut.toString().endsWith("\",\"email\":\"myEmail\",\"RAX-AUTH:defaultRegion\":\"myRegion\"}"), equalTo(true));
     }
 
     @Test
@@ -1409,9 +1411,9 @@ public class JSONWriterTest {
         JSONObject result = writer.getUser(user);
         String jsonText = JSONValue.toJSONString(result);
         myOut.write(jsonText.getBytes());
-        assertThat("user", myOut.toString(), equalTo(
-                "{\"id\":\"10019805\",\"enabled\":true," +"\"username\":\"kurt\",\"updated\":\"0001-02-01T00:00:00.000-06:00\",\"created\":\"0001-02-01T00:00:00.000-06:00\",\"email\":\"myEmail\"" +
-                        "}"));
+        assertThat("user", myOut.toString().startsWith("{\"id\":\"10019805\",\"enabled\":true,\"username\":\"kurt\",\"updated\":\"0001-02-01T00:00:00.000-"), equalTo(true));
+        assertThat("user", myOut.toString().contains("\",\"created\":\"0001-02-01T00:00:00.000-"), equalTo(true));
+        assertThat("user", myOut.toString().endsWith("\"email\":\"myEmail\"}"), equalTo(true));
     }
 
     @Test
@@ -1427,9 +1429,8 @@ public class JSONWriterTest {
         JSONObject result = writer.getUser(user);
         String jsonText = JSONValue.toJSONString(result);
         myOut.write(jsonText.getBytes());
-        assertThat("user", myOut.toString(), equalTo(
-                "{\"id\":\"10019805\",\"enabled\":true," +"\"username\":\"kurt\",\"updated\":\"0001-02-01T00:00:00.000-06:00\",\"email\":\"myEmail\",\"RAX-AUTH:defaultRegion\":\"myRegion\"" +
-                        "}"));
+        assertThat("user", myOut.toString().startsWith("{\"id\":\"10019805\",\"enabled\":true," +"\"username\":\"kurt\",\"updated\":\"0001-02-01T00:00:00.000-"), equalTo(true));
+        assertThat("user", myOut.toString().endsWith("\",\"email\":\"myEmail\",\"RAX-AUTH:defaultRegion\":\"myRegion\"}"), equalTo(true));
     }
 
     @Test
@@ -1445,9 +1446,8 @@ public class JSONWriterTest {
         JSONObject result = writer.getUser(user);
         String jsonText = JSONValue.toJSONString(result);
         myOut.write(jsonText.getBytes());
-        assertThat("user", myOut.toString(), equalTo(
-                "{\"id\":\"10019805\",\"enabled\":true," +"\"username\":\"kurt\",\"created\":\"0001-02-01T00:00:00.000-06:00\",\"email\":\"myEmail\",\"RAX-AUTH:defaultRegion\":\"myRegion\"" +
-                        "}"));
+        assertThat("user", myOut.toString().startsWith("{\"id\":\"10019805\",\"enabled\":true," +"\"username\":\"kurt\",\"created\":\"0001-02-01T00:00:00.000-"), equalTo(true));
+        assertThat("user", myOut.toString().endsWith("\",\"email\":\"myEmail\",\"RAX-AUTH:defaultRegion\":\"myRegion\"}"), equalTo(true));
     }
 
     @Test
@@ -2207,7 +2207,9 @@ public class JSONWriterTest {
         JSONObject result = writer.getExtensionWithoutWrapper(extension);
         String jsonText = JSONValue.toJSONString(result);
         myOut.write(jsonText.getBytes());
-        assertThat("string", myOut.toString(), equalTo("{\"updated\":\"0001-02-01T00:00:00.000-06:00\",\"alias\":null,\"description\":null,\"name\":null,\"namespace\":null}"));
+        assertThat("string", myOut.toString().startsWith("{\"updated\":\"0001-02-01T00:00:00.000-"), equalTo(true));
+        assertThat("string", myOut.toString().endsWith("\",\"alias\":null,\"description\":null,\"name\":null,\"namespace\":null}"), equalTo(true));
+
     }
 
     @Test

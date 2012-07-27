@@ -162,4 +162,11 @@ public class UserScopeAccess extends ScopeAccess implements HasAccessToken, HasR
         return userRsId;
     }
 
+    public void setLdapEntry(ReadOnlyEntry ldapEntry) {
+        this.ldapEntry = ldapEntry;
+    }
+
+    public ReadOnlyEntry getLDAPEntry() {
+        return ldapEntry;
+    }
 }
