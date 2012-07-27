@@ -6,6 +6,7 @@ import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
+import org.hamcrest.Matchers;
 import org.junit.*;
 
 import java.util.List;
@@ -148,29 +149,29 @@ public class LdapTenantRepositoryIntegrationTest extends InMemoryLdapIntegration
         this.repo.deleteTenantRole(null);
     }
     
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void shouldNotGetTenantRoleWithBlankParent() {
-        this.repo.getTenantRoleForParentById(null, roleName);
+        Assert.assertNull(this.repo.getTenantRoleForParentById(null, roleName));
     }
     
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void shouldNotGetTenantRoleWithBlankId() {
-        this.repo.getTenantRoleForParentById(dn, null);
+        Assert.assertNull(this.repo.getTenantRoleForParentById(dn, null));
     }
     
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void shouldNotGetTenantRolesWithBlankParent() {
-        this.repo.getTenantRolesByParent(null);
+        Assert.assertThat("Empty List", this.repo.getTenantRolesByParent(null).isEmpty(), Matchers.equalTo(true));
     }
     
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void shouldNotGetTenantRolesByClientIdWithBlankParent() {
-        this.repo.getTenantRolesByParentAndClientId(null, clientId);
+        Assert.assertThat("Empty List", this.repo.getTenantRolesByParentAndClientId(null, clientId).isEmpty(), Matchers.equalTo(true));
     }
     
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void shouldNotGetTenantRolesByClientIdWithBlankClientId() {
-        this.repo.getTenantRolesByParentAndClientId(dn, null);
+        Assert.assertThat("Empty List", this.repo.getTenantRolesByParentAndClientId(dn, null).isEmpty(), Matchers.equalTo(true));
     }
     
     private Tenant getTestTenant() {

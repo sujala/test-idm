@@ -69,9 +69,10 @@ public class LdapTenantRepositoryTest extends InMemoryLdapIntegrationTest{
         verify(spy).deleteEntryAndSubtree(anyString(), any(Audit.class));
     }
 
-    @Test (expected = IllegalArgumentException.class)
-    public void getTenant_tenantIdIsBlank_throwsIllegalArgument() throws Exception {
-        ldapTenantRepository.getTenant("");
+    @Test
+    public void getTenant_tenantIdIsBlank_returnsNull() throws Exception {
+        Tenant result = ldapTenantRepository.getTenant("");
+        assertThat("tenant", result, equalTo(null));
     }
 
     @Test (expected = IllegalStateException.class)
@@ -88,9 +89,10 @@ public class LdapTenantRepositoryTest extends InMemoryLdapIntegrationTest{
         assertThat("tenant", result, equalTo(tenant));
     }
 
-    @Test (expected = IllegalArgumentException.class)
-    public void getTenantByName_nameIsBlank_throwsIllegalArgument() throws Exception {
-        ldapTenantRepository.getTenantByName("  ");
+    @Test
+    public void getTenantByName_nameIsBlank_returnsNull() throws Exception {
+        Tenant result = ldapTenantRepository.getTenantByName("  ");
+        assertThat("tenant", result, equalTo(null));
     }
 
     @Test (expected = IllegalStateException.class)
@@ -215,14 +217,16 @@ public class LdapTenantRepositoryTest extends InMemoryLdapIntegrationTest{
         verify(spy).deleteEntryAndSubtree(eq("uniqueId"), any(Audit.class));
     }
 
-    @Test (expected = IllegalArgumentException.class)
-    public void getTenantRoleForParentById_parentUniqueIdIsBlank_throwsIllegalArgument() throws Exception {
-        ldapTenantRepository.getTenantRoleForParentById("   ", "id");
+    @Test
+    public void getTenantRoleForParentById_parentUniqueIdIsBlank_returnsNull() throws Exception {
+        TenantRole result = ldapTenantRepository.getTenantRoleForParentById("   ", "id");
+        assertThat("tenant role", result, equalTo(null));
     }
 
-    @Test (expected = IllegalArgumentException.class)
-    public void getTenantRoleForParentById_idIsBlank_throwsIllegalArgument() throws Exception {
-        ldapTenantRepository.getTenantRoleForParentById("uniqueId", "");
+    @Test
+    public void getTenantRoleForParentById_idIsBlank_returnsNull() throws Exception {
+        TenantRole result = ldapTenantRepository.getTenantRoleForParentById("uniqueId", "");
+        assertThat("tenant role", result, equalTo(null));
     }
 
     @Test (expected = IllegalStateException.class)
@@ -239,9 +243,10 @@ public class LdapTenantRepositoryTest extends InMemoryLdapIntegrationTest{
         assertThat("tenant role", result, equalTo(tenantRole));
     }
 
-    @Test (expected = IllegalArgumentException.class)
-    public void getTenantRolesByParent_parentUniqueIdIsBlank_throwsIllegalArgument() throws Exception {
-        ldapTenantRepository.getTenantRolesByParent("  ");
+    @Test
+    public void getTenantRolesByParent_parentUniqueIdIsBlank_returnsEmptyList() throws Exception {
+        List<TenantRole> result = ldapTenantRepository.getTenantRolesByParent("  ");
+        assertThat("list", result.isEmpty(), equalTo(true));
     }
 
     @Test (expected = IllegalStateException.class)
@@ -298,14 +303,16 @@ public class LdapTenantRepositoryTest extends InMemoryLdapIntegrationTest{
         verify(spy).getTenantRolesForClient("uniqueId", null);
     }
 
-    @Test (expected = IllegalArgumentException.class)
-    public void getTenantRolesByParentAndClientId_parentUniqueIdIsBlank_throwsIllegalArgument() throws Exception {
-        ldapTenantRepository.getTenantRolesByParentAndClientId(" ", "clientId");
+    @Test
+    public void getTenantRolesByParentAndClientId_parentUniqueIdIsBlank_returnsEmptyList() throws Exception {
+        List<TenantRole> result = ldapTenantRepository.getTenantRolesByParentAndClientId(" ", "clientId");
+        assertThat("list", result.isEmpty(), equalTo(true));
     }
 
-    @Test (expected = IllegalArgumentException.class)
-    public void getTenantRolesByParentAndClientId_clientIdIsBlank_throwsIllegalArgument() throws Exception {
-        ldapTenantRepository.getTenantRolesByParentAndClientId("uniqueId", null);
+    @Test
+    public void getTenantRolesByParentAndClientId_clientIdIsBlank_returnsEmptyList() throws Exception {
+        List<TenantRole> result = ldapTenantRepository.getTenantRolesByParentAndClientId("uniqueId", null);
+        assertThat("list", result.isEmpty(), equalTo(true));
     }
 
     @Test (expected = IllegalStateException.class)
@@ -419,9 +426,10 @@ public class LdapTenantRepositoryTest extends InMemoryLdapIntegrationTest{
         spy.updateTenantRole(role);
     }
 
-    @Test (expected = IllegalArgumentException.class)
-    public void getAllTenantRolesForTenant_tenantIdIsBlank_throwsIllegalArgument() throws Exception {
-        ldapTenantRepository.getAllTenantRolesForTenant(" ");
+    @Test
+    public void getAllTenantRolesForTenant_tenantIdIsBlank_returnsEmptyList() throws Exception {
+        List<TenantRole> result = ldapTenantRepository.getAllTenantRolesForTenant(" ");
+        assertThat("list", result.isEmpty(), equalTo(true));
     }
 
     @Test (expected = IllegalStateException.class)
@@ -440,9 +448,10 @@ public class LdapTenantRepositoryTest extends InMemoryLdapIntegrationTest{
         assertThat("tenant role", result.get(0), equalTo(tenantRole));
     }
 
-    @Test (expected = IllegalArgumentException.class)
-    public void getAllTenantRolesForClientRole_clientRoleIsNull_throwsIllegalArgument() throws Exception {
-        ldapTenantRepository.getAllTenantRolesForClientRole(null);
+    @Test
+    public void getAllTenantRolesForClientRole_clientRoleIsNull_returnsEmptyList() throws Exception {
+        List<TenantRole> result = ldapTenantRepository.getAllTenantRolesForClientRole(null);
+        assertThat("list", result.isEmpty(), equalTo(true));
     }
 
     @Test (expected = IllegalStateException.class)
@@ -465,14 +474,16 @@ public class LdapTenantRepositoryTest extends InMemoryLdapIntegrationTest{
         assertThat("tenant role", result.get(0), equalTo(tenantRole));
     }
 
-    @Test (expected = IllegalArgumentException.class)
-    public void getAllTenantRolesForTenantAndRoles_tenantIdIsBlank_throwsIllegalArgument() throws Exception {
-        ldapTenantRepository.getAllTenantRolesForTenantAndRole(" ", "roleId");
+    @Test
+    public void getAllTenantRolesForTenantAndRoles_tenantIdIsBlank_returnsEmptyList() throws Exception {
+        List<TenantRole> result = ldapTenantRepository.getAllTenantRolesForTenantAndRole(" ", "roleId");
+        assertThat("list", result.isEmpty(), equalTo(true));
     }
 
-    @Test (expected = IllegalArgumentException.class)
-    public void getAllTenantRolesForTenantAndRoles_roleIdIsBlank_throwsIllegalArgument() throws Exception {
-        ldapTenantRepository.getAllTenantRolesForTenantAndRole("tenantId", "   ");
+    @Test
+    public void getAllTenantRolesForTenantAndRoles_roleIdIsBlank_returnsEmptyList() throws Exception {
+        List<TenantRole> result = ldapTenantRepository.getAllTenantRolesForTenantAndRole("tenantId", "   ");
+        assertThat("list", result.isEmpty(), equalTo(true));
     }
 
     @Test (expected = IllegalStateException.class)

@@ -1731,6 +1731,10 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
         }
+        for (Application application: openStackServices){
+            application.setUseForDefaultRegion(false);
+            clientService.updateClient(application);
+        }
         for (String serviceName : serviceNames){
             Application application = clientService.getByName(serviceName);
             application.setUseForDefaultRegion(true);

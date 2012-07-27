@@ -499,18 +499,15 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         getLogger().debug("Updating client {}", client);
 
         if (client == null || StringUtils.isBlank(client.getClientId())) {
-            getLogger().error(
-                    "Client instance is null or its clientId has no value");
-            throw new IllegalArgumentException(
-                    "Bad parameter: The Client instance either null or its clientName has no value.");
+            getLogger().error("Client instance is null or its clientId has no value");
+            throw new IllegalArgumentException("Bad parameter: The Client instance either null or its clientName has no value.");
         }
         String clientId = client.getClientId();
         Application oldClient = getClientByClientId(clientId);
 
         if (oldClient == null) {
             getLogger().error("No record found for client {}", clientId);
-            throw new IllegalArgumentException(
-                    "There is no exisiting record for the given client instance.");
+            throw new IllegalArgumentException("There is no existing record for the given client instance.");
         }
 
         Audit audit = Audit.log(client);
@@ -802,6 +799,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         checkForDescriptionModification(cOld, cNew, mods);
         checkForScopeModification(cOld, cNew, mods);
         checkForCallBackUrlModification(cOld, cNew, mods);
+        checkForUseForDefaultRegionModification(cOld,cNew,mods);
 
         getLogger().debug("Found {} modifications.", mods.size());
 
@@ -852,6 +850,12 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
     private void checkForEnabledStatusModification(Application cOld, Application cNew, List<Modification> mods) {
         if (cNew.isEnabled() != null && !cNew.isEnabled().equals(cOld.isEnabled())) {
             mods.add(new Modification(ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(cNew.isEnabled())));
+        }
+    }
+
+    private void checkForUseForDefaultRegionModification(Application cOld, Application cNew, List<Modification> mods) {
+        if (cNew.getUseForDefaultRegion() != null && !cNew.getUseForDefaultRegion().equals(cOld.getUseForDefaultRegion())) {
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_USE_FOR_DEFAULT_REGION, String.valueOf(cNew.getUseForDefaultRegion())));
         }
     }
 

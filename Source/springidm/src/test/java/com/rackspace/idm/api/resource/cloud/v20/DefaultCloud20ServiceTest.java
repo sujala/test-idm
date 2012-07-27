@@ -316,7 +316,7 @@ public class DefaultCloud20ServiceTest {
         defaultRegionServices.getServiceName().add("cloudFiles");
         defaultRegionServices.getServiceName().add("cloudFilesCDN");
         defaultCloud20Service.setDefaultRegionServices("token", defaultRegionServices);
-        verify(clientService,times(2)).updateClient(any(Application.class));
+        verify(clientService,times(5)).updateClient(any(Application.class));
     }
 
     @Test
