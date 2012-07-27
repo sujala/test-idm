@@ -11,7 +11,7 @@ import static org.hamcrest.Matchers.equalTo;
 
 /**
  * Created with IntelliJ IDEA.
- * User: yung5027
+ * User: Yung Lai
  * Date: 7/19/12
  * Time: 4:50 PM
  * To change this template use File | Settings | File Templates.
@@ -106,5 +106,13 @@ public class RackerScopeAccessTest {
         rackerScopeAccess.setRackerId("rackerId");
         String result = rackerScopeAccess.getAuditContext();
         assertThat("audit string", result, equalTo("Racker(rackerId=rackerId)"));
+    }
+
+    @Test
+    public void setRefreshTokenExpired_expiresRefreshToken() throws Exception {
+        rackerScopeAccess.setRefreshTokenString("refreshToken");
+        rackerScopeAccess.setRefreshTokenExpired();
+        boolean result = rackerScopeAccess.isRefreshTokenExpired(new DateTime());
+        assertThat("boolean", result, equalTo(true));
     }
 }
