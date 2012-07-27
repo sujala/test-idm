@@ -864,7 +864,7 @@ public class UserTest {
         user.setUpdated(dateTime);
         user.setUniqueId("uniqueId");
         int result = user.hashCode();
-        assertThat("hash code", result, equalTo(543978772));
+        assertThat("hash code", result, equalTo(687027758));
     }
 
     @Test
