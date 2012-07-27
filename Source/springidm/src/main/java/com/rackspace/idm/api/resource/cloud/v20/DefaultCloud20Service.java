@@ -1168,7 +1168,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
                     .createTenant(this.tenantConverterCloudV20.toTenant(tenant)).getValue());
         } catch (Exception ex) {
-            return exceptionResponse(ex);
+            return exceptionHandler.exceptionResponse(ex);
         }
     }
 
@@ -1197,7 +1197,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUser(this.userConverterCloudV20.toUser(user)).getValue());
         } catch (Exception ex) {
-            return exceptionResponse(ex);
+            return exceptionHandler.exceptionResponse(ex);
         }
     }
 
@@ -1220,7 +1220,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(user)).getValue());
         } catch (Exception ex) {
-            return exceptionResponse(ex);
+            return exceptionHandler.exceptionResponse(ex);
         }
     }
 
@@ -1276,7 +1276,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             return Response.ok(creds.getValue());
 
         } catch (Exception ex) {
-            return exceptionResponse(ex);
+            return exceptionHandler.exceptionResponse(ex);
         }
     }
 
@@ -1312,7 +1312,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                     .createRole(this.roleConverterCloudV20.toRole(role)).getValue());
 
         } catch (Exception ex) {
-            return exceptionResponse(ex);
+            return exceptionHandler.exceptionResponse(ex);
         }
     }
 
@@ -1344,7 +1344,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createCredentials(creds).getValue());
         } catch (Exception ex) {
-            return exceptionResponse(ex);
+            return exceptionHandler.exceptionResponse(ex);
         }
     }
 
@@ -1397,7 +1397,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                     .createEndpoints(this.endpointConverterCloudV20.toEndpointListFromBaseUrls(baseUrls)).getValue());
 
         } catch (Exception ex) {
-            return exceptionResponse(ex);
+            return exceptionHandler.exceptionResponse(ex);
         }
     }
 
@@ -1416,7 +1416,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createEndpoints(list).getValue());
         } catch (Exception ex) {
-            return exceptionResponse(ex);
+            return exceptionHandler.exceptionResponse(ex);
         }
     }
 
@@ -1440,7 +1440,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                             .createEndpointTemplates(endpointConverterCloudV20.toEndpointTemplateList(baseUrls)).getValue());
 
         } catch (Exception ex) {
-            return exceptionResponse(ex);
+            return exceptionHandler.exceptionResponse(ex);
         }
     }
 
@@ -1459,7 +1459,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             return Response.ok(currentExtensions.getValue());
         } catch (Exception e) {
             // Return 500 error. Is WEB-IN/extensions.xml malformed?
-            return serviceExceptionResponse();
+            return exceptionHandler.exceptionResponse(e);
         }
     }
 
@@ -1479,7 +1479,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListFromClientRoles(roles)).getValue());
         } catch (Exception ex) {
-            return exceptionResponse(ex);
+            return exceptionHandler.exceptionResponse(ex);
         }
     }
 
@@ -1498,7 +1498,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                     OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListJaxb(roles)).getValue());
 
         } catch (Exception ex) {
-            return exceptionResponse(ex);
+            return exceptionHandler.exceptionResponse(ex);
         }
     }
 
@@ -1519,7 +1519,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             return Response.ok(
                     OBJ_FACTORIES.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListJaxb(roles)).getValue());
         } catch (Exception ex) {
-            return exceptionResponse(ex);
+            return exceptionHandler.exceptionResponse(ex);
         }
 
     }

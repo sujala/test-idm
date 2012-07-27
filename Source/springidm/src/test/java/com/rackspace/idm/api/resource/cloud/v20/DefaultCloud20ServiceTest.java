@@ -18,6 +18,7 @@ import com.rackspace.idm.exception.*;
 import com.sun.jersey.core.spi.factory.ResponseBuilderImpl;
 import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.Control;
+import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.SearchResultEntry;
 import org.apache.commons.configuration.Configuration;
 import org.hamcrest.Matchers;
@@ -2913,7 +2914,7 @@ public class DefaultCloud20ServiceTest {
         doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
         doThrow(notFoundException).when(spy).checkAndGetTenant(null);
         when(exceptionHandler.exceptionResponse(notFoundException)).thenReturn(responseBuilder);
-        assertThat("response builder",spy.getTenantById(null, authToken, null),equalTo(responseBuilder));
+        assertThat("response builder", spy.getTenantById(null, authToken, null), equalTo(responseBuilder));
     }
 
     @Test
@@ -2929,9 +2930,11 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void getTenantByName_tenantIsNullThrowsNotFoundException_returns404() throws Exception {
-        Response.ResponseBuilder responseBuilder = spy.getTenantByName(null, authToken, null);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(404));
+    public void getTenantByName_tenantIsNullThrowsNotFoundException_returnsResponseBuilder() throws Exception {
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
+        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        when(exceptionHandler.exceptionResponse(any(NotFoundException.class))).thenReturn(responseBuilder);
+        assertThat("response builder", spy.getTenantByName(null, authToken, null), equalTo(responseBuilder));
     }
 
     @Test
@@ -2945,6 +2948,19 @@ public class DefaultCloud20ServiceTest {
     public void getUserById_callerDoesNotHaveDefaultUserRole_callsVerifyUserAdminLevelAccess() throws Exception {
         doReturn(new User()).when(spy).getUser(any(ScopeAccess.class));
         spy.getUserById(null, authToken, null);
+        verify(spy).verifyUserAdminLevelAccess(authToken);
+    }
+
+    @Test
+    public void getUserById_callerDoesNotHaveDefaultUserRole_returnsResponseBuilder() throws Exception {
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doReturn(new User()).when(spy).getUser(scopeAccess);
+        when(authorizationService.authorizeCloudUser(scopeAccess)).thenReturn(false);
+        doNothing().when(spy).verifyUserAdminLevelAccess(authToken);
+        when(exceptionHandler.exceptionResponse(any(NotFoundException.class))).thenReturn(responseBuilder);
+        assertThat("response builder",spy.getUserById(null, authToken, null),equalTo(responseBuilder));
         verify(spy).verifyUserAdminLevelAccess(authToken);
     }
 
@@ -2966,11 +2982,14 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void getUserById_isCloudUserAndIdDoesNotMatchThrowForbiddenException_returns403() throws Exception {
-        when(authorizationService.authorizeCloudUser(any(ScopeAccess.class))).thenReturn(true);
+    public void getUserById_isCloudUserAndIdDoesNotMatchThrowForbiddenException_returnsResponseBuilder() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        when(authorizationService.authorizeCloudUser(scopeAccess)).thenReturn(true);
         doReturn(user).when(spy).getUser(any(ScopeAccess.class));
-        Response.ResponseBuilder responseBuilder = spy.getUserById(httpHeaders, authToken, null);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(403));
+        when(exceptionHandler.exceptionResponse(any(ForbiddenException.class))).thenReturn(responseBuilder);
+        assertThat("response builder", spy.getUserById(httpHeaders, authToken, null), equalTo(responseBuilder));
     }
 
     @Test
@@ -2987,9 +3006,11 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void getUserByName_userIsNullThrowsNotFoundException_returns404() throws Exception {
-        Response.ResponseBuilder responseBuilder = spy.getUserByName(null, authToken, null);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(404));
+    public void getUserByName_userIsNullThrowsNotFoundException_returnsResponseBuilder() throws Exception {
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
+        doNothing().when(spy).verifyUserLevelAccess(authToken);
+        when(exceptionHandler.exceptionResponse(any(NotFoundException.class))).thenReturn(responseBuilder);
+        assertThat("response builder", spy.getUserByName(null, authToken, null), equalTo(responseBuilder));
     }
 
     @Test
@@ -3035,9 +3056,11 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void getUserCredential_notPasswordCredentialOrAPIKeyCredentialThrowsBadRequest_returns400() throws Exception {
-        Response.ResponseBuilder responseBuilder = spy.getUserCredential(null, authToken, null, "");
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
+    public void getUserCredential_notPasswordCredentialOrAPIKeyCredentialThrowsBadRequest_returnsResponseBuilder() throws Exception {
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
+        doNothing().when(spy).verifyUserLevelAccess(authToken);
+        when(exceptionHandler.exceptionResponse(any(BadRequestException.class))).thenReturn(responseBuilder);
+        assertThat("response builder", spy.getUserCredential(null, authToken, null, ""), equalTo(responseBuilder));
     }
 
     @Test
@@ -3048,20 +3071,23 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void getUserCredential_cloudUserIdNotMatchThrowsForbiddenException_returns403() throws Exception {
+    public void getUserCredential_cloudUserIdNotMatchThrowsForbiddenException_returnsResponseBuilder() throws Exception {
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         when(authorizationService.authorizeCloudUser(any(ScopeAccess.class))).thenReturn(true);
         doReturn(user).when(spy).getUser(any(ScopeAccess.class));
-        Response.ResponseBuilder responseBuilder = spy.getUserCredential(null, authToken, "", apiKeyCredentials);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(403));
+        when(exceptionHandler.exceptionResponse(any(ForbiddenException.class))).thenReturn(responseBuilder);
+        assertThat("response builder", spy.getUserCredential(null, authToken, "", apiKeyCredentials), equalTo(responseBuilder));
     }
 
     @Test
-    public void getUserCredential_userIsNull_returns404() throws Exception {
+    public void getUserCredential_userIsNull_returnsResponseBuilder() throws Exception {
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
+        doNothing().when(spy).verifyUserLevelAccess(authToken);
         when(userService.getUserById("id")).thenReturn(null);
         when(authorizationService.authorizeCloudUser(any(ScopeAccess.class))).thenReturn(true);
         doReturn(user).when(spy).getUser(any(ScopeAccess.class));
-        Response.ResponseBuilder responseBuilder = spy.getUserCredential(null, authToken, "id", apiKeyCredentials);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(404));
+        when(exceptionHandler.exceptionResponse(any(NotFoundException.class))).thenReturn(responseBuilder);
+        assertThat("response builder", spy.getUserCredential(null, authToken, "id", apiKeyCredentials), equalTo(responseBuilder));
     }
 
     @Test
@@ -3072,24 +3098,30 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void getUserCredential_cloudAdminUserIdNotMatchThrowsForbiddenException_returns403() throws Exception {
+    public void getUserCredential_cloudAdminUserIdNotMatchThrowsForbiddenException_returnsResponseBuilder() throws Exception {
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
+        doNothing().when(spy).verifyUserLevelAccess(authToken);
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
         doReturn(user).when(spy).getUser(any(ScopeAccess.class));
-        Response.ResponseBuilder responseBuilder = spy.getUserCredential(null, authToken, "", passwordCredentials);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(403));
+        when(exceptionHandler.exceptionResponse(any(ForbiddenException.class))).thenReturn(responseBuilder);
+        assertThat("response code",spy.getUserCredential(null, authToken, "", passwordCredentials), equalTo(responseBuilder));
     }
 
     @Test
-    public void getUserCredential_userIsNullThrowsNotFoundException_returns404() throws Exception {
-        Response.ResponseBuilder responseBuilder = spy.getUserCredential(null, authToken, "", apiKeyCredentials);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(404));
+    public void getUserCredential_userIsNullThrowsNotFoundException_returnsResponseBuilder() throws Exception {
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
+        doNothing().when(spy).verifyUserLevelAccess(authToken);
+        when(exceptionHandler.exceptionResponse(any(NotFoundException.class))).thenReturn(responseBuilder);
+        assertThat("response builder", spy.getUserCredential(null, authToken, "", apiKeyCredentials), equalTo(responseBuilder));
     }
 
     @Test
-    public void getUserCredential_passwordCredentialUserPasswordIsBlank_returns404() throws Exception {
+    public void getUserCredential_passwordCredentialUserPasswordIsBlank_returnsResponseBuilder() throws Exception {
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
+        doNothing().when(spy).verifyUserLevelAccess(authToken);
         when(userService.getUserById(userId)).thenReturn(new User());
-        Response.ResponseBuilder responseBuilder = spy.getUserCredential(null, authToken, userId, passwordCredentials);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(404));
+        when(exceptionHandler.exceptionResponse(any(NotFoundException.class))).thenReturn(responseBuilder);
+        assertThat("response builder", spy.getUserCredential(null, authToken, userId, passwordCredentials), equalTo(responseBuilder));
     }
 
     @Test
@@ -3110,10 +3142,12 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void getUserCredential_apiKeyCredentialAPIKeyIsBlank_returns404() throws Exception {
+    public void getUserCredential_apiKeyCredentialAPIKeyIsBlank_returnsResponseBuilder() throws Exception {
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
+        doNothing().when(spy).verifyUserLevelAccess(authToken);
         when(userService.getUserById(userId)).thenReturn(user);
-        Response.ResponseBuilder responseBuilder = spy.getUserCredential(httpHeaders, authToken, userId, apiKeyCredentials);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(404));
+        when(exceptionHandler.exceptionResponse(any(NotFoundException.class))).thenReturn(responseBuilder);
+        assertThat("response builder", spy.getUserCredential(httpHeaders, authToken, userId, apiKeyCredentials), equalTo(responseBuilder));
     }
 
     @Test
@@ -3123,17 +3157,20 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void getUserRole_roleIsNullThrowsNotFoundException_returns404() throws Exception {
+    public void getUserRole_roleIsNullThrowsNotFoundException_returnsResponseBuilder() throws Exception {
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         User user = new User();
         TenantRole tenantRole = new TenantRole();
         tenantRole.setRoleRsId("different");
         List<TenantRole> tenantRoleList = new ArrayList<TenantRole>();
         tenantRoleList.add(tenantRole);
+        ArgumentCaptor<NotFoundException> argumentCaptor = ArgumentCaptor.forClass(NotFoundException.class);
         doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
         doReturn(user).when(spy).checkAndGetUser("userId");
+        when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         when(tenantService.getGlobalRolesForUser(user)).thenReturn(tenantRoleList);
-        Response.ResponseBuilder responseBuilder = spy.getUserRole(null, authToken, "userId", "roleId");
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(404));
+        assertThat("response builder", spy.getUserRole(null, authToken, "userId", "roleId"), equalTo(responseBuilder));
+        assertThat("correct exception type",argumentCaptor.getValue(),instanceOf(NotFoundException.class));
     }
 
     @Test
@@ -3149,6 +3186,16 @@ public class DefaultCloud20ServiceTest {
     public void listCredentials_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.listCredentials(null, authToken, null, null, 0);
         verify(spy).verifyUserLevelAccess(authToken);
+    }
+
+    @Test
+    public void listCredentials_throwsNotFoundException_returnsResponseBuilder() throws Exception {
+        NotFoundException notFoundException = new NotFoundException();
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
+        doNothing().when(spy).verifyUserLevelAccess(authToken);
+        doThrow(notFoundException).when(spy).checkAndGetUser(null);
+        when(exceptionHandler.exceptionResponse(notFoundException)).thenReturn(responseBuilder);
+        assertThat("response builder",spy.listCredentials(null, authToken, null, null, 0),equalTo(responseBuilder));
     }
 
     @Test
@@ -3266,6 +3313,17 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void listEndpoints_throwsNotFoundException_returnsResponseBuilder() throws Exception {
+        NotFoundException notFoundException = new NotFoundException();
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
+        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doNothing().when(spy).verifyTokenHasTenantAccess(authToken, null);
+        doThrow(notFoundException).when(spy).checkAndGetTenant(null);
+        when(exceptionHandler.exceptionResponse(notFoundException)).thenReturn(responseBuilder);
+        assertThat("response builder", spy.listEndpoints(null, authToken, null), equalTo(responseBuilder));
+    }
+
+    @Test
     public void listEndpoints_baseUrlIdsIsNotNullResponseOk_returns200() throws Exception {
         Response.ResponseBuilder responseBuilder = spy.listEndpoints(httpHeaders, authToken, tenantId);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
@@ -3298,6 +3356,15 @@ public class DefaultCloud20ServiceTest {
     public void listEndpointTemplates_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.listEndpointTemplates(null, authToken, null);
         verify(spy).verifyServiceAdminLevelAccess(authToken);
+    }
+
+    @Test
+    public void listEndpointTemplates_throwsNotAuthorizedException_returnsResponseBuilder() throws Exception {
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
+        NotAuthorizedException notAuthorizedException = new NotAuthorizedException();
+        doThrow(notAuthorizedException).when(spy).verifyServiceAdminLevelAccess(authToken);
+        when(exceptionHandler.exceptionResponse(notAuthorizedException)).thenReturn(responseBuilder);
+        assertThat("response builder", spy.listEndpointTemplates(null, authToken, null), equalTo(responseBuilder));
     }
 
     @Test
@@ -3344,6 +3411,17 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void listRolesForTenant_throwsNotFoundException_returnsResponseBuilder() throws Exception {
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
+        NotFoundException notFoundException = new NotFoundException();
+        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doNothing().when(spy).verifyTokenHasTenantAccess(authToken, null);
+        doThrow(notFoundException).when(spy).checkAndGetTenant(null);
+        when(exceptionHandler.exceptionResponse(notFoundException)).thenReturn(responseBuilder);
+        assertThat("response builder", spy.listRolesForTenant(null, authToken, null, null, 0), equalTo(responseBuilder));
+    }
+
+    @Test
     public void listRolesForTenant_responseOk_returns200() throws Exception {
         Response.ResponseBuilder responseBuilder = spy.listRolesForTenant(httpHeaders, authToken, tenantId, null, null);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
@@ -3353,6 +3431,17 @@ public class DefaultCloud20ServiceTest {
     public void listRolesForUserOnTenant_verifyServiceAdminLevelAccess() throws Exception {
         spy.listRolesForUserOnTenant(null, authToken, null, null);
         verify(spy).verifyServiceAdminLevelAccess(authToken);
+    }
+
+    @Test
+    public void listRolesForUserOnTenant_throwsNotFoundException_returnsResponseBuilder() throws Exception {
+        NotFoundException notFoundException = new NotFoundException();
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
+        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doNothing().when(spy).verifyTokenHasTenantAccess(authToken,null);
+        doThrow(notFoundException).when(spy).checkAndGetTenant(null);
+        when(exceptionHandler.exceptionResponse(notFoundException)).thenReturn(responseBuilder);
+        assertThat("response builder",spy.listRolesForUserOnTenant(null, authToken, null, null),equalTo(responseBuilder));
     }
 
     @Test
@@ -4067,6 +4156,15 @@ public class DefaultCloud20ServiceTest {
     public void listEndpointsForToken_callsVerifyServiceAdminLevelAccess() throws Exception {
         spy.listEndpointsForToken(null, null, null);
         verify(spy).verifyServiceAdminLevelAccess(null);
+    }
+
+    @Test
+    public void listEndpointsForToken_throwsNotAuthorizedException_returnsResponseBuilder() throws Exception {
+        NotAuthorizedException notAuthorizedException = new NotAuthorizedException();
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
+        doThrow(notAuthorizedException).when(spy).verifyServiceAdminLevelAccess(null);
+        when(exceptionHandler.exceptionResponse(notAuthorizedException)).thenReturn(responseBuilder);
+        assertThat("response builder", spy.listEndpointsForToken(null, null, null), equalTo(responseBuilder));
     }
 
     @Test
@@ -5230,10 +5328,12 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void listRoles_verifyServiceAdmin_throwsForbiddenException_returns403() throws Exception {
-        doThrow(new ForbiddenException()).when(spy).verifyServiceAdminLevelAccess(authToken);
-        Response.ResponseBuilder responseBuilder = spy.listRoles(httpHeaders, authToken, null, null, null);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(403));
+    public void listRoles_throwsForbiddenException_returnsResponseBuilder() throws Exception {
+        ForbiddenException forbiddenException = new ForbiddenException();
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
+        doThrow(forbiddenException).when(spy).verifyServiceAdminLevelAccess(authToken);
+        when(exceptionHandler.exceptionResponse(forbiddenException)).thenReturn(responseBuilder);
+        assertThat("response builder", spy.listRoles(httpHeaders, authToken, null, null, null), equalTo(responseBuilder));
     }
 
     @Test
