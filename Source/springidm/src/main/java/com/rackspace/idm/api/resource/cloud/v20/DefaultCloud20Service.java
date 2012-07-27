@@ -946,7 +946,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             return Response.noContent();
         } catch (Exception ex) {
-            return exceptionResponse(ex);
+            return exceptionHandler.exceptionResponse(ex);
         }
     }
 
@@ -958,7 +958,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             userService.deleteUser(user);
             return Response.noContent();
         } catch (Exception ex) {
-            return exceptionResponse(ex);
+            return exceptionHandler.exceptionResponse(ex);
         }
     }
 
@@ -993,7 +993,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             return Response.noContent();
 
         } catch (Exception ex) {
-            return exceptionResponse(ex);
+            return exceptionHandler.exceptionResponse(ex);
         }
     }
 
@@ -1023,7 +1023,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             this.tenantService.deleteGlobalRole(role);
             return Response.noContent();
         } catch (Exception ex) {
-            return exceptionResponse(ex);
+            return exceptionHandler.exceptionResponse(ex);
         }
     }
 
@@ -1038,7 +1038,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (!tenant.containsBaseUrlId(endpointId)) {
                 String errMsg = String.format("Tenant %s does not have endpoint %s", tenantId, endpointId);
                 logger.warn(errMsg);
-                return notFoundExceptionResponse(errMsg);
+                throw new NotFoundException(errMsg);
             }
 
             CloudBaseUrl baseUrl = checkAndGetEndpointTemplate(endpointId);
@@ -1046,7 +1046,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             return Response.ok(
                     OBJ_FACTORIES.getOpenStackIdentityV2Factory().createEndpoint(endpointConverterCloudV20.toEndpoint(baseUrl)).getValue());
         } catch (Exception ex) {
-            return exceptionResponse(ex);
+            return exceptionHandler.exceptionResponse(ex);
         }
     }
 
@@ -1061,22 +1061,22 @@ public class DefaultCloud20Service implements Cloud20Service {
                     .createEndpointTemplate(this.endpointConverterCloudV20.toEndpointTemplate(baseUrl)).getValue());
 
         } catch (Exception ex) {
-            return exceptionResponse(ex);
+            return exceptionHandler.exceptionResponse(ex);
         }
     }
 
     @Override
     public ResponseBuilder getExtension(HttpHeaders httpHeaders, String alias) throws IOException {
-        if (StringUtils.isBlank(alias)) {
-            return badRequestExceptionResponse("Invalid extension alias '" + alias + "'.");
-        }
+        try{
+            if (StringUtils.isBlank(alias)) {
+                throw new BadRequestException("Invalid extension alias '" + alias + "'.");
+            }
 
-        final String normalizedAlias = alias.trim().toUpperCase();
+            final String normalizedAlias = alias.trim().toUpperCase();
 
-        if (extensionMap == null) {
-            extensionMap = new HashMap<String, JAXBElement<Extension>>();
+            if (extensionMap == null) {
+                extensionMap = new HashMap<String, JAXBElement<Extension>>();
 
-            try {
                 if (currentExtensions == null) {
                     JAXBContext jaxbContext = JAXBContextResolver.get();
                     Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
@@ -1090,17 +1090,17 @@ public class DefaultCloud20Service implements Cloud20Service {
                 for (Extension e : exts.getExtension()) {
                     extensionMap.put(e.getAlias().trim().toUpperCase(), OBJ_FACTORIES.getOpenStackCommonV1Factory().createExtension(e));
                 }
-            } catch (Exception e) {
-                // Return 500 error. Is WEB-IN/extensions.xml malformed?
-                return serviceExceptionResponse();
             }
-        }
 
-        if (!extensionMap.containsKey(normalizedAlias)) {
-            return notFoundExceptionResponse("Extension with alias '" + normalizedAlias + "' is not available.");
-        }
+            if (!extensionMap.containsKey(normalizedAlias)) {
+                throw new NotFoundException("Extension with alias '" + normalizedAlias + "' is not available.");
+            }
 
-        return Response.ok(extensionMap.get(normalizedAlias).getValue());
+            return Response.ok(extensionMap.get(normalizedAlias).getValue());
+
+        } catch (Exception ex){
+            return exceptionHandler.exceptionResponse(ex);
+        }
     }
 
     @Override
@@ -1111,7 +1111,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory()
                     .createRole(this.roleConverterCloudV20.toRoleFromClientRole(role)).getValue());
         } catch (Exception ex) {
-            return exceptionResponse(ex);
+            return exceptionHandler.exceptionResponse(ex);
         }
     }
 
@@ -1127,7 +1127,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             return Response.ok(OBJ_FACTORIES.getRackspaceIdentityExtKsqaV1Factory().createSecretQA(secrets).getValue());
 
         } catch (Exception ex) {
-            return exceptionResponse(ex);
+            return exceptionHandler.exceptionResponse(ex);
         }
     }
 
@@ -1138,7 +1138,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             Application client = checkAndGetApplication(serviceId);
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityExtKsadmnV1Factory().createService(serviceConverterCloudV20.toService(client)).getValue());
         } catch (Exception ex) {
-            return exceptionResponse(ex);
+            return exceptionHandler.exceptionResponse(ex);
         }
     }
 
@@ -1149,7 +1149,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             Tenant tenant = checkAndGetTenant(tenantsId);
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createTenant(tenantConverterCloudV20.toTenant(tenant)).getValue());
         } catch (Exception ex) {
-            return exceptionResponse(ex);
+            return exceptionHandler.exceptionResponse(ex);
         }
     }
 
