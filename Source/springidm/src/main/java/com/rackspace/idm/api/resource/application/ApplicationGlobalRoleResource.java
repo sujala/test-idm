@@ -27,7 +27,6 @@ import javax.ws.rs.core.Response;
 @Component("applicationGlobalRoleResource")
 public class ApplicationGlobalRoleResource {
 
-    private final ScopeAccessService scopeAccessService;
     private final ApplicationService applicationService;
     private final AuthorizationService authorizationService;
     private final TenantService tenantService;
@@ -36,10 +35,8 @@ public class ApplicationGlobalRoleResource {
 
     @Autowired
     public ApplicationGlobalRoleResource(
-        AuthorizationService authorizationService, ApplicationService applicationService,
-        ScopeAccessService scopeAccessService, TenantService tenantService) {
+        AuthorizationService authorizationService, ApplicationService applicationService, TenantService tenantService) {
         this.applicationService = applicationService;
-        this.scopeAccessService = scopeAccessService;
         this.authorizationService = authorizationService;
         this.tenantService = tenantService;
     }
@@ -59,20 +56,20 @@ public class ApplicationGlobalRoleResource {
         @PathParam("roleId") String roleId) {
 
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
-        
-		// TODO: Refactor. This logic should be in the tenant role service
-        Application application = this.applicationService.loadApplication(applicationId); 
-		ClientRole role = this.applicationService.getClientRoleById(roleId);
-		if (role == null) {
-			String errMsg = String.format("Role %s not found", roleId);
-			logger.warn(errMsg);
-			throw new BadRequestException(errMsg);
-		}
 
-		TenantRole tenantRole = new TenantRole();
-		tenantRole.setClientId(role.getClientId());
-		tenantRole.setRoleRsId(role.getId());
-		tenantRole.setName(role.getName());
+        // TODO: Refactor. This logic should be in the tenant role service
+        Application application = this.applicationService.loadApplication(applicationId);
+        ClientRole role = this.applicationService.getClientRoleById(roleId);
+        if (role == null) {
+            String errMsg = String.format("Role %s not found", roleId);
+            logger.warn(errMsg);
+            throw new BadRequestException(errMsg);
+        }
+
+        TenantRole tenantRole = new TenantRole();
+        tenantRole.setClientId(role.getClientId());
+        tenantRole.setRoleRsId(role.getId());
+        tenantRole.setName(role.getName());
 
 		this.tenantService.addTenantRoleToClient(application, tenantRole);
 
@@ -96,14 +93,7 @@ public class ApplicationGlobalRoleResource {
         
         Application application = this.applicationService.loadApplication(applicationId);
 
-        if(application==null){
-            throw new BadRequestException("Application with id: " + applicationId + " not found.");
-        }
-
     	TenantRole tenantRole = this.tenantService.getTenantRoleForParentById(application.getUniqueId(), roleId);
-        if(tenantRole==null){
-            throw new NotFoundException("Role with id: " + roleId + " not found.");
-        }
 		this.tenantService.deleteTenantRole(application.getUniqueId(), tenantRole);
 
         return Response.noContent().build();

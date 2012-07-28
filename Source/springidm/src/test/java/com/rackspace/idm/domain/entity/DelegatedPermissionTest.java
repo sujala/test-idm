@@ -82,6 +82,15 @@ public class DelegatedPermissionTest {
     }
 
     @Test
+    public void equals_ldapEntryNullAndOtherLdapNotNull_returnsTrue() throws Exception {
+        DelegatedPermission delegatedPermission1 = new DelegatedPermission();
+        delegatedPermission1.setLdapEntry(new ReadOnlyEntry("uniqueId",new Attribute[0]));
+        delegatedPermission.setLdapEntry(new ReadOnlyEntry("uniqueId",new Attribute[0]));
+        assertThat("equals",delegatedPermission.equals(delegatedPermission1),equalTo(true));
+        delegatedPermission.setLdapEntry(ldapEntry);
+    }
+
+    @Test
     public void equals_bothLdapEntriesNull_returnsFalse() throws Exception {
         DelegatedPermission delegatedPermission1 = new DelegatedPermission();
         delegatedPermission.setLdapEntry(null);

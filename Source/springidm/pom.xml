@@ -23,7 +23,7 @@
 
         <!--PowerMockito Properties-->
         <powermock.version>1.4.11</powermock.version>
-        <!--SoapUI Pro version-->
+        <!--SoapUI version-->
         <soapui.version>4.0.2-SNAPSHOT</soapui.version>
         <!--Integration test flag for sonar 3.0-->
         <skip.default.surefire>true</skip.default.surefire>
@@ -339,6 +339,33 @@
             <groupId>eviware</groupId>
             <artifactId>maven-soapui-plugin</artifactId>
             <version>${soapui.version}</version>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <artifactId>servlet-api</artifactId>
+                    <groupId>jetty</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>jaxb-impl</artifactId>
+                    <groupId>activesoap</groupId>
+                </exclusion>
+                <exclusion>
+                    <groupId>groovy</groupId>
+                    <artifactId>groovy-all</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>eviware</groupId>
+            <artifactId>soapui</artifactId>
+            <version>3.6.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>eviware</groupId>
+            <artifactId>maven-soapui-plugin</artifactId>
+            <version>3.6.1</version>
             <scope>test</scope>
             <exclusions>
                 <exclusion>
@@ -695,6 +722,60 @@
                 </plugins>
             </build>
         </profile>
+
+        <profile>
+            <id>soapui-dev-routing</id>
+            <activation>
+                <property>
+                    <name>soapui-dev-routing</name>
+                </property>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>eviware</groupId>
+                        <artifactId>maven-soapui-plugin</artifactId>
+                        <version>3.6.1</version>
+                        <configuration>
+                            <projectFile>soapui/soapUI/routing/Auth1.0_Routing.xml</projectFile>
+                            <junitReport>true</junitReport>
+                            <testSuite>Functional v1.0 redirect</testSuite>
+                            <testSuite>Functional v1.0.2</testSuite>
+                            <outputFolder>soapui/dev-routing-results</outputFolder>
+                            <projectProperties>
+                                <property>stagingEndpoint=http://d-api1.cidm.iad2.corp.rackspace.com:4931</property>
+                                <property>USstaginEndpoint=http://d-api1.cidm.iad2.corp.rackspace.com</property>
+                                <property>path=cloud</property>
+                            </projectProperties>
+                        </configuration>
+                        <dependencies>
+                            <dependency>
+                                <groupId>eviware</groupId>
+                                <artifactId>maven-soapui-plugin</artifactId>
+                                <version>3.6.1</version>
+                                <exclusions>
+                                    <exclusion>
+                                        <groupId>org.codehaus.groovy</groupId>
+                                        <artifactId>groovy-all</artifactId>
+                                    </exclusion>
+                                </exclusions>
+                            </dependency>
+                        </dependencies>
+                        <executions>
+                            <execution>
+                                <id>soapui-test</id>
+                                <phase>integration-test</phase>
+                                <goals>
+                                    <goal>test</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
         <profile>
             <id>soapui-dev2</id>
             <activation>

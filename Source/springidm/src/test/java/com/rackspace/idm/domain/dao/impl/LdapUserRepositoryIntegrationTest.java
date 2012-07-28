@@ -85,40 +85,35 @@ public class LdapUserRepositoryIntegrationTest extends InMemoryLdapIntegrationTe
         } catch (IllegalArgumentException e) {
             Assert.assertTrue(true);
         }
+
+        try {
+            Assert.assertNull(repo.getRackerByRackerId(null));
+        } catch (IllegalArgumentException e) {
+            Assert.fail("should have returned null!");
+        }
         
         try {
-            repo.getRackerByRackerId(null);
-            Assert.fail("Should have thrown an exception!");
+            Assert.assertNull(repo.getUserByUsername(null));
         } catch (IllegalArgumentException e) {
-            Assert.assertTrue(true);
-        }
-        
-        try {
-            repo.getUserByUsername(null);
-            Assert.fail("Should have thrown an exception!");
-        } catch (IllegalArgumentException e) {
-            Assert.assertTrue(true);
+            Assert.fail("should have returned null!");
         }
 
         try {
-            repo.getUserByUsername("     ");
-            Assert.fail("Should have thrown an exception!");
+            Assert.assertNull(repo.getUserByUsername("     "));
         } catch (IllegalArgumentException e) {
-            Assert.assertTrue(true);
+            Assert.fail("should have returned null");
         }
 
         try {
-            repo.getUserById(null);
-            Assert.fail("Should have thrown an exception!");
+            Assert.assertNull(repo.getUserById(null));
         } catch (IllegalArgumentException e) {
-            Assert.assertTrue(true);
+            Assert.fail("should have returned null!");
         }
 
         try {
-            repo.getUserById("     ");
-            Assert.fail("Should have thrown an exception!");
+            Assert.assertNull(repo.getUserById("     "));
         } catch (IllegalArgumentException e) {
-            Assert.assertTrue(true);
+            Assert.fail("should have returned null!");
         }
 
         try {

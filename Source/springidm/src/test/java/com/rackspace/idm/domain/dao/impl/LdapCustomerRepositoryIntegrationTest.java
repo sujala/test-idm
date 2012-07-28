@@ -3,11 +3,7 @@ package com.rackspace.idm.domain.dao.impl;
 import com.rackspace.idm.domain.config.LdapConfiguration;
 import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.entity.Customer;
-import com.rackspace.idm.domain.entity.CustomerStatus;
 import com.unboundid.ldap.sdk.Modification;
-import org.apache.commons.configuration.Configuration;
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.commons.configuration.PropertiesConfiguration;
 import org.junit.*;
 
 import java.util.List;
@@ -18,10 +14,6 @@ public class LdapCustomerRepositoryIntegrationTest extends InMemoryLdapIntegrati
     private static LdapConnectionPools connPools;
 
     static String customerId = "DELETE_My_CustomerId";
-    String customerName = "DELETE_My_Name";
-    CustomerStatus status = CustomerStatus.ACTIVE;
-    String country = "USA";
-    boolean softDeleted = false;
     String id = "XXXX";
 
     private static LdapCustomerRepository getRepo(LdapConnectionPools connPools) {
@@ -44,7 +36,7 @@ public class LdapCustomerRepositoryIntegrationTest extends InMemoryLdapIntegrati
         if (deleteme != null) {
             repo.deleteCustomer(customerId);
         }
-        addNewTestCustomer(customerId, customerName, status, country);
+        addNewTestCustomer(customerId);
     }
 
     @AfterClass
@@ -91,13 +83,6 @@ public class LdapCustomerRepositoryIntegrationTest extends InMemoryLdapIntegrati
     }
 
     @Test
-    @Ignore
-    public void shouldRetrieveAllCustomersThatExist() {
-        List<Customer> customers = repo.getAllCustomers();
-        Assert.assertTrue(customers.size() >= 1);
-    }
-
-    @Test
     public void shouldDeleteCustomer() {
         repo.deleteCustomer(customerId);
         Customer idontexist = repo.getCustomerByCustomerId(customerId);
@@ -117,8 +102,7 @@ public class LdapCustomerRepositoryIntegrationTest extends InMemoryLdapIntegrati
         Assert.assertEquals(1, mods.size());
     }
 
-    private Customer addNewTestCustomer(String customerId, String name,
-        CustomerStatus status, String country) {
+    private Customer addNewTestCustomer(String customerId) {
 
         Customer newCustomer = createTestCustomerInstance(customerId);
         repo.addCustomer(newCustomer);

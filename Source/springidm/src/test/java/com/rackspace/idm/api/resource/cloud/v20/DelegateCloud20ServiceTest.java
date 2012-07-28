@@ -95,7 +95,37 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
-    public void addUser_routingTrueAndCallerExistsInGA_callsDefaultService() throws Exception {
+    public void addUser_routingTrueAndCallerDoesNotExistInGA_callsCloudClient() throws Exception {
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(scopeAccessService.getAccessTokenByAuthHeader("token")).thenReturn(null);
+        spy.addUser(null,null,"token",null);
+        verify(cloudClient).post(anyString(), any(HttpHeaders.class), anyString());
+    }
+
+    @Test
+    public void addUser_routingTrueAndCallerExistsInGA_callerIsNotUserAdmin_callsCloudClient() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        when(authorizationService.authorizeCloudUserAdmin(scopeAccess)).thenReturn(false);
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(scopeAccessService.getAccessTokenByAuthHeader("token")).thenReturn(scopeAccess);
+        spy.addUser(null,null,"token",null);
+        verify(cloudClient).post(anyString(), any(HttpHeaders.class), anyString());
+    }
+
+    @Test
+    public void addUser_checksForUserAdminRole() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        when(authorizationService.authorizeCloudUserAdmin(scopeAccess)).thenReturn(true);
+        when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(scopeAccessService.getAccessTokenByAuthHeader("token")).thenReturn(scopeAccess);
+        spy.addUser(null,null,"token",null);
+        verify(authorizationService).authorizeCloudUserAdmin(scopeAccess);
+    }
+
+
+    @Test
+    public void addUser_routingTrueAndCallerExistsInGAAndCallerIsUserAdmin_callsDefaultService() throws Exception {
+        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(scopeAccessService.getAccessTokenByAuthHeader("token")).thenReturn(new ScopeAccess());
         spy.addUser(null,null,"token",null);
@@ -103,7 +133,8 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test(expected = DuplicateUsernameException.class)
-    public void addUser_routingTrueAndCallerExistsInGAButNameExistsInCloudAuth_throwsConflictException() throws Exception {
+    public void addUser_routingTrueAndCallerExistsInGAAndCallerIsUserAdminButNameExistsInCloudAuth_throwsConflictException() throws Exception {
+        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(scopeAccessService.getAccessTokenByAuthHeader("token")).thenReturn(new ScopeAccess());
         when(cloudClient.get(anyString(),any(HttpHeaders.class))).thenReturn(Response.ok());
@@ -113,7 +144,8 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
-    public void addUser_routingTrueAndCallerExistsInGAButNameExistsInCloudAuth_callsClientGetUsers() throws Exception {
+    public void addUser_routingTrueAndCallerExistsInGAAndCallerIsUserAdminButNameExistsInCloudAuth_callsClientGetUsers() throws Exception {
+        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(scopeAccessService.getAccessTokenByAuthHeader("token")).thenReturn(new ScopeAccess());
         when(cloudClient.get(anyString(), any(HttpHeaders.class))).thenReturn(Response.status(400));

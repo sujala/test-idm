@@ -36,7 +36,7 @@ public class ApplicationGlobalRoleResourceTest {
         authorizationService = mock(AuthorizationService.class);
         tenantService = mock(TenantService.class);
         applicationService = mock(ApplicationService.class);
-        applicationGlobalRoleResource =  new ApplicationGlobalRoleResource(authorizationService,applicationService,null,tenantService);
+        applicationGlobalRoleResource =  new ApplicationGlobalRoleResource(authorizationService,applicationService,tenantService);
     }
 
     @Test
@@ -44,12 +44,6 @@ public class ApplicationGlobalRoleResourceTest {
         when(applicationService.getClientRoleById(anyString())).thenReturn(new ClientRole());
         applicationGlobalRoleResource.grantGlobalRoleToApplication(null, null, null);
         verify(authorizationService).verifyIdmSuperAdminAccess(null);
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void grantGlobalRoleToApplication_ThrowsBadRequestWhenClientRoleNotFound() throws Exception {
-        doNothing().when(authorizationService).verifyIdmSuperAdminAccess(anyString());
-        applicationGlobalRoleResource.grantGlobalRoleToApplication(null, null, null);
     }
 
     @Test
@@ -68,18 +62,19 @@ public class ApplicationGlobalRoleResourceTest {
         assertThat("response status", response.getStatus(), equalTo(204));
     }
 
+
     @Test(expected = NotFoundException.class)
     public void deleteGlobalRoleFromUser_throwsNotFoundExceptionWhenRoleIsNotFound() throws Exception {
         doNothing().when(authorizationService).verifyIdmSuperAdminAccess(anyString());
         when(applicationService.loadApplication(anyString())).thenReturn(new Application());
-        when(tenantService.getTenantRoleForParentById(anyString(), anyString())).thenReturn(null);
+        when(tenantService.getTenantRoleForParentById(anyString(), anyString())).thenThrow(new NotFoundException());
         applicationGlobalRoleResource.deleteGlobalRoleFromApplication(null, null, null);
     }
 
-    @Test(expected = BadRequestException.class)
+    @Test(expected = NotFoundException.class)
     public void deleteGlobalRoleFromApplication_throwsBadRequestExceptionWhenApplicationIsNotFound() throws Exception {
         doNothing().when(authorizationService).verifyIdmSuperAdminAccess(anyString());
-        when(applicationService.loadApplication(anyString())).thenReturn(null);
+        when(applicationService.loadApplication(anyString())).thenThrow(new NotFoundException());
         when(tenantService.getTenantRoleForParentById(anyString(), anyString())).thenReturn(null);
         applicationGlobalRoleResource.deleteGlobalRoleFromApplication(null, null, null);
     }
@@ -92,7 +87,6 @@ public class ApplicationGlobalRoleResourceTest {
         applicationGlobalRoleResource.deleteGlobalRoleFromApplication(null, null, null);
         verify(tenantService).deleteTenantRole(anyString(), any(TenantRole.class));
     }
-
     @Test
     public void deleteGlobalRoleFromApplication_returnsNoContentResponse() throws Exception {
         doNothing().when(authorizationService).verifyIdmSuperAdminAccess(anyString());

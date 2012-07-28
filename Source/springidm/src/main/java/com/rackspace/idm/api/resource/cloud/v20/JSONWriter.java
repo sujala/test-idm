@@ -216,9 +216,6 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             if (cred instanceof ApiKeyCredentials) {
                 ApiKeyCredentials creds = (ApiKeyCredentials) cred;
                 jsonText = JSONValue.toJSONString(getApiKeyCredentials(creds));
-            } else if (cred instanceof SecretQA) {
-                SecretQA secrets = (SecretQA) object;
-                jsonText = JSONValue.toJSONString(getSecretQA(secrets));
             } else if (cred instanceof PasswordCredentialsBase) {
                 PasswordCredentialsBase creds = (PasswordCredentialsBase) cred;
                 jsonText = JSONValue.toJSONString(getPasswordCredentials(creds));

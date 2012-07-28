@@ -10,6 +10,9 @@ import java.util.Locale;
 
 import org.joda.time.DateTimeZone;
 
+import static org.hamcrest.Matchers.nullValue;
+import static org.junit.Assert.assertThat;
+
 public class UserLocaleTests {
     private Locale preferredLang = Locale.US;
     private DateTimeZone timeZone = DateTimeZone.forID("America/Chicago");
@@ -37,7 +40,15 @@ public class UserLocaleTests {
         
         Assert.assertEquals(961, loc.hashCode());
     }
-    
+
+    @Test
+    public void setPreferredString_null_withNullInput() throws Exception {
+        UserLocale locale = getTestLocale();
+        locale.setPreferredLang(null);
+
+        assertThat("local prefered lang", locale.getPreferredLang(), nullValue());
+    }
+
     @Test
     public void shouldReturnTrueForEquals() {
         UserLocale loc1 = getTestLocale();

@@ -78,7 +78,7 @@ public class ApplicationResourceTest {
 
     @Test(expected = BadRequestException.class)
     public void updateApplication_withNonMatchingApplicationIdInPayload_throwsBadRequestException() throws Exception {
-        com.rackspace.idm.domain.entity.Application application = new com.rackspace.idm.domain.entity.Application("clientId", null, null, null, null);
+        com.rackspace.idm.domain.entity.Application application = new com.rackspace.idm.domain.entity.Application("clientId", null, null, null);
         doNothing().when(authorizationService).verifyIdmSuperAdminAccess(anyString());
         when(applicationConverter.toClientDO(Matchers.<Application>any())).thenReturn(application);
         when(applicationService.loadApplication(null)).thenReturn(null);

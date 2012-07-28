@@ -1,14 +1,11 @@
 package com.rackspace.idm.api.resource.cloud;
 
-import java.io.InputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import java.util.zip.GZIPInputStream;
 
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
@@ -17,30 +14,14 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.client.protocol.RequestAcceptEncoding;
-import org.apache.http.client.protocol.ResponseContentEncoding;
-
-import org.apache.http.conn.scheme.Scheme;
-
-import org.apache.http.conn.ssl.SSLSocketFactory;
-
-import org.apache.http.entity.HttpEntityWrapper;
 import org.apache.http.entity.StringEntity;
 
-import org.apache.http.HeaderElement;
-import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpException;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.HttpResponse;
-import org.apache.http.HttpResponseInterceptor;
 
-import org.apache.http.impl.client.ContentEncodingHttpClient;
 import org.apache.http.impl.client.DecompressingHttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
-
-import org.apache.http.protocol.HttpContext;
 
 import org.apache.http.util.EntityUtils;
 import org.springframework.stereotype.Component;

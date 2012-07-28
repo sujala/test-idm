@@ -115,4 +115,12 @@ public class DelegatedClientScopeAccessTest {
         String result = delegatedClientScopeAccess.getUserRsId();
         assertThat("user rs id", result, equalTo("userRsId"));
     }
+
+    @Test
+    public void getAccessTokenExp_returnsAccessTokenExp() throws Exception {
+        Date date = new Date(3000, 1, 1);
+        delegatedClientScopeAccess.setAccessTokenExp(date);
+        Date result = delegatedClientScopeAccess.getAccessTokenExp();
+        assertThat("date", result, equalTo(date));
+    }
 }

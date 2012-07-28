@@ -1,16 +1,11 @@
 package com.rackspace.idm.domain.entity;
 
-import com.rackspace.idm.validation.MessageTexts;
-import com.rackspace.idm.validation.RegexPatterns;
 import junit.framework.Assert;
 
 import org.joda.time.DateTime;
 import org.junit.Test;
-import org.tuckey.web.filters.urlrewrite.utils.RegexPattern;
 
 public class PasswordTest {
-    MessageTexts messageTexts = new MessageTexts();
-    RegexPatterns regexPatterns = new RegexPatterns();
 
     @Test
     public void shouldGenerateRandomPassword() {
@@ -31,6 +26,11 @@ public class PasswordTest {
     @Test(expected = IllegalArgumentException.class)
     public void shouldNotAllowBlankValueForExistingPassword() {
         Password.existingInstance(" ", null, false);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldNotNullValueForLastUpdated() {
+        Password.existingInstance("SomePassword", null, false);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -80,12 +80,21 @@ public class PasswordTest {
 
         Assert.assertTrue(pwd1.equals(pwd2));
         Assert.assertTrue(pwd1.equals(pwd1));
+
+        Password pwd3 = Password.newInstance("@#!");
+        pwd3.setValue(null); //for testing purposes
+        Password pwd4 = Password.newInstance("123");
+        pwd4.setValue(null); //for testing purposes
+
+        Assert.assertTrue(pwd3.equals(pwd4));
+        Assert.assertTrue(pwd4.equals(pwd3));
     }
 
     @Test
     public void ShouldReturnNotEquals() {
         Password pwd1 = Password.newInstance("Password");
         Password pwd2 = Password.newInstance("OtherPassword");
+
 
         Assert.assertFalse(pwd1.equals(null));
         Assert.assertFalse(pwd1.equals(11));

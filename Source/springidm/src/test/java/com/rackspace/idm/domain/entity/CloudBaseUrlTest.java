@@ -180,7 +180,9 @@ public class CloudBaseUrlTest {
         cloudBaseUrl.setVersionId("123");
         cloudBaseUrl.setVersionInfo("versionInfo");
         cloudBaseUrl.setVersionList("versionList");
-        assertThat("hash code", cloudBaseUrl.hashCode(), equalTo(88412547));
+        cloudBaseUrl.setRegion("someRegion");
+        cloudBaseUrl.setServiceName("someService");
+        assertThat("hash code", cloudBaseUrl.hashCode(), equalTo(-1116460004));
     }
 
     @Test

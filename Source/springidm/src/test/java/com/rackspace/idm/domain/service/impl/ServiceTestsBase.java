@@ -7,9 +7,7 @@ import org.junit.Test;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientScopeAccess;
 import com.rackspace.idm.domain.entity.ClientSecret;
-import com.rackspace.idm.domain.entity.ClientStatus;
 import com.rackspace.idm.domain.entity.Customer;
-import com.rackspace.idm.domain.entity.CustomerStatus;
 import com.rackspace.idm.domain.entity.PasswordResetScopeAccess;
 import com.rackspace.idm.domain.entity.Permission;
 import com.rackspace.idm.domain.entity.RackerScopeAccess;
@@ -22,29 +20,11 @@ public class ServiceTestsBase {
     String clientId = "ClientId";
     ClientSecret clientSecret = ClientSecret.newInstance("Secret");
     String name = "Name";
-    String inum = "Inum";
-    String iname = "Iname";
     String customerId = "CustomerId";
-    ClientStatus status = ClientStatus.ACTIVE;
-    String seeAlso = "SeeAlso";
-    String owner = "Owner";
 
-    String customerName = "Name";
     String customerInum = "Inum";
-    String customerIname = "Iname";
-    CustomerStatus customerStatus = CustomerStatus.ACTIVE;
-    String customerSeeAlso = "SeeAlso";
-    String customerOwner = "Owner";
-    String customerCountry = "USA";
-
-    String resourceId = "resource";
-    String resourceValue = "resourceValue";
-
-    String groupName = "groupName";
-    String groupType = "groupType";
 
     String userDN = "userDN";
-    String groupDN = "groupDN";
     String username = "username";
 
     String uniqueId = "uniqueId";
@@ -56,7 +36,7 @@ public class ServiceTestsBase {
 
     protected Application getFakeClient() {
         Application client = new Application(clientId, clientSecret, name, 
-            customerId, status);
+            customerId);
 
         client.setUniqueId(uniqueId);
         return client;

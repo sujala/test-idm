@@ -197,9 +197,10 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         verify(spy).deleteEntryAndSubtree(eq("uniqueId"), any(Audit.class));
     }
 
-    @Test (expected = IllegalArgumentException.class)
-    public void getGroupIdsForUser_usernameIsBlank_throwsIllegalArgument() throws Exception {
-        ldapUserRepository.getGroupIdsForUser("");
+    @Test
+    public void getGroupIdsForUser_usernameIsBlank_returnsNull() throws Exception {
+        String[] result = ldapUserRepository.getGroupIdsForUser("");
+        assertThat("list", result, equalTo(null));
     }
 
     @Test
@@ -229,9 +230,10 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         assertThat("group id", result, equalTo(null));
     }
 
-    @Test (expected = IllegalArgumentException.class)
-    public void getRackerByRackerId_rackerIdIsBlank_throwsIllegalArgument() throws Exception {
-        ldapUserRepository.getRackerByRackerId("   ");
+    @Test
+    public void getRackerByRackerId_rackerIdIsBlank_returnsNull() throws Exception {
+        Racker result = ldapUserRepository.getRackerByRackerId("   ");
+        assertThat("racker", result, equalTo(null));
     }
 
     @Test
@@ -259,14 +261,16 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         assertThat("racker", result, equalTo(null));
     }
 
-    @Test (expected = IllegalArgumentException.class)
-    public void getUserByCustomerIdAndUsername_customerIdIsBlank_throwsIllegalArgument() throws Exception {
-        ldapUserRepository.getUserByCustomerIdAndUsername("   ", "username");
+    @Test
+    public void getUserByCustomerIdAndUsername_customerIdIsBlank_returnsNull() throws Exception {
+        User result = ldapUserRepository.getUserByCustomerIdAndUsername("   ", "username");
+        assertThat("user", result, equalTo(null));
     }
 
-    @Test (expected = IllegalArgumentException.class)
-    public void getUserByCustomerIdAndUsername_usernameIsBlank_throwsIllegalArgument() throws Exception {
-        ldapUserRepository.getUserByCustomerIdAndUsername("customerId", "     ");
+    @Test
+    public void getUserByCustomerIdAndUsername_usernameIsBlank_returnsNull() throws Exception {
+        User result = ldapUserRepository.getUserByCustomerIdAndUsername("customerId", "     ");
+        assertThat("user", result, equalTo(null));
     }
 
     @Test
@@ -284,9 +288,10 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         assertThat("user", result, equalTo(user));
     }
 
-    @Test (expected = IllegalArgumentException.class)
-    public void getUserById_idIsBlank_throwsIllegalArgument() throws Exception {
-        ldapUserRepository.getUserById("");
+    @Test
+    public void getUserById_idIsBlank_returnsNull() throws Exception {
+        User result = ldapUserRepository.getUserById("");
+        assertThat("user", result, equalTo(null));
     }
 
     @Test
@@ -319,9 +324,10 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         assertThat("users", result, equalTo(users));
     }
 
-    @Test (expected = IllegalArgumentException.class)
-    public void getUsersByNastId_nastIdIsBlank_throwsIllegalArgument() throws Exception {
-        ldapUserRepository.getUsersByNastId("");
+    @Test
+    public void getUsersByNastId_nastIdIsBlank_returnsNull() throws Exception {
+        Users result = ldapUserRepository.getUsersByNastId("");
+        assertThat("users", result, equalTo(null));
     }
 
     @Test
@@ -339,9 +345,10 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         assertThat("users", result, equalTo(users));
     }
 
-    @Test (expected = IllegalArgumentException.class)
-    public void getUsersByDomainId_domainIdIsBlank_throwsIllegalArgument() throws Exception {
-        ldapUserRepository.getUsersByDomainId("");
+    @Test
+    public void getUsersByDomainId_domainIdIsBlank_returnsNull() throws Exception {
+        Users result = ldapUserRepository.getUsersByDomainId("");
+        assertThat("users", result, equalTo(null));
     }
 
     @Test
@@ -359,9 +366,10 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         assertThat("users", result, equalTo(users));
     }
 
-    @Test (expected = IllegalArgumentException.class)
-    public void getUserByRPN_rpnIsBlank_throwsIllegalArgument() throws Exception {
-        ldapUserRepository.getUserByRPN("");
+    @Test
+    public void getUserByRPN_rpnIsBlank_returnsNull() throws Exception {
+        User result = ldapUserRepository.getUserByRPN("");
+        assertThat("user", result, equalTo(null));
     }
 
     @Test
@@ -379,9 +387,10 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         assertThat("user", result, equalTo(user));
     }
 
-    @Test (expected = IllegalArgumentException.class)
-    public void getUserBySecureId_secureIdIsBlank_throwsIllegalArgument() throws Exception {
-        ldapUserRepository.getUserBySecureId(null);
+    @Test
+    public void getUserBySecureId_secureIdIsBlank_returnsNull() throws Exception {
+        User result = ldapUserRepository.getUserBySecureId(null);
+        assertThat("user", result, equalTo(null));
     }
 
     @Test
@@ -399,9 +408,22 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         assertThat("user", result, equalTo(user));
     }
 
-    @Test (expected = IllegalArgumentException.class)
-    public void getUserByUsername_usernameIsBlank_throwsIllegalArgument() throws Exception {
-        ldapUserRepository.getUserByUsername("   ");
+    @Test
+    public void getUserByUsername_usernameIsBlank_returnsNull() throws Exception {
+        User userByUsername = ldapUserRepository.getUserByUsername("   ");
+        assertThat("user", userByUsername, equalTo(null));
+    }
+
+    @Test
+    public void getUserByUsername_usernameIsNull_returnsNull() throws Exception {
+        User userByUsername = ldapUserRepository.getUserByUsername(null);
+        assertThat("user", userByUsername, equalTo(null));
+    }
+
+    @Test
+    public void getUserByUsername_usernameIsEmptyString_returnsNull() throws Exception {
+        User userByUsername = ldapUserRepository.getUserByUsername("");
+        assertThat("user", userByUsername, equalTo(null));
     }
 
     @Test
@@ -2294,9 +2316,10 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         assertThat("mod list", modificationList.get(0).getModificationType().toString(), equalTo("REPLACE"));
     }
 
-    @Test (expected = IllegalArgumentException.class)
-    public void getSoftDeletedUserById_idIsBlank_throwsIllegalArgument() throws Exception {
-        ldapUserRepository.getSoftDeletedUserById("           ");
+    @Test
+    public void getSoftDeletedUserById_idIsBlank_returnNull() throws Exception {
+        User result = ldapUserRepository.getSoftDeletedUserById("           ");
+        assertThat("user", result, equalTo(null));
     }
 
     @Test
@@ -2314,9 +2337,10 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         assertThat("user", result, equalTo(user));
     }
 
-    @Test (expected = IllegalArgumentException.class)
-    public void getSoftDeletedUserByUsername_usernameIsBlank_throwsIllegalArgument() throws Exception {
-        ldapUserRepository.getSoftDeletedUserByUsername("           ");
+    @Test
+    public void getSoftDeletedUserByUsername_usernameIsBlank_returnsNull() throws Exception {
+        User result = ldapUserRepository.getSoftDeletedUserByUsername("           ");
+        assertThat("user", result, equalTo(null));
     }
 
     @Test

@@ -188,7 +188,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().debug("Getting GroupIds for User {}", username);
         if (StringUtils.isBlank(username)) {
             getLogger().error("Null or Empty username parameter");
-            throw new IllegalArgumentException("Null or Empty username parameter.");
+            getLogger().info("Invalid username parameter");
+            return null;
         }
 
         String[] groupIds = null;
@@ -215,8 +216,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().debug("Getting Racker {}", rackerId);
         if (StringUtils.isBlank(rackerId)) {
             getLogger().error("Null or Empty rackerId parameter");
-            throw new IllegalArgumentException(
-                "Null or Empty rackerId parameter.");
+            getLogger().info("Invalid rackerId parameter.");
+            return null;
         }
 
         Filter searchFilter = new LdapSearchBuilder()
@@ -244,11 +245,13 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         if (StringUtils.isBlank(customerId)) {
             getLogger().error("Null or Empty customerId parameter");
-            throw new IllegalArgumentException("Null or Empty customerId parameter.");
+            getLogger().info("Invalid customerId parameter.");
+            return null;
         }
         if (StringUtils.isBlank(username)) {
             getLogger().error("Null or Empty username parameter");
-            throw new IllegalArgumentException("Null or Empty username parameter.");
+            getLogger().info("Invalid username parameter.");
+            return null;
         }
 
         Filter searchFilter = new LdapSearchBuilder()
@@ -272,7 +275,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().debug("Doing search for id " + id);
         if (StringUtils.isBlank(id)) {
             getLogger().error("Null or Empty id parameter");
-            throw new IllegalArgumentException("Null or Empty id parameter.");
+            getLogger().info("Invalid id parameter.");
+            return null;
         }
 
         Filter searchFilter = new LdapSearchBuilder()
@@ -308,8 +312,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().debug("Doing search for nastId " + nastId);
         if (StringUtils.isBlank(nastId)) {
             getLogger().error("Null or Empty nastId parameter");
-            throw new IllegalArgumentException(
-                "Null or Empty nastId parameter.");
+            getLogger().info("Invalid nastId parameter.");
+            return null;
         }
 
         Filter searchFilter = new LdapSearchBuilder()
@@ -329,8 +333,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().debug("Doing search for domainId " + domainId);
         if (StringUtils.isBlank(domainId)) {
             getLogger().error("Null or Empty domainId parameter");
-            throw new IllegalArgumentException(
-                    "Null or Empty domainId parameter.");
+            getLogger().info("Invalid domainId parameter.");
+            return null;
         }
 
         Filter searchFilter = new LdapSearchBuilder()
@@ -350,7 +354,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().debug("Doing User search by rpn " + rpn);
         if (StringUtils.isBlank(rpn)) {
             getLogger().error("Null or Empty rpn parameter");
-            throw new IllegalArgumentException("Null or Empty rpn parameter.");
+            getLogger().info("Invalid rpn parameter.");
+            return null;
         }
 
         Filter searchFilter = new LdapSearchBuilder()
@@ -370,7 +375,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().debug("Doing User search by secureId " + secureId);
         if (StringUtils.isBlank(secureId)) {
             getLogger().error("Null or Empty secureId parameter");
-            throw new IllegalArgumentException("Null or Empty secureId parameter.");
+            getLogger().info("Invalid secureId parameter.");
+            return null;
         }
 
         Filter searchFilter = new LdapSearchBuilder()
@@ -392,7 +398,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().debug("Doing search for username " + username);
         if (StringUtils.isBlank(username)) {
             getLogger().error("Null or Empty username parameter");
-            throw new IllegalArgumentException("Null or Empty username parameter.");
+            getLogger().info("Invalid username parameter.");
+            return null;
         }
 
         Filter searchFilter = new LdapSearchBuilder()
@@ -1239,7 +1246,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().debug("Doing search for id " + id);
         if (StringUtils.isBlank(id)) {
             getLogger().error("Null or Empty id parameter");
-            throw new IllegalArgumentException("Null or Empty id parameter.");
+            getLogger().info("Invalid id parameter.");
+            return null;
         }
 
         Filter searchFilter = new LdapSearchBuilder()
@@ -1261,8 +1269,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().debug("Doing search for user " + username);
         if (StringUtils.isBlank(username)) {
             getLogger().error("Null or Empty username parameter");
-            throw new IllegalArgumentException(
-                "Null or Empty username parameter.");
+            getLogger().info("Invalid username parameter.");
+            return null;
         }
 
         Filter searchFilter = new LdapSearchBuilder()

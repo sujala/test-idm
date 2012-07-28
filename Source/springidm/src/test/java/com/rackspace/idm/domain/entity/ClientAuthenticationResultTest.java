@@ -18,7 +18,7 @@ public class ClientAuthenticationResultTest {
 
     @Before
     public void setUp() throws Exception {
-        clientAuthenticationResult = new ClientAuthenticationResult(null, true);
+        clientAuthenticationResult = new ClientAuthenticationResult(null, false);
     }
 
     @Test
@@ -31,7 +31,7 @@ public class ClientAuthenticationResultTest {
     @Test
     public void hashCode_clientIsNull_returnsHashResult() throws Exception {
         int result = clientAuthenticationResult.hashCode();
-        assertThat("hash code", result, equalTo(39122));
+        assertThat("hash code", result, equalTo(39308));
     }
 
     @Test
@@ -39,7 +39,7 @@ public class ClientAuthenticationResultTest {
         Application client = new Application();
         clientAuthenticationResult.setClient(client);
         int result = clientAuthenticationResult.hashCode();
-        assertThat("hash code", result, equalTo(-293363885));
+        assertThat("hash code", result, equalTo(-293363699));
     }
 
     @Test
@@ -56,14 +56,14 @@ public class ClientAuthenticationResultTest {
 
     @Test
     public void equals_clientNullOtherClientNull_returnsTrue() throws Exception {
-        AuthenticationResult test = new ClientAuthenticationResult(null, true);
+        AuthenticationResult test = new ClientAuthenticationResult(null, false);
         boolean result = clientAuthenticationResult.equals(test);
         assertThat("boolean", result, equalTo(true));
     }
 
     @Test
     public void equals_clientNullOtherClientNotNull_returnsFalse() throws Exception {
-        AuthenticationResult test = new ClientAuthenticationResult(new Application(), true);
+        AuthenticationResult test = new ClientAuthenticationResult(new Application(), false);
         boolean result = clientAuthenticationResult.equals(test);
         assertThat("boolean", result, equalTo(false));
     }
@@ -71,6 +71,14 @@ public class ClientAuthenticationResultTest {
     @Test
     public void equals_clientNotNullAndNotEqual_returnsFalse() throws Exception {
         clientAuthenticationResult.setClient(new Application());
+        AuthenticationResult test = new ClientAuthenticationResult(null, false);
+        boolean result = clientAuthenticationResult.equals(test);
+        assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
+    public void equals_authenticatedDifferent_returnsFalse() throws Exception {
+        clientAuthenticationResult.setClient(null);
         AuthenticationResult test = new ClientAuthenticationResult(null, true);
         boolean result = clientAuthenticationResult.equals(test);
         assertThat("boolean", result, equalTo(false));
@@ -80,7 +88,7 @@ public class ClientAuthenticationResultTest {
     public void equals_clientNotNullAndEqualClient_returnsTrue() throws Exception {
         Application client = new Application();
         clientAuthenticationResult.setClient(client);
-        AuthenticationResult test = new ClientAuthenticationResult(client, true);
+        AuthenticationResult test = new ClientAuthenticationResult(client, false);
         boolean result = clientAuthenticationResult.equals(test);
         assertThat("boolean", result, equalTo(true));
     }
@@ -88,6 +96,6 @@ public class ClientAuthenticationResultTest {
     @Test
     public void toString_returnsString() throws Exception {
         String result = clientAuthenticationResult.toString();
-        assertThat("string", result, equalTo("ClientAuthenticationResult [client=null, authenticated=true]"));
+        assertThat("string", result, equalTo("ClientAuthenticationResult [client=null, authenticated=false]"));
     }
 }

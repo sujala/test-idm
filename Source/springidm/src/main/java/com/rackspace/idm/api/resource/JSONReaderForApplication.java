@@ -131,8 +131,8 @@ public class JSONReaderForApplication implements MessageBodyReader<Application> 
                 }
             }
         } catch (ParseException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            logger.info(e.toString());
+            throw new BadRequestException("Bad JSON request");
         }
 
         return creds;

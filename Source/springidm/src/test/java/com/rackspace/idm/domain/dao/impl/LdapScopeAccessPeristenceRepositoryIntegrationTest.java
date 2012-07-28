@@ -690,7 +690,7 @@ public class LdapScopeAccessPeristenceRepositoryIntegrationTest extends InMemory
 
     private Application createTestClientInstance() {
         final Application newClient = new Application("DELETE_My_ClientId", ClientSecret.newInstance("DELETE_My_Client_Secret"),
-                "DELETE_My_Name", "RCN-123-456-789", ClientStatus.ACTIVE);
+                "DELETE_My_Name", "RCN-123-456-789");
         return newClient;
     }
 

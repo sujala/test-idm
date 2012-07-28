@@ -499,18 +499,15 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         getLogger().debug("Updating client {}", client);
 
         if (client == null || StringUtils.isBlank(client.getClientId())) {
-            getLogger().error(
-                    "Client instance is null or its clientId has no value");
-            throw new IllegalArgumentException(
-                    "Bad parameter: The Client instance either null or its clientName has no value.");
+            getLogger().error("Client instance is null or its clientId has no value");
+            throw new IllegalArgumentException("Bad parameter: The Client instance either null or its clientName has no value.");
         }
         String clientId = client.getClientId();
         Application oldClient = getClientByClientId(clientId);
 
         if (oldClient == null) {
             getLogger().error("No record found for client {}", clientId);
-            throw new IllegalArgumentException(
-                    "There is no exisiting record for the given client instance.");
+            throw new IllegalArgumentException("There is no existing record for the given client instance.");
         }
 
         Audit audit = Audit.log(client);
@@ -802,6 +799,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         checkForDescriptionModification(cOld, cNew, mods);
         checkForScopeModification(cOld, cNew, mods);
         checkForCallBackUrlModification(cOld, cNew, mods);
+        checkForUseForDefaultRegionModification(cOld,cNew,mods);
 
         getLogger().debug("Found {} modifications.", mods.size());
 
@@ -855,12 +853,17 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         }
     }
 
+    void checkForUseForDefaultRegionModification(Application cOld, Application cNew, List<Modification> mods) {
+        if (cNew.getUseForDefaultRegion() != null && !cNew.getUseForDefaultRegion().equals(cOld.getUseForDefaultRegion())) {
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_USE_FOR_DEFAULT_REGION, String.valueOf(cNew.getUseForDefaultRegion())));
+        }
+    }
+
     private void checkForClientSecretModification(Application cNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
-        if (cNew.getClientSecretObj().isNew()) {
-            mods.add(new Modification(ModificationType.REPLACE,
-                    ATTR_CLIENT_SECRET, cNew.getClientSecretObj().getValue()));
-            mods.add(new Modification(ModificationType.REPLACE,
-                    ATTR_CLEAR_PASSWORD, cryptHelper.encrypt(cNew.getClientSecretObj().getValue())));
+        //TODO null pointer?
+        if (cNew.getClientSecretObj() != null && cNew.getClientSecretObj().isNew()) {
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_CLIENT_SECRET, cNew.getClientSecretObj().getValue()));
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_CLEAR_PASSWORD, cryptHelper.encrypt(cNew.getClientSecretObj().getValue())));
         }
     }
 

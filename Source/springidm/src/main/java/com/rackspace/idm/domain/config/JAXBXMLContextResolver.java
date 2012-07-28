@@ -52,4 +52,8 @@ public class JAXBXMLContextResolver implements ContextResolver<JAXBContext> {
         );
 
     }
+
+    public static void setContext(JAXBContext context) {
+        JAXBXMLContextResolver.context = context;
+    }
 }

@@ -46,7 +46,7 @@ public class AuthConverterTest {
 
     @Test
     public void toAuthDataJaxb_withAuthData_setsApplication() throws Exception {
-        authData.setApplication(new Application("clientId", ClientSecret.newInstance("clientSecret"), "name", "customerId", ClientStatus.ACTIVE));
+        authData.setApplication(new Application("clientId", ClientSecret.newInstance("clientSecret"), "name", "customerId"));
         JAXBElement<com.rackspace.api.idm.v1.AuthData> authDataJAXBElement = authConverter.toAuthDataJaxb(authData);
         assertThat("application", authDataJAXBElement.getValue().getApplication().getClientId(), equalTo("clientId"));
     }

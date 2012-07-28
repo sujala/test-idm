@@ -35,6 +35,9 @@ public class ClientSecretTests {
         
         pwd = ClientSecret.existingInstance("Password");
         Assert.assertEquals(1281669191, pwd.hashCode());
+
+        pwd = ClientSecret.existingInstance(null);
+        Assert.assertEquals(39308, pwd.hashCode());
     }
     
     @Test
@@ -43,23 +46,39 @@ public class ClientSecretTests {
         ClientSecret pwd2 = ClientSecret.newInstance("Password");
         
         Assert.assertTrue(pwd1.equals(pwd2));
-        Assert.assertTrue(pwd1.equals(pwd1));
+        Assert.assertTrue(pwd2.equals(pwd1));
         
         pwd1 = ClientSecret.existingInstance("Password");
         pwd2 = ClientSecret.existingInstance("Password");
         
         Assert.assertTrue(pwd1.equals(pwd2));
-        Assert.assertTrue(pwd1.equals(pwd1));
+        Assert.assertTrue(pwd2.equals(pwd1));
+
+        pwd1 = ClientSecret.existingInstance("Password");
+        pwd2 = ClientSecret.newInstance("HashedPassword") ;
+
+        Assert.assertTrue(pwd1.equals(pwd2));
+        Assert.assertTrue(pwd2.equals(pwd1));
+
+        pwd1 = ClientSecret.newInstance(null);
+        pwd2 = ClientSecret.newInstance(null) ;
+
+        Assert.assertTrue(pwd1.equals(pwd2));
+        Assert.assertTrue(pwd2.equals(pwd1));
     }
-    
+
     @Test
     public void ShouldReturnNotEquals() {
         ClientSecret pwd1 = ClientSecret.newInstance("Password");
         ClientSecret pwd2 = ClientSecret.newInstance("OtherPassword");
-        
+        ClientSecret pwd3 = ClientSecret.newInstance(null);
+
         Assert.assertFalse(pwd1.equals(null));
         Assert.assertFalse(pwd1.equals(11));
-        Assert.assertFalse(pwd1.equals(pwd2));
+        Assert.assertFalse(pwd3.equals(pwd1));
+        Assert.assertFalse(pwd3.equals(pwd2));
+
+
     }
 
      @Test

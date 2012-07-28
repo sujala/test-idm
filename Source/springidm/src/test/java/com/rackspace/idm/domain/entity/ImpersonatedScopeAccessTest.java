@@ -86,4 +86,12 @@ public class ImpersonatedScopeAccessTest {
         boolean result = impersonatedScopeAccess.isAccessTokenExpired(new DateTime());
         assertThat("boolean", result, equalTo(false));
     }
+
+    @Test
+    public void setAccessTokenExpired_expiresToken() throws Exception {
+        impersonatedScopeAccess.setAccessTokenString("tokenString");
+        impersonatedScopeAccess.setAccessTokenExpired();
+        boolean result = impersonatedScopeAccess.isAccessTokenExpired(new DateTime());
+        assertThat("boolean", result, equalTo(true));
+    }
 }

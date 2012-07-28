@@ -2,11 +2,15 @@ package com.rackspace.idm.domain.entity;
 
 import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.ReadOnlyEntry;
+import com.unboundid.ldap.sdk.migrate.ldapjdk.LDAPEntry;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.ArrayList;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
 
 /**
  * Created with IntelliJ IDEA.
@@ -28,6 +32,13 @@ public class PermissionTest {
         permission.setLdapEntry(null);
         String result = permission.getUniqueId();
         assertThat("unique id", result, equalTo(null));
+    }
+
+    @Test
+    public void getUniqueId_ldapEntryIsNotNull_returnLdapDN() throws Exception {
+        permission.setLdapEntry(new ReadOnlyEntry("ldapDN", new ArrayList<Attribute>()));
+        String result = permission.getUniqueId();
+        assertThat("unique id", result, equalTo("ldapDN"));
     }
 
     @Test
