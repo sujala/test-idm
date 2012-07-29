@@ -271,9 +271,19 @@ public class DelegateCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder listEndpointsForToken(HttpHeaders httpHeaders, String authToken, String tokenId) throws IOException {
         ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByAccessToken(tokenId);
+
         if (isCloudAuthRoutingEnabled() && scopeAccess == null) {
             String request = getCloudAuthV20Url() + "tokens/" + tokenId + "/endpoints";
             return cloudClient.get(request, httpHeaders);
+        }
+        if (scopeAccess instanceof ImpersonatedScopeAccess) {
+            ImpersonatedScopeAccess impersonatedScopeAccess = (ImpersonatedScopeAccess) scopeAccess;
+            tokenId = impersonatedScopeAccess.getImpersonatingToken();
+            ScopeAccess impersonatedUserScopeAccess = scopeAccessService.getScopeAccessByAccessToken(tokenId);
+            if (impersonatedUserScopeAccess == null) {
+                String request = getCloudAuthV20Url() + "tokens/" + tokenId + "/endpoints";
+                return cloudClient.get(request, httpHeaders);
+            }
         }
         return defaultCloud20Service.listEndpointsForToken(httpHeaders, authToken, tokenId);
     }

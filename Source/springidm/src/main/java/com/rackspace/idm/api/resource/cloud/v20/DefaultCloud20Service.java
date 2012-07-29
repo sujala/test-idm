@@ -1407,11 +1407,14 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         try {
             verifyServiceAdminLevelAccess(authToken);
-
             ScopeAccess sa = checkAndGetToken(tokenId);
+            if (sa instanceof ImpersonatedScopeAccess) {
+                ImpersonatedScopeAccess impersonatedScopeAccess = (ImpersonatedScopeAccess) sa;
+                tokenId = impersonatedScopeAccess.getImpersonatingToken();
+                sa = scopeAccessService.getScopeAccessByAccessToken(tokenId);
+            }
 
             List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(sa);
-
             EndpointList list = endpointConverterCloudV20.toEndpointList(endpoints);
 
             return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createEndpoints(list).getValue());
