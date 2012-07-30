@@ -231,7 +231,7 @@ public class ApiExceptionMapperTest {
 
     @Test
     public void toResponse_WebApplicationException_withAnyOtherStatus_returns503() throws Exception {
-        Response response = apiExceptionMapper.toResponse(new WebApplicationException(503));
+        Response response = apiExceptionMapper.toResponse(new WebApplicationException(987456321));
         assertThat("response code", response.getStatus(), equalTo(503));
     }
 
