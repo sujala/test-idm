@@ -96,4 +96,9 @@ public class HttpClientWrapper {
         this.url = url;
         return this;
     }
+
+
+    public void setClient(HttpClient client) {
+        this.client = client;
+    }
 }
