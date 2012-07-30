@@ -46,6 +46,12 @@ public class ApplicationGlobalRoleResourceTest {
         verify(authorizationService).verifyIdmSuperAdminAccess(null);
     }
 
+    @Test(expected = BadRequestException.class)
+    public void grantGlobalRoleToApplication_withNullClient_throwsBadRequestException() throws Exception {
+        when(applicationService.getClientRoleById(anyString())).thenReturn(null);
+        applicationGlobalRoleResource.grantGlobalRoleToApplication(null, null, null);
+    }
+
     @Test
     public void grantGlobalRoleToApplication_callsTenantService_addTenantRoleToClient() throws Exception {
         doNothing().when(authorizationService).verifyIdmSuperAdminAccess(anyString());
