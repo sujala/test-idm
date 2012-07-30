@@ -107,7 +107,6 @@ public class DelegateCloud11ServiceTest {
         when(OBJ_FACTORY.createBaseURLRef(any(BaseURLRef.class))).thenReturn(new JAXBElement<BaseURLRef>(QName.valueOf("foo"), BaseURLRef.class, new BaseURLRef()));
         url = "http://foo.com/";
         when(config.getString("cloudAuth11url")).thenReturn(url);
-        when(httpHeaders.getMediaType()).thenReturn(new MediaType("application/json", null));
         when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn("Basic YXV0aDphdXRoMTIz");
         spy = spy(delegateCloud11Service);
 
@@ -124,6 +123,7 @@ public class DelegateCloud11ServiceTest {
         JAXBElement jaxbElement = new JAXBElement<UserCredentials>(QName.valueOf("foo"), UserCredentials.class, new UserCredentials());
         when(cloudUserExtractor.getUserByCredentialType(jaxbElement)).thenReturn(null);
         when(defaultCloud11Service.authenticate(null, null, httpHeaders, jsonBody)).thenReturn(Response.status(404));
+        when(httpHeaders.getMediaType()).thenReturn(MediaType.APPLICATION_JSON_TYPE);
         when(credentialUnmarshaller.unmarshallCredentialsFromJSON(jsonBody)).thenReturn(jaxbElement);
         when(cloudClient.post(eq(url + "auth"), Matchers.<javax.ws.rs.core.HttpHeaders>any(), anyString())).thenReturn(notFoundResponse);
         when(defaultUserService.isMigratedUser(null)).thenReturn(false);
@@ -135,10 +135,22 @@ public class DelegateCloud11ServiceTest {
     public void adminAuthenticate_withJsonBody_callsCredentialUnmarshaller() throws Exception {
         JAXBElement jaxbElement = new JAXBElement<UserCredentials>(QName.valueOf("foo"), UserCredentials.class, new UserCredentials());
         when(defaultCloud11Service.adminAuthenticate(null, null, httpHeaders, jsonBody)).thenReturn(Response.status(404));
+        when(httpHeaders.getMediaType()).thenReturn(MediaType.APPLICATION_JSON_TYPE);
         when(credentialUnmarshaller.unmarshallCredentialsFromJSON(jsonBody)).thenReturn(jaxbElement);
         when(cloudClient.post(eq(url + "auth-admin"), Matchers.<javax.ws.rs.core.HttpHeaders>any(), anyString())).thenReturn(notFoundResponse);
         delegateCloud11Service.adminAuthenticate(null, null, httpHeaders, jsonBody);
         verify(credentialUnmarshaller).unmarshallCredentialsFromJSON(jsonBody);
+    }
+
+    @Test
+    public void adminAuthenticate_withXmlBody_doesNotCallUnmarshaller() throws Exception {
+        JAXBElement jaxbElement = new JAXBElement<UserCredentials>(QName.valueOf("foo"), UserCredentials.class, new UserCredentials());
+        when(defaultCloud11Service.adminAuthenticate(null, null, httpHeaders, jsonBody)).thenReturn(Response.status(404));
+        when(httpHeaders.getMediaType()).thenReturn(MediaType.APPLICATION_XML_TYPE);
+        when(credentialUnmarshaller.unmarshallCredentialsFromJSON(jsonBody)).thenReturn(jaxbElement);
+        when(cloudClient.post(eq(url + "auth-admin"), Matchers.<javax.ws.rs.core.HttpHeaders>any(), anyString())).thenReturn(notFoundResponse);
+        delegateCloud11Service.adminAuthenticate(null, null, httpHeaders, jsonBody);
+        verify(credentialUnmarshaller, never()).unmarshallCredentialsFromJSON(jsonBody);
     }
 
     @Test
@@ -953,6 +965,7 @@ public class DelegateCloud11ServiceTest {
         JAXBElement<? extends Credentials> jaxbElement = new JAXBElement<UserCredentials>(QName.valueOf("foo"), UserCredentials.class, new UserCredentials());
         when(cloudUserExtractor.getUserByCredentialType(jaxbElement)).thenReturn(null);
         when(defaultUserService.isMigratedUser(null)).thenReturn(true);
+        when(httpHeaders.getMediaType()).thenReturn(MediaType.APPLICATION_JSON_TYPE);
         delegateCloud11Service.authenticate(null, null, httpHeaders, jsonBody);
         verify(defaultCloud11Service).authenticate(null, null, httpHeaders, jsonBody);
     }
@@ -965,6 +978,7 @@ public class DelegateCloud11ServiceTest {
         JAXBElement jaxbElement = new JAXBElement<UserCredentials>(QName.valueOf("foo"), UserCredentials.class, new UserCredentials());
         when(cloudUserExtractor.getUserByCredentialType(jaxbElement)).thenReturn(user);
         when(defaultUserService.isMigratedUser(user)).thenReturn(false);
+        when(httpHeaders.getMediaType()).thenReturn(MediaType.APPLICATION_JSON_TYPE);
         when(defaultCloud11Service.authenticate(request, httpServletResponse, httpHeaders, jsonBody)).thenReturn(response);
         when(credentialUnmarshaller.unmarshallCredentialsFromJSON(jsonBody)).thenReturn(jaxbElement);
         when(cloudClient.post(eq(url + "auth"), Matchers.<javax.ws.rs.core.HttpHeaders>any(), anyString())).thenReturn(response);
@@ -981,6 +995,7 @@ public class DelegateCloud11ServiceTest {
         JAXBElement jaxbElement = new JAXBElement<UserCredentials>(QName.valueOf("foo"), UserCredentials.class, new UserCredentials());
         when(cloudUserExtractor.getUserByCredentialType(jaxbElement)).thenReturn(user);
         when(defaultUserService.isMigratedUser(user)).thenReturn(false);
+        when(httpHeaders.getMediaType()).thenReturn(MediaType.APPLICATION_JSON_TYPE);
         when(defaultCloud11Service.authenticate(request, httpServletResponse, httpHeaders, jsonBody)).thenReturn(response);
         when(credentialUnmarshaller.unmarshallCredentialsFromJSON(jsonBody)).thenReturn(jaxbElement);
         when(cloudClient.post(eq(url + "auth"), Matchers.<javax.ws.rs.core.HttpHeaders>any(), anyString())).thenReturn(response);
@@ -1003,6 +1018,7 @@ public class DelegateCloud11ServiceTest {
         JAXBElement jaxbElement = new JAXBElement<UserCredentials>(QName.valueOf("foo"), UserCredentials.class, new UserCredentials());
         when(cloudUserExtractor.getUserByCredentialType(jaxbElement)).thenReturn(user);
         when(defaultUserService.isMigratedUser(user)).thenReturn(false);
+        when(httpHeaders.getMediaType()).thenReturn(MediaType.APPLICATION_JSON_TYPE);
         when(defaultCloud11Service.authenticate(request, httpServletResponse, httpHeaders, jsonBody)).thenReturn(response);
         when(credentialUnmarshaller.unmarshallCredentialsFromJSON(jsonBody)).thenReturn(jaxbElement);
         when(cloudClient.post(eq(url + "auth"), Matchers.<javax.ws.rs.core.HttpHeaders>any(), anyString())).thenReturn(response);
@@ -1021,6 +1037,7 @@ public class DelegateCloud11ServiceTest {
         JAXBElement jaxbElement = new JAXBElement<UserCredentials>(QName.valueOf("foo"), UserCredentials.class, new UserCredentials());
         when(cloudUserExtractor.getUserByCredentialType(jaxbElement)).thenReturn(user);
         when(defaultUserService.isMigratedUser(user)).thenReturn(false);
+        when(httpHeaders.getMediaType()).thenReturn(MediaType.APPLICATION_JSON_TYPE);
         when(defaultCloud11Service.authenticate(request, httpServletResponse, httpHeaders, jsonBody)).thenReturn(response);
         when(credentialUnmarshaller.unmarshallCredentialsFromJSON(jsonBody)).thenReturn(jaxbElement);
         when(cloudClient.post(eq(url + "auth"), Matchers.<javax.ws.rs.core.HttpHeaders>any(), anyString())).thenReturn(response);
@@ -1038,6 +1055,7 @@ public class DelegateCloud11ServiceTest {
         JAXBElement jaxbElement = new JAXBElement<UserCredentials>(QName.valueOf("foo"), UserCredentials.class, new UserCredentials());
         when(cloudUserExtractor.getUserByCredentialType(jaxbElement)).thenReturn(user);
         when(defaultUserService.isMigratedUser(user)).thenReturn(false);
+        when(httpHeaders.getMediaType()).thenReturn(MediaType.APPLICATION_JSON_TYPE);
         when(defaultCloud11Service.authenticate(request, httpServletResponse, httpHeaders, jsonBody)).thenReturn(response);
         when(credentialUnmarshaller.unmarshallCredentialsFromJSON(jsonBody)).thenReturn(jaxbElement);
         when(cloudClient.post(eq(url + "auth-admin"), Matchers.<javax.ws.rs.core.HttpHeaders>any(), anyString())).thenReturn(response);
@@ -1060,6 +1078,7 @@ public class DelegateCloud11ServiceTest {
         JAXBElement jaxbElement = new JAXBElement<UserCredentials>(QName.valueOf("foo"), UserCredentials.class, new UserCredentials());
         when(cloudUserExtractor.getUserByCredentialType(jaxbElement)).thenReturn(user);
         when(defaultUserService.isMigratedUser(user)).thenReturn(false);
+        when(httpHeaders.getMediaType()).thenReturn(MediaType.APPLICATION_JSON_TYPE);
         when(defaultCloud11Service.adminAuthenticate(request, httpServletResponse, httpHeaders, jsonBody)).thenReturn(response);
         when(credentialUnmarshaller.unmarshallCredentialsFromJSON(jsonBody)).thenReturn(jaxbElement);
         when(cloudClient.post(eq(url + "auth-admin"), Matchers.<javax.ws.rs.core.HttpHeaders>any(), anyString())).thenReturn(response);
@@ -1078,6 +1097,7 @@ public class DelegateCloud11ServiceTest {
         JAXBElement jaxbElement = new JAXBElement<UserCredentials>(QName.valueOf("foo"), UserCredentials.class, new UserCredentials());
         when(cloudUserExtractor.getUserByCredentialType(jaxbElement)).thenReturn(user);
         when(defaultUserService.isMigratedUser(user)).thenReturn(false);
+        when(httpHeaders.getMediaType()).thenReturn(MediaType.APPLICATION_JSON_TYPE);
         when(defaultCloud11Service.adminAuthenticate(request, httpServletResponse, httpHeaders, jsonBody)).thenReturn(response);
         when(credentialUnmarshaller.unmarshallCredentialsFromJSON(jsonBody)).thenReturn(jaxbElement);
         when(cloudClient.post(eq(url + "auth-admin"), Matchers.<javax.ws.rs.core.HttpHeaders>any(), anyString())).thenReturn(response);
