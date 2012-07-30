@@ -20,9 +20,7 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.anyList;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -413,5 +411,14 @@ public class ApplicationConverterTest {
         when(rolesConverter.toRoleJaxbFromTenantRole(anyList())).thenReturn(new JAXBElement<RoleList>(new QName("Name"), RoleList.class, new RoleList()));
         applicationConverter.toApplicationJaxbFromApplication(clientDO);
         verify(rolesConverter).toRoleJaxbFromTenantRole(anyList());
+    }
+
+    @Test
+    public void toClientJaxbWithPermissionsAndCredentials_callsTotoClientJaxb() throws Exception {
+        ApplicationConverter spy = spy(applicationConverter);
+        com.rackspace.idm.domain.entity.Application client = new com.rackspace.idm.domain.entity.Application();
+        doReturn(null).when(spy).toClientJaxb(client, true);
+        spy.toClientJaxbWithPermissionsAndCredentials(client);
+        verify(spy).toClientJaxb(client, true);
     }
 }

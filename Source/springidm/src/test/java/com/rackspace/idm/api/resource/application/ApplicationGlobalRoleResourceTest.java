@@ -68,6 +68,11 @@ public class ApplicationGlobalRoleResourceTest {
         assertThat("response status", response.getStatus(), equalTo(204));
     }
 
+    @Test (expected = BadRequestException.class)
+    public void grantGlobalRoleToApplication_roleIsNull_throwsBadRequestException() throws Exception {
+        when(applicationService.getClientRoleById("roleId")).thenReturn(null);
+        applicationGlobalRoleResource.grantGlobalRoleToApplication(null, "applicationId", "roleId");
+    }
 
     @Test(expected = NotFoundException.class)
     public void deleteGlobalRoleFromUser_throwsNotFoundExceptionWhenRoleIsNotFound() throws Exception {
@@ -158,5 +163,6 @@ public class ApplicationGlobalRoleResourceTest {
         when(applicationService.getClientRoleById(anyString())).thenReturn(null);
         applicationGlobalRoleResource.deleteTenantRoleFromApplication(null, null, null, null);
     }
+
 
 }
