@@ -203,4 +203,12 @@ public class RolesConverterTest {
         Role jaxbRole = rolesConverter.createJaxbRole(tenantRole);
         assertThat("jaxbRole application id", jaxbRole.getApplicationId(), equalTo("clientId"));
     }
+
+    @Test
+    public void toRoleJaxbFromClientRole_withClientRoleParam_returnsJAXBElement() throws Exception {
+        clientRole.setName("test");
+        JAXBElement<Role> result = rolesConverter.toRoleJaxbFromClientRole(clientRole);
+        assertThat("client role", result.getValue().getName(), equalTo("test"));
+
+    }
 }

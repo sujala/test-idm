@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.api.converter.cloudv20.*;
@@ -10,7 +11,6 @@ import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
@@ -18,7 +18,6 @@ import com.rackspace.idm.exception.*;
 import com.sun.jersey.core.spi.factory.ResponseBuilderImpl;
 import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.Control;
-import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.SearchResultEntry;
 import org.apache.commons.configuration.Configuration;
 import org.hamcrest.Matchers;
@@ -32,11 +31,6 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.ext.os_ksec2.v1.Ec2CredentialsType;
 import org.openstack.docs.identity.api.v2.*;
-import org.openstack.docs.identity.api.v2.BadRequestFault;
-import org.openstack.docs.identity.api.v2.ItemNotFoundFault;
-import org.openstack.docs.identity.api.v2.ObjectFactory;
-import org.openstack.docs.identity.api.v2.Token;
-import org.openstack.docs.identity.api.v2.UserDisabledFault;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import javax.ws.rs.core.*;
@@ -92,6 +86,7 @@ public class DefaultCloud20ServiceTest {
     private Users users;
     private Tenant tenant;
     private String tenantId = "tenantId";
+    private Token token;
     private CloudBaseUrl baseUrl;
     private Role role;
     private TenantRole tenantRole;
@@ -223,6 +218,8 @@ public class DefaultCloud20ServiceTest {
         secretQA.setUsername("username");
         secretQA.setAnswer("answer");
         secretQA.setQuestion("question");
+        token = new Token();
+        token.setId("abcdefg");
 
         //stubbing
         when(jaxbObjectFactories.getRackspaceIdentityExtKsgrpV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.ObjectFactory());
@@ -863,15 +860,29 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void authenticate_withTokenAndNoTenantId_returnsBadRequestStatus() throws Exception {
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+
+        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
+        tokenForAuthenticationRequest.setId("tokenId");
+
+        authenticationRequest.setToken(tokenForAuthenticationRequest);
+        spy.authenticate(null, authenticationRequest);
+        verify(exceptionHandler).exceptionResponse(org.mockito.Matchers.any(BadRequestException.class));
+    }
+
+    @Test
     public void authenticate_endpoints_callsScopeAccessService() throws Exception {
         AuthenticationRequest authenticationRequest = new AuthenticationRequest();
         TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
         tokenForAuthenticationRequest.setId("tokenId");
         authenticationRequest.setToken(tokenForAuthenticationRequest);
+        authenticationRequest.setTenantId(tenantId);
         UserScopeAccess scopeAccess = new UserScopeAccess();
         scopeAccess.setAccessTokenExp(new Date(5000, 1, 1));
         scopeAccess.setAccessTokenString("foo");
         when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
+        when(tenantService.hasTenantAccess(org.mockito.Matchers.any(UserScopeAccess.class), anyString())).thenReturn(true);
         doReturn(new User()).when(spy).checkAndGetUser(anyString());
         spy.authenticate(null, authenticationRequest);
         verify(scopeAccessService).getOpenstackEndpointsForScopeAccess(any(ScopeAccess.class));
@@ -882,11 +893,14 @@ public class DefaultCloud20ServiceTest {
         AuthenticationRequest authenticationRequest = new AuthenticationRequest();
         TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
         tokenForAuthenticationRequest.setId("tokenId");
+        authenticationRequest.setTenantId(tenantId);
         authenticationRequest.setToken(tokenForAuthenticationRequest);
+        authenticationRequest.setTenantId("tenantId");
         UserScopeAccess scopeAccess = new UserScopeAccess();
         scopeAccess.setAccessTokenExp(new Date(5000, 1, 1));
         scopeAccess.setAccessTokenString("foo");
         when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
+        when(tenantService.hasTenantAccess(org.mockito.Matchers.any(UserScopeAccess.class), anyString())).thenReturn(true);
         doReturn(new User()).when(spy).checkAndGetUser(anyString());
         spy.authenticate(null, authenticationRequest);
         verify(spy).stripEndpoints(any(List.class));
@@ -897,11 +911,15 @@ public class DefaultCloud20ServiceTest {
         AuthenticationRequest authenticationRequest = new AuthenticationRequest();
         TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
         tokenForAuthenticationRequest.setId("tokenId");
+        authenticationRequest.setTenantId(tenantId);
         authenticationRequest.setToken(tokenForAuthenticationRequest);
+        authenticationRequest.setTenantId("tenantId");
         UserScopeAccess scopeAccess = new UserScopeAccess();
         scopeAccess.setAccessTokenExp(new Date(5000, 1, 1));
         scopeAccess.setAccessTokenString("foo");
         when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
+        when(tenantService.hasTenantAccess(org.mockito.Matchers.any(UserScopeAccess.class), anyString())).thenReturn(true);
+        when(tokenConverterCloudV20.toToken(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(new Token());
         doReturn(new User()).when(spy).checkAndGetUser(anyString());
         when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
         spy.authenticate(null, authenticationRequest);
@@ -1098,14 +1116,16 @@ public class DefaultCloud20ServiceTest {
         TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
         tokenForAuthenticationRequest.setId("tokenId");
         authenticationRequest.setToken(tokenForAuthenticationRequest);
-        authenticationRequest.setTenantName("tenantId");
+        authenticationRequest.setTenantId("tenantId");
         UserScopeAccess scopeAccess = new UserScopeAccess();
         scopeAccess.setAccessTokenExp(new Date(5000, 1, 1));
         scopeAccess.setAccessTokenString("uuuuuuuuuu");
         when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
+        when(tenantService.hasTenantAccess(org.mockito.Matchers.any(UserScopeAccess.class), anyString())).thenReturn(true);
+        when(tokenConverterCloudV20.toToken(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(new Token());
         doReturn(new User()).when(spy).checkAndGetUser(anyString());
         spy.authenticate(null, authenticationRequest);
-        verify(tenantService).hasTenantAccess(org.mockito.Matchers.any(UserScopeAccess.class), eq("tenantId"));
+        verify(tenantService, atLeastOnce()).hasTenantAccess(org.mockito.Matchers.any(UserScopeAccess.class), eq("tenantId"));
     }
 
     @Test
@@ -4149,6 +4169,15 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void verifyBlankTokenHasTenantAccessForAuthenticate_callsVerifyTokenHasTenant() throws Exception {
+        List<Tenant> adminTenants = new ArrayList<Tenant>();
+        adminTenants.add(tenant);
+        when(tenantService.getTenantsForScopeAccessByTenantRoles(any(ScopeAccess.class))).thenReturn(adminTenants);
+        spy.verifyTokenHasTenantAccessForAuthenticate(authToken, tenantId);
+        verify(spy).verifyTokenHasTenant(eq(tenantId), any(ScopeAccess.class));
+    }
+
+    @Test
     public void stripEndpoints_succeeds() throws Exception {
         List<OpenstackEndpoint> endpoints = new ArrayList<OpenstackEndpoint>();
         List<CloudBaseUrl> cloudBaseUrls = new ArrayList<CloudBaseUrl>();
@@ -5260,7 +5289,7 @@ public class DefaultCloud20ServiceTest {
         passwordCredentialsRequiredUsername.setUsername("username");
         JAXBElement<PasswordCredentialsRequiredUsername> creds = new JAXBElement<PasswordCredentialsRequiredUsername>(new QName("http://docs.openstack.org/identity/api/v2.0", "pw"), PasswordCredentialsRequiredUsername.class, passwordCredentialsRequiredUsername);
         AuthenticationRequest authenticationRequest = new AuthenticationRequest();
-        authenticationRequest.setTenantName("tenantName");
+        authenticationRequest.setTenantId("tenantId");
         authenticationRequest.setToken(tokenForAuthenticationRequest);
         authenticationRequest.setCredential(creds);
         ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
@@ -5276,6 +5305,7 @@ public class DefaultCloud20ServiceTest {
         when(authorizationService.authorizeCloudIdentityAdmin(userScopeAccess)).thenReturn(true);
         when(tenantService.getTenantRolesForScopeAccess(userScopeAccess)).thenReturn(tenantRoles);
         when(tenantService.getTenantByName("tenantName")).thenReturn(new Tenant());
+        when(tenantService.hasTenantAccess(org.mockito.Matchers.any(UserScopeAccess.class), anyString())).thenReturn(true);
         when(tokenConverterCloudV20.toToken(impersonatedScopeAccess)).thenReturn(new Token());
         when(authConverterCloudV20.toAuthenticationResponse(userTest, userScopeAccess, tenantRoles, openstackEndpoints)).thenReturn(new AuthenticateResponse());
         Response.ResponseBuilder responseBuilder = spy.authenticate(httpHeaders, authenticationRequest);

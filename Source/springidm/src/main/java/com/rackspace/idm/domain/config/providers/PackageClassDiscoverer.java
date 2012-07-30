@@ -19,9 +19,6 @@ import org.springframework.core.type.classreading.SimpleMetadataReaderFactory;
 
 public class PackageClassDiscoverer {
 
-    private PackageClassDiscoverer() {
-    }
-
     private static MetadataReaderFactory metadataReaderFactory = new SimpleMetadataReaderFactory();
 
     public static Set<Class<?>> findClassesIn(String... packages) throws ClassNotFoundException, IOException {

@@ -216,7 +216,8 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
         if (StringUtils.isBlank(clientId)) {
             getLogger().error("Null or Empty clientId parameter");
-            throw new IllegalArgumentException("Null or Empty clientId parameter.");
+            getLogger().info("Invalid clientId parameter.");
+            return null;
         }
 
         Filter searchFilter = new LdapSearchBuilder()
@@ -258,7 +259,8 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
         if (StringUtils.isBlank(clientId)) {
             getLogger().error("Null or Empty clientId parameter");
-            throw new IllegalArgumentException("Null or Empty clientId parameter.");
+            getLogger().info("Invalid clientId parameter.");
+            return null;
         }
 
         Filter searchFilter = new LdapSearchBuilder()

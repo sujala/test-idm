@@ -71,7 +71,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     @Autowired
     private CloudContractDescriptionBuilder cloudContractDescriptionBuilder;
 
-    private final AuthHeaderHelper authHeaderHelper = new AuthHeaderHelper();
+    private AuthHeaderHelper authHeaderHelper = new AuthHeaderHelper();
 
     @Autowired
     private NastFacade nastFacade;
@@ -1202,11 +1202,8 @@ public class DefaultCloud11Service implements Cloud11Service {
                 user = userService.getUser(username);
                 usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(username, password, cloudAuthClientId);
             } else if (value instanceof MossoCredentials) {
-                Integer mossoId = ((MossoCredentials) value).getMossoId();
+                int mossoId = ((MossoCredentials) value).getMossoId();
                 String key = ((MossoCredentials) value).getKey();
-                if (mossoId == null) {
-                    return cloudExceptionResponse.badRequestExceptionResponse("Expecting mosso id");
-                }
                 user = userService.getUserByMossoId(mossoId);
                 if (user == null)
                     throw new NotAuthenticatedException("MossoId or api key is invalid.");
@@ -1329,5 +1326,9 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     public void setCloudContractDescriptionBuilder(CloudContractDescriptionBuilder cloudContractDescriptionBuilder) {
         this.cloudContractDescriptionBuilder = cloudContractDescriptionBuilder;
+    }
+
+    public void setAuthHeaderHelper(AuthHeaderHelper authHeaderHelper) {
+        this.authHeaderHelper = authHeaderHelper;
     }
 }

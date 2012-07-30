@@ -195,9 +195,10 @@ public class LdapApplicationRepositoryTest extends InMemoryLdapIntegrationTest{
         assertThat("client", result.get(0), equalTo(client));
     }
 
-    @Test (expected = IllegalArgumentException.class)
-    public void getClientByClientId_clientIdIsBlank_throwsIllegalArgument() throws Exception {
-        ldapApplicationRepository.getClientByClientId("");
+    @Test
+    public void getClientByClientId_clientIdIsBlank_returnsNull() throws Exception {
+        Application result = ldapApplicationRepository.getClientByClientId("");
+        assertThat("client", result, equalTo(null));
     }
 
     @Test
@@ -221,9 +222,10 @@ public class LdapApplicationRepositoryTest extends InMemoryLdapIntegrationTest{
         assertThat("client", result, equalTo(client));
     }
 
-    @Test (expected = IllegalArgumentException.class)
-    public void getClientByCustomerIdAndClientId_clientIdIsBlank_throwsIllegalArgument() throws Exception {
-        ldapApplicationRepository.getClientByCustomerIdAndClientId("customerId", "   ");
+    @Test
+    public void getClientByCustomerIdAndClientId_clientIdIsBlank_returnsNull() throws Exception {
+        Application result = ldapApplicationRepository.getClientByCustomerIdAndClientId("customerId", "   ");
+        assertThat("client", result, equalTo(null));
     }
 
     @Test
