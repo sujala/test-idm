@@ -28,6 +28,7 @@
         <!--Integration test flag for sonar 3.0-->
         <skip.default.surefire>true</skip.default.surefire>
         <skip.test>false</skip.test>
+        <cobertura.skip.check>true</cobertura.skip.check>
         <jetty.port>8083</jetty.port>
         <jetty.host>http://localhost:${jetty.port}/idm/</jetty.host>
     </properties>
@@ -1400,6 +1401,7 @@
                 <artifactId>cobertura-maven-plugin</artifactId>
                 <version>2.5.1</version>
                 <configuration>
+                    <skip>${cobertura.skip.check}</skip>
                     <check>
                         <totalLineRate>95</totalLineRate>
                         <totalBranchRate>95</totalBranchRate>
