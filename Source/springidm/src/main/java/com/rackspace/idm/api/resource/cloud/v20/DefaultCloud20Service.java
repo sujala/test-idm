@@ -663,6 +663,9 @@ public class DefaultCloud20Service implements Cloud20Service {
                 if (StringUtils.isBlank(authenticationRequest.getToken().getId())) {
                     throw new BadRequestException("Invalid Token Id");
                 }
+                if (StringUtils.isBlank(authenticationRequest.getTenantId())) {
+                    throw new BadRequestException("Invalid Tenant Id");
+                }
                 ScopeAccess sa = scopeAccessService.getScopeAccessByAccessToken(authenticationRequest.getToken().getId());
                 // Check for impersonated token
                 if(sa instanceof ImpersonatedScopeAccess){
