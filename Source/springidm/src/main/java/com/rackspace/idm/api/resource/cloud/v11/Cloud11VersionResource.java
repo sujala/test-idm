@@ -151,13 +151,13 @@ public class Cloud11VersionResource {
 
     @GET
     @Path("baseURLs/{baseURLId}")
-    public Response getBaseURLId(@Context HttpServletRequest request,
-                                 @PathParam("baseURLId") int baseURLId,
-                                 @QueryParam("serviceName") String serviceName,
-                                 @Context HttpHeaders httpHeaders
+    public Response getBaseURLById(@Context HttpServletRequest request,
+                                   @PathParam("baseURLId") int baseURLId,
+                                   @QueryParam("serviceName") String serviceName,
+                                   @Context HttpHeaders httpHeaders
     ) throws IOException {
         serviceName = Encoder.encode(serviceName);
-        return getCloud11Service().getBaseURLId(request, baseURLId, serviceName, httpHeaders).build();
+        return getCloud11Service().getBaseURLById(request, baseURLId, serviceName, httpHeaders).build();
     }
 
     @GET

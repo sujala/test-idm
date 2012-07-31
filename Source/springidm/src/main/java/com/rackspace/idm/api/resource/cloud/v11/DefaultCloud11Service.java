@@ -925,7 +925,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     // BaseURL Methods
     @Override
-    public Response.ResponseBuilder getBaseURLId(HttpServletRequest request, int baseURLId, String serviceName, HttpHeaders httpHeaders)
+    public Response.ResponseBuilder getBaseURLById(HttpServletRequest request, int baseURLId, String serviceName, HttpHeaders httpHeaders)
             throws IOException {
 
         try {

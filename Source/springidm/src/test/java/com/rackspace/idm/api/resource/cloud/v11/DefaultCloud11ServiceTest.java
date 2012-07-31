@@ -2285,14 +2285,14 @@ public class DefaultCloud11ServiceTest {
 
     @Test
     public void getBaseURLId_isAdminCall_callAuthenticateCloudAdminUserForGetRequests() throws Exception {
-        spy.getBaseURLId(request, 0, null, null);
+        spy.getBaseURLById(request, 0, null, null);
         verify(spy).authenticateCloudAdminUserForGetRequests(request);
     }
 
     @Test
     public void getBaseURLId_isAdminCall_callEndpointService_getBaseUrlById() throws Exception {
         doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
-        spy.getBaseURLId(request, 12345, null, null);
+        spy.getBaseURLById(request, 12345, null, null);
         verify(endpointService).getBaseUrlById(12345);
     }
 
@@ -2300,7 +2300,7 @@ public class DefaultCloud11ServiceTest {
     public void getBaseURLId_withNullBaseURL_returnsNotFoundResponse() throws Exception {
         doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
         when(endpointService.getBaseUrlById(12345)).thenReturn(null);
-        Response.ResponseBuilder responseBuilder = spy.getBaseURLId(request, 12345, null, null);
+        Response.ResponseBuilder responseBuilder = spy.getBaseURLById(request, 12345, null, null);
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(404));
     }
 
@@ -2310,7 +2310,7 @@ public class DefaultCloud11ServiceTest {
         CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
         cloudBaseUrl.setServiceName("serviceName2");
         when(endpointService.getBaseUrlById(12345)).thenReturn(cloudBaseUrl);
-        Response.ResponseBuilder responseBuilder = spy.getBaseURLId(request, 12345, "serviceName", null);
+        Response.ResponseBuilder responseBuilder = spy.getBaseURLById(request, 12345, "serviceName", null);
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(404));
     }
 
@@ -2320,7 +2320,7 @@ public class DefaultCloud11ServiceTest {
         CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
         cloudBaseUrl.setServiceName("serviceName");
         when(endpointService.getBaseUrlById(12345)).thenReturn(cloudBaseUrl);
-        spy.getBaseURLId(request, 12345, "serviceName", null);
+        spy.getBaseURLById(request, 12345, "serviceName", null);
         verify(endpointConverterCloudV11).toBaseUrl(any(CloudBaseUrl.class));
     }
 
@@ -2330,7 +2330,7 @@ public class DefaultCloud11ServiceTest {
         CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
         cloudBaseUrl.setServiceName("serviceName");
         when(endpointService.getBaseUrlById(12345)).thenReturn(cloudBaseUrl);
-        Response.ResponseBuilder responseBuilder = spy.getBaseURLId(request, 12345, "serviceName", null);
+        Response.ResponseBuilder responseBuilder = spy.getBaseURLById(request, 12345, "serviceName", null);
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(200));
     }
 
