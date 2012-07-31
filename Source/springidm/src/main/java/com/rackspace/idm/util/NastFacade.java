@@ -31,7 +31,7 @@ public class NastFacade {
             try {
                 response = nastXMLRpcClientWrapper.removeResellerStorageAccount(nastAccountId);
             } catch (Exception e) {
-                throw new ApiException(500, e.getMessage(), "could not remove reseller");
+                throw new ApiException(500, e.getMessage(), "could not remove reseller", e);
             }
         }
 
@@ -51,7 +51,7 @@ public class NastFacade {
 
             return nastAccountId;
         } catch (Exception e) {
-            throw new ApiException(500, e.getMessage(), "could not add nast user");
+            throw new ApiException(500, e.getMessage(), "could not add nast user", e);
         }
     }
 

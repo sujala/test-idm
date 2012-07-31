@@ -796,7 +796,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         } catch (NotFoundException e) {
             String errorMessage = String.format("Unable to authenticate user with credentials provided.");
             logger.warn(errorMessage);
-            throw new NotAuthenticatedException(errorMessage);
+            throw new NotAuthenticatedException(errorMessage, e);
         }
         return user;
     }
@@ -809,7 +809,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         } catch (NotFoundException e) {
             String errorMessage = String.format("Unable to authenticate user with credentials provided.");
             logger.warn(errorMessage);
-            throw new NotAuthenticatedException(errorMessage);
+            throw new NotAuthenticatedException(errorMessage, e);
         }
         return user;
     }
@@ -2271,6 +2271,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     Application checkAndGetApplication(String applicationId) {
+
         Application application = this.clientService.getById(applicationId);
         if (application == null) {
             String errMsg = String.format("Service %s not found", applicationId);
@@ -2307,7 +2308,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         } catch (NumberFormatException nfe) {
             String errMsg = String.format("EndpointTemplate %s not found", id);
             logger.warn(errMsg);
-            throw new NotFoundException(errMsg);
+            throw new NotFoundException(errMsg, nfe);
         }
         return checkAndGetEndpointTemplate(baseUrlId);
     }
@@ -2573,7 +2574,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             Unmarshaller unmarshaller = context.createUnmarshaller();
             cred = (JAXBElement<? extends CredentialType>) unmarshaller.unmarshal(new StringReader(body));
         } catch (JAXBException e) {
-            throw new BadRequestException();
+            throw new BadRequestException(e);
         }
         return cred;
     }

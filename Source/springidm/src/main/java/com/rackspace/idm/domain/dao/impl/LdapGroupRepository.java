@@ -220,7 +220,7 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
             if (e instanceof NotFoundException) {
                 String errMsg = String.format("Group %s not found", groupId);
                 getLogger().error(errMsg);
-                throw new NotFoundException(errMsg);
+                throw new NotFoundException(errMsg, e);
             }
         }
 
@@ -236,7 +236,7 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
         }catch(Exception e){
             getLogger().error("Error adding user {} to group - {}", userId, e);
             String errMsg = String.format("User %s not found", userId);
-            throw new BadRequestException(errMsg);
+            throw new BadRequestException(errMsg, e);
         }
 
         List<Modification> mods = new ArrayList<Modification>();
@@ -280,7 +280,7 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
         }catch(Exception e){
             getLogger().error("Error deleting user {} from group - {}", userId, e);
             String errMsg = String.format("User %s not found", userId);
-            throw new BadRequestException(errMsg);
+            throw new BadRequestException(errMsg, e);
         }
 
         List<String> groups = new ArrayList<String>();
