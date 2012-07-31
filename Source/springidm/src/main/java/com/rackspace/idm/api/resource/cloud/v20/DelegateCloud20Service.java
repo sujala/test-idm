@@ -24,6 +24,7 @@ import com.sun.jersey.api.json.JSONUnmarshaller;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
+import org.apache.http.Header;
 import org.apache.log4j.Logger;
 import org.apache.ws.commons.util.Base64;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
@@ -59,6 +60,7 @@ import java.util.List;
 @Component
 public class DelegateCloud20Service implements Cloud20Service {
 
+    public static final String X_AUTH_TOKEN = "X-Auth-Token";
     @Autowired
     private CloudClient cloudClient;
 
@@ -227,7 +229,7 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     ResponseBuilder validateImpersonatedTokenFromCloud(HttpHeaders httpHeaders, String impersonatedCloudToken, String belongsTo, ImpersonatedScopeAccess impersonatedScopeAccess) throws Exception, JAXBException {
         String gaXAuthToken = getXAuthToken_byPassword(config.getString("ga.username"), config.getString("ga.password")).getToken().getId();
-        httpHeaders.getRequestHeaders().get("x-auth-token").set(0, gaXAuthToken);
+        httpHeaders.getRequestHeaders().get(X_AUTH_TOKEN).set(0, gaXAuthToken);
         httpHeaders.getRequestHeaders().get("accept").set(0, "application/xml");
         Response cloudValidateResponse = checkToken(httpHeaders, gaXAuthToken, impersonatedCloudToken, belongsTo).build();
         if (cloudValidateResponse.getStatus() != 200 && cloudValidateResponse.getStatus() != 203) {
@@ -1166,8 +1168,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         authenticationRequest.setCredential(objectFactoryRAXKSKEY.createApiKeyCredentials(apiKeyCredentials));
         String body = marshallObjectToString(objectFactory.createAuth(authenticationRequest));
         HashMap<String, String> headers = new HashMap<String, String>();
-        headers.put("Content-Type", "application/xml");
-        headers.put("Accept", "application/xml");
+        headers.put(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML);
+        headers.put("Accept", MediaType.APPLICATION_XML);
         Response authResponse = cloudClient.post(getCloudAuthV20Url() + "tokens", headers, body).build();
         if (authResponse.getStatus() != 200 && authResponse.getStatus() != 203) {
             throw new ApiException(authResponse.getStatus(), "", "");
@@ -1183,8 +1185,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         authenticationRequest.setCredential(objectFactory.createPasswordCredentials(passwordCredentials));
         String body = marshallObjectToString(objectFactory.createAuth(authenticationRequest));
         HashMap<String, String> headers = new HashMap<String, String>();
-        headers.put("Content-Type", "application/xml");
-        headers.put("Accept", "application/xml");
+        headers.put(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML);
+        headers.put("Accept", MediaType.APPLICATION_XML);
         Response authResponse = cloudClient.post(getCloudAuthV20Url() + "tokens", headers, body).build();
         if (authResponse.getStatus() != 200 && authResponse.getStatus() != 203) {
             throw new ApiException(authResponse.getStatus(), "", "");
@@ -1194,9 +1196,9 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     public ApiKeyCredentials getUserApiCredentials(String userId, String xAuthToken) throws IOException {
         HashMap<String, String> headers = new HashMap<String, String>();
-        headers.put("Content-Type", "application/xml");
-        headers.put("X-Auth-Token", xAuthToken);
-        headers.put("Accept", "application/xml");
+        headers.put(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML);
+        headers.put(X_AUTH_TOKEN, xAuthToken);
+        headers.put("Accept", MediaType.APPLICATION_XML);
         Response credsResponse = cloudClient.get(getCloudAuthV20Url() + "users/" + userId + "/OS-KSADM/credentials/RAX-KSKEY:apiKeyCredentials", headers).build();
         if (credsResponse.getStatus() != 200 && credsResponse.getStatus() != 203) {
             throw new ApiException(credsResponse.getStatus(), "", "");
@@ -1206,9 +1208,9 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     public User getCloudUserByName(String userName, String xAuthToken) throws IOException {
         HashMap<String, String> headers = new HashMap<String, String>();
-        headers.put("Content-Type", "application/xml");
-        headers.put("X-Auth-Token", xAuthToken);
-        headers.put("Accept", "application/xml");
+        headers.put(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML);
+        headers.put(X_AUTH_TOKEN, xAuthToken);
+        headers.put(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML);
         Response userResponse = cloudClient.get(getCloudAuthV20Url() + "users" + "?name=" + userName, headers).build();
         if (userResponse.getStatus() != 200 && userResponse.getStatus() != 203) {
             throw new ApiException(userResponse.getStatus(), "", "");
@@ -1218,9 +1220,9 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     public RoleList getGlobalRolesForCloudUser(String userId, String xAuthToken) throws IOException {
         HashMap<String, String> headers = new HashMap<String, String>();
-        headers.put("Content-Type", "application/xml");
-        headers.put("X-Auth-Token", xAuthToken);
-        headers.put("Accept", "application/xml");
+        headers.put(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML);
+        headers.put(X_AUTH_TOKEN, xAuthToken);
+        headers.put(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML);
         Response userResponse = cloudClient.get(getCloudAuthV20Url() + "users/" + userId + "/roles", headers).build();
         if (userResponse.getStatus() != 200 && userResponse.getStatus() != 203) {
             throw new ApiException(userResponse.getStatus(), "", "");
