@@ -1403,8 +1403,8 @@
                 <configuration>
                     <skip>${cobertura.skip.check}</skip>
                     <check>
-                        <totalLineRate>100</totalLineRate>
-                        <totalBranchRate>100</totalBranchRate>
+                        <totalLineRate>95</totalLineRate>
+                        <totalBranchRate>95</totalBranchRate>
                     </check>
                     <formats>
                         <format>xml</format>
