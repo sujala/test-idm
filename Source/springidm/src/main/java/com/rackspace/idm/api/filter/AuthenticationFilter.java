@@ -83,8 +83,9 @@ public class AuthenticationFilter implements ContainerRequestFilter,
         if (path.startsWith("cloud")) {
 
             // Return if call is authentication or validation
-            if(path.startsWith("cloud/v2.0/tokens") && !path.contains("endpoints"))
+            if(path.startsWith("cloud/v2.0/tokens") && !path.contains("endpoints")) {
                 return request;
+            }
 
             final String authToken = request.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER);
             if (authToken != null) {
@@ -112,8 +113,9 @@ public class AuthenticationFilter implements ContainerRequestFilter,
                 List<String> rackerRoles = userService.getRackerRoles(((RackerScopeAccess) sa).getRackerId());
                 if (rackerRoles != null) {
                     for (String r : rackerRoles) {
-                        if(r.equals(getMigrationAdminGroup()))
+                        if(r.equals(getMigrationAdminGroup())) {
                             return request;
+                        }
                     }
                 }
                 else {

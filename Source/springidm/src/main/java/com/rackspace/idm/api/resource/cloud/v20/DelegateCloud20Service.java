@@ -141,8 +141,9 @@ public class DelegateCloud20Service implements Cloud20Service {
 
         //Get "user" from LDAP
         com.rackspace.idm.domain.entity.User user = cloudUserExtractor.getUserByV20CredentialType(authenticationRequest);
-        if (userService.isMigratedUser(user))
+        if (userService.isMigratedUser(user)) {
             return defaultCloud20Service.authenticate(httpHeaders, authenticationRequest);
+        }
 
         //Get Cloud Auth response
         String body = marshallObjectToString(objectFactory.createAuth(authenticationRequest));
@@ -320,8 +321,9 @@ public class DelegateCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder listUsers(HttpHeaders httpHeaders, String authToken, Integer marker, Integer limit)  {
         ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByAccessToken(authToken);
-        if (scopeAccess != null)
+        if (scopeAccess != null) {
             return defaultCloud20Service.listUsers(httpHeaders, authToken, marker, limit);
+        }
 
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             String request = getCloudAuthV20Url() + USERS;
@@ -697,8 +699,9 @@ public class DelegateCloud20Service implements Cloud20Service {
         if (isCloudAuthRoutingEnabled()) {
             com.rackspace.idm.domain.entity.User user = userService.getUserById(userId);
 
-            if (user == null)
+            if (user == null) {
                 return cloudClient.delete(getCloudAuthV20Url() + USERS + "/" + userId, httpHeaders);
+            }
 
             if (userService.isMigratedUser(user)) {
                 cloudClient.delete(getCloudAuthV20Url() + USERS + "/" + userId, httpHeaders);

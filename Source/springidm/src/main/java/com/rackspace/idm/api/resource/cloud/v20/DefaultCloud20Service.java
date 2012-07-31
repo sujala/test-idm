@@ -2181,8 +2181,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             AuthenticateResponse access = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createAuthenticateResponse();
             access.setToken(this.tokenConverterCloudV20.toToken(sa));
 
-            if (((HasAccessToken) sa).isAccessTokenExpired(new DateTime()))
+            if (((HasAccessToken) sa).isAccessTokenExpired(new DateTime())) {
                 throw new NotFoundException("Token not found");
+            }
 
             if (sa instanceof RackerScopeAccess) {
                 RackerScopeAccess rackerScopeAccess = (RackerScopeAccess) sa;

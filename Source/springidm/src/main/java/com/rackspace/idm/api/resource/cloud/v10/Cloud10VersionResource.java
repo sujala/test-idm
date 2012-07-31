@@ -108,8 +108,9 @@ public class Cloud10VersionResource {
                 return cloudResponse;
             }
         }
-        if (user == null)
+        if (user == null) {
             return builder.status(HttpServletResponse.SC_UNAUTHORIZED).entity("Bad username or password").build();
+        }
 
         try {
             UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(username, key, getCloudAuthClientId());
