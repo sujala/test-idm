@@ -259,7 +259,7 @@ public class CloudMigrationService {
                 user11 = client.getUserTenantsBaseUrls(config.getString("ga.username"), config.getString("ga.password"), username);
             }
             catch (Exception ex) {
-                throw new NotFoundException("User with username " + username + " could not be found.");
+                throw new NotFoundException("User with username " + username + " could not be found.", ex);
             }
             String legacyId = user.getId();
 
@@ -412,7 +412,9 @@ public class CloudMigrationService {
             try {
                 users = client.getUsers(userToken);
             } catch (Exception e) {
-                throw new ConflictException("Could not retrieve users for useradmin - " + e.getMessage());
+                ConflictException conflictException = new ConflictException("Could not retrieve users for useradmin - " + e.getMessage());
+                conflictException.setStackTrace(e.getStackTrace());
+                throw conflictException;
             }
 
             if (users != null) {
@@ -624,7 +626,7 @@ public class CloudMigrationService {
             }
         }
         catch (Exception ex) {
-            throw new BadRequestException("Failed migration with incomplete credential information.");
+            throw new BadRequestException("Failed migration with incomplete credential information.", ex);
         }
         return authenticateResponse;
     }
@@ -690,7 +692,7 @@ public class CloudMigrationService {
             AuthenticateResponse authenticateResponse = client.authenticateWithApiKey(adminUsername, adminApiKey);
             return authenticateResponse.getToken().getId();
         } catch (Exception ex) {
-            throw new NotAuthenticatedException("Admin credentials are invalid");
+            throw new NotAuthenticatedException("Admin credentials are invalid", ex);
         }
     }
 

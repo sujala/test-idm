@@ -1,5 +1,7 @@
 package com.rackspace.idm.exception;
 
+import javax.xml.bind.JAXBException;
+
 @SuppressWarnings("serial")
 public class BadRequestException extends IdmException {
     public BadRequestException() {
@@ -8,5 +10,13 @@ public class BadRequestException extends IdmException {
 
     public BadRequestException(String message) {
         super(message);
+    }
+
+    public BadRequestException(Throwable cause) {
+        super(cause);
+    }
+
+    public BadRequestException(String message, Throwable cause) {
+        super(message, cause);
     }
 }
