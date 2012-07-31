@@ -6,12 +6,14 @@ import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.ForbiddenException;
+import com.rackspace.idm.exception.NotAuthorizedException;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import static junit.framework.Assert.assertTrue;
@@ -790,6 +792,52 @@ public class DefaultAuthorizationServiceTest {
         when(scopeAccessService.getScopeAccessByAccessToken(null)).thenReturn(scopeAccess);
         doReturn(false).when(spy).authorizeIdmSuperAdmin(scopeAccess);
         spy.verifyIdmSuperAdminAccess(null);
+    }
+
+    @Test
+    public void verifyServiceAdminLevelAccess_identityAdminCallerAndNotServiceAdmin_succeeds() throws Exception {
+        UserScopeAccess userScopeAccess = new UserScopeAccess();
+        userScopeAccess.setAccessTokenString("admin");
+        userScopeAccess.setAccessTokenExp(new Date(2099, 1, 1));
+        doReturn(true).when(spy).authorizeCloudIdentityAdmin(userScopeAccess);
+        doReturn(false).when(spy).authorizeCloudServiceAdmin(userScopeAccess);
+        spy.verifyServiceAdminLevelAccess(userScopeAccess);
+    }
+
+    @Test
+    public void verifyServiceAdminLevelAccess_notIdentityAdminCallerAndServiceAdmin_succeeds() throws Exception {
+        UserScopeAccess userScopeAccess = new UserScopeAccess();
+        userScopeAccess.setAccessTokenString("admin");
+        userScopeAccess.setAccessTokenExp(new Date(2099, 1, 1));
+        doReturn(false).when(spy).authorizeCloudIdentityAdmin(userScopeAccess);
+        doReturn(true).when(spy).authorizeCloudServiceAdmin(userScopeAccess);
+        spy.verifyServiceAdminLevelAccess(userScopeAccess);
+    }
+
+    @Test
+    public void verifyServiceAdminLevelAccess_identityAdminCallerAndServiceAdmin_succeeds() throws Exception {
+        UserScopeAccess userScopeAccess = new UserScopeAccess();
+        userScopeAccess.setAccessTokenString("admin");
+        userScopeAccess.setAccessTokenExp(new Date(2099, 1, 1));
+        doReturn(true).when(spy).authorizeCloudIdentityAdmin(userScopeAccess);
+        doReturn(true).when(spy).authorizeCloudServiceAdmin(userScopeAccess);
+        spy.verifyServiceAdminLevelAccess(userScopeAccess);
+    }
+
+    @Test
+    public void verifyServiceAdminLevelAccess_notIdentityAdminAndNotServiceAdmin_throwsForbiddenException() throws Exception {
+        try{
+            UserScopeAccess userScopeAccess = new UserScopeAccess();
+            userScopeAccess.setAccessTokenString("admin");
+            userScopeAccess.setAccessTokenExp(new Date(2099, 1, 1));
+            doReturn(false).when(spy).authorizeCloudServiceAdmin(userScopeAccess);
+            doReturn(false).when(spy).authorizeCloudIdentityAdmin(userScopeAccess);
+            spy.verifyServiceAdminLevelAccess(userScopeAccess);
+            assertTrue("should throw exception",false);
+        } catch (ForbiddenException ex){
+            assertThat("exception message",ex.getMessage(),equalTo("Not authorized."));
+        }
+
     }
 
     @Test
