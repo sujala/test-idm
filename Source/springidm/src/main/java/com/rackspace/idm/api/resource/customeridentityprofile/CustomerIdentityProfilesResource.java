@@ -74,7 +74,7 @@ public class CustomerIdentityProfilesResource extends ParentResource {
             String errorMsg = String.format("A customer with that customerId already exists: %s",
                 customerDO.getRCN());
             getLogger().warn(errorMsg);
-            throw new CustomerConflictException(errorMsg);
+            throw new CustomerConflictException(errorMsg, ex);
         }
 
         getLogger().debug("Added Customer Identity Profile: {}", customerDO);

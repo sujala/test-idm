@@ -66,7 +66,7 @@ MessageBodyReader<SecretQA> {
                 }
             }
         } catch (ParseException e) {
-            throw new BadRequestException("Unable to parse data in request body. Please review JSON formatting");
+            throw new BadRequestException("Unable to parse data in request body. Please review JSON formatting", e);
         }
 
         return secrets;
