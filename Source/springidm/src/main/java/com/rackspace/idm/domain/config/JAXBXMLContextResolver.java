@@ -4,6 +4,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.ext.ContextResolver;
 import javax.ws.rs.ext.Provider;
 import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
 
 @Provider
 @Produces("application/xml")
@@ -11,7 +12,7 @@ public class JAXBXMLContextResolver implements ContextResolver<JAXBContext> {
 
     private static JAXBContext context;
 
-    public JAXBXMLContextResolver() throws Exception {
+    public JAXBXMLContextResolver() throws JAXBException{
     	init();
     }
 
@@ -31,7 +32,7 @@ public class JAXBXMLContextResolver implements ContextResolver<JAXBContext> {
     	return context;
     }
     
-    private static void init() throws Exception {
+    private static void init() throws JAXBException {
 
         context = JAXBContext.newInstance(
 	            "com.rackspace.api.idm.v1:"+
