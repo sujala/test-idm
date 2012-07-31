@@ -1043,7 +1043,7 @@ public class DelegateCloud20Service implements Cloud20Service {
                 try {
                     encodeValue = URLEncoder.encode(value.toString(), JSONConstants.UTF_8);
                 } catch (Exception e) {
-                    throw new BadRequestException("Unable to encode query params.");
+                    throw new BadRequestException("Unable to encode query params.", e);
                 }
                 result += key + "=" + encodeValue;
             }
@@ -1112,8 +1112,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         try {
             marshaller.marshal(jaxbObject, sw);
         } catch (Exception e) {
-            JAXBException k = new JAXBException(e.getMessage());
-            throw k;
+            throw new JAXBException(e.getMessage(), e);
         }
         return sw.toString();
     }

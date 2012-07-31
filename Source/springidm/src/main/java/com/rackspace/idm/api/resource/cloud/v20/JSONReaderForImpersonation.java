@@ -73,9 +73,9 @@ public class JSONReaderForImpersonation implements MessageBodyReader<Impersonati
                 request.setUser(user);
             }
         } catch (NumberFormatException e) {
-            throw new BadRequestException("Expire-in element should be an integer.");
+            throw new BadRequestException("Expire-in element should be an integer.", e);
         } catch (Exception e) {
-            throw new BadRequestException("Invalid json request body");
+            throw new BadRequestException("Invalid json request body", e);
         }
 
         return request;

@@ -171,7 +171,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 try {
                     userType = UserType.fromValue(type.trim().toUpperCase());
                 } catch (IllegalArgumentException iae) {
-                    throw new BadRequestException("Bad type parameter");
+                    throw new BadRequestException("Bad type parameter", iae);
                 }
             } else {
                 userType = UserType.CLOUD;
@@ -1161,7 +1161,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             Unmarshaller unmarshaller = context.createUnmarshaller();
             cred = (JAXBElement<? extends Credentials>) unmarshaller.unmarshal(new StringReader(body));
         } catch (JAXBException e) {
-            throw new BadRequestException("Invalid XML");
+            throw new BadRequestException("Invalid XML", e);
         }
         if (isAdmin) {
             return adminAuthenticateResponse(cred, response);
@@ -1261,7 +1261,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         try {
             stringStringMap = authHeaderHelper.parseBasicParams(authHeader);
         } catch (CloudAdminAuthorizationException e) {
-            throw new NotAuthorizedException("You are not authorized to access this resource.");
+            throw new NotAuthorizedException("You are not authorized to access this resource.", e);
         }
         if (stringStringMap == null) {
             throw new NotAuthorizedException("You are not authorized to access this resource.");

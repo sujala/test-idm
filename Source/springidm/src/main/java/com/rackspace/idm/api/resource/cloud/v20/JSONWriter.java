@@ -376,7 +376,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
                 getMarshaller().marshallToJSON(object, outputStream);
             } catch (JAXBException e) {
                 logger.info(e.toString());
-                throw new BadRequestException("Parameters are not valid.");
+                throw new BadRequestException("Parameters are not valid.", e);
             }
         }
         outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
@@ -510,7 +510,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             tokenInner.put(JSONConstants.ID, token.getId());
             tokenInner.put(JSONConstants.EXPIRES, token.getExpires().toString());
         } catch (NullPointerException e) {
-            throw new BadRequestException("Expected \"id\" and \"expired\" to not be null.");
+            throw new BadRequestException("Expected \"id\" and \"expired\" to not be null.", e);
         }
 
         if (token.getTenant() != null) {
