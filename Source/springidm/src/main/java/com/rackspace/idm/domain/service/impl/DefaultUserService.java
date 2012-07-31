@@ -688,7 +688,7 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public User getUserByScopeAccess(ScopeAccess scopeAccess) throws Exception {
+    public User getUserByScopeAccess(ScopeAccess scopeAccess) throws IdmException {
         User user = null;
         if (scopeAccess instanceof RackerScopeAccess) {
             RackerScopeAccess rackerScopeAccess = (RackerScopeAccess) scopeAccess;
@@ -708,7 +708,7 @@ public class DefaultUserService implements UserService {
             UserScopeAccess userScopeAccess = (UserScopeAccess) scopeAccess;
             user = getUser(userScopeAccess.getUsername());
         } else {
-            throw new Exception("Invalid getUserByScopeAccess, scopeAccess cannot provide information to get a user");
+            throw new BadRequestException("Invalid getUserByScopeAccess, scopeAccess cannot provide information to get a user");
         }
         if (user == null) {
             throw new NotFoundException("User not found with scopeAccess: " + scopeAccess.toString());

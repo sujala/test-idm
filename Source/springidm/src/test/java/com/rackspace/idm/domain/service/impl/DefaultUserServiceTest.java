@@ -942,7 +942,7 @@ public class DefaultUserServiceTest {
         assertThat("user", result, equalTo(user));
     }
 
-    @Test (expected = Exception.class)
+    @Test (expected = BadRequestException.class)
     public void getUserByScopeAccess_invalidScopeAccess_throwsException() throws Exception {
         ScopeAccess scopeAccess = mock(ScopeAccess.class);
         defaultUserService.getUserByScopeAccess(scopeAccess);

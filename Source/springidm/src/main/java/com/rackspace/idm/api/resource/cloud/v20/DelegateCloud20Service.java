@@ -24,7 +24,6 @@ import com.sun.jersey.api.json.JSONUnmarshaller;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
-import org.apache.http.Header;
 import org.apache.log4j.Logger;
 import org.apache.ws.commons.util.Base64;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
@@ -120,7 +119,7 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public Response.ResponseBuilder authenticate(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest)
-            throws IOException, JAXBException {
+            throws JAXBException {
 
         //Check for impersonated token if authenticating with token creds
         if (authenticationRequest.getToken() != null && !StringUtils.isBlank(authenticationRequest.getToken().getId())) {
@@ -162,7 +161,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         }
     }
 
-    ResponseBuilder authenticateImpersonated(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest, ScopeAccess sa) throws IOException, JAXBException {
+    ResponseBuilder authenticateImpersonated(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest, ScopeAccess sa) throws JAXBException {
         try {
             ImpersonatedScopeAccess isa = (ImpersonatedScopeAccess) sa;
             com.rackspace.idm.domain.entity.User user = userService.getUserByAuthToken(isa.getImpersonatingToken());
@@ -199,7 +198,7 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder validateToken(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo)
-            throws Exception, JAXBException {
+            throws JAXBException {
         if (tokenId == null) {
             throw new BadRequestException("Token cannot be null.");
         }
@@ -227,7 +226,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         return defaultCloud20Service.validateToken(httpHeaders, authToken, tokenId, belongsTo);
     }
 
-    ResponseBuilder validateImpersonatedTokenFromCloud(HttpHeaders httpHeaders, String impersonatedCloudToken, String belongsTo, ImpersonatedScopeAccess impersonatedScopeAccess) throws Exception, JAXBException {
+    ResponseBuilder validateImpersonatedTokenFromCloud(HttpHeaders httpHeaders, String impersonatedCloudToken, String belongsTo, ImpersonatedScopeAccess impersonatedScopeAccess) throws JAXBException {
         String gaXAuthToken = getXAuthToken_byPassword(config.getString("ga.username"), config.getString("ga.password")).getToken().getId();
         httpHeaders.getRequestHeaders().get(X_AUTH_TOKEN).set(0, gaXAuthToken);
         httpHeaders.getRequestHeaders().get(HttpHeaders.ACCEPT).set(0, MediaType.APPLICATION_XML);
@@ -256,7 +255,7 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder checkToken(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo)
-            throws IOException {
+             {
 
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             String request = getCloudAuthV20Url() + "tokens/" + tokenId;
@@ -271,7 +270,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listEndpointsForToken(HttpHeaders httpHeaders, String authToken, String tokenId) throws IOException {
+    public ResponseBuilder listEndpointsForToken(HttpHeaders httpHeaders, String authToken, String tokenId)  {
         ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByAccessToken(tokenId);
 
         if (isCloudAuthRoutingEnabled() && scopeAccess == null) {
@@ -291,7 +290,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listExtensions(HttpHeaders httpHeaders) throws IOException {
+    public ResponseBuilder listExtensions(HttpHeaders httpHeaders)  {
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             String request = getCloudAuthV20Url() + "extensions";
             return cloudClient.get(request, httpHeaders);
@@ -300,7 +299,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getExtension(HttpHeaders httpHeaders, String alias) throws IOException {
+    public ResponseBuilder getExtension(HttpHeaders httpHeaders, String alias)  {
 
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             String request = getCloudAuthV20Url() + "extensions/" + alias;
@@ -310,7 +309,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listUsers(HttpHeaders httpHeaders, String authToken, Integer marker, Integer limit) throws IOException {
+    public ResponseBuilder listUsers(HttpHeaders httpHeaders, String authToken, Integer marker, Integer limit)  {
         ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByAccessToken(authToken);
         if (scopeAccess != null)
             return defaultCloud20Service.listUsers(httpHeaders, authToken, marker, limit);
@@ -327,7 +326,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String authToken, String userId) throws IOException {
+    public ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String authToken, String userId)  {
         if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
             String request = getCloudAuthV20Url() + "users/" + userId + "/RAX-KSGRP";
             return cloudClient.get(request, httpHeaders);
@@ -336,7 +335,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getGroupById(HttpHeaders httpHeaders, String authToken, String groupId) throws IOException {
+    public ResponseBuilder getGroupById(HttpHeaders httpHeaders, String authToken, String groupId)  {
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             String request = getCloudAuthV20Url() + "RAX-GRPADM/groups/" + groupId;
             return cloudClient.get(request, httpHeaders);
@@ -345,7 +344,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder addGroup(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Group group) throws IOException, JAXBException {
+    public ResponseBuilder addGroup(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Group group) throws JAXBException {
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             String request = getCloudAuthV20Url() + "RAX-GRPADM/groups";
             String body = marshallObjectToString(objectFactoryRAXGRP.createGroup(group));
@@ -355,7 +354,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder updateGroup(HttpHeaders httpHeaders, String authToken, String groupId, Group group) throws IOException, JAXBException {
+    public ResponseBuilder updateGroup(HttpHeaders httpHeaders, String authToken, String groupId, Group group) throws JAXBException {
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             String request = getCloudAuthV20Url() + "RAX-GRPADM/groups/" + groupId;
             String body = marshallObjectToString(objectFactoryRAXGRP.createGroup(group));
@@ -365,7 +364,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder deleteGroup(HttpHeaders httpHeaders, String authToken, String groupId) throws IOException {
+    public ResponseBuilder deleteGroup(HttpHeaders httpHeaders, String authToken, String groupId)  {
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             String request = getCloudAuthV20Url() + "RAX-GRPADM/groups/" + groupId;
             return cloudClient.delete(request, httpHeaders);
@@ -374,7 +373,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder addUserToGroup(HttpHeaders httpHeaders, String authToken, String groupId, String userId) throws IOException {
+    public ResponseBuilder addUserToGroup(HttpHeaders httpHeaders, String authToken, String groupId, String userId)  {
         if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
             String request = getCloudAuthV20Url() + "RAX-GRPADM/groups/" + groupId + "/users/" + userId;
             return cloudClient.put(request, httpHeaders, null);
@@ -383,7 +382,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder removeUserFromGroup(HttpHeaders httpHeaders, String authToken, String groupId, String userId) throws IOException {
+    public ResponseBuilder removeUserFromGroup(HttpHeaders httpHeaders, String authToken, String groupId, String userId)  {
         if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
             String request = getCloudAuthV20Url() + "RAX-GRPADM/groups/" + groupId + "/users/" + userId;
             return cloudClient.delete(request, httpHeaders);
@@ -392,7 +391,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getUsersForGroup(HttpHeaders httpHeaders, String authToken, String groupId, String marker, Integer limit) throws IOException {
+    public ResponseBuilder getUsersForGroup(HttpHeaders httpHeaders, String authToken, String groupId, String marker, Integer limit)  {
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             // TODO: Implement routing to DefaultCloud20Service
             String request = getCloudAuthV20Url() + "RAX-GRPADM/groups/" + groupId + "/users";
@@ -406,7 +405,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getGroup(HttpHeaders httpHeaders, String authToken, String groupName) throws IOException {
+    public ResponseBuilder getGroup(HttpHeaders httpHeaders, String authToken, String groupName)  {
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             String request = getCloudAuthV20Url() + "RAX-GRPADM/groups";
             HashMap<String, Object> params = new HashMap<String, Object>();
@@ -418,7 +417,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder impersonate(HttpHeaders httpHeaders, String authToken, ImpersonationRequest impersonationRequest) throws IOException {
+    public ResponseBuilder impersonate(HttpHeaders httpHeaders, String authToken, ImpersonationRequest impersonationRequest)  {
         return null;
     }
 
@@ -433,7 +432,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getUserByName(HttpHeaders httpHeaders, String authToken, String name) throws IOException {
+    public ResponseBuilder getUserByName(HttpHeaders httpHeaders, String authToken, String name)  {
         if (isCloudAuthRoutingEnabled() && !userService.userExistsByUsername(name)) {
             String request = getCloudAuthV20Url() + "users";
             HashMap<String, Object> params = new HashMap<String, Object>();
@@ -445,7 +444,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getUserById(HttpHeaders httpHeaders, String authToken, String userId) throws IOException {
+    public ResponseBuilder getUserById(HttpHeaders httpHeaders, String authToken, String userId)  {
         if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
             String request = getCloudAuthV20Url() + "users/" + userId;
             return cloudClient.get(request, httpHeaders);
@@ -454,7 +453,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listUserGlobalRoles(HttpHeaders httpHeaders, String authToken, String userId) throws IOException {
+    public ResponseBuilder listUserGlobalRoles(HttpHeaders httpHeaders, String authToken, String userId)  {
         if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
             String request = getCloudAuthV20Url() + "users/" + userId + "/roles";
             return cloudClient.get(request, httpHeaders);
@@ -464,7 +463,7 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder listUserGlobalRolesByServiceId(HttpHeaders httpHeaders, String authToken, String userId,
-                                                          String serviceId) throws IOException {
+                                                          String serviceId)  {
         if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
             String request = getCloudAuthV20Url() + "users/" + userId + "/roles";
             HashMap<String, Object> params = new HashMap<String, Object>();
@@ -476,7 +475,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listGroups(HttpHeaders httpHeaders, String authToken, String marker, String groupName, Integer limit) throws IOException {
+    public ResponseBuilder listGroups(HttpHeaders httpHeaders, String authToken, String marker, String groupName, Integer limit)  {
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             String request = getCloudAuthV20Url() + "RAX-GRPADM/groups";
             HashMap<String, Object> params = new HashMap<String, Object>();
@@ -490,7 +489,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listTenants(HttpHeaders httpHeaders, String authToken, String marker, Integer limit) throws IOException {
+    public ResponseBuilder listTenants(HttpHeaders httpHeaders, String authToken, String marker, Integer limit)  {
         ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByAccessToken(authToken);
         if (isCloudAuthRoutingEnabled() && scopeAccess == null) {
             String request = getCloudAuthV20Url() + "tenants";
@@ -504,7 +503,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getTenantByName(HttpHeaders httpHeaders, String authToken, String name) throws IOException {
+    public ResponseBuilder getTenantByName(HttpHeaders httpHeaders, String authToken, String name)  {
         com.rackspace.idm.domain.entity.Tenant tenant = tenantService.getTenantByName(name);
         if (isCloudAuthRoutingEnabled() && tenant == null) {
             String request = getCloudAuthV20Url() + "tenants";
@@ -517,7 +516,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getTenantById(HttpHeaders httpHeaders, String authToken, String tenantsId) throws IOException {
+    public ResponseBuilder getTenantById(HttpHeaders httpHeaders, String authToken, String tenantsId)  {
         com.rackspace.idm.domain.entity.Tenant tenant = tenantService.getTenant(tenantsId);
         if (isCloudAuthRoutingEnabled() && tenant == null) {
             String request = getCloudAuthV20Url() + "tenants/" + tenantsId;
@@ -527,7 +526,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder addUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String body) throws IOException {
+    public ResponseBuilder addUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String body)  {
         if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
             String xmlBody = body;
             if (httpHeaders.getMediaType().isCompatible(MediaType.APPLICATION_JSON_TYPE)) {
@@ -566,7 +565,7 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder listCredentials(HttpHeaders httpHeaders, String authToken, String userId, String marker, Integer limit)
-            throws Exception {
+             {
         if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
             String request = getCloudAuthV20Url() + "users/" + userId + "/OS-KSADM/credentials";
             HashMap<String, Object> params = new HashMap<String, Object>();
@@ -581,7 +580,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder updateUserPasswordCredentials(HttpHeaders httpHeaders, String authToken, String userId,
                                                          String credentialType, PasswordCredentialsRequiredUsername creds)
-            throws JAXBException, IOException {
+            throws JAXBException {
         if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
             String request = getCloudAuthV20Url() + "users/" + userId + "/OS-KSADM/credentials/" + credentialType;
             String body = marshallObjectToString(objectFactory.createPasswordCredentials(creds));
@@ -592,7 +591,7 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder updateUserApiKeyCredentials(HttpHeaders httpHeaders, String authToken, String userId, String credentialType,
-                                                       ApiKeyCredentials creds) throws JAXBException, IOException {
+                                                       ApiKeyCredentials creds) throws JAXBException {
         if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
             String request = getCloudAuthV20Url() + "users/" + userId + "/OS-KSADM/credentials/" + credentialType;
             String body = marshallObjectToString(objectFactoryRAXKSKEY.createApiKeyCredentials(creds));
@@ -603,7 +602,7 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String credentialType)
-            throws IOException {
+             {
         if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
             String request = getCloudAuthV20Url() + "users/" + userId + "/OS-KSADM/credentials/" + credentialType;
             return cloudClient.get(request, httpHeaders);
@@ -613,7 +612,7 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder deleteUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String credentialType)
-            throws IOException {
+             {
         if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
             String request = getCloudAuthV20Url() + "users/" + userId + "/OS-KSADM/credentials/" + credentialType;
             return cloudClient.delete(request, httpHeaders);
@@ -623,7 +622,7 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder listRolesForUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId,
-                                                    String userId) throws IOException {
+                                                    String userId)  {
         if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
             String request = getCloudAuthV20Url() + "tenants/" + tenantId + "/users/" + userId + "/roles";
             return cloudClient.get(request, httpHeaders);
@@ -633,7 +632,7 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder addUser(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, UserForCreate user)
-            throws IOException, JAXBException {
+            throws JAXBException {
 
         ScopeAccess accessTokenByAuthHeader = scopeAccessService.getAccessTokenByAuthHeader(authToken);
         boolean isUserAdminInGA = false;
@@ -680,7 +679,7 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder updateUser(HttpHeaders httpHeaders, String authToken, String userId, UserForCreate user)
-            throws IOException, JAXBException {
+            throws JAXBException {
         if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
             String request = getCloudAuthV20Url() + "users/" + userId;
             String body = marshallObjectToString(objectFactory.createUser(user));
@@ -690,7 +689,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder deleteUser(HttpHeaders httpHeaders, String authToken, String userId) throws IOException {
+    public ResponseBuilder deleteUser(HttpHeaders httpHeaders, String authToken, String userId)  {
         if (isCloudAuthRoutingEnabled()) {
             com.rackspace.idm.domain.entity.User user = userService.getUserById(userId);
 
@@ -706,7 +705,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder deleteUserFromSoftDeleted(HttpHeaders httpHeaders, String authToken, String userId) throws IOException, NotFoundException {
+    public ResponseBuilder deleteUserFromSoftDeleted(HttpHeaders httpHeaders, String authToken, String userId)  {
         if (config.getBoolean("allowSoftDeleteDeletion")) {
             return defaultCloud20Service.deleteUserFromSoftDeleted(httpHeaders, authToken, userId);
         } else {
@@ -716,7 +715,7 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder setUserEnabled(HttpHeaders httpHeaders, String authToken, String userId, User user)
-            throws IOException, JAXBException {
+            throws JAXBException {
         if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
             String request = getCloudAuthV20Url() + "users/" + userId + "/OS-KSADM/enabled";
             String body = marshallObjectToString(objectFactory.createUser(user));
@@ -726,7 +725,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder addUserRole(HttpHeaders httpHeaders, String authToken, String userId, String roleId) throws IOException {
+    public ResponseBuilder addUserRole(HttpHeaders httpHeaders, String authToken, String userId, String roleId)  {
         if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
             String request = getCloudAuthV20Url() + "users/" + userId + "/roles/OS-KSADM/" + roleId;
             return cloudClient.put(request, httpHeaders, null);
@@ -735,7 +734,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getUserRole(HttpHeaders httpHeaders, String authToken, String userId, String roleId) throws IOException {
+    public ResponseBuilder getUserRole(HttpHeaders httpHeaders, String authToken, String userId, String roleId)  {
         if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
             String request = getCloudAuthV20Url() + "users/" + userId + "/roles/OS-KSADM/" + roleId;
             return cloudClient.get(request, httpHeaders);
@@ -744,7 +743,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder deleteUserRole(HttpHeaders httpHeaders, String authToken, String userId, String roleId) throws IOException {
+    public ResponseBuilder deleteUserRole(HttpHeaders httpHeaders, String authToken, String userId, String roleId)  {
         if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
             String request = getCloudAuthV20Url() + "users/" + userId + "/roles/OS-KSADM/" + roleId;
             return cloudClient.delete(request, httpHeaders);
@@ -754,7 +753,7 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder addTenant(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, org.openstack.docs.identity.api.v2.Tenant tenant)
-            throws IOException, JAXBException {
+            throws JAXBException {
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             String request = getCloudAuthV20Url() + "tenants";
             String body = marshallObjectToString(objectFactory.createTenant(tenant));
@@ -765,7 +764,7 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder updateTenant(HttpHeaders httpHeaders, String authToken, String tenantId, org.openstack.docs.identity.api.v2.Tenant tenant)
-            throws IOException, JAXBException {
+            throws JAXBException {
         if (isCloudAuthRoutingEnabled() && !isTenantInGAbyId(tenantId)) {
             String request = getCloudAuthV20Url() + "tenants/" + tenantId;
             String body = marshallObjectToString(objectFactory
@@ -776,7 +775,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder deleteTenant(HttpHeaders httpHeaders, String authToken, String tenantId) throws IOException {
+    public ResponseBuilder deleteTenant(HttpHeaders httpHeaders, String authToken, String tenantId)  {
         if (isCloudAuthRoutingEnabled() && !isTenantInGAbyId(tenantId)) {
             String request = getCloudAuthV20Url() + "tenants/" + tenantId;
             return cloudClient.delete(request, httpHeaders);
@@ -786,7 +785,7 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder listRolesForTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String marker,
-                                              Integer limit) throws IOException {
+                                              Integer limit)  {
         if (isCloudAuthRoutingEnabled() && !isTenantInGAbyId(tenantId)) {
             String request = getCloudAuthV20Url() + "tenants/" + tenantId + "/OS-KSADM/roles";
             HashMap<String, Object> params = new HashMap<String, Object>();
@@ -800,7 +799,7 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder listUsersWithRoleForTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String roleId, String marker, Integer limit)
-            throws IOException {
+             {
         if (isCloudAuthRoutingEnabled() && !isTenantInGAbyId(tenantId)) {
             String request = getCloudAuthV20Url() + "tenants/" + tenantId + "/users";
             HashMap<String, Object> params = new HashMap<String, Object>();
@@ -815,7 +814,7 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder listUsersForTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String marker, Integer limit)
-            throws IOException {
+             {
         if (isCloudAuthRoutingEnabled() && !isTenantInGAbyId(tenantId)) {
             String request = getCloudAuthV20Url() + "tenants/" + tenantId + "/users";
             HashMap<String, Object> params = new HashMap<String, Object>();
@@ -829,7 +828,7 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder addRolesToUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String userId, String roleId)
-            throws IOException {
+             {
         if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
             String request = getCloudAuthV20Url() + "tenants/" + tenantId + "/users/" + userId + "/roles/OS-KSADM/" + roleId;
             return cloudClient.put(request, httpHeaders, null);
@@ -839,7 +838,7 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder deleteRoleFromUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String userId, String roleId)
-            throws IOException {
+             {
         if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
             String request = getCloudAuthV20Url() + "tenants/" + tenantId + "/users/" + userId + "/roles/OS-KSADM/" + roleId;
             return cloudClient.delete(request, httpHeaders);
@@ -848,7 +847,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listRoles(HttpHeaders httpHeaders, String authToken, String serviceId, String marker, Integer limit) throws IOException {
+    public ResponseBuilder listRoles(HttpHeaders httpHeaders, String authToken, String serviceId, String marker, Integer limit)  {
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             String request = getCloudAuthV20Url() + "OS-KSADM/roles";
             HashMap<String, Object> params = new HashMap<String, Object>();
@@ -862,7 +861,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder addRole(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Role role) throws IOException, JAXBException {
+    public ResponseBuilder addRole(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Role role) throws JAXBException {
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             String request = getCloudAuthV20Url() + "OS-KSADM/roles";
             String body = marshallObjectToString(objectFactory.createRole(role));
@@ -872,7 +871,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getRole(HttpHeaders httpHeaders, String authToken, String roleId) throws IOException {
+    public ResponseBuilder getRole(HttpHeaders httpHeaders, String authToken, String roleId)  {
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             String request = getCloudAuthV20Url() + "OS-KSADM/roles/" + roleId;
             return cloudClient.get(request, httpHeaders);
@@ -881,7 +880,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder deleteRole(HttpHeaders httpHeaders, String authToken, String roleId) throws IOException {
+    public ResponseBuilder deleteRole(HttpHeaders httpHeaders, String authToken, String roleId)  {
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             String request = getCloudAuthV20Url() + "OS-KSADM/roles/" + roleId;
             return cloudClient.delete(request, httpHeaders);
@@ -890,7 +889,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listServices(HttpHeaders httpHeaders, String authToken, String marker, Integer limit) throws IOException {
+    public ResponseBuilder listServices(HttpHeaders httpHeaders, String authToken, String marker, Integer limit)  {
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             String request = getCloudAuthV20Url() + "OS-KSADM/services";
             HashMap<String, Object> params = new HashMap<String, Object>();
@@ -903,7 +902,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder addService(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Service service) throws IOException, JAXBException {
+    public ResponseBuilder addService(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Service service) throws JAXBException {
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             String request = getCloudAuthV20Url() + "OS-KSADM/services";
             String body = marshallObjectToString(objectFactoryOSADMN.createService(service));
@@ -913,7 +912,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getService(HttpHeaders httpHeaders, String authToken, String serviceId) throws IOException {
+    public ResponseBuilder getService(HttpHeaders httpHeaders, String authToken, String serviceId)  {
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             String request = getCloudAuthV20Url() + "OS-KSADM/services/" + serviceId;
             return cloudClient.get(request, httpHeaders);
@@ -922,7 +921,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder deleteService(HttpHeaders httpHeaders, String authToken, String serviceId) throws IOException {
+    public ResponseBuilder deleteService(HttpHeaders httpHeaders, String authToken, String serviceId)  {
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             String request = getCloudAuthV20Url() + "OS-KSADM/services/" + serviceId;
             return cloudClient.delete(request, httpHeaders);
@@ -931,7 +930,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listEndpointTemplates(HttpHeaders httpHeaders, String authToken, String serviceId) throws IOException {
+    public ResponseBuilder listEndpointTemplates(HttpHeaders httpHeaders, String authToken, String serviceId)  {
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             String request = getCloudAuthV20Url() + "OS-KSCATALOG/endpointTemplates";
             HashMap<String, Object> params = new HashMap<String, Object>();
@@ -944,7 +943,7 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder addEndpointTemplate(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, EndpointTemplate endpoint)
-            throws IOException, JAXBException {
+            throws JAXBException {
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             String request = getCloudAuthV20Url() + "OS-KSCATALOG/endpointTemplates";
             String body = marshallObjectToString(objectFactoryOSCATALOG.createEndpointTemplate(endpoint));
@@ -954,7 +953,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getEndpointTemplate(HttpHeaders httpHeaders, String authToken, String endpointTemplateId) throws IOException {
+    public ResponseBuilder getEndpointTemplate(HttpHeaders httpHeaders, String authToken, String endpointTemplateId)  {
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             String request = getCloudAuthV20Url() + "OS-KSCATALOG/endpointTemplates/" + endpointTemplateId;
             return cloudClient.get(request, httpHeaders);
@@ -963,7 +962,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder deleteEndpointTemplate(HttpHeaders httpHeaders, String authToken, String endpointTemplateId) throws IOException {
+    public ResponseBuilder deleteEndpointTemplate(HttpHeaders httpHeaders, String authToken, String endpointTemplateId)  {
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             String request = getCloudAuthV20Url() + "OS-KSCATALOG/endpointTemplates/" + endpointTemplateId;
             return cloudClient.delete(request, httpHeaders);
@@ -972,7 +971,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listEndpoints(HttpHeaders httpHeaders, String authToken, String tenantId) throws IOException {
+    public ResponseBuilder listEndpoints(HttpHeaders httpHeaders, String authToken, String tenantId)  {
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             String request = getCloudAuthV20Url() + "tenants/" + tenantId + "/OS-KSCATALOG/endpoints";
             return cloudClient.get(request, httpHeaders);
@@ -982,7 +981,7 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder addEndpoint(HttpHeaders httpHeaders, String authToken, String tenantId, EndpointTemplate endpoint)
-            throws IOException, JAXBException {
+            throws JAXBException {
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             String request = getCloudAuthV20Url() + "tenants/" + tenantId + "/OS-KSCATALOG/endpoints";
             String body = marshallObjectToString(objectFactoryOSCATALOG.createEndpointTemplate(endpoint));
@@ -993,7 +992,7 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getEndpoint(HttpHeaders httpHeaders, String authToken, String endpointId, String tenantId)
-            throws IOException {
+             {
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             String request = getCloudAuthV20Url() + "tenants/" + tenantId
                     + "/OS-KSCATALOG/endpoints/" + endpointId;
@@ -1004,7 +1003,7 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder deleteEndpoint(HttpHeaders httpHeaders, String authToken, String endpointId, String tenantId)
-            throws IOException {
+             {
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             String request = getCloudAuthV20Url() + "tenants/" + tenantId + "/OS-KSCATALOG/endpoints/" + endpointId;
             return cloudClient.delete(request, httpHeaders);
@@ -1013,7 +1012,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getSecretQA(HttpHeaders httpHeaders, String authToken, String userId) throws IOException {
+    public ResponseBuilder getSecretQA(HttpHeaders httpHeaders, String authToken, String userId)  {
         if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
             String request = getCloudAuthV20Url() + "users/" + userId + "/RAX-KSQA/secretqa";
             return cloudClient.get(request, httpHeaders);
@@ -1023,7 +1022,7 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder updateSecretQA(HttpHeaders httpHeaders, String authToken, String userId, SecretQA secrets)
-            throws IOException, JAXBException {
+            throws JAXBException {
         if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
             String request = getCloudAuthV20Url() + "users/" + userId + "/RAX-KSQA/secretqa";
             String body = marshallObjectToString(objectFactorySECRETQA.createSecretQA(secrets));
@@ -1181,7 +1180,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         return (AuthenticateResponse) unmarshallResponse(authResponse.getEntity().toString(), AuthenticateResponse.class);
     }
 
-    public AuthenticateResponse getXAuthToken_byPassword(String userName, String password) throws JAXBException, IOException {
+    public AuthenticateResponse getXAuthToken_byPassword(String userName, String password) throws JAXBException {
         PasswordCredentialsRequiredUsername passwordCredentials = new PasswordCredentialsRequiredUsername();
         passwordCredentials.setUsername(userName);
         passwordCredentials.setPassword(password);
@@ -1198,7 +1197,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         return (AuthenticateResponse) unmarshallResponse(authResponse.getEntity().toString(), AuthenticateResponse.class);
     }
 
-    public ApiKeyCredentials getUserApiCredentials(String userId, String xAuthToken) throws IOException {
+    public ApiKeyCredentials getUserApiCredentials(String userId, String xAuthToken)  {
         HashMap<String, String> headers = new HashMap<String, String>();
         headers.put(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML);
         headers.put(X_AUTH_TOKEN, xAuthToken);
@@ -1210,7 +1209,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         return (ApiKeyCredentials) unmarshallResponse(credsResponse.getEntity().toString(), ApiKeyCredentials.class);
     }
 
-    public User getCloudUserByName(String userName, String xAuthToken) throws IOException {
+    public User getCloudUserByName(String userName, String xAuthToken)  {
         HashMap<String, String> headers = new HashMap<String, String>();
         headers.put(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML);
         headers.put(X_AUTH_TOKEN, xAuthToken);
@@ -1222,7 +1221,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         return (User) unmarshallResponse(userResponse.getEntity().toString(), User.class);
     }
 
-    public RoleList getGlobalRolesForCloudUser(String userId, String xAuthToken) throws IOException {
+    public RoleList getGlobalRolesForCloudUser(String userId, String xAuthToken)  {
         HashMap<String, String> headers = new HashMap<String, String>();
         headers.put(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML);
         headers.put(X_AUTH_TOKEN, xAuthToken);

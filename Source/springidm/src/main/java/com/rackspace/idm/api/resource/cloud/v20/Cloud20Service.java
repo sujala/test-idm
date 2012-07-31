@@ -12,11 +12,9 @@ import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.*;
 
 import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.JAXBException;
-import java.io.IOException;
 
 /**
  * Created by IntelliJ IDEA.
@@ -26,152 +24,152 @@ import java.io.IOException;
  */
 public interface Cloud20Service {
 
-    ResponseBuilder authenticate(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest) throws IOException, JAXBException;
+    ResponseBuilder authenticate(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest) throws JAXBException;
 
-    ResponseBuilder validateToken(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo) throws Exception, JAXBException;
+    ResponseBuilder validateToken(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo) throws JAXBException;
 
-    ResponseBuilder checkToken(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo) throws IOException;
+    ResponseBuilder checkToken(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo) ;
 
-    ResponseBuilder listEndpointsForToken(HttpHeaders httpHeaders, String authToken, String tokenId) throws IOException;
+    ResponseBuilder listEndpointsForToken(HttpHeaders httpHeaders, String authToken, String tokenId) ;
 
-    ResponseBuilder listExtensions(HttpHeaders httpHeaders) throws IOException;
+    ResponseBuilder listExtensions(HttpHeaders httpHeaders) ;
 
-    ResponseBuilder getExtension(HttpHeaders httpHeaders, String alias) throws IOException;
+    ResponseBuilder getExtension(HttpHeaders httpHeaders, String alias) ;
 
-    ResponseBuilder getUserByName(HttpHeaders httpHeaders, String authToken, String name) throws IOException;
+    ResponseBuilder getUserByName(HttpHeaders httpHeaders, String authToken, String name) ;
 
-    ResponseBuilder getUserById(HttpHeaders httpHeaders, String authToken, String userId) throws IOException;
+    ResponseBuilder getUserById(HttpHeaders httpHeaders, String authToken, String userId) ;
 
-    ResponseBuilder listUserGlobalRoles(HttpHeaders httpHeaders, String authToken, String userId) throws IOException;
+    ResponseBuilder listUserGlobalRoles(HttpHeaders httpHeaders, String authToken, String userId) ;
 
-    ResponseBuilder listTenants(HttpHeaders httpHeaders, String authToken, String marker, Integer limit) throws IOException;
+    ResponseBuilder listTenants(HttpHeaders httpHeaders, String authToken, String marker, Integer limit) ;
 
-    ResponseBuilder getTenantByName(HttpHeaders httpHeaders, String authToken, String name) throws IOException;
+    ResponseBuilder getTenantByName(HttpHeaders httpHeaders, String authToken, String name) ;
 
-    ResponseBuilder getTenantById(HttpHeaders httpHeaders, String authToken, String tenantsId) throws IOException;
+    ResponseBuilder getTenantById(HttpHeaders httpHeaders, String authToken, String tenantsId) ;
 
-    ResponseBuilder addUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String body) throws IOException;
+    ResponseBuilder addUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String body) ;
 
-    ResponseBuilder listCredentials(HttpHeaders httpHeaders, String authToken, String userId, String marker, Integer limit) throws Exception;
+    ResponseBuilder listCredentials(HttpHeaders httpHeaders, String authToken, String userId, String marker, Integer limit) ;
 
-    ResponseBuilder getUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String credentialType) throws IOException;
+    ResponseBuilder getUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String credentialType) ;
 
-    ResponseBuilder deleteUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String credentialType) throws IOException;
+    ResponseBuilder deleteUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String credentialType) ;
 
-    ResponseBuilder listRolesForUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantsId, String userId) throws IOException;
+    ResponseBuilder listRolesForUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantsId, String userId) ;
 
-	ResponseBuilder addUser(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, UserForCreate user) throws IOException, JAXBException;
+	ResponseBuilder addUser(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, UserForCreate user) throws JAXBException;
 
-	ResponseBuilder updateUser(HttpHeaders httpHeaders, String authToken, String userId, UserForCreate user) throws IOException, JAXBException;
+	ResponseBuilder updateUser(HttpHeaders httpHeaders, String authToken, String userId, UserForCreate user) throws JAXBException;
 
-	ResponseBuilder deleteUser(HttpHeaders httpHeaders, String authToken, String userId) throws IOException;
+	ResponseBuilder deleteUser(HttpHeaders httpHeaders, String authToken, String userId) ;
 
-    ResponseBuilder deleteUserFromSoftDeleted(HttpHeaders httpHeaders, String authToken, String userId) throws IOException, NotFoundException;
+    ResponseBuilder deleteUserFromSoftDeleted(HttpHeaders httpHeaders, String authToken, String userId) throws NotFoundException;
 
-	ResponseBuilder setUserEnabled(HttpHeaders httpHeaders, String authToken, String userId, User user) throws IOException, JAXBException;
+	ResponseBuilder setUserEnabled(HttpHeaders httpHeaders, String authToken, String userId, User user) throws JAXBException;
 
-	ResponseBuilder addUserRole(HttpHeaders httpHeaders, String authToken, String userId, String roleId) throws IOException;
+	ResponseBuilder addUserRole(HttpHeaders httpHeaders, String authToken, String userId, String roleId) ;
 
-	ResponseBuilder getUserRole(HttpHeaders httpHeaders, String authToken, String userId, String roleId) throws IOException;
+	ResponseBuilder getUserRole(HttpHeaders httpHeaders, String authToken, String userId, String roleId) ;
 
-	ResponseBuilder deleteUserRole(HttpHeaders httpHeaders, String authToken, String userId, String roleId) throws IOException;
+	ResponseBuilder deleteUserRole(HttpHeaders httpHeaders, String authToken, String userId, String roleId) ;
 
-	ResponseBuilder addTenant(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Tenant tenant) throws IOException, JAXBException;
+	ResponseBuilder addTenant(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Tenant tenant) throws JAXBException;
 
-	ResponseBuilder updateTenant(HttpHeaders httpHeaders, String authToken, String tenantId, Tenant tenant) throws IOException, JAXBException;
+	ResponseBuilder updateTenant(HttpHeaders httpHeaders, String authToken, String tenantId, Tenant tenant) throws JAXBException;
 
-	ResponseBuilder deleteTenant(HttpHeaders httpHeaders, String authToken, String tenantId) throws IOException;
+	ResponseBuilder deleteTenant(HttpHeaders httpHeaders, String authToken, String tenantId) ;
 
-	ResponseBuilder listRolesForTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String marker, Integer limit) throws IOException;
+	ResponseBuilder listRolesForTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String marker, Integer limit) ;
 
-	ResponseBuilder listUsersWithRoleForTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String roleId, String marker, Integer limit) throws IOException;
+	ResponseBuilder listUsersWithRoleForTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String roleId, String marker, Integer limit) ;
 
-	ResponseBuilder listUsersForTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String marker, Integer limit) throws IOException;
+	ResponseBuilder listUsersForTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String marker, Integer limit) ;
 
-	ResponseBuilder addRolesToUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String userId, String roleId) throws IOException;
+	ResponseBuilder addRolesToUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String userId, String roleId) ;
 
-	ResponseBuilder deleteRoleFromUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String userId, String roleId) throws IOException;
+	ResponseBuilder deleteRoleFromUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String userId, String roleId) ;
 
-	ResponseBuilder listRoles(HttpHeaders httpHeaders, String authToken, String serviceId, String marker, Integer limit) throws IOException;
+	ResponseBuilder listRoles(HttpHeaders httpHeaders, String authToken, String serviceId, String marker, Integer limit) ;
 
-	ResponseBuilder addRole(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Role role) throws IOException, JAXBException;
+	ResponseBuilder addRole(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Role role) throws JAXBException;
 
-	ResponseBuilder getRole(HttpHeaders httpHeaders, String authToken, String roleId) throws IOException;
+	ResponseBuilder getRole(HttpHeaders httpHeaders, String authToken, String roleId) ;
 
-	ResponseBuilder deleteRole(HttpHeaders httpHeaders, String authToken, String roleId) throws IOException;
+	ResponseBuilder deleteRole(HttpHeaders httpHeaders, String authToken, String roleId) ;
 
-	ResponseBuilder listServices(HttpHeaders httpHeaders, String authToken, String marker, Integer limit) throws IOException;
+	ResponseBuilder listServices(HttpHeaders httpHeaders, String authToken, String marker, Integer limit) ;
 
-	ResponseBuilder addService(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Service service) throws IOException, JAXBException;
+	ResponseBuilder addService(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Service service) throws JAXBException;
 
-	ResponseBuilder getService(HttpHeaders httpHeaders, String authToken, String serviceId) throws IOException;
+	ResponseBuilder getService(HttpHeaders httpHeaders, String authToken, String serviceId) ;
 
-	ResponseBuilder deleteService(HttpHeaders httpHeaders, String authToken, String serviceId) throws IOException;
+	ResponseBuilder deleteService(HttpHeaders httpHeaders, String authToken, String serviceId) ;
 
-    ResponseBuilder listUsers(HttpHeaders httpHeaders, String authToken, Integer marker, Integer limit) throws IOException;
+    ResponseBuilder listUsers(HttpHeaders httpHeaders, String authToken, Integer marker, Integer limit) ;
 
     ResponseBuilder listEndpointTemplates(HttpHeaders httpHeaders,
-        String authToken, String serviceId) throws IOException;
+        String authToken, String serviceId) ;
 
     ResponseBuilder addEndpointTemplate(HttpHeaders httpHeaders, UriInfo uriInfo,
-        String authToken, EndpointTemplate endpoint) throws IOException, JAXBException;
+        String authToken, EndpointTemplate endpoint) throws JAXBException;
 
     ResponseBuilder getEndpointTemplate(HttpHeaders httpHeaders,
-        String authToken, String endpointTemplateId) throws IOException;
+        String authToken, String endpointTemplateId) ;
 
     ResponseBuilder deleteEndpointTemplate(HttpHeaders httpHeaders,
-        String authToken, String enpdointTemplateId) throws IOException;
+        String authToken, String enpdointTemplateId) ;
 
     ResponseBuilder listEndpoints(HttpHeaders httpHeaders, String authToken,
-        String tenantId) throws IOException;
+        String tenantId) ;
 
     ResponseBuilder addEndpoint(HttpHeaders httpHeaders, String authToken, String tenantId,
-        EndpointTemplate endpoint) throws IOException, JAXBException;
+        EndpointTemplate endpoint) throws JAXBException;
 
     ResponseBuilder getEndpoint(HttpHeaders httpHeaders, String authToken, String tenantId,
-        String endpointId) throws IOException;
+        String endpointId) ;
 
     ResponseBuilder deleteEndpoint(HttpHeaders httpHeaders, String authToken, String tenantId,
-        String endpointId) throws IOException;
+        String endpointId) ;
 
     ResponseBuilder updateUserPasswordCredentials(HttpHeaders httpHeaders,
         String authToken, String userId, String credentialType,
-        PasswordCredentialsRequiredUsername creds) throws IOException, JAXBException;
+        PasswordCredentialsRequiredUsername creds) throws JAXBException;
 
     ResponseBuilder updateUserApiKeyCredentials(HttpHeaders httpHeaders,
         String authToken, String userId, String credentialType,
-        ApiKeyCredentials creds) throws IOException, JAXBException;
+        ApiKeyCredentials creds) throws JAXBException;
 
     ResponseBuilder getSecretQA(HttpHeaders httpHeaders, String authToken,
-        String userId) throws IOException;
+        String userId) ;
 
     ResponseBuilder updateSecretQA(HttpHeaders httpHeaders, String authToken,
-        String userId, SecretQA secrets) throws IOException, JAXBException;
+        String userId, SecretQA secrets) throws JAXBException;
 
     ResponseBuilder listUserGlobalRolesByServiceId(HttpHeaders httpHeaders,
-        String authToken, String userId, String serviceId) throws IOException;
+        String authToken, String userId, String serviceId) ;
 
-    ResponseBuilder listGroups(HttpHeaders httpHeaders, String authToken, String marker, String s, Integer limit) throws IOException;
+    ResponseBuilder listGroups(HttpHeaders httpHeaders, String authToken, String marker, String s, Integer limit) ;
 
-    ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String authToken, String userId) throws IOException;
+    ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String authToken, String userId) ;
 
-    ResponseBuilder getGroupById(HttpHeaders httpHeaders, String authToken, String groupId) throws IOException;
+    ResponseBuilder getGroupById(HttpHeaders httpHeaders, String authToken, String groupId) ;
 
-    ResponseBuilder addGroup(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Group group) throws IOException, JAXBException;
+    ResponseBuilder addGroup(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Group group) throws JAXBException;
 
-    ResponseBuilder updateGroup(HttpHeaders httpHeaders, String authToken, String groupId, Group group) throws IOException, JAXBException;
+    ResponseBuilder updateGroup(HttpHeaders httpHeaders, String authToken, String groupId, Group group) throws JAXBException;
 
-    ResponseBuilder deleteGroup(HttpHeaders httpHeaders, String authToken, String groupId) throws IOException;
+    ResponseBuilder deleteGroup(HttpHeaders httpHeaders, String authToken, String groupId) ;
 
-    ResponseBuilder addUserToGroup(HttpHeaders httpHeaders, String authToken, String groupId, String userId) throws IOException;
+    ResponseBuilder addUserToGroup(HttpHeaders httpHeaders, String authToken, String groupId, String userId) ;
 
-    ResponseBuilder removeUserFromGroup(HttpHeaders httpHeaders, String authToken, String groupId, String userId) throws IOException;
+    ResponseBuilder removeUserFromGroup(HttpHeaders httpHeaders, String authToken, String groupId, String userId) ;
 
-    ResponseBuilder getUsersForGroup(HttpHeaders httpHeaders, String authToken, String groupId, String marker, Integer limit) throws IOException;
+    ResponseBuilder getUsersForGroup(HttpHeaders httpHeaders, String authToken, String groupId, String marker, Integer limit) ;
 
-    ResponseBuilder getGroup(HttpHeaders httpHeaders, String authToken, String groupName) throws IOException;
+    ResponseBuilder getGroup(HttpHeaders httpHeaders, String authToken, String groupName) ;
 
-    ResponseBuilder impersonate(HttpHeaders httpHeaders, String authToken, ImpersonationRequest impersonationRequest) throws IOException, JAXBException;
+    ResponseBuilder impersonate(HttpHeaders httpHeaders, String authToken, ImpersonationRequest impersonationRequest) throws JAXBException;
 
     ResponseBuilder listDefaultRegionServices(String authToken);
 

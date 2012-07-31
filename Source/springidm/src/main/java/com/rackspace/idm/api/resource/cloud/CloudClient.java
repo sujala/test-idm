@@ -34,44 +34,39 @@ public class CloudClient {
 
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public Response.ResponseBuilder get(String url, HttpHeaders httpHeaders)
-            throws IOException {
+    public Response.ResponseBuilder get(String url, HttpHeaders httpHeaders) {
         HttpGet request = new HttpGet(url);
         setHttpHeaders(httpHeaders, request);
         return executeRequest(request);
     }
 
-    public Response.ResponseBuilder get(String url, HashMap headers)
-            throws IOException {
+    public Response.ResponseBuilder get(String url, HashMap headers) {
         HttpGet request = new HttpGet(url);
         setHeaders(headers, request);
         return executeRequest(request);
     }
 
-    public Response.ResponseBuilder delete(String url, HttpHeaders httpHeaders)
-            throws IOException {
+    public Response.ResponseBuilder delete(String url, HttpHeaders httpHeaders) {
         HttpDelete request = new HttpDelete(url);
         setHttpHeaders(httpHeaders, request);
         return executeRequest(request);
     }
 
-    public Response.ResponseBuilder put(String url, HttpHeaders httpHeaders,
-                                        String body) throws IOException {
+    public Response.ResponseBuilder put(String url, HttpHeaders httpHeaders, String body){
         HttpPut request = new HttpPut(url);
         request.setEntity(getHttpEntity(body));
         setHttpHeaders(httpHeaders, request);
         return executeRequest(request);
     }
 
-    public Response.ResponseBuilder post(String url, HttpHeaders httpHeaders,
-                                         String body) throws IOException {
+    public Response.ResponseBuilder post(String url, HttpHeaders httpHeaders, String body) {
         HttpPost request = new HttpPost(url);
         request.setEntity(getHttpEntity(body));
         setHttpHeaders(httpHeaders, request);
         return executeRequest(request);
     }
 
-    public Response.ResponseBuilder post(String url, HashMap<String, String> headers, String body) throws IOException {
+    public Response.ResponseBuilder post(String url, HashMap<String, String> headers, String body) {
         HttpPost request = new HttpPost(url);
         request.setEntity(getHttpEntity(body));
         setHeaders(headers, request);
