@@ -26,6 +26,11 @@ import java.util.UUID;
 public class DefaultScopeAccessService implements ScopeAccessService {
 
     private static final String PASSWORD_RESET_CLIENT_ID = "PASSWORDRESET";
+    public static final String NULL_ARGUMENT_PASSED_IN = "Null argument passed in.";
+    public static final String ADDING_SCOPE_ACCESS = "Adding scopeAccess {}";
+    public static final String ADDED_SCOPE_ACCESS = "Added scopeAccess {}";
+    public static final String NULL_SCOPE_ACCESS_OBJECT_INSTANCE = "Null scope access object instance.";
+    public static final String GETTING_PERMISSION_ON_SCOPE_ACCESS = "Getting Permission {} on ScopeAccess {}";
 
     private final AuthHeaderHelper authHeaderHelper;
     private final ApplicationDao clientDao;
@@ -103,13 +108,13 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     public ScopeAccess addDelegateScopeAccess(String parentUniqueId,
                                               ScopeAccess scopeAccess) {
         if (scopeAccess == null) {
-            String errMsg = String.format("Null argument passed in.");
+            String errMsg = String.format(NULL_ARGUMENT_PASSED_IN);
             logger.error(errMsg);
             throw new IllegalArgumentException(errMsg);
         }
-        logger.info("Adding scopeAccess {}", scopeAccess);
+        logger.info(ADDING_SCOPE_ACCESS, scopeAccess);
         ScopeAccess newScopeAccess = this.scopeAccessDao.addDelegateScopeAccess(parentUniqueId, scopeAccess);
-        logger.info("Added scopeAccess {}", scopeAccess);
+        logger.info(ADDED_SCOPE_ACCESS, scopeAccess);
         return newScopeAccess;
     }
 
@@ -126,9 +131,9 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             scopeAccess.setImpersonatingToken(impersonatingToken);
             scopeAccess.setAccessTokenString(this.generateToken());
 
-            logger.info("Adding scopeAccess {}", scopeAccess);
+            logger.info(ADDING_SCOPE_ACCESS, scopeAccess);
             ImpersonatedScopeAccess newScopeAccess = (ImpersonatedScopeAccess) this.scopeAccessDao.addImpersonatedScopeAccess(user.getUniqueId(), scopeAccess);
-            logger.info("Added scopeAccess {}", scopeAccess);
+            logger.info(ADDED_SCOPE_ACCESS, scopeAccess);
 
             return newScopeAccess;
         } else {
@@ -189,13 +194,13 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     public ScopeAccess addDirectScopeAccess(String parentUniqueId,
                                             ScopeAccess scopeAccess) {
         if (scopeAccess == null) {
-            String errMsg = String.format("Null argument passed in.");
+            String errMsg = String.format(NULL_ARGUMENT_PASSED_IN);
             logger.error(errMsg);
             throw new IllegalArgumentException(errMsg);
         }
-        logger.info("Adding scopeAccess {}", scopeAccess);
+        logger.info(ADDING_SCOPE_ACCESS, scopeAccess);
         ScopeAccess newScopeAccess = this.scopeAccessDao.addDirectScopeAccess(parentUniqueId, scopeAccess);
-        logger.info("Added scopeAccess {}", scopeAccess);
+        logger.info(ADDED_SCOPE_ACCESS, scopeAccess);
         return newScopeAccess;
     }
 
@@ -203,13 +208,13 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     public ScopeAccess addScopeAccess(String parentUniqueId,
                                       ScopeAccess scopeAccess) {
         if (scopeAccess == null) {
-            String errMsg = String.format("Null argument passed in.");
+            String errMsg = String.format(NULL_ARGUMENT_PASSED_IN);
             logger.error(errMsg);
             throw new IllegalArgumentException(errMsg);
         }
-        logger.info("Adding scopeAccess {}", scopeAccess);
+        logger.info(ADDING_SCOPE_ACCESS, scopeAccess);
         ScopeAccess newScopeAccess = this.scopeAccessDao.addScopeAccess(parentUniqueId, scopeAccess);
-        logger.info("Added scopeAccess {}", scopeAccess);
+        logger.info(ADDED_SCOPE_ACCESS, scopeAccess);
         return newScopeAccess;
     }
 
@@ -244,7 +249,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     public void deleteScopeAccess(ScopeAccess scopeAccess) {
         logger.info("Deleting ScopeAccess {}", scopeAccess);
         if (scopeAccess == null) {
-            String errMsg = String.format("Null argument passed in.");
+            String errMsg = String.format(NULL_ARGUMENT_PASSED_IN);
             logger.error(errMsg);
             throw new IllegalArgumentException(errMsg);
         }
@@ -296,7 +301,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     public boolean doesAccessTokenHavePermission(ScopeAccess token,
                                                  Permission permission) {
         if (permission == null) {
-            String errMsg = String.format("Null argument passed in.");
+            String errMsg = String.format(NULL_ARGUMENT_PASSED_IN);
             logger.error(errMsg);
             throw new IllegalArgumentException(errMsg);
         }
@@ -505,7 +510,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             User user) {
 
         if (user == null) {
-            String errMsg = String.format("Null argument passed in.");
+            String errMsg = String.format(NULL_ARGUMENT_PASSED_IN);
             logger.error(errMsg);
             throw new IllegalArgumentException(errMsg);
         }
@@ -546,16 +551,16 @@ public class DefaultScopeAccessService implements ScopeAccessService {
                                              Permission permission) {
         if (permission == null) {
             String errorMsg = String
-                    .format("Null scope access object instance.");
+                    .format(NULL_SCOPE_ACCESS_OBJECT_INSTANCE);
             logger.warn(errorMsg);
             throw new IllegalArgumentException(errorMsg);
         }
 
-        logger.debug("Getting Permission {} on ScopeAccess {}", permission,
+        logger.debug(GETTING_PERMISSION_ON_SCOPE_ACCESS, permission,
                 scopeAccessUniqueId);
         Permission perm = this.scopeAccessDao
                 .getPermissionByParentAndPermission(scopeAccessUniqueId, permission);
-        logger.debug("Getting Permission {} on ScopeAccess {}", permission,
+        logger.debug(GETTING_PERMISSION_ON_SCOPE_ACCESS, permission,
                 scopeAccessUniqueId);
         return perm;
     }
@@ -565,17 +570,17 @@ public class DefaultScopeAccessService implements ScopeAccessService {
                                                     Permission permission) {
         if (permission == null) {
             String errorMsg = String
-                    .format("Null scope access object instance.");
+                    .format(NULL_SCOPE_ACCESS_OBJECT_INSTANCE);
             logger.warn(errorMsg);
             throw new IllegalArgumentException(errorMsg);
         }
 
-        logger.debug("Getting Permission {} on ScopeAccess {}", permission,
+        logger.debug(GETTING_PERMISSION_ON_SCOPE_ACCESS, permission,
                 scopeAccessUniqueId);
         List<Permission> perms = this.scopeAccessDao
                 .getPermissionsByParentAndPermission(scopeAccessUniqueId,
                         permission);
-        logger.debug("Getting Permission {} on ScopeAccess {}", permission,
+        logger.debug(GETTING_PERMISSION_ON_SCOPE_ACCESS, permission,
                 scopeAccessUniqueId);
         return perms;
     }
@@ -796,7 +801,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     public GrantedPermission grantPermissionToClient(String parentUniqueId,
                                                      GrantedPermission permission) {
         if (permission == null) {
-            String errMsg = String.format("Null argument passed in.");
+            String errMsg = String.format(NULL_ARGUMENT_PASSED_IN);
             logger.error(errMsg);
             throw new IllegalArgumentException(errMsg);
         }
@@ -854,7 +859,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     public GrantedPermission grantPermissionToUser(User user,
                                                    GrantedPermission permission) {
         if (permission == null || user == null) {
-            String errMsg = String.format("Null argument passed in.");
+            String errMsg = String.format(NULL_ARGUMENT_PASSED_IN);
             logger.error(errMsg);
             throw new IllegalArgumentException(errMsg);
         }
@@ -918,7 +923,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     public void removePermission(Permission permission) {
         if (permission == null) {
             String errorMsg = String
-                    .format("Null scope access object instance.");
+                    .format(NULL_SCOPE_ACCESS_OBJECT_INSTANCE);
             logger.warn(errorMsg);
             throw new IllegalArgumentException(errorMsg);
         }
@@ -931,7 +936,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     public void updatePermission(Permission permission) {
         if (permission == null) {
             String errorMsg = String
-                    .format("Null scope access object instance.");
+                    .format(NULL_SCOPE_ACCESS_OBJECT_INSTANCE);
             logger.warn(errorMsg);
             throw new IllegalArgumentException(errorMsg);
         }
@@ -946,7 +951,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
         if (scopeAccess == null) {
             String errorMsg = String
-                    .format("Null scope access object instance.");
+                    .format(NULL_SCOPE_ACCESS_OBJECT_INSTANCE);
             logger.warn(errorMsg);
             throw new IllegalArgumentException(errorMsg);
         }
