@@ -24,9 +24,9 @@ import javax.xml.bind.JAXBException;
  */
 public interface Cloud20Service {
 
-    ResponseBuilder authenticate(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest) throws JAXBException;
+    ResponseBuilder authenticate(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest);
 
-    ResponseBuilder validateToken(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo) throws JAXBException;
+    ResponseBuilder validateToken(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo);
 
     ResponseBuilder checkToken(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo) ;
 
@@ -58,15 +58,15 @@ public interface Cloud20Service {
 
     ResponseBuilder listRolesForUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantsId, String userId) ;
 
-	ResponseBuilder addUser(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, UserForCreate user) throws JAXBException;
+	ResponseBuilder addUser(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, UserForCreate user);
 
-	ResponseBuilder updateUser(HttpHeaders httpHeaders, String authToken, String userId, UserForCreate user) throws JAXBException;
+	ResponseBuilder updateUser(HttpHeaders httpHeaders, String authToken, String userId, UserForCreate user);
 
 	ResponseBuilder deleteUser(HttpHeaders httpHeaders, String authToken, String userId) ;
 
-    ResponseBuilder deleteUserFromSoftDeleted(HttpHeaders httpHeaders, String authToken, String userId) throws NotFoundException;
+    ResponseBuilder deleteUserFromSoftDeleted(HttpHeaders httpHeaders, String authToken, String userId);
 
-	ResponseBuilder setUserEnabled(HttpHeaders httpHeaders, String authToken, String userId, User user) throws JAXBException;
+	ResponseBuilder setUserEnabled(HttpHeaders httpHeaders, String authToken, String userId, User user);
 
 	ResponseBuilder addUserRole(HttpHeaders httpHeaders, String authToken, String userId, String roleId) ;
 
@@ -74,9 +74,9 @@ public interface Cloud20Service {
 
 	ResponseBuilder deleteUserRole(HttpHeaders httpHeaders, String authToken, String userId, String roleId) ;
 
-	ResponseBuilder addTenant(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Tenant tenant) throws JAXBException;
+	ResponseBuilder addTenant(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Tenant tenant);
 
-	ResponseBuilder updateTenant(HttpHeaders httpHeaders, String authToken, String tenantId, Tenant tenant) throws JAXBException;
+	ResponseBuilder updateTenant(HttpHeaders httpHeaders, String authToken, String tenantId, Tenant tenant);
 
 	ResponseBuilder deleteTenant(HttpHeaders httpHeaders, String authToken, String tenantId) ;
 
@@ -92,7 +92,7 @@ public interface Cloud20Service {
 
 	ResponseBuilder listRoles(HttpHeaders httpHeaders, String authToken, String serviceId, String marker, Integer limit) ;
 
-	ResponseBuilder addRole(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Role role) throws JAXBException;
+	ResponseBuilder addRole(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Role role);
 
 	ResponseBuilder getRole(HttpHeaders httpHeaders, String authToken, String roleId) ;
 
@@ -100,7 +100,7 @@ public interface Cloud20Service {
 
 	ResponseBuilder listServices(HttpHeaders httpHeaders, String authToken, String marker, Integer limit) ;
 
-	ResponseBuilder addService(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Service service) throws JAXBException;
+	ResponseBuilder addService(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Service service);
 
 	ResponseBuilder getService(HttpHeaders httpHeaders, String authToken, String serviceId) ;
 
@@ -112,7 +112,7 @@ public interface Cloud20Service {
         String authToken, String serviceId) ;
 
     ResponseBuilder addEndpointTemplate(HttpHeaders httpHeaders, UriInfo uriInfo,
-        String authToken, EndpointTemplate endpoint) throws JAXBException;
+        String authToken, EndpointTemplate endpoint);
 
     ResponseBuilder getEndpointTemplate(HttpHeaders httpHeaders,
         String authToken, String endpointTemplateId) ;
@@ -124,7 +124,7 @@ public interface Cloud20Service {
         String tenantId) ;
 
     ResponseBuilder addEndpoint(HttpHeaders httpHeaders, String authToken, String tenantId,
-        EndpointTemplate endpoint) throws JAXBException;
+        EndpointTemplate endpoint);
 
     ResponseBuilder getEndpoint(HttpHeaders httpHeaders, String authToken, String tenantId,
         String endpointId) ;
@@ -134,17 +134,17 @@ public interface Cloud20Service {
 
     ResponseBuilder updateUserPasswordCredentials(HttpHeaders httpHeaders,
         String authToken, String userId, String credentialType,
-        PasswordCredentialsRequiredUsername creds) throws JAXBException;
+        PasswordCredentialsRequiredUsername creds);
 
     ResponseBuilder updateUserApiKeyCredentials(HttpHeaders httpHeaders,
         String authToken, String userId, String credentialType,
-        ApiKeyCredentials creds) throws JAXBException;
+        ApiKeyCredentials creds);
 
     ResponseBuilder getSecretQA(HttpHeaders httpHeaders, String authToken,
         String userId) ;
 
     ResponseBuilder updateSecretQA(HttpHeaders httpHeaders, String authToken,
-        String userId, SecretQA secrets) throws JAXBException;
+        String userId, SecretQA secrets);
 
     ResponseBuilder listUserGlobalRolesByServiceId(HttpHeaders httpHeaders,
         String authToken, String userId, String serviceId) ;
@@ -155,9 +155,9 @@ public interface Cloud20Service {
 
     ResponseBuilder getGroupById(HttpHeaders httpHeaders, String authToken, String groupId) ;
 
-    ResponseBuilder addGroup(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Group group) throws JAXBException;
+    ResponseBuilder addGroup(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Group group);
 
-    ResponseBuilder updateGroup(HttpHeaders httpHeaders, String authToken, String groupId, Group group) throws JAXBException;
+    ResponseBuilder updateGroup(HttpHeaders httpHeaders, String authToken, String groupId, Group group);
 
     ResponseBuilder deleteGroup(HttpHeaders httpHeaders, String authToken, String groupId) ;
 
@@ -169,7 +169,7 @@ public interface Cloud20Service {
 
     ResponseBuilder getGroup(HttpHeaders httpHeaders, String authToken, String groupName) ;
 
-    ResponseBuilder impersonate(HttpHeaders httpHeaders, String authToken, ImpersonationRequest impersonationRequest) throws JAXBException;
+    ResponseBuilder impersonate(HttpHeaders httpHeaders, String authToken, ImpersonationRequest impersonationRequest);
 
     ResponseBuilder listDefaultRegionServices(String authToken);
 

@@ -1663,13 +1663,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         if (user == null) {
             logger.info("Impersonation call - calling cloud auth to get user");
             // Get from cloud.
-            try {
-                impersonatingToken = delegateCloud20Service.impersonateUser(impersonatingUsername, config.getString("ga.username"), config.getString("ga.password"));
-            } catch (JAXBException e) {
-                throw new IdmException("error routing call", e);
-            } catch (IOException e) {
-                throw new IdmException("error routing call", e);
-            }
+            impersonatingToken = delegateCloud20Service.impersonateUser(impersonatingUsername, config.getString("ga.username"), config.getString("ga.password"));
         } else if (!user.isEnabled()) {
             throw new ForbiddenException("User cannot be impersonated; User is not enabled");
         } else {
