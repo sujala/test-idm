@@ -283,22 +283,22 @@ public class Cloud11VersionResourceTest {
 
     @Test
     public void getBaseURLId_callsGetCloud11Service() throws Exception {
-        when(delegateCloud11Service.getBaseURLId(null, 0, null, null)).thenReturn(Response.ok());
-        spy.getBaseURLId(null, 0, null, null);
+        when(delegateCloud11Service.getBaseURLById(null, 0, null, null)).thenReturn(Response.ok());
+        spy.getBaseURLById(null, 0, null, null);
         verify(spy).getCloud11Service();
     }
 
     @Test
     public void getBaseURLId_callsGetCloud11Service_callsGetBaseURLId() throws Exception {
-        when(delegateCloud11Service.getBaseURLId(null, 0, null, null)).thenReturn(Response.ok());
-        spy.getBaseURLId(null, 0, null, null);
-        verify(delegateCloud11Service).getBaseURLId(null, 0, null, null);
+        when(delegateCloud11Service.getBaseURLById(null, 0, null, null)).thenReturn(Response.ok());
+        spy.getBaseURLById(null, 0, null, null);
+        verify(delegateCloud11Service).getBaseURLById(null, 0, null, null);
     }
 
     @Test
     public void getBaseURLId_responseOk_returns200() throws Exception {
-        when(delegateCloud11Service.getBaseURLId(null, 0, null, null)).thenReturn(Response.ok());
-        Response result = spy.getBaseURLId(null, 0, null, null);
+        when(delegateCloud11Service.getBaseURLById(null, 0, null, null)).thenReturn(Response.ok());
+        Response result = spy.getBaseURLById(null, 0, null, null);
         assertThat("response code", result.getStatus(), equalTo(200));
     }
 
