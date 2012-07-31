@@ -80,7 +80,7 @@ public class JSONReaderForService implements MessageBodyReader<Service> {
             }
         } catch (ParseException e) {
             logger.info(e.toString());
-            throw new BadRequestException("Invalid JSON");
+            throw new BadRequestException("Invalid JSON", e);
         }
 
         return service;

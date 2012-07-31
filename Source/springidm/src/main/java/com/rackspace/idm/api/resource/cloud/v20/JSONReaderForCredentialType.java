@@ -31,7 +31,7 @@ public class JSONReaderForCredentialType {
                 throw new BadRequestException("Unsupported credential type");
             }
         } catch (ParseException e) {
-            throw new BadRequestException("malformed JSON");
+            throw new BadRequestException("malformed JSON", e);
         }
         return creds;
     }

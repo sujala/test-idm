@@ -124,7 +124,7 @@ public class ApplicationsResource extends ParentResource {
         catch (DuplicateException ex) {
             String errorMsg = ex.getMessage();
             getLogger().warn(errorMsg);
-            throw new ClientConflictException(errorMsg);
+            throw new ClientConflictException(errorMsg, ex);
         }  
     }
     

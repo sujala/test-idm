@@ -65,7 +65,7 @@ public class JSONReaderForDefaultRegionServices implements MessageBodyReader<Def
             }
         } catch (ParseException e) {
             logger.info(e.toString());
-            throw new BadRequestException("Bad JSON request");
+            throw new BadRequestException("Bad JSON request", e);
         }
 
         return defaultRegionServices;

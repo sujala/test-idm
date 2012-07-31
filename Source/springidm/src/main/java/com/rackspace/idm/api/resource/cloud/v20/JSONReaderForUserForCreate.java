@@ -89,7 +89,7 @@ public class JSONReaderForUserForCreate implements MessageBodyReader<UserForCrea
 
             }
         } catch (ParseException e) {
-            throw new BadRequestException("Unable to parse request");
+            throw new BadRequestException("Unable to parse request", e);
         }
 
         return user;

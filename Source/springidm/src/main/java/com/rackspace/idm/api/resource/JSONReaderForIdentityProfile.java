@@ -77,7 +77,7 @@ public class JSONReaderForIdentityProfile implements MessageBodyReader<IdentityP
             }
         } catch (ParseException e) {
             logger.info(e.toString());
-            throw new BadRequestException("Invalid JSON");
+            throw new BadRequestException("Invalid JSON", e);
         }
 
         return ip;

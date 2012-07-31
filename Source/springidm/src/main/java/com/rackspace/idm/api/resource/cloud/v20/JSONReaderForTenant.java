@@ -84,7 +84,7 @@ public class JSONReaderForTenant implements MessageBodyReader<Tenant> {
             }
         } catch (ParseException e) {
             logger.info(e.toString());
-            throw new BadRequestException("Bad JSON request");
+            throw new BadRequestException("Bad JSON request", e);
         }
         
         return tenant;
