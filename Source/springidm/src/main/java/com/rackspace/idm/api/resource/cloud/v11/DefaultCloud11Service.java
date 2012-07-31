@@ -1033,7 +1033,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     @Override
     public ResponseBuilder getExtension(HttpHeaders httpHeaders, String alias) throws IOException {
         try {
-            if (org.tuckey.web.filters.urlrewrite.utils.StringUtils.isBlank(alias)) {
+            if (StringUtils.isBlank(alias)) {
                 throw new BadRequestException("Invalid extension alias '" + alias + "'.");
             }
 
