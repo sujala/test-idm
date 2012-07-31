@@ -505,6 +505,13 @@ public class DefaultUserServiceTest {
     }
 
     @Test
+    public void getUserByAuthToken_scopeAccessIsNull_returnsNull() throws Exception {
+        when(scopeAccessService.getScopeAccessByAccessToken("authToken")).thenReturn(null);
+        User result = defaultUserService.getUserByAuthToken("authToken");
+        assertThat("user", result, equalTo(null));
+    }
+
+    @Test
     public void getUserByMossoId_usersSizeIsZero_returnsNull() throws Exception {
         List<User> userList = new ArrayList<User>();
         Users users = new Users();

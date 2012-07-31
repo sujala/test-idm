@@ -80,10 +80,9 @@ public class LdapApplicationRepositoryIntegrationTest extends InMemoryLdapIntegr
         }
 
         try {
-            repo.getClientByClientId("     ");
-            Assert.fail("Should have thrown an exception!");
+            Assert.assertNull(repo.getClientByClientId("     "));
         } catch (IllegalArgumentException e) {
-            Assert.assertTrue(true);
+            Assert.fail("Should have returned null.");
         }
 
         try {
