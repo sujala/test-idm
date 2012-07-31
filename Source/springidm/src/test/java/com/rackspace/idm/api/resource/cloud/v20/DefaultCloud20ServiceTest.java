@@ -4204,6 +4204,16 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void listEndpointsForToken_scopeAccessIsImpersonated_callsScopeAccessService_getScopeAccessByAccessToken() throws Exception {
+        ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
+        impersonatedScopeAccess.setImpersonatingToken("impersonatingToken");
+        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(impersonatedScopeAccess).when(spy).checkAndGetToken("tokenId");
+        spy.listEndpointsForToken(null, authToken, "tokenId");
+        verify(scopeAccessService).getScopeAccessByAccessToken("impersonatingToken");
+    }
+
+    @Test
     public void listEndpointsForToken_responseOk_returns200() throws Exception {
         List<OpenstackEndpoint> openstackEndpointList = new ArrayList<OpenstackEndpoint>();
         doReturn(new ScopeAccess()).when(spy).checkAndGetToken("tokenId");
@@ -5729,5 +5739,14 @@ public class DefaultCloud20ServiceTest {
         doReturn(new ScopeAccess()).when(spy).getScopeAccessForValidToken(anyString());
         when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
         spy.verifyIdentityAdminLevelAccess("someString");
+    }
+
+    @Test (expected = BadRequestException.class)
+    public void validatePasswordCredentials_passwordIsBlank_throwsBadRequest() throws Exception {
+        PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
+        passwordCredentialsRequiredUsername.setUsername("username");
+        passwordCredentialsRequiredUsername.setPassword(" ");
+        doNothing().when(spy).validateUsername("username");
+        spy.validatePasswordCredentials(passwordCredentialsRequiredUsername);
     }
 }

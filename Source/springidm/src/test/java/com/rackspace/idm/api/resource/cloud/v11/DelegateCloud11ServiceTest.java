@@ -7,7 +7,6 @@ import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.impl.DefaultUserService;
 import com.rackspacecloud.docs.auth.api.v1.*;
-import com.rackspacecloud.docs.auth.api.v1.AuthData;
 import com.rackspacecloud.docs.auth.api.v1.Credentials;
 import com.rackspacecloud.docs.auth.api.v1.User;
 import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
@@ -837,16 +836,16 @@ public class DelegateCloud11ServiceTest {
     public void getBaseURLId_routingFalse_gaSourceOfTruthFalse_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(config.getBoolean(DelegateCloud11Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
-        delegateCloud11Service.getBaseURLId(null, 0, null, null);
-        verify(defaultCloud11Service).getBaseURLId(null, 0, null, null);
+        delegateCloud11Service.getBaseURLById(null, 0, null, null);
+        verify(defaultCloud11Service).getBaseURLById(null, 0, null, null);
     }
 
     @Test
     public void getBaseURLId_routingFalse_gaSourceOfTruthTrue_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(config.getBoolean(DelegateCloud11Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
-        delegateCloud11Service.getBaseURLId(null, 0, null, null);
-        verify(defaultCloud11Service).getBaseURLId(null, 0, null, null);
+        delegateCloud11Service.getBaseURLById(null, 0, null, null);
+        verify(defaultCloud11Service).getBaseURLById(null, 0, null, null);
     }
 
     @Test
@@ -854,7 +853,7 @@ public class DelegateCloud11ServiceTest {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(DelegateCloud11Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
         javax.ws.rs.core.HttpHeaders mockHeaders = mock(javax.ws.rs.core.HttpHeaders.class);
-        delegateCloud11Service.getBaseURLId(null, 0, null, mockHeaders);
+        delegateCloud11Service.getBaseURLById(null, 0, null, mockHeaders);
         verify(cloudClient).get(url + "baseURLs/" + 0, mockHeaders);
     }
 
@@ -862,8 +861,8 @@ public class DelegateCloud11ServiceTest {
     public void getBaseURLId_routingTrue_gaSourceOfTruthTrue_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(DelegateCloud11Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
-        delegateCloud11Service.getBaseURLId(null, 0, null, null);
-        verify(defaultCloud11Service).getBaseURLId(null, 0, null, null);
+        delegateCloud11Service.getBaseURLById(null, 0, null, null);
+        verify(defaultCloud11Service).getBaseURLById(null, 0, null, null);
     }
 
     @Test

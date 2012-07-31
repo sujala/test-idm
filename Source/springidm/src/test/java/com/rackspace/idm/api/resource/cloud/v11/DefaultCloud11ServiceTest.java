@@ -23,6 +23,7 @@ import com.sun.jersey.core.util.Base64;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Matchers;
@@ -1596,6 +1597,35 @@ public class DefaultCloud11ServiceTest {
         defaultCloud11Service.authenticateCloudAdminUserForGetRequests(request);
     }
 
+    @Test(expected = NotAuthorizedException.class)
+    public void authenticateCloudAdminUserForGetRequests_withInvalidAuthHeaders() throws Exception {
+        when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn("Basic " + Base64.encode("auth"));
+        defaultCloud11Service.authenticateCloudAdminUserForGetRequests(request);
+    }
+
+    @Test
+    public void authenticateCloudAdminUserForGetRequests_withServiceAndIdentityAdmin_withoutExceptions() throws Exception {
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
+        defaultCloud11Service.authenticateCloudAdminUserForGetRequests(request);
+    }
+
+    @Test
+    public void authenticateCloudAdminUserForGetRequests_withService() throws Exception {
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
+        defaultCloud11Service.authenticateCloudAdminUserForGetRequests(request);
+        assertTrue("no Exception thrown", true);
+    }
+
+    @Test
+    public void authenticateCloudAdminUserForGetRequests_withIdentityAdmin() throws Exception {
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
+        defaultCloud11Service.authenticateCloudAdminUserForGetRequests(request);
+        assertTrue("no Exception thrown", true);
+    }
+
     @Test
     public void getBaseUrlRef_isAdminCall_callAuthenticateCloudAdminUserForGetRequests() throws Exception {
         spy.getBaseURLRef(request, null, null, null);
@@ -2285,14 +2315,14 @@ public class DefaultCloud11ServiceTest {
 
     @Test
     public void getBaseURLId_isAdminCall_callAuthenticateCloudAdminUserForGetRequests() throws Exception {
-        spy.getBaseURLId(request, 0, null, null);
+        spy.getBaseURLById(request, 0, null, null);
         verify(spy).authenticateCloudAdminUserForGetRequests(request);
     }
 
     @Test
     public void getBaseURLId_isAdminCall_callEndpointService_getBaseUrlById() throws Exception {
         doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
-        spy.getBaseURLId(request, 12345, null, null);
+        spy.getBaseURLById(request, 12345, null, null);
         verify(endpointService).getBaseUrlById(12345);
     }
 
@@ -2300,7 +2330,7 @@ public class DefaultCloud11ServiceTest {
     public void getBaseURLId_withNullBaseURL_returnsNotFoundResponse() throws Exception {
         doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
         when(endpointService.getBaseUrlById(12345)).thenReturn(null);
-        Response.ResponseBuilder responseBuilder = spy.getBaseURLId(request, 12345, null, null);
+        Response.ResponseBuilder responseBuilder = spy.getBaseURLById(request, 12345, null, null);
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(404));
     }
 
@@ -2310,7 +2340,7 @@ public class DefaultCloud11ServiceTest {
         CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
         cloudBaseUrl.setServiceName("serviceName2");
         when(endpointService.getBaseUrlById(12345)).thenReturn(cloudBaseUrl);
-        Response.ResponseBuilder responseBuilder = spy.getBaseURLId(request, 12345, "serviceName", null);
+        Response.ResponseBuilder responseBuilder = spy.getBaseURLById(request, 12345, "serviceName", null);
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(404));
     }
 
@@ -2320,7 +2350,7 @@ public class DefaultCloud11ServiceTest {
         CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
         cloudBaseUrl.setServiceName("serviceName");
         when(endpointService.getBaseUrlById(12345)).thenReturn(cloudBaseUrl);
-        spy.getBaseURLId(request, 12345, "serviceName", null);
+        spy.getBaseURLById(request, 12345, "serviceName", null);
         verify(endpointConverterCloudV11).toBaseUrl(any(CloudBaseUrl.class));
     }
 
@@ -2330,7 +2360,7 @@ public class DefaultCloud11ServiceTest {
         CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
         cloudBaseUrl.setServiceName("serviceName");
         when(endpointService.getBaseUrlById(12345)).thenReturn(cloudBaseUrl);
-        Response.ResponseBuilder responseBuilder = spy.getBaseURLId(request, 12345, "serviceName", null);
+        Response.ResponseBuilder responseBuilder = spy.getBaseURLById(request, 12345, "serviceName", null);
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(200));
     }
 
@@ -2645,9 +2675,24 @@ public class DefaultCloud11ServiceTest {
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(404));
     }
 
+    @Ignore //we have no extensions at the moment.
+    @Test
+    public void getExtension_withExtensions_addsAliasToExtensionMap() throws IOException{
+        defaultCloud11Service.extensions(httpHeaders);
+        Response.ResponseBuilder responseBuilder = defaultCloud11Service.getExtension(httpHeaders, "123");
+        assertThat("response status", responseBuilder.build().getStatus(), equalTo(404));
+
+    }
+
     @Test(expected = CloudAdminAuthorizationException.class)
     public void authenticateCloudAdminUser_withInvalidAuthHeaders() throws Exception {
         when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn("Basic " + Base64.encode("auth"));
+        defaultCloud11Service.authenticateCloudAdminUser(request);
+    }
+
+    @Test(expected = CloudAdminAuthorizationException.class)
+    public void authenticateCloudAdminUser_nullStringMap() throws Exception {
+        when(authHeaderHelper.parseBasicParams(any(String.class))).thenReturn(null);
         defaultCloud11Service.authenticateCloudAdminUser(request);
     }
 
