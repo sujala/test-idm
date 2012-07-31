@@ -328,7 +328,7 @@ public class DelegateCloud11Service implements Cloud11Service {
 
     @Override
     public Response.ResponseBuilder getServiceCatalog(HttpServletRequest request, String userId, HttpHeaders httpHeaders) throws IOException {
-        if(isCloudAuthRoutingEnabled() && !isGASourceOfTruth()){
+        if(isCloudAuthRoutingEnabled() && !userExistsInGA(userId)){
             String path = "users/" + userId + "/serviceCatalog";
             return cloudClient.get(getCloudAuthV11Url().concat(path), httpHeaders);
         }
