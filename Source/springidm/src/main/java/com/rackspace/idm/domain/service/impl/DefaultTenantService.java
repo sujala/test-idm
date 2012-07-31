@@ -188,8 +188,9 @@ public class DefaultTenantService implements TenantService {
             if (role.getTenantIds() != null && role.getTenantIds().length > 0) {
                 for (String tenantId : role.getTenantIds()) {
                     for(String existingId : existingRole.getTenantIds()){
-                        if(existingId.equals(tenantId))  //If role is existing then throw error
+                        if(existingId.equals(tenantId)) { //If role is existing then throw error
                             throw new  ClientConflictException("Tenant Role already exists");
+                        }
                     }
                     existingRole.addTenantId(tenantId);
                 }

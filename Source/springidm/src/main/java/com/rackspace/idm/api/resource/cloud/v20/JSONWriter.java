@@ -280,8 +280,9 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             AuthenticateResponse authenticateResponse = (AuthenticateResponse) object;
             access.put(JSONConstants.TOKEN, getToken(authenticateResponse.getToken()));
 
-            if (authenticateResponse.getServiceCatalog() != null)
+            if (authenticateResponse.getServiceCatalog() != null) {
                 access.put(JSONConstants.SERVICECATALOG, getServiceCatalog(authenticateResponse.getServiceCatalog()));
+            }
 
             if (authenticateResponse.getUser() != null) {
                 access.put(JSONConstants.USER, getTokenUser(authenticateResponse.getUser()));
