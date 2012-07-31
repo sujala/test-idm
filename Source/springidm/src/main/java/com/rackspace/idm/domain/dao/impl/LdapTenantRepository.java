@@ -40,7 +40,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
             if (e.getResultCode() == ResultCode.ENTRY_ALREADY_EXISTS) {
                 String errMsg = String.format("Tenant %s already exists", tenant.getTenantId());
                 getLogger().warn(errMsg);
-                throw new DuplicateException(errMsg);
+                throw new DuplicateException(errMsg, e);
             }
             getLogger().error("Error adding tenant object", e);
             audit.fail(e.getMessage());

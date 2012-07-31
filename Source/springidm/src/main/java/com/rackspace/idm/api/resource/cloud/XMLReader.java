@@ -109,7 +109,7 @@ public class XMLReader implements MessageBodyReader<Object> {
 
             return unMarshal.getValue();
         } catch (JAXBException e) {
-            throw new BadRequestException(e.toString());
+            throw new BadRequestException(e.toString(), e);
         }
 
 

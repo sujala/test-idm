@@ -73,7 +73,7 @@ public class JSONReaderForUserWithOnlyEnabled implements MessageBodyReader<UserW
             }
         } catch (ParseException e) {
             logger.info(e.toString());
-            throw new BadRequestException("Invalid JSON");
+            throw new BadRequestException("Invalid JSON", e);
         }
 
         return user;

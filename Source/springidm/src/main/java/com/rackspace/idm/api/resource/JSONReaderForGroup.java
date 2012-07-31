@@ -70,7 +70,7 @@ public class JSONReaderForGroup implements MessageBodyReader<Group> {
                 }
             }
         } catch (ParseException e) {
-            throw new BadRequestException("Unable to parse data in request body.");
+            throw new BadRequestException("Unable to parse data in request body.", e);
         }
 
         return ip;
