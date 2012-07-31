@@ -40,88 +40,88 @@ public class MigrationResource {
 
     @GET
     @Path("cloud/users")
-    public Response getMigratedUsers() throws Exception {
+    public Response getMigratedUsers() {
         return cloudMigrationService.getMigratedUserList().build();
     }
 
     @GET
     @Path("cloud/users/pending")
-    public Response getInMigrationUsers() throws Exception {
+    public Response getInMigrationUsers() {
         return cloudMigrationService.getInMigrationUserList().build();
     }
 
     @POST
     @Path("cloud/users/{username}")
     public Response migrateCloudUserByUsername(@PathParam("username") String username,
-                                               @DefaultValue("false") @QueryParam("subusers") boolean processSubUsers) throws Exception {
+                                               @DefaultValue("false") @QueryParam("subusers") boolean processSubUsers) {
     	MigrateUserResponseType migrateUserResponseType = cloudMigrationService.migrateUserByUsername(username, processSubUsers);
     	return Response.status(Response.Status.OK).entity(migrateUserResponseType).build();
     }
 
     @PUT
     @Path("cloud/users/{username}/enable")
-    public Response enableMigratedUserByUsername(@PathParam("username") String username) throws Exception {
+    public Response enableMigratedUserByUsername(@PathParam("username") String username) {
         cloudMigrationService.setMigratedUserEnabledStatus(username, false);
         return Response.status(Response.Status.ACCEPTED).build();
     }
 
     @PUT
     @Path("cloud/users/{username}/disable")
-    public Response disableMigratedUserByUsername(@PathParam("username") String username) throws Exception {
+    public Response disableMigratedUserByUsername(@PathParam("username") String username) {
         cloudMigrationService.setMigratedUserEnabledStatus(username, true);
         return Response.status(Response.Status.ACCEPTED).build();
     }
 
     @POST
     @Path("cloud/users/{username}/unmigrate")
-    public Response unmigrateCloudUserByUsername(@PathParam("username") String username) throws Exception {
+    public Response unmigrateCloudUserByUsername(@PathParam("username") String username) {
         cloudMigrationService.unmigrateUserByUsername(username);
         return Response.status(Response.Status.ACCEPTED).build();
     }
 
     @GET
     @Path("cloud/users/{username}")
-    public Response getMigratedCloudUserByUsername(@PathParam("username") String username) throws Exception {
+    public Response getMigratedCloudUserByUsername(@PathParam("username") String username) {
         return cloudMigrationService.getMigratedUser(username).build();
     }
 
     @GET
     @Path("cloud/users/{username}/roles")
-    public Response getMigratedCloudUserRolesByUsername(@PathParam("username") String username) throws Exception {
+    public Response getMigratedCloudUserRolesByUsername(@PathParam("username") String username) {
         return cloudMigrationService.getMigratedUserRoles(username).build();
     }
 
     @GET
     @Path("cloud/users/{username}/endpoints")
-    public Response getMigratedCloudUserEndpointsByUsername(@PathParam("username") String username) throws Exception {
+    public Response getMigratedCloudUserEndpointsByUsername(@PathParam("username") String username) {
         return cloudMigrationService.getMigratedUserEndpoints(username).build();
     }
 
 
     @POST
     @Path("cloud/baseurls")
-    public Response migrateBaseURLs() throws Exception {
+    public Response migrateBaseURLs() {
         cloudMigrationService.migrateBaseURLs();
         return Response.status(Response.Status.ACCEPTED).build();
     }
 
     @POST
     @Path("cloud/roles")
-    public Response migrateRoles() throws Exception {
+    public Response migrateRoles() {
         cloudMigrationService.migrateRoles();
         return Response.status(Response.Status.ACCEPTED).build();
     }
 
     @POST
     @Path("cloud/groups")
-    public Response migrateGroups() throws Exception {
+    public Response migrateGroups() {
         cloudMigrationService.migrateGroups();
         return Response.status(Response.Status.ACCEPTED).build();
     }
 
     @GET
     @Path("cloud/groups")
-    public Response getGroups() throws Exception {
+    public Response getGroups() {
         return cloudMigrationService.getGroups().build();
     }
 

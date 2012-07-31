@@ -78,8 +78,7 @@ public class Cloud20VersionResource {
     */
     @POST
     @Path("tokens")
-    public Response authenticate(@Context HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest)
-            throws IOException, JAXBException {
+    public Response authenticate(@Context HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest) {
         return getCloud20Service().authenticate(httpHeaders, authenticationRequest).build();
     }
 
@@ -89,7 +88,7 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("tokenId") String tokenId,
-            @QueryParam("belongsTo") String belongsTo) throws Exception, JAXBException {
+            @QueryParam("belongsTo") String belongsTo) {
         return getCloud20Service().validateToken(httpHeaders, authToken, tokenId, belongsTo).build();
     }
 
@@ -99,7 +98,7 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("tokenId") String tokenId,
-            @QueryParam("belongsTo") String belongsTo) throws Exception, JAXBException {
+            @QueryParam("belongsTo") String belongsTo) {
         return getCloud20Service().validateToken(httpHeaders, authToken, tokenId, belongsTo).build();
     }
 
@@ -108,7 +107,7 @@ public class Cloud20VersionResource {
     public Response listEndpointsForToken(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("tokenId") String tokenId) throws IOException {
+            @PathParam("tokenId") String tokenId) {
         return getCloud20Service().listEndpointsForToken(httpHeaders, authToken, tokenId).build();
     }
 
@@ -131,19 +130,19 @@ public class Cloud20VersionResource {
     public Response impersonate(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            ImpersonationRequest impersonationRequest) throws IOException, JAXBException {
+            ImpersonationRequest impersonationRequest) {
         return defaultCloud20Service.impersonate(httpHeaders, authToken, impersonationRequest).build();
     }
     
     @GET
     @Path("extensions")
-    public Response listExtensions(@Context HttpHeaders httpHeaders) throws IOException {
+    public Response listExtensions(@Context HttpHeaders httpHeaders) {
         return getCloud20Service().listExtensions(httpHeaders).build();
     }
 
     @GET
     @Path("extensions/{alias}")
-    public Response getExtension(@Context HttpHeaders httpHeaders, @PathParam("alias") String alias) throws IOException {
+    public Response getExtension(@Context HttpHeaders httpHeaders, @PathParam("alias") String alias) {
         return getCloud20Service().getExtension(httpHeaders, alias).build();
     }
 
@@ -154,7 +153,7 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @QueryParam("name") String name,
             @QueryParam("marker") int marker,
-            @QueryParam("limit") int limit) throws IOException {
+            @QueryParam("limit") int limit) {
         if (StringUtils.isBlank(name)) {
             return getCloud20Service().listUsers(httpHeaders, authToken, marker, limit).build();
         } else {
@@ -167,7 +166,7 @@ public class Cloud20VersionResource {
     public Response getUserById(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("userId") String userId) throws IOException {
+            @PathParam("userId") String userId) {
         return getCloud20Service().getUserById(httpHeaders, authToken, userId).build();
     }
 
@@ -177,7 +176,7 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("userId") String userId,
-            @QueryParam("serviceId") String serviceId) throws IOException {
+            @QueryParam("serviceId") String serviceId) {
         if (!StringUtils.isBlank(serviceId)) {
             return getCloud20Service().listUserGlobalRolesByServiceId(httpHeaders, authToken, userId, serviceId).build();
         } else {
@@ -192,7 +191,7 @@ public class Cloud20VersionResource {
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @QueryParam("name") String name,
         @QueryParam("marker") String marker,
-        @QueryParam("limit") Integer limit) throws IOException {
+        @QueryParam("limit") Integer limit) {
         // Note: getTenantByName only available to admin
         if (!StringUtils.isBlank(name)) {
             return getCloud20Service().getTenantByName(httpHeaders, authToken, name).build();
@@ -206,7 +205,7 @@ public class Cloud20VersionResource {
     public Response getTenantById(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("tenantId") String tenantsId) throws IOException {
+            @PathParam("tenantId") String tenantsId) {
         return getCloud20Service().getTenantById(httpHeaders, authToken, tenantsId).build();
     }
 
@@ -216,7 +215,7 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("tenantId") String tenantId,
-            @PathParam("userId") String userId) throws IOException {
+            @PathParam("userId") String userId) {
         return getCloud20Service().listRolesForUserOnTenant(httpHeaders, authToken, tenantId, userId).build();
     }
 
@@ -225,7 +224,7 @@ public class Cloud20VersionResource {
     public Response addUser(
             @Context HttpHeaders httpHeaders,
             @Context UriInfo uriInfo,
-            @HeaderParam(X_AUTH_TOKEN) String authToken, UserForCreate user) throws IOException, JAXBException {
+            @HeaderParam(X_AUTH_TOKEN) String authToken, UserForCreate user) {
 
         return getCloud20Service().addUser(httpHeaders, uriInfo, authToken, user).build();
     }
@@ -235,7 +234,7 @@ public class Cloud20VersionResource {
     public Response updateUser(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("userId") String userId, UserForCreate user) throws IOException, JAXBException {
+            @PathParam("userId") String userId, UserForCreate user) {
         return getCloud20Service().updateUser(httpHeaders, authToken, userId, user).build();
     }
 
@@ -244,7 +243,7 @@ public class Cloud20VersionResource {
     public Response deleteUser(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("userId") String userId) throws IOException {
+            @PathParam("userId") String userId) {
         return getCloud20Service().deleteUser(httpHeaders, authToken, userId).build();
     }
 
@@ -253,7 +252,7 @@ public class Cloud20VersionResource {
     public Response setUserEnabled(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("userId") String userId, User user) throws IOException, JAXBException {
+            @PathParam("userId") String userId, User user) {
         return getCloud20Service().setUserEnabled(httpHeaders, authToken, userId, user).build();
     }
 
@@ -262,7 +261,7 @@ public class Cloud20VersionResource {
     public Response listUserGroups(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("userId") String userId) throws IOException {
+            @PathParam("userId") String userId) {
         return getCloud20Service().listUserGroups(httpHeaders, authToken, userId).build();
     }
 
@@ -272,7 +271,7 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("userId") String userId,
-            @PathParam("roleId") String roleId) throws IOException {
+            @PathParam("roleId") String roleId) {
         return getCloud20Service().addUserRole(httpHeaders, authToken, userId, roleId).build();
     }
 
@@ -282,7 +281,7 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("userId") String userId,
-            @PathParam("roleId") String roleId) throws IOException {
+            @PathParam("roleId") String roleId) {
         return getCloud20Service().getUserRole(httpHeaders, authToken, userId, roleId).build();
     }
 
@@ -292,7 +291,7 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("userId") String userId,
-            @PathParam("roleId") String roleId) throws IOException {
+            @PathParam("roleId") String roleId) {
         return getCloud20Service().deleteUserRole(httpHeaders, authToken, userId, roleId).build();
     }
 
@@ -301,7 +300,7 @@ public class Cloud20VersionResource {
     public Response addUserCredential(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("userId") String userId, String body) throws IOException {
+            @PathParam("userId") String userId, String body) {
         return getCloud20Service().addUserCredential(httpHeaders, authToken, userId, body).build();
     }
 
@@ -312,7 +311,7 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("userId") String userId,
             @QueryParam("marker") String marker,
-            @QueryParam("limit") Integer limit) throws Exception {
+            @QueryParam("limit") Integer limit) {
         return getCloud20Service().listCredentials(httpHeaders, authToken, userId, marker, limit).build();
     }
 
@@ -322,7 +321,7 @@ public class Cloud20VersionResource {
         @Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("userId") String userId,
-        PasswordCredentialsRequiredUsername creds) throws IOException, JAXBException {
+        PasswordCredentialsRequiredUsername creds) {
         return getCloud20Service().updateUserPasswordCredentials(httpHeaders, authToken, userId, JSONConstants.PASSWORD_CREDENTIALS, creds).build();
     }
 
@@ -331,7 +330,7 @@ public class Cloud20VersionResource {
     public Response updateUserApiKeyCredentials(
         @Context HttpHeaders httpHeaders,
         @HeaderParam(X_AUTH_TOKEN) String authToken,
-        @PathParam("userId") String userId, ApiKeyCredentials creds) throws IOException, JAXBException {
+        @PathParam("userId") String userId, ApiKeyCredentials creds) {
         return getCloud20Service().updateUserApiKeyCredentials(httpHeaders, authToken, userId, JSONConstants.APIKEY_CREDENTIALS, creds).build();
     }
 
@@ -340,7 +339,7 @@ public class Cloud20VersionResource {
     public Response getUserCredentialKey(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("userId") String userId) throws IOException {
+            @PathParam("userId") String userId) {
         return getCloud20Service().getUserCredential(httpHeaders, authToken, userId, JSONConstants.APIKEY_CREDENTIALS).build();
     }
 
@@ -349,7 +348,7 @@ public class Cloud20VersionResource {
     public Response getUserCredential(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("userId") String userId) throws IOException {
+            @PathParam("userId") String userId) {
         return getCloud20Service().getUserCredential(httpHeaders, authToken, userId, JSONConstants.PASSWORD_CREDENTIALS).build();
     }
 
@@ -358,7 +357,7 @@ public class Cloud20VersionResource {
     public Response deleteUserKeyCredential(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("userId") String userId) throws IOException {
+            @PathParam("userId") String userId) {
         return getCloud20Service().deleteUserCredential(httpHeaders, authToken, userId, JSONConstants.APIKEY_CREDENTIALS).build();
     }
 
@@ -367,7 +366,7 @@ public class Cloud20VersionResource {
     public Response deleteUserCredential(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("userId") String userId) throws IOException {
+            @PathParam("userId") String userId) {
         return getCloud20Service().deleteUserCredential(httpHeaders, authToken, userId, JSONConstants.PASSWORD_CREDENTIALS).build();
     }
 
@@ -376,7 +375,7 @@ public class Cloud20VersionResource {
     public Response addTenant(
             @Context HttpHeaders httpHeaders,
             @Context UriInfo uriInfo,
-            @HeaderParam(X_AUTH_TOKEN) String authToken, Tenant tenant) throws IOException, JAXBException {
+            @HeaderParam(X_AUTH_TOKEN) String authToken, Tenant tenant) {
         return getCloud20Service().addTenant(httpHeaders, uriInfo, authToken, tenant).build();
     }
 
@@ -385,7 +384,7 @@ public class Cloud20VersionResource {
     public Response updateTenant(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("tenantId") String tenantId, Tenant tenant) throws IOException, JAXBException {
+            @PathParam("tenantId") String tenantId, Tenant tenant) {
         return getCloud20Service().updateTenant(httpHeaders, authToken, tenantId, tenant).build();
     }
 
@@ -394,7 +393,7 @@ public class Cloud20VersionResource {
     public Response deleteTenant(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("tenantId") String tenantId) throws IOException {
+            @PathParam("tenantId") String tenantId) {
         return getCloud20Service().deleteTenant(httpHeaders, authToken, tenantId).build();
     }
 
@@ -405,7 +404,7 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("tenantId") String tenantId,
             @QueryParam("marker") String marker,
-            @QueryParam("limit") Integer limit) throws IOException {
+            @QueryParam("limit") Integer limit) {
         return getCloud20Service().listRolesForTenant(httpHeaders, authToken, tenantId, marker, limit).build();
     }
 
@@ -417,7 +416,7 @@ public class Cloud20VersionResource {
         @PathParam("tenantId") String tenantId,
         @QueryParam("roleId") String roleId,
         @QueryParam("marker") String marker,
-        @QueryParam("limit") Integer limit) throws IOException {
+        @QueryParam("limit") Integer limit) {
         if (roleId != null) {
             return getCloud20Service().listUsersWithRoleForTenant(httpHeaders, authToken, tenantId, roleId, marker, limit).build();
         } else {
@@ -432,7 +431,7 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("tenantId") String tenantId,
             @PathParam("userId") String userId,
-            @PathParam("roleId") String roleId) throws IOException {
+            @PathParam("roleId") String roleId) {
         return getCloud20Service().addRolesToUserOnTenant(httpHeaders, authToken, tenantId, userId, roleId).build();
     }
 
@@ -443,7 +442,7 @@ public class Cloud20VersionResource {
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("tenantId") String tenantId,
         @PathParam("userId") String userId,
-        @PathParam("roleId") String roleId) throws IOException {
+        @PathParam("roleId") String roleId) {
         return getCloud20Service().deleteRoleFromUserOnTenant(httpHeaders, authToken, tenantId, userId, roleId).build();
     }
 
@@ -454,7 +453,7 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @QueryParam("serviceId") String serviceId,
             @QueryParam("marker") String marker,
-            @QueryParam("limit") Integer limit) throws IOException {
+            @QueryParam("limit") Integer limit) {
         return getCloud20Service().listRoles(httpHeaders, authToken, serviceId, marker, limit).build();
     }
 
@@ -464,7 +463,7 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @Context UriInfo uriInfo,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            Role role) throws IOException, JAXBException {
+            Role role) {
         return getCloud20Service().addRole(httpHeaders, uriInfo, authToken, role).build();
     }
 
@@ -473,7 +472,7 @@ public class Cloud20VersionResource {
     public Response getRole(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("roleId") String roleId) throws IOException {
+            @PathParam("roleId") String roleId) {
         return getCloud20Service().getRole(httpHeaders, authToken, roleId).build();
     }
 
@@ -482,7 +481,7 @@ public class Cloud20VersionResource {
     public Response deleteRole(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("roleId") String roleId) throws IOException {
+            @PathParam("roleId") String roleId) {
         return getCloud20Service().deleteRole(httpHeaders, authToken, roleId).build();
     }
 
@@ -493,7 +492,7 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @QueryParam("marker") String marker,
             @QueryParam("limit") Integer limit)
-        throws IOException {
+        {
         return getCloud20Service().listServices(httpHeaders, authToken, marker, limit).build();
     }
 
@@ -502,7 +501,7 @@ public class Cloud20VersionResource {
     public Response addService(
             @Context HttpHeaders httpHeaders,
             @Context UriInfo uriInfo,
-            @HeaderParam(X_AUTH_TOKEN) String authToken, Service service) throws IOException, JAXBException {
+            @HeaderParam(X_AUTH_TOKEN) String authToken, Service service) {
         return getCloud20Service().addService(httpHeaders, uriInfo, authToken, service).build();
     }
 
@@ -511,7 +510,7 @@ public class Cloud20VersionResource {
     public Response getService(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("serviceId") String serviceId) throws IOException {
+            @PathParam("serviceId") String serviceId) {
         return getCloud20Service().getService(httpHeaders, authToken, serviceId).build();
     }
 
@@ -520,7 +519,7 @@ public class Cloud20VersionResource {
     public Response deleteService(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("serviceId") String serviceId) throws IOException {
+            @PathParam("serviceId") String serviceId) {
         return getCloud20Service().deleteService(httpHeaders, authToken, serviceId).build();
     }
 
@@ -529,7 +528,7 @@ public class Cloud20VersionResource {
     public Response listEndpointTemplates(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @QueryParam("serviceId") String serviceId) throws IOException {
+            @QueryParam("serviceId") String serviceId) {
         return getCloud20Service().listEndpointTemplates(httpHeaders, authToken, serviceId).build();
     }
 
@@ -538,7 +537,7 @@ public class Cloud20VersionResource {
     public Response addEndpointTemplate(
             @Context HttpHeaders httpHeaders,
             @Context UriInfo uriInfo,
-            @HeaderParam(X_AUTH_TOKEN) String authToken, EndpointTemplate endpoint) throws IOException, JAXBException {
+            @HeaderParam(X_AUTH_TOKEN) String authToken, EndpointTemplate endpoint) {
         return getCloud20Service().addEndpointTemplate(httpHeaders, uriInfo, authToken, endpoint).build();
     }
 
@@ -547,7 +546,7 @@ public class Cloud20VersionResource {
     public Response getEndpointTemplate(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("endpointTemplateId") String endpointTemplateId) throws IOException {
+            @PathParam("endpointTemplateId") String endpointTemplateId) {
         return getCloud20Service().getEndpointTemplate(httpHeaders, authToken, endpointTemplateId).build();
     }
 
@@ -556,7 +555,7 @@ public class Cloud20VersionResource {
     public Response deleteEndpointTemplate(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("endpointTemplateId") String enpdointTemplateId) throws IOException {
+            @PathParam("endpointTemplateId") String enpdointTemplateId) {
         return getCloud20Service().deleteEndpointTemplate(httpHeaders, authToken, enpdointTemplateId).build();
     }
 
@@ -565,7 +564,7 @@ public class Cloud20VersionResource {
     public Response listEndpoints(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("tenantId") String tenantId) throws IOException {
+            @PathParam("tenantId") String tenantId) {
         return getCloud20Service().listEndpoints(httpHeaders, authToken, tenantId).build();
     }
 
@@ -574,7 +573,7 @@ public class Cloud20VersionResource {
     public Response addEndpoint(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("tenantId") String tenantId, EndpointTemplate endpoint) throws IOException, JAXBException {
+            @PathParam("tenantId") String tenantId, EndpointTemplate endpoint) {
         return getCloud20Service().addEndpoint(httpHeaders, authToken, tenantId, endpoint).build();
     }
 
@@ -584,7 +583,7 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("tenantId") String tenantId,
-            @PathParam("endpointId") String endpointId) throws IOException {
+            @PathParam("endpointId") String endpointId) {
         return getCloud20Service().getEndpoint(httpHeaders, authToken, tenantId, endpointId).build();
     }
 
@@ -594,7 +593,7 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("tenantId") String tenantId,
-            @PathParam("endpointId") String endpointId) throws IOException {
+            @PathParam("endpointId") String endpointId) {
         return getCloud20Service().deleteEndpoint(httpHeaders, authToken, tenantId, endpointId).build();
     }
 
@@ -603,7 +602,7 @@ public class Cloud20VersionResource {
     public Response getSecretQA(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("userId") String userId) throws IOException {
+            @PathParam("userId") String userId) {
         return getCloud20Service().getSecretQA(httpHeaders, authToken, userId).build();
     }
 
@@ -612,7 +611,7 @@ public class Cloud20VersionResource {
     public Response updateSecretQA(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("userId") String userId, SecretQA secrets) throws IOException, JAXBException {
+            @PathParam("userId") String userId, SecretQA secrets) {
         return getCloud20Service().updateSecretQA(httpHeaders, authToken, userId, secrets).build();
     }
 
@@ -626,7 +625,7 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @Context UriInfo uriInfo,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            Group group) throws IOException, JAXBException {
+            Group group) {
         return getCloud20Service().addGroup(httpHeaders, uriInfo, authToken, group).build();
     }
 
@@ -637,7 +636,7 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @QueryParam("name") String groupName,
             @QueryParam("marker") String marker,
-            @QueryParam("limit") Integer limit) throws IOException {
+            @QueryParam("limit") Integer limit) {
         if(groupName != null){
             return getCloud20Service().getGroup(httpHeaders, authToken, groupName).build();
         }
@@ -649,7 +648,7 @@ public class Cloud20VersionResource {
     public Response getGroupById(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("groupId") String groupId) throws IOException {
+            @PathParam("groupId") String groupId) {
         return getCloud20Service().getGroupById(httpHeaders, authToken, groupId).build();
     }
 
@@ -659,7 +658,7 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("groupId") String groupId,
-            Group group) throws IOException, JAXBException {
+            Group group) {
         return getCloud20Service().updateGroup(httpHeaders, authToken, groupId, group).build();
     }
 
@@ -668,7 +667,7 @@ public class Cloud20VersionResource {
     public Response deleteGroupById(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("groupId") String groupId) throws IOException {
+            @PathParam("groupId") String groupId) {
         return getCloud20Service().deleteGroup(httpHeaders, authToken, groupId).build();
     }
 
@@ -679,7 +678,7 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("groupId") String groupId,
             @QueryParam("marker") String marker,
-            @QueryParam("limit") Integer limit) throws IOException {
+            @QueryParam("limit") Integer limit) {
         return getCloud20Service().getUsersForGroup(httpHeaders, authToken, groupId, marker, limit).build();
     }
 
@@ -689,7 +688,7 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("groupId") String groupId,
-            @PathParam("userId") String userId) throws IOException {
+            @PathParam("userId") String userId) {
         return getCloud20Service().addUserToGroup(httpHeaders, authToken, groupId, userId).build();
     }
 
@@ -699,7 +698,7 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("groupId") String groupId,
-            @PathParam("userId") String userId) throws IOException {
+            @PathParam("userId") String userId) {
         return getCloud20Service().removeUserFromGroup(httpHeaders, authToken, groupId, userId).build();
     }
 
@@ -709,7 +708,7 @@ public class Cloud20VersionResource {
     public Response deleteSoftDeletedUser(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("userId") String userId) throws IOException, NotFoundException {
+            @PathParam("userId") String userId) {
         if(config.getBoolean("allowSoftDeleteDeletion")){
             return getCloud20Service().deleteUserFromSoftDeleted(httpHeaders, authToken, userId).build();
         }

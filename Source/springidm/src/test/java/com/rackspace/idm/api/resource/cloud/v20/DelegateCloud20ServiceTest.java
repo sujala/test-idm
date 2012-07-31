@@ -335,8 +335,8 @@ public class DelegateCloud20ServiceTest {
         assertThat(delegateCloud20Service.unmarshallResponse(body, ApiKeyCredentials.class), not(nullValue()));
     }
 
-    @Test (expected = JAXBException.class)
-    public void marshallObjectToString_nullValues_throwsJAXBException() throws Exception {
+    @Test (expected = IdmException.class)
+    public void marshallObjectToString_nullValues_throwsIdmException() throws Exception {
         delegateCloud20Service.marshallObjectToString(null);
     }
 
@@ -1808,8 +1808,8 @@ public class DelegateCloud20ServiceTest {
         verify(objectFactoryRAXKSKEY).createApiKeyCredentials(any(ApiKeyCredentials.class));
     }
 
-    @Test (expected = IllegalStateException.class)
-    public void convertCredentialToXML_invalidCredentials_throwsIllegalStateException() throws Exception {
+    @Test (expected = IdmException.class)
+    public void convertCredentialToXML_invalidCredentials_throwsIdmException() throws Exception {
         delegateCloud20Service.setObjectFactory(objectFactory);
         String body = "{\n" +
                 "    \"passwordCredentials\": {\n" +
@@ -2983,7 +2983,7 @@ public class DelegateCloud20ServiceTest {
     @Test
     public void authenticateImpersonated_cloudExtractorThrowsException_callsExceptionResponse() throws Exception {
         spy.setObjectFactory(objectFactory);
-        JAXBException ex = new JAXBException("error");
+        IdmException ex = new IdmException("error");
         doThrow(ex).when(spy).marshallObjectToString(null);
         when(authenticationRequest.getToken()).thenReturn(new TokenForAuthenticationRequest());
         spy.authenticateImpersonated(null, authenticationRequest, new ImpersonatedScopeAccess());

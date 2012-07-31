@@ -15,6 +15,7 @@ import com.rackspace.idm.api.resource.cloud.v20.CloudKsGroupBuilder;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.IdmException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspacecloud.docs.auth.api.v1.BaseURL;
@@ -56,7 +57,7 @@ import java.util.List;
 public class CloudMigrationService {
 
     private static final int UK_BASEURL_OFFSET = 1000;
-    
+
     private MigrationClient client;
 
     @Autowired
@@ -106,12 +107,7 @@ public class CloudMigrationService {
     }
 
     public void migrateBaseURLs(){
-        try {
-            addOrUpdateEndpointTemplates(getAdminToken());
-        }
-        catch (Exception ex) {
-
-        }
+        addOrUpdateEndpointTemplates(getAdminToken());
     }
 
     public void migrateRoles() {
@@ -147,7 +143,7 @@ public class CloudMigrationService {
         }
     }
 
-    public void migrateGroups() throws Exception {
+    public void migrateGroups() {
         if(isUkCloudRegion()) {
             throw new NotFoundException("Method not found.");
         }
@@ -167,41 +163,46 @@ public class CloudMigrationService {
         return Response.ok(obj_factories.getRackspaceIdentityExtKsgrpV1Factory().createGroups(cloudGroups));
     }
 
-    public Response.ResponseBuilder getMigratedUserList() throws Exception {
+    public Response.ResponseBuilder getMigratedUserList() {
         FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParam.FilterParamName.MIGRATED, null)};
         com.rackspace.idm.domain.entity.Users users = userService.getAllUsers(filters);
-        if (users == null)
+        if (users == null) {
             throw new NotFoundException("Users not found.");
+        }
         return Response.ok(obj_factories.getOpenStackIdentityV2Factory().createUsers(userConverterCloudV20.toUserList(users.getUsers())));
     }
 
-    public Response.ResponseBuilder getInMigrationUserList() throws Exception {
+    public Response.ResponseBuilder getInMigrationUserList() {
         FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParam.FilterParamName.IN_MIGRATION, null)};
         com.rackspace.idm.domain.entity.Users users = userService.getAllUsers(filters);
-        if (users == null)
+        if (users == null) {
             throw new NotFoundException("Users not found.");
+        }
         return Response.ok(obj_factories.getOpenStackIdentityV2Factory().createUsers(userConverterCloudV20.toUserList(users.getUsers())));
     }
 
-    public Response.ResponseBuilder getMigratedUser(String username) throws Exception {
+    public Response.ResponseBuilder getMigratedUser(String username) {
         com.rackspace.idm.domain.entity.User user = userService.getUser(username);
-        if (user == null)
+        if (user == null) {
             throw new NotFoundException("User not found.");
+        }
         return Response.ok(obj_factories.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(user)));
     }
 
-    public Response.ResponseBuilder getMigratedUserRoles(String username) throws Exception {
+    public Response.ResponseBuilder getMigratedUserRoles(String username) {
         com.rackspace.idm.domain.entity.User user = userService.getUser(username);
-        if (user == null)
+        if (user == null) {
             throw new NotFoundException("User not found.");
+        }
         List<TenantRole> roles = tenantService.getGlobalRolesForUser(user);
         return Response.ok(obj_factories.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListJaxb(roles)));
     }
 
-    public Response.ResponseBuilder getMigratedUserEndpoints(String username) throws Exception {
+    public Response.ResponseBuilder getMigratedUserEndpoints(String username) {
         com.rackspace.idm.domain.entity.User user = userService.getUser(username);
-        if (user == null)
+        if (user == null) {
             throw new NotFoundException("User not found.");
+        }
         EndpointList list = getEndpointsForUser(user.getUniqueId());
         return Response.ok(obj_factories.getOpenStackIdentityV2Factory().createEndpoints(list));
     }
@@ -214,7 +215,7 @@ public class CloudMigrationService {
     }
 
 
-    public MigrateUserResponseType migrateUserByUsername(String username, boolean processSubUsers) throws Exception {
+    public MigrateUserResponseType migrateUserByUsername(String username, boolean processSubUsers) {
         try {
             MigrateUserResponseType response = migrateUserByUsername(username, processSubUsers, null);
 
@@ -234,15 +235,14 @@ public class CloudMigrationService {
         } catch (ConflictException ce){
             throw ce;
         } catch (Exception e) {
-            try {
-                unmigrateUserByUsername(username);
-            } catch (Exception e2) {
-            }
-            throw e;
+            logger.info("failed to migrate user: {}", username);
+            unmigrateUserByUsername(username);
+            logger.info("successfully unmigrated user: {}", username);
+            throw new IdmException(e);
         }
     }
 
-    public MigrateUserResponseType migrateUserByUsername(String username, boolean processSubUsers, String domainId) throws Exception {
+    public MigrateUserResponseType migrateUserByUsername(String username, boolean processSubUsers, String domainId) {
         client.setCloud20Host(config.getString("cloudAuth20url"));
         client.setCloud11Host(config.getString("cloudAuth11url"));
         if (userService.userExistsByUsername(username)) {
@@ -395,7 +395,7 @@ public class CloudMigrationService {
 		return defaultRegion;
 	}
 
-    List<String> getSubUsers(User user, String userToken, RoleList roles) throws Exception {
+    List<String> getSubUsers(User user, String userToken, RoleList roles) {
         client.setCloud20Host(config.getString("cloudAuth20url"));
         client.setCloud11Host(config.getString("cloudAuth11url"));
         List<String> subUsers = new ArrayList<String>();
@@ -611,8 +611,7 @@ public class CloudMigrationService {
         return password;
     }
 
-    AuthenticateResponse authenticate(String username, String apiKey,
-                                              String password) throws Exception {
+    AuthenticateResponse authenticate(String username, String apiKey, String password) {
         client.setCloud20Host(config.getString("cloudAuth20url"));
         client.setCloud11Host(config.getString("cloudAuth11url"));
         AuthenticateResponse authenticateResponse;
@@ -651,27 +650,30 @@ public class CloudMigrationService {
 
     public void setMigratedUserEnabledStatus(String username, boolean enable) {
         com.rackspace.idm.domain.entity.User user = userService.getUser(username);
-        if (user == null)
+        if (user == null) {
             throw new NotFoundException("User not found.");
-        if (user.getInMigration() == null)
+        } if (user.getInMigration() == null) {
             throw new NotFoundException("User not found.");
+        }
         user.setInMigration(enable);
         userService.updateUserById(user, false);
     }
 
-    public void unmigrateUserByUsername(String username) throws Exception {
+    public void unmigrateUserByUsername(String username) {
         com.rackspace.idm.domain.entity.User user = userService.getUser(username);
-        if (user == null)
+        if (user == null) {
             throw new NotFoundException("User not found.");
-        if (user.getInMigration() == null) // Used so we do not delete a user who wasn't previously migrated.
+        } if (user.getInMigration() == null) { // Used so we do not delete a user who wasn't previously migrated.
             throw new NotFoundException("User not found.");
+        }
 
         String domainId = user.getDomainId();
         FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParam.FilterParamName.DOMAIN_ID, domainId)};
         Users users = this.userService.getAllUsers(filters, 0, 0);
 
-        if (users.getUsers() == null) // Used so we do not delete a user who wasn't previously migrated.
+        if (users.getUsers() == null) {// Used so we do not delete a user who wasn't previously migrated.
             throw new NotFoundException("User not found.");
+        }
 
         for (com.rackspace.idm.domain.entity.User u : users.getUsers()) {
             if (u.getInMigration() == null) {
@@ -679,11 +681,12 @@ public class CloudMigrationService {
             }
         }
         
-        for (com.rackspace.idm.domain.entity.User u : users.getUsers())
+        for (com.rackspace.idm.domain.entity.User u : users.getUsers()) {
             userService.deleteUser(u.getUsername());
+        }
     }
 
-    String getAdminToken() throws URISyntaxException, HttpException, IOException, JAXBException {
+    String getAdminToken() {
         client.setCloud20Host(config.getString("cloudAuth20url"));
         client.setCloud11Host(config.getString("cloudAuth11url"));
         try {
@@ -710,18 +713,21 @@ public class CloudMigrationService {
         newUser.setMossoId(mossoId);
         newUser.setNastId(nastId);
 
-        if (!StringUtils.isEmpty(user.getEmail()))
+        if (!StringUtils.isEmpty(user.getEmail())) {
             newUser.setEmail(user.getEmail());
+        }
 
         newUser.setApiKey(apiKey);
         newUser.setPassword(password);
         newUser.setEnabled(user.isEnabled());
 
-        if(user.getCreated() != null)
+        if(user.getCreated() != null) {
             newUser.setCreated(new DateTime(user.getCreated().toGregorianCalendar().getTime()));
+        }
 
-        if (user.getUpdated() != null)
+        if (user.getUpdated() != null) {
             newUser.setUpdated(new DateTime(user.getUpdated().toGregorianCalendar().getTime()));
+        }
 
         if (secretQA != null) {
             newUser.setSecretQuestion(secretQA.getQuestion());
@@ -744,7 +750,7 @@ public class CloudMigrationService {
         return newUser;
     }
 
-    void addUserGroups(String userId, Groups groups) throws Exception {
+    void addUserGroups(String userId, Groups groups) {
         try {
             for (Group group : groups.getGroup()) {
                 if (isUkCloudRegion() && group.getId().equals("1"))  {// Set Default (1) to Default (0)
@@ -775,7 +781,7 @@ public class CloudMigrationService {
         }
     }
 
-    void addTenantsForUserByToken(com.rackspace.idm.domain.entity.User user, String tenantId, List<String> baseUrlRefs) throws Exception {
+    void addTenantsForUserByToken(com.rackspace.idm.domain.entity.User user, String tenantId, List<String> baseUrlRefs) {
         if (baseUrlRefs != null) {
             com.rackspace.idm.domain.entity.Tenant newTenant = tenantService.getTenant(tenantId);
             // Add the Tenant if it doesn't exist.
@@ -825,7 +831,7 @@ public class CloudMigrationService {
         }
     }
 
-    private SecretQA getSecretQA(String adminToken, String userId) throws Exception {
+    private SecretQA getSecretQA(String adminToken, String userId) {
         client.setCloud20Host(config.getString("cloudAuth20url"));
         client.setCloud11Host(config.getString("cloudAuth11url"));
         try {
@@ -833,11 +839,12 @@ public class CloudMigrationService {
             return secretQA;
         }
         catch (Exception ex) {
+            logger.info("Failed to get secret QA from cloud: {}", ex.getMessage());
             return null;
         }
     }
 
-    void addOrUpdateGroups(String adminToken) throws Exception {
+    void addOrUpdateGroups(String adminToken) {
         client.setCloud20Host(config.getString("cloudAuth20url"));
         client.setCloud11Host(config.getString("cloudAuth11url"));
         Groups groups = client.getGroups(adminToken);
@@ -854,8 +861,9 @@ public class CloudMigrationService {
 
                 try {
                     com.rackspace.idm.domain.entity.Group oldGroup = cloudGroupService.getGroupById(Integer.parseInt(group.getId()));
-                    if (!StringUtils.equals(newGroup.getName(), oldGroup.getName()) || !StringUtils.equals(newGroup.getDescription(), oldGroup.getDescription()))
+                    if (!StringUtils.equals(newGroup.getName(), oldGroup.getName()) || !StringUtils.equals(newGroup.getDescription(), oldGroup.getDescription())) {
                         cloudGroupService.updateGroup(newGroup);
+                    }
                 }
                 catch (NotFoundException ex) {
                     cloudGroupService.insertGroup(newGroup);
@@ -864,7 +872,7 @@ public class CloudMigrationService {
         }
     }
 
-    void addOrUpdateEndpointTemplates(String adminToken) throws Exception {
+    void addOrUpdateEndpointTemplates(String adminToken) {
         client.setCloud20Host(config.getString("cloudAuth20url"));
         client.setCloud11Host(config.getString("cloudAuth11url"));
         // Using Endpoints call to get Keystone Endpoint
@@ -943,8 +951,9 @@ public class CloudMigrationService {
 
     BaseURL getBaseUrlFromEndpoint(int endpointId, List<BaseURL> baseURLs) {
         for (BaseURL b : baseURLs) {
-            if (b.getId() == endpointId)
+            if (b.getId() == endpointId) {
                 return b;
+            }
         }
         return null;
     }

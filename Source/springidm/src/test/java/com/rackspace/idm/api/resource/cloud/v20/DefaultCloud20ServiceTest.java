@@ -5875,4 +5875,9 @@ public class DefaultCloud20ServiceTest {
         doNothing().when(spy).validateUsername("username");
         spy.validatePasswordCredentials(passwordCredentialsRequiredUsername);
     }
+
+    @Test (expected = BadRequestException.class)
+    public void getXMLCredentials_callsUnmarshaller_unmarshall_throwsJAXBException() throws Exception {
+        spy.getXMLCredentials("body");
+    }
 }

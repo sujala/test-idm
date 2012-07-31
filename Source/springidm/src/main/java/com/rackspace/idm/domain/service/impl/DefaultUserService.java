@@ -83,14 +83,17 @@ public class DefaultUserService implements UserService {
 //        }
         setPasswordIfNecessary(user);
 
-        if (user.isEnabled() == null)
+        if (user.isEnabled() == null) {
             user.setEnabled(user.isEnabled());
+        }
 
-        if (user.getId() == null)
+        if (user.getId() == null) {
             user.setId(this.userDao.getNextUserId());
+        }
 
-        if (user.getDomainId() == null)
+        if (user.getDomainId() == null) {
             user.setDomainId(user.getId());
+        }
 
 
         userDao.addUser(user);
@@ -319,8 +322,9 @@ public class DefaultUserService implements UserService {
         } else if (users.getUsers().size() > 1) {
             for (User user : users.getUsers()) {
                 UserScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), getCloudAuthClientId());
-                if (authorizationService.authorizeCloudUserAdmin(sa))
+                if (authorizationService.authorizeCloudUserAdmin(sa)) {
                     return user;
+                }
             }
         }
         return null;
@@ -344,8 +348,9 @@ public class DefaultUserService implements UserService {
         } else if (users.getUsers().size() > 1) {
             for (User user : users.getUsers()) {
                 UserScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), getCloudAuthClientId());
-                if (authorizationService.authorizeCloudUserAdmin(sa))
+                if (authorizationService.authorizeCloudUserAdmin(sa)) {
                     return user;
+                }
             }
         }
         return null;
@@ -688,7 +693,7 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public User getUserByScopeAccess(ScopeAccess scopeAccess) throws Exception {
+    public User getUserByScopeAccess(ScopeAccess scopeAccess) throws IdmException {
         User user = null;
         if (scopeAccess instanceof RackerScopeAccess) {
             RackerScopeAccess rackerScopeAccess = (RackerScopeAccess) scopeAccess;
@@ -708,7 +713,7 @@ public class DefaultUserService implements UserService {
             UserScopeAccess userScopeAccess = (UserScopeAccess) scopeAccess;
             user = getUser(userScopeAccess.getUsername());
         } else {
-            throw new Exception("Invalid getUserByScopeAccess, scopeAccess cannot provide information to get a user");
+            throw new BadRequestException("Invalid getUserByScopeAccess, scopeAccess cannot provide information to get a user");
         }
         if (user == null) {
             throw new NotFoundException("User not found with scopeAccess: " + scopeAccess.toString());
@@ -723,17 +728,19 @@ public class DefaultUserService implements UserService {
     public void addBaseUrlToUser(Integer baseUrlId, User user) {
         CloudBaseUrl baseUrl = endpointService.getBaseUrlById(baseUrlId);
         String tenantId;
-        if (baseUrl.getOpenstackType().equals("NAST"))
+        if (baseUrl.getOpenstackType().equals("NAST")) {
             tenantId = user.getNastId();
-        else
+        } else {
             tenantId = String.valueOf(user.getMossoId());
+        }
 
         Tenant tenant = tenantService.getTenant(tenantId);
 
         // Check for existing BaseUrl
         for (String bId : tenant.getBaseUrlIds()) {
-            if (bId.equals(String.valueOf(baseUrl.getBaseUrlId())))
+            if (bId.equals(String.valueOf(baseUrl.getBaseUrlId()))) {
                 throw new BadRequestException("BaseUrl already exists.");
+            }
         }
 
         tenant.addBaseUrlId(String.valueOf(baseUrl.getBaseUrlId()));

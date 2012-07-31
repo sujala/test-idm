@@ -916,8 +916,9 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         user.setDomainId(resultEntry.getAttributeValue(ATTR_DOMAIN_ID));
 
         user.setInMigration(resultEntry.getAttributeValueAsBoolean(ATTR_IN_MIGRATION));
-        if(user.getInMigration() != null)
+        if(user.getInMigration() != null) {
             user.setMigrationDate(new DateTime(resultEntry.getAttributeValueAsDate(ATTR_MIGRATION_DATE)));
+        }
 
         String ecryptedPwd = cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_CLEAR_PASSWORD));
         Date lastUpdates = resultEntry.getAttributeValueAsDate(ATTR_PASSWORD_UPDATED_TIMESTAMP);

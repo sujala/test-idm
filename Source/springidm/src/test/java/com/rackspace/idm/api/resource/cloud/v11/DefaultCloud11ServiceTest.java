@@ -1590,6 +1590,12 @@ public class DefaultCloud11ServiceTest {
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(204));
     }
 
+    @Test (expected = NotAuthorizedException.class)
+    public void authenticateCloudAdminUserForGetRequests_callsAuthHeaderHelper_parseBasicParams_throwsCloudAdminAuthorizationException() throws Exception {
+        doThrow(new CloudAdminAuthorizationException()).when(authHeaderHelper).parseBasicParams(anyString());
+        defaultCloud11Service.authenticateCloudAdminUserForGetRequests(request);
+    }
+
     @Test(expected = NotAuthorizedException.class)
     public void authenticateCloudAdminUserForGetRequests_withNoBasicParams_throwsNotAuthorized() throws Exception {
         request = mock(HttpServletRequest.class);

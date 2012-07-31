@@ -524,8 +524,9 @@ public class DefaultCloud11Service implements Cloud11Service {
                 }
 
 
-            if (!found)
+            if (!found) {
                 throw new NotFoundException(String.format("Attempting to delete nonexisting baseUrl: %s", String.valueOf(baseUrl.getBaseUrlId())));
+            }
 
             return Response.noContent();
         } catch (Exception ex) {
@@ -1205,8 +1206,9 @@ public class DefaultCloud11Service implements Cloud11Service {
                 int mossoId = ((MossoCredentials) value).getMossoId();
                 String key = ((MossoCredentials) value).getKey();
                 user = userService.getUserByMossoId(mossoId);
-                if (user == null)
+                if (user == null) {
                     throw new NotAuthenticatedException("MossoId or api key is invalid.");
+                }
                 usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(user.getUsername(), key, cloudAuthClientId);
             } else if (value instanceof NastCredentials) {
                 String nastId = ((NastCredentials) value).getNastId();
@@ -1215,8 +1217,9 @@ public class DefaultCloud11Service implements Cloud11Service {
                     return cloudExceptionResponse.badRequestExceptionResponse("Expecting nast id");
                 }
                 user = userService.getUserByNastId(nastId);
-                if (user == null)
+                if (user == null) {
                     throw new NotAuthenticatedException("NastId or api key is invalid.");
+                }
                 usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(user.getUsername(), key, cloudAuthClientId);
             }
 
@@ -1270,10 +1273,11 @@ public class DefaultCloud11Service implements Cloud11Service {
             UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(
                     stringStringMap.get("username"), stringStringMap.get("password"), getCloudAuthClientId());
             boolean authenticated = authorizationService.authorizeCloudServiceAdmin(usa);
-            if (!authenticated)
+            if (!authenticated) {
                 authenticated = authorizationService.authorizeCloudIdentityAdmin(usa);
-            if (!authenticated)
+            } if (!authenticated) {
                 throw new NotAuthorizedException("You are not authorized to access this resource.");
+            }
         }
     }
 
