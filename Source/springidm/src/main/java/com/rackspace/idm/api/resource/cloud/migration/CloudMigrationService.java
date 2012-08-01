@@ -1004,7 +1004,7 @@ public class CloudMigrationService {
         this.config = config;
     }
 
-    public void setObj_factories(JAXBObjectFactories obj_factories) {
+    public void setObjFactories(JAXBObjectFactories obj_factories) {
         this.obj_factories = obj_factories;
     }
 

@@ -28,7 +28,7 @@ public class ServiceConverterCloudV20Test {
     public void setUp() throws Exception {
         serviceConverterCloudV20 = new ServiceConverterCloudV20();
         jaxbObjectFactories = new JAXBObjectFactories();
-        serviceConverterCloudV20.setOBJ_FACTORIES(jaxbObjectFactories);
+        serviceConverterCloudV20.setObjFactories(jaxbObjectFactories);
     }
 
     @Test

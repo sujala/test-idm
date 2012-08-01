@@ -1,13 +1,11 @@
 package com.rackspace.idm.api.converter.cloudv20;
 
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
-import com.rackspace.idm.domain.entity.HasAccessToken;
 import com.rackspace.idm.domain.entity.RackerScopeAccess;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.TenantRole;
 import org.junit.Before;
 import org.junit.Test;
-import org.openstack.docs.identity.api.v2.Tenant;
 import org.openstack.docs.identity.api.v2.TenantForAuthenticateResponse;
 import org.openstack.docs.identity.api.v2.Token;
 
@@ -37,7 +35,7 @@ public class TokenConverterCloudV20Test {
     public void setUp() throws Exception {
         tokenConverterCloudV20 = new TokenConverterCloudV20();
         jaxbObjectFactories = new JAXBObjectFactories();
-        tokenConverterCloudV20.setOBJ_FACTORIES(jaxbObjectFactories);
+        tokenConverterCloudV20.setObjFactories(jaxbObjectFactories);
 
         spy = spy(tokenConverterCloudV20);
     }
