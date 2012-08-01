@@ -3,8 +3,6 @@ package com.rackspace.idm.domain.entity;
 
 public final class ClientSecret {
 
-    private static final String NULL_OR_BLANK_ERROR = "Null or blank secret was passed in.";
-
     private String value = null;
     private boolean isNew = false;
 

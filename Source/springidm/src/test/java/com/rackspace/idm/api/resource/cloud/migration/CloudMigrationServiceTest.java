@@ -16,6 +16,7 @@ import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.IdmException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspacecloud.docs.auth.api.v1.BaseURL;
@@ -103,7 +104,7 @@ public class CloudMigrationServiceTest {
         cloudMigrationService.setClient(client);
         cloudMigrationService.setConfig(config);
         cloudMigrationService.setEndpointService(endpointService);
-        cloudMigrationService.setObj_factories(jaxbObjectFactories);
+        cloudMigrationService.setObjFactories(jaxbObjectFactories);
         cloudMigrationService.setTenantService(tenantService);
         cloudMigrationService.setUserConverterCloudV20(userConverterCloudV20);
         cloudMigrationService.setUserService(userService);
@@ -116,7 +117,7 @@ public class CloudMigrationServiceTest {
         gc.setTimeInMillis(new Date().getTime());
 
         //setting mocks for endpointconverter
-        endpointConverterCloudV20.setOBJ_FACTORIES(jaxbObjectFactories);
+        endpointConverterCloudV20.setObjFactories(jaxbObjectFactories);
 
         //fields
         user = new User();
@@ -465,7 +466,7 @@ public class CloudMigrationServiceTest {
         verify(spy).addMigrationUser(any(org.openstack.docs.identity.api.v2.User.class), anyInt(), anyString(), anyString(), eq("password"), any(SecretQA.class), anyString());
     }
 
-    @Test( expected = ConflictException.class)
+    @Test( expected = IdmException.class)
     public void migrateUserByUsername_throwsConflictExceptions() throws Exception {
         doThrow(new ConflictException()).when(spy).migrateUserByUsername("user", false, null);
         spy.migrateUserByUsername("user", false);

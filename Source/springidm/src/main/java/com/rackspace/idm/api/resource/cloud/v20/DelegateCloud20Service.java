@@ -6,7 +6,6 @@ import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.JSONConstants;
-import com.rackspace.idm.api.converter.cloudv20.TokenConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
 import com.rackspace.idm.api.resource.cloud.CloudClient;
 import com.rackspace.idm.api.resource.cloud.CloudUserExtractor;
@@ -36,12 +35,14 @@ import org.springframework.stereotype.Component;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.*;
 import javax.ws.rs.core.Response.ResponseBuilder;
-import javax.xml.bind.*;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBElement;
+import javax.xml.bind.Marshaller;
+import javax.xml.bind.Unmarshaller;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.transform.stream.StreamSource;
-import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.URLEncoder;
@@ -96,9 +97,6 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Autowired
     private AuthorizationService authorizationService;
-
-    @Autowired
-    private TokenConverterCloudV20 tokenConverterCloudV20;
 
     @Autowired
     private JAXBObjectFactories OBJ_FACTORIES;
@@ -193,7 +191,7 @@ public class DelegateCloud20Service implements Cloud20Service {
                     try {
                         authenticateResponse.getToken().setExpires(DatatypeFactory.newInstance().newXMLGregorianCalendar(calendar));
                     } catch (DatatypeConfigurationException e) {
-                        e.printStackTrace();
+                        LOG.info("failed to create XMLGregorianCalendar: " + e.getMessage());
                     }
                     return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createAccess(authenticateResponse).getValue());
                 }
@@ -217,7 +215,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         }
         ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByAccessToken(tokenId);
         if (isCloudAuthRoutingEnabled() && scopeAccess == null) {
-            String request = getCloudAuthV20Url() + "tokens/" + tokenId;
+            String request = getCloudAuthV20Url() + TOKENS + "/" + tokenId;
             HashMap<String, Object> params = new HashMap<String, Object>();
             params.put("belongsTo", belongsTo);
             request = appendQueryParams(request, params);
@@ -237,7 +235,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     ResponseBuilder validateImpersonatedTokenFromCloud(HttpHeaders httpHeaders, String impersonatedCloudToken, String belongsTo, ImpersonatedScopeAccess impersonatedScopeAccess) {
-        String gaXAuthToken = getXAuthToken_byPassword(config.getString("ga.username"), config.getString("ga.password")).getToken().getId();
+        String gaXAuthToken = getXAuthTokenByPassword(config.getString("ga.username"), config.getString("ga.password")).getToken().getId();
         httpHeaders.getRequestHeaders().get(X_AUTH_TOKEN).set(0, gaXAuthToken);
         httpHeaders.getRequestHeaders().get(HttpHeaders.ACCEPT).set(0, MediaType.APPLICATION_XML);
         Response cloudValidateResponse = checkToken(httpHeaders, gaXAuthToken, impersonatedCloudToken, belongsTo).build();
@@ -268,7 +266,7 @@ public class DelegateCloud20Service implements Cloud20Service {
              {
 
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
-            String request = getCloudAuthV20Url() + "tokens/" + tokenId;
+            String request = getCloudAuthV20Url() + TOKENS + "/" + tokenId;
 
             HashMap<String, Object> params = new HashMap<String, Object>();
             params.put("belongsTo", belongsTo);
@@ -284,7 +282,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByAccessToken(tokenId);
 
         if (isCloudAuthRoutingEnabled() && scopeAccess == null) {
-            String request = getCloudAuthV20Url() + "tokens/" + tokenId + "/endpoints";
+            String request = getCloudAuthV20Url() + TOKENS + "/" + tokenId + "/endpoints";
             return cloudClient.get(request, httpHeaders);
         }
         if (scopeAccess instanceof ImpersonatedScopeAccess) {
@@ -292,7 +290,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             tokenId = impersonatedScopeAccess.getImpersonatingToken();
             ScopeAccess impersonatedUserScopeAccess = scopeAccessService.getScopeAccessByAccessToken(tokenId);
             if (impersonatedUserScopeAccess == null) {
-                String request = getCloudAuthV20Url() + "tokens/" + tokenId + "/endpoints";
+                String request = getCloudAuthV20Url() + TOKENS + "/" + tokenId + "/endpoints";
                 return cloudClient.get(request, httpHeaders);
             }
         }
@@ -1103,10 +1101,6 @@ public class DelegateCloud20Service implements Cloud20Service {
         return config.getString("cloudAuth11url");
     }
 
-    private String getCloudAuthUKV20Url() {
-        return config.getString("cloudAuthUK20url");
-    }
-
     private String getCloudAuthUKV11Url() {
         return config.getString("cloudAuthUK11url");
     }
@@ -1187,7 +1181,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         return (AuthenticateResponse) unmarshallResponse(authResponse.getEntity().toString(), AuthenticateResponse.class);
     }
 
-    public AuthenticateResponse getXAuthToken_byPassword(String userName, String password) {
+    public AuthenticateResponse getXAuthTokenByPassword(String userName, String password) {
         PasswordCredentialsRequiredUsername passwordCredentials = new PasswordCredentialsRequiredUsername();
         passwordCredentials.setUsername(userName);
         passwordCredentials.setPassword(password);
@@ -1241,7 +1235,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     public String impersonateUser(String userName, String impersonatorName, String impersonatorPassword) {
-        String impersonatorXAuthToken = getXAuthToken_byPassword(impersonatorName, impersonatorPassword).getToken().getId();
+        String impersonatorXAuthToken = getXAuthTokenByPassword(impersonatorName, impersonatorPassword).getToken().getId();
         User user = getCloudUserByName(userName, impersonatorXAuthToken);
         if (!user.isEnabled()) {
             throw new ForbiddenException("User cannot be impersonated; User is not enabled");
@@ -1283,7 +1277,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         this.userConverterCloudV20 = userConverterCloudV20;
     }
 
-    public void setOBJ_FACTORIES(JAXBObjectFactories OBJ_FACTORIES) {
+    public void setObjFactories(JAXBObjectFactories OBJ_FACTORIES) {
         this.OBJ_FACTORIES = OBJ_FACTORIES;
     }
 

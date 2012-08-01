@@ -396,6 +396,8 @@ public class DefaultTenantServiceTest {
     @Test (expected = IllegalStateException.class)
     public void getTenantRolesForScopeAccess_gettingParentDNFails_throwsIllegalStateException() throws Exception {
         ScopeAccess scopeAccess = mock(ScopeAccess.class);
+        ReadOnlyEntry readOnlyEntry = mock(ReadOnlyEntry.class);
+        when(scopeAccess.getLDAPEntry()).thenReturn(readOnlyEntry);
 
         defaultTenantService.getTenantRolesForScopeAccess(scopeAccess);
 

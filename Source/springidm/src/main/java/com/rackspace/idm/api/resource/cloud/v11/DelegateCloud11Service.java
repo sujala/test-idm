@@ -8,6 +8,8 @@ import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.impl.DefaultUserService;
 import com.rackspacecloud.docs.auth.api.v1.*;
 import org.apache.commons.configuration.Configuration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -31,6 +33,7 @@ import java.util.HashMap;
 @Component
 public class DelegateCloud11Service implements Cloud11Service {
 
+    public static final String USERS = "users/";
     @Autowired
     private CloudClient cloudClient;
 
@@ -60,6 +63,8 @@ public class DelegateCloud11Service implements Cloud11Service {
     public static final String CLOUD_AUTH_11_URL = "cloudAuth11url";
     public static final String CLOUD_AUTH_ROUTING = "useCloudAuth";
     public static final String GA_SOURCE_OF_TRUTH = "gaIsSourceOfTruth";
+    private Logger logger = LoggerFactory.getLogger(DelegateCloud11Service.class);
+
     public DelegateCloud11Service() throws JAXBException {
     }
 
@@ -256,7 +261,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     @Override
     public Response.ResponseBuilder getUser(HttpServletRequest request, String userId, HttpHeaders httpHeaders) throws IOException {
         if(isCloudAuthRoutingEnabled() && ! userExistsInGA(userId)){
-            return cloudClient.get(getCloudAuthV11Url().concat("users/" + userId), httpHeaders);
+            return cloudClient.get(getCloudAuthV11Url().concat(USERS + userId), httpHeaders);
         }
         return defaultCloud11Service.getUser(request, userId, httpHeaders);
     }
@@ -267,11 +272,11 @@ public class DelegateCloud11Service implements Cloud11Service {
             com.rackspace.idm.domain.entity.User user = defaultUserService.getUserById(userId);
 
             if(user == null) {
-                return cloudClient.delete(getCloudAuthV11Url().concat("users/" + userId), httpHeaders);
+                return cloudClient.delete(getCloudAuthV11Url().concat(USERS + userId), httpHeaders);
             }
 
             if(defaultUserService.isMigratedUser(user)){
-                cloudClient.delete(getCloudAuthV11Url().concat("users/" + userId), httpHeaders);
+                cloudClient.delete(getCloudAuthV11Url().concat(USERS + userId), httpHeaders);
                 return defaultCloud11Service.deleteUser(request, userId, httpHeaders);
             }
         }
@@ -283,7 +288,7 @@ public class DelegateCloud11Service implements Cloud11Service {
                                                User user) throws IOException, JAXBException {
         if(isCloudAuthRoutingEnabled() && !userExistsInGA(userId)){
             String body = this.marshallObjectToString(OBJ_FACTORY.createUser(user));
-            return cloudClient.put(getCloudAuthV11Url().concat("users/" + userId), httpHeaders, body);
+            return cloudClient.put(getCloudAuthV11Url().concat(USERS + userId), httpHeaders, body);
         }
         return defaultCloud11Service.updateUser(request, userId, httpHeaders, user);
     }
@@ -291,7 +296,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     @Override
     public Response.ResponseBuilder getUserEnabled(HttpServletRequest request, String userId, HttpHeaders httpHeaders) throws IOException {
         if(isCloudAuthRoutingEnabled() && !userExistsInGA(userId)){
-            String path = "users/" + userId + "/enabled";
+            String path = USERS + userId + "/enabled";
             return cloudClient.get(getCloudAuthV11Url().concat(path), httpHeaders);
         }
         return defaultCloud11Service.getUserEnabled(request, userId, httpHeaders);
@@ -301,7 +306,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     public Response.ResponseBuilder setUserEnabled(HttpServletRequest request, String userId, UserWithOnlyEnabled user, HttpHeaders httpHeaders)
             throws IOException, JAXBException {
         if(isCloudAuthRoutingEnabled() && !userExistsInGA(userId)){
-            String path = "users/" + userId + "/enabled";
+            String path = USERS + userId + "/enabled";
             String body = this.marshallObjectToString(OBJ_FACTORY.createUser(user));
             return cloudClient.put(getCloudAuthV11Url().concat(path), httpHeaders, body);
         }
@@ -311,7 +316,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     @Override
     public Response.ResponseBuilder getUserKey(HttpServletRequest request, String userId, HttpHeaders httpHeaders) throws IOException {
         if(isCloudAuthRoutingEnabled() && !userExistsInGA(userId)){
-            String path = "users/" + userId + "/key";
+            String path = USERS + userId + "/key";
             return cloudClient.get(getCloudAuthV11Url().concat(path), httpHeaders);
         }
         return defaultCloud11Service.getUserKey(request, userId, httpHeaders);
@@ -322,7 +327,7 @@ public class DelegateCloud11Service implements Cloud11Service {
             throws IOException, JAXBException {
         if(isCloudAuthRoutingEnabled() && !userExistsInGA(userId)){
             String body = marshallObjectToString(OBJ_FACTORY.createUser(user));
-            String path = "users/" + userId + "/key";
+            String path = USERS + userId + "/key";
             return cloudClient.put(getCloudAuthV11Url().concat(path), httpHeaders, body);
         }
         return defaultCloud11Service.setUserKey(request, userId, httpHeaders, user);
@@ -331,7 +336,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     @Override
     public Response.ResponseBuilder getServiceCatalog(HttpServletRequest request, String userId, HttpHeaders httpHeaders) throws IOException {
         if(isCloudAuthRoutingEnabled() && !userExistsInGA(userId)){
-            String path = "users/" + userId + "/serviceCatalog";
+            String path = USERS + userId + "/serviceCatalog";
             return cloudClient.get(getCloudAuthV11Url().concat(path), httpHeaders);
         }
         return defaultCloud11Service.getServiceCatalog(request, userId, httpHeaders);
@@ -340,7 +345,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     @Override
     public Response.ResponseBuilder getBaseURLRefs(HttpServletRequest request, String userId, HttpHeaders httpHeaders) throws IOException {
         if (isCloudAuthRoutingEnabled() && !userExistsInGA(userId)) {
-            String path = "users/" + userId + "/baseURLRefs";
+            String path = USERS + userId + "/baseURLRefs";
             return cloudClient.get(getCloudAuthV11Url().concat(path), httpHeaders);
         }
         return defaultCloud11Service.getBaseURLRefs(request, userId, httpHeaders);
@@ -360,7 +365,7 @@ public class DelegateCloud11Service implements Cloud11Service {
                                                   UriInfo uriInfo, BaseURLRef baseUrlRef) throws IOException, JAXBException {
         if (isCloudAuthRoutingEnabled() && !userExistsInGA(userId)) {
             String body = this.marshallObjectToString(OBJ_FACTORY.createBaseURLRef(baseUrlRef));
-            String path = "users/" + userId + "/baseURLRefs";
+            String path = USERS + userId + "/baseURLRefs";
             return cloudClient.post(getCloudAuthV11Url().concat(path), httpHeaders, body);
         }
         return defaultCloud11Service.addBaseURLRef(request, userId, httpHeaders, uriInfo, baseUrlRef);
@@ -372,7 +377,7 @@ public class DelegateCloud11Service implements Cloud11Service {
         if (!isCloudAuthRoutingEnabled() || userExistsInGA(userId)) {
             return defaultCloud11Service.getBaseURLRef(request, userId, baseURLId, httpHeaders);
         }
-        String path = "users/" + userId + "/baseURLRefs/" + baseURLId;
+        String path = USERS + userId + "/baseURLRefs/" + baseURLId;
         return cloudClient.get(getCloudAuthV11Url().concat(path), httpHeaders);
     }
 
@@ -382,7 +387,7 @@ public class DelegateCloud11Service implements Cloud11Service {
         if (!isCloudAuthRoutingEnabled() || userExistsInGA(userId)) {
             return defaultCloud11Service.deleteBaseURLRef(request, userId, baseURLId, httpHeaders);
         }
-        String path = "users/" + userId + "/baseURLRefs/" + baseURLId;
+        String path = USERS + userId + "/baseURLRefs/" + baseURLId;
         return cloudClient.delete(getCloudAuthV11Url().concat(path), httpHeaders);
     }
 
@@ -440,7 +445,7 @@ public class DelegateCloud11Service implements Cloud11Service {
         if (!isCloudAuthRoutingEnabled() || userExistsInGA(userId)) {
             return defaultCloud11Service.getUserGroups(request, userId, httpHeaders);
         }
-        String path = "users/" + userId + "/groups";
+        String path = USERS + userId + "/groups";
         return cloudClient.get(getCloudAuthV11Url().concat(path), httpHeaders);
     }
 
@@ -491,8 +496,7 @@ public class DelegateCloud11Service implements Cloud11Service {
         try {
             marshaller.marshal(jaxbObject, sw);
         } catch (JAXBException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            logger.info("failed to marshall object to string: " + e.getMessage());
         }
         return sw.toString();
     }
@@ -505,7 +509,7 @@ public class DelegateCloud11Service implements Cloud11Service {
         this.credentialUnmarshaller = credentialUnmarshaller;
     }
 
-    public static void setOBJ_FACTORY(ObjectFactory OBJ_FACTORY) {
+    public static void setObjFactory(ObjectFactory OBJ_FACTORY) {
         DelegateCloud11Service.OBJ_FACTORY = OBJ_FACTORY;
     }
 
@@ -554,8 +558,7 @@ public class DelegateCloud11Service implements Cloud11Service {
             Unmarshaller unmarshaller = context.createUnmarshaller();
             cred = (JAXBElement<? extends Credentials>) unmarshaller.unmarshal(new StringReader(body));
         } catch (JAXBException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            logger.info("failed to extract XMLCredentials: " + e.getMessage());
         }
         return cred;
     }

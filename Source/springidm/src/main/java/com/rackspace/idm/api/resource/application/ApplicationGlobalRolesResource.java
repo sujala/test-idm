@@ -7,7 +7,6 @@ import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.AuthorizationService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TenantService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +28,6 @@ import java.util.List;
 @Component("applicationGlobalRolesResource")
 public class ApplicationGlobalRolesResource {
 
-    private final ScopeAccessService scopeAccessService;
     private final TenantService tenantService;
     private final ApplicationService clientService;
     private final AuthorizationService authorizationService;
@@ -41,11 +39,9 @@ public class ApplicationGlobalRolesResource {
     @Autowired
     public ApplicationGlobalRolesResource(TenantService tenantService,
         AuthorizationService authorizationService, ApplicationService clientService,
-        ScopeAccessService scopeAccessService,
         ApplicationGlobalRoleResource roleResource, RolesConverter rolesConverter) {
         this.clientService = clientService;
         this.tenantService = tenantService;
-        this.scopeAccessService = scopeAccessService;
         this.authorizationService = authorizationService;
         this.roleResource = roleResource;
         this.rolesConverter = rolesConverter;

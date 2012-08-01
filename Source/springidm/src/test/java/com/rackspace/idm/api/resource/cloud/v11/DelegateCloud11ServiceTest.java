@@ -89,7 +89,7 @@ public class DelegateCloud11ServiceTest {
         delegateCloud11Service.setDefaultUserService(defaultUserService);
         delegateCloud11Service.setScopeAccessService(scopeAccessService);
         OBJ_FACTORY = mock(com.rackspacecloud.docs.auth.api.v1.ObjectFactory.class);
-        DelegateCloud11Service.setOBJ_FACTORY(OBJ_FACTORY);
+        DelegateCloud11Service.setObjFactory(OBJ_FACTORY);
         config = mock(Configuration.class);
         delegateCloud11Service.setConfig(config);
         cloudClient = mock(CloudClient.class);

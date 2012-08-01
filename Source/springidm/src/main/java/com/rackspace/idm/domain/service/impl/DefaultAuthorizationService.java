@@ -4,7 +4,6 @@ import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.ForbiddenException;
@@ -268,7 +267,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         }
 
         if (IDM_SUPER_ADMIN_ROLE == null) {
-            ClientRole role = clientDao.getClientRoleByClientIdAndRoleName(getIdmClientId(), getIdmSuperAdminRole());
+            ClientRole role = clientDao.getClientRoleByClientIdAndRoleName(getIdmClientId(), config.getString("idm.superAdminRole"));
             IDM_SUPER_ADMIN_ROLE = role;
         }
 
@@ -427,59 +426,59 @@ public class DefaultAuthorizationService implements AuthorizationService {
         this.scopeAccessService = scopeAccessService;
     }
 
-    public static ClientRole getCLOUD_ADMIN_ROLE() {
+    public static ClientRole getCloudAdminRole() {
         return CLOUD_ADMIN_ROLE;
     }
 
-    public static void setCLOUD_ADMIN_ROLE(ClientRole CLOUD_ADMIN_ROLE) {
+    public static void setCloudAdminRole(ClientRole CLOUD_ADMIN_ROLE) {
         DefaultAuthorizationService.CLOUD_ADMIN_ROLE = CLOUD_ADMIN_ROLE;
     }
 
-    public static ClientRole getRACKER_ROLE() {
+    public static ClientRole getRackerRole() {
         return RACKER_ROLE;
     }
 
-    public static void setRACKER_ROLE(ClientRole RACKER_ROLE) {
+    public static void setRackerRole(ClientRole RACKER_ROLE) {
         DefaultAuthorizationService.RACKER_ROLE = RACKER_ROLE;
     }
 
-    public static ClientRole getCLOUD_SERVICE_ADMIN_ROLE() {
+    public static ClientRole getCloudServiceAdminRole() {
         return CLOUD_SERVICE_ADMIN_ROLE;
     }
 
-    public static void setCLOUD_SERVICE_ADMIN_ROLE(ClientRole CLOUD_SERVICE_ADMIN_ROLE) {
+    public static void setCloudServiceAdminRole(ClientRole CLOUD_SERVICE_ADMIN_ROLE) {
         DefaultAuthorizationService.CLOUD_SERVICE_ADMIN_ROLE = CLOUD_SERVICE_ADMIN_ROLE;
     }
 
-    public static ClientRole getCLOUD_USER_ADMIN_ROLE() {
+    public static ClientRole getCloudUserAdminRole() {
         return CLOUD_USER_ADMIN_ROLE;
     }
 
-    public static void setCLOUD_USER_ADMIN_ROLE(ClientRole CLOUD_USER_ADMIN_ROLE) {
+    public static void setCloudUserAdminRole(ClientRole CLOUD_USER_ADMIN_ROLE) {
         DefaultAuthorizationService.CLOUD_USER_ADMIN_ROLE = CLOUD_USER_ADMIN_ROLE;
     }
 
-    public static ClientRole getCLOUD_USER_ROLE() {
+    public static ClientRole getCloudUserRole() {
         return CLOUD_USER_ROLE;
     }
 
-    public static void setCLOUD_USER_ROLE(ClientRole CLOUD_USER_ROLE) {
+    public static void setCloudUserRole(ClientRole CLOUD_USER_ROLE) {
         DefaultAuthorizationService.CLOUD_USER_ROLE = CLOUD_USER_ROLE;
     }
 
-    public static ClientRole getIDM_SUPER_ADMIN_ROLE() {
+    public static ClientRole getIdmSuperAdminRole() {
         return IDM_SUPER_ADMIN_ROLE;
     }
 
-    public static void setIDM_SUPER_ADMIN_ROLE(ClientRole IDM_SUPER_ADMIN_ROLE) {
+    public static void setIdmSuperAdminRole(ClientRole IDM_SUPER_ADMIN_ROLE) {
         DefaultAuthorizationService.IDM_SUPER_ADMIN_ROLE = IDM_SUPER_ADMIN_ROLE;
     }
 
-    public static String getIDM_ADMIN_GROUP_DN() {
+    public static String getIdmAdminGroupDn() {
         return IDM_ADMIN_GROUP_DN;
     }
 
-    public static void setIDM_ADMIN_GROUP_DN(String IDM_ADMIN_GROUP_DN) {
+    public static void setIdmAdminGroupDn(String IDM_ADMIN_GROUP_DN) {
         DefaultAuthorizationService.IDM_ADMIN_GROUP_DN = IDM_ADMIN_GROUP_DN;
     }
 
@@ -513,9 +512,5 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     private String getCloudAuthUserRole() {
         return config.getString("cloudAuth.userRole");
-    }
-
-    private String getIdmSuperAdminRole() {
-        return config.getString("idm.superAdminRole");
     }
 }

@@ -33,7 +33,7 @@ public class ExceptionHandlerTest {
     @Before
     public void setUp() throws Exception {
         exceptionHandler = new ExceptionHandler();
-        exceptionHandler.setOBJ_FACTORIES(jaxbObjectFactories);
+        exceptionHandler.setObjFactories(jaxbObjectFactories);
         spy = spy(exceptionHandler);
         when(jaxbObjectFactories.getOpenStackIdentityV2Factory()).thenReturn(objectFactory);
     }

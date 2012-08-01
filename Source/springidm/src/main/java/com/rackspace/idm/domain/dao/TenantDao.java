@@ -1,14 +1,8 @@
 package com.rackspace.idm.domain.dao;
 
-import java.util.List;
+import com.rackspace.idm.domain.entity.*;
 
-import com.rackspace.idm.domain.entity.Application;
-import com.rackspace.idm.domain.entity.ClientRole;
-import com.rackspace.idm.domain.entity.FilterParam;
-import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.Tenant;
-import com.rackspace.idm.domain.entity.TenantRole;
-import com.rackspace.idm.domain.entity.User;
+import java.util.List;
 
 public interface TenantDao {
 

@@ -6,7 +6,6 @@ import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AuthorizationService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.UserService;
 import org.slf4j.Logger;
@@ -16,7 +15,8 @@ import org.springframework.stereotype.Component;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import javax.ws.rs.*;
-import javax.ws.rs.core.*;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.util.List;
 
 /**
@@ -28,7 +28,6 @@ import java.util.List;
 @Component
 public class UserGlobalRolesResource {
 
-    private final ScopeAccessService scopeAccessService;
     private final UserService userService;
     private final TenantService tenantService;
     private final AuthorizationService authorizationService;
@@ -40,12 +39,10 @@ public class UserGlobalRolesResource {
     @Autowired
     public UserGlobalRolesResource(UserService userService,
         AuthorizationService authorizationService, TenantService tenantService,
-        ScopeAccessService scopeAccessService,
         UserGlobalRoleResource roleResource,
         RolesConverter rolesConverter) {
         this.tenantService = tenantService;
         this.userService = userService;
-        this.scopeAccessService = scopeAccessService;
         this.authorizationService = authorizationService;
         this.roleResource = roleResource;
         this.rolesConverter = rolesConverter;

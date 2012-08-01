@@ -145,7 +145,7 @@ public class DefaultCloud20ServiceTest {
         //setting mocks
         defaultCloud20Service.setUserService(userService);
         defaultCloud20Service.setUserGroupService(userGroupService);
-        defaultCloud20Service.setOBJ_FACTORIES(jaxbObjectFactories);
+        defaultCloud20Service.setObjFactories(jaxbObjectFactories);
         defaultCloud20Service.setScopeAccessService(scopeAccessService);
         defaultCloud20Service.setAuthorizationService(authorizationService);
         defaultCloud20Service.setUserConverterCloudV20(userConverterCloudV20);
@@ -1559,7 +1559,7 @@ public class DefaultCloud20ServiceTest {
         when(userService.getAllUsers(org.mockito.Matchers.<FilterParam[]>any())).thenReturn(users);
         when(config.getInt("numberOfSubUsers")).thenReturn(-1);
         ExceptionHandler handler = new ExceptionHandler();
-        handler.setOBJ_FACTORIES(new JAXBObjectFactories());
+        handler.setObjFactories(new JAXBObjectFactories());
         spy.setExceptionHandler(handler);
 
         Response.ResponseBuilder builder = spy.addUser(null, null, authToken, userOS);

@@ -44,7 +44,7 @@ public class DefaultApplicationService implements ApplicationService {
         }
 
         try {
-            client.setClientId(HashHelper.MakeSHA1Hash(client.getName()));
+            client.setClientId(HashHelper.makeSHA1Hash(client.getName()));
             client.setClientSecretObj(ClientSecret.newInstance(HashHelper.getRandomSha1()));
         } catch (NoSuchAlgorithmException e) {
             logger.error("Unsupported hashing algorithm - {}", e);

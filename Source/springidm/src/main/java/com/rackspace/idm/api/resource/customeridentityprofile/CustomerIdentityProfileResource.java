@@ -5,7 +5,6 @@ import com.rackspace.idm.api.resource.ParentResource;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.CustomerService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.validation.InputValidator;
 import com.sun.jersey.core.provider.EntityHolder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +26,6 @@ public class CustomerIdentityProfileResource extends ParentResource {
     private final PasswordRotationPolicyResource passwordRotationPolicyResource;
     private final UsersResource usersResource;
     private final CustomerService customerService;
-    private final ScopeAccessService scopeAccessService;
     private final CustomerConverter customerConverter;
     private final AuthorizationService authorizationService;
     private final ApplicationsResource applicationsResource;
@@ -35,7 +33,7 @@ public class CustomerIdentityProfileResource extends ParentResource {
     @Autowired
     public CustomerIdentityProfileResource(PasswordRotationPolicyResource passwordRotationPolicyResource,
         UsersResource usersResource,
-        CustomerService customerService, ScopeAccessService scopeAccessService, CustomerConverter customerConverter,
+        CustomerService customerService, CustomerConverter customerConverter,
         AuthorizationService authorizationService,
         ApplicationsResource applicationsResource, InputValidator inputValidator) {
         
@@ -43,7 +41,6 @@ public class CustomerIdentityProfileResource extends ParentResource {
         this.passwordRotationPolicyResource = passwordRotationPolicyResource;
         this.usersResource = usersResource;
         this.customerService = customerService;
-        this.scopeAccessService = scopeAccessService;
         this.customerConverter = customerConverter;
         this.authorizationService = authorizationService;
         this.applicationsResource = applicationsResource;

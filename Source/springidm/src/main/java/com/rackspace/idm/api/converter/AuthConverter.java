@@ -1,20 +1,16 @@
 package com.rackspace.idm.api.converter;
 
-import java.util.GregorianCalendar;
+import com.rackspace.api.idm.v1.*;
+import com.rackspace.idm.domain.entity.AuthData;
+import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
-
-import org.joda.time.DateTime;
-
-import com.rackspace.api.idm.v1.Application;
-import com.rackspace.api.idm.v1.ObjectFactory;
-import com.rackspace.api.idm.v1.Racker;
-import com.rackspace.api.idm.v1.Token;
-import com.rackspace.api.idm.v1.User;
-import com.rackspace.idm.domain.entity.AuthData;
+import java.util.GregorianCalendar;
 
 public class AuthConverter {
 
@@ -23,6 +19,7 @@ public class AuthConverter {
     private final TokenConverter tokenConverter;
 
     private final ObjectFactory objectFactory = new ObjectFactory();
+    private Logger logger = LoggerFactory.getLogger(AuthConverter.class);
 
     public AuthConverter(TokenConverter tokenConverter,
         ApplicationConverter clientConverter, UserConverter userConverter) {
@@ -79,7 +76,7 @@ public class AuthConverter {
             }
 
         } catch (DatatypeConfigurationException e) {
-            e.printStackTrace();
+            logger.info("Failed to convert GregorianCalendar to XmlGregorianCalendar");
         }
 
         return null;

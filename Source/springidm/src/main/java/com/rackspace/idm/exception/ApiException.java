@@ -1,8 +1,8 @@
 package com.rackspace.idm.exception;
 
-import javax.ws.rs.WebApplicationException;
-
 import com.rackspace.idm.api.error.ApiError;
+
+import javax.ws.rs.WebApplicationException;
 
 public class ApiException extends WebApplicationException {
     

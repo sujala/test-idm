@@ -39,7 +39,7 @@ public class AuthConverterCloudV20Test {
     @Before
     public void setUp() throws Exception {
         authConverter = new AuthConverterCloudV20();
-        authConverter.setOBJ_FACTORIES(new JAXBObjectFactories());
+        authConverter.setObjFactories(new JAXBObjectFactories());
         endpointConverterCloudV20 = mock(EndpointConverterCloudV20.class);
         tokenConverterCloudV20 = mock(TokenConverterCloudV20.class);
         userConverterCloudV20 = mock(UserConverterCloudV20.class);

@@ -26,7 +26,6 @@ import static org.mockito.Mockito.verify;
 public class ProvisionedApplicationsResourceTest {
 
     ProvisionedApplicationResource provisionedApplicationResource;
-    ScopeAccessService scopeAccessService;
     ApplicationConverter applicationConverter;
     ApplicationService applicationService;
     AuthorizationService authorizationService;
@@ -35,11 +34,10 @@ public class ProvisionedApplicationsResourceTest {
     @Before
     public void setUp() throws Exception {
         provisionedApplicationResource = mock(ProvisionedApplicationResource.class);
-        scopeAccessService = mock(ScopeAccessService.class);
         applicationConverter = mock(ApplicationConverter.class);
         applicationService = mock(ApplicationService.class);
         authorizationService = mock(AuthorizationService.class);
-        provisionedApplicationsResource = new ProvisionedApplicationsResource(null, scopeAccessService, applicationConverter, applicationService, authorizationService, provisionedApplicationResource, null);
+        provisionedApplicationsResource = new ProvisionedApplicationsResource(applicationConverter, applicationService, authorizationService, provisionedApplicationResource, null);
     }
 
     @Test

@@ -40,7 +40,7 @@ public class ApplicationGlobalRolesResourceTest {
         applicationGlobalRolesResource = mock(ApplicationGlobalRolesResource.class);
         roleResource = mock(ApplicationGlobalRoleResource.class);
         rolesConverter = mock(RolesConverter.class);
-        applicationGlobalRolesResource = new ApplicationGlobalRolesResource(tenantService, authorizationService, clientService, null, roleResource, rolesConverter);
+        applicationGlobalRolesResource = new ApplicationGlobalRolesResource(tenantService, authorizationService, clientService, roleResource, rolesConverter);
     }
 
     @Test

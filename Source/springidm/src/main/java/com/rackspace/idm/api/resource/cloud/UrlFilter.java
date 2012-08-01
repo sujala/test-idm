@@ -1,5 +1,7 @@
 package com.rackspace.idm.api.resource.cloud;
 
+import org.apache.cxf.common.util.UrlUtils;
+
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
@@ -7,8 +9,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-
-import org.apache.cxf.common.util.UrlUtils;
 
 /**
  * Created by IntelliJ IDEA.

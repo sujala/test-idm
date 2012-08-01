@@ -7,6 +7,8 @@ import com.rackspacecloud.docs.auth.api.v1.FullToken;
 import com.rackspacecloud.docs.auth.api.v1.ServiceCatalog;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
@@ -16,6 +18,7 @@ public class AuthConverterCloudV11 {
     private final Configuration config;
     private final TokenConverterCloudV11 tokenConverter;
     private final EndpointConverterCloudV11 endpointConverter;
+    private Logger logger = LoggerFactory.getLogger(AuthConverterCloudV11.class);
 
     public AuthConverterCloudV11(Configuration config, TokenConverterCloudV11 tokenConverter, EndpointConverterCloudV11 endpointConverter) {
         this.config = config;
@@ -56,8 +59,7 @@ public class AuthConverterCloudV11 {
             }
 
         } catch (DatatypeConfigurationException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            logger.info("failed to create XMLGregorianCalendar: " + e.getMessage());
         }
 
         return token;

@@ -1,12 +1,11 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.rackspace.idm.JSONConstants;
+import com.rackspace.idm.exception.BadRequestException;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.openstack.docs.identity.api.v2.CredentialType;
-
-import com.rackspace.idm.JSONConstants;
-import com.rackspace.idm.exception.BadRequestException;
 
 public class JSONReaderForCredentialType {
 

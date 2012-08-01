@@ -1,10 +1,10 @@
 package com.rackspace.idm.domain.entity;
 
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
-
 import com.rackspace.idm.validation.MessageTexts;
 import com.rackspace.idm.validation.RegexPatterns;
+
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
 
 public class CloudBaseUrl implements Auditable {
     private String uniqueId = null;

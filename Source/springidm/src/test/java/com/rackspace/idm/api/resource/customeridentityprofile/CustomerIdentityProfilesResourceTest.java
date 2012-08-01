@@ -29,7 +29,6 @@ public class CustomerIdentityProfilesResourceTest {
 
     CustomerIdentityProfileResource customerIdentityProfileResource;
     CustomerService customerService;
-    ScopeAccessService scopeAccessService;
     CustomerConverter customerConverter;
     AuthorizationService authorizationService;
     InputValidator inputValidator;
@@ -39,12 +38,11 @@ public class CustomerIdentityProfilesResourceTest {
     public void setUp() throws Exception {
         customerIdentityProfileResource = mock(CustomerIdentityProfileResource.class);
         customerService = mock(CustomerService.class);
-        scopeAccessService = mock(ScopeAccessService.class);
         customerConverter = mock(CustomerConverter.class);
         authorizationService = mock(AuthorizationService.class);
         inputValidator = mock(InputValidator.class);
 
-        customerIdentityProfilesResource = new CustomerIdentityProfilesResource(customerIdentityProfileResource, customerService, scopeAccessService, inputValidator, customerConverter, authorizationService);
+        customerIdentityProfilesResource = new CustomerIdentityProfilesResource(customerIdentityProfileResource, customerService, inputValidator, customerConverter, authorizationService);
     }
 
     @Test

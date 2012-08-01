@@ -23,9 +23,10 @@ import java.util.regex.Pattern;
 public class DefaultUserService implements UserService {
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile(".+@.+\\.[\\w]+");
+    public static final String GETTING_USER = "Getting User: {}";
+    public static final String GOT_USER = "Got User: {}";
     private final AuthDao authDao;
     private final ApplicationService clientService;
-    private final TokenService oauthService;
     private final Configuration config;
 
     private final PasswordComplexityService passwordComplexityService;
@@ -49,7 +50,7 @@ public class DefaultUserService implements UserService {
 
     public DefaultUserService(UserDao userDao, AuthDao rackerDao,
                               ScopeAccessDao scopeAccessDao,
-                              ApplicationService clientService, Configuration config, TokenService oauthService,
+                              ApplicationService clientService, Configuration config,
                               PasswordComplexityService passwordComplexityService) {
 
         this.userDao = userDao;
@@ -57,7 +58,6 @@ public class DefaultUserService implements UserService {
         this.scopeAccessDao = scopeAccessDao;
         this.clientService = clientService;
         this.config = config;
-        this.oauthService = oauthService;
         this.passwordComplexityService = passwordComplexityService;
     }
 
@@ -285,9 +285,9 @@ public class DefaultUserService implements UserService {
 
     @Override
     public User getUser(String username) {
-        logger.debug("Getting User: {}", username);
+        logger.debug(GETTING_USER, username);
         User user = userDao.getUserByUsername(username);
-        logger.debug("Got User: {}", user);
+        logger.debug(GOT_USER, user);
         return user;
     }
 
@@ -308,13 +308,13 @@ public class DefaultUserService implements UserService {
     public User getUser(String customerId, String username) {
         logger.debug("Getting User: {} - {}", customerId, username);
         User user = userDao.getUserByCustomerIdAndUsername(customerId, username);
-        logger.debug("Got User: {}", user);
+        logger.debug(GOT_USER, user);
         return user;
     }
 
     @Override
     public User getUserByMossoId(int mossoId) { // Returns the first User-Admin it finds with matching mossoId
-        logger.debug("Getting User: {}", mossoId);
+        logger.debug(GETTING_USER, mossoId);
         Users users = userDao.getUsersByMossoId(mossoId);
 
         if (users.getUsers().size() == 1) {
@@ -332,15 +332,15 @@ public class DefaultUserService implements UserService {
 
     @Override
     public Users getUsersByMossoId(int mossoId) {
-        logger.debug("Getting User: {}", mossoId);
+        logger.debug(GETTING_USER, mossoId);
         Users users = userDao.getUsersByMossoId(mossoId);
-        logger.debug("Got User: {}", users);
+        logger.debug(GOT_USER, users);
         return users;
     }
 
     @Override
     public User getUserByNastId(String nastId) { // Returns the first User-Admin it finds with matching nastId
-        logger.debug("Getting User: {}", nastId);
+        logger.debug(GETTING_USER, nastId);
         Users users = userDao.getUsersByNastId(nastId);
 
         if (users.getUsers().size() == 1) {
@@ -358,9 +358,9 @@ public class DefaultUserService implements UserService {
 
     @Override
     public User getUserByRPN(String rpn) {
-        logger.debug("Getting User: {}", rpn);
+        logger.debug(GETTING_USER, rpn);
         User user = userDao.getUserByRPN(rpn);
-        logger.debug("Got User: {}", user);
+        logger.debug(GOT_USER, user);
         return user;
     }
 
@@ -368,15 +368,15 @@ public class DefaultUserService implements UserService {
     public User getUserBySecureId(String secureId) {
         logger.debug("Getting User by secureId: {}", secureId);
         User user = userDao.getUserBySecureId(secureId);
-        logger.debug("Got User: {}", user);
+        logger.debug(GOT_USER, user);
         return user;
     }
 
     @Override
     public User getSoftDeletedUser(String id) {
-        logger.debug("Getting User: {}", id);
+        logger.debug(GETTING_USER, id);
         User user = userDao.getSoftDeletedUserById(id);
-        logger.debug("Got User: {}", user);
+        logger.debug(GOT_USER, user);
         return user;
     }
 //
@@ -601,9 +601,9 @@ public class DefaultUserService implements UserService {
 
     @Override
     public User getUserById(String id) {
-        logger.debug("Getting User: {}", id);
+        logger.debug(GETTING_USER, id);
         User user = userDao.getUserById(id);
-        logger.debug("Got User: {}", user);
+        logger.debug(GOT_USER, user);
         return user;
     }
 

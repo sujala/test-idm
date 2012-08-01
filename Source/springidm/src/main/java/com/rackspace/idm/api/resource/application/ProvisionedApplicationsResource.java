@@ -6,8 +6,6 @@ import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.Applications;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.AuthorizationService;
-import com.rackspace.idm.domain.service.CustomerService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.validation.InputValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -26,15 +24,12 @@ import javax.ws.rs.core.Response;
 public class ProvisionedApplicationsResource extends ParentResource {
 	
 	private final ProvisionedApplicationResource provisionedApplicationResource;
-	private final ScopeAccessService scopeAccessService;
 	private final ApplicationConverter applicationConverter;
 	private final ApplicationService applicationService;
 	private final AuthorizationService authorizationService;
 
 	@Autowired
 	public ProvisionedApplicationsResource(
-			CustomerService customerService,
-			ScopeAccessService scopeAccessService,
 			ApplicationConverter clientConverter, ApplicationService clientService,
 			AuthorizationService authorizationService,
 			ProvisionedApplicationResource provisionedApplicationResource,
@@ -42,7 +37,6 @@ public class ProvisionedApplicationsResource extends ParentResource {
 
 		super(inputValidator);
 		this.applicationService = clientService;
-		this.scopeAccessService = scopeAccessService;
 		this.applicationConverter = clientConverter;
 		this.authorizationService = authorizationService;
 		this.provisionedApplicationResource = provisionedApplicationResource;

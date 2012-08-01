@@ -1,12 +1,12 @@
 package com.rackspace.idm.api.config;
 
-import java.util.List;
-
 import com.sun.jersey.api.wadl.config.WadlGeneratorConfig;
 import com.sun.jersey.api.wadl.config.WadlGeneratorDescription;
 import com.sun.jersey.server.wadl.generators.WadlGeneratorApplicationDoc;
 import com.sun.jersey.server.wadl.generators.WadlGeneratorGrammarsSupport;
 import com.sun.jersey.server.wadl.generators.resourcedoc.WadlGeneratorResourceDocSupport;
+
+import java.util.List;
 
 public class IdmWadlGeneratorConfig extends WadlGeneratorConfig {
 

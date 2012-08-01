@@ -33,7 +33,7 @@ public class ApplicationsResourceTest {
         applicationConverter = mock(ApplicationConverter.class);
         applicationService = mock(ApplicationService.class);
         authorizationService = mock(AuthorizationService.class);
-        applicationsResource = new ApplicationsResource(null, applicationConverter, authorizationService, applicationService, null);
+        applicationsResource = new ApplicationsResource(null, applicationConverter, authorizationService, applicationService);
     }
 
     @Test
