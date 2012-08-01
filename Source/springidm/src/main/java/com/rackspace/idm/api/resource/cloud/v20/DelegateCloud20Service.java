@@ -1065,7 +1065,6 @@ public class DelegateCloud20Service implements Cloud20Service {
                 JSONConfiguration jsonConfiguration = JSONConfiguration.natural().rootUnwrapping(false).build();
                 JSONJAXBContext context = new JSONJAXBContext(jsonConfiguration, "org.openstack.docs.identity.api.v2");
                 JSONUnmarshaller jsonUnmarshaller = context.createJSONUnmarshaller();
-                StreamSource xml = new StreamSource(new StringReader(entity));
                 JAXBElement ob = jsonUnmarshaller.unmarshalJAXBElementFromJSON(new StringReader(entity), objectClass);
                 return ob.getValue();
             } else {

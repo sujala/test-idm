@@ -62,7 +62,6 @@ public class UserApplicationResource extends ParentResource {
         // Customer IdM can add any service to user
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
         getLogger().info("Provisioning application {} for user {}", applicationId, userId);
-        ScopeAccess token = this.scopeAccessService.getAccessTokenByAuthHeader(authHeader);
         Application application = this.applicationService.loadApplication(applicationId);
         User user = this.userService.loadUser(userId);
 
