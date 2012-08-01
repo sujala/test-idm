@@ -208,8 +208,7 @@ public class CloudMigrationService {
     EndpointList getEndpointsForUser(String userId) {
         ScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(userId, config.getString("cloudAuth.clientId"));
         List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(sa);
-        EndpointList list = endpointConverterCloudV20.toEndpointList(endpoints);
-        return list;
+        return endpointConverterCloudV20.toEndpointList(endpoints);
     }
 
 
@@ -833,8 +832,7 @@ public class CloudMigrationService {
         client.setCloud20Host(getCloudAuth20Url());
         client.setCloud11Host(getCloudAuth11Url());
         try {
-            SecretQA secretQA = client.getSecretQA(adminToken, userId);
-            return secretQA;
+            return client.getSecretQA(adminToken, userId);
         }
         catch (Exception ex) {
             logger.info("Failed to get secret QA from cloud: {}", ex.getMessage());

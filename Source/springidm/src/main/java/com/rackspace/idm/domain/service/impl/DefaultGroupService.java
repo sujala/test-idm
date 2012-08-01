@@ -41,20 +41,17 @@ public class DefaultGroupService implements GroupService {
 
     @Override
     public List<Group> getGroupsByMossoId(Integer mossoAccountId) {
-        List<Group> groups = null;
-        return groups;
+        return null;
     }
 
     @Override
     public List<Group> getGroupListByMossoId(Integer mossoAccountId) {
-        List<Group> groups = null;
-        return groups;
+        return null;
     }
 
     @Override
     public Group getGroupById(Integer groupId) {
-        Group group = groupDao.getGroupById(groupId);
-        return group;
+        return groupDao.getGroupById(groupId);
     }
 
     @Override

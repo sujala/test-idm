@@ -186,8 +186,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         throws LDAPPersistException {
         SearchResultEntry entry = this.getSingleEntry(TENANT_BASE_DN,
             SearchScope.ONE, searchFilter, ATTR_TENANT_SEARCH_ATTRIBUTES);
-        Tenant tenant = getTenant(entry);
-        return tenant;
+        return getTenant(entry);
     }
 
     Tenant getTenant(SearchResultEntry entry)
@@ -415,8 +414,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
     TenantRole getSingleTenantRole(String parentUniqueId,
         Filter searchFilter) throws LDAPPersistException {
         SearchResultEntry entry = this.getSingleEntry(parentUniqueId, SearchScope.SUB, searchFilter);
-        TenantRole role = getTenantRole(entry);
-        return role;
+        return getTenantRole(entry);
     }
 
     TenantRole getTenantRole(SearchResultEntry entry)
@@ -424,8 +422,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         if (entry == null) {
             return null;
         }
-        TenantRole role = LDAPPersister.getInstance(TenantRole.class).decode(entry);
-        return role;
+        return LDAPPersister.getInstance(TenantRole.class).decode(entry);
     }
 
     @Override
