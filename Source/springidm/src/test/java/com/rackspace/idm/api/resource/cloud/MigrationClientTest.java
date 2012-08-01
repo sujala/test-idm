@@ -22,7 +22,6 @@ public class MigrationClientTest {
     private String password;
     private String password1;
     private String username2;
-    private String username3;
     private String userId3;
 
     @Before
@@ -31,7 +30,6 @@ public class MigrationClientTest {
         password = "auth123";
         username2 = "cmarin2";
         password1 = "Password1";
-        username3 = "carlostest3";
         userId3 = "175017";
 
         client = new MigrationClient();
