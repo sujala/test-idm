@@ -15,6 +15,8 @@ import com.rackspace.api.idm.v1.Racker;
 import com.rackspace.api.idm.v1.Token;
 import com.rackspace.api.idm.v1.User;
 import com.rackspace.idm.domain.entity.AuthData;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AuthConverter {
 
@@ -23,6 +25,7 @@ public class AuthConverter {
     private final TokenConverter tokenConverter;
 
     private final ObjectFactory objectFactory = new ObjectFactory();
+    private Logger logger = LoggerFactory.getLogger(AuthConverter.class);
 
     public AuthConverter(TokenConverter tokenConverter,
         ApplicationConverter clientConverter, UserConverter userConverter) {
@@ -79,7 +82,7 @@ public class AuthConverter {
             }
 
         } catch (DatatypeConfigurationException e) {
-            e.printStackTrace();
+            logger.info("Failed to convert GregorianCalendar to XmlGregorianCalendar");
         }
 
         return null;

@@ -7,6 +7,8 @@ import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -21,6 +23,7 @@ public class TenantConverter {
 
 
     private final ObjectFactory objectFactory = new ObjectFactory();
+    private Logger logger = LoggerFactory.getLogger(TenantConverter.class);
 
 //    @Autowired
 //    private JAXBObjectFactories OBJ_FACTORIES;
@@ -48,7 +51,7 @@ public class TenantConverter {
                     .newXMLGregorianCalendar(gc);
                 jaxbTenant.setCreated(createdDate);
             } catch (DatatypeConfigurationException e) {
-                e.printStackTrace();
+               logger.info("failed to create XMLGregorianCalendar: " + e.getMessage());
             }
         }
         
@@ -62,7 +65,7 @@ public class TenantConverter {
                     .newXMLGregorianCalendar(gc);
                 jaxbTenant.setUpdated(updatedDate);
             } catch (DatatypeConfigurationException e) {
-                e.printStackTrace();
+                logger.info("failed to create XMLGregorianCalendar: " + e.getMessage());
             }
         }
         return jaxbTenant;

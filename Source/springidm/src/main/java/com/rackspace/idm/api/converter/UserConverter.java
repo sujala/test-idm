@@ -13,12 +13,15 @@ import com.rackspace.api.idm.v1.Role;
 import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.Users;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class UserConverter {
 
     private final ObjectFactory objectFactory = new ObjectFactory();
 
     private final RolesConverter rolesConverter;
+    private Logger logger = LoggerFactory.getLogger(UserConverter.class);
 
     public UserConverter(RolesConverter rolesConverter) {
         this.rolesConverter = rolesConverter;
@@ -164,8 +167,7 @@ public class UserConverter {
             }
 
         } catch (DatatypeConfigurationException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            logger.info("failed to create XMLGregorianCalendar: " + e.getMessage());
         }
 
         if (includePassword && user.getPasswordObj() != null

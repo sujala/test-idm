@@ -6,14 +6,18 @@ import java.security.SecureRandom;
 import java.util.Date;
 
 import org.apache.commons.codec.binary.Base64;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class HashHelper {
+    private static Logger logger = LoggerFactory.getLogger(HashHelper.class);
+
     public static String getRandomSha1() throws NoSuchAlgorithmException {
         SecureRandom random = null;
         try {
             random = SecureRandom.getInstance("SHA1PRNG");
         } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
+            logger.info("failed to Secure Random based on SHA1PRNG: " + e.getMessage());
         }
 
         // Salt generation 64 bits long

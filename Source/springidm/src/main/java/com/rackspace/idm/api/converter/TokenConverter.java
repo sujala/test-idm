@@ -13,11 +13,14 @@ import org.joda.time.DateTime;
 import com.rackspace.api.idm.v1.ObjectFactory;
 import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
 import com.rackspace.idm.domain.entity.Permission;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TokenConverter {
     
     private final ObjectFactory of = new ObjectFactory();
-    
+    private Logger logger = LoggerFactory.getLogger(TokenConverter.class);
+
     public TokenConverter() {
     }
 
@@ -40,8 +43,7 @@ public class TokenConverter {
             }
 
         } catch (DatatypeConfigurationException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            logger.info("failed to create XMLGregorianCalendar: " + e.getMessage());
         }
 
         return of.createToken(jaxbToken);
@@ -62,8 +64,7 @@ public class TokenConverter {
                         .toGregorianCalendar()));
 
         } catch (DatatypeConfigurationException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            logger.info("failed to create XMLGregorianCalendar: " + e.getMessage());
         }
 
         return jaxbToken;

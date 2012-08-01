@@ -8,6 +8,8 @@ import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
@@ -16,6 +18,8 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
 public class WebClientDevWrapper {
+
+    private static Logger logger = LoggerFactory.getLogger(WebClientDevWrapper.class);
 
     public static HttpClient wrapClient(HttpClient base) {
         try {
@@ -47,7 +51,7 @@ public class WebClientDevWrapper {
             //defaultHttpClient.addResponseInterceptor(new ResponseContentEncoding());
             return base;
         } catch (Exception ex) {
-            ex.printStackTrace();
+            logger.info("failed to wrap HttpClient " + ex.getMessage());
             return null;
         }
     }

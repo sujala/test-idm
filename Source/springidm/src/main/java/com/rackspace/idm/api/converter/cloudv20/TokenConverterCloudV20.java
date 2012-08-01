@@ -6,6 +6,8 @@ import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.TenantRole;
 import org.openstack.docs.identity.api.v2.TenantForAuthenticateResponse;
 import org.openstack.docs.identity.api.v2.Token;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -21,6 +23,7 @@ public class TokenConverterCloudV20 {
 
     @Autowired
     private JAXBObjectFactories OBJ_FACTORIES;
+    private Logger logger = LoggerFactory.getLogger(TokenConverterCloudV20.class);
 
     public Token toToken(ScopeAccess scopeAccess) {
         return toToken(scopeAccess, null);
@@ -44,7 +47,7 @@ public class TokenConverterCloudV20 {
             try {
                 expiresDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(gc);
             } catch (DatatypeConfigurationException e) {
-                e.printStackTrace();
+                logger.info("failed to create XMLGregorianCalendar: " + e.getMessage());
             }
             token.setExpires(expiresDate);
         }

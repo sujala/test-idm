@@ -7,11 +7,14 @@ import org.joda.time.DateTime;
 
 import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspacecloud.docs.auth.api.v1.Token;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TokenConverterCloudV11 {
     
     private final com.rackspacecloud.docs.auth.api.v1.ObjectFactory OBJ_FACTORY = new com.rackspacecloud.docs.auth.api.v1.ObjectFactory();
-    
+    private Logger logger = LoggerFactory.getLogger(TokenConverterCloudV11.class);
+
     public Token toCloudv11TokenJaxb(UserScopeAccess usa) {
         
         com.rackspacecloud.docs.auth.api.v1.Token token = OBJ_FACTORY.createToken();
@@ -29,8 +32,7 @@ public class TokenConverterCloudV11 {
                 }
 
             } catch (DatatypeConfigurationException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                logger.info("failed to create XMLGregorianCalendar: " + e.getMessage());
             }
         }
         return token;

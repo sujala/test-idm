@@ -8,6 +8,8 @@ import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.impl.DefaultUserService;
 import com.rackspacecloud.docs.auth.api.v1.*;
 import org.apache.commons.configuration.Configuration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -61,6 +63,8 @@ public class DelegateCloud11Service implements Cloud11Service {
     public static final String CLOUD_AUTH_11_URL = "cloudAuth11url";
     public static final String CLOUD_AUTH_ROUTING = "useCloudAuth";
     public static final String GA_SOURCE_OF_TRUTH = "gaIsSourceOfTruth";
+    private Logger logger = LoggerFactory.getLogger(DelegateCloud11Service.class);
+
     public DelegateCloud11Service() throws JAXBException {
     }
 
@@ -492,8 +496,7 @@ public class DelegateCloud11Service implements Cloud11Service {
         try {
             marshaller.marshal(jaxbObject, sw);
         } catch (JAXBException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            logger.info("failed to marshall object to string: " + e.getMessage());
         }
         return sw.toString();
     }
@@ -555,8 +558,7 @@ public class DelegateCloud11Service implements Cloud11Service {
             Unmarshaller unmarshaller = context.createUnmarshaller();
             cred = (JAXBElement<? extends Credentials>) unmarshaller.unmarshal(new StringReader(body));
         } catch (JAXBException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            logger.info("failed to extract XMLCredentials: " + e.getMessage());
         }
         return cred;
     }
