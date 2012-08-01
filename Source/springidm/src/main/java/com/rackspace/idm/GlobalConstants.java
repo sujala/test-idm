@@ -6,6 +6,8 @@ package com.rackspace.idm;
  */
 public final class GlobalConstants {
 
+    private GlobalConstants() {}
+
     public static final String NO_REPLY_EMAIL = "no-reply@idm.rackspace.com";
     public static final String API_NAMESPACE_LOCATION = "http://docs.rackspacecloud.com/idm/api/v1.0";
 

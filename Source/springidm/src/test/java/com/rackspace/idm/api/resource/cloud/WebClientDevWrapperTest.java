@@ -15,12 +15,6 @@ import static org.junit.Assert.assertThat;
  */
 public class WebClientDevWrapperTest {
 
-    WebClientDevWrapper webClientDevWrapper;
-
-    @Before
-    public void setUp() throws Exception {
-        webClientDevWrapper = new WebClientDevWrapper();
-    }
 
     @Test
     public void wrapClient_throwsException_returnsNull() throws Exception {

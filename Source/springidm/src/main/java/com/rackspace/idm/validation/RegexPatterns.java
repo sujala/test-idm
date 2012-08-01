@@ -7,4 +7,6 @@ public class RegexPatterns {
     public static final String USERNAME = "^[\\S].*";
 
     public static final String EMAIL_ADDRESS = ".+@.+\\.[\\w]+";
+
+    private RegexPatterns(){};
 }
