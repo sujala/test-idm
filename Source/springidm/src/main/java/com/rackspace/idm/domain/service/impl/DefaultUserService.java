@@ -657,10 +657,8 @@ public class DefaultUserService implements UserService {
             return false;
         } else if (user.getInMigration() == null) {
             return false;
-        } else if (!user.getInMigration()) {
-            return true;
         } else {
-            return false;
+            return !user.getInMigration();
         }
     }
 
