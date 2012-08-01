@@ -283,7 +283,7 @@ public class DefaultTenantService implements TenantService {
             } else {
                 parentDn = scopeAccess.getLDAPEntry().getParentDNString();
             }
-        } catch (LDAPException ex) {
+        } catch (Exception ex) {
             logger.info("failed to getLdapEntry's parentDNString: " + ex.getMessage());
             throw new IllegalStateException();
         }
