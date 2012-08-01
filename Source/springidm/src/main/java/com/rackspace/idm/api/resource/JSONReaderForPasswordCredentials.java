@@ -80,9 +80,9 @@ public class JSONReaderForPasswordCredentials implements
                                             .toString()));
                 }
                 if (verifyCurrentPassword != null) {
-                    if (verifyCurrentPassword.equals("false"))
+                    if (verifyCurrentPassword.equals("false")) {
                         creds.setVerifyCurrentPassword(false);
-                    else {
+                    } else {
                         creds.setVerifyCurrentPassword(true);
                     }
                 }

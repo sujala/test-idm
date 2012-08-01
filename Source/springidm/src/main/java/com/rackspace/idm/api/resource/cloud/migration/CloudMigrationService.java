@@ -567,10 +567,11 @@ public class CloudMigrationService {
         String defaultNewValue = StringUtils.defaultString(newValue);
 
         if (!StringUtils.equals(defaultOldValue, defaultNewValue)) {
-            if (mask)
+            if (mask) {
                 commentList.add(id + ":*****");
-            else
+            } else {
                 commentList.add(id + ":" + defaultOldValue);
+            }
         }
     }
 
@@ -613,11 +614,11 @@ public class CloudMigrationService {
         client.setCloud11Host(getCloudAuth11Url());
         AuthenticateResponse authenticateResponse;
         try {
-            if (!StringUtils.isEmpty(apiKey))
+            if (!StringUtils.isEmpty(apiKey)) {
                 authenticateResponse = client.authenticateWithApiKey(username, apiKey);
-            else if (!StringUtils.isEmpty(password))
+            } else if (!StringUtils.isEmpty(password)) {
                 authenticateResponse = client.authenticateWithPassword(username, password);
-            else {
+            } else {
                 throw new BadRequestException("Failed migration with incomplete credential information.");
             }
         }
@@ -932,10 +933,11 @@ public class CloudMigrationService {
         cloudBaseUrl.setInternalUrl(endpoint.getInternalURL());
         cloudBaseUrl.setOpenstackType(endpoint.getType());
 
-        if (!StringUtils.isBlank(endpoint.getPublicURL()))
+        if (!StringUtils.isBlank(endpoint.getPublicURL())) {
             cloudBaseUrl.setPublicUrl(endpoint.getPublicURL());
-        else
+        } else {
             cloudBaseUrl.setPublicUrl("https://");
+        }
 
         cloudBaseUrl.setServiceName(endpoint.getName());
         cloudBaseUrl.setRegion(endpoint.getRegion());
