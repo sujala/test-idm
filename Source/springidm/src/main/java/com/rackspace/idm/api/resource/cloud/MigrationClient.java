@@ -29,7 +29,7 @@ public class MigrationClient {
 
     private Logger logger = LoggerFactory.getLogger(MigrationClient.class);
 	
-	HttpClientWrapper client;
+	private HttpClientWrapper client;
 	
     private String cloud11Host = "";
 	private String cloud20Host = "";

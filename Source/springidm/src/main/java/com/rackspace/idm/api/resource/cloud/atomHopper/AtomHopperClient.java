@@ -43,7 +43,7 @@ public class AtomHopperClient {
     @Autowired
     private Configuration config;
 
-    HttpClient httpClient;
+    private HttpClient httpClient;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 

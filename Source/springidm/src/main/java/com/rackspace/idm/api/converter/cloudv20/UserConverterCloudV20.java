@@ -20,7 +20,7 @@ import java.util.List;
 @Component
 public class UserConverterCloudV20 {
     
-    ObjectFactory objectFactory = new ObjectFactory();
+    private ObjectFactory objectFactory = new ObjectFactory();
 
     @Autowired
     private RoleConverterCloudV20 roleConverterCloudV20;
