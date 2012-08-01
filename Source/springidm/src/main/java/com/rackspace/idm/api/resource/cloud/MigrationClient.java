@@ -21,9 +21,9 @@ import java.net.URISyntaxException;
 
 public class MigrationClient {
 
-    private final String USERS = "users/";
-    private final String FAILED_TO_CALL_CLOUD = "failed to call cloud";
-    private final String X_AUTH_TOKEN = "X-AUTH-TOKEN";
+    private static final String USERS = "users/";
+    private static final String FAILED_TO_CALL_CLOUD = "failed to call cloud";
+    private static final String X_AUTH_TOKEN = "X-AUTH-TOKEN";
 	
 	private ObjectFactory objectFactory = new ObjectFactory();
 

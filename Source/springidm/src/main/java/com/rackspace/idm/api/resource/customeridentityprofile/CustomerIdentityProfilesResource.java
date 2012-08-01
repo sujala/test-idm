@@ -62,20 +62,20 @@ public class CustomerIdentityProfilesResource extends ParentResource {
         customerDO.setDefaults();
         validateDomainObject(customerDO);
 
-        getLogger().debug("Adding Customer Identity Profile: {}", customerDO.getRCN());
+        getLogger().debug("Adding Customer Identity Profile: {}", customerDO.getRcn());
 
         try {
             this.customerService.addCustomer(customerDO);
         } catch (DuplicateException ex) {
             String errorMsg = String.format("A customer with that customerId already exists: %s",
-                customerDO.getRCN());
+                customerDO.getRcn());
             getLogger().warn(errorMsg);
             throw new CustomerConflictException(errorMsg, ex);
         }
 
         getLogger().debug("Added Customer Identity Profile: {}", customerDO);
 
-        String location = customerDO.getRCN();
+        String location = customerDO.getRcn();
 
 		return Response.created(URI.create(location)).build();
     }

@@ -18,7 +18,7 @@ public class CustomerConverter {
         Customer customer = new Customer();
 
         customer.setId(jaxbCustomer.getId());
-        customer.setRCN(jaxbCustomer.getCustomerId());
+        customer.setRcn(jaxbCustomer.getCustomerId());
         if (jaxbCustomer.isEnabled() != null) {
             customer.setEnabled(jaxbCustomer.isEnabled());
         }
@@ -30,7 +30,7 @@ public class CustomerConverter {
 
         IdentityProfile jaxbCustomer = objectFactory.createIdentityProfile();
         jaxbCustomer.setId(customer.getId());
-        jaxbCustomer.setCustomerId(customer.getRCN());
+        jaxbCustomer.setCustomerId(customer.getRcn());
         jaxbCustomer.setEnabled(customer.isEnabled());
 
         return objectFactory.createCustomerIdentityProfile(jaxbCustomer);

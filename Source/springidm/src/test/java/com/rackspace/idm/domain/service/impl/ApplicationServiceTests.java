@@ -646,7 +646,7 @@ public class ApplicationServiceTests {
 
     private Customer getFakeCustomer() {
         Customer customer = new Customer();
-        customer.setRCN(customerId);
+        customer.setRcn(customerId);
         return customer;
     }
 

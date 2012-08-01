@@ -36,10 +36,10 @@ public class DefaultCustomerService implements CustomerService {
         logger.info("Adding Customer: {}", customer);
 
         Customer exists = customerDao
-            .getCustomerByCustomerId(customer.getRCN());
+            .getCustomerByCustomerId(customer.getRcn());
 
         if (exists != null) {
-            String errMsg = String.format("Couldn't add customer %s because customerId already taken", customer.getRCN());
+            String errMsg = String.format("Couldn't add customer %s because customerId already taken", customer.getRcn());
             logger.warn(errMsg);
             throw new DuplicateException(errMsg);
         }
@@ -123,7 +123,7 @@ public class DefaultCustomerService implements CustomerService {
 //    private void process(Customer customer, boolean locked) {
 //        logger.info("Setting customer's locked state: {}", customer);
 //
-//        String customerId = customer.getRCN();
+//        String customerId = customer.getRcn();
 //
 //        // locks/unlockes all users under customer
 //        userDao.setUsersLockedFlagByCustomerId(customerId, locked);
