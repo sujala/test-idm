@@ -669,8 +669,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         ScopeAccess scopeAccess = scopeAccessDao
                 .getScopeAccessByRefreshToken(accessToken);
 
-        if (scopeAccess == null
-                || !(scopeAccess instanceof DelegatedClientScopeAccess)) {
+        if (!(scopeAccess instanceof DelegatedClientScopeAccess)) {
             return null;
         }
 

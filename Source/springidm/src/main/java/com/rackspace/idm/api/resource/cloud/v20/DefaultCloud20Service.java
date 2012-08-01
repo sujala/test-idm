@@ -683,7 +683,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                     logger.info("Impersonating token {} with token {} ", authenticationRequest.getToken(), newToken);
                     sa = scopeAccessService.getScopeAccessByAccessToken(newToken);
                 }
-                if (sa == null || ((HasAccessToken) sa).isAccessTokenExpired(new DateTime()) || !(sa instanceof UserScopeAccess)) {
+                if ( !(sa instanceof UserScopeAccess) || ((HasAccessToken) sa).isAccessTokenExpired(new DateTime())) {
                     String errMsg = "Token not authenticated";
                     logger.warn(errMsg);
                     throw new NotAuthenticatedException(errMsg);
