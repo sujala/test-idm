@@ -731,9 +731,9 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
     Applications getMultipleClients(Filter searchFilter, int offset, int limit) {
 
-        offset = offset < 0 ? this.getLdapPagingOffsetDefault() : offset;
-        limit = limit <= 0 ? this.getLdapPagingLimitDefault() : limit;
-        limit = limit > this.getLdapPagingLimitMax() ? this.getLdapPagingLimitMax() : limit;
+        int offsets = offset < 0 ? this.getLdapPagingOffsetDefault() : offset;
+        int limits = limit <= 0 ? this.getLdapPagingLimitDefault() : limit;
+        limits = limits > this.getLdapPagingLimitMax() ? this.getLdapPagingLimitMax() : limits;
 
         int contentCount = 0;
 
@@ -745,8 +745,8 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
         if (offset < contentCount) {
 
-            int toIndex = offset + limit > contentCount ? contentCount : offset + limit;
-            int fromIndex = offset;
+            int toIndex = offsets + limits > contentCount ? contentCount : offsets + limits;
+            int fromIndex = offsets;
 
             List<SearchResultEntry> subList = entries.subList(fromIndex, toIndex);
 
@@ -759,8 +759,8 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
         Applications clients = new Applications();
 
-        clients.setLimit(limit);
-        clients.setOffset(offset);
+        clients.setLimit(limits);
+        clients.setOffset(offsets);
         clients.setTotalRecords(contentCount);
         clients.setClients(clientList);
 
@@ -1086,8 +1086,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
             throws LDAPPersistException {
         SearchResultEntry entry = this.getSingleEntry(baseDN, SearchScope.SUB,
                 searchFilter);
-        ClientRole role = getClientRole(entry);
-        return role;
+        return getClientRole(entry);
     }
 
     ClientRole getClientRole(SearchResultEntry entry)

@@ -160,8 +160,7 @@ public class DelegatedClientScopeAccess extends ScopeAccess implements HasAccess
         }
             
         DateTime exp = new DateTime(this.authCodeExp);
-        boolean expired = exp.isBefore(time);
-        return expired;
+        return exp.isBefore(time);
     }
     
     @Override

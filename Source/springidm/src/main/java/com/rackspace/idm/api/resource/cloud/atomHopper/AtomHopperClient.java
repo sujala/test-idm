@@ -160,8 +160,7 @@ public class AtomHopperClient {
 
     public InputStreamEntity createRequestEntity(String s) throws UnsupportedEncodingException {
         InputStream isStream = new ByteArrayInputStream(s.getBytes("UTF-8"));
-        InputStreamEntity reqEntity = new InputStreamEntity(isStream, -1);
-        return reqEntity;
+        return new InputStreamEntity(isStream, -1);
     }
 
     public AtomFeed createAtomFeed(User user, String status) {
