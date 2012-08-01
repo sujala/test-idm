@@ -653,14 +653,15 @@ public class DefaultUserService implements UserService {
 
     @Override
     public boolean isMigratedUser(User user) {
-        if (user == null)
+        if (user == null) {
             return false;
-        else if (user.getInMigration() == null)
+        } else if (user.getInMigration() == null) {
             return false;
-        else if (!user.getInMigration())
+        } else if (!user.getInMigration()) {
             return true;
-        else
+        } else {
             return false;
+        }
     }
 
     private void setPasswordIfNecessary(User user) {
@@ -751,10 +752,11 @@ public class DefaultUserService implements UserService {
     public void removeBaseUrlFromUser(Integer baseUrlId, User user) {
         CloudBaseUrl baseUrl = endpointService.getBaseUrlById(baseUrlId);
         String tenantId;
-        if (baseUrl.getOpenstackType().equals("NAST"))
+        if (baseUrl.getOpenstackType().equals("NAST")) {
             tenantId = user.getNastId();
-        else
+        } else {
             tenantId = String.valueOf(user.getMossoId());
+        }
 
         Tenant tenant = this.tenantService.getTenant(tenantId);
         tenant.removeBaseUrlId(String.valueOf(baseUrl.getBaseUrlId()));
