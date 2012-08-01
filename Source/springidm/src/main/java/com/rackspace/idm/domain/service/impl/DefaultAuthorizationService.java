@@ -404,8 +404,18 @@ public class DefaultAuthorizationService implements AuthorizationService {
         }
     }
 
+    @Override
     public void verifyServiceAdminLevelAccess(ScopeAccess authScopeAccess) {
         if (!authorizeCloudIdentityAdmin(authScopeAccess) && !authorizeCloudServiceAdmin(authScopeAccess)) {
+            String errMsg = "Not authorized.";
+            logger.warn(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
+    }
+
+    @Override
+    public void verifyIdentityAdminLevelAccess(ScopeAccess authScopeAccess) {
+        if (!authorizeCloudIdentityAdmin(authScopeAccess)) {
             String errMsg = "Not authorized.";
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
