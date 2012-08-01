@@ -43,7 +43,7 @@ public class ApplicationResourceTest {
         customerClientServicesResource = mock(ProvisionedApplicationsResource.class);
         applicationTenantsResource = mock(ApplicationTenantsResource.class);
         applicationGlobalRolesResource = mock(ApplicationGlobalRolesResource.class);
-        applicationResource = new ApplicationResource(applicationTenantsResource,applicationGlobalRolesResource,customerClientServicesResource,applicationService,null,applicationConverter,authorizationService,null);
+        applicationResource = new ApplicationResource(applicationTenantsResource,applicationGlobalRolesResource,customerClientServicesResource,applicationService,applicationConverter,authorizationService,null);
     }
 
     @Test

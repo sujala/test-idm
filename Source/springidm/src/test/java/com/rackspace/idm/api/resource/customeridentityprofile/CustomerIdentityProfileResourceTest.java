@@ -32,7 +32,6 @@ public class CustomerIdentityProfileResourceTest {
     private PasswordRotationPolicyResource passwordRotationPolicyResource;
     private UsersResource usersResource;
     private CustomerService customerService;
-    private ScopeAccessService scopeAccessService;
     private CustomerConverter customerConverter;
     private AuthorizationService authorizationService;
     private ApplicationsResource applicationsResource;
@@ -43,13 +42,12 @@ public class CustomerIdentityProfileResourceTest {
         passwordRotationPolicyResource = mock(PasswordRotationPolicyResource.class);
         usersResource = mock(UsersResource.class);
         customerService = mock(CustomerService.class);
-        scopeAccessService = mock(ScopeAccessService.class);
         customerConverter = mock(CustomerConverter.class);
         authorizationService = mock(AuthorizationService.class);
         applicationsResource = mock(ApplicationsResource.class);
         inputValidator = mock(InputValidator.class);
 
-        customerIdentityProfileResource = new CustomerIdentityProfileResource(passwordRotationPolicyResource, usersResource, customerService, scopeAccessService,
+        customerIdentityProfileResource = new CustomerIdentityProfileResource(passwordRotationPolicyResource, usersResource, customerService,
                 customerConverter, authorizationService, applicationsResource, inputValidator);
     }
 

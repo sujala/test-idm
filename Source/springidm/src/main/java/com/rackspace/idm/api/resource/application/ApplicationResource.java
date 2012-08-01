@@ -31,7 +31,6 @@ public class ApplicationResource extends ParentResource {
 	private final ApplicationTenantsResource tenantsResource;
 	private final ApplicationGlobalRolesResource globalRolesResource;
     private final ProvisionedApplicationsResource provisionedApplicationsResource;
-    private final ScopeAccessService scopeAccessService;
     private final ApplicationConverter applicationConverter;
     private final ApplicationService applicationService;
     private final AuthorizationService authorizationService;
@@ -43,7 +42,7 @@ public class ApplicationResource extends ParentResource {
     	ApplicationTenantsResource tenantsResource,
     	ApplicationGlobalRolesResource globalRolesResource,
         ProvisionedApplicationsResource customerClientServicesResource,
-        ApplicationService clientService, ScopeAccessService scopeAccessService,
+        ApplicationService clientService,
         ApplicationConverter clientConverter,
         AuthorizationService authorizationService,
         InputValidator inputValidator) {
@@ -54,7 +53,6 @@ public class ApplicationResource extends ParentResource {
     	this.globalRolesResource = globalRolesResource;
         this.provisionedApplicationsResource = customerClientServicesResource;
         this.applicationService = clientService;
-        this.scopeAccessService = scopeAccessService;
         this.applicationConverter = clientConverter;
         this.authorizationService = authorizationService;
     }

@@ -29,19 +29,16 @@ public class CustomerIdentityProfilesResource extends ParentResource {
     
     private final CustomerIdentityProfileResource customerIdentityProfileResource;
     private final CustomerService customerService;
-    private final ScopeAccessService scopeAccessService;
     private final CustomerConverter customerConverter;
     private final AuthorizationService authorizationService;
 
     @Autowired
     public CustomerIdentityProfilesResource(CustomerIdentityProfileResource customerResource, CustomerService customerService,
-                                            ScopeAccessService scopeAccessService, InputValidator inputValidator, CustomerConverter customerConverter,
-                                            AuthorizationService authorizationService) {
+                                            InputValidator inputValidator, CustomerConverter customerConverter, AuthorizationService authorizationService) {
        
     	super(inputValidator);
         this.customerIdentityProfileResource = customerResource;
         this.customerService = customerService;
-        this.scopeAccessService = scopeAccessService;
         this.customerConverter = customerConverter;
         this.authorizationService = authorizationService;
     }

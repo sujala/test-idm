@@ -26,7 +26,6 @@ public class Cloud11VersionResource {
 
     private final Configuration config;
     private final CloudClient cloudClient;
-    private final CloudContractDescriptionBuilder cloudContractDescriptionBuilder;
 
     @Autowired
     private DefaultCloud11Service defaultCloud11Service;
@@ -38,11 +37,9 @@ public class Cloud11VersionResource {
     private UriInfo uriInfo;
 
     @Autowired
-    public Cloud11VersionResource(Configuration config, CloudClient cloudClient,
-                                  CloudContractDescriptionBuilder cloudContractDescriptionBuilder) {
+    public Cloud11VersionResource(Configuration config, CloudClient cloudClient) {
         this.config = config;
         this.cloudClient = cloudClient;
-        this.cloudContractDescriptionBuilder = cloudContractDescriptionBuilder;
     }
 
     public Response getPublicCloud11VersionInfo(@Context HttpHeaders httpHeaders) throws IOException {

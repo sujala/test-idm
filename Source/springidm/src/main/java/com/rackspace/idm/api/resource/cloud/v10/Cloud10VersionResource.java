@@ -66,20 +66,17 @@ public class Cloud10VersionResource {
     private final Configuration config;
     private final CloudClient cloudClient;
     private final ScopeAccessService scopeAccessService;
-    private final EndpointService endpointService;
     private final EndpointConverterCloudV11 endpointConverterCloudV11;
     private final UserService userService;
 
     @Autowired
     public Cloud10VersionResource(Configuration config,
         CloudClient cloudClient, ScopeAccessService scopeAccessService,
-        EndpointService endpointService,
         EndpointConverterCloudV11 endpointConverterCloudV11,
         UserService userService) {
         this.config = config;
         this.cloudClient = cloudClient;
         this.scopeAccessService = scopeAccessService;
-        this.endpointService = endpointService;
         this.endpointConverterCloudV11 = endpointConverterCloudV11;
         this.userService = userService;
     }

@@ -25,18 +25,10 @@ import javax.ws.rs.core.UriInfo;
 @Component
 public class MigrationResource {
 
-    private final TenantsResource tenantsResource;
-    
-    @Context
-    private UriInfo uriInfo;
-
     @Autowired
     CloudMigrationService cloudMigrationService;
 
-    @Autowired
-    public MigrationResource(TenantsResource tenantsResource) {
-        this.tenantsResource = tenantsResource;
-    }
+    public MigrationResource(){};
 
     @GET
     @Path("cloud/users")

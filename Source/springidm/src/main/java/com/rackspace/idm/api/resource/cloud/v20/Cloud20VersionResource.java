@@ -46,9 +46,6 @@ public class Cloud20VersionResource {
     @Autowired
     private DelegateCloud20Service delegateCloud20Service;
 
-    @Context
-    private UriInfo uriInfo;
-
     @Autowired
     public Cloud20VersionResource(Configuration config,
         CloudContractDescriptionBuilder cloudContractDescriptionBuilder) {

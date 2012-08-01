@@ -20,8 +20,7 @@ import static org.mockito.Mockito.when;
  * Time: 2:55 PM
  */
 public class ApiExceptionMapperTest {
-    ResourceBundle resourceBundle = mock(ResourceBundle.class);
-    ApiExceptionMapper apiExceptionMapper = new ApiExceptionMapper(resourceBundle);
+    ApiExceptionMapper apiExceptionMapper = new ApiExceptionMapper();
 
     @Test
     public void toResponse_ApplicationExceptionCausedByNotProvisionedException_setsExceptionToCause() throws Exception {

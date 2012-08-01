@@ -21,14 +21,12 @@ import static org.mockito.Mockito.*;
  */
 public class MigrationResourceTest {
     private MigrationResource migrationResource;
-    private TenantsResource tenantsResource;
     private CloudMigrationService cloudMigrationService;
 
     @Before
     public void setUp() throws Exception {
-        tenantsResource = mock(TenantsResource.class);
         cloudMigrationService = mock(CloudMigrationService.class);
-        migrationResource = new MigrationResource(tenantsResource);
+        migrationResource = new MigrationResource();
         migrationResource.setCloudMigrationService(cloudMigrationService);
     }
 

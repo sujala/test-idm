@@ -38,11 +38,6 @@ public class CloudVersionsResource {
     private final Configuration config;
     private final CloudContractDescriptionBuilder cloudContractDescriptionBuilder;
 
-    final private Logger logger = LoggerFactory.getLogger(this.getClass());
-
-    @Context
-    private UriInfo uriInfo;
-
     @Autowired
     public CloudVersionsResource(Cloud10VersionResource cloud10VersionResource,
                                  Cloud11VersionResource cloud11VersionResource,

@@ -24,19 +24,12 @@ import java.util.ResourceBundle;
 @Component
 @Provider
 public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
-    private final ResourceBundle faultMessageConfig;
     private final Logger logger = LoggerFactory.getLogger(ApiExceptionMapper.class);
     private final com.rackspacecloud.docs.auth.api.v1.ObjectFactory cloud_of = new com.rackspacecloud.docs.auth.api.v1.ObjectFactory();
     private final com.rackspace.api.common.fault.v1.ObjectFactory rax_of = new com.rackspace.api.common.fault.v1.ObjectFactory();
     private final com.rackspace.api.idm.v1.ObjectFactory ga_of = new com.rackspace.api.idm.v1.ObjectFactory();
 
-    @Context
-    private HttpHeaders headers;
-
-    @Autowired
-    public ApiExceptionMapper(ResourceBundle faultMessageConfig) {
-        this.faultMessageConfig = faultMessageConfig;
-    }
+    public ApiExceptionMapper() {}
 
     @Override
     public Response toResponse(Throwable thrown) {

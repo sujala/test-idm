@@ -145,7 +145,7 @@ public class  ServiceConfiguration {
     @Bean
     public UserService userService() {
         return new DefaultUserService(userRepo, authDao,
-            scopeAccessDao, clientService(), config, tokenService(), passwordComplexityService());
+            scopeAccessDao, clientService(), config, passwordComplexityService());
     }
 
     @Bean

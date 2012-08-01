@@ -29,7 +29,6 @@ import java.util.List;
 @Component("applicationGlobalRolesResource")
 public class ApplicationGlobalRolesResource {
 
-    private final ScopeAccessService scopeAccessService;
     private final TenantService tenantService;
     private final ApplicationService clientService;
     private final AuthorizationService authorizationService;
@@ -41,11 +40,9 @@ public class ApplicationGlobalRolesResource {
     @Autowired
     public ApplicationGlobalRolesResource(TenantService tenantService,
         AuthorizationService authorizationService, ApplicationService clientService,
-        ScopeAccessService scopeAccessService,
         ApplicationGlobalRoleResource roleResource, RolesConverter rolesConverter) {
         this.clientService = clientService;
         this.tenantService = tenantService;
-        this.scopeAccessService = scopeAccessService;
         this.authorizationService = authorizationService;
         this.roleResource = roleResource;
         this.rolesConverter = rolesConverter;

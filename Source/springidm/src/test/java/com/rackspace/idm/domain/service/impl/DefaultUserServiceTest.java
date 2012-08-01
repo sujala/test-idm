@@ -34,7 +34,6 @@ public class DefaultUserServiceTest {
     private ScopeAccessDao scopeAccessDao;
     private ApplicationService applicationService;
     private Configuration config;
-    private TokenService tokenService;
     private PasswordComplexityService passwordComplexityService;
     private ScopeAccessService scopeAccessService;
     private AuthorizationService authorizationService;
@@ -48,14 +47,13 @@ public class DefaultUserServiceTest {
         scopeAccessDao = mock(ScopeAccessDao.class);
         applicationService = mock(ApplicationService.class);
         config = mock(Configuration.class);
-        tokenService = mock(TokenService.class);
         passwordComplexityService = mock(PasswordComplexityService.class);
         scopeAccessService = mock(ScopeAccessService.class);
         authorizationService = mock(AuthorizationService.class);
         tenantService = mock(TenantService.class);
         endpointService = mock(EndpointService.class);
 
-        defaultUserService = new DefaultUserService(userDao, authDao, scopeAccessDao, applicationService, config, tokenService, passwordComplexityService);
+        defaultUserService = new DefaultUserService(userDao, authDao, scopeAccessDao, applicationService, config, passwordComplexityService);
 
         defaultUserService.setAuthorizationService(authorizationService);
         defaultUserService.setScopeAccessService(scopeAccessService);

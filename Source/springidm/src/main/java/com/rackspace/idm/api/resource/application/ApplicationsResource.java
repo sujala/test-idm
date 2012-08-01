@@ -46,7 +46,6 @@ import com.sun.jersey.core.provider.EntityHolder;
 public class ApplicationsResource extends ParentResource {
 
 	private final ApplicationResource applicationResource;
-    private final ScopeAccessService scopeAccessService;
     private final ApplicationConverter applicationConverter;
     private final ApplicationService applicationService;
     private final AuthorizationService authorizationService;
@@ -54,7 +53,7 @@ public class ApplicationsResource extends ParentResource {
     @Autowired
     public ApplicationsResource(
     	ApplicationResource applicationResource,
-        ApplicationService applicationService, ScopeAccessService scopeAccessService,
+        ApplicationService applicationService,
         ApplicationConverter applicationConverter,
         AuthorizationService authorizationService,
         InputValidator inputValidator) {
@@ -62,7 +61,6 @@ public class ApplicationsResource extends ParentResource {
         super(inputValidator);
         this.applicationResource = applicationResource;
         this.applicationService = applicationService;
-        this.scopeAccessService = scopeAccessService;
         this.applicationConverter = applicationConverter;
         this.authorizationService = authorizationService;
     }

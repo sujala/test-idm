@@ -22,14 +22,12 @@ import javax.ws.rs.core.Response;
 public class UserApplicationsResource extends ParentResource {
 
     private final UserApplicationResource applicationResource;
-    private final ScopeAccessService scopeAccessService;
     private final ApplicationConverter applicationConverter;
     private final UserService userService;
     private final AuthorizationService authorizationService;
 
     @Autowired
     public UserApplicationsResource(UserApplicationResource applicationResource,
-        ScopeAccessService scopeAccessService,
         ApplicationConverter clientConverter,
         UserService userService,
         AuthorizationService authorizationService,
@@ -37,7 +35,6 @@ public class UserApplicationsResource extends ParentResource {
     	
     	super(inputValidator);
         this.applicationResource = applicationResource;
-        this.scopeAccessService = scopeAccessService;
         this.applicationConverter = clientConverter;
         this.authorizationService = authorizationService;
         this.userService = userService;

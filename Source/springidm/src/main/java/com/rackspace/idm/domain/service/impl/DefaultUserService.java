@@ -25,7 +25,6 @@ public class DefaultUserService implements UserService {
     private static final Pattern EMAIL_PATTERN = Pattern.compile(".+@.+\\.[\\w]+");
     private final AuthDao authDao;
     private final ApplicationService clientService;
-    private final TokenService oauthService;
     private final Configuration config;
 
     private final PasswordComplexityService passwordComplexityService;
@@ -49,7 +48,7 @@ public class DefaultUserService implements UserService {
 
     public DefaultUserService(UserDao userDao, AuthDao rackerDao,
                               ScopeAccessDao scopeAccessDao,
-                              ApplicationService clientService, Configuration config, TokenService oauthService,
+                              ApplicationService clientService, Configuration config,
                               PasswordComplexityService passwordComplexityService) {
 
         this.userDao = userDao;
@@ -57,7 +56,6 @@ public class DefaultUserService implements UserService {
         this.scopeAccessDao = scopeAccessDao;
         this.clientService = clientService;
         this.config = config;
-        this.oauthService = oauthService;
         this.passwordComplexityService = passwordComplexityService;
     }
 

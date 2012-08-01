@@ -30,8 +30,7 @@ public class ApplicationsResource extends ParentResource {
     @Autowired
     public ApplicationsResource(
             InputValidator inputValidator, ApplicationConverter applicationConverter,
-            AuthorizationService authorizationService, ApplicationService applicationService,
-            Configuration config) {
+            AuthorizationService authorizationService, ApplicationService applicationService) {
 
         super(inputValidator);
         this.applicationConverter = applicationConverter;

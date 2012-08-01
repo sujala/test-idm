@@ -88,9 +88,6 @@ public class DelegateCloud20Service implements Cloud20Service {
     private AuthorizationService authorizationService;
 
     @Autowired
-    private TokenConverterCloudV20 tokenConverterCloudV20;
-
-    @Autowired
     private JAXBObjectFactories OBJ_FACTORIES;
 
     @Autowired
