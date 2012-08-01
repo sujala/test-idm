@@ -121,8 +121,7 @@ public class DefaultApplicationService implements ApplicationService {
             throw new DuplicateException(String.format("PermissionId %s already exists", client.getName()));
         }
 
-        permission = this.scopeAccessDao.definePermission(sa.getUniqueId(), permission);
-        logger.debug("Defined Permission: {}", permission);
+        logger.debug("Defined Permission: {}", this.scopeAccessDao.definePermission(sa.getUniqueId(), permission));
     }
 
     @Override

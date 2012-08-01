@@ -743,7 +743,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
         contentCount = entries.size();
 
-        if (offset < contentCount) {
+        if (offsets < contentCount) {
 
             int toIndex = offsets + limits > contentCount ? contentCount : offsets + limits;
             int fromIndex = offsets;

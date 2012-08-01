@@ -1356,11 +1356,15 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     boolean isUserAdmin(ScopeAccess requesterScopeAccess, List<TenantRole> tenantRoles) {
+        List<TenantRole> tenantRoleList;
         if (tenantRoles == null) {
-            tenantRoles = tenantService.getTenantRolesForScopeAccess(requesterScopeAccess);
+            tenantRoleList = tenantService.getTenantRolesForScopeAccess(requesterScopeAccess);
+        }
+        else {
+            tenantRoleList = tenantRoles;
         }
         boolean hasRole = false;
-        for (TenantRole tenantRole : tenantRoles) {
+        for (TenantRole tenantRole : tenantRoleList) {
             String name = tenantRole.getName();
             if (name.equals("identity:user-admin")) {
                 hasRole = true;
@@ -1370,11 +1374,15 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     boolean isDefaultUser(ScopeAccess requesterScopeAccess, List<TenantRole> tenantRoles) {
+        List<TenantRole> tenantRoleList;
         if (tenantRoles == null) {
-            tenantRoles = tenantService.getTenantRolesForScopeAccess(requesterScopeAccess);
+            tenantRoleList = tenantService.getTenantRolesForScopeAccess(requesterScopeAccess);
+        }
+        else {
+            tenantRoleList = tenantRoles;
         }
         boolean hasRole = false;
-        for (TenantRole tenantRole : tenantRoles) {
+        for (TenantRole tenantRole : tenantRoleList) {
             String name = tenantRole.getName();
             if (name.equals("identity:default")) {
                 hasRole = true;
@@ -1417,8 +1425,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             ScopeAccess sa = checkAndGetToken(tokenId);
             if (sa instanceof ImpersonatedScopeAccess) {
                 ImpersonatedScopeAccess impersonatedScopeAccess = (ImpersonatedScopeAccess) sa;
-                tokenId = impersonatedScopeAccess.getImpersonatingToken();
-                sa = scopeAccessService.getScopeAccessByAccessToken(tokenId);
+                String impersonatedTokenId = impersonatedScopeAccess.getImpersonatingToken();
+                sa = scopeAccessService.getScopeAccessByAccessToken(impersonatedTokenId);
             }
 
             List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(sa);
