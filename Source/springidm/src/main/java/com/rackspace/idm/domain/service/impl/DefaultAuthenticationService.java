@@ -230,8 +230,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
                 throw new NotAuthenticatedException(message);
             }
 
-            RackerScopeAccess scopeAccess = this.getAndUpdateRackerScopeAccessForClientId((Racker) uaResult.getUser(), caResult.getClient());
-            return scopeAccess;
+            return this.getAndUpdateRackerScopeAccessForClientId((Racker) uaResult.getUser(), caResult.getClient());
         }
 
         if (trParam instanceof RSACredentials) {
@@ -241,8 +240,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
                 logger.warn(message);
                 throw new NotAuthenticatedException(message);
             }
-            RackerScopeAccess scopeAccess = this.getAndUpdateRackerScopeAccessForClientId((Racker) uaResult.getUser(), caResult.getClient());
-            return scopeAccess;
+            return this.getAndUpdateRackerScopeAccessForClientId((Racker) uaResult.getUser(), caResult.getClient());
         }
 
         if (PASSWORD == grantType) {

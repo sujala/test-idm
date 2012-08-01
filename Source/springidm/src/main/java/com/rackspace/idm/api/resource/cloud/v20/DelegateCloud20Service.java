@@ -99,7 +99,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     private AuthorizationService authorizationService;
 
     @Autowired
-    private JAXBObjectFactories OBJ_FACTORIES;
+    private JAXBObjectFactories objFactories;
 
     @Autowired
     private ExceptionHandler exceptionHandler;
@@ -193,7 +193,7 @@ public class DelegateCloud20Service implements Cloud20Service {
                     } catch (DatatypeConfigurationException e) {
                         LOG.info("failed to create XMLGregorianCalendar: " + e.getMessage());
                     }
-                    return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createAccess(authenticateResponse).getValue());
+                    return Response.ok(objFactories.getOpenStackIdentityV2Factory().createAccess(authenticateResponse).getValue());
                 }
                 return serviceResponse;
             }
@@ -253,11 +253,11 @@ public class DelegateCloud20Service implements Cloud20Service {
         List<TenantRole> impRoles = tenantService.getGlobalRolesForUser(impersonator, null);
         UserForAuthenticateResponse userForAuthenticateResponse = userConverterCloudV20.toUserForAuthenticateResponse(impersonator, impRoles);
 
-        com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = OBJ_FACTORIES.getRackspaceIdentityExtRaxgaV1Factory();
+        com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = objFactories.getRackspaceIdentityExtRaxgaV1Factory();
         JAXBElement<UserForAuthenticateResponse> impersonatorJAXBElement = raxAuthObjectFactory.createImpersonator(userForAuthenticateResponse);
         validateResponse.getAny().add(impersonatorJAXBElement);
 
-        return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createAccess(validateResponse).getValue());
+        return Response.ok(objFactories.getOpenStackIdentityV2Factory().createAccess(validateResponse).getValue());
     }
 
 
@@ -1278,7 +1278,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     public void setObjFactories(JAXBObjectFactories OBJ_FACTORIES) {
-        this.OBJ_FACTORIES = OBJ_FACTORIES;
+        this.objFactories = OBJ_FACTORIES;
     }
 
     public void setObjectFactoryRAXKSKEY(com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory objectFactoryRAXKSKEY) {

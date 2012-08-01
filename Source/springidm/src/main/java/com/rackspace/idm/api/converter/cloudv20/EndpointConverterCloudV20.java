@@ -19,12 +19,12 @@ import java.util.List;
 public class EndpointConverterCloudV20 {
 
     @Autowired
-    private JAXBObjectFactories OBJ_FACTORIES;
+    private JAXBObjectFactories objFactories;
 
     private OpenStackServiceCatalogFactory sf = new OpenStackServiceCatalogFactory();
 
     public ServiceCatalog toServiceCatalog(List<OpenstackEndpoint> endpoints) {
-        ServiceCatalog catalog = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+        ServiceCatalog catalog = objFactories.getOpenStackIdentityV2Factory()
             .createServiceCatalog();
 
         if (endpoints == null || endpoints.size() == 0) {
@@ -37,7 +37,7 @@ public class EndpointConverterCloudV20 {
     }
 
     public EndpointList toEndpointList(List<OpenstackEndpoint> endpoints) {
-        EndpointList list = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+        EndpointList list = objFactories.getOpenStackIdentityV2Factory()
             .createEndpointList();
 
         if (endpoints == null || endpoints.size() == 0) {
@@ -51,7 +51,7 @@ public class EndpointConverterCloudV20 {
                 version.setInfo(baseUrl.getVersionInfo());
                 version.setList(baseUrl.getVersionList());
 
-                Endpoint endpoint = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createEndpoint();
+                Endpoint endpoint = objFactories.getOpenStackIdentityV2Factory().createEndpoint();
                 endpoint.setAdminURL(baseUrl.getAdminUrl());
                 endpoint.setId(baseUrl.getBaseUrlId());     //TODO: throws null pointer of Id is not set.
                 endpoint.setInternalURL(baseUrl.getInternalUrl());
@@ -70,7 +70,7 @@ public class EndpointConverterCloudV20 {
     }
 
     public EndpointList toEndpointListFromBaseUrls(List<CloudBaseUrl> endpoints) {
-        EndpointList list = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+        EndpointList list = objFactories.getOpenStackIdentityV2Factory()
             .createEndpointList();
 
         if (endpoints == null || endpoints.size() == 0) {
@@ -83,7 +83,7 @@ public class EndpointConverterCloudV20 {
             version.setInfo(baseUrl.getVersionInfo());
             version.setList(baseUrl.getVersionList());
 
-            Endpoint endpoint = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createEndpoint();
+            Endpoint endpoint = objFactories.getOpenStackIdentityV2Factory().createEndpoint();
             endpoint.setAdminURL(baseUrl.getAdminUrl());
             endpoint.setId(baseUrl.getBaseUrlId());     //TODO: throws null pointer of Id is not set. Only going from Endpoints to BaseUrls throws the NPE
             endpoint.setInternalURL(baseUrl.getInternalUrl());
@@ -107,7 +107,7 @@ public class EndpointConverterCloudV20 {
         version.setInfo(baseUrl.getVersionInfo());
         version.setList(baseUrl.getVersionList());
 
-        EndpointTemplate template = OBJ_FACTORIES.getOpenStackIdentityExtKscatalogV1Factory().createEndpointTemplate();
+        EndpointTemplate template = objFactories.getOpenStackIdentityExtKscatalogV1Factory().createEndpointTemplate();
         template.setAdminURL(baseUrl.getAdminUrl());
         template.setEnabled(baseUrl.getEnabled());
         template.setGlobal(baseUrl.getGlobal());
@@ -126,7 +126,7 @@ public class EndpointConverterCloudV20 {
 
     public EndpointTemplateList toEndpointTemplateList(
         List<CloudBaseUrl> baseUrls) {
-        EndpointTemplateList list = OBJ_FACTORIES
+        EndpointTemplateList list = objFactories
             .getOpenStackIdentityExtKscatalogV1Factory()
             .createEndpointTemplateList();
 
@@ -147,7 +147,7 @@ public class EndpointConverterCloudV20 {
         version.setInfo(baseUrl.getVersionInfo());
         version.setList(baseUrl.getVersionList());
 
-        Endpoint endpoint = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createEndpoint();
+        Endpoint endpoint = objFactories.getOpenStackIdentityV2Factory().createEndpoint();
         endpoint.setAdminURL(baseUrl.getAdminUrl());
         endpoint.setId(baseUrl.getBaseUrlId());
         endpoint.setInternalURL(baseUrl.getInternalUrl());
@@ -181,7 +181,7 @@ public class EndpointConverterCloudV20 {
     }
 
     public void setObjFactories(JAXBObjectFactories OBJ_FACTORIES) {
-        this.OBJ_FACTORIES = OBJ_FACTORIES;
+        this.objFactories = OBJ_FACTORIES;
     }
 
     public void setSf(OpenStackServiceCatalogFactory sf) {

@@ -86,7 +86,7 @@ public class LdapScopeAccessPeristenceRepositoryIntegrationTest extends InMemory
 
     @After
     public void postTestTearDown() throws Exception {
-        customerRepo.deleteCustomer(customer.getRCN());
+        customerRepo.deleteCustomer(customer.getRcn());
         clientRepo.deleteClient(client);
         clientRepo.deleteClient(client2);
     }
@@ -670,7 +670,7 @@ public class LdapScopeAccessPeristenceRepositoryIntegrationTest extends InMemory
     private Customer createTestCustomerInstance(String customerId) {
 
         final Customer newCustomer = new Customer();
-        newCustomer.setRCN(customerId);
+        newCustomer.setRcn(customerId);
         return newCustomer;
     }
 

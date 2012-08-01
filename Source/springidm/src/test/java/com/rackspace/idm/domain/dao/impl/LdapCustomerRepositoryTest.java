@@ -4,7 +4,6 @@ import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.entity.Customer;
 import com.unboundid.ldap.sdk.*;
 import org.apache.commons.configuration.Configuration;
-import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -148,7 +147,7 @@ public class LdapCustomerRepositoryTest extends InMemoryLdapIntegrationTest{
     @Test (expected = IllegalArgumentException.class)
     public void updateCustomer_customerNotFound_throwsIllegalArgument() throws Exception {
         Customer customer = new Customer();
-        customer.setRCN("rcn");
+        customer.setRcn("rcn");
         doReturn(null).when(spy).getCustomerByCustomerId("rcn");
         spy.updateCustomer(customer);
     }
@@ -156,7 +155,7 @@ public class LdapCustomerRepositoryTest extends InMemoryLdapIntegrationTest{
     @Test
     public void updateCustomer_noModification_returns()throws Exception {
         Customer customer = new Customer();
-        customer.setRCN("rcn");
+        customer.setRcn("rcn");
         doReturn(customer).when(spy).getCustomerByCustomerId("rcn");
         doReturn(new ArrayList<Modification>()).when(spy).getModifications(customer, customer);
         spy.updateCustomer(customer);
@@ -166,7 +165,7 @@ public class LdapCustomerRepositoryTest extends InMemoryLdapIntegrationTest{
     @Test
     public void updateCustomer_callsUpdateEntry() throws Exception {
         Customer customer = new Customer();
-        customer.setRCN("rcn");
+        customer.setRcn("rcn");
         Modification modification = new Modification(ModificationType.REPLACE, "replace");
         doReturn(customer).when(spy).getCustomerByCustomerId("rcn");
         ArrayList<Modification> mods = new ArrayList<Modification>();
@@ -181,7 +180,7 @@ public class LdapCustomerRepositoryTest extends InMemoryLdapIntegrationTest{
     public void getAddAttributes_addsAllAttributes_returnsArray() throws Exception {
         Customer customer = new Customer();
         customer.setId("id");
-        customer.setRCN("rcn");
+        customer.setRcn("rcn");
         customer.setEnabled(true);
         Attribute[] result = ldapCustomerRepository.getAddAttributes(customer);
         assertThat("id", result[1].getValue(), equalTo("id"));
@@ -205,7 +204,7 @@ public class LdapCustomerRepositoryTest extends InMemoryLdapIntegrationTest{
         attributes[3] = new Attribute(LdapRepository.ATTR_ENABLED, "true");
         SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId",attributes);
         Customer result = ldapCustomerRepository.getCustomer(searchResultEntry);
-        assertThat("rcn", result.getRCN(), equalTo("rcn"));
+        assertThat("rcn", result.getRcn(), equalTo("rcn"));
         assertThat("password rotation duration", result.getPasswordRotationDuration(), equalTo(1));
         assertThat("password rotation enabled", result.getPasswordRotationEnabled(), equalTo(true));
         assertThat("enabled", result.isEnabled(), equalTo(true));

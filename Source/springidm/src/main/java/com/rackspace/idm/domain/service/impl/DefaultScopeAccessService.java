@@ -782,8 +782,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         final UserAuthenticationResult result = userDao.authenticateByAPIKey(username, apiKey);
         handleApiKeyUsernameAuthenticationFailure(username, result);
 
-        final UserScopeAccess scopeAccess = this.getValidUserScopeAccessForClientId(result.getUser().getUniqueId(), clientId);
-        return scopeAccess;
+        return this.getValidUserScopeAccessForClientId(result.getUser().getUniqueId(), clientId);
     }
 
     @Override
@@ -793,8 +792,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         final UserAuthenticationResult result = this.userDao.authenticate(username, password);
         handleAuthenticationFailure(username, result);
 
-        final UserScopeAccess scopeAccess = this.getValidUserScopeAccessForClientId(result.getUser().getUniqueId(), clientId);
-        return scopeAccess;
+        return this.getValidUserScopeAccessForClientId(result.getUser().getUniqueId(), clientId);
     }
 
     @Override

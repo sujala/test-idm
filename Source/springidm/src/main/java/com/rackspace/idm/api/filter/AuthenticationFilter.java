@@ -37,7 +37,7 @@ import java.util.UUID;
 @Component
 public class AuthenticationFilter implements ContainerRequestFilter,
         ApplicationContextAware {
-    private final String GET = "GET";
+    private static final String GET = "GET";
     private final AuthHeaderHelper authHeaderHelper = new AuthHeaderHelper();
     private final Logger logger = LoggerFactory.getLogger(AuthenticationFilter.class);
 

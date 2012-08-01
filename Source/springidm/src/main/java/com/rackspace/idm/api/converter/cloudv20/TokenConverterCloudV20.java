@@ -22,7 +22,7 @@ import java.util.List;
 public class TokenConverterCloudV20 {
 
     @Autowired
-    private JAXBObjectFactories OBJ_FACTORIES;
+    private JAXBObjectFactories objFactories;
     private Logger logger = LoggerFactory.getLogger(TokenConverterCloudV20.class);
 
     public Token toToken(ScopeAccess scopeAccess) {
@@ -30,7 +30,7 @@ public class TokenConverterCloudV20 {
     }
 
     public Token toToken(ScopeAccess scopeAccess, List<TenantRole> roles) {
-        Token token = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createToken();
+        Token token = objFactories.getOpenStackIdentityV2Factory().createToken();
 
         if (scopeAccess instanceof HasAccessToken) {
 
@@ -90,6 +90,6 @@ public class TokenConverterCloudV20 {
     */
 
     public void setObjFactories(JAXBObjectFactories OBJ_FACTORIES) {
-        this.OBJ_FACTORIES = OBJ_FACTORIES;
+        this.objFactories = OBJ_FACTORIES;
     }
 }

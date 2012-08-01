@@ -26,11 +26,11 @@ public class AuthConverterCloudV11 {
         this.endpointConverter = endpointConverter;
     }
 
-    private final com.rackspacecloud.docs.auth.api.v1.ObjectFactory OBJ_FACTORY = new com.rackspacecloud.docs.auth.api.v1.ObjectFactory();
+    private final com.rackspacecloud.docs.auth.api.v1.ObjectFactory objFactory = new com.rackspacecloud.docs.auth.api.v1.ObjectFactory();
 
     public AuthData toCloudv11AuthDataJaxb(UserScopeAccess usa, List<OpenstackEndpoint> endpoints) {
 
-        AuthData auth = OBJ_FACTORY.createAuthData();
+        AuthData auth = objFactory.createAuthData();
 
         auth.setToken(this.tokenConverter.toCloudv11TokenJaxb(usa));
 
@@ -43,7 +43,7 @@ public class AuthConverterCloudV11 {
     }
 
     public FullToken toCloudV11TokenJaxb(UserScopeAccess usa, String requestUrl) {
-        FullToken token = OBJ_FACTORY.createFullToken();
+        FullToken token = objFactory.createFullToken();
 
         token.setId(usa.getAccessTokenString());
         token.setUserId(usa.getUsername());

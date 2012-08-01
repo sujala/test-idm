@@ -65,15 +65,15 @@ public class LdapCustomerRepositoryIntegrationTest extends InMemoryLdapIntegrati
     public void shouldAddNewCustomer() {
         Customer checkCustomer = repo.getCustomerByCustomerId(customerId);
         Assert.assertNotNull(checkCustomer);
-        Assert.assertEquals(customerId, checkCustomer.getRCN());
-        repo.deleteCustomer(checkCustomer.getRCN());
+        Assert.assertEquals(customerId, checkCustomer.getRcn());
+        repo.deleteCustomer(checkCustomer.getRcn());
     }
 
     @Test
     public void shouldFindOneCustomerThatExists() {
         Customer customer = repo.getCustomerByCustomerId(customerId);
         Assert.assertNotNull(customer);
-        Assert.assertEquals(customerId, customer.getRCN());
+        Assert.assertEquals(customerId, customer.getRcn());
     }
 
     @Test
@@ -112,7 +112,7 @@ public class LdapCustomerRepositoryIntegrationTest extends InMemoryLdapIntegrati
     private Customer createTestCustomerInstance(String customerId) {
 
         Customer newCustomer = new Customer();
-        newCustomer.setRCN(customerId);
+        newCustomer.setRcn(customerId);
         newCustomer.setId(id);
         return newCustomer;
     }

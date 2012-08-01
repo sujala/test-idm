@@ -5,7 +5,6 @@ import com.rackspace.idm.api.converter.CustomerConverter;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.CustomerService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.CustomerConflictException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.validation.InputValidator;
@@ -50,7 +49,7 @@ public class CustomerIdentityProfilesResourceTest {
         EntityHolder<IdentityProfile> customer = mock(EntityHolder.class);
         when(customer.hasEntity()).thenReturn(true);
         Customer customerDo = new Customer();
-        customerDo.setRCN("rcn");
+        customerDo.setRcn("rcn");
         when(customerConverter.toCustomerDO(any(IdentityProfile.class))).thenReturn(customerDo);
         customerIdentityProfilesResource.addCustomer(null, customer);
         verify(authorizationService).verifyIdmSuperAdminAccess(anyString());
@@ -62,7 +61,7 @@ public class CustomerIdentityProfilesResourceTest {
         EntityHolder<IdentityProfile> customer = mock(EntityHolder.class);
         when(customer.hasEntity()).thenReturn(true);
         Customer customerDo = new Customer();
-        customerDo.setRCN("rcn");
+        customerDo.setRcn("rcn");
         when(customerConverter.toCustomerDO(any(IdentityProfile.class))).thenReturn(customerDo);
         customerIdentityProfilesResource.addCustomer(null, customer);
         verify(customerService).addCustomer(any(Customer.class));
@@ -74,7 +73,7 @@ public class CustomerIdentityProfilesResourceTest {
         EntityHolder<IdentityProfile> customer = mock(EntityHolder.class);
         when(customer.hasEntity()).thenReturn(true);
         Customer customerDo = new Customer();
-        customerDo.setRCN("rcn");
+        customerDo.setRcn("rcn");
         when(customerConverter.toCustomerDO(any(IdentityProfile.class))).thenReturn(customerDo);
         doThrow(new DuplicateException()).when(customerService).addCustomer(any(Customer.class));
         customerIdentityProfilesResource.addCustomer(null, customer);
