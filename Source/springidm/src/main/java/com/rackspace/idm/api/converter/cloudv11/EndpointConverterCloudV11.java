@@ -5,7 +5,6 @@ import com.rackspace.idm.domain.entity.CloudEndpoint;
 import com.rackspace.idm.domain.entity.OpenstackEndpoint;
 import com.rackspace.idm.util.CloudAuthServiceCatalogFactory;
 import com.rackspacecloud.docs.auth.api.v1.*;
-
 import org.apache.commons.configuration.Configuration;
 
 import java.util.ArrayList;

@@ -1,6 +1,5 @@
 package com.rackspace.idm.api.converter.cloudv20;
 
-import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.TenantRole;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;

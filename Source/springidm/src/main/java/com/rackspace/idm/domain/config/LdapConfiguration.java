@@ -1,7 +1,9 @@
 package com.rackspace.idm.domain.config;
 
-import java.security.GeneralSecurityException;
-
+import com.rackspace.idm.domain.dao.impl.LdapConnectionPools;
+import com.unboundid.ldap.sdk.*;
+import com.unboundid.util.ssl.SSLUtil;
+import com.unboundid.util.ssl.TrustAllTrustManager;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
@@ -10,15 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 
-import com.rackspace.idm.domain.dao.impl.LdapConnectionPools;
-import com.unboundid.ldap.sdk.BindRequest;
-import com.unboundid.ldap.sdk.LDAPConnectionPool;
-import com.unboundid.ldap.sdk.LDAPException;
-import com.unboundid.ldap.sdk.RoundRobinServerSet;
-import com.unboundid.ldap.sdk.ServerSet;
-import com.unboundid.ldap.sdk.SimpleBindRequest;
-import com.unboundid.util.ssl.SSLUtil;
-import com.unboundid.util.ssl.TrustAllTrustManager;
+import java.security.GeneralSecurityException;
 
 /**
  * @author john.eo <br/>

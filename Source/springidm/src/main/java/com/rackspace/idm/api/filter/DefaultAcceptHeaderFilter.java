@@ -1,12 +1,11 @@
 package com.rackspace.idm.api.filter;
 
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-
-import org.springframework.stereotype.Component;
-
 import com.sun.jersey.spi.container.ContainerRequest;
 import com.sun.jersey.spi.container.ContainerRequestFilter;
+import org.springframework.stereotype.Component;
+
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
 
 /**
  * @author john.eo Add a default Accept Header for all rest calls if one is

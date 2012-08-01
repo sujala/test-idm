@@ -1,20 +1,18 @@
 package com.rackspace.idm.api.converter;
 
-import java.util.Date;
-import java.util.List;
+import com.rackspace.api.idm.v1.ObjectFactory;
+import com.rackspace.api.idm.v1.Token;
+import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
+import com.rackspace.idm.domain.entity.Permission;
+import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
-
-import com.rackspace.api.idm.v1.Token;
-import org.joda.time.DateTime;
-
-import com.rackspace.api.idm.v1.ObjectFactory;
-import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
-import com.rackspace.idm.domain.entity.Permission;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.Date;
+import java.util.List;
 
 public class TokenConverter {
     

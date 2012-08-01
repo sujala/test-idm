@@ -1,7 +1,5 @@
 package com.rackspace.idm.exception;
 
-import javax.xml.bind.JAXBException;
-
 @SuppressWarnings("serial")
 public class BadRequestException extends IdmException {
     public BadRequestException() {

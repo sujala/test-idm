@@ -1,21 +1,13 @@
 package com.rackspace.idm.api.filter;
 
-import java.util.Set;
+import javax.servlet.*;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.HashMap;
+import java.util.Set;
 import java.util.StringTokenizer;
-
-import java.io.IOException;
-
-import javax.servlet.Filter;
-import javax.servlet.FilterConfig;
-import javax.servlet.FilterChain;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.ServletException;
-
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * <p>

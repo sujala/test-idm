@@ -2,15 +2,12 @@ package com.rackspace.idm.api.resource;
 
 import com.rackspace.idm.api.resource.cloud.migration.CloudMigrationService;
 import com.rackspace.idm.api.resource.cloud.migration.MigrateUserResponseType;
-import com.rackspace.idm.api.resource.tenant.TenantsResource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
 
 /**
  * Created by IntelliJ IDEA.

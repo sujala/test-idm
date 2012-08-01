@@ -1,19 +1,18 @@
 	package com.rackspace.idm.util;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+    import com.rackspace.idm.domain.dao.impl.LdapConnectionPools;
+    import com.unboundid.ldap.sdk.LDAPConnection;
+    import com.unboundid.ldap.sdk.LDAPException;
+    import org.apache.commons.lang.StringUtils;
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.jmx.export.annotation.ManagedAttribute;
+    import org.springframework.jmx.export.annotation.ManagedOperation;
+    import org.springframework.jmx.export.annotation.ManagedResource;
 
-import org.apache.commons.lang.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jmx.export.annotation.ManagedAttribute;
-import org.springframework.jmx.export.annotation.ManagedOperation;
-import org.springframework.jmx.export.annotation.ManagedResource;
-
-import com.rackspace.idm.domain.dao.impl.LdapConnectionPools;
-import com.unboundid.ldap.sdk.LDAPConnection;
-import com.unboundid.ldap.sdk.LDAPException;
+    import java.util.HashMap;
+    import java.util.Map;
+    import java.util.regex.Matcher;
+    import java.util.regex.Pattern;
 
 @ManagedResource
 public class LdapRouterMBean {

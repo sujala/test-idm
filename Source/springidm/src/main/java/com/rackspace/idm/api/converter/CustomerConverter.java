@@ -1,10 +1,10 @@
 package com.rackspace.idm.api.converter;
 
-import javax.xml.bind.JAXBElement;
-
 import com.rackspace.api.idm.v1.IdentityProfile;
 import com.rackspace.api.idm.v1.ObjectFactory;
 import com.rackspace.idm.domain.entity.Customer;
+
+import javax.xml.bind.JAXBElement;
 
 public class CustomerConverter {
 

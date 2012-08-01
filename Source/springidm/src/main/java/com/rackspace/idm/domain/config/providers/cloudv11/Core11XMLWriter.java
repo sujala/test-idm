@@ -8,14 +8,12 @@ package com.rackspace.idm.domain.config.providers.cloudv11;
  * To change this template use File | Settings | File Templates.
  */
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import com.rackspace.idm.domain.config.providers.PackageClassDiscoverer;
+import com.sun.jersey.api.json.JSONConfiguration;
+import com.sun.jersey.api.json.JSONJAXBContext;
+import com.sun.xml.bind.marshaller.NamespacePrefixMapper;
+import org.apache.log4j.Logger;
+import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import javax.ws.rs.Produces;
@@ -27,13 +25,14 @@ import javax.ws.rs.ext.Provider;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
-
-import com.rackspace.idm.domain.config.providers.PackageClassDiscoverer;
-import org.apache.log4j.Logger;
-import org.springframework.stereotype.Component;
-import com.sun.jersey.api.json.JSONConfiguration;
-import com.sun.jersey.api.json.JSONJAXBContext;
-import com.sun.xml.bind.marshaller.NamespacePrefixMapper;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * This is a JAXBElement provider with awareness of atom links and other

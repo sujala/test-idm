@@ -1,12 +1,11 @@
 package com.rackspace.idm.domain.config;
 
-import java.io.IOException;
-
+import freemarker.template.Configuration;
+import freemarker.template.DefaultObjectWrapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Scope;
 
-import freemarker.template.Configuration;
-import freemarker.template.DefaultObjectWrapper;
+import java.io.IOException;
 
 /**
  * @author john.eo <br/>

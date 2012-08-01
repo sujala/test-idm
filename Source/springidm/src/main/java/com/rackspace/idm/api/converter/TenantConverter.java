@@ -1,22 +1,17 @@
 package com.rackspace.idm.api.converter;
 
-import java.util.GregorianCalendar;
-import java.util.List;
+import com.rackspace.api.idm.v1.ObjectFactory;
+import com.rackspace.api.idm.v1.Tenant;
+import com.rackspace.api.idm.v1.Tenants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import com.rackspace.api.idm.v1.ObjectFactory;
-import com.rackspace.api.idm.v1.Tenants;
-import com.rackspace.api.idm.v1.Tenant;
-
-import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
+import java.util.GregorianCalendar;
+import java.util.List;
 
 @Component
 public class TenantConverter {

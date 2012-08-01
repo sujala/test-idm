@@ -1,7 +1,10 @@
 package com.rackspace.idm.api.filter;
 
 import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.HasAccessToken;
+import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess;
+import com.rackspace.idm.domain.entity.RackerScopeAccess;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.AuthenticationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;

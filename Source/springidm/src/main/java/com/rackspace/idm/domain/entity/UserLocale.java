@@ -1,9 +1,9 @@
 package com.rackspace.idm.domain.entity;
 
-import java.util.Locale;
-
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTimeZone;
+
+import java.util.Locale;
 
 public class UserLocale {
     private Locale preferredLang = null;
