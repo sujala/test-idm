@@ -840,11 +840,29 @@ public class DefaultAuthorizationServiceTest {
     }
 
     @Test
+    public void verifyIdentityAdminLevelAccess_withoutAdminLevelAccess_throwsForbiddenException() throws Exception {
+        try{
+            ScopeAccess scopeAccess = new ScopeAccess();
+            doReturn(false).when(spy).authorizeCloudIdentityAdmin(scopeAccess);
+            spy.verifyIdentityAdminLevelAccess(scopeAccess);
+            assertTrue("should throw exception",false);
+        }catch (ForbiddenException ex){
+            assertThat("exception message",ex.getMessage(),equalTo("Not authorized."));
+        }
+
+    }
+
+    @Test
+    public void verifyIdentityAdminLevelAccess_withAdminLevelAccess_succeeds() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(true).when(spy).authorizeCloudIdentityAdmin(scopeAccess);
+        spy.verifyIdentityAdminLevelAccess(scopeAccess);
+    }
+
+    @Test
     public void checkAuthAndHandleFailure_isAuthorized_doesNothing() throws Exception {
         defaultAuthorizationService.checkAuthAndHandleFailure(true,null);
     }
-
-
 
     @Test
     public void checkAuthAndHandleFailure_notAuthorized_throwsForbiddenException() throws Exception {

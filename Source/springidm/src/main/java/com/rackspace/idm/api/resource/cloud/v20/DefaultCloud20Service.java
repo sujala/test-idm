@@ -182,7 +182,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder addRole(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Role role) {
 
         try {
-            authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            ScopeAccess tokenScopeAccess = getScopeAccessForValidToken(authToken);
+            authorizationService.verifyServiceAdminLevelAccess(tokenScopeAccess);
 
             if (role == null) {
                 String errMsg = "role cannot be null";
@@ -200,7 +201,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             if(StringUtils.startsWithIgnoreCase(role.getName(), "identity:")){
-                verifyIdentityAdminLevelAccess(authToken);
+                authorizationService.verifyIdentityAdminLevelAccess(tokenScopeAccess);
             }
 
             Application service = checkAndGetApplication(role.getServiceId());
@@ -873,7 +874,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder deleteRole(HttpHeaders httpHeaders, String authToken, String roleId) {
         try {
-            verifyIdentityAdminLevelAccess(authToken);
+            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
             if (roleId == null) {
                 throw new BadRequestException("roleId cannot be null");
             }
@@ -2388,17 +2389,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             if(StringUtils.startsWithIgnoreCase(userRole.getName(), "identity:")) {
                 throw new BadRequestException("You are not allowed to add more than one Identity role.");
             }
-        }
-    }
-
-        //method verifies that caller has the identity admin
-
-    void verifyIdentityAdminLevelAccess(String authToken) {
-        ScopeAccess authScopeAccess = getScopeAccessForValidToken(authToken);
-        if (!authorizationService.authorizeCloudIdentityAdmin(authScopeAccess)) {
-            String errMsg = NOT_AUTHORIZED;
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
         }
     }
 

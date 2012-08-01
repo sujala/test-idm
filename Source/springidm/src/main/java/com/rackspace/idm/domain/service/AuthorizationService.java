@@ -55,5 +55,6 @@ public interface AuthorizationService {
 
     void verifyIdmSuperAdminAccess(String authToken);
     void verifyServiceAdminLevelAccess(ScopeAccess authScopeAccess);
+    void verifyIdentityAdminLevelAccess(ScopeAccess authScopeAccess);
 
 }
