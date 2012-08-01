@@ -31,7 +31,7 @@ public class DefaultTokenService implements TokenService {
     public DefaultTokenService(
         final ApplicationService clientService,
         final AuthorizationService authorizationService,
-        final Configuration config, final InputValidator inputValidator,
+        final Configuration config,
         final ScopeAccessService scopeAccessService,
         final UserDao userDao, final TenantService tenantService) {
     	this.userDao = userDao;

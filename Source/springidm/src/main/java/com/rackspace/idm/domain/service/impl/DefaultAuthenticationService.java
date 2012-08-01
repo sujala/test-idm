@@ -45,8 +45,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public DefaultAuthenticationService(TokenService tokenService,
-                                        AuthDao authDao, TenantService tenantService,
+    public DefaultAuthenticationService(AuthDao authDao, TenantService tenantService,
                                         ScopeAccessService scopeAccessService,
                                         ApplicationDao clientDao,
                                         Configuration config, UserDao userDao,

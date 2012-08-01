@@ -38,7 +38,7 @@ public class DefaultTokenServiceTest {
 
     @Before
     public void setUp() throws Exception {
-        defaultTokenService = new DefaultTokenService(clientService,authorizationService,config,null,scopeAccessService,userDao,tenantService);
+        defaultTokenService = new DefaultTokenService(clientService,authorizationService,config,scopeAccessService,userDao,tenantService);
         spy = spy(defaultTokenService);
     }
 

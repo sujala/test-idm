@@ -14,7 +14,7 @@ public class ServiceProfileDescriptionBuilder {
     private final ServiceDescriptionTemplateUtil templateUtil;
     
     @Autowired
-	public ServiceProfileDescriptionBuilder(Configuration freemarkerConfig, ApiDocDao apiDocDao, ServiceDescriptionTemplateUtil templateUtil) {
+	public ServiceProfileDescriptionBuilder(ApiDocDao apiDocDao, ServiceDescriptionTemplateUtil templateUtil) {
 		this.apiDocDao = apiDocDao;
 		this.templateUtil = templateUtil;
 	}

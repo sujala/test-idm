@@ -24,7 +24,7 @@ public class DefaultCustomerService implements CustomerService {
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public DefaultCustomerService(ApplicationDao clientDao, CustomerDao customerDao,
-        UserDao userDao, TokenService oauthService) {
+        UserDao userDao) {
 
         this.clientDao = clientDao;
         this.customerDao = customerDao;

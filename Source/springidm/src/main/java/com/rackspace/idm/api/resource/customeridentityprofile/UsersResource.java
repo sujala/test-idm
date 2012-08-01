@@ -29,7 +29,7 @@ public class UsersResource extends ParentResource {
     public UsersResource(
             InputValidator inputValidator, UserConverter userConverter,
             AuthorizationService authorizationService,
-            Configuration config, UserService userService) {
+            UserService userService) {
 
         super(inputValidator);
 

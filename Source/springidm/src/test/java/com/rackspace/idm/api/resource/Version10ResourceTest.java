@@ -44,8 +44,6 @@ public class Version10ResourceTest {
     private CanonicalContractDescriptionBuilder canonicalContractDescriptionBuilder;
     private TenantsResource tenantsResource;
     private RackerResource rackerResource;
-    private CloudVersionsResource cloudVersionsResource;
-    private Configuration config;
 
     @Before
     public void setUp() throws Exception {
@@ -59,10 +57,8 @@ public class Version10ResourceTest {
         canonicalContractDescriptionBuilder = mock(CanonicalContractDescriptionBuilder.class);
         tenantsResource = mock(TenantsResource.class);
         rackerResource = mock(RackerResource.class);
-        cloudVersionsResource = mock(CloudVersionsResource.class);
-        config = mock(Configuration.class);
         version10Resource = new Version10Resource(usersResource, customerIdentityProfilesResource, passwordRulesResource, tokenResource, rolesResource,
-                cloudVersionsResource, apiDocService, config, canonicalContractDescriptionBuilder, applicationsResource, tenantsResource, rackerResource);
+                apiDocService, canonicalContractDescriptionBuilder, applicationsResource, tenantsResource, rackerResource);
     }
 
     @Test

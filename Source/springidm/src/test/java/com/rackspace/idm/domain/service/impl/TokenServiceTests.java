@@ -33,7 +33,6 @@ public class TokenServiceTests {
     AuthorizationService mockAuthorizationService;
     TokenService tokenService;
     AuthHeaderHelper authHeaderHelper;
-    InputValidator inputValidator;
     Configuration mockConfiguration;
     ScopeAccessService mockScopeAccessService;
     UserDao mockUserDao;
@@ -63,7 +62,6 @@ public class TokenServiceTests {
         .createNiceMock(AuthorizationService.class);
         mockScopeAccessService = EasyMock.createMock(ScopeAccessService.class);
         authHeaderHelper = new AuthHeaderHelper();
-        inputValidator = EasyMock.createMock(InputValidator.class);
         mockConfiguration = EasyMock.createMock(Configuration.class);
         mockUserDao = EasyMock.createMock(UserDao.class);
         mockTenantService = EasyMock.createMock(TenantService.class);
@@ -74,7 +72,7 @@ public class TokenServiceTests {
 
         tokenService = new DefaultTokenService(
                 mockClientService, mockAuthorizationService, appConfig,
-                inputValidator, mockScopeAccessService, mockUserDao, mockTenantService);
+                mockScopeAccessService, mockUserDao, mockTenantService);
     }
 
     @Test

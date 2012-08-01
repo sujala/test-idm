@@ -92,7 +92,7 @@ public class  ServiceConfiguration {
 
     @Bean
     public CustomerService customerService() {
-        return new DefaultCustomerService(clientDao, customerDao, userRepo, tokenService());
+        return new DefaultCustomerService(clientDao, customerDao, userRepo);
     }
 
     @Bean
@@ -120,7 +120,7 @@ public class  ServiceConfiguration {
     @Bean
     public TokenService tokenService() {
         return new DefaultTokenService(clientService(),
-            authorizationService(), config, inputValidator,
+            authorizationService(), config,
             scopeAccessService(), userRepo, tenantService());
     }
 
@@ -141,7 +141,7 @@ public class  ServiceConfiguration {
     
     @Bean
     public AuthenticationService authenticationService() {
-    	return new DefaultAuthenticationService(tokenService(), authDao, tenantService(), scopeAccessService(),
+    	return new DefaultAuthenticationService(authDao, tenantService(), scopeAccessService(),
     			clientDao, config, userRepo, customerDao, inputValidator);
     }
     

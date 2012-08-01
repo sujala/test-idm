@@ -47,9 +47,7 @@ public class Version10Resource {
     @Autowired
     public Version10Resource(UsersResource usersResource,
         CustomerIdentityProfilesResource customersResource, PasswordRulesResource passwordRulesResource,
-        TokensResource tokenResource, RolesResource rolesResource,
-        CloudVersionsResource cloudVersionsResource, ApiDocService apiDocService,
-        Configuration config,
+        TokensResource tokenResource, RolesResource rolesResource, ApiDocService apiDocService,
         CanonicalContractDescriptionBuilder canonicalContractDescriptionBuilder,
         ApplicationsResource applicationsResource,
         TenantsResource tenantsResource,
