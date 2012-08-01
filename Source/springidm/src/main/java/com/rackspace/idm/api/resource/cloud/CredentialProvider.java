@@ -73,9 +73,7 @@ public class CredentialProvider implements MessageBodyReader<JAXBElement<? exten
             Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
             return (JAXBElement<? extends Credentials>) unmarshaller.unmarshal(entityStream);
         } catch (Exception e) {
-            WebApplicationException webApplicationException = new WebApplicationException(400);
-            webApplicationException.setStackTrace(e.getStackTrace());
-            throw webApplicationException;
+            throw new WebApplicationException(e, 400);
         }
     }
 }
