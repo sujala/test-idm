@@ -6,8 +6,6 @@ import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.Applications;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.AuthorizationService;
-import com.rackspace.idm.domain.service.CustomerService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.validation.InputValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

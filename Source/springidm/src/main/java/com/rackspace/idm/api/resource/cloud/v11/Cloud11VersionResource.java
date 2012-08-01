@@ -2,7 +2,6 @@ package com.rackspace.idm.api.resource.cloud.v11;
 
 import com.rackspace.idm.api.resource.Encoder;
 import com.rackspace.idm.api.resource.cloud.CloudClient;
-import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import com.rackspacecloud.docs.auth.api.v1.*;
 import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;

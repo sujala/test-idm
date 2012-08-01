@@ -5,7 +5,6 @@ import com.rackspace.idm.api.resource.ParentResource;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.CustomerService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.CustomerConflictException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.validation.InputValidator;

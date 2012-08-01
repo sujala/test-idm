@@ -1,13 +1,11 @@
 package com.rackspace.idm.api.serviceprofile;
 
-import javax.ws.rs.core.UriInfo;
-
+import com.rackspace.idm.domain.dao.ApiDocDao;
+import freemarker.template.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.rackspace.idm.domain.dao.ApiDocDao;
-
-import freemarker.template.Configuration;
+import javax.ws.rs.core.UriInfo;
 
 @Component
 public class ServiceProfileDescriptionBuilder {

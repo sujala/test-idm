@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
+import com.rackspace.idm.JSONConstants;
+import com.rackspace.idm.exception.BadRequestException;
 import org.apache.commons.io.IOUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -9,9 +10,6 @@ import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
-
-import com.rackspace.idm.JSONConstants;
-import com.rackspace.idm.exception.BadRequestException;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.WebApplicationException;

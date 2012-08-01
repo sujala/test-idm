@@ -1,11 +1,6 @@
 package com.rackspace.idm.domain.dao;
 
-import com.rackspace.idm.domain.entity.ClientGroup;
-import com.rackspace.idm.domain.entity.FilterParam;
-import com.rackspace.idm.domain.entity.Racker;
-import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.UserAuthenticationResult;
-import com.rackspace.idm.domain.entity.Users;
+import com.rackspace.idm.domain.entity.*;
 
 public interface UserDao {
 

@@ -1,14 +1,12 @@
 package com.rackspace.idm.api.resource.application;
 
 import com.rackspace.api.idm.v1.ApplicationSecretCredentials;
-import com.rackspace.api.idm.v1.ObjectFactory;
 import com.rackspace.idm.api.converter.ApplicationConverter;
 import com.rackspace.idm.api.resource.ParentResource;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientSecret;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.AuthorizationService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.IdmException;
 import com.rackspace.idm.validation.InputValidator;

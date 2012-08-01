@@ -1,22 +1,13 @@
 package com.rackspace.idm.api.config;
 
-import org.apache.commons.configuration.Configuration;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-
-import com.rackspace.idm.api.converter.ApplicationConverter;
-import com.rackspace.idm.api.converter.AuthConverter;
-import com.rackspace.idm.api.converter.CredentialsConverter;
-import com.rackspace.idm.api.converter.CustomerConverter;
-import com.rackspace.idm.api.converter.PasswordConverter;
-import com.rackspace.idm.api.converter.PasswordRulesConverter;
-import com.rackspace.idm.api.converter.RolesConverter;
-import com.rackspace.idm.api.converter.TokenConverter;
-import com.rackspace.idm.api.converter.UserConverter;
+import com.rackspace.idm.api.converter.*;
 import com.rackspace.idm.api.converter.cloudv11.AuthConverterCloudV11;
 import com.rackspace.idm.api.converter.cloudv11.EndpointConverterCloudV11;
 import com.rackspace.idm.api.converter.cloudv11.TokenConverterCloudV11;
 import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11;
+import org.apache.commons.configuration.Configuration;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 
 @org.springframework.context.annotation.Configuration
 public class ConverterConfiguration {

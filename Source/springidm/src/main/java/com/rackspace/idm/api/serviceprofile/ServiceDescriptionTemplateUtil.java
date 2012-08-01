@@ -1,21 +1,19 @@
 package com.rackspace.idm.api.serviceprofile;
 
+import freemarker.template.Configuration;
+import freemarker.template.Template;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import javax.ws.rs.core.UriInfo;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.HashMap;
 import java.util.Map;
-
-import javax.ws.rs.core.UriInfo;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import freemarker.template.Configuration;
-import freemarker.template.Template;
 
 @Component
 public class ServiceDescriptionTemplateUtil {

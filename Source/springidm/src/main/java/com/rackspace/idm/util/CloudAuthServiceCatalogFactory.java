@@ -5,8 +5,6 @@ import com.rackspace.idm.domain.entity.OpenstackEndpoint;
 import com.rackspacecloud.docs.auth.api.v1.Endpoint;
 import com.rackspacecloud.docs.auth.api.v1.Service;
 import com.rackspacecloud.docs.auth.api.v1.ServiceCatalog;
-import com.rackspacecloud.docs.auth.api.v1.UserType;
-import org.apache.commons.lang.StringUtils;
 
 import java.util.List;
 

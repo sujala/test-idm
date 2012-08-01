@@ -1,25 +1,19 @@
 package com.rackspace.idm.domain.service.impl;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
 import com.rackspace.idm.domain.dao.UserDao;
-import com.rackspace.idm.domain.entity.Application;
-import com.rackspace.idm.domain.entity.Applications;
-import com.rackspace.idm.domain.entity.Customer;
-import com.rackspace.idm.domain.entity.FilterParam;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
-import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.service.CustomerService;
 import com.rackspace.idm.domain.service.TokenService;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class DefaultCustomerService implements CustomerService {
 

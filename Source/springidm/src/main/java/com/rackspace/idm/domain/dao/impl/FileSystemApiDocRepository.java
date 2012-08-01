@@ -1,16 +1,9 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.StringWriter;
-import java.io.Writer;
-
+import com.rackspace.idm.domain.dao.ApiDocDao;
 import org.apache.commons.lang.StringUtils;
 
-import com.rackspace.idm.domain.dao.ApiDocDao;
+import java.io.*;
 
 public class FileSystemApiDocRepository implements ApiDocDao {
 

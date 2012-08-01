@@ -1,12 +1,11 @@
 package com.rackspace.idm.domain.entity;
 
-import java.util.List;
+import com.rackspace.idm.validation.MessageTexts;
+import com.rackspace.idm.validation.RegexPatterns;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
-
-import com.rackspace.idm.validation.MessageTexts;
-import com.rackspace.idm.validation.RegexPatterns;
+import java.util.List;
 
 public class Application implements Auditable {
     private static final long serialVersionUID = -3160754818606772239L;

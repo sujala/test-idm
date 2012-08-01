@@ -2,24 +2,22 @@ package com.rackspace.idm.api.error;
 
 import com.rackspace.api.common.fault.v1.*;
 import com.rackspace.api.idm.v1.*;
-import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.exception.*;
 import com.rackspacecloud.docs.auth.api.v1.AuthFault;
 import org.omg.CORBA.portable.ApplicationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.*;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Variant;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.ResourceBundle;
 
 @Component
 @Provider
