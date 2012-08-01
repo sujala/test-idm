@@ -5,13 +5,10 @@ import com.rackspace.idm.domain.dao.GroupDao;
 import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
-import com.rackspace.idm.util.CryptHelper;
 import com.unboundid.ldap.sdk.*;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
-import org.bouncycastle.crypto.InvalidCipherTextException;
 
-import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.List;
 

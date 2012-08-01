@@ -860,6 +860,82 @@ public class DefaultAuthorizationServiceTest {
     }
 
     @Test
+    public void verifyUserAdminLevelAccess_notAuthorizedAsIdentityAdminOrServiceAdminOrUserAdmin_throwsForbidden() throws Exception {
+        try{
+            ScopeAccess scopeAccess = new ScopeAccess();
+            doReturn(false).when(spy).authorizeCloudIdentityAdmin(scopeAccess);
+            doReturn(false).when(spy).authorizeCloudServiceAdmin(scopeAccess);
+            doReturn(false).when(spy).authorizeCloudUserAdmin(scopeAccess);
+            spy.verifyUserAdminLevelAccess(scopeAccess);
+        } catch (ForbiddenException ex){
+            assertThat("exception message", ex.getMessage(), equalTo("Not authorized."));
+        }
+    }
+
+    @Test
+    public void verifyUserAdminLevelAccess_authorizedAsUserAdmin_succeeds() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(false).when(spy).authorizeCloudIdentityAdmin(scopeAccess);
+        doReturn(false).when(spy).authorizeCloudServiceAdmin(scopeAccess);
+        doReturn(true).when(spy).authorizeCloudUserAdmin(scopeAccess);
+        spy.verifyUserAdminLevelAccess(scopeAccess);
+    }
+
+    @Test
+    public void verifyUserAdminLevelAccess_authorizedAsServiceAdmin_succeeds() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(false).when(spy).authorizeCloudIdentityAdmin(scopeAccess);
+        doReturn(true).when(spy).authorizeCloudServiceAdmin(scopeAccess);
+        doReturn(false).when(spy).authorizeCloudUserAdmin(scopeAccess);
+        spy.verifyUserAdminLevelAccess(scopeAccess);
+    }
+
+    @Test
+    public void verifyUserAdminLevelAccess_authorizedAsServiceAdminAndUserAdmin_succeeds() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(false).when(spy).authorizeCloudIdentityAdmin(scopeAccess);
+        doReturn(true).when(spy).authorizeCloudServiceAdmin(scopeAccess);
+        doReturn(true).when(spy).authorizeCloudUserAdmin(scopeAccess);
+        spy.verifyUserAdminLevelAccess(scopeAccess);
+    }
+
+    @Test
+    public void verifyUserAdminLevelAccess_authorizedAsIdentityAdmin_succeeds() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(true).when(spy).authorizeCloudIdentityAdmin(scopeAccess);
+        doReturn(false).when(spy).authorizeCloudServiceAdmin(scopeAccess);
+        doReturn(false).when(spy).authorizeCloudUserAdmin(scopeAccess);
+        spy.verifyUserAdminLevelAccess(scopeAccess);
+    }
+
+    @Test
+    public void verifyUserAdminLevelAccess_authorizedAsIdentityAdminAndUserAdmin_succeeds() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(true).when(spy).authorizeCloudIdentityAdmin(scopeAccess);
+        doReturn(false).when(spy).authorizeCloudServiceAdmin(scopeAccess);
+        doReturn(true).when(spy).authorizeCloudUserAdmin(scopeAccess);
+        spy.verifyUserAdminLevelAccess(scopeAccess);
+    }
+
+    @Test
+    public void verifyUserAdminLevelAccess_authorizedAsIdentityAdminAndServiceAdmin_succeeds() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(true).when(spy).authorizeCloudIdentityAdmin(scopeAccess);
+        doReturn(true).when(spy).authorizeCloudServiceAdmin(scopeAccess);
+        doReturn(false).when(spy).authorizeCloudUserAdmin(scopeAccess);
+        spy.verifyUserAdminLevelAccess(scopeAccess);
+    }
+
+    @Test
+    public void verifyUserAdminLevelAccess_authorizedAsIdentityAdminAndServiceAdminAndUserAdmin_succeeds() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(true).when(spy).authorizeCloudIdentityAdmin(scopeAccess);
+        doReturn(true).when(spy).authorizeCloudServiceAdmin(scopeAccess);
+        doReturn(true).when(spy).authorizeCloudUserAdmin(scopeAccess);
+        spy.verifyUserAdminLevelAccess(scopeAccess);
+    }
+
+    @Test
     public void checkAuthAndHandleFailure_isAuthorized_doesNothing() throws Exception {
         defaultAuthorizationService.checkAuthAndHandleFailure(true,null);
     }

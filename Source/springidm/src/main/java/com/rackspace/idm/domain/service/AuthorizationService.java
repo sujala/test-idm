@@ -54,7 +54,7 @@ public interface AuthorizationService {
     void authorizeIdmSuperAdminOrRackspaceClient(ScopeAccess scopeAccess);
 
     void verifyIdmSuperAdminAccess(String authToken);
-    void verifyServiceAdminLevelAccess(ScopeAccess authScopeAccess);
     void verifyIdentityAdminLevelAccess(ScopeAccess authScopeAccess);
-
+    void verifyServiceAdminLevelAccess(ScopeAccess authScopeAccess);
+    void verifyUserAdminLevelAccess(ScopeAccess authScopeAccess);
 }

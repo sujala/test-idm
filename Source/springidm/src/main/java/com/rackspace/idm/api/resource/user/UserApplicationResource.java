@@ -2,7 +2,6 @@ package com.rackspace.idm.api.resource.user;
 
 import com.rackspace.idm.api.resource.ParentResource;
 import com.rackspace.idm.domain.entity.Application;
-import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.service.ApplicationService;
