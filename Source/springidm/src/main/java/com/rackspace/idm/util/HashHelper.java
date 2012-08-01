@@ -23,21 +23,21 @@ public class HashHelper {
         // Salt generation 64 bits long
         byte[] bSalt = new byte[8];
         random.nextBytes(bSalt);
-        String sSalt = ByteToBase64(bSalt);
+        String sSalt = byteToBase64(bSalt);
 
         Date now = new Date();
         String timestamp = String.valueOf(now.getTime());
 
-        String randomSha1 = MakeSHA1Hash(sSalt + timestamp);
+        String randomSha1 = makeSHA1Hash(sSalt + timestamp);
 
         return randomSha1;
     }
 
-    public static String ByteToBase64(byte[] data) {
+    public static String byteToBase64(byte[] data) {
         return Base64.encodeBase64(data).toString();
     }
 
-    public static String MakeSHA1Hash(String input)
+    public static String makeSHA1Hash(String input)
         throws NoSuchAlgorithmException {
         MessageDigest md = MessageDigest.getInstance("SHA1");
         md.reset();

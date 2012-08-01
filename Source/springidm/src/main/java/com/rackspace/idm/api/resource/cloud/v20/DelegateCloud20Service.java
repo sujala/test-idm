@@ -233,7 +233,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     ResponseBuilder validateImpersonatedTokenFromCloud(HttpHeaders httpHeaders, String impersonatedCloudToken, String belongsTo, ImpersonatedScopeAccess impersonatedScopeAccess) {
-        String gaXAuthToken = getXAuthToken_byPassword(config.getString("ga.username"), config.getString("ga.password")).getToken().getId();
+        String gaXAuthToken = getXAuthTokenByPassword(config.getString("ga.username"), config.getString("ga.password")).getToken().getId();
         httpHeaders.getRequestHeaders().get(X_AUTH_TOKEN).set(0, gaXAuthToken);
         httpHeaders.getRequestHeaders().get(HttpHeaders.ACCEPT).set(0, MediaType.APPLICATION_XML);
         Response cloudValidateResponse = checkToken(httpHeaders, gaXAuthToken, impersonatedCloudToken, belongsTo).build();
@@ -1179,7 +1179,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         return (AuthenticateResponse) unmarshallResponse(authResponse.getEntity().toString(), AuthenticateResponse.class);
     }
 
-    public AuthenticateResponse getXAuthToken_byPassword(String userName, String password) {
+    public AuthenticateResponse getXAuthTokenByPassword(String userName, String password) {
         PasswordCredentialsRequiredUsername passwordCredentials = new PasswordCredentialsRequiredUsername();
         passwordCredentials.setUsername(userName);
         passwordCredentials.setPassword(password);
@@ -1233,7 +1233,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     public String impersonateUser(String userName, String impersonatorName, String impersonatorPassword) {
-        String impersonatorXAuthToken = getXAuthToken_byPassword(impersonatorName, impersonatorPassword).getToken().getId();
+        String impersonatorXAuthToken = getXAuthTokenByPassword(impersonatorName, impersonatorPassword).getToken().getId();
         User user = getCloudUserByName(userName, impersonatorXAuthToken);
         if (!user.isEnabled()) {
             throw new ForbiddenException("User cannot be impersonated; User is not enabled");
@@ -1275,7 +1275,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         this.userConverterCloudV20 = userConverterCloudV20;
     }
 
-    public void setOBJ_FACTORIES(JAXBObjectFactories OBJ_FACTORIES) {
+    public void setObjFactories(JAXBObjectFactories OBJ_FACTORIES) {
         this.OBJ_FACTORIES = OBJ_FACTORIES;
     }
 
