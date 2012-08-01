@@ -98,7 +98,6 @@ public class DelegateCloud11ServiceTest {
         baseUrl = new BaseURL();
         baseUrl.setDefault(true);
         baseUrl.setId(1);
-        delegateCloud11Service.setMarshaller(marshaller);
         ldapUserRepository = mock(LdapUserRepository.class);
         delegateCloud11Service.setLdapUserRepository(ldapUserRepository);
         request = mock(HttpServletRequest.class);
