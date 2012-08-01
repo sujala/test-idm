@@ -129,7 +129,7 @@ public class OSKSADM_XMLWriter extends NamespacePrefixMapper implements
         return osksadmNsPrefixMap.get(namespaceUri);
     }
 
-    public void setNsPrefixMap(HashMap<String, String> nsPrefixMap) {
+    public void setNsPrefixMap(Map<String, String> nsPrefixMap) {
         this.osksadmNsPrefixMap = nsPrefixMap;
     }
 }

@@ -68,7 +68,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     private org.openstack.docs.common.api.v1.ObjectFactory objectFactory = new org.openstack.docs.common.api.v1.ObjectFactory();
 
-    private HashMap<String, JAXBElement<Extension>> extensionMap;
+    private Map<String, JAXBElement<Extension>> extensionMap;
     private JAXBElement<Extensions> currentExtensions;
 
     @Autowired

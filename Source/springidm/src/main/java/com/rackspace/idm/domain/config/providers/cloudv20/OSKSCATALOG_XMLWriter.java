@@ -129,7 +129,7 @@ public class OSKSCATALOG_XMLWriter extends NamespacePrefixMapper implements
         return oskscatalogNsPrefixMap.get(namespaceUri);
     }
 
-    public void setNsPrefixMap(HashMap<String, String> nsPrefixMap) {
+    public void setNsPrefixMap(Map<String, String> nsPrefixMap) {
         this.oskscatalogNsPrefixMap = nsPrefixMap;
     }
 }

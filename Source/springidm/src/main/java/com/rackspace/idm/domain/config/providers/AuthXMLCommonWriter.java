@@ -130,7 +130,7 @@ public class AuthXMLCommonWriter extends NamespacePrefixMapper implements
         return osCommonNsPrefixMap.get(namespaceUri);
     }
 
-    public void setNsPrefixMap(HashMap<String, String> nsPrefixMap) {
+    public void setNsPrefixMap(Map<String, String> nsPrefixMap) {
         this.osCommonNsPrefixMap = nsPrefixMap;
     }
 }

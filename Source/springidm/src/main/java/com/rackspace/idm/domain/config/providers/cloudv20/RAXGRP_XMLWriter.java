@@ -129,7 +129,7 @@ public class RAXGRP_XMLWriter extends NamespacePrefixMapper implements
         return raxgrpNsPrefixMap.get(namespaceUri);
     }
 
-    public void setNsPrefixMap(HashMap<String, String> nsPrefixMap) {
+    public void setNsPrefixMap(Map<String, String> nsPrefixMap) {
         this.raxgrpNsPrefixMap = nsPrefixMap;
     }
 }

@@ -129,7 +129,7 @@ public class RAXKSKEY_XMLWriter extends NamespacePrefixMapper implements
         return raxkskeyNsPrefixMap.get(namespaceUri);
     }
 
-    public void setNsPrefixMap(HashMap<String, String> nsPrefixMap) {
+    public void setNsPrefixMap(Map<String, String> nsPrefixMap) {
         this.raxkskeyNsPrefixMap = nsPrefixMap;
     }
 }

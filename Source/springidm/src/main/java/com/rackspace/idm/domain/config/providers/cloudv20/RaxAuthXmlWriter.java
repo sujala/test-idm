@@ -123,7 +123,7 @@ public class RaxAuthXmlWriter extends NamespacePrefixMapper implements
         return raxAuthNsPrefixMap.get(namespaceUri);
     }
 
-    public void setNsPrefixMap(HashMap<String, String> nsPrefixMap) {
+    public void setNsPrefixMap(Map<String, String> nsPrefixMap) {
         this.raxAuthNsPrefixMap = nsPrefixMap;
     }
 }

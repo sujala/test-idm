@@ -18,6 +18,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.*;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -37,7 +38,7 @@ public class CloudClient {
         return executeRequest(request);
     }
 
-    public Response.ResponseBuilder get(String url, HashMap headers) {
+    public Response.ResponseBuilder get(String url, Map<String, String> headers) {
         HttpGet request = new HttpGet(url);
         setHeaders(headers, request);
         return executeRequest(request);
@@ -63,7 +64,7 @@ public class CloudClient {
         return executeRequest(request);
     }
 
-    public Response.ResponseBuilder post(String url, HashMap<String, String> headers, String body) {
+    public Response.ResponseBuilder post(String url, Map<String, String> headers, String body) {
         HttpPost request = new HttpPost(url);
         request.setEntity(getHttpEntity(body));
         setHeaders(headers, request);
@@ -146,7 +147,7 @@ public class CloudClient {
         return client;
     }
 
-    private void setHeaders(HashMap<String, String> headers, HttpRequestBase request) {
+    private void setHeaders(Map<String, String> headers, HttpRequestBase request) {
         if (!headers.isEmpty()) {
             for (String header : headers.keySet()) {
                 request.addHeader(header, headers.get(header).toString());
