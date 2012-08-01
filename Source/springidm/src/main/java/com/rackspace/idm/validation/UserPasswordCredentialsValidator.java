@@ -14,6 +14,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class UserPasswordCredentialsValidator {
 
+    public static final String INVALID_REQUEST = "Invalid request";
+
     public void validateUserPasswordCredentials(UserPasswordCredentials userPasswordCredentials, User user) {
         if(userPasswordCredentials.isVerifyCurrentPassword()){
             validateCurrentPassword(userPasswordCredentials, user);
@@ -24,32 +26,32 @@ public class UserPasswordCredentialsValidator {
     public void validateCurrentPassword(UserPasswordCredentials userPasswordCredentials, User user) {
         UserPassword currentPassword = userPasswordCredentials.getCurrentPassword();
         if (currentPassword == null) {
-            throw new BadRequestException("Invalid request");
+            throw new BadRequestException(INVALID_REQUEST);
         }
         String password = userPasswordCredentials.getCurrentPassword().getPassword();
         if (password == null || password.equals("")) {
-            throw new BadRequestException("Invalid request");
+            throw new BadRequestException(INVALID_REQUEST);
         }
         if (!user.getPassword().equals(password)) {
-            throw new BadRequestException("Invalid request");
+            throw new BadRequestException(INVALID_REQUEST);
         }
     }
 
     public void validateCurrentPassword(UserPasswordCredentials userPasswordCredentials) {
         String currentPassword = userPasswordCredentials.getCurrentPassword().getPassword();
         if (currentPassword == null || currentPassword.equals("")) {
-            throw new BadRequestException("Invalid request");
+            throw new BadRequestException(INVALID_REQUEST);
         }
     }
 
     public void validateNewPassword(UserPasswordCredentials userPasswordCredentials) {
         UserPassword newPassword = userPasswordCredentials.getNewPassword();
         if (newPassword == null) {
-            throw new BadRequestException("Invalid request");
+            throw new BadRequestException(INVALID_REQUEST);
         }
         String password = userPasswordCredentials.getNewPassword().getPassword();
         if (password == null || password.equals("")) {
-            throw new BadRequestException("Invalid request");
+            throw new BadRequestException(INVALID_REQUEST);
         }
     }
 
