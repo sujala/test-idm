@@ -45,6 +45,7 @@ public class RootResource {
         this.cloudVersionsResource = cloudVersionsResource;
         this.versionResource = versionResource;
         this.migrationResource = migrationResource;
+        this.config = config;
         this.serviceProfileDescriptionBuilder = serviceProfileDescriptionBuilder;
     }
 

@@ -90,8 +90,6 @@ public class UserPasswordCredentialsResource extends ParentResource {
 
         validateRequestBody(userCredentials);
 
-        ScopeAccess token = this.scopeAccessService.getAccessTokenByAuthHeader(authHeader);
-
         User user = this.userService.getUserById(userId);
         if (user == null) {
             throw new NotFoundException("User not found with id: " + userId);

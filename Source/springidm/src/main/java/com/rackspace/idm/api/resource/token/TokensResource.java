@@ -55,8 +55,7 @@ public class TokensResource extends ParentResource {
     final private Logger logger = LoggerFactory.getLogger(TokensResource.class);
 
     @Autowired(required = true)
-    public TokensResource(TokenService oauthService,
-                          AuthHeaderHelper authHeaderHelper, AuthConverter authConverter,
+    public TokensResource(AuthHeaderHelper authHeaderHelper, AuthConverter authConverter,
                           AuthorizationService authorizationService,
                           ScopeAccessService scopeAccessService,
                           CredentialsConverter credentialsConverter,

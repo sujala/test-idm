@@ -59,7 +59,7 @@ public class TokensResourceTest {
         authenticationService = mock(AuthenticationService.class);
         httpHeaders = mock(HttpHeaders.class);
 
-        tokensResource = new TokensResource(tokenService, authHeaderHelper, authConverter, authorizationService, scopeAccessService, credentialsConverter,
+        tokensResource = new TokensResource(authHeaderHelper, authConverter, authorizationService, scopeAccessService, credentialsConverter,
                 authenticationService, inputValidator, tokenService);
     }
 

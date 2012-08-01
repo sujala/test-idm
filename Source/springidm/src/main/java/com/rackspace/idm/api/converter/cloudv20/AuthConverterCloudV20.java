@@ -43,8 +43,8 @@ public class AuthConverterCloudV20 {
         return auth;
     }
 
-    public void setObjFactories(JAXBObjectFactories OBJ_FACTORIES) {
-        this.objFactories = OBJ_FACTORIES;
+    public void setObjFactories(JAXBObjectFactories objFactories) {
+        this.objFactories = objFactories;
     }
 
     public void setTokenConverterCloudV20(TokenConverterCloudV20 tokenConverterCloudV20) {

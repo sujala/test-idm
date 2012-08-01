@@ -197,21 +197,19 @@ public class AtomHopperClientTest {
 
     @Test
     public void postMigrateUser_withResponseStatusNot201_throwsNoErrors() throws Exception {
-        AtomHopperConstants migrated = new AtomHopperConstants();
         AtomFeed atomFeed = new AtomFeed();
         doReturn(atomFeed).when(spy).createAtomFeed(any(User.class), eq("migrationStatus"));
         when(httpResponse.getStatusLine()).thenReturn(new BasicStatusLine(new ProtocolVersion("http", 1,1), 404, "not found"));
-        spy.postMigrateUser(new User(),  "token", migrated.MIGRATED, "migrationStatus");
+        spy.postMigrateUser(new User(),  "token", AtomHopperConstants.MIGRATED, "migrationStatus");
         verify(spy).executePostRequest(eq("token"), any(Writer.class), anyString());
     }
 
     @Test
     public void postMigrateUser_withResponseStatus201_throwsNoErrors() throws Exception {
-        AtomHopperConstants migrated = new AtomHopperConstants();
         AtomFeed atomFeed = new AtomFeed();
         doReturn(atomFeed).when(spy).createAtomFeed(any(User.class), eq("migrationStatus"));
         when(httpResponse.getStatusLine()).thenReturn(new BasicStatusLine(new ProtocolVersion("http", 1,1), 201, "not found"));
-        spy.postMigrateUser(new User(),  "token", migrated.MIGRATED, "migrationStatus");
+        spy.postMigrateUser(new User(),  "token", AtomHopperConstants.MIGRATED, "migrationStatus");
         verify(spy).executePostRequest(eq("token"), any(Writer.class), anyString());
     }
 
@@ -226,12 +224,11 @@ public class AtomHopperClientTest {
 
     @Test
     public void asyncPost_callsPostMigrateUser() throws Exception {
-        AtomHopperConstants migrated = new AtomHopperConstants();
         AtomFeed atomFeed = new AtomFeed();
         doReturn(atomFeed).when(spy).createAtomFeed(any(User.class), eq("migrationStatus"));
         when(httpResponse.getStatusLine()).thenReturn(new BasicStatusLine(new ProtocolVersion("http", 1, 1), 404, "not found"));
-        spy.asyncPost(user, "token", migrated.MIGRATED, "migrationStatus");
-        verify(spy, timeout(100)).postMigrateUser(any(User.class), eq("token"),eq(migrated.MIGRATED), eq("migrationStatus"));
+        spy.asyncPost(user, "token", AtomHopperConstants.MIGRATED, "migrationStatus");
+        verify(spy, timeout(100)).postMigrateUser(any(User.class), eq("token"),eq(AtomHopperConstants.MIGRATED), eq("migrationStatus"));
     }
 
     @Test

@@ -29,7 +29,7 @@ public class MigrationClient {
 
     private Logger logger = LoggerFactory.getLogger(MigrationClient.class);
 	
-	HttpClientWrapper client;
+	private HttpClientWrapper client;
 	
     private String cloud11Host = "";
 	private String cloud20Host = "";
@@ -133,7 +133,7 @@ public class MigrationClient {
         }
     }
     
-    public UserList getUsers(String token) throws URISyntaxException, HttpException, IOException, JAXBException {
+    public UserList getUsers(String token) throws URISyntaxException, HttpException, IOException {
         UserList userList = new UserList();
     	String response = client.url(cloud20Host + "users")
     	    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML)

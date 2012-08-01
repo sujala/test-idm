@@ -794,9 +794,9 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     Users getMultipleUsers(Filter searchFilter,
         String[] searchAttributes, int offset, int limit) {
 
-        offset = offset < 0 ? this.getLdapPagingOffsetDefault() : offset;
-        limit = limit <= 0 ? this.getLdapPagingLimitDefault() : limit;
-        limit = limit > this.getLdapPagingLimitMax() ? this.getLdapPagingLimitMax() : limit;
+        int offsets = offset < 0 ? this.getLdapPagingOffsetDefault() : offset;
+        int limits = limit <= 0 ? this.getLdapPagingLimitDefault() : limit;
+        limits = limits > this.getLdapPagingLimitMax() ? this.getLdapPagingLimitMax() : limits;
 
         int contentCount = 0;
 
@@ -809,10 +809,10 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
             contentCount = entries.size();
 
-            if (offset < contentCount) {
+            if (offsets < contentCount) {
 
-                int toIndex = offset + limit > contentCount ? contentCount : offset + limit;
-                int fromIndex = offset;
+                int toIndex = offsets + limits > contentCount ? contentCount : offsets + limits;
+                int fromIndex = offsets;
 
                 List<SearchResultEntry> subList = entries.subList(fromIndex, toIndex);
 
@@ -833,8 +833,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         Users users = new Users();
 
-        users.setLimit(limit);
-        users.setOffset(offset);
+        users.setLimit(limits);
+        users.setOffset(offsets);
         users.setTotalRecords(contentCount);
         users.setUsers(userList);
         getLogger().debug("Returning {} Users.", users.getTotalRecords());

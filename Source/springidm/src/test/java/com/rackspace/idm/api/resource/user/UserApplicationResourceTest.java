@@ -55,13 +55,6 @@ public class UserApplicationResourceTest {
     }
 
     @Test
-    public void provisionApplicationForUser_callsScopeAccessService_getAccessTokenByAuthHeader() throws Exception {
-        when(applicationService.loadApplication("applicationId")).thenReturn(new Application());
-        userApplicationResource.provisionApplicationForUser("authHeader", "userId", "applicationId");
-        verify(scopeAccessService).getAccessTokenByAuthHeader("authHeader");
-    }
-
-    @Test
     public void provisionApplicationForUser_callsApplicationService_loadApplication() throws Exception {
         when(applicationService.loadApplication("applicationId")).thenReturn(new Application());
         userApplicationResource.provisionApplicationForUser("authHeader", "userId", "applicationId");

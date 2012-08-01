@@ -5,13 +5,10 @@ import com.rackspace.idm.domain.dao.GroupDao;
 import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
-import com.rackspace.idm.util.CryptHelper;
 import com.unboundid.ldap.sdk.*;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
-import org.bouncycastle.crypto.InvalidCipherTextException;
 
-import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -132,20 +129,8 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
 
         Audit audit = Audit.log(group).add();
 
-        Attribute[] attributes = null;
-
-        try {
-            attributes = getAddAttributes(group);
-            addEntry(groupDN, attributes, audit);
-        } catch (GeneralSecurityException e) {
-            getLogger().error(e.getMessage());
-            audit.fail("encryption error");
-            throw new IllegalStateException(e);
-        } catch (InvalidCipherTextException e) {
-            getLogger().error(e.getMessage());
-            audit.fail("encryption error");
-            throw new IllegalStateException(e);
-        }
+        Attribute[] attributes = getAddAttributes(group);
+        addEntry(groupDN, attributes, audit);
         audit.succeed();
 
         getLogger().debug("Added group {}", group);
@@ -351,7 +336,6 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
             SearchResultEntry e = searchResult.getSearchEntries().get(0);
             String[] list = e.getAttributeValues(ATTR_GROUP_ID);
             if(list != null) {
-                List<String> noGroup = new ArrayList<String>();
                 for(String id : list) {
                     try{
                         Group groupById = getGroupById(Integer.parseInt(id));
@@ -386,9 +370,7 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
         return group;
     }
 
-    Attribute[] getAddAttributes(Group group)
-        throws GeneralSecurityException, InvalidCipherTextException {
-        CryptHelper cryptHelper = CryptHelper.getInstance();
+    Attribute[] getAddAttributes(Group group) {
 
         List<Attribute> atts = new ArrayList<Attribute>();
 

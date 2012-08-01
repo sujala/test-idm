@@ -2,7 +2,6 @@ package com.rackspace.idm.api.resource.user;
 
 import com.rackspace.idm.api.resource.ParentResource;
 import com.rackspace.idm.domain.entity.Application;
-import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.service.ApplicationService;
@@ -62,7 +61,6 @@ public class UserApplicationResource extends ParentResource {
         // Customer IdM can add any service to user
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
         getLogger().info("Provisioning application {} for user {}", applicationId, userId);
-        ScopeAccess token = this.scopeAccessService.getAccessTokenByAuthHeader(authHeader);
         Application application = this.applicationService.loadApplication(applicationId);
         User user = this.userService.loadUser(userId);
 

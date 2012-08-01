@@ -6,7 +6,6 @@ import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
-import com.rackspace.idm.validation.InputValidator;
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +30,7 @@ public class DefaultTokenService implements TokenService {
     public DefaultTokenService(
         final ApplicationService clientService,
         final AuthorizationService authorizationService,
-        final Configuration config, final InputValidator inputValidator,
+        final Configuration config,
         final ScopeAccessService scopeAccessService,
         final UserDao userDao, final TenantService tenantService) {
     	this.userDao = userDao;

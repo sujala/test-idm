@@ -624,13 +624,8 @@ public class DefaultUserService implements UserService {
         if (userById.getInMigration() == null) {
             return true;
         }
-        if (userById.getInMigration()) {
-            return false;
-        }
-        if (userById.getInMigration() == false) {
-            return true;
-        }
-        return true;
+        return !userById.getInMigration();
+
     }
 
     @Override
@@ -642,13 +637,7 @@ public class DefaultUserService implements UserService {
         if (userByUsername.getInMigration() == null) {
             return true;
         }
-        if (userByUsername.getInMigration()) {
-            return false;
-        }
-        if (userByUsername.getInMigration() == false) {
-            return true;
-        }
-        return true;
+       return !userByUsername.getInMigration();
     }
 
     @Override
@@ -657,10 +646,8 @@ public class DefaultUserService implements UserService {
             return false;
         } else if (user.getInMigration() == null) {
             return false;
-        } else if (!user.getInMigration()) {
-            return true;
         } else {
-            return false;
+            return !user.getInMigration();
         }
     }
 

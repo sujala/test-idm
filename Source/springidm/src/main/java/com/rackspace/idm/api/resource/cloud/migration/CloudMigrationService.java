@@ -965,11 +965,7 @@ public class CloudMigrationService {
     }
 
     private boolean isUkCloudRegion() {
-        if ("UK".equalsIgnoreCase(config.getString("cloud.region"))) {
-            return true;
-        } else {
-            return false;
-        }
+        return ("UK".equalsIgnoreCase(config.getString("cloud.region")));
     }
 
     public void setClient(MigrationClient client) {
@@ -1004,8 +1000,8 @@ public class CloudMigrationService {
         this.config = config;
     }
 
-    public void setObjFactories(JAXBObjectFactories obj_factories) {
-        this.objFactories = obj_factories;
+    public void setObjFactories(JAXBObjectFactories objFactories) {
+        this.objFactories = objFactories;
     }
 
     public void setUserConverterCloudV20(UserConverterCloudV20 userConverterCloudV20) {

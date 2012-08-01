@@ -9,7 +9,6 @@ import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.AuthenticationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TenantService;
-import com.rackspace.idm.domain.service.TokenService;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.util.RSAClient;
 import com.rackspace.idm.validation.AuthorizationCodeCredentialsCheck;
@@ -45,8 +44,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public DefaultAuthenticationService(TokenService tokenService,
-                                        AuthDao authDao, TenantService tenantService,
+    public DefaultAuthenticationService(AuthDao authDao, TenantService tenantService,
                                         ScopeAccessService scopeAccessService,
                                         ApplicationDao clientDao,
                                         Configuration config, UserDao userDao,
