@@ -147,7 +147,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             ScopeAccess sa = this.scopeAccessService.getScopeAccessByAccessToken(tokenId);
 
-            if (sa == null || !(sa instanceof UserScopeAccess) || ((UserScopeAccess) sa).isAccessTokenExpired(new DateTime())) {
+            if (!(sa instanceof UserScopeAccess) || ((UserScopeAccess) sa).isAccessTokenExpired(new DateTime())) {
                 throw new NotFoundException(String.format("token %s not found", tokenId));
             }
 
@@ -182,7 +182,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             ScopeAccess sa = scopeAccessService.getScopeAccessByAccessToken(tokeId);
 
-            if (sa == null || !(sa instanceof UserScopeAccess) || ((UserScopeAccess) sa).isAccessTokenExpired(new DateTime())) {
+            if (!(sa instanceof UserScopeAccess) || ((UserScopeAccess) sa).isAccessTokenExpired(new DateTime())) {
                 throw new NotFoundException(String.format("token %s not found", tokeId));
             }
 
