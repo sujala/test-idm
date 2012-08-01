@@ -233,7 +233,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder addRolesToUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String userId, String roleId) {
 
         try {
-            verifyUserAdminLevelAccess(authToken);
+            authorizationService.verifyUserAdminLevelAccess(getScopeAccessForValidToken(authToken));
             verifyTokenHasTenantAccess(authToken, tenantId);
 
             Tenant tenant = checkAndGetTenant(tenantId);
@@ -340,10 +340,11 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder addUser(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, UserForCreate user) {
         try {
-            verifyUserAdminLevelAccess(authToken);
+            ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
+            authorizationService.verifyUserAdminLevelAccess(scopeAccessByAccessToken);
             validateUser(user);
             validateUsernameForUpdateOrCreate(user.getUsername());
-            ScopeAccess scopeAccessByAccessToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
+
             String password = user.getPassword();
             boolean emptyPassword = StringUtils.isBlank(password);
 
@@ -626,11 +627,12 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder addUserRole(HttpHeaders httpHeaders, String authToken, String userId, String roleId) {
 
         try {
-            verifyUserAdminLevelAccess(authToken);
+            ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
+            authorizationService.verifyUserAdminLevelAccess(scopeAccessByAccessToken);
             User user = checkAndGetUser(userId);
             ClientRole cRole = checkAndGetClientRole(roleId);
             checkForMultipleIdentityRoles(user, cRole);
-            ScopeAccess scopeAccessByAccessToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
+
             if (!authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken)
                     && config.getString("cloudAuth.adminRole").equals(cRole.getName())) {
                 throw new ForbiddenException(NOT_AUTHORIZED);
@@ -889,7 +891,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder deleteRoleFromUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String userId, String roleId) {
         try {
-            verifyUserAdminLevelAccess(authToken);
+            authorizationService.verifyUserAdminLevelAccess(getScopeAccessForValidToken(authToken));
             verifyTokenHasTenantAccess(authToken, tenantId);
             Tenant tenant = checkAndGetTenant(tenantId);
             User user = checkAndGetUser(userId);
@@ -933,7 +935,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder deleteUser(HttpHeaders httpHeaders, String authToken, String userId)  {
         try {
-            verifyUserAdminLevelAccess(authToken);
+            authorizationService.verifyUserAdminLevelAccess(getScopeAccessForValidToken(authToken));
             User user = checkAndGetUser(userId);
             //is same domain?
             if (authorizationService.authorizeCloudUserAdmin(scopeAccessService.getScopeAccessByAccessToken(authToken))) {
@@ -1006,7 +1008,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder deleteUserRole(HttpHeaders httpHeaders, String authToken, String userId, String roleId) {
         try {
-            verifyUserAdminLevelAccess(authToken);
+            ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
+            authorizationService.verifyUserAdminLevelAccess(scopeAccessByAccessToken);
 
             User user = checkAndGetUser(userId);
             List<TenantRole> globalRoles = this.tenantService.getGlobalRolesForUser(user);
@@ -1021,7 +1024,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 logger.warn(errMsg);
                 throw new NotFoundException(errMsg);
             }
-            ScopeAccess scopeAccessByAccessToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
+
             if (!authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken)
                     && config.getString("cloudAuth.adminRole").equals(role.getName())) {
                 throw new ForbiddenException(NOT_AUTHORIZED);
@@ -1191,7 +1194,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                     throw new ForbiddenException(NOT_AUTHORIZED);
                 }
             }
-            verifyUserAdminLevelAccess(authToken);
+            authorizationService.verifyUserAdminLevelAccess(scopeAccessByAccessToken);
             User user = this.userService.getUserById(userId);
             if (user == null) {
                 String errMsg = String.format("User with id: '%s' was not found", userId);
@@ -1950,10 +1953,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder listUsers(HttpHeaders httpHeaders, String authToken, Integer marker, Integer limit) {
 
         try {
-            ScopeAccess scopeAccessByAccessToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
-            if (scopeAccessByAccessToken == null) {
-                throw new NotAuthorizedException("Invalid token");
-            }
+            ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
             User caller = getUser(scopeAccessByAccessToken);
 
             //if default user
@@ -1963,7 +1963,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 return Response.ok(objFactories.getOpenStackIdentityV2Factory()
                         .createUsers(this.userConverterCloudV20.toUserList(users)).getValue());
             }
-            verifyUserAdminLevelAccess(authToken);
+            authorizationService.verifyUserAdminLevelAccess(scopeAccessByAccessToken);
             Users users = new Users();
             if (authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken) ||
                     authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken)) {
@@ -1987,7 +1987,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder listUsersForTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String marker, Integer limit) {
 
         try {
-            verifyUserAdminLevelAccess(authToken);
+            authorizationService.verifyUserAdminLevelAccess(getScopeAccessForValidToken(authToken));
             verifyTokenHasTenantAccess(authToken, tenantId);
 
             Tenant tenant = checkAndGetTenant(tenantId);
@@ -2006,7 +2006,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                                                       String roleId, String marker, Integer limit) {
 
         try {
-            verifyUserAdminLevelAccess(authToken);
+            authorizationService.verifyUserAdminLevelAccess(getScopeAccessForValidToken(authToken));
             verifyTokenHasTenantAccess(authToken, tenantId);
 
             Tenant tenant = checkAndGetTenant(tenantId);
@@ -2437,19 +2437,6 @@ public class DefaultCloud20Service implements Cloud20Service {
                 && !authorizationService.authorizeCloudServiceAdmin(authScopeAccess)
                 && !authorizationService.authorizeCloudUserAdmin(authScopeAccess)
                 && !authorizationService.authorizeCloudUser(authScopeAccess)) {
-            String errMsg = NOT_AUTHORIZED;
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
-    }
-
-    //method verifies that caller is an identity admin, service admin or user admin
-
-    void verifyUserAdminLevelAccess(String authToken) {
-        ScopeAccess authScopeAccess = getScopeAccessForValidToken(authToken);
-        if (!authorizationService.authorizeCloudIdentityAdmin(authScopeAccess)
-                && !authorizationService.authorizeCloudServiceAdmin(authScopeAccess)
-                && !authorizationService.authorizeCloudUserAdmin(authScopeAccess)) {
             String errMsg = NOT_AUTHORIZED;
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
