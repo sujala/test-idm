@@ -1,6 +1,6 @@
 package com.rackspace.idm.validation;
 
-public class MessageTexts {
+public final class MessageTexts {
 
     private MessageTexts() {}
 

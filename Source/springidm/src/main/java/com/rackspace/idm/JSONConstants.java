@@ -1,6 +1,6 @@
 package com.rackspace.idm;
 
-public class JSONConstants {
+public final class JSONConstants {
 
     private JSONConstants() {}
 

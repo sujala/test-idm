@@ -27,7 +27,7 @@ public class Audit {
 		SUCCEED, FAIL;
 	}
 
-	private class Event {
+	private final class Event {
 		private ACTION action;
 		private String context;
 

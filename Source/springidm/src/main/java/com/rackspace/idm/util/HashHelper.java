@@ -9,7 +9,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Date;
 
-public class HashHelper {
+public final class HashHelper {
 
     private HashHelper() {}
 
