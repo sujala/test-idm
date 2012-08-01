@@ -89,7 +89,7 @@ public class TokenConverterCloudV20 {
     }
     */
 
-    public void setObjFactories(JAXBObjectFactories OBJ_FACTORIES) {
-        this.objFactories = OBJ_FACTORIES;
+    public void setObjFactories(JAXBObjectFactories objFactories) {
+        this.objFactories = objFactories;
     }
 }

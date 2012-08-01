@@ -440,56 +440,56 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return cloudAdminRole;
     }
 
-    public static void setCloudAdminRole(ClientRole CLOUD_ADMIN_ROLE) {
-        DefaultAuthorizationService.cloudAdminRole = CLOUD_ADMIN_ROLE;
+    public static void setCloudAdminRole(ClientRole cloudAdminRole) {
+        DefaultAuthorizationService.cloudAdminRole = cloudAdminRole;
     }
 
     public static ClientRole getRackerRole() {
         return rackerRole;
     }
 
-    public static void setRackerRole(ClientRole RACKER_ROLE) {
-        DefaultAuthorizationService.rackerRole = RACKER_ROLE;
+    public static void setRackerRole(ClientRole rackerRole) {
+        DefaultAuthorizationService.rackerRole = rackerRole;
     }
 
     public static ClientRole getCloudServiceAdminRole() {
         return cloudServiceAdminRole;
     }
 
-    public static void setCloudServiceAdminRole(ClientRole CLOUD_SERVICE_ADMIN_ROLE) {
-        DefaultAuthorizationService.cloudServiceAdminRole = CLOUD_SERVICE_ADMIN_ROLE;
+    public static void setCloudServiceAdminRole(ClientRole cloudServiceAdminRole) {
+        DefaultAuthorizationService.cloudServiceAdminRole = cloudServiceAdminRole;
     }
 
     public static ClientRole getCloudUserAdminRole() {
         return cloudUserAdminRole;
     }
 
-    public static void setCloudUserAdminRole(ClientRole CLOUD_USER_ADMIN_ROLE) {
-        DefaultAuthorizationService.cloudUserAdminRole = CLOUD_USER_ADMIN_ROLE;
+    public static void setCloudUserAdminRole(ClientRole cloudUserAdminRole) {
+        DefaultAuthorizationService.cloudUserAdminRole = cloudUserAdminRole;
     }
 
     public static ClientRole getCloudUserRole() {
         return cloudUserRole;
     }
 
-    public static void setCloudUserRole(ClientRole CLOUD_USER_ROLE) {
-        DefaultAuthorizationService.cloudUserRole = CLOUD_USER_ROLE;
+    public static void setCloudUserRole(ClientRole cloudUserRole) {
+        DefaultAuthorizationService.cloudUserRole = cloudUserRole;
     }
 
     public static ClientRole getIdmSuperAdminRole() {
         return idmSuperAdminRole;
     }
 
-    public static void setIdmSuperAdminRole(ClientRole IDM_SUPER_ADMIN_ROLE) {
-        DefaultAuthorizationService.idmSuperAdminRole = IDM_SUPER_ADMIN_ROLE;
+    public static void setIdmSuperAdminRole(ClientRole idmSuperAdminRole) {
+        DefaultAuthorizationService.idmSuperAdminRole = idmSuperAdminRole;
     }
 
     public static String getIdmAdminGroupDn() {
         return idmAdminGroupDn;
     }
 
-    public static void setIdmAdminGroupDn(String IDM_ADMIN_GROUP_DN) {
-        DefaultAuthorizationService.idmAdminGroupDn = IDM_ADMIN_GROUP_DN;
+    public static void setIdmAdminGroupDn(String idmAdminGroupDn) {
+        DefaultAuthorizationService.idmAdminGroupDn = idmAdminGroupDn;
     }
 
     private String getIdmAdminGroupName() {
