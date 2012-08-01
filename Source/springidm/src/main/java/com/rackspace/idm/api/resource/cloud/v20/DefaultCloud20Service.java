@@ -51,6 +51,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -127,6 +128,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Autowired
     private ExceptionHandler exceptionHandler;
 
+    @Autowired
+    private DefaultRegionService defaultRegionService;
+
     com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
 
     private HashMap<String, JAXBElement<Extension>> extensionMap;
@@ -134,7 +138,6 @@ public class DefaultCloud20Service implements Cloud20Service {
     private JAXBElement<Extensions> currentExtensions;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-
 
     @Override
     public ResponseBuilder addEndpoint(HttpHeaders httpHeaders, String authToken, String tenantId, EndpointTemplate endpoint) {
@@ -154,6 +157,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             return exceptionHandler.exceptionResponse(ex);
         }
     }
+
 
     @Override
     public ResponseBuilder addEndpointTemplate(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, EndpointTemplate endpoint) {
@@ -355,8 +359,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             User userDO = this.userConverterCloudV20.toUserDO(user);
 
             //if caller is a user-admin, give user same mosso and nastId and verifies that it has less then 100 subusers
-            boolean isUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken);
-            if (isUserAdmin) {
+            boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken);
+            boolean callerIsServiceAdmin = authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken);
+            if (callerIsUserAdmin) {
                 //TODO Pagination index and offset
                 Users users;
                 User caller = userService.getUserByAuthToken(authToken);
@@ -372,11 +377,22 @@ public class DefaultCloud20Service implements Cloud20Service {
                 userDO.setNastId(caller.getNastId());
             }
             setDomainId(scopeAccessByAccessToken, userDO);
+            if(callerIsServiceAdmin || callerIsUserAdmin){
+                Set<String> defaultRegions = defaultRegionService.getDefaultRegions();
+                String regionString = "";
+                for(String region : defaultRegions){
+                    regionString += " "+region;
+                }
+                String userRegion = userDO.getRegion();
+                if(userRegion!=null && !defaultRegions.contains(userRegion)){
+                    throw new BadRequestException("Invalid defaultRegion value, accepted values are:" + regionString +".");
+                }
+            }
             userService.addUser(userDO);
             assignProperRole(httpHeaders, authToken, scopeAccessByAccessToken, userDO);
 
             //after user is created and caller is a user admin, add tenant roles to default user
-            if (isUserAdmin) {
+            if (callerIsUserAdmin) {
                 tenantService.addTenantRolesToUser(scopeAccessByAccessToken, userDO);
             }
             UriBuilder requestUriBuilder = uriInfo.getRequestUriBuilder();
@@ -1406,7 +1422,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
-
     @Override
     public ResponseBuilder listEndpointsForToken(HttpHeaders httpHeaders, String authToken, String tokenId)  {
 
@@ -1427,6 +1442,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             return exceptionHandler.exceptionResponse(ex);
         }
     }
+
 
     @Override
     public ResponseBuilder listEndpointTemplates(HttpHeaders httpHeaders, String authToken, String serviceId) {
@@ -2667,5 +2683,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     public void setExceptionHandler(ExceptionHandler exceptionHandler) {
         this.exceptionHandler = exceptionHandler;
+    }
+
+    public void setDefaultRegionService(DefaultRegionService defaultRegionService) {
+        this.defaultRegionService = defaultRegionService;
     }
 }
