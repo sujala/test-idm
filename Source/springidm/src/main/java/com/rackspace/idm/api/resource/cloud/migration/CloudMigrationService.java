@@ -230,12 +230,12 @@ public class CloudMigrationService {
             }
 
             return response;
-        } catch (ConflictException ce){
-            throw ce;
         } catch (Exception e) {
-            logger.info("failed to migrate user: {}", username);
-            unmigrateUserByUsername(username);
-            logger.info("successfully unmigrated user: {}", username);
+            if(!(e instanceof ConflictException)){
+                logger.info("failed to migrate user: {}", username);
+                unmigrateUserByUsername(username);
+                logger.info("successfully unmigrated user: {}", username);
+            }
             throw new IdmException(e);
         }
     }

@@ -1681,7 +1681,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             impersonatingToken = impAccess.getAccessTokenString();
         }
 
-        if (impersonatingToken == "" || impersonatingUsername == "") {
+        if (StringUtils.isBlank(impersonatingToken) || StringUtils.isBlank(impersonatingUsername)) {
             throw new BadRequestException("Invalid user");
         }
 

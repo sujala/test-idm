@@ -1,6 +1,6 @@
 package com.rackspace.idm.domain.entity;
 
-public class Entity {
+public final class Entity {
 	
 	public static final Integer USER = 1;
 	public static final Integer APPLICATION = 2;

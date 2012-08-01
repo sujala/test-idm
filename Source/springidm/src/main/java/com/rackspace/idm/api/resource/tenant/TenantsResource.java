@@ -173,7 +173,7 @@ public class TenantsResource extends ParentResource {
 
     void validateTenantId(String tenantId) {
         if(tenantId != null) {
-            int index = tenantId.indexOf(":");
+            int index = tenantId.indexOf(':');
 
             String namespace = null;
             String id = null;

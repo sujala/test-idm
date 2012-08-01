@@ -1200,7 +1200,11 @@ public class JSONWriterTest {
     public void getToken_nullExpired_throwsBadRequestException() throws Exception {
         Token token = new Token();
         writer.getToken(token);
+    }
 
+    @Test (expected = BadRequestException.class)
+    public void getToken_nullToken_throwsBadRequestException() throws Exception {
+        writer.getToken(null);
     }
 
     @Test

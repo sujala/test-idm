@@ -9,6 +9,7 @@ import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.exception.ClientConflictException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
+import com.unboundid.ldap.sdk.LDAPException;
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -282,8 +283,8 @@ public class DefaultTenantService implements TenantService {
             } else {
                 parentDn = scopeAccess.getLDAPEntry().getParentDNString();
             }
-        } catch (Exception ex) {
-            System.out.println(ex.getMessage());
+        } catch (LDAPException ex) {
+            logger.info("failed to getLdapEntry's parentDNString: " + ex.getMessage());
             throw new IllegalStateException();
         }
 

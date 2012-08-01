@@ -1099,10 +1099,6 @@ public class DelegateCloud20Service implements Cloud20Service {
         return config.getString("cloudAuth11url");
     }
 
-    private String getCloudAuthUKV20Url() {
-        return config.getString("cloudAuthUK20url");
-    }
-
     private String getCloudAuthUKV11Url() {
         return config.getString("cloudAuthUK11url");
     }

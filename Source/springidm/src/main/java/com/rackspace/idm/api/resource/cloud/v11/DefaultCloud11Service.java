@@ -514,7 +514,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             tenants[1] = this.tenantService.getTenant(tenantId2);
 
             boolean found = false;
-            for(Tenant tenant : tenants)
+            for(Tenant tenant : tenants) {
                 if(tenant != null){
                     for (String currentId : tenant.getBaseUrlIds()) {
                         if (currentId.equals(String.valueOf(baseUrl.getBaseUrlId()))){
@@ -525,6 +525,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
                     }
                 }
+            }
 
 
             if (!found) {

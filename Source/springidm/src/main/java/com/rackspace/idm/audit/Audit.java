@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class Audit {
+public final class Audit {
 	public static final String REMOTE_IP = "REMOTE_IP";
 	public static final String HOST_IP = "HOST_IP";
 	public static final String PATH = "PATH";

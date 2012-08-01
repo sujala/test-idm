@@ -128,7 +128,7 @@ public class AuthenticationFilter implements ContainerRequestFilter,
         }
 
         // Skip authentication for the following calls
-        int index = path.indexOf("/");
+        int index = path.indexOf('/');
         path = index > 0 ? path.substring(index + 1) : ""; //TODO: "/asdf/afafw/fwa" -> "" is correct behavior?
 
         if (GET.equals(method) && "application.wadl".equals(path)) {

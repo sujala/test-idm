@@ -506,13 +506,13 @@ public class JSONWriter implements MessageBodyWriter<Object> {
 
     @SuppressWarnings("unchecked")
     JSONObject getToken(Token token) {
-        JSONObject tokenInner = new JSONObject();
-        try {
-            tokenInner.put(JSONConstants.ID, token.getId());
-            tokenInner.put(JSONConstants.EXPIRES, token.getExpires().toString());
-        } catch (NullPointerException e) {
-            throw new BadRequestException("Expected \"id\" and \"expired\" to not be null.", e);
+        if(token == null || token.getExpires() == null){
+            throw new BadRequestException("Invalid token.");
         }
+
+        JSONObject tokenInner = new JSONObject();
+        tokenInner.put(JSONConstants.ID, token.getId());
+        tokenInner.put(JSONConstants.EXPIRES, token.getExpires().toString());
 
         if (token.getTenant() != null) {
             JSONObject tenantInner = new JSONObject();
