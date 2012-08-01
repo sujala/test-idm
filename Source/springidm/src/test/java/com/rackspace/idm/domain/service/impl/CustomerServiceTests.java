@@ -29,7 +29,6 @@ public class CustomerServiceTests {
     ApplicationDao applicationDao;
     CustomerDao mockCustomerDao;
     UserDao mockUserDao;
-    TokenService mockTokenService;
 
     String customerId = "CustomerId";
     String username = "username";
@@ -42,10 +41,9 @@ public class CustomerServiceTests {
         applicationDao = EasyMock.createMock(ApplicationDao.class);
         mockCustomerDao = EasyMock.createMock(CustomerDao.class);
         mockUserDao = EasyMock.createMock(UserDao.class);
-        mockTokenService = EasyMock.createMock(TokenService.class);
 
         service = new DefaultCustomerService(applicationDao, mockCustomerDao,
-            mockUserDao, mockTokenService);
+            mockUserDao);
     }
 
     @Test

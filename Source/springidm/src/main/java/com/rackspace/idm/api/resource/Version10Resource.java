@@ -1,7 +1,6 @@
 package com.rackspace.idm.api.resource;
 
 import com.rackspace.idm.api.resource.application.ApplicationsResource;
-import com.rackspace.idm.api.resource.cloud.CloudVersionsResource;
 import com.rackspace.idm.api.resource.customeridentityprofile.CustomerIdentityProfilesResource;
 import com.rackspace.idm.api.resource.passwordrule.PasswordRulesResource;
 import com.rackspace.idm.api.resource.roles.RolesResource;
@@ -11,7 +10,6 @@ import com.rackspace.idm.api.resource.user.RackerResource;
 import com.rackspace.idm.api.resource.user.UsersResource;
 import com.rackspace.idm.api.serviceprofile.CanonicalContractDescriptionBuilder;
 import com.rackspace.idm.domain.service.ApiDocService;
-import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -47,9 +45,7 @@ public class Version10Resource {
     @Autowired
     public Version10Resource(UsersResource usersResource,
         CustomerIdentityProfilesResource customersResource, PasswordRulesResource passwordRulesResource,
-        TokensResource tokenResource, RolesResource rolesResource,
-        CloudVersionsResource cloudVersionsResource, ApiDocService apiDocService,
-        Configuration config,
+        TokensResource tokenResource, RolesResource rolesResource, ApiDocService apiDocService,
         CanonicalContractDescriptionBuilder canonicalContractDescriptionBuilder,
         ApplicationsResource applicationsResource,
         TenantsResource tenantsResource,

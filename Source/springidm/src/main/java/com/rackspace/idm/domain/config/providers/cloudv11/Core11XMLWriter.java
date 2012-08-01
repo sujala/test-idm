@@ -9,6 +9,7 @@ package com.rackspace.idm.domain.config.providers.cloudv11;
  */
 
 import com.rackspace.idm.domain.config.providers.PackageClassDiscoverer;
+import com.rackspace.idm.exception.IdmException;
 import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.api.json.JSONJAXBContext;
 import com.sun.xml.bind.marshaller.NamespacePrefixMapper;
@@ -69,7 +70,7 @@ public class Core11XMLWriter extends NamespacePrefixMapper implements
 
         } catch (Exception e) {
             LOG.error("Error in static initializer.  - " + e.getMessage());
-            throw new RuntimeException(e);
+            throw new IdmException(e);
         }
     }
 

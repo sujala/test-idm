@@ -56,8 +56,7 @@ public class NastXmlRpcClientWrapper {
 
     String removeNastPrefix(String nastAccountId) {
         if (!StringUtils.isBlank(nastAccountId) && nastAccountId.startsWith(authConfiguration.getNastResellerName())) {
-            nastAccountId = nastAccountId.replaceFirst(authConfiguration.getNastResellerName() + "_", "");
-            return nastAccountId;
+            return nastAccountId.replaceFirst(authConfiguration.getNastResellerName() + "_", "");
         }
 
         return nastAccountId;

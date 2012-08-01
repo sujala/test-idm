@@ -42,8 +42,7 @@ public class JSONReaderForImpersonation implements MessageBodyReader<Impersonati
                                          MultivaluedMap<String, String> httpHeaders,
                                          InputStream entityStream) throws IOException, WebApplicationException {
         String jsonBody = IOUtils.toString(entityStream, JSONConstants.UTF_8);
-        ImpersonationRequest request = getImpersonationFromJSONString(jsonBody);
-        return request;
+        return getImpersonationFromJSONString(jsonBody);
     }
 
     public static ImpersonationRequest getImpersonationFromJSONString(String jsonBody) {

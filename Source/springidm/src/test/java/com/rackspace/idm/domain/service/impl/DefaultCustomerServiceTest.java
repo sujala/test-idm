@@ -22,16 +22,14 @@ public class DefaultCustomerServiceTest {
     ApplicationDao clientDao;
     CustomerDao customerDao;
     UserDao userDao;
-    TokenService oauthService;
 
     @Before
     public void setUp() throws Exception {
         clientDao = mock(ApplicationDao.class);
         customerDao = mock(CustomerDao.class);
         userDao = mock(UserDao.class);
-        oauthService = mock(TokenService.class);
 
-        defaultCustomerService = new DefaultCustomerService(clientDao, customerDao, userDao, oauthService);
+        defaultCustomerService = new DefaultCustomerService(clientDao, customerDao, userDao);
     }
 
     @Test

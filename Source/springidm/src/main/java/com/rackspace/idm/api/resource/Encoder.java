@@ -9,7 +9,9 @@ import java.net.URLEncoder;
  * Date: 8/31/11
  * Time: 11:37 AM
  */
-public class Encoder {
+public final class Encoder {
+
+    private Encoder() {}
 
     public static String encode(String url) throws UnsupportedEncodingException {
         if(url != null) {

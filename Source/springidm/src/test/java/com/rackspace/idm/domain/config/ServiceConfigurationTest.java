@@ -27,8 +27,6 @@ import static org.mockito.Mockito.*;
  */
 public class ServiceConfigurationTest {
 
-    ScopeAccessDao scopeAccessDao = mock(ScopeAccessDao.class);
-
     Configuration config = mock(Configuration.class);
     ServiceConfiguration serviceConfiguration;
     ServiceConfiguration spy;
@@ -63,12 +61,6 @@ public class ServiceConfigurationTest {
     @Test
     public void endpointService_returnsEndpointService() throws Exception {
         assertThat("endpoint service",serviceConfiguration.endpointService(),instanceOf(EndpointService.class));
-    }
-
-    @Test
-    public void customerService_callsTokenService() throws Exception {
-        spy.customerService();
-        verify(spy).tokenService();
     }
 
     @Test

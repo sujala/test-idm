@@ -51,6 +51,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
@@ -127,9 +128,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Autowired
     private ExceptionHandler exceptionHandler;
 
-    com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
+    private com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
 
-    private HashMap<String, JAXBElement<Extension>> extensionMap;
+    private Map<String, JAXBElement<Extension>> extensionMap;
 
     private JAXBElement<Extensions> currentExtensions;
 
@@ -684,7 +685,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                     logger.info("Impersonating token {} with token {} ", authenticationRequest.getToken(), newToken);
                     sa = scopeAccessService.getScopeAccessByAccessToken(newToken);
                 }
-                if (sa == null || ((HasAccessToken) sa).isAccessTokenExpired(new DateTime()) || !(sa instanceof UserScopeAccess)) {
+                if ( !(sa instanceof UserScopeAccess) || ((HasAccessToken) sa).isAccessTokenExpired(new DateTime())) {
                     String errMsg = "Token not authenticated";
                     logger.warn(errMsg);
                     throw new NotAuthenticatedException(errMsg);
@@ -1358,11 +1359,15 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     boolean isUserAdmin(ScopeAccess requesterScopeAccess, List<TenantRole> tenantRoles) {
+        List<TenantRole> tenantRoleList;
         if (tenantRoles == null) {
-            tenantRoles = tenantService.getTenantRolesForScopeAccess(requesterScopeAccess);
+            tenantRoleList = tenantService.getTenantRolesForScopeAccess(requesterScopeAccess);
+        }
+        else {
+            tenantRoleList = tenantRoles;
         }
         boolean hasRole = false;
-        for (TenantRole tenantRole : tenantRoles) {
+        for (TenantRole tenantRole : tenantRoleList) {
             String name = tenantRole.getName();
             if (name.equals("identity:user-admin")) {
                 hasRole = true;
@@ -1372,11 +1377,15 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     boolean isDefaultUser(ScopeAccess requesterScopeAccess, List<TenantRole> tenantRoles) {
+        List<TenantRole> tenantRoleList;
         if (tenantRoles == null) {
-            tenantRoles = tenantService.getTenantRolesForScopeAccess(requesterScopeAccess);
+            tenantRoleList = tenantService.getTenantRolesForScopeAccess(requesterScopeAccess);
+        }
+        else {
+            tenantRoleList = tenantRoles;
         }
         boolean hasRole = false;
-        for (TenantRole tenantRole : tenantRoles) {
+        for (TenantRole tenantRole : tenantRoleList) {
             String name = tenantRole.getName();
             if (name.equals("identity:default")) {
                 hasRole = true;
@@ -1419,8 +1428,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             ScopeAccess sa = checkAndGetToken(tokenId);
             if (sa instanceof ImpersonatedScopeAccess) {
                 ImpersonatedScopeAccess impersonatedScopeAccess = (ImpersonatedScopeAccess) sa;
-                tokenId = impersonatedScopeAccess.getImpersonatingToken();
-                sa = scopeAccessService.getScopeAccessByAccessToken(tokenId);
+                String impersonatedTokenId = impersonatedScopeAccess.getImpersonatingToken();
+                sa = scopeAccessService.getScopeAccessByAccessToken(impersonatedTokenId);
             }
 
             List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(sa);
@@ -1718,7 +1727,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         if(openStackServices!=null){
             for(Application application: openStackServices){
                 Boolean useForDefaultRegion = application.getUseForDefaultRegion();
-                if(useForDefaultRegion!=null && useForDefaultRegion==true){
+                if(useForDefaultRegion!=null && useForDefaultRegion){
                     defaultRegionServices.getServiceName().add(application.getName());
                 }
             }
@@ -2227,8 +2236,8 @@ public class DefaultCloud20Service implements Cloud20Service {
                     access.setUser(userConverterCloudV20.toUserForAuthenticateResponse(user, roles));
                     List<TenantRole> impRoles = this.tenantService.getGlobalRolesForUser(impersonator, null);
                     UserForAuthenticateResponse userForAuthenticateResponse = userConverterCloudV20.toUserForAuthenticateResponse(impersonator, impRoles);
-                    com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = objFactories.getRackspaceIdentityExtRaxgaV1Factory();
-                    JAXBElement<UserForAuthenticateResponse> impersonatorJAXBElement = raxAuthObjectFactory.createImpersonator(userForAuthenticateResponse);
+                    com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory objectFactory = objFactories.getRackspaceIdentityExtRaxgaV1Factory();
+                    JAXBElement<UserForAuthenticateResponse> impersonatorJAXBElement = objectFactory.createImpersonator(userForAuthenticateResponse);
                     access.getAny().add(impersonatorJAXBElement);
                 }
             }
@@ -2558,8 +2567,8 @@ public class DefaultCloud20Service implements Cloud20Service {
         return tenantForAuthenticateResponse;
     }
 
-    public void setObjFactories(JAXBObjectFactories OBJ_FACTORIES) {
-        this.objFactories = OBJ_FACTORIES;
+    public void setObjFactories(JAXBObjectFactories objFactories) {
+        this.objFactories = objFactories;
     }
 
     public void setScopeAccessService(ScopeAccessService scopeAccessService) {
@@ -2622,7 +2631,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         this.authConverterCloudV20 = authConverterCloudV20;
     }
 
-    public void setExtensionMap(HashMap<String, JAXBElement<Extension>> extensionMap) {
+    public void setExtensionMap(Map<String, JAXBElement<Extension>> extensionMap) {
         this.extensionMap = extensionMap;
     }
 

@@ -23,14 +23,12 @@ public class ServiceProfileDescriptionBuilderTest {
     private ServiceProfileDescriptionBuilder serviceProfileDescriptionBuilder;
     private ApiDocDao apiDocDao;
     private ServiceDescriptionTemplateUtil serviceDescriptionTemplateUtil;
-    private Configuration config;
 
     @Before
     public void setUp() throws Exception {
-        config = new Configuration();
         apiDocDao = mock(ApiDocDao.class);
         serviceDescriptionTemplateUtil = mock(ServiceDescriptionTemplateUtil.class);
-        serviceProfileDescriptionBuilder = new ServiceProfileDescriptionBuilder(config, apiDocDao, serviceDescriptionTemplateUtil);
+        serviceProfileDescriptionBuilder = new ServiceProfileDescriptionBuilder(apiDocDao, serviceDescriptionTemplateUtil);
     }
 
     @Test

@@ -27,11 +27,11 @@ public class Audit {
 		SUCCEED, FAIL;
 	}
 
-	private class Event {
+	private final class Event {
 		private ACTION action;
 		private String context;
 
-		Event(ACTION action, String context) {
+		private Event(ACTION action, String context) {
 			this.action = action;
 			this.context = context;
 		}

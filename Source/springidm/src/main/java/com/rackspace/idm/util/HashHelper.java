@@ -9,7 +9,10 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Date;
 
-public class HashHelper {
+public final class HashHelper {
+
+    private HashHelper() {}
+
     private static Logger logger = LoggerFactory.getLogger(HashHelper.class);
 
     public static String getRandomSha1() throws NoSuchAlgorithmException {

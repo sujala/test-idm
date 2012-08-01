@@ -6,7 +6,6 @@ import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.domain.service.CustomerService;
-import com.rackspace.idm.domain.service.TokenService;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import org.slf4j.Logger;
@@ -24,7 +23,7 @@ public class DefaultCustomerService implements CustomerService {
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public DefaultCustomerService(ApplicationDao clientDao, CustomerDao customerDao,
-        UserDao userDao, TokenService oauthService) {
+        UserDao userDao) {
 
         this.clientDao = clientDao;
         this.customerDao = customerDao;

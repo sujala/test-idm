@@ -23,7 +23,7 @@ import javax.ws.rs.core.Response;
 public class MigrationResource {
 
     @Autowired
-    CloudMigrationService cloudMigrationService;
+    private CloudMigrationService cloudMigrationService;
 
     public MigrationResource(){};
 

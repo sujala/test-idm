@@ -40,7 +40,6 @@ public class AuthenticationServiceTests {
     TenantService mockTenantService;
     AuthenticationService authenticationService;
     DefaultAuthenticationService authSpy;
-    TokenService mockTokenService;
     ApplicationDao mockApplicationDao;
     AuthDao mockAuthDao;
     CustomerDao mockCustomerDao;
@@ -73,7 +72,6 @@ public class AuthenticationServiceTests {
         inputValidator = EasyMock.createMock(InputValidator.class);
         mockUserDao = EasyMock.createMock(UserDao.class);
         mockTenantService = mock(TenantService.class);
-        mockTokenService = EasyMock.createMock(TokenService.class);
         mockApplicationDao = EasyMock.createMock(ApplicationDao.class);
         mockAuthDao = EasyMock.createMock(AuthDao.class);
         mockCustomerDao = EasyMock.createMock(CustomerDao.class);
@@ -89,11 +87,11 @@ public class AuthenticationServiceTests {
         appConfig.addProperty("idm.clientId", "TESTING");
 
         authenticationService = new DefaultAuthenticationService(
-                mockTokenService, mockAuthDao, mockTenantService,
+                mockAuthDao, mockTenantService,
                 mockScopeAccessService, mockApplicationDao, appConfig,
                 mockUserDao, mockCustomerDao, inputValidator);
         authSpy = PowerMockito.spy(new DefaultAuthenticationService(
-                mockTokenService, mockAuthDao, mockTenantService,
+                mockAuthDao, mockTenantService,
                 mockScopeAccessService, mockApplicationDao, appConfig,
                 mockUserDao, mockCustomerDao, inputValidator));
     }

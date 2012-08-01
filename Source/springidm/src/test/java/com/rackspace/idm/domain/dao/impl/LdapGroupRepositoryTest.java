@@ -162,22 +162,6 @@ public class LdapGroupRepositoryTest extends InMemoryLdapIntegrationTest{
         ldapGroupRepository.addGroup(null);
     }
 
-    @Test (expected = IllegalStateException.class)
-    public void addGroup_callsGetAddAttributes_throwsGeneralSecurityException() throws Exception {
-        Group group = new Group();
-        group.setGroupId(1);
-        doThrow(new GeneralSecurityException()).when(spy).getAddAttributes(group);
-        spy.addGroup(group);
-    }
-
-    @Test (expected = IllegalStateException.class)
-    public void addGroup_callsGetAddAttributes_throwsInvalidCipherTextException() throws Exception {
-        Group group = new Group();
-        group.setGroupId(1);
-        doThrow(new InvalidCipherTextException()).when(spy).getAddAttributes(group);
-        spy.addGroup(group);
-    }
-
     @Test
     public void addGroup_callsAddEntry() throws Exception {
         Group group = new Group();

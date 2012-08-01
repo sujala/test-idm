@@ -38,7 +38,7 @@ public class UsersResourceTest {
         userConverter = mock(UserConverter.class);
         authorizationService = mock(AuthorizationService.class);
 
-        usersResource = new UsersResource(null, userConverter, authorizationService, null, userService);
+        usersResource = new UsersResource(null, userConverter, authorizationService, userService);
     }
 
     @Test
