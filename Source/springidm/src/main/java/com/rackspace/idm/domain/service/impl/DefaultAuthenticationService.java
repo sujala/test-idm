@@ -9,7 +9,6 @@ import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.AuthenticationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TenantService;
-import com.rackspace.idm.domain.service.TokenService;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.util.RSAClient;
 import com.rackspace.idm.validation.AuthorizationCodeCredentialsCheck;
