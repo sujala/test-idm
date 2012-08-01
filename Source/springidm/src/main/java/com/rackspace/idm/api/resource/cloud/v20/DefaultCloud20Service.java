@@ -65,6 +65,8 @@ import java.util.regex.Pattern;
 @Component
 public class DefaultCloud20Service implements Cloud20Service {
 
+    public static final String NOT_AUTHORIZED = "Not authorized.";
+    public static final String USER_AND_USER_ID_MIS_MATCHED = "User and UserId mis-matched";
     @Autowired
     private AuthConverterCloudV20 authConverterCloudV20;
 
@@ -440,7 +442,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (authorizationService.authorizeCloudUser(scopeAccessByAccessToken)) {
                 User caller = userService.getUserByAuthToken(authToken);
                 if (!caller.getId().equals(retrievedUser.getId())) {
-                    throw new ForbiddenException("Not authorized.");
+                    throw new ForbiddenException(NOT_AUTHORIZED);
                 }
             }
             //if user admin, verify domain
@@ -595,7 +597,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 validatePassword(userCredentials.getPassword());
                 user = checkAndGetUser(userId);
                 if (!userCredentials.getUsername().equals(user.getUsername())) {
-                    String errMsg = "User and UserId mis-matched";
+                    String errMsg = USER_AND_USER_ID_MIS_MATCHED;
                     logger.warn(errMsg);
                     throw new BadRequestException(errMsg);
                 }
@@ -607,7 +609,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 validateApiKeyCredentials(userCredentials);
                 user = checkAndGetUser(userId);
                 if (!userCredentials.getUsername().equals(user.getUsername())) {
-                    String errMsg = "User and UserId mis-matched";
+                    String errMsg = USER_AND_USER_ID_MIS_MATCHED;
                     logger.warn(errMsg);
                     throw new BadRequestException(errMsg);
                 }
@@ -631,7 +633,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             ScopeAccess scopeAccessByAccessToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
             if (!authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken)
                     && config.getString("cloudAuth.adminRole").equals(cRole.getName())) {
-                throw new ForbiddenException("Not authorized.");
+                throw new ForbiddenException(NOT_AUTHORIZED);
             }
 
             TenantRole role = new TenantRole();
@@ -1022,7 +1024,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             ScopeAccess scopeAccessByAccessToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
             if (!authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken)
                     && config.getString("cloudAuth.adminRole").equals(role.getName())) {
-                throw new ForbiddenException("Not authorized.");
+                throw new ForbiddenException(NOT_AUTHORIZED);
             }
             this.tenantService.deleteGlobalRole(role);
             return Response.noContent();
@@ -1186,7 +1188,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 if (caller.getId().equals(userId)) {
                     return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createUser(this.userConverterCloudV20.toUser(caller)).getValue());
                 } else {
-                    throw new ForbiddenException("Not authorized.");
+                    throw new ForbiddenException(NOT_AUTHORIZED);
                 }
             }
             verifyUserAdminLevelAccess(authToken);
@@ -1560,7 +1562,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (access == null) { // ToDo: Send an empty list, it's what Cloud does.
                 //return Response.ok(OBJ_FACTORIES.getOpenStackIdentityV2Factory().createTenants(
                 //        this.tenantConverterCloudV20.toTenantList(tenants)));
-                throw new NotAuthorizedException("Not authorized.");
+                throw new NotAuthorizedException(NOT_AUTHORIZED);
             }
 
             ScopeAccess sa = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
@@ -2103,7 +2105,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     void verifyDomain(User retrievedUser, User caller) {
         if (caller.getDomainId() == null || !caller.getDomainId().equals(retrievedUser.getDomainId())) {
-            throw new ForbiddenException("Not authorized.");
+            throw new ForbiddenException(NOT_AUTHORIZED);
         }
     }
 
@@ -2132,7 +2134,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             User user = checkAndGetUser(userId);
             if (!creds.getUsername().equals(user.getUsername())) {
-                String errMsg = "User and UserId mis-matched";
+                String errMsg = USER_AND_USER_ID_MIS_MATCHED;
                 logger.warn(errMsg);
                 throw new BadRequestException(errMsg);
             }
@@ -2158,7 +2160,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             validatePassword(creds.getPassword());
             User user = checkAndGetUser(userId);
             if (!creds.getUsername().equals(user.getUsername())) {
-                String errMsg = "User and UserId mis-matched";
+                String errMsg = USER_AND_USER_ID_MIS_MATCHED;
                 logger.warn(errMsg);
                 throw new BadRequestException(errMsg);
             }
@@ -2395,7 +2397,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     void verifyIdentityAdminLevelAccess(String authToken) {
         ScopeAccess authScopeAccess = getScopeAccessForValidToken(authToken);
         if (!authorizationService.authorizeCloudIdentityAdmin(authScopeAccess)) {
-            String errMsg = "Not authorized.";
+            String errMsg = NOT_AUTHORIZED;
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -2418,7 +2420,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     void verifyServiceAdminLevelAccess(String authToken) {
         ScopeAccess authScopeAccess = getScopeAccessForValidToken(authToken);
         if (!authorizationService.authorizeCloudIdentityAdmin(authScopeAccess) && !authorizationService.authorizeCloudServiceAdmin(authScopeAccess)) {
-            String errMsg = "Not authorized.";
+            String errMsg = NOT_AUTHORIZED;
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -2434,7 +2436,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         String requesterUsername = requester.getUsername();
 
         if (!((requesterUsername.equals(username) && (requesterUniqueId.equals(uniqueId))))) {
-            String errMsg = "Not authorized.";
+            String errMsg = NOT_AUTHORIZED;
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -2443,7 +2445,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     void verifyRackerOrServiceAdminAccess(String authToken) {
         ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
         if (!authorizationService.authorizeRacker(scopeAccess) && !authorizationService.authorizeCloudServiceAdmin(scopeAccess)) {
-            String errMsg = "Not authorized.";
+            String errMsg = NOT_AUTHORIZED;
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -2457,7 +2459,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 && !authorizationService.authorizeCloudServiceAdmin(authScopeAccess)
                 && !authorizationService.authorizeCloudUserAdmin(authScopeAccess)
                 && !authorizationService.authorizeCloudUser(authScopeAccess)) {
-            String errMsg = "Not authorized.";
+            String errMsg = NOT_AUTHORIZED;
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -2470,7 +2472,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         if (!authorizationService.authorizeCloudIdentityAdmin(authScopeAccess)
                 && !authorizationService.authorizeCloudServiceAdmin(authScopeAccess)
                 && !authorizationService.authorizeCloudUserAdmin(authScopeAccess)) {
-            String errMsg = "Not authorized.";
+            String errMsg = NOT_AUTHORIZED;
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -2497,7 +2499,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
 
         if (!authorized) {
-            String errMsg = "Not authorized.";
+            String errMsg = NOT_AUTHORIZED;
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -2518,7 +2520,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 return;
             }
         }
-        String errMsg = "Not authorized.";
+        String errMsg = NOT_AUTHORIZED;
         logger.warn(errMsg);
         throw new ForbiddenException(errMsg);
     }

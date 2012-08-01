@@ -21,6 +21,9 @@ import java.util.List;
 
 public class LdapApplicationRepository extends LdapRepository implements ApplicationDao {
 
+    public static final String ENCRYPTION_ERROR = "encryption error";
+    public static final String FOUND_CLIENT = "Found client - {}";
+
     public LdapApplicationRepository(LdapConnectionPools connPools, Configuration config) {
         super(connPools, config);
     }
@@ -45,11 +48,11 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
             addEntry(clientDN, attributes, audit);
         } catch (GeneralSecurityException e) {
             getLogger().error(e.getMessage());
-            audit.fail("encryption error");
+            audit.fail(ENCRYPTION_ERROR);
             throw new IllegalStateException(e);
         } catch (InvalidCipherTextException e) {
             getLogger().error(e.getMessage());
-            audit.fail("encryption error");
+            audit.fail(ENCRYPTION_ERROR);
             throw new IllegalStateException(e);
         }
 
@@ -227,7 +230,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
         Application client = getSingleClient(searchFilter);
 
-        getLogger().debug("Found client - {}", client);
+        getLogger().debug(FOUND_CLIENT, client);
 
         return client;
     }
@@ -248,7 +251,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
         Application client = getSingleClient(searchFilter);
 
-        getLogger().debug("Found client - {}", client);
+        getLogger().debug(FOUND_CLIENT, client);
 
         return client;
     }
@@ -271,7 +274,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
         Application client = getSingleClient(searchFilter);
 
-        getLogger().debug("Found client - {}", client);
+        getLogger().debug(FOUND_CLIENT, client);
 
         return client;
     }
@@ -292,7 +295,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
         Application client = getSingleClient(searchFilter);
 
-        getLogger().debug("Found client - {}", client);
+        getLogger().debug(FOUND_CLIENT, client);
 
         return client;
     }
@@ -313,7 +316,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
         Application client = getSingleClient(searchFilter);
 
-        getLogger().debug("Found client - {}", client);
+        getLogger().debug(FOUND_CLIENT, client);
 
         return client;
     }
@@ -525,11 +528,11 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
             updateEntry(oldClient.getUniqueId(), mods, audit);
         } catch (GeneralSecurityException e) {
             getLogger().error(e.getMessage());
-            audit.fail("encryption error");
+            audit.fail(ENCRYPTION_ERROR);
             throw new IllegalStateException(e);
         } catch (InvalidCipherTextException e) {
             getLogger().error(e.getMessage());
-            audit.fail("encryption error");
+            audit.fail(ENCRYPTION_ERROR);
             throw new IllegalStateException(e);
         }
 
@@ -772,7 +775,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
             client = getClient(entry);
         }
 
-        getLogger().debug("Found Client - {}", client);
+        getLogger().debug(FOUND_CLIENT, client);
 
         return client;
     }
@@ -785,7 +788,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
             client = getClient(entry);
         }
 
-        getLogger().debug("Found Client - {}", client);
+        getLogger().debug(FOUND_CLIENT, client);
 
         return client;
     }

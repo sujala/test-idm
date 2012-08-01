@@ -187,6 +187,7 @@
         "Dashboard": "",
         "Ticketing": "https://www15.v1host.com/RACKSPCE/",
         "Tests - Jenkins": "http://10.6.50.168:8080/jenkins/job/globalAuth/",
+        "Sonar": "http://10.6.50.168:9000/dashboard/index/1",
         "Manual Test Status": "",
         "Chatter-Group": "https://na3.salesforce.com/_ui/core/chatter/groups/GroupProfilePage?g=0F950000000TPeD",
         "Chat": "irc://irc.intra.rackspace.com -> #identityauth"

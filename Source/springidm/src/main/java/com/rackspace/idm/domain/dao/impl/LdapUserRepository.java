@@ -26,6 +26,10 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     // NOTE: This is pretty fragile way of handling the specific error, so we
     // need to look into more reliable way of detecting this error.
     private static final String STALE_PASSWORD_MESSAGE = "Password match in history";
+    public static final String ENCRYPTION_ERROR = "encryption error";
+    public static final String NULL_OR_EMPTY_USERNAME_PARAMETER = "Null or Empty username parameter";
+    public static final String FOUND_USER = "Found User - {}";
+    public static final String FOUND_USERS = "Found Users - {}";
     private final Configuration config;
 
     public LdapUserRepository(LdapConnectionPools connPools, Configuration config) {
@@ -79,11 +83,11 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             addEntry(userDN, attributes, audit);
         } catch (GeneralSecurityException e) {
             getLogger().error(e.getMessage());
-            audit.fail("encryption error");
+            audit.fail(ENCRYPTION_ERROR);
             throw new IllegalStateException(e);
         } catch (InvalidCipherTextException e) {
             getLogger().error(e.getMessage());
-            audit.fail("encryption error");
+            audit.fail(ENCRYPTION_ERROR);
             throw new IllegalStateException(e);
         }
 
@@ -99,7 +103,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     public UserAuthenticationResult authenticate(String username, String password) {
         getLogger().debug("Authenticating User {}", username);
         if (StringUtils.isBlank(username)) {
-            String errmsg = "Null or Empty username parameter";
+            String errmsg = NULL_OR_EMPTY_USERNAME_PARAMETER;
             getLogger().error(errmsg);
             throw new IllegalArgumentException(errmsg);
         }
@@ -113,7 +117,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     public UserAuthenticationResult authenticateByAPIKey(String username, String apiKey) {
         getLogger().debug("Authenticating User {} by API Key ", username);
         if (StringUtils.isBlank(username)) {
-            String errmsg = "Null or Empty username parameter";
+            String errmsg = NULL_OR_EMPTY_USERNAME_PARAMETER;
             getLogger().error(errmsg);
             throw new IllegalArgumentException(errmsg);
         }
@@ -163,7 +167,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     public void deleteUser(String username) {
         getLogger().info("Deleting username - {}", username);
         if (StringUtils.isBlank(username)) {
-            getLogger().error("Null or Empty username parameter");
+            getLogger().error(NULL_OR_EMPTY_USERNAME_PARAMETER);
             throw new IllegalArgumentException("Null or Empty username parameter.");
         }
 
@@ -187,7 +191,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     public String[] getGroupIdsForUser(String username) {
         getLogger().debug("Getting GroupIds for User {}", username);
         if (StringUtils.isBlank(username)) {
-            getLogger().error("Null or Empty username parameter");
+            getLogger().error(NULL_OR_EMPTY_USERNAME_PARAMETER);
             getLogger().info("Invalid username parameter");
             return null;
         }
@@ -249,7 +253,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             return null;
         }
         if (StringUtils.isBlank(username)) {
-            getLogger().error("Null or Empty username parameter");
+            getLogger().error(NULL_OR_EMPTY_USERNAME_PARAMETER);
             getLogger().info("Invalid username parameter.");
             return null;
         }
@@ -286,7 +290,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         User user = getSingleUser(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES);
 
-        getLogger().debug("Found User - {}", user);
+        getLogger().debug(FOUND_USER, user);
 
         return user;
     }
@@ -302,7 +306,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES,getLdapPagingOffsetDefault(),getLdapPagingLimitDefault());
 
-        getLogger().debug("Found Users - {}", users);
+        getLogger().debug(FOUND_USERS, users);
 
         return users;
     }
@@ -323,7 +327,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES,getLdapPagingOffsetDefault(),getLdapPagingLimitDefault());
 
-        getLogger().debug("Found Users - {}", users);
+        getLogger().debug(FOUND_USERS, users);
 
         return users;
     }
@@ -344,7 +348,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES,getLdapPagingOffsetDefault(),getLdapPagingLimitDefault());
 
-        getLogger().debug("Found Users - {}", users);
+        getLogger().debug(FOUND_USERS, users);
 
         return users;
     }
@@ -365,7 +369,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         User user = getSingleUser(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES);
 
-        getLogger().debug("Found User - {}", user);
+        getLogger().debug(FOUND_USER, user);
 
         return user;
     }
@@ -386,7 +390,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         User user = getSingleUser(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES);
 
-        getLogger().debug("Found User - {}", user);
+        getLogger().debug(FOUND_USER, user);
 
         return user;
     }
@@ -397,7 +401,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         // soft-deleted
         getLogger().debug("Doing search for username " + username);
         if (StringUtils.isBlank(username)) {
-            getLogger().error("Null or Empty username parameter");
+            getLogger().error(NULL_OR_EMPTY_USERNAME_PARAMETER);
             getLogger().info("Invalid username parameter.");
             return null;
         }
@@ -409,7 +413,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         User user = getSingleUser(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES);
 
-        getLogger().debug("Found User - {}", user);
+        getLogger().debug(FOUND_USER, user);
 
         return user;
     }
@@ -443,7 +447,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         Filter searchFilter = searchBuilder.build();
         Users users = getMultipleUsers(searchFilter,  ATTR_USER_SEARCH_ATTRIBUTES, offset, limit);
 
-        getLogger().debug("Found Users - {}", users);
+        getLogger().debug(FOUND_USERS, users);
 
         return users;
     }
@@ -516,11 +520,11 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             throw new IllegalStateException(ldapEx);
         } catch (GeneralSecurityException e) {
             getLogger().error(e.getMessage());
-            audit.fail("encryption error");
+            audit.fail(ENCRYPTION_ERROR);
             throw new IllegalStateException(e);
         } catch (InvalidCipherTextException e) {
             getLogger().error(e.getMessage());
-            audit.fail("encryption error");
+            audit.fail(ENCRYPTION_ERROR);
             throw new IllegalStateException(e);
         }
 
@@ -864,7 +868,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             throw new IllegalStateException(e);
         }
 
-        getLogger().debug("Found User - {}", user);
+        getLogger().debug(FOUND_USER, user);
 
         return user;
     }
@@ -888,7 +892,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             throw new IllegalStateException(e);
         }
 
-        getLogger().debug("Found User - {}", user);
+        getLogger().debug(FOUND_USER, user);
 
         return user;
     }
@@ -1259,7 +1263,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         User user = getSingleSoftDeletedUser(searchFilter,
             ATTR_USER_SEARCH_ATTRIBUTES);
 
-        getLogger().debug("Found User - {}", user);
+        getLogger().debug(FOUND_USER, user);
 
         return user;
     }
@@ -1269,7 +1273,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         getLogger().debug("Doing search for user " + username);
         if (StringUtils.isBlank(username)) {
-            getLogger().error("Null or Empty username parameter");
+            getLogger().error(NULL_OR_EMPTY_USERNAME_PARAMETER);
             getLogger().info("Invalid username parameter.");
             return null;
         }
@@ -1282,7 +1286,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         User user = getSingleSoftDeletedUser(searchFilter,
             ATTR_USER_SEARCH_ATTRIBUTES);
 
-        getLogger().debug("Found User - {}", user);
+        getLogger().debug(FOUND_USER, user);
 
         return user;
     }
