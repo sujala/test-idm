@@ -40,6 +40,7 @@ import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.namespace.QName;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.*;
 
 import static org.hamcrest.Matchers.equalTo;
@@ -674,7 +675,7 @@ public class CloudMigrationServiceTest {
         AuthenticateResponse authResponse = new AuthenticateResponse();
         authResponse.setToken(new Token());
         doReturn(authResponse).when(spy).authenticate(anyString(), anyString(), anyString());
-        when(client.getUsers(anyString())).thenThrow(new JAXBException("EXCEPTION"));
+        when(client.getUsers(anyString())).thenThrow(new URISyntaxException("exception", "exception"));
         spy.getSubUsers(user, "", new RoleList());
     }
 
