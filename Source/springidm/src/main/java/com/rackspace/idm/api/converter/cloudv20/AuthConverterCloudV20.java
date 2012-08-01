@@ -16,7 +16,7 @@ import java.util.List;
 public class AuthConverterCloudV20 {
 
     @Autowired
-    private JAXBObjectFactories OBJ_FACTORIES;
+    private JAXBObjectFactories objFactories;
 
     @Autowired
     private TokenConverterCloudV20 tokenConverterCloudV20;
@@ -28,7 +28,7 @@ public class AuthConverterCloudV20 {
     private EndpointConverterCloudV20 endpointConverterCloudV20;
 
     public AuthenticateResponse toAuthenticationResponse(User user, ScopeAccess scopeAccess, List<TenantRole> roles, List<OpenstackEndpoint> endpoints) {
-        AuthenticateResponse auth = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createAuthenticateResponse();
+        AuthenticateResponse auth = objFactories.getOpenStackIdentityV2Factory().createAuthenticateResponse();
         
         auth.setToken(this.tokenConverterCloudV20.toToken(scopeAccess, roles));
         auth.setUser(this.userConverterCloudV20.toUserForAuthenticateResponse(user, roles));
@@ -38,13 +38,13 @@ public class AuthConverterCloudV20 {
     }
 
     public ImpersonationResponse toImpersonationResponse(ScopeAccess scopeAccess) {
-        ImpersonationResponse auth = OBJ_FACTORIES.getRackspaceIdentityExtRaxgaV1Factory().createImpersonationResponse();
+        ImpersonationResponse auth = objFactories.getRackspaceIdentityExtRaxgaV1Factory().createImpersonationResponse();
         auth.setToken(this.tokenConverterCloudV20.toToken(scopeAccess));
         return auth;
     }
 
-    public void setOBJ_FACTORIES(JAXBObjectFactories OBJ_FACTORIES) {
-        this.OBJ_FACTORIES = OBJ_FACTORIES;
+    public void setObjFactories(JAXBObjectFactories OBJ_FACTORIES) {
+        this.objFactories = OBJ_FACTORIES;
     }
 
     public void setTokenConverterCloudV20(TokenConverterCloudV20 tokenConverterCloudV20) {

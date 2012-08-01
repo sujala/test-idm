@@ -85,7 +85,7 @@ public class CloudMigrationServiceIntegrationTest {
         cloudMigrationService.setClient(client);
         cloudMigrationService.setConfig(config);
         cloudMigrationService.setEndpointService(endpointService);
-        cloudMigrationService.setObj_factories(jaxbObjectFactories);
+        cloudMigrationService.setObjFactories(jaxbObjectFactories);
         cloudMigrationService.setTenantService(tenantService);
         cloudMigrationService.setUserConverterCloudV20(userConverterCloudV20);
         cloudMigrationService.setUserService(userService);
@@ -97,7 +97,7 @@ public class CloudMigrationServiceIntegrationTest {
         gc.setTimeInMillis(new Date().getTime());
 
         //setting mocks for endpointconverter
-        endpointConverterCloudV20.setOBJ_FACTORIES(jaxbObjectFactories);
+        endpointConverterCloudV20.setObjFactories(jaxbObjectFactories);
 
         //fields
         user = new User();

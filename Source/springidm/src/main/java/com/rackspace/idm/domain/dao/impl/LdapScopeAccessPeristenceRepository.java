@@ -14,6 +14,9 @@ import java.util.List;
 
 public class LdapScopeAccessPeristenceRepository extends LdapRepository implements ScopeAccessDao {
 
+    public static final String FIND_SCOPE_ACCESS_FOR_PARENT_BY_CLIENT_ID = "Find ScopeAccess for Parent: {} by ClientId: {}";
+    public static final String ERROR_READING_SCOPE_ACCESS_BY_CLIENT_ID = "Error reading scope access by clientId";
+
     public LdapScopeAccessPeristenceRepository(LdapConnectionPools connPools,
         Configuration config) {
         super(connPools, config);
@@ -180,7 +183,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
 
     @Override
     public ScopeAccess getDelegateScopeAccessForParentByClientId(String parentUniqueId, String clientId) {
-        getLogger().debug("Find ScopeAccess for Parent: {} by ClientId: {}", parentUniqueId, clientId);
+        getLogger().debug(FIND_SCOPE_ACCESS_FOR_PARENT_BY_CLIENT_ID, parentUniqueId, clientId);
 
         String dn = new LdapDnBuilder(parentUniqueId).addAttribute(ATTR_NAME, CONTAINER_DELEGATE).build();
 
@@ -198,7 +201,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
             }
         } catch (final LDAPException e) {
             if (e.getResultCode() != ResultCode.NO_SUCH_OBJECT) {
-                getLogger().error("Error reading scope access by clientId", e);
+                getLogger().error(ERROR_READING_SCOPE_ACCESS_BY_CLIENT_ID, e);
                 throw new IllegalStateException(e);
             }
         }
@@ -225,7 +228,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
             }
         } catch (final LDAPException e) {
             if (e.getResultCode() != ResultCode.NO_SUCH_OBJECT) {
-                getLogger().error("Error reading scope access by clientId", e);
+                getLogger().error(ERROR_READING_SCOPE_ACCESS_BY_CLIENT_ID, e);
                 throw new IllegalStateException(e);
             }
         }
@@ -234,7 +237,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
 
     @Override
     public ScopeAccess getDirectScopeAccessForParentByClientId(String parentUniqueId, String clientId) {
-        getLogger().debug("Find ScopeAccess for Parent: {} by ClientId: {}", parentUniqueId, clientId);
+        getLogger().debug(FIND_SCOPE_ACCESS_FOR_PARENT_BY_CLIENT_ID, parentUniqueId, clientId);
 
         String dn = new LdapDnBuilder(parentUniqueId).addAttribute(ATTR_NAME, CONTAINER_DIRECT).build();
 
@@ -252,7 +255,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
             }
         } catch (final LDAPException e) {
             if (e.getResultCode() != ResultCode.NO_SUCH_OBJECT) {
-                getLogger().error("Error reading scope access by clientId", e);
+                getLogger().error(ERROR_READING_SCOPE_ACCESS_BY_CLIENT_ID, e);
                 throw new IllegalStateException(e);
             }
         }
@@ -493,7 +496,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
     @Override
     public ScopeAccess getScopeAccessByParentAndClientId(String parentUniqueId,
         String clientId) {
-        getLogger().debug("Find ScopeAccess for Parent: {} by ClientId: {}",
+        getLogger().debug(FIND_SCOPE_ACCESS_FOR_PARENT_BY_CLIENT_ID,
             parentUniqueId, clientId);
 
         try {
@@ -509,7 +512,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
                 return decodeScopeAccess(searchResultEntry);
             }
         } catch (final LDAPException e) {
-            getLogger().error("Error reading scope access by clientId", e);
+            getLogger().error(ERROR_READING_SCOPE_ACCESS_BY_CLIENT_ID, e);
             throw new IllegalStateException(e);
         }
         return null;
@@ -518,7 +521,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
     @Override
     public List<ScopeAccess> getScopeAccessesByParentAndClientId(
         String parentUniqueId, String clientId) {
-        getLogger().debug("Find ScopeAccess for Parent: {} by ClientId: {}",
+        getLogger().debug(FIND_SCOPE_ACCESS_FOR_PARENT_BY_CLIENT_ID,
             parentUniqueId, clientId);
         final List<ScopeAccess> list = new ArrayList<ScopeAccess>();
 
@@ -532,7 +535,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
                 list.add(decodeScopeAccess(searchResultEntry));
             }
         } catch (final LDAPException e) {
-            getLogger().error("Error reading scope access by clientId", e);
+            getLogger().error(ERROR_READING_SCOPE_ACCESS_BY_CLIENT_ID, e);
             throw new IllegalStateException(e);
         }
         return list;

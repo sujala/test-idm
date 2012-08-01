@@ -1,11 +1,11 @@
 package com.rackspace.idm.api.converter;
 
-import javax.xml.bind.JAXBElement;
-
 import com.rackspace.api.idm.v1.ObjectFactory;
 import com.rackspace.api.idm.v1.UserPasswordCredentials;
 import com.rackspace.idm.domain.entity.Password;
 import com.rackspace.idm.domain.entity.PasswordCredentials;
+
+import javax.xml.bind.JAXBElement;
 
 public class PasswordConverter {
 

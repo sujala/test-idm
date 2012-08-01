@@ -10,6 +10,8 @@ import java.util.Map;
 
 public class AuthHeaderHelper {
 
+    public static final String INVALID_AUTH_HEADER = "Invalid Auth Header";
+
     public Map<String, String> parseBasicParams(String authHeader) {
         String encoded = this.getBase64EncodedString(authHeader);
         Map<String, String> authParams = new HashMap<String, String>();
@@ -44,7 +46,7 @@ public class AuthHeaderHelper {
 
     public String getTokenFromAuthHeader(String authHeader) {
         if (StringUtils.isBlank(authHeader)) {
-            throw new NotAuthorizedException("Invalid Auth Header");
+            throw new NotAuthorizedException(INVALID_AUTH_HEADER);
         }
 
         return authHeader.trim();
@@ -52,17 +54,17 @@ public class AuthHeaderHelper {
 
     public String getBase64EncodedString(String authHeader) {
         if (authHeader == null) {
-            throw new CloudAdminAuthorizationException("Invalid Auth Header");
+            throw new CloudAdminAuthorizationException(INVALID_AUTH_HEADER);
         }
         if (authHeader.isEmpty()) {
-            throw new CloudAdminAuthorizationException("Invalid Auth Header");
+            throw new CloudAdminAuthorizationException(INVALID_AUTH_HEADER);
         }
         String[] strings = authHeader.split(" ");
         if(strings.length!=2){
-            throw new CloudAdminAuthorizationException("Invalid Auth Header");
+            throw new CloudAdminAuthorizationException(INVALID_AUTH_HEADER);
         }
         if(!strings[0].equals("Basic")){
-            throw new CloudAdminAuthorizationException("Invalid Auth Header");
+            throw new CloudAdminAuthorizationException(INVALID_AUTH_HEADER);
         }
         return strings[1];
     }

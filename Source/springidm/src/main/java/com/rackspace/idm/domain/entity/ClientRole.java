@@ -1,13 +1,12 @@
 package com.rackspace.idm.domain.entity;
 
-import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
-
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.FilterUsage;
 import com.unboundid.ldap.sdk.persist.LDAPEntryField;
 import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
+import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 @LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_CLIENT_ROLE)
 public class ClientRole implements Auditable {

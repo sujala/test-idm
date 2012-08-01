@@ -54,6 +54,9 @@ import java.util.Map;
 public class DefaultCloud11Service implements Cloud11Service {
 
     private static final com.rackspacecloud.docs.auth.api.v1.ObjectFactory OBJ_FACTORY = new com.rackspacecloud.docs.auth.api.v1.ObjectFactory();
+    public static final String USER_S_NOT_FOUND = "User %s not found";
+    public static final String EXPECTING_USERNAME = "Expecting username";
+    public static final String USER_NOT_FOUND = "User not found: ";
     private final AuthConverterCloudV11 authConverterCloudV11;
     private final Configuration config;
     private final EndpointConverterCloudV11 endpointConverterCloudV11;
@@ -264,7 +267,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             User user = userService.getUser(userId);
             if (user == null) {
-                String errMsg = String.format("User %s not found", userId);
+                String errMsg = String.format(USER_S_NOT_FOUND, userId);
                 throw new NotFoundException(errMsg);
             }
 
@@ -315,7 +318,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             authenticateCloudAdminUser(request);
 
             if (StringUtils.isBlank(user.getId())) {
-                String errorMsg = "Expecting username";
+                String errorMsg = EXPECTING_USERNAME;
                 logger.warn(errorMsg);
                 throw new BadRequestException(errorMsg);
             }
@@ -364,7 +367,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 }
             }
 
-            UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientId(userDO.getUniqueId(), config.getString("cloudAuth.clientId"));
+            UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientId(userDO.getUniqueId(), getCloudAuthClientId());
             List<OpenstackEndpoint> endpointsForUser = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
 
             String id = userDO.getId();
@@ -483,7 +486,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             User user = userService.getUser(userId);
 
             if (user == null) {
-                String errMsg = String.format("User %s not found", userId);
+                String errMsg = String.format(USER_S_NOT_FOUND, userId);
                 throw new NotFoundException(errMsg);
             }
 
@@ -511,7 +514,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             tenants[1] = this.tenantService.getTenant(tenantId2);
 
             boolean found = false;
-            for(Tenant tenant : tenants)
+            for(Tenant tenant : tenants) {
                 if(tenant != null){
                     for (String currentId : tenant.getBaseUrlIds()) {
                         if (currentId.equals(String.valueOf(baseUrl.getBaseUrlId()))){
@@ -522,6 +525,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
                     }
                 }
+            }
 
 
             if (!found) {
@@ -543,7 +547,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             User gaUser = userService.getUser(userId);
 
             if (gaUser == null) {
-                String errMsg = String.format("User %s not found", userId);
+                String errMsg = String.format(USER_S_NOT_FOUND, userId);
                 throw new NotFoundException(errMsg);
             }
 
@@ -593,12 +597,12 @@ public class DefaultCloud11Service implements Cloud11Service {
             User user = userService.getUser(userId);
 
             if (user == null) {
-                String errMsg = String.format("User %s not found", userId);
+                String errMsg = String.format(USER_S_NOT_FOUND, userId);
                 throw new NotFoundException(errMsg);
             }
 
             BaseURLRef baseURLRef = new BaseURLRef();
-            UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), config.getString("cloudAuth.clientId"));
+            UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), getCloudAuthClientId());
             List<OpenstackEndpoint> endpointsForUser = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
             for (OpenstackEndpoint openstackEndpoint : endpointsForUser) {
                 for (CloudBaseUrl baseUrl : openstackEndpoint.getBaseUrls()) {
@@ -631,11 +635,11 @@ public class DefaultCloud11Service implements Cloud11Service {
             User gaUser = userService.getUser(userId);
 
             if (gaUser == null) {
-                String errMsg = "User not found: " + userId;
+                String errMsg = USER_NOT_FOUND + userId;
                 throw new NotFoundException(errMsg);
             }
 
-            UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientId(gaUser.getUniqueId(), config.getString("cloudAuth.clientId"));
+            UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientId(gaUser.getUniqueId(), getCloudAuthClientId());
             List<OpenstackEndpoint> endpointsForUser = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
             JAXBElement<BaseURLRefList> baseURLRefsNew = OBJ_FACTORY.createBaseURLRefs(this.endpointConverterCloudV11.openstackToBaseUrlRefs(endpointsForUser));
             return Response.ok(baseURLRefsNew.getValue());
@@ -655,11 +659,11 @@ public class DefaultCloud11Service implements Cloud11Service {
             User gaUser = userService.getUser(userId);
 
             if (gaUser == null) {
-                String errMsg = "User not found: " + userId;
+                String errMsg = USER_NOT_FOUND + userId;
                 throw new NotFoundException(errMsg);
             }
 
-            UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientId(gaUser.getUniqueId(), config.getString("cloudAuth.clientId"));
+            UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientId(gaUser.getUniqueId(), getCloudAuthClientId());
             List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
 
             return Response.ok(OBJ_FACTORY.createServiceCatalog(this.endpointConverterCloudV11.toServiceCatalog(endpoints)).getValue());
@@ -682,7 +686,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 throw new NotFoundException(errMsg);
             }
 
-            ScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), config.getString("cloudAuth.clientId"));
+            ScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), getCloudAuthClientId());
             List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(sa);
             return Response.ok(OBJ_FACTORY.createUser(this.userConverterCloudV11.openstackToCloudV11User(user, endpoints)).getValue());
         } catch (Exception ex) {
@@ -700,7 +704,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             User user = userService.getUser(userId);
 
             if (user == null) {
-                String errMsg = "User not found: " + userId;
+                String errMsg = USER_NOT_FOUND + userId;
                 throw new NotFoundException(errMsg);
             }
 
@@ -722,7 +726,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             if (user == null) {
                 throw new NotFoundException(String.format("User with MossoId %s not found", mossoId));
             }
-            ScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), config.getString("cloudAuth.clientId"));
+            ScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), getCloudAuthClientId());
             List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(sa);
             return Response.status(301).entity(OBJ_FACTORY.createUser(this.userConverterCloudV11.openstackToCloudV11User(user, endpoints)));
         } catch (Exception ex) {
@@ -743,7 +747,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             if (user == null) {
                 throw new NotFoundException(String.format("User with NastId %s not found", nastId));
             }
-            ScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), config.getString("cloudAuth.clientId"));
+            ScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), getCloudAuthClientId());
             List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(sa);
             return Response.status(301).entity(OBJ_FACTORY.createUser(this.userConverterCloudV11.openstackToCloudV11User(user, endpoints)));
         } catch (Exception ex) {
@@ -800,7 +804,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             User user = userService.getUser(userId);
 
             if (user == null) {
-                String errMsg = "User not found: " + userId;
+                String errMsg = USER_NOT_FOUND + userId;
                 throw new NotFoundException(errMsg);
             }
 
@@ -821,7 +825,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             User gaUser = userService.getUser(userId);
 
             if (gaUser == null) {
-                String errMsg = String.format("User %s not found", userId);
+                String errMsg = String.format(USER_S_NOT_FOUND, userId);
                 throw new NotFoundException(errMsg);
             }
 
@@ -849,7 +853,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             User gaUser = userService.getUser(userId);
 
             if (gaUser == null) {
-                String errMsg = "User not found: " + userId;
+                String errMsg = USER_NOT_FOUND + userId;
                 throw new NotFoundException(errMsg);
             }
 
@@ -877,7 +881,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             User gaUser = userService.getUser(userId);
 
             if (gaUser == null) {
-                String errMsg = "User not found: " + userId;
+                String errMsg = USER_NOT_FOUND + userId;
                 throw new NotFoundException(errMsg);
             }
 
@@ -887,7 +891,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             this.userService.updateUser(gaUser, false);
 
-            ScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(gaUser.getUniqueId(), config.getString("cloudAuth.clientId"));
+            ScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(gaUser.getUniqueId(), getCloudAuthClientId());
             if (user.getBaseURLRefs() != null && user.getBaseURLRefs().getBaseURLRef().size() > 0) {
                 // If BaseUrlRefs were sent in then we're going to clear out the
                 // old
@@ -938,7 +942,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 throw new NotFoundException(String.format("BaseUrlId %s not found", baseURLId));
             }
 
-            if (!StringUtils.equals(serviceName, baseUrl.getServiceName())) {
+            if (serviceName != null && !StringUtils.equals(serviceName, baseUrl.getServiceName())) {
                 throw new NotFoundException(String.format("BaseUrlId %s not found", baseURLId));
             }
 
@@ -1118,7 +1122,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                     return cloudExceptionResponse.badRequestExceptionResponse("Expecting password");
                 }
                 if (StringUtils.isBlank(username)) {
-                    return cloudExceptionResponse.badRequestExceptionResponse("Expecting username");
+                    return cloudExceptionResponse.badRequestExceptionResponse(EXPECTING_USERNAME);
                 }
                 user = this.userService.getUser(username);
                 if (user == null) {
@@ -1187,7 +1191,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                     return cloudExceptionResponse.badRequestExceptionResponse("Expecting apiKey");
                 }
                 if (StringUtils.isBlank(username)) {
-                    return cloudExceptionResponse.badRequestExceptionResponse("Expecting username");
+                    return cloudExceptionResponse.badRequestExceptionResponse(EXPECTING_USERNAME);
                 }
                 user = userService.getUser(username);
                 usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(username, apiKey, cloudAuthClientId);
@@ -1198,7 +1202,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                     return cloudExceptionResponse.badRequestExceptionResponse("Expecting password");
                 }
                 if (StringUtils.isBlank(username)) {
-                    return cloudExceptionResponse.badRequestExceptionResponse("Expecting username");
+                    return cloudExceptionResponse.badRequestExceptionResponse(EXPECTING_USERNAME);
                 }
                 user = userService.getUser(username);
                 usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(username, password, cloudAuthClientId);
@@ -1224,7 +1228,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             }
 
             if (user == null) {
-                String errMsg = String.format("User %s not found", username);
+                String errMsg = String.format(USER_S_NOT_FOUND, username);
                 throw new NotFoundException(errMsg);
             }
 

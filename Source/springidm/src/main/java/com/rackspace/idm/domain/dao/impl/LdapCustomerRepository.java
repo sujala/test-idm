@@ -149,16 +149,16 @@ public class LdapCustomerRepository extends LdapRepository implements
     public void updateCustomer(Customer customer) {
         getLogger().info("Updating customer {}", customer);
 
-        if (customer == null || StringUtils.isBlank(customer.getRCN())) {
+        if (customer == null || StringUtils.isBlank(customer.getRcn())) {
             String errMsg = "Customer instance is null or its customerId has no value";
             getLogger().error(errMsg);
             throw new IllegalArgumentException(errMsg);
         }
 
-        Customer oldCustomer = getCustomerByCustomerId(customer.getRCN());
+        Customer oldCustomer = getCustomerByCustomerId(customer.getRcn());
 
         if (oldCustomer == null) {
-            String errMsg = String.format("No record found for customer %s", customer.getRCN());
+            String errMsg = String.format("No record found for customer %s", customer.getRcn());
             getLogger().error(errMsg);
             throw new IllegalArgumentException(errMsg);
         }
@@ -189,9 +189,9 @@ public class LdapCustomerRepository extends LdapRepository implements
                 .getId()));
         }
 
-        if (!StringUtils.isBlank(customer.getRCN())) {
+        if (!StringUtils.isBlank(customer.getRcn())) {
             atts.add(new Attribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customer
-                .getRCN()));
+                .getRcn()));
         }
 
         if (customer.isEnabled() != null) {
@@ -208,8 +208,8 @@ public class LdapCustomerRepository extends LdapRepository implements
         Customer customer = new Customer();
 
         customer.setUniqueId(resultEntry.getDN());
-        customer.setRCN(resultEntry
-            .getAttributeValue(ATTR_RACKSPACE_CUSTOMER_NUMBER));
+        customer.setRcn(resultEntry
+                .getAttributeValue(ATTR_RACKSPACE_CUSTOMER_NUMBER));
 
         customer.setPasswordRotationDuration(resultEntry
             .getAttributeValueAsInteger(ATTR_PASSWORD_ROTATION_DURATION));
@@ -254,7 +254,7 @@ public class LdapCustomerRepository extends LdapRepository implements
     
     @Override
     public void softDeleteCustomer(Customer customer) {
-        getLogger().info("SoftDeleting customer - {}", customer.getRCN());
+        getLogger().info("SoftDeleting customer - {}", customer.getRcn());
         try {
             String oldDn = customer.getUniqueId();
             String newRdn = new LdapDnBuilder("").addAttribute(ATTR_ID, customer.getId()).build();
@@ -269,7 +269,7 @@ public class LdapCustomerRepository extends LdapRepository implements
             getLogger().error("Error soft deleting customer", e);
             throw new IllegalStateException(e);
         }
-        getLogger().info("SoftDeleted customer - {}", customer.getRCN());
+        getLogger().info("SoftDeleted customer - {}", customer.getRcn());
     }
     
     @Override

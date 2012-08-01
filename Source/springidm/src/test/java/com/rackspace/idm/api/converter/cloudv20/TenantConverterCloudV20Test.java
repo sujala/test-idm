@@ -30,7 +30,7 @@ public class TenantConverterCloudV20Test {
     public void setUp() throws Exception {
         tenantConverterCloudV20 = new TenantConverterCloudV20();
         jaxbObjectFactories = new JAXBObjectFactories();
-        tenantConverterCloudV20.setOBJ_FACTORIES(jaxbObjectFactories);
+        tenantConverterCloudV20.setObjFactories(jaxbObjectFactories);
     }
 
     @Test

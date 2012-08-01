@@ -5,7 +5,6 @@ import com.rackspace.idm.api.resource.cloud.CloudClient;
 import com.rackspace.idm.domain.entity.OpenstackEndpoint;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
-import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.NotAuthenticatedException;
@@ -66,20 +65,17 @@ public class Cloud10VersionResource {
     private final Configuration config;
     private final CloudClient cloudClient;
     private final ScopeAccessService scopeAccessService;
-    private final EndpointService endpointService;
     private final EndpointConverterCloudV11 endpointConverterCloudV11;
     private final UserService userService;
 
     @Autowired
     public Cloud10VersionResource(Configuration config,
         CloudClient cloudClient, ScopeAccessService scopeAccessService,
-        EndpointService endpointService,
         EndpointConverterCloudV11 endpointConverterCloudV11,
         UserService userService) {
         this.config = config;
         this.cloudClient = cloudClient;
         this.scopeAccessService = scopeAccessService;
-        this.endpointService = endpointService;
         this.endpointConverterCloudV11 = endpointConverterCloudV11;
         this.userService = userService;
     }
@@ -92,7 +88,7 @@ public class Cloud10VersionResource {
         Response.ResponseBuilder builder = Response.noContent();
 
         if(StringUtils.isBlank(username)){
-            return builder.status(HttpServletResponse.SC_UNAUTHORIZED).entity("Bad username or password").build();
+            return builder.status(HttpServletResponse.SC_UNAUTHORIZED).entity(AUTH_V1_0_FAILED_MSG).build();
         }
 
         User user = this.userService.getUser(username);
@@ -109,7 +105,7 @@ public class Cloud10VersionResource {
             }
         }
         if (user == null) {
-            return builder.status(HttpServletResponse.SC_UNAUTHORIZED).entity("Bad username or password").build();
+            return builder.status(HttpServletResponse.SC_UNAUTHORIZED).entity(AUTH_V1_0_FAILED_MSG).build();
         }
 
         try {
@@ -162,10 +158,10 @@ public class Cloud10VersionResource {
             builder.header(CACHE_CONTROL, "s-maxage=" + secondsLeft);
             return builder.build();
         } catch (NotAuthenticatedException nae) {
-            String errMsg = "Bad username or password";
+            String errMsg = AUTH_V1_0_FAILED_MSG;
             return builder.status(HttpServletResponse.SC_UNAUTHORIZED).entity(errMsg).build();
         } catch (UserDisabledException ude) {
-            String errMsg = "Bad username or password";
+            String errMsg = AUTH_V1_0_FAILED_MSG;
             return builder.status(HttpServletResponse.SC_FORBIDDEN).entity(errMsg).build();
         } catch (Exception ex) {
             return builder.status(HttpServletResponse.SC_INTERNAL_SERVER_ERROR).build();

@@ -30,7 +30,6 @@ public class UserGlobalRolesResourceTest {
     private AuthorizationService authorizationService;
     private UserService userService;
     private TenantService tenantService;
-    private ScopeAccessService scopeAccessService;
     private UserGlobalRoleResource roleResource;
     private RolesConverter rolesConverter;
 
@@ -39,10 +38,9 @@ public class UserGlobalRolesResourceTest {
         authorizationService = mock(AuthorizationService.class);
         userService = mock(UserService.class);
         tenantService = mock(TenantService.class);
-        scopeAccessService = mock(ScopeAccessService.class);
         roleResource = mock(UserGlobalRoleResource.class);
         rolesConverter = mock(RolesConverter.class);
-        userGlobalRolesResource = new UserGlobalRolesResource(userService, authorizationService, tenantService, scopeAccessService, roleResource, rolesConverter);
+        userGlobalRolesResource = new UserGlobalRolesResource(userService, authorizationService, tenantService, roleResource, rolesConverter);
     }
 
     @Test

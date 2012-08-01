@@ -2,6 +2,8 @@ package com.rackspace.idm.api.converter.cloudv11;
 
 import com.rackspace.idm.domain.entity.OpenstackEndpoint;
 import com.rackspace.idm.domain.entity.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
@@ -11,7 +13,8 @@ public class UserConverterCloudV11 {
     
     private final EndpointConverterCloudV11 enpointConverterCloudV11;
     
-    private final com.rackspacecloud.docs.auth.api.v1.ObjectFactory OBJ_FACTORY = new com.rackspacecloud.docs.auth.api.v1.ObjectFactory();
+    private static final com.rackspacecloud.docs.auth.api.v1.ObjectFactory OBJ_FACTORY = new com.rackspacecloud.docs.auth.api.v1.ObjectFactory();
+    private Logger logger = LoggerFactory.getLogger(UserConverterCloudV11.class);
 
     public UserConverterCloudV11(EndpointConverterCloudV11 enpointConverterCloudV11) {
         this.enpointConverterCloudV11 = enpointConverterCloudV11;
@@ -73,8 +76,7 @@ public class UserConverterCloudV11 {
             }
 
         } catch (DatatypeConfigurationException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            logger.info("failed to create XMLGregorianCalendar: " + e.getMessage());
         }
 		return jaxbUser;
 	}

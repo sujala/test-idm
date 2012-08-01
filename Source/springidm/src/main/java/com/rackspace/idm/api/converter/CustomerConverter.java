@@ -1,10 +1,10 @@
 package com.rackspace.idm.api.converter;
 
-import javax.xml.bind.JAXBElement;
-
 import com.rackspace.api.idm.v1.IdentityProfile;
 import com.rackspace.api.idm.v1.ObjectFactory;
 import com.rackspace.idm.domain.entity.Customer;
+
+import javax.xml.bind.JAXBElement;
 
 public class CustomerConverter {
 
@@ -18,7 +18,7 @@ public class CustomerConverter {
         Customer customer = new Customer();
 
         customer.setId(jaxbCustomer.getId());
-        customer.setRCN(jaxbCustomer.getCustomerId());
+        customer.setRcn(jaxbCustomer.getCustomerId());
         if (jaxbCustomer.isEnabled() != null) {
             customer.setEnabled(jaxbCustomer.isEnabled());
         }
@@ -30,7 +30,7 @@ public class CustomerConverter {
 
         IdentityProfile jaxbCustomer = objectFactory.createIdentityProfile();
         jaxbCustomer.setId(customer.getId());
-        jaxbCustomer.setCustomerId(customer.getRCN());
+        jaxbCustomer.setCustomerId(customer.getRcn());
         jaxbCustomer.setEnabled(customer.isEnabled());
 
         return objectFactory.createCustomerIdentityProfile(jaxbCustomer);

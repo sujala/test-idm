@@ -501,7 +501,7 @@ public class AuthenticationServiceTests {
 
     private Customer getFakeCustomer() {
         final Customer customer = new Customer();
-        customer.setRCN(customerId);
+        customer.setRcn(customerId);
         customer.setPasswordRotationEnabled(true);
         customer.setPasswordRotationDuration(2);
         return customer;

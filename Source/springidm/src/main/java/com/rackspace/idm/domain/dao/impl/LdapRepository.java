@@ -177,6 +177,7 @@ public abstract class LdapRepository {
     protected static final String[] ATTR_GROUP_SEARCH_ATTRIBUTES = {ATTR_OBJECT_CLASS, ATTR_RACKSPACE_CUSTOMER_NUMBER, ATTR_CLIENT_ID, ATTR_GROUP_TYPE, ATTR_NAME};
     protected static final String[] ATTR_USER_SEARCH_ATTRIBUTES = {"*", ATTR_CREATED_DATE, ATTR_UPDATED_DATE, ATTR_PWD_ACCOUNT_LOCKOUT_TIME};
     protected static final String[] ATTR_TENANT_SEARCH_ATTRIBUTES = {"*", ATTR_CREATED_DATE, ATTR_UPDATED_DATE};
+    public static final String LDAP_SEARCH_ERROR = "LDAP Search error - {}";
 
     private final LdapConnectionPools connPools;
 
@@ -228,7 +229,7 @@ public abstract class LdapRepository {
 
         } catch (LDAPException e) {
             audit.fail();
-            getLogger().error("LDAP Search error - {}", e.getMessage());
+            getLogger().error(LDAP_SEARCH_ERROR, e.getMessage());
             throw new IllegalStateException(e);
         }
     }
@@ -239,7 +240,7 @@ public abstract class LdapRepository {
             SearchRequest request = new SearchRequest(baseDN, scope, searchFilter, attributes);
             searchResult = getAppInterface().search(request);
         } catch (LDAPException ldapEx) {
-            getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
+            getLogger().error(LDAP_SEARCH_ERROR, ldapEx.getMessage());
             return new ArrayList<SearchResultEntry>();
         }
 
@@ -256,7 +257,7 @@ public abstract class LdapRepository {
             request.setControls(new Control[]{sortRequest});
             searchResult = getAppInterface().search(request);
         } catch (LDAPException ldapEx) {
-            getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
+            getLogger().error(LDAP_SEARCH_ERROR, ldapEx.getMessage());
             return new ArrayList<SearchResultEntry>();
         }
 
@@ -272,7 +273,7 @@ public abstract class LdapRepository {
             entry = getAppInterface().searchForEntry(baseDN, scope,
                 searchFilter, attributes);
         } catch (LDAPSearchException ldapEx) {
-            getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
+            getLogger().error(LDAP_SEARCH_ERROR, ldapEx.getMessage());
             throw new IllegalStateException(ldapEx);
         }
 

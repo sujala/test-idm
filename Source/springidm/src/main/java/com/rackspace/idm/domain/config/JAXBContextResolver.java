@@ -2,6 +2,8 @@ package com.rackspace.idm.domain.config;
 
 import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.api.json.JSONJAXBContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.Produces;
 import javax.ws.rs.ext.ContextResolver;
@@ -14,6 +16,7 @@ import javax.xml.bind.JAXBException;
 public class JAXBContextResolver implements ContextResolver<JAXBContext> {
 
     private static JAXBContext context;
+    private static Logger logger = LoggerFactory.getLogger(JAXBContextResolver.class);
 
     public JAXBContextResolver() throws JAXBException{
     	init();
@@ -29,8 +32,8 @@ public class JAXBContextResolver implements ContextResolver<JAXBContext> {
     		try {
     			init();
     		} catch (Throwable t) {
-    			t.printStackTrace();
-    		}
+                logger.info("failed initalize JSONJAXBContext: " + t.getMessage());
+            }
     	}
     	return context;
     }

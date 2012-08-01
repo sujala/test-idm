@@ -20,7 +20,7 @@ public class LdapConnectionPools {
         }
 
         // Reference check -- make sure they are separate objects!
-        if (applicationConnectionPool == bindConnectionPool) {
+        if (applicationConnectionPool.equals(bindConnectionPool)) {
             throw new IllegalArgumentException(
                 "Don't pass in the same connection pool instance!!!");
         }

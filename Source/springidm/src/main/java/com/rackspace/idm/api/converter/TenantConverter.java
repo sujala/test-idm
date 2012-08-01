@@ -1,26 +1,24 @@
 package com.rackspace.idm.api.converter;
 
-import java.util.GregorianCalendar;
-import java.util.List;
+import com.rackspace.api.idm.v1.ObjectFactory;
+import com.rackspace.api.idm.v1.Tenant;
+import com.rackspace.api.idm.v1.Tenants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import com.rackspace.api.idm.v1.ObjectFactory;
-import com.rackspace.api.idm.v1.Tenants;
-import com.rackspace.api.idm.v1.Tenant;
-
-import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
+import java.util.GregorianCalendar;
+import java.util.List;
 
 @Component
 public class TenantConverter {
 
 
     private final ObjectFactory objectFactory = new ObjectFactory();
+    private Logger logger = LoggerFactory.getLogger(TenantConverter.class);
 
 //    @Autowired
 //    private JAXBObjectFactories OBJ_FACTORIES;
@@ -48,7 +46,7 @@ public class TenantConverter {
                     .newXMLGregorianCalendar(gc);
                 jaxbTenant.setCreated(createdDate);
             } catch (DatatypeConfigurationException e) {
-                e.printStackTrace();
+               logger.info("failed to create XMLGregorianCalendar: " + e.getMessage());
             }
         }
         
@@ -62,7 +60,7 @@ public class TenantConverter {
                     .newXMLGregorianCalendar(gc);
                 jaxbTenant.setUpdated(updatedDate);
             } catch (DatatypeConfigurationException e) {
-                e.printStackTrace();
+                logger.info("failed to create XMLGregorianCalendar: " + e.getMessage());
             }
         }
         return jaxbTenant;

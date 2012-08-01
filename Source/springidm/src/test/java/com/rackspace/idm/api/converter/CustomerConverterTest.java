@@ -42,7 +42,7 @@ public class CustomerConverterTest {
     public void toCustomerDO_withJaxbCustomer_setsRCN() throws Exception {
         jaxbCustomer.setCustomerId("customerId");
         Customer customer = customerConverter.toCustomerDO(jaxbCustomer);
-        assertThat("customer id", customer.getRCN(), equalTo("customerId"));
+        assertThat("customer id", customer.getRcn(), equalTo("customerId"));
     }
 
     @Test
@@ -67,7 +67,7 @@ public class CustomerConverterTest {
 
     @Test
     public void toCustomerDO_withCustomerDo_setsRCN() throws Exception {
-        customerDO.setRCN("customerId");
+        customerDO.setRcn("customerId");
         JAXBElement<IdentityProfile> customer = customerConverter.toJaxbCustomer(customerDO);
         assertThat("customer id", customer.getValue().getCustomerId(), equalTo("customerId"));
     }

@@ -54,7 +54,7 @@ public class Cloud10VersionResourceTest {
         endpointConverterCloudV11 = mock(EndpointConverterCloudV11.class);
         endpointService = mock(EndpointService.class);
         userService = mock(UserService.class);
-        cloud10VersionResource = new Cloud10VersionResource(config, cloudClient, scopeAccessService, endpointService, endpointConverterCloudV11, userService);
+        cloud10VersionResource = new Cloud10VersionResource(config, cloudClient, scopeAccessService, endpointConverterCloudV11, userService);
     }
 
     @Test

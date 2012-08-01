@@ -21,7 +21,9 @@ import java.net.URISyntaxException;
 
 public class MigrationClient {
 
-	private final String X_AUTH_TOKEN = "X-AUTH-TOKEN";
+    private static final String USERS = "users/";
+    private static final String FAILED_TO_CALL_CLOUD = "failed to call cloud";
+    private static final String X_AUTH_TOKEN = "X-AUTH-TOKEN";
 	
 	private ObjectFactory objectFactory = new ObjectFactory();
 
@@ -117,7 +119,7 @@ public class MigrationClient {
 
     public RoleList getRolesForUser(String token, String userId) {
         try {
-            String response = client.url(cloud20Host + "users/" + userId + "/roles")
+            String response = client.url(cloud20Host + USERS + userId + "/roles")
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML)
                 .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML)
                 .header(X_AUTH_TOKEN, token)
@@ -127,7 +129,7 @@ public class MigrationClient {
             return unmarshaller.unmarshal(response, RoleList.class);
         } catch (Exception e) {
             logger.info("getRolesForUSer failed with exception {}", e.getMessage());
-            throw new IdmException("failed to call cloud", e);
+            throw new IdmException(FAILED_TO_CALL_CLOUD, e);
         }
     }
     
@@ -156,7 +158,7 @@ public class MigrationClient {
     }
 
     public SecretQA getSecretQA(String token, String userId) throws URISyntaxException, HttpException, IOException, JAXBException {
-        String response = client.url(cloud20Host + "users/"+ userId +"/RAX-KSQA/secretqa")
+        String response = client.url(cloud20Host + USERS + userId +"/RAX-KSQA/secretqa")
             .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML)
             .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML)
             .header(X_AUTH_TOKEN, token)
@@ -180,13 +182,13 @@ public class MigrationClient {
             return unmarshaller.unmarshal(response, Groups.class);
         } catch (Exception e) {
             logger.info("getGroups failed with exception {}", e.getMessage());
-            throw new IdmException("failed to call cloud", e);
+            throw new IdmException(FAILED_TO_CALL_CLOUD, e);
         }
     }
 
     public Groups getGroupsForUser(String token, String userId) {
         try {
-            String response = client.url(cloud20Host + "users/" + userId + "/RAX-KSGRP")
+            String response = client.url(cloud20Host + USERS + userId + "/RAX-KSGRP")
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML)
                 .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML)
                 .header(X_AUTH_TOKEN, token)
@@ -196,13 +198,13 @@ public class MigrationClient {
             return unmarshaller.unmarshal(response, Groups.class);
         } catch (Exception e) {
             logger.info("getGroupsForUser failed with exception {}", e.getMessage());
-            throw new IdmException("failed to call cloud", e);
+            throw new IdmException(FAILED_TO_CALL_CLOUD, e);
         }
     }
 
     public CredentialListType getUserCredentials(String token, String userId) throws URISyntaxException, HttpException, IOException, JAXBException {
 
-        String response = client.url(cloud20Host + "users/" + userId + "/OS-KSADM/credentials")
+        String response = client.url(cloud20Host + USERS + userId + "/OS-KSADM/credentials")
             .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML)
             .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML)
             .header(X_AUTH_TOKEN, token)
@@ -216,7 +218,7 @@ public class MigrationClient {
 
     public com.rackspacecloud.docs.auth.api.v1.User getUserTenantsBaseUrls(String username, String password, String userId) throws URISyntaxException, HttpException, IOException, JAXBException {
 
-        String response = client.url(cloud11Host + "users/" + userId + ".xml")
+        String response = client.url(cloud11Host + USERS + userId + ".xml")
             .header(HttpHeaders.AUTHORIZATION, getBasicAuth(username, password))
             .get();
 
@@ -256,7 +258,7 @@ public class MigrationClient {
             return unmarshaller.unmarshal(response, EndPoints.class);
         } catch (Exception e) {
             logger.info("get EndpointTemplateList call to cloud failed: {}", e.getMessage());
-            throw new IdmException("failed to call cloud", e);
+            throw new IdmException(FAILED_TO_CALL_CLOUD, e);
         }
     }
 

@@ -1,6 +1,5 @@
 package com.rackspace.idm.api.converter.cloudv20;
 
-import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.TenantRole;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
@@ -8,6 +7,8 @@ import org.openstack.docs.identity.api.v2.ObjectFactory;
 import org.openstack.docs.identity.api.v2.User;
 import org.openstack.docs.identity.api.v2.UserForAuthenticateResponse;
 import org.openstack.docs.identity.api.v2.UserList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -23,6 +24,7 @@ public class UserConverterCloudV20 {
 
     @Autowired
     private RoleConverterCloudV20 roleConverterCloudV20;
+    private Logger logger = LoggerFactory.getLogger(UserConverterCloudV20.class);
 
     public com.rackspace.idm.domain.entity.User toUserDO(User user) {
 
@@ -92,7 +94,7 @@ public class UserConverterCloudV20 {
             }
 
         }   catch (DatatypeConfigurationException e) {
-                e.printStackTrace();
+            logger.info("failed to create XMLGregorianCalendar: " + e.getMessage());
         }
 
         return jaxbUser;
@@ -125,8 +127,7 @@ public class UserConverterCloudV20 {
             }
 
         } catch (DatatypeConfigurationException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            logger.info("failed to create XMLGregorianCalendar: " + e.getMessage());
         }
 
         return jaxbUser;

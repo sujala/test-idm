@@ -20,6 +20,8 @@ import java.util.List;
 
 public class DefaultTenantService implements TenantService {
 
+    public static final String GETTING_TENANT_ROLES = "Getting Tenant Roles";
+    public static final String GOT_TENANT_ROLES = "Got {} Tenant Roles";
     @Autowired
     private Configuration config;
 
@@ -255,7 +257,7 @@ public class DefaultTenantService implements TenantService {
 
     @Override
     public List<TenantRole> getTenantRolesByParent(String parentUniqueId) {
-        logger.debug("Getting Tenant Roles");
+        logger.debug(GETTING_TENANT_ROLES);
         List<TenantRole> roles = this.tenantDao
             .getTenantRolesByParent(parentUniqueId);
         for (TenantRole role : roles) {
@@ -265,13 +267,13 @@ public class DefaultTenantService implements TenantService {
                 role.setDescription(cRole.getDescription());
             }
         }
-        logger.debug("Got {} Tenant Roles", roles.size());
+        logger.debug(GOT_TENANT_ROLES, roles.size());
         return roles;
     }
 
     @Override
     public List<TenantRole> getTenantRolesForScopeAccess(ScopeAccess scopeAccess) {
-        logger.debug("Getting Tenant Roles");
+        logger.debug(GETTING_TENANT_ROLES);
 
         String parentDn = null;
         try {
@@ -281,7 +283,7 @@ public class DefaultTenantService implements TenantService {
                 parentDn = scopeAccess.getLDAPEntry().getParentDNString();
             }
         } catch (Exception ex) {
-            System.out.println(ex.getMessage());
+            logger.info("failed to getLdapEntry's parentDNString: " + ex.getMessage());
             throw new IllegalStateException();
         }
 
@@ -293,7 +295,7 @@ public class DefaultTenantService implements TenantService {
                 role.setDescription(cRole.getDescription());
             }
         }
-        logger.debug("Got {} Tenant Roles", roles.size());
+        logger.debug(GOT_TENANT_ROLES, roles.size());
         return roles;
     }
 
@@ -311,7 +313,7 @@ public class DefaultTenantService implements TenantService {
                 role.setDescription(cRole.getDescription());
             }
         }
-        logger.debug("Got {} Tenant Roles", roles.size());
+        logger.debug(GOT_TENANT_ROLES, roles.size());
         return roles;
     }
 
@@ -451,7 +453,7 @@ public class DefaultTenantService implements TenantService {
                     "Tenant cannot be null.");
         }
 
-        logger.debug("Getting Tenant Roles");
+        logger.debug(GETTING_TENANT_ROLES);
         List<TenantRole> roles = this.tenantDao.getTenantRolesForUser(user);
         List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
         for (TenantRole role : roles) {
@@ -464,13 +466,13 @@ public class DefaultTenantService implements TenantService {
                 tenantRoles.add(newRole);
             }
         }
-        logger.debug("Got {} Tenant Roles", roles.size());
+        logger.debug(GOT_TENANT_ROLES, roles.size());
         return tenantRoles;
     }
 
     @Override
     public List<TenantRole> getTenantRolesForUser(User user, FilterParam[] filters) {
-        logger.debug("Getting Tenant Roles");
+        logger.debug(GETTING_TENANT_ROLES);
         List<TenantRole> roles = this.tenantDao.getTenantRolesForUser(user, filters);
         for (TenantRole role : roles) {
             if (role != null) {
@@ -485,7 +487,7 @@ public class DefaultTenantService implements TenantService {
     @Override
     public List<TenantRole> getTenantRolesForApplication(
         Application application, FilterParam[] filters) {
-        logger.debug("Getting Tenant Roles");
+        logger.debug(GETTING_TENANT_ROLES);
         List<TenantRole> roles = this.tenantDao.getTenantRolesForApplication(application, filters);
 
         return getTenantOnlyRoles(roles);

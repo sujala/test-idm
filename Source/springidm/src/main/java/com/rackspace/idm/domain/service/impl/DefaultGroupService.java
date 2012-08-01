@@ -24,6 +24,7 @@ import java.util.List;
  */
 public class DefaultGroupService implements GroupService {
 
+    public static final String GROUP_CANNOT_BE_NULL = "Group cannot be null";
     private UserService defaultUserService;
     private final GroupDao groupDao;
     final private Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -40,20 +41,17 @@ public class DefaultGroupService implements GroupService {
 
     @Override
     public List<Group> getGroupsByMossoId(Integer mossoAccountId) {
-        List<Group> groups = null;
-        return groups;
+        return null;
     }
 
     @Override
     public List<Group> getGroupListByMossoId(Integer mossoAccountId) {
-        List<Group> groups = null;
-        return groups;
+        return null;
     }
 
     @Override
     public Group getGroupById(Integer groupId) {
-        Group group = groupDao.getGroupById(groupId);
-        return group;
+        return groupDao.getGroupById(groupId);
     }
 
     @Override
@@ -72,7 +70,7 @@ public class DefaultGroupService implements GroupService {
     public void addGroup(Group group) {
 
         if(group == null){
-            throw new IllegalArgumentException("Group cannot be null");
+            throw new IllegalArgumentException(GROUP_CANNOT_BE_NULL);
         }
 
         logger.info("Adding Client Group: {}", group);
@@ -91,7 +89,7 @@ public class DefaultGroupService implements GroupService {
     public void updateGroup(Group group) {
         logger.info("Updating Client Group: {}", group);
         if(group == null){
-            throw new IllegalArgumentException("Group cannot be null");
+            throw new IllegalArgumentException(GROUP_CANNOT_BE_NULL);
         }
         if(group.getGroupId() == null){
             throw new IllegalArgumentException("GroupId cannot be null");
@@ -111,7 +109,7 @@ public class DefaultGroupService implements GroupService {
 
     void verifyDuplicateGroup(Group group) {
         if(group == null){
-            throw new IllegalArgumentException("Group cannot be null");
+            throw new IllegalArgumentException(GROUP_CANNOT_BE_NULL);
         }
         Group exists = groupDao.getGroupByName(group.getName());
         if (exists != null) {
@@ -124,7 +122,7 @@ public class DefaultGroupService implements GroupService {
     @Override
     public void deleteGroup(String groupId) {
         if(groupId == null){
-            throw new IllegalArgumentException("Group cannot be null");
+            throw new IllegalArgumentException(GROUP_CANNOT_BE_NULL);
         }
         int grpId = Integer.parseInt(groupId);
         Group exists = groupDao.getGroupById(grpId);

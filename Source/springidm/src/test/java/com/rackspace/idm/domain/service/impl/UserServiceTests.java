@@ -28,7 +28,6 @@ public class UserServiceTests {
     ApplicationService mockClientService;
     ScopeAccessService mockScopeAccessService;
     ScopeAccessDao mockScopeAccessObjectDao;
-    TokenService mockTokenService;
     PasswordComplexityService mockPasswordComplexityService;
 
     String customerId = "123456";
@@ -68,7 +67,6 @@ public class UserServiceTests {
         mockClientService = EasyMock.createMock(ApplicationService.class);
         mockScopeAccessObjectDao = EasyMock.createMock(ScopeAccessDao.class);
         mockScopeAccessService = EasyMock.createMock(ScopeAccessService.class);
-        mockTokenService = EasyMock.createMock(TokenService.class);
         mockPasswordComplexityService = EasyMock.createMock(PasswordComplexityService.class);
         
         Configuration appConfig = new PropertyFileConfiguration().getConfig();
@@ -76,14 +74,14 @@ public class UserServiceTests {
 
         userService = new DefaultUserService(mockUserDao, mockRackerDao,
                 mockScopeAccessObjectDao,
-                mockClientService, appConfig, mockTokenService, mockPasswordComplexityService);
+                mockClientService, appConfig, mockPasswordComplexityService);
         
         Configuration appConfig2 = new PropertyFileConfiguration().getConfig();
         
         appConfig2.setProperty("ldap.server.trusted", true);
         trustedUserService =  new DefaultUserService(mockUserDao, mockRackerDao,
                 mockScopeAccessObjectDao,
-                mockClientService, appConfig2, mockTokenService, mockPasswordComplexityService);
+                mockClientService, appConfig2, mockPasswordComplexityService);
     }
 
     @Test
@@ -574,7 +572,7 @@ public class UserServiceTests {
 
     private Customer getFakeCustomer() {
         Customer customer = new Customer();
-        customer.setRCN(customerId);
+        customer.setRcn(customerId);
         return customer;
     }
 

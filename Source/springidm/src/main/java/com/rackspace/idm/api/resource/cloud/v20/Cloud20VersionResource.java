@@ -24,7 +24,6 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
-import java.io.IOException;
 import java.io.StringReader;
 
 /**
@@ -38,16 +37,13 @@ public class Cloud20VersionResource {
     private final Configuration config;
     private final CloudContractDescriptionBuilder cloudContractDescriptionBuilder;
 
-    private final String X_AUTH_TOKEN = "X-AUTH-TOKEN";
+    private static final String X_AUTH_TOKEN = "X-AUTH-TOKEN";
 
     @Autowired
     private DefaultCloud20Service defaultCloud20Service;
 
     @Autowired
     private DelegateCloud20Service delegateCloud20Service;
-
-    @Context
-    private UriInfo uriInfo;
 
     @Autowired
     public Cloud20VersionResource(Configuration config,

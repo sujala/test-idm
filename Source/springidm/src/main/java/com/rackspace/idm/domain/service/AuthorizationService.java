@@ -4,8 +4,6 @@ import com.rackspace.idm.domain.entity.Entity;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.exception.ForbiddenException;
 
-import javax.ws.rs.core.UriInfo;
-
 public interface AuthorizationService {
     
 	/**

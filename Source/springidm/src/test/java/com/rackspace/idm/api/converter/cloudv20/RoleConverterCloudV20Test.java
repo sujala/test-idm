@@ -5,7 +5,6 @@ import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.TenantRole;
 import org.junit.Before;
 import org.junit.Test;
-import org.openstack.docs.identity.api.v2.ObjectFactory;
 import org.openstack.docs.identity.api.v2.Role;
 import org.openstack.docs.identity.api.v2.RoleList;
 
@@ -15,9 +14,7 @@ import java.util.List;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
-import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * Created with IntelliJ IDEA.
@@ -33,7 +30,7 @@ public class RoleConverterCloudV20Test {
     @Before
     public void setUp() throws Exception {
         roleConverterCloudV20 = new RoleConverterCloudV20();
-        roleConverterCloudV20.setOBJ_FACTORIES(new JAXBObjectFactories());
+        roleConverterCloudV20.setObjFactories(new JAXBObjectFactories());
     }
 
     @Test

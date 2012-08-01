@@ -1,19 +1,17 @@
 package com.rackspace.idm.domain.entity;
 
-import java.security.NoSuchAlgorithmException;
-import java.util.Stack;
+import com.rackspace.idm.util.HashHelper;
+import com.rackspace.idm.validation.MessageTexts;
+import com.rackspace.idm.validation.RegexPatterns;
+import org.apache.commons.lang.StringUtils;
+import org.joda.time.DateTime;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
-
-import org.apache.commons.lang.StringUtils;
-import org.joda.time.DateTime;
-
-import com.rackspace.idm.util.HashHelper;
-import com.rackspace.idm.validation.MessageTexts;
-import com.rackspace.idm.validation.RegexPatterns;
+import java.security.NoSuchAlgorithmException;
+import java.util.Stack;
 
 /**
  * Let's keep this immutable.

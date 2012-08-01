@@ -1,14 +1,10 @@
 package com.rackspace.idm.domain.entity;
 
+import com.rackspace.idm.validation.*;
+
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
-
-import com.rackspace.idm.validation.AuthorizationCodeCredentialsCheck;
-import com.rackspace.idm.validation.BasicCredentialsCheck;
-import com.rackspace.idm.validation.MessageTexts;
-import com.rackspace.idm.validation.RefreshTokenCredentialsCheck;
-import com.rackspace.idm.validation.RegexPatterns;
 
 public class Credentials {
 

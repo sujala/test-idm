@@ -145,7 +145,7 @@ public class DefaultCloud20ServiceTest {
         //setting mocks
         defaultCloud20Service.setUserService(userService);
         defaultCloud20Service.setUserGroupService(userGroupService);
-        defaultCloud20Service.setOBJ_FACTORIES(jaxbObjectFactories);
+        defaultCloud20Service.setObjFactories(jaxbObjectFactories);
         defaultCloud20Service.setScopeAccessService(scopeAccessService);
         defaultCloud20Service.setAuthorizationService(authorizationService);
         defaultCloud20Service.setUserConverterCloudV20(userConverterCloudV20);
@@ -590,7 +590,7 @@ public class DefaultCloud20ServiceTest {
         rackerScopeAccess.setAccessTokenExpired();
         ArgumentCaptor<NotFoundException> argumentCaptor = ArgumentCaptor.forClass(NotFoundException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doReturn(new ScopeAccess()).when(spy).getScopeAccessForValidToken(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(rackerScopeAccess).when(spy).checkAndGetToken("token");
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("Response Builder", spy.validateToken(null, authToken, "token", null), equalTo(responseBuilder));
@@ -1559,7 +1559,7 @@ public class DefaultCloud20ServiceTest {
         when(userService.getAllUsers(org.mockito.Matchers.<FilterParam[]>any())).thenReturn(users);
         when(config.getInt("numberOfSubUsers")).thenReturn(-1);
         ExceptionHandler handler = new ExceptionHandler();
-        handler.setOBJ_FACTORIES(new JAXBObjectFactories());
+        handler.setObjFactories(new JAXBObjectFactories());
         spy.setExceptionHandler(handler);
 
         Response.ResponseBuilder builder = spy.addUser(null, null, authToken, userOS);
@@ -1785,7 +1785,7 @@ public class DefaultCloud20ServiceTest {
     public void addTenant_withNullTenantName_returnsResponseBuilder() throws Exception {
         ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doReturn(new ScopeAccess()).when(spy).getScopeAccessForValidToken(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         tenantOS.setName(null);
         assertThat("response builder", spy.addTenant(null, null, authToken, tenantOS), equalTo(responseBuilder));
@@ -1908,7 +1908,7 @@ public class DefaultCloud20ServiceTest {
     public void addRole_roleWithNullName_returnsResponseBuilder() throws Exception {
         ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doReturn(new ScopeAccess()).when(spy).getScopeAccessForValidToken(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         Role role1 = new Role();
         role1.setName(null);
@@ -1920,7 +1920,7 @@ public class DefaultCloud20ServiceTest {
     public void addRole_nullRole_returnsResponseBuilder() throws Exception {
         ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doReturn(new ScopeAccess()).when(spy).getScopeAccessForValidToken(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response bulider", spy.addRole(null, null, authToken, null), equalTo(responseBuilder));
         assertThat("exception type",argumentCaptor.getValue(),instanceOf(BadRequestException.class));
@@ -1943,7 +1943,7 @@ public class DefaultCloud20ServiceTest {
         Role role1 = new Role();
         role1.setName("Identity:role");
         role1.setServiceId("serviceId");
-        doReturn(new ScopeAccess()).when(spy).getScopeAccessForValidToken(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doThrow(new ForbiddenException()).when(spy).verifyIdentityAdminLevelAccess(authToken);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response builder", spy.addRole(null, null, authToken, role1), equalTo(responseBuilder));
@@ -1989,7 +1989,7 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void addRole_roleConflictThrowsDuplicateException_returnsResponseBuilder() throws Exception {
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doReturn(new ScopeAccess()).when(spy).getScopeAccessForValidToken(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(new Application()).when(spy).checkAndGetApplication(role.getServiceId());
         doThrow(new DuplicateException("role conflict")).when(clientService).addClientRole(any(ClientRole.class));
         when(exceptionHandler.conflictExceptionResponse("role conflict")).thenReturn(responseBuilder);
@@ -2073,7 +2073,7 @@ public class DefaultCloud20ServiceTest {
     public void addEndpoint_Global_throwBadRequestExceptionAndReturnsResponseBuilder() throws Exception {
         ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doReturn(new ScopeAccess()).when(spy).getScopeAccessForValidToken(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(tenant).when(spy).checkAndGetTenant(tenantId);
         doReturn(cloudBaseUrl).when(spy).checkAndGetEndpointTemplate(endpointTemplate.getId());
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
@@ -2094,15 +2094,19 @@ public class DefaultCloud20ServiceTest {
     public void listUserGroups_badRequestException_returnsResponseBuilder() throws Exception {
         BadRequestException badRequestException = new BadRequestException();
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doThrow(badRequestException).when(spy).verifyServiceAdminLevelAccess(authToken);
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doThrow(badRequestException).when(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
         when(exceptionHandler.exceptionResponse(badRequestException)).thenReturn(responseBuilder);
         assertThat("response builder", spy.listUserGroups(null, authToken, null), equalTo(responseBuilder));
     }
 
     @Test
     public void listUserGroups_callsVerifyServiceAdminLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.listUserGroups(null, authToken, null);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -2128,15 +2132,17 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void getGroupById_callsVerifyServiceAdminLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.getGroupById(null, authToken, null);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
     }
 
     @Test
     public void getGroupById_throwsBadRequestException_returnsResponseBuilder() throws Exception {
         BadRequestException badRequestException = new BadRequestException();
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doThrow(badRequestException).when(spy).validateGroupId(null);
         when(exceptionHandler.exceptionResponse(badRequestException)).thenReturn(responseBuilder);
         assertThat("response builder",spy.getGroupById(null, authToken, null),equalTo(responseBuilder));
@@ -2189,8 +2195,10 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void addEndpointTemplate_callsVerifyServiceAdminLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.addEndpointTemplate(null, null, authToken, null);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -2221,7 +2229,7 @@ public class DefaultCloud20ServiceTest {
     public void addEndpointTemplate_endPointServiceThrowsBaseUrlConflictException_returnsResponseBuilder() throws Exception {
         ArgumentCaptor<BaseUrlConflictException> argumentCaptor = ArgumentCaptor.forClass(BaseUrlConflictException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         when(endpointConverterCloudV20.toCloudBaseUrl(endpointTemplate)).thenReturn(cloudBaseUrl);
         doThrow(new BaseUrlConflictException()).when(endpointService).addBaseUrl(cloudBaseUrl);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
@@ -2232,7 +2240,7 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void addEndpointTemplate_endPointServiceThrowsDuplicateException_returnsResponseBuilder() throws Exception {
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         when(endpointConverterCloudV20.toCloudBaseUrl(endpointTemplate)).thenReturn(cloudBaseUrl);
         when(exceptionHandler.conflictExceptionResponse("duplicate exception")).thenReturn(responseBuilder);
         doThrow(new DuplicateException("duplicate exception")).when(endpointService).addBaseUrl(cloudBaseUrl);
@@ -2240,15 +2248,17 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void addRoleToUserOnTenant_callsVerifyServiceAdminLevelAccess() throws Exception {
+    public void addRoleToUserOnTenant_callsVerifyUserAdminLevelAccess() throws Exception {
         spy.addRolesToUserOnTenant(null, authToken, null, null, null);
         verify(spy).verifyUserAdminLevelAccess(authToken);
     }
 
     @Test
     public void addUserCredential_callsVerifyServiceAdminLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.addUserCredential(null, authToken, null, null);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -2291,7 +2301,7 @@ public class DefaultCloud20ServiceTest {
         MediaType mediaType = mock(MediaType.class);
         user.setUsername("wrong_user");
         JAXBElement<PasswordCredentialsRequiredUsername> jaxbElement = new JAXBElement<PasswordCredentialsRequiredUsername>(QName.valueOf("credentials"),PasswordCredentialsRequiredUsername.class,passwordCredentialsRequiredUsername);
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(jaxbElement).when(spy).getJSONCredentials(jsonBody);
         when(httpHeaders.getMediaType()).thenReturn(mediaType);
         when(mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)).thenReturn(true);
@@ -2355,7 +2365,7 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void addUserCredentials_notApiKeyCredentialsAndNotPasswordCredentials_returns200() throws Exception {
         JAXBElement<Ec2CredentialsType> credentials = new JAXBElement<Ec2CredentialsType>(new QName("ec2"), Ec2CredentialsType.class, new Ec2CredentialsType());
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         when(httpHeaders.getMediaType()).thenReturn(MediaType.APPLICATION_XML_TYPE);
         doReturn(credentials).when(spy).getXMLCredentials("body");
         Response.ResponseBuilder responseBuilder = spy.addUserCredential(httpHeaders, authToken, "userId", "body");
@@ -2435,8 +2445,10 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void checkToken_callsVerifyServiceAdminLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.checkToken(null, authToken, authToken, null);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -2475,50 +2487,62 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void checkToken_throwsBadRequestException_returnsResponseBuilder() throws Exception {
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doThrow(new BadRequestException("message")).when(spy).verifyServiceAdminLevelAccess(authToken);
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doThrow(new BadRequestException("message")).when(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
         when(exceptionHandler.badRequestExceptionResponse("message")).thenReturn(responseBuilder);
         assertThat("response builder", spy.checkToken(null, authToken, null, null), equalTo(responseBuilder));
     }
 
     @Test
     public void checkToken_throwsNotAuthorizedException_returns401() throws Exception {
-        doThrow(new NotAuthorizedException()).when(spy).verifyServiceAdminLevelAccess(authToken);
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doThrow(new NotAuthorizedException()).when(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
         Response.ResponseBuilder responseBuilder = spy.checkToken(null, authToken, null, null);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(401));
     }
 
     @Test
     public void checkToken_throwsForbiddenException_returns403() throws Exception {
-        doThrow(new ForbiddenException()).when(spy).verifyServiceAdminLevelAccess(authToken);
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doThrow(new ForbiddenException()).when(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
         Response.ResponseBuilder responseBuilder = spy.checkToken(null, authToken, null, null);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(403));
     }
 
     @Test
     public void checkToken_throwsNotFoundException_returns404() throws Exception {
-        doThrow(new NotFoundException()).when(spy).verifyServiceAdminLevelAccess(authToken);
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doThrow(new NotFoundException()).when(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
         Response.ResponseBuilder responseBuilder = spy.checkToken(null, authToken, null, null);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(404));
     }
 
     @Test
     public void checkToken_throwsException_returns500() throws Exception {
-        doThrow(new NullPointerException()).when(spy).verifyServiceAdminLevelAccess(authToken);
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doThrow(new NullPointerException()).when(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
         Response.ResponseBuilder responseBuilder = spy.checkToken(null, authToken, null, null);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(500));
     }
 
     @Test
     public void deleteEndpoint_callsVerifyServiceAdminLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.deleteEndpoint(null, authToken, authToken, null);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
     }
 
     @Test
     public void deleteEndpoint_throwsNotFoundException_returnsResponseBuilder() throws Exception {
         ArgumentCaptor<NotFoundException> argumentCaptor = ArgumentCaptor.forClass(NotFoundException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doThrow(new NotFoundException()).when(spy).checkAndGetTenant(authToken);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response bulider", spy.deleteEndpoint(null, authToken, authToken, null), equalTo(responseBuilder));
@@ -2527,15 +2551,17 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void deleteEndpointTemplate_callsVerifyServiceAdminLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.deleteEndpointTemplate(null, authToken, null);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
     }
 
     @Test
     public void deleteEndpointTemplate_throwsException_returnsResponseBuilder() throws Exception {
         ArgumentCaptor<NotFoundException> argumentCaptor = ArgumentCaptor.forClass(NotFoundException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doThrow(new NotFoundException()).when(spy).checkAndGetEndpointTemplate(null);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response builder", spy.deleteEndpointTemplate(null, authToken, null), equalTo(responseBuilder));
@@ -2544,13 +2570,13 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void deleteRole_callsVerifyIdentityAdminLevelAccess() throws Exception {
-        doNothing().when(spy).verifyServiceAdminLevelAccess(anyString());
+        doNothing().when(spy).verifyIdentityAdminLevelAccess(authToken);
         spy.deleteRole(null, authToken, roleId);
         verify(spy).verifyIdentityAdminLevelAccess(anyString());
     }
 
     @Test
-    public void deleteRoleFromUserOnTenant_callsVerifyServiceAdminLevelAccess() throws Exception {
+    public void deleteRoleFromUserOnTenant_callsVerifyUserAdminLevelAccess() throws Exception {
         spy.deleteRoleFromUserOnTenant(null, authToken, tenantId, null, null);
         verify(spy).verifyUserAdminLevelAccess(authToken);
     }
@@ -2571,15 +2597,17 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void deleteService_callsVerifyServiceAdminLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.deleteService(null, authToken, null);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
     }
 
     @Test
     public void deleteService_throwsNotFoundException_returnsResponseBuilder() throws Exception {
         NotFoundException notFoundException = new NotFoundException();
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doThrow(notFoundException).when(spy).checkAndGetApplication(null);
         when(exceptionHandler.exceptionResponse(notFoundException)).thenReturn(responseBuilder);
         assertThat("response builder", spy.deleteService(null, authToken, null), equalTo(responseBuilder));
@@ -2587,8 +2615,10 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void deleteTenant_callsVerifyServiceAdminLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.deleteTenant(null, authToken, null);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -2613,8 +2643,10 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void deleteUserCredential_callsVerifyServiceAdminLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.deleteUserCredential(null, authToken, null, null);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -2629,7 +2661,7 @@ public class DefaultCloud20ServiceTest {
         ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         String credentialType = "";
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response builder",spy.deleteUserCredential(null, authToken, null, credentialType) , equalTo(responseBuilder));
         assertThat("exception type",argumentCaptor.getValue(),instanceOf(BadRequestException.class));
@@ -2670,7 +2702,7 @@ public class DefaultCloud20ServiceTest {
         user.setId("123");
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         ArgumentCaptor<NotFoundException> argumentCaptor = ArgumentCaptor.forClass(NotFoundException.class);
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(user).when(spy).checkAndGetUser("userId");
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response builder", spy.deleteUserCredential(null, authToken, "userId", credentialType), equalTo(responseBuilder));
@@ -2789,15 +2821,17 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void getEndpoint_callsVerifyServiceAdminLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.getEndpoint(null, authToken, null, null);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
     }
 
     @Test
     public void getEndpoint_throwsNotFoundException_returnsResponseBuilder() throws Exception {
         ArgumentCaptor<NotFoundException> argumentCaptor = ArgumentCaptor.forClass(NotFoundException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(tenant).when(spy).checkAndGetTenant(tenantId);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response builder", spy.getEndpoint(null, authToken, tenantId, null), equalTo(responseBuilder));
@@ -2823,16 +2857,17 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void getEndpointTemplate_callsVerifyServiceAdminLevelAccess() throws Exception {
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.getEndpointTemplate(null, authToken, null);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
     }
 
     @Test
     public void getEndpointTemplate_throwsNotFoundException_returnsResponseBuilder() throws Exception {
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         NotFoundException notFoundException = new NotFoundException();
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doThrow(notFoundException).when(spy).checkAndGetEndpointTemplate(null);
         when(exceptionHandler.exceptionResponse(notFoundException)).thenReturn(responseBuilder);
         assertThat("response builder", spy.getEndpointTemplate(null, authToken, null), equalTo(responseBuilder));
@@ -2849,15 +2884,17 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void getRole_callsVerifyServiceAdminLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.getRole(null, authToken, null);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
     }
 
     @Test
     public void getRole_throwsNotFoundException_returnsResponseBuilder() throws Exception {
         NotFoundException notFoundException = new NotFoundException();
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doThrow(notFoundException).when(spy).checkAndGetClientRole(null);
         when(exceptionHandler.exceptionResponse(notFoundException)).thenReturn(responseBuilder);
         assertThat("response builder", spy.getRole(null, authToken, null), equalTo(responseBuilder));
@@ -2876,7 +2913,7 @@ public class DefaultCloud20ServiceTest {
         user.setSecretQuestion("question");
         user.setUsername("username");
         SecretQA secretQA2 = new SecretQA();
-        doNothing().when(spy).verifyServiceAdminLevelAccess("authToken");
+        doReturn(null).when(spy).getScopeAccessForValidToken("authToken");
         doReturn(user).when(spy).checkAndGetUser("userId");
         com.rackspace.docs.identity.api.ext.rax_ksqa.v1.ObjectFactory objectFactory = mock(com.rackspace.docs.identity.api.ext.rax_ksqa.v1.ObjectFactory.class);
         when(jaxbObjectFactories.getRackspaceIdentityExtKsqaV1Factory()).thenReturn(objectFactory);
@@ -2888,15 +2925,17 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void getSecretQA_callsverifyServiceAdminLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.getSecretQA(null, authToken, null);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
     }
 
     @Test
     public void getSecretQA_throwsNotFoundException_returnsResponseBuilder() throws Exception {
         NotFoundException notFoundException = new NotFoundException();
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doThrow(notFoundException).when(spy).checkAndGetUser(null);
         when(exceptionHandler.exceptionResponse(notFoundException)).thenReturn(responseBuilder);
         assertThat("response builder", spy.getSecretQA(null, authToken, null), equalTo(responseBuilder));
@@ -2910,16 +2949,18 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void getService_callsverifyServiceAdminLevelAccess() throws Exception {
+    public void getService_callsVerifyServiceAdminLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.getService(null, authToken, null);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
     }
 
     @Test
     public void getService_throwsNotFoundException_returnResponseBuilder() throws Exception {
         NotFoundException notFoundException = new NotFoundException();
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doThrow(notFoundException).when(spy).checkAndGetApplication(null);
         when(exceptionHandler.exceptionResponse(notFoundException)).thenReturn(responseBuilder);
         assertThat("response builder", spy.getService(null, authToken, null), equalTo(responseBuilder));
@@ -2937,15 +2978,17 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void getTenantById_callsVerifyServiceAdminLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.getTenantById(null, authToken, null);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
     }
 
     @Test
     public void getTenantById_throwsNotFoundException_returnsResponseBuilder() throws Exception {
         NotFoundException notFoundException = new NotFoundException();
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doThrow(notFoundException).when(spy).checkAndGetTenant(null);
         when(exceptionHandler.exceptionResponse(notFoundException)).thenReturn(responseBuilder);
         assertThat("response builder", spy.getTenantById(null, authToken, null), equalTo(responseBuilder));
@@ -2959,15 +3002,17 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void getTenantByName_callsVerifyServiceAdminLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.getTenantByName(null, authToken, null);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
     }
 
     @Test
     public void getTenantByName_tenantIsNullThrowsNotFoundException_returnsResponseBuilder() throws Exception {
         ArgumentCaptor<NotFoundException> argumentCaptor = ArgumentCaptor.forClass(NotFoundException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response builder", spy.getTenantByName(null, authToken, null), equalTo(responseBuilder));
         assertThat("exception type",argumentCaptor.getValue(),instanceOf(NotFoundException.class));
@@ -3207,8 +3252,10 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void getUserRole_callsVerifyServiceAdminLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.getUserRole(null, authToken, null, null);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -3220,7 +3267,7 @@ public class DefaultCloud20ServiceTest {
         List<TenantRole> tenantRoleList = new ArrayList<TenantRole>();
         tenantRoleList.add(tenantRole);
         ArgumentCaptor<NotFoundException> argumentCaptor = ArgumentCaptor.forClass(NotFoundException.class);
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(user).when(spy).checkAndGetUser("userId");
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         when(tenantService.getGlobalRolesForUser(user)).thenReturn(tenantRoleList);
@@ -3238,7 +3285,7 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void listCredentials_callsVerifyServiceAdminLevelAccess() throws Exception {
+    public void listCredentials_callsVerifyUserLevelAccess() throws Exception {
         spy.listCredentials(null, authToken, null, null, 0);
         verify(spy).verifyUserLevelAccess(authToken);
     }
@@ -3363,15 +3410,17 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void listEndpoints_verifyServiceAdminLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.listEndpoints(null, authToken, null);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
     }
 
     @Test
     public void listEndpoints_throwsNotFoundException_returnsResponseBuilder() throws Exception {
         NotFoundException notFoundException = new NotFoundException();
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doNothing().when(spy).verifyTokenHasTenantAccess(authToken, null);
         doThrow(notFoundException).when(spy).checkAndGetTenant(null);
         when(exceptionHandler.exceptionResponse(notFoundException)).thenReturn(responseBuilder);
@@ -3390,7 +3439,7 @@ public class DefaultCloud20ServiceTest {
         tenant.setBaseUrlIds(ids);
         ArrayList<CloudBaseUrl> cloudBaseUrlList = new ArrayList<CloudBaseUrl>();
         cloudBaseUrlList.add(cloudBaseUrl);
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doNothing().when(spy).verifyTokenHasTenantAccess(authToken, tenantId);
         doReturn(tenant).when(spy).checkAndGetTenant(tenantId);
         when(endpointService.getGlobalBaseUrls()).thenReturn(cloudBaseUrlList);
@@ -3409,15 +3458,19 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void listEndpointTemplates_callsVerifyServiceAdminLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.listEndpointTemplates(null, authToken, null);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
     }
 
     @Test
     public void listEndpointTemplates_throwsNotAuthorizedException_returnsResponseBuilder() throws Exception {
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         NotAuthorizedException notAuthorizedException = new NotAuthorizedException();
-        doThrow(notAuthorizedException).when(spy).verifyServiceAdminLevelAccess(authToken);
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doThrow(notAuthorizedException).when(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
         when(exceptionHandler.exceptionResponse(notAuthorizedException)).thenReturn(responseBuilder);
         assertThat("response builder", spy.listEndpointTemplates(null, authToken, null), equalTo(responseBuilder));
     }
@@ -3441,8 +3494,10 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void listRoles_callsVerifyServiceAdminLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.listRoles(null, authToken, null, null, 0);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -3461,15 +3516,17 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void listRolesForTenant_verifyServiceAdminLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.listRolesForTenant(null, authToken, null, null, 0);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
     }
 
     @Test
     public void listRolesForTenant_throwsNotFoundException_returnsResponseBuilder() throws Exception {
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         NotFoundException notFoundException = new NotFoundException();
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doNothing().when(spy).verifyTokenHasTenantAccess(authToken, null);
         doThrow(notFoundException).when(spy).checkAndGetTenant(null);
         when(exceptionHandler.exceptionResponse(notFoundException)).thenReturn(responseBuilder);
@@ -3484,15 +3541,17 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void listRolesForUserOnTenant_verifyServiceAdminLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.listRolesForUserOnTenant(null, authToken, null, null);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
     }
 
     @Test
     public void listRolesForUserOnTenant_throwsNotFoundException_returnsResponseBuilder() throws Exception {
         NotFoundException notFoundException = new NotFoundException();
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doNothing().when(spy).verifyTokenHasTenantAccess(authToken,null);
         doThrow(notFoundException).when(spy).checkAndGetTenant(null);
         when(exceptionHandler.exceptionResponse(notFoundException)).thenReturn(responseBuilder);
@@ -3507,15 +3566,19 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void listServices_callsVerifyServiceAdminLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.listServices(null, authToken, null, null);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
     }
 
     @Test
     public void listServices_throwsForbiddenException_returnsResponseBuilder() throws Exception {
         ForbiddenException forbiddenException = new ForbiddenException();
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doThrow(forbiddenException).when(spy).verifyServiceAdminLevelAccess(authToken);
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doThrow(forbiddenException).when(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
         when(exceptionHandler.exceptionResponse(forbiddenException)).thenReturn(responseBuilder);
         assertThat("response builder",spy.listServices(null, authToken, null, null),equalTo(responseBuilder));
     }
@@ -3580,15 +3643,19 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void listUserGlobalRolesByServiceId_callsVerifyServiceAdminLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.listUserGlobalRolesByServiceId(null, authToken, null, null);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
     }
 
     @Test
     public void listUserGlobalRolesByServiceId_throwsForbiddenException_returnsResponseBuilder() throws Exception {
         ForbiddenException forbiddenException = new ForbiddenException();
         Response.ResponseBuilder  responseBuilder = new ResponseBuilderImpl();
-        doThrow(forbiddenException).when(spy).verifyServiceAdminLevelAccess(authToken);
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doThrow(forbiddenException).when(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
         when(exceptionHandler.exceptionResponse(forbiddenException)).thenReturn(responseBuilder);
         assertThat("response builder", spy.listUserGlobalRolesByServiceId(null, authToken, null, null), equalTo(responseBuilder));
     }
@@ -3602,8 +3669,10 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void listGroups_callsVerifyServiceAdminLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.listGroups(null, authToken, null, null, null);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -3626,7 +3695,7 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void listUsersForTenant_CallsVerifyServiceAdminLevelAccess() throws Exception {
+    public void listUsersForTenant_CallsVerifyUserAdminLevelAccess() throws Exception {
         spy.listUsersForTenant(null, authToken, null, null, 0);
         verify(spy).verifyUserAdminLevelAccess(authToken);
     }
@@ -3635,7 +3704,7 @@ public class DefaultCloud20ServiceTest {
     public void listUsersForTenant_throwsNotFoundException_returnsResponseBuilder() throws Exception {
         NotFoundException notFoundException = new NotFoundException();
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doNothing().when(spy).verifyUserAdminLevelAccess(authToken);
         doThrow(notFoundException).when(spy).verifyTokenHasTenantAccess(authToken, null);
         when(exceptionHandler.exceptionResponse(notFoundException)).thenReturn(responseBuilder);
         assertThat("response builder", spy.listUsersForTenant(null, authToken, null, null, 0), equalTo(responseBuilder));
@@ -3654,7 +3723,7 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void listUsersWithRoleForTenant_callsVerifyServiceAdminLevelAccess() throws Exception {
+    public void listUsersWithRoleForTenant_callsVerifyUserAdminLevelAccess() throws Exception {
         spy.listUsersWithRoleForTenant(null, authToken, null, null, null, 0);
         verify(spy).verifyUserAdminLevelAccess(authToken);
     }
@@ -3683,15 +3752,17 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void setUserEnabled_callsVerifyServiceAdminLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.setUserEnabled(null, authToken, null, null);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
     }
 
     @Test
     public void setUserEnabled_throwsNotFoundException_returnsResponseBuilder() throws Exception {
         NotFoundException notFoundException = new NotFoundException();
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doThrow(notFoundException).when(spy).checkAndGetUser(null);
         when(exceptionHandler.exceptionResponse(notFoundException)).thenReturn(responseBuilder);
         assertThat("response builder", spy.setUserEnabled(null, authToken, null, null), equalTo(responseBuilder));
@@ -3715,8 +3786,10 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void updateSecretQA_callsVerifyServiceAdminLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.updateSecretQA(null, authToken, null, null);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -3724,7 +3797,7 @@ public class DefaultCloud20ServiceTest {
         ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         secretQA.setAnswer("");
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response builder", spy.updateSecretQA(null, authToken, null, secretQA), equalTo(responseBuilder));
         assertThat("exception type",argumentCaptor.getValue(),instanceOf(BadRequestException.class));
@@ -3734,7 +3807,7 @@ public class DefaultCloud20ServiceTest {
     public void updateSecretQA_secretQuestionIsBlankThrowsBadRequest_returnsResponseBuilder() throws Exception {
         ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         secretQA.setQuestion("");
         assertThat("response code", spy.updateSecretQA(null, authToken, null, secretQA), equalTo(responseBuilder));
@@ -3755,15 +3828,17 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void updateTenant_callsVerifyServiceAdminLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.updateTenant(null, authToken, null, null);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
     }
 
     @Test
     public void updateTenant_throwsNotFoundException_returnsResponseBuilder() throws Exception {
         NotFoundException notFoundException = new NotFoundException();
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doThrow(notFoundException).when(spy).checkAndGetTenant(null);
         when(exceptionHandler.exceptionResponse(notFoundException)).thenReturn(responseBuilder);
         assertThat("response builder", spy.updateTenant(null, authToken, null, null), equalTo(responseBuilder));
@@ -4037,8 +4112,10 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void updateUserApiKeyCredentials_callsVerifyServiceAdminLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.updateUserApiKeyCredentials(null, authToken, null, null, null);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -4047,7 +4124,7 @@ public class DefaultCloud20ServiceTest {
         creds.setApiKey("");
         ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response builder", spy.updateUserApiKeyCredentials(null, authToken, null, null, creds), equalTo(responseBuilder));
         assertThat("exception type",argumentCaptor.getValue(),instanceOf(BadRequestException.class));
@@ -4069,7 +4146,7 @@ public class DefaultCloud20ServiceTest {
         creds.setUsername("username");
         ArgumentCaptor<NotFoundException> argumentCaptor = ArgumentCaptor.forClass(NotFoundException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doNothing().when(spy).validateUsername("username");
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response builder", spy.updateUserApiKeyCredentials(null, authToken, null, null, creds), equalTo(responseBuilder));
@@ -4083,7 +4160,7 @@ public class DefaultCloud20ServiceTest {
         creds.setUsername("username");
         ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doNothing().when(spy).validateUsername("username");
         when(userService.getUser("username")).thenReturn(user);
         doReturn(new User()).when(spy).checkAndGetUser(userId);
@@ -4118,8 +4195,10 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void updateUserPasswordCredentials_callsVerifyServiceAdminLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.updateUserPasswordCredentials(null, authToken, null, null, null);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -4129,7 +4208,7 @@ public class DefaultCloud20ServiceTest {
         creds.setPassword("ABCdef123");
         ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doNothing().when(spy).validatePasswordCredentials(creds);
         doNothing().when(spy).validatePassword("ABCdef123");
         doReturn(new User()).when(spy).checkAndGetUser(userId);
@@ -4191,36 +4270,6 @@ public class DefaultCloud20ServiceTest {
         when(scopeAccessByAccessToken.getLDAPEntry()).thenReturn(new SearchResultEntry("", attributes, new Control[]{}));
         defaultCloud20Service.setDomainId(scopeAccessByAccessToken, userDO);
         verify(userService).getUser("dude");
-    }
-
-    @Test(expected = NotAuthorizedException.class)
-    public void verifyServiceAdminLevelAccess_withNullToken_throwsNotAuthorizedException() throws Exception {
-        defaultCloud20Service.verifyServiceAdminLevelAccess(null);
-    }
-
-    @Test(expected = NotAuthorizedException.class)
-    public void verifyServiceAdminLevelAccess_withBlankToken_throwsNotAuthorizedException() throws Exception {
-        defaultCloud20Service.verifyServiceAdminLevelAccess("");
-    }
-
-    @Test
-    public void verifyServiceAdminLevelAccess_identityAdminCaller_succeeds() throws Exception {
-        UserScopeAccess userScopeAccess = new UserScopeAccess();
-        userScopeAccess.setAccessTokenString("admin");
-        userScopeAccess.setAccessTokenExp(new Date(2099, 1, 1));
-        when(scopeAccessService.getScopeAccessByAccessToken("admin")).thenReturn(userScopeAccess);
-        when(authorizationService.authorizeCloudIdentityAdmin(userScopeAccess)).thenReturn(true);
-        defaultCloud20Service.verifyServiceAdminLevelAccess("admin");
-    }
-
-    @Test(expected = ForbiddenException.class)
-    public void verifyServiceAdminLevelAccess_userAdminCaller_throwsForbiddenException() throws Exception {
-        UserScopeAccess userScopeAccess = new UserScopeAccess();
-        userScopeAccess.setAccessTokenString("admin");
-        userScopeAccess.setAccessTokenExp(new Date(2099, 1, 1));
-        when(scopeAccessService.getScopeAccessByAccessToken("admin")).thenReturn(userScopeAccess);
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
-        defaultCloud20Service.verifyServiceAdminLevelAccess("admin");
     }
 
     @Test(expected = ForbiddenException.class)
@@ -4302,15 +4351,19 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void listEndpointsForToken_callsVerifyServiceAdminLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(null);
         spy.listEndpointsForToken(null, null, null);
-        verify(spy).verifyServiceAdminLevelAccess(null);
+        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
     }
 
     @Test
     public void listEndpointsForToken_throwsNotAuthorizedException_returnsResponseBuilder() throws Exception {
         NotAuthorizedException notAuthorizedException = new NotAuthorizedException();
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doThrow(notAuthorizedException).when(spy).verifyServiceAdminLevelAccess(null);
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(null);
+        doThrow(notAuthorizedException).when(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
         when(exceptionHandler.exceptionResponse(notAuthorizedException)).thenReturn(responseBuilder);
         assertThat("response builder", spy.listEndpointsForToken(null, null, null), equalTo(responseBuilder));
     }
@@ -4319,7 +4372,7 @@ public class DefaultCloud20ServiceTest {
     public void listEndpointsForToken_scopeAccessIsImpersonated_callsScopeAccessService_getScopeAccessByAccessToken() throws Exception {
         ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
         impersonatedScopeAccess.setImpersonatingToken("impersonatingToken");
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(impersonatedScopeAccess).when(spy).checkAndGetToken("tokenId");
         spy.listEndpointsForToken(null, authToken, "tokenId");
         verify(scopeAccessService).getScopeAccessByAccessToken("impersonatingToken");
@@ -4354,6 +4407,14 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void addGroup_callsVerifyServiceAdminLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        spy.addGroup(httpHeaders,null,authToken,null);
+        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+    }
+
+    @Test
     public void addGroup_callsCloudGroupBuilder() throws Exception {
         CloudGroupBuilder cloudGrpBuilder = mock(CloudGroupBuilder.class);
         defaultCloud20Service.setCloudGroupBuilder(cloudGrpBuilder);
@@ -4376,7 +4437,7 @@ public class DefaultCloud20ServiceTest {
     public void addGroup_duplicateGroup_returnsResponseBuilder() throws Exception {
         CloudGroupBuilder cloudGroupBuilder = mock(CloudGroupBuilder.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doNothing().when(spy).validateKsGroup(groupKs);
         when(cloudGroupBuilder.build((com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group) any())).thenReturn(group);
         doThrow(new DuplicateException("message")).when(userGroupService).addGroup(org.mockito.Matchers.<Group>any());
@@ -4389,7 +4450,7 @@ public class DefaultCloud20ServiceTest {
     public void addGroup_throwsBadRequestException_returnsResponseBuilder() throws Exception {
         BadRequestException badRequestException = new BadRequestException();
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doThrow(badRequestException).when(spy).validateKsGroup(groupKs);
         when(exceptionHandler.exceptionResponse(badRequestException)).thenReturn(responseBuilder);
         assertThat("response builder",spy.addGroup(null, null, authToken, groupKs), equalTo(responseBuilder));
@@ -4489,15 +4550,19 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void updateGroup_callsVerifyServiceAdminLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.updateGroup(null, authToken, null, null);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
     }
 
     @Test
     public void updateGroup_throwsForbiddenException_returnsResponseBuilder() throws Exception {
         ForbiddenException forbiddenException = new ForbiddenException();
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doThrow(forbiddenException).when(spy).verifyServiceAdminLevelAccess(authToken);
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doThrow(forbiddenException).when(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
         when(exceptionHandler.exceptionResponse(forbiddenException)).thenReturn(responseBuilder);
         assertThat("response builder", spy.updateGroup(null, authToken, null, null), equalTo(responseBuilder));
     }
@@ -4527,7 +4592,7 @@ public class DefaultCloud20ServiceTest {
         CloudGroupBuilder cloudGroupBuilder = mock(CloudGroupBuilder.class);
         spy.setCloudGroupBuilder(cloudGroupBuilder);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doNothing().when(spy).validateKsGroup(groupKs);
         doNothing().when(spy).validateGroupId("1");
         doThrow(new DuplicateException("message")).when(userGroupService).updateGroup(any(Group.class));
@@ -4537,15 +4602,17 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void deleteGroup_callsVerifyServiceAdminLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.deleteGroup(null, authToken, null);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
     }
 
     @Test
     public void deleteGroup_throwsBadRequestException_returnsResponseBuilder() throws Exception {
         BadRequestException badRequestException = new BadRequestException();
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doThrow(badRequestException).when(spy).validateGroupId(null);
         when(exceptionHandler.exceptionResponse(badRequestException)).thenReturn(responseBuilder);
         assertThat("response builder", spy.deleteGroup(null, authToken, null), equalTo(responseBuilder));
@@ -4609,8 +4676,10 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void addUserToGroup_callsVerifyServiceAdminLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.addUserToGroup(null, authToken, null, null);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -4642,8 +4711,10 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void removeUserFromGroup_callsVerifyServiceAdminLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.removeUserFromGroup(null, authToken, null, null);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -4656,7 +4727,7 @@ public class DefaultCloud20ServiceTest {
     public void removeUserFromGroup_userIdIsNullThrowsBadRequest_returnsResponseBuilder() throws Exception {
         ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doNothing().when(spy).validateGroupId("1");
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response builder", spy.removeUserFromGroup(null, authToken, "1", null), equalTo(responseBuilder));
@@ -4667,7 +4738,7 @@ public class DefaultCloud20ServiceTest {
     public void removeUserFromGroup_userIdIsBlankSpaceThrowsBadRequest_returnsResponseBuilder() throws Exception {
         ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doNothing().when(spy).validateGroupId("1");
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response builder", spy.removeUserFromGroup(null, authToken, "1", " "), equalTo(responseBuilder));
@@ -4693,7 +4764,7 @@ public class DefaultCloud20ServiceTest {
         List<User> userList = new ArrayList<User>();
         Users users = new Users();
         users.setUsers(userList);
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doNothing().when(spy).validateGroupId("1");
         when(userGroupService.getGroupById(1)).thenReturn(group);
         when(userGroupService.getAllEnabledUsers(any(FilterParam[].class), anyString(), anyInt())).thenReturn(users);
@@ -4704,8 +4775,10 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void getUsersForGroup_callsVerifyServiceAdminLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.getUsersForGroup(null, authToken, null, null, null);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -4718,7 +4791,7 @@ public class DefaultCloud20ServiceTest {
     public void getUsersForGroup_groupNotExistThrowsNotFoundException_returnsResponseBuilder() throws Exception {
         ArgumentCaptor<NotFoundException> argumentCaptor = ArgumentCaptor.forClass(NotFoundException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doNothing().when(spy).validateGroupId("1");
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response builder", spy.getUsersForGroup(null, authToken, "1", null, null), equalTo(responseBuilder));
@@ -4951,7 +5024,9 @@ public class DefaultCloud20ServiceTest {
     public void deleteTenant_throwsForbiddenException_returnResponseBuilder() throws Exception {
         ForbiddenException forbiddenException = new ForbiddenException();
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doThrow(forbiddenException).when(spy).verifyServiceAdminLevelAccess(authToken);
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doThrow(forbiddenException).when(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
         when(exceptionHandler.exceptionResponse(forbiddenException)).thenReturn(responseBuilder);
         assertThat("response builder", spy.deleteTenant(null, authToken, "1"), equalTo(responseBuilder));
     }
@@ -5013,8 +5088,10 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void getGroup_callsVerifyServiceAdminLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.getGroup(null, authToken, null);
-        verify(spy).verifyServiceAdminLevelAccess(authToken);
+        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -5551,7 +5628,9 @@ public class DefaultCloud20ServiceTest {
     public void listRoles_throwsForbiddenException_returnsResponseBuilder() throws Exception {
         ForbiddenException forbiddenException = new ForbiddenException();
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doThrow(forbiddenException).when(spy).verifyServiceAdminLevelAccess(authToken);
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doThrow(forbiddenException).when(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
         when(exceptionHandler.exceptionResponse(forbiddenException)).thenReturn(responseBuilder);
         assertThat("response builder", spy.listRoles(httpHeaders, authToken, null, null, null), equalTo(responseBuilder));
     }
@@ -5597,7 +5676,9 @@ public class DefaultCloud20ServiceTest {
     public void listGroups_throwsForbiddenException_returnsResponseBuilder() throws Exception {
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         ForbiddenException forbiddenException = new ForbiddenException();
-        doThrow(forbiddenException).when(spy).verifyServiceAdminLevelAccess(authToken);
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doThrow(forbiddenException).when(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
         when(exceptionHandler.exceptionResponse(forbiddenException)).thenReturn(responseBuilder);
         assertThat("response code", spy.listGroups(httpHeaders, authToken, null, null, null), equalTo(responseBuilder));
     }
@@ -5606,7 +5687,9 @@ public class DefaultCloud20ServiceTest {
     public void getGroup_throwsForbiddenException_returnsResponseBuilder() throws Exception {
         ForbiddenException forbiddenException = new ForbiddenException();
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doThrow(forbiddenException).when(spy).verifyServiceAdminLevelAccess(authToken);
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doThrow(forbiddenException).when(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
         when(exceptionHandler.exceptionResponse(forbiddenException)).thenReturn(responseBuilder);
         assertThat("response code", spy.getGroup(httpHeaders, authToken, null), equalTo(responseBuilder));
     }
@@ -5653,7 +5736,7 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void listDefaultRegionServices_openStackServicesIsNull_responseOk_returns200() throws Exception {
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         when(clientService.getOpenStackServices()).thenReturn(null);
         Response.ResponseBuilder responseBuilder = spy.listDefaultRegionServices(authToken);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
@@ -5665,7 +5748,7 @@ public class DefaultCloud20ServiceTest {
         application.setUseForDefaultRegion(null);
         List<Application> openStackServices = new ArrayList<Application>();
         openStackServices.add(application);
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         when(clientService.getOpenStackServices()).thenReturn(openStackServices);
         Response.ResponseBuilder responseBuilder = spy.listDefaultRegionServices(authToken);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
@@ -5677,7 +5760,7 @@ public class DefaultCloud20ServiceTest {
         application.setUseForDefaultRegion(false);
         List<Application> openStackServices = new ArrayList<Application>();
         openStackServices.add(application);
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         when(clientService.getOpenStackServices()).thenReturn(openStackServices);
         Response.ResponseBuilder responseBuilder = spy.listDefaultRegionServices(authToken);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
@@ -5700,7 +5783,7 @@ public class DefaultCloud20ServiceTest {
         Group group = new Group();
         List<Group> groups = new ArrayList<Group>();
         groups.add(group);
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         when(cloudGroupService.getGroupsForUser("userId")).thenReturn(groups);
         when(cloudKsGroupBuilder.build(group)).thenReturn(new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group());
         Response.ResponseBuilder responseBuilder = spy.listUserGroups(httpHeaders, authToken, "userId");
@@ -5725,7 +5808,7 @@ public class DefaultCloud20ServiceTest {
         rackerScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
         rackerScopeAccess.setAccessTokenString("notExpired");
         rackerScopeAccess.setRackerId("rackerId");
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(rackerScopeAccess).when(spy).checkAndGetToken("tokenId");
         when(tokenConverterCloudV20.toToken(rackerScopeAccess)).thenReturn(token);
         when(userService.getRackerByRackerId("rackerId")).thenReturn(racker);
@@ -5742,7 +5825,7 @@ public class DefaultCloud20ServiceTest {
         ClientScopeAccess clientScopeAccess = new ClientScopeAccess();
         clientScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
         clientScopeAccess.setAccessTokenString("notExpired");
-        doNothing().when(spy).verifyServiceAdminLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(clientScopeAccess).when(spy).checkAndGetToken("tokenId");
         when(tokenConverterCloudV20.toToken(clientScopeAccess)).thenReturn(token);
         Response.ResponseBuilder responseBuilder = spy.validateToken(httpHeaders, authToken, "tokenId", "belongsTo");

@@ -20,7 +20,7 @@ public class CustomerTest {
 
     private Customer getTestCustomer() {
         Customer customer = new Customer();
-        customer.setRCN(customerId);
+        customer.setRcn(customerId);
         return customer;
     }
 
@@ -43,9 +43,9 @@ public class CustomerTest {
         Assert.assertTrue(customer1.equals(customer2));
         Assert.assertTrue(customer1.equals(customer1));
 
-        customer1.setRCN(null);
+        customer1.setRcn(null);
 
-        customer2.setRCN(null);
+        customer2.setRcn(null);
 
         Assert.assertTrue(customer1.equals(customer2));
     }
@@ -58,9 +58,9 @@ public class CustomerTest {
         Assert.assertFalse(customer1.equals(null));
         Assert.assertFalse(customer1.equals(1));
 
-        customer2.setRCN("NewId");
+        customer2.setRcn("NewId");
         Assert.assertFalse(customer1.equals(customer2));
-        customer2.setRCN(null);
+        customer2.setRcn(null);
         Assert.assertFalse(customer2.equals(customer1));
     }
 
@@ -74,7 +74,7 @@ public class CustomerTest {
 
     @Test
     public void hashCode_attributesNotNull_returnsHashCode() throws Exception {
-        customer.setRCN("rcn");
+        customer.setRcn("rcn");
         customer.setEnabled(true);
         customer.setId("id");
         customer.setPasswordRotationDuration(1);
@@ -86,7 +86,7 @@ public class CustomerTest {
 
     @Test
     public void hashCode_attributesIsNull_returnsHashCode() throws Exception {
-        customer.setRCN(null);
+        customer.setRcn(null);
         customer.setEnabled(null);
         customer.setId(null);
         customer.setPasswordRotationDuration(null);
@@ -99,8 +99,8 @@ public class CustomerTest {
     @Test
     public void equals_rcnIsNullAndObjectRcnNotNull_returnsFalse() throws Exception {
         Customer object = new Customer();
-        object.setRCN("notNull");
-        customer.setRCN(null);
+        object.setRcn("notNull");
+        customer.setRcn(null);
         boolean result = customer.equals(object);
         assertThat("boolean", result, equalTo(false));
     }
@@ -198,14 +198,14 @@ public class CustomerTest {
     @Test
     public void equals_returnsTrue() throws Exception {
         Customer object = new Customer();
-        object.setRCN("rcn");
+        object.setRcn("rcn");
         object.setId("id");
         object.setPasswordRotationEnabled(true);
         object.setUniqueId("uniqueId");
         object.setEnabled(true);
         object.setPasswordRotationDuration(1);
 
-        customer.setRCN("rcn");
+        customer.setRcn("rcn");
         customer.setId("id");
         customer.setPasswordRotationEnabled(true);
         customer.setUniqueId("uniqueId");

@@ -24,7 +24,6 @@ public class Cloud11VersionResourceTest {
 
     Configuration config;
     CloudClient cloudClient;
-    CloudContractDescriptionBuilder cloudContractDescriptionBuilder;
     Cloud11VersionResource cloudV11VersionResource;
     Cloud11VersionResource spy;
     DefaultCloud11Service defaultCloud11Service;
@@ -35,8 +34,7 @@ public class Cloud11VersionResourceTest {
         // setup
         config = mock(Configuration.class);
         cloudClient = mock(CloudClient.class);
-        cloudContractDescriptionBuilder = mock(CloudContractDescriptionBuilder.class);
-        cloudV11VersionResource = new Cloud11VersionResource(config, cloudClient, cloudContractDescriptionBuilder);
+        cloudV11VersionResource = new Cloud11VersionResource(config, cloudClient);
 
         // mocks
         defaultCloud11Service = mock(DefaultCloud11Service.class);

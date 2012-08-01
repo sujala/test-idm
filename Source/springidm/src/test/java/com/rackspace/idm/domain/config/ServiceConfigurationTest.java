@@ -110,12 +110,6 @@ public class ServiceConfigurationTest {
     }
 
     @Test
-    public void userService_callsTokenService() throws Exception {
-        spy.userService();
-        verify(spy,atLeastOnce()).tokenService();
-    }
-
-    @Test
     public void userService_callsPasswordComplexityService() throws Exception {
         spy.userService();
         verify(spy,atLeastOnce()).passwordComplexityService();

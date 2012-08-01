@@ -13,10 +13,10 @@ import java.util.List;
 public class ServiceConverterCloudV20 {
     
     @Autowired
-    private JAXBObjectFactories OBJ_FACTORIES;
+    private JAXBObjectFactories objFactories;
 
     public Service toService(Application client) {
-        Service service = OBJ_FACTORIES.getOpenStackIdentityExtKsadmnV1Factory().createService();
+        Service service = objFactories.getOpenStackIdentityExtKsadmnV1Factory().createService();
         
         service.setId(client.getClientId());
         service.setName(client.getName());
@@ -27,7 +27,7 @@ public class ServiceConverterCloudV20 {
     }
     
     public ServiceList toServiceList(List<Application> clients) {
-        ServiceList list = OBJ_FACTORIES.getOpenStackIdentityExtKsadmnV1Factory().createServiceList();
+        ServiceList list = objFactories.getOpenStackIdentityExtKsadmnV1Factory().createServiceList();
         
         for (Application client : clients) {
             list.getService().add(this.toService(client));
@@ -35,7 +35,7 @@ public class ServiceConverterCloudV20 {
         return list;
     }
 
-    public void setOBJ_FACTORIES(JAXBObjectFactories OBJ_FACTORIES) {
-        this.OBJ_FACTORIES = OBJ_FACTORIES;
+    public void setObjFactories(JAXBObjectFactories OBJ_FACTORIES) {
+        this.objFactories = OBJ_FACTORIES;
     }
 }

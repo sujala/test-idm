@@ -6,8 +6,6 @@ import com.rackspace.idm.api.resource.cloud.v20.Cloud20VersionResource;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import org.apache.commons.configuration.Configuration;
 import org.openstack.docs.common.api.v1.VersionChoiceList;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -15,7 +13,10 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.*;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
@@ -37,11 +38,6 @@ public class CloudVersionsResource {
     private final Cloud20VersionResource cloud20VersionResource;
     private final Configuration config;
     private final CloudContractDescriptionBuilder cloudContractDescriptionBuilder;
-
-    final private Logger logger = LoggerFactory.getLogger(this.getClass());
-
-    @Context
-    private UriInfo uriInfo;
 
     @Autowired
     public CloudVersionsResource(Cloud10VersionResource cloud10VersionResource,

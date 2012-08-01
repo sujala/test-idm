@@ -5,7 +5,6 @@ import com.rackspace.idm.api.resource.ParentResource;
 import com.rackspace.idm.domain.entity.Applications;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AuthorizationService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.validation.InputValidator;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,14 +21,12 @@ import javax.ws.rs.core.Response;
 public class UserApplicationsResource extends ParentResource {
 
     private final UserApplicationResource applicationResource;
-    private final ScopeAccessService scopeAccessService;
     private final ApplicationConverter applicationConverter;
     private final UserService userService;
     private final AuthorizationService authorizationService;
 
     @Autowired
     public UserApplicationsResource(UserApplicationResource applicationResource,
-        ScopeAccessService scopeAccessService,
         ApplicationConverter clientConverter,
         UserService userService,
         AuthorizationService authorizationService,
@@ -37,7 +34,6 @@ public class UserApplicationsResource extends ParentResource {
     	
     	super(inputValidator);
         this.applicationResource = applicationResource;
-        this.scopeAccessService = scopeAccessService;
         this.applicationConverter = clientConverter;
         this.authorizationService = authorizationService;
         this.userService = userService;

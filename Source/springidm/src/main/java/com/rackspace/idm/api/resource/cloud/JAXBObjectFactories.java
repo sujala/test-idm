@@ -1,6 +1,5 @@
 package com.rackspace.idm.api.resource.cloud;
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory;
 import org.springframework.stereotype.Component;
 
 @Component
