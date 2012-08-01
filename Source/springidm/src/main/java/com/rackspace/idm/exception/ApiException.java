@@ -11,14 +11,14 @@ public class ApiException extends WebApplicationException {
     
     public ApiException(int code, String message, String details) {
         super(code);
-        ApiError err = new ApiError(code, message, details);
-        this.err = err;
+        ApiError error = new ApiError(code, message, details);
+        this.err = error;
     }
 
     public ApiException(int code, String message, String details, Throwable cause) {
         super(cause, code);
-        ApiError err = new ApiError(code, message, details);
-        this.err = err;
+        ApiError error = new ApiError(code, message, details);
+        this.err = error;
     }
 
     @Override
