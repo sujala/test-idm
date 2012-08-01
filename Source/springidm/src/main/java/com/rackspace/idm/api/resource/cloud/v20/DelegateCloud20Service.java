@@ -240,8 +240,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         httpHeaders.getRequestHeaders().get(HttpHeaders.ACCEPT).set(0, MediaType.APPLICATION_XML);
         Response cloudValidateResponse = checkToken(httpHeaders, gaXAuthToken, impersonatedCloudToken, belongsTo).build();
         if (cloudValidateResponse.getStatus() != 200 && cloudValidateResponse.getStatus() != 203) {
-            ResponseBuilder cloudResponseBuilder = Response.status(cloudValidateResponse.getStatus()).entity(cloudValidateResponse.getEntity()).header("response-source", "cloud-auth");
-            return cloudResponseBuilder;
+            return Response.status(cloudValidateResponse.getStatus()).entity(cloudValidateResponse.getEntity()).header("response-source", "cloud-auth");
         }
         AuthenticateResponse validateResponse = (AuthenticateResponse) unmarshallResponse(cloudValidateResponse.getEntity().toString(), AuthenticateResponse.class);
         validateResponse.getToken().setId(impersonatedScopeAccess.getAccessTokenString());
@@ -1245,8 +1244,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             throw new BadRequestException("User cannot be impersonated; No valid impersonation roles");
         }
         String userApiKey = getUserApiCredentials(user.getId(), impersonatorXAuthToken).getApiKey();
-        String userXAuthToken = getXAuthToken(userName, userApiKey).getToken().getId();
-        return userXAuthToken;
+        return getXAuthToken(userName, userApiKey).getToken().getId();
     }
 
 

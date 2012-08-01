@@ -341,8 +341,7 @@ public class DefaultApplicationService implements ApplicationService {
 
     @Override
     public ClientGroup getClientGroup(String customerId, String clientId, String groupName) {
-        ClientGroup group = clientDao.getClientGroup(customerId, clientId, groupName);
-        return group;
+        return clientDao.getClientGroup(customerId, clientId, groupName);
     }
 
     @Override

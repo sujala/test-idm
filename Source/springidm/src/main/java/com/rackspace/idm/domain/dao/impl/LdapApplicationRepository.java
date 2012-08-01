@@ -1086,8 +1086,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
             throws LDAPPersistException {
         SearchResultEntry entry = this.getSingleEntry(baseDN, SearchScope.SUB,
                 searchFilter);
-        ClientRole role = getClientRole(entry);
-        return role;
+        return getClientRole(entry);
     }
 
     ClientRole getClientRole(SearchResultEntry entry)
