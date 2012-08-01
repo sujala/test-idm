@@ -4,12 +4,15 @@ import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.domain.entity.EndPoints;
+import com.rackspace.idm.exception.IdmException;
 import com.rackspacecloud.docs.auth.api.v1.BaseURLList;
 import org.apache.http.HttpException;
 import org.apache.http.HttpHeaders;
 import org.apache.ws.commons.util.Base64;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplateList;
 import org.openstack.docs.identity.api.v2.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.MediaType;
 import javax.xml.bind.JAXBException;
@@ -21,6 +24,8 @@ public class MigrationClient {
 	private final String X_AUTH_TOKEN = "X-AUTH-TOKEN";
 	
 	private ObjectFactory objectFactory = new ObjectFactory();
+
+    private Logger logger = LoggerFactory.getLogger(MigrationClient.class);
 	
 	HttpClientWrapper client;
 	
@@ -110,16 +115,20 @@ public class MigrationClient {
         return unmarshaller.unmarshal(response, User.class);
     }
 
-    public RoleList getRolesForUser(String token, String userId) throws URISyntaxException, HttpException, IOException, JAXBException {
+    public RoleList getRolesForUser(String token, String userId) {
+        try {
+            String response = client.url(cloud20Host + "users/" + userId + "/roles")
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML)
+                .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML)
+                .header(X_AUTH_TOKEN, token)
+                .get();
 
-        String response = client.url(cloud20Host + "users/" + userId + "/roles")
-            .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML)
-            .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML)
-            .header(X_AUTH_TOKEN, token)
-            .get();
-
-    	ObjectMarshaller<RoleList> unmarshaller = new ObjectMarshaller<RoleList>();
-        return unmarshaller.unmarshal(response, RoleList.class);
+            ObjectMarshaller<RoleList> unmarshaller = new ObjectMarshaller<RoleList>();
+            return unmarshaller.unmarshal(response, RoleList.class);
+        } catch (Exception e) {
+            logger.info("getRolesForUSer failed with exception {}", e.getMessage());
+            throw new IdmException("failed to call cloud", e);
+        }
     }
     
     public UserList getUsers(String token) throws URISyntaxException, HttpException, IOException, JAXBException {
@@ -157,28 +166,38 @@ public class MigrationClient {
         return unmarshaller.unmarshal(response, Groups.class);
     }
 
-    public Groups getGroups(String token) throws URISyntaxException, HttpException, IOException, JAXBException {
+    public Groups getGroups(String token) {
 
-        String response = client.url(cloud20Host + "RAX-GRPADM/groups")
-            .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML)
-            .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML)
-            .header(X_AUTH_TOKEN, token)
-            .get();
+        String response;
+        try {
+            response = client.url(cloud20Host + "RAX-GRPADM/groups")
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML)
+                .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML)
+                .header(X_AUTH_TOKEN, token)
+                .get();
 
-        ObjectMarshaller<Groups> unmarshaller = new ObjectMarshaller<Groups>();
-        return unmarshaller.unmarshal(response, Groups.class);
+            ObjectMarshaller<Groups> unmarshaller = new ObjectMarshaller<Groups>();
+            return unmarshaller.unmarshal(response, Groups.class);
+        } catch (Exception e) {
+            logger.info("getGroups failed with exception {}", e.getMessage());
+            throw new IdmException("failed to call cloud", e);
+        }
     }
 
-    public Groups getGroupsForUser(String token, String userId) throws URISyntaxException, HttpException, IOException, JAXBException {
+    public Groups getGroupsForUser(String token, String userId) {
+        try {
+            String response = client.url(cloud20Host + "users/" + userId + "/RAX-KSGRP")
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML)
+                .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML)
+                .header(X_AUTH_TOKEN, token)
+                .get();
 
-        String response = client.url(cloud20Host + "users/" + userId + "/RAX-KSGRP")
-            .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML)
-            .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML)
-            .header(X_AUTH_TOKEN, token)
-            .get();
-
-        ObjectMarshaller<Groups> unmarshaller = new ObjectMarshaller<Groups>();
-        return unmarshaller.unmarshal(response, Groups.class);
+            ObjectMarshaller<Groups> unmarshaller = new ObjectMarshaller<Groups>();
+            return unmarshaller.unmarshal(response, Groups.class);
+        } catch (Exception e) {
+            logger.info("getGroupsForUser failed with exception {}", e.getMessage());
+            throw new IdmException("failed to call cloud", e);
+        }
     }
 
     public CredentialListType getUserCredentials(String token, String userId) throws URISyntaxException, HttpException, IOException, JAXBException {
@@ -224,15 +243,21 @@ public class MigrationClient {
         return unmarshaller.unmarshal(response, RoleList.class);
     }
 
-    public EndpointTemplateList getEndpointTemplates(String adminToken) throws URISyntaxException, HttpException, IOException, JAXBException {
-        String response = client.url(cloud20Host + "OS-KSCATALOG/endpointTemplates")
-            .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML)
-            .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML)
-            .header(X_AUTH_TOKEN, adminToken)
-            .get();
+    public EndpointTemplateList getEndpointTemplates(String adminToken) {
+        String response;
+        try {
+            response = client.url(cloud20Host + "OS-KSCATALOG/endpointTemplates")
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML)
+                .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML)
+                .header(X_AUTH_TOKEN, adminToken)
+                .get();
 
-        ObjectMarshaller<EndpointTemplateList> unmarshaller = new ObjectMarshaller<EndpointTemplateList>();
-        return unmarshaller.unmarshal(response, EndPoints.class);
+            ObjectMarshaller<EndpointTemplateList> unmarshaller = new ObjectMarshaller<EndpointTemplateList>();
+            return unmarshaller.unmarshal(response, EndPoints.class);
+        } catch (Exception e) {
+            logger.info("get EndpointTemplateList call to cloud failed: {}", e.getMessage());
+            throw new IdmException("failed to call cloud", e);
+        }
     }
 
     private String getBasicAuth(String username, String password) {

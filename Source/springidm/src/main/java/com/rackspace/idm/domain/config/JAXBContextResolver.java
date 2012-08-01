@@ -7,6 +7,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.ext.ContextResolver;
 import javax.ws.rs.ext.Provider;
 import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
 
 @Provider
 @Produces("application/json")
@@ -14,7 +15,7 @@ public class JAXBContextResolver implements ContextResolver<JAXBContext> {
 
     private static JAXBContext context;
 
-    public JAXBContextResolver() throws Exception {
+    public JAXBContextResolver() throws JAXBException{
     	init();
     }
 
@@ -34,7 +35,7 @@ public class JAXBContextResolver implements ContextResolver<JAXBContext> {
     	return context;
     }
     
-    private static void init() throws Exception {
+    private static void init() throws JAXBException {
         JSONConfiguration jsonConfiguration = JSONConfiguration.natural().rootUnwrapping(false).build();
 
         context = new JSONJAXBContext(

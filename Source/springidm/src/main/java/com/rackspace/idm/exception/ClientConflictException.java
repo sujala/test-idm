@@ -9,4 +9,8 @@ public class ClientConflictException extends IdmException {
     public ClientConflictException(String message) {
         super(message);
     }
+
+    public ClientConflictException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

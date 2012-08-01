@@ -171,7 +171,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 try {
                     userType = UserType.fromValue(type.trim().toUpperCase());
                 } catch (IllegalArgumentException iae) {
-                    throw new BadRequestException("Bad type parameter");
+                    throw new BadRequestException("Bad type parameter", iae);
                 }
             } else {
                 userType = UserType.CLOUD;
@@ -524,8 +524,9 @@ public class DefaultCloud11Service implements Cloud11Service {
                 }
 
 
-            if (!found)
+            if (!found) {
                 throw new NotFoundException(String.format("Attempting to delete nonexisting baseUrl: %s", String.valueOf(baseUrl.getBaseUrlId())));
+            }
 
             return Response.noContent();
         } catch (Exception ex) {
@@ -1161,7 +1162,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             Unmarshaller unmarshaller = context.createUnmarshaller();
             cred = (JAXBElement<? extends Credentials>) unmarshaller.unmarshal(new StringReader(body));
         } catch (JAXBException e) {
-            throw new BadRequestException("Invalid XML");
+            throw new BadRequestException("Invalid XML", e);
         }
         if (isAdmin) {
             return adminAuthenticateResponse(cred, response);
@@ -1205,8 +1206,9 @@ public class DefaultCloud11Service implements Cloud11Service {
                 int mossoId = ((MossoCredentials) value).getMossoId();
                 String key = ((MossoCredentials) value).getKey();
                 user = userService.getUserByMossoId(mossoId);
-                if (user == null)
+                if (user == null) {
                     throw new NotAuthenticatedException("MossoId or api key is invalid.");
+                }
                 usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(user.getUsername(), key, cloudAuthClientId);
             } else if (value instanceof NastCredentials) {
                 String nastId = ((NastCredentials) value).getNastId();
@@ -1215,8 +1217,9 @@ public class DefaultCloud11Service implements Cloud11Service {
                     return cloudExceptionResponse.badRequestExceptionResponse("Expecting nast id");
                 }
                 user = userService.getUserByNastId(nastId);
-                if (user == null)
+                if (user == null) {
                     throw new NotAuthenticatedException("NastId or api key is invalid.");
+                }
                 usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(user.getUsername(), key, cloudAuthClientId);
             }
 
@@ -1261,7 +1264,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         try {
             stringStringMap = authHeaderHelper.parseBasicParams(authHeader);
         } catch (CloudAdminAuthorizationException e) {
-            throw new NotAuthorizedException("You are not authorized to access this resource.");
+            throw new NotAuthorizedException("You are not authorized to access this resource.", e);
         }
         if (stringStringMap == null) {
             throw new NotAuthorizedException("You are not authorized to access this resource.");
@@ -1270,10 +1273,11 @@ public class DefaultCloud11Service implements Cloud11Service {
             UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(
                     stringStringMap.get("username"), stringStringMap.get("password"), getCloudAuthClientId());
             boolean authenticated = authorizationService.authorizeCloudServiceAdmin(usa);
-            if (!authenticated)
+            if (!authenticated) {
                 authenticated = authorizationService.authorizeCloudIdentityAdmin(usa);
-            if (!authenticated)
+            } if (!authenticated) {
                 throw new NotAuthorizedException("You are not authorized to access this resource.");
+            }
         }
     }
 

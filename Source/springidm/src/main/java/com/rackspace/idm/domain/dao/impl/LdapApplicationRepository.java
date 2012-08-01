@@ -125,7 +125,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
             if (ldapEx.getResultCode().equals(ResultCode.ATTRIBUTE_OR_VALUE_EXISTS)) {
                 audit.fail("User already in group");
-                throw new DuplicateException("User already in group");
+                throw new DuplicateException("User already in group", ldapEx);
             }
 
             audit.fail(ldapEx.getMessage());
@@ -487,7 +487,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
                     ldapEx);
             if (ldapEx.getResultCode().equals(ResultCode.NO_SUCH_ATTRIBUTE)) {
                 audit.fail("User isn't in group");
-                throw new NotFoundException("User isn't in group");
+                throw new NotFoundException("User isn't in group", ldapEx);
             }
             throw new IllegalStateException(ldapEx);
         }
@@ -907,7 +907,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
                 String errMsg = String.format("Tenant %s already exists",
                         role.getName());
                 getLogger().warn(errMsg);
-                throw new DuplicateException(errMsg);
+                throw new DuplicateException(errMsg, e);
             }
             getLogger().error("Error adding client role object", e);
             audit.fail(e.getMessage());

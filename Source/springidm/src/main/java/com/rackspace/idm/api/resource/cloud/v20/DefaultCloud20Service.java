@@ -140,7 +140,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder addEndpoint(HttpHeaders httpHeaders, String authToken, String tenantId, EndpointTemplate endpoint) {
         try {
-            verifyServiceAdminLevelAccess(authToken);
+            authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+
             Tenant tenant = checkAndGetTenant(tenantId);
             CloudBaseUrl baseUrl = checkAndGetEndpointTemplate(endpoint.getId());
             if (baseUrl.getGlobal()) {
@@ -180,7 +181,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder addRole(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Role role) {
 
         try {
-            verifyServiceAdminLevelAccess(authToken);
+            authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
             if (role == null) {
                 String errMsg = "role cannot be null";
@@ -306,7 +307,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                                      org.openstack.docs.identity.api.v2.Tenant tenant) {
 
         try {
-            verifyServiceAdminLevelAccess(authToken);
+            authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
             if (StringUtils.isBlank(tenant.getName())) {
                 String errMsg = "Expecting name";
@@ -424,7 +425,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder updateUser(HttpHeaders httpHeaders, String authToken, String userId, UserForCreate user) throws IOException {
+    public ResponseBuilder updateUser(HttpHeaders httpHeaders, String authToken, String userId, UserForCreate user)  {
         try {
             verifyUserLevelAccess(authToken);
             if (user.getPassword() != null) {
@@ -573,7 +574,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder addUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String body) throws IOException {
+    public ResponseBuilder addUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String body)  {
 
         try {
             verifyServiceAdminLevelAccess(authToken);
@@ -647,7 +648,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     // Core Service Methods
 
     @Override
-    public Response.ResponseBuilder authenticate(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest) throws IOException {
+    public Response.ResponseBuilder authenticate(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest)  {
         try {
             User user = null;
             UserScopeAccess usa = null;
@@ -796,9 +797,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         } catch (NotFoundException e) {
             String errorMessage = String.format("Unable to authenticate user with credentials provided.");
             logger.warn(errorMessage);
-            NotAuthenticatedException notAuthenticatedException = new NotAuthenticatedException(errorMessage);
-            notAuthenticatedException.setStackTrace(e.getStackTrace());
-            throw notAuthenticatedException;
+            throw new NotAuthenticatedException(errorMessage, e);
         }
         return user;
     }
@@ -811,13 +810,13 @@ public class DefaultCloud20Service implements Cloud20Service {
         } catch (NotFoundException e) {
             String errorMessage = String.format("Unable to authenticate user with credentials provided.");
             logger.warn(errorMessage);
-            throw new NotAuthenticatedException(errorMessage);
+            throw new NotAuthenticatedException(errorMessage, e);
         }
         return user;
     }
 
     @Override
-    public ResponseBuilder checkToken(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo) throws IOException {
+    public ResponseBuilder checkToken(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo)  {
         try {
             verifyServiceAdminLevelAccess(authToken);
 
@@ -930,7 +929,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder deleteUser(HttpHeaders httpHeaders, String authToken, String userId) throws IOException {
+    public ResponseBuilder deleteUser(HttpHeaders httpHeaders, String authToken, String userId)  {
         try {
             verifyUserAdminLevelAccess(authToken);
             User user = checkAndGetUser(userId);
@@ -956,7 +955,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder deleteUserFromSoftDeleted(HttpHeaders httpHeaders, String authToken, String userId) throws IOException {
+    public ResponseBuilder deleteUserFromSoftDeleted(HttpHeaders httpHeaders, String authToken, String userId)  {
         try {
             checkXAUTHTOKEN(authToken, true, null);
             User user = checkAndGetSoftDeletedUser(userId);
@@ -968,7 +967,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder deleteUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String credentialType) throws IOException {
+    public ResponseBuilder deleteUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String credentialType)  {
         try {
             verifyServiceAdminLevelAccess(authToken);
 
@@ -1071,7 +1070,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getExtension(HttpHeaders httpHeaders, String alias) throws IOException {
+    public ResponseBuilder getExtension(HttpHeaders httpHeaders, String alias)  {
         try{
             if (StringUtils.isBlank(alias)) {
                 throw new BadRequestException("Invalid extension alias '" + alias + "'.");
@@ -1121,7 +1120,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getSecretQA(HttpHeaders httpHeaders, String authToken, String userId) throws IOException {
+    public ResponseBuilder getSecretQA(HttpHeaders httpHeaders, String authToken, String userId)  {
         try {
             verifyServiceAdminLevelAccess(authToken);
             User user = checkAndGetUser(userId);
@@ -1148,7 +1147,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getTenantById(HttpHeaders httpHeaders, String authToken, String tenantsId) throws IOException {
+    public ResponseBuilder getTenantById(HttpHeaders httpHeaders, String authToken, String tenantsId)  {
         try {
             verifyServiceAdminLevelAccess(authToken);
             Tenant tenant = checkAndGetTenant(tenantsId);
@@ -1159,7 +1158,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getTenantByName(HttpHeaders httpHeaders, String authToken, String name) throws IOException {
+    public ResponseBuilder getTenantByName(HttpHeaders httpHeaders, String authToken, String name)  {
         try {
             verifyServiceAdminLevelAccess(authToken);
 
@@ -1178,7 +1177,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getUserById(HttpHeaders httpHeaders, String authToken, String userId) throws IOException {
+    public ResponseBuilder getUserById(HttpHeaders httpHeaders, String authToken, String userId)  {
         try {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
             User caller = getUser(scopeAccessByAccessToken);
@@ -1207,7 +1206,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getUserByName(HttpHeaders httpHeaders, String authToken, String name) throws IOException {
+    public ResponseBuilder getUserByName(HttpHeaders httpHeaders, String authToken, String name)  {
         try {
             verifyUserLevelAccess(authToken);
             User user = this.userService.getUser(name);
@@ -1230,7 +1229,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String credentialType) throws IOException {
+    public ResponseBuilder getUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String credentialType)  {
         try {
             verifyUserLevelAccess(authToken);
 
@@ -1322,7 +1321,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listCredentials(HttpHeaders httpHeaders, String authToken, String userId, String marker, Integer limit) throws Exception {
+    public ResponseBuilder listCredentials(HttpHeaders httpHeaders, String authToken, String userId, String marker, Integer limit) {
         try {
             verifyUserLevelAccess(authToken);
             ScopeAccess callersScopeAccess = scopeAccessService.getScopeAccessByAccessToken(authToken);
@@ -1408,7 +1407,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
 
     @Override
-    public ResponseBuilder listEndpointsForToken(HttpHeaders httpHeaders, String authToken, String tokenId) throws IOException {
+    public ResponseBuilder listEndpointsForToken(HttpHeaders httpHeaders, String authToken, String tokenId)  {
 
         try {
             verifyServiceAdminLevelAccess(authToken);
@@ -1453,7 +1452,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listExtensions(HttpHeaders httpHeaders) throws IOException {
+    public ResponseBuilder listExtensions(HttpHeaders httpHeaders)  {
         try {
             if (currentExtensions == null) {
                 JAXBContext jaxbContext = JAXBContextResolver.get();
@@ -1512,7 +1511,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder listRolesForUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId,
-                                                    String userId) throws IOException {
+                                                    String userId)  {
 
         try {
             verifyServiceAdminLevelAccess(authToken);
@@ -1552,7 +1551,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder listTenants(HttpHeaders httpHeaders, String authToken, String marker, Integer limit)
-            throws IOException {
+             {
         try {
             verifyUserLevelAccess(authToken);
             List<Tenant> tenants = new ArrayList<Tenant>();
@@ -1578,7 +1577,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listUserGlobalRoles(HttpHeaders httpHeaders, String authToken, String userId) throws IOException {
+    public ResponseBuilder listUserGlobalRoles(HttpHeaders httpHeaders, String authToken, String userId) {
         try {
             verifyUserLevelAccess(authToken);
             User user = this.userService.getUserById(userId);
@@ -1607,7 +1606,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder listUserGlobalRolesByServiceId(HttpHeaders httpHeaders, String authToken, String userId,
-                                                          String serviceId) throws IOException {
+                                                          String serviceId)  {
         try {
             verifyServiceAdminLevelAccess(authToken);
 
@@ -1623,7 +1622,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listGroups(HttpHeaders httpHeaders, String authToken, String groupName, String marker, Integer limit) throws IOException {
+    public ResponseBuilder listGroups(HttpHeaders httpHeaders, String authToken, String groupName, String marker, Integer limit)  {
         try {
             verifyServiceAdminLevelAccess(authToken);
             List<Group> groups = cloudGroupService.getGroups(marker, limit);
@@ -1642,7 +1641,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getGroup(HttpHeaders httpHeaders, String authToken, String groupName) throws IOException {
+    public ResponseBuilder getGroup(HttpHeaders httpHeaders, String authToken, String groupName)  {
         try {
             verifyServiceAdminLevelAccess(authToken);
             Group group = cloudGroupService.getGroupByName(groupName);
@@ -1654,7 +1653,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder impersonate(HttpHeaders httpHeaders, String authToken, ImpersonationRequest impersonationRequest) throws IOException, JAXBException {
+    public ResponseBuilder impersonate(HttpHeaders httpHeaders, String authToken, ImpersonationRequest impersonationRequest)  {
         verifyRackerOrServiceAdminAccess(authToken);
         validateImpersonationRequest(impersonationRequest);
 
@@ -1707,7 +1706,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder listDefaultRegionServices(String authToken) {
-        verifyServiceAdminLevelAccess(authToken);
+        authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+
         List<Application> openStackServices = clientService.getOpenStackServices();
         DefaultRegionServices defaultRegionServices = raxAuthObjectFactory.createDefaultRegionServices();
         if(openStackServices!=null){
@@ -1723,7 +1723,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder setDefaultRegionServices(String authToken, DefaultRegionServices defaultRegionServices) {
-        verifyServiceAdminLevelAccess(authToken);
+        authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+
         List<String> serviceNames = defaultRegionServices.getServiceName();
         List<Application> openStackServices = clientService.getOpenStackServices();
 
@@ -1777,7 +1778,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String authToken, String userId) throws IOException {
+    public ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String authToken, String userId)  {
         try {
             verifyServiceAdminLevelAccess(authToken);
             List<Group> groups = cloudGroupService.getGroupsForUser(userId);
@@ -1798,7 +1799,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getGroupById(HttpHeaders httpHeaders, String authToken, String groupId) throws IOException {
+    public ResponseBuilder getGroupById(HttpHeaders httpHeaders, String authToken, String groupId)  {
         try {
             verifyServiceAdminLevelAccess(authToken);
             validateGroupId(groupId);
@@ -1812,7 +1813,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder addGroup(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken,
-                                    com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group) throws IOException {
+                                    com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group)  {
         try {
             verifyServiceAdminLevelAccess(authToken);
             validateKsGroup(group);
@@ -1845,7 +1846,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder updateGroup(HttpHeaders httpHeaders, String authToken, String groupId,
-                                       com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group) throws IOException {
+                                       com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group)  {
         try {
             verifyServiceAdminLevelAccess(authToken);
             validateKsGroup(group);
@@ -1863,7 +1864,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder deleteGroup(HttpHeaders httpHeaders, String authToken, String groupId) throws IOException {
+    public ResponseBuilder deleteGroup(HttpHeaders httpHeaders, String authToken, String groupId)  {
         try {
             verifyServiceAdminLevelAccess(authToken);
             validateGroupId(groupId);
@@ -1892,7 +1893,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder addUserToGroup(HttpHeaders httpHeaders, String authToken, String groupId, String userId) throws IOException {
+    public ResponseBuilder addUserToGroup(HttpHeaders httpHeaders, String authToken, String groupId, String userId)  {
         try {
             verifyServiceAdminLevelAccess(authToken);
             validateGroupId(groupId);
@@ -1904,7 +1905,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder removeUserFromGroup(HttpHeaders httpHeaders, String authToken, String groupId, String userId) throws IOException {
+    public ResponseBuilder removeUserFromGroup(HttpHeaders httpHeaders, String authToken, String groupId, String userId)  {
         try {
             verifyServiceAdminLevelAccess(authToken);
             validateGroupId(groupId);
@@ -1919,7 +1920,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getUsersForGroup(HttpHeaders httpHeaders, String authToken, String groupId, String marker, Integer limit) throws IOException {
+    public ResponseBuilder getUsersForGroup(HttpHeaders httpHeaders, String authToken, String groupId, String marker, Integer limit)  {
         try {
             verifyServiceAdminLevelAccess(authToken);
             validateGroupId(groupId);
@@ -2022,7 +2023,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder setUserEnabled(HttpHeaders httpHeaders, String authToken, String userId,
-                                          org.openstack.docs.identity.api.v2.User user) throws IOException {
+                                          org.openstack.docs.identity.api.v2.User user)  {
 
         try {
             verifyServiceAdminLevelAccess(authToken);
@@ -2050,7 +2051,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder updateSecretQA(HttpHeaders httpHeaders, String authToken, String userId, SecretQA secrets)
-            throws IOException, JAXBException {
+             {
 
         try {
             verifyServiceAdminLevelAccess(authToken);
@@ -2078,7 +2079,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder updateTenant(HttpHeaders httpHeaders, String authToken, String tenantId,
-                                        org.openstack.docs.identity.api.v2.Tenant tenant) throws IOException {
+                                        org.openstack.docs.identity.api.v2.Tenant tenant)  {
 
         try {
             verifyServiceAdminLevelAccess(authToken);
@@ -2108,7 +2109,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder updateUserApiKeyCredentials(HttpHeaders httpHeaders, String authToken, String userId,
-                                                       String credentialType, ApiKeyCredentials creds) throws IOException, JAXBException {
+                                                       String credentialType, ApiKeyCredentials creds)  {
 
         try {
             verifyServiceAdminLevelAccess(authToken);
@@ -2148,7 +2149,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder updateUserPasswordCredentials(HttpHeaders httpHeaders, String authToken, String userId,
-                                                         String credentialType, PasswordCredentialsRequiredUsername creds) throws IOException, JAXBException {
+                                                         String credentialType, PasswordCredentialsRequiredUsername creds)  {
 
         try {
             verifyServiceAdminLevelAccess(authToken);
@@ -2175,16 +2176,18 @@ public class DefaultCloud20Service implements Cloud20Service {
     // Core Admin Token Methods
 
     @Override
-    public ResponseBuilder validateToken(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo) throws IOException {
+    public ResponseBuilder validateToken(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo)  {
         try {
             //TODO: This token can be a Racker, Service or User of Proper Level
-            verifyServiceAdminLevelAccess(authToken);
+            authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+
             ScopeAccess sa = checkAndGetToken(tokenId);
             AuthenticateResponse access = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createAuthenticateResponse();
             access.setToken(this.tokenConverterCloudV20.toToken(sa));
 
-            if (((HasAccessToken) sa).isAccessTokenExpired(new DateTime()))
+            if (((HasAccessToken) sa).isAccessTokenExpired(new DateTime())) {
                 throw new NotFoundException("Token not found");
+            }
 
             if (sa instanceof RackerScopeAccess) {
                 RackerScopeAccess rackerScopeAccess = (RackerScopeAccess) sa;
@@ -2310,7 +2313,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         } catch (NumberFormatException nfe) {
             String errMsg = String.format("EndpointTemplate %s not found", id);
             logger.warn(errMsg);
-            throw new NotFoundException(errMsg);
+            throw new NotFoundException(errMsg, nfe);
         }
         return checkAndGetEndpointTemplate(baseUrlId);
     }
@@ -2421,7 +2424,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
-    void verifySelf(String authToken, User user) throws Exception {
+    void verifySelf(String authToken, User user)  {
         ScopeAccess authTokenScopeAccess = getScopeAccessForValidToken(authToken);
         User requester = userService.getUserByScopeAccess(authTokenScopeAccess);
 
@@ -2576,7 +2579,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             Unmarshaller unmarshaller = context.createUnmarshaller();
             cred = (JAXBElement<? extends CredentialType>) unmarshaller.unmarshal(new StringReader(body));
         } catch (JAXBException e) {
-            throw new BadRequestException();
+            throw new BadRequestException(e);
         }
         return cred;
     }

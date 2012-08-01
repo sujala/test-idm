@@ -62,7 +62,7 @@ public class CredentialUnmarshaller {
             	throw new BadRequestException("malformed JSON");
             }
         } catch (ParseException e) {
-            throw new BadRequestException("malformed JSON");
+            throw new BadRequestException("malformed JSON", e);
         }
         return creds;
     }

@@ -108,7 +108,7 @@ public class TokensResource extends ParentResource {
                 creds = (JAXBElement<? extends com.rackspace.api.idm.v1.Credentials>) unmarshaller.unmarshal(reader);
             }
         }catch(Exception ex){
-            throw new BadRequestException("Bad Request.");
+            throw new BadRequestException("Bad Request.", ex);
         }
         Credentials credentialsDO = credentialsConverter.toCredentialsDO(creds.getValue());
 

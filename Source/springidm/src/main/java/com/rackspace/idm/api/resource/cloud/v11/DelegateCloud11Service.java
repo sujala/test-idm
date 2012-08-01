@@ -89,8 +89,9 @@ public class DelegateCloud11Service implements Cloud11Service {
          //Get "user" from LDAP
         JAXBElement<? extends Credentials> cred = extractCredentials(httpHeaders, body);
         com.rackspace.idm.domain.entity.User user = cloudUserExtractor.getUserByCredentialType(cred);
-        if(defaultUserService.isMigratedUser(user))
+        if(defaultUserService.isMigratedUser(user)) {
             return defaultCloud11Service.authenticate(request, response, httpHeaders, body);
+        }
 
          //Get Cloud Auth response
         String xmlBody = body;
@@ -265,8 +266,9 @@ public class DelegateCloud11Service implements Cloud11Service {
         if(isCloudAuthRoutingEnabled()){
             com.rackspace.idm.domain.entity.User user = defaultUserService.getUserById(userId);
 
-            if(user == null)
+            if(user == null) {
                 return cloudClient.delete(getCloudAuthV11Url().concat("users/" + userId), httpHeaders);
+            }
 
             if(defaultUserService.isMigratedUser(user)){
                 cloudClient.delete(getCloudAuthV11Url().concat("users/" + userId), httpHeaders);
@@ -328,7 +330,7 @@ public class DelegateCloud11Service implements Cloud11Service {
 
     @Override
     public Response.ResponseBuilder getServiceCatalog(HttpServletRequest request, String userId, HttpHeaders httpHeaders) throws IOException {
-        if(isCloudAuthRoutingEnabled() && !isGASourceOfTruth()){
+        if(isCloudAuthRoutingEnabled() && !userExistsInGA(userId)){
             String path = "users/" + userId + "/serviceCatalog";
             return cloudClient.get(getCloudAuthV11Url().concat(path), httpHeaders);
         }
@@ -403,19 +405,21 @@ public class DelegateCloud11Service implements Cloud11Service {
 
     boolean userExistsInGAByMossoId(int mossoId){
         com.rackspace.idm.domain.entity.Users usersById = ldapUserRepository.getUsersByMossoId(mossoId);
-        if(usersById.getUsers() == null)
+        if(usersById.getUsers() == null) {
             return false;
-        if(usersById.getUsers().size() == 0)
+        } if(usersById.getUsers().size() == 0) {
             return false;
+        }
         return true;
     }
 
     boolean userExistsInGAByNastId(String nastId){
         com.rackspace.idm.domain.entity.Users usersById = ldapUserRepository.getUsersByNastId(nastId);
-        if(usersById.getUsers() == null)
+        if(usersById.getUsers() == null) {
             return false;
-        if (usersById.getUsers().size() == 0)
+        } if (usersById.getUsers().size() == 0) {
             return false;
+        }
         return true;
     }
 

@@ -74,7 +74,7 @@ public class JSONReaderForApiKeyCredentials implements
             }
         } catch (ParseException e) {
             logger.info(e.toString());
-            throw new BadRequestException("Invalid JSON");
+            throw new BadRequestException("Invalid JSON", e);
         }
 
         return creds;

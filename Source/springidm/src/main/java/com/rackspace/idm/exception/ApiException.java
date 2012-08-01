@@ -15,6 +15,12 @@ public class ApiException extends WebApplicationException {
         this.err = err;
     }
 
+    public ApiException(int code, String message, String details, Throwable cause) {
+        super(cause, code);
+        ApiError err = new ApiError(code, message, details);
+        this.err = err;
+    }
+
     @Override
     public String toString() {
         return String.format("%s [err=%s]",

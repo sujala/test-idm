@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.service;
 
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.exception.DuplicateException;
+import com.rackspace.idm.exception.IdmException;
 
 import java.util.List;
 
@@ -61,7 +62,7 @@ public interface UserService {
     
     User loadUser(String userId);
 
-    User getUserByScopeAccess(ScopeAccess scopeAccess)throws Exception;
+    User getUserByScopeAccess(ScopeAccess scopeAccess)throws IdmException;
 
     boolean isUsernameUnique(String username);
 

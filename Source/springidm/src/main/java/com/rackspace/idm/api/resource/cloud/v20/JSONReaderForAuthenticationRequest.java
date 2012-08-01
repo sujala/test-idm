@@ -111,7 +111,7 @@ public class JSONReaderForAuthenticationRequest implements
             }
         } catch (ParseException e) {
             logger.info(e.toString());
-            throw new BadRequestException("JSON Parsing error");
+            throw new BadRequestException("JSON Parsing error", e);
         }
 
         return auth;

@@ -472,8 +472,8 @@ public class CloudMigrationServiceTest {
     }
 
     @Test
-    public void migrateUserByUsername_NonClinflictException_UnmigratesUser() throws Exception {
-        doThrow(new Exception()).when(spy).migrateUserByUsername("user", false, null);
+    public void migrateUserByUsername_withRuntimeException_UnmigratesUser() throws Exception {
+        doThrow(new RuntimeException()).when(spy).migrateUserByUsername("user", false, null);
         try {
             spy.migrateUserByUsername("user", false);
         } catch (Exception e) {}

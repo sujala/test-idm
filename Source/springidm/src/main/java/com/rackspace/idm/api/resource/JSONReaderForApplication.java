@@ -104,7 +104,7 @@ public class JSONReaderForApplication implements MessageBodyReader<Application> 
             }
         } catch (ParseException e) {
             logger.info(e.toString());
-            throw new BadRequestException("Invalid JSON");
+            throw new BadRequestException("Invalid JSON", e);
         }
 
         return app;
@@ -132,7 +132,7 @@ public class JSONReaderForApplication implements MessageBodyReader<Application> 
             }
         } catch (ParseException e) {
             logger.info(e.toString());
-            throw new BadRequestException("Bad JSON request");
+            throw new BadRequestException("Bad JSON request", e);
         }
 
         return creds;

@@ -46,7 +46,7 @@ public class CloudUserExtractor {
         this.scopeAccessService = scopeAccessService;
     }
 
-    public User getUserByV20CredentialType(AuthenticationRequest authenticationRequest) throws IOException {
+    public User getUserByV20CredentialType(AuthenticationRequest authenticationRequest){
         try {
             User user = null;
             UserScopeAccess usa = null;
@@ -66,7 +66,7 @@ public class CloudUserExtractor {
         }
     }
 
-    public User getUserByCredentialType(JAXBElement<? extends Credentials> credentials) throws IOException {
+    public User getUserByCredentialType(JAXBElement<? extends Credentials> credentials) {
         String username;
         User user = null;
         if (credentials.getValue() instanceof UserCredentials) {

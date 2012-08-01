@@ -104,7 +104,7 @@ public class UserPasswordCredentialsResource extends ParentResource {
             this.userService.updateUser(user, false);
         } catch (Exception e) {
             if(e instanceof IllegalStateException){
-                throw new BadRequestException(e.getCause().getMessage());
+                throw new BadRequestException(e.getCause().getMessage(), e);
             }
         }
         return Response.noContent().build();
