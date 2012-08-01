@@ -80,7 +80,7 @@ public class CloudMigrationService {
     private GroupService cloudGroupService;
 
     @Autowired
-    private JAXBObjectFactories obj_factories;
+    private JAXBObjectFactories objFactories;
 
     @Autowired
     private UserConverterCloudV20 userConverterCloudV20;
@@ -158,7 +158,7 @@ public class CloudMigrationService {
             cloudGroups.getGroup().add(cloudGroup);
         }
 
-        return Response.ok(obj_factories.getRackspaceIdentityExtKsgrpV1Factory().createGroups(cloudGroups));
+        return Response.ok(objFactories.getRackspaceIdentityExtKsgrpV1Factory().createGroups(cloudGroups));
     }
 
     public Response.ResponseBuilder getMigratedUserList() {
@@ -167,7 +167,7 @@ public class CloudMigrationService {
         if (users == null) {
             throw new NotFoundException("Users not found.");
         }
-        return Response.ok(obj_factories.getOpenStackIdentityV2Factory().createUsers(userConverterCloudV20.toUserList(users.getUsers())));
+        return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUsers(userConverterCloudV20.toUserList(users.getUsers())));
     }
 
     public Response.ResponseBuilder getInMigrationUserList() {
@@ -176,7 +176,7 @@ public class CloudMigrationService {
         if (users == null) {
             throw new NotFoundException("Users not found.");
         }
-        return Response.ok(obj_factories.getOpenStackIdentityV2Factory().createUsers(userConverterCloudV20.toUserList(users.getUsers())));
+        return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUsers(userConverterCloudV20.toUserList(users.getUsers())));
     }
 
     public Response.ResponseBuilder getMigratedUser(String username) {
@@ -184,7 +184,7 @@ public class CloudMigrationService {
         if (user == null) {
             throw new NotFoundException(USER_NOT_FOUND);
         }
-        return Response.ok(obj_factories.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(user)));
+        return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(user)));
     }
 
     public Response.ResponseBuilder getMigratedUserRoles(String username) {
@@ -193,7 +193,7 @@ public class CloudMigrationService {
             throw new NotFoundException(USER_NOT_FOUND);
         }
         List<TenantRole> roles = tenantService.getGlobalRolesForUser(user);
-        return Response.ok(obj_factories.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListJaxb(roles)));
+        return Response.ok(objFactories.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListJaxb(roles)));
     }
 
     public Response.ResponseBuilder getMigratedUserEndpoints(String username) {
@@ -202,7 +202,7 @@ public class CloudMigrationService {
             throw new NotFoundException(USER_NOT_FOUND);
         }
         EndpointList list = getEndpointsForUser(user.getUniqueId());
-        return Response.ok(obj_factories.getOpenStackIdentityV2Factory().createEndpoints(list));
+        return Response.ok(objFactories.getOpenStackIdentityV2Factory().createEndpoints(list));
     }
 
     EndpointList getEndpointsForUser(String userId) {
@@ -1005,7 +1005,7 @@ public class CloudMigrationService {
     }
 
     public void setObjFactories(JAXBObjectFactories obj_factories) {
-        this.obj_factories = obj_factories;
+        this.objFactories = obj_factories;
     }
 
     public void setUserConverterCloudV20(UserConverterCloudV20 userConverterCloudV20) {

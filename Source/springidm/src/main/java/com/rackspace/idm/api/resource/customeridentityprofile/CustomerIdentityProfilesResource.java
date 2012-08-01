@@ -5,7 +5,6 @@ import com.rackspace.idm.api.resource.ParentResource;
 import com.rackspace.idm.domain.entity.Customer;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.CustomerService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.CustomerConflictException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.validation.InputValidator;
@@ -63,20 +62,20 @@ public class CustomerIdentityProfilesResource extends ParentResource {
         customerDO.setDefaults();
         validateDomainObject(customerDO);
 
-        getLogger().debug("Adding Customer Identity Profile: {}", customerDO.getRCN());
+        getLogger().debug("Adding Customer Identity Profile: {}", customerDO.getRcn());
 
         try {
             this.customerService.addCustomer(customerDO);
         } catch (DuplicateException ex) {
             String errorMsg = String.format("A customer with that customerId already exists: %s",
-                customerDO.getRCN());
+                customerDO.getRcn());
             getLogger().warn(errorMsg);
             throw new CustomerConflictException(errorMsg, ex);
         }
 
         getLogger().debug("Added Customer Identity Profile: {}", customerDO);
 
-        String location = customerDO.getRCN();
+        String location = customerDO.getRcn();
 
 		return Response.created(URI.create(location)).build();
     }

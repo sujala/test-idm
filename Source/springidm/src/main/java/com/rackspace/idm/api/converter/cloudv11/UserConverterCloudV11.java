@@ -13,7 +13,7 @@ public class UserConverterCloudV11 {
     
     private final EndpointConverterCloudV11 enpointConverterCloudV11;
     
-    private final com.rackspacecloud.docs.auth.api.v1.ObjectFactory OBJ_FACTORY = new com.rackspacecloud.docs.auth.api.v1.ObjectFactory();
+    private static final com.rackspacecloud.docs.auth.api.v1.ObjectFactory OBJ_FACTORY = new com.rackspacecloud.docs.auth.api.v1.ObjectFactory();
     private Logger logger = LoggerFactory.getLogger(UserConverterCloudV11.class);
 
     public UserConverterCloudV11(EndpointConverterCloudV11 enpointConverterCloudV11) {

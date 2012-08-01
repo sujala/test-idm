@@ -20,11 +20,11 @@ import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 public class TenantConverterCloudV20 {
 
     @Autowired
-    private JAXBObjectFactories OBJ_FACTORIES;
+    private JAXBObjectFactories objFactories;
     private Logger logger = LoggerFactory.getLogger(TenantConverterCloudV20.class);
 
     public Tenant toTenant(com.rackspace.idm.domain.entity.Tenant tenant) {
-        Tenant jaxbTenant = OBJ_FACTORIES.getOpenStackIdentityV2Factory()
+        Tenant jaxbTenant = objFactories.getOpenStackIdentityV2Factory()
             .createTenant();
         jaxbTenant.setDescription(tenant.getDescription());
         jaxbTenant.setDisplayName(tenant.getDisplayName());
@@ -64,7 +64,7 @@ public class TenantConverterCloudV20 {
     
     public Tenants toTenantList(List<com.rackspace.idm.domain.entity.Tenant> tenants) {
         
-        Tenants jaxbTenants = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createTenants();
+        Tenants jaxbTenants = objFactories.getOpenStackIdentityV2Factory().createTenants();
         
         for (com.rackspace.idm.domain.entity.Tenant tenant : tenants) {
             jaxbTenants.getTenant().add(toTenant(tenant));
@@ -88,6 +88,6 @@ public class TenantConverterCloudV20 {
     }
 
     public void setObjFactories(JAXBObjectFactories OBJ_FACTORIES) {
-        this.OBJ_FACTORIES = OBJ_FACTORIES;
+        this.objFactories = OBJ_FACTORIES;
     }
 }

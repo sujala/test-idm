@@ -14,7 +14,7 @@ public class Customer implements Auditable {
     
     @NotNull
     @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY)
-    private String RCN = null;
+    private String rcn = null;
 
     private Boolean enabled = null;
     
@@ -50,13 +50,13 @@ public class Customer implements Auditable {
         }
     }
 
-    public String getRCN() {
-        return RCN;
+    public String getRcn() {
+        return rcn;
     }
 
-    public void setRCN(String rcn) {
+    public void setRcn(String rcn) {
         if (rcn != null) {
-            this.RCN = rcn;
+            this.rcn = rcn;
         }
     }
 
@@ -77,7 +77,7 @@ public class Customer implements Auditable {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((RCN == null) ? 0 : RCN.hashCode());
+        result = prime * result + ((rcn == null) ? 0 : rcn.hashCode());
         result = prime * result + ((enabled == null) ? 0 : enabled.hashCode());
         result = prime * result + ((id == null) ? 0 : id.hashCode());
         result = prime
@@ -105,11 +105,11 @@ public class Customer implements Auditable {
             return false;
         }
         Customer other = (Customer) obj;
-        if (RCN == null) {
-            if (other.RCN != null) {
+        if (rcn == null) {
+            if (other.rcn != null) {
                 return false;
             }
-        } else if (!RCN.equals(other.RCN)) {
+        } else if (!rcn.equals(other.rcn)) {
             return false;
         }
         if (enabled == null) {
@@ -159,8 +159,8 @@ public class Customer implements Auditable {
 
     @Override
     public String getAuditContext() {
-        String format = "id=%s,RCN=%s";
-        return String.format(format, getId(), RCN);
+        String format = "id=%s,rcn=%s";
+        return String.format(format, getId(), rcn);
     }
 
     public void setEnabled(Boolean enabled) {

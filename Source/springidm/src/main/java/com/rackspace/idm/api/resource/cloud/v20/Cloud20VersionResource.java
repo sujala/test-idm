@@ -38,7 +38,7 @@ public class Cloud20VersionResource {
     private final Configuration config;
     private final CloudContractDescriptionBuilder cloudContractDescriptionBuilder;
 
-    private final String X_AUTH_TOKEN = "X-AUTH-TOKEN";
+    private static final String X_AUTH_TOKEN = "X-AUTH-TOKEN";
 
     @Autowired
     private DefaultCloud20Service defaultCloud20Service;
