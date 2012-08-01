@@ -225,7 +225,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             ImpersonatedScopeAccess impersonatedScopeAccess = (ImpersonatedScopeAccess) scopeAccess;
             ScopeAccess impersonatedUserScopeAccess = scopeAccessService.getScopeAccessByAccessToken(impersonatedScopeAccess.getImpersonatingToken());
             if (impersonatedUserScopeAccess == null) {
-                defaultCloud20Service.verifyServiceAdminLevelAccess(authToken);
+                authorizationService.verifyServiceAdminLevelAccess(defaultCloud20Service.getScopeAccessForValidToken(authToken));
                 return validateImpersonatedTokenFromCloud(httpHeaders, impersonatedScopeAccess.getImpersonatingToken(), belongsTo, impersonatedScopeAccess);
             } else {
                 return defaultCloud20Service.validateToken(httpHeaders, authToken, tokenId, belongsTo);

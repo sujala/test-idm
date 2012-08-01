@@ -467,6 +467,17 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
+    public void validateToken_RoutingFalseAndTokenIsImpersonatedUserWithNoAccess_callsVerifyServiceAdminLevelAccess() throws Exception {
+        ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
+        when(defaultCloud20Service.getScopeAccessForValidToken("token")).thenReturn(impersonatedScopeAccess);
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        when(scopeAccessService.getScopeAccessByAccessToken("token")).thenReturn(impersonatedScopeAccess);
+        doReturn(new ResponseBuilderImpl()).when(spy).validateImpersonatedTokenFromCloud(null, null, null, impersonatedScopeAccess);
+        spy.validateToken(null, "token", "token", null);
+        verify(authorizationService).verifyServiceAdminLevelAccess(impersonatedScopeAccess);
+    }
+
+    @Test
     public void validateToken_RoutingFalseAndTokenIsImpersonatedUserWithNoAccess_callsValidateImpersonatedTokenFromCloud() throws Exception {
 
         ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
