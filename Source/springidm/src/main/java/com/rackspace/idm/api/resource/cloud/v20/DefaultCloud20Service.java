@@ -1724,7 +1724,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         if(openStackServices!=null){
             for(Application application: openStackServices){
                 Boolean useForDefaultRegion = application.getUseForDefaultRegion();
-                if(useForDefaultRegion!=null && useForDefaultRegion==true){
+                if(useForDefaultRegion!=null && useForDefaultRegion){
                     defaultRegionServices.getServiceName().add(application.getName());
                 }
             }
