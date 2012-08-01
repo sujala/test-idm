@@ -79,7 +79,7 @@ public class TokensResource extends ParentResource {
      * @param credentials AuthCredentials for authenticating the token request.
      */
     @POST
-    public Response authenticate(@Context HttpHeaders httpHeaders, EntityHolder<String> credentials) throws Throwable {
+    public Response authenticate(@Context HttpHeaders httpHeaders, EntityHolder<String> credentials) {
 
         validateRequestBody(credentials);
 
