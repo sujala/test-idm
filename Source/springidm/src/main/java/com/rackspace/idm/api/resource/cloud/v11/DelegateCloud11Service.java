@@ -506,7 +506,7 @@ public class DelegateCloud11Service implements Cloud11Service {
         this.credentialUnmarshaller = credentialUnmarshaller;
     }
 
-    public static void setOBJ_FACTORY(ObjectFactory OBJ_FACTORY) {
+    public static void setObjFactory(ObjectFactory OBJ_FACTORY) {
         DelegateCloud11Service.OBJ_FACTORY = OBJ_FACTORY;
     }
 

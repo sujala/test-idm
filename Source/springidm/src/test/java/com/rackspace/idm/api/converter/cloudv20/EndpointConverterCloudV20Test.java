@@ -34,7 +34,7 @@ public class EndpointConverterCloudV20Test {
     public void setUp() throws Exception {
         openStackServiceCatalogFactory = mock(OpenStackServiceCatalogFactory.class);
         endpointConverterCloudV20 = new EndpointConverterCloudV20();
-        endpointConverterCloudV20.setOBJ_FACTORIES(new JAXBObjectFactories());
+        endpointConverterCloudV20.setObjFactories(new JAXBObjectFactories());
         endpointConverterCloudV20.setSf(openStackServiceCatalogFactory);
     }
 

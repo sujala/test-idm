@@ -97,7 +97,7 @@ public class CloudMigrationServiceIntegrationTest {
         gc.setTimeInMillis(new Date().getTime());
 
         //setting mocks for endpointconverter
-        endpointConverterCloudV20.setOBJ_FACTORIES(jaxbObjectFactories);
+        endpointConverterCloudV20.setObjFactories(jaxbObjectFactories);
 
         //fields
         user = new User();

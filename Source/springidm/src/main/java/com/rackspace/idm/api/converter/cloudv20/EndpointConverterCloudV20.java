@@ -180,7 +180,7 @@ public class EndpointConverterCloudV20 {
         return baseUrl;
     }
 
-    public void setOBJ_FACTORIES(JAXBObjectFactories OBJ_FACTORIES) {
+    public void setObjFactories(JAXBObjectFactories OBJ_FACTORIES) {
         this.OBJ_FACTORIES = OBJ_FACTORIES;
     }
 

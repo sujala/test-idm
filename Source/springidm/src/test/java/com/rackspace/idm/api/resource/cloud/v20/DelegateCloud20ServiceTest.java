@@ -17,7 +17,6 @@ import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.NotImplementedException;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Matchers;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
@@ -78,7 +77,7 @@ public class DelegateCloud20ServiceTest {
         delegateCloud20Service.setTokenService(tokenService);
         delegateCloud20Service.setCloudUserExtractor(cloudUserExtractor);
         delegateCloud20Service.setUserConverterCloudV20(userConverterCloudV20);
-        delegateCloud20Service.setOBJ_FACTORIES(OBJ_FACTORIES);
+        delegateCloud20Service.setObjFactories(OBJ_FACTORIES);
         delegateCloud20Service.setScopeAccessService(scopeAccessService);
         delegateCloud20Service.setTenantService(tenantService);
         delegateCloud20Service.setAuthorizationService(authorizationService);
@@ -523,7 +522,7 @@ public class DelegateCloud20ServiceTest {
        ArrayList<String> dummy = new ArrayList<String>();
        dummy.add("foo");
        MultivaluedMap<String,String> requestHeaders = mock(MultivaluedMap.class);
-       doReturn(authenticateResponse).when(spy).getXAuthToken_byPassword(anyString(), anyString());
+       doReturn(authenticateResponse).when(spy).getXAuthTokenByPassword(anyString(), anyString());
        when(httpHeaders.getRequestHeaders()).thenReturn(requestHeaders);
        when(requestHeaders.get("X-Auth-Token")).thenReturn(dummy);
        when(requestHeaders.get("Accept")).thenReturn(dummy);
@@ -544,7 +543,7 @@ public class DelegateCloud20ServiceTest {
         List<TenantRole> list = new ArrayList<TenantRole>();
         UserForAuthenticateResponse userForAuthenticateResponse = mock(UserForAuthenticateResponse.class);
 
-        doReturn(authenticateResponse).when(spy).getXAuthToken_byPassword(anyString(), anyString());
+        doReturn(authenticateResponse).when(spy).getXAuthTokenByPassword(anyString(), anyString());
         when(authenticateResponse.getToken()).thenReturn(new Token());
         when(httpHeaders.getRequestHeaders()).thenReturn(requestHeaders);
         when(requestHeaders.get("X-Auth-Token")).thenReturn(dummy);
@@ -575,7 +574,7 @@ public class DelegateCloud20ServiceTest {
         List<TenantRole> list = new ArrayList<TenantRole>();
         UserForAuthenticateResponse userForAuthenticateResponse = mock(UserForAuthenticateResponse.class);
 
-        doReturn(authenticateResponse).when(spy).getXAuthToken_byPassword(anyString(), anyString());
+        doReturn(authenticateResponse).when(spy).getXAuthTokenByPassword(anyString(), anyString());
         when(authenticateResponse.getToken()).thenReturn(new Token());
         when(httpHeaders.getRequestHeaders()).thenReturn(requestHeaders);
         when(requestHeaders.get("X-Auth-Token")).thenReturn(dummy);
@@ -2714,7 +2713,7 @@ public class DelegateCloud20ServiceTest {
     @Test (expected = ApiException.class)
     public void getXAuthTokenByPassword_ResponseNot200AndNot203_throwsApiException() throws Exception {
         when(cloudClient.post(anyString(),any(HashMap.class),anyString())).thenReturn(Response.status(123));
-        delegateCloud20Service.getXAuthToken_byPassword(null, null);
+        delegateCloud20Service.getXAuthTokenByPassword(null, null);
     }
 
     @Test
@@ -2726,7 +2725,7 @@ public class DelegateCloud20ServiceTest {
         when(cloudClient.post(anyString(), any(HashMap.class), anyString())).thenReturn(responseBuilder);
         doReturn(authenticateResponse).when(spy).unmarshallResponse(anyString(),eq(AuthenticateResponse.class));
 
-        assertThat("response",spy.getXAuthToken_byPassword(null, null),equalTo(authenticateResponse));
+        assertThat("response",spy.getXAuthTokenByPassword(null, null),equalTo(authenticateResponse));
     }
 
     @Test
@@ -2738,7 +2737,7 @@ public class DelegateCloud20ServiceTest {
         when(cloudClient.post(anyString(), any(HashMap.class), anyString())).thenReturn(responseBuilder);
         doReturn(authenticateResponse).when(spy).unmarshallResponse(anyString(),eq(AuthenticateResponse.class));
 
-        assertThat("response",spy.getXAuthToken_byPassword(null, null),equalTo(authenticateResponse));
+        assertThat("response",spy.getXAuthTokenByPassword(null, null),equalTo(authenticateResponse));
     }
 
     @Test (expected = ApiException.class)
@@ -2833,7 +2832,7 @@ public class DelegateCloud20ServiceTest {
         authenticateResponse.setToken(new Token());
         org.openstack.docs.identity.api.v2.User user = new org.openstack.docs.identity.api.v2.User();
         user.setEnabled(true);
-        doReturn(authenticateResponse).when(spy).getXAuthToken_byPassword(null, null);
+        doReturn(authenticateResponse).when(spy).getXAuthTokenByPassword(null, null);
         doReturn(user).when(spy).getCloudUserByName(null,null);
         doReturn(new RoleList()).when(spy).getGlobalRolesForCloudUser(null,null);
         doReturn(false).when(spy).isValidCloudImpersonatee(any(RoleList.class));
@@ -2846,7 +2845,7 @@ public class DelegateCloud20ServiceTest {
         authenticateResponse.setToken(new Token());
         org.openstack.docs.identity.api.v2.User user = new org.openstack.docs.identity.api.v2.User();
         user.setEnabled(true);
-        doReturn(authenticateResponse).when(spy).getXAuthToken_byPassword(null, null);
+        doReturn(authenticateResponse).when(spy).getXAuthTokenByPassword(null, null);
         doReturn(user).when(spy).getCloudUserByName(null,null);
         doReturn(new RoleList()).when(spy).getGlobalRolesForCloudUser(null,null);
         doReturn(true).when(spy).isValidCloudImpersonatee(any(RoleList.class));
@@ -2861,7 +2860,7 @@ public class DelegateCloud20ServiceTest {
         Token token = new Token();
         token.setId("token");
         response.setToken(token);
-        doReturn(response).when(spy).getXAuthToken_byPassword("impersonator", "password");
+        doReturn(response).when(spy).getXAuthTokenByPassword("impersonator", "password");
         org.openstack.docs.identity.api.v2.User user = new org.openstack.docs.identity.api.v2.User();
         user.setEnabled(false);
         doReturn(user).when(spy).getCloudUserByName("user","token");
