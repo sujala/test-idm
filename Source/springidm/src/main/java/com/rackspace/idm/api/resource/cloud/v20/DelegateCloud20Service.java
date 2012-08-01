@@ -214,7 +214,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         }
         ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByAccessToken(tokenId);
         if (isCloudAuthRoutingEnabled() && scopeAccess == null) {
-            String request = getCloudAuthV20Url() + "tokens/" + tokenId;
+            String request = getCloudAuthV20Url() + TOKENS + "/" + tokenId;
             HashMap<String, Object> params = new HashMap<String, Object>();
             params.put("belongsTo", belongsTo);
             request = appendQueryParams(request, params);
@@ -265,7 +265,7 @@ public class DelegateCloud20Service implements Cloud20Service {
              {
 
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
-            String request = getCloudAuthV20Url() + "tokens/" + tokenId;
+            String request = getCloudAuthV20Url() + TOKENS + "/" + tokenId;
 
             HashMap<String, Object> params = new HashMap<String, Object>();
             params.put("belongsTo", belongsTo);
@@ -281,7 +281,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByAccessToken(tokenId);
 
         if (isCloudAuthRoutingEnabled() && scopeAccess == null) {
-            String request = getCloudAuthV20Url() + "tokens/" + tokenId + "/endpoints";
+            String request = getCloudAuthV20Url() + TOKENS + "/" + tokenId + "/endpoints";
             return cloudClient.get(request, httpHeaders);
         }
         if (scopeAccess instanceof ImpersonatedScopeAccess) {
@@ -289,7 +289,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             tokenId = impersonatedScopeAccess.getImpersonatingToken();
             ScopeAccess impersonatedUserScopeAccess = scopeAccessService.getScopeAccessByAccessToken(tokenId);
             if (impersonatedUserScopeAccess == null) {
-                String request = getCloudAuthV20Url() + "tokens/" + tokenId + "/endpoints";
+                String request = getCloudAuthV20Url() + TOKENS + "/" + tokenId + "/endpoints";
                 return cloudClient.get(request, httpHeaders);
             }
         }

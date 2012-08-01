@@ -34,6 +34,7 @@ import java.util.UUID;
 @Component
 public class AuthenticationFilter implements ContainerRequestFilter,
         ApplicationContextAware {
+    private final String GET = "GET";
     private final AuthHeaderHelper authHeaderHelper = new AuthHeaderHelper();
     private final Logger logger = LoggerFactory.getLogger(AuthenticationFilter.class);
 
@@ -130,23 +131,23 @@ public class AuthenticationFilter implements ContainerRequestFilter,
         int index = path.indexOf("/");
         path = index > 0 ? path.substring(index + 1) : ""; //TODO: "/asdf/afafw/fwa" -> "" is correct behavior?
 
-        if ("GET".equals(method) && "application.wadl".equals(path)) {
+        if (GET.equals(method) && "application.wadl".equals(path)) {
             return request;
         }
 
-        if ("GET".equals(method) && "idm.wadl".equals(path)) {
+        if (GET.equals(method) && "idm.wadl".equals(path)) {
             return request;
         }
 
-        if ("GET".equals(method) && path.startsWith("xsd")) {
+        if (GET.equals(method) && path.startsWith("xsd")) {
             return request;
         }
 
-        if ("GET".equals(method) && path.startsWith("xslt")) {
+        if (GET.equals(method) && path.startsWith("xslt")) {
             return request;
         }
 
-        if ("GET".equals(method) && "".equals(path)) {
+        if (GET.equals(method) && "".equals(path)) {
             return request;
         }
 
