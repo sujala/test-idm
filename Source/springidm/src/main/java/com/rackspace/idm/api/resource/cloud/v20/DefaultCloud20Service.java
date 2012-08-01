@@ -140,7 +140,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder addEndpoint(HttpHeaders httpHeaders, String authToken, String tenantId, EndpointTemplate endpoint) {
         try {
-            verifyServiceAdminLevelAccess(authToken);
+            authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+
             Tenant tenant = checkAndGetTenant(tenantId);
             CloudBaseUrl baseUrl = checkAndGetEndpointTemplate(endpoint.getId());
             if (baseUrl.getGlobal()) {
@@ -180,7 +181,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder addRole(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Role role) {
 
         try {
-            verifyServiceAdminLevelAccess(authToken);
+            authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
             if (role == null) {
                 String errMsg = "role cannot be null";
@@ -306,7 +307,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                                      org.openstack.docs.identity.api.v2.Tenant tenant) {
 
         try {
-            verifyServiceAdminLevelAccess(authToken);
+            authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
             if (StringUtils.isBlank(tenant.getName())) {
                 String errMsg = "Expecting name";
@@ -1705,7 +1706,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder listDefaultRegionServices(String authToken) {
-        verifyServiceAdminLevelAccess(authToken);
+        authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+
         List<Application> openStackServices = clientService.getOpenStackServices();
         DefaultRegionServices defaultRegionServices = raxAuthObjectFactory.createDefaultRegionServices();
         if(openStackServices!=null){
@@ -1721,7 +1723,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder setDefaultRegionServices(String authToken, DefaultRegionServices defaultRegionServices) {
-        verifyServiceAdminLevelAccess(authToken);
+        authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+
         List<String> serviceNames = defaultRegionServices.getServiceName();
         List<Application> openStackServices = clientService.getOpenStackServices();
 
@@ -2176,7 +2179,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder validateToken(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo)  {
         try {
             //TODO: This token can be a Racker, Service or User of Proper Level
-            verifyServiceAdminLevelAccess(authToken);
+            authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+
             ScopeAccess sa = checkAndGetToken(tokenId);
             AuthenticateResponse access = OBJ_FACTORIES.getOpenStackIdentityV2Factory().createAuthenticateResponse();
             access.setToken(this.tokenConverterCloudV20.toToken(sa));
