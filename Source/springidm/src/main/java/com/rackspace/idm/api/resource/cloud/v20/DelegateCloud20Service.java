@@ -283,12 +283,13 @@ public class DelegateCloud20Service implements Cloud20Service {
         }
         if (scopeAccess instanceof ImpersonatedScopeAccess) {
             ImpersonatedScopeAccess impersonatedScopeAccess = (ImpersonatedScopeAccess) scopeAccess;
-            tokenId = impersonatedScopeAccess.getImpersonatingToken();
-            ScopeAccess impersonatedUserScopeAccess = scopeAccessService.getScopeAccessByAccessToken(tokenId);
+            String impersonatedTokenId = impersonatedScopeAccess.getImpersonatingToken();
+            ScopeAccess impersonatedUserScopeAccess = scopeAccessService.getScopeAccessByAccessToken(impersonatedTokenId);
             if (impersonatedUserScopeAccess == null) {
-                String request = getCloudAuthV20Url() + TOKENS + "/" + tokenId + "/endpoints";
+                String request = getCloudAuthV20Url() + TOKENS + "/" + impersonatedTokenId + "/endpoints";
                 return cloudClient.get(request, httpHeaders);
             }
+            return defaultCloud20Service.listEndpointsForToken(httpHeaders, authToken, impersonatedTokenId);
         }
         return defaultCloud20Service.listEndpointsForToken(httpHeaders, authToken, tokenId);
     }
