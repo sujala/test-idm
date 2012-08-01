@@ -965,11 +965,7 @@ public class CloudMigrationService {
     }
 
     private boolean isUkCloudRegion() {
-        if ("UK".equalsIgnoreCase(config.getString("cloud.region"))) {
-            return true;
-        } else {
-            return false;
-        }
+        return ("UK".equalsIgnoreCase(config.getString("cloud.region")));
     }
 
     public void setClient(MigrationClient client) {

@@ -462,11 +462,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 	}
 
     private boolean isUkCloudRegion() {
-        if ("UK".equalsIgnoreCase(config.getString("cloud.region"))) {
-            return true;
-        } else {
-            return false;
-        }
+        return ("UK".equalsIgnoreCase(config.getString("cloud.region")));
     }
 
     public void validateMossoId(Integer mossoId) {
