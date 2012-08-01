@@ -8,6 +8,7 @@ package com.rackspace.idm.domain.config.providers;
  * To change this template use File | Settings | File Templates.
  */
 
+import com.rackspace.idm.exception.IdmException;
 import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.api.json.JSONJAXBContext;
 import com.sun.xml.bind.marshaller.NamespacePrefixMapper;
@@ -71,7 +72,7 @@ public class AuthXMLCommonWriter extends NamespacePrefixMapper implements
 
         } catch (Exception e) {
             LOG.error("Error in static initializer.  - " + e.getMessage());
-            throw new RuntimeException(e);
+            throw new IdmException(e);
         }
     }
 
