@@ -29,6 +29,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Map;
 
 @Component
 public class DelegateCloud11Service implements Cloud11Service {
@@ -449,7 +450,7 @@ public class DelegateCloud11Service implements Cloud11Service {
         return cloudClient.get(getCloudAuthV11Url().concat(path), httpHeaders);
     }
 
-    String getPath(String path, HashMap<String, String> queryParams) {
+    String getPath(String path, Map<String, String> queryParams) {
         String result = path;
         String queryString = "";
 

@@ -9,6 +9,7 @@ package com.rackspace.idm.domain.config.providers.cloudv20;
  */
 
 import com.rackspace.idm.domain.config.providers.PackageClassDiscoverer;
+import com.rackspace.idm.exception.IdmException;
 import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.api.json.JSONJAXBContext;
 import com.sun.xml.bind.marshaller.NamespacePrefixMapper;
@@ -64,7 +65,7 @@ public class RaxAuthXmlWriter extends NamespacePrefixMapper implements
 
         } catch (Exception e) {
             LOG.error("Error in static initializer.  - " + e.getMessage());
-            throw new RuntimeException(e);
+            throw new IdmException(e);
         }
     }
 
@@ -123,7 +124,7 @@ public class RaxAuthXmlWriter extends NamespacePrefixMapper implements
         return raxAuthNsPrefixMap.get(namespaceUri);
     }
 
-    public void setNsPrefixMap(HashMap<String, String> nsPrefixMap) {
+    public void setNsPrefixMap(Map<String, String> nsPrefixMap) {
         this.raxAuthNsPrefixMap = nsPrefixMap;
     }
 }

@@ -46,10 +46,7 @@ import javax.xml.transform.stream.StreamSource;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.URLEncoder;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -1035,7 +1032,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         return defaultCloud20Service.updateSecretQA(httpHeaders, authToken, userId, secrets);
     }
 
-    public String appendQueryParams(String request, HashMap<String, Object> params) {
+    public String appendQueryParams(String request, Map<String, Object> params) {
         String result = "";
         for (String key : params.keySet()) {
             Object value = params.get(key);

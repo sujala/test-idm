@@ -15,6 +15,8 @@ import java.security.cert.X509Certificate;
 
 public class WebClientDevWrapper {
 
+    private WebClientDevWrapper() {}
+
     private static Logger logger = LoggerFactory.getLogger(WebClientDevWrapper.class);
 
     public static HttpClient wrapClient(HttpClient base) {

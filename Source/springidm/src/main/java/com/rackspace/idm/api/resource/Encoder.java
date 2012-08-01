@@ -11,6 +11,8 @@ import java.net.URLEncoder;
  */
 public class Encoder {
 
+    private Encoder() {}
+
     public static String encode(String url) throws UnsupportedEncodingException {
         if(url != null) {
             return URLEncoder.encode(url, "UTF-8");

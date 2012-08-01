@@ -51,6 +51,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
@@ -129,7 +130,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
 
-    private HashMap<String, JAXBElement<Extension>> extensionMap;
+    private Map<String, JAXBElement<Extension>> extensionMap;
 
     private JAXBElement<Extensions> currentExtensions;
 
@@ -2635,7 +2636,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         this.authConverterCloudV20 = authConverterCloudV20;
     }
 
-    public void setExtensionMap(HashMap<String, JAXBElement<Extension>> extensionMap) {
+    public void setExtensionMap(Map<String, JAXBElement<Extension>> extensionMap) {
         this.extensionMap = extensionMap;
     }
 

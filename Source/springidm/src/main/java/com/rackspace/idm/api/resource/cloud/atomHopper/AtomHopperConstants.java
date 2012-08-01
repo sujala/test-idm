@@ -8,6 +8,9 @@ package com.rackspace.idm.api.resource.cloud.atomHopper;
  * To change this template use File | Settings | File Templates.
  */
 public class AtomHopperConstants {
+
+    private AtomHopperConstants() {}
+
     public static final String SUCCESS = "Migrated";
     public static final String DELETED = "deleted";
     public static final String DISABLED = "disabled";
