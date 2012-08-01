@@ -942,7 +942,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 throw new NotFoundException(String.format("BaseUrlId %s not found", baseURLId));
             }
 
-            if (!StringUtils.equals(serviceName, baseUrl.getServiceName())) {
+            if (serviceName != null && !StringUtils.equals(serviceName, baseUrl.getServiceName())) {
                 throw new NotFoundException(String.format("BaseUrlId %s not found", baseURLId));
             }
 
