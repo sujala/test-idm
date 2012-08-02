@@ -18,6 +18,7 @@ import java.util.List;
 
 public class DefaultAuthorizationService implements AuthorizationService {
 
+    public static final String NOT_AUTHORIZED_MSG = "Not authorized.";
     private final ApplicationDao clientDao;
     private final Configuration config;
     private final ScopeAccessDao scopeAccessDao;
@@ -334,16 +335,16 @@ public class DefaultAuthorizationService implements AuthorizationService {
         }
 
         String username = null;
-        String RCN = null;
+        String rcn = null;
 
         if (scopeAccess instanceof UserScopeAccess) {
             UserScopeAccess usa = (UserScopeAccess) scopeAccess;
             username = usa.getUsername();
-            RCN = usa.getUserRCN();
+            rcn = usa.getUserRCN();
         } else if (scopeAccess instanceof DelegatedClientScopeAccess) {
             DelegatedClientScopeAccess dcsa = (DelegatedClientScopeAccess) scopeAccess;
             username = dcsa.getUsername();
-            RCN = dcsa.getUserRCN();
+            rcn = dcsa.getUserRCN();
         }
 
         if (idmAdminGroupDn == null) {
@@ -352,7 +353,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         }
 
         boolean authorized = false;
-        authorized = clientDao.isUserInClientGroup(username, idmAdminGroupDn) && customerId.equalsIgnoreCase(RCN);
+        authorized = clientDao.isUserInClientGroup(username, idmAdminGroupDn) && customerId.equalsIgnoreCase(rcn);
         logger.debug("Authorized {} as admin user - {}", scopeAccess, authorized);
         return authorized;
     }
@@ -406,7 +407,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
     @Override
     public void verifyIdentityAdminLevelAccess(ScopeAccess authScopeAccess) {
         if (!authorizeCloudIdentityAdmin(authScopeAccess)) {
-            String errMsg = "Not authorized.";
+            String errMsg = NOT_AUTHORIZED_MSG;
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -415,7 +416,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
     @Override
     public void verifyServiceAdminLevelAccess(ScopeAccess authScopeAccess) {
         if (!authorizeCloudIdentityAdmin(authScopeAccess) && !authorizeCloudServiceAdmin(authScopeAccess)) {
-            String errMsg = "Not authorized.";
+            String errMsg = NOT_AUTHORIZED_MSG;
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -425,7 +426,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
     public void verifyUserAdminLevelAccess(ScopeAccess authScopeAccess) {
         if (!authorizeCloudIdentityAdmin(authScopeAccess) && !authorizeCloudServiceAdmin(authScopeAccess)
                 && !authorizeCloudUserAdmin(authScopeAccess)) {
-            String errMsg = "Not authorized.";
+            String errMsg = NOT_AUTHORIZED_MSG;
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
@@ -438,7 +439,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
                 return;
             }
         }
-        String errMsg = "Not authorized.";
+        String errMsg = NOT_AUTHORIZED_MSG;
         logger.warn(errMsg);
         throw new ForbiddenException(errMsg);
     }
