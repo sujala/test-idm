@@ -197,14 +197,14 @@ public class DefaultCloud11ServiceTest {
     public void authenticateResponse_callsCredentialValidator_validateCredential() throws Exception {
         NastCredentials nastCredentials = new NastCredentials();
         defaultCloud11Service.authenticateResponse(new JAXBElement<Credentials>(new QName(""), Credentials.class, nastCredentials));
-        verify(credentialValidator).validateCredential(nastCredentials);
+        verify(credentialValidator).validateCredential(nastCredentials, userService);
     }
 
     @Test
     public void adminAuthenticateResponse_callsCredentialValidator_validateCredential() throws Exception {
         NastCredentials nastCredentials = new NastCredentials();
         defaultCloud11Service.adminAuthenticateResponse(new JAXBElement<Credentials>(new QName(""), Credentials.class, nastCredentials), null);
-        verify(credentialValidator).validateCredential(nastCredentials);
+        verify(credentialValidator).validateCredential(nastCredentials, userService);
     }
 
     @Test
@@ -289,67 +289,6 @@ public class DefaultCloud11ServiceTest {
         Response.ResponseBuilder responseBuilder = spy.getUserGroups(request, "testUser", httpHeaders);
         ItemNotFoundFault entity = (ItemNotFoundFault)responseBuilder.build().getEntity();
         assertThat("code", entity.getDetails(), equalTo(null));
-    }
-
-    @Test
-    public void authenticateResponse_withNastCredentials_withEmptyNastId_returns400() throws Exception {
-        NastCredentials nastCredentials = new NastCredentials();
-        nastCredentials.setNastId("");
-        JAXBElement<NastCredentials> credentials = new JAXBElement<NastCredentials>(QName.valueOf("foo"), NastCredentials.class, nastCredentials);
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(credentials);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
-    }
-
-    @Test
-    public void authenticateResponse_withPasswordCredentials_withBlankUsername_returns400() throws Exception {
-        PasswordCredentials passwordCredentials = new PasswordCredentials();
-        passwordCredentials.setPassword("password");
-        passwordCredentials.setUsername("");
-        JAXBElement<PasswordCredentials> credentials =
-                new JAXBElement<PasswordCredentials>(QName.valueOf("foo"), PasswordCredentials.class, passwordCredentials);
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(credentials);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
-    }
-
-    @Test
-    public void authenticateResponse_withPasswordCredentials_withBlankPassword_returns400() throws Exception {
-        PasswordCredentials passwordCredentials = new PasswordCredentials();
-        passwordCredentials.setUsername("username");
-        JAXBElement<PasswordCredentials> credentials =
-                new JAXBElement<PasswordCredentials>(QName.valueOf("foo"), PasswordCredentials.class, passwordCredentials);
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(credentials);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
-    }
-
-    @Test
-    public void authenticateResponse_withApiCredentials_withBlankApiKey_returns400() throws Exception {
-        UserCredentials userCredentials = new UserCredentials();
-        userCredentials.setUsername("username");
-        JAXBElement<UserCredentials> credentials =
-                new JAXBElement<UserCredentials>(QName.valueOf("foo"), UserCredentials.class, userCredentials);
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(credentials);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
-    }
-
-    @Test
-    public void authenticateResponse_withPasswordCredentials_withEmptyPassword_returns400() throws Exception {
-        PasswordCredentials passwordCredentials = new PasswordCredentials();
-        passwordCredentials.setPassword("");
-        JAXBElement<PasswordCredentials> credentials =
-                new JAXBElement<PasswordCredentials>(QName.valueOf("foo"), PasswordCredentials.class, passwordCredentials);
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(credentials);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
-    }
-
-    @Test
-    public void authenticateResponse_withUserCredentials_withEmptyUsername_returns400() throws Exception {
-        UserCredentials userCredentials = new UserCredentials();
-        userCredentials.setKey("apiKey");
-        userCredentials.setUsername("");
-        JAXBElement<UserCredentials> credentials =
-                new JAXBElement<UserCredentials>(QName.valueOf("foo"), UserCredentials.class, userCredentials);
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(credentials);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
     }
 
     @Test
@@ -474,51 +413,6 @@ public class DefaultCloud11ServiceTest {
     }
 
     @Test
-    public void adminAuthenticateResponse_withPasswordCredentialsAndBlankPassword_returnBadRequestResponse() throws Exception {
-        JAXBElement credentials = mock(JAXBElement.class);
-        PasswordCredentials passwordCredentials = new PasswordCredentials();
-        passwordCredentials.setUsername("username");
-        when(credentials.getValue()).thenReturn(passwordCredentials);
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.adminAuthenticateResponse(credentials, null);
-        assertThat("response status", responseBuilder.build().getStatus(), equalTo(400));
-    }
-
-    @Test
-    public void adminAuthenticateResponse_withPasswordCredentialsAndBlankUsername_returnBadRequestResponse() throws Exception {
-        JAXBElement credentials = mock(JAXBElement.class);
-        PasswordCredentials passwordCredentials = new PasswordCredentials();
-        passwordCredentials.setPassword("password");
-        when(credentials.getValue()).thenReturn(passwordCredentials);
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.adminAuthenticateResponse(credentials, null);
-        assertThat("response status", responseBuilder.build().getStatus(), equalTo(400));
-    }
-
-    @Test
-    public void adminAuthenticateResponse_withPasswordCredentialsAndNullUserFromUserService_returnNotAuthorizedResponse() throws Exception {
-        JAXBElement credentials = mock(JAXBElement.class);
-        PasswordCredentials passwordCredentials = new PasswordCredentials();
-        passwordCredentials.setUsername("username");
-        passwordCredentials.setPassword("password");
-        when(credentials.getValue()).thenReturn(passwordCredentials);
-        when(userService.getUser("username")).thenReturn(null);
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.adminAuthenticateResponse(credentials, null);
-        assertThat("response status", responseBuilder.build().getStatus(), equalTo(401));
-    }
-
-    @Test
-    public void adminAuthenticateResponse_withPasswordCredentialsAndDisabledUserFromUserService_returnForbiddenResponse() throws Exception {
-        JAXBElement credentials = mock(JAXBElement.class);
-        PasswordCredentials passwordCredentials = new PasswordCredentials();
-        passwordCredentials.setUsername("username");
-        passwordCredentials.setPassword("password");
-        when(credentials.getValue()).thenReturn(passwordCredentials);
-        userDO.setEnabled(false);
-        when(userService.getUser("username")).thenReturn(userDO);
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.adminAuthenticateResponse(credentials, null);
-        assertThat("response status", responseBuilder.build().getStatus(), equalTo(403));
-    }
-
-    @Test
     public void adminAuthenticateResponse_withPasswordCredentials_callsScopeAccessService_getUserScopeAccessForClientIdByUsernameAndPassword() throws Exception {
         JAXBElement credentials = mock(JAXBElement.class);
         PasswordCredentials passwordCredentials = new PasswordCredentials();
@@ -540,25 +434,6 @@ public class DefaultCloud11ServiceTest {
     }
 
     @Test
-    public void adminAuthenticateResponse_withNastCredentialsAndNullUser_returnNotFoundResponse() throws Exception {
-        JAXBElement credentials = mock(JAXBElement.class);
-        when(credentials.getValue()).thenReturn(new NastCredentials());
-        when(userService.getUserByNastId(null)).thenReturn(null);
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.adminAuthenticateResponse(credentials, null);
-        assertThat("response status", responseBuilder.build().getStatus(), equalTo(404));
-    }
-
-    @Test
-    public void adminAuthenticateResponse_withNastCredentialsAndDisabledUser_returnForbiddenResponse() throws Exception {
-        JAXBElement credentials = mock(JAXBElement.class);
-        when(credentials.getValue()).thenReturn(new NastCredentials());
-        userDO.setEnabled(false);
-        when(userService.getUserByNastId(null)).thenReturn(userDO);
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.adminAuthenticateResponse(credentials, null);
-        assertThat("response status", responseBuilder.build().getStatus(), equalTo(403));
-    }
-
-    @Test
     public void adminAuthenticateResponse_withNastCredentials_callsScopeAccessService_getUserScopeAccessForClientIdByNastIdAndApiCredentials() throws Exception {
         JAXBElement credentials = mock(JAXBElement.class);
         when(credentials.getValue()).thenReturn(new NastCredentials());
@@ -566,24 +441,6 @@ public class DefaultCloud11ServiceTest {
         when(userService.getUserByNastId(null)).thenReturn(userDO);
         defaultCloud11Service.adminAuthenticateResponse(credentials, null);
         verify(scopeAccessService).getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString());
-    }
-
-    @Test
-    public void adminAuthenticateResponse_withMossoCredentialsAndNullApiKey_returnsBadRequestResponse() throws Exception {
-        JAXBElement credentials = mock(JAXBElement.class);
-        when(credentials.getValue()).thenReturn(new MossoCredentials());
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.adminAuthenticateResponse(credentials, null);
-        assertThat("response status", responseBuilder.build().getStatus(), equalTo(400));
-    }
-
-    @Test
-    public void adminAuthenticateResponse_withMossoCredentialsAndZeroLengthApiKey_returnsBadRequestResponse() throws Exception {
-        JAXBElement credentials = mock(JAXBElement.class);
-        MossoCredentials mossoCredentials = mock(MossoCredentials.class);
-        when(credentials.getValue()).thenReturn(mossoCredentials);
-        when(mossoCredentials.getKey()).thenReturn("");
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.adminAuthenticateResponse(credentials, null);
-        assertThat("response status", responseBuilder.build().getStatus(), equalTo(400));
     }
 
     @Test
@@ -595,31 +452,6 @@ public class DefaultCloud11ServiceTest {
         when(mossoCredentials.getMossoId()).thenReturn(12345);
         defaultCloud11Service.adminAuthenticateResponse(credentials, null);
         verify(userService).getUserByMossoId(12345);
-    }
-
-    @Test
-    public void adminAuthenticateResponse_withMossoCredentialsAndNullUser_returnsNotFoundResponse() throws Exception {
-        JAXBElement credentials = mock(JAXBElement.class);
-        MossoCredentials mossoCredentials = mock(MossoCredentials.class);
-        when(credentials.getValue()).thenReturn(mossoCredentials);
-        when(mossoCredentials.getKey()).thenReturn("apiKey");
-        when(userService.getUserByMossoId(anyInt())).thenReturn(null);
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.adminAuthenticateResponse(credentials, null);
-        assertThat("response status", responseBuilder.build().getStatus(), equalTo(404));
-    }
-
-    @Test
-    public void adminAuthenticateResponse_withMossoCredentialsAndDisabledUser_returnsForbiddenResponse() throws Exception {
-        JAXBElement credentials = mock(JAXBElement.class);
-        MossoCredentials mossoCredentials = mock(MossoCredentials.class);
-        when(credentials.getValue()).thenReturn(mossoCredentials);
-        when(mossoCredentials.getKey()).thenReturn("apiKey");
-        when(mossoCredentials.getMossoId()).thenReturn(12345);
-        when(userService.getUserByMossoId(anyInt())).thenReturn(userDO);
-        userDO.setEnabled(false);
-        userDO.setMossoId(12345);
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.adminAuthenticateResponse(credentials, null);
-        assertThat("response status", responseBuilder.build().getStatus(), equalTo(403));
     }
 
     @Test
@@ -960,14 +792,6 @@ public class DefaultCloud11ServiceTest {
         defaultCloud11Service.addMossoTenant(user);
         Mockito.verify(endpointService).getBaseUrlsByBaseUrlType("MOSSO");
     }
-
-    @Test
-    public void authenticateResponse_usernameIsNull_returns400() throws Exception {
-        JAXBElement<Credentials> cred = new JAXBElement<Credentials>(new QName(""), Credentials.class, new UserCredentials());
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(cred);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
-    }
-
 
     @Test
     public void revokeToken_isAdminCall_callAuthenticateCloudAdminUserForGetRequests() throws Exception {
@@ -2527,15 +2351,6 @@ public class DefaultCloud11ServiceTest {
         doNothing().when(endpointService).addBaseUrl(null);
         Response.ResponseBuilder responseBuilder = spy.addBaseURL(request, null, new BaseURL());
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(201));
-    }
-
-    @Test
-    public void authAdmin_withPasswordCredentials_withInvalidUser_returns401() throws Exception {
-        when(authorizationService.authorizeCloudServiceAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
-        when(httpHeaders.getMediaType()).thenReturn(new MediaType());
-        String credentials = "<passwordCredentials password=\"123\" username=\"IValidUser\" xmlns=\"http://docs.rackspacecloud.com/auth/api/v1.1\"/>";
-        Response.ResponseBuilder responseBuilder = spy.adminAuthenticate(request, null, httpHeaders, credentials);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(401));
     }
 
     @Test
