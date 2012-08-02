@@ -62,6 +62,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     public static final String NOT_AUTHORIZED = "Not authorized.";
     public static final String USER_AND_USER_ID_MIS_MATCHED = "User and UserId mis-matched";
+    public static final int PASSWORD_MIN_LENGTH = 8;
+    public static final int MAX_GROUP_NAME = 200;
+    public static final int MAX_GROUP_DESC = 1000;
     @Autowired
     private AuthConverterCloudV20 authConverterCloudV20;
 
@@ -560,7 +563,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     void validatePassword(String password) {
         String errMsg = "Password must be at least 8 characters in length, must contain at least one uppercase letter, one lowercase letter and one numeric character.";
-        if (password.length() < 8) {
+        if (password.length() < PASSWORD_MIN_LENGTH) {
             logger.warn(errMsg);
             throw new BadRequestException(errMsg);
         }
@@ -1861,10 +1864,10 @@ public class DefaultCloud20Service implements Cloud20Service {
         if (group.getName() == null || checkName.isEmpty()) {
             throw new BadRequestException("Missing group name");
         }
-        if (group.getName().length() > 200) {
+        if (group.getName().length() > MAX_GROUP_NAME) {
             throw new BadRequestException("Group name length cannot exceed 200 characters");
         }
-        if (group.getDescription().length() > 1000) {
+        if (group.getDescription().length() > MAX_GROUP_DESC) {
             throw new BadRequestException("Group description length cannot exceed 1000 characters");
         }
     }

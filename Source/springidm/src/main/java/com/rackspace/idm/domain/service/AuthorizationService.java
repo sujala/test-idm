@@ -3,7 +3,6 @@ package com.rackspace.idm.domain.service;
 import com.rackspace.idm.domain.entity.Entity;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.Tenant;
-import com.rackspace.idm.exception.ForbiddenException;
 
 import java.util.List;
 

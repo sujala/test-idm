@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud;
 import com.rackspacecloud.docs.auth.api.v1.Credentials;
 import org.apache.log4j.Logger;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
@@ -73,7 +74,7 @@ public class CredentialProvider implements MessageBodyReader<JAXBElement<? exten
             Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
             return (JAXBElement<? extends Credentials>) unmarshaller.unmarshal(entityStream);
         } catch (Exception e) {
-            throw new WebApplicationException(e, 400);
+            throw new WebApplicationException(e, HttpServletResponse.SC_BAD_REQUEST);
         }
     }
 }

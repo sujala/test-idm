@@ -108,7 +108,7 @@ public class DelegateCloud11Service implements Cloud11Service {
         Response dummyResponse = serviceResponse.clone().build();
          //If SUCCESS and "user" is not null, store token to "user" and return cloud response
         int status = dummyResponse.getStatus();
-        if (status == 302){
+        if (status == HttpServletResponse.SC_MOVED_TEMPORARILY){
             serviceResponse.location(new URI(config.getString("ga.endpoint")+"cloud/v1.1/auth-admin"));
         }
         if (status == HttpServletResponse.SC_OK && user != null) {

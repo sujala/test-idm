@@ -6,6 +6,7 @@ public class MinimumLengthRule extends PasswordRule {
     private static final int RULE_ID = 1;
     private static final String RULE_NAME = "Mininumn Length";
     private static final String RULE_MESSAGE = "The password must be at least 7 characters long";
+    public static final int MIN_LENGTH = 7;
 
     public MinimumLengthRule() {
         super(RULE_ID, RULE_NAME, RULE_MESSAGE);
@@ -17,7 +18,7 @@ public class MinimumLengthRule extends PasswordRule {
         result.setRuleId(this.getRuleId());
         result.setRuleName(this.getRuleName());
         result.setMessage(this.getMessage());
-        result.setRulePassed(password.length() >= 7);
+        result.setRulePassed(password.length() >= MIN_LENGTH);
         return result;
     }
 }

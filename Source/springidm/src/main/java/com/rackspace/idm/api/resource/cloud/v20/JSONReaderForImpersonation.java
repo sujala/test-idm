@@ -9,7 +9,6 @@ import org.json.simple.parser.JSONParser;
 import org.openstack.docs.identity.api.v2.User;
 
 import javax.ws.rs.Consumes;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyReader;

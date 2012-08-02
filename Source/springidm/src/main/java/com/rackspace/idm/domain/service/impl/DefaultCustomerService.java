@@ -139,7 +139,7 @@ public class DefaultCustomerService implements CustomerService {
     private List<User> getUserListForCustomerId(String customerId) {
     	FilterParam[] filters = new FilterParam[] { new FilterParam(FilterParamName.RCN, customerId)};
         int offset = 0;
-        int limit = 100;
+        final int limit = 100;
         List<User> userList = new ArrayList<User>();
         Users users = null;
 
@@ -155,7 +155,7 @@ public class DefaultCustomerService implements CustomerService {
     
     private List<Application> getClientListForCustomerId(String customerId) {
         int offset = 0;
-        int limit = 100;
+        final int limit = 100;
         List<Application> clientList = new ArrayList<Application>();
         Applications clients = null;
 
