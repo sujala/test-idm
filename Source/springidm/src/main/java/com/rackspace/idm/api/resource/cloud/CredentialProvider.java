@@ -68,14 +68,12 @@ public class CredentialProvider implements MessageBodyReader<JAXBElement<? exten
     public JAXBElement<? extends Credentials> readFrom(Class<JAXBElement<? extends Credentials>> type,
                                                        Type genericType, Annotation[] annotations, MediaType mediaType,
                                                        MultivaluedMap<String, String> httpHeaders, InputStream entityStream)
-            throws WebApplicationException, IOException {
+            throws IOException {
         try {
             Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
             return (JAXBElement<? extends Credentials>) unmarshaller.unmarshal(entityStream);
         } catch (Exception e) {
-            WebApplicationException webApplicationException = new WebApplicationException(400);
-            webApplicationException.setStackTrace(e.getStackTrace());
-            throw webApplicationException;
+            throw new WebApplicationException(e, 400);
         }
     }
 }

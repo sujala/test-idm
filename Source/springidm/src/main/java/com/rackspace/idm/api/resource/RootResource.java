@@ -30,7 +30,7 @@ public class RootResource {
     private final Version10Resource versionResource;
     private final MigrationResource migrationResource;
     private final ServiceProfileDescriptionBuilder serviceProfileDescriptionBuilder;
-    final private Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
     private Configuration config;

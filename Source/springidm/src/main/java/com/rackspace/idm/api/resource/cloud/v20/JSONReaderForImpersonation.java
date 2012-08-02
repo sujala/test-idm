@@ -40,7 +40,7 @@ public class JSONReaderForImpersonation implements MessageBodyReader<Impersonati
     public ImpersonationRequest readFrom(Class<ImpersonationRequest> type, Type genericType,
                                          Annotation[] annotations, MediaType mediaType,
                                          MultivaluedMap<String, String> httpHeaders,
-                                         InputStream entityStream) throws IOException, WebApplicationException {
+                                         InputStream entityStream) throws IOException {
         String jsonBody = IOUtils.toString(entityStream, JSONConstants.UTF_8);
         return getImpersonationFromJSONString(jsonBody);
     }

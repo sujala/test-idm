@@ -17,7 +17,7 @@ public class LdapAuthRepository implements AuthDao {
     private static final String BASE_DN = "ou=users,o=rackspace";
     private final LDAPConnectionPool connPool;
     private final Configuration config;
-    final private Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public LdapAuthRepository(LDAPConnectionPool connPool, Configuration config) {
         this.connPool = connPool;

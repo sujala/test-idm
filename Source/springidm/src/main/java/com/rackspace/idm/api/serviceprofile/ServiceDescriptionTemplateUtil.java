@@ -18,7 +18,7 @@ import java.util.Map;
 @Component
 public class ServiceDescriptionTemplateUtil {
 
-    final private Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
     
 	@Autowired
 	private final Configuration freemarkerConfig;

@@ -23,7 +23,7 @@ import javax.ws.rs.core.Response;
 public class PasswordRotationPolicyResource extends ParentResource {
     private final CustomerService customerService;
     private final AuthorizationService authorizationService;
-    final private Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private ObjectFactory objectFactory = new ObjectFactory();
 
     @Autowired

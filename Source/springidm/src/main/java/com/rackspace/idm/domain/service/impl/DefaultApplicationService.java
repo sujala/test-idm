@@ -22,7 +22,7 @@ public class DefaultApplicationService implements ApplicationService {
     private final CustomerDao customerDao;
     private final UserDao userDao;
     private final TenantDao tenantDao;
-    final private Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public DefaultApplicationService(ScopeAccessDao scopeAccessDao,
         ApplicationDao clientDao, CustomerDao customerDao, UserDao userDao, TenantDao tenantDao) {

@@ -36,7 +36,7 @@ public class JSONReaderForPasswordCredentials implements
     }
 
     @Override
-    public PasswordCredentialsRequiredUsername readFrom(Class<PasswordCredentialsRequiredUsername> passwordCredentialsRequiredUsernameClass, Type type, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> stringStringMultivaluedMap, InputStream inputStream) throws IOException, WebApplicationException {
+    public PasswordCredentialsRequiredUsername readFrom(Class<PasswordCredentialsRequiredUsername> passwordCredentialsRequiredUsernameClass, Type type, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> stringStringMultivaluedMap, InputStream inputStream) throws IOException {
         String jsonBody = IOUtils.toString(inputStream, JSONConstants.UTF_8);
 
         PasswordCredentialsRequiredUsername creds = getPasswordCredentialsFromJSONString(jsonBody);

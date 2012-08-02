@@ -17,7 +17,7 @@ public class DefaultTokenService implements TokenService {
     private final AuthorizationService authorizationService;
     private final ApplicationService clientService;
     private final Configuration config;
-    final private Logger logger = LoggerFactory
+    private final Logger logger = LoggerFactory
         .getLogger(DefaultTokenService.class);
     private final ScopeAccessService scopeAccessService;
     private final UserDao userDao;

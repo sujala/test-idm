@@ -37,7 +37,7 @@ public class JSONReaderForRole implements MessageBodyReader<Role> {
     public Role readFrom(Class<Role> type, Type genericType,
         Annotation[] annotations, MediaType mediaType,
         MultivaluedMap<String, String> httpHeaders, InputStream inputStream)
-        throws IOException, WebApplicationException {
+        throws IOException {
 
         String jsonBody = IOUtils.toString(inputStream, JSONConstants.UTF_8);
 

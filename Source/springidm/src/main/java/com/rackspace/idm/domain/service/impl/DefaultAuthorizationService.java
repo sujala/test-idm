@@ -22,7 +22,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
     private final Configuration config;
     private final ScopeAccessDao scopeAccessDao;
     private final TenantDao tenantDao;
-    final private Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
     @Autowired
     private ScopeAccessService scopeAccessService;
 

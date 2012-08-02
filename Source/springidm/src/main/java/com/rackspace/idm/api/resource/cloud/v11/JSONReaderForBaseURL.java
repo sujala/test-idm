@@ -38,7 +38,7 @@ public class JSONReaderForBaseURL implements MessageBodyReader<BaseURL>{
     public BaseURL readFrom(Class<BaseURL> type,
         Type genericType, Annotation[] annotations, MediaType mediaType,
         MultivaluedMap<String, String> httpHeaders, InputStream inputStream)
-        throws IOException, WebApplicationException {
+        throws IOException {
 
         String jsonBody = IOUtils.toString(inputStream, JSONConstants.UTF_8);
 

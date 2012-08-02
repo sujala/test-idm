@@ -9,6 +9,8 @@ import org.openstack.docs.identity.api.v2.CredentialType;
 
 public class JSONReaderForCredentialType {
 
+    private JSONReaderForCredentialType(){};
+
     public static CredentialType checkAndGetCredentialsFromJSONString(String jsonBody) {
         JSONParser parser = new JSONParser();
         CredentialType creds = null;

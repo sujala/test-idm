@@ -36,7 +36,7 @@ public class JSONReaderForDefaultRegionServices implements MessageBodyReader<Def
     @Override
     public DefaultRegionServices readFrom(Class<DefaultRegionServices> type, Type genericType, Annotation[] annotations,
                                           MediaType mediaType, MultivaluedMap<String, String> httpHeaders,
-                                          InputStream inputStream) throws IOException, WebApplicationException {
+                                          InputStream inputStream) throws IOException {
 
         String jsonBody = IOUtils.toString(inputStream, JSONConstants.UTF_8);
 

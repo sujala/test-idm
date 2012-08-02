@@ -16,7 +16,7 @@ public class DefaultPasswordComplexityService implements
     private LowercaseRule lowercaseRule = new LowercaseRule();
 //    private SpecialCharacterRule specialCharacterRule = new SpecialCharacterRule();
     private NumberRule numberRule = new NumberRule();
-    final private Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private List<PasswordRule> rules = new ArrayList<PasswordRule>();
 

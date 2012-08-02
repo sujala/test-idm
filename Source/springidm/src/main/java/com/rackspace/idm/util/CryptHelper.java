@@ -21,7 +21,7 @@ import java.security.Security;
 public class CryptHelper {
 
 	// Salt
-	private static byte[] salt = { (byte) 0xc7, (byte) 0x73, (byte) 0x21, (byte) 0x8c, (byte) 0x7e, (byte) 0xc8,
+	private final static byte[] salt = { (byte) 0xc7, (byte) 0x73, (byte) 0x21, (byte) 0x8c, (byte) 0x7e, (byte) 0xc8,
 			(byte) 0xee, (byte) 0x99 };
 
 	// TODO: get this from secrets.idm.properties
@@ -30,12 +30,18 @@ public class CryptHelper {
 	private static PBEParametersGenerator keyGenerator;
 	private static CipherParameters keyParams;
 
-	static {
+    public static final int ITERATION_COUNT = 20;
+
+    public static final int KEY_SIZE = 256;
+
+    public static final int IV_SIZE = 128;
+
+    static {
 		try {
 			Security.addProvider(new BouncyCastleProvider());
 			keyGenerator = new PKCS12ParametersGenerator(new SHA256Digest());
-			keyGenerator.init(PKCS12ParametersGenerator.PKCS12PasswordToBytes(password), salt, 20);
-			keyParams = keyGenerator.generateDerivedParameters(256, 128);
+			keyGenerator.init(PKCS12ParametersGenerator.PKCS12PasswordToBytes(password), salt, ITERATION_COUNT);
+			keyParams = keyGenerator.generateDerivedParameters(KEY_SIZE, IV_SIZE);
 		} catch (Exception e) {
 			LoggerFactory.getLogger(CryptHelper.class).error("Error initializing encryption provider", e);
 		}
