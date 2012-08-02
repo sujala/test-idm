@@ -15,13 +15,15 @@ import java.util.Locale;
 
 public class User implements Auditable {
     private static final long serialVersionUID = 1347677880811855274L;
-    
+    public static final int MAX = 32;
+    public static final int PRIME = 31;
+
     private String uniqueId = null;
     
     private String id = null;
 
     @NotNull
-    @Length(min = 1, max = 32)
+    @Length(min = 1, max = MAX)
     @Pattern(regexp = RegexPatterns.USERNAME, message = MessageTexts.USERNAME)
     private String username = null;
 
@@ -501,25 +503,25 @@ public class User implements Auditable {
     @Override
     public int hashCode() {
         int result = uniqueId != null ? uniqueId.hashCode() : 0;
-        result = 31 * result + (id != null ? id.hashCode() : 0);
-        result = 31 * result + (username != null ? username.hashCode() : 0);
-        result = 31 * result + (customerId != null ? customerId.hashCode() : 0);
-        result = 31 * result + (email != null ? email.hashCode() : 0);
-        result = 31 * result + (credential != null ? credential.hashCode() : 0);
-        result = 31 * result + (personId != null ? personId.hashCode() : 0);
-        result = 31 * result + (name != null ? name.hashCode() : 0);
-        result = 31 * result + (preference != null ? preference.hashCode() : 0);
-        result = 31 * result + (country != null ? country.hashCode() : 0);
-        result = 31 * result + (displayName != null ? displayName.hashCode() : 0);
-        result = 31 * result + (apiKey != null ? apiKey.hashCode() : 0);
-        result = 31 * result + (region != null ? region.hashCode() : 0);
-        result = 31 * result + (nastId != null ? nastId.hashCode() : 0);
-        result = 31 * result + (mossoId != null ? mossoId.hashCode() : 0);
-        result = 31 * result + (created != null ? created.hashCode() : 0);
-        result = 31 * result + (updated != null ? updated.hashCode() : 0);
-        result = 31 * result + (softDeletedTimestamp != null ? softDeletedTimestamp.hashCode() : 0);
-        result = 31 * result + (maxLoginFailuresExceded != null ? maxLoginFailuresExceded.hashCode() : 0);
-        result = 31 * result + (secureId != null ? secureId.hashCode() : 0);
+        result = PRIME * result + (id != null ? id.hashCode() : 0);
+        result = PRIME * result + (username != null ? username.hashCode() : 0);
+        result = PRIME * result + (customerId != null ? customerId.hashCode() : 0);
+        result = PRIME * result + (email != null ? email.hashCode() : 0);
+        result = PRIME * result + (credential != null ? credential.hashCode() : 0);
+        result = PRIME * result + (personId != null ? personId.hashCode() : 0);
+        result = PRIME * result + (name != null ? name.hashCode() : 0);
+        result = PRIME * result + (preference != null ? preference.hashCode() : 0);
+        result = PRIME * result + (country != null ? country.hashCode() : 0);
+        result = PRIME * result + (displayName != null ? displayName.hashCode() : 0);
+        result = PRIME * result + (apiKey != null ? apiKey.hashCode() : 0);
+        result = PRIME * result + (region != null ? region.hashCode() : 0);
+        result = PRIME * result + (nastId != null ? nastId.hashCode() : 0);
+        result = PRIME * result + (mossoId != null ? mossoId.hashCode() : 0);
+        result = PRIME * result + (created != null ? created.hashCode() : 0);
+        result = PRIME * result + (updated != null ? updated.hashCode() : 0);
+        result = PRIME * result + (softDeletedTimestamp != null ? softDeletedTimestamp.hashCode() : 0);
+        result = PRIME * result + (maxLoginFailuresExceded != null ? maxLoginFailuresExceded.hashCode() : 0);
+        result = PRIME * result + (secureId != null ? secureId.hashCode() : 0);
         return result;
     }
 
