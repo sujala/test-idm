@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.entity;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.*;
+import org.apache.commons.lang.ArrayUtils;
 
 import java.util.Arrays;
 
@@ -40,7 +41,7 @@ public class GrantedPermission extends Permission implements Auditable {
     }
 
     public void setResourceGroups(String[] resourceGroups) {
-        this.resourceGroups = resourceGroups;
+        this.resourceGroups = (String[]) ArrayUtils.clone(resourceGroups);
     }
 
     public void setLdapEntry(ReadOnlyEntry ldapEntry) {

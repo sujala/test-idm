@@ -31,8 +31,8 @@ public class JAXBContextResolver implements ContextResolver<JAXBContext> {
     	if (context == null) {
     		try {
     			init();
-    		} catch (Throwable t) {
-                logger.info("failed initalize JSONJAXBContext: " + t.getMessage());
+    		} catch (Exception e) {
+                logger.info("failed initalize JSONJAXBContext: " + e.getMessage());
             }
     	}
     	return context;
