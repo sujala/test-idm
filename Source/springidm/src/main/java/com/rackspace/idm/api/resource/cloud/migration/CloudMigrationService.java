@@ -664,6 +664,12 @@ public class CloudMigrationService {
         } if (user.getInMigration() == null) { // Used so we do not delete a user who wasn't previously migrated.
             throw new NotFoundException(USER_NOT_FOUND);
         }
+        
+        List<TenantRole> tenantRoles = tenantService.getGlobalRolesForUser(user);
+
+        if (!isUserAdmin(roleConverterCloudV20.toRoleListJaxb(tenantRoles))) {
+            throw new BadRequestException("Migration is not allowed for subusers");
+        }
 
         String domainId = user.getDomainId();
         FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParam.FilterParamName.DOMAIN_ID, domainId)};

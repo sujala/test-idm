@@ -3068,5 +3068,63 @@ public class DelegateCloud20ServiceTest {
     public void setDefaultRegionServices_throwsNotImplementedException() throws Exception {
         delegateCloud20Service.setDefaultRegionServices(null, null);
     }
+
+    @Test
+    public void listEndpointsForToken_callsScopeAccessService_getScopeAccessByAccessToken() throws Exception {
+        delegateCloud20Service.listEndpointsForToken(null, "authToken", "tokenId");
+        verify(scopeAccessService).getScopeAccessByAccessToken("tokenId");
+    }
+
+    @Test
+    public void listEndpointsForToken_isCloudAuthEnabledAndScopeAccessIsNull_callsCloudClient_get() throws Exception {
+        when(scopeAccessService.getScopeAccessByAccessToken("tokenId")).thenReturn(null);
+        when(config.getBoolean("useCloudAuth")).thenReturn(true);
+        when(config.getString("cloudAuth20url")).thenReturn("url/");
+        delegateCloud20Service.listEndpointsForToken(httpHeaders, "authToken", "tokenId");
+        verify(cloudClient).get("url/tokens/tokenId/endpoints", httpHeaders);
+    }
+
+    @Test
+    public void listEndpointsForToken_scopeAccessIsImpersonated_callsScopeAccessService_getScopeAccessByAccessToken() throws Exception {
+        ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
+        impersonatedScopeAccess.setImpersonatingToken("impersonatedToken");
+        when(scopeAccessService.getScopeAccessByAccessToken("tokenId")).thenReturn(impersonatedScopeAccess);
+        when(config.getBoolean("useCloudAuth")).thenReturn(true);
+        when(config.getString("cloudAuth20url")).thenReturn("url/");
+        delegateCloud20Service.listEndpointsForToken(httpHeaders, "authToken", "tokenId");
+        verify(scopeAccessService).getScopeAccessByAccessToken("impersonatedToken");
+    }
+
+    @Test
+    public void listEndpointsForToken_impersonatedScopeAccessIsNull_callsCloudClient_get() throws Exception {
+        ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
+        impersonatedScopeAccess.setImpersonatingToken("impersonatedToken");
+        when(scopeAccessService.getScopeAccessByAccessToken("tokenId")).thenReturn(impersonatedScopeAccess);
+        when(config.getBoolean("useCloudAuth")).thenReturn(true);
+        when(config.getString("cloudAuth20url")).thenReturn("url/");
+        when(scopeAccessService.getScopeAccessByAccessToken("impersonatedToken")).thenReturn(null);
+        delegateCloud20Service.listEndpointsForToken(httpHeaders, "authToken", "tokenId");
+        verify(cloudClient).get("url/tokens/impersonatedToken/endpoints", httpHeaders);
+    }
+
+    @Test
+    public void listEndpointsForToken_impersonatedScopeAccessNotNull_callsDefaultCloud20Service_listEndpointsForToken() throws Exception {
+        ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
+        impersonatedScopeAccess.setImpersonatingToken("impersonatedToken");
+        when(scopeAccessService.getScopeAccessByAccessToken("tokenId")).thenReturn(impersonatedScopeAccess);
+        when(config.getBoolean("useCloudAuth")).thenReturn(false);
+        when(scopeAccessService.getScopeAccessByAccessToken("impersonatedToken")).thenReturn(impersonatedScopeAccess);
+        delegateCloud20Service.listEndpointsForToken(httpHeaders, "authToken", "tokenId");
+        verify(defaultCloud20Service).listEndpointsForToken(httpHeaders, "authToken", "impersonatedToken");
+    }
+
+    @Test
+    public void listEndpointsForToken_scopeAccessNotInstanceOfImpersonated_callsDefaultCloud20Service_listEndpointsForToken() throws Exception {
+        RackerScopeAccess rackerScopeAccess = new RackerScopeAccess();
+        when(scopeAccessService.getScopeAccessByAccessToken("tokenId")).thenReturn(rackerScopeAccess);
+        when(config.getBoolean("useCloudAuth")).thenReturn(true);
+        delegateCloud20Service.listEndpointsForToken(httpHeaders, "authToken", "tokenId");
+        verify(defaultCloud20Service).listEndpointsForToken(httpHeaders, "authToken", "tokenId");
+    }
 }
 

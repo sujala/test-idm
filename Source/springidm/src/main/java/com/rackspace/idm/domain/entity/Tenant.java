@@ -6,7 +6,8 @@ import com.unboundid.ldap.sdk.persist.FilterUsage;
 import com.unboundid.ldap.sdk.persist.LDAPEntryField;
 import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
-import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
+import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -116,7 +117,7 @@ public class Tenant implements Auditable {
     }
 
     public void setBaseUrlIds(String[] baseUrlIds) {
-        this.baseUrlIds = baseUrlIds;
+        this.baseUrlIds = (String[]) ArrayUtils.clone(baseUrlIds);
     }
 
     public void addBaseUrlId(String baseUrlId) {

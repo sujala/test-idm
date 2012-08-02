@@ -6,6 +6,7 @@ import com.unboundid.ldap.sdk.persist.FilterUsage;
 import com.unboundid.ldap.sdk.persist.LDAPEntryField;
 import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
+import org.apache.commons.lang.ArrayUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -90,7 +91,7 @@ public class TenantRole implements Auditable {
     }
 
     public void setTenantIds(String[] tenantIds) {
-        this.tenantIds = tenantIds;
+        this.tenantIds = (String[]) ArrayUtils.clone(tenantIds);
     }
 
     public void addTenantId(String tenantId) {

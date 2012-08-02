@@ -95,7 +95,7 @@ public class Cloud10VersionResource {
 
         if(useCloudAuth() && !userService.isMigratedUser(user)) {
             Response cloudResponse = cloudClient.get(getCloudAuthV10Url(), httpHeaders).build();
-            if (cloudResponse.getStatus() == 204 && user != null) {
+            if (cloudResponse.getStatus() == HttpServletResponse.SC_NO_CONTENT && user != null) {
                 String token = cloudResponse.getMetadata().getFirst("X-Auth-Token").toString();
                 scopeAccessService.updateUserScopeAccessTokenForClientIdByUser(user, getCloudAuthClientId(), token,
                         new DateTime().plusSeconds(getDefaultCloudAuthTokenExpirationSeconds()).toDate());

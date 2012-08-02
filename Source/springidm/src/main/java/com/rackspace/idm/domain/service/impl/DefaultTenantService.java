@@ -10,6 +10,7 @@ import com.rackspace.idm.exception.ClientConflictException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -180,14 +181,12 @@ public class DefaultTenantService implements TenantService {
             // if the user does not have the role then just add the
             // tenant role normally.
             this.tenantDao.addTenantRoleToParent(parentUniqueId, role);
-        } else if (existingRole.getTenantIds() == null || existingRole.getTenantIds().length == 0) {
-            // If the user already has the global role then do nothing
-        } else {
+        } else if (!ArrayUtils.isEmpty(existingRole.getTenantIds())) {
             // If the new role is not global then add the new tenant
             // to the role and update the role, otherwise just update
             // the role and it will delete the existing tenants and
             // make it a global role.
-            if (role.getTenantIds() != null && role.getTenantIds().length > 0) {
+            if (!ArrayUtils.isEmpty(role.getTenantIds())) {
                 for (String tenantId : role.getTenantIds()) {
                     for(String existingId : existingRole.getTenantIds()){
                         if(existingId.equals(tenantId)) { //If role is existing then throw error

@@ -1133,13 +1133,14 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
     @Override
     public List<Application> getOpenStackServices() {
+        final int limit = 400;
 
         Filter searchFilter = new LdapSearchBuilder()
                 .addPresenceAttribute(ATTR_OPENSTACK_TYPE)
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION)
                 .build();
 
-        Applications clients = getMultipleClients(searchFilter, 0, 400);
+        Applications clients = getMultipleClients(searchFilter, 0, limit);
 
         return clients.getClients();
     }

@@ -26,8 +26,8 @@ public class RSAClient {
 			
 			RadiusClient client = new RadiusClient(rsaHost, rsaSecret);
 			return client.authenticate(userID, passCode);
-		} catch (Throwable t) {
-			logger.info("error authentication racker with rsa credentials: {}", t.getMessage());
+		} catch (Exception e) {
+			logger.info("error authentication racker with rsa credentials: {}", e.getMessage());
 			return false;
 		}
 	}
