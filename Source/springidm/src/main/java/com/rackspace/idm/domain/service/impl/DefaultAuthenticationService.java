@@ -30,6 +30,7 @@ import static com.rackspace.idm.domain.entity.OAuthGrantType.*;
 
 public class DefaultAuthenticationService implements AuthenticationService {
 
+    public static final int YEARS = 100;
     private final ApplicationDao clientDao;
     private final TenantService tenantService;
     private final ScopeAccessService scopeAccessService;
@@ -366,7 +367,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
 
         if (refreshExpiration.isBefore(current)) {
             scopeAccess.setRefreshTokenString(this.generateToken());
-            scopeAccess.setRefreshTokenExp(current.plusYears(100).toDate());
+            scopeAccess.setRefreshTokenExp(current.plusYears(YEARS).toDate());
         }
 
         logger.debug("Updating Expirations for User: {} and ClientId: {}", user.getUsername(), client.getClientId());
@@ -459,7 +460,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
 
         if (refreshExpiration.isBefore(current)) {
             scopeAccess.setRefreshTokenString(this.generateToken());
-            scopeAccess.setRefreshTokenExp(current.plusYears(100).toDate());
+            scopeAccess.setRefreshTokenExp(current.plusYears(YEARS).toDate());
         }
 
         logger.debug("Updating Expirations for Racker: {} and ClientId: {}", racker.getRackerId(), client.getClientId());

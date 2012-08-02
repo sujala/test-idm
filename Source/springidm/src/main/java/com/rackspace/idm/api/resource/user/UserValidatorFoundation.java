@@ -10,6 +10,7 @@ import org.apache.ws.commons.util.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.HashMap;
@@ -57,14 +58,14 @@ public class UserValidatorFoundation {
             String uri = config.getString("cloudAuth11url") + "users/" + username;
             Response.ResponseBuilder cloudAuthUSResponse = cloudClient.get(uri, httpHeaders);
             int status = cloudAuthUSResponse.build().getStatus();
-            if (status == 200) {
+            if (status == HttpServletResponse.SC_OK) {
                 throw new DuplicateUsernameException(String.format("Username %s already exists", username));
             }
             //search for user in UK Cloud Auth
             String ukUri = config.getString("cloudAuthUK11url") + "users/" + username;
             Response.ResponseBuilder cloudAuthUKResponse = cloudClient.get(ukUri, httpHeaders);
             status = cloudAuthUKResponse.build().getStatus();
-            if (status == 200) {
+            if (status == HttpServletResponse.SC_OK) {
                 throw new DuplicateUsernameException(String.format("Username %s already exists", username));
             }
         }

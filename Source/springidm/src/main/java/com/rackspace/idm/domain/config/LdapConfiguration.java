@@ -24,6 +24,7 @@ public class LdapConfiguration {
     private static final int SERVER_POOL_SIZE_INIT = 1;
     private static final int SERVER_POOL_SIZE_MAX = 100;
     private static final String CONNECT_ERROR_STRING = "Could not connect/bind to the LDAP server instance. Make sure that the LDAP server is available and that the bind credential is correct.";
+    public static final int PORT = 389;
 
     @Autowired
     private Configuration config;
@@ -61,7 +62,7 @@ public class LdapConfiguration {
                 hosts = (String[]) ArrayUtils.add(hosts, parts[0]);
                 // default LDAP port is 636
                 int port = parts.length > 1 && StringUtils.isNotBlank(parts[1]) ? Integer.valueOf(parts[1]) : DEFAULT_SERVER_PORT;
-                if(port != 389 && config.getBoolean("ldap.server.useSSL")) {
+                if(port != PORT && config.getBoolean("ldap.server.useSSL")) {
                 	isSSL = true;
                 }
                 ports = ArrayUtils.add(ports, port);

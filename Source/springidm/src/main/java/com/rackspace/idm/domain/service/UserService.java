@@ -1,8 +1,6 @@
 package com.rackspace.idm.domain.service;
 
 import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.exception.DuplicateException;
-import com.rackspace.idm.exception.IdmException;
 
 import java.util.List;
 
