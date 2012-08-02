@@ -443,9 +443,9 @@ public class JSONWriter implements MessageBodyWriter<Object> {
                 jtype.put("type", mt.getType());
                 typeArray.add(jtype);
             }
-            JSONObject type_values = new JSONObject();
-            type_values.put("values", typeArray);
-            inner.put("media-types", type_values);
+            JSONObject typeValues = new JSONObject();
+            typeValues.put("values", typeArray);
+            inner.put("media-types", typeValues);
         }
         return outer;
 

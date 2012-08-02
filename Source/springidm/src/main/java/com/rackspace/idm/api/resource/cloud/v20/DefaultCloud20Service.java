@@ -131,7 +131,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Autowired
     private DefaultRegionService defaultRegionService;
 
-    com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
+    private com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
 
     private Map<String, JAXBElement<Extension>> extensionMap;
 

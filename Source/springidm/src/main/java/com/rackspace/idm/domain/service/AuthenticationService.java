@@ -5,7 +5,7 @@ import com.rackspace.idm.domain.entity.Credentials;
 
 public interface AuthenticationService {
     
-	static final String AUTH_TOKEN_HEADER = "X-Auth-Token";
+	final String AUTH_TOKEN_HEADER = "X-Auth-Token";
 	
     AuthData authenticate(Credentials credentials);
     
