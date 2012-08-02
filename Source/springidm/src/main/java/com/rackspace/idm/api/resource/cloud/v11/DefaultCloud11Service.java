@@ -1081,53 +1081,24 @@ public class DefaultCloud11Service implements Cloud11Service {
         User user = null;
         UserScopeAccess usa = null;
 
-        credentialValidator.validateCredential(cred.getValue());
+        credentialValidator.validateCredential(cred.getValue(), userService);
         try {
             if (cred.getValue() instanceof MossoCredentials) {
                 MossoCredentials mossoCreds = (MossoCredentials) cred.getValue();
                 int mossoId = mossoCreds.getMossoId();
                 String apiKey = mossoCreds.getKey();
-                if (StringUtils.isEmpty(apiKey)) {
-                    return cloudExceptionResponse.badRequestExceptionResponse("Expecting apiKey");
-                }
                 user = this.userService.getUserByMossoId(mossoId);
-                if (user == null) {
-                    return cloudExceptionResponse.notFoundExceptionResponse(String.format("User with MossoId %s not found", mossoId));
-                }
-                if (user.isDisabled()) {
-                    throw new UserDisabledException(user.getMossoId().toString());
-                }
                 usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(user.getUsername(), apiKey, getCloudAuthClientId());
             } else if (cred.getValue() instanceof NastCredentials) {
                 NastCredentials nastCreds = (NastCredentials) cred.getValue();
                 String nastId = nastCreds.getNastId();
                 String apiKey = nastCreds.getKey();
                 user = this.userService.getUserByNastId(nastId);
-                if (user == null) {
-                    return cloudExceptionResponse.notFoundExceptionResponse(String.format("User with NastId %s not found", nastId));
-                }
-                if (user.isDisabled()) {
-                    throw new UserDisabledException(user.getNastId());
-                }
                 usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(user.getUsername(), apiKey, getCloudAuthClientId());
             } else {
                 PasswordCredentials passCreds = (PasswordCredentials) cred.getValue();
                 String username = passCreds.getUsername();
                 String password = passCreds.getPassword();
-                if (StringUtils.isBlank(password)) {
-                    return cloudExceptionResponse.badRequestExceptionResponse("Expecting password");
-                }
-                if (StringUtils.isBlank(username)) {
-                    return cloudExceptionResponse.badRequestExceptionResponse(EXPECTING_USERNAME);
-                }
-                user = this.userService.getUser(username);
-                if (user == null) {
-                    String errMsg = "User account exists externally, but not in the AUTH database.";
-                    throw new NotAuthorizedException(errMsg);
-                }
-                if (user.isDisabled()) {
-                    throw new UserDisabledException("User " + username + " is not enabled.");
-                }
                 usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(username, password, getCloudAuthClientId());
             }
             List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
@@ -1178,48 +1149,27 @@ public class DefaultCloud11Service implements Cloud11Service {
             User user = null;
             UserScopeAccess usa = null;
             String cloudAuthClientId = getCloudAuthClientId();
-            credentialValidator.validateCredential(value);
+            credentialValidator.validateCredential(value, userService);
             if (value instanceof UserCredentials) {
                 UserCredentials userCreds = (UserCredentials) value;
                 username = userCreds.getUsername();
                 String apiKey = userCreds.getKey();
-                if (StringUtils.isBlank(apiKey)) {
-                    return cloudExceptionResponse.badRequestExceptionResponse("Expecting apiKey");
-                }
-                if (StringUtils.isBlank(username)) {
-                    return cloudExceptionResponse.badRequestExceptionResponse(EXPECTING_USERNAME);
-                }
                 user = userService.getUser(username);
                 usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(username, apiKey, cloudAuthClientId);
             } else if (value instanceof PasswordCredentials) {
                 username = ((PasswordCredentials) value).getUsername();
                 String password = ((PasswordCredentials) value).getPassword();
-                if (StringUtils.isBlank(password)) {
-                    return cloudExceptionResponse.badRequestExceptionResponse("Expecting password");
-                }
-                if (StringUtils.isBlank(username)) {
-                    return cloudExceptionResponse.badRequestExceptionResponse(EXPECTING_USERNAME);
-                }
                 user = userService.getUser(username);
                 usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(username, password, cloudAuthClientId);
             } else if (value instanceof MossoCredentials) {
                 int mossoId = ((MossoCredentials) value).getMossoId();
                 String key = ((MossoCredentials) value).getKey();
                 user = userService.getUserByMossoId(mossoId);
-                if (user == null) {
-                    throw new NotAuthenticatedException("MossoId or api key is invalid.");
-                }
                 usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(user.getUsername(), key, cloudAuthClientId);
             } else if (value instanceof NastCredentials) {
                 String nastId = ((NastCredentials) value).getNastId();
                 String key = ((NastCredentials) value).getKey();
-                if (StringUtils.isBlank(nastId)) {
-                    return cloudExceptionResponse.badRequestExceptionResponse("Expecting nast id");
-                }
                 user = userService.getUserByNastId(nastId);
-                if (user == null) {
-                    throw new NotAuthenticatedException("NastId or api key is invalid.");
-                }
                 usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(user.getUsername(), key, cloudAuthClientId);
             }
 

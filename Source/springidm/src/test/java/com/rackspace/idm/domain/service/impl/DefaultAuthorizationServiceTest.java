@@ -9,6 +9,7 @@ import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.exception.ForbiddenException;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -939,6 +940,186 @@ public class DefaultAuthorizationServiceTest {
     }
 
     @Test
+    public void verifyUserLevelAccess_scopeAccessHasAllRoles_doesNotThrowException() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(true).when(spy).authorizeCloudIdentityAdmin(scopeAccess);
+        doReturn(true).when(spy).authorizeCloudServiceAdmin(scopeAccess);
+        doReturn(true).when(spy).authorizeCloudUserAdmin(scopeAccess);
+        doReturn(true).when(spy).authorizeCloudUser(scopeAccess);
+        spy.verifyUserLevelAccess(scopeAccess);
+        Assert.assertTrue("no exceptions", true);
+    }
+
+    @Test
+    public void verifyUserLevelAccess_scopeAccessNotCloudUser_doesNotThrowException() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(true).when(spy).authorizeCloudIdentityAdmin(scopeAccess);
+        doReturn(true).when(spy).authorizeCloudServiceAdmin(scopeAccess);
+        doReturn(true).when(spy).authorizeCloudUserAdmin(scopeAccess);
+        doReturn(false).when(spy).authorizeCloudUser(scopeAccess);
+        spy.verifyUserLevelAccess(scopeAccess);
+        Assert.assertTrue("no exceptions", true);
+    }
+
+    @Test
+    public void verifyUserLevelAccess_scopeAccessNotUserAdmin_doesNotThrowException() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(true).when(spy).authorizeCloudIdentityAdmin(scopeAccess);
+        doReturn(true).when(spy).authorizeCloudServiceAdmin(scopeAccess);
+        doReturn(false).when(spy).authorizeCloudUserAdmin(scopeAccess);
+        doReturn(true).when(spy).authorizeCloudUser(scopeAccess);
+        spy.verifyUserLevelAccess(scopeAccess);
+        Assert.assertTrue("no exceptions", true);
+    }
+
+    @Test
+    public void verifyUserLevelAccess_scopeAccessNotUserAdminOrUser_doesNotThrowException() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(true).when(spy).authorizeCloudIdentityAdmin(scopeAccess);
+        doReturn(true).when(spy).authorizeCloudServiceAdmin(scopeAccess);
+        doReturn(false).when(spy).authorizeCloudUserAdmin(scopeAccess);
+        doReturn(false).when(spy).authorizeCloudUser(scopeAccess);
+        spy.verifyUserLevelAccess(scopeAccess);
+        Assert.assertTrue("no exceptions", true);
+    }
+
+    @Test
+    public void verifyUserLevelAccess_scopeAccessNotServiceAdmin_doesNotThrowException() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(true).when(spy).authorizeCloudIdentityAdmin(scopeAccess);
+        doReturn(false).when(spy).authorizeCloudServiceAdmin(scopeAccess);
+        doReturn(true).when(spy).authorizeCloudUserAdmin(scopeAccess);
+        doReturn(true).when(spy).authorizeCloudUser(scopeAccess);
+        spy.verifyUserLevelAccess(scopeAccess);
+        Assert.assertTrue("no exceptions", true);
+    }
+
+    @Test
+    public void verifyUserLevelAccess_scopeAccessNotServiceAdminOrUser_doesNotThrowException() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(true).when(spy).authorizeCloudIdentityAdmin(scopeAccess);
+        doReturn(false).when(spy).authorizeCloudServiceAdmin(scopeAccess);
+        doReturn(true).when(spy).authorizeCloudUserAdmin(scopeAccess);
+        doReturn(false).when(spy).authorizeCloudUser(scopeAccess);
+        spy.verifyUserLevelAccess(scopeAccess);
+        Assert.assertTrue("no exceptions", true);
+    }
+
+    @Test
+    public void verifyUserLevelAccess_scopeAccessNotServiceAdminOrUserAdmin_doesNotThrowException() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(true).when(spy).authorizeCloudIdentityAdmin(scopeAccess);
+        doReturn(false).when(spy).authorizeCloudServiceAdmin(scopeAccess);
+        doReturn(false).when(spy).authorizeCloudUserAdmin(scopeAccess);
+        doReturn(true).when(spy).authorizeCloudUser(scopeAccess);
+        spy.verifyUserLevelAccess(scopeAccess);
+        Assert.assertTrue("no exceptions", true);
+    }
+
+    @Test
+    public void verifyUserLevelAccess_scopeAccessIsIdentityAdmin_doesNotThrowException() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(true).when(spy).authorizeCloudIdentityAdmin(scopeAccess);
+        doReturn(false).when(spy).authorizeCloudServiceAdmin(scopeAccess);
+        doReturn(false).when(spy).authorizeCloudUserAdmin(scopeAccess);
+        doReturn(false).when(spy).authorizeCloudUser(scopeAccess);
+        spy.verifyUserLevelAccess(scopeAccess);
+        Assert.assertTrue("no exceptions", true);
+    }
+
+    @Test
+    public void verifyUserLevelAccess_scopeAccessNotIdentityAdmin_doesNotThrowException() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(false).when(spy).authorizeCloudIdentityAdmin(scopeAccess);
+        doReturn(true).when(spy).authorizeCloudServiceAdmin(scopeAccess);
+        doReturn(true).when(spy).authorizeCloudUserAdmin(scopeAccess);
+        doReturn(true).when(spy).authorizeCloudUser(scopeAccess);
+        spy.verifyUserLevelAccess(scopeAccess);
+        Assert.assertTrue("no exceptions", true);
+    }
+
+    @Test
+    public void verifyUserLevelAccess_scopeAccessNotIdentityAdminOrUser_doesNotThrowException() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(false).when(spy).authorizeCloudIdentityAdmin(scopeAccess);
+        doReturn(true).when(spy).authorizeCloudServiceAdmin(scopeAccess);
+        doReturn(true).when(spy).authorizeCloudUserAdmin(scopeAccess);
+        doReturn(false).when(spy).authorizeCloudUser(scopeAccess);
+        spy.verifyUserLevelAccess(scopeAccess);
+        Assert.assertTrue("no exceptions", true);
+    }
+
+    @Test
+    public void verifyUserLevelAccess_scopeAccessNotIdentityAdminOrUserAdmin_doesNotThrowException() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(false).when(spy).authorizeCloudIdentityAdmin(scopeAccess);
+        doReturn(true).when(spy).authorizeCloudServiceAdmin(scopeAccess);
+        doReturn(false).when(spy).authorizeCloudUserAdmin(scopeAccess);
+        doReturn(true).when(spy).authorizeCloudUser(scopeAccess);
+        spy.verifyUserLevelAccess(scopeAccess);
+        Assert.assertTrue("no exceptions", true);
+    }
+
+    @Test
+    public void verifyUserLevelAccess_scopeAccessIsServiceAdmin_doesNotThrowException() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(false).when(spy).authorizeCloudIdentityAdmin(scopeAccess);
+        doReturn(true).when(spy).authorizeCloudServiceAdmin(scopeAccess);
+        doReturn(false).when(spy).authorizeCloudUserAdmin(scopeAccess);
+        doReturn(false).when(spy).authorizeCloudUser(scopeAccess);
+        spy.verifyUserLevelAccess(scopeAccess);
+        Assert.assertTrue("no exceptions", true);
+    }
+
+    @Test
+    public void verifyUserLevelAccess_scopeAccessIsUserAdminAndUser_doesNotThrowException() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(false).when(spy).authorizeCloudIdentityAdmin(scopeAccess);
+        doReturn(false).when(spy).authorizeCloudServiceAdmin(scopeAccess);
+        doReturn(true).when(spy).authorizeCloudUserAdmin(scopeAccess);
+        doReturn(true).when(spy).authorizeCloudUser(scopeAccess);
+        spy.verifyUserLevelAccess(scopeAccess);
+        Assert.assertTrue("no exceptions", true);
+    }
+
+    @Test
+    public void verifyUserLevelAccess_scopeAccessIsUserAdmin_doesNotThrowException() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(false).when(spy).authorizeCloudIdentityAdmin(scopeAccess);
+        doReturn(false).when(spy).authorizeCloudServiceAdmin(scopeAccess);
+        doReturn(true).when(spy).authorizeCloudUserAdmin(scopeAccess);
+        doReturn(false).when(spy).authorizeCloudUser(scopeAccess);
+        spy.verifyUserLevelAccess(scopeAccess);
+        Assert.assertTrue("no exceptions", true);
+    }
+
+    @Test
+    public void verifyUserLevelAccess_scopeAccessIsUser_doesNotThrowException() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(false).when(spy).authorizeCloudIdentityAdmin(scopeAccess);
+        doReturn(false).when(spy).authorizeCloudServiceAdmin(scopeAccess);
+        doReturn(false).when(spy).authorizeCloudUserAdmin(scopeAccess);
+        doReturn(true).when(spy).authorizeCloudUser(scopeAccess);
+        spy.verifyUserLevelAccess(scopeAccess);
+        Assert.assertTrue("no exceptions", true);
+    }
+
+    @Test
+    public void verifyUserLevelAccess_notValidUserLevelAccess_throwsForbidden() throws Exception {
+        try{
+            ScopeAccess scopeAccess = new ScopeAccess();
+            doReturn(false).when(spy).authorizeCloudIdentityAdmin(scopeAccess);
+            doReturn(false).when(spy).authorizeCloudServiceAdmin(scopeAccess);
+            doReturn(false).when(spy).authorizeCloudUserAdmin(scopeAccess);
+            doReturn(false).when(spy).authorizeCloudUser(scopeAccess);
+            spy.verifyUserLevelAccess(scopeAccess);
+            assertTrue("should throw exception",false);
+        } catch (ForbiddenException ex){
+            assertThat("exception message",ex.getMessage(),equalTo("Not authorized."));
+        }
+    }
+
+    @Test
     public void verifyTokenHasTenantAccess_isIdentityAdminAndServiceAdmin_succeeds() throws Exception {
         ScopeAccess scopeAccess = new UserScopeAccess();
         doReturn(true).when(spy).authorizeCloudIdentityAdmin(scopeAccess);
@@ -991,7 +1172,6 @@ public class DefaultAuthorizationServiceTest {
         } catch (ForbiddenException ex){
             assertThat("exception message",ex.getMessage(),equalTo("Not authorized."));
         }
-
     }
 
     @Test
@@ -1007,6 +1187,54 @@ public class DefaultAuthorizationServiceTest {
         } catch (ForbiddenException ex){
             assertThat("exception message",ex.getMessage(),equalTo("Not authorized."));
         }
+    }
+
+    @Test
+    public void verifyDomain_domainIdIsNull_throwsForbiddenException() throws Exception {
+        try{
+            User caller = new User();
+            User retrievedUser = new User();
+            retrievedUser.setDomainId("domainId");
+            defaultAuthorizationService.verifyDomain(retrievedUser, caller);
+            assertTrue("should throw exception", false);
+        } catch (ForbiddenException ex){
+            assertThat("exception message", ex.getMessage(),equalTo("Not authorized."));
+        }
+    }
+
+    @Test
+    public void verifyDomain_domainIdsAreNull_throwsForbiddenException() throws Exception {
+        try{
+            User caller = new User();
+            User retrievedUser = new User();
+            defaultAuthorizationService.verifyDomain(retrievedUser, caller);
+            assertTrue("should throw exception", false);
+        } catch (ForbiddenException ex){
+            assertThat("exception message", ex.getMessage(),equalTo("Not authorized."));
+        }
+    }
+
+    @Test
+    public void verifyDomain_callerDomainIdNotMatchRetrievedUserDomainId_throwsForbiddenException() throws Exception {
+        try{
+            User caller = new User();
+            caller.setDomainId("notSame");
+            User retrievedUser = new User();
+            retrievedUser.setDomainId("domainId");
+            defaultAuthorizationService.verifyDomain(retrievedUser, caller);
+            assertTrue("should throw exception",false);
+        }catch (ForbiddenException ex){
+            assertThat("exception message",ex.getMessage(),equalTo("Not authorized."));
+        }
+    }
+
+    @Test
+    public void verifyDomain_sameDomainId_success() throws Exception {
+        User caller = new User();
+        caller.setDomainId("domainId");
+        User retrievedUser = new User();
+        retrievedUser.setDomainId("domainId");
+        spy.verifyDomain(retrievedUser, caller);
     }
 
     @Test
