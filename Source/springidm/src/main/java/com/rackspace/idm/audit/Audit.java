@@ -99,19 +99,19 @@ public class Audit {
 	}
 
 	// these attributes will be obfuscated
-	private static final List<String> secrets;
+	private static final List<String> SECRETS;
 	static {
 		List<String> temp = new ArrayList<String>();
 		temp.add(LdapRepository.ATTR_PASSWORD);
 		temp.add(LdapRepository.ATTR_CLEAR_PASSWORD);
 		temp.add(LdapRepository.ATTR_RACKSPACE_API_KEY);
-		secrets = Collections.unmodifiableList(temp);
+		SECRETS = Collections.unmodifiableList(temp);
 	}
 
 	public Audit modify(List<Modification> mods) {
 		// obfuscate our secret attributes
 		for (Modification mod : mods) {
-			if (secrets.contains(mod.getAttributeName())) {
+			if (SECRETS.contains(mod.getAttributeName())) {
 				mod = new Modification(mod.getModificationType(),
 						mod.getAttributeName(), "*****");
 			}
