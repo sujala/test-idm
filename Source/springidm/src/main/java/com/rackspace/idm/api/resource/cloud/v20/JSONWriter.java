@@ -600,10 +600,8 @@ public class JSONWriter implements MessageBodyWriter<Object> {
         outer.put(JSONConstants.USERNAME, user.getUsername());
         outer.put(JSONConstants.EMAIL, user.getEmail());
         outer.put(JSONConstants.ENABLED, user.isEnabled());
-        if (user instanceof UserForCreate) {
-            if (((UserForCreate) user).getPassword() != null) {
-                outer.put(JSONConstants.OS_KSADM_PASSWORD, ((UserForCreate) user).getPassword());
-            }
+        if (user instanceof UserForCreate && ((UserForCreate) user).getPassword() != null) {
+            outer.put(JSONConstants.OS_KSADM_PASSWORD, ((UserForCreate) user).getPassword());
         }
         if (user.getCreated() != null) {
             outer.put(JSONConstants.CREATED, user.getCreated().toString());

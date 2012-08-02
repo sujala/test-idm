@@ -225,11 +225,9 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
         // check token is valid and not expired
         final ScopeAccess scopeAccess = this.scopeAccessDao.getScopeAccessByAccessToken(accessTokenStr);
-        if (scopeAccess instanceof HasAccessToken) {
-            if (!((HasAccessToken) scopeAccess).isAccessTokenExpired(new DateTime())) {
-                authenticated = true;
-                MDC.put(Audit.WHO, scopeAccess.getAuditContext());
-            }
+        if (scopeAccess instanceof HasAccessToken && !((HasAccessToken) scopeAccess).isAccessTokenExpired(new DateTime())) {
+            authenticated = true;
+            MDC.put(Audit.WHO, scopeAccess.getAuditContext());
         }
 
         logger.debug("Authorized Token: {} : {}", accessTokenStr, authenticated);

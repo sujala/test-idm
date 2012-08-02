@@ -131,14 +131,14 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
         }
 
         String newEndpoint = def ? "+" : "-";
-        newEndpoint = newEndpoint + String.valueOf(baseUrlId);
+        newEndpoint = newEndpoint + baseUrlId;
 
         EndPoints oldEndpoints = this.getRawEndpointsForUser(username);
 
         List<String> endpoints = new ArrayList<String>();
 
         for (String s : oldEndpoints.getEndpoints()) {
-            if (s.equals("-" + String.valueOf(baseUrlId)) || s.equals("+" + String.valueOf(baseUrlId))) {
+            if (s.equals("-" + baseUrlId) || s.equals("+" + baseUrlId)) {
                 throw new BaseUrlConflictException("Attempt to add existing BaseURL!");
             }
             endpoints.add(s);
