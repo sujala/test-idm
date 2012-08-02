@@ -26,18 +26,37 @@ public class CloudAuthServiceCatalogFactory {
     static void processService(ServiceCatalog serviceCatalog, OpenstackEndpoint openstackEndPoint) {
         if(openstackEndPoint.getBaseUrls() != null) {
             for (CloudBaseUrl baseUrl : openstackEndPoint.getBaseUrls()) {
-                Service service = new Service();
-                service.setName(baseUrl.getServiceName());
-                Endpoint endpoint = new Endpoint();
-                endpoint.setAdminURL(baseUrl.getAdminUrl());
-                endpoint.setInternalURL(baseUrl.getInternalUrl());
-                endpoint.setPublicURL(baseUrl.getPublicUrl());
-                endpoint.setRegion(baseUrl.getRegion());
-                endpoint.setV1Default(baseUrl.getDef());
-                service.getEndpoint().add(endpoint);
-                serviceCatalog.getService().add(service);
+            	Service service = getServiceFromName(serviceCatalog, baseUrl.getServiceName());
+            	
+            	if (service != null) {
+	                addEndpoint(service, baseUrl);
+            	} else {
+	                service = new Service();
+	                service.setName(baseUrl.getServiceName());
+	                addEndpoint(service, baseUrl);
+	                serviceCatalog.getService().add(service);
+            	}
             }
         }
+    }
+
+	private static void addEndpoint(Service service, CloudBaseUrl baseUrl) {
+		Endpoint endpoint = new Endpoint();
+		endpoint.setAdminURL(baseUrl.getAdminUrl());
+		endpoint.setInternalURL(baseUrl.getInternalUrl());
+		endpoint.setPublicURL(baseUrl.getPublicUrl());
+		endpoint.setRegion(baseUrl.getRegion());
+		endpoint.setV1Default(baseUrl.getDef());
+		service.getEndpoint().add(endpoint);
+	}
+    
+    static Service getServiceFromName(ServiceCatalog serviceCatalog, String name) {
+    	for(Service service : serviceCatalog.getService()) {
+    		if (name.equalsIgnoreCase(service.getName())) {
+    			return service;
+    		}
+    	}
+    	return null;
     }
 
 }
