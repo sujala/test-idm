@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.MediaType;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -40,6 +41,10 @@ import java.security.cert.X509Certificate;
 @Component
 public class AtomHopperClient {
 
+    public static final int PORT80 = 80;
+    public static final int PORT443 = 443;
+    public static final int MAX_TOTAL_CONNECTION = 200;
+    public static final int DEFAULT_MAX_PER_ROUTE = 200;
     @Autowired
     private Configuration config;
 
@@ -58,15 +63,15 @@ public class AtomHopperClient {
             });
             SchemeRegistry schemeRegistry = new SchemeRegistry();
             schemeRegistry.register(
-                    new Scheme("http", 80, PlainSocketFactory.getSocketFactory()));
+                    new Scheme("http", PORT80, PlainSocketFactory.getSocketFactory()));
             schemeRegistry.register(
-                    new Scheme("https", 443, sslsf));
+                    new Scheme("https", PORT443, sslsf));
 
             PoolingClientConnectionManager cm = new PoolingClientConnectionManager(schemeRegistry);
 // Increase max total connection to 200
-            cm.setMaxTotal(200);
+            cm.setMaxTotal(MAX_TOTAL_CONNECTION);
 // Increase default max connection per route to 20
-            cm.setDefaultMaxPerRoute(200);
+            cm.setDefaultMaxPerRoute(DEFAULT_MAX_PER_ROUTE);
 
             httpClient = new DefaultHttpClient(cm);
         } catch (Exception e) {
@@ -110,7 +115,7 @@ public class AtomHopperClient {
             } else {
                 response = null;
             }
-            if (response.getStatusLine().getStatusCode() != 201) {
+            if (response.getStatusLine().getStatusCode() != HttpServletResponse.SC_CREATED) {
                 logger.warn("Failed to create feed for user: " + user.getUsername() + "with Id:" + user.getId());
             }
 
@@ -131,7 +136,7 @@ public class AtomHopperClient {
             } else {
                 response = null;
             }
-            if (response.getStatusLine().getStatusCode() != 201) {
+            if (response.getStatusLine().getStatusCode() != HttpServletResponse.SC_CREATED) {
                 logger.warn("Failed to create feed for user: " + user.getUsername() + "with Id:" + user.getId());
             }
 

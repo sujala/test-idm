@@ -93,7 +93,7 @@ public class TenantsResource extends ParentResource {
         if(tenant == null) {
             String errMsg = String.format("Tenant with id/name: '%s' was not found.", tenantId);
             logger.warn(errMsg);
-            throw new WebApplicationException(new NotFoundException(errMsg), 404);
+            throw new WebApplicationException(new NotFoundException(errMsg), HttpServletResponse.SC_NOT_FOUND);
         }
 
         return Response.ok(objectFactory.createTenant(tenantConverter.toTenant(tenant))).build();
@@ -160,11 +160,11 @@ public class TenantsResource extends ParentResource {
                 id == null || id.length() == 0) {
 
                 String errMsg = String.format("Invalid Tenant id/name: '%s'.", tenantId);
-                throw new WebApplicationException(new BadRequestException(errMsg), 404);
+                throw new WebApplicationException(new BadRequestException(errMsg), HttpServletResponse.SC_NOT_FOUND);
             }
         } else {
             String errMsg = String.format("Invalid Tenant id/name: '%s'.", tenantId);
-            throw new WebApplicationException(new BadRequestException(errMsg), 404);
+            throw new WebApplicationException(new BadRequestException(errMsg), HttpServletResponse.SC_NOT_FOUND);
         }
 	}
 

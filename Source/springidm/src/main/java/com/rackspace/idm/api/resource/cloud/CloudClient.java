@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -77,8 +78,8 @@ public class CloudClient {
         client.getParams().setParameter(ClientPNames.HANDLE_REDIRECTS, false);
 
         String responseBody = null;
-        int statusCode = 500;
-        HttpResponse response = new BasicHttpResponse(request.getProtocolVersion(), 500, "Unable To connect to Auth Service");
+        int statusCode = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
+        HttpResponse response = new BasicHttpResponse(request.getProtocolVersion(), statusCode, "Unable To connect to Auth Service");
         try {
             response = client.execute(request);
             statusCode = response.getStatusLine().getStatusCode();
@@ -91,7 +92,7 @@ public class CloudClient {
         }
 
         // Catch 301 - MOVED_PERMANENTLY
-        if (statusCode == 301) {
+        if (statusCode == HttpServletResponse.SC_MOVED_PERMANENTLY) {
             //Quick Fix: not best way to pass the body
             return handleRedirect(response, responseBody);
         }
@@ -104,7 +105,7 @@ public class CloudClient {
                 responseBuilder = responseBuilder.header(key, header.getValue());
             }
         }
-        if (statusCode == 500) {
+        if (statusCode == HttpServletResponse.SC_INTERNAL_SERVER_ERROR) {
             logger.info("Cloud Auth returned a 500 status code.");
         }
         responseBuilder.header("response-source", "cloud-auth");
