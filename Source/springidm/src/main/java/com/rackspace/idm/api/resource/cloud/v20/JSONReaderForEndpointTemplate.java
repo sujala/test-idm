@@ -38,7 +38,7 @@ MessageBodyReader<EndpointTemplate> {
     public EndpointTemplate readFrom(Class<EndpointTemplate> type,
         Type genericType, Annotation[] annotations, MediaType mediaType,
         MultivaluedMap<String, String> httpHeaders, InputStream inputStream)
-        throws IOException, WebApplicationException {
+        throws IOException {
 
         String jsonBody = IOUtils.toString(inputStream, JSONConstants.UTF_8);
 

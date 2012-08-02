@@ -73,7 +73,7 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public void addUser(User user) throws DuplicateException {
+    public void addUser(User user) {
         logger.info("Adding User: {}", user);
 
         validateUserEmailAddress(user);

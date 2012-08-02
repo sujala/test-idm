@@ -100,7 +100,7 @@ public class XMLReader implements MessageBodyReader<Object> {
     }
 
     @Override
-    public Object readFrom(Class<Object> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream) throws IOException, WebApplicationException {
+    public Object readFrom(Class<Object> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream) throws IOException {
         try {
             StringWriter writer = new StringWriter();
             IOUtils.copy(entityStream, writer);

@@ -592,22 +592,21 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().info("Removed users from clientGroup {}", group);
     }
     
-    void throwIfEmptyOldUser(User oldUser, User user)
-        throws IllegalArgumentException {
+    void throwIfEmptyOldUser(User oldUser, User user) {
         if (oldUser == null) {
             getLogger().error("No record found for user {}", user.getUsername());
             throw new IllegalArgumentException("There is no exisiting record for the given User instance. Has the userName been changed?");
         }
     }
 
-    void throwIfEmptyUsername(User user) throws IllegalArgumentException {
+    void throwIfEmptyUsername(User user) {
         if (user == null || StringUtils.isBlank(user.getUsername())) {
             getLogger().error("User instance is null or its userName has no value");
             throw new BadRequestException("Bad parameter: The User is null or has a blank Username");
         }
     }
 
-    void throwIfStalePassword(LDAPException ldapEx, Audit audit) throws StalePasswordException {
+    void throwIfStalePassword(LDAPException ldapEx, Audit audit) {
         if (ResultCode.CONSTRAINT_VIOLATION.equals(ldapEx.getResultCode())
             && STALE_PASSWORD_MESSAGE.equals(ldapEx.getMessage())) {
             audit.fail(STALE_PASSWORD_MESSAGE);

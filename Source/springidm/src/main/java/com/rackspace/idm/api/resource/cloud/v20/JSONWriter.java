@@ -119,7 +119,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
     @Override
     public void writeTo(Object object, Class<?> type, Type genericType, Annotation[] annotations,
                         MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream outputStream)
-            throws IOException, WebApplicationException {
+            throws IOException {
         String jsonText = "";
         if (object.getClass().equals(Extension.class)) {
             Extension extension = (Extension) object;

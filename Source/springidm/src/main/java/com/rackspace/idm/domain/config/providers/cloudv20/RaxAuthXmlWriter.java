@@ -104,7 +104,7 @@ public class RaxAuthXmlWriter extends NamespacePrefixMapper implements
     }
 
     @Override
-    public void writeTo(Object o, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
+    public void writeTo(Object o, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException {
         //To change body of implemented methods use File | Settings | File Templates.
         try {
             Marshaller m = getContext().createMarshaller();
