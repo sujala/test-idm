@@ -36,7 +36,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     private final ApplicationDao clientDao;
     private final Configuration config;
 
-    final private Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final ScopeAccessDao scopeAccessDao;
     private final UserDao userDao;
     private final TenantDao tenantDao;
@@ -225,11 +225,9 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
         // check token is valid and not expired
         final ScopeAccess scopeAccess = this.scopeAccessDao.getScopeAccessByAccessToken(accessTokenStr);
-        if (scopeAccess instanceof HasAccessToken) {
-            if (!((HasAccessToken) scopeAccess).isAccessTokenExpired(new DateTime())) {
-                authenticated = true;
-                MDC.put(Audit.WHO, scopeAccess.getAuditContext());
-            }
+        if (scopeAccess instanceof HasAccessToken && !((HasAccessToken) scopeAccess).isAccessTokenExpired(new DateTime())) {
+            authenticated = true;
+            MDC.put(Audit.WHO, scopeAccess.getAuditContext());
         }
 
         logger.debug("Authorized Token: {} : {}", accessTokenStr, authenticated);
@@ -669,8 +667,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         ScopeAccess scopeAccess = scopeAccessDao
                 .getScopeAccessByRefreshToken(accessToken);
 
-        if (scopeAccess == null
-                || !(scopeAccess instanceof DelegatedClientScopeAccess)) {
+        if (!(scopeAccess instanceof DelegatedClientScopeAccess)) {
             return null;
         }
 

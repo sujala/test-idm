@@ -1,6 +1,8 @@
 package com.rackspace.idm;
 
-public class JSONConstants {
+public final class JSONConstants {
+
+    private JSONConstants() {}
 
     public static final String ACCESS = "access";
     public static final String ADMIN_URL = "adminURL";

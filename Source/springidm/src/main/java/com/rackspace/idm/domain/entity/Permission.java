@@ -22,9 +22,6 @@ public class Permission implements Auditable {
     @LDAPField(attribute = LdapRepository.ATTR_RACKSPACE_CUSTOMER_NUMBER, objectClass = LdapRepository.OBJECTCLASS_PERMISSION, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)
     private String            customerId;
     
-    @LDAPField(attribute=LdapRepository.ATTR_OBJECT_CLASS, objectClass=LdapRepository.OBJECTCLASS_PERMISSION, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
-    private String[] objectClass;
-    
     public Permission() {}
     
     public Permission(String customerId, String clientId, String permissionId) {

@@ -12,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.Consumes;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyReader;
@@ -26,7 +25,7 @@ import java.lang.reflect.Type;
 @Consumes(MediaType.APPLICATION_JSON)
 public class JSONReaderForBaseURL implements MessageBodyReader<BaseURL>{
 
-    private static final Logger logger = LoggerFactory.getLogger(JSONReaderForBaseURL.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(JSONReaderForBaseURL.class);
 
     @Override
     public boolean isReadable(Class<?> type, Type genericType,
@@ -38,7 +37,7 @@ public class JSONReaderForBaseURL implements MessageBodyReader<BaseURL>{
     public BaseURL readFrom(Class<BaseURL> type,
         Type genericType, Annotation[] annotations, MediaType mediaType,
         MultivaluedMap<String, String> httpHeaders, InputStream inputStream)
-        throws IOException, WebApplicationException {
+        throws IOException {
 
         String jsonBody = IOUtils.toString(inputStream, JSONConstants.UTF_8);
 
@@ -101,7 +100,7 @@ public class JSONReaderForBaseURL implements MessageBodyReader<BaseURL>{
 
             }
         } catch (ParseException e) {
-            logger.info(e.toString());
+            LOGGER.info(e.toString());
             throw new BadRequestException("Bad JSON request", e);
         }
 

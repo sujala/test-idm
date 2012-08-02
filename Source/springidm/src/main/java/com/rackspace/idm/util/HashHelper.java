@@ -9,7 +9,15 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Date;
 
-public class HashHelper {
+public final class HashHelper {
+
+    public static final int SALT_SIZE = 8;
+    public static final int MASK = 0xff;
+    public static final int BIT256 = 0x100;
+    public static final int BASE = 16;
+
+    private HashHelper() {}
+
     private static Logger logger = LoggerFactory.getLogger(HashHelper.class);
 
     public static String getRandomSha1() throws NoSuchAlgorithmException {
@@ -21,7 +29,7 @@ public class HashHelper {
         }
 
         // Salt generation 64 bits long
-        byte[] bSalt = new byte[8];
+        byte[] bSalt = new byte[SALT_SIZE];
         random.nextBytes(bSalt);
         String sSalt = byteToBase64(bSalt);
 
@@ -47,7 +55,7 @@ public class HashHelper {
 
         String hexStr = "";
         for (int i = 0; i < digest.length; i++) {
-            hexStr += Integer.toString((digest[i] & 0xff) + 0x100, 16)
+            hexStr += Integer.toString((digest[i] & MASK) + BIT256, BASE)
                 .substring(1);
         }
         return hexStr;

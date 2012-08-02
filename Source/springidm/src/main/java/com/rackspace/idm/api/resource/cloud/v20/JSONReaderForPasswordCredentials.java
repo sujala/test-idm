@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import javax.ws.rs.Consumes;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyReader;
@@ -36,7 +35,7 @@ public class JSONReaderForPasswordCredentials implements
     }
 
     @Override
-    public PasswordCredentialsRequiredUsername readFrom(Class<PasswordCredentialsRequiredUsername> passwordCredentialsRequiredUsernameClass, Type type, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> stringStringMultivaluedMap, InputStream inputStream) throws IOException, WebApplicationException {
+    public PasswordCredentialsRequiredUsername readFrom(Class<PasswordCredentialsRequiredUsername> passwordCredentialsRequiredUsernameClass, Type type, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> stringStringMultivaluedMap, InputStream inputStream) throws IOException {
         String jsonBody = IOUtils.toString(inputStream, JSONConstants.UTF_8);
 
         PasswordCredentialsRequiredUsername creds = getPasswordCredentialsFromJSONString(jsonBody);

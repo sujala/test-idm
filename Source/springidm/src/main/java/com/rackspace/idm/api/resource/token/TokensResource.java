@@ -52,11 +52,10 @@ public class TokensResource extends ParentResource {
     private final CredentialsConverter credentialsConverter;
     private final ScopeAccessService scopeAccessService;
     private final AuthenticationService authenticationService;
-    final private Logger logger = LoggerFactory.getLogger(TokensResource.class);
+    private final Logger logger = LoggerFactory.getLogger(TokensResource.class);
 
     @Autowired(required = true)
-    public TokensResource(TokenService oauthService,
-                          AuthHeaderHelper authHeaderHelper, AuthConverter authConverter,
+    public TokensResource(AuthHeaderHelper authHeaderHelper, AuthConverter authConverter,
                           AuthorizationService authorizationService,
                           ScopeAccessService scopeAccessService,
                           CredentialsConverter credentialsConverter,
@@ -80,7 +79,7 @@ public class TokensResource extends ParentResource {
      * @param credentials AuthCredentials for authenticating the token request.
      */
     @POST
-    public Response authenticate(@Context HttpHeaders httpHeaders, EntityHolder<String> credentials) throws Throwable {
+    public Response authenticate(@Context HttpHeaders httpHeaders, EntityHolder<String> credentials) {
 
         validateRequestBody(credentials);
 

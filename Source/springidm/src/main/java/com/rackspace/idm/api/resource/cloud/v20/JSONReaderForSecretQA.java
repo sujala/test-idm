@@ -9,7 +9,6 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import javax.ws.rs.Consumes;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyReader;
@@ -33,7 +32,7 @@ MessageBodyReader<SecretQA> {
     public SecretQA readFrom(Class<SecretQA> type,
         Type genericType, Annotation[] annotations, MediaType mediaType,
         MultivaluedMap<String, String> httpHeaders, InputStream inputStream)
-        throws IOException, WebApplicationException {
+        throws IOException {
 
         String jsonBody = IOUtils.toString(inputStream, JSONConstants.UTF_8);
 

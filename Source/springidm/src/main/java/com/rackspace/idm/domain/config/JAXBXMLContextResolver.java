@@ -29,8 +29,8 @@ public class JAXBXMLContextResolver implements ContextResolver<JAXBContext> {
     	if (context == null) {
     		try {
     			init();
-    		} catch (Throwable t) {
-                logger.info("failed to create JAXBXMLContext: " + t.getMessage());
+    		} catch (Exception e) {
+                logger.info("failed to create JAXBXMLContext: " + e.getMessage());
             }
     	}
     	return context;

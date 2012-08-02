@@ -34,7 +34,7 @@ public class ApplicationGlobalRolesResource {
     private final RolesConverter rolesConverter;
     private final ApplicationGlobalRoleResource roleResource;
     
-    final private Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
     public ApplicationGlobalRolesResource(TenantService tenantService,

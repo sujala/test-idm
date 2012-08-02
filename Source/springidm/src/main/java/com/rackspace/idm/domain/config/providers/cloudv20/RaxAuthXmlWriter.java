@@ -9,6 +9,7 @@ package com.rackspace.idm.domain.config.providers.cloudv20;
  */
 
 import com.rackspace.idm.domain.config.providers.PackageClassDiscoverer;
+import com.rackspace.idm.exception.IdmException;
 import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.api.json.JSONJAXBContext;
 import com.sun.xml.bind.marshaller.NamespacePrefixMapper;
@@ -30,7 +31,6 @@ import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -64,7 +64,7 @@ public class RaxAuthXmlWriter extends NamespacePrefixMapper implements
 
         } catch (Exception e) {
             LOG.error("Error in static initializer.  - " + e.getMessage());
-            throw new RuntimeException(e);
+            throw new IdmException(e);
         }
     }
 
@@ -104,7 +104,7 @@ public class RaxAuthXmlWriter extends NamespacePrefixMapper implements
     }
 
     @Override
-    public void writeTo(Object o, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
+    public void writeTo(Object o, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException {
         //To change body of implemented methods use File | Settings | File Templates.
         try {
             Marshaller m = getContext().createMarshaller();
@@ -123,7 +123,7 @@ public class RaxAuthXmlWriter extends NamespacePrefixMapper implements
         return raxAuthNsPrefixMap.get(namespaceUri);
     }
 
-    public void setNsPrefixMap(HashMap<String, String> nsPrefixMap) {
+    public void setNsPrefixMap(Map<String, String> nsPrefixMap) {
         this.raxAuthNsPrefixMap = nsPrefixMap;
     }
 }

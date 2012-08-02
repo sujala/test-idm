@@ -13,7 +13,7 @@ import java.util.List;
 public class DefaultEndpointService implements EndpointService {
 
     private final EndpointDao endpointDao;
-    final private Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public DefaultEndpointService(EndpointDao endpointDao) {
         this.endpointDao = endpointDao;

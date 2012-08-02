@@ -9,6 +9,7 @@ package com.rackspace.idm.domain.config.providers.cloudv20;
  */
 
 import com.rackspace.idm.domain.config.providers.PackageClassDiscoverer;
+import com.rackspace.idm.exception.IdmException;
 import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.api.json.JSONJAXBContext;
 import com.sun.xml.bind.marshaller.NamespacePrefixMapper;
@@ -69,7 +70,7 @@ public class Core20XMLWriter extends NamespacePrefixMapper implements
 
         } catch (Exception e) {
             LOG.error("Error in static initializer.  - " + e.getMessage());
-            throw new RuntimeException(e);
+            throw new IdmException(e);
         }
     }
 
@@ -109,7 +110,7 @@ public class Core20XMLWriter extends NamespacePrefixMapper implements
     }
 
     @Override
-    public void writeTo(Object o, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
+    public void writeTo(Object o, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException {
         //To change body of implemented methods use File | Settings | File Templates.
         try {
             Marshaller m = getContext().createMarshaller();

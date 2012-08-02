@@ -182,12 +182,12 @@ public class Cloud20VersionResource {
 
     @GET
     @Path("tenants")
-    public Response listTenants_getTenantByName(
-        @Context HttpHeaders httpHeaders,
-        @HeaderParam(X_AUTH_TOKEN) String authToken,
-        @QueryParam("name") String name,
-        @QueryParam("marker") String marker,
-        @QueryParam("limit") Integer limit) {
+    public Response listTenantsAndGetTenantByName(
+            @Context HttpHeaders httpHeaders,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @QueryParam("name") String name,
+            @QueryParam("marker") String marker,
+            @QueryParam("limit") Integer limit) {
         // Note: getTenantByName only available to admin
         if (!StringUtils.isBlank(name)) {
             return getCloud20Service().getTenantByName(httpHeaders, authToken, name).build();
@@ -406,13 +406,13 @@ public class Cloud20VersionResource {
 
     @GET
     @Path("tenants/{tenantId}/users")
-    public Response listUsersForTenant_listUsersWithRoleForTenant(
-        @Context HttpHeaders httpHeaders,
-        @HeaderParam(X_AUTH_TOKEN) String authToken,
-        @PathParam("tenantId") String tenantId,
-        @QueryParam("roleId") String roleId,
-        @QueryParam("marker") String marker,
-        @QueryParam("limit") Integer limit) {
+    public Response listUsersForTenantAndListUsersWithRoleForTenant(
+            @Context HttpHeaders httpHeaders,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("tenantId") String tenantId,
+            @QueryParam("roleId") String roleId,
+            @QueryParam("marker") String marker,
+            @QueryParam("limit") Integer limit) {
         if (roleId != null) {
             return getCloud20Service().listUsersWithRoleForTenant(httpHeaders, authToken, tenantId, roleId, marker, limit).build();
         } else {

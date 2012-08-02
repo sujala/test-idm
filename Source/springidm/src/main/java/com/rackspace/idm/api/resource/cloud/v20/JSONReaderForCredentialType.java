@@ -7,7 +7,9 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.openstack.docs.identity.api.v2.CredentialType;
 
-public class JSONReaderForCredentialType {
+public final class JSONReaderForCredentialType {
+
+    private JSONReaderForCredentialType(){};
 
     public static CredentialType checkAndGetCredentialsFromJSONString(String jsonBody) {
         JSONParser parser = new JSONParser();

@@ -13,7 +13,11 @@ import javax.net.ssl.X509TrustManager;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
-public class WebClientDevWrapper {
+public final class WebClientDevWrapper {
+
+    public static final int PORT = 443;
+
+    private WebClientDevWrapper() {}
 
     private static Logger logger = LoggerFactory.getLogger(WebClientDevWrapper.class);
 
@@ -41,7 +45,7 @@ public class WebClientDevWrapper {
             SSLSocketFactory ssf = new SSLSocketFactory(ctx);
             ssf.setHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
             ClientConnectionManager ccm = base.getConnectionManager();
-            ccm.getSchemeRegistry().register(new Scheme("https", ssf, 443));
+            ccm.getSchemeRegistry().register(new Scheme("https", ssf, PORT));
             //DefaultHttpClient defaultHttpClient = new DefaultHttpClient(ccm, base.getParams());
             //defaultHttpClient.addRequestInterceptor(new RequestAcceptEncoding());
             //defaultHttpClient.addResponseInterceptor(new ResponseContentEncoding());

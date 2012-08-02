@@ -11,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.Consumes;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyReader;
@@ -37,7 +36,7 @@ public class JSONReaderForUserWithOnlyEnabled implements MessageBodyReader<UserW
     public UserWithOnlyEnabled readFrom(Class<UserWithOnlyEnabled> type, Type genericType,
         Annotation[] annotations, MediaType mediaType,
         MultivaluedMap<String, String> httpHeaders, InputStream inputStream)
-        throws IOException, WebApplicationException {
+        throws IOException {
 
         String jsonBody = IOUtils.toString(inputStream, JSONConstants.UTF_8);
 

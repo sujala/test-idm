@@ -9,7 +9,6 @@ import org.json.simple.parser.JSONParser;
 import org.openstack.docs.identity.api.v2.User;
 
 import javax.ws.rs.Consumes;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyReader;
@@ -40,10 +39,9 @@ public class JSONReaderForImpersonation implements MessageBodyReader<Impersonati
     public ImpersonationRequest readFrom(Class<ImpersonationRequest> type, Type genericType,
                                          Annotation[] annotations, MediaType mediaType,
                                          MultivaluedMap<String, String> httpHeaders,
-                                         InputStream entityStream) throws IOException, WebApplicationException {
+                                         InputStream entityStream) throws IOException {
         String jsonBody = IOUtils.toString(entityStream, JSONConstants.UTF_8);
-        ImpersonationRequest request = getImpersonationFromJSONString(jsonBody);
-        return request;
+        return getImpersonationFromJSONString(jsonBody);
     }
 
     public static ImpersonationRequest getImpersonationFromJSONString(String jsonBody) {

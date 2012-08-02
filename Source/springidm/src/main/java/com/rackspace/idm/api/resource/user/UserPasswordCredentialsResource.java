@@ -90,8 +90,6 @@ public class UserPasswordCredentialsResource extends ParentResource {
 
         validateRequestBody(userCredentials);
 
-        ScopeAccess token = this.scopeAccessService.getAccessTokenByAuthHeader(authHeader);
-
         User user = this.userService.getUserById(userId);
         if (user == null) {
             throw new NotFoundException("User not found with id: " + userId);
@@ -102,11 +100,9 @@ public class UserPasswordCredentialsResource extends ParentResource {
         user.setPassword(userCred.getNewPassword().getPassword());
         try {
             this.userService.updateUser(user, false);
-        } catch (Exception e) {
-            if(e instanceof IllegalStateException){
-                throw new BadRequestException(e.getCause().getMessage(), e);
-            }
-        }
+        } catch (IllegalStateException e){
+            throw new BadRequestException(e.getMessage(), e);
+        } catch (Exception e) { }
         return Response.noContent().build();
 
     }

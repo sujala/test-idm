@@ -592,22 +592,21 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().info("Removed users from clientGroup {}", group);
     }
     
-    void throwIfEmptyOldUser(User oldUser, User user)
-        throws IllegalArgumentException {
+    void throwIfEmptyOldUser(User oldUser, User user) {
         if (oldUser == null) {
             getLogger().error("No record found for user {}", user.getUsername());
             throw new IllegalArgumentException("There is no exisiting record for the given User instance. Has the userName been changed?");
         }
     }
 
-    void throwIfEmptyUsername(User user) throws IllegalArgumentException {
+    void throwIfEmptyUsername(User user) {
         if (user == null || StringUtils.isBlank(user.getUsername())) {
             getLogger().error("User instance is null or its userName has no value");
             throw new BadRequestException("Bad parameter: The User is null or has a blank Username");
         }
     }
 
-    void throwIfStalePassword(LDAPException ldapEx, Audit audit) throws StalePasswordException {
+    void throwIfStalePassword(LDAPException ldapEx, Audit audit) {
         if (ResultCode.CONSTRAINT_VIOLATION.equals(ldapEx.getResultCode())
             && STALE_PASSWORD_MESSAGE.equals(ldapEx.getMessage())) {
             audit.fail(STALE_PASSWORD_MESSAGE);
@@ -794,9 +793,9 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     Users getMultipleUsers(Filter searchFilter,
         String[] searchAttributes, int offset, int limit) {
 
-        offset = offset < 0 ? this.getLdapPagingOffsetDefault() : offset;
-        limit = limit <= 0 ? this.getLdapPagingLimitDefault() : limit;
-        limit = limit > this.getLdapPagingLimitMax() ? this.getLdapPagingLimitMax() : limit;
+        int offsets = offset < 0 ? this.getLdapPagingOffsetDefault() : offset;
+        int limits = limit <= 0 ? this.getLdapPagingLimitDefault() : limit;
+        limits = limits > this.getLdapPagingLimitMax() ? this.getLdapPagingLimitMax() : limits;
 
         int contentCount = 0;
 
@@ -809,10 +808,10 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
             contentCount = entries.size();
 
-            if (offset < contentCount) {
+            if (offsets < contentCount) {
 
-                int toIndex = offset + limit > contentCount ? contentCount : offset + limit;
-                int fromIndex = offset;
+                int toIndex = offsets + limits > contentCount ? contentCount : offsets + limits;
+                int fromIndex = offsets;
 
                 List<SearchResultEntry> subList = entries.subList(fromIndex, toIndex);
 
@@ -833,8 +832,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         Users users = new Users();
 
-        users.setLimit(limit);
-        users.setOffset(offset);
+        users.setLimit(limits);
+        users.setOffset(offsets);
         users.setTotalRecords(contentCount);
         users.setUsers(userList);
         getLogger().debug("Returning {} Users.", users.getTotalRecords());

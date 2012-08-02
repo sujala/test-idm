@@ -9,7 +9,6 @@ import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.AuthenticationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TenantService;
-import com.rackspace.idm.domain.service.TokenService;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.util.RSAClient;
 import com.rackspace.idm.validation.AuthorizationCodeCredentialsCheck;
@@ -31,6 +30,7 @@ import static com.rackspace.idm.domain.entity.OAuthGrantType.*;
 
 public class DefaultAuthenticationService implements AuthenticationService {
 
+    public static final int YEARS = 100;
     private final ApplicationDao clientDao;
     private final TenantService tenantService;
     private final ScopeAccessService scopeAccessService;
@@ -45,8 +45,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public DefaultAuthenticationService(TokenService tokenService,
-                                        AuthDao authDao, TenantService tenantService,
+    public DefaultAuthenticationService(AuthDao authDao, TenantService tenantService,
                                         ScopeAccessService scopeAccessService,
                                         ApplicationDao clientDao,
                                         Configuration config, UserDao userDao,
@@ -195,7 +194,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
         }
     }
 
-    ScopeAccess getTokens(final Credentials trParam, final DateTime currentTime) throws NotAuthenticatedException {
+    ScopeAccess getTokens(final Credentials trParam, final DateTime currentTime) {
 
         if(trParam.getGrantType() == null){
             throw new BadRequestException("grant_type cannot be null");
@@ -368,7 +367,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
 
         if (refreshExpiration.isBefore(current)) {
             scopeAccess.setRefreshTokenString(this.generateToken());
-            scopeAccess.setRefreshTokenExp(current.plusYears(100).toDate());
+            scopeAccess.setRefreshTokenExp(current.plusYears(YEARS).toDate());
         }
 
         logger.debug("Updating Expirations for User: {} and ClientId: {}", user.getUsername(), client.getClientId());
@@ -461,7 +460,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
 
         if (refreshExpiration.isBefore(current)) {
             scopeAccess.setRefreshTokenString(this.generateToken());
-            scopeAccess.setRefreshTokenExp(current.plusYears(100).toDate());
+            scopeAccess.setRefreshTokenExp(current.plusYears(YEARS).toDate());
         }
 
         logger.debug("Updating Expirations for Racker: {} and ClientId: {}", racker.getRackerId(), client.getClientId());

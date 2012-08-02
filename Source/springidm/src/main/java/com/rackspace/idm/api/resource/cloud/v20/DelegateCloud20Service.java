@@ -46,10 +46,7 @@ import javax.xml.transform.stream.StreamSource;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.URLEncoder;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -239,9 +236,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         httpHeaders.getRequestHeaders().get(X_AUTH_TOKEN).set(0, gaXAuthToken);
         httpHeaders.getRequestHeaders().get(HttpHeaders.ACCEPT).set(0, MediaType.APPLICATION_XML);
         Response cloudValidateResponse = checkToken(httpHeaders, gaXAuthToken, impersonatedCloudToken, belongsTo).build();
-        if (cloudValidateResponse.getStatus() != 200 && cloudValidateResponse.getStatus() != 203) {
-            ResponseBuilder cloudResponseBuilder = Response.status(cloudValidateResponse.getStatus()).entity(cloudValidateResponse.getEntity()).header("response-source", "cloud-auth");
-            return cloudResponseBuilder;
+        if (cloudValidateResponse.getStatus() != HttpServletResponse.SC_OK && cloudValidateResponse.getStatus() != HttpServletResponse.SC_NON_AUTHORITATIVE_INFORMATION) {
+            return Response.status(cloudValidateResponse.getStatus()).entity(cloudValidateResponse.getEntity()).header("response-source", "cloud-auth");
         }
         AuthenticateResponse validateResponse = (AuthenticateResponse) unmarshallResponse(cloudValidateResponse.getEntity().toString(), AuthenticateResponse.class);
         validateResponse.getToken().setId(impersonatedScopeAccess.getAccessTokenString());
@@ -287,12 +283,13 @@ public class DelegateCloud20Service implements Cloud20Service {
         }
         if (scopeAccess instanceof ImpersonatedScopeAccess) {
             ImpersonatedScopeAccess impersonatedScopeAccess = (ImpersonatedScopeAccess) scopeAccess;
-            tokenId = impersonatedScopeAccess.getImpersonatingToken();
-            ScopeAccess impersonatedUserScopeAccess = scopeAccessService.getScopeAccessByAccessToken(tokenId);
+            String impersonatedTokenId = impersonatedScopeAccess.getImpersonatingToken();
+            ScopeAccess impersonatedUserScopeAccess = scopeAccessService.getScopeAccessByAccessToken(impersonatedTokenId);
             if (impersonatedUserScopeAccess == null) {
-                String request = getCloudAuthV20Url() + TOKENS + "/" + tokenId + "/endpoints";
+                String request = getCloudAuthV20Url() + TOKENS + "/" + impersonatedTokenId + "/endpoints";
                 return cloudClient.get(request, httpHeaders);
             }
+            return defaultCloud20Service.listEndpointsForToken(httpHeaders, authToken, impersonatedTokenId);
         }
         return defaultCloud20Service.listEndpointsForToken(httpHeaders, authToken, tokenId);
     }
@@ -661,14 +658,14 @@ public class DelegateCloud20Service implements Cloud20Service {
             String uri = getCloudAuthV11Url() + USERS + "/" + user.getUsername();
             ResponseBuilder cloudAuthUSResponse = cloudClient.get(uri, httpHeaders);
             int status = cloudAuthUSResponse.build().getStatus();
-            if (status == 200) {
+            if (status == HttpServletResponse.SC_OK) {
                 throw new DuplicateUsernameException(String.format("Username %s already exists", user.getUsername()));
             }
             //search for user in UK Cloud Auth
             String ukUri = getCloudAuthUKV11Url() + USERS + "/" + user.getUsername();
             ResponseBuilder cloudAuthUKResponse = cloudClient.get(ukUri, httpHeaders);
             status = cloudAuthUKResponse.build().getStatus();
-            if (status == 200) {
+            if (status == HttpServletResponse.SC_OK) {
                 throw new DuplicateUsernameException(String.format("Username %s already exists", user.getUsername()));
             }
         }
@@ -1036,7 +1033,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         return defaultCloud20Service.updateSecretQA(httpHeaders, authToken, userId, secrets);
     }
 
-    public String appendQueryParams(String request, HashMap<String, Object> params) {
+    public String appendQueryParams(String request, Map<String, Object> params) {
         String result = "";
         for (String key : params.keySet()) {
             Object value = params.get(key);
@@ -1069,7 +1066,6 @@ public class DelegateCloud20Service implements Cloud20Service {
                 JSONConfiguration jsonConfiguration = JSONConfiguration.natural().rootUnwrapping(false).build();
                 JSONJAXBContext context = new JSONJAXBContext(jsonConfiguration, "org.openstack.docs.identity.api.v2");
                 JSONUnmarshaller jsonUnmarshaller = context.createJSONUnmarshaller();
-                StreamSource xml = new StreamSource(new StringReader(entity));
                 JAXBElement ob = jsonUnmarshaller.unmarshalJAXBElementFromJSON(new StringReader(entity), objectClass);
                 return ob.getValue();
             } else {
@@ -1175,7 +1171,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         headers.put(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML);
         headers.put(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML);
         Response authResponse = cloudClient.post(getCloudAuthV20Url() + TOKENS, headers, body).build();
-        if (authResponse.getStatus() != 200 && authResponse.getStatus() != 203) {
+        if (authResponse.getStatus() != HttpServletResponse.SC_OK && authResponse.getStatus() != HttpServletResponse.SC_NON_AUTHORITATIVE_INFORMATION) {
             throw new ApiException(authResponse.getStatus(), "", "");
         }
         return (AuthenticateResponse) unmarshallResponse(authResponse.getEntity().toString(), AuthenticateResponse.class);
@@ -1192,7 +1188,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         headers.put(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML);
         headers.put(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML);
         Response authResponse = cloudClient.post(getCloudAuthV20Url() + TOKENS, headers, body).build();
-        if (authResponse.getStatus() != 200 && authResponse.getStatus() != 203) {
+        if (authResponse.getStatus() != HttpServletResponse.SC_OK && authResponse.getStatus() != HttpServletResponse.SC_NON_AUTHORITATIVE_INFORMATION) {
             throw new ApiException(authResponse.getStatus(), "", "");
         }
         return (AuthenticateResponse) unmarshallResponse(authResponse.getEntity().toString(), AuthenticateResponse.class);
@@ -1204,7 +1200,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         headers.put(X_AUTH_TOKEN, xAuthToken);
         headers.put(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML);
         Response credsResponse = cloudClient.get(getCloudAuthV20Url() + USERS + "/" + userId + "/OS-KSADM/credentials/RAX-KSKEY:apiKeyCredentials", headers).build();
-        if (credsResponse.getStatus() != 200 && credsResponse.getStatus() != 203) {
+        if (credsResponse.getStatus() != HttpServletResponse.SC_OK && credsResponse.getStatus() != HttpServletResponse.SC_NON_AUTHORITATIVE_INFORMATION) {
             throw new ApiException(credsResponse.getStatus(), "", "");
         }
         return (ApiKeyCredentials) unmarshallResponse(credsResponse.getEntity().toString(), ApiKeyCredentials.class);
@@ -1216,7 +1212,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         headers.put(X_AUTH_TOKEN, xAuthToken);
         headers.put(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML);
         Response userResponse = cloudClient.get(getCloudAuthV20Url() + USERS + "?name=" + userName, headers).build();
-        if (userResponse.getStatus() != 200 && userResponse.getStatus() != 203) {
+        if (userResponse.getStatus() != HttpServletResponse.SC_OK && userResponse.getStatus() != HttpServletResponse.SC_NON_AUTHORITATIVE_INFORMATION) {
             throw new ApiException(userResponse.getStatus(), "", "");
         }
         return (User) unmarshallResponse(userResponse.getEntity().toString(), User.class);
@@ -1228,7 +1224,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         headers.put(X_AUTH_TOKEN, xAuthToken);
         headers.put(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML);
         Response userResponse = cloudClient.get(getCloudAuthV20Url() + USERS + "/" + userId + "/" + ROLES, headers).build();
-        if (userResponse.getStatus() != 200 && userResponse.getStatus() != 203) {
+        if (userResponse.getStatus() != HttpServletResponse.SC_OK && userResponse.getStatus() != HttpServletResponse.SC_NON_AUTHORITATIVE_INFORMATION) {
             throw new ApiException(userResponse.getStatus(), "", "");
         }
         return (RoleList) unmarshallResponse(userResponse.getEntity().toString(), RoleList.class);
@@ -1245,8 +1241,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             throw new BadRequestException("User cannot be impersonated; No valid impersonation roles");
         }
         String userApiKey = getUserApiCredentials(user.getId(), impersonatorXAuthToken).getApiKey();
-        String userXAuthToken = getXAuthToken(userName, userApiKey).getToken().getId();
-        return userXAuthToken;
+        return getXAuthToken(userName, userApiKey).getToken().getId();
     }
 
 
@@ -1277,8 +1272,8 @@ public class DelegateCloud20Service implements Cloud20Service {
         this.userConverterCloudV20 = userConverterCloudV20;
     }
 
-    public void setObjFactories(JAXBObjectFactories OBJ_FACTORIES) {
-        this.objFactories = OBJ_FACTORIES;
+    public void setObjFactories(JAXBObjectFactories objFactories) {
+        this.objFactories = objFactories;
     }
 
     public void setObjectFactoryRAXKSKEY(com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory objectFactoryRAXKSKEY) {

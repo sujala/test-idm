@@ -14,7 +14,6 @@ import org.openstack.docs.identity.api.v2.AuthenticationRequest;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
-import javax.xml.bind.JAXBElement;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -312,42 +311,42 @@ public class Cloud20VersionResourceTest {
     @Test
     public void listTenants_getTenantByName_nameIsBlank_callsGetCloud20Service() throws Exception {
         when(delegateCloud20Service.listTenants(httpHeaders, null, null, 1)).thenReturn(Response.ok());
-        spy.listTenants_getTenantByName(httpHeaders, null, null, null, 1);
+        spy.listTenantsAndGetTenantByName(httpHeaders, null, null, null, 1);
         verify(spy).getCloud20Service();
     }
 
     @Test
     public void listTenants_getTenantByName_callsGetCloud20Service_callsListTenants() throws Exception {
         when(delegateCloud20Service.listTenants(httpHeaders, null, null, 1)).thenReturn(Response.ok());
-        spy.listTenants_getTenantByName(httpHeaders, null, null, null, 1);
+        spy.listTenantsAndGetTenantByName(httpHeaders, null, null, null, 1);
         verify(delegateCloud20Service).listTenants(httpHeaders, null, null, 1);
     }
 
     @Test
     public void listTenants_getTenantByName_nameIsBlank_responseOkReturns200() throws Exception {
         when(delegateCloud20Service.listTenants(httpHeaders, null, null, 1)).thenReturn(Response.ok());
-        Response result = spy.listTenants_getTenantByName(httpHeaders, null, null, null, 1);
+        Response result = spy.listTenantsAndGetTenantByName(httpHeaders, null, null, null, 1);
         assertThat("response code", result.getStatus(), equalTo(200));
     }
 
     @Test
     public void listTenants_getTenantByName_nameNotBlank_callsGetCloud20Service() throws Exception {
         when(delegateCloud20Service.getTenantByName(httpHeaders, null, "name")).thenReturn(Response.ok());
-        spy.listTenants_getTenantByName(httpHeaders, null, "name", null, 1);
+        spy.listTenantsAndGetTenantByName(httpHeaders, null, "name", null, 1);
         verify(spy).getCloud20Service();
     }
 
     @Test
     public void listTenants_getTenantByName_callsGetCloud20Service_callsGetTenantByName() throws Exception {
         when(delegateCloud20Service.getTenantByName(httpHeaders, null, "name")).thenReturn(Response.ok());
-        spy.listTenants_getTenantByName(httpHeaders, null, "name", null, 1);
+        spy.listTenantsAndGetTenantByName(httpHeaders, null, "name", null, 1);
         verify(delegateCloud20Service).getTenantByName(httpHeaders, null, "name");
     }
 
     @Test
     public void listTenants_getTenantByName_nameNotBlank_responseOkReturns200() throws Exception {
         when(delegateCloud20Service.getTenantByName(httpHeaders, null, "name")).thenReturn(Response.ok());
-        Response result = spy.listTenants_getTenantByName(httpHeaders, null, "name", null, 1);
+        Response result = spy.listTenantsAndGetTenantByName(httpHeaders, null, "name", null, 1);
         assertThat("response code", result.getStatus(), equalTo(200));
     }
 
@@ -816,42 +815,42 @@ public class Cloud20VersionResourceTest {
     @Test
     public void listUsersForTenant_listUsersWithRoleForTenant_roleIsNotNull_callsGetCloud20Service() throws Exception {
         when(delegateCloud20Service.listUsersWithRoleForTenant(httpHeaders, null, null, "roleId", null, 1)).thenReturn(Response.ok());
-        spy.listUsersForTenant_listUsersWithRoleForTenant(httpHeaders, null, null, "roleId", null, 1);
+        spy.listUsersForTenantAndListUsersWithRoleForTenant(httpHeaders, null, null, "roleId", null, 1);
         verify(spy).getCloud20Service();
     }
 
     @Test
     public void listUsersForTenant_listUsersWithRoleForTenant_roleIsNotNull_callsGetCloud20Service_callsListUsersWithRoleForTenant() throws Exception {
         when(delegateCloud20Service.listUsersWithRoleForTenant(httpHeaders, null, null, "roleId", null, 1)).thenReturn(Response.ok());
-        spy.listUsersForTenant_listUsersWithRoleForTenant(httpHeaders, null, null, "roleId", null, 1);
+        spy.listUsersForTenantAndListUsersWithRoleForTenant(httpHeaders, null, null, "roleId", null, 1);
         verify(delegateCloud20Service).listUsersWithRoleForTenant(httpHeaders, null, null, "roleId", null, 1);
     }
 
     @Test
     public void listUsersForTenant_listUsersWithRoleForTenant_roleIsNotNull_responseOk_returns200() throws Exception {
         when(delegateCloud20Service.listUsersWithRoleForTenant(httpHeaders, null, null, "roleId", null, 1)).thenReturn(Response.ok());
-        Response result = spy.listUsersForTenant_listUsersWithRoleForTenant(httpHeaders, null, null, "roleId", null, 1);
+        Response result = spy.listUsersForTenantAndListUsersWithRoleForTenant(httpHeaders, null, null, "roleId", null, 1);
         assertThat("response code", result.getStatus(), equalTo(200));
     }
 
     @Test
     public void listUsersForTenant_listUsersWithRoleForTenant_roleNull_callsGetCloud20Service() throws Exception {
         when(delegateCloud20Service.listUsersForTenant(httpHeaders, null, null, null, 1)).thenReturn(Response.ok());
-        spy.listUsersForTenant_listUsersWithRoleForTenant(httpHeaders, null, null, null, null, 1);
+        spy.listUsersForTenantAndListUsersWithRoleForTenant(httpHeaders, null, null, null, null, 1);
         verify(spy).getCloud20Service();
     }
 
     @Test
     public void listUsersForTenant_listUsersWithRoleForTenant_roleNull_callsGetCloud20Service_callsListUsersForTenant() throws Exception {
         when(delegateCloud20Service.listUsersForTenant(httpHeaders, null, null, null, 1)).thenReturn(Response.ok());
-        spy.listUsersForTenant_listUsersWithRoleForTenant(httpHeaders, null, null, null, null, 1);
+        spy.listUsersForTenantAndListUsersWithRoleForTenant(httpHeaders, null, null, null, null, 1);
         verify(delegateCloud20Service).listUsersForTenant(httpHeaders, null, null, null, 1);
     }
 
     @Test
     public void listUsersForTenant_listUsersWithRoleForTenant_roleIsNull_responseOk_returns200() throws Exception {
         when(delegateCloud20Service.listUsersForTenant(httpHeaders, null, null, null, 1)).thenReturn(Response.ok());
-        Response result = spy.listUsersForTenant_listUsersWithRoleForTenant(httpHeaders, null, null, null, null, 1);
+        Response result = spy.listUsersForTenantAndListUsersWithRoleForTenant(httpHeaders, null, null, null, null, 1);
         assertThat("response code", result.getStatus(), equalTo(200));
     }
 

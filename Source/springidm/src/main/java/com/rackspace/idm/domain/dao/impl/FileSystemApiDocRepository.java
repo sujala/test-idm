@@ -7,7 +7,9 @@ import java.io.*;
 
 public class FileSystemApiDocRepository implements ApiDocDao {
 
-    
+
+    public static final int BUFFER_SZ = 1024;
+
     public String getContent(String path) {
         if (StringUtils.isBlank(path)) {
             return "";
@@ -29,7 +31,7 @@ public class FileSystemApiDocRepository implements ApiDocDao {
         if (is != null) {
             Writer writer = new StringWriter();
 
-            char[] buffer = new char[1024];
+            char[] buffer = new char[BUFFER_SZ];
             try {
                 Reader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
                 int n;

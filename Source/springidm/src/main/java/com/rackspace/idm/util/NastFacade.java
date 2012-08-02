@@ -14,6 +14,7 @@ import org.apache.xmlrpc.XmlRpcException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.servlet.http.HttpServletResponse;
 import java.net.MalformedURLException;
 
 @Component
@@ -31,7 +32,7 @@ public class NastFacade {
             try {
                 response = nastXMLRpcClientWrapper.removeResellerStorageAccount(nastAccountId);
             } catch (Exception e) {
-                throw new ApiException(500, e.getMessage(), "could not remove reseller", e);
+                throw new ApiException(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(), "could not remove reseller", e);
             }
         }
 
@@ -51,7 +52,7 @@ public class NastFacade {
 
             return nastAccountId;
         } catch (Exception e) {
-            throw new ApiException(500, e.getMessage(), "could not add nast user", e);
+            throw new ApiException(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(), "could not add nast user", e);
         }
     }
 

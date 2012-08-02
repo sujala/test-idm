@@ -11,9 +11,9 @@ public class UserHumanName {
     }
 
     public UserHumanName(String firstname, String middlename, String lastname) {
-        this.setFirstname(firstname);
-        this.setMiddlename(middlename);
-        this.setLastname(lastname);
+        this.firstname = firstname;
+        this.middlename = middlename;
+        this.lastname = lastname;
     }
 
     public void setFirstname(String firstname) {

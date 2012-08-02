@@ -6,7 +6,6 @@ import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.domain.service.CustomerService;
-import com.rackspace.idm.domain.service.TokenService;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import org.slf4j.Logger;
@@ -21,10 +20,10 @@ public class DefaultCustomerService implements CustomerService {
     private final CustomerDao customerDao;
     private final UserDao userDao;
 
-    final private Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public DefaultCustomerService(ApplicationDao clientDao, CustomerDao customerDao,
-        UserDao userDao, TokenService oauthService) {
+        UserDao userDao) {
 
         this.clientDao = clientDao;
         this.customerDao = customerDao;
@@ -114,12 +113,12 @@ public class DefaultCustomerService implements CustomerService {
         logger.debug("SoftDeleted Customer: {}", customer);
     }
     
-    /**
-     * does some processing once a customer like enable or disable all users of 
-     * that belong to that customer, revoke tokens, etc
-     * @param customer
-     * @param locked - true/false
-     */
+//    /**
+//     * does some processing once a customer like enable or disable all users of
+//     * that belong to that customer, revoke tokens, etc
+//     * @param customer
+//     * @param locked - true/false
+//     */
 //    private void process(Customer customer, boolean locked) {
 //        logger.info("Setting customer's locked state: {}", customer);
 //
@@ -140,7 +139,7 @@ public class DefaultCustomerService implements CustomerService {
     private List<User> getUserListForCustomerId(String customerId) {
     	FilterParam[] filters = new FilterParam[] { new FilterParam(FilterParamName.RCN, customerId)};
         int offset = 0;
-        int limit = 100;
+        final int limit = 100;
         List<User> userList = new ArrayList<User>();
         Users users = null;
 
@@ -156,7 +155,7 @@ public class DefaultCustomerService implements CustomerService {
     
     private List<Application> getClientListForCustomerId(String customerId) {
         int offset = 0;
-        int limit = 100;
+        final int limit = 100;
         List<Application> clientList = new ArrayList<Application>();
         Applications clients = null;
 

@@ -19,8 +19,6 @@ public class ScopeAccess implements Auditable {
     @LDAPField(attribute=LdapRepository.ATTR_CLIENT_RCN, objectClass=LdapRepository.OBJECTCLASS_SCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String clientRCN;
 
-    @LDAPField(attribute=LdapRepository.ATTR_OBJECT_CLASS, objectClass=LdapRepository.OBJECTCLASS_SCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
-    private String[] objectClass;
 
     public ScopeAccess() {}
 

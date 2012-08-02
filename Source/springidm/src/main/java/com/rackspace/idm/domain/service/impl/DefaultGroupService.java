@@ -27,7 +27,7 @@ public class DefaultGroupService implements GroupService {
     public static final String GROUP_CANNOT_BE_NULL = "Group cannot be null";
     private UserService defaultUserService;
     private final GroupDao groupDao;
-    final private Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public DefaultGroupService(GroupDao groupDao, UserService defaultUserService) {
         this.groupDao = groupDao;

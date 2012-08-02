@@ -40,6 +40,7 @@ import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.namespace.QName;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.*;
 
 import static org.hamcrest.Matchers.equalTo;
@@ -580,6 +581,17 @@ public class CloudMigrationServiceTest {
     public void unmigrateUserByUsername_usersWithNullSubUsers_throwsNotFoundException() throws Exception {
         User user1 = new User();
         user1.setInMigration(true);
+
+        List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
+
+        RoleList roles = new RoleList();
+        Role role = new Role();
+        role.setName("identity:user-admin");
+        roles.getRole().add(role);
+        
+        when(roleConverterCloudV20.toRoleListJaxb(tenantRoles)).thenReturn(roles);
+
+        when(tenantService.getGlobalRolesForUser(user1)).thenReturn(tenantRoles);
         when(userService.getUser("username")).thenReturn(user1);
         when(userService.getAllUsers(any(FilterParam[].class), eq(0), eq(0))).thenReturn(new Users());
         spy.unmigrateUserByUsername("username");
@@ -593,6 +605,19 @@ public class CloudMigrationServiceTest {
         Users users = new Users();
         users.setUsers(new ArrayList<User>());
         users.getUsers().add(new User());
+
+        List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
+
+        RoleList roles = new RoleList();
+        Role role = new Role();
+        role.setName("identity:user-admin");
+        roles.getRole().add(role);
+        
+        when(roleConverterCloudV20.toRoleListJaxb(tenantRoles)).thenReturn(roles);
+
+        when(tenantService.getGlobalRolesForUser(user1)).thenReturn(tenantRoles);
+
+
         when(userService.getAllUsers(any(FilterParam[].class), eq(0), eq(0))).thenReturn(users);
         spy.unmigrateUserByUsername("username");
     }
@@ -604,6 +629,19 @@ public class CloudMigrationServiceTest {
         when(userService.getUser("username")).thenReturn(user1);
         Users users = new Users();
         users.setUsers(new ArrayList<User>());
+
+        List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
+
+        RoleList roles = new RoleList();
+        Role role = new Role();
+        role.setName("identity:user-admin");
+        roles.getRole().add(role);
+        
+        when(roleConverterCloudV20.toRoleListJaxb(tenantRoles)).thenReturn(roles);
+
+        when(tenantService.getGlobalRolesForUser(user1)).thenReturn(tenantRoles);
+
+
         when(userService.getAllUsers(any(FilterParam[].class), eq(0), eq(0))).thenReturn(users);
         spy.unmigrateUserByUsername("username");
         verify(userService, never()).deleteUser(anyString());
@@ -619,6 +657,19 @@ public class CloudMigrationServiceTest {
         User user2 = new User();
         user2.setInMigration(false);
         users.getUsers().add(user2);
+
+        List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
+
+        RoleList roles = new RoleList();
+        Role role = new Role();
+        role.setName("identity:user-admin");
+        roles.getRole().add(role);
+        
+        when(roleConverterCloudV20.toRoleListJaxb(tenantRoles)).thenReturn(roles);
+
+        when(tenantService.getGlobalRolesForUser(user1)).thenReturn(tenantRoles);
+
+
         when(userService.getAllUsers(any(FilterParam[].class), eq(0), eq(0))).thenReturn(users);
         spy.unmigrateUserByUsername("username");
         verify(userService).deleteUser(anyString());
@@ -674,7 +725,7 @@ public class CloudMigrationServiceTest {
         AuthenticateResponse authResponse = new AuthenticateResponse();
         authResponse.setToken(new Token());
         doReturn(authResponse).when(spy).authenticate(anyString(), anyString(), anyString());
-        when(client.getUsers(anyString())).thenThrow(new JAXBException("EXCEPTION"));
+        when(client.getUsers(anyString())).thenThrow(new URISyntaxException("exception", "exception"));
         spy.getSubUsers(user, "", new RoleList());
     }
 

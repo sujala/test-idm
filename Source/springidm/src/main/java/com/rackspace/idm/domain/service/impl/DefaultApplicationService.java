@@ -22,7 +22,7 @@ public class DefaultApplicationService implements ApplicationService {
     private final CustomerDao customerDao;
     private final UserDao userDao;
     private final TenantDao tenantDao;
-    final private Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public DefaultApplicationService(ScopeAccessDao scopeAccessDao,
         ApplicationDao clientDao, CustomerDao customerDao, UserDao userDao, TenantDao tenantDao) {
@@ -121,8 +121,7 @@ public class DefaultApplicationService implements ApplicationService {
             throw new DuplicateException(String.format("PermissionId %s already exists", client.getName()));
         }
 
-        permission = this.scopeAccessDao.definePermission(sa.getUniqueId(), permission);
-        logger.debug("Defined Permission: {}", permission);
+        logger.debug("Defined Permission: {}", this.scopeAccessDao.definePermission(sa.getUniqueId(), permission));
     }
 
     @Override
@@ -341,8 +340,7 @@ public class DefaultApplicationService implements ApplicationService {
 
     @Override
     public ClientGroup getClientGroup(String customerId, String clientId, String groupName) {
-        ClientGroup group = clientDao.getClientGroup(customerId, clientId, groupName);
-        return group;
+        return clientDao.getClientGroup(customerId, clientId, groupName);
     }
 
     @Override
@@ -465,7 +463,7 @@ public class DefaultApplicationService implements ApplicationService {
     }
 
     @Override
-    public DefinedPermission checkAndGetPermission(String customerId, String clientId, String permissionId) throws NotFoundException {
+    public DefinedPermission checkAndGetPermission(String customerId, String clientId, String permissionId) {
         logger.debug("Check and get Permission: {} for ClientId: {}", permissionId, clientId);
         DefinedPermission permission = this.getDefinedPermissionByClientIdAndPermissionId(clientId, permissionId);
 

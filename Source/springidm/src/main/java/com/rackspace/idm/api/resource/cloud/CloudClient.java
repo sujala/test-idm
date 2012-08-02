@@ -13,11 +13,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.*;
-import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -29,7 +30,7 @@ import java.util.Set;
 @Component
 public class CloudClient {
 
-    final private Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public Response.ResponseBuilder get(String url, HttpHeaders httpHeaders) {
         HttpGet request = new HttpGet(url);
@@ -37,7 +38,7 @@ public class CloudClient {
         return executeRequest(request);
     }
 
-    public Response.ResponseBuilder get(String url, HashMap headers) {
+    public Response.ResponseBuilder get(String url, Map<String, String> headers) {
         HttpGet request = new HttpGet(url);
         setHeaders(headers, request);
         return executeRequest(request);
@@ -63,7 +64,7 @@ public class CloudClient {
         return executeRequest(request);
     }
 
-    public Response.ResponseBuilder post(String url, HashMap<String, String> headers, String body) {
+    public Response.ResponseBuilder post(String url, Map<String, String> headers, String body) {
         HttpPost request = new HttpPost(url);
         request.setEntity(getHttpEntity(body));
         setHeaders(headers, request);
@@ -77,8 +78,8 @@ public class CloudClient {
         client.getParams().setParameter(ClientPNames.HANDLE_REDIRECTS, false);
 
         String responseBody = null;
-        int statusCode = 500;
-        HttpResponse response = new BasicHttpResponse(request.getProtocolVersion(), 500, "Unable To connect to Auth Service");
+        int statusCode = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
+        HttpResponse response = new BasicHttpResponse(request.getProtocolVersion(), statusCode, "Unable To connect to Auth Service");
         try {
             response = client.execute(request);
             statusCode = response.getStatusLine().getStatusCode();
@@ -91,7 +92,7 @@ public class CloudClient {
         }
 
         // Catch 301 - MOVED_PERMANENTLY
-        if (statusCode == 301) {
+        if (statusCode == HttpServletResponse.SC_MOVED_PERMANENTLY) {
             //Quick Fix: not best way to pass the body
             return handleRedirect(response, responseBody);
         }
@@ -104,7 +105,7 @@ public class CloudClient {
                 responseBuilder = responseBuilder.header(key, header.getValue());
             }
         }
-        if (statusCode == 500) {
+        if (statusCode == HttpServletResponse.SC_INTERNAL_SERVER_ERROR) {
             logger.info("Cloud Auth returned a 500 status code.");
         }
         responseBuilder.header("response-source", "cloud-auth");
@@ -146,7 +147,7 @@ public class CloudClient {
         return client;
     }
 
-    private void setHeaders(HashMap<String, String> headers, HttpRequestBase request) {
+    private void setHeaders(Map<String, String> headers, HttpRequestBase request) {
         if (!headers.isEmpty()) {
             for (String header : headers.keySet()) {
                 request.addHeader(header, headers.get(header).toString());

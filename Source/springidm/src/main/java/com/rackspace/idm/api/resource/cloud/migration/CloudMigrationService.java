@@ -229,12 +229,12 @@ public class CloudMigrationService {
             }
 
             return response;
+        } catch (ConflictException e) {
+            throw new IdmException(e);
         } catch (Exception e) {
-            if(!(e instanceof ConflictException)){
-                logger.info("failed to migrate user: {}", username);
-                unmigrateUserByUsername(username);
-                logger.info("successfully unmigrated user: {}", username);
-            }
+            logger.info("failed to migrate user: {}", username);
+            unmigrateUserByUsername(username);
+            logger.info("successfully unmigrated user: {}", username);
             throw new IdmException(e);
         }
     }
@@ -664,6 +664,12 @@ public class CloudMigrationService {
         } if (user.getInMigration() == null) { // Used so we do not delete a user who wasn't previously migrated.
             throw new NotFoundException(USER_NOT_FOUND);
         }
+        
+        List<TenantRole> tenantRoles = tenantService.getGlobalRolesForUser(user);
+
+        if (!isUserAdmin(roleConverterCloudV20.toRoleListJaxb(tenantRoles))) {
+            throw new BadRequestException("Migration is not allowed for subusers");
+        }
 
         String domainId = user.getDomainId();
         FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParam.FilterParamName.DOMAIN_ID, domainId)};
@@ -965,11 +971,7 @@ public class CloudMigrationService {
     }
 
     private boolean isUkCloudRegion() {
-        if ("UK".equalsIgnoreCase(config.getString("cloud.region"))) {
-            return true;
-        } else {
-            return false;
-        }
+        return ("UK".equalsIgnoreCase(config.getString("cloud.region")));
     }
 
     public void setClient(MigrationClient client) {
@@ -1004,8 +1006,8 @@ public class CloudMigrationService {
         this.config = config;
     }
 
-    public void setObjFactories(JAXBObjectFactories obj_factories) {
-        this.objFactories = obj_factories;
+    public void setObjFactories(JAXBObjectFactories objFactories) {
+        this.objFactories = objFactories;
     }
 
     public void setUserConverterCloudV20(UserConverterCloudV20 userConverterCloudV20) {

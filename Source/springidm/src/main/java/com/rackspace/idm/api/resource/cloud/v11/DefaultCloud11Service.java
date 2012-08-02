@@ -68,7 +68,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     private org.openstack.docs.common.api.v1.ObjectFactory objectFactory = new org.openstack.docs.common.api.v1.ObjectFactory();
 
-    private HashMap<String, JAXBElement<Extension>> extensionMap;
+    private Map<String, JAXBElement<Extension>> extensionMap;
     private JAXBElement<Extensions> currentExtensions;
 
     @Autowired
@@ -147,7 +147,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             ScopeAccess sa = this.scopeAccessService.getScopeAccessByAccessToken(tokenId);
 
-            if (sa == null || !(sa instanceof UserScopeAccess) || ((UserScopeAccess) sa).isAccessTokenExpired(new DateTime())) {
+            if (!(sa instanceof UserScopeAccess) || ((UserScopeAccess) sa).isAccessTokenExpired(new DateTime())) {
                 throw new NotFoundException(String.format("token %s not found", tokenId));
             }
 
@@ -182,7 +182,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             ScopeAccess sa = scopeAccessService.getScopeAccessByAccessToken(tokeId);
 
-            if (sa == null || !(sa instanceof UserScopeAccess) || ((UserScopeAccess) sa).isAccessTokenExpired(new DateTime())) {
+            if (!(sa instanceof UserScopeAccess) || ((UserScopeAccess) sa).isAccessTokenExpired(new DateTime())) {
                 throw new NotFoundException(String.format("token %s not found", tokeId));
             }
 
@@ -462,11 +462,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 	}
 
     private boolean isUkCloudRegion() {
-        if ("UK".equalsIgnoreCase(config.getString("cloud.region"))) {
-            return true;
-        } else {
-            return false;
-        }
+        return ("UK".equalsIgnoreCase(config.getString("cloud.region")));
     }
 
     public void validateMossoId(Integer mossoId) {
@@ -728,7 +724,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             }
             ScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), getCloudAuthClientId());
             List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(sa);
-            return Response.status(301).entity(OBJ_FACTORY.createUser(this.userConverterCloudV11.openstackToCloudV11User(user, endpoints)));
+            return Response.status(HttpServletResponse.SC_MOVED_PERMANENTLY).entity(OBJ_FACTORY.createUser(this.userConverterCloudV11.openstackToCloudV11User(user, endpoints)));
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }
@@ -749,7 +745,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             }
             ScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), getCloudAuthClientId());
             List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(sa);
-            return Response.status(301).entity(OBJ_FACTORY.createUser(this.userConverterCloudV11.openstackToCloudV11User(user, endpoints)));
+            return Response.status(HttpServletResponse.SC_MOVED_PERMANENTLY).entity(OBJ_FACTORY.createUser(this.userConverterCloudV11.openstackToCloudV11User(user, endpoints)));
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }

@@ -30,7 +30,7 @@ public class DefaultUserService implements UserService {
     private final Configuration config;
 
     private final PasswordComplexityService passwordComplexityService;
-    final private Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private final ScopeAccessDao scopeAccessDao;
 
@@ -73,7 +73,7 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public void addUser(User user) throws DuplicateException {
+    public void addUser(User user) {
         logger.info("Adding User: {}", user);
 
         validateUserEmailAddress(user);
@@ -592,10 +592,8 @@ public class DefaultUserService implements UserService {
 
     void validateMossoId(int mossoId) {
         Users usersByMossoId = userDao.getUsersByMossoId(mossoId);
-        if (usersByMossoId != null) {
-            if (usersByMossoId.getUsers().size() > 0) {
-                throw new BadRequestException("User with Mosso Account ID: " + mossoId + " already exists.");
-            }
+        if (usersByMossoId != null && usersByMossoId.getUsers().size() > 0) {
+            throw new BadRequestException("User with Mosso Account ID: " + mossoId + " already exists.");
         }
     }
 
@@ -624,13 +622,8 @@ public class DefaultUserService implements UserService {
         if (userById.getInMigration() == null) {
             return true;
         }
-        if (userById.getInMigration()) {
-            return false;
-        }
-        if (userById.getInMigration() == false) {
-            return true;
-        }
-        return true;
+        return !userById.getInMigration();
+
     }
 
     @Override
@@ -642,13 +635,7 @@ public class DefaultUserService implements UserService {
         if (userByUsername.getInMigration() == null) {
             return true;
         }
-        if (userByUsername.getInMigration()) {
-            return false;
-        }
-        if (userByUsername.getInMigration() == false) {
-            return true;
-        }
-        return true;
+       return !userByUsername.getInMigration();
     }
 
     @Override
@@ -657,10 +644,8 @@ public class DefaultUserService implements UserService {
             return false;
         } else if (user.getInMigration() == null) {
             return false;
-        } else if (!user.getInMigration()) {
-            return true;
         } else {
-            return false;
+            return !user.getInMigration();
         }
     }
 
@@ -694,7 +679,7 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public User getUserByScopeAccess(ScopeAccess scopeAccess) throws IdmException {
+    public User getUserByScopeAccess(ScopeAccess scopeAccess) {
         User user = null;
         if (scopeAccess instanceof RackerScopeAccess) {
             RackerScopeAccess rackerScopeAccess = (RackerScopeAccess) scopeAccess;

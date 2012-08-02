@@ -43,7 +43,7 @@ public class DefaultAuthenticationServiceTest {
     InputValidator inputValidator = mock(InputValidator.class);
 
     private Configuration config = mock(Configuration.class);
-    DefaultAuthenticationService defaultAuthenticationService = new DefaultAuthenticationService(null,null,tenantService,scopeAccessService,applicationDao,config,userDao,customerDao,inputValidator);
+    DefaultAuthenticationService defaultAuthenticationService = new DefaultAuthenticationService(null,tenantService,scopeAccessService,applicationDao,config,userDao,customerDao,inputValidator);
     DefaultAuthenticationService spy;
     RSAClient rsaClient = mock(RSAClient.class);
 

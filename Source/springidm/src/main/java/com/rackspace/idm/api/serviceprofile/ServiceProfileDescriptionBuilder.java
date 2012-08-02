@@ -1,7 +1,6 @@
 package com.rackspace.idm.api.serviceprofile;
 
 import com.rackspace.idm.domain.dao.ApiDocDao;
-import freemarker.template.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -14,7 +13,7 @@ public class ServiceProfileDescriptionBuilder {
     private final ServiceDescriptionTemplateUtil templateUtil;
     
     @Autowired
-	public ServiceProfileDescriptionBuilder(Configuration freemarkerConfig, ApiDocDao apiDocDao, ServiceDescriptionTemplateUtil templateUtil) {
+	public ServiceProfileDescriptionBuilder(ApiDocDao apiDocDao, ServiceDescriptionTemplateUtil templateUtil) {
 		this.apiDocDao = apiDocDao;
 		this.templateUtil = templateUtil;
 	}

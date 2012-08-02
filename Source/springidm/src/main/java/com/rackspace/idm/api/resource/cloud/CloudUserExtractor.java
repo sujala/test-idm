@@ -98,7 +98,6 @@ public class CloudUserExtractor {
             user = userService.getUserByMossoId(mossoId);
         } else if (credentials.getValue() instanceof NastCredentials) {
             String nastId = ((NastCredentials) credentials.getValue()).getNastId();
-            String key = ((NastCredentials) credentials.getValue()).getKey();
             if (StringUtils.isBlank(nastId)) {
                 throw new CloudExceptionResponse(cloudExceptionResponse.badRequestExceptionResponse("Expecting nast id"));
             }

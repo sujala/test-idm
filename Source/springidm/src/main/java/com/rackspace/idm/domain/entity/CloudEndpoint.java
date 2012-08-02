@@ -50,13 +50,15 @@ public class CloudEndpoint {
     @Override
     public int hashCode() {
         final int prime = 31;
+        final int oldPrime = 1231;
+        final int newPrime = 1237;
         int result = 1;
         result = prime * result + ((baseUrl == null) ? 0 : baseUrl.hashCode());
         result = prime * result + ((mossoId == null) ? 0 : mossoId.hashCode());
         result = prime * result + ((nastId == null) ? 0 : nastId.hashCode());
         result = prime * result
             + ((username == null) ? 0 : username.hashCode());
-        result = prime * result + (v1preferred ? 1231 : 1237);
+        result = prime * result + (v1preferred ? oldPrime : newPrime);
         return result;
     }
 

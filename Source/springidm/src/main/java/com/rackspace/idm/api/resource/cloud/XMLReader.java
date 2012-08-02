@@ -2,12 +2,12 @@ package com.rackspace.idm.api.resource.cloud;
 
 import com.rackspace.idm.domain.config.providers.PackageClassDiscoverer;
 import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.IdmException;
 import com.sun.jersey.core.provider.EntityHolder;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 
 import javax.ws.rs.Consumes;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyReader;
@@ -81,7 +81,7 @@ public class XMLReader implements MessageBodyReader<Object> {
                     "com.rackspace.idm.api.resource.cloud.migration");
         } catch (Exception e) {
             LOG.error("Error in static initializer.  - " + e.getMessage());
-            throw new RuntimeException(e);
+            throw new IdmException(e);
         }
     }
 
@@ -99,7 +99,7 @@ public class XMLReader implements MessageBodyReader<Object> {
     }
 
     @Override
-    public Object readFrom(Class<Object> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream) throws IOException, WebApplicationException {
+    public Object readFrom(Class<Object> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream) throws IOException {
         try {
             StringWriter writer = new StringWriter();
             IOUtils.copy(entityStream, writer);

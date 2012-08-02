@@ -29,6 +29,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Map;
 
 @Component
 public class DelegateCloud11Service implements Cloud11Service {
@@ -58,7 +59,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     @Autowired
     private DefaultUserService defaultUserService;
 
-    private static com.rackspacecloud.docs.auth.api.v1.ObjectFactory OBJ_FACTORY = new com.rackspacecloud.docs.auth.api.v1.ObjectFactory();
+    private static com.rackspacecloud.docs.auth.api.v1.ObjectFactory objFactory = new com.rackspacecloud.docs.auth.api.v1.ObjectFactory();
 
     public static final String CLOUD_AUTH_11_URL = "cloudAuth11url";
     public static final String CLOUD_AUTH_ROUTING = "useCloudAuth";
@@ -107,7 +108,7 @@ public class DelegateCloud11Service implements Cloud11Service {
         Response dummyResponse = serviceResponse.clone().build();
          //If SUCCESS and "user" is not null, store token to "user" and return cloud response
         int status = dummyResponse.getStatus();
-        if (status == 302){
+        if (status == HttpServletResponse.SC_MOVED_TEMPORARILY){
             serviceResponse.location(new URI(config.getString("ga.endpoint")+"cloud/v1.1/auth-admin"));
         }
         if (status == HttpServletResponse.SC_OK && user != null) {
@@ -252,7 +253,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     public Response.ResponseBuilder createUser(HttpServletRequest request, HttpHeaders httpHeaders, UriInfo uriInfo,
                                                User user) throws IOException, JAXBException {
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
-            String body = this.marshallObjectToString(OBJ_FACTORY.createUser(user));
+            String body = this.marshallObjectToString(objFactory.createUser(user));
             return cloudClient.post(getCloudAuthV11Url().concat("users"), httpHeaders, body);
         }
         return defaultCloud11Service.createUser(request, httpHeaders, uriInfo, user);
@@ -287,7 +288,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     public Response.ResponseBuilder updateUser(HttpServletRequest request, String userId, HttpHeaders httpHeaders,
                                                User user) throws IOException, JAXBException {
         if(isCloudAuthRoutingEnabled() && !userExistsInGA(userId)){
-            String body = this.marshallObjectToString(OBJ_FACTORY.createUser(user));
+            String body = this.marshallObjectToString(objFactory.createUser(user));
             return cloudClient.put(getCloudAuthV11Url().concat(USERS + userId), httpHeaders, body);
         }
         return defaultCloud11Service.updateUser(request, userId, httpHeaders, user);
@@ -307,7 +308,7 @@ public class DelegateCloud11Service implements Cloud11Service {
             throws IOException, JAXBException {
         if(isCloudAuthRoutingEnabled() && !userExistsInGA(userId)){
             String path = USERS + userId + "/enabled";
-            String body = this.marshallObjectToString(OBJ_FACTORY.createUser(user));
+            String body = this.marshallObjectToString(objFactory.createUser(user));
             return cloudClient.put(getCloudAuthV11Url().concat(path), httpHeaders, body);
         }
         return defaultCloud11Service.setUserEnabled(request, userId, user, httpHeaders);
@@ -326,7 +327,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     public Response.ResponseBuilder setUserKey(HttpServletRequest request, String userId, HttpHeaders httpHeaders, UserWithOnlyKey user)
             throws IOException, JAXBException {
         if(isCloudAuthRoutingEnabled() && !userExistsInGA(userId)){
-            String body = marshallObjectToString(OBJ_FACTORY.createUser(user));
+            String body = marshallObjectToString(objFactory.createUser(user));
             String path = USERS + userId + "/key";
             return cloudClient.put(getCloudAuthV11Url().concat(path), httpHeaders, body);
         }
@@ -356,7 +357,7 @@ public class DelegateCloud11Service implements Cloud11Service {
         if (!isCloudAuthRoutingEnabled() || isGASourceOfTruth()) {
             return defaultCloud11Service.addBaseURL(request, httpHeaders, baseUrl);
         }
-        String body = marshallObjectToString(OBJ_FACTORY.createBaseURL(baseUrl));
+        String body = marshallObjectToString(objFactory.createBaseURL(baseUrl));
         return cloudClient.post(getCloudAuthV11Url().concat("baseURLs"), httpHeaders, body);
     }
 
@@ -364,7 +365,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     public Response.ResponseBuilder addBaseURLRef(HttpServletRequest request, String userId, HttpHeaders httpHeaders,
                                                   UriInfo uriInfo, BaseURLRef baseUrlRef) throws IOException, JAXBException {
         if (isCloudAuthRoutingEnabled() && !userExistsInGA(userId)) {
-            String body = this.marshallObjectToString(OBJ_FACTORY.createBaseURLRef(baseUrlRef));
+            String body = this.marshallObjectToString(objFactory.createBaseURLRef(baseUrlRef));
             String path = USERS + userId + "/baseURLRefs";
             return cloudClient.post(getCloudAuthV11Url().concat(path), httpHeaders, body);
         }
@@ -449,7 +450,7 @@ public class DelegateCloud11Service implements Cloud11Service {
         return cloudClient.get(getCloudAuthV11Url().concat(path), httpHeaders);
     }
 
-    String getPath(String path, HashMap<String, String> queryParams) {
+    String getPath(String path, Map<String, String> queryParams) {
         String result = path;
         String queryString = "";
 
@@ -509,8 +510,8 @@ public class DelegateCloud11Service implements Cloud11Service {
         this.credentialUnmarshaller = credentialUnmarshaller;
     }
 
-    public static void setObjFactory(ObjectFactory OBJ_FACTORY) {
-        DelegateCloud11Service.OBJ_FACTORY = OBJ_FACTORY;
+    public static void setObjFactory(ObjectFactory objFactory) {
+        DelegateCloud11Service.objFactory = objFactory;
     }
 
     public void setCloudClient(CloudClient cloudClient) {
@@ -519,9 +520,6 @@ public class DelegateCloud11Service implements Cloud11Service {
 
     public void setDefaultCloud11Service(DefaultCloud11Service defaultCloud11Service) {
         this.defaultCloud11Service = defaultCloud11Service;
-    }
-
-    public void setMarshaller(Marshaller marshaller) {
     }
 
     public void setLdapUserRepository(LdapUserRepository ldapUserRepository) {

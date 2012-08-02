@@ -18,7 +18,7 @@ import java.util.Map;
 @Component
 public class ServiceDescriptionTemplateUtil {
 
-    final private Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
     
 	@Autowired
 	private final Configuration freemarkerConfig;
@@ -44,8 +44,8 @@ public class ServiceDescriptionTemplateUtil {
 			out.flush();
 
 			return out.toString();
-		} catch (Throwable t) {
-			logger.error("Could not load template.", t);
+		} catch (Exception e) {
+			logger.error("Could not load template.", e);
 		}
 
 		return "";
@@ -64,8 +64,8 @@ public class ServiceDescriptionTemplateUtil {
 			out.flush();
 
 			return out.toString();
-		} catch (Throwable t) {
-			logger.error("Could not load template.", t);
+		} catch (Exception e) {
+			logger.error("Could not load template.", e);
 		}
 
 		return "";
