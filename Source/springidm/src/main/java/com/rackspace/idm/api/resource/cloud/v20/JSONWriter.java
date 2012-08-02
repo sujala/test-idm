@@ -15,7 +15,6 @@ import com.rackspacecloud.docs.auth.api.v1.*;
 import com.sun.jersey.api.json.JSONJAXBContext;
 import com.sun.jersey.api.json.JSONMarshaller;
 import org.apache.cxf.common.util.StringUtils;
-import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -33,11 +32,11 @@ import org.openstack.docs.identity.api.v2.Endpoint;
 import org.openstack.docs.identity.api.v2.ServiceCatalog;
 import org.openstack.docs.identity.api.v2.Token;
 import org.openstack.docs.identity.api.v2.User;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3._2005.atom.Link;
 
 import javax.ws.rs.Produces;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyWriter;
@@ -59,7 +58,7 @@ import java.util.Set;
 @Produces(MediaType.APPLICATION_JSON)
 public class JSONWriter implements MessageBodyWriter<Object> {
 
-    public static final Logger LOG = Logger.getLogger(JSONWriter.class);
+    public static final org.apache.log4j.Logger LOG = org.apache.log4j.Logger.getLogger(JSONWriter.class);
     private static Set<Class<?>> classes = new HashSet<Class<?>>();
 
     static {
@@ -103,7 +102,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
         return ret;
     }
 
-    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(JSONWriter.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(JSONWriter.class);
 
     @Override
     public long getSize(Object arg0, Class<?> arg1, Type arg2, Annotation[] arg3, MediaType arg4) {
@@ -377,7 +376,7 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             try {
                 getMarshaller().marshallToJSON(object, outputStream);
             } catch (JAXBException e) {
-                logger.info(e.toString());
+                LOGGER.info(e.toString());
                 throw new BadRequestException("Parameters are not valid.", e);
             }
         }

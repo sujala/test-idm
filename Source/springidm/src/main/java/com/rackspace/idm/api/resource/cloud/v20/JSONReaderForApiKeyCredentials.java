@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import javax.ws.rs.Consumes;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyReader;
@@ -27,7 +26,7 @@ import java.lang.reflect.Type;
 public class JSONReaderForApiKeyCredentials implements
     MessageBodyReader<ApiKeyCredentials> {
 
-    private static final Logger logger = LoggerFactory.getLogger(JSONReaderForApiKeyCredentials.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(JSONReaderForApiKeyCredentials.class);
 
     @Override
     public boolean isReadable(Class<?> type, Type genericType,
@@ -71,7 +70,7 @@ public class JSONReaderForApiKeyCredentials implements
                 }
             }
         } catch (ParseException e) {
-            logger.info(e.toString());
+            LOGGER.info(e.toString());
             throw new BadRequestException("Invalid JSON", e);
         }
 

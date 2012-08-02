@@ -20,7 +20,7 @@ import java.util.Stack;
 @XmlRootElement
 public final class Password {
 
-    public static final String ValidNonAlphaChars = "!@#$%^+=?:";
+    public static final String VALID_NON_ALPHA_CHARS = "!@#$%^+=?:";
 
     @NotNull
     @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY)
@@ -129,8 +129,8 @@ public final class Password {
             while (usedIndexes.contains(randomIndex)) {
                 randomIndex = (int) (Math.random() * randomPassword.length());
             }
-            int randomInt = (int) (Math.random() * ValidNonAlphaChars.length());
-            int randomNonAlpha = ValidNonAlphaChars.charAt(randomInt);
+            int randomInt = (int) (Math.random() * VALID_NON_ALPHA_CHARS.length());
+            int randomNonAlpha = VALID_NON_ALPHA_CHARS.charAt(randomInt);
             pw[randomIndex] = (char) randomNonAlpha;
 
             randomPassword = new String(pw);

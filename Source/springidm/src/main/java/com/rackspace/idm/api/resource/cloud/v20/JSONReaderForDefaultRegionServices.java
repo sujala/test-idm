@@ -12,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.Consumes;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyReader;
@@ -26,7 +25,7 @@ import java.lang.reflect.Type;
 @Consumes(MediaType.APPLICATION_JSON)
 public class JSONReaderForDefaultRegionServices implements MessageBodyReader<DefaultRegionServices> {
 
-    private static final Logger logger = LoggerFactory.getLogger(JSONReaderForRole.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(JSONReaderForRole.class);
 
     @Override
     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
@@ -61,7 +60,7 @@ public class JSONReaderForDefaultRegionServices implements MessageBodyReader<Def
 
             }
         } catch (ParseException e) {
-            logger.info(e.toString());
+            LOGGER.info(e.toString());
             throw new BadRequestException("Bad JSON request", e);
         }
 

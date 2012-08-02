@@ -14,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.Consumes;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyReader;
@@ -31,7 +30,7 @@ public class JSONReaderForAuthenticationRequest implements
 
     private static final com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory OBJ_FACTORY_API_KEY = new com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory();
     private static final org.openstack.docs.identity.api.v2.ObjectFactory OBJ_FACTORY_PASSWORD = new org.openstack.docs.identity.api.v2.ObjectFactory();
-    private static final Logger logger = LoggerFactory.getLogger(JSONReaderForAuthenticationRequest.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(JSONReaderForAuthenticationRequest.class);
 
     @Override
     public boolean isReadable(Class<?> type, Type genericType,
@@ -108,7 +107,7 @@ public class JSONReaderForAuthenticationRequest implements
                 }
             }
         } catch (ParseException e) {
-            logger.info(e.toString());
+            LOGGER.info(e.toString());
             throw new BadRequestException("JSON Parsing error", e);
         }
 
