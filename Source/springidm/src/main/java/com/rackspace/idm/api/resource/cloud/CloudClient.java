@@ -29,7 +29,7 @@ import java.util.Set;
 @Component
 public class CloudClient {
 
-    final private Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public Response.ResponseBuilder get(String url, HttpHeaders httpHeaders) {
         HttpGet request = new HttpGet(url);

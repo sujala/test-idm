@@ -52,7 +52,7 @@ public class TokensResource extends ParentResource {
     private final CredentialsConverter credentialsConverter;
     private final ScopeAccessService scopeAccessService;
     private final AuthenticationService authenticationService;
-    final private Logger logger = LoggerFactory.getLogger(TokensResource.class);
+    private final Logger logger = LoggerFactory.getLogger(TokensResource.class);
 
     @Autowired(required = true)
     public TokensResource(AuthHeaderHelper authHeaderHelper, AuthConverter authConverter,

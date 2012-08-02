@@ -18,7 +18,7 @@ public class UriExtensionFilter implements ContainerRequestFilter {
     private static final String DOT = ".";
 
     @SuppressWarnings("serial")
-    final static Map<String, String> EXTENSION_TO_ACCEPT_HEADER = new HashMap<String, String>() {
+    static final Map<String, String> EXTENSION_TO_ACCEPT_HEADER = new HashMap<String, String>() {
         {
             put("json", MediaType.APPLICATION_JSON);
             put("xml", MediaType.APPLICATION_XML);

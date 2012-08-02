@@ -36,7 +36,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     private final ApplicationDao clientDao;
     private final Configuration config;
 
-    final private Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final ScopeAccessDao scopeAccessDao;
     private final UserDao userDao;
     private final TenantDao tenantDao;

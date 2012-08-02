@@ -31,7 +31,7 @@ import javax.xml.namespace.QName;
 @XmlRegistry
 public class ObjectFactory {
 
-    private final static QName _Response_QNAME = new QName("http://migration.api.rackspace.com/v1.0/MigrateUserResponse", "response");
+    private static final QName _Response_QNAME = new QName("http://migration.api.rackspace.com/v1.0/MigrateUserResponse", "response");
 
     /**
      * Create a new ObjectFactory that can be used to create new instances of schema derived classes for package: com.rackspace.idm.api.resource.cloud.migration

@@ -27,7 +27,7 @@ public class UserGlobalRoleResource {
 	private final AuthorizationService authorizationService;
 	private final TenantService tenantService;
 
-	final private Logger logger = LoggerFactory.getLogger(this.getClass());
+	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	@Autowired
 	public UserGlobalRoleResource(UserService userService,

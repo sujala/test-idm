@@ -30,7 +30,7 @@ public class DefaultUserService implements UserService {
     private final Configuration config;
 
     private final PasswordComplexityService passwordComplexityService;
-    final private Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private final ScopeAccessDao scopeAccessDao;
 

@@ -28,7 +28,7 @@ public class PasswordRulesResource {
     private final PasswordComplexityService passwordComplexityService;
     private final PasswordRulesConverter passwordRulesConverter;
     private final AuthorizationService authorizationService;
-    final private Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
     public PasswordRulesResource(

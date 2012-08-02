@@ -183,7 +183,7 @@ public abstract class LdapRepository {
 
     private final Configuration config;
 
-    final private Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     protected LdapRepository(LdapConnectionPools conn, Configuration config) {
         this.connPools = conn;

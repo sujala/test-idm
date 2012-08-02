@@ -20,7 +20,7 @@ public class DefaultCustomerService implements CustomerService {
     private final CustomerDao customerDao;
     private final UserDao userDao;
 
-    final private Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public DefaultCustomerService(ApplicationDao clientDao, CustomerDao customerDao,
         UserDao userDao) {
@@ -113,12 +113,12 @@ public class DefaultCustomerService implements CustomerService {
         logger.debug("SoftDeleted Customer: {}", customer);
     }
     
-    /**
-     * does some processing once a customer like enable or disable all users of 
-     * that belong to that customer, revoke tokens, etc
-     * @param customer
-     * @param locked - true/false
-     */
+//    /**
+//     * does some processing once a customer like enable or disable all users of
+//     * that belong to that customer, revoke tokens, etc
+//     * @param customer
+//     * @param locked - true/false
+//     */
 //    private void process(Customer customer, boolean locked) {
 //        logger.info("Setting customer's locked state: {}", customer);
 //
