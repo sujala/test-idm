@@ -433,6 +433,18 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
+    public void verifyTokenHasTenant(String tenantId, ScopeAccess authScopeAccess,List<Tenant> adminTenants) {
+        for (Tenant tenant : adminTenants) {
+            if (tenant.getTenantId().equals(tenantId)) {
+                return;
+            }
+        }
+        String errMsg = "Not authorized.";
+        logger.warn(errMsg);
+        throw new ForbiddenException(errMsg);
+    }
+
+    @Override
     public void checkAuthAndHandleFailure(boolean authorized, ScopeAccess token) {
         if (!authorized) {
             String errMsg = String.format("Token %s Forbidden from this call",

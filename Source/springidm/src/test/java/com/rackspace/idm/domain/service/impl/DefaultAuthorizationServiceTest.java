@@ -936,6 +936,44 @@ public class DefaultAuthorizationServiceTest {
     }
 
     @Test
+    public void verifyTokenHasTenant_tenantIdEquals_succeeds() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        Tenant tenant = new Tenant();
+        tenant.setTenantId("tenantId");
+        List<Tenant> tenantList = new ArrayList<Tenant>();
+        tenantList.add(tenant);
+        spy.verifyTokenHasTenant("tenantId",scopeAccess,tenantList);
+    }
+
+    @Test
+    public void verifyTokenHasTenant_tenantIdNotEquals_throwsForbiddenExcpetion() throws Exception {
+        try{
+            ScopeAccess scopeAccess = new ScopeAccess();
+            Tenant tenant = new Tenant();
+            tenant.setTenantId("notMatch");
+            List<Tenant> tenantList = new ArrayList<Tenant>();
+            tenantList.add(tenant);
+            spy.verifyTokenHasTenant("tenantId",scopeAccess,tenantList);
+            assertTrue("should throw exception",false);
+        } catch (ForbiddenException ex){
+            assertThat("exception message",ex.getMessage(),equalTo("Not authorized."));
+        }
+
+    }
+
+    @Test
+    public void verifyTokenHasTenant_listEmpty_throwsForbiddenExcpetion() throws Exception {
+        try{
+            ScopeAccess scopeAccess = new ScopeAccess();
+            List<Tenant> tenantList = new ArrayList<Tenant>();
+            spy.verifyTokenHasTenant("tenantId",scopeAccess,tenantList);
+            assertTrue("should throw exception",false);
+        } catch (ForbiddenException ex){
+            assertThat("exception message",ex.getMessage(),equalTo("Not authorized."));
+        }
+    }
+
+    @Test
     public void checkAuthAndHandleFailure_isAuthorized_doesNothing() throws Exception {
         defaultAuthorizationService.checkAuthAndHandleFailure(true,null);
     }

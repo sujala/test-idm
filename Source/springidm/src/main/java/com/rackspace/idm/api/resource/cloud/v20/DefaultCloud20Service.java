@@ -936,10 +936,11 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder deleteUser(HttpHeaders httpHeaders, String authToken, String userId)  {
         try {
-            authorizationService.verifyUserAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
+            authorizationService.verifyUserAdminLevelAccess(scopeAccessByAccessToken);
             User user = checkAndGetUser(userId);
             //is same domain?
-            if (authorizationService.authorizeCloudUserAdmin(scopeAccessService.getScopeAccessByAccessToken(authToken))) {
+            if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
                 User caller = userService.getUserByAuthToken(authToken);
                 verifyDomain(user, caller);
             }
@@ -2484,24 +2485,14 @@ public class DefaultCloud20Service implements Cloud20Service {
         if (authorizationService.authorizeCloudIdentityAdmin(authScopeAccess) || authorizationService.authorizeCloudServiceAdmin(authScopeAccess)) {
             return;
         }
-        verifyTokenHasTenant(tenantId, authScopeAccess);
-    }
-
-    void verifyTokenHasTenant(String tenantId, ScopeAccess authScopeAccess) {
         List<Tenant> adminTenants = this.tenantService.getTenantsForScopeAccessByTenantRoles(authScopeAccess);
-        for (Tenant tenant : adminTenants) {
-            if (tenant.getTenantId().equals(tenantId)) {
-                return;
-            }
-        }
-        String errMsg = NOT_AUTHORIZED;
-        logger.warn(errMsg);
-        throw new ForbiddenException(errMsg);
+        authorizationService.verifyTokenHasTenant(tenantId, authScopeAccess,adminTenants);
     }
 
     void verifyTokenHasTenantAccessForAuthenticate(String authToken, String tenantId) {
         ScopeAccess authScopeAccess = getScopeAccessForValidToken(authToken);
-        verifyTokenHasTenant(tenantId, authScopeAccess);
+        List<Tenant> adminTenants = tenantService.getTenantsForScopeAccessByTenantRoles(authScopeAccess);
+        authorizationService.verifyTokenHasTenant(tenantId, authScopeAccess,adminTenants);
     }
 
     void stripEndpoints(List<OpenstackEndpoint> endpoints) {

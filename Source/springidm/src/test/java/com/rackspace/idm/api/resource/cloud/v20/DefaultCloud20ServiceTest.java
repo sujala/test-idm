@@ -4323,18 +4323,11 @@ public class DefaultCloud20ServiceTest {
     public void verifyTokenHasTenantAccessForAuthenticate_callsVerifyTokenHasTenant() throws Exception {
         List<Tenant> adminTenants = new ArrayList<Tenant>();
         adminTenants.add(tenant);
-        when(tenantService.getTenantsForScopeAccessByTenantRoles(any(ScopeAccess.class))).thenReturn(adminTenants);
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        when(tenantService.getTenantsForScopeAccessByTenantRoles(scopeAccess)).thenReturn(adminTenants);
         spy.verifyTokenHasTenantAccessForAuthenticate(authToken, tenantId);
-        verify(spy).verifyTokenHasTenant(eq(tenantId), any(ScopeAccess.class));
-    }
-
-    @Test
-    public void verifyBlankTokenHasTenantAccessForAuthenticate_callsVerifyTokenHasTenant() throws Exception {
-        List<Tenant> adminTenants = new ArrayList<Tenant>();
-        adminTenants.add(tenant);
-        when(tenantService.getTenantsForScopeAccessByTenantRoles(any(ScopeAccess.class))).thenReturn(adminTenants);
-        spy.verifyTokenHasTenantAccessForAuthenticate(authToken, tenantId);
-        verify(spy).verifyTokenHasTenant(eq(tenantId), any(ScopeAccess.class));
+        verify(authorizationService).verifyTokenHasTenant(tenantId, scopeAccess, adminTenants);
     }
 
     @Test
@@ -4475,23 +4468,22 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void verifyTokenHasTenantAccess_callsTenantService() throws Exception {
-        ArrayList<Tenant> list = new ArrayList<Tenant>();
-        Tenant tenant1 = new Tenant();
-        tenant1.setTenantId("1");
-        list.add(tenant1);
-        when(tenantService.getTenantsForScopeAccessByTenantRoles(any(ScopeAccess.class))).thenReturn(list);
         when(authorizationService.authorizeCloudIdentityAdmin((ScopeAccess) anyObject())).thenReturn(false);
         when(authorizationService.authorizeCloudServiceAdmin((ScopeAccess) anyObject())).thenReturn(false);
-        defaultCloud20Service.verifyTokenHasTenantAccess(authToken, tenant1.getTenantId());
+        defaultCloud20Service.verifyTokenHasTenantAccess(authToken, "1");
         verify(tenantService).getTenantsForScopeAccessByTenantRoles(any(ScopeAccess.class));
     }
 
-    @Test(expected = ForbiddenException.class)
-    public void verifyTokenHasTenantAccess_NoTenants_throwsException() throws Exception {
-        when(tenantService.getTenantsForScopeAccessByTenantRoles(any(ScopeAccess.class))).thenReturn(new ArrayList<Tenant>());
-        when(authorizationService.authorizeCloudIdentityAdmin((ScopeAccess) anyObject())).thenReturn(false);
-        when(authorizationService.authorizeCloudServiceAdmin((ScopeAccess) anyObject())).thenReturn(false);
-        defaultCloud20Service.verifyTokenHasTenantAccess(authToken, null);
+    @Test
+    public void verifyTokenHasTenantAccess_callsTenantAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        ArrayList<Tenant> list = new ArrayList<Tenant>();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        when(tenantService.getTenantsForScopeAccessByTenantRoles(scopeAccess)).thenReturn(list);
+        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(false);
+        spy.verifyTokenHasTenantAccess(authToken, tenantId);
+        verify(authorizationService).verifyTokenHasTenant(tenantId,scopeAccess,list);
     }
 
     @Test
@@ -5887,17 +5879,6 @@ public class DefaultCloud20ServiceTest {
         when(authorizationService.authorizeCloudUser(scopeAccess)).thenReturn(true);
         spy.verifyUserLevelAccess(authToken);
         assertTrue("no exceptions", true);
-    }
-
-    @Test (expected =  ForbiddenException.class)
-    public void verifyTokenHasTenant_tenantIdNotEquals_throwsForbiddenExcpetion() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        Tenant tenant = new Tenant();
-        tenant.setTenantId("notMatch");
-        List<Tenant> tenantList = new ArrayList<Tenant>();
-        tenantList.add(tenant);
-        when(tenantService.getTenantsForScopeAccessByTenantRoles(scopeAccess)).thenReturn(tenantList);
-        spy.verifyTokenHasTenant("tenantId", scopeAccess);
     }
 
     @Test

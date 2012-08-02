@@ -2,7 +2,10 @@ package com.rackspace.idm.domain.service;
 
 import com.rackspace.idm.domain.entity.Entity;
 import com.rackspace.idm.domain.entity.ScopeAccess;
+import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.exception.ForbiddenException;
+
+import java.util.List;
 
 public interface AuthorizationService {
     
@@ -57,4 +60,5 @@ public interface AuthorizationService {
     void verifyIdentityAdminLevelAccess(ScopeAccess authScopeAccess);
     void verifyServiceAdminLevelAccess(ScopeAccess authScopeAccess);
     void verifyUserAdminLevelAccess(ScopeAccess authScopeAccess);
+    void verifyTokenHasTenant(String tenantId, ScopeAccess authScopeAccess, List<Tenant> adminTenants);
 }
