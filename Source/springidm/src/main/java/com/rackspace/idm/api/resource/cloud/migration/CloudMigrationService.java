@@ -319,11 +319,7 @@ public class CloudMigrationService {
 
             //Add CA token to GA User
             if(!userToken.equals("")) {
-                try {
-                    scopeAccessService.updateUserScopeAccessTokenForClientIdByUser(newUser, config.getString("cloudAuth.clientId"), userToken, expireToken);
-                }catch(Exception e){
-
-                }
+                scopeAccessService.updateUserScopeAccessTokenForClientIdByUser(newUser, config.getString("cloudAuth.clientId"), userToken, expireToken);
             }
             
             // Get Roles

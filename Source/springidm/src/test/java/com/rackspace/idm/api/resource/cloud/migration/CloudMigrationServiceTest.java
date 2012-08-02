@@ -468,7 +468,7 @@ public class CloudMigrationServiceTest {
     }
 
     @Test( expected = IdmException.class)
-    public void migrateUserByUsername_throwsConflictExceptions() throws Exception {
+    public void migrateUserByUsername_throwsIdmExceptions() throws Exception {
         doThrow(new ConflictException()).when(spy).migrateUserByUsername("user", false, null);
         spy.migrateUserByUsername("user", false);
     }
@@ -476,9 +476,10 @@ public class CloudMigrationServiceTest {
     @Test
     public void migrateUserByUsername_withRuntimeException_UnmigratesUser() throws Exception {
         doThrow(new RuntimeException()).when(spy).migrateUserByUsername("user", false, null);
+        doNothing().when(spy).unmigrateUserByUsername(anyString());
         try {
             spy.migrateUserByUsername("user", false);
-        } catch (Exception e) {}
+        } catch (IdmException e) {}
         verify(spy).unmigrateUserByUsername("user");
     }
 
@@ -514,6 +515,31 @@ public class CloudMigrationServiceTest {
         doThrow(new RuntimeException()).when(spy).getApiKey(any(CredentialListType.class));
         spy.migrateUserByUsername("user", false);
         verify(spy, never()).getPassword(any(CredentialListType.class));
+    }
+
+    @Test
+    public void migrateUserByUsername_withProcessingSubUsers_callsMigrateUserByUsernameForSubUser() throws Exception {
+        when(client.getUser(anyString(), anyString())).thenReturn(new org.openstack.docs.identity.api.v2.User());
+        com.rackspacecloud.docs.auth.api.v1.User user11 = new com.rackspacecloud.docs.auth.api.v1.User();
+        user11.setMossoId(1);
+        user11.setBaseURLRefs(new BaseURLRefList());
+        user11.getBaseURLRefs().getBaseURLRef().add(new BaseURLRef());
+        when(client.getUserTenantsBaseUrls(anyString(), anyString(), anyString())).thenReturn(user11);
+        when(client.getSecretQA(anyString(), anyString())).thenThrow(new NotFoundException());
+        doReturn("token").when(spy).getAdminToken();
+        ArrayList<String> subUsers = new ArrayList<String>();
+        subUsers.add("subUserName");
+        doReturn(subUsers).when(spy).getSubUsers(any(org.openstack.docs.identity.api.v2.User.class), anyString(), any(RoleList.class));
+        when(userService.userExistsByUsername(anyString())).thenReturn(false);
+        doReturn(new User()).when(spy).addMigrationUser(any(org.openstack.docs.identity.api.v2.User.class), anyInt(), anyString(), anyString(), anyString(), any(SecretQA.class), anyString());
+        doNothing().when(spy).addUserGlobalRoles(any(User.class), any(RoleList.class));
+        doReturn(false).when(spy).isSubUser(any(RoleList.class));
+        when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
+        when(userService.getUser(anyString())).thenReturn(user);
+        when(userService.userExistsById(anyString())).thenReturn(true);
+        doReturn(new UserType()).when(spy).validateUser(any(org.openstack.docs.identity.api.v2.User.class), anyString(), anyString(), any(SecretQA.class), any(RoleList.class), any(Groups.class), anyList());
+        spy.migrateUserByUsername("cmarin2", true, "1");
+        verify(spy).migrateUserByUsername(anyString(), eq(false), anyString());
     }
 
     @Test

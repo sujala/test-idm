@@ -124,45 +124,47 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public Response.ResponseBuilder authenticate(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest) {
-
-        //Check for impersonated token if authenticating with token creds
-        if (authenticationRequest.getToken() != null && !StringUtils.isBlank(authenticationRequest.getToken().getId())) {
-            ScopeAccess sa = scopeAccessService.getScopeAccessByAccessToken(authenticationRequest.getToken().getId());
-            if (sa instanceof ImpersonatedScopeAccess) {
-                //check expiration
-                return authenticateImpersonated(httpHeaders, authenticationRequest, sa);
+        try {
+            //Check for impersonated token if authenticating with token creds
+            if (authenticationRequest.getToken() != null && !StringUtils.isBlank(authenticationRequest.getToken().getId())) {
+                ScopeAccess sa = scopeAccessService.getScopeAccessByAccessToken(authenticationRequest.getToken().getId());
+                if (sa instanceof ImpersonatedScopeAccess) {
+                    //check expiration
+                    return authenticateImpersonated(httpHeaders, authenticationRequest, sa);
+                }
             }
-        }
 
-        //Get "user" from LDAP
-        com.rackspace.idm.domain.entity.User user = cloudUserExtractor.getUserByV20CredentialType(authenticationRequest);
-        if (userService.isMigratedUser(user)) {
-            return defaultCloud20Service.authenticate(httpHeaders, authenticationRequest);
-        }
-
-        //Get Cloud Auth response
-        String body = marshallObjectToString(objectFactory.createAuth(authenticationRequest));
-        Response.ResponseBuilder serviceResponse = cloudClient.post(getCloudAuthV20Url() + TOKENS, httpHeaders, body);
-        Response dummyResponse = serviceResponse.clone().build();
-        //If SUCCESS and "user" is not null, store token to "user" and return cloud response
-        int status = dummyResponse.getStatus();
-        if (status == HttpServletResponse.SC_OK && user != null) {
-            AuthenticateResponse authenticateResponse = (AuthenticateResponse) unmarshallResponse(dummyResponse.getEntity().toString(), AuthenticateResponse.class);
-            if (authenticateResponse != null) {
-                String token = authenticateResponse.getToken().getId();
-                XMLGregorianCalendar authResExpires = authenticateResponse.getToken().getExpires();
-                LOG.info("authResExpires = " + authResExpires);
-                GregorianCalendar gregorianCalendar = authResExpires.toGregorianCalendar();
-                LOG.info("GregorianCalander = " + gregorianCalendar);
-                Date expires = gregorianCalendar.getTime();
-                LOG.info("expires = " + expires);
-                scopeAccessService.updateUserScopeAccessTokenForClientIdByUser(user, getCloudAuthClientId(), token, expires);
+            //Get "user" from LDAP
+            com.rackspace.idm.domain.entity.User user = cloudUserExtractor.getUserByV20CredentialType(authenticationRequest);
+            if (userService.isMigratedUser(user)) {
+                return defaultCloud20Service.authenticate(httpHeaders, authenticationRequest);
             }
-            return serviceResponse;
-        } else if (user == null) { //If "user" is null return cloud response
-            return serviceResponse;
-        } else { //If we get this far, return Default Service Response
-            return defaultCloud20Service.authenticate(httpHeaders, authenticationRequest);
+
+            //Get Cloud Auth response
+            String body = marshallObjectToString(objectFactory.createAuth(authenticationRequest));
+            Response.ResponseBuilder serviceResponse = cloudClient.post(getCloudAuthV20Url() + TOKENS, httpHeaders, body);
+            Response dummyResponse = serviceResponse.clone().build();
+            //If SUCCESS and "user" is not null, store token to "user" and return cloud response
+            int status = dummyResponse.getStatus();
+            if (status == HttpServletResponse.SC_OK && user != null) {
+                Token token = JSONReaderForCloudAuthenticationResponseToken.getAuthenticationResponseTokenFromJSONString(dummyResponse.getEntity().toString());
+                if (token != null) {
+                    XMLGregorianCalendar authResExpires = token.getExpires();
+                    LOG.info("authResExpires = " + authResExpires);
+                    GregorianCalendar gregorianCalendar = authResExpires.toGregorianCalendar();
+                    LOG.info("GregorianCalander = " + gregorianCalendar);
+                    Date expires = gregorianCalendar.getTime();
+                    LOG.info("expires = " + expires);
+                    scopeAccessService.updateUserScopeAccessTokenForClientIdByUser(user, getCloudAuthClientId(), token.getId(), expires);
+                }
+                return serviceResponse;
+            } else if (user == null) { //If "user" is null return cloud response
+                return serviceResponse;
+            } else { //If we get this far, return Default Service Response
+                return defaultCloud20Service.authenticate(httpHeaders, authenticationRequest);
+            }
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
         }
     }
 

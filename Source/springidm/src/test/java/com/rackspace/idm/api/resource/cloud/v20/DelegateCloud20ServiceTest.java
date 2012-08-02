@@ -232,30 +232,26 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
-    public void authenticate_userNotMigratedAndNotNullAndCloudClientResponse200AndAuthenticateResponseIsNull_returnsResponse200() throws Exception {
+    public void authenticate_userNotMigratedAndNotNullAndCloudClientResponse200AndAuthenticateResponseIsNull_returns500InternalError() throws Exception {
         User user = new User();
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         responseBuilder.status(200);
         responseBuilder.entity(new Object());
         when(cloudUserExtractor.getUserByV20CredentialType(authenticationRequest)).thenReturn(user);
         when(cloudClient.post(anyString(), any(HttpHeaders.class), anyString())).thenReturn(responseBuilder);
-        assertThat("response", delegateCloud20Service.authenticate(httpHeaders, authenticationRequest).build().getStatus(), equalTo(200));
+        when(exceptionHandler.exceptionResponse(any(IdmException.class))).thenReturn(Response.status(500));
+        assertThat("response", delegateCloud20Service.authenticate(httpHeaders, authenticationRequest).build().getStatus(), equalTo(500));
     }
 
     @Test
     public void authenticate_userNotMigratedAndNotNullAndCloudClientResponse200AndAuthenticateResponseNotNull_scopeAcessUpdated() throws Exception {
         User user = new User();
+        String authResponseString = "{\"access\":{\"token\":{\"id\":\"1319b190-9527-46e7-9c0e-4fc3ca032e57\",\"expires\":\"2012-08-03T14:56:25.000-05:00\",\"tenant\":{\"id\":\"MossoCloudFS_6eee84c5-54a4-4217-a895-8308da81feb3\",\"name\":\"MossoCloudFS_6eee84c5-54a4-4217-a895-8308da81feb3\"}},\"serviceCatalog\":[{\"endpoints\":[{\"region\":\"STAGING\",\"tenantId\":\"-16\",\"publicURL\":\"https:\\/\\/cmstaging.api.rackspacecloud.com\\/v1.0\\/-16\"}],\"name\":\"cloudMonitoring\",\"type\":\"rax:monitor\"},{\"endpoints\":[{\"region\":\"STAGING\",\"tenantId\":\"-16\",\"publicURL\":\"https:\\/\\/staging.ord.loadbalancers.api.rackspacecloud.com\\/v1.0\\/-16\"}],\"name\":\"cloudLoadBalancers\",\"type\":\"rax:load-balancer\"},{\"endpoints\":[{\"tenantId\":\"-16\",\"publicURL\":\"https:\\/\\/staging.dnsaas.rackspace.net\\/v1.0\\/-16\"}],\"name\":\"cloudDNS\",\"type\":\"rax:dns\"},{\"endpoints\":[{\"tenantId\":\"-16\",\"publicURL\":\"https:\\/\\/servers.api.staging.us.ccp.rackspace.net\\/v1.0\\/-16\",\"versionInfo\":\"https:\\/\\/servers.api.staging.us.ccp.rackspace.net\\/v1.0\",\"versionList\":\"https:\\/\\/servers.api.staging.us.ccp.rackspace.net\\/v1.0\",\"versionId\":\"1.0\"}],\"name\":\"cloudServers\",\"type\":\"compute\"},{\"endpoints\":[{\"region\":\"STAGING\",\"tenantId\":\"-16\",\"publicURL\":\"https:\\/\\/api.staging.ord1.clouddb.rackspace.net\\/v1.0\\/-16\"}],\"name\":\"cloudDatabases\",\"type\":\"rax:database\"},{\"endpoints\":[{\"region\":\"ORD\",\"tenantId\":\"-16\",\"publicURL\":\"https:\\/\\/preprod.ord.servers.api.rackspacecloud.com\\/v2\\/-16\"},{\"region\":\"DFW\",\"tenantId\":\"-16\",\"publicURL\":\"https:\\/\\/preprod.dfw.servers.api.rackspacecloud.com\\/v2\\/-16\"}],\"name\":\"cloudServersPreprod\",\"type\":\"compute\"},{\"endpoints\":[{\"region\":\"ORD\",\"tenantId\":\"MossoCloudFS_6eee84c5-54a4-4217-a895-8308da81feb3\",\"publicURL\":\"https:\\/\\/cdn.stg.clouddrive.com\\/v1\\/MossoCloudFS_6eee84c5-54a4-4217-a895-8308da81feb3\"}],\"name\":\"cloudFilesCDN\",\"type\":\"rax:object-cdn\"},{\"endpoints\":[{\"region\":\"ORD\",\"tenantId\":\"MossoCloudFS_6eee84c5-54a4-4217-a895-8308da81feb3\",\"publicURL\":\"https:\\/\\/storage.stg.swift.racklabs.com\\/v1\\/MossoCloudFS_6eee84c5-54a4-4217-a895-8308da81feb3\",\"internalURL\":\"https:\\/\\/snet-storage.stg.swift.racklabs.com\\/v1\\/MossoCloudFS_6eee84c5-54a4-4217-a895-8308da81feb3\"}],\"name\":\"cloudFiles\",\"type\":\"object-store\"}],\"user\":{\"id\":\"153345\",\"roles\":[{\"id\":\"357\",\"description\":\"Customer Admin Access\",\"name\":\"customer:admin\"},{\"id\":\"1\",\"description\":\"Admin Role.\",\"name\":\"identity:admin\"}],\"name\":\"auth\",\"RAX-AUTH:defaultRegion\":\"\"}}}";
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
-        Token token = new Token();
-        authenticateResponse.setToken(token);
         responseBuilder.status(200);
-        responseBuilder.entity(new Object());
+        responseBuilder.entity(authResponseString);
         when(cloudUserExtractor.getUserByV20CredentialType(authenticationRequest)).thenReturn(user);
         when(cloudClient.post(anyString(), any(HttpHeaders.class), anyString())).thenReturn(responseBuilder);
-        doReturn(authenticateResponse).when(spy).unmarshallResponse(anyString(), eq(AuthenticateResponse.class));
-        token.setId("someTokenId");
-        token.setExpires(new XMLGregorianCalendarImpl(new GregorianCalendar(1, 1, 1)));
         spy.authenticate(httpHeaders, authenticationRequest);
         verify(scopeAccessService).updateUserScopeAccessTokenForClientIdByUser(any(User.class), anyString(), anyString(), any(Date.class));
     }
