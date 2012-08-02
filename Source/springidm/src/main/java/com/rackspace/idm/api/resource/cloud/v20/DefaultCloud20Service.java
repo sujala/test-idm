@@ -1412,7 +1412,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         try {
             authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            verifyTokenHasTenantAccess(authToken, tenantId);
 
             Tenant tenant = checkAndGetTenant(tenantId);
 
@@ -1522,7 +1521,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         try {
             authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            verifyTokenHasTenantAccess(authToken, tenantId);
 
             Tenant tenant = checkAndGetTenant(tenantId);
 
@@ -1542,7 +1540,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         try {
             authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            verifyTokenHasTenantAccess(authToken, tenantId);
 
             Tenant tenant = checkAndGetTenant(tenantId);
 

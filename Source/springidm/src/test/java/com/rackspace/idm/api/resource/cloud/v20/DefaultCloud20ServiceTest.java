@@ -3477,7 +3477,6 @@ public class DefaultCloud20ServiceTest {
         NotFoundException notFoundException = new NotFoundException();
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doNothing().when(spy).verifyTokenHasTenantAccess(authToken, null);
         doThrow(notFoundException).when(spy).checkAndGetTenant(null);
         when(exceptionHandler.exceptionResponse(notFoundException)).thenReturn(responseBuilder);
         assertThat("response builder", spy.listEndpoints(null, authToken, null), equalTo(responseBuilder));
@@ -3496,7 +3495,6 @@ public class DefaultCloud20ServiceTest {
         ArrayList<CloudBaseUrl> cloudBaseUrlList = new ArrayList<CloudBaseUrl>();
         cloudBaseUrlList.add(cloudBaseUrl);
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doNothing().when(spy).verifyTokenHasTenantAccess(authToken, tenantId);
         doReturn(tenant).when(spy).checkAndGetTenant(tenantId);
         when(endpointService.getGlobalBaseUrls()).thenReturn(cloudBaseUrlList);
         when(endpointService.getBaseUrlById(1)).thenReturn(cloudBaseUrl);
@@ -3608,7 +3606,6 @@ public class DefaultCloud20ServiceTest {
         NotFoundException notFoundException = new NotFoundException();
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doNothing().when(spy).verifyTokenHasTenantAccess(authToken,null);
         doThrow(notFoundException).when(spy).checkAndGetTenant(null);
         when(exceptionHandler.exceptionResponse(notFoundException)).thenReturn(responseBuilder);
         assertThat("response builder",spy.listRolesForUserOnTenant(null, authToken, null, null),equalTo(responseBuilder));
