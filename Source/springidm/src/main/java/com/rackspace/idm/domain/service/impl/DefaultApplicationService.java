@@ -463,7 +463,7 @@ public class DefaultApplicationService implements ApplicationService {
     }
 
     @Override
-    public DefinedPermission checkAndGetPermission(String customerId, String clientId, String permissionId) throws NotFoundException {
+    public DefinedPermission checkAndGetPermission(String customerId, String clientId, String permissionId) {
         logger.debug("Check and get Permission: {} for ClientId: {}", permissionId, clientId);
         DefinedPermission permission = this.getDefinedPermissionByClientIdAndPermissionId(clientId, permissionId);
 

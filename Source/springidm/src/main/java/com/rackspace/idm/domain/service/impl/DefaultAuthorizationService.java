@@ -45,8 +45,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     
     @Override
-	public void authorize(String token, Entity object, String... authorizedRoles) 
-    		throws ForbiddenException {
+	public void authorize(String token, Entity object, String... authorizedRoles) {
 
     	if(token == null){
             throw new IllegalArgumentException("Token cannot be null");

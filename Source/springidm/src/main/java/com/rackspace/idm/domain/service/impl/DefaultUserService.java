@@ -592,10 +592,8 @@ public class DefaultUserService implements UserService {
 
     void validateMossoId(int mossoId) {
         Users usersByMossoId = userDao.getUsersByMossoId(mossoId);
-        if (usersByMossoId != null) {
-            if (usersByMossoId.getUsers().size() > 0) {
-                throw new BadRequestException("User with Mosso Account ID: " + mossoId + " already exists.");
-            }
+        if (usersByMossoId != null && usersByMossoId.getUsers().size() > 0) {
+            throw new BadRequestException("User with Mosso Account ID: " + mossoId + " already exists.");
         }
     }
 
@@ -681,7 +679,7 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public User getUserByScopeAccess(ScopeAccess scopeAccess) throws IdmException {
+    public User getUserByScopeAccess(ScopeAccess scopeAccess) {
         User user = null;
         if (scopeAccess instanceof RackerScopeAccess) {
             RackerScopeAccess rackerScopeAccess = (RackerScopeAccess) scopeAccess;

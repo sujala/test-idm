@@ -193,7 +193,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
         }
     }
 
-    ScopeAccess getTokens(final Credentials trParam, final DateTime currentTime) throws NotAuthenticatedException {
+    ScopeAccess getTokens(final Credentials trParam, final DateTime currentTime) {
 
         if(trParam.getGrantType() == null){
             throw new BadRequestException("grant_type cannot be null");

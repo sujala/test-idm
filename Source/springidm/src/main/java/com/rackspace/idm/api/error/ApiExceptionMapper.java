@@ -170,16 +170,11 @@ public class ApiExceptionMapper implements ExceptionMapper<Throwable> {
         if (e instanceof WebApplicationException) {
             WebApplicationException wae = (WebApplicationException) e;
             Throwable cause = wae.getCause();
-            if (cause != null) {
-                //
-                // Common user errors
-                //
-                if (cause instanceof ClassCastException) {
+            if (cause instanceof ClassCastException) {
                     BadRequestFault fault = new BadRequestFault();
                     fault.setCode(Response.Status.BAD_REQUEST.getStatusCode());
                     fault.setMessage(e.getMessage());
                     return Response.ok(raxOf.createBadRequest(fault)).status(Response.Status.BAD_REQUEST).build();
-                }
             }
 
             switch (wae.getResponse().getStatus()) {
