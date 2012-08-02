@@ -176,8 +176,7 @@ public class AuthenticationFilter implements ContainerRequestFilter,
     }
 
     @Override
-    public void setApplicationContext(ApplicationContext applicationContext)
-            throws BeansException {
+    public void setApplicationContext(ApplicationContext applicationContext) {
         springCtx = applicationContext;
     }
 

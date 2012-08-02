@@ -198,16 +198,14 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
         Group group;
         List<String> groups = new ArrayList<String>();
 
-        try{
+        try{ //TODO: should this catch exist... The getGroupById method already logs and throws accordingly
             group = this.getGroupById(groupId);
             groups.add(group.getGroupId().toString());
-        }catch (Exception e){
-            if (e instanceof NotFoundException) {
-                String errMsg = String.format("Group %s not found", groupId);
-                getLogger().error(errMsg);
-                throw new NotFoundException(errMsg, e);
-            }
-        }
+        } catch (NotFoundException e){
+            String errMsg = String.format("Group %s not found", groupId);
+            getLogger().error(errMsg);
+            throw new NotFoundException(errMsg, e);
+        } catch (Exception e) { }
 
         String userDN = new LdapDnBuilder(USERS_BASE_DN).addAttribute(ATTR_ID, userId).build();
         List<Group> oldGroups;

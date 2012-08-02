@@ -128,7 +128,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Autowired
     private DefaultRegionService defaultRegionService;
 
-    com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
+    private com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
 
     private Map<String, JAXBElement<Extension>> extensionMap;
 
@@ -957,10 +957,8 @@ public class DefaultCloud20Service implements Cloud20Service {
                 verifyDomain(user, caller);
             }
             ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByUserId(userId);
-            if (authorizationService.hasUserAdminRole(scopeAccess)) {
-                if (userService.hasSubUsers(userId)) {
-                    throw new BadRequestException("Please delete sub-users before deleting last user-admin for the account");
-                }
+            if (authorizationService.hasUserAdminRole(scopeAccess) && userService.hasSubUsers(userId)) {
+                throw new BadRequestException("Please delete sub-users before deleting last user-admin for the account");
             }
             userService.softDeleteUser(user);
 

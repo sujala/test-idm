@@ -16,7 +16,7 @@ public interface AuthorizationService {
 	 * @param object - the entity we are trying to access.
 	 * @param authorizedRoles  - the role ids that client must have to access the object. null allowed.
 	 */
-	void authorize(String token, Entity object, String... authorizedRoles) throws ForbiddenException;
+	void authorize(String token, Entity object, String... authorizedRoles);
 	
     boolean authorizeRacker(ScopeAccess scopeAccess);
 
@@ -38,7 +38,7 @@ public interface AuthorizationService {
      * @param requestingScopeAccess Representing the caller's credentials
      * @return true/false
      */
-    abstract boolean authorizeAsRequestorOrOwner(ScopeAccess targetScopeAccess,
+    boolean authorizeAsRequestorOrOwner(ScopeAccess targetScopeAccess,
         ScopeAccess requestingScopeAccess);
 
     void checkAuthAndHandleFailure(boolean authorized, ScopeAccess token);

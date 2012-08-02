@@ -54,7 +54,7 @@ public class DefaultRegionService {
         Set<String> defaultRegions = new HashSet<String>();
         if (openStackServices!=null){
             for (Application application : openStackServices){
-                if(application.getUseForDefaultRegion()!=null && application.getUseForDefaultRegion()==true){
+                if(application.getUseForDefaultRegion()!=null && application.getUseForDefaultRegion()){
                     List<CloudBaseUrl> baseUrls = endpointService.getBaseUrlsByServiceName(application.getName());
                     for (CloudBaseUrl baseUrl : baseUrls){
                         defaultRegions.add(baseUrl.getRegion());
