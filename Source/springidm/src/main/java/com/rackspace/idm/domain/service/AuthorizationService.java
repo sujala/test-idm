@@ -60,5 +60,5 @@ public interface AuthorizationService {
     void verifyIdentityAdminLevelAccess(ScopeAccess authScopeAccess);
     void verifyServiceAdminLevelAccess(ScopeAccess authScopeAccess);
     void verifyUserAdminLevelAccess(ScopeAccess authScopeAccess);
-    void verifyTokenHasTenant(String tenantId, ScopeAccess authScopeAccess, List<Tenant> adminTenants);
+    void verifyTokenHasTenantAccess(String tenantId, ScopeAccess authScopeAccess);
 }

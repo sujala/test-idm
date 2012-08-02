@@ -5,6 +5,7 @@ import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.exception.ForbiddenException;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
@@ -36,11 +37,13 @@ public class DefaultAuthorizationServiceTest {
     ApplicationDao clientDao = mock(ApplicationDao.class);
     TenantDao tenantDao = mock(TenantDao.class);
     Configuration config = mock(Configuration.class);
+    TenantService tenantSerivce = mock(TenantService.class);
     DefaultAuthorizationService spy;
 
     @Before
     public void setUp() throws Exception {
         defaultAuthorizationService = new DefaultAuthorizationService(scopeAccessDao,clientDao,tenantDao,config);
+        defaultAuthorizationService.setTenantService(tenantSerivce);
         spy = spy(defaultAuthorizationService);
 
     }
@@ -936,24 +939,54 @@ public class DefaultAuthorizationServiceTest {
     }
 
     @Test
-    public void verifyTokenHasTenant_tenantIdEquals_succeeds() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
+    public void verifyTokenHasTenantAccess_isIdentityAdminAndServiceAdmin_succeeds() throws Exception {
+        ScopeAccess scopeAccess = new UserScopeAccess();
+        doReturn(true).when(spy).authorizeCloudIdentityAdmin(scopeAccess);
+        doReturn(true).when(spy).authorizeCloudServiceAdmin(scopeAccess);
+        spy.verifyTokenHasTenantAccess("tenantId", scopeAccess);
+    }
+
+    @Test
+    public void verifyTokenHasTenantAccess_isIdentityAdmin_succeeds() throws Exception {
+        ScopeAccess scopeAccess = new UserScopeAccess();
+        doReturn(true).when(spy).authorizeCloudIdentityAdmin(scopeAccess);
+        doReturn(false).when(spy).authorizeCloudServiceAdmin(scopeAccess);
+        spy.verifyTokenHasTenantAccess("tenantId", scopeAccess);
+    }
+
+    @Test
+    public void verifyTokenHasTenantAccess_isServiceAdmin_succeeds() throws Exception {
+        ScopeAccess scopeAccess = new UserScopeAccess();
+        doReturn(false).when(spy).authorizeCloudIdentityAdmin(scopeAccess);
+        doReturn(true).when(spy).authorizeCloudServiceAdmin(scopeAccess);
+        spy.verifyTokenHasTenantAccess("tenantId", scopeAccess);
+    }
+
+    @Test
+    public void verifyTokenHasTenantAccess_tenantIdEquals_succeeds() throws Exception {
+        ScopeAccess scopeAccess = new UserScopeAccess();
         Tenant tenant = new Tenant();
         tenant.setTenantId("tenantId");
         List<Tenant> tenantList = new ArrayList<Tenant>();
         tenantList.add(tenant);
-        spy.verifyTokenHasTenant("tenantId",scopeAccess,tenantList);
+        doReturn(false).when(spy).authorizeCloudIdentityAdmin(scopeAccess);
+        doReturn(false).when(spy).authorizeCloudServiceAdmin(scopeAccess);
+        when(tenantSerivce.getTenantsForScopeAccessByTenantRoles(scopeAccess)).thenReturn(tenantList);
+        spy.verifyTokenHasTenantAccess("tenantId", scopeAccess);
     }
 
     @Test
-    public void verifyTokenHasTenant_tenantIdNotEquals_throwsForbiddenExcpetion() throws Exception {
+    public void verifyTokenHasTenantAccess_tenantIdNotEquals_throwsForbiddenExcpetion() throws Exception {
         try{
-            ScopeAccess scopeAccess = new ScopeAccess();
+            ScopeAccess scopeAccess = new UserScopeAccess();
             Tenant tenant = new Tenant();
             tenant.setTenantId("notMatch");
             List<Tenant> tenantList = new ArrayList<Tenant>();
             tenantList.add(tenant);
-            spy.verifyTokenHasTenant("tenantId",scopeAccess,tenantList);
+            doReturn(false).when(spy).authorizeCloudIdentityAdmin(scopeAccess);
+            doReturn(false).when(spy).authorizeCloudServiceAdmin(scopeAccess);
+            when(tenantSerivce.getTenantsForScopeAccessByTenantRoles(scopeAccess)).thenReturn(tenantList);
+            spy.verifyTokenHasTenantAccess("tenantId", scopeAccess);
             assertTrue("should throw exception",false);
         } catch (ForbiddenException ex){
             assertThat("exception message",ex.getMessage(),equalTo("Not authorized."));
@@ -962,11 +995,14 @@ public class DefaultAuthorizationServiceTest {
     }
 
     @Test
-    public void verifyTokenHasTenant_listEmpty_throwsForbiddenExcpetion() throws Exception {
+    public void verifyTokenHasTenantAccess_listEmpty_throwsForbiddenExcpetion() throws Exception {
         try{
-            ScopeAccess scopeAccess = new ScopeAccess();
+            ScopeAccess scopeAccess = new UserScopeAccess();
             List<Tenant> tenantList = new ArrayList<Tenant>();
-            spy.verifyTokenHasTenant("tenantId",scopeAccess,tenantList);
+            doReturn(false).when(spy).authorizeCloudIdentityAdmin(scopeAccess);
+            doReturn(false).when(spy).authorizeCloudServiceAdmin(scopeAccess);
+            when(tenantSerivce.getTenantsForScopeAccessByTenantRoles(scopeAccess)).thenReturn(tenantList);
+            spy.verifyTokenHasTenantAccess("tenantId", scopeAccess);
             assertTrue("should throw exception",false);
         } catch (ForbiddenException ex){
             assertThat("exception message",ex.getMessage(),equalTo("Not authorized."));

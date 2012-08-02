@@ -234,8 +234,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder addRolesToUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String userId, String roleId) {
 
         try {
-            authorizationService.verifyUserAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            verifyTokenHasTenantAccess(authToken, tenantId);
+            ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
+            authorizationService.verifyUserAdminLevelAccess(scopeAccess);
+            authorizationService.verifyTokenHasTenantAccess(tenantId, scopeAccess);
 
             Tenant tenant = checkAndGetTenant(tenantId);
 
@@ -904,8 +905,10 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder deleteRoleFromUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String userId, String roleId) {
         try {
-            authorizationService.verifyUserAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            verifyTokenHasTenantAccess(authToken, tenantId);
+            ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
+            authorizationService.verifyUserAdminLevelAccess(scopeAccess);
+            authorizationService.verifyTokenHasTenantAccess(tenantId,scopeAccess);
+
             Tenant tenant = checkAndGetTenant(tenantId);
             User user = checkAndGetUser(userId);
             ClientRole role = checkAndGetClientRole(roleId);
@@ -2004,8 +2007,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder listUsersForTenant(HttpHeaders httpHeaders, String authToken, String tenantId, String marker, Integer limit) {
 
         try {
-            authorizationService.verifyUserAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            verifyTokenHasTenantAccess(authToken, tenantId);
+            ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
+            authorizationService.verifyUserAdminLevelAccess(scopeAccess);
+            authorizationService.verifyTokenHasTenantAccess(tenantId,scopeAccess);
 
             Tenant tenant = checkAndGetTenant(tenantId);
 
@@ -2023,8 +2027,9 @@ public class DefaultCloud20Service implements Cloud20Service {
                                                       String roleId, String marker, Integer limit) {
 
         try {
-            authorizationService.verifyUserAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            verifyTokenHasTenantAccess(authToken, tenantId);
+            ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
+            authorizationService.verifyUserAdminLevelAccess(scopeAccess);
+            authorizationService.verifyTokenHasTenantAccess(tenantId,scopeAccess);
 
             Tenant tenant = checkAndGetTenant(tenantId);
 
@@ -2485,21 +2490,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
         }
-    }
-
-    void verifyTokenHasTenantAccess(String authToken, String tenantId) {
-        ScopeAccess authScopeAccess = getScopeAccessForValidToken(authToken);
-        if (authorizationService.authorizeCloudIdentityAdmin(authScopeAccess) || authorizationService.authorizeCloudServiceAdmin(authScopeAccess)) {
-            return;
-        }
-        List<Tenant> adminTenants = this.tenantService.getTenantsForScopeAccessByTenantRoles(authScopeAccess);
-        authorizationService.verifyTokenHasTenant(tenantId, authScopeAccess,adminTenants);
-    }
-
-    void verifyTokenHasTenantAccessForAuthenticate(String authToken, String tenantId) {
-        ScopeAccess authScopeAccess = getScopeAccessForValidToken(authToken);
-        List<Tenant> adminTenants = tenantService.getTenantsForScopeAccessByTenantRoles(authScopeAccess);
-        authorizationService.verifyTokenHasTenant(tenantId, authScopeAccess,adminTenants);
     }
 
     void stripEndpoints(List<OpenstackEndpoint> endpoints) {

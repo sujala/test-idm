@@ -6,6 +6,7 @@ import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.exception.ForbiddenException;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
@@ -26,6 +27,8 @@ public class DefaultAuthorizationService implements AuthorizationService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     @Autowired
     private ScopeAccessService scopeAccessService;
+    @Autowired
+    private TenantService tenantService;
 
     private static String idmAdminGroupDn = null;
     private static ClientRole cloudAdminRole = null;
@@ -433,12 +436,20 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
-    public void verifyTokenHasTenant(String tenantId, ScopeAccess authScopeAccess,List<Tenant> adminTenants) {
+    public void verifyTokenHasTenantAccess(String tenantId, ScopeAccess authScopeAccess) {
+
+        if (authorizeCloudIdentityAdmin(authScopeAccess) || authorizeCloudServiceAdmin(authScopeAccess)) {
+            return;
+        }
+
+        List<Tenant> adminTenants = tenantService.getTenantsForScopeAccessByTenantRoles(authScopeAccess);
+
         for (Tenant tenant : adminTenants) {
             if (tenant.getTenantId().equals(tenantId)) {
                 return;
             }
         }
+
         String errMsg = NOT_AUTHORIZED_MSG;
         logger.warn(errMsg);
         throw new ForbiddenException(errMsg);
@@ -512,6 +523,10 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     public static void setIdmAdminGroupDn(String idmAdminGroupDn) {
         DefaultAuthorizationService.idmAdminGroupDn = idmAdminGroupDn;
+    }
+
+    public void setTenantService(TenantService tenantService) {
+        this.tenantService = tenantService;
     }
 
     private String getIdmAdminGroupName() {
