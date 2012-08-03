@@ -147,7 +147,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             //If SUCCESS and "user" is not null, store token to "user" and return cloud response
             int status = dummyResponse.getStatus();
             if (status == HttpServletResponse.SC_OK && user != null) {
-                Token token = JSONReaderForCloudAuthenticationResponseToken.getAuthenticationResponseTokenFromJSONString(dummyResponse.getEntity().toString());
+                Token token = ((AuthenticateResponse)unmarshallResponse(dummyResponse.getEntity().toString(), AuthenticateResponse.class)).getToken();
                 if (token != null) {
                     XMLGregorianCalendar authResExpires = token.getExpires();
                     LOG.info("authResExpires = " + authResExpires);
@@ -1064,12 +1064,10 @@ public class DelegateCloud20Service implements Cloud20Service {
     Object unmarshallResponse(String entity, Class<?> objectClass) {
         try {
             if (entity.trim().startsWith("{")) {
-                //TODO: HANDLE JAXBElement for user
-                JSONConfiguration jsonConfiguration = JSONConfiguration.natural().rootUnwrapping(false).build();
-                JSONJAXBContext context = new JSONJAXBContext(jsonConfiguration, "org.openstack.docs.identity.api.v2");
-                JSONUnmarshaller jsonUnmarshaller = context.createJSONUnmarshaller();
-                JAXBElement ob = jsonUnmarshaller.unmarshalJAXBElementFromJSON(new StringReader(entity), objectClass);
-                return ob.getValue();
+                //TODO: get more than just the token
+                AuthenticateResponse authenticateResponse = new AuthenticateResponse();
+                authenticateResponse.setToken(JSONReaderForCloudAuthenticationResponseToken.getAuthenticationResponseTokenFromJSONString(entity));
+                return authenticateResponse;
             } else {
                 JAXBContext jc = JAXBContext.newInstance(objectClass);
                 Unmarshaller unmarshaller = jc.createUnmarshaller();
