@@ -231,11 +231,13 @@ public class CloudMigrationService {
             return response;
         } catch (ConflictException e) {
             throw e;
+        } catch (BadRequestException e) {
+            throw e;
         } catch (Exception e) {
             logger.info("failed to migrate user: {}", username);
             unmigrateUserByUsername(username);
             logger.info("successfully unmigrated user: {}", username);
-            throw new IdmException(e);
+            throw new BadRequestException(e);
         }
     }
 
