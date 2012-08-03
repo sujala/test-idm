@@ -798,6 +798,72 @@ public class DefaultAuthorizationServiceTest {
     }
 
     @Test
+    public void verifyIdentityAdminLevelAccess_withoutAdminLevelAccess_throwsForbiddenException() throws Exception {
+        try{
+            ScopeAccess scopeAccess = new ScopeAccess();
+            doReturn(false).when(spy).authorizeCloudIdentityAdmin(scopeAccess);
+            spy.verifyIdentityAdminLevelAccess(scopeAccess);
+            assertTrue("should throw exception",false);
+        }catch (ForbiddenException ex){
+            assertThat("exception message",ex.getMessage(),equalTo("Not authorized."));
+        }
+    }
+
+    @Test
+    public void verifyIdentityAdminLevelAccess_withAdminLevelAccess_succeeds() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(true).when(spy).authorizeCloudIdentityAdmin(scopeAccess);
+        spy.verifyIdentityAdminLevelAccess(scopeAccess);
+    }
+
+    @Test
+    public void verifyRackerOrServiceAdminAccess_notRackerAndNotCloudServiceAdmin_throwsForbidden() throws Exception {
+        try{
+            ScopeAccess scopeAccess = new ScopeAccess();
+            doReturn(false).when(spy).authorizeRacker(scopeAccess);
+            doReturn(false).when(spy).authorizeCloudServiceAdmin(scopeAccess);
+            spy.verifyRackerOrServiceAdminAccess(scopeAccess);
+            assertTrue("should throw exception",false);
+        } catch (ForbiddenException ex){
+            assertThat("exception message",ex.getMessage(),equalTo("Not authorized."));
+        }
+    }
+
+    @Test
+    public void verifyRackerOrServiceAdminAccess_isRackerAndNotCloudServiceAdmin_succeeds() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(true).when(spy).authorizeRacker(scopeAccess);
+        doReturn(false).when(spy).authorizeCloudServiceAdmin(scopeAccess);
+        spy.verifyRackerOrServiceAdminAccess(scopeAccess);
+    }
+
+    @Test
+    public void verifyRackerOrServiceAdminAccess_callsAuthorizationService_authorizeCloudServiceAdmin() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(false).when(spy).authorizeRacker(scopeAccess);
+        doReturn(true).when(spy).authorizeCloudServiceAdmin(scopeAccess);
+        spy.verifyRackerOrServiceAdminAccess(scopeAccess);
+        verify(spy).authorizeCloudServiceAdmin(scopeAccess);
+    }
+
+    @Test
+    public void verifyRackerOrServiceAdminAccess_isServiceAdminAndRacker_succeeds() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(true).when(spy).authorizeCloudServiceAdmin(scopeAccess);
+        doReturn(true).when(spy).authorizeRacker(scopeAccess);
+        spy.verifyRackerOrServiceAdminAccess(scopeAccess);
+    }
+
+    @Test
+    public void verifyRackerOrServiceAdminAccess_isServiceAdmin_callsAuthorizeCloudServiceAdmin() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(true).when(spy).authorizeCloudServiceAdmin(scopeAccess);
+        doReturn(false).when(spy).authorizeRacker(scopeAccess);
+        spy.verifyRackerOrServiceAdminAccess(scopeAccess);
+        verify(spy).authorizeCloudServiceAdmin(scopeAccess);
+    }
+
+    @Test
     public void verifyServiceAdminLevelAccess_identityAdminCallerAndNotServiceAdmin_succeeds() throws Exception {
         UserScopeAccess userScopeAccess = new UserScopeAccess();
         userScopeAccess.setAccessTokenString("admin");
@@ -841,26 +907,6 @@ public class DefaultAuthorizationServiceTest {
             assertThat("exception message",ex.getMessage(),equalTo("Not authorized."));
         }
 
-    }
-
-    @Test
-    public void verifyIdentityAdminLevelAccess_withoutAdminLevelAccess_throwsForbiddenException() throws Exception {
-        try{
-            ScopeAccess scopeAccess = new ScopeAccess();
-            doReturn(false).when(spy).authorizeCloudIdentityAdmin(scopeAccess);
-            spy.verifyIdentityAdminLevelAccess(scopeAccess);
-            assertTrue("should throw exception",false);
-        }catch (ForbiddenException ex){
-            assertThat("exception message",ex.getMessage(),equalTo("Not authorized."));
-        }
-
-    }
-
-    @Test
-    public void verifyIdentityAdminLevelAccess_withAdminLevelAccess_succeeds() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        doReturn(true).when(spy).authorizeCloudIdentityAdmin(scopeAccess);
-        spy.verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -1144,7 +1190,7 @@ public class DefaultAuthorizationServiceTest {
            user2.setUsername("!foo");
            user2.setUniqueId("foo");
            defaultAuthorizationService.verifySelf(user1, user2);
-           assertTrue("should throw exception",false);
+           assertTrue("should throw exception", false);
        }catch (ForbiddenException ex){
            assertThat("exception message",ex.getMessage(),equalTo("Not authorized."));
        }
@@ -1162,7 +1208,7 @@ public class DefaultAuthorizationServiceTest {
             user2.setUsername("foo");
             user2.setUniqueId("!foo");
             defaultAuthorizationService.verifySelf(user1, user2);
-            assertTrue("should throw exception",false);
+            assertTrue("should throw exception", false);
         }catch (ForbiddenException ex){
             assertThat("exception message", ex.getMessage(),equalTo("Not authorized."));
         }
@@ -1181,7 +1227,7 @@ public class DefaultAuthorizationServiceTest {
             user2.setUsername("!foo");
             user2.setUniqueId("!foo");
             defaultAuthorizationService.verifySelf(user1, user2);
-            assertTrue("should throw exception",false);
+            assertTrue("should throw exception", false);
         }catch (ForbiddenException ex){
             assertThat("exception message",ex.getMessage(),equalTo("Not authorized."));
         }

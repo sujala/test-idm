@@ -1278,35 +1278,6 @@ public class DefaultCloud20ServiceTest {
         assertThat("exception type", argumentCaptor.getValue(),instanceOf(BadRequestException.class));
     }
 
-    @Test(expected = ForbiddenException.class)
-    public void verifyRackerOrServiceAdminAccess_notRackerAndNotCloudServiceAdmin_throwsForbidden() throws Exception {
-        when(authorizationService.authorizeRacker(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(false);
-        when(authorizationService.authorizeCloudServiceAdmin(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(false);
-        spy.verifyRackerOrServiceAdminAccess(authToken);
-    }
-
-    @Test
-    public void verifyRackerOrServiceAdminAccess_isRackerAndNotCloudServiceAdmin_succeeds() throws Exception {
-        when(authorizationService.authorizeRacker(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(true);
-        when(authorizationService.authorizeCloudServiceAdmin(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(false);
-        spy.verifyRackerOrServiceAdminAccess(authToken);
-    }
-
-    @Test
-    public void verifyRackerOrServiceAdminAccess_callsAuthorizationService_authorizeCloudServiceAdmin() throws Exception {
-        when(authorizationService.authorizeRacker(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(false);
-        when(authorizationService.authorizeCloudServiceAdmin(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(true);
-        spy.verifyRackerOrServiceAdminAccess(authToken);
-        verify(authorizationService).authorizeCloudServiceAdmin(org.mockito.Matchers.any(ScopeAccess.class));
-    }
-
-    @Test
-    public void verifyRackerOrServiceAdminAccess_withServiceAdmin_succeeds() throws Exception {
-        when(authorizationService.authorizeCloudServiceAdmin(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(true);
-        spy.verifyRackerOrServiceAdminAccess(authToken);
-        verify(authorizationService).authorizeCloudServiceAdmin(org.mockito.Matchers.any(ScopeAccess.class));
-    }
-
     @Test
     public void assignDefaultRegionToDomainUser_withNullRegion_assignsDefaultRegion() throws Exception {
         final User userDO = new User();
@@ -5089,16 +5060,20 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void impersonate_callsVerifyRackerOrServiceAdminAccess() throws Exception {
         user.setEnabled(true);
+        ScopeAccess scopeAccess = new ScopeAccess();
         org.openstack.docs.identity.api.v2.User impersonateUser = new org.openstack.docs.identity.api.v2.User();
         impersonateUser.setUsername("impersonateUser");
         impersonateUser.setId("impersonateUserId");
         ImpersonationRequest impersonationRequest = new ImpersonationRequest();
         impersonationRequest.setUser(impersonateUser);
+
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         when(authorizationService.authorizeRacker(any(ScopeAccess.class))).thenReturn(true);
         when(delegateCloud20Service.impersonateUser(anyString(), anyString(), anyString())).thenReturn("impersonatingToken");
         when(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory());
+
         spy.impersonate(null, authToken, impersonationRequest);
-        verify(spy).verifyRackerOrServiceAdminAccess(authToken);
+        verify(authorizationService).verifyRackerOrServiceAdminAccess(scopeAccess);
     }
 
     @Test
@@ -5646,7 +5621,7 @@ public class DefaultCloud20ServiceTest {
         userTest.setUsername("");
         ImpersonationRequest impersonationRequest = new ImpersonationRequest();
         impersonationRequest.setUser(userTest);
-        doNothing().when(spy).verifyRackerOrServiceAdminAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doNothing().when(spy).validateImpersonationRequest(impersonationRequest);
         when(userService.getUser("")).thenReturn(user);
         doReturn(true).when(spy).isValidImpersonatee(user);
@@ -5666,7 +5641,7 @@ public class DefaultCloud20ServiceTest {
         userTest.setUsername("");
         ImpersonationRequest impersonationRequest = new ImpersonationRequest();
         impersonationRequest.setUser(userTest);
-        doNothing().when(spy).verifyRackerOrServiceAdminAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doNothing().when(spy).validateImpersonationRequest(impersonationRequest);
         when(userService.getUser("")).thenReturn(user);
         doReturn(true).when(spy).isValidImpersonatee(user);

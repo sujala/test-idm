@@ -1681,7 +1681,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder impersonate(HttpHeaders httpHeaders, String authToken, ImpersonationRequest impersonationRequest)  {
-        verifyRackerOrServiceAdminAccess(authToken);
+        authorizationService.verifyRackerOrServiceAdminAccess(getScopeAccessForValidToken(authToken));
         validateImpersonationRequest(impersonationRequest);
 
         String impersonatingToken = "";
@@ -2421,15 +2421,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             throw new NotAuthorizedException(errMsg);
         }
         return authScopeAccess;
-    }
-
-    void verifyRackerOrServiceAdminAccess(String authToken) {
-        ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
-        if (!authorizationService.authorizeRacker(scopeAccess) && !authorizationService.authorizeCloudServiceAdmin(scopeAccess)) {
-            String errMsg = NOT_AUTHORIZED;
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
     }
 
     void checkXAUTHTOKEN(String authToken, boolean identityOnly, String tenantId) {
