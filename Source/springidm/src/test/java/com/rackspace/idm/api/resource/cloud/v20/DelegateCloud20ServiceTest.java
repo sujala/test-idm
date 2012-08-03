@@ -232,15 +232,14 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
-    public void authenticate_userNotMigratedAndNotNullAndCloudClientResponse200AndAuthenticateResponseIsNull_returns500InternalError() throws Exception {
+    public void authenticate_userNotMigratedAndNotNullAndCloudClientResponse200AndAuthenticateResponseIsEmpty_returns200() throws Exception {
         User user = new User();
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         responseBuilder.status(200);
         responseBuilder.entity(new Object());
         when(cloudUserExtractor.getUserByV20CredentialType(authenticationRequest)).thenReturn(user);
         when(cloudClient.post(anyString(), any(HttpHeaders.class), anyString())).thenReturn(responseBuilder);
-        when(exceptionHandler.exceptionResponse(any(IdmException.class))).thenReturn(Response.status(500));
-        assertThat("response", delegateCloud20Service.authenticate(httpHeaders, authenticationRequest).build().getStatus(), equalTo(500));
+        assertThat("response", delegateCloud20Service.authenticate(httpHeaders, authenticationRequest).build().getStatus(), equalTo(200));
     }
 
     @Test

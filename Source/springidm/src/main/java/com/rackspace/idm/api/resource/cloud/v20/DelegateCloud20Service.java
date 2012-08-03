@@ -147,7 +147,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             //If SUCCESS and "user" is not null, store token to "user" and return cloud response
             int status = dummyResponse.getStatus();
             if (status == HttpServletResponse.SC_OK && user != null) {
-                Token token = ((AuthenticateResponse)unmarshallResponse(dummyResponse.getEntity().toString(), AuthenticateResponse.class)).getToken();
+                Token token = unmarshallAuthenticateResponse(dummyResponse.getEntity().toString()).getToken();
                 if (token != null) {
                     XMLGregorianCalendar authResExpires = token.getExpires();
                     LOG.info("authResExpires = " + authResExpires);
@@ -183,14 +183,16 @@ public class DelegateCloud20Service implements Cloud20Service {
                 int status = dummyResponse.getStatus();
                 if (status == HttpServletResponse.SC_OK) {
                     // Need to replace token info with original from sa
-                    AuthenticateResponse authenticateResponse = (AuthenticateResponse) unmarshallResponse(dummyResponse.getEntity().toString(), AuthenticateResponse.class);
-                    authenticateResponse.getToken().setId(isa.getAccessTokenString());
-                    GregorianCalendar calendar = new GregorianCalendar();
-                    calendar.setTime(isa.getAccessTokenExp());
-                    try {
-                        authenticateResponse.getToken().setExpires(DatatypeFactory.newInstance().newXMLGregorianCalendar(calendar));
-                    } catch (DatatypeConfigurationException e) {
-                        LOG.info("failed to create XMLGregorianCalendar: " + e.getMessage());
+                    AuthenticateResponse authenticateResponse = unmarshallAuthenticateResponse(dummyResponse.getEntity().toString());
+                    if(authenticateResponse.getToken() != null){
+                        authenticateResponse.getToken().setId(isa.getAccessTokenString());
+                        GregorianCalendar calendar = new GregorianCalendar();
+                        calendar.setTime(isa.getAccessTokenExp());
+                        try {
+                            authenticateResponse.getToken().setExpires(DatatypeFactory.newInstance().newXMLGregorianCalendar(calendar));
+                        } catch (DatatypeConfigurationException e) {
+                            LOG.info("failed to create XMLGregorianCalendar: " + e.getMessage());
+                        }
                     }
                     return Response.ok(objFactories.getOpenStackIdentityV2Factory().createAccess(authenticateResponse).getValue());
                 }
@@ -1059,7 +1061,25 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     //TODO change way we check for media type
 
-//    private AuthenticateResponse getAuthFromResponse(String entity) {
+    AuthenticateResponse unmarshallAuthenticateResponse(String entity) {
+        try {
+            if (entity.trim().startsWith("{")) {
+                //TODO: get more than just the token
+                AuthenticateResponse authenticateResponse = new AuthenticateResponse();
+                authenticateResponse.setToken(JSONReaderForCloudAuthenticationResponseToken.getAuthenticationResponseTokenFromJSONString(entity));
+                return authenticateResponse;
+            } else {
+                JAXBContext jc = JAXBContext.newInstance(AuthenticateResponse.class);
+                Unmarshaller unmarshaller = jc.createUnmarshaller();
+                StreamSource xml = new StreamSource(new StringReader(entity));
+                JAXBElement ob = unmarshaller.unmarshal(xml, AuthenticateResponse.class);
+                return (AuthenticateResponse) ob.getValue();
+
+            }
+        } catch (Exception ex) {
+            return new AuthenticateResponse();
+        }
+    }
 
     Object unmarshallResponse(String entity, Class<?> objectClass) {
         try {
