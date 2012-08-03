@@ -447,6 +447,15 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
+    public void verifySelf(User requester, User requestedUser) {
+        if (!(requester.getUsername().equals(requestedUser.getUsername()) && (requester.getUniqueId().equals(requestedUser.getUniqueId())))) {
+            String errMsg = NOT_AUTHORIZED_MSG;
+            logger.warn(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
+    }
+
+    @Override
     public void verifyTokenHasTenantAccess(String tenantId, ScopeAccess authScopeAccess) {
         if (authorizeCloudIdentityAdmin(authScopeAccess) || authorizeCloudServiceAdmin(authScopeAccess)) {
             return;
@@ -466,7 +475,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
-    public void verifyDomain(User retrievedUser, User caller) {
+    public void verifyDomain(User caller, User retrievedUser) {
         if (caller.getDomainId() == null || !caller.getDomainId().equals(retrievedUser.getDomainId())) {
             throw new ForbiddenException(NOT_AUTHORIZED_MSG);
         }

@@ -1120,6 +1120,74 @@ public class DefaultAuthorizationServiceTest {
     }
 
     @Test
+    public void verifySelf_sameUsernameAndUniqueId_succeeds() throws Exception {
+            User user1 = new User();
+            user1.setId("foo");
+            user1.setUsername("foo");
+            user1.setUniqueId("foo");
+            User user2 = new User();
+            user2.setId("foo");
+            user2.setUsername("foo");
+            user2.setUniqueId("foo");
+            defaultAuthorizationService.verifySelf(user1, user2);
+    }
+
+    @Test
+    public void verifySelf_differentUsername_throwsForbiddenException() throws Exception {
+       try{
+           User user1 = new User();
+           user1.setId("foo");
+           user1.setUsername("foo");
+           user1.setUniqueId("foo");
+           User user2 = new User();
+           user2.setId("foo");
+           user2.setUsername("!foo");
+           user2.setUniqueId("foo");
+           defaultAuthorizationService.verifySelf(user1, user2);
+           assertTrue("should throw exception",false);
+       }catch (ForbiddenException ex){
+           assertThat("exception message",ex.getMessage(),equalTo("Not authorized."));
+       }
+    }
+
+    @Test
+    public void verifySelf_differentUniqueId_throwsForbiddenException() throws Exception {
+        try{
+            User user1 = new User();
+            user1.setId("foo");
+            user1.setUsername("foo");
+            user1.setUniqueId("foo");
+            User user2 = new User();
+            user2.setId("foo");
+            user2.setUsername("foo");
+            user2.setUniqueId("!foo");
+            defaultAuthorizationService.verifySelf(user1, user2);
+            assertTrue("should throw exception",false);
+        }catch (ForbiddenException ex){
+            assertThat("exception message", ex.getMessage(),equalTo("Not authorized."));
+        }
+
+    }
+
+    @Test
+    public void verifySelf_differentUsernameAndDifferentUniqueId_throwsForbiddenException() throws Exception {
+        try{
+            User user1 = new User();
+            user1.setId("foo");
+            user1.setUsername("foo");
+            user1.setUniqueId("foo");
+            User user2 = new User();
+            user2.setId("foo");
+            user2.setUsername("!foo");
+            user2.setUniqueId("!foo");
+            defaultAuthorizationService.verifySelf(user1, user2);
+            assertTrue("should throw exception",false);
+        }catch (ForbiddenException ex){
+            assertThat("exception message",ex.getMessage(),equalTo("Not authorized."));
+        }
+    }
+
+    @Test
     public void verifyTokenHasTenantAccess_isIdentityAdminAndServiceAdmin_succeeds() throws Exception {
         ScopeAccess scopeAccess = new UserScopeAccess();
         doReturn(true).when(spy).authorizeCloudIdentityAdmin(scopeAccess);

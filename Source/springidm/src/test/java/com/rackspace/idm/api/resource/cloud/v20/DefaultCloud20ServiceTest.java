@@ -423,7 +423,7 @@ public class DefaultCloud20ServiceTest {
         when(authorizationService.authorizeCloudUserAdmin(scopeAccess)).thenReturn(true);
         when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
         spy.deleteUser(null,authToken,userId);
-        verify(authorizationService).verifyDomain(user,caller);
+        verify(authorizationService).verifyDomain(caller,user);
     }
 
     @Test
@@ -3110,7 +3110,7 @@ public class DefaultCloud20ServiceTest {
         when(authorizationService.authorizeCloudUserAdmin(scopeAccess)).thenReturn(true);
         when(this.userService.getUserById(userId)).thenReturn(user);
         spy.getUserById(null, authToken, userId);
-        verify(authorizationService).verifyDomain(user, caller);
+        verify(authorizationService).verifyDomain(caller, user);
     }
 
     @Test
@@ -3160,39 +3160,40 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void getUserByName_callsScopeAccessServiceGetScopeAccessByAccessToken() throws Exception {
-        when(userService.getUser("userName")).thenReturn(user);
-        spy.getUserByName(null, authToken, "userName");
-        verify(scopeAccessService).getScopeAccessByAccessToken(authToken);
-    }
-
-    @Test
     public void getUserByName_adminUser_callsVerifyDomain() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         User adminUser = new User();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         when(userService.getUser("userName")).thenReturn(user);
         when(authorizationService.authorizeCloudUserAdmin(scopeAccess)).thenReturn(true);
-        when(userService.getUserByAuthToken(authToken)).thenReturn(adminUser);
+        when(userService.getUserByScopeAccess(scopeAccess)).thenReturn(adminUser);
         spy.getUserByName(null, authToken, "userName");
-        verify(authorizationService).verifyDomain(user, adminUser);
+        verify(authorizationService).verifyDomain(adminUser, user);
     }
 
     @Test
     public void getUserByName_defaultUser_callsVerifySelf() throws Exception {
+        User requester = new User();
+        ScopeAccess scopeAccess = new ScopeAccess();
+
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         when(userService.getUser("userName")).thenReturn(user);
-        when(authorizationService.authorizeCloudUser(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(true);
-        when(userService.getUserByAuthToken(authToken)).thenReturn(user);
+        when(authorizationService.authorizeCloudUserAdmin(scopeAccess)).thenReturn(false);
+        when(authorizationService.authorizeCloudUser(scopeAccess)).thenReturn(true);
+        when(userService.getUserByScopeAccess(scopeAccess)).thenReturn(requester);
+
         spy.getUserByName(null, authToken, "userName");
-        verify(spy).verifySelf(authToken, user);
+        verify(authorizationService).verifySelf(requester, user);
     }
 
     @Test
     public void getUserByName_responseOk_returns200() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         when(userService.getUser("userName")).thenReturn(user);
         doReturn(false).when(spy).isUserAdmin(any(ScopeAccess.class), any(List.class));
         doReturn(false).when(spy).isDefaultUser(any(ScopeAccess.class), any(List.class));
-        when(userService.getUserByAuthToken(authToken)).thenReturn(user);
+        when(userService.getUserByScopeAccess(scopeAccess)).thenReturn(user);
         Response.ResponseBuilder responseBuilder = spy.getUserByName(httpHeaders, authToken, "userName");
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
@@ -3368,16 +3369,28 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void listCredentials_userAdmin_callsVerifySelf() throws Exception {
-        doReturn(true).when(spy).isUserAdmin(any(ScopeAccess.class), any(List.class));
+        ScopeAccess scopeAccess = new ScopeAccess();
+        User requester = new User();
+        User requested = new User();
+        doReturn(requested).when(spy).checkAndGetUser(userId);
+        when(userService.getUserByScopeAccess(scopeAccess)).thenReturn(requester);
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doReturn(true).when(spy).isUserAdmin(scopeAccess, null);
         spy.listCredentials(null, authToken, userId, null, null);
-        verify(spy).verifySelf(eq(authToken), any(User.class));
+        verify(authorizationService).verifySelf(requester, requested);
     }
 
     @Test
     public void listCredential_defaultUser_callsVerifySelf() throws Exception {
-        doReturn(true).when(spy).isDefaultUser(any(ScopeAccess.class), any(List.class));
+        ScopeAccess scopeAccess = new ScopeAccess();
+        User requester = new User();
+        User requested = new User();
+        doReturn(requested).when(spy).checkAndGetUser(userId);
+        when(userService.getUserByScopeAccess(scopeAccess)).thenReturn(requester);
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doReturn(true).when(spy).isDefaultUser(scopeAccess, null);
         spy.listCredentials(null, authToken, userId, null, null);
-        verify(spy).verifySelf(eq(authToken), any(User.class));
+        verify(authorizationService).verifySelf(requester, requested);
     }
 
     @Test
@@ -3665,20 +3678,22 @@ public class DefaultCloud20ServiceTest {
         when(authorizationService.authorizeCloudUser(scopeAccess)).thenReturn(false);
 
         spy.listUserGlobalRoles(null, authToken, userId);
-        verify(authorizationService).verifyDomain(user, caller);
+        verify(authorizationService).verifyDomain(caller, user);
     }
 
     @Test
     public void listUserGlobalRoles_isDefaultUser_callsVerifySelf() throws Exception {
-        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doReturn(user).when(spy).getUser(org.mockito.Matchers.any(ScopeAccess.class));
-        when(userService.getUserById(anyString())).thenReturn(user);
-        when(userService.getUser(anyString())).thenReturn(user);
-        when(authorizationService.authorizeCloudIdentityAdmin(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(false);
-        when(authorizationService.authorizeCloudServiceAdmin(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(false);
-        when(authorizationService.authorizeCloudUser(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(true);
-        spy.listUserGlobalRoles(null, authToken, null);
-        verify(spy).verifySelf(anyString(), org.mockito.Matchers.any(User.class));
+        ScopeAccess scopeAccess = new ScopeAccess();
+        User requester = new User();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doReturn(user).when(spy).getUser(scopeAccess);
+        when(userService.getUserById(userId)).thenReturn(user);
+        doReturn(requester).when(spy).getUser(scopeAccess);
+        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(false);
+        when(authorizationService.authorizeCloudUser(scopeAccess)).thenReturn(true);
+        spy.listUserGlobalRoles(null, authToken, userId);
+        verify(authorizationService).verifySelf(requester, user);
     }
 
     @Test
@@ -5233,47 +5248,6 @@ public class DefaultCloud20ServiceTest {
         doReturn(clientScopeAccess).when(spy).checkAndGetToken(authToken);
         when(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory());
         spy.impersonate(null, authToken, impersonationRequest);
-    }
-
-    @Test
-    public void verifySelf_callsUserService_getUserByScopeAccess() throws Exception {
-        User user1 = new User();
-        user1.setId("foo");
-        user1.setUsername("foo");
-        user1.setUniqueId("foo");
-        when(userService.getUserByScopeAccess(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(user1);
-        defaultCloud20Service.verifySelf("token", user1);
-        verify(userService).getUserByScopeAccess(org.mockito.Matchers.any(ScopeAccess.class));
-    }
-
-    @Test(expected = ForbiddenException.class)
-    public void verifySelf_differentUsername_throwsForbiddenException() throws Exception {
-        User user1 = new User();
-        user1.setId("foo");
-        user1.setUsername("foo");
-        user1.setUniqueId("foo");
-        when(userService.getUserByScopeAccess(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(user1);
-        User user2 = new User();
-        user2.setId("foo");
-        user2.setUsername("!foo");
-        user2.setUniqueId("foo");
-        defaultCloud20Service.verifySelf("token", user2);
-        verify(userService).getUserByScopeAccess(org.mockito.Matchers.any(ScopeAccess.class));
-    }
-
-    @Test(expected = ForbiddenException.class)
-    public void verifySelf_differentUniqueId_throwsForbiddenException() throws Exception {
-        User user1 = new User();
-        user1.setId("foo");
-        user1.setUsername("foo");
-        user1.setUniqueId("foo");
-        when(userService.getUserByScopeAccess(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(user1);
-        User user2 = new User();
-        user2.setId("foo");
-        user2.setUsername("foo");
-        user2.setUniqueId("!foo");
-        defaultCloud20Service.verifySelf("token", user2);
-        verify(userService).getUserByScopeAccess(org.mockito.Matchers.any(ScopeAccess.class));
     }
 
     @Test

@@ -468,7 +468,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             //if user admin, verify domain
             if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
                 User caller = userService.getUserByAuthToken(authToken);
-                authorizationService.verifyDomain(retrievedUser, caller);
+                authorizationService.verifyDomain(caller, retrievedUser);
             }
 
             if (!StringUtils.isBlank(user.getUsername())) {
@@ -962,7 +962,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             //is same domain?
             if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
                 User caller = userService.getUserByAuthToken(authToken);
-                authorizationService.verifyDomain(user, caller);
+                authorizationService.verifyDomain(caller, user);
             }
             ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByUserId(userId);
             if (authorizationService.hasUserAdminRole(scopeAccess) && userService.hasSubUsers(userId)) {
@@ -1222,7 +1222,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new NotFoundException(errMsg);
             }
             if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
-                authorizationService.verifyDomain(user, caller);
+                authorizationService.verifyDomain(caller, user);
             }
             return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUser(this.userConverterCloudV20.toUser(user)).getValue());
         } catch (Exception ex) {
@@ -1233,22 +1233,28 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder getUserByName(HttpHeaders httpHeaders, String authToken, String name)  {
         try {
-            ScopeAccess callerScopeAccess = getScopeAccessForValidToken(authToken);
-            authorizationService.verifyUserLevelAccess(callerScopeAccess);
-            User user = this.userService.getUser(name);
+            ScopeAccess requesterScopeAccess = getScopeAccessForValidToken(authToken);
+
+            authorizationService.verifyUserLevelAccess(requesterScopeAccess);
+
+            User user = userService.getUser(name);
+
             if (user == null) {
                 String errMsg = String.format("User not found: '%s'", name);
                 logger.warn(errMsg);
                 throw new NotFoundException(errMsg);
             }
 
-            if (authorizationService.authorizeCloudUserAdmin(callerScopeAccess)) {
-                User adminUser = userService.getUserByAuthToken(authToken);
-                authorizationService.verifyDomain(user, adminUser);
-            } else if (authorizationService.authorizeCloudUser(callerScopeAccess)) {
-                verifySelf(authToken, user);
+            User requester = userService.getUserByScopeAccess(requesterScopeAccess);
+
+            if (authorizationService.authorizeCloudUserAdmin(requesterScopeAccess)) {
+                authorizationService.verifyDomain(requester, user);
+            } else if (authorizationService.authorizeCloudUser(requesterScopeAccess)) {
+                authorizationService.verifySelf(requester, user);
             }
+
             return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(user)).getValue());
+
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
@@ -1354,7 +1360,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             User user = checkAndGetUser(userId);
 
             if (isUserAdmin(callersScopeAccess, null) || isDefaultUser(callersScopeAccess, null)) {
-                verifySelf(authToken, user);
+                authorizationService.verifySelf(userService.getUserByScopeAccess(callersScopeAccess), user);
             }
             CredentialListType creds = objFactories.getOpenStackIdentityV2Factory().createCredentialListType();
 
@@ -1613,9 +1619,9 @@ public class DefaultCloud20Service implements Cloud20Service {
                     && !authorizationService.authorizeCloudServiceAdmin(callersScopeAccess)) {
                 //is either a user-admin or default user
                 if (authorizationService.authorizeCloudUser(callersScopeAccess)) {
-                    verifySelf(authToken, user);
+                    authorizationService.verifySelf(caller, user);
                 } else {
-                    authorizationService.verifyDomain(user, caller);
+                    authorizationService.verifyDomain(caller, user);
                 }
             }
             List<TenantRole> roles = tenantService.getGlobalRolesForUser(user);
@@ -2415,22 +2421,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             throw new NotAuthorizedException(errMsg);
         }
         return authScopeAccess;
-    }
-
-    void verifySelf(String authToken, User user)  {
-        ScopeAccess authTokenScopeAccess = getScopeAccessForValidToken(authToken);
-        User requester = userService.getUserByScopeAccess(authTokenScopeAccess);
-
-        String username = user.getUsername();
-        String uniqueId = user.getUniqueId();
-        String requesterUniqueId = requester.getUniqueId();
-        String requesterUsername = requester.getUsername();
-
-        if (!((requesterUsername.equals(username) && (requesterUniqueId.equals(uniqueId))))) {
-            String errMsg = NOT_AUTHORIZED;
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
     }
 
     void verifyRackerOrServiceAdminAccess(String authToken) {
