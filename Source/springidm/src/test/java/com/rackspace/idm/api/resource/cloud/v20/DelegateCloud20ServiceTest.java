@@ -344,7 +344,7 @@ public class DelegateCloud20ServiceTest {
 
     @Test(expected = IdmException.class)
     public void unmarshallAuthenticateResponse_withBadData_throwsIdmExceptiom() throws Exception {
-        String body = "{\"acce,\"tenant\":{\"id\":\"MossoCloudFS_6eee84c5-54a4-4217-a895-8308da81feb37-a895-8308da81feb3\"}}}";
+        String body = "xml";
         delegateCloud20Service.unmarshallAuthenticateResponse(body);
     }
 
