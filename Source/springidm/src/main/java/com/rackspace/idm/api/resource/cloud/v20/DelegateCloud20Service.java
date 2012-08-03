@@ -147,16 +147,18 @@ public class DelegateCloud20Service implements Cloud20Service {
             //If SUCCESS and "user" is not null, store token to "user" and return cloud response
             int status = dummyResponse.getStatus();
             if (status == HttpServletResponse.SC_OK && user != null) {
-                Token token = JSONReaderForCloudAuthenticationResponseToken.getAuthenticationResponseTokenFromJSONString(dummyResponse.getEntity().toString());
-                if (token != null) {
-                    XMLGregorianCalendar authResExpires = token.getExpires();
-                    LOG.info("authResExpires = " + authResExpires);
-                    GregorianCalendar gregorianCalendar = authResExpires.toGregorianCalendar();
-                    LOG.info("GregorianCalander = " + gregorianCalendar);
-                    Date expires = gregorianCalendar.getTime();
-                    LOG.info("expires = " + expires);
-                    scopeAccessService.updateUserScopeAccessTokenForClientIdByUser(user, getCloudAuthClientId(), token.getId(), expires);
+                Token token = unmarshallAuthenticateResponse(dummyResponse.getEntity().toString()).getToken();
+                if (token == null) {
+                    throw new IdmException("Unable to sync tokens");
                 }
+
+                XMLGregorianCalendar authResExpires = token.getExpires();
+                LOG.info("authResExpires = " + authResExpires);
+                GregorianCalendar gregorianCalendar = authResExpires.toGregorianCalendar();
+                LOG.info("GregorianCalander = " + gregorianCalendar);
+                Date expires = gregorianCalendar.getTime();
+                LOG.info("expires = " + expires);
+                scopeAccessService.updateUserScopeAccessTokenForClientIdByUser(user, getCloudAuthClientId(), token.getId(), expires);
                 return serviceResponse;
             } else if (user == null) { //If "user" is null return cloud response
                 return serviceResponse;
@@ -164,6 +166,7 @@ public class DelegateCloud20Service implements Cloud20Service {
                 return defaultCloud20Service.authenticate(httpHeaders, authenticationRequest);
             }
         } catch (Exception ex) {
+            LOG.info("unable to authenticate impersonated authenticationRequest successfully: " + ex.getMessage());
             return exceptionHandler.exceptionResponse(ex);
         }
     }
@@ -183,7 +186,10 @@ public class DelegateCloud20Service implements Cloud20Service {
                 int status = dummyResponse.getStatus();
                 if (status == HttpServletResponse.SC_OK) {
                     // Need to replace token info with original from sa
-                    AuthenticateResponse authenticateResponse = (AuthenticateResponse) unmarshallResponse(dummyResponse.getEntity().toString(), AuthenticateResponse.class);
+                    AuthenticateResponse authenticateResponse = unmarshallAuthenticateResponse(dummyResponse.getEntity().toString());
+                    if(authenticateResponse.getToken() == null){
+                        throw new IdmException("Unable to sync tokens");
+                    }
                     authenticateResponse.getToken().setId(isa.getAccessTokenString());
                     GregorianCalendar calendar = new GregorianCalendar();
                     calendar.setTime(isa.getAccessTokenExp());
@@ -197,7 +203,8 @@ public class DelegateCloud20Service implements Cloud20Service {
                 return serviceResponse;
             }
         } catch (Exception ex) {
-            exceptionHandler.exceptionResponse(ex);
+            LOG.info("unable to authenticate impersonated authenticationRequest successfully: " + ex.getMessage());
+            return exceptionHandler.exceptionResponse(ex);
         }
 
         return defaultCloud20Service.authenticate(httpHeaders, authenticationRequest);
@@ -1059,12 +1066,31 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     //TODO change way we check for media type
 
-//    private AuthenticateResponse getAuthFromResponse(String entity) {
+    AuthenticateResponse unmarshallAuthenticateResponse(String entity) {
+        try {
+            if (entity.trim().startsWith("{")) {
+                //TODO: get more than just the token
+                AuthenticateResponse authenticateResponse = new AuthenticateResponse();
+                authenticateResponse.setToken(JSONReaderForCloudAuthenticationResponseToken.getAuthenticationResponseTokenFromJSONString(entity));
+                return authenticateResponse;
+            } else {
+                JAXBContext jc = JAXBContext.newInstance(AuthenticateResponse.class);
+                Unmarshaller unmarshaller = jc.createUnmarshaller();
+                StreamSource xml = new StreamSource(new StringReader(entity));
+                JAXBElement ob = unmarshaller.unmarshal(xml, AuthenticateResponse.class);
+                return (AuthenticateResponse) ob.getValue();
+
+            }
+        } catch (Exception ex) {
+            LOG.info("Unable to unmarshall AuthenticateResponse from cloud");
+            throw new IdmException("unable to unmarshall cloud response",ex);
+        }
+    }
 
     Object unmarshallResponse(String entity, Class<?> objectClass) {
         try {
             if (entity.trim().startsWith("{")) {
-                //TODO: HANDLE JAXBElement for user
+                //TODO: get more than just the token
                 JSONConfiguration jsonConfiguration = JSONConfiguration.natural().rootUnwrapping(false).build();
                 JSONJAXBContext context = new JSONJAXBContext(jsonConfiguration, "org.openstack.docs.identity.api.v2");
                 JSONUnmarshaller jsonUnmarshaller = context.createJSONUnmarshaller();

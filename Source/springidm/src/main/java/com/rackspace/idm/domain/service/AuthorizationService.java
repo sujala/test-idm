@@ -2,10 +2,7 @@ package com.rackspace.idm.domain.service;
 
 import com.rackspace.idm.domain.entity.Entity;
 import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
-
-import java.util.List;
 
 public interface AuthorizationService {
     

@@ -270,7 +270,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     @Override
     public Response.ResponseBuilder deleteUser(HttpServletRequest request, String userId, HttpHeaders httpHeaders) throws IOException {
         if(isCloudAuthRoutingEnabled()){
-            com.rackspace.idm.domain.entity.User user = defaultUserService.getUserById(userId);
+            com.rackspace.idm.domain.entity.User user = defaultUserService.getUser(userId);
 
             if(user == null) {
                 return cloudClient.delete(getCloudAuthV11Url().concat(USERS + userId), httpHeaders);

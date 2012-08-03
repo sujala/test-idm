@@ -7,8 +7,6 @@ import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotAuthorizedException;
 import com.rackspace.idm.exception.UserDisabledException;
 import com.rackspacecloud.docs.auth.api.v1.*;
-import com.rackspacecloud.docs.auth.api.v1.Credentials;
-import com.rackspacecloud.docs.auth.api.v1.PasswordCredentials;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
