@@ -230,7 +230,7 @@ public class CloudMigrationService {
 
             return response;
         } catch (ConflictException e) {
-            throw new IdmException(e);
+            throw e;
         } catch (Exception e) {
             logger.info("failed to migrate user: {}", username);
             unmigrateUserByUsername(username);

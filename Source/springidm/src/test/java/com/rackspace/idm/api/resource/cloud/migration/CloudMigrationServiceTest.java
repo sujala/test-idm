@@ -467,7 +467,7 @@ public class CloudMigrationServiceTest {
         verify(spy).addMigrationUser(any(org.openstack.docs.identity.api.v2.User.class), anyInt(), anyString(), anyString(), eq("password"), any(SecretQA.class), anyString());
     }
 
-    @Test( expected = IdmException.class)
+    @Test( expected = ConflictException.class)
     public void migrateUserByUsername_throwsIdmExceptions() throws Exception {
         doThrow(new ConflictException()).when(spy).migrateUserByUsername("user", false, null);
         spy.migrateUserByUsername("user", false);
