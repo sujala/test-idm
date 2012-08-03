@@ -4,6 +4,7 @@ import com.rackspace.idm.api.resource.cloud.CloudClient;
 import com.rackspace.idm.api.resource.cloud.CloudUserExtractor;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.impl.DefaultUserService;
 import com.rackspacecloud.docs.auth.api.v1.*;
@@ -73,19 +74,16 @@ public class DelegateCloud11Service implements Cloud11Service {
     public Response.ResponseBuilder validateToken(HttpServletRequest request, String tokenId, String belongsTo,
                                                   String type, HttpHeaders httpHeaders) throws IOException {
 
-        Response.ResponseBuilder serviceResponse = defaultCloud11Service.validateToken(request, tokenId, belongsTo, type, httpHeaders);
-        // We have to clone the ResponseBuilder from above because once we build
-        // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
-        int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
+        ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByAccessToken(tokenId);
+        if(scopeAccess != null) {
+            return defaultCloud11Service.validateToken(request, tokenId, belongsTo, type, httpHeaders);
+        } else {
             HashMap<String, String> queryParams = new HashMap<String, String>();
             queryParams.put("belongsTo", belongsTo);
             queryParams.put("type", type);
             String path = getCloudAuthV11Url().concat(getPath("token/" + tokenId, queryParams));
             return cloudClient.get(path, httpHeaders);
         }
-        return serviceResponse;
     }
 
     @Override

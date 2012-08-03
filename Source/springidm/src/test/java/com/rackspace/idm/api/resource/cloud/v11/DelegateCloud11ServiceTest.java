@@ -932,10 +932,7 @@ public class DelegateCloud11ServiceTest {
 
     @Test
     public void validateToken_HttpServletResponseNotFound_callsCloudClient() throws Exception {
-        Response.ResponseBuilder responseClone = mock(Response.ResponseBuilder.class);
-        when(defaultCloud11Service.validateToken(request, "tokenId", "belongTo", "type", httpHeaders)).thenReturn(responseClone);
-        when(responseClone.clone()).thenReturn(responseClone);
-        when(responseClone.build()).thenReturn(Response.status(404).build());
+        when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(null);
         delegateCloud11Service.validateToken(request, "tokenId", "belongTo", "type", httpHeaders);
         verify(cloudClient).get(url + "token/tokenId?type=type&belongsTo=belongTo", httpHeaders);
     }
@@ -952,12 +949,11 @@ public class DelegateCloud11ServiceTest {
 
     @Test
     public void validateToken_HttpServletResponseFound_callsServiceResponse() throws Exception {
-        Response.ResponseBuilder responseClone = mock(Response.ResponseBuilder.class);
-        when(defaultCloud11Service.validateToken(request, "tokenId", "belongTo", "type", httpHeaders)).thenReturn(responseClone);
-        when(responseClone.clone()).thenReturn(responseClone);
-        when(responseClone.build()).thenReturn(Response.ok().build());
-        Response.ResponseBuilder response = delegateCloud11Service.validateToken(request, "tokenId", "belongTo", "type", httpHeaders);
-        assertThat("Reponse Code", response, equalTo(responseClone));
+        UserScopeAccess scopeAccess = new UserScopeAccess();
+        scopeAccess.setAccessTokenString("tokenId");
+        when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
+        delegateCloud11Service.validateToken(request, "tokenId", "belongTo", "type", httpHeaders);
+        verify(defaultCloud11Service).validateToken(request, "tokenId", "belongTo", "type", httpHeaders);
     }
 
     @Test
