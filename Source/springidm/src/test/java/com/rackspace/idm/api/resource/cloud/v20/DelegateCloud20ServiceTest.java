@@ -329,6 +329,18 @@ public class DelegateCloud20ServiceTest {
         assertThat(delegateCloud20Service.unmarshallResponse(body, ApiKeyCredentials.class), not(nullValue()));
     }
 
+    @Test
+    public void unmarshallAuthenticateResponse_inputStartsWithBracket_returnsCorrectToken() throws Exception {
+        String body = "{\"access\":{\"token\":{\"id\":\"1319b190-9527-46e7-9c0e-4fc3ca032e57\",\"expires\":\"2012-08-03T14:56:25.000-05:00\",\"tenant\":{\"id\":\"MossoCloudFS_6eee84c5-54a4-4217-a895-8308da81feb3\",\"name\":\"MossoCloudFS_6eee84c5-54a4-4217-a895-8308da81feb3\"}}}}";
+        assertThat(delegateCloud20Service.unmarshallAuthenticateResponse(body).getToken(), not(nullValue()));
+    }
+
+    @Test
+    public void unmarshallAuthenticateResponse_withBadData_returnsEmptyAuthResponse() throws Exception {
+        String body = "{\"acce,\"tenant\":{\"id\":\"MossoCloudFS_6eee84c5-54a4-4217-a895-8308da81feb37-a895-8308da81feb3\"}}}";
+        assertThat(delegateCloud20Service.unmarshallAuthenticateResponse(body).getToken(), nullValue());
+    }
+
     @Test (expected = IdmException.class)
     public void marshallObjectToString_nullValues_throwsIdmException() throws Exception {
         delegateCloud20Service.marshallObjectToString(null);
