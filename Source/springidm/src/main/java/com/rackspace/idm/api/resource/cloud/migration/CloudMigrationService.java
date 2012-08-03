@@ -684,6 +684,12 @@ public class CloudMigrationService {
         for (com.rackspace.idm.domain.entity.User u : users.getUsers()) {
             userService.deleteUser(u.getUsername());
         }
+
+        // remove Mosso and Nast tenants if created and no longer attached to anyone
+        if(user.getMossoId() != null)
+            deleteTenant(user.getMossoId().toString());
+        if(user.getNastId() != null)
+            deleteTenant(user.getNastId());
     }
 
     String getAdminToken() {
@@ -956,6 +962,14 @@ public class CloudMigrationService {
             }
         }
         return null;
+    }
+
+    private void deleteTenant(String tenantId){
+        try {
+            tenantService.deleteTenant(tenantId);
+        }catch(Exception ex) {
+
+        }
     }
 
     private String getCloudAuth20Url() {

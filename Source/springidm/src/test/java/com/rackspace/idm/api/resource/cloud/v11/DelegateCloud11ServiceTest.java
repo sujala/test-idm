@@ -608,7 +608,7 @@ public class DelegateCloud11ServiceTest {
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         com.rackspace.idm.domain.entity.User user = new com.rackspace.idm.domain.entity.User();
         user.setId(userId);
-        when(defaultUserService.getUserById(userId)).thenReturn(user);
+        when(defaultUserService.getUser(userId)).thenReturn(user);
         when(defaultUserService.isMigratedUser(Matchers.<com.rackspace.idm.domain.entity.User>any())).thenReturn(true);
         delegateCloud11Service.deleteUser(null, userId, null);
         verify(defaultCloud11Service).deleteUser(null, userId, null);
@@ -618,7 +618,7 @@ public class DelegateCloud11ServiceTest {
     public void deleteUser_userNotMigratedUser_callsDefaultCloud11DeleteUser() throws Exception {
         com.rackspace.idm.domain.entity.User user = new com.rackspace.idm.domain.entity.User();
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
-        when(defaultUserService.getUserById("userId")).thenReturn(user);
+        when(defaultUserService.getUser("userId")).thenReturn(user);
         when(defaultUserService.isMigratedUser(user)).thenReturn(false);
         delegateCloud11Service.deleteUser(null, "userId", httpHeaders);
         verify(defaultCloud11Service).deleteUser(null, "userId", httpHeaders);

@@ -664,9 +664,7 @@ public class CloudMigrationServiceTest {
         roles.getRole().add(role);
         
         when(roleConverterCloudV20.toRoleListJaxb(tenantRoles)).thenReturn(roles);
-
         when(tenantService.getGlobalRolesForUser(user1)).thenReturn(tenantRoles);
-
 
         when(userService.getAllUsers(any(FilterParam[].class), eq(0), eq(0))).thenReturn(users);
         spy.unmigrateUserByUsername("username");
