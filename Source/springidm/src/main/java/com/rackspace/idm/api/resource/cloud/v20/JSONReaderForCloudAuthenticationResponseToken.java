@@ -2,19 +2,17 @@ package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.exception.IdmException;
-import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
 import org.joda.time.DateTime;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import org.openstack.docs.identity.api.v2.Tenant;
 import org.openstack.docs.identity.api.v2.TenantForAuthenticateResponse;
 import org.openstack.docs.identity.api.v2.Token;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
-import javax.xml.datatype.XMLGregorianCalendar;
-import java.util.GregorianCalendar;
 
 /**
  * Created with IntelliJ IDEA.
@@ -24,6 +22,8 @@ import java.util.GregorianCalendar;
  * To change this template use File | Settings | File Templates.
  */
 public class JSONReaderForCloudAuthenticationResponseToken {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(JSONReaderForCloudAuthenticationResponseToken.class);
 
     public static Token getAuthenticationResponseTokenFromJSONString(
             String jsonBody) {
@@ -72,8 +72,10 @@ public class JSONReaderForCloudAuthenticationResponseToken {
             }
 
         } catch (ParseException e) {
+            LOGGER.info(e.toString());
             throw new IdmException("unable to parse Cloud AuthenticationResponse token", e);
         } catch (DatatypeConfigurationException e) {
+            LOGGER.info(e.toString());
             throw new IdmException("unable to parse Cloud AuthenticationResponse token expiration", e);
         }
         return token;

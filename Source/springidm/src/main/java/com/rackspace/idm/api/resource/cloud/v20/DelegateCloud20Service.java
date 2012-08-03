@@ -1085,9 +1085,11 @@ public class DelegateCloud20Service implements Cloud20Service {
         try {
             if (entity.trim().startsWith("{")) {
                 //TODO: get more than just the token
-                AuthenticateResponse authenticateResponse = new AuthenticateResponse();
-                authenticateResponse.setToken(JSONReaderForCloudAuthenticationResponseToken.getAuthenticationResponseTokenFromJSONString(entity));
-                return authenticateResponse;
+                JSONConfiguration jsonConfiguration = JSONConfiguration.natural().rootUnwrapping(false).build();
+                JSONJAXBContext context = new JSONJAXBContext(jsonConfiguration, "org.openstack.docs.identity.api.v2");
+                JSONUnmarshaller jsonUnmarshaller = context.createJSONUnmarshaller();
+                JAXBElement ob = jsonUnmarshaller.unmarshalJAXBElementFromJSON(new StringReader(entity), objectClass);
+                return ob.getValue();
             } else {
                 JAXBContext jc = JAXBContext.newInstance(objectClass);
                 Unmarshaller unmarshaller = jc.createUnmarshaller();

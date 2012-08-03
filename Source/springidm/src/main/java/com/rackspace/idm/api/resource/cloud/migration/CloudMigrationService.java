@@ -686,10 +686,12 @@ public class CloudMigrationService {
         }
 
         // remove Mosso and Nast tenants if created and no longer attached to anyone
-        if(user.getMossoId() != null)
+        if(user.getMossoId() != null) {
             deleteTenant(user.getMossoId().toString());
-        if(user.getNastId() != null)
+        }
+        if(user.getNastId() != null) {
             deleteTenant(user.getNastId());
+        }
     }
 
     String getAdminToken() {
