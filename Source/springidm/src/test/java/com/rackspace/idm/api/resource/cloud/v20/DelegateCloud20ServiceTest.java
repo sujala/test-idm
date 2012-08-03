@@ -232,14 +232,14 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
-    public void authenticate_userNotMigratedAndNotNullAndCloudClientResponse200AndAuthenticateResponseIsEmpty_returns200() throws Exception {
+    public void authenticate_userNotMigratedAndNotNullAndCloudClientResponse200AndAuthenticateResponseIsEmpty_returns500() throws Exception {
         User user = new User();
-        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        responseBuilder.status(200);
-        responseBuilder.entity(new Object());
+        Response.ResponseBuilder responseBuilder = Response.ok(new Object());
         when(cloudUserExtractor.getUserByV20CredentialType(authenticationRequest)).thenReturn(user);
         when(cloudClient.post(anyString(), any(HttpHeaders.class), anyString())).thenReturn(responseBuilder);
-        assertThat("response", delegateCloud20Service.authenticate(httpHeaders, authenticationRequest).build().getStatus(), equalTo(200));
+        Response.ResponseBuilder responseBuilder2 = Response.status(500);
+        when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(responseBuilder2);
+        assertThat("response", delegateCloud20Service.authenticate(httpHeaders, authenticationRequest).build().getStatus(), equalTo(500));
     }
 
     @Test
@@ -335,10 +335,10 @@ public class DelegateCloud20ServiceTest {
         assertThat(delegateCloud20Service.unmarshallAuthenticateResponse(body).getToken(), not(nullValue()));
     }
 
-    @Test
-    public void unmarshallAuthenticateResponse_withBadData_returnsEmptyAuthResponse() throws Exception {
+    @Test(expected = IdmException.class)
+    public void unmarshallAuthenticateResponse_withBadData_throwsIdmExceptiom() throws Exception {
         String body = "{\"acce,\"tenant\":{\"id\":\"MossoCloudFS_6eee84c5-54a4-4217-a895-8308da81feb37-a895-8308da81feb3\"}}}";
-        assertThat(delegateCloud20Service.unmarshallAuthenticateResponse(body).getToken(), nullValue());
+        delegateCloud20Service.unmarshallAuthenticateResponse(body);
     }
 
     @Test (expected = IdmException.class)
@@ -3045,7 +3045,7 @@ public class DelegateCloud20ServiceTest {
         when(cloudUserExtractor.getUserByV20CredentialType(authenticationRequest)).thenReturn(null);
         when(config.getString("cloudAuth20url")).thenReturn("cloudAuth/");
         when(cloudClient.post(eq("cloudAuth/tokens"), any(HttpHeadersAcceptXml.class), anyString())).thenReturn(Response.status(200).entity("test"));
-        doReturn(authenticateResponse).when(spy).unmarshallResponse("test", AuthenticateResponse.class);
+        doReturn(authenticateResponse).when(spy).unmarshallAuthenticateResponse("test");
         Response.ResponseBuilder responseBuilder = spy.authenticateImpersonated(httpHeaders, authenticationRequest, impersonatedScopeAccess);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
