@@ -129,6 +129,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     private ExceptionHandler exceptionHandler;
 
     @Autowired
+    private UserValidator20 userValidator20;
+
+    @Autowired
     private DefaultRegionService defaultRegionService;
 
     private com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
@@ -347,8 +350,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
             authorizationService.verifyUserAdminLevelAccess(scopeAccessByAccessToken);
-            validateUser(user);
-            validateUsernameForUpdateOrCreate(user.getUsername());
+            userValidator20.validateUserForCreate(user);
 
             String password = user.getPassword();
             boolean emptyPassword = StringUtils.isBlank(password);
@@ -507,19 +509,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             //is userAdmin
             userDO.setDomainId(caller.getDomainId());
         }
-    }
-
-    void validateUser(org.openstack.docs.identity.api.v2.User user) {
-        String username = user.getUsername();
-        validateUsername(username);
-        String email = user.getEmail();
-        if (StringUtils.isBlank(email)) {
-            String errorMsg = "Expecting valid email address";
-            logger.warn(errorMsg);
-            throw new BadRequestException(errorMsg);
-        }
-        validateEmail(email);
-
     }
 
     void validateEmail(String email) {
@@ -2141,7 +2130,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException(errMsg);
             }
 
-            validateUsername(creds.getUsername());
+            userValidator20.validateUsername(creds.getUsername());
             User credUser = this.userService.getUser(creds.getUsername());
 
             if (credUser == null) {
@@ -2599,6 +2588,10 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     public void setExceptionHandler(ExceptionHandler exceptionHandler) {
         this.exceptionHandler = exceptionHandler;
+    }
+
+    public void setUserValidator20(UserValidator20 userValidator20) {
+        this.userValidator20 = userValidator20;
     }
 
     public void setDefaultRegionService(DefaultRegionService defaultRegionService) {

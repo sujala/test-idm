@@ -111,6 +111,7 @@ public class DefaultCloud20ServiceTest {
     private String apiKeyCredentials = "RAX-KSKEY:apiKeyCredentials";
     private DelegateCloud20Service delegateCloud20Service;
     private SecretQA secretQA;
+    private UserValidator20 userValidator20;
 
     @Before
     public void setUp() throws Exception {
@@ -139,6 +140,7 @@ public class DefaultCloud20ServiceTest {
         delegateCloud20Service = mock(DelegateCloud20Service.class);
         exceptionHandler = mock(ExceptionHandler.class);
         defaultRegionService = mock(DefaultRegionService.class);
+        userValidator20 = mock(UserValidator20.class);
 
         //setting mocks
         defaultCloud20Service.setUserService(userService);
@@ -161,6 +163,7 @@ public class DefaultCloud20ServiceTest {
         defaultCloud20Service.setServiceConverterCloudV20(serviceConverterCloudV20);
         defaultCloud20Service.setDelegateCloud20Service(delegateCloud20Service);
         defaultCloud20Service.setExceptionHandler(exceptionHandler);
+        defaultCloud20Service.setUserValidator20(userValidator20);
         defaultCloud20Service.setDefaultRegionService(defaultRegionService);
 
         //fields
@@ -476,7 +479,7 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void validatePassword_containsHyphen_succeeds() throws Exception {
+    public void validateEmail_containsHyphen_succeeds() throws Exception {
         defaultCloud20Service.validateEmail("foo-bar@test.com");
     }
 
@@ -1328,7 +1331,6 @@ public class DefaultCloud20ServiceTest {
     public void updateUser_withNoRegionAndPreviousRegionsExists_previousRegionRemains() throws Exception {
         UserForCreate userNoRegion = new UserForCreate();
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doNothing().when(spy).validateUser(org.mockito.Matchers.any(org.openstack.docs.identity.api.v2.User.class));
         when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(new User());
         User retrievedUser = new User("testUser");
         retrievedUser.setId("id");
@@ -1347,7 +1349,6 @@ public class DefaultCloud20ServiceTest {
         userWithRegion.setId(userId);
         userWithRegion.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "defaultRegion"), "foo");
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doNothing().when(spy).validateUser(org.mockito.Matchers.any(org.openstack.docs.identity.api.v2.User.class));
         spy.setUserConverterCloudV20(new UserConverterCloudV20());
         User retrievedUser = new User("testUser");
         retrievedUser.setId("id");
@@ -1370,7 +1371,6 @@ public class DefaultCloud20ServiceTest {
 
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doNothing().when(spy).assignProperRole(any(HttpHeaders.class), anyString(), any(ScopeAccess.class), any(User.class));
-        doNothing().when(spy).validateUser(org.mockito.Matchers.any(org.openstack.docs.identity.api.v2.User.class));
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         when(uriBuilder.path(anyString())).thenReturn(uriBuilder);
         when(uriBuilder.build()).thenReturn(new URI("uri"));
@@ -1388,8 +1388,7 @@ public class DefaultCloud20ServiceTest {
         UserForCreate userNoRegion = new UserForCreate();
         userNoRegion.setUsername("testUser");
         ArgumentCaptor<User> argumentCaptor = ArgumentCaptor.forClass(User.class);
-        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doNothing().when(spy).validateUser(org.mockito.Matchers.any(org.openstack.docs.identity.api.v2.User.class));
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);;
         when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(new User());
         spy.addUser(httpHeaders, uriInfo, authToken, userNoRegion);
         verify(userService).addUser(argumentCaptor.capture());
@@ -1457,7 +1456,7 @@ public class DefaultCloud20ServiceTest {
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         BadRequestException badRequestException = new BadRequestException("missing username");
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doThrow(badRequestException).when(spy).validateUser(userOS);
+        doThrow(badRequestException).when(userValidator20).validateUserForCreate(userOS);
         when(exceptionHandler.exceptionResponse(badRequestException)).thenReturn(responseBuilder);
         userOS.setUsername(null);
         assertThat("response code", spy.addUser(null, null, authToken, userOS), equalTo(responseBuilder));
@@ -1562,8 +1561,6 @@ public class DefaultCloud20ServiceTest {
         users.setUsers(userList);
 
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doNothing().when(spy).validateUser(userOS);
-        doNothing().when(spy).validateUsernameForUpdateOrCreate(userOS.getUsername());
         when(authorizationService.authorizeCloudUserAdmin(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(true);
         when(userConverterCloudV20.toUserDO(userOS)).thenReturn(new User());
         when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
@@ -1625,8 +1622,6 @@ public class DefaultCloud20ServiceTest {
     public void addUser_userServiceDuplicateException_returnsResponseBuilder() throws Exception {
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doNothing().when(spy).validateUser(userOS);
-        doNothing().when(spy).validateUsernameForUpdateOrCreate(userOS.getUsername());
         when(userConverterCloudV20.toUserDO(userOS)).thenReturn(new User());
         doThrow(new DuplicateException("duplicate")).when(userService).addUser(any(User.class));
         when(exceptionHandler.conflictExceptionResponse("duplicate")).thenReturn(responseBuilder);
@@ -1639,8 +1634,6 @@ public class DefaultCloud20ServiceTest {
         DuplicateUsernameException duplicateUsernameException = new DuplicateUsernameException();
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doNothing().when(spy).validateUser(userOS);
-        doNothing().when(spy).validateUsernameForUpdateOrCreate(userOS.getUsername());
         when(userConverterCloudV20.toUserDO(userOS)).thenReturn(caller);
         when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
         when(userService.getAllUsers(any(FilterParam[].class))).thenReturn(null);
@@ -4038,114 +4031,6 @@ public class DefaultCloud20ServiceTest {
         verify(scopeAccessService).expireAllTokensForUser(user.getUsername());
     }
 
-    @Test(expected = BadRequestException.class)
-    public void validateUser_missingUsername_throwsBadRequestException() throws Exception {
-        defaultCloud20Service.validateUser(new org.openstack.docs.identity.api.v2.User());
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void validateUser_missingEmail_throwsBadRequestException() throws Exception {
-        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
-        user1.setUsername("username");
-        defaultCloud20Service.validateUser(user1);
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void validateUser_withInvalidEmail_throwsBadRequestException() throws Exception {
-        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
-        user1.setUsername("username");
-        user1.setEmail("foo");
-        defaultCloud20Service.validateUser(user1);
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void validateUser_withInvalidEmail2_throwsBadRequestException() throws Exception {
-        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
-        user1.setUsername("username");
-        user1.setEmail("foo@");
-        defaultCloud20Service.validateUser(user1);
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void validateUser_withInvalidEmail3_throwsBadRequestException() throws Exception {
-        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
-        user1.setUsername("username");
-        user1.setEmail("foo.com");
-        defaultCloud20Service.validateUser(user1);
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void validateUser_withInvalidEmail4_throwsBadRequestException() throws Exception {
-        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
-        user1.setUsername("username");
-        user1.setEmail("foo@.com");
-        defaultCloud20Service.validateUser(user1);
-    }
-
-    @Test
-    public void validateUser_withValidEmail_succeeds() throws Exception {
-        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
-        user1.setUsername("username");
-        user1.setEmail("foo@bar.com");
-        defaultCloud20Service.validateUser(user1);
-    }
-
-    @Test
-    public void validateUser_withValidEmail2_succeeds() throws Exception {
-        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
-        user1.setUsername("username");
-        user1.setEmail("racker@rackspace.com");
-        defaultCloud20Service.validateUser(user1);
-    }
-
-    @Test
-    public void validateUser_withValidEmail3_succeeds() throws Exception {
-        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
-        user1.setUsername("username");
-        user1.setEmail("john.smith@rackspace.com");
-        defaultCloud20Service.validateUser(user1);
-    }
-
-    @Test
-    public void validateUser_withValidEmail4_succeeds() throws Exception {
-        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
-        user1.setUsername("username");
-        user1.setEmail("john.\"elGuapo\".smith@rackspace.com");
-        defaultCloud20Service.validateUser(user1);
-    }
-
-    @Test
-    public void validateUser_withValidEmail5_succeeds() throws Exception {
-        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
-        user1.setUsername("username");
-        user1.setEmail("1@rackspace.com");
-        defaultCloud20Service.validateUser(user1);
-    }
-
-    @Test
-    public void validateUser_withValidEmail6_succeeds() throws Exception {
-        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
-        user1.setUsername("username");
-        user1.setEmail("1@1.net");
-        defaultCloud20Service.validateUser(user1);
-    }
-
-    @Test
-    public void validateUser_withValidEmail7_succeeds() throws Exception {
-        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
-        user1.setUsername("username");
-        user1.setEmail("1@1.rackspace.com");
-        defaultCloud20Service.validateUser(user1);
-    }
-
-    @Test
-    public void validateUser_withValidEmail8_succeeds() throws Exception {
-        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
-        user1.setUsername("username");
-        user1.setEmail("R_a_c_K_e_r_4000@rackspace.com");
-        defaultCloud20Service.validateUser(user1);
-    }
-
     @Test
     public void updateUserApiKeyCredentials_callsVerifyServiceAdminLevelAccess() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
@@ -4171,8 +4056,9 @@ public class DefaultCloud20ServiceTest {
         ApiKeyCredentials creds = new ApiKeyCredentials();
         creds.setApiKey("123");
         creds.setUsername("username");
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         spy.updateUserApiKeyCredentials(null, authToken, null, null, creds);
-        verify(spy).validateUsername("username");
+        verify(userValidator20).validateUsername("username");
     }
 
     @Test
@@ -4183,7 +4069,6 @@ public class DefaultCloud20ServiceTest {
         ArgumentCaptor<NotFoundException> argumentCaptor = ArgumentCaptor.forClass(NotFoundException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doNothing().when(spy).validateUsername("username");
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response builder", spy.updateUserApiKeyCredentials(null, authToken, null, null, creds), equalTo(responseBuilder));
         assertThat("exception type", argumentCaptor.getValue(),instanceOf(NotFoundException.class));
@@ -4197,7 +4082,6 @@ public class DefaultCloud20ServiceTest {
         ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doNothing().when(spy).validateUsername("username");
         when(userService.getUser("username")).thenReturn(user);
         doReturn(new User()).when(spy).checkAndGetUser(userId);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
