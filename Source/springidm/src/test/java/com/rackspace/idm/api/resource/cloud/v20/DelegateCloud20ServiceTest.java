@@ -239,7 +239,8 @@ public class DelegateCloud20ServiceTest {
         when(cloudClient.post(anyString(), any(HttpHeaders.class), anyString())).thenReturn(responseBuilder);
         Response.ResponseBuilder responseBuilder2 = Response.status(500);
         when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(responseBuilder2);
-        assertThat("response", delegateCloud20Service.authenticate(httpHeaders, authenticationRequest).build().getStatus(), equalTo(500));
+        doReturn(new AuthenticateResponse()).when(spy).unmarshallAuthenticateResponse(anyString());
+        assertThat("response", spy.authenticate(httpHeaders, authenticationRequest).build().getStatus(), equalTo(500));
     }
 
     @Test
@@ -327,6 +328,12 @@ public class DelegateCloud20ServiceTest {
                 "    }\n" +
                 "}";
         assertThat(delegateCloud20Service.unmarshallResponse(body, ApiKeyCredentials.class), not(nullValue()));
+    }
+
+    @Test
+    public void unmarshallResponse_inputNotStartWithBracket_throwsIdmException_returnsNull() throws Exception {
+        Object result = delegateCloud20Service.unmarshallResponse("xml", AuthenticateResponse.class);
+        assertThat("authenticate response", result, equalTo(null));
     }
 
     @Test
@@ -2998,22 +3005,12 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
-    public void authenticateImpersonated_cloudExtractorThrowsException_callsExceptionResponse() throws Exception {
-        spy.setObjectFactory(objectFactory);
-        IdmException ex = new IdmException("error");
-        doThrow(ex).when(spy).marshallObjectToString(null);
-        when(authenticationRequest.getToken()).thenReturn(new TokenForAuthenticationRequest());
-        spy.authenticateImpersonated(null, authenticationRequest, new ImpersonatedScopeAccess());
-        verify(exceptionHandler).exceptionResponse(ex);
-    }
-
-    @Test
-    public void authenticateImpersonated_cloudUserExtractorReturnsNotNullUser_callsDefaultCloud20Service_authenticate() throws Exception {
-        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+    public void authenticateImpersonated_userNotNull_callsDefaultCloud20Service_authenticate() throws Exception {
         ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
-        when(cloudUserExtractor.getUserByV20CredentialType(authenticationRequest)).thenReturn(new User());
-        spy.authenticateImpersonated(httpHeaders, authenticationRequest, impersonatedScopeAccess);
-        verify(defaultCloud20Service).authenticate(httpHeaders, authenticationRequest);
+        impersonatedScopeAccess.setImpersonatingToken("impersonatedToken");
+        when(userService.getUserByAuthToken("impersonatedToken")).thenReturn(new User());
+        delegateCloud20Service.authenticateImpersonated(null, authenticationRequest, impersonatedScopeAccess);
+        verify(defaultCloud20Service).authenticate(null, authenticationRequest);
     }
 
     @Test
@@ -3028,6 +3025,25 @@ public class DelegateCloud20ServiceTest {
         when(cloudClient.post(eq("cloudAuth/tokens"), any(HttpHeadersAcceptXml.class), anyString())).thenReturn(Response.status(404));
         Response.ResponseBuilder responseBuilder = spy.authenticateImpersonated(httpHeaders, authenticationRequest, impersonatedScopeAccess);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(404));
+    }
+
+    @Test
+    public void authenticateImpersonated_userIsNull_statusIs200WithEmptyAuthenticateResponse_returns500() throws Exception {
+        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
+        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        authenticationRequest.setToken(tokenForAuthenticationRequest);
+        ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
+        impersonatedScopeAccess.setImpersonatingToken("impersonatingToken");
+        impersonatedScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
+        impersonatedScopeAccess.setAccessTokenString("notExpired");
+        when(cloudUserExtractor.getUserByV20CredentialType(authenticationRequest)).thenReturn(null);
+        when(config.getString("cloudAuth20url")).thenReturn("cloudAuth/");
+        when(cloudClient.post(eq("cloudAuth/tokens"), any(HttpHeadersAcceptXml.class), anyString())).thenReturn(Response.status(200).entity("test"));
+        doReturn(authenticateResponse).when(spy).unmarshallAuthenticateResponse("test");
+        when(exceptionHandler.exceptionResponse(any(IdmException.class))).thenReturn(Response.status(500));
+        Response.ResponseBuilder responseBuilder = spy.authenticateImpersonated(httpHeaders, authenticationRequest, impersonatedScopeAccess);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(500));
     }
 
     @Test

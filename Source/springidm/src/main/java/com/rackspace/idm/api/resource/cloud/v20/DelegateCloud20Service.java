@@ -204,7 +204,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             }
         } catch (Exception ex) {
             LOG.info("unable to authenticate impersonated authenticationRequest successfully: " + ex.getMessage());
-            exceptionHandler.exceptionResponse(ex);
+            return exceptionHandler.exceptionResponse(ex);
         }
 
         return defaultCloud20Service.authenticate(httpHeaders, authenticationRequest);
