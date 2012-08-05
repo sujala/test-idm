@@ -2,9 +2,7 @@ package com.rackspace.idm.domain.service;
 
 import com.rackspace.idm.domain.entity.Entity;
 import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.Tenant;
-
-import java.util.List;
+import com.rackspace.idm.domain.entity.User;
 
 public interface AuthorizationService {
     
@@ -57,7 +55,11 @@ public interface AuthorizationService {
 
     void verifyIdmSuperAdminAccess(String authToken);
     void verifyIdentityAdminLevelAccess(ScopeAccess authScopeAccess);
+    void verifyRackerOrServiceAdminAccess(ScopeAccess authScopeAccess);
     void verifyServiceAdminLevelAccess(ScopeAccess authScopeAccess);
     void verifyUserAdminLevelAccess(ScopeAccess authScopeAccess);
+    void verifyUserLevelAccess(ScopeAccess authScopeAccess);
+    void verifySelf(User requester, User requestedUser);
     void verifyTokenHasTenantAccess(String tenantId, ScopeAccess authScopeAccess);
+    void verifyDomain(User retrievedUser, User caller);
 }

@@ -230,12 +230,14 @@ public class CloudMigrationService {
 
             return response;
         } catch (ConflictException e) {
-            throw new IdmException(e);
+            throw e;
+        } catch (BadRequestException e) {
+            throw e;
         } catch (Exception e) {
             logger.info("failed to migrate user: {}", username);
             unmigrateUserByUsername(username);
             logger.info("successfully unmigrated user: {}", username);
-            throw new IdmException(e);
+            throw new BadRequestException(e);
         }
     }
 
@@ -319,11 +321,7 @@ public class CloudMigrationService {
 
             //Add CA token to GA User
             if(!userToken.equals("")) {
-                try {
-                    scopeAccessService.updateUserScopeAccessTokenForClientIdByUser(newUser, config.getString("cloudAuth.clientId"), userToken, expireToken);
-                }catch(Exception e){
-
-                }
+                scopeAccessService.updateUserScopeAccessTokenForClientIdByUser(newUser, config.getString("cloudAuth.clientId"), userToken, expireToken);
             }
             
             // Get Roles
@@ -688,6 +686,14 @@ public class CloudMigrationService {
         for (com.rackspace.idm.domain.entity.User u : users.getUsers()) {
             userService.deleteUser(u.getUsername());
         }
+
+        // remove Mosso and Nast tenants if created and no longer attached to anyone
+        if(user.getMossoId() != null) {
+            deleteTenant(user.getMossoId().toString());
+        }
+        if(user.getNastId() != null) {
+            deleteTenant(user.getNastId());
+        }
     }
 
     String getAdminToken() {
@@ -960,6 +966,14 @@ public class CloudMigrationService {
             }
         }
         return null;
+    }
+
+    private void deleteTenant(String tenantId){
+        try {
+            tenantService.deleteTenant(tenantId);
+        }catch(Exception ex) {
+
+        }
     }
 
     private String getCloudAuth20Url() {

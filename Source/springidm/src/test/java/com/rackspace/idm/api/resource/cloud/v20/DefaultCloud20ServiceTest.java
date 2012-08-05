@@ -111,6 +111,7 @@ public class DefaultCloud20ServiceTest {
     private String apiKeyCredentials = "RAX-KSKEY:apiKeyCredentials";
     private DelegateCloud20Service delegateCloud20Service;
     private SecretQA secretQA;
+    private UserValidator20 userValidator20;
 
     @Before
     public void setUp() throws Exception {
@@ -139,6 +140,7 @@ public class DefaultCloud20ServiceTest {
         delegateCloud20Service = mock(DelegateCloud20Service.class);
         exceptionHandler = mock(ExceptionHandler.class);
         defaultRegionService = mock(DefaultRegionService.class);
+        userValidator20 = mock(UserValidator20.class);
 
         //setting mocks
         defaultCloud20Service.setUserService(userService);
@@ -161,6 +163,7 @@ public class DefaultCloud20ServiceTest {
         defaultCloud20Service.setServiceConverterCloudV20(serviceConverterCloudV20);
         defaultCloud20Service.setDelegateCloud20Service(delegateCloud20Service);
         defaultCloud20Service.setExceptionHandler(exceptionHandler);
+        defaultCloud20Service.setUserValidator20(userValidator20);
         defaultCloud20Service.setDefaultRegionService(defaultRegionService);
 
         //fields
@@ -415,6 +418,18 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void deleteUser_isUserAdmin_callsVerifyDomain() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        User caller = new User();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doReturn(user).when(spy).checkAndGetUser(userId);
+        when(authorizationService.authorizeCloudUserAdmin(scopeAccess)).thenReturn(true);
+        when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
+        spy.deleteUser(null,authToken,userId);
+        verify(authorizationService).verifyDomain(caller,user);
+    }
+
+    @Test
     public void deleteUser_userIsUserAdmin_callsUserService_hasSubUsers() throws Exception {
         when(authorizationService.hasUserAdminRole(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(true);
         spy.deleteUser(httpHeaders, authToken, userId);
@@ -429,7 +444,6 @@ public class DefaultCloud20ServiceTest {
 
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(new User()).when(spy).checkAndGetUser("userId");
-        when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(scopeAccess);
         when(authorizationService.authorizeCloudUserAdmin(scopeAccess)).thenReturn(false);
         when(scopeAccessService.getScopeAccessByUserId("userId")).thenReturn(scopeAccess);
         when(authorizationService.hasUserAdminRole(scopeAccess)).thenReturn(true);
@@ -465,7 +479,7 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void validatePassword_containsHyphen_succeeds() throws Exception {
+    public void validateEmail_containsHyphen_succeeds() throws Exception {
         defaultCloud20Service.validateEmail("foo-bar@test.com");
     }
 
@@ -1267,44 +1281,6 @@ public class DefaultCloud20ServiceTest {
         assertThat("exception type", argumentCaptor.getValue(),instanceOf(BadRequestException.class));
     }
 
-    @Test(expected = ForbiddenException.class)
-    public void verifyRackerOrServiceAdminAccess_notRackerAndNotCloudServiceAdmin_throwsForbidden() throws Exception {
-        when(authorizationService.authorizeRacker(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(false);
-        when(authorizationService.authorizeCloudServiceAdmin(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(false);
-        spy.verifyRackerOrServiceAdminAccess(authToken);
-    }
-
-    @Test
-    public void verifyRackerOrServiceAdminAccess_isRackerAndNotCloudServiceAdmin_succeeds() throws Exception {
-        when(authorizationService.authorizeRacker(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(true);
-        when(authorizationService.authorizeCloudServiceAdmin(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(false);
-        spy.verifyRackerOrServiceAdminAccess(authToken);
-    }
-
-    @Test
-    public void verifyRackerOrServiceAdminAccess_callsAuthorizationService_authorizeCloudServiceAdmin() throws Exception {
-        when(authorizationService.authorizeRacker(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(false);
-        when(authorizationService.authorizeCloudServiceAdmin(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(true);
-        spy.verifyRackerOrServiceAdminAccess(authToken);
-        verify(authorizationService).authorizeCloudServiceAdmin(org.mockito.Matchers.any(ScopeAccess.class));
-    }
-
-    @Test
-    public void verifyRackerOrServiceAdminAccess_withServiceAdmin_succeeds() throws Exception {
-        when(authorizationService.authorizeCloudServiceAdmin(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(true);
-        spy.verifyRackerOrServiceAdminAccess(authToken);
-        verify(authorizationService).authorizeCloudServiceAdmin(org.mockito.Matchers.any(ScopeAccess.class));
-    }
-
-    @Test(expected = ForbiddenException.class)
-    public void verifyUserLevelAccess_notValidUserLevelAccess_throwsForbidden() throws Exception {
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
-        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(false);
-        when(authorizationService.authorizeCloudUser(any(ScopeAccess.class))).thenReturn(false);
-        spy.verifyUserLevelAccess(authToken);
-    }
-
     @Test
     public void assignDefaultRegionToDomainUser_withNullRegion_assignsDefaultRegion() throws Exception {
         final User userDO = new User();
@@ -1326,7 +1302,7 @@ public class DefaultCloud20ServiceTest {
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         UserForCreate userForCreate = new UserForCreate();
         userForCreate.setId("notSameId");
-        doNothing().when(spy).verifyUserLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(user).when(spy).checkAndGetUser("123");
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
 
@@ -1343,7 +1319,7 @@ public class DefaultCloud20ServiceTest {
         User user = new User();
         user.setEnabled(true);
         user.setId(userId);
-        doNothing().when(spy).verifyUserLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(user).when(spy).checkAndGetUser(userId);
         when(userService.getUserByAuthToken(authToken)).thenReturn(user);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
@@ -1354,8 +1330,7 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void updateUser_withNoRegionAndPreviousRegionsExists_previousRegionRemains() throws Exception {
         UserForCreate userNoRegion = new UserForCreate();
-        doNothing().when(spy).verifyUserLevelAccess(authToken);
-        doNothing().when(spy).validateUser(org.mockito.Matchers.any(org.openstack.docs.identity.api.v2.User.class));
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(new User());
         User retrievedUser = new User("testUser");
         retrievedUser.setId("id");
@@ -1373,8 +1348,7 @@ public class DefaultCloud20ServiceTest {
         UserForCreate userWithRegion = new UserForCreate();
         userWithRegion.setId(userId);
         userWithRegion.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "defaultRegion"), "foo");
-        doNothing().when(spy).verifyUserLevelAccess(authToken);
-        doNothing().when(spy).validateUser(org.mockito.Matchers.any(org.openstack.docs.identity.api.v2.User.class));
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         spy.setUserConverterCloudV20(new UserConverterCloudV20());
         User retrievedUser = new User("testUser");
         retrievedUser.setId("id");
@@ -1397,7 +1371,6 @@ public class DefaultCloud20ServiceTest {
 
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doNothing().when(spy).assignProperRole(any(HttpHeaders.class), anyString(), any(ScopeAccess.class), any(User.class));
-        doNothing().when(spy).validateUser(org.mockito.Matchers.any(org.openstack.docs.identity.api.v2.User.class));
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         when(uriBuilder.path(anyString())).thenReturn(uriBuilder);
         when(uriBuilder.build()).thenReturn(new URI("uri"));
@@ -1415,8 +1388,7 @@ public class DefaultCloud20ServiceTest {
         UserForCreate userNoRegion = new UserForCreate();
         userNoRegion.setUsername("testUser");
         ArgumentCaptor<User> argumentCaptor = ArgumentCaptor.forClass(User.class);
-        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doNothing().when(spy).validateUser(org.mockito.Matchers.any(org.openstack.docs.identity.api.v2.User.class));
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);;
         when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(new User());
         spy.addUser(httpHeaders, uriInfo, authToken, userNoRegion);
         verify(userService).addUser(argumentCaptor.capture());
@@ -1484,7 +1456,7 @@ public class DefaultCloud20ServiceTest {
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         BadRequestException badRequestException = new BadRequestException("missing username");
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doThrow(badRequestException).when(spy).validateUser(userOS);
+        doThrow(badRequestException).when(userValidator20).validateUserForCreate(userOS);
         when(exceptionHandler.exceptionResponse(badRequestException)).thenReturn(responseBuilder);
         userOS.setUsername(null);
         assertThat("response code", spy.addUser(null, null, authToken, userOS), equalTo(responseBuilder));
@@ -1589,8 +1561,6 @@ public class DefaultCloud20ServiceTest {
         users.setUsers(userList);
 
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doNothing().when(spy).validateUser(userOS);
-        doNothing().when(spy).validateUsernameForUpdateOrCreate(userOS.getUsername());
         when(authorizationService.authorizeCloudUserAdmin(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(true);
         when(userConverterCloudV20.toUserDO(userOS)).thenReturn(new User());
         when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
@@ -1652,8 +1622,6 @@ public class DefaultCloud20ServiceTest {
     public void addUser_userServiceDuplicateException_returnsResponseBuilder() throws Exception {
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doNothing().when(spy).validateUser(userOS);
-        doNothing().when(spy).validateUsernameForUpdateOrCreate(userOS.getUsername());
         when(userConverterCloudV20.toUserDO(userOS)).thenReturn(new User());
         doThrow(new DuplicateException("duplicate")).when(userService).addUser(any(User.class));
         when(exceptionHandler.conflictExceptionResponse("duplicate")).thenReturn(responseBuilder);
@@ -1666,8 +1634,6 @@ public class DefaultCloud20ServiceTest {
         DuplicateUsernameException duplicateUsernameException = new DuplicateUsernameException();
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doNothing().when(spy).validateUser(userOS);
-        doNothing().when(spy).validateUsernameForUpdateOrCreate(userOS.getUsername());
         when(userConverterCloudV20.toUserDO(userOS)).thenReturn(caller);
         when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
         when(userService.getAllUsers(any(FilterParam[].class))).thenReturn(null);
@@ -2216,26 +2182,16 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void listTenants_invalidToken_returnsResponseBuilder() throws Exception {
-        ArgumentCaptor<NotAuthorizedException> argumentCaptor = ArgumentCaptor.forClass(NotAuthorizedException.class);
-        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doNothing().when(spy).verifyUserLevelAccess("bad");
-        when(scopeAccessService.getAccessTokenByAuthHeader("bad")).thenReturn(null);
-        when(tenantConverterCloudV20.toTenantList(org.mockito.Matchers.<List<Tenant>>any())).thenReturn(null);
-        when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
-        assertThat("response builder", spy.listTenants(null, "bad", null, 1), equalTo(responseBuilder));
-        assertThat("exception type", argumentCaptor.getValue(), instanceOf(NotAuthorizedException.class));
-    }
-
-    @Test
     public void listTenants_callsUserLevelAccess() throws Exception {
-        spy.listTenants(null, null, null, null);
-        verify(spy).verifyUserLevelAccess(null);
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        spy.listTenants(null, authToken, null, null);
+        verify(authorizationService).verifyUserLevelAccess(scopeAccess);
     }
 
     @Test
     public void listTenants_scopeAccessSaNotNullResponseOk_returns200() throws Exception {
-        when(scopeAccessService.getAccessTokenByAuthHeader(authToken)).thenReturn(new ScopeAccess());
+        doReturn(new ScopeAccess()).when(spy).getScopeAccessForValidToken(authToken);
         Response.ResponseBuilder responseBuilder = spy.listTenants(httpHeaders, authToken, null, null);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
@@ -2706,7 +2662,7 @@ public class DefaultCloud20ServiceTest {
         when(userService.getUserById("dude")).thenReturn(new User());
         when(userService.getUserByAuthToken(authToken)).thenReturn(user);
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
-        doThrow(forbiddenException).when(spy).verifyDomain(user, user);
+        doThrow(forbiddenException).when(authorizationService).verifyDomain(user, user);
         when(exceptionHandler.exceptionResponse(forbiddenException)).thenReturn(responseBuilder);
         assertThat("response code", spy.deleteUser(null, authToken, "dude"), equalTo(responseBuilder));
     }
@@ -3111,11 +3067,14 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void getUserById_callerHasUserAdminRole_callsVerifyDomain() throws Exception {
-        doReturn(new User()).when(spy).getUser(any(ScopeAccess.class));
-        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
-        when(this.userService.getUserById(any(String.class))).thenReturn(user);
-        spy.getUserById(null, authToken, null);
-        verify(spy).verifyDomain(any(User.class), any(User.class));
+        ScopeAccess scopeAccess = new ScopeAccess();
+        User caller= new User();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doReturn(caller).when(spy).getUser(scopeAccess);
+        when(authorizationService.authorizeCloudUserAdmin(scopeAccess)).thenReturn(true);
+        when(this.userService.getUserById(userId)).thenReturn(user);
+        spy.getUserById(null, authToken, userId);
+        verify(authorizationService).verifyDomain(caller, user);
     }
 
     @Test
@@ -3148,67 +3107,74 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void getUserByName_callsVerifyUserLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.getUserByName(null, authToken, null);
-        verify(spy).verifyUserLevelAccess(authToken);
+        verify(authorizationService).verifyUserLevelAccess(scopeAccess);
     }
 
     @Test
     public void getUserByName_userIsNullThrowsNotFoundException_returnsResponseBuilder() throws Exception {
         ArgumentCaptor<NotFoundException> argumentCaptor = ArgumentCaptor.forClass(NotFoundException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doNothing().when(spy).verifyUserLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response builder", spy.getUserByName(null, authToken, null), equalTo(responseBuilder));
         assertThat("exception type", argumentCaptor.getValue(), instanceOf(NotFoundException.class));
     }
 
     @Test
-    public void getUserByName_callsScopeAccessServiceGetScopeAccessByAccessToken() throws Exception {
-        when(userService.getUser("userName")).thenReturn(user);
-        spy.getUserByName(null, authToken, "userName");
-        verify(scopeAccessService, times(2)).getScopeAccessByAccessToken(authToken);
-    }
-
-    @Test
     public void getUserByName_adminUser_callsVerifyDomain() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        User adminUser = new User();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         when(userService.getUser("userName")).thenReturn(user);
-        doReturn(true).when(spy).isUserAdmin(any(ScopeAccess.class), any(List.class));
-        when(authorizationService.authorizeCloudUserAdmin(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(true);
-        when(userService.getUserByAuthToken(authToken)).thenReturn(user);
+        when(authorizationService.authorizeCloudUserAdmin(scopeAccess)).thenReturn(true);
+        when(userService.getUserByScopeAccess(scopeAccess)).thenReturn(adminUser);
         spy.getUserByName(null, authToken, "userName");
-        verify(spy).verifyDomain(user, user);
+        verify(authorizationService).verifyDomain(adminUser, user);
     }
 
     @Test
     public void getUserByName_defaultUser_callsVerifySelf() throws Exception {
+        User requester = new User();
+        ScopeAccess scopeAccess = new ScopeAccess();
+
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         when(userService.getUser("userName")).thenReturn(user);
-        when(authorizationService.authorizeCloudUser(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(true);
-        when(userService.getUserByAuthToken(authToken)).thenReturn(user);
+        when(authorizationService.authorizeCloudUserAdmin(scopeAccess)).thenReturn(false);
+        when(authorizationService.authorizeCloudUser(scopeAccess)).thenReturn(true);
+        when(userService.getUserByScopeAccess(scopeAccess)).thenReturn(requester);
+
         spy.getUserByName(null, authToken, "userName");
-        verify(spy).verifySelf(authToken, user);
+        verify(authorizationService).verifySelf(requester, user);
     }
 
     @Test
     public void getUserByName_responseOk_returns200() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         when(userService.getUser("userName")).thenReturn(user);
         doReturn(false).when(spy).isUserAdmin(any(ScopeAccess.class), any(List.class));
         doReturn(false).when(spy).isDefaultUser(any(ScopeAccess.class), any(List.class));
-        when(userService.getUserByAuthToken(authToken)).thenReturn(user);
+        when(userService.getUserByScopeAccess(scopeAccess)).thenReturn(user);
         Response.ResponseBuilder responseBuilder = spy.getUserByName(httpHeaders, authToken, "userName");
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
     @Test
     public void getUserCredential_callsVerifyUserLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.getUserCredential(null, authToken, null, null);
-        verify(spy).verifyUserLevelAccess(authToken);
+        verify(authorizationService).verifyUserLevelAccess(scopeAccess);
     }
 
     @Test
     public void getUserCredential_notPasswordCredentialOrAPIKeyCredentialThrowsBadRequest_returnsResponseBuilder() throws Exception {
         ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doNothing().when(spy).verifyUserLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response builder", spy.getUserCredential(null, authToken, null, ""), equalTo(responseBuilder));
         assertThat("exception type", argumentCaptor.getValue(), instanceOf(BadRequestException.class));
@@ -3236,7 +3202,7 @@ public class DefaultCloud20ServiceTest {
     public void getUserCredential_userIsNull_returnsResponseBuilder() throws Exception {
         ArgumentCaptor<NotFoundException> argumentCaptor = ArgumentCaptor.forClass(NotFoundException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doNothing().when(spy).verifyUserLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         when(userService.getUserById("id")).thenReturn(null);
         when(authorizationService.authorizeCloudUser(any(ScopeAccess.class))).thenReturn(true);
         doReturn(user).when(spy).getUser(any(ScopeAccess.class));
@@ -3256,7 +3222,7 @@ public class DefaultCloud20ServiceTest {
     public void getUserCredential_cloudAdminUserIdNotMatchThrowsForbiddenException_returnsResponseBuilder() throws Exception {
         ArgumentCaptor<ForbiddenException> argumentCaptor = ArgumentCaptor.forClass(ForbiddenException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doNothing().when(spy).verifyUserLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
         doReturn(user).when(spy).getUser(any(ScopeAccess.class));
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
@@ -3268,7 +3234,7 @@ public class DefaultCloud20ServiceTest {
     public void getUserCredential_userIsNullThrowsNotFoundException_returnsResponseBuilder() throws Exception {
         ArgumentCaptor<NotFoundException> argumentCaptor = ArgumentCaptor.forClass(NotFoundException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doNothing().when(spy).verifyUserLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response builder", spy.getUserCredential(null, authToken, "", apiKeyCredentials), equalTo(responseBuilder));
         assertThat("exception type",argumentCaptor.getValue(),instanceOf(NotFoundException.class));
@@ -3278,7 +3244,7 @@ public class DefaultCloud20ServiceTest {
     public void getUserCredential_passwordCredentialUserPasswordIsBlank_returnsResponseBuilder() throws Exception {
         ArgumentCaptor<NotFoundException> argumentCaptor = ArgumentCaptor.forClass(NotFoundException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doNothing().when(spy).verifyUserLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         when(userService.getUserById(userId)).thenReturn(new User());
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response builder", spy.getUserCredential(null, authToken, userId, passwordCredentials), equalTo(responseBuilder));
@@ -3306,7 +3272,7 @@ public class DefaultCloud20ServiceTest {
     public void getUserCredential_apiKeyCredentialAPIKeyIsBlank_returnsResponseBuilder() throws Exception {
         ArgumentCaptor<NotFoundException> argumentCaptor = ArgumentCaptor.forClass(NotFoundException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doNothing().when(spy).verifyUserLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         when(userService.getUserById(userId)).thenReturn(user);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response builder", spy.getUserCredential(httpHeaders, authToken, userId, apiKeyCredentials), equalTo(responseBuilder));
@@ -3349,15 +3315,17 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void listCredentials_callsVerifyUserLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.listCredentials(null, authToken, null, null, 0);
-        verify(spy).verifyUserLevelAccess(authToken);
+        verify(authorizationService).verifyUserLevelAccess(scopeAccess);
     }
 
     @Test
     public void listCredentials_throwsNotFoundException_returnsResponseBuilder() throws Exception {
         NotFoundException notFoundException = new NotFoundException();
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doNothing().when(spy).verifyUserLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doThrow(notFoundException).when(spy).checkAndGetUser(null);
         when(exceptionHandler.exceptionResponse(notFoundException)).thenReturn(responseBuilder);
         assertThat("response builder", spy.listCredentials(null, authToken, null, null, 0), equalTo(responseBuilder));
@@ -3365,16 +3333,28 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void listCredentials_userAdmin_callsVerifySelf() throws Exception {
-        doReturn(true).when(spy).isUserAdmin(any(ScopeAccess.class), any(List.class));
+        ScopeAccess scopeAccess = new ScopeAccess();
+        User requester = new User();
+        User requested = new User();
+        doReturn(requested).when(spy).checkAndGetUser(userId);
+        when(userService.getUserByScopeAccess(scopeAccess)).thenReturn(requester);
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doReturn(true).when(spy).isUserAdmin(scopeAccess, null);
         spy.listCredentials(null, authToken, userId, null, null);
-        verify(spy).verifySelf(eq(authToken), any(User.class));
+        verify(authorizationService).verifySelf(requester, requested);
     }
 
     @Test
     public void listCredential_defaultUser_callsVerifySelf() throws Exception {
-        doReturn(true).when(spy).isDefaultUser(any(ScopeAccess.class), any(List.class));
+        ScopeAccess scopeAccess = new ScopeAccess();
+        User requester = new User();
+        User requested = new User();
+        doReturn(requested).when(spy).checkAndGetUser(userId);
+        when(userService.getUserByScopeAccess(scopeAccess)).thenReturn(requester);
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doReturn(true).when(spy).isDefaultUser(scopeAccess, null);
         spy.listCredentials(null, authToken, userId, null, null);
-        verify(spy).verifySelf(eq(authToken), any(User.class));
+        verify(authorizationService).verifySelf(requester, requested);
     }
 
     @Test
@@ -3651,41 +3631,48 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void listUserGlobalRoles_isUserAdmin_callsVerifyDomain() throws Exception {
-        doNothing().when(spy).verifyUserLevelAccess(authToken);
-        doReturn(user).when(spy).getUser(org.mockito.Matchers.any(ScopeAccess.class));
-        when(userService.getUserById(anyString())).thenReturn(user);
-        when(userService.getUser(anyString())).thenReturn(user);
-        when(authorizationService.authorizeCloudIdentityAdmin(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(false);
-        when(authorizationService.authorizeCloudServiceAdmin(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(false);
-        when(authorizationService.authorizeCloudUser(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(false);
-        spy.listUserGlobalRoles(null, authToken, null);
-        verify(spy).verifyDomain(org.mockito.Matchers.any(User.class), org.mockito.Matchers.any(User.class));
+        ScopeAccess scopeAccess = new ScopeAccess();
+        User caller = new User();
+
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doReturn(caller).when(spy).getUser(scopeAccess);
+        when(userService.getUserById(userId)).thenReturn(user);
+        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(false);
+        when(authorizationService.authorizeCloudUser(scopeAccess)).thenReturn(false);
+
+        spy.listUserGlobalRoles(null, authToken, userId);
+        verify(authorizationService).verifyDomain(caller, user);
     }
 
     @Test
     public void listUserGlobalRoles_isDefaultUser_callsVerifySelf() throws Exception {
-        doNothing().when(spy).verifyUserLevelAccess(authToken);
-        doReturn(user).when(spy).getUser(org.mockito.Matchers.any(ScopeAccess.class));
-        when(userService.getUserById(anyString())).thenReturn(user);
-        when(userService.getUser(anyString())).thenReturn(user);
-        when(authorizationService.authorizeCloudIdentityAdmin(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(false);
-        when(authorizationService.authorizeCloudServiceAdmin(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(false);
-        when(authorizationService.authorizeCloudUser(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(true);
-        spy.listUserGlobalRoles(null, authToken, null);
-        verify(spy).verifySelf(anyString(), org.mockito.Matchers.any(User.class));
+        ScopeAccess scopeAccess = new ScopeAccess();
+        User requester = new User();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doReturn(user).when(spy).getUser(scopeAccess);
+        when(userService.getUserById(userId)).thenReturn(user);
+        doReturn(requester).when(spy).getUser(scopeAccess);
+        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(false);
+        when(authorizationService.authorizeCloudUser(scopeAccess)).thenReturn(true);
+        spy.listUserGlobalRoles(null, authToken, userId);
+        verify(authorizationService).verifySelf(requester, user);
     }
 
     @Test
     public void listUserGlobalRoles_callsVerifyUserLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.listUserGlobalRoles(null, authToken, null);
-        verify(spy).verifyUserLevelAccess(authToken);
+        verify(authorizationService).verifyUserLevelAccess(scopeAccess);
     }
 
     @Test
     public void listUserGlobalRoles_throwsForbiddenException_returnsResponseBody() throws Exception {
         ArgumentCaptor<NotFoundException> argumentCaptor = ArgumentCaptor.forClass(NotFoundException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doNothing().when(spy).verifyUserLevelAccess(userId);
+        doReturn(null).when(spy).getScopeAccessForValidToken(userId);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response builder", spy.listUserGlobalRoles(null, authToken, null), equalTo(responseBuilder));
         assertThat("correct exception",argumentCaptor.getValue(),instanceOf(NotFoundException.class));
@@ -3929,40 +3916,16 @@ public class DefaultCloud20ServiceTest {
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
-    @Test(expected = ForbiddenException.class)
-    public void verifyDomain_domainIdIsNull_throwsForbiddenException() throws Exception {
-        User caller = new User();
-        User retrievedUser = new User();
-        retrievedUser.setDomainId("domainId");
-        spy.verifyDomain(retrievedUser, caller);
-    }
-
-    @Test(expected = ForbiddenException.class)
-    public void verifyDomain_callerDomainIdNotMatchRetrievedUserDomainId_throwsForbiddenException() throws Exception {
-        User caller = new User();
-        caller.setDomainId("notSame");
-        User retrievedUser = new User();
-        retrievedUser.setDomainId("domainId");
-        spy.verifyDomain(retrievedUser, caller);
-    }
-
-    @Test
-    public void verifyDomain_sameDomainId_success() throws Exception {
-        User caller = new User();
-        caller.setDomainId("domainId");
-        User retrievedUser = new User();
-        retrievedUser.setDomainId("domainId");
-        spy.verifyDomain(retrievedUser, caller);
-    }
-
     @Test
     public void updateUser_callsVerifyUserLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.updateUser(null, authToken, null, null);
-        verify(spy).verifyUserLevelAccess(authToken);
+        verify(authorizationService).verifyUserLevelAccess(scopeAccess);
     }
 
     @Test
-    public void updateUser_calls_userService_updateUserById() throws Exception {
+    public void updateUser_callsUserService_updateUserById() throws Exception {
         userOS.setId(userId);
         spy.updateUser(null, authToken, userId, userOS);
         verify(userService).updateUserById(any(User.class), anyBoolean());
@@ -3974,9 +3937,8 @@ public class DefaultCloud20ServiceTest {
         user.setId(userId);
         userOS.setId(userId);
         ScopeAccess scopeAccess = new ScopeAccess();
-        doNothing().when(spy).verifyUserLevelAccess(authToken);
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(user).when(spy).checkAndGetUser(anyString());
-        when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(scopeAccess);
         spy.updateUser(null, authToken, userId, userOS);
         verify(authorizationService).authorizeCloudUser(scopeAccess);
     }
@@ -4008,7 +3970,7 @@ public class DefaultCloud20ServiceTest {
         user1.setId(userId);
         userOS.setId(userId);
         user.setId("notMatch");
-        doNothing().when(spy).verifyUserLevelAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(user1).when(spy).checkAndGetUser(userId);
         when(authorizationService.authorizeCloudUser(any(ScopeAccess.class))).thenReturn(true);
         when(userService.getUserByAuthToken(authToken)).thenReturn(user);
@@ -4053,7 +4015,7 @@ public class DefaultCloud20ServiceTest {
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(userService.getUserByAuthToken(authToken)).thenReturn(user);
         spy.updateUser(null, authToken, userId, userOS);
-        verify(spy).verifyDomain(any(User.class), eq(user));
+        verify(authorizationService).verifyDomain(user, user);
     }
 
     @Test
@@ -4067,114 +4029,6 @@ public class DefaultCloud20ServiceTest {
         when(user.isDisabled()).thenReturn(true);
         spy.updateUser(httpHeaders, authToken, userId, userOS);
         verify(scopeAccessService).expireAllTokensForUser(user.getUsername());
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void validateUser_missingUsername_throwsBadRequestException() throws Exception {
-        defaultCloud20Service.validateUser(new org.openstack.docs.identity.api.v2.User());
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void validateUser_missingEmail_throwsBadRequestException() throws Exception {
-        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
-        user1.setUsername("username");
-        defaultCloud20Service.validateUser(user1);
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void validateUser_withInvalidEmail_throwsBadRequestException() throws Exception {
-        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
-        user1.setUsername("username");
-        user1.setEmail("foo");
-        defaultCloud20Service.validateUser(user1);
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void validateUser_withInvalidEmail2_throwsBadRequestException() throws Exception {
-        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
-        user1.setUsername("username");
-        user1.setEmail("foo@");
-        defaultCloud20Service.validateUser(user1);
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void validateUser_withInvalidEmail3_throwsBadRequestException() throws Exception {
-        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
-        user1.setUsername("username");
-        user1.setEmail("foo.com");
-        defaultCloud20Service.validateUser(user1);
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void validateUser_withInvalidEmail4_throwsBadRequestException() throws Exception {
-        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
-        user1.setUsername("username");
-        user1.setEmail("foo@.com");
-        defaultCloud20Service.validateUser(user1);
-    }
-
-    @Test
-    public void validateUser_withValidEmail_succeeds() throws Exception {
-        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
-        user1.setUsername("username");
-        user1.setEmail("foo@bar.com");
-        defaultCloud20Service.validateUser(user1);
-    }
-
-    @Test
-    public void validateUser_withValidEmail2_succeeds() throws Exception {
-        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
-        user1.setUsername("username");
-        user1.setEmail("racker@rackspace.com");
-        defaultCloud20Service.validateUser(user1);
-    }
-
-    @Test
-    public void validateUser_withValidEmail3_succeeds() throws Exception {
-        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
-        user1.setUsername("username");
-        user1.setEmail("john.smith@rackspace.com");
-        defaultCloud20Service.validateUser(user1);
-    }
-
-    @Test
-    public void validateUser_withValidEmail4_succeeds() throws Exception {
-        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
-        user1.setUsername("username");
-        user1.setEmail("john.\"elGuapo\".smith@rackspace.com");
-        defaultCloud20Service.validateUser(user1);
-    }
-
-    @Test
-    public void validateUser_withValidEmail5_succeeds() throws Exception {
-        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
-        user1.setUsername("username");
-        user1.setEmail("1@rackspace.com");
-        defaultCloud20Service.validateUser(user1);
-    }
-
-    @Test
-    public void validateUser_withValidEmail6_succeeds() throws Exception {
-        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
-        user1.setUsername("username");
-        user1.setEmail("1@1.net");
-        defaultCloud20Service.validateUser(user1);
-    }
-
-    @Test
-    public void validateUser_withValidEmail7_succeeds() throws Exception {
-        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
-        user1.setUsername("username");
-        user1.setEmail("1@1.rackspace.com");
-        defaultCloud20Service.validateUser(user1);
-    }
-
-    @Test
-    public void validateUser_withValidEmail8_succeeds() throws Exception {
-        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
-        user1.setUsername("username");
-        user1.setEmail("R_a_c_K_e_r_4000@rackspace.com");
-        defaultCloud20Service.validateUser(user1);
     }
 
     @Test
@@ -4202,8 +4056,9 @@ public class DefaultCloud20ServiceTest {
         ApiKeyCredentials creds = new ApiKeyCredentials();
         creds.setApiKey("123");
         creds.setUsername("username");
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         spy.updateUserApiKeyCredentials(null, authToken, null, null, creds);
-        verify(spy).validateUsername("username");
+        verify(userValidator20).validateUsername("username");
     }
 
     @Test
@@ -4214,7 +4069,6 @@ public class DefaultCloud20ServiceTest {
         ArgumentCaptor<NotFoundException> argumentCaptor = ArgumentCaptor.forClass(NotFoundException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doNothing().when(spy).validateUsername("username");
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response builder", spy.updateUserApiKeyCredentials(null, authToken, null, null, creds), equalTo(responseBuilder));
         assertThat("exception type", argumentCaptor.getValue(),instanceOf(NotFoundException.class));
@@ -4228,7 +4082,6 @@ public class DefaultCloud20ServiceTest {
         ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doNothing().when(spy).validateUsername("username");
         when(userService.getUser("username")).thenReturn(user);
         doReturn(new User()).when(spy).checkAndGetUser(userId);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
@@ -5091,16 +4944,20 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void impersonate_callsVerifyRackerOrServiceAdminAccess() throws Exception {
         user.setEnabled(true);
+        ScopeAccess scopeAccess = new ScopeAccess();
         org.openstack.docs.identity.api.v2.User impersonateUser = new org.openstack.docs.identity.api.v2.User();
         impersonateUser.setUsername("impersonateUser");
         impersonateUser.setId("impersonateUserId");
         ImpersonationRequest impersonationRequest = new ImpersonationRequest();
         impersonationRequest.setUser(impersonateUser);
+
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         when(authorizationService.authorizeRacker(any(ScopeAccess.class))).thenReturn(true);
         when(delegateCloud20Service.impersonateUser(anyString(), anyString(), anyString())).thenReturn("impersonatingToken");
         when(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory());
+
         spy.impersonate(null, authToken, impersonationRequest);
-        verify(spy).verifyRackerOrServiceAdminAccess(authToken);
+        verify(authorizationService).verifyRackerOrServiceAdminAccess(scopeAccess);
     }
 
     @Test
@@ -5250,47 +5107,6 @@ public class DefaultCloud20ServiceTest {
         doReturn(clientScopeAccess).when(spy).checkAndGetToken(authToken);
         when(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory());
         spy.impersonate(null, authToken, impersonationRequest);
-    }
-
-    @Test
-    public void verifySelf_callsUserService_getUserByScopeAccess() throws Exception {
-        User user1 = new User();
-        user1.setId("foo");
-        user1.setUsername("foo");
-        user1.setUniqueId("foo");
-        when(userService.getUserByScopeAccess(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(user1);
-        defaultCloud20Service.verifySelf("token", user1);
-        verify(userService).getUserByScopeAccess(org.mockito.Matchers.any(ScopeAccess.class));
-    }
-
-    @Test(expected = ForbiddenException.class)
-    public void verifySelf_differentUsername_throwsForbiddenException() throws Exception {
-        User user1 = new User();
-        user1.setId("foo");
-        user1.setUsername("foo");
-        user1.setUniqueId("foo");
-        when(userService.getUserByScopeAccess(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(user1);
-        User user2 = new User();
-        user2.setId("foo");
-        user2.setUsername("!foo");
-        user2.setUniqueId("foo");
-        defaultCloud20Service.verifySelf("token", user2);
-        verify(userService).getUserByScopeAccess(org.mockito.Matchers.any(ScopeAccess.class));
-    }
-
-    @Test(expected = ForbiddenException.class)
-    public void verifySelf_differentUniqueId_throwsForbiddenException() throws Exception {
-        User user1 = new User();
-        user1.setId("foo");
-        user1.setUsername("foo");
-        user1.setUniqueId("foo");
-        when(userService.getUserByScopeAccess(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(user1);
-        User user2 = new User();
-        user2.setId("foo");
-        user2.setUsername("foo");
-        user2.setUniqueId("!foo");
-        defaultCloud20Service.verifySelf("token", user2);
-        verify(userService).getUserByScopeAccess(org.mockito.Matchers.any(ScopeAccess.class));
     }
 
     @Test
@@ -5625,9 +5441,7 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void listTenants_scopeAccessServiceCallsGetScopeAccessByAccessTokenReturnsNull_responseIsOk_returns200() throws Exception {
-        doNothing().when(spy).verifyUserLevelAccess(authToken);
-        when(scopeAccessService.getAccessTokenByAuthHeader(authToken)).thenReturn(new ScopeAccess());
-        when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(null);
+        doReturn(new ScopeAccess()).when(spy).getScopeAccessForValidToken(authToken);
         Response.ResponseBuilder responseBuilder = spy.listTenants(httpHeaders, authToken, "marker", 1);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
@@ -5635,9 +5449,8 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void listUserGlobalRoles_notIdentityAdminAndIsServiceAdmin_responseOk_returns200() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
-        doNothing().when(spy).verifyUserLevelAccess(authToken);
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         when(userService.getUserById("userId")).thenReturn(user);
-        when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(scopeAccess);
         doReturn(new User()).when(spy).getUser(scopeAccess);
         when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(false);
         when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(true);
@@ -5649,9 +5462,8 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void listUserGlobalRoles_isIdentityAdminAndNotServiceAdmin_responseOk_returns200() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
-        doNothing().when(spy).verifyUserLevelAccess(authToken);
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         when(userService.getUserById("userId")).thenReturn(user);
-        when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(scopeAccess);
         doReturn(new User()).when(spy).getUser(scopeAccess);
         when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(true);
         when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(false);
@@ -5693,7 +5505,7 @@ public class DefaultCloud20ServiceTest {
         userTest.setUsername("");
         ImpersonationRequest impersonationRequest = new ImpersonationRequest();
         impersonationRequest.setUser(userTest);
-        doNothing().when(spy).verifyRackerOrServiceAdminAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doNothing().when(spy).validateImpersonationRequest(impersonationRequest);
         when(userService.getUser("")).thenReturn(user);
         doReturn(true).when(spy).isValidImpersonatee(user);
@@ -5713,7 +5525,7 @@ public class DefaultCloud20ServiceTest {
         userTest.setUsername("");
         ImpersonationRequest impersonationRequest = new ImpersonationRequest();
         impersonationRequest.setUser(userTest);
-        doNothing().when(spy).verifyRackerOrServiceAdminAccess(authToken);
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doNothing().when(spy).validateImpersonationRequest(impersonationRequest);
         when(userService.getUser("")).thenReturn(user);
         doReturn(true).when(spy).isValidImpersonatee(user);
@@ -5852,42 +5664,6 @@ public class DefaultCloud20ServiceTest {
         rackerScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
         when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(rackerScopeAccess);
         spy.getScopeAccessForValidToken(authToken);
-    }
-
-    @Test
-    public void verifyUserLevelAccess_scopeAccessIsServiceAdmin_doesNotThrowException() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(false);
-        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(true);
-        when(authorizationService.authorizeCloudUserAdmin(scopeAccess)).thenReturn(false);
-        when(authorizationService.authorizeCloudUser(scopeAccess)).thenReturn(false);
-        spy.verifyUserLevelAccess(authToken);
-        assertTrue("no exceptions", true);
-    }
-
-    @Test
-    public void verifyUserLevelAccess_scopeAccessIsUserAdmin_doesNotThrowException() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(false);
-        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(false);
-        when(authorizationService.authorizeCloudUserAdmin(scopeAccess)).thenReturn(true);
-        when(authorizationService.authorizeCloudUser(scopeAccess)).thenReturn(false);
-        spy.verifyUserLevelAccess(authToken);
-        assertTrue("no exceptions", true);
-    }
-
-    @Test
-    public void verifyUserLevelAccess_scopeAccessIsUser_doesNotThrowException() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(false);
-        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(false);
-        when(authorizationService.authorizeCloudUserAdmin(scopeAccess)).thenReturn(false);
-        when(authorizationService.authorizeCloudUser(scopeAccess)).thenReturn(true);
-        spy.verifyUserLevelAccess(authToken);
-        assertTrue("no exceptions", true);
     }
 
     @Test

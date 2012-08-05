@@ -149,9 +149,7 @@ public class MigrationClient {
             try {
                 ObjectMarshaller<UserList> unmarshaller = new ObjectMarshaller<UserList>();
                 userList = unmarshaller.unmarshal(response, UserList.class);
-            }catch (Exception ex2){
-
-            }
+            }catch (Exception ex2){ }
         }
 
     	return userList;

@@ -62,14 +62,21 @@ public class MigrationClientTest {
     }
 
     @Test
-    public void getRoles_validUserName_returnsRoles() throws URISyntaxException, HttpException, IOException, JAXBException {
+    public void getRolesForUser_validUserName_returnsRoles() throws JAXBException, IOException, HttpException, URISyntaxException {
         String token = getAdminToken();
         User user = client.getUser(token, "cmarin2");
         RoleList roles = client.getRolesForUser(token, user.getId());
 
         assertThat("roles", roles, notNullValue());
     }
-    
+
+    @Test
+    public void getRoles_validToken_returnsRoles() throws URISyntaxException, HttpException, IOException, JAXBException {
+        String token = getAdminToken();
+        RoleList roles = client.getRoles(token);
+        assertThat("roles", roles, notNullValue());
+    }
+
     @Test
     public void getSecretQA_validUserName_returnsSecretQA() throws URISyntaxException, HttpException, IOException, JAXBException {
         String token = getAdminToken();
@@ -117,13 +124,6 @@ public class MigrationClientTest {
         assertThat("baseURLList", baseURLList, notNullValue());
     }
    
-    @Test
-    public void getRoles_validToken_returnsRoles() throws URISyntaxException, HttpException, IOException, JAXBException {
-        String token = getAdminToken();
-        RoleList roles = client.getRoles(token);
-        assertThat("roles", roles, notNullValue());
-    }
-
     @Test
     public void getEndpoints() throws URISyntaxException, HttpException, IOException, JAXBException {
         EndpointList endPoints = client.getEndpointsByToken(getAdminToken(), getToken("cmarin2", "Password1"));

@@ -417,6 +417,15 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
+    public void verifyRackerOrServiceAdminAccess(ScopeAccess authScopeAccess) {
+        if (!authorizeRacker(authScopeAccess) && !authorizeCloudServiceAdmin(authScopeAccess)) {
+            String errMsg = NOT_AUTHORIZED_MSG;
+            logger.warn(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
+    }
+
+    @Override
     public void verifyServiceAdminLevelAccess(ScopeAccess authScopeAccess) {
         if (!authorizeCloudIdentityAdmin(authScopeAccess) && !authorizeCloudServiceAdmin(authScopeAccess)) {
             String errMsg = NOT_AUTHORIZED_MSG;
@@ -436,8 +445,27 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
-    public void verifyTokenHasTenantAccess(String tenantId, ScopeAccess authScopeAccess) {
+    public void verifyUserLevelAccess(ScopeAccess authScopeAccess) {
+        if (!authorizeCloudIdentityAdmin(authScopeAccess) && !authorizeCloudServiceAdmin(authScopeAccess)
+                && !authorizeCloudUserAdmin(authScopeAccess) && !authorizeCloudUser(authScopeAccess)) {
 
+            String errMsg = NOT_AUTHORIZED_MSG;
+            logger.warn(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
+    }
+
+    @Override
+    public void verifySelf(User requester, User requestedUser) {
+        if (!(requester.getUsername().equals(requestedUser.getUsername()) && (requester.getUniqueId().equals(requestedUser.getUniqueId())))) {
+            String errMsg = NOT_AUTHORIZED_MSG;
+            logger.warn(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
+    }
+
+    @Override
+    public void verifyTokenHasTenantAccess(String tenantId, ScopeAccess authScopeAccess) {
         if (authorizeCloudIdentityAdmin(authScopeAccess) || authorizeCloudServiceAdmin(authScopeAccess)) {
             return;
         }
@@ -453,6 +481,13 @@ public class DefaultAuthorizationService implements AuthorizationService {
         String errMsg = NOT_AUTHORIZED_MSG;
         logger.warn(errMsg);
         throw new ForbiddenException(errMsg);
+    }
+
+    @Override
+    public void verifyDomain(User caller, User retrievedUser) {
+        if (caller.getDomainId() == null || !caller.getDomainId().equals(retrievedUser.getDomainId())) {
+            throw new ForbiddenException(NOT_AUTHORIZED_MSG);
+        }
     }
 
     @Override

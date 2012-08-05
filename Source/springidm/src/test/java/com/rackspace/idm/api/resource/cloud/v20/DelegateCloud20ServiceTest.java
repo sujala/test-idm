@@ -232,30 +232,26 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
-    public void authenticate_userNotMigratedAndNotNullAndCloudClientResponse200AndAuthenticateResponseIsNull_returnsResponse200() throws Exception {
+    public void authenticate_userNotMigratedAndNotNullAndCloudClientResponse200AndAuthenticateResponseIsEmpty_returns500() throws Exception {
         User user = new User();
-        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        responseBuilder.status(200);
-        responseBuilder.entity(new Object());
+        Response.ResponseBuilder responseBuilder = Response.ok(new Object());
         when(cloudUserExtractor.getUserByV20CredentialType(authenticationRequest)).thenReturn(user);
         when(cloudClient.post(anyString(), any(HttpHeaders.class), anyString())).thenReturn(responseBuilder);
-        assertThat("response", delegateCloud20Service.authenticate(httpHeaders, authenticationRequest).build().getStatus(), equalTo(200));
+        Response.ResponseBuilder responseBuilder2 = Response.status(500);
+        when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(responseBuilder2);
+        doReturn(new AuthenticateResponse()).when(spy).unmarshallAuthenticateResponse(anyString());
+        assertThat("response", spy.authenticate(httpHeaders, authenticationRequest).build().getStatus(), equalTo(500));
     }
 
     @Test
     public void authenticate_userNotMigratedAndNotNullAndCloudClientResponse200AndAuthenticateResponseNotNull_scopeAcessUpdated() throws Exception {
         User user = new User();
+        String authResponseString = "{\"access\":{\"token\":{\"id\":\"1319b190-9527-46e7-9c0e-4fc3ca032e57\",\"expires\":\"2012-08-03T14:56:25.000-05:00\",\"tenant\":{\"id\":\"MossoCloudFS_6eee84c5-54a4-4217-a895-8308da81feb3\",\"name\":\"MossoCloudFS_6eee84c5-54a4-4217-a895-8308da81feb3\"}},\"serviceCatalog\":[{\"endpoints\":[{\"region\":\"STAGING\",\"tenantId\":\"-16\",\"publicURL\":\"https:\\/\\/cmstaging.api.rackspacecloud.com\\/v1.0\\/-16\"}],\"name\":\"cloudMonitoring\",\"type\":\"rax:monitor\"},{\"endpoints\":[{\"region\":\"STAGING\",\"tenantId\":\"-16\",\"publicURL\":\"https:\\/\\/staging.ord.loadbalancers.api.rackspacecloud.com\\/v1.0\\/-16\"}],\"name\":\"cloudLoadBalancers\",\"type\":\"rax:load-balancer\"},{\"endpoints\":[{\"tenantId\":\"-16\",\"publicURL\":\"https:\\/\\/staging.dnsaas.rackspace.net\\/v1.0\\/-16\"}],\"name\":\"cloudDNS\",\"type\":\"rax:dns\"},{\"endpoints\":[{\"tenantId\":\"-16\",\"publicURL\":\"https:\\/\\/servers.api.staging.us.ccp.rackspace.net\\/v1.0\\/-16\",\"versionInfo\":\"https:\\/\\/servers.api.staging.us.ccp.rackspace.net\\/v1.0\",\"versionList\":\"https:\\/\\/servers.api.staging.us.ccp.rackspace.net\\/v1.0\",\"versionId\":\"1.0\"}],\"name\":\"cloudServers\",\"type\":\"compute\"},{\"endpoints\":[{\"region\":\"STAGING\",\"tenantId\":\"-16\",\"publicURL\":\"https:\\/\\/api.staging.ord1.clouddb.rackspace.net\\/v1.0\\/-16\"}],\"name\":\"cloudDatabases\",\"type\":\"rax:database\"},{\"endpoints\":[{\"region\":\"ORD\",\"tenantId\":\"-16\",\"publicURL\":\"https:\\/\\/preprod.ord.servers.api.rackspacecloud.com\\/v2\\/-16\"},{\"region\":\"DFW\",\"tenantId\":\"-16\",\"publicURL\":\"https:\\/\\/preprod.dfw.servers.api.rackspacecloud.com\\/v2\\/-16\"}],\"name\":\"cloudServersPreprod\",\"type\":\"compute\"},{\"endpoints\":[{\"region\":\"ORD\",\"tenantId\":\"MossoCloudFS_6eee84c5-54a4-4217-a895-8308da81feb3\",\"publicURL\":\"https:\\/\\/cdn.stg.clouddrive.com\\/v1\\/MossoCloudFS_6eee84c5-54a4-4217-a895-8308da81feb3\"}],\"name\":\"cloudFilesCDN\",\"type\":\"rax:object-cdn\"},{\"endpoints\":[{\"region\":\"ORD\",\"tenantId\":\"MossoCloudFS_6eee84c5-54a4-4217-a895-8308da81feb3\",\"publicURL\":\"https:\\/\\/storage.stg.swift.racklabs.com\\/v1\\/MossoCloudFS_6eee84c5-54a4-4217-a895-8308da81feb3\",\"internalURL\":\"https:\\/\\/snet-storage.stg.swift.racklabs.com\\/v1\\/MossoCloudFS_6eee84c5-54a4-4217-a895-8308da81feb3\"}],\"name\":\"cloudFiles\",\"type\":\"object-store\"}],\"user\":{\"id\":\"153345\",\"roles\":[{\"id\":\"357\",\"description\":\"Customer Admin Access\",\"name\":\"customer:admin\"},{\"id\":\"1\",\"description\":\"Admin Role.\",\"name\":\"identity:admin\"}],\"name\":\"auth\",\"RAX-AUTH:defaultRegion\":\"\"}}}";
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
-        Token token = new Token();
-        authenticateResponse.setToken(token);
         responseBuilder.status(200);
-        responseBuilder.entity(new Object());
+        responseBuilder.entity(authResponseString);
         when(cloudUserExtractor.getUserByV20CredentialType(authenticationRequest)).thenReturn(user);
         when(cloudClient.post(anyString(), any(HttpHeaders.class), anyString())).thenReturn(responseBuilder);
-        doReturn(authenticateResponse).when(spy).unmarshallResponse(anyString(), eq(AuthenticateResponse.class));
-        token.setId("someTokenId");
-        token.setExpires(new XMLGregorianCalendarImpl(new GregorianCalendar(1, 1, 1)));
         spy.authenticate(httpHeaders, authenticationRequest);
         verify(scopeAccessService).updateUserScopeAccessTokenForClientIdByUser(any(User.class), anyString(), anyString(), any(Date.class));
     }
@@ -332,6 +328,24 @@ public class DelegateCloud20ServiceTest {
                 "    }\n" +
                 "}";
         assertThat(delegateCloud20Service.unmarshallResponse(body, ApiKeyCredentials.class), not(nullValue()));
+    }
+
+    @Test
+    public void unmarshallResponse_inputNotStartWithBracket_throwsIdmException_returnsNull() throws Exception {
+        Object result = delegateCloud20Service.unmarshallResponse("xml", AuthenticateResponse.class);
+        assertThat("authenticate response", result, equalTo(null));
+    }
+
+    @Test
+    public void unmarshallAuthenticateResponse_inputStartsWithBracket_returnsCorrectToken() throws Exception {
+        String body = "{\"access\":{\"token\":{\"id\":\"1319b190-9527-46e7-9c0e-4fc3ca032e57\",\"expires\":\"2012-08-03T14:56:25.000-05:00\",\"tenant\":{\"id\":\"MossoCloudFS_6eee84c5-54a4-4217-a895-8308da81feb3\",\"name\":\"MossoCloudFS_6eee84c5-54a4-4217-a895-8308da81feb3\"}}}}";
+        assertThat(delegateCloud20Service.unmarshallAuthenticateResponse(body).getToken(), not(nullValue()));
+    }
+
+    @Test(expected = IdmException.class)
+    public void unmarshallAuthenticateResponse_withBadData_throwsIdmExceptiom() throws Exception {
+        String body = "xml";
+        delegateCloud20Service.unmarshallAuthenticateResponse(body);
     }
 
     @Test (expected = IdmException.class)
@@ -2991,22 +3005,12 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
-    public void authenticateImpersonated_cloudExtractorThrowsException_callsExceptionResponse() throws Exception {
-        spy.setObjectFactory(objectFactory);
-        IdmException ex = new IdmException("error");
-        doThrow(ex).when(spy).marshallObjectToString(null);
-        when(authenticationRequest.getToken()).thenReturn(new TokenForAuthenticationRequest());
-        spy.authenticateImpersonated(null, authenticationRequest, new ImpersonatedScopeAccess());
-        verify(exceptionHandler).exceptionResponse(ex);
-    }
-
-    @Test
-    public void authenticateImpersonated_cloudUserExtractorReturnsNotNullUser_callsDefaultCloud20Service_authenticate() throws Exception {
-        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+    public void authenticateImpersonated_userNotNull_callsDefaultCloud20Service_authenticate() throws Exception {
         ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
-        when(cloudUserExtractor.getUserByV20CredentialType(authenticationRequest)).thenReturn(new User());
-        spy.authenticateImpersonated(httpHeaders, authenticationRequest, impersonatedScopeAccess);
-        verify(defaultCloud20Service).authenticate(httpHeaders, authenticationRequest);
+        impersonatedScopeAccess.setImpersonatingToken("impersonatedToken");
+        when(userService.getUserByAuthToken("impersonatedToken")).thenReturn(new User());
+        delegateCloud20Service.authenticateImpersonated(null, authenticationRequest, impersonatedScopeAccess);
+        verify(defaultCloud20Service).authenticate(null, authenticationRequest);
     }
 
     @Test
@@ -3024,6 +3028,25 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
+    public void authenticateImpersonated_userIsNull_statusIs200WithEmptyAuthenticateResponse_returns500() throws Exception {
+        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
+        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        authenticationRequest.setToken(tokenForAuthenticationRequest);
+        ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
+        impersonatedScopeAccess.setImpersonatingToken("impersonatingToken");
+        impersonatedScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
+        impersonatedScopeAccess.setAccessTokenString("notExpired");
+        when(cloudUserExtractor.getUserByV20CredentialType(authenticationRequest)).thenReturn(null);
+        when(config.getString("cloudAuth20url")).thenReturn("cloudAuth/");
+        when(cloudClient.post(eq("cloudAuth/tokens"), any(HttpHeadersAcceptXml.class), anyString())).thenReturn(Response.status(200).entity("test"));
+        doReturn(authenticateResponse).when(spy).unmarshallAuthenticateResponse("test");
+        when(exceptionHandler.exceptionResponse(any(IdmException.class))).thenReturn(Response.status(500));
+        Response.ResponseBuilder responseBuilder = spy.authenticateImpersonated(httpHeaders, authenticationRequest, impersonatedScopeAccess);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(500));
+    }
+
+    @Test
     public void authenticateImpersonated_userIsNull_statusIs200_returnsOkResponseCode200() throws Exception {
         Token token = new Token();
         AuthenticateResponse authenticateResponse = new AuthenticateResponse();
@@ -3038,7 +3061,7 @@ public class DelegateCloud20ServiceTest {
         when(cloudUserExtractor.getUserByV20CredentialType(authenticationRequest)).thenReturn(null);
         when(config.getString("cloudAuth20url")).thenReturn("cloudAuth/");
         when(cloudClient.post(eq("cloudAuth/tokens"), any(HttpHeadersAcceptXml.class), anyString())).thenReturn(Response.status(200).entity("test"));
-        doReturn(authenticateResponse).when(spy).unmarshallResponse("test", AuthenticateResponse.class);
+        doReturn(authenticateResponse).when(spy).unmarshallAuthenticateResponse("test");
         Response.ResponseBuilder responseBuilder = spy.authenticateImpersonated(httpHeaders, authenticationRequest, impersonatedScopeAccess);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
