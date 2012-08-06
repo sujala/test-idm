@@ -9,9 +9,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplateList;
 import org.openstack.docs.identity.api.v2.*;
-import org.openstack.docs.identity.api.v2.ObjectFactory;
 import org.openstack.docs.identity.api.v2.User;
-import org.slf4j.Logger;
 
 import javax.ws.rs.core.MediaType;
 
@@ -20,7 +18,6 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -33,26 +30,20 @@ import static org.mockito.Mockito.when;
 public class MigrationClientTest {
     MigrationClient migrationClient;
     HttpClientWrapper httpClientWrapper;
-    ObjectFactory objectFactory;
-    Logger logger;
     String cloud20Host;
     String cloud11Host;
 
     @Before
     public void setUp() throws Exception {
         migrationClient = new MigrationClient();
-        objectFactory = new ObjectFactory();
 
         // Mocks
         httpClientWrapper = mock(HttpClientWrapper.class);
-        logger = mock(Logger.class);
 
         // setting up fields
         cloud11Host = "cloud11host/";
         cloud20Host = "cloud20host/";
         migrationClient.setClient(httpClientWrapper);
-        migrationClient.setLogger(logger);
-        migrationClient.setObjectFactory(objectFactory);
         migrationClient.setCloud11Host(cloud11Host);
         migrationClient.setCloud20Host(cloud20Host);
     }
