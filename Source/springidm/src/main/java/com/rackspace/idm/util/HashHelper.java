@@ -1,5 +1,6 @@
 package com.rackspace.idm.util;
 
+import com.rackspace.idm.exception.IdmException;
 import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,12 +21,13 @@ public final class HashHelper {
 
     private static Logger logger = LoggerFactory.getLogger(HashHelper.class);
 
-    public static String getRandomSha1() throws NoSuchAlgorithmException {
+    public static String getRandomSha1() {
         SecureRandom random = null;
         try {
             random = SecureRandom.getInstance("SHA1PRNG");
         } catch (NoSuchAlgorithmException e) {
             logger.info("failed to Secure Random based on SHA1PRNG: " + e.getMessage());
+            throw new IdmException("failed to create Secure Random based on SHA1PRNG", e);
         }
 
         // Salt generation 64 bits long
@@ -45,9 +47,14 @@ public final class HashHelper {
         return Base64.encodeBase64(data).toString();
     }
 
-    public static String makeSHA1Hash(String input)
-        throws NoSuchAlgorithmException {
-        MessageDigest md = MessageDigest.getInstance("SHA1");
+    public static String makeSHA1Hash(String input) {
+        MessageDigest md = null;
+        try {
+            md = MessageDigest.getInstance("SHA1");
+        } catch (NoSuchAlgorithmException e) {
+            logger.info("failed to create SHA1 message digest: " + e.getMessage());
+            throw new IdmException("failed to create SHA1 message digest", e);
+        }
         md.reset();
         byte[] buffer = input.getBytes();
         md.update(buffer);

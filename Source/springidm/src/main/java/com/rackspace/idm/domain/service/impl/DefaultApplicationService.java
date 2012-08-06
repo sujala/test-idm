@@ -43,13 +43,8 @@ public class DefaultApplicationService implements ApplicationService {
             throw new DuplicateException(String.format("Clientname %s already exists", client.getName()));
         }
 
-        try {
-            client.setClientId(HashHelper.makeSHA1Hash(client.getName()));
-            client.setClientSecretObj(ClientSecret.newInstance(HashHelper.getRandomSha1()));
-        } catch (NoSuchAlgorithmException e) {
-            logger.error("Unsupported hashing algorithm - {}", e);
-            throw new IllegalStateException("Unsupported hashing algorithm", e);
-        }
+        client.setClientId(HashHelper.makeSHA1Hash(client.getName()));
+        client.setClientSecretObj(ClientSecret.newInstance(HashHelper.getRandomSha1()));
 
         clientDao.addClient(client);
         logger.debug("Added Client: {}", client);
@@ -230,15 +225,10 @@ public class DefaultApplicationService implements ApplicationService {
         logger.debug("Reseting Client secret ClientId: {}", client.getClientId());
 
         ClientSecret clientSecret = null;
-        try {
-            clientSecret = ClientSecret.newInstance(HashHelper.getRandomSha1());
-            client.setClientSecretObj(clientSecret);
-            clientDao.updateClient(client);
-            logger.debug("Reset Client secret ClientId: {}", client.getClientId());
-        } catch (NoSuchAlgorithmException e) {
-            logger.error("Unsupported hashing algorithm - {}", e);
-            throw new IllegalStateException("Unsupported hashing algorithm", e);
-        }
+        clientSecret = ClientSecret.newInstance(HashHelper.getRandomSha1());
+        client.setClientSecretObj(clientSecret);
+        clientDao.updateClient(client);
+        logger.debug("Reset Client secret ClientId: {}", client.getClientId());
         return clientSecret;
     }
 

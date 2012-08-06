@@ -96,51 +96,45 @@ public final class Password {
     }
 
     public static Password generateRandom(boolean isSelfUpdate) {
+        String randomPassword = HashHelper.getRandomSha1();
+        randomPassword = randomPassword.substring(0, BASE);
+        char[] pw = randomPassword.toCharArray();
 
-        try {
+        Stack<Integer> usedIndexes = new Stack<Integer>();
+        int randomIndex = (int) (Math.random() * randomPassword.length());
+        usedIndexes.push(randomIndex);
 
-            String randomPassword = HashHelper.getRandomSha1();
-            randomPassword = randomPassword.substring(0, BASE);
-            char[] pw = randomPassword.toCharArray();
+        // insert random number
+        char randomNumeric = (char) ('0' + (int) (Math.random() * BASE));
+        pw[randomIndex] = randomNumeric;
 
-            Stack<Integer> usedIndexes = new Stack<Integer>();
-            int randomIndex = (int) (Math.random() * randomPassword.length());
-            usedIndexes.push(randomIndex);
-
-            // insert random number
-            char randomNumeric = (char) ('0' + (int) (Math.random() * BASE));
-            pw[randomIndex] = randomNumeric;
-
-            // insert random upper case letter
-            while (usedIndexes.contains(randomIndex)) {
-                randomIndex = (int) (Math.random() * randomPassword.length());
-            }
-            char randomUpper = (char) ('A' + (int) (Math.random() * MAX_ALPHABET_LENGTH));
-            pw[randomIndex] = randomUpper;
-            usedIndexes.push(randomIndex);
-
-            // insert random lower case letter
-            while (usedIndexes.contains(randomIndex)) {
-                randomIndex = (int) (Math.random() * randomPassword.length());
-            }
-            char randomLower = (char) ('a' + (int) (Math.random() * MAX_ALPHABET_LENGTH));
-            pw[randomIndex] = randomLower;
-            usedIndexes.push(randomIndex);
-
-            // insert random non-alphanumeric
-            while (usedIndexes.contains(randomIndex)) {
-                randomIndex = (int) (Math.random() * randomPassword.length());
-            }
-            int randomInt = (int) (Math.random() * VALID_NON_ALPHA_CHARS.length());
-            int randomNonAlpha = VALID_NON_ALPHA_CHARS.charAt(randomInt);
-            pw[randomIndex] = (char) randomNonAlpha;
-
-            randomPassword = new String(pw);
-
-            return new Password(randomPassword, true, new DateTime(), isSelfUpdate);
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("Unsupported hashing algorithm in generating random password.", e);
+        // insert random upper case letter
+        while (usedIndexes.contains(randomIndex)) {
+            randomIndex = (int) (Math.random() * randomPassword.length());
         }
+        char randomUpper = (char) ('A' + (int) (Math.random() * MAX_ALPHABET_LENGTH));
+        pw[randomIndex] = randomUpper;
+        usedIndexes.push(randomIndex);
+
+        // insert random lower case letter
+        while (usedIndexes.contains(randomIndex)) {
+            randomIndex = (int) (Math.random() * randomPassword.length());
+        }
+        char randomLower = (char) ('a' + (int) (Math.random() * MAX_ALPHABET_LENGTH));
+        pw[randomIndex] = randomLower;
+        usedIndexes.push(randomIndex);
+
+        // insert random non-alphanumeric
+        while (usedIndexes.contains(randomIndex)) {
+            randomIndex = (int) (Math.random() * randomPassword.length());
+        }
+        int randomInt = (int) (Math.random() * VALID_NON_ALPHA_CHARS.length());
+        int randomNonAlpha = VALID_NON_ALPHA_CHARS.charAt(randomInt);
+        pw[randomIndex] = (char) randomNonAlpha;
+
+        randomPassword = new String(pw);
+
+        return new Password(randomPassword, true, new DateTime(), isSelfUpdate);
     }
 
     @Override

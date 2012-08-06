@@ -479,7 +479,6 @@ public class DefaultCloud20ServiceTest {
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
-    @Test
     public void getUserByName_callsAuthorizationService_authenticateCloudUserAdmin() throws Exception {
         when(userService.getUser("userName")).thenReturn(new User("username"));
         defaultCloud20Service.getUserByName(null, authToken, "userName");
