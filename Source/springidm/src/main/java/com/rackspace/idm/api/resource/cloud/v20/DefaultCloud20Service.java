@@ -20,7 +20,6 @@ import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import org.apache.commons.configuration.Configuration;
-import org.apache.commons.lang.CharUtils;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.openstack.docs.common.api.v1.Extension;
@@ -49,7 +48,6 @@ import java.io.InputStream;
 import java.io.StringReader;
 import java.net.URI;
 import java.util.*;
-import java.util.regex.Pattern;
 
 /**
  * Created by IntelliJ IDEA.
@@ -129,7 +127,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     private ExceptionHandler exceptionHandler;
 
     @Autowired
-    private UserValidator20 userValidator20;
+    private Validator20 validator20;
 
     @Autowired
     private DefaultRegionService defaultRegionService;
@@ -350,7 +348,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
             authorizationService.verifyUserAdminLevelAccess(scopeAccessByAccessToken);
-            userValidator20.validateUserForCreate(user);
+            validator20.validateUserForCreate(user);
 
             String password = user.getPassword();
             boolean emptyPassword = StringUtils.isBlank(password);
@@ -474,7 +472,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             if (!StringUtils.isBlank(user.getUsername())) {
-                validateUsernameForUpdateOrCreate(user.getUsername());
+                validator20.validateUsernameForUpdateOrCreate(user.getUsername());
             }
 
             if (!user.isEnabled()) {
@@ -511,14 +509,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
-    void validateEmail(String email) {
-        if (!email.matches("[a-zA-Z0-9_\\-\\.\"]+@[a-zA-Z0-9_\\.]+\\.[a-zA-Z]+")) {
-            String errorMsg = "Expecting valid email address";
-            logger.warn(errorMsg);
-            throw new BadRequestException(errorMsg);
-        }
-    }
-
     void validateUsername(String username) {
         if (StringUtils.isBlank(username)) {
             String errorMsg = "Expecting username";
@@ -529,16 +519,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             String errorMsg = "Username should not contain white spaces";
             logger.warn(errorMsg);
             throw new BadRequestException(errorMsg);
-        }
-    }
-
-    void validateUsernameForUpdateOrCreate(String username) {
-        Pattern alphaNumberic = Pattern.compile("[a-zA-z0-9]*");
-        if (!alphaNumberic.matcher(username).matches()) {
-            throw new BadRequestException("Username has invalid characters; only alphanumeric characters are allowed.");
-        }
-        if (!CharUtils.isAsciiAlpha(username.charAt(0))) {
-            throw new BadRequestException("Username must begin with an alphabetic character.");
         }
     }
 
@@ -2130,7 +2110,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException(errMsg);
             }
 
-            userValidator20.validateUsername(creds.getUsername());
+            validator20.validateUsername(creds.getUsername());
             User credUser = this.userService.getUser(creds.getUsername());
 
             if (credUser == null) {
@@ -2590,8 +2570,8 @@ public class DefaultCloud20Service implements Cloud20Service {
         this.exceptionHandler = exceptionHandler;
     }
 
-    public void setUserValidator20(UserValidator20 userValidator20) {
-        this.userValidator20 = userValidator20;
+    public void setValidator20(Validator20 validator20) {
+        this.validator20 = validator20;
     }
 
     public void setDefaultRegionService(DefaultRegionService defaultRegionService) {

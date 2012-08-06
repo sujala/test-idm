@@ -1,9 +1,9 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.ForbiddenException;
 import org.junit.Before;
 import org.junit.Test;
+import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
 import org.openstack.docs.identity.api.v2.User;
 
 import static org.hamcrest.Matchers.equalTo;
@@ -20,21 +20,21 @@ import static org.mockito.Mockito.verify;
  * Time: 4:05 PM
  * To change this template use File | Settings | File Templates.
  */
-public class UserValidator20Test {
+public class Validator20Test {
 
-    UserValidator20 userValidator20;
-    UserValidator20 spy;
+    Validator20 validator20;
+    Validator20 spy;
 
     @Before
     public void setUp() throws Exception {
-        userValidator20 = new UserValidator20();
-        spy = spy(userValidator20);
+        validator20 = new Validator20();
+        spy = spy(validator20);
     }
 
     @Test
     public void validateUsername_withEmptyString_throwBadRequestException() throws Exception {
         try{
-            userValidator20.validateUsername("");
+            validator20.validateUsername("");
             assertTrue("should throw exception",false);
         } catch (BadRequestException ex){
             assertThat("exception message",ex.getMessage(),equalTo("Expecting username"));
@@ -44,7 +44,7 @@ public class UserValidator20Test {
     @Test
     public void validateUsername_withNullString_throwBadRequestException() throws Exception {
         try{
-            userValidator20.validateUsername(null);
+            validator20.validateUsername(null);
             assertTrue("should throw exception",false);
         } catch (BadRequestException ex){
             assertThat("exception message",ex.getMessage(),equalTo("Expecting username"));
@@ -54,7 +54,7 @@ public class UserValidator20Test {
     @Test
     public void validateUsername_withWhiteSpaceContainingString_throwBadRequestException() throws Exception {
         try{
-            userValidator20.validateUsername("first last");
+            validator20.validateUsername("first last");
             assertTrue("should throw exception",false);
         }catch (BadRequestException ex){
             assertThat("exception message",ex.getMessage(),equalTo("Username should not contain white spaces"));
@@ -64,7 +64,7 @@ public class UserValidator20Test {
     @Test
     public void validateUsername_withWhiteSpaceContainingString2_throwBadRequestException() throws Exception {
         try{
-            userValidator20.validateUsername(" firstlast");
+            validator20.validateUsername(" firstlast");
             assertTrue("should throw exception",false);
         }catch (BadRequestException ex){
             assertThat("exception message", ex.getMessage(), equalTo("Username should not contain white spaces"));
@@ -74,7 +74,7 @@ public class UserValidator20Test {
     @Test
     public void validateUsername_withWhiteSpaceContainingString3_throwBadRequestException() throws Exception {
         try{
-            userValidator20.validateUsername("firstlast ");
+            validator20.validateUsername("firstlast ");
             assertTrue("should throw exception",false);
         }catch (BadRequestException ex){
             assertThat("exception message",ex.getMessage(),equalTo("Username should not contain white spaces"));
@@ -84,7 +84,7 @@ public class UserValidator20Test {
     @Test
     public void validateUsername_withTabContainingString_throwBadRequestException() throws Exception {
         try{
-            userValidator20.validateUsername("first   last");
+            validator20.validateUsername("first   last");
             assertTrue("should throw exception",false);
         } catch (BadRequestException ex){
             assertThat("exception message", ex.getMessage(),equalTo("Username should not contain white spaces"));
@@ -94,7 +94,7 @@ public class UserValidator20Test {
     @Test
     public void validateUsernameForUpdateOrCreate_withNonAlphChara_throwBadRequestException() throws Exception {
         try{
-            userValidator20.validateUsernameForUpdateOrCreate("12nogood");
+            validator20.validateUsernameForUpdateOrCreate("12nogood");
             assertTrue("should throw exception",false);
         } catch (BadRequestException ex){
             assertThat("exception message", ex.getMessage(), equalTo("Username must begin with an alphabetic character."));
@@ -104,7 +104,7 @@ public class UserValidator20Test {
     @Test
     public void validateUsernameForUpdateOrCreate_withSpecialChara_throwBadRequestException() throws Exception {
         try{
-            userValidator20.validateUsernameForUpdateOrCreate("jorgenogood!");
+            validator20.validateUsernameForUpdateOrCreate("jorgenogood!");
             assertTrue("should throw exception",false);
         } catch (BadRequestException ex){
             assertThat("exception message", ex.getMessage(),equalTo("Username has invalid characters; only alphanumeric characters are allowed."));
@@ -113,13 +113,13 @@ public class UserValidator20Test {
 
     @Test
     public void validateUsernameForUpdateOrCreate_validUserName() throws Exception {
-        userValidator20.validateUsernameForUpdateOrCreate("jorgegood");
+        validator20.validateUsernameForUpdateOrCreate("jorgegood");
     }
 
     @Test
     public void validateEmail_missingEmail_throwsBadRequestException() throws Exception {
         try{
-            userValidator20.validateEmail(null);
+            validator20.validateEmail(null);
             assertTrue("should throw exception",false);
         } catch (BadRequestException ex){
             assertThat("exception message",ex.getMessage(),equalTo("Expecting valid email address"));
@@ -129,7 +129,7 @@ public class UserValidator20Test {
     @Test
     public void validateEmail_blankEmail_throwsBadRequestException() throws Exception {
         try{
-            userValidator20.validateEmail("");
+            validator20.validateEmail("");
             assertTrue("should throw exception",false);
         } catch (BadRequestException ex){
             assertThat("exception message",ex.getMessage(),equalTo("Expecting valid email address"));
@@ -139,7 +139,7 @@ public class UserValidator20Test {
     @Test
     public void validateEmail_withInvalidEmail_throwsBadRequestException() throws Exception {
         try{
-            userValidator20.validateEmail("foo");
+            validator20.validateEmail("foo");
             assertTrue("should throw exception",false);
         } catch (BadRequestException ex){
             assertThat("exception message", ex.getMessage(), equalTo("Expecting valid email address"));
@@ -149,7 +149,7 @@ public class UserValidator20Test {
     @Test
     public void validateEmail_withInvalidEmail2_throwsBadRequestException() throws Exception {
         try{
-            userValidator20.validateEmail("foo@");
+            validator20.validateEmail("foo@");
             assertTrue("should throw exception",false);
         } catch (BadRequestException ex){
             assertThat("exception message",ex.getMessage(),equalTo("Expecting valid email address"));
@@ -159,7 +159,7 @@ public class UserValidator20Test {
     @Test
     public void validateEmail_withInvalidEmail3_throwsBadRequestException() throws Exception {
         try{
-            userValidator20.validateEmail("foo.com");
+            validator20.validateEmail("foo.com");
             assertTrue("should throw exception",false);
         } catch (BadRequestException ex){
             assertThat("exception message",ex.getMessage(),equalTo("Expecting valid email address"));
@@ -169,7 +169,7 @@ public class UserValidator20Test {
     @Test
     public void validateEmail_withInvalidEmail4_throwsBadRequestException() throws Exception {
         try{
-            userValidator20.validateEmail("foo@.com");
+            validator20.validateEmail("foo@.com");
             assertTrue("should throw exception",false);
         } catch (BadRequestException ex){
             assertThat("exception message",ex.getMessage(),equalTo("Expecting valid email address"));
@@ -178,42 +178,42 @@ public class UserValidator20Test {
 
     @Test
     public void validateUser_withValidEmail_succeeds() throws Exception {
-        userValidator20.validateEmail("foo@bar.com");
+        validator20.validateEmail("foo@bar.com");
     }
 
     @Test
     public void validateUser_withValidEmail2_succeeds() throws Exception {
-        userValidator20.validateEmail("racker@rackspace.com");
+        validator20.validateEmail("racker@rackspace.com");
     }
 
     @Test
     public void validateEmail_withValidEmail3_succeeds() throws Exception {
-        userValidator20.validateEmail("john.smith@rackspace.com");
+        validator20.validateEmail("john.smith@rackspace.com");
     }
 
     @Test
     public void validateEmail_withValidEmail4_succeeds() throws Exception {
-        userValidator20.validateEmail("john.\"elGuapo\".smith@rackspace.com");
+        validator20.validateEmail("john.\"elGuapo\".smith@rackspace.com");
     }
 
     @Test
     public void validateEmail_withValidEmail5_succeeds() throws Exception {
-        userValidator20.validateEmail("1@rackspace.com");
+        validator20.validateEmail("1@rackspace.com");
     }
 
     @Test
     public void validateEmail_withValidEmail6_succeeds() throws Exception {
-        userValidator20.validateEmail("1@1.net");
+        validator20.validateEmail("1@1.net");
     }
 
     @Test
     public void validateEmail_withValidEmail7_succeeds() throws Exception {
-        userValidator20.validateEmail("1@1.rackspace.com");
+        validator20.validateEmail("1@1.rackspace.com");
     }
 
     @Test
     public void validateEmail_withValidEmail8_succeeds() throws Exception {
-        userValidator20.validateEmail("R_a_c_K_e_r_4000@rackspace.com");
+        validator20.validateEmail("R_a_c_K_e_r_4000@rackspace.com");
     }
 
     @Test
@@ -250,5 +250,28 @@ public class UserValidator20Test {
         doNothing().when(spy).validateEmail("email");
         spy.validateUserForCreate(user);
         verify(spy).validateEmail("email");
+    }
+
+    @Test
+    public void validatePasswordCredentials_passwordIsBlank_throwsBadRequest() throws Exception {
+        try{
+            PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
+            passwordCredentialsRequiredUsername.setUsername("username");
+            passwordCredentialsRequiredUsername.setPassword(" ");
+            doNothing().when(spy).validateUsername("username");
+            validator20.validatePasswordCredentials(passwordCredentialsRequiredUsername);
+            assertTrue("should throw exception",false);
+        } catch (BadRequestException ex){
+            assertThat("exception message", ex.getMessage(),equalTo("Expecting password"));
+        }
+    }
+
+    @Test
+    public void validatePasswordCredentials_passwordIsNotBlank_throwsBadRequest() throws Exception {
+        PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
+        passwordCredentialsRequiredUsername.setUsername("username");
+        passwordCredentialsRequiredUsername.setPassword("password");
+        doNothing().when(spy).validateUsername("username");
+        validator20.validatePasswordCredentials(passwordCredentialsRequiredUsername);
     }
 }

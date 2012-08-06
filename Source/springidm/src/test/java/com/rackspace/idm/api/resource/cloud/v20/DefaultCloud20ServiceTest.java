@@ -22,6 +22,7 @@ import com.unboundid.ldap.sdk.SearchResultEntry;
 import org.apache.commons.configuration.Configuration;
 import org.hamcrest.Matchers;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.openstack.docs.common.api.v1.Extension;
@@ -111,7 +112,7 @@ public class DefaultCloud20ServiceTest {
     private String apiKeyCredentials = "RAX-KSKEY:apiKeyCredentials";
     private DelegateCloud20Service delegateCloud20Service;
     private SecretQA secretQA;
-    private UserValidator20 userValidator20;
+    private Validator20 validator20;
 
     @Before
     public void setUp() throws Exception {
@@ -140,7 +141,7 @@ public class DefaultCloud20ServiceTest {
         delegateCloud20Service = mock(DelegateCloud20Service.class);
         exceptionHandler = mock(ExceptionHandler.class);
         defaultRegionService = mock(DefaultRegionService.class);
-        userValidator20 = mock(UserValidator20.class);
+        validator20 = mock(Validator20.class);
 
         //setting mocks
         defaultCloud20Service.setUserService(userService);
@@ -163,7 +164,7 @@ public class DefaultCloud20ServiceTest {
         defaultCloud20Service.setServiceConverterCloudV20(serviceConverterCloudV20);
         defaultCloud20Service.setDelegateCloud20Service(delegateCloud20Service);
         defaultCloud20Service.setExceptionHandler(exceptionHandler);
-        defaultCloud20Service.setUserValidator20(userValidator20);
+        defaultCloud20Service.setValidator20(validator20);
         defaultCloud20Service.setDefaultRegionService(defaultRegionService);
 
         //fields
@@ -478,17 +479,6 @@ public class DefaultCloud20ServiceTest {
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
-    @Test
-    public void validateEmail_containsHyphen_succeeds() throws Exception {
-        defaultCloud20Service.validateEmail("foo-bar@test.com");
-    }
-
-    @Test (expected =  BadRequestException.class)
-    public void validateEmail_badEmail_throwsBadRequestException() throws Exception {
-        defaultCloud20Service.validateEmail("badEmail@badEmail.badEmai1com");
-    }
-
-    @Test
     public void getUserByName_callsAuthorizationService_authenticateCloudUserAdmin() throws Exception {
         when(userService.getUser("userName")).thenReturn(new User("username"));
         defaultCloud20Service.getUserByName(null, authToken, "userName");
@@ -983,6 +973,40 @@ public class DefaultCloud20ServiceTest {
         assertThat("message",argumentCaptor.getValue().getMessage(),equalTo("Invalid request. Specify tenantId OR tenantName, not both."));
     }
 
+    @Ignore
+    @Test
+    public void authenticate_typeIsPasswordCredentials_callsValidatePasswordCredentials() throws Exception {
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
+        Token token = new Token();
+        token.setId("token");
+        UserForAuthenticateResponse userForAuthenticateResponse = new UserForAuthenticateResponse();
+        RoleList roleList = mock(RoleList.class);
+        userForAuthenticateResponse.setRoles(roleList);
+        authenticateResponse.setToken(token);
+        authenticateResponse.setUser(userForAuthenticateResponse);
+        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
+        tokenForAuthenticationRequest.setId("tokenId");
+        PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
+        authenticationRequest.setTenantId("tenantId");
+        authenticationRequest.setToken(tokenForAuthenticationRequest);
+        authenticationRequest.setCredential(new JAXBElement<PasswordCredentialsRequiredUsername>(QName.valueOf("foo"),PasswordCredentialsRequiredUsername.class,passwordCredentialsRequiredUsername));
+        UserScopeAccess scopeAccess = new UserScopeAccess();
+        scopeAccess.setAccessTokenExp(new Date(5000, 1, 1));
+        scopeAccess.setAccessTokenString("foo");
+        scopeAccess.setUserRsId("userRsId");
+
+        when(scopeAccessService.getScopeAccessByAccessToken("tokenId")).thenReturn(scopeAccess);
+        doReturn(new User()).when(spy).getUserByIdForAuthentication("userRsId");
+        when(tokenConverterCloudV20.toToken(any(ScopeAccess.class))).thenReturn(token);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(tenantService.hasTenantAccess(any(ScopeAccess.class), eq("tenantId"))).thenReturn(true);
+        when(authConverterCloudV20.toAuthenticationResponse(any(User.class), any(ScopeAccess.class), any(List.class), any(List.class))).thenReturn(authenticateResponse);
+
+        spy.authenticate(null, authenticationRequest);
+        verify(validator20).validatePasswordCredentials(passwordCredentialsRequiredUsername);
+    }
+
     @Test
     public void authenticate_responseOk_returns200() throws Exception {
         AuthenticationRequest authenticationRequest = new AuthenticationRequest();
@@ -1461,7 +1485,7 @@ public class DefaultCloud20ServiceTest {
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         BadRequestException badRequestException = new BadRequestException("missing username");
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doThrow(badRequestException).when(userValidator20).validateUserForCreate(userOS);
+        doThrow(badRequestException).when(validator20).validateUserForCreate(userOS);
         when(exceptionHandler.exceptionResponse(badRequestException)).thenReturn(responseBuilder);
         userOS.setUsername(null);
         assertThat("response code", spy.addUser(null, null, authToken, userOS), equalTo(responseBuilder));
@@ -3957,6 +3981,20 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void updateUser_usernameNotBlank_callsValidateUsernameForUpdateOrCreate() throws Exception {
+        User user = new User();
+        user.setId(userId);
+        userOS.setId(userId);
+        userOS.setUsername("username");
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(user).when(spy).checkAndGetUser(userId);
+        when(authorizationService.authorizeCloudUser(scopeAccess)).thenReturn(false);
+        spy.updateUser(null, authToken, userId, userOS);
+        verify(validator20).validateUsernameForUpdateOrCreate("username");
+    }
+
+
+    @Test
     public void updateUser_authorizationServiceAuthorizeCloudUserIsTrue_callsUserServiceGetUserByAuthToken() throws Exception {
         User user = new User();
         user.setId(userId);
@@ -4063,7 +4101,7 @@ public class DefaultCloud20ServiceTest {
         creds.setUsername("username");
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         spy.updateUserApiKeyCredentials(null, authToken, null, null, creds);
-        verify(userValidator20).validateUsername("username");
+        verify(validator20).validateUsername("username");
     }
 
     @Test
@@ -4818,21 +4856,6 @@ public class DefaultCloud20ServiceTest {
     @Test(expected = BadRequestException.class)
     public void validateUsername_withTabContainingString_throwBadRequestException() throws Exception {
         defaultCloud20Service.validateUsername("first   last");
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void validateUsername_withNonAlphChara_throwBadRequestException() throws Exception {
-        defaultCloud20Service.validateUsernameForUpdateOrCreate("12nogood");
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void validateUsername_withSpecialChara_throwBadRequestException() throws Exception {
-        defaultCloud20Service.validateUsernameForUpdateOrCreate("jorgenogood!");
-    }
-
-    @Test
-    public void validateUsername_validUserName() throws Exception {
-        defaultCloud20Service.validateUsernameForUpdateOrCreate("jorgegood");
     }
 
     @Test
