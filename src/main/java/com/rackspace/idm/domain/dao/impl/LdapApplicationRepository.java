@@ -132,7 +132,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
             }
 
             audit.fail(ldapEx.getMessage());
-            throw new IllegalStateException(ldapEx);
+            throw new IllegalStateException(ldapEx.getMessage(), ldapEx);
         }
 
         audit.succeed();
@@ -161,7 +161,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
                 return new ClientAuthenticationResult(client, false);
             }
             getLogger().error("Bind operation on clientId " + clientId + " failed.", e);
-            throw new IllegalStateException(e);
+            throw new IllegalStateException(e.getMessage(), e);
         }
 
         boolean isAuthenticated = ResultCode.SUCCESS.equals(result.getResultCode());
@@ -492,7 +492,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
                 audit.fail("User isn't in group");
                 throw new NotFoundException("User isn't in group", ldapEx);
             }
-            throw new IllegalStateException(ldapEx);
+            throw new IllegalStateException(ldapEx.getMessage(), ldapEx);
         }
 
         audit.succeed();
@@ -593,7 +593,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
             }
         } catch (final LDAPException e) {
             getLogger().error("Error reading scopeAccessList for clients.", e);
-            throw new IllegalStateException(e);
+            throw new IllegalStateException(e.getMessage(), e);
         }
 
         getLogger().debug("Found the scope accesses defined in the system.");
@@ -914,7 +914,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
             }
             getLogger().error("Error adding client role object", e);
             audit.fail(e.getMessage());
-            throw new IllegalStateException(e);
+            throw new IllegalStateException(e.getMessage(), e);
         }
     }
 
@@ -1065,7 +1065,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         } catch (final LDAPException e) {
             getLogger().error("Error updating Client Role", e);
             audit.fail();
-            throw new IllegalStateException(e);
+            throw new IllegalStateException(e.getMessage(), e);
         }
     }
 
@@ -1160,7 +1160,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
                     ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(false)));
         } catch (LDAPException e) {
             getLogger().error("Error soft deleting application", e);
-            throw new IllegalStateException(e);
+            throw new IllegalStateException(e.getMessage(), e);
         }
         getLogger().info("SoftDeleted application - {}", application.getRCN());
     }
@@ -1225,7 +1225,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
                     ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(true)));
         } catch (LDAPException e) {
             getLogger().error("Error soft deleting application", e);
-            throw new IllegalStateException(e);
+            throw new IllegalStateException(e.getMessage(), e);
         }
         getLogger().info("SoftDeleted application - {}", application);
     }

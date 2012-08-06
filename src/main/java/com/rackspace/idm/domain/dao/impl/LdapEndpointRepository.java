@@ -106,7 +106,7 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
             getLogger().info("Added basedUrl {}", baseUrl);
         } catch (LDAPException ldapEx) {
             getLogger().error("Error adding baseUrl {} - {}", baseUrl, ldapEx);
-            throw new IllegalStateException(ldapEx);
+            throw new IllegalStateException(ldapEx.getMessage(), ldapEx);
         }
 
         if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
@@ -158,7 +158,7 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
             getLogger().debug("Added baseUlr {} to user {}", baseUrlId, username);
         } catch (LDAPException ldapEx) {
             getLogger().error("Error updating user {} endpoints - {}", username, ldapEx);
-            throw new IllegalStateException(ldapEx);
+            throw new IllegalStateException(ldapEx.getMessage(), ldapEx);
         }
 
         if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
@@ -183,7 +183,7 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
             getLogger().info("Deleted baseUrl - {}", baseUrlId);
         } catch (LDAPException ldapEx) {
             getLogger().error("Error deleting baseUlr {} - {}", baseUrlId, ldapEx);
-            throw new IllegalStateException(ldapEx);
+            throw new IllegalStateException(ldapEx.getMessage(), ldapEx);
         }
 
         if (!ResultCode.SUCCESS.equals(result.getResultCode())) {

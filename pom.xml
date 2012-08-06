@@ -677,7 +677,7 @@
                         <artifactId>maven-soapui-plugin</artifactId>
                         <version>${soapui.version}</version>
                         <configuration>
-                            <projectFile>soapui/soapUI/foundationAPI/FoundationAPI.xml</projectFile>
+                            <projectFile>GlobalAuthQE/soapui/soapUI/foundationAPI/FoundationAPI.xml</projectFile>
                             <junitReport>true</junitReport>
                             <testSuite>FoundationAuth-GA TestSuite</testSuite>
                             <testSuite>FoundationAuth-GA NegativeTestSuite</testSuite>
@@ -733,7 +733,7 @@
                         <artifactId>maven-soapui-plugin</artifactId>
                         <version>3.6.1</version>
                         <configuration>
-                            <projectFile>soapui/soapUI/routing/Auth1.0_Routing.xml</projectFile>
+                            <projectFile>GlobalAuthQE/soapui/soapUI/routing/Auth1.0_Routing.xml</projectFile>
                             <junitReport>true</junitReport>
                             <testSuite>Functional v1.0 redirect</testSuite>
                             <testSuite>Functional v1.0.2</testSuite>
@@ -786,7 +786,7 @@
                         <artifactId>maven-soapui-plugin</artifactId>
                         <version>3.6.1</version>
                         <configuration>
-                            <projectFile>soapui/soapUI/implementation/Auth1.0_Routing.xml</projectFile>
+                            <projectFile>GlobalAuthQE/soapui/soapUI/implementation/Auth1.0_Routing.xml</projectFile>
                             <junitReport>true</junitReport>
                             <testSuite>Functional v1.0 redirect</testSuite>
                             <testSuite>Functional v1.0.2</testSuite>
@@ -840,7 +840,7 @@
                         <artifactId>maven-soapui-plugin</artifactId>
                         <version>${soapui.version}</version>
                         <configuration>
-                            <projectFile>soapui/soapUI/foundationAPI/FoundationAPI-DEV.xml</projectFile>
+                            <projectFile>GlobalAuthQE/soapui/soapUI/foundationAPI/FoundationAPI-DEV.xml</projectFile>
                             <junitReport>true</junitReport>
                             <testSuite>FoundationAuth-GA TestSuite</testSuite>
                             <testSuite>FoundationAuth-GA NegativeTestSuite</testSuite>
@@ -894,7 +894,7 @@
                         <artifactId>maven-soapui-plugin</artifactId>
                         <version>${soapui.version}</version>
                         <configuration>
-                            <projectFile>soapui/soapUI/foundationAPI/FoundationAPI.xml</projectFile>
+                            <projectFile>GlobalAuthQE/soapui/soapUI/foundationAPI/FoundationAPI.xml</projectFile>
                             <junitReport>true</junitReport>
                             <testSuite>FoundationAuth-GA TestSuite</testSuite>
                             <testSuite>FoundationAuth-GA NegativeTestSuite</testSuite>

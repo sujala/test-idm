@@ -15,7 +15,6 @@ import com.rackspace.idm.api.resource.cloud.v20.CloudKsGroupBuilder;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.IdmException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspacecloud.docs.auth.api.v1.BaseURL;
@@ -363,6 +362,8 @@ public class CloudMigrationService {
             userService.updateUserById(newUser, false);
 
             UserType userResponse = validateUser(user, apiKey, cloudPassword, secretQA, roles, groups, user11.getBaseURLRefs().getBaseURLRef());
+            userResponse.setNastId(user11.getNastId());
+            userResponse.setMossoId(String.valueOf(user11.getMossoId()));
             MigrateUserResponseType result = new MigrateUserResponseType();
 
             if(subUsers != null) {

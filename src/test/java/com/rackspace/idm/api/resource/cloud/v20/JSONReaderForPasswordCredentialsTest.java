@@ -101,6 +101,14 @@ public class JSONReaderForPasswordCredentialsTest {
     }
 
     @Test
+    public void readFrom_callsGetPasswordCredentialsFromJSONString_returnsPasswordCredentials() throws Exception {
+        JSONReaderForPasswordCredentials jsonReaderForPasswordCredentials = spy(new JSONReaderForPasswordCredentials());
+        PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = jsonReaderForPasswordCredentials.readFrom(PasswordCredentialsRequiredUsername.class, getClass(), null, MediaType.APPLICATION_JSON_TYPE, null, new BufferedInputStream(new ByteArrayInputStream(passwordCredentialsJSON.getBytes())));
+        assertThat("passwordCredentials username", passwordCredentialsRequiredUsername.getUsername(), equalTo("jsmith"));
+        assertThat("passwordCredentials password", passwordCredentialsRequiredUsername.getPassword(), equalTo("secretPassword"));
+    }
+
+    @Test
     public void isReadable_withPasswordCredentials_returnsTrue() throws Exception {
         JSONReaderForPasswordCredentials jsonReaderForPasswordCredentials = new JSONReaderForPasswordCredentials();
         boolean readable = jsonReaderForPasswordCredentials.isReadable(PasswordCredentialsRequiredUsername.class, PasswordCredentialsRequiredUsername.class, null, null);

@@ -12,6 +12,7 @@ import com.rackspace.idm.api.resource.cloud.CloudUserExtractor;
 import com.rackspace.idm.api.resource.cloud.HttpHeadersAcceptXml;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
+import com.rackspace.idm.domain.entity.HasAccessToken;
 import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.TenantRole;
@@ -25,6 +26,7 @@ import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.ws.commons.util.Base64;
+import org.joda.time.DateTime;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
@@ -173,6 +175,9 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     ResponseBuilder authenticateImpersonated(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest, ScopeAccess sa) {
         try {
+            if (((HasAccessToken) sa).isAccessTokenExpired(new DateTime())) {
+                throw new NotAuthorizedException("Token not authenticated");
+            }
             ImpersonatedScopeAccess isa = (ImpersonatedScopeAccess) sa;
             com.rackspace.idm.domain.entity.User user = userService.getUserByAuthToken(isa.getImpersonatingToken());
             if (user == null) {
@@ -228,6 +233,9 @@ public class DelegateCloud20Service implements Cloud20Service {
             return cloudClient.get(request, httpHeaders);
         }
         if (scopeAccess instanceof ImpersonatedScopeAccess) {
+            if (((HasAccessToken) scopeAccess).isAccessTokenExpired(new DateTime())) {
+                throw new NotAuthorizedException("Impersonated token has expired.");
+            }
             ImpersonatedScopeAccess impersonatedScopeAccess = (ImpersonatedScopeAccess) scopeAccess;
             ScopeAccess impersonatedUserScopeAccess = scopeAccessService.getScopeAccessByAccessToken(impersonatedScopeAccess.getImpersonatingToken());
             if (impersonatedUserScopeAccess == null) {

@@ -379,15 +379,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
             setDomainId(scopeAccessByAccessToken, userDO);
             if(callerIsServiceAdmin || callerIsUserAdmin){
-                Set<String> defaultRegions = defaultRegionService.getDefaultRegions();
-                String regionString = "";
-                for(String region : defaultRegions){
-                    regionString += " "+region;
-                }
-                String userRegion = userDO.getRegion();
-                if(userRegion!=null && !defaultRegions.contains(userRegion)){
-                    throw new BadRequestException("Invalid defaultRegion value, accepted values are:" + regionString +".");
-                }
+                defaultRegionService.validateDefaultRegion(userDO.getRegion());
             }
             userService.addUser(userDO);
             assignProperRole(httpHeaders, authToken, scopeAccessByAccessToken, userDO);
@@ -464,7 +456,8 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
             }
             //if user admin, verify domain
-            if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
+            boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken);
+            if (callerIsUserAdmin) {
                 User caller = userService.getUserByAuthToken(authToken);
                 authorizationService.verifyDomain(caller, retrievedUser);
             }
@@ -486,7 +479,10 @@ public class DefaultCloud20Service implements Cloud20Service {
                 atomHopperClient.asyncPost(retrievedUser, authToken, AtomHopperConstants.DISABLED, null);
             }
             retrievedUser.copyChanges(userDO);
-
+            boolean callerIsServiceAdmin = authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken);
+            if(callerIsServiceAdmin || callerIsUserAdmin){
+                defaultRegionService.validateDefaultRegion(userDO.getRegion());
+            }
             userService.updateUserById(retrievedUser, false);
             return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(retrievedUser)).getValue());
         } catch (Exception ex) {
