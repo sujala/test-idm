@@ -106,7 +106,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
         } catch (final LDAPException e) {
             getLogger().error("Error defining permission", e);
             audit.fail();
-            throw new IllegalStateException(e);
+            throw new IllegalStateException(e.getMessage(), e);
         }
     }
 
@@ -130,7 +130,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
         } catch (final LDAPException e) {
             getLogger().error("Error delegating permission", e);
             audit.fail();
-            throw new IllegalStateException(e);
+            throw new IllegalStateException(e.getMessage(), e);
         }
     }
 
@@ -160,7 +160,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
             return result != null;
         } catch (final LDAPException e) {
             getLogger().error("Error checking permission", e);
-            throw new IllegalStateException(e);
+            throw new IllegalStateException(e.getMessage(), e);
         }
     }
 
@@ -177,7 +177,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
             return result != null;
         } catch (final LDAPException e) {
             getLogger().error("Error checking permission", e);
-            throw new IllegalStateException(e);
+            throw new IllegalStateException(e.getMessage(), e);
         }
     }
 
@@ -202,7 +202,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
         } catch (final LDAPException e) {
             if (e.getResultCode() != ResultCode.NO_SUCH_OBJECT) {
                 getLogger().error(ERROR_READING_SCOPE_ACCESS_BY_CLIENT_ID, e);
-                throw new IllegalStateException(e);
+                throw new IllegalStateException(e.getMessage(), e);
             }
         }
         return null;
@@ -229,7 +229,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
         } catch (final LDAPException e) {
             if (e.getResultCode() != ResultCode.NO_SUCH_OBJECT) {
                 getLogger().error(ERROR_READING_SCOPE_ACCESS_BY_CLIENT_ID, e);
-                throw new IllegalStateException(e);
+                throw new IllegalStateException(e.getMessage(), e);
             }
         }
         return null;
@@ -256,7 +256,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
         } catch (final LDAPException e) {
             if (e.getResultCode() != ResultCode.NO_SUCH_OBJECT) {
                 getLogger().error(ERROR_READING_SCOPE_ACCESS_BY_CLIENT_ID, e);
-                throw new IllegalStateException(e);
+                throw new IllegalStateException(e.getMessage(), e);
             }
         }
         return null;
@@ -296,7 +296,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
         } catch (final LDAPException e) {
             getLogger().error(
                 "Error reading permission by parent and permission", e);
-            throw new IllegalStateException(e);
+            throw new IllegalStateException(e.getMessage(), e);
         }
 
         getLogger().debug(
@@ -332,7 +332,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
             }
         } catch (final LDAPException e) {
             getLogger().error("Error reading ScopeAccess by AccessToken: " + accessToken, e);
-            throw new IllegalStateException(e);
+            throw new IllegalStateException(e.getMessage(), e);
         }
         return null;
     }
@@ -351,7 +351,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
             }
         } catch (final LDAPException e) {
             getLogger().error("Error reading ScopeAccess by user id: " + userId, e);
-            throw new IllegalStateException(e);
+            throw new IllegalStateException(e.getMessage(), e);
         }
         return null;
     }
@@ -370,7 +370,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
             }
         } catch (final LDAPException e) {
             getLogger().error("Error reading ScopeAccess by user id: " + userId, e);
-            throw new IllegalStateException(e);
+            throw new IllegalStateException(e.getMessage(), e);
         }
         return scopeAccessList;
     }
@@ -393,7 +393,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
             getLogger().error(
                 "Error reading ScopeAccess by Authorization Code: "
                     + authorizationCode, e);
-            throw new IllegalStateException(e);
+            throw new IllegalStateException(e.getMessage(), e);
         }
         return null;
     }
@@ -418,7 +418,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
                 .error(
                         "Error reading ScopeAccess by RefreshToken: "
                                 + refreshToken, e);
-            throw new IllegalStateException(e);
+            throw new IllegalStateException(e.getMessage(), e);
         }
         return null;
     }
@@ -441,7 +441,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
             }
         } catch (final LDAPException e) {
             getLogger().error("Error reading scope access by username", e);
-            throw new IllegalStateException(e);
+            throw new IllegalStateException(e.getMessage(), e);
         }
         return null;
     }
@@ -467,7 +467,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
             }
         } catch (final LDAPException e) {
             getLogger().error("Error reading scope access by username", e);
-            throw new IllegalStateException(e);
+            throw new IllegalStateException(e.getMessage(), e);
         }
         return scopeAccessList;
     }
@@ -486,7 +486,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
             }
         } catch (final LDAPException e) {
             getLogger().error("Error reading scope accesses by parent", e);
-            throw new IllegalStateException(e);
+            throw new IllegalStateException(e.getMessage(), e);
         }
         getLogger().debug("Found {} ScopeAccess object(s) for: {}",
             list.size(), parentUniqueId);
@@ -513,7 +513,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
             }
         } catch (final LDAPException e) {
             getLogger().error(ERROR_READING_SCOPE_ACCESS_BY_CLIENT_ID, e);
-            throw new IllegalStateException(e);
+            throw new IllegalStateException(e.getMessage(), e);
         }
         return null;
     }
@@ -536,7 +536,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
             }
         } catch (final LDAPException e) {
             getLogger().error(ERROR_READING_SCOPE_ACCESS_BY_CLIENT_ID, e);
-            throw new IllegalStateException(e);
+            throw new IllegalStateException(e.getMessage(), e);
         }
         return list;
     }
@@ -558,7 +558,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
         } catch (final LDAPException e) {
             if (e.getResultCode() != ResultCode.NO_SUCH_OBJECT) {
                 getLogger().error("Error reading scope accesses by parent", e);
-                throw new IllegalStateException(e);
+                throw new IllegalStateException(e.getMessage(), e);
             }
         }
         getLogger().debug("Found {} ScopeAccess object(s) for: {}",
@@ -587,7 +587,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
         } catch (final LDAPException e) {
             getLogger().error("Error granting permission", e);
             audit.fail();
-            throw new IllegalStateException(e);
+            throw new IllegalStateException(e.getMessage(), e);
         }
     }
 
@@ -637,7 +637,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
         } catch (final LDAPException e) {
             getLogger().error("Error updating scope access", e);
             audit.fail();
-            throw new IllegalStateException(e);
+            throw new IllegalStateException(e.getMessage(), e);
         } catch (final LDAPSDKRuntimeException e) {
             // noop
         }
@@ -659,7 +659,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
             return (ScopeAccess) persister.get(scopeAccess, getAppInterface(), parentUniqueId);
         } catch (final LDAPException e) {
             getLogger().error("Error adding scope acccess object", e);
-            throw new IllegalStateException(e);
+            throw new IllegalStateException(e.getMessage(), e);
         }
     }
 

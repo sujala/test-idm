@@ -165,7 +165,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         } catch (final LDAPException e) {
             getLogger().error("Error updating tenant", e);
             audit.fail();
-            throw new IllegalStateException(e);
+            throw new IllegalStateException(e.getMessage(), e);
         }
     }
 
@@ -224,7 +224,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         } catch (final LDAPException e) {
             getLogger().error("Error adding tenant role object", e);
             audit.fail(e.getMessage());
-            throw new IllegalStateException(e);
+            throw new IllegalStateException(e.getMessage(), e);
         }
     }
 
@@ -444,7 +444,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         } catch (final LDAPException e) {
             getLogger().error("Error updating Tenant Role", e);
             audit.fail();
-            throw new IllegalStateException(e);
+            throw new IllegalStateException(e.getMessage(), e);
         }
     }
 

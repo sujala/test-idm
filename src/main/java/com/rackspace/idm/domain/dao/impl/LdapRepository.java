@@ -211,7 +211,7 @@ public abstract class LdapRepository {
             getAppInterface().add(entryDn, attributes);
         } catch (LDAPException e) {
             audit.fail();
-            throw new IllegalStateException(e);
+            throw new IllegalStateException(e.getMessage(), e);
         }
     }
 
@@ -230,7 +230,7 @@ public abstract class LdapRepository {
         } catch (LDAPException e) {
             audit.fail();
             getLogger().error(LDAP_SEARCH_ERROR, e.getMessage());
-            throw new IllegalStateException(e);
+            throw new IllegalStateException(e.getMessage(), e);
         }
     }
 
@@ -287,7 +287,7 @@ public abstract class LdapRepository {
         } catch (LDAPException ldapEx) {
             audit.fail();
             getLogger().error("Error updating entry {} - {}", entryDn, ldapEx);
-            throw new IllegalStateException(ldapEx);
+            throw new IllegalStateException(ldapEx.getMessage(), ldapEx);
         }
     }
 
@@ -365,7 +365,7 @@ public abstract class LdapRepository {
                 return getNextId(type);
             }
             getLogger().error("Error getting next id of type {}", type, ex);
-            throw new IllegalStateException();
+            throw new IllegalStateException(ex.getMessage(), ex);
         }
         return String.valueOf(nextId);
     }

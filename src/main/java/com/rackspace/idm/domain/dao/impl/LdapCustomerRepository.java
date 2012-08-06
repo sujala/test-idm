@@ -267,7 +267,7 @@ public class LdapCustomerRepository extends LdapRepository implements
                 ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(false)));
         } catch (LDAPException e) {
             getLogger().error("Error soft deleting customer", e);
-            throw new IllegalStateException(e);
+            throw new IllegalStateException(e.getMessage(), e);
         }
         getLogger().info("SoftDeleted customer - {}", customer.getRcn());
     }
@@ -344,7 +344,7 @@ public class LdapCustomerRepository extends LdapRepository implements
                 ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(true)));
         } catch (LDAPException e) {
             getLogger().error("Error soft deleting customer", e);
-            throw new IllegalStateException(e);
+            throw new IllegalStateException(e.getMessage(), e);
         }
         getLogger().info("SoftDeleted customer - {}", customer);
     }
