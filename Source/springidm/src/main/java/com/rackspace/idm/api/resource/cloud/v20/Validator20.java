@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v20;
 import com.rackspace.idm.exception.BadRequestException;
 import org.apache.commons.lang.CharUtils;
 import org.apache.commons.lang.StringUtils;
+import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
 import org.openstack.docs.identity.api.v2.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +19,7 @@ import java.util.regex.Pattern;
  * To change this template use File | Settings | File Templates.
  */
 @Component
-public class UserValidator20 {
+public class Validator20 {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -57,6 +58,17 @@ public class UserValidator20 {
         validateUsername(user.getUsername());
         validateUsernameForUpdateOrCreate(user.getUsername());
         validateEmail(user.getEmail());
+    }
+
+    public void validatePasswordCredentials(PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername) {
+        String username = passwordCredentialsRequiredUsername.getUsername();
+        String password = passwordCredentialsRequiredUsername.getPassword();
+        validateUsername(username);
+        if (StringUtils.isBlank(password)) {
+            String errMsg = "Expecting password";
+            logger.warn(errMsg);
+            throw new BadRequestException(errMsg);
+        }
     }
 
 }

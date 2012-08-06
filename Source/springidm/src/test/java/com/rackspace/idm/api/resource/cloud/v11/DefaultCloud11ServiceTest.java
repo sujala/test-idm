@@ -2624,7 +2624,6 @@ public class DefaultCloud11ServiceTest {
         user.setMossoId(1);
         user.setBaseURLRefs(baseURLRefList);
         doNothing().when(spy).authenticateCloudAdminUser(request);
-        doNothing().when(userValidator).validateUsername("userId");
         when(userService.getUser("userId")).thenReturn(null);
         when(userConverterCloudV11.toUserDO(user)).thenReturn(userTest);
         doNothing().when(spy).validateMossoId(1);
