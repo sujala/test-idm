@@ -1,148 +1,108 @@
 package com.rackspace.idm.api.resource.cloud;
 
-import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups;
-import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
-import com.rackspacecloud.docs.auth.api.v1.BaseURLList;
-import org.apache.http.HttpException;
+import org.apache.http.HttpHeaders;
 import org.junit.Before;
 import org.junit.Test;
-import org.openstack.docs.identity.api.v2.*;
+import org.openstack.docs.identity.api.v2.AuthenticateResponse;
+import org.openstack.docs.identity.api.v2.ObjectFactory;
+import org.openstack.docs.identity.api.v2.Tenants;
+import org.slf4j.Logger;
 
-import javax.xml.bind.JAXBException;
-import java.io.IOException;
-import java.net.URISyntaxException;
+import javax.ws.rs.core.MediaType;
 
-import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+/**
+ * Created with IntelliJ IDEA.
+ * User: Yung Lai
+ * Date: 8/6/12
+ * Time: 12:08 PM
+ * To change this template use File | Settings | File Templates.
+ */
 public class MigrationClientTest {
-
-    private MigrationClient client;
-    private String username;
-    private String password;
-    private String password1;
-    private String username2;
-    private String userId3;
+    MigrationClient migrationClient;
+    HttpClientWrapper httpClientWrapper;
+    ObjectFactory objectFactory;
+    Logger logger;
+    String cloud20Host;
+    String cloud11Host;
 
     @Before
-    public void setup() {
-        username = "auth";
-        password = "auth123";
-        username2 = "cmarin2";
-        password1 = "Password1";
-        userId3 = "175017";
+    public void setUp() throws Exception {
+        migrationClient = new MigrationClient();
+        objectFactory = new ObjectFactory();
 
-        client = new MigrationClient();
-        client.setCloud11Host("https://auth.staging.us.ccp.rackspace.net/v1.1/");
-        client.setCloud20Host("https://auth.staging.us.ccp.rackspace.net/v2.0/");
-    }
-    
-    @Test
-    public void getTenants_validUser_returnsTenants() throws URISyntaxException, HttpException, IOException, JAXBException {
-        String token = getAdminToken();
-        Tenants tenants = client.getTenants(token);
-        
-        assertThat("tenants", tenants, notNullValue());
-    }
-    
-    @Test
-    public void getUser_validUserName_returnsUser() throws URISyntaxException, HttpException, IOException, JAXBException {
-        String token = getAdminToken();
-        User user = client.getUser(token, username);
-        
-        assertThat("user", user, notNullValue());
-    }
-    
-    @Test
-    public void getUsers_validUserName_returnsUsers() throws URISyntaxException, HttpException, IOException, JAXBException {
-    	String token = getToken(username2, password1);
-        UserList users = client.getUsers(token);
-        
-        assertThat("users", users, notNullValue());
+        // Mocks
+        httpClientWrapper = mock(HttpClientWrapper.class);
+        logger = mock(Logger.class);
+
+        // setting up fields
+        cloud11Host = "cloud11host/";
+        cloud20Host = "cloud20host/";
+        migrationClient.setClient(httpClientWrapper);
+        migrationClient.setLogger(logger);
+        migrationClient.setObjectFactory(objectFactory);
+        migrationClient.setCloud11Host(cloud11Host);
+        migrationClient.setCloud20Host(cloud20Host);
     }
 
     @Test
-    public void getRolesForUser_validUserName_returnsRoles() throws JAXBException, IOException, HttpException, URISyntaxException {
-        String token = getAdminToken();
-        User user = client.getUser(token, "cmarin2");
-        RoleList roles = client.getRolesForUser(token, user.getId());
-
-        assertThat("roles", roles, notNullValue());
-    }
-
-    @Test
-    public void getRoles_validToken_returnsRoles() throws URISyntaxException, HttpException, IOException, JAXBException {
-        String token = getAdminToken();
-        RoleList roles = client.getRoles(token);
-        assertThat("roles", roles, notNullValue());
-    }
-
-    @Test
-    public void getSecretQA_validUserName_returnsSecretQA() throws URISyntaxException, HttpException, IOException, JAXBException {
-        String token = getAdminToken();
-        SecretQA secretQA = client.getSecretQA(token, userId3);
-
-        assertThat("secretQA", secretQA, notNullValue());
-    }
-
-    @Test
-    public void getUserGroup_validUser_returnsGroups() throws URISyntaxException, HttpException, IOException, JAXBException {
-        String token = getAdminToken();
-        User user = client.getUser(token, "cmarin2");
-        Groups groups = client.getGroupsForUser(token, user.getId());
-        
-        assertThat("groups", groups, notNullValue());
-    }
-    
-    @Test
-    public void getGroups_validToken_returnsGroups() throws URISyntaxException, HttpException, IOException, JAXBException {
-        String token = getAdminToken();
-        Groups groups = client.getGroups(token);
-        
-        assertThat("groups", groups, notNullValue());
-    }
-    
-    @Test
-    public void getUserCredentials_validToken_returnsCredentials() throws URISyntaxException, HttpException, IOException, JAXBException {
-        String token = getAdminToken();
-        User user = client.getUser(token, username2);
-        CredentialListType credentials = client.getUserCredentials(token, user.getId());
-        
-        assertThat("credentials", credentials, notNullValue());
-    }
-
-    @Test
-    public void getUserTenantsBaseUrls_validToken_returnsUser() throws URISyntaxException, HttpException, IOException, JAXBException {
-        com.rackspacecloud.docs.auth.api.v1.User user = client.getUserTenantsBaseUrls(username, password, "cmarin2");
-        assertThat("User", user, notNullValue());
-    }
-
-
-    @Test
-    public void getBaseUrls_validToken_returnsBaseUrls() throws URISyntaxException, HttpException, IOException, JAXBException {
-        BaseURLList baseURLList = client.getBaseUrls(username, password);
-        assertThat("baseURLList", baseURLList, notNullValue());
-    }
-   
-    @Test
-    public void getEndpoints() throws URISyntaxException, HttpException, IOException, JAXBException {
-        EndpointList endPoints = client.getEndpointsByToken(getAdminToken(), getToken("cmarin2", "Password1"));
-        assertThat("endPoints", endPoints, notNullValue());
-    }
-
-    private String getAdminToken() throws URISyntaxException, HttpException, IOException, JAXBException {
-        AuthenticateResponse  authenticateResponse = client.authenticateWithPassword(username, password);
-        return authenticateResponse.getToken().getId();
-    }
-
-    private String getToken(String username, String password) throws URISyntaxException, HttpException, IOException, JAXBException {
-        AuthenticateResponse authenticateResponse = client.authenticateWithPassword(username, password);
-        return authenticateResponse.getToken().getId();
+    public void authenticateWithPassword_returnsAuthenticateResponse() throws Exception {
+        String body = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<access xmlns=\"http://docs.openstack.org/identity/api/v2.0\">\n" +
+                "    <token id=\"ab48a9efdfedb23ty3494\" expires=\"2010-11-01T03:32:15-05:00\">\n" +
+                "        <tenant id=\"345\" name=\"My Project\" />\n" +
+                "    </token>\n" +
+                "    <user id=\"123\" username=\"jqsmith\">\n" +
+                "        <roles xmlns=\"http://docs.openstack.org/identity/api/v2.0\">\n" +
+                "            <role id=\"123\" name=\"compute:admin\" />\n" +
+                "            <role id=\"234\" name=\"object-store:admin\" />\n" +
+                "        </roles>\n" +
+                "    </user>\n" +
+                "</access>";
+        when(httpClientWrapper.url(cloud20Host + "tokens")).thenReturn(httpClientWrapper);
+        when(httpClientWrapper.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML)).thenReturn(httpClientWrapper);
+        when(httpClientWrapper.header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML)).thenReturn(httpClientWrapper);
+        when(httpClientWrapper.post(anyString())).thenReturn(body);
+        AuthenticateResponse result = migrationClient.authenticateWithPassword("username", "password");
+        assertThat("user id", result.getUser().getId(), equalTo("123"));
+        assertThat("user id", result.getToken().getId(), equalTo("ab48a9efdfedb23ty3494"));
     }
 
     @Test
     public void authenticateWithApiKey_returnsAuthenticateResponse() throws Exception {
-        AuthenticateResponse authenticateResponse = client.authenticateWithApiKey("auth", "aaaaa-bbbbb-ccccc-12345678");
-        assertThat("token", authenticateResponse.getToken(), notNullValue());
+        String body = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<access xmlns=\"http://docs.openstack.org/identity/api/v2.0\">\n" +
+                "    <token id=\"ab48a9efdfedb23ty3494\" expires=\"2010-11-01T03:32:15-05:00\">\n" +
+                "        <tenant id=\"345\" name=\"My Project\" />\n" +
+                "    </token>\n" +
+                "    <user id=\"123\" username=\"jqsmith\">\n" +
+                "        <roles xmlns=\"http://docs.openstack.org/identity/api/v2.0\">\n" +
+                "            <role id=\"123\" name=\"compute:admin\" />\n" +
+                "            <role id=\"234\" name=\"object-store:admin\" />\n" +
+                "        </roles>\n" +
+                "    </user>\n" +
+                "</access>";
+        when(httpClientWrapper.url(cloud20Host + "tokens")).thenReturn(httpClientWrapper);
+        when(httpClientWrapper.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML)).thenReturn(httpClientWrapper);
+        when(httpClientWrapper.header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML)).thenReturn(httpClientWrapper);
+        when(httpClientWrapper.post(anyString())).thenReturn(body);
+        AuthenticateResponse result = migrationClient.authenticateWithApiKey("username", "apikey");
+        assertThat("user id", result.getUser().getId(), equalTo("123"));
+        assertThat("user id", result.getToken().getId(), equalTo("ab48a9efdfedb23ty3494"));
     }
+    /*
+    @Test
+    public void getTenants_returnsTenants() throws Exception {
+        when(httpClientWrapper.url(cloud20Host + "tenants")).thenReturn(httpClientWrapper);
+        when(httpClientWrapper.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML)).thenReturn(httpClientWrapper);
+        when(httpClientWrapper.header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML)).thenReturn(httpClientWrapper);
+        when(httpClientWrapper.header("X-AUTH-TOKEN", "token")).thenReturn(httpClientWrapper);
+        Tenants result = migrationClient.getTenants("token");
+        assertThat("tenant id", result.getTenant().get(0).getId(), equalTo("123"));
+    }   */
 }
