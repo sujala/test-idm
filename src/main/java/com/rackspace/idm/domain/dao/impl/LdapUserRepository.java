@@ -517,7 +517,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             throwIfStalePassword(ldapEx, audit);
             getLogger().error("Error updating user {} - {}", newUser.getUsername(), ldapEx);
             audit.fail("Error updating user");
-            throw new IllegalStateException(ldapEx);
+            throw new IllegalStateException(ldapEx.getMessage(), ldapEx);
         } catch (GeneralSecurityException e) {
             getLogger().error(e.getMessage());
             audit.fail(ENCRYPTION_ERROR);
