@@ -363,6 +363,8 @@ public class CloudMigrationService {
             userService.updateUserById(newUser, false);
 
             UserType userResponse = validateUser(user, apiKey, cloudPassword, secretQA, roles, groups, user11.getBaseURLRefs().getBaseURLRef());
+            userResponse.setNastId(user11.getNastId());
+            userResponse.setMossoId(String.valueOf(user11.getMossoId()));
             MigrateUserResponseType result = new MigrateUserResponseType();
 
             if(subUsers != null) {

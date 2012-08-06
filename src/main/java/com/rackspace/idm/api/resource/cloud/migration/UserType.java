@@ -45,6 +45,8 @@ import java.util.List;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "UserType", propOrder = {
     "id",
+    "mossoId",
+    "nastId",
     "username",
     "email",
     "apiKey",
@@ -59,6 +61,10 @@ public class UserType {
 
     @XmlElement
     protected String id;
+    @XmlElement
+    protected String mossoId;
+    @XmlElement
+    protected String nastId;
     @XmlElement
     protected String username;
     @XmlElement
@@ -101,6 +107,54 @@ public class UserType {
      */
     public void setId(String value) {
         this.id = value;
+    }
+
+    /**
+     * Gets the value of the mossoId property.
+     * 
+     * @return
+     *     possible object is
+     *     {@link String }
+     *     
+     */
+    public String getMossoId() {
+        return mossoId;
+    }
+
+    /**
+     * Sets the value of the mossoId property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link String }
+     *     
+     */
+    public void setMossoId(String value) {
+        this.mossoId = value;
+    }
+
+    /**
+     * Gets the value of the nastId property.
+     * 
+     * @return
+     *     possible object is
+     *     {@link String }
+     *     
+     */
+    public String getNastId() {
+        return nastId;
+    }
+
+    /**
+     * Sets the value of the nastId property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link String }
+     *     
+     */
+    public void setNastId(String value) {
+        this.nastId = value;
     }
 
     /**
