@@ -7,6 +7,6 @@ then
     echo "usage: copyWar.sh <host>"
 else
     HOST=$1
-    WAR=`find $BASEDIR | grep idm.*.war$`
+    WAR=`find $BASEDIR/../ | grep idm.*.war$`
     scp $WAR gauth@$HOST:/opt/glassfish/glassfish/domains/gauth/autodeploy/idm.war
 fi

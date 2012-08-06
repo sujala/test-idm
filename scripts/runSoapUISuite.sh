@@ -7,6 +7,6 @@ then
     echo "usage: runSoapUISuite <profile>"
 else
     PROFILE=$1
-    cd $BASEDIR
+    cd $BASEDIR/../
     mvn eviware:maven-soapui-plugin:test -P$1
 fi
