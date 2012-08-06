@@ -479,6 +479,7 @@ public class DefaultCloud20ServiceTest {
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
+    @Test
     public void getUserByName_callsAuthorizationService_authenticateCloudUserAdmin() throws Exception {
         when(userService.getUser("userName")).thenReturn(new User("username"));
         defaultCloud20Service.getUserByName(null, authToken, "userName");
@@ -492,60 +493,6 @@ public class DefaultCloud20ServiceTest {
         defaultCloud20Service.getUserByName(null, authToken, "userName");
         ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByAccessToken(authToken);
         verify(authorizationService).authorizeCloudUser(scopeAccess);
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void validateImpersonationRequest_expireInIsLessThan1_throwsBadRequestException() throws Exception {
-        ImpersonationRequest impersonationRequest = new ImpersonationRequest();
-        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
-        user1.setUsername("username");
-        impersonationRequest.setUser(user1);
-        impersonationRequest.setExpireInSeconds(0);
-        defaultCloud20Service.validateImpersonationRequest(impersonationRequest);
-    }
-
-    @Test
-    public void validateImpersonationRequest_expireInNull_succeeds() throws Exception {
-        ImpersonationRequest impersonationRequest = new ImpersonationRequest();
-        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
-        user1.setUsername("username");
-        impersonationRequest.setUser(user1);
-        impersonationRequest.setExpireInSeconds(null);
-        defaultCloud20Service.validateImpersonationRequest(impersonationRequest);
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void validateImpersonationRequest_userIsNull_throwsBadRequestException() throws Exception {
-        ImpersonationRequest impersonationRequest = new ImpersonationRequest();
-        org.openstack.docs.identity.api.v2.User impersonateUser = null;
-        impersonationRequest.setUser(impersonateUser);
-        defaultCloud20Service.validateImpersonationRequest(impersonationRequest);
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void validateImpersonationRequest_userNameIsNull_throwsBadRequestException() throws Exception {
-        ImpersonationRequest impersonationRequest = new ImpersonationRequest();
-        org.openstack.docs.identity.api.v2.User impersonateUser = new org.openstack.docs.identity.api.v2.User();
-        impersonationRequest.setUser(impersonateUser);
-        defaultCloud20Service.validateImpersonationRequest(impersonationRequest);
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void validateImpersonationRequest_userNameIsEmpty_throwsBadRequestException() throws Exception {
-        ImpersonationRequest impersonationRequest = new ImpersonationRequest();
-        org.openstack.docs.identity.api.v2.User impersonateUser = new org.openstack.docs.identity.api.v2.User();
-        impersonateUser.setUsername(" ");
-        impersonationRequest.setUser(impersonateUser);
-        defaultCloud20Service.validateImpersonationRequest(impersonationRequest);
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void validateImpersonationRequest_userNameIsBlankString_throwsBadRequestException() throws Exception {
-        ImpersonationRequest impersonationRequest = new ImpersonationRequest();
-        org.openstack.docs.identity.api.v2.User impersonateUser = new org.openstack.docs.identity.api.v2.User();
-        impersonateUser.setUsername("");
-        impersonationRequest.setUser(impersonateUser);
-        defaultCloud20Service.validateImpersonationRequest(impersonationRequest);
     }
 
     @Test
@@ -973,7 +920,6 @@ public class DefaultCloud20ServiceTest {
         assertThat("message",argumentCaptor.getValue().getMessage(),equalTo("Invalid request. Specify tenantId OR tenantName, not both."));
     }
 
-    @Ignore
     @Test
     public void authenticate_typeIsPasswordCredentials_callsValidatePasswordCredentials() throws Exception {
         AuthenticationRequest authenticationRequest = new AuthenticationRequest();
@@ -985,12 +931,9 @@ public class DefaultCloud20ServiceTest {
         userForAuthenticateResponse.setRoles(roleList);
         authenticateResponse.setToken(token);
         authenticateResponse.setUser(userForAuthenticateResponse);
-        TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
-        tokenForAuthenticationRequest.setId("tokenId");
         PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
         authenticationRequest.setTenantId("tenantId");
-        authenticationRequest.setToken(tokenForAuthenticationRequest);
-        authenticationRequest.setCredential(new JAXBElement<PasswordCredentialsRequiredUsername>(QName.valueOf("foo"),PasswordCredentialsRequiredUsername.class,passwordCredentialsRequiredUsername));
+        authenticationRequest.setCredential(new JAXBElement(QName.valueOf("foo"), PasswordCredentialsRequiredUsername.class, passwordCredentialsRequiredUsername));
         UserScopeAccess scopeAccess = new UserScopeAccess();
         scopeAccess.setAccessTokenExp(new Date(5000, 1, 1));
         scopeAccess.setAccessTokenString("foo");
@@ -1105,7 +1048,6 @@ public class DefaultCloud20ServiceTest {
         scopeAccess.setAccessTokenExp(new Date(5000, 1, 1));
         scopeAccess.setAccessTokenString("foo");
 
-        doNothing().when(spy).validatePasswordCredentials(passwordCredentialsRequiredUsername);
         when(userService.getUser("test_user")).thenReturn(user);
         when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
         doReturn(new User()).when(spy).getUserByUsernameForAuthentication("test_user");
@@ -1116,6 +1058,19 @@ public class DefaultCloud20ServiceTest {
 
         assertThat("response builder", spy.authenticate(null, authenticationRequest), equalTo(responseBuilder));
         assertThat("exception type",argumentCaptor.getValue(),instanceOf(NotAuthenticatedException.class));
+    }
+
+    @Test
+    public void authenticate_withApiKeyCredentialsWithInvalidTenant_callsValidateApiKeyCredentials() throws Exception {
+        ApiKeyCredentials keyCredentials = new ApiKeyCredentials();
+        keyCredentials.setUsername("test_user");
+        keyCredentials.setApiKey("123");
+        JAXBElement<? extends PasswordCredentialsRequiredUsername> credentialType = new JAXBElement(QName.valueOf("foo"), ApiKeyCredentials.class, keyCredentials);
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        authenticationRequest.setCredential(credentialType);
+        doReturn(new User()).when(spy).getUserByUsernameForAuthentication("test_user");
+        spy.authenticate(null, authenticationRequest);
+        verify(validator20).validateApiKeyCredentials(keyCredentials);
     }
 
     @Test
@@ -1153,7 +1108,6 @@ public class DefaultCloud20ServiceTest {
         scopeAccess.setAccessTokenExp(new Date(5000, 1, 1));
         scopeAccess.setAccessTokenString("foo");
 
-        doNothing().when(spy).validateApiKeyCredentials(keyCredentials);
         when(userService.getUser("test_user")).thenReturn(user);
         when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
         doReturn(new User()).when(spy).getUserByUsernameForAuthentication("test_user");
@@ -1443,7 +1397,6 @@ public class DefaultCloud20ServiceTest {
         when(userService.getAllUsers(org.mockito.Matchers.<FilterParam[]>any())).thenReturn(users);
         when(config.getInt("numberOfSubUsers")).thenReturn(100);
         doNothing().when(spy).setDomainId(any(ScopeAccess.class), any(User.class));
-        doNothing().when(spy).validatePassword("password");
         UserForCreate userForCreate = new UserForCreate();
         userForCreate.setUsername("userforcreate");
         userForCreate.setEmail("user@rackspace.com");
@@ -1574,8 +1527,9 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void addUser_userPasswordNotNull_callsValidatePassword() throws Exception {
         userOS.setPassword("password");
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         spy.addUser(null, null, authToken, userOS);
-        verify(spy).validatePassword("password");
+        verify(validator20).validatePasswordForCreateOrUpdate("password");
     }
 
     @Test
@@ -1624,7 +1578,6 @@ public class DefaultCloud20ServiceTest {
         when(config.getInt("numberOfSubUsers")).thenReturn(2);
         doNothing().when(spy).setDomainId(any(ScopeAccess.class), any(User.class));
         doNothing().when(spy).assignProperRole(eq(httpHeaders), eq(authToken), any(ScopeAccess.class), any(User.class));
-        doNothing().when(spy).validatePassword("password");
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         doReturn(uriBuilder).when(uriBuilder).path(anyString());
         doReturn(uri).when(uriBuilder).build();
@@ -2322,13 +2275,24 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void addUserCredential_passwordCredentials_callsValidatePasswordCredentialsForCreateOrUpdate() throws Exception {
+        MediaType mediaType = mock(MediaType.class);
+        PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
+        user.setUsername("test_user");
+        when(httpHeaders.getMediaType()).thenReturn(mediaType);
+        when(mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)).thenReturn(true);
+        doReturn(new JAXBElement<PasswordCredentialsRequiredUsername>(QName.valueOf("foo"),PasswordCredentialsRequiredUsername.class,passwordCredentialsRequiredUsername)).when(spy).getJSONCredentials(jsonBody);
+        doReturn(user).when(spy).checkAndGetUser(userId);
+        spy.addUserCredential(httpHeaders, authToken, userId, jsonBody);
+        verify(validator20).validatePasswordCredentialsForCreateOrUpdate(passwordCredentialsRequiredUsername);
+    }
+
+    @Test
     public void addUserCredential_passwordCredentials_callsUserServiceUpdateUser() throws Exception {
         MediaType mediaType = mock(MediaType.class);
         user.setUsername("test_user");
         when(httpHeaders.getMediaType()).thenReturn(mediaType);
         when(mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)).thenReturn(true);
-        doNothing().when(spy).validatePasswordCredentials(any(PasswordCredentialsRequiredUsername.class));
-        doNothing().when(spy).validatePassword(anyString());
         doReturn(user).when(spy).checkAndGetUser(anyString());
         spy.addUserCredential(httpHeaders, authToken, userId, jsonBody);
         verify(userService).updateUser(user, false);
@@ -2347,8 +2311,6 @@ public class DefaultCloud20ServiceTest {
         doReturn(jaxbElement).when(spy).getJSONCredentials(jsonBody);
         when(httpHeaders.getMediaType()).thenReturn(mediaType);
         when(mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)).thenReturn(true);
-        doNothing().when(spy).validatePasswordCredentials(passwordCredentialsRequiredUsername);
-        doNothing().when(spy).validatePassword(anyString());
         doReturn(user).when(spy).checkAndGetUser(userId);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response builder",spy.addUserCredential(httpHeaders, authToken, userId, jsonBody), equalTo(responseBuilder));
@@ -2361,11 +2323,21 @@ public class DefaultCloud20ServiceTest {
         user.setUsername("test_user");
         when(httpHeaders.getMediaType()).thenReturn(mediaType);
         when(mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)).thenReturn(true);
-        doNothing().when(spy).validatePasswordCredentials(any(PasswordCredentialsRequiredUsername.class));
-        doNothing().when(spy).validatePassword(anyString());
         doReturn(user).when(spy).checkAndGetUser(anyString());
         Response.ResponseBuilder responseBuilder = spy.addUserCredential(httpHeaders, authToken, userId, jsonBody);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void addUserCredential_apiKeyCredentials_callsValidateApiKeyCredentials() throws Exception {
+        MediaType mediaType = mock(MediaType.class);
+        ApiKeyCredentials apiKeyCredentials1 = new ApiKeyCredentials();
+        when(httpHeaders.getMediaType()).thenReturn(mediaType);
+        when(mediaType.isCompatible(MediaType.APPLICATION_XML_TYPE)).thenReturn(true);
+        doReturn(new JAXBElement<ApiKeyCredentials>(QName.valueOf("foo"),ApiKeyCredentials.class,apiKeyCredentials1)).when(spy).getXMLCredentials(jsonBody);
+        doReturn(user).when(spy).checkAndGetUser(userId);
+        spy.addUserCredential(httpHeaders, authToken, userId, jsonBody);
+        verify(validator20).validateApiKeyCredentials(apiKeyCredentials1);
     }
 
     @Test
@@ -2382,7 +2354,6 @@ public class DefaultCloud20ServiceTest {
         doReturn(jaxbElement).when(spy).getXMLCredentials(jsonBody);
         when(httpHeaders.getMediaType()).thenReturn(mediaType);
         when(mediaType.isCompatible(MediaType.APPLICATION_XML_TYPE)).thenReturn(true);
-        doNothing().when(spy).validateApiKeyCredentials(apiCredentials);
         doReturn(user).when(spy).checkAndGetUser(anyString());
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response builder", spy.addUserCredential(httpHeaders, authToken, userId, jsonBody), equalTo(responseBuilder));
@@ -2405,7 +2376,7 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void addUserCredentials_notApiKeyCredentialsAndNotPasswordCredentials_returns200() throws Exception {
+    public void addUserCredential_notApiKeyCredentialsAndNotPasswordCredentials_returns200() throws Exception {
         JAXBElement<Ec2CredentialsType> credentials = new JAXBElement<Ec2CredentialsType>(new QName("ec2"), Ec2CredentialsType.class, new Ec2CredentialsType());
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         when(httpHeaders.getMediaType()).thenReturn(MediaType.APPLICATION_XML_TYPE);
@@ -3974,10 +3945,11 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void updateUser_passwordNotNull_callsValidatePassword() throws Exception {
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         userOS.setPassword("123");
         userOS.setId(userId);
         spy.updateUser(null, authToken, userId, userOS);
-        verify(spy).validatePassword("123");
+        verify(validator20).validatePasswordForCreateOrUpdate("123");
     }
 
     @Test
@@ -4091,7 +4063,7 @@ public class DefaultCloud20ServiceTest {
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response builder", spy.updateUserApiKeyCredentials(null, authToken, null, null, creds), equalTo(responseBuilder));
-        assertThat("exception type",argumentCaptor.getValue(),instanceOf(BadRequestException.class));
+        assertThat("exception type", argumentCaptor.getValue(), instanceOf(BadRequestException.class));
     }
 
     @Test
@@ -4129,7 +4101,7 @@ public class DefaultCloud20ServiceTest {
         doReturn(new User()).when(spy).checkAndGetUser(userId);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response code", spy.updateUserApiKeyCredentials(null, authToken, userId, null, creds), equalTo(responseBuilder));
-        assertThat("exception type",argumentCaptor.getValue(),instanceOf(BadRequestException.class));
+        assertThat("exception type", argumentCaptor.getValue(), instanceOf(BadRequestException.class));
     }
 
     @Test
@@ -4155,6 +4127,13 @@ public class DefaultCloud20ServiceTest {
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
+    @Test
+    public void updateUserPasswordCredentials_callsValidatePasswordCredentialsForCreateOrUpdate() throws Exception {
+        PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
+        spy.updateUserPasswordCredentials(null, authToken, null, null, passwordCredentialsRequiredUsername);
+        verify(validator20).validatePasswordCredentialsForCreateOrUpdate(passwordCredentialsRequiredUsername);
+    }
 
     @Test
     public void updateUserPasswordCredentials_callsVerifyServiceAdminLevelAccess() throws Exception {
@@ -4172,8 +4151,6 @@ public class DefaultCloud20ServiceTest {
         ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doNothing().when(spy).validatePasswordCredentials(creds);
-        doNothing().when(spy).validatePassword("ABCdef123");
         doReturn(new User()).when(spy).checkAndGetUser(userId);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response builder", spy.updateUserPasswordCredentials(null, authToken, userId, null, creds), equalTo(responseBuilder));
@@ -4187,31 +4164,6 @@ public class DefaultCloud20ServiceTest {
         creds.setPassword("ABCdef123");
         spy.updateUserPasswordCredentials(null, authToken, userId, null, creds);
         verify(userService).updateUser(user, false);
-    }
-
-    @Test
-    public void validatePassword_ValidPassword_succeeds() throws Exception {
-        defaultCloud20Service.validatePassword("Ab345678");
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void validatePassword_LessThan8CharactersLong_throwsException() throws Exception {
-        defaultCloud20Service.validatePassword("123");
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void validatePassword_DoesNotContainUpperCaseLetter_throwsException() throws Exception {
-        defaultCloud20Service.validatePassword("ab345678");
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void validatePassword_DoesNotContainLowerCaseLetter_throwsException() throws Exception {
-        defaultCloud20Service.validatePassword("AB345678");
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void validatePassword_DoesNotContainNumericCharacter_throwsException() throws Exception {
-        defaultCloud20Service.validatePassword("Abcdefghik");
     }
 
     @Test
@@ -4828,52 +4780,6 @@ public class DefaultCloud20ServiceTest {
         verify(spy).addUserRole(null, authToken, user.getId(), clientRole.getId());
     }
 
-    @Test(expected = BadRequestException.class)
-    public void validateUsername_withEmptyString_throwBadRequestException() throws Exception {
-        defaultCloud20Service.validateUsername("");
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void validateUsername_withNullString_throwBadRequestException() throws Exception {
-        defaultCloud20Service.validateUsername(null);
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void validateUsername_withWhiteSpaceContainingString_throwBadRequestException() throws Exception {
-        defaultCloud20Service.validateUsername("first last");
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void validateUsername_withWhiteSpaceContainingString2_throwBadRequestException() throws Exception {
-        defaultCloud20Service.validateUsername(" firstlast");
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void validateUsername_withWhiteSpaceContainingString3_throwBadRequestException() throws Exception {
-        defaultCloud20Service.validateUsername("firstlast ");
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void validateUsername_withTabContainingString_throwBadRequestException() throws Exception {
-        defaultCloud20Service.validateUsername("first   last");
-    }
-
-    @Test
-    public void validateApiKeyCredentials_validApiKey_noException() throws Exception {
-        ApiKeyCredentials apiKeyCredentials = new ApiKeyCredentials();
-        apiKeyCredentials.setApiKey("1234568790");
-        apiKeyCredentials.setUsername("test");
-        defaultCloud20Service.validateApiKeyCredentials(apiKeyCredentials);
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void validateApiKeyCredentials_validApiKey_BadRequestException() throws Exception {
-        ApiKeyCredentials apiKeyCredentials = new ApiKeyCredentials();
-        apiKeyCredentials.setApiKey("");
-        apiKeyCredentials.setUsername("test");
-        defaultCloud20Service.validateApiKeyCredentials(apiKeyCredentials);
-    }
-
     @Test
     public void deleteTenant_validTenantAdminAndServiceAdmin_return204() throws Exception {
         UserScopeAccess scopeAccess = new UserScopeAccess();
@@ -4996,11 +4902,12 @@ public class DefaultCloud20ServiceTest {
         impersonateUser.setId("impersonateUserId");
         ImpersonationRequest impersonationRequest = new ImpersonationRequest();
         impersonationRequest.setUser(impersonateUser);
-        when(authorizationService.authorizeRacker(any(ScopeAccess.class))).thenReturn(true);
-        when(delegateCloud20Service.impersonateUser(anyString(), anyString(), anyString())).thenReturn("impersonatingToken");
+        when(config.getString("ga.username")).thenReturn("ga.username");
+        when(config.getString("ga.password")).thenReturn("ga.password");
+        when(delegateCloud20Service.impersonateUser("impersonateUser", "ga.username", "ga.password")).thenReturn("impersonatingToken");
         when(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory());
         spy.impersonate(null, authToken, impersonationRequest);
-        verify(spy).validateImpersonationRequest(impersonationRequest);
+        verify(validator20).validateImpersonationRequest(impersonationRequest);
     }
 
     @Test(expected = ForbiddenException.class)
@@ -5247,7 +5154,6 @@ public class DefaultCloud20ServiceTest {
         userScopeAccess.setAccessTokenString("notExpired");
 
         when(tenantService.hasTenantAccess(userScopeAccess, "tenantName")).thenReturn(false);
-        doNothing().when(spy).validatePasswordCredentials(passwordCredentialsRequiredUsername);
         doReturn(userTest).when(spy).getUserByUsernameForAuthentication("username");
         when(config.getString("cloudAuth.clientId")).thenReturn("clientId");
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword("username", "password", "clientId")).thenReturn(userScopeAccess);
@@ -5398,7 +5304,6 @@ public class DefaultCloud20ServiceTest {
         userScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
         userScopeAccess.setAccessTokenString("notExpired");
         when(tenantService.hasTenantAccess(userScopeAccess, "tenantName")).thenReturn(true);
-        doNothing().when(spy).validatePasswordCredentials(passwordCredentialsRequiredUsername);
         doReturn(userTest).when(spy).getUserByUsernameForAuthentication("username");
         when(config.getString("cloudAuth.clientId")).thenReturn("clientId");
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword("username", "password", "clientId")).thenReturn(userScopeAccess);
@@ -5442,7 +5347,6 @@ public class DefaultCloud20ServiceTest {
         userScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
         userScopeAccess.setAccessTokenString("notExpired");
         when(tenantService.hasTenantAccess(userScopeAccess, "tenantName")).thenReturn(true);
-        doNothing().when(spy).validatePasswordCredentials(passwordCredentialsRequiredUsername);
         doReturn(userTest).when(spy).getUserByUsernameForAuthentication("username");
         when(config.getString("cloudAuth.clientId")).thenReturn("clientId");
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword("username", "password", "clientId")).thenReturn(userScopeAccess);
@@ -5534,7 +5438,6 @@ public class DefaultCloud20ServiceTest {
         ImpersonationRequest impersonationRequest = new ImpersonationRequest();
         impersonationRequest.setUser(userTest);
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doNothing().when(spy).validateImpersonationRequest(impersonationRequest);
         when(userService.getUser("")).thenReturn(user);
         doReturn(true).when(spy).isValidImpersonatee(user);
         when(config.getString("cloudAuth.clientId")).thenReturn("clientId");
@@ -5554,7 +5457,6 @@ public class DefaultCloud20ServiceTest {
         ImpersonationRequest impersonationRequest = new ImpersonationRequest();
         impersonationRequest.setUser(userTest);
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doNothing().when(spy).validateImpersonationRequest(impersonationRequest);
         when(userService.getUser("")).thenReturn(user);
         doReturn(true).when(spy).isValidImpersonatee(user);
         when(config.getString("cloudAuth.clientId")).thenReturn("clientId");
@@ -5592,16 +5494,6 @@ public class DefaultCloud20ServiceTest {
         when(clientService.getOpenStackServices()).thenReturn(openStackServices);
         Response.ResponseBuilder responseBuilder = spy.listDefaultRegionServices(authToken);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
-    }
-
-    @Test
-    public void validateImpersonationRequest_validRequest_doesNotThrowAnyExceptions() throws Exception {
-        org.openstack.docs.identity.api.v2.User userTest = new org.openstack.docs.identity.api.v2.User();
-        userTest.setUsername("username");
-        ImpersonationRequest impersonationRequest = new ImpersonationRequest();
-        impersonationRequest.setUser(userTest);
-        impersonationRequest.setExpireInSeconds(2);
-        spy.validateImpersonationRequest(impersonationRequest);
     }
 
     @Test
@@ -5712,15 +5604,6 @@ public class DefaultCloud20ServiceTest {
         ApiKeyCredentials result = (ApiKeyCredentials) jaxbElement.getValue();
         assertThat("apikey", result.getApiKey(), equalTo("aaaaa-bbbbb-ccccc-12345678"));
         assertThat("username", result.getUsername(), equalTo("test_user"));
-    }
-
-    @Test (expected = BadRequestException.class)
-    public void validatePasswordCredentials_passwordIsBlank_throwsBadRequest() throws Exception {
-        PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
-        passwordCredentialsRequiredUsername.setUsername("username");
-        passwordCredentialsRequiredUsername.setPassword(" ");
-        doNothing().when(spy).validateUsername("username");
-        spy.validatePasswordCredentials(passwordCredentialsRequiredUsername);
     }
 
     @Test (expected = BadRequestException.class)
