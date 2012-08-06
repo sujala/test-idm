@@ -21,13 +21,11 @@ import org.mockito.Matchers;
 import com.rackspace.idm.domain.entity.User;
 
 import javax.ws.rs.core.Response;
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.Writer;
+import java.io.*;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 
 /**
@@ -220,6 +218,13 @@ public class AtomHopperClientTest {
         doThrow(new NullPointerException()).when(spy).executePostRequest(eq("token"), any(Writer.class), anyString());
         spy.postMigrateUser(new User(),  "token", "migrated", "migrationStatus");
         verify(spy).executePostRequest(eq("token"), any(Writer.class), anyString());
+    }
+
+    @Test
+    public void asyncPost_callsPostUserThrowsException_getsCaught() throws Exception {
+        doThrow(new IOException()).when(spy).postUser(user, "token", "notMigrated");
+        spy.asyncPost(user, "token", "notMigrated", "migrationStatus");
+        assertTrue(true);
     }
 
     @Test

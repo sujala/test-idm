@@ -47,6 +47,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.any;
 
@@ -467,6 +468,12 @@ public class CloudMigrationServiceTest {
         verify(spy).addMigrationUser(any(org.openstack.docs.identity.api.v2.User.class), anyInt(), anyString(), anyString(), eq("password"), any(SecretQA.class), anyString());
     }
 
+    @Test (expected = BadRequestException.class)
+    public void migrateUserByUsername_callsMigrateUserByUsername_throwsBadRequestException() {
+        doThrow(new BadRequestException()).when(spy).migrateUserByUsername("username", false, null);
+        spy.migrateUserByUsername("username", false);
+    }
+
     @Test( expected = ConflictException.class)
     public void migrateUserByUsername_throwsIdmExceptions() throws Exception {
         doThrow(new ConflictException()).when(spy).migrateUserByUsername("user", false, null);
@@ -585,6 +592,18 @@ public class CloudMigrationServiceTest {
         verify(userService).updateUserById(any(User.class), eq(false));
     }
 
+    @Test (expected = BadRequestException.class)
+    public void unmigrateUserByUsername_notUserAdminRole_throwsBadRequestException() throws Exception {
+        user.setInMigration(true);
+        ArrayList<TenantRole> tenantRoles = new ArrayList<TenantRole>();
+        RoleList roleList = new RoleList();
+        when(userService.getUser("username")).thenReturn(user);
+        when(tenantService.getGlobalRolesForUser(user)).thenReturn(tenantRoles);
+        when(roleConverterCloudV20.toRoleListJaxb(tenantRoles)).thenReturn(roleList);
+        doReturn(false).when(spy).isUserAdmin(roleList);
+        spy.unmigrateUserByUsername("username");
+    }
+
     @Test (expected = NotFoundException.class)
     public void unmigrateUserByUsername_userIsNull_throwsNotFoundException() throws Exception {
         spy.unmigrateUserByUsername(null);
@@ -697,6 +716,42 @@ public class CloudMigrationServiceTest {
         when(userService.getAllUsers(any(FilterParam[].class), eq(0), eq(0))).thenReturn(users);
         spy.unmigrateUserByUsername("username");
         verify(userService).deleteUser(anyString());
+    }
+
+    @Test
+    public void unmigrateUserByUsername_mossoIdNotNull_callsDeleteTenant() throws Exception {
+        Users users = new Users();
+        users.setUsers(new ArrayList<User>());
+        user.setInMigration(true);
+        user.setDomainId("donaminId");
+        user.setMossoId(1);
+        ArrayList<TenantRole> tenantRoles = new ArrayList<TenantRole>();
+        RoleList roleList = new RoleList();
+        when(userService.getUser("username")).thenReturn(user);
+        when(tenantService.getGlobalRolesForUser(user)).thenReturn(tenantRoles);
+        when(roleConverterCloudV20.toRoleListJaxb(tenantRoles)).thenReturn(roleList);
+        doReturn(true).when(spy).isUserAdmin(roleList);
+        when(userService.getAllUsers(any(FilterParam[].class), anyInt(), anyInt())).thenReturn(users);
+        spy.unmigrateUserByUsername("username");
+        verify(tenantService).deleteTenant("1");
+    }
+
+    @Test
+    public void unmigrateUserByUsername_nastIdNotNull_callsDeleteTenant() throws Exception {
+        Users users = new Users();
+        users.setUsers(new ArrayList<User>());
+        user.setInMigration(true);
+        user.setDomainId("donaminId");
+        user.setNastId("nastId");
+        ArrayList<TenantRole> tenantRoles = new ArrayList<TenantRole>();
+        RoleList roleList = new RoleList();
+        when(userService.getUser("username")).thenReturn(user);
+        when(tenantService.getGlobalRolesForUser(user)).thenReturn(tenantRoles);
+        when(roleConverterCloudV20.toRoleListJaxb(tenantRoles)).thenReturn(roleList);
+        doReturn(true).when(spy).isUserAdmin(roleList);
+        when(userService.getAllUsers(any(FilterParam[].class), anyInt(), anyInt())).thenReturn(users);
+        spy.unmigrateUserByUsername("username");
+        verify(tenantService).deleteTenant("nastId");
     }
 
     @Test
@@ -1637,6 +1692,18 @@ public class CloudMigrationServiceTest {
     }
 
     @Test
+    public void addTenantRole_tenantServiceCallsAddTenantRoleToUser_throwsIllegalArgument_getsCaught() throws Exception {
+        when(endpointService.getBaseUrlById(123456)).thenReturn(new CloudBaseUrl());
+        when(applicationService.getByName(anyString())).thenReturn(new Application());
+        ArrayList<ClientRole> clientRoles = new ArrayList<ClientRole>();
+        clientRoles.add(new ClientRole());
+        when(applicationService.getClientRolesByClientId(anyString())).thenReturn(clientRoles);
+        doThrow(new IllegalArgumentException()).when(tenantService).addTenantRoleToUser(any(User.class), any(TenantRole.class));
+        cloudMigrationService.addTenantRole(new User(), "tenantId", 123456);
+        assertTrue(true);
+    }
+
+    @Test
     public void migrateRoles_callsMigrationClient_getRoles() throws Exception {
         RoleList roleList = new RoleList();
         doReturn("adminToken").when(spy).getAdminToken();
@@ -1779,5 +1846,18 @@ public class CloudMigrationServiceTest {
         baseURLList.add(baseURL);
         BaseURL result = cloudMigrationService.getBaseUrlFromEndpoint(1, baseURLList);
         assertThat("base url", result, equalTo(null));
+    }
+
+    @Test
+    public void deleteTenant_callsTenantService_deleteTenant() throws Exception {
+        cloudMigrationService.deleteTenant("tenantId");
+        verify(tenantService).deleteTenant("tenantId");
+    }
+
+    @Test
+    public void deleteTenant_callsTenantServiceDeleteTenant_throwsException_getsCaught() throws Exception {
+        doThrow(new IllegalArgumentException()).when(tenantService).deleteTenant("tenantId");
+        cloudMigrationService.deleteTenant("tenantId");
+        assertTrue(true);
     }
 }

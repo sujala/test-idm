@@ -968,7 +968,7 @@ public class CloudMigrationService {
         return null;
     }
 
-    private void deleteTenant(String tenantId){
+    void deleteTenant(String tenantId){
         try {
             tenantService.deleteTenant(tenantId);
         }catch(Exception ex) {

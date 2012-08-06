@@ -7,6 +7,7 @@ import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.impl.DefaultUserService;
 import com.rackspacecloud.docs.auth.api.v1.*;
+import com.rackspacecloud.docs.auth.api.v1.AuthData;
 import com.rackspacecloud.docs.auth.api.v1.Credentials;
 import com.rackspacecloud.docs.auth.api.v1.User;
 import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
@@ -1254,5 +1255,17 @@ public class DelegateCloud11ServiceTest {
         doReturn(null).when(spy).extractXMLCredentials("body");
         spy.extractCredentials(httpHeaders, "body");
         verify(spy).extractXMLCredentials("body");
+    }
+
+    @Test
+    public void getAuthFromResponse_returnsAuthData() throws Exception {
+        String body = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<auth xmlns=\"http://docs.rackspacecloud.com/auth/api/v1.1\">\n" +
+                "    <token id=\"ab48a9efdfedb23ty3494\" expires=\"2010-11-01T03:32:15-05:00\">\n" +
+                "        <tenant id=\"345\" name=\"My Project\" />\n" +
+                "    </token>\n" +
+                "</auth>";
+        AuthData result = delegateCloud11Service.getAuthFromResponse(body);
+        assertThat("token id", result.getToken().getId(), equalTo("ab48a9efdfedb23ty3494"));
     }
 }

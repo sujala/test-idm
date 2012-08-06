@@ -483,6 +483,11 @@ public class DefaultCloud20ServiceTest {
         defaultCloud20Service.validateEmail("foo-bar@test.com");
     }
 
+    @Test (expected =  BadRequestException.class)
+    public void validateEmail_badEmail_throwsBadRequestException() throws Exception {
+        defaultCloud20Service.validateEmail("badEmail@badEmail.badEmai1com");
+    }
+
     @Test
     public void getUserByName_callsAuthorizationService_authenticateCloudUserAdmin() throws Exception {
         when(userService.getUser("userName")).thenReturn(new User("username"));
