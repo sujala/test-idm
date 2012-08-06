@@ -369,13 +369,22 @@ public class CloudClientTest {
     }
 
     @Test
-    public void handleRedirect_withNullRrsponseBody_returnsResponseBuilderWithNullEntity() throws Exception {
+    public void handleRedirect_withNullResponseBody_returnsResponseBuilderWithNullEntity() throws Exception {
         HttpResponse response = mock(HttpResponse.class);
         when(response.getAllHeaders()).thenReturn(new Header[0]);
 
         Response.ResponseBuilder responseBuilder = spy.handleRedirect(response, null);
         Response builtResponse = responseBuilder.build();
         assertThat("response entity", builtResponse.getEntity(), nullValue());
+    }
+
+    //TODO: should be 400 bad request?
+    @Test
+    public void handleRedirect_withNullResponse_returns500Status() throws Exception {
+        HttpResponse response = null;
+
+        Response.ResponseBuilder responseBuilder = spy.handleRedirect(response, null);
+        assertThat("response entity", responseBuilder.build().getStatus(), equalTo(500));
     }
 
     @Test
@@ -401,6 +410,20 @@ public class CloudClientTest {
         Response.ResponseBuilder responseBuilder = spy.handleRedirect(response, "response body");
         Response builtResponse = responseBuilder.build();
         assertThat("Other header", builtResponse.getMetadata().containsKey("someHeader"), equalTo(true));
+    }
+
+    @Test
+    public void handleRedirect_withContentTypeHeader_setsContentTypeToXML() throws Exception {
+        HttpHeaders headers = mock(HttpHeaders.class);
+        MultivaluedMapImpl multivaluedMap = new MultivaluedMapImpl();
+        multivaluedMap.add("content-type", "application/notxml");
+        when(headers.getRequestHeaders()).thenReturn(multivaluedMap);
+        doReturn(null).when(spy).executeRequest(any(HttpRequestBase.class));
+
+        spy.post("someUrl", headers, "someBody");
+        ArgumentCaptor<HttpRequestBase> argumentCaptor = ArgumentCaptor.forClass(HttpRequestBase.class);
+        verify(spy).executeRequest(argumentCaptor.capture());
+        assertThat("content-type is application/xml", argumentCaptor.getValue().getFirstHeader("content-type").getValue(), equalTo("application/xml"));
     }
 
     @Test
