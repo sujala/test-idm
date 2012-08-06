@@ -662,7 +662,6 @@
             </build>
         </profile>
 
-
         <profile>
             <id>soapui-dev</id>
             <activation>
@@ -773,6 +772,59 @@
         </profile>
 
         <profile>
+            <id>soapui-dev-implementation</id>
+            <activation>
+                <property>
+                    <name>soapui-dev-implementation</name>
+                </property>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>eviware</groupId>
+                        <artifactId>maven-soapui-plugin</artifactId>
+                        <version>3.6.1</version>
+                        <configuration>
+                            <projectFile>soapui/soapUI/implementation/Auth1.0_Routing.xml</projectFile>
+                            <junitReport>true</junitReport>
+                            <testSuite>Functional v1.0 redirect</testSuite>
+                            <testSuite>Functional v1.0.2</testSuite>
+                            <outputFolder>soapui/dev-routing-results</outputFolder>
+                            <projectProperties>
+                                <property>stagingEndpoint=http://d-api2.cidm.iad2.corp.rackspace.com:4931</property>
+                                <property>USstaginEndpoint=http://d-api2.cidm.iad2.corp.rackspace.com</property>
+                                <property>path=cloud</property>
+                            </projectProperties>
+                        </configuration>
+                        <dependencies>
+                            <dependency>
+                                <groupId>eviware</groupId>
+                                <artifactId>maven-soapui-plugin</artifactId>
+                                <version>3.6.1</version>
+                                <exclusions>
+                                    <exclusion>
+                                        <groupId>org.codehaus.groovy</groupId>
+                                        <artifactId>groovy-all</artifactId>
+                                    </exclusion>
+                                </exclusions>
+                            </dependency>
+                        </dependencies>
+                        <executions>
+                            <execution>
+                                <id>soapui-test</id>
+                                <phase>integration-test</phase>
+                                <goals>
+                                    <goal>test</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
             <id>soapui-dev2</id>
             <activation>
                 <property>
@@ -825,6 +877,7 @@
                 </plugins>
             </build>
         </profile>
+
         <profile>
             <id>soapui-test</id>
             <activation>
