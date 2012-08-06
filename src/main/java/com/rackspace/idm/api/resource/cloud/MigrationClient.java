@@ -149,7 +149,10 @@ public class MigrationClient {
             try {
                 ObjectMarshaller<UserList> unmarshaller = new ObjectMarshaller<UserList>();
                 userList = unmarshaller.unmarshal(response, UserList.class);
-            }catch (Exception ex2){ }
+            }catch (Exception ex2){
+                logger.info("getUsers failed with exception {}", ex2.getMessage());
+                throw new IdmException(ex2);
+            }
         }
 
     	return userList;
@@ -273,14 +276,6 @@ public class MigrationClient {
 	public void setCloud11Host(String host) {
 		this.cloud11Host = host;
 	}
-
-    public void setObjectFactory(ObjectFactory objectFactory) {
-        this.objectFactory = objectFactory;
-    }
-
-    public void setLogger(Logger logger) {
-        this.logger = logger;
-    }
 
     public void setClient(HttpClientWrapper client) {
         this.client = client;
