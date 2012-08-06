@@ -331,7 +331,25 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
-    public void unmarshallResponse_inputNotStartWithBracket_throwsIdmException_returnsNull() throws Exception {
+    public void unmarshallResponse_inputNotStartWithBracket_returnsCorrectToken() throws Exception {
+        String body = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<access xmlns=\"http://docs.openstack.org/identity/api/v2.0\">\n" +
+                "    <token id=\"ab48a9efdfedb23ty3494\" expires=\"2010-11-01T03:32:15-05:00\">\n" +
+                "        <tenant id=\"345\" name=\"My Project\" />\n" +
+                "    </token>\n" +
+                "    <user id=\"123\" username=\"jqsmith\">\n" +
+                "        <roles xmlns=\"http://docs.openstack.org/identity/api/v2.0\">\n" +
+                "            <role id=\"123\" name=\"compute:admin\" />\n" +
+                "            <role id=\"234\" name=\"object-store:admin\" />\n" +
+                "        </roles>\n" +
+                "    </user>\n" +
+                "</access>";
+        AuthenticateResponse authenticateResponse = (AuthenticateResponse)delegateCloud20Service.unmarshallResponse(body, AuthenticateResponse.class);
+        assertThat("", authenticateResponse.getToken().getId(), equalTo("ab48a9efdfedb23ty3494"));
+    }
+
+    @Test
+    public void unmarshallResponse_withBadData_throwsIdmException_returnsNull() throws Exception {
         Object result = delegateCloud20Service.unmarshallResponse("xml", AuthenticateResponse.class);
         assertThat("authenticate response", result, equalTo(null));
     }
@@ -340,6 +358,24 @@ public class DelegateCloud20ServiceTest {
     public void unmarshallAuthenticateResponse_inputStartsWithBracket_returnsCorrectToken() throws Exception {
         String body = "{\"access\":{\"token\":{\"id\":\"1319b190-9527-46e7-9c0e-4fc3ca032e57\",\"expires\":\"2012-08-03T14:56:25.000-05:00\",\"tenant\":{\"id\":\"MossoCloudFS_6eee84c5-54a4-4217-a895-8308da81feb3\",\"name\":\"MossoCloudFS_6eee84c5-54a4-4217-a895-8308da81feb3\"}}}}";
         assertThat(delegateCloud20Service.unmarshallAuthenticateResponse(body).getToken(), not(nullValue()));
+    }
+
+    @Test
+    public void unmarshallAuthenticateResponse_inputNotStartWithBracket_returnsCorrectToken() throws Exception {
+        String body = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<access xmlns=\"http://docs.openstack.org/identity/api/v2.0\">\n" +
+                "    <token id=\"ab48a9efdfedb23ty3494\" expires=\"2010-11-01T03:32:15-05:00\">\n" +
+                "        <tenant id=\"345\" name=\"My Project\" />\n" +
+                "    </token>\n" +
+                "    <user id=\"123\" username=\"jqsmith\">\n" +
+                "        <roles xmlns=\"http://docs.openstack.org/identity/api/v2.0\">\n" +
+                "            <role id=\"123\" name=\"compute:admin\" />\n" +
+                "            <role id=\"234\" name=\"object-store:admin\" />\n" +
+                "        </roles>\n" +
+                "    </user>\n" +
+                "</access>";
+        AuthenticateResponse authenticateResponse = delegateCloud20Service.unmarshallAuthenticateResponse(body);
+        assertThat("", authenticateResponse.getToken().getId(), equalTo("ab48a9efdfedb23ty3494"));
     }
 
     @Test(expected = IdmException.class)
