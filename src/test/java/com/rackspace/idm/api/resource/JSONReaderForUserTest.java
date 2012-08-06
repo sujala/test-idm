@@ -1,12 +1,9 @@
 package com.rackspace.idm.api.resource;
 
 import com.rackspace.api.idm.v1.UserSecret;
-import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.api.idm.v1.User;
 import com.rackspace.api.idm.v1.UserPasswordCredentials;
-import org.hamcrest.CoreMatchers;
-import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 import org.openstack.docs.identity.api.v2.Tenant;

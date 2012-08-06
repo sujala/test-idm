@@ -517,7 +517,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             throwIfStalePassword(ldapEx, audit);
             getLogger().error("Error updating user {} - {}", newUser.getUsername(), ldapEx);
             audit.fail("Error updating user");
-            throw new IllegalStateException(ldapEx);
+            throw new IllegalStateException(ldapEx.getMessage(), ldapEx);
         } catch (GeneralSecurityException e) {
             getLogger().error(e.getMessage());
             audit.fail(ENCRYPTION_ERROR);
@@ -563,7 +563,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             }
         } catch (LDAPException ldapEx) {
             getLogger().error("LDAP Search error - {}", ldapEx.getMessage());
-            throw new IllegalStateException(ldapEx);
+            throw new IllegalStateException(ldapEx.getMessage(), ldapEx);
         } catch (GeneralSecurityException e) {
             getLogger().error(e.getMessage());
             throw new IllegalStateException(e);
@@ -584,7 +584,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 getAppInterface().modify(user.getUniqueId(), mods);
             } catch (LDAPException ldapEx) {
                 audit.fail(ldapEx.getMessage());
-                throw new IllegalStateException(ldapEx);
+                throw new IllegalStateException(ldapEx.getMessage(), ldapEx);
             }
             audit.succeed();
         }
@@ -680,7 +680,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 return false;
             }
             getLogger().error("Bind operation on username " + user.getUsername() + " failed.", e);
-            throw new IllegalStateException(e);
+            throw new IllegalStateException(e.getMessage(), e);
         }
 
         getLogger().debug(result.toString());
@@ -1239,7 +1239,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                     ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(false)));
         } catch (LDAPException e) {
             getLogger().error("Error soft deleting user", e);
-            throw new IllegalStateException(e);
+            throw new IllegalStateException(e.getMessage(), e);
         }
         getLogger().info("SoftDeleted user - {}", user.getUsername());
     }
@@ -1306,7 +1306,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                     ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(true)));
         } catch (LDAPException e) {
             getLogger().error("Error unsoft deleting user", e);
-            throw new IllegalStateException(e);
+            throw new IllegalStateException(e.getMessage(), e);
         }
         getLogger().info("unSoftDeleted user - {}", user.getUsername());
     }

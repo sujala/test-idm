@@ -155,7 +155,7 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
         } catch (LDAPException ldapEx) {
             getLogger().error("Error updating group {} - {}", group.getName(), ldapEx);
             audit.fail("Error updating user");
-            throw new IllegalStateException(ldapEx);
+            throw new IllegalStateException(ldapEx.getMessage(), ldapEx);
         }
         audit.succeed();
         getLogger().info("Updated group - {}", group);
@@ -175,7 +175,7 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
             getLogger().info("Deleted group - {}", groupId);
         } catch (LDAPException ldapEx) {
             getLogger().error("Error deleting group {} - {}", groupId, ldapEx);
-            throw new IllegalStateException(ldapEx);
+            throw new IllegalStateException(ldapEx.getMessage(), ldapEx);
         }
 
         if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
@@ -234,7 +234,7 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
             getLogger().info("Added group {} to user {}", groupId, userId);
         } catch (LDAPException ldapEx) {
             getLogger().error("Error updating user {} endpoints - {}", userId, ldapEx);
-            throw new IllegalStateException(ldapEx);
+            throw new IllegalStateException(ldapEx.getMessage(), ldapEx);
         }
 
         if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
@@ -292,7 +292,7 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
             getLogger().info("Removed group {} from user {}", groupId, userId);
         } catch (LDAPException ldapEx) {
             getLogger().error("Error updating user {} groups - {}", userId, ldapEx);
-            throw new IllegalStateException(ldapEx);
+            throw new IllegalStateException(ldapEx.getMessage(), ldapEx);
         }
 
         if (!ResultCode.SUCCESS.equals(result.getResultCode())) {

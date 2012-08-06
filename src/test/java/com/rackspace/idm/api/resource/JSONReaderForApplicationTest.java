@@ -34,36 +34,20 @@ public class JSONReaderForApplicationTest {
             "       \"description\" : \"applicationDescription\"," +
             "       \"callBackUrl\" : \"applicationCallBackUrl\"," +
             "       \"scope\" : \"applicationScope\"," +
-            "       \"secretCredentials\" : \"applicationSecretCredentials\"" +
+            "       \"applicationSecretCredentials\" : {" +
+            "           \"clientSecret\" : \"clientSecret\"" +
+            "       }" +
             "   }" +
             "}";
 
     private String applicationJSONWithClientSecret = "{" +
             "   \"applicationSecretCredentials\" : {" +
-            "       \"clientId\" : \"clientId\"," +
-            "       \"customerId\" : \"customerId\"," +
-            "       \"name\" : \"applicationName\"," +
-            "       \"enabled\" : false," +
-            "       \"title\" : \"applicationTitle\"," +
-            "       \"description\" : \"applicationDescription\"," +
-            "       \"callBackUrl\" : \"applicationCallBackUrl\"," +
-            "       \"scope\" : \"applicationScope\"," +
-            "       \"secretCredentials\" : \"secretCredentials\"," +
             "       \"clientSecret\" : \"clientSecret\"" +
             "   }" +
             "}";
 
     private String applicationJSONWithOutClientSecret = "{" +
             "   \"applicationSecretCredentials\" : {" +
-            "       \"clientId\" : \"clientId\"," +
-            "       \"customerId\" : \"customerId\"," +
-            "       \"name\" : \"applicationName\"," +
-            "       \"enabled\" : false," +
-            "       \"title\" : \"applicationTitle\"," +
-            "       \"description\" : \"applicationDescription\"," +
-            "       \"callBackUrl\" : \"applicationCallBackUrl\"," +
-            "       \"scope\" : \"applicationScope\"," +
-            "       \"secretCredentials\" : \"secretCredentials\"" +
             "   }" +
             "}";
 
@@ -143,13 +127,6 @@ public class JSONReaderForApplicationTest {
         assertThat("application scope", applicationFromJSONString.getScope(), equalTo("applicationScope"));
     }
 
-//    @Test
-//    public void getApplicationFromJSONString_withValidJSON_setsApplicationSecretCredentials() throws Exception {
-//        Application applicationFromJSONString = JSONReaderForApplication.getApplicationFromJSONString(applicationJSON);
-//        assertThat("application secret credentials", applicationFromJSONString.getSecretCredentials(), equalTo("clientId"));
-//    }
-
-
     @Test
     public void getApplicationFromJSONString_withEmptyValidJSON_setsNullApplicationClientId() throws Exception {
         Application applicationFromJSONString = JSONReaderForApplication.getApplicationFromJSONString(emptyApplicationJSON);
@@ -226,6 +203,11 @@ public class JSONReaderForApplicationTest {
     public void getSecretCredentialsFromJSONString_withValidJsonAndSecretIsNotNull_setClientSecret() throws Exception {
         ApplicationSecretCredentials creds = JSONReaderForApplication.getSecretCredentialsFromJSONString(applicationJSONWithClientSecret);
         assertThat("Secret", creds.getClientSecret(), equalTo("clientSecret"));
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void getSecretCredentialsFromJSONString_withInvalidJSON_throwsBadRequestException() throws Exception {
+        JSONReaderForApplication.getSecretCredentialsFromJSONString("Invalid JSON");
     }
 
     @Test

@@ -4,6 +4,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 
 /**
@@ -35,8 +36,13 @@ public class UserAuthenticationResultTest {
     }
 
     @Test
-    public void equals_ObjectClassesNotEqual_returnsFalse() throws Exception {
+    public void equals_objectClassesNotEqual_returnsFalse() throws Exception {
         assertThat("equals",userAuthenticationResult.equals(new ClientAuthenticationResult(null,true)),equalTo(false));
+    }
+
+    @Test
+    public void equals_nullObject_returnsFalse() throws Exception {
+        assertThat("equals",userAuthenticationResult.equals(null),equalTo(false));
     }
 
     @Test
@@ -64,5 +70,11 @@ public class UserAuthenticationResultTest {
     public void equals_objectsEqual_returnsTrue() throws Exception {
       UserAuthenticationResult userAuthenticationResult1 = new UserAuthenticationResult(user,true);
       assertThat("equals",userAuthenticationResult.equals(userAuthenticationResult1),equalTo(true));
+    }
+
+    @Test
+    public void toString_containsAuthenticated() throws Exception {
+        userAuthenticationResult = new UserAuthenticationResult(user, false);
+        assertThat("authenticationResult toString", userAuthenticationResult.toString(), containsString("false"));
     }
 }

@@ -1,12 +1,17 @@
 package com.rackspace.idm.util;
 
+import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.OpenstackEndpoint;
+import com.rackspacecloud.docs.auth.api.v1.Service;
 import com.rackspacecloud.docs.auth.api.v1.ServiceCatalog;
+import org.junit.Ignore;
 import org.junit.Test;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
+import java.util.ArrayList;
+
+import static org.hamcrest.Matchers.equalTo;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -28,5 +33,23 @@ public class CloudAuthServiceCatalogFactoryTest {
         ServiceCatalog serviceCatalog = mock(ServiceCatalog.class);
         CloudAuthServiceCatalogFactory.processService(serviceCatalog, new OpenstackEndpoint());
         verify(serviceCatalog, never()).getService();
+    }
+
+    @Test
+    public void processService_withService_callsAddEndpoint() throws Exception {
+        ServiceCatalog serviceCatalog = mock(ServiceCatalog.class);
+        ArrayList<Service> services = new ArrayList<Service>();
+        Service service = new Service();
+        service.setName("serviceName");
+        services.add(service);
+        when(serviceCatalog.getService()).thenReturn(services);
+        OpenstackEndpoint openstackEndPoint = new OpenstackEndpoint();
+        ArrayList<CloudBaseUrl> baseUrls = new ArrayList<CloudBaseUrl>();
+        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
+        cloudBaseUrl.setServiceName("serviceName");
+        baseUrls.add(cloudBaseUrl);
+        openstackEndPoint.setBaseUrls(baseUrls);
+        CloudAuthServiceCatalogFactory.processService(serviceCatalog, openstackEndPoint);
+        assertThat("services size", services.size(), equalTo(1));
     }
 }
