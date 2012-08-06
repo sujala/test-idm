@@ -1,3 +1,0 @@
-<auth xmlns="http://docs.openstack.org/identity/api/v2.0"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-<passwordCredentials password="Password1" username="cmarin2"/> </auth>
