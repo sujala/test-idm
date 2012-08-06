@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices;
+import com.rackspace.idm.exception.BadRequestException;
 import org.hamcrest.core.IsNull;
 import org.junit.Test;
 
@@ -39,6 +40,11 @@ public class JSONReaderForDefaultRegionServicesTest {
         assertThat("list size", defaultRegionServicesFromJSONString.getServiceName().size(), equalTo(2));
         assertThat("service", defaultRegionServicesFromJSONString.getServiceName().get(0), notNullValue());
         assertThat("service", defaultRegionServicesFromJSONString.getServiceName().get(1), notNullValue());
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void getDefaultRegionServicesFromJSONString_withInvalidJSON_throwsBadRequestException() throws Exception {
+        JSONReaderForDefaultRegionServices.getDefaultRegionServicesFromJSONString("invalid JSON");
     }
 
     @Test

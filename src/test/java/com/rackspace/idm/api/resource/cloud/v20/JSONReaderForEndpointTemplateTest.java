@@ -29,6 +29,7 @@ public class JSONReaderForEndpointTemplateTest {
                 "       \"id\":1,\n" +
                 "       \"region\":\"North\",\n" +
                 "       \"type\":\"compute\",\n" +
+                "       \"name\": \"name\",\n" +
                 "       \"publicURL\":\"https://compute.north.public.com/v1\",\n" +
                 "       \"internalURL\":\"https://compute.north.internal.com/v1\",\n" +
                 "       \"adminURL\" : \"https://compute.north.admin.com/v1\",\n" +
@@ -151,6 +152,12 @@ public class JSONReaderForEndpointTemplateTest {
     public void getEndpointTemplateFromJSONString_withValidJSONAndNoAdminURL_setsNullAdminURL() throws Exception {
         EndpointTemplate endpointTemplateFromJSONString = JSONReaderForEndpointTemplate.getEndpointTemplateFromJSONString(emptyEndpointTemplateJSON);
         assertThat("endpoint template AdminURL", endpointTemplateFromJSONString.getAdminURL(), nullValue());
+    }
+
+    @Test
+    public void getEndpointTemplateFromJSONString_withValidJSON_setsName() throws Exception {
+        EndpointTemplate endpointTemplateFromJSONString = JSONReaderForEndpointTemplate.getEndpointTemplateFromJSONString(endpointTemplateJSON);
+        assertThat("endpoint template name", endpointTemplateFromJSONString.getName(), equalTo("name"));
     }
 
     @Test
