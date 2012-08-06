@@ -277,14 +277,6 @@ public class MigrationClient {
 		this.cloud11Host = host;
 	}
 
-    public void setObjectFactory(ObjectFactory objectFactory) {
-        this.objectFactory = objectFactory;
-    }
-
-    public void setLogger(Logger logger) {
-        this.logger = logger;
-    }
-
     public void setClient(HttpClientWrapper client) {
         this.client = client;
     }
