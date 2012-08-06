@@ -519,6 +519,8 @@ public class DelegateCloud20ServiceTest {
     @Test
     public void validateToken_RoutingFalseAndTokenIsImpersonatedUserWithNoAccess_callsVerifyServiceAdminLevelAccess() throws Exception {
         ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
+        impersonatedScopeAccess.setAccessTokenExp(new Date(9999,1,1));
+        impersonatedScopeAccess.setAccessTokenString("123");
         when(defaultCloud20Service.getScopeAccessForValidToken("token")).thenReturn(impersonatedScopeAccess);
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(scopeAccessService.getScopeAccessByAccessToken("token")).thenReturn(impersonatedScopeAccess);
@@ -529,8 +531,9 @@ public class DelegateCloud20ServiceTest {
 
     @Test
     public void validateToken_RoutingFalseAndTokenIsImpersonatedUserWithNoAccess_callsValidateImpersonatedTokenFromCloud() throws Exception {
-
         ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
+        impersonatedScopeAccess.setAccessTokenExp(new Date(9999,1,1));
+        impersonatedScopeAccess.setAccessTokenString("123");
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(scopeAccessService.getScopeAccessByAccessToken("token")).thenReturn(impersonatedScopeAccess);
         doReturn(new ResponseBuilderImpl()).when(spy).validateImpersonatedTokenFromCloud(null, null, null, impersonatedScopeAccess);
@@ -541,7 +544,10 @@ public class DelegateCloud20ServiceTest {
     @Test
     public void validateToken_RoutingFalseAndTokenIsImpersonatedUserWithAccess_callsDefaultCloud20ServiceValidateToken() throws Exception {
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
-        when(scopeAccessService.getScopeAccessByAccessToken("token")).thenReturn(new ImpersonatedScopeAccess());
+        ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
+        impersonatedScopeAccess.setAccessTokenExp(new Date(9999,1,1));
+        impersonatedScopeAccess.setAccessTokenString("123");
+        when(scopeAccessService.getScopeAccessByAccessToken("token")).thenReturn(impersonatedScopeAccess);
         when(scopeAccessService.getScopeAccessByAccessToken(null)).thenReturn(new ScopeAccess());
         when(defaultCloud20Service.validateToken(null, "token", "token", null)).thenReturn(new ResponseBuilderImpl());
         delegateCloud20Service.validateToken(null, "token", "token", null);
@@ -3044,6 +3050,8 @@ public class DelegateCloud20ServiceTest {
     public void authenticateImpersonated_userNotNull_callsDefaultCloud20Service_authenticate() throws Exception {
         ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
         impersonatedScopeAccess.setImpersonatingToken("impersonatedToken");
+        impersonatedScopeAccess.setAccessTokenExp(new Date(9999,1,1));
+        impersonatedScopeAccess.setAccessTokenString("123");
         when(userService.getUserByAuthToken("impersonatedToken")).thenReturn(new User());
         delegateCloud20Service.authenticateImpersonated(null, authenticationRequest, impersonatedScopeAccess);
         verify(defaultCloud20Service).authenticate(null, authenticationRequest);
@@ -3056,6 +3064,8 @@ public class DelegateCloud20ServiceTest {
         authenticationRequest.setToken(tokenForAuthenticationRequest);
         ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
         impersonatedScopeAccess.setImpersonatingToken("impersonatingToken");
+        impersonatedScopeAccess.setAccessTokenExp(new Date(9999, 1, 1));
+        impersonatedScopeAccess.setAccessTokenString("123");
         when(cloudUserExtractor.getUserByV20CredentialType(authenticationRequest)).thenReturn(null);
         when(config.getString("cloudAuth20url")).thenReturn("cloudAuth/");
         when(cloudClient.post(eq("cloudAuth/tokens"), any(HttpHeadersAcceptXml.class), anyString())).thenReturn(Response.status(404));

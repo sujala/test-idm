@@ -172,6 +172,7 @@ public class DefaultCloud20ServiceTest {
         user.setUsername(userId);
         user.setId(userId);
         user.setMossoId(123);
+        user.setRegion("region");
         role = new Role();
         role.setId("roleId");
         role.setName("roleName");
@@ -1515,25 +1516,11 @@ public class DefaultCloud20ServiceTest {
         verify(authorizationService).authorizeCloudServiceAdmin(any(ScopeAccess.class));
     }
 
-
     @Test
-    public void addUser_callerIsServiceAdmin_callsDefaultRegionService() throws Exception {
+    public void addUser_callerIsServiceAdmin_callsDefaultRegionService_validateDefaultRegion() throws Exception {
         when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
         spy.addUser(null, null, authToken, userOS);
-        verify(defaultRegionService).getDefaultRegions();
-    }
-
-    @Test
-    public void addUser_callerIsServiceAdmin_defaultRegionDoesNotMatchUserRegion_throwsBadRequestException() throws Exception {
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
-        HashSet<String> defaultRegions = new HashSet<String>();
-        defaultRegions.add("DFW");
-        when(defaultRegionService.getDefaultRegions()).thenReturn(defaultRegions);
-        user.setRegion("ORD");
-        spy.addUser(null, null, authToken, userOS);
-        ArgumentCaptor<Exception> argument = ArgumentCaptor.forClass(Exception.class);
-        verify(exceptionHandler).exceptionResponse(argument.capture());
-        assertThat("exception", argument.getValue(), instanceOf(BadRequestException.class));
+        verify(defaultRegionService).validateDefaultRegion(user.getRegion());
     }
 
     @Test
@@ -1550,25 +1537,12 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void addUser_callerIsServiceAdmin_defaultRegionDoesNotMatchUserRegion_returnsCorrectMessage() throws Exception {
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
-        HashSet<String> defaultRegions = new HashSet<String>();
-        defaultRegions.add("DFW");
-        when(defaultRegionService.getDefaultRegions()).thenReturn(defaultRegions);
-        user.setRegion("ORD");
-        spy.addUser(null, null, authToken, userOS);
-        ArgumentCaptor<Exception> argument = ArgumentCaptor.forClass(Exception.class);
-        verify(exceptionHandler).exceptionResponse(argument.capture());
-        assertThat("exception", argument.getValue().getMessage(), equalTo("Invalid defaultRegion value, accepted values are: DFW."));
-    }
-
-    @Test
     public void addUser_callerIsUserAdmin_callsDefaultRegionService() throws Exception {
         doNothing().when(spy).setDomainId(any(ScopeAccess.class), any(User.class));
         when(userService.getUserByAuthToken(authToken)).thenReturn(new User());
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
         spy.addUser(null, null, authToken, userOS);
-        verify(defaultRegionService).getDefaultRegions();
+        verify(defaultRegionService).validateDefaultRegion(user.getRegion());
     }
 
     @Test

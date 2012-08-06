@@ -7,18 +7,22 @@ import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.exception.BadRequestException;
 import org.hamcrest.core.Is;
 import org.hamcrest.core.IsNull;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Matchers;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
 /**
@@ -48,6 +52,28 @@ public class DefaultRegionServiceTest {
         when(scopeAccessService.getScopeAccessByUserId(null)).thenReturn(scopeAccess);
         defaultRegionService.getRegionList(null);
         verify(scopeAccessService).getOpenstackEndpointsForScopeAccess(scopeAccess);
+    }
+
+    @Test
+    public void addUser_callerIsServiceAdmin_defaultRegionDoesNotMatchUserRegion_returnsCorrectMessage() throws Exception {
+        HashSet<String> defaultRegions = new HashSet<String>();
+        defaultRegions.add("DFW");
+        DefaultRegionService spy = spy(defaultRegionService);
+        doReturn(defaultRegions).when(spy).getDefaultRegions();
+        try {
+            spy.validateDefaultRegion("ORD");
+        } catch (Exception e) {
+            assertThat("exception", e.getMessage(), equalTo("Invalid defaultRegion value, accepted values are: DFW."));
+        }
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void addUser_callerIsServiceAdmin_defaultRegionDoesNotMatchUserRegion_ThrowsBadRequestException() throws Exception {
+        HashSet<String> defaultRegions = new HashSet<String>();
+        defaultRegions.add("DFW");
+        DefaultRegionService spy = spy(defaultRegionService);
+        doReturn(defaultRegions).when(spy).getDefaultRegions();
+        spy.validateDefaultRegion("ORD");
     }
 
     @Test
@@ -195,7 +221,7 @@ public class DefaultRegionServiceTest {
 
         when(applicationService.getOpenStackServices()).thenReturn(applications);
         defaultRegionService.getDefaultRegions();
-        verify(endpointService,times(3)).getBaseUrlsByServiceName(anyString());
+        verify(endpointService, times(3)).getBaseUrlsByServiceName(anyString());
     }
 
     @Test
@@ -224,7 +250,7 @@ public class DefaultRegionServiceTest {
 
         when(applicationService.getOpenStackServices()).thenReturn(applications);
         defaultRegionService.getDefaultRegions();
-        verify(endpointService,times(3)).getBaseUrlsByServiceName(anyString());
+        verify(endpointService, times(3)).getBaseUrlsByServiceName(anyString());
     }
 
     @Test
@@ -253,7 +279,7 @@ public class DefaultRegionServiceTest {
 
         when(applicationService.getOpenStackServices()).thenReturn(applications);
         defaultRegionService.getDefaultRegions();
-        verify(endpointService,times(3)).getBaseUrlsByServiceName(anyString());
+        verify(endpointService, times(3)).getBaseUrlsByServiceName(anyString());
     }
 
 
