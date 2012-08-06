@@ -3,7 +3,6 @@ package com.rackspace.idm.api.converter;
 import com.rackspace.api.idm.v1.UserPassword;
 import com.rackspace.api.idm.v1.UserPasswordCredentials;
 import com.rackspace.idm.domain.entity.Password;
-import com.rackspacecloud.docs.auth.api.v1.PasswordCredentials;
 import org.junit.Before;
 import org.junit.Test;
 
