@@ -229,12 +229,7 @@ public class DefaultUserService implements UserService {
 
     @Override
     public String generateApiKey() {
-        try {
             return HashHelper.getRandomSha1();
-        } catch (NoSuchAlgorithmException e) {
-            throw new UnsupportedOperationException(
-                    "The JVM does not support the algorithm needed.", e);
-        }
     }
 
     @Override
