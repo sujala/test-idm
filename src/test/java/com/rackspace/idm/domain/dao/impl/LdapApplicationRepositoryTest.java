@@ -32,7 +32,7 @@ import static org.mockito.Mockito.*;
  * Time: 12:59 PM
  * To change this template use File | Settings | File Templates.
  */
-public class LdapApplicationRepositoryTest extends InMemoryLdapIntegrationTest{
+public class LdapApplicationRepositoryTest{
     private LdapApplicationRepository ldapApplicationRepository;
     private LdapApplicationRepository spy;
     private LDAPInterface ldapInterface;
