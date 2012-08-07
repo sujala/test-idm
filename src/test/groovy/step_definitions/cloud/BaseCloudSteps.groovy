@@ -1,4 +1,4 @@
-package step_definitions.cloud
+
 
 import com.sun.jersey.api.client.Client
 import com.sun.jersey.api.client.ClientResponse
@@ -11,7 +11,8 @@ String jetty_host
 
 Before() {
     client = Client.create()
-    jetty_host = System.properties.get("jetty.host")
+//    jetty_host = System.properties.get("jetty.host")
+    jetty_host = "http://localhost:8083/idm/"
 }
 //Version steps
 Given(~'^a auth (\\d+).(\\d+) endpoint$') { int version, int release ->
@@ -27,6 +28,7 @@ Given(~'^a auth (\\d+).(\\d+) endpoint$') { int version, int release ->
     auth_endpoint = client.resource(jetty_host+version_path)
 }
 
+
 Given(~'^the request type is "([^"]*)"$') { String request_type ->
     auth_endpoint.header("content-type", request_type)
 }
@@ -41,3 +43,4 @@ Then(~'^the response status should be (\\d+)$') { int status ->
    assert response.getStatus() == status
 
 }
+
