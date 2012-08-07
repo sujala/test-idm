@@ -597,6 +597,7 @@ public class DelegateCloud20ServiceTest {
         ImpersonatedScopeAccess sa = new ImpersonatedScopeAccess();
         sa.setAccessTokenExp(new Date());
         sa.setAccessTokenString("123");
+        Thread.sleep(100);
         when(scopeAccessService.getScopeAccessByAccessToken(Matchers.<String>any())).thenReturn(sa);
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         delegateCloud20Service.validateToken(null, null, "test", null);
