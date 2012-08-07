@@ -786,7 +786,7 @@
                         <artifactId>maven-soapui-plugin</artifactId>
                         <version>3.6.1</version>
                         <configuration>
-                            <projectFile>GlobalAuthQE/soapui/soapUI/implementation/Auth1.0_Routing.xml</projectFile>
+                            <projectFile>GlobalAuthQE/soapui/soapUI/implementation/Auth1.0.2_soapUI_project.xml</projectFile>
                             <junitReport>true</junitReport>
                             <testSuite>Functional v1.0 redirect</testSuite>
                             <testSuite>Functional v1.0.2</testSuite>
