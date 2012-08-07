@@ -3996,6 +3996,30 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void updateUser_cloudUserAdminIsTrue_callsDefaultRegionService() throws Exception {
+        User user = new User();
+        user.setId(userId);
+        userOS.setId(userId);
+        doReturn(user).when(spy).checkAndGetUser(userId);
+        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(userService.getUserByAuthToken(authToken)).thenReturn(user);
+        spy.updateUser(null, authToken, userId, userOS);
+        verify(defaultRegionService).validateDefaultRegion(user.getRegion());
+    }
+
+    @Test
+    public void updateUser_cloudServiceAdminIsTrue_callsDefaultRegionService() throws Exception {
+        User user = new User();
+        user.setId(userId);
+        userOS.setId(userId);
+        doReturn(user).when(spy).checkAndGetUser(userId);
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(userService.getUserByAuthToken(authToken)).thenReturn(user);
+        spy.updateUser(null, authToken, userId, userOS);
+        verify(defaultRegionService).validateDefaultRegion(user.getRegion());
+    }
+
+    @Test
     public void updateUser_cloudUserAdminIsTrue_callsVerifyDomain() throws Exception {
         User user = new User();
         user.setId(userId);

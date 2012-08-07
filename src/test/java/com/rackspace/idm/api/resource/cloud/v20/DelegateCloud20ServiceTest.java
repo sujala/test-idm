@@ -582,6 +582,16 @@ public class DelegateCloud20ServiceTest {
         verify(defaultCloud20Service).validateToken(null, null, "test", null);
     }
 
+    @Test(expected = NotAuthorizedException.class)
+    public void validateToken_ExpiredImpersonatedToken_throwsNotAuthorizedException() throws Exception {
+        ImpersonatedScopeAccess sa = new ImpersonatedScopeAccess();
+        sa.setAccessTokenExp(new Date());
+        sa.setAccessTokenString("123");
+        when(scopeAccessService.getScopeAccessByAccessToken(Matchers.<String>any())).thenReturn(sa);
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        delegateCloud20Service.validateToken(null, null, "test", null);
+    }
+
     @Test
     public void validateImpersonatedTokenFromCloud_SCOkFalseAndSCNonAuthoritativeInformationFalse_returns123Response() throws Exception{
        AuthenticateResponse authenticateResponse = new AuthenticateResponse();
@@ -3090,6 +3100,15 @@ public class DelegateCloud20ServiceTest {
         when(exceptionHandler.exceptionResponse(any(IdmException.class))).thenReturn(Response.status(500));
         Response.ResponseBuilder responseBuilder = spy.authenticateImpersonated(httpHeaders, authenticationRequest, impersonatedScopeAccess);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(500));
+    }
+
+    @Test
+    public void authenticateImpersonated_impersonatedScopeAccess_throwsNotAuthorizedException() throws Exception {
+        ImpersonatedScopeAccess sa = new ImpersonatedScopeAccess();
+        sa.setAccessTokenExp(new Date());
+        sa.setAccessTokenString("123");
+        spy.authenticateImpersonated(httpHeaders,authenticationRequest, sa);
+        verify(exceptionHandler).exceptionResponse(any(NotAuthorizedException.class));
     }
 
     @Test
