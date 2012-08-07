@@ -1216,4 +1216,34 @@ public class DefaultTenantServiceTest {
         spy.getTenantRolesForUser(null, null);
         verify(clientDao, times(0)).getClientRoleById(anyString());
     }
+
+    @Test
+    public void isTenantIdContainedInTenantRoles_rolesIsNull_returnsFalse() throws Exception {
+        assertThat("boolean",defaultTenantService.isTenantIdContainedInTenantRoles("tenantId",null),equalTo(false));
+    }
+
+    @Test
+    public void isTenantIdContainedInTenantRoles_rolesSizeIsZero_returnsFalse() throws Exception {
+        assertThat("boolean",defaultTenantService.isTenantIdContainedInTenantRoles("tenantId",new ArrayList<TenantRole>()),equalTo(false));
+    }
+
+    @Test
+    public void isTenantIdContainedInTenantRoles_tenantIdInRoles_returnsTrue() throws Exception {
+        String[] tenantIds = {"123"};
+        TenantRole role = new TenantRole();
+        role.setTenantIds(tenantIds);
+        List<TenantRole> roles = new ArrayList<TenantRole>();
+        roles.add(role);
+        assertThat("boolean",defaultTenantService.isTenantIdContainedInTenantRoles("123",roles),equalTo(true));
+    }
+
+    @Test
+    public void isTenantIdContainedInTenantRoles_tenantIdNotInRoles_returnsFalse() throws Exception {
+        String[] tenantIds = {"321"};
+        TenantRole role = new TenantRole();
+        role.setTenantIds(tenantIds);
+        List<TenantRole> roles = new ArrayList<TenantRole>();
+        roles.add(role);
+        assertThat("boolean",defaultTenantService.isTenantIdContainedInTenantRoles("123",roles),equalTo(false));
+    }
 }

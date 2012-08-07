@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.NotFoundException;
 import org.junit.Before;
 import org.junit.Test;
 import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
@@ -518,4 +519,69 @@ public class Validator20Test {
             assertThat("Exception", e.getMessage(), equalTo("Group name length cannot exceed 200 characters"));
         }
     }
+
+    @Test
+    public void validateGroupId_validGroupId() {
+        validator20.validateGroupId("1");
+    }
+
+    @Test
+    public void validateGroupId_validGroupIdWithSpaces_succeeds() {
+        validator20.validateGroupId("  1   ");
+    }
+
+    @Test
+    public void validateGroupId_nonNumericGroupId_throwsBadRequest() {
+        try{
+            validator20.validateGroupId("a");
+            assertTrue("should throw exception",false);
+        }catch (BadRequestException ex){
+            assertThat("exception message", ex.getMessage(), equalTo("Invalid group id"));
+        }
+    }
+
+    @Test
+    public void validateGroupId_inValidGroupId_throwBadRequest() {
+        try {
+            validator20.validateGroupId(" ");
+            assertTrue("should throw exception",false);
+        } catch (BadRequestException e) {
+            assertThat("Exception", e.getMessage(), equalTo("Invalid group id"));
+        }
+    }
+
+    @Test
+    public void validateGroupId_inValidGroupIdWithSpaces_throwBadRequest() {
+        try {
+            validator20.validateGroupId(" a ");
+        } catch (Exception e) {
+            assertThat("Exception", e.getMessage(), equalTo("Invalid group id"));
+        }
+    }
+
+    @Test
+    public void validateGroupId_groupIdIsNull_throwsBadRequest() throws Exception {
+        try{
+            validator20.validateGroupId(null);
+            assertTrue("should throw exception",false);
+        }catch (BadRequestException ex){
+            assertThat("exception message", ex.getMessage(), equalTo("Invalid group id"));
+        }
+    }
+
+    /*@Test
+    public void validateBelongsTo_success() throws Exception {
+        validator20.validateBelongsTo("", null);
+    }
+
+    @Test
+    public void validateBelongsTo_throwsNotFoundException() throws Exception {
+        try{
+            validator20.validateBelongsTo("belong", null);
+            assertTrue("should throw exception", false);
+        }catch (NotFoundException ex){
+            assertThat("exception message",ex.getMessage(), equalTo("Token doesn't belong to Tenant with Id/Name: belong"));
+        }
+    }*/
+
 }

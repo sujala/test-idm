@@ -311,7 +311,6 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder addTenant(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken,
                                      org.openstack.docs.identity.api.v2.Tenant tenant) {
-
         try {
             authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
@@ -746,16 +745,16 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder checkToken(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo)  {
+    public ResponseBuilder checkToken(HttpHeaders httpHeaders, String authToken, String tokenId, String tenantId)  {
         try {
             authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
             ScopeAccess sa = checkAndGetToken(tokenId);
 
-            if (!StringUtils.isBlank(belongsTo)) {
+            if (!StringUtils.isBlank(tenantId)) {
                 UserScopeAccess usa = (UserScopeAccess) sa;
                 List<TenantRole> roles = this.tenantService.getTenantRolesForScopeAccess(usa);
-                if (!belongsTo(belongsTo, roles)) {
+                if (!tenantService.isTenantIdContainedInTenantRoles(tenantId, roles)) {
                     throw new NotFoundException();
                 }
             }
@@ -1723,7 +1722,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder getGroupById(HttpHeaders httpHeaders, String authToken, String groupId)  {
         try {
             authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            validateGroupId(groupId);
+            validator20.validateGroupId(groupId);
             Group group = cloudGroupService.getGroupById(Integer.parseInt(groupId));
             com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group cloudGroup = cloudKsGroupBuilder.build(group);
             return Response.ok(objFactories.getRackspaceIdentityExtKsgrpV1Factory().createGroup(cloudGroup).getValue());
@@ -1737,7 +1736,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                                     com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group)  {
         try {
             authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            validateKsGroup(group);
+            validator20.validateKsGroup(group);
             Group groupDO = cloudGroupBuilder.build(group);
             cloudGroupService.addGroup(groupDO);
             com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group groupKs = cloudKsGroupBuilder.build(groupDO);
@@ -1752,30 +1751,19 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     }
 
-    public void validateKsGroup(com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group) {
-        String checkName = group.getName().trim();
-        if (group.getName() == null || checkName.isEmpty()) {
-            throw new BadRequestException("Missing group name");
-        }
-        if (group.getName().length() > MAX_GROUP_NAME) {
-            throw new BadRequestException("Group name length cannot exceed 200 characters");
-        }
-        if (group.getDescription().length() > MAX_GROUP_DESC) {
-            throw new BadRequestException("Group description length cannot exceed 1000 characters");
-        }
-    }
-
     @Override
     public ResponseBuilder updateGroup(HttpHeaders httpHeaders, String authToken, String groupId,
                                        com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group)  {
         try {
             authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            validateKsGroup(group);
-            validateGroupId(groupId);
+            validator20.validateKsGroup(group);
+            validator20.validateGroupId(groupId);
+
             group.setId(groupId);
             Group groupDO = cloudGroupBuilder.build(group);
             cloudGroupService.updateGroup(groupDO);
             com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group groupKs = cloudKsGroupBuilder.build(groupDO);
+
             return Response.ok().entity(objFactories.getRackspaceIdentityExtKsgrpV1Factory().createGroup(groupKs).getValue());
         } catch (DuplicateException bre) {
             return exceptionHandler.conflictExceptionResponse(bre.getMessage());
@@ -1788,7 +1776,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder deleteGroup(HttpHeaders httpHeaders, String authToken, String groupId)  {
         try {
             authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            validateGroupId(groupId);
+            validator20.validateGroupId(groupId);
             cloudGroupService.deleteGroup(groupId);
             return Response.noContent();
         } catch (Exception e) {
@@ -1796,28 +1784,11 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
-    public void validateGroupId(String groupId) {
-        Boolean valid = false;
-        if (groupId != null) {
-            String checkGroupId = groupId.trim();
-            try {
-                Integer.parseInt(checkGroupId);
-                valid = true;
-            } catch (Exception e) {
-                valid = false;
-            }
-        }
-        if (!valid) {
-            throw new BadRequestException("Invalid group id");
-        }
-
-    }
-
     @Override
     public ResponseBuilder addUserToGroup(HttpHeaders httpHeaders, String authToken, String groupId, String userId)  {
         try {
             authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            validateGroupId(groupId);
+            validator20.validateGroupId(groupId);
             cloudGroupService.addGroupToUser(Integer.parseInt(groupId), userId);
             return Response.noContent();
         } catch (Exception e) {
@@ -1829,7 +1800,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder removeUserFromGroup(HttpHeaders httpHeaders, String authToken, String groupId, String userId)  {
         try {
             authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            validateGroupId(groupId);
+            validator20.validateGroupId(groupId);
             if (userId == null || userId.trim().isEmpty()) {
                 throw new BadRequestException("Invalid user id");
             }
@@ -1844,7 +1815,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder getUsersForGroup(HttpHeaders httpHeaders, String authToken, String groupId, String marker, Integer limit)  {
         try {
             authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            validateGroupId(groupId);
+            validator20.validateGroupId(groupId);
             FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParamName.GROUP_ID, groupId)};
             String iMarker = (marker != null) ? marker : "0";
             int iLimit = (limit != null) ? limit : 0;

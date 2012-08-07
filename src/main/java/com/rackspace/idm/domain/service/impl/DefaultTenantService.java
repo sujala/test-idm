@@ -618,6 +618,20 @@ public class DefaultTenantService implements TenantService {
 
     }
 
+    public boolean isTenantIdContainedInTenantRoles(String tenantId, List<TenantRole> roles){
+        boolean truth = false;
+
+        if (roles != null) {
+            for (TenantRole role : roles) {
+                if (role.containsTenantId(tenantId)) {
+                    truth = true;
+                }
+            }
+        }
+
+        return truth;
+    }
+
     public void setConfig(Configuration config) {
         this.config = config;
     }
