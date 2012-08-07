@@ -1,5 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
+import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.idm.exception.BadRequestException;
 import org.apache.commons.lang.CharUtils;
 import org.apache.commons.lang.StringUtils;
@@ -22,6 +24,9 @@ import java.util.regex.Pattern;
 public class Validator20 {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    public static final int PASSWORD_MIN_LENGTH = 8;
+    public static final int MAX_GROUP_NAME = 200;
+    public static final int MAX_GROUP_DESC = 1000;
 
     public void validateUsername(String username) {
         if (StringUtils.isBlank(username)) {
@@ -60,9 +65,9 @@ public class Validator20 {
         validateEmail(user.getEmail());
     }
 
-    public void validatePasswordCredentials(PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername) {
-        String username = passwordCredentialsRequiredUsername.getUsername();
-        String password = passwordCredentialsRequiredUsername.getPassword();
+    public void validatePasswordCredentials(PasswordCredentialsRequiredUsername passwordCredentials) {
+        String username = passwordCredentials.getUsername();
+        String password = passwordCredentials.getPassword();
         validateUsername(username);
         if (StringUtils.isBlank(password)) {
             String errMsg = "Expecting password";
@@ -71,4 +76,62 @@ public class Validator20 {
         }
     }
 
+    public void validatePasswordForCreateOrUpdate(String password){
+        String errMsg = "Password must be at least 8 characters in length, must contain at least one uppercase letter, one lowercase letter, and one numeric character.";
+        if (password.length() < PASSWORD_MIN_LENGTH) {
+            logger.warn(errMsg);
+            throw new BadRequestException(errMsg);
+        }
+        if (!password.matches(".*[A-Z].*")) {
+            logger.warn(errMsg);
+            throw new BadRequestException(errMsg);
+        }
+        if (!password.matches(".*[a-z].*")) {
+            logger.warn(errMsg);
+            throw new BadRequestException(errMsg);
+        }
+        if (!password.matches(".*[0-9].*")) {
+            logger.warn(errMsg);
+            throw new BadRequestException(errMsg);
+        }
+    }
+
+    public void validatePasswordCredentialsForCreateOrUpdate(PasswordCredentialsRequiredUsername passwordCredentials){
+        validatePasswordCredentials(passwordCredentials);
+        validatePasswordForCreateOrUpdate(passwordCredentials.getPassword());
+    }
+
+    public void validateApiKeyCredentials(ApiKeyCredentials apiKeyCredentials) {
+        validateUsername(apiKeyCredentials.getUsername());
+        if (StringUtils.isBlank(apiKeyCredentials.getApiKey())) {
+            String errMsg = "Expecting apiKey";
+            logger.warn(errMsg);
+            throw new BadRequestException(errMsg);
+        }
+    }
+
+    public void validateImpersonationRequest(ImpersonationRequest impersonationRequest) {
+        if (impersonationRequest.getUser() == null) {
+            throw new BadRequestException("User cannot be null for impersonation request");
+        } else if (impersonationRequest.getUser().getUsername() == null) {
+            throw new BadRequestException("Username cannot be null for impersonation request");
+        } else if (impersonationRequest.getUser().getUsername().isEmpty() || StringUtils.isBlank(impersonationRequest.getUser().getUsername())) {
+            throw new BadRequestException("Username cannot be empty or blank");
+        } else if (impersonationRequest.getExpireInSeconds() != null && impersonationRequest.getExpireInSeconds() < 1) {
+            throw new BadRequestException("Expire in element cannot be less than 1.");
+        }
+    }
+
+    public void validateKsGroup(com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group) {
+        String checkName = group.getName();
+        if (StringUtils.isBlank(checkName)) {
+            throw new BadRequestException("Missing group name");
+        }
+        if (checkName.length() > MAX_GROUP_NAME) {
+            throw new BadRequestException("Group name length cannot exceed 200 characters");
+        }
+        if (group.getDescription().length() > MAX_GROUP_DESC) {
+            throw new BadRequestException("Group description length cannot exceed 1000 characters");
+        }
+    }
 }

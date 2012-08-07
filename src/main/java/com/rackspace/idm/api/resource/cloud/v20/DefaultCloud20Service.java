@@ -60,7 +60,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     public static final String NOT_AUTHORIZED = "Not authorized.";
     public static final String USER_AND_USER_ID_MIS_MATCHED = "User and UserId mis-matched";
-    public static final int PASSWORD_MIN_LENGTH = 8;
     public static final int MAX_GROUP_NAME = 200;
     public static final int MAX_GROUP_DESC = 1000;
     @Autowired
@@ -158,7 +157,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             return exceptionHandler.exceptionResponse(ex);
         }
     }
-
 
     @Override
     public ResponseBuilder addEndpointTemplate(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, EndpointTemplate endpoint) {
@@ -354,7 +352,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             boolean emptyPassword = StringUtils.isBlank(password);
 
             if (password != null) {
-                validatePassword(user.getPassword());
+                validator20.validatePasswordForCreateOrUpdate(user.getPassword());
             } else {
                 password = Password.generateRandom(false).getValue();
                 user.setPassword(password);
@@ -381,15 +379,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
             setDomainId(scopeAccessByAccessToken, userDO);
             if(callerIsServiceAdmin || callerIsUserAdmin){
-                Set<String> defaultRegions = defaultRegionService.getDefaultRegions();
-                String regionString = "";
-                for(String region : defaultRegions){
-                    regionString += " "+region;
-                }
-                String userRegion = userDO.getRegion();
-                if(userRegion!=null && !defaultRegions.contains(userRegion)){
-                    throw new BadRequestException("Invalid defaultRegion value, accepted values are:" + regionString +".");
-                }
+                defaultRegionService.validateDefaultRegion(userDO.getRegion());
             }
             userService.addUser(userDO);
             assignProperRole(httpHeaders, authToken, scopeAccessByAccessToken, userDO);
@@ -451,7 +441,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyUserLevelAccess(scopeAccessByAccessToken);
 
             if (user.getPassword() != null) {
-                validatePassword(user.getPassword());
+                validator20.validatePasswordForCreateOrUpdate(user.getPassword());
             }
             User retrievedUser = checkAndGetUser(userId);
             if (!userId.equals(user.getId()) && user.getId() != null) {
@@ -466,7 +456,8 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
             }
             //if user admin, verify domain
-            if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
+            boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken);
+            if (callerIsUserAdmin) {
                 User caller = userService.getUserByAuthToken(authToken);
                 authorizationService.verifyDomain(caller, retrievedUser);
             }
@@ -488,7 +479,10 @@ public class DefaultCloud20Service implements Cloud20Service {
                 atomHopperClient.asyncPost(retrievedUser, authToken, AtomHopperConstants.DISABLED, null);
             }
             retrievedUser.copyChanges(userDO);
-
+            boolean callerIsServiceAdmin = authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken);
+            if(callerIsServiceAdmin || callerIsUserAdmin){
+                defaultRegionService.validateDefaultRegion(userDO.getRegion());
+            }
             userService.updateUserById(retrievedUser, false);
             return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(retrievedUser)).getValue());
         } catch (Exception ex) {
@@ -506,61 +500,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             User caller = getUser(scopeAccessByAccessToken);
             //is userAdmin
             userDO.setDomainId(caller.getDomainId());
-        }
-    }
-
-    void validateUsername(String username) {
-        if (StringUtils.isBlank(username)) {
-            String errorMsg = "Expecting username";
-            logger.warn(errorMsg);
-            throw new BadRequestException(errorMsg);
-        }
-        if (username.contains(" ")) {
-            String errorMsg = "Username should not contain white spaces";
-            logger.warn(errorMsg);
-            throw new BadRequestException(errorMsg);
-        }
-    }
-
-    void validatePasswordCredentials(PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername) {
-        String username = passwordCredentialsRequiredUsername.getUsername();
-        String password = passwordCredentialsRequiredUsername.getPassword();
-        validateUsername(username);
-        if (StringUtils.isBlank(password)) {
-            String errMsg = "Expecting password";
-            logger.warn(errMsg);
-            throw new BadRequestException(errMsg);
-        }
-    }
-
-    void validatePassword(String password) {
-        String errMsg = "Password must be at least 8 characters in length, must contain at least one uppercase letter, one lowercase letter and one numeric character.";
-        if (password.length() < PASSWORD_MIN_LENGTH) {
-            logger.warn(errMsg);
-            throw new BadRequestException(errMsg);
-        }
-        if (!password.matches(".*[A-Z].*")) {
-            logger.warn(errMsg);
-            throw new BadRequestException(errMsg);
-        }
-        if (!password.matches(".*[a-z].*")) {
-            logger.warn(errMsg);
-            throw new BadRequestException(errMsg);
-        }
-        if (!password.matches(".*[0-9].*")) {
-            logger.warn(errMsg);
-            throw new BadRequestException(errMsg);
-        }
-    }
-
-    void validateApiKeyCredentials(ApiKeyCredentials apiKeyCredentials) {
-        String username = apiKeyCredentials.getUsername();
-        String apiKey = apiKeyCredentials.getApiKey();
-        validateUsername(username);
-        if (StringUtils.isBlank(apiKey)) {
-            String errMsg = "Expecting apiKey";
-            logger.warn(errMsg);
-            throw new BadRequestException(errMsg);
         }
     }
 
@@ -582,8 +521,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             if (credentials.getValue() instanceof PasswordCredentialsRequiredUsername) {
                 PasswordCredentialsRequiredUsername userCredentials = (PasswordCredentialsRequiredUsername) credentials.getValue();
-                validatePasswordCredentials(userCredentials);
-                validatePassword(userCredentials.getPassword());
+                validator20.validatePasswordCredentialsForCreateOrUpdate(userCredentials);
                 user = checkAndGetUser(userId);
                 if (!userCredentials.getUsername().equals(user.getUsername())) {
                     String errMsg = USER_AND_USER_ID_MIS_MATCHED;
@@ -595,7 +533,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             } else if (credentials.getValue() instanceof ApiKeyCredentials) {
                 ApiKeyCredentials userCredentials = (ApiKeyCredentials) credentials.getValue();
                 //TODO validate username breaks authenticate call
-                validateApiKeyCredentials(userCredentials);
+                validator20.validateApiKeyCredentials(userCredentials);
                 user = checkAndGetUser(userId);
                 if (!userCredentials.getUsername().equals(user.getUsername())) {
                     String errMsg = USER_AND_USER_ID_MIS_MATCHED;
@@ -692,10 +630,10 @@ public class DefaultCloud20Service implements Cloud20Service {
                     logger.warn(errMsg);
                     throw new NotAuthenticatedException(errMsg);
                 }
-            } else if (authenticationRequest.getCredential().getDeclaredType().isAssignableFrom(PasswordCredentialsRequiredUsername.class)) {
+            } else if (authenticationRequest.getCredential().getValue() instanceof PasswordCredentialsRequiredUsername) {
                 PasswordCredentialsRequiredUsername creds = (PasswordCredentialsRequiredUsername) authenticationRequest.getCredential().getValue();
                 //TODO username validation breaks validate call
-                validatePasswordCredentials(creds);
+                validator20.validatePasswordCredentials(creds);
                 String username = creds.getUsername();
                 String password = creds.getPassword();
 
@@ -706,7 +644,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             } else if (authenticationRequest.getCredential().getDeclaredType().isAssignableFrom(ApiKeyCredentials.class)) {
                 ApiKeyCredentials creds = (ApiKeyCredentials) authenticationRequest.getCredential().getValue();
-                validateApiKeyCredentials(creds);
+                validator20.validateApiKeyCredentials(creds);
                 String username = creds.getUsername();
                 String key = creds.getApiKey();
 
@@ -1651,7 +1589,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder impersonate(HttpHeaders httpHeaders, String authToken, ImpersonationRequest impersonationRequest)  {
         authorizationService.verifyRackerOrServiceAdminAccess(getScopeAccessForValidToken(authToken));
-        validateImpersonationRequest(impersonationRequest);
+        validator20.validateImpersonationRequest(impersonationRequest);
 
         String impersonatingToken = "";
         String impersonatingUsername = impersonationRequest.getUser().getUsername();
@@ -1747,19 +1685,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
 
         return Response.noContent();
-    }
-
-    void validateImpersonationRequest(ImpersonationRequest impersonationRequest) {
-        if (impersonationRequest.getUser() == null) {
-            throw new BadRequestException("User cannot be null for impersonation request");
-        } else if (impersonationRequest.getUser().getUsername() == null) {
-            throw new BadRequestException("Username cannot be null for impersonation request");
-        } else if (impersonationRequest.getUser().getUsername().isEmpty() || StringUtils.isBlank(impersonationRequest.getUser().getUsername())) {
-            throw new BadRequestException("Username cannot be empty or blank");
-        } else if (impersonationRequest.getExpireInSeconds() != null && impersonationRequest.getExpireInSeconds() < 1) {
-            throw new BadRequestException("Expire in element cannot be less than 1.");
-        }
-
     }
 
     public boolean isValidImpersonatee(User user) {
@@ -2143,9 +2068,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         try {
             authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            validator20.validatePasswordCredentialsForCreateOrUpdate(creds);
 
-            validatePasswordCredentials(creds);
-            validatePassword(creds.getPassword());
             User user = checkAndGetUser(userId);
             if (!creds.getUsername().equals(user.getUsername())) {
                 String errMsg = USER_AND_USER_ID_MIS_MATCHED;

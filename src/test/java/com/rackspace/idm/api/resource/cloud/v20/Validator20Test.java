@@ -1,5 +1,8 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
+import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.idm.exception.BadRequestException;
 import org.junit.Before;
 import org.junit.Test;
@@ -9,9 +12,8 @@ import org.openstack.docs.identity.api.v2.User;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 
 /**
  * Created with IntelliJ IDEA.
@@ -273,5 +275,247 @@ public class Validator20Test {
         passwordCredentialsRequiredUsername.setPassword("password");
         doNothing().when(spy).validateUsername("username");
         validator20.validatePasswordCredentials(passwordCredentialsRequiredUsername);
+    }
+
+    @Test
+    public void validatePasswordForCreateOrUpdate_ValidPassword_succeeds() throws Exception {
+        validator20.validatePasswordForCreateOrUpdate("Ab345678");
+    }
+
+    @Test
+    public void validatePasswordCForCreateOrUpdateForCreateOrUpdate_LessThan8CharactersLong_throwsException() throws Exception {
+        try{
+            validator20.validatePasswordForCreateOrUpdate("123");
+            assertTrue("should throw exception",false);
+        } catch (BadRequestException ex)
+        {
+            assertThat("exception message", ex.getMessage(), equalTo("Password must be at least 8 characters in length, must contain at least one uppercase letter, one lowercase letter, and one numeric character."));
+        }
+    }
+
+    @Test
+    public void validatePasswordForCreateOrUpdate_DoesNotContainUpperCaseLetter_throwsException() throws Exception {
+        try{
+            validator20.validatePasswordForCreateOrUpdate("ab345678");
+            assertTrue("should throw exception",false);
+        } catch (BadRequestException ex)
+        {
+            assertThat("exception message", ex.getMessage(), equalTo("Password must be at least 8 characters in length, must contain at least one uppercase letter, one lowercase letter, and one numeric character."));
+        }
+    }
+
+    @Test
+    public void validatePasswordForCreateOrUpdate_DoesNotContainLowerCaseLetter_throwsException() throws Exception {
+        try{
+            validator20.validatePasswordForCreateOrUpdate("AB345678");
+            assertTrue("should throw exception",false);
+        } catch (BadRequestException ex)
+        {
+            assertThat("exception message", ex.getMessage(), equalTo("Password must be at least 8 characters in length, must contain at least one uppercase letter, one lowercase letter, and one numeric character."));
+        }
+    }
+
+    @Test
+    public void validatePasswordForCreateOrUpdate_DoesNotContainNumericCharacter_throwsException() throws Exception {
+        try{
+            validator20.validatePasswordForCreateOrUpdate("Abcdefghik");
+            assertTrue("should throw exception",false);
+        } catch (BadRequestException ex)
+        {
+            assertThat("exception message", ex.getMessage(), equalTo("Password must be at least 8 characters in length, must contain at least one uppercase letter, one lowercase letter, and one numeric character."));
+        }
+    }
+
+    @Test
+    public void validatePasswordCredentialsForCreateOrUpdate_callsValidatePasswordCredentials() throws Exception {
+        PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
+        passwordCredentialsRequiredUsername.setPassword("password");
+        doNothing().when(spy).validatePasswordCredentials(passwordCredentialsRequiredUsername);
+        doNothing().when(spy).validatePasswordForCreateOrUpdate("password");
+        spy.validatePasswordCredentialsForCreateOrUpdate(passwordCredentialsRequiredUsername);
+        verify(spy).validatePasswordCredentials(passwordCredentialsRequiredUsername);
+    }
+    @Test
+    public void validatePasswordCredentialsForCreateOrUpdate_callsValidatePasswordForCreateOrUpdate() throws Exception {
+        PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
+        passwordCredentialsRequiredUsername.setPassword("password");
+        doNothing().when(spy).validatePasswordCredentials(passwordCredentialsRequiredUsername);
+        doNothing().when(spy).validatePasswordForCreateOrUpdate("password");
+        spy.validatePasswordCredentialsForCreateOrUpdate(passwordCredentialsRequiredUsername);
+        verify(spy).validatePasswordForCreateOrUpdate("password");
+    }
+
+    @Test
+    public void validateApiKeyCredentials_callsValidateUsername() throws Exception {
+        ApiKeyCredentials apiKeyCredentials = new ApiKeyCredentials();
+        apiKeyCredentials.setApiKey("1234568790");
+        apiKeyCredentials.setUsername("test");
+        doNothing().when(spy).validateUsername("test");
+        spy.validateApiKeyCredentials(apiKeyCredentials);
+        verify(spy).validateUsername("test");
+    }
+
+    @Test
+    public void validateApiKeyCredentials_validApiKey_noException() throws Exception {
+        ApiKeyCredentials apiKeyCredentials = new ApiKeyCredentials();
+        apiKeyCredentials.setApiKey("1234568790");
+        apiKeyCredentials.setUsername("test");
+        doNothing().when(spy).validateUsername("test");
+        spy.validateApiKeyCredentials(apiKeyCredentials);
+    }
+
+    @Test
+    public void validateApiKeyCredentials_validApiKey_BadRequestException() throws Exception {
+        try{
+            ApiKeyCredentials apiKeyCredentials = new ApiKeyCredentials();
+            apiKeyCredentials.setApiKey("");
+            apiKeyCredentials.setUsername("test");
+            doNothing().when(spy).validateUsername("test");
+            spy.validateApiKeyCredentials(apiKeyCredentials);
+            assertTrue("should throw exception",false);
+        } catch (BadRequestException ex){
+            assertThat("exception message",ex.getMessage(),equalTo("Expecting apiKey"));
+        }
+    }
+
+    @Test
+    public void validateImpersonationRequest_validRequest_doesNotThrowAnyExceptions() throws Exception {
+        User userTest = new User();
+        userTest.setUsername("username");
+        ImpersonationRequest impersonationRequest = new ImpersonationRequest();
+        impersonationRequest.setUser(userTest);
+        impersonationRequest.setExpireInSeconds(2);
+        validator20.validateImpersonationRequest(impersonationRequest);
+    }
+
+    @Test
+    public void validateImpersonationRequest_expireInIsLessThan1_throwsBadRequestException() throws Exception {
+        try{
+            ImpersonationRequest impersonationRequest = new ImpersonationRequest();
+            org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
+            user1.setUsername("username");
+            impersonationRequest.setUser(user1);
+            impersonationRequest.setExpireInSeconds(0);
+            validator20.validateImpersonationRequest(impersonationRequest);
+            assertTrue("should throw exception",false);
+        }catch (BadRequestException ex){
+            assertThat("exception message",ex.getMessage(),equalTo("Expire in element cannot be less than 1."));
+        }
+    }
+
+    @Test
+    public void validateImpersonationRequest_expireInNull_succeeds() throws Exception {
+        ImpersonationRequest impersonationRequest = new ImpersonationRequest();
+        org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
+        user1.setUsername("username");
+        impersonationRequest.setUser(user1);
+        validator20.validateImpersonationRequest(impersonationRequest);
+    }
+
+    @Test
+    public void validateImpersonationRequest_userIsNull_throwsBadRequestException() throws Exception {
+        try{
+            validator20.validateImpersonationRequest(new ImpersonationRequest());
+            assertTrue("should throw exception",false);
+        }catch (BadRequestException ex){
+            assertThat("exception message",ex.getMessage(),equalTo("User cannot be null for impersonation request"));
+        }
+    }
+
+    @Test
+    public void validateImpersonationRequest_userNameIsNull_throwsBadRequestException() throws Exception {
+        try{
+            ImpersonationRequest impersonationRequest = new ImpersonationRequest();
+            org.openstack.docs.identity.api.v2.User impersonateUser = new org.openstack.docs.identity.api.v2.User();
+            impersonationRequest.setUser(impersonateUser);
+            validator20.validateImpersonationRequest(impersonationRequest);
+            assertTrue("should throw exception",false);
+        }catch (BadRequestException ex){
+            assertThat("exception message",ex.getMessage(),equalTo("Username cannot be null for impersonation request"));
+        }
+    }
+
+    @Test
+    public void validateImpersonationRequest_userNameIsEmpty_throwsBadRequestException() throws Exception {
+        try{
+            ImpersonationRequest impersonationRequest = new ImpersonationRequest();
+            org.openstack.docs.identity.api.v2.User impersonateUser = new org.openstack.docs.identity.api.v2.User();
+            impersonateUser.setUsername(" ");
+            impersonationRequest.setUser(impersonateUser);
+            validator20.validateImpersonationRequest(impersonationRequest);
+            assertTrue("should throw exception",false);
+        } catch (BadRequestException ex){
+            assertThat("exception message", ex.getMessage(), equalTo("Username cannot be empty or blank"));
+        }
+    }
+
+    @Test
+    public void validateImpersonationRequest_userNameIsBlankString_throwsBadRequestException() throws Exception {
+        try{
+            ImpersonationRequest impersonationRequest = new ImpersonationRequest();
+            org.openstack.docs.identity.api.v2.User impersonateUser = new org.openstack.docs.identity.api.v2.User();
+            impersonateUser.setUsername("");
+            impersonationRequest.setUser(impersonateUser);
+            validator20.validateImpersonationRequest(impersonationRequest);
+            assertTrue("should throw exception",false);
+        }catch (BadRequestException ex){
+            assertThat("exception message", ex.getMessage(), equalTo("Username cannot be empty or blank"));
+        }
+    }
+
+    @Test
+    public void validateKsGroup_validGroup_succeeds() {
+        Group groupKs = new Group();
+        groupKs.setName("name");
+        groupKs.setDescription("description");
+        validator20.validateKsGroup(groupKs);
+    }
+
+    @Test
+    public void validateKsGroup_groupNameIsNull_throwsBadRequestException() {
+        try{
+            validator20.validateKsGroup(new Group());
+            assertTrue("should throw exception",false);
+        } catch (BadRequestException ex){
+            assertThat("exception message",ex.getMessage(),equalTo("Missing group name"));
+        }
+    }
+
+    @Test
+    public void validateKsGroup_groupDescriptionMoreThan1000Characters_throwsBadRequest() {
+        try{
+            Group groupKs = new Group();
+            groupKs.setName("valid");
+            String moreThan1000Chars = org.apache.commons.lang.StringUtils.repeat("a", 1001);
+            groupKs.setDescription(moreThan1000Chars);
+            validator20.validateKsGroup(groupKs);
+            assertTrue("should throw exception",false);
+        }catch (BadRequestException ex){
+            assertThat("exception message", ex.getMessage(), equalTo("Group description length cannot exceed 1000 characters"));
+        }
+    }
+
+    @Test
+    public void validateKsGroup_emptyName_throwsBadRequest() {
+        try{
+            Group groupKs = new Group();
+            groupKs.setName("");
+            validator20.validateKsGroup(groupKs);
+            assertTrue("should throw exception",false);
+        }catch (BadRequestException ex){
+           assertThat("exception message", ex.getMessage(), equalTo("Missing group name"));
+        }
+    }
+
+    @Test
+    public void validateKsGroup_invalidGroupLength_throwsBadRequestMessage() {
+        Group groupKs = new Group();
+        groupKs.setName("Invalidnamellllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll");
+        try {
+            validator20.validateKsGroup(groupKs);
+            assertTrue("should throw exception",false);
+        } catch (BadRequestException e) {
+            assertThat("Exception", e.getMessage(), equalTo("Group name length cannot exceed 200 characters"));
+        }
     }
 }
