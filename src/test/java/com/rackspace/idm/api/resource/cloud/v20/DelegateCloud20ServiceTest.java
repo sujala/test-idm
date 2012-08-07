@@ -516,6 +516,16 @@ public class DelegateCloud20ServiceTest {
         verify(defaultCloud20Service).validateToken(null, "token", "token", null);
     }
 
+    @Test (expected = NotAuthorizedException.class)
+    public void validateToken_tokenIsImpersonatedScopeAccessThatHasExpired_throwsNotAuthorizedException() throws Exception {
+        ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
+        impersonatedScopeAccess.setAccessTokenExpired();
+        when(scopeAccessService.getScopeAccessByAccessToken("tokenId")).thenReturn(impersonatedScopeAccess);
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
+        delegateCloud20Service.validateToken(null, "authToken", "tokenId", "belongsTo");
+
+    }
+
     @Test
     public void validateToken_RoutingFalseAndTokenIsImpersonatedUserWithNoAccess_callsVerifyServiceAdminLevelAccess() throws Exception {
         ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
@@ -3044,6 +3054,16 @@ public class DelegateCloud20ServiceTest {
         when(userService.isMigratedUser(user)).thenReturn(true);
         spy.authenticate(httpHeaders, authenticationRequest);
         verify(defaultCloud20Service).authenticate(httpHeaders, authenticationRequest);
+    }
+
+    @Test
+    public void authenticateImpersonated_scopeAccessTokenExpired_returns401() throws Exception {
+        ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
+        impersonatedScopeAccess.setAccessTokenString("123");
+        impersonatedScopeAccess.setAccessTokenExpired();
+        when(exceptionHandler.exceptionResponse(any(NotAuthorizedException.class))).thenReturn(Response.status(401));
+        Response.ResponseBuilder result = delegateCloud20Service.authenticateImpersonated(null, authenticationRequest, impersonatedScopeAccess);
+        assertThat("response code", result.build().getStatus(), equalTo(401));
     }
 
     @Test
