@@ -786,7 +786,7 @@
                         <artifactId>maven-soapui-plugin</artifactId>
                         <version>3.6.1</version>
                         <configuration>
-                            <projectFile>GlobalAuthQE/soapui/soapUI/implementation/Auth1.0_Routing.xml</projectFile>
+                            <projectFile>GlobalAuthQE/soapui/soapUI/implementation/Auth1.0.2_soapUI_project.xml</projectFile>
                             <junitReport>true</junitReport>
                             <testSuite>Functional v1.0 redirect</testSuite>
                             <testSuite>Functional v1.0.2</testSuite>
@@ -900,8 +900,8 @@
                             <testSuite>FoundationAuth-GA NegativeTestSuite</testSuite>
                             <outputFolder>soapui/test-test-results</outputFolder>
                             <projectProperties>
-                                <property>endpoint=http://t-api2.cidm.iad2.corp.rackspace.com:4931</property>
-                                <property>endpointjson=http://t-api2.cidm.iad2.corp.rackspace.com</property>
+                                <property>endpoint=https://t-api2.cidm.iad2.corp.rackspace.com:4932</property>
+                                <property>endpointjson=https://t-api2.cidm.iad2.corp.rackspace.com</property>
                                 <property>softDeletePath=cloud/v2.0</property>
                                 <property>path=v1</property>
                                 <property>v2.0path=cloud/v2.0</property>
