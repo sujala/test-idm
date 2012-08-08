@@ -168,6 +168,9 @@ public class DefaultCloud11Service implements Cloud11Service {
         try {
             authenticateCloudAdminUserForGetRequests(request);
 
+            String requestURL = request.getRequestURL().toString();
+            String versionBaseUrl = requestURL.substring(0, requestURL.lastIndexOf("/token/") + 1);
+
             UserType userType = null;
 
             if (type != null) {
@@ -181,6 +184,18 @@ public class DefaultCloud11Service implements Cloud11Service {
             }
 
             ScopeAccess sa = scopeAccessService.getScopeAccessByAccessToken(tokeId);
+
+            if (sa instanceof ImpersonatedScopeAccess){
+                ImpersonatedScopeAccess isa = (ImpersonatedScopeAccess) sa;
+                if(isa.isAccessTokenExpired(new DateTime())){
+                    throw new NotFoundException(String.format("token %s not found", tokeId));
+                }
+                UserScopeAccess usa = new UserScopeAccess();
+                usa.setAccessTokenString(isa.getAccessTokenString());
+                usa.setAccessTokenExp(isa.getAccessTokenExp());
+                usa.setUsername(isa.getImpersonatingUsername());
+                return Response.ok(OBJ_FACTORY.createToken(this.authConverterCloudV11.toCloudV11TokenJaxb(usa, versionBaseUrl)).getValue());
+            }
 
             if (!(sa instanceof UserScopeAccess) || ((UserScopeAccess) sa).isAccessTokenExpired(new DateTime())) {
                 throw new NotFoundException(String.format("token %s not found", tokeId));
@@ -216,8 +231,6 @@ public class DefaultCloud11Service implements Cloud11Service {
                 }
             }
 
-            String requestURL = request.getRequestURL().toString();
-            String versionBaseUrl = requestURL.substring(0, requestURL.lastIndexOf("/token/") + 1);
             return Response.ok(OBJ_FACTORY.createToken(this.authConverterCloudV11.toCloudV11TokenJaxb(usa, versionBaseUrl)).getValue());
 
         } catch (Exception ex) {
