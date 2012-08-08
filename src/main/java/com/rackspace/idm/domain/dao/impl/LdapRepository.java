@@ -42,6 +42,7 @@ public abstract class LdapRepository {
     public static final String OBJECTCLASS_RACKSPACE_CONTAINER = "rsContainer";
     public static final String OBJECTCLASS_TENANT = "tenant";
     public static final String OBJECTCLASS_TENANT_ROLE = "tenantRole";
+    public static final String OBJECTCLASS_DOMAIN = "rsDomain";
 
     public static final String OBJECTCLASS_NEXT_ID = "rsNextId";
     public static final String ATTR_ID = "rsId";
@@ -157,6 +158,7 @@ public abstract class LdapRepository {
     protected static final String BASEURL_BASE_DN = "ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com";
     protected static final String GROUP_BASE_DN = "ou=groups,ou=cloud,o=rackspace,dc=rackspace,dc=com";
     protected static final String TENANT_BASE_DN = "ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com";
+    protected static final String DOMAIN_BASE_DN = "ou=domains,ou=cloud,o=rackspace,dc=rackspace,dc=com";
     protected static final String CLOUD_ADMIN_BASE_DN = "ou=adminUsers,ou=cloud,o=rackspace,dc=rackspace,dc=com";
     protected static final String CUSTOMERS_BASE_DN = "ou=customers,o=rackspace,dc=rackspace,dc=com";
     protected static final String APPLICATIONS_BASE_DN = "ou=applications,o=rackspace,dc=rackspace,dc=com";
@@ -177,6 +179,7 @@ public abstract class LdapRepository {
     protected static final String[] ATTR_GROUP_SEARCH_ATTRIBUTES = {ATTR_OBJECT_CLASS, ATTR_RACKSPACE_CUSTOMER_NUMBER, ATTR_CLIENT_ID, ATTR_GROUP_TYPE, ATTR_NAME};
     protected static final String[] ATTR_USER_SEARCH_ATTRIBUTES = {"*", ATTR_CREATED_DATE, ATTR_UPDATED_DATE, ATTR_PWD_ACCOUNT_LOCKOUT_TIME};
     protected static final String[] ATTR_TENANT_SEARCH_ATTRIBUTES = {"*", ATTR_CREATED_DATE, ATTR_UPDATED_DATE};
+    protected static final String[] ATTR_DOMAIN_SEARCH_ATTRIBUTES = {"*"};
     public static final String LDAP_SEARCH_ERROR = "LDAP Search error - {}";
 
     private final LdapConnectionPools connPools;
@@ -342,6 +345,7 @@ public abstract class LdapRepository {
     protected static final String NEXT_CLIENT_ID = "nextClientId";
     protected static final String NEXT_CUSTOMER_ID = "nextCustomerId";
     protected static final String NEXT_GROUP_ID = "nextGroupId";
+    protected static final String NEXT_DOMAIN_ID = "nextDomainId";
 
     protected String getNextId(String type) {
         Filter filter = new LdapSearchBuilder()

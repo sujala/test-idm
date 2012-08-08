@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups;
@@ -372,6 +373,11 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             outer.put(JSONConstants.USER, getUser(user));
 
             jsonText = JSONValue.toJSONString(outer);
+        } else if (object.getClass().equals(Domain.class)) {
+            Domain domain = (Domain) object;
+            JSONObject outer = new JSONObject();
+            outer.put(JSONConstants.DOMAIN, getDomainWithoutWrapper(domain));
+            jsonText = JSONValue.toJSONString(outer);
         } else {
             try {
                 getMarshaller().marshallToJSON(object, outputStream);
@@ -483,6 +489,20 @@ public class JSONWriter implements MessageBodyWriter<Object> {
         //userInner.put(JSONConstants.DISPLAY_NAME, tenant.getDisplayName());
         //userInner.put(JSONConstants.CREATED, tenant.getCreated().toString());
         return userInner;
+    }
+
+    @SuppressWarnings("unchecked")
+    JSONObject getDomainWithoutWrapper(Domain domain) {
+        JSONObject domainInner = new JSONObject();
+        domainInner.put(JSONConstants.ID, domain.getId());
+        domainInner.put(JSONConstants.ENABLED, domain.isEnabled());
+        if (domain.getName() != null) {
+            domainInner.put(JSONConstants.NAME, domain.getName());
+        }
+        if (domain.getDescription() != null) {
+            domainInner.put(JSONConstants.DESCRIPTION, domain.getDescription());
+        }
+        return domainInner;
     }
 
     @SuppressWarnings("unchecked")

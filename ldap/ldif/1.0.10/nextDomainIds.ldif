@@ -1,0 +1,5 @@
+dn: cn=nextDomainId,ou=nextIds,o=rackspace,dc=rackspace,dc=com
+objectClass:top
+objectClass:rsNextId
+cn: nextDomainId
+rsId: 10000

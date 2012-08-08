@@ -131,6 +131,12 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Autowired
     private DefaultRegionService defaultRegionService;
 
+    @Autowired
+    private DomainConverterCloudV20 domainConverterCloudV20;
+
+    @Autowired
+    private DomainService domainService;
+
     private com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
 
     private Map<String, JAXBElement<Extension>> extensionMap;
@@ -1686,6 +1692,63 @@ public class DefaultCloud20Service implements Cloud20Service {
         return Response.noContent();
     }
 
+    @Override
+    public ResponseBuilder addDomain(String authToken, UriInfo uriInfo, com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain) {
+        try {
+            authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            if (StringUtils.isBlank(domain.getName())) {
+                String errMsg = "Expecting name";
+                logger.warn(errMsg);
+                throw new BadRequestException(errMsg);
+            }
+            Domain savedDomain = this.domainConverterCloudV20.toDomainDO(domain);
+            this.domainService.addDomain(savedDomain);
+            UriBuilder requestUriBuilder = uriInfo.getRequestUriBuilder();
+            String domainId = savedDomain.getDomainId();
+            URI build = requestUriBuilder.path(domainId).build();
+            com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory objectFactory = objFactories.getRackspaceIdentityExtRaxgaV1Factory();
+            com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain value = this.domainConverterCloudV20.toDomain(savedDomain);
+            return Response.created(build).entity(objectFactory.createDomain(value).getValue());
+        } catch (DuplicateException de) {
+            return exceptionHandler.conflictExceptionResponse(de.getMessage());
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public ResponseBuilder getDomain(String authToken, String domainId) {
+        authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+        Domain domain = checkAndGetDomain(domainId);
+        com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory objectFactory = objFactories.getRackspaceIdentityExtRaxgaV1Factory();
+        com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain value = this.domainConverterCloudV20.toDomain(domain);
+        return Response.ok(objectFactory.createDomain(value).getValue());
+    }
+
+    @Override
+    public ResponseBuilder updateDomain(String authToken, String domainId, com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain) {
+        authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+        Domain domainDO = checkAndGetDomain(domainId);
+        domainDO.setDescription(domain.getDescription());
+        domainDO.setName(domain.getName());
+        domainDO.setEnabled(domain.isEnabled());
+        domainDO.setName(domain.getName());
+        this.domainService.updateDomain(domainDO);
+        return Response.ok(objFactories.getRackspaceIdentityExtRaxgaV1Factory().createDomain(domainConverterCloudV20.toDomain(domainDO)).getValue());
+    }
+
+    @Override
+    public ResponseBuilder deleteDomain(String authToken, String domainId) {
+        try {
+            authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            Domain domain = checkAndGetDomain(domainId);
+            domainService.deleteDomain(domain.getDomainId());
+            return Response.noContent();
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
     public boolean isValidImpersonatee(User user) {
         List<TenantRole> tenantRolesForUser = tenantService.getGlobalRolesForUser(user, null);
         for (TenantRole role : tenantRolesForUser) {
@@ -2212,6 +2275,17 @@ public class DefaultCloud20Service implements Cloud20Service {
             throw new NotFoundException(errMsg);
         }
         return tenant;
+    }
+
+    Domain checkAndGetDomain(String domainId) {
+        Domain domain = this.domainService.getDomain(domainId);
+
+        if (domain == null) {
+            String errMsg = String.format("Domain with id: '%s' was not found.", domainId);
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+        return domain;
     }
 
     ScopeAccess checkAndGetToken(String tokenId) {
