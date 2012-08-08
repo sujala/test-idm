@@ -7,6 +7,7 @@ import com.rackspace.idm.domain.dao.impl.LdapUserRepository;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.impl.DefaultUserService;
+import com.rackspace.idm.exception.NotAuthorizedException;
 import com.rackspacecloud.docs.auth.api.v1.*;
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
@@ -275,8 +276,12 @@ public class DelegateCloud11Service implements Cloud11Service {
             }
 
             if(defaultUserService.isMigratedUser(user)){
-                cloudClient.delete(getCloudAuthV11Url().concat(USERS + userId), httpHeaders);
-                return defaultCloud11Service.deleteUser(request, userId, httpHeaders);
+                String url = getCloudAuthV11Url().concat(USERS + userId);
+                ResponseBuilder responseBuilder = cloudClient.delete(url, httpHeaders);
+                int status = responseBuilder.build().getStatus();
+                if (status == HttpServletResponse.SC_UNAUTHORIZED) {
+                    throw new NotAuthorizedException("Cloud admin user authorization Failed.");
+                }
             }
         }
         return defaultCloud11Service.deleteUser(request, userId, httpHeaders);

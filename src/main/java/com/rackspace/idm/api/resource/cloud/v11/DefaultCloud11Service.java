@@ -565,7 +565,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             if (isDefaultUser) {
                 throw new BadRequestException("Cannot delete Sub-Users via Auth v1.1. Please use v2.0");
             }
-            if (userService.hasSubUsers(userId)) {
+            if (userService.hasSubUsers(gaUser.getId())) {
                 throw new BadRequestException("Cannot delete a User-Admin with Sub-Users. Please use v2.0 contract to remove Sub-Users then try again");
             }
 
