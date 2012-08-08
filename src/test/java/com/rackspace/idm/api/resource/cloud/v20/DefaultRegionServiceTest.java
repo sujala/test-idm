@@ -41,17 +41,8 @@ public class DefaultRegionServiceTest {
 
     @Before
     public void setUp() throws Exception {
-        defaultRegionService.setScopeAccessService(scopeAccessService);
         defaultRegionService.setEndpointService(endpointService);
         defaultRegionService.setApplicationService(applicationService);
-    }
-
-    @Test
-    public void testGetRegionList_callsScopeAccessService_getOpenstackEndpointsForScopeAccess() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        when(scopeAccessService.getScopeAccessByUserId(null)).thenReturn(scopeAccess);
-        defaultRegionService.getRegionList(null);
-        verify(scopeAccessService).getOpenstackEndpointsForScopeAccess(scopeAccess);
     }
 
     @Test
@@ -77,101 +68,44 @@ public class DefaultRegionServiceTest {
     }
 
     @Test
-    public void testGetRegionList_ScopeAccessNotFound_returnsEmptyList() throws Exception {
-        when(scopeAccessService.getScopeAccessByUserId(null)).thenReturn(null);
-        Set<String> regionList = defaultRegionService.getRegionList(null);
-        assertThat("region list", regionList.size(), equalTo(0));
+    public void validateDefaultRegion_nullRegion_NoExceptionThrown() throws Exception {
+        DefaultRegionService spy = spy(defaultRegionService);
+        Set<String> regions = new HashSet<String>();
+        regions.add("DFW");
+        regions.add("ORD");
+        doReturn(regions).when(spy).getDefaultRegions();
+        spy.validateDefaultRegion(null);
     }
 
     @Test
-    public void testGetRegionList_returnsAllRegions() throws Exception {
-        ArrayList<OpenstackEndpoint> openstackEndpoints = new ArrayList<OpenstackEndpoint>();
-
-        OpenstackEndpoint endpoint1 = new OpenstackEndpoint();
-        ArrayList<CloudBaseUrl> baseUrls1 = new ArrayList<CloudBaseUrl>();
-        CloudBaseUrl baseUrl1 = new CloudBaseUrl();
-        baseUrl1.setRegion("DFW");
-        baseUrls1.add(baseUrl1);
-        endpoint1.setBaseUrls(baseUrls1);
-
-        OpenstackEndpoint endpoint2 = new OpenstackEndpoint();
-        ArrayList<CloudBaseUrl> baseUrls2 = new ArrayList<CloudBaseUrl>();
-        CloudBaseUrl baseUrl2 = new CloudBaseUrl();
-        baseUrl2.setRegion("ORD");
-        baseUrls2.add(baseUrl2);
-        endpoint2.setBaseUrls(baseUrls2);
-
-        OpenstackEndpoint endpoint3 = new OpenstackEndpoint();
-        ArrayList<CloudBaseUrl> baseUrls3 = new ArrayList<CloudBaseUrl>();
-        CloudBaseUrl baseUrl3 = new CloudBaseUrl();
-        baseUrl3.setRegion("LON");
-        baseUrls3.add(baseUrl3);
-        endpoint3.setBaseUrls(baseUrls3);
-
-        openstackEndpoints.add(endpoint1);
-        openstackEndpoints.add(endpoint2);
-        openstackEndpoints.add(endpoint3);
-
-        when(scopeAccessService.getOpenstackEndpointsForScopeAccess(Matchers.any(ScopeAccess.class))).thenReturn(openstackEndpoints);
-        Set<String> regionList = defaultRegionService.getRegionList(null);
-        assertThat("region list", regionList.size(), equalTo(3));
-        assertThat("region list", regionList, hasItem("DFW"));
-        assertThat("region list", regionList, hasItem("ORD"));
-        assertThat("region list", regionList, hasItem("LON"));
+    public void validateDefaultRegion_matchingRegion_NoExceptionThrown() throws Exception {
+        DefaultRegionService spy = spy(defaultRegionService);
+        Set<String> regions = new HashSet<String>();
+        regions.add("DFW");
+        regions.add("ORD");
+        doReturn(regions).when(spy).getDefaultRegions();
+        spy.validateDefaultRegion("DFW");
     }
 
     @Test
-    public void testGetRegionList_IgnoresDuplicates() throws Exception {
-        ArrayList<OpenstackEndpoint> openstackEndpoints = new ArrayList<OpenstackEndpoint>();
-
-        OpenstackEndpoint endpoint1 = new OpenstackEndpoint();
-        ArrayList<CloudBaseUrl> baseUrls1 = new ArrayList<CloudBaseUrl>();
-        CloudBaseUrl baseUrl1 = new CloudBaseUrl();
-        baseUrl1.setRegion("DFW");
-        baseUrls1.add(baseUrl1);
-        endpoint1.setBaseUrls(baseUrls1);
-
-        OpenstackEndpoint endpoint2 = new OpenstackEndpoint();
-        ArrayList<CloudBaseUrl> baseUrls2 = new ArrayList<CloudBaseUrl>();
-        CloudBaseUrl baseUrl2 = new CloudBaseUrl();
-        baseUrl2.setRegion("DFW");
-        baseUrls2.add(baseUrl2);
-        endpoint2.setBaseUrls(baseUrls2);
-
-        OpenstackEndpoint endpoint3 = new OpenstackEndpoint();
-        ArrayList<CloudBaseUrl> baseUrls3 = new ArrayList<CloudBaseUrl>();
-        CloudBaseUrl baseUrl3 = new CloudBaseUrl();
-        baseUrl3.setRegion("LON");
-        baseUrls3.add(baseUrl3);
-        endpoint3.setBaseUrls(baseUrls3);
-
-        openstackEndpoints.add(endpoint1);
-        openstackEndpoints.add(endpoint2);
-        openstackEndpoints.add(endpoint3);
-
-        when(scopeAccessService.getOpenstackEndpointsForScopeAccess(Matchers.any(ScopeAccess.class))).thenReturn(openstackEndpoints);
-        Set<String> regionList = defaultRegionService.getRegionList(null);
-        assertThat("region list", regionList.size(), equalTo(2));
-        assertThat("region list", regionList, hasItem("DFW"));
-        assertThat("region list", regionList, hasItem("LON"));
+    public void validateDefaultRegion_callsGetDefaultRegions() throws Exception {
+        DefaultRegionService spy = spy(defaultRegionService);
+        Set<String> regions = new HashSet<String>();
+        regions.add("DFW");
+        regions.add("ORD");
+        doReturn(regions).when(spy).getDefaultRegions();
+        spy.validateDefaultRegion("DFW");
+        verify(spy).getDefaultRegions();
     }
 
-    @Test
-    public void testGetRegionList_callsScopeAccessService_getScopeAccessByUserId() throws Exception {
-        defaultRegionService.getRegionList(null);
-        verify(scopeAccessService).getScopeAccessByUserId(null);
-    }
-
-    @Test
-    public void testGetRegionList_returnsNonNullValue() throws Exception {
-        Set<String> regionList = defaultRegionService.getRegionList(null);
-        assertThat("region list", regionList, IsNull.notNullValue());
-    }
-
-    @Test
-    public void testGetRegionList_returnsSetType() throws Exception {
-        Set<String> regionList = defaultRegionService.getRegionList(null);
-        assertThat("region list", regionList, Is.is(Set.class));
+    @Test(expected = BadRequestException.class)
+    public void validateDefaultRegion_nonMatchingRegion_BadRequestExceptionThrown() throws Exception {
+        DefaultRegionService spy = spy(defaultRegionService);
+        Set<String> regions = new HashSet<String>();
+        regions.add("DFW");
+        regions.add("ORD");
+        doReturn(regions).when(spy).getDefaultRegions();
+        spy.validateDefaultRegion("LON");
     }
 
     @Test
