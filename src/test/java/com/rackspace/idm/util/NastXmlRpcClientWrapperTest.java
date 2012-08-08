@@ -1,18 +1,22 @@
 package com.rackspace.idm.util;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
+
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.xmlrpc.client.XmlRpcClient;
 import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.net.URL;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.notNull;
-import static org.mockito.Mockito.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -25,6 +29,7 @@ public class NastXmlRpcClientWrapperTest {
     private NastXmlRpcClientWrapper nastXmlRpcClientWrapper;
     private NastConfiguration nastConfiguration;
     private NastXmlRpcClientWrapper spy;
+    private URL url;
 
     @Before
     public void setUp() throws Exception {
@@ -36,25 +41,24 @@ public class NastXmlRpcClientWrapperTest {
         nastXmlRpcClientWrapper.setAuthConfiguration(nastConfiguration);
 
         spy = spy(nastXmlRpcClientWrapper);
-    }
 
-    @Test
-    public void getClient_callsNastConfig_getNastXmlRpcUrl() throws Exception {
-        nastXmlRpcClientWrapper.getClient();
-        verify(nastConfiguration).getNastXmlRpcUrl();
+        url = new URL("http://localhost");
     }
 
     @Test
     public void getClient_returnsNewClient() throws Exception {
-        XmlRpcClient rpcClient = nastXmlRpcClientWrapper.getClient();
-        assertThat("rpc client", ((XmlRpcClientConfigImpl)rpcClient.getClientConfig()).getServerURL(), equalTo(null));
+        XmlRpcClient rpcClient = nastXmlRpcClientWrapper.getClient(url);
+        assertThat("rpc client", ((XmlRpcClientConfigImpl)rpcClient.getClientConfig()).getServerURL(), equalTo(url));
     }
 
     @Test
     public void addResellerStorageAccount_returnsResponse() throws Exception {
         XmlRpcClient xmlRpcClient = mock(XmlRpcClient.class);
-        doReturn(xmlRpcClient).when(spy).getClient();
+        doReturn(xmlRpcClient).when(spy).getClient(url);
         when(xmlRpcClient.execute("reseller.add_storage_account", new String[]{"1", "2", "3"})).thenReturn("response");
+        List<URL> urllist = new ArrayList<URL>();
+        urllist.add(new URL("http://localhost"));
+        when(nastConfiguration.getNastXmlRpcUrl()).thenReturn(urllist);
         String response = spy.addResellerStorageAccount(new String[]{"1", "2", "3"});
         assertThat("response string", response, equalTo("response"));
     }
@@ -62,8 +66,11 @@ public class NastXmlRpcClientWrapperTest {
     @Test
     public void removeResellerStorageAccount_returnsFalse() throws Exception {
         XmlRpcClient xmlRpcClient = mock(XmlRpcClient.class);
-        doReturn(xmlRpcClient).when(spy).getClient();
+        doReturn(xmlRpcClient).when(spy).getClient(url);
         when(xmlRpcClient.execute(anyString(), any(Object[].class))).thenReturn(false);
+        List<URL> urllist = new ArrayList<URL>();
+        urllist.add(new URL("http://localhost"));
+        when(nastConfiguration.getNastXmlRpcUrl()).thenReturn(urllist);
         Boolean response = spy.removeResellerStorageAccount("");
         assertThat("boolean", response, equalTo(false));
     }
@@ -71,7 +78,7 @@ public class NastXmlRpcClientWrapperTest {
     @Test
     public void removeResellerStorageAccount_returnsTrue() throws Exception {
         XmlRpcClient xmlRpcClient = mock(XmlRpcClient.class);
-        doReturn(xmlRpcClient).when(spy).getClient();
+        doReturn(xmlRpcClient).when(spy).getClient(url);
         when(xmlRpcClient.execute(anyString(), any(String[].class))).thenReturn(true);
         Boolean response = spy.removeResellerStorageAccount("");
         assertThat("boolean", response, equalTo(true));
