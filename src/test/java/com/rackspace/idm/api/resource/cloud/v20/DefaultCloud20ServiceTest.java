@@ -22,7 +22,6 @@ import com.unboundid.ldap.sdk.SearchResultEntry;
 import org.apache.commons.configuration.Configuration;
 import org.hamcrest.Matchers;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.openstack.docs.common.api.v1.Extension;
@@ -442,7 +441,7 @@ public class DefaultCloud20ServiceTest {
     public void deleteUser_userServiceHasSubUsersWithUserId_returnsResponseBuilder() throws Exception {
         ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        ScopeAccess scopeAccess = new ScopeAccess();
+        UserScopeAccess scopeAccess = new UserScopeAccess();
 
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(new User()).when(spy).checkAndGetUser("userId");
@@ -458,14 +457,14 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void deleteUser_callsScopeAccessService_getScopeAccessByUserId() throws Exception {
-        when(scopeAccessService.getScopeAccessByUserId(userId)).thenReturn(new ScopeAccess());
+        when(scopeAccessService.getScopeAccessByUserId(userId)).thenReturn(new UserScopeAccess());
         spy.deleteUser(httpHeaders, authToken, userId);
         verify(scopeAccessService).getScopeAccessByUserId(userId);
     }
 
     @Test
     public void deleteUser_callsAuthService_hasUserAdminRole() throws Exception {
-        when(scopeAccessService.getScopeAccessByUserId(userId)).thenReturn(new ScopeAccess());
+        when(scopeAccessService.getScopeAccessByUserId(userId)).thenReturn(new UserScopeAccess());
         spy.deleteUser(httpHeaders, authToken, userId);
         verify(authorizationService).hasUserAdminRole(org.mockito.Matchers.any(ScopeAccess.class));
     }
@@ -3930,6 +3929,51 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void updateUser_callsGetScopeAccessByUserId() throws Exception {
+        User user = new User();
+        user.setId(userId);
+        userOS.setId(userId);
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doReturn(user).when(spy).checkAndGetUser(anyString());
+        spy.updateUser(null, authToken, userId, userOS);
+        verify(scopeAccessService).getScopeAccessByUserId(userId);
+    }
+
+    @Test
+    public void updateUser_userIsDefaultUser_callsDefaultRegionService() throws Exception {
+        User user = new User();
+        user.setId(userId);
+        userOS.setId(userId);
+        ScopeAccess scopeAccess = new ScopeAccess();
+        UserScopeAccess scopeAccessForDefaultUser = new UserScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doReturn(user).when(spy).checkAndGetUser(anyString());
+        when(scopeAccessService.getScopeAccessByUserId(userId)).thenReturn(scopeAccessForDefaultUser);
+        when(authorizationService.authorizeCloudUser(scopeAccessForDefaultUser)).thenReturn(true);
+        ScopeAccess value = new ScopeAccess();
+        when(scopeAccessService.getScopeAccessByUserId(userId)).thenReturn(value);
+        when(authorizationService.hasDefaultUserRole(value)).thenReturn(true);
+        spy.updateUser(null, authToken, userId, userOS);
+        verify(defaultRegionService).validateDefaultRegion(anyString());
+    }
+
+    @Test
+    public void updateUser_userIsUserAdminUser_callsDefaultRegionService() throws Exception {
+        User user = new User();
+        user.setId(userId);
+        userOS.setId(userId);
+        ScopeAccess scopeAccess = new ScopeAccess();
+        UserScopeAccess scopeAccessForUserAdmin = new UserScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doReturn(user).when(spy).checkAndGetUser(anyString());
+        when(scopeAccessService.getScopeAccessByUserId(userId)).thenReturn(scopeAccessForUserAdmin);
+        when(authorizationService.hasUserAdminRole(scopeAccessForUserAdmin)).thenReturn(true);
+        spy.updateUser(null, authToken, userId, userOS);
+        verify(defaultRegionService).validateDefaultRegion(anyString());
+    }
+
+    @Test
     public void updateUser_passwordNotNull_callsValidatePassword() throws Exception {
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         userOS.setPassword("123");
@@ -4008,25 +4052,16 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void updateUser_cloudUserAdminIsTrue_callsDefaultRegionService() throws Exception {
+    public void updateUser_userIdUserAdmin_callsDefaultRegionService() throws Exception {
         User user = new User();
         user.setId(userId);
         userOS.setId(userId);
         doReturn(user).when(spy).checkAndGetUser(userId);
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(userService.getUserByAuthToken(authToken)).thenReturn(user);
-        spy.updateUser(null, authToken, userId, userOS);
-        verify(defaultRegionService).validateDefaultRegion(user.getRegion());
-    }
-
-    @Test
-    public void updateUser_cloudServiceAdminIsTrue_callsDefaultRegionService() throws Exception {
-        User user = new User();
-        user.setId(userId);
-        userOS.setId(userId);
-        doReturn(user).when(spy).checkAndGetUser(userId);
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
-        when(userService.getUserByAuthToken(authToken)).thenReturn(user);
+        ScopeAccess value = new ScopeAccess();
+        when(scopeAccessService.getScopeAccessByUserId(userId)).thenReturn(value);
+        when(authorizationService.hasUserAdminRole(value)).thenReturn(true);
         spy.updateUser(null, authToken, userId, userOS);
         verify(defaultRegionService).validateDefaultRegion(user.getRegion());
     }

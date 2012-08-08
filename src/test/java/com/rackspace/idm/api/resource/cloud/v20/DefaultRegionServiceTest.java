@@ -35,7 +35,6 @@ import static org.mockito.Mockito.*;
 public class DefaultRegionServiceTest {
 
     DefaultRegionService defaultRegionService = new DefaultRegionService();
-    ScopeAccessService scopeAccessService = mock(ScopeAccessService.class);
     EndpointService endpointService = mock(EndpointService.class);
     ApplicationService applicationService = mock(ApplicationService.class);
 
@@ -106,6 +105,27 @@ public class DefaultRegionServiceTest {
         regions.add("ORD");
         doReturn(regions).when(spy).getDefaultRegions();
         spy.validateDefaultRegion("LON");
+    }
+
+
+    @Test(expected = BadRequestException.class)
+    public void validateDefaultRegion_regionIsEmptyString_throwBadRequestException() throws Exception {
+        DefaultRegionService spy = spy(defaultRegionService);
+        Set<String> regions = new HashSet<String>();
+        regions.add("DFW");
+        regions.add("ORD");
+        doReturn(regions).when(spy).getDefaultRegions();
+        spy.validateDefaultRegion("");
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void validateDefaultRegion_regionIsBlankString_throwBadRequestException() throws Exception {
+        DefaultRegionService spy = spy(defaultRegionService);
+        Set<String> regions = new HashSet<String>();
+        regions.add("DFW");
+        regions.add("ORD");
+        doReturn(regions).when(spy).getDefaultRegions();
+        spy.validateDefaultRegion("   ");
     }
 
     @Test

@@ -478,8 +478,10 @@ public class DefaultCloud20Service implements Cloud20Service {
                 atomHopperClient.asyncPost(retrievedUser, authToken, AtomHopperConstants.DISABLED, null);
             }
             retrievedUser.copyChanges(userDO);
-            boolean callerIsServiceAdmin = authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken);
-            if(callerIsServiceAdmin || callerIsUserAdmin){
+            ScopeAccess scopeAccessForUserBeingUpdated = scopeAccessService.getScopeAccessByUserId(userId);
+            boolean userBeingUpdatedIsDefaultUser = authorizationService.hasDefaultUserRole(scopeAccessForUserBeingUpdated);
+            boolean userBeingUpdatedIsUserAdmin = authorizationService.hasUserAdminRole(scopeAccessForUserBeingUpdated);
+            if(userBeingUpdatedIsDefaultUser || userBeingUpdatedIsUserAdmin){
                 defaultRegionService.validateDefaultRegion(userDO.getRegion());
             }
             userService.updateUserById(retrievedUser, false);
