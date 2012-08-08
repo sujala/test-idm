@@ -184,7 +184,7 @@ public class DefaultCloud11ServiceTest {
         doNothing().when(spy).authenticateCloudAdminUser(request);
         when(userService.getUser("userId")).thenReturn(userDO);
         spy.deleteUser(request, "userId", httpHeaders);
-        verify(userService).hasSubUsers("userId");
+        verify(userService).hasSubUsers(userDO.getId());
     }
 
     @Test
