@@ -19,6 +19,7 @@ import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
+import com.rackspace.idm.validation.Validator20;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
@@ -2060,7 +2061,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     // Core Admin Token Methods
 
     @Override
-    public ResponseBuilder validateToken(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo)  {
+    public ResponseBuilder validateToken(HttpHeaders httpHeaders, String authToken, String tokenId, String tenantId)  {
         try {
             //TODO: This token can be a Racker, Service or User of Proper Level
             authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
@@ -2097,14 +2098,14 @@ public class DefaultCloud20Service implements Cloud20Service {
                     UserScopeAccess usa = (UserScopeAccess) sa;
                     user = userService.getUserByScopeAccess(usa);
                     roles = getRolesForScopeAccess(sa);
-                    validateBelongsTo(belongsTo, roles);
+                    validator20.validateTenantIdInRoles(tenantId, roles);
                     access.setUser(userConverterCloudV20.toUserForAuthenticateResponse(user, roles));
                 } else {
                     ImpersonatedScopeAccess isa = (ImpersonatedScopeAccess) sa;
                     impersonator = userService.getUserByScopeAccess(isa);
                     user = userService.getUser(isa.getImpersonatingUsername());
                     roles = tenantService.getTenantRolesForUser(user, null);
-                    validateBelongsTo(belongsTo, roles);
+                    validator20.validateTenantIdInRoles(tenantId, roles);
                     access.setToken(tokenConverterCloudV20.toToken(isa));
                     access.setUser(userConverterCloudV20.toUserForAuthenticateResponse(user, roles));
                     List<TenantRole> impRoles = this.tenantService.getGlobalRolesForUser(impersonator, null);
@@ -2120,14 +2121,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
-    void validateBelongsTo(String belongsTo, List<TenantRole> roles) {
-        if (!belongsTo(belongsTo, roles)) {
-            String errMsg = String.format("Token doesn't belong to Tenant with Id/Name: '%s'", belongsTo);
-            logger.warn(errMsg);
-            throw new NotFoundException(errMsg);
-        }
-    }
-
     public List<TenantRole> getRolesForScopeAccess(ScopeAccess scopeAccess) {
         List<TenantRole> roles = null;
         if (scopeAccess instanceof UserScopeAccess) {
@@ -2136,27 +2129,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             roles = this.tenantService.getTenantRolesForScopeAccess(scopeAccess);
         }
         return roles;
-    }
-
-    boolean belongsTo(String belongsTo, List<TenantRole> roles) {
-
-        if (StringUtils.isBlank(belongsTo)) {
-            return true;
-        }
-
-        if (roles == null || roles.size() == 0) {
-            return false;
-        }
-
-        boolean ok = false;
-
-        for (TenantRole role : roles) {
-            if (role.containsTenantId(belongsTo)) {
-                ok = true;
-                break;
-            }
-        }
-        return ok;
     }
 
     Application checkAndGetApplication(String applicationId) {

@@ -1,16 +1,21 @@
-package com.rackspace.idm.api.resource.cloud.v20;
+package com.rackspace.idm.validation;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
+import com.rackspace.idm.domain.entity.TenantRole;
+import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.lang.CharUtils;
 import org.apache.commons.lang.StringUtils;
 import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
 import org.openstack.docs.identity.api.v2.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -27,6 +32,8 @@ public class Validator20 {
     public static final int PASSWORD_MIN_LENGTH = 8;
     public static final int MAX_GROUP_NAME = 200;
     public static final int MAX_GROUP_DESC = 1000;
+    @Autowired
+    private TenantService tenantService;
 
     public void validateUsername(String username) {
         if (StringUtils.isBlank(username)) {
@@ -143,5 +150,15 @@ public class Validator20 {
         }
     }
 
+    public void validateTenantIdInRoles(String tenantId, List<TenantRole> roles) {
+        if (!StringUtils.isBlank(tenantId) && !tenantService.isTenantIdContainedInTenantRoles(tenantId, roles)) {
+            String errMsg = String.format("Token doesn't belong to Tenant with Id/Name: '%s'", tenantId);
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+    }
 
+    public void setTenantService(TenantService tenantService) {
+        this.tenantService = tenantService;
+    }
 }
