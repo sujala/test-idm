@@ -33,6 +33,8 @@ public interface ApplicationService {
 
     Application getByName(String clientName);
 
+    Application checkAndGetApplication(String applicationId);
+
     Application getClient(String customerId, String clientId);
 
     ClientGroup getClientGroup(String customerId, String clientId,

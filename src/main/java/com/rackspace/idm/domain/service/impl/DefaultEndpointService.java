@@ -4,6 +4,7 @@ import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.exception.BaseUrlConflictException;
+import com.rackspace.idm.exception.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,6 +86,30 @@ public class DefaultEndpointService implements EndpointService {
     public CloudBaseUrl getBaseUrlById(int baseUrlId) {
         logger.debug("Getting baserul {}", baseUrlId);
         return this.endpointDao.getBaseUrlById(baseUrlId);
+    }
+
+    @Override
+    public CloudBaseUrl checkAndGetEndpointTemplate(int baseUrlId) {
+        CloudBaseUrl baseUrl = getBaseUrlById(baseUrlId);
+        if (baseUrl == null) {
+            String errMsg = String.format("EndpointTemplate %s not found", baseUrlId);
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+        return baseUrl;
+    }
+
+    @Override
+    public CloudBaseUrl checkAndGetEndpointTemplate(String id) {
+        Integer baseUrlId;
+        try {
+            baseUrlId = Integer.parseInt(id);
+        } catch (NumberFormatException nfe) {
+            String errMsg = String.format("EndpointTemplate %s not found", id);
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg, nfe);
+        }
+        return checkAndGetEndpointTemplate(baseUrlId);
     }
 
     @Override

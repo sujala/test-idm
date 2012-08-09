@@ -13,6 +13,7 @@ import java.util.List;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 
 /**
@@ -133,6 +134,24 @@ public class DefaultApplicationServiceTest {
     public void getAllApplications_callsClientDao_getAllClients() throws Exception {
         defaultApplicationService.getAllApplications(null, 0, 0);
         verify(clientDao).getAllClients(null, 0, 0);
+    }
+
+    @Test
+    public void checkAndGetApplication_applicationNotNull_returnsApplication() throws Exception {
+        Application application = new Application();
+        doReturn(application).when(spy).getById("applicationId");
+        assertThat("application",spy.checkAndGetApplication("applicationId"),equalTo(application));
+    }
+
+    @Test
+    public void checkAndGetApplication_applicationNull_throwsNotFoundException() throws Exception {
+        try{
+            doReturn(null).when(spy).getById("applicationId");
+            spy.checkAndGetApplication("applicationId");
+            assertTrue("should throw exception",false);
+        } catch (NotFoundException ex){
+            assertThat("exception message", ex.getMessage(), equalTo("Service applicationId not found"));
+        }
     }
 
     @Test
