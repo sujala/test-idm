@@ -4,6 +4,7 @@ import com.rackspace.api.idm.v1.Application;
 import com.rackspace.api.idm.v1.ApplicationSecretCredentials;
 import com.rackspace.idm.exception.BadRequestException;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.BufferedInputStream;
@@ -215,6 +216,7 @@ public class JSONReaderForApplicationTest {
         assertThat("Secret", creds.getClientSecret(), equalTo(null));
     }
 
+    @Ignore
     @Test
     public void getApplicationFromJSONString_withValidSecretCredentials_returnsSecretCredentialsCredentials() throws Exception {
         ApplicationSecretCredentials clientSecret = JSONReaderForApplication.getApplicationFromJSONString(applicationJSON).getSecretCredentials();
