@@ -1,14 +1,20 @@
-package com.rackspace.idm.api.resource.cloud.v20;
+package com.rackspace.idm.validation;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
+import com.rackspace.idm.domain.entity.TenantRole;
+import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.validation.Validator20;
 import org.junit.Before;
 import org.junit.Test;
 import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
 import org.openstack.docs.identity.api.v2.User;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
@@ -25,12 +31,14 @@ import static org.mockito.Mockito.when;
  */
 public class Validator20Test {
 
+    TenantService tenantService = mock(TenantService.class);
     Validator20 validator20;
     Validator20 spy;
 
     @Before
     public void setUp() throws Exception {
         validator20 = new Validator20();
+        validator20.setTenantService(tenantService);
         spy = spy(validator20);
     }
 
@@ -569,19 +577,37 @@ public class Validator20Test {
         }
     }
 
-    /*@Test
-    public void validateBelongsTo_success() throws Exception {
-        validator20.validateBelongsTo("", null);
+    @Test
+    public void validateTenantIdInRoles_tenantIdBlankAndContainedInTenantRoles_succeeds() throws Exception {
+        List<TenantRole> roles = new ArrayList<TenantRole>();
+        when(tenantService.isTenantIdContainedInTenantRoles("",roles)).thenReturn(true);
+        validator20.validateTenantIdInRoles("", roles);
     }
 
     @Test
-    public void validateBelongsTo_throwsNotFoundException() throws Exception {
+    public void validateTenantIdInRoles_tenantIdBlankAndNotContainedInTenantRoles_success() throws Exception {
+        List<TenantRole> roles = new ArrayList<TenantRole>();
+        when(tenantService.isTenantIdContainedInTenantRoles("",roles)).thenReturn(false);
+        validator20.validateTenantIdInRoles("", null);
+    }
+
+    @Test
+    public void validateTenantIdInRoles_tenantIdNotBlankAndContainedInTenantRoles_success() throws Exception {
+        List<TenantRole> roles = new ArrayList<TenantRole>();
+        when(tenantService.isTenantIdContainedInTenantRoles("tenantId",roles)).thenReturn(true);
+        validator20.validateTenantIdInRoles("tenantId", roles);
+    }
+
+    @Test
+    public void validateTenantIdInRoles_tenantIdNotBlankAndNotContainedInTenantRoles_throwsNotFoundException() throws Exception {
         try{
-            validator20.validateBelongsTo("belong", null);
+            List<TenantRole> roles = new ArrayList<TenantRole>();
+            when(tenantService.isTenantIdContainedInTenantRoles("tenantId",roles)).thenReturn(false);
+            validator20.validateTenantIdInRoles("tenantId", roles);
             assertTrue("should throw exception", false);
         }catch (NotFoundException ex){
-            assertThat("exception message",ex.getMessage(), equalTo("Token doesn't belong to Tenant with Id/Name: belong"));
+            assertThat("exception message",ex.getMessage(), equalTo("Token doesn't belong to Tenant with Id/Name: 'tenantId'"));
         }
-    }*/
+    }
 
 }

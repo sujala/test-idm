@@ -15,6 +15,7 @@ import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
+import com.rackspace.idm.validation.Validator20;
 import com.sun.jersey.core.spi.factory.ResponseBuilderImpl;
 import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.Control;
@@ -623,13 +624,18 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void validateToken_whenUserScopeAccess_callsValidateBelongsTo() throws Exception {
+    public void validateToken_whenUserScopeAccess_callsValidateTenantIdInRoles() throws Exception {
         UserScopeAccess userScopeAccess = new UserScopeAccess();
         userScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
         userScopeAccess.setAccessTokenString("userToken");
+
+        List<TenantRole> roles = new ArrayList<TenantRole>();
+
         doReturn(userScopeAccess).when(spy).checkAndGetToken("token");
-        spy.validateToken(httpHeaders, authToken, "token", "belongsTo");
-        verify(spy).validateBelongsTo(eq("belongsTo"), any(List.class));
+        doReturn(roles).when(spy).getRolesForScopeAccess(userScopeAccess);
+
+        spy.validateToken(httpHeaders, authToken, "token", "tenantId");
+        verify(validator20).validateTenantIdInRoles("tenantId", roles);
     }
 
     @Test
@@ -638,7 +644,6 @@ public class DefaultCloud20ServiceTest {
         userScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
         userScopeAccess.setAccessTokenString("userToken");
         doReturn(userScopeAccess).when(spy).checkAndGetToken("token");
-        doNothing().when(spy).validateBelongsTo(eq("belongsTo"), any(List.class));
         Response.ResponseBuilder responseBuilder = spy.validateToken(httpHeaders, authToken, "token", "belongsTo");
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
@@ -648,9 +653,16 @@ public class DefaultCloud20ServiceTest {
         ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
         impersonatedScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
         impersonatedScopeAccess.setAccessTokenString("impToken");
+        impersonatedScopeAccess.setImpersonatingUsername("impersonating");
+
+        List<TenantRole> roles = new ArrayList<TenantRole>();
+
         doReturn(impersonatedScopeAccess).when(spy).checkAndGetToken("token");
-        spy.validateToken(httpHeaders, authToken, "token", "belongsTo");
-        verify(spy).validateBelongsTo(eq("belongsTo"), any(List.class));
+        when(userService.getUser("impersonating")).thenReturn(user);
+        when(tenantService.getTenantRolesForUser(user,null)).thenReturn(roles);
+
+        spy.validateToken(httpHeaders, authToken, "token", "tenantId");
+        verify(validator20).validateTenantIdInRoles("tenantId",roles);
     }
 
     @Test
@@ -659,20 +671,9 @@ public class DefaultCloud20ServiceTest {
         impersonatedScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
         impersonatedScopeAccess.setAccessTokenString("impToken");
         doReturn(impersonatedScopeAccess).when(spy).checkAndGetToken("token");
-        doNothing().when(spy).validateBelongsTo(eq("belongsTo"), any(List.class));
         when(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory());
         Response.ResponseBuilder responseBuilder = spy.validateToken(httpHeaders, authToken, "token", "belongsTo");
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
-    }
-
-    @Test
-    public void validateBelongsTo_success() throws Exception {
-        spy.validateBelongsTo("", null);
-    }
-
-    @Test(expected = NotFoundException.class)
-    public void validateBelongsTo_throwsNotFoundException() throws Exception {
-        spy.validateBelongsTo("belong", null);
     }
 
     @Test
@@ -687,45 +688,6 @@ public class DefaultCloud20ServiceTest {
         ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
         spy.getRolesForScopeAccess(impersonatedScopeAccess);
         verify(tenantService).getTenantRolesForScopeAccess(impersonatedScopeAccess);
-    }
-
-    @Test
-    public void belongsTo_stringBelongsToIsBlank_returnsTrue() throws Exception {
-        Boolean belong = spy.belongsTo("", null);
-        assertThat("Boolean Value", belong, equalTo(true));
-    }
-
-    @Test
-    public void belongsTo_rolesIsNull_returnsFalse() throws Exception {
-        Boolean belong = spy.belongsTo("belong", null);
-        assertThat("Boolean Value", belong, equalTo(false));
-    }
-
-    @Test
-    public void belongsTo_rolesSizeIsZero_returnsFalse() throws Exception {
-        List<TenantRole> roles = new ArrayList<TenantRole>();
-        Boolean belong = spy.belongsTo("belong", roles);
-        assertThat("Boolean Value", belong, equalTo(false));
-    }
-
-    @Test
-    public void belongsTo_tenantIdMatchesBelongsTo_returnsTrue() throws Exception {
-        List<TenantRole> roles = new ArrayList<TenantRole>();
-        String[] tenantId = {"belong"};
-        tenantRole.setTenantIds(tenantId);
-        roles.add(tenantRole);
-        Boolean belong = spy.belongsTo("belong", roles);
-        assertThat("Boolean Value", belong, equalTo(true));
-    }
-
-    @Test
-    public void belongsTo_tenantIdDoesNotMatcheBelongsTo_returnsFalse() throws Exception {
-        List<TenantRole> roles = new ArrayList<TenantRole>();
-        String[] tenantId = {"NotMatch"};
-        tenantRole.setTenantIds(tenantId);
-        roles.add(tenantRole);
-        Boolean belong = spy.belongsTo("belong", roles);
-        assertThat("Boolean Value", belong, equalTo(false));
     }
 
     @Test(expected = NotFoundException.class)
