@@ -11,6 +11,10 @@ public interface EndpointService {
 
     CloudBaseUrl getBaseUrlById(int baseUrlId);
 
+    CloudBaseUrl checkAndGetEndpointTemplate(int id);
+
+    CloudBaseUrl checkAndGetEndpointTemplate(String id);
+
     List<CloudBaseUrl> getBaseUrls();
 
     List<CloudBaseUrl> getGlobalBaseUrls();

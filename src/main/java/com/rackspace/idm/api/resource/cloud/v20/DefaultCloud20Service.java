@@ -145,8 +145,8 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
-            Tenant tenant = checkAndGetTenant(tenantId);
-            CloudBaseUrl baseUrl = checkAndGetEndpointTemplate(endpoint.getId());
+            Tenant tenant = tenantService.checkAndGetTenant(tenantId);
+            CloudBaseUrl baseUrl = endpointService.checkAndGetEndpointTemplate(endpoint.getId());
             if (baseUrl.getGlobal()) {
                 throw new BadRequestException("Cannot add a global endpoint to this tenant.");
             }
@@ -208,7 +208,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 authorizationService.verifyIdentityAdminLevelAccess(tokenScopeAccess);
             }
 
-            Application service = checkAndGetApplication(role.getServiceId());
+            Application service = clientService.checkAndGetApplication(role.getServiceId());
 
             ClientRole clientRole = new ClientRole();
             clientRole.setClientId(service.getClientId());
@@ -241,7 +241,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyUserAdminLevelAccess(scopeAccess);
             authorizationService.verifyTokenHasTenantAccess(tenantId, scopeAccess);
 
-            Tenant tenant = checkAndGetTenant(tenantId);
+            Tenant tenant = tenantService.checkAndGetTenant(tenantId);
 
             User user = checkAndGetUser(userId);
 
@@ -779,8 +779,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder deleteEndpoint(HttpHeaders httpHeaders, String authToken, String tenantId, String endpointId) {
         try {
             authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            Tenant tenant = checkAndGetTenant(tenantId);
-            CloudBaseUrl baseUrl = checkAndGetEndpointTemplate(endpointId);
+            Tenant tenant = tenantService.checkAndGetTenant(tenantId);
+            CloudBaseUrl baseUrl = endpointService.checkAndGetEndpointTemplate(endpointId);
             tenant.removeBaseUrlId(String.valueOf(baseUrl.getBaseUrlId()));
             tenantService.updateTenant(tenant);
             return Response.noContent();
@@ -793,7 +793,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder deleteEndpointTemplate(HttpHeaders httpHeaders, String authToken, String endpointTemplateId) {
         try {
             authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            CloudBaseUrl baseUrl = checkAndGetEndpointTemplate(endpointTemplateId);
+            CloudBaseUrl baseUrl = endpointService.checkAndGetEndpointTemplate(endpointTemplateId);
             this.endpointService.deleteBaseUrl(baseUrl.getBaseUrlId());
             return Response.noContent();
         } catch (Exception ex) {
@@ -823,7 +823,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyUserAdminLevelAccess(scopeAccess);
             authorizationService.verifyTokenHasTenantAccess(tenantId,scopeAccess);
 
-            Tenant tenant = checkAndGetTenant(tenantId);
+            Tenant tenant = tenantService.checkAndGetTenant(tenantId);
             User user = checkAndGetUser(userId);
             ClientRole role = checkAndGetClientRole(roleId);
             TenantRole tenantrole = new TenantRole();
@@ -842,7 +842,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder deleteService(HttpHeaders httpHeaders, String authToken, String serviceId) {
         try {
             authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            Application client = checkAndGetApplication(serviceId);
+            Application client = clientService.checkAndGetApplication(serviceId);
             this.clientService.delete(client.getClientId());
             return Response.noContent();
         } catch (Exception ex) {
@@ -854,7 +854,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder deleteTenant(HttpHeaders httpHeaders, String authToken, String tenantId) {
         try {
             authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            Tenant tenant = checkAndGetTenant(tenantId);
+            Tenant tenant = tenantService.checkAndGetTenant(tenantId);
             tenantService.deleteTenant(tenant.getTenantId());
             return Response.noContent();
         } catch (Exception ex) {
@@ -971,7 +971,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
-            Tenant tenant = checkAndGetTenant(tenantId);
+            Tenant tenant = tenantService.checkAndGetTenant(tenantId);
 
             if (!tenant.containsBaseUrlId(endpointId)) {
                 String errMsg = String.format("Tenant %s does not have endpoint %s", tenantId, endpointId);
@@ -979,7 +979,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new NotFoundException(errMsg);
             }
 
-            CloudBaseUrl baseUrl = checkAndGetEndpointTemplate(endpointId);
+            CloudBaseUrl baseUrl = endpointService.checkAndGetEndpointTemplate(endpointId);
 
             return Response.ok(
                     objFactories.getOpenStackIdentityV2Factory().createEndpoint(endpointConverterCloudV20.toEndpoint(baseUrl)).getValue());
@@ -993,7 +993,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
-            CloudBaseUrl baseUrl = checkAndGetEndpointTemplate(endpointTemplateId);
+            CloudBaseUrl baseUrl = endpointService.checkAndGetEndpointTemplate(endpointTemplateId);
 
             return Response.ok(objFactories.getOpenStackIdentityExtKscatalogV1Factory()
                     .createEndpointTemplate(this.endpointConverterCloudV20.toEndpointTemplate(baseUrl)).getValue());
@@ -1073,7 +1073,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder getService(HttpHeaders httpHeaders, String authToken, String serviceId) {
         try {
             authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            Application client = checkAndGetApplication(serviceId);
+            Application client = clientService.checkAndGetApplication(serviceId);
             return Response.ok(objFactories.getOpenStackIdentityExtKsadmnV1Factory().createService(serviceConverterCloudV20.toService(client)).getValue());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
@@ -1084,7 +1084,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder getTenantById(HttpHeaders httpHeaders, String authToken, String tenantsId)  {
         try {
             authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            Tenant tenant = checkAndGetTenant(tenantsId);
+            Tenant tenant = tenantService.checkAndGetTenant(tenantsId);
             return Response.ok(objFactories.getOpenStackIdentityV2Factory().createTenant(tenantConverterCloudV20.toTenant(tenant)).getValue());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
@@ -1332,7 +1332,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
-            Tenant tenant = checkAndGetTenant(tenantId);
+            Tenant tenant = tenantService.checkAndGetTenant(tenantId);
 
             List<CloudBaseUrl> baseUrls = this.endpointService.getGlobalBaseUrls();
             if (tenant.getBaseUrlIds() != null) {
@@ -1383,7 +1383,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (StringUtils.isBlank(serviceId)) {
                 baseUrls = this.endpointService.getBaseUrls();
             } else {
-                Application client = checkAndGetApplication(serviceId);
+                Application client = clientService.checkAndGetApplication(serviceId);
                 baseUrls = this.endpointService.getBaseUrlsByServiceType(client.getOpenStackType());
             }
 
@@ -1441,7 +1441,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
-            Tenant tenant = checkAndGetTenant(tenantId);
+            Tenant tenant = tenantService.checkAndGetTenant(tenantId);
 
             List<TenantRole> roles = this.tenantService.getTenantRolesForTenant(tenant.getTenantId());
 
@@ -1460,7 +1460,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
-            Tenant tenant = checkAndGetTenant(tenantId);
+            Tenant tenant = tenantService.checkAndGetTenant(tenantId);
 
             User user = checkAndGetUser(userId);
 
@@ -1587,54 +1587,58 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder impersonate(HttpHeaders httpHeaders, String authToken, ImpersonationRequest impersonationRequest)  {
-        authorizationService.verifyRackerOrServiceAdminAccess(getScopeAccessForValidToken(authToken));
-        validator20.validateImpersonationRequest(impersonationRequest);
+        try{
+            authorizationService.verifyRackerOrServiceAdminAccess(getScopeAccessForValidToken(authToken));
+            validator20.validateImpersonationRequest(impersonationRequest);
 
-        String impersonatingToken = "";
-        String impersonatingUsername = impersonationRequest.getUser().getUsername();
+            String impersonatingToken = "";
+            String impersonatingUsername = impersonationRequest.getUser().getUsername();
 
-        User user = userService.getUser(impersonatingUsername);
-        if (user == null) {
-            logger.info("Impersonation call - calling cloud auth to get user");
-            // Get from cloud.
-            impersonatingToken = delegateCloud20Service.impersonateUser(impersonatingUsername, config.getString("ga.username"), config.getString("ga.password"));
-        } else if (!user.isEnabled()) {
-            throw new ForbiddenException("User cannot be impersonated; User is not enabled");
-        } else {
-            if (!isValidImpersonatee(user)) {
-                throw new BadRequestException("User cannot be impersonated; No valid impersonation roles assigned");
+            User user = userService.getUser(impersonatingUsername);
+            if (user == null) {
+                logger.info("Impersonation call - calling cloud auth to get user");
+                // Get from cloud.
+                impersonatingToken = delegateCloud20Service.impersonateUser(impersonatingUsername, config.getString("ga.username"), config.getString("ga.password"));
+            } else if (!user.isEnabled()) {
+                throw new ForbiddenException("User cannot be impersonated; User is not enabled");
+            } else {
+                if (!isValidImpersonatee(user)) {
+                    throw new BadRequestException("User cannot be impersonated; No valid impersonation roles assigned");
+                }
+                UserScopeAccess impAccess = (UserScopeAccess) scopeAccessService.getDirectScopeAccessForParentByClientId(user.getUniqueId(), getCloudAuthClientId());
+
+                if (impAccess.isAccessTokenExpired(new DateTime())) {
+                    scopeAccessService.updateExpiredUserScopeAccess(impAccess);
+                }
+                impersonatingToken = impAccess.getAccessTokenString();
             }
-            UserScopeAccess impAccess = (UserScopeAccess) scopeAccessService.getDirectScopeAccessForParentByClientId(user.getUniqueId(), getCloudAuthClientId());
 
-            if (impAccess.isAccessTokenExpired(new DateTime())) {
-                scopeAccessService.updateExpiredUserScopeAccess(impAccess);
+            if (StringUtils.isBlank(impersonatingToken) || StringUtils.isBlank(impersonatingUsername)) {
+                throw new BadRequestException("Invalid user");
             }
-            impersonatingToken = impAccess.getAccessTokenString();
-        }
 
-        if (StringUtils.isBlank(impersonatingToken) || StringUtils.isBlank(impersonatingUsername)) {
-            throw new BadRequestException("Invalid user");
-        }
+            ScopeAccess sa = checkAndGetToken(authToken);
+            ScopeAccess usa;
+            //impersonator is a service user
+            if (sa instanceof UserScopeAccess) {
+                UserScopeAccess userSa = (UserScopeAccess) sa;
+                User impersonator = this.userService.getUserById(userSa.getUserRsId());
+                usa = scopeAccessService.addImpersonatedScopeAccess(impersonator, getCloudAuthClientId(), impersonatingToken, impersonationRequest);
+            }
+            //impersonator is a Racker
+            else if (sa instanceof RackerScopeAccess) {
+                RackerScopeAccess rackerSa = (RackerScopeAccess) sa;
+                Racker racker = this.userService.getRackerByRackerId(rackerSa.getRackerId());
+                usa = scopeAccessService.addImpersonatedScopeAccess(racker, getCloudAuthClientId(), impersonatingToken, impersonationRequest);
+            } else {
+                throw new NotAuthorizedException("User does not have access");
+            }
 
-        ScopeAccess sa = checkAndGetToken(authToken);
-        ScopeAccess usa;
-        //impersonator is a service user
-        if (sa instanceof UserScopeAccess) {
-            UserScopeAccess userSa = (UserScopeAccess) sa;
-            User impersonator = this.userService.getUserById(userSa.getUserRsId());
-            usa = scopeAccessService.addImpersonatedScopeAccess(impersonator, getCloudAuthClientId(), impersonatingToken, impersonationRequest);
+            ImpersonationResponse auth = authConverterCloudV20.toImpersonationResponse(usa);
+            return Response.ok(objFactories.getRackspaceIdentityExtRaxgaV1Factory().createAccess(auth).getValue());
+        } catch (Exception ex){
+            return exceptionHandler.exceptionResponse(ex);
         }
-        //impersonator is a Racker
-        else if (sa instanceof RackerScopeAccess) {
-            RackerScopeAccess rackerSa = (RackerScopeAccess) sa;
-            Racker racker = this.userService.getRackerByRackerId(rackerSa.getRackerId());
-            usa = scopeAccessService.addImpersonatedScopeAccess(racker, getCloudAuthClientId(), impersonatingToken, impersonationRequest);
-        } else {
-            throw new NotAuthorizedException("User does not have access");
-        }
-
-        ImpersonationResponse auth = authConverterCloudV20.toImpersonationResponse(usa);
-        return Response.ok(objFactories.getRackspaceIdentityExtRaxgaV1Factory().createAccess(auth).getValue());
     }
 
     @Override
@@ -1879,7 +1883,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyUserAdminLevelAccess(scopeAccess);
             authorizationService.verifyTokenHasTenantAccess(tenantId,scopeAccess);
 
-            Tenant tenant = checkAndGetTenant(tenantId);
+            Tenant tenant = tenantService.checkAndGetTenant(tenantId);
 
             List<User> users = this.tenantService.getUsersForTenant(tenant.getTenantId());
 
@@ -1899,7 +1903,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyUserAdminLevelAccess(scopeAccess);
             authorizationService.verifyTokenHasTenantAccess(tenantId,scopeAccess);
 
-            Tenant tenant = checkAndGetTenant(tenantId);
+            Tenant tenant = tenantService.checkAndGetTenant(tenantId);
 
             ClientRole role = checkAndGetClientRole(roleId);
 
@@ -1976,7 +1980,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
-            Tenant tenantDO = checkAndGetTenant(tenantId);
+            Tenant tenantDO = tenantService.checkAndGetTenant(tenantId);
 
             tenantDO.setDescription(tenant.getDescription());
             tenantDO.setDisplayName(tenant.getDisplayName());
@@ -2131,17 +2135,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         return roles;
     }
 
-    Application checkAndGetApplication(String applicationId) {
-
-        Application application = this.clientService.getById(applicationId);
-        if (application == null) {
-            String errMsg = String.format("Service %s not found", applicationId);
-            logger.warn(errMsg);
-            throw new NotFoundException(errMsg);
-        }
-        return application;
-    }
-
     ClientRole checkAndGetClientRole(String id) {
         ClientRole cRole = this.clientService.getClientRoleById(id);
         if (cRole == null) {
@@ -2150,39 +2143,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             throw new NotFoundException(errMsg);
         }
         return cRole;
-    }
-
-    CloudBaseUrl checkAndGetEndpointTemplate(int baseUrlId) {
-        CloudBaseUrl baseUrl = this.endpointService.getBaseUrlById(baseUrlId);
-        if (baseUrl == null) {
-            String errMsg = String.format("EndpointTemplate %s not found", baseUrlId);
-            logger.warn(errMsg);
-            throw new NotFoundException(errMsg);
-        }
-        return baseUrl;
-    }
-
-    CloudBaseUrl checkAndGetEndpointTemplate(String id) {
-        Integer baseUrlId;
-        try {
-            baseUrlId = Integer.parseInt(id);
-        } catch (NumberFormatException nfe) {
-            String errMsg = String.format("EndpointTemplate %s not found", id);
-            logger.warn(errMsg);
-            throw new NotFoundException(errMsg, nfe);
-        }
-        return checkAndGetEndpointTemplate(baseUrlId);
-    }
-
-    Tenant checkAndGetTenant(String tenantId) {
-        Tenant tenant = this.tenantService.getTenant(tenantId);
-
-        if (tenant == null) {
-            String errMsg = String.format("Tenant with id/name: '%s' was not found.", tenantId);
-            logger.warn(errMsg);
-            throw new NotFoundException(errMsg);
-        }
-        return tenant;
     }
 
     ScopeAccess checkAndGetToken(String tokenId) {

@@ -29,6 +29,7 @@ import static org.mockito.Mockito.*;
 public class DefaultUserServiceTest {
 
     private DefaultUserService defaultUserService;
+    private DefaultUserService spy;
     private UserDao userDao;
     private AuthDao authDao;
     private ScopeAccessDao scopeAccessDao;
@@ -59,6 +60,8 @@ public class DefaultUserServiceTest {
         defaultUserService.setScopeAccessService(scopeAccessService);
         defaultUserService.setTenantService(tenantService);
         defaultUserService.setEndpointService(endpointService);
+        spy = spy(defaultUserService);
+
     }
 
     @Test
@@ -309,6 +312,12 @@ public class DefaultUserServiceTest {
         }catch (Exception e){
             assertThat("exception message", e.getMessage(), Matchers.equalTo("User with Mosso Account ID: 1 already exists."));
         }
+    }
+
+    @Test
+    public void checkAndGetUser_userExists_returnsUser() throws Exception {
+        User user = new User();
+        doReturn(user).when(spy).getUserById("id");
     }
 
     @Test

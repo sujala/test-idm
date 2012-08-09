@@ -10,6 +10,7 @@ import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.unboundid.ldap.sdk.*;
 import org.apache.commons.configuration.Configuration;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -18,6 +19,7 @@ import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
@@ -57,6 +59,24 @@ public class DefaultTenantServiceTest {
     public void addTenant_tenantExists_throwDuplicateException() throws Exception {
         when(tenantDao.getTenant(null)).thenReturn(new Tenant());
         defaultTenantService.addTenant(new Tenant());
+    }
+
+    @Test
+    public void checkAndGetTenant_TenantIsNull_throwsNotFoundException() throws Exception {
+        try{
+            doReturn(null).when(spy).getTenant("tenantId");
+            spy.checkAndGetTenant("tenantId");
+            assertTrue("should throw exception",false);
+        } catch (NotFoundException ex){
+            assertThat("exception message", ex.getMessage(), equalTo("Tenant with id/name: 'tenantId' was not found."));
+        }
+    }
+
+    @Test
+    public void checkAndGetTenant_TenantIsNotNull_returnsTenant() throws Exception {
+        Tenant tenant = new Tenant();
+        doReturn(tenant).when(spy).getTenant("tenantId");
+        assertThat("tenant", spy.checkAndGetTenant("tenantId"),equalTo(tenant));
     }
 
     @Test
