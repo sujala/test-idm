@@ -600,6 +600,19 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
+    public User checkAndGetUserById(String id) {
+        User user = getUserById(id);
+
+        if (user == null) {
+            String errMsg = String.format("User %s not found", id);
+            logger.warn(errMsg);
+            throw new NotFoundException("User not found");
+        }
+
+        return user;
+    }
+
+    @Override
     public void softDeleteUser(User user) {
         logger.debug("SoftDeleting User: {}", user);
         scopeAccessService.expireAllTokensForUser(user.getUsername());

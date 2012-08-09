@@ -18,6 +18,7 @@ import java.util.List;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 
 /**
@@ -315,9 +316,21 @@ public class DefaultUserServiceTest {
     }
 
     @Test
-    public void checkAndGetUser_userExists_returnsUser() throws Exception {
+    public void checkAndGetUserById_userExists_returnsUser() throws Exception {
         User user = new User();
         doReturn(user).when(spy).getUserById("id");
+        assertThat("user",spy.checkAndGetUserById("id"),equalTo(user));
+    }
+
+    @Test
+    public void checkAndGetUserById_userNull_throwsNotFoundException() throws Exception {
+        try{
+            doReturn(null).when(spy).getUserById("id");
+            spy.checkAndGetUserById("id");
+            assertTrue("should throw exception",false);
+        } catch (NotFoundException ex){
+            assertThat("exception message",ex.getMessage(),equalTo("User not found"));
+        }
     }
 
     @Test

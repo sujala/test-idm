@@ -243,7 +243,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             Tenant tenant = tenantService.checkAndGetTenant(tenantId);
 
-            User user = checkAndGetUser(userId);
+            User user = userService.checkAndGetUserById(userId);
 
             ClientRole role = checkAndGetClientRole(roleId);
             String roleName = role.getName();
@@ -443,7 +443,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (user.getPassword() != null) {
                 validator20.validatePasswordForCreateOrUpdate(user.getPassword());
             }
-            User retrievedUser = checkAndGetUser(userId);
+            User retrievedUser = userService.checkAndGetUserById(userId);
             if (!userId.equals(user.getId()) && user.getId() != null) {
                 throw new BadRequestException("Id in url does not match id in body.");
             }
@@ -524,7 +524,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (credentials.getValue() instanceof PasswordCredentialsRequiredUsername) {
                 PasswordCredentialsRequiredUsername userCredentials = (PasswordCredentialsRequiredUsername) credentials.getValue();
                 validator20.validatePasswordCredentialsForCreateOrUpdate(userCredentials);
-                user = checkAndGetUser(userId);
+                user = userService.checkAndGetUserById(userId);
                 if (!userCredentials.getUsername().equals(user.getUsername())) {
                     String errMsg = USER_AND_USER_ID_MIS_MATCHED;
                     logger.warn(errMsg);
@@ -536,7 +536,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 ApiKeyCredentials userCredentials = (ApiKeyCredentials) credentials.getValue();
                 //TODO validate username breaks authenticate call
                 validator20.validateApiKeyCredentials(userCredentials);
-                user = checkAndGetUser(userId);
+                user = userService.checkAndGetUserById(userId);
                 if (!userCredentials.getUsername().equals(user.getUsername())) {
                     String errMsg = USER_AND_USER_ID_MIS_MATCHED;
                     logger.warn(errMsg);
@@ -557,7 +557,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
             authorizationService.verifyUserAdminLevelAccess(scopeAccessByAccessToken);
-            User user = checkAndGetUser(userId);
+            User user = userService.checkAndGetUserById(userId);
             ClientRole cRole = checkAndGetClientRole(roleId);
             checkForMultipleIdentityRoles(user, cRole);
 
@@ -738,7 +738,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         User user = null;
 
         try {
-            user = this.checkAndGetUser(id);
+            user = userService.checkAndGetUserById(id);
         } catch (NotFoundException e) {
             String errorMessage = String.format("Unable to authenticate user with credentials provided.");
             logger.warn(errorMessage);
@@ -824,7 +824,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyTokenHasTenantAccess(tenantId,scopeAccess);
 
             Tenant tenant = tenantService.checkAndGetTenant(tenantId);
-            User user = checkAndGetUser(userId);
+            User user = userService.checkAndGetUserById(userId);
             ClientRole role = checkAndGetClientRole(roleId);
             TenantRole tenantrole = new TenantRole();
             tenantrole.setClientId(role.getClientId());
@@ -867,7 +867,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
             authorizationService.verifyUserAdminLevelAccess(scopeAccessByAccessToken);
-            User user = checkAndGetUser(userId);
+            User user = userService.checkAndGetUserById(userId);
             //is same domain?
             if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
                 User caller = userService.getUserByAuthToken(authToken);
@@ -917,7 +917,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException("unsupported credential type");
             }
 
-            User user = checkAndGetUser(userId);
+            User user = userService.checkAndGetUserById(userId);
 
             if (user.getApiKey() == null) {
                 throw new NotFoundException("Credential type RAX-KSKEY:apiKeyCredentials was not found for User with Id: " + user.getId());
@@ -940,7 +940,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
             authorizationService.verifyUserAdminLevelAccess(scopeAccessByAccessToken);
 
-            User user = checkAndGetUser(userId);
+            User user = userService.checkAndGetUserById(userId);
             List<TenantRole> globalRoles = this.tenantService.getGlobalRolesForUser(user);
             TenantRole role = null;
             for (TenantRole globalRole : globalRoles) {

@@ -39,6 +39,8 @@ public interface UserService {
     User getUserByAuthToken(String authToken);
     
     User getUserById(String id);
+
+    User checkAndGetUserById(String id);
     
     User getUserByRPN(String rpn);
 
