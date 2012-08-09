@@ -8,6 +8,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
@@ -51,5 +52,16 @@ public class CloudAuthServiceCatalogFactoryTest {
         openstackEndPoint.setBaseUrls(baseUrls);
         CloudAuthServiceCatalogFactory.processService(serviceCatalog, openstackEndPoint);
         assertThat("services size", services.size(), equalTo(1));
+    }
+
+    @Test
+    public void getServiceFromName_nameDoesNotMatch_returnsNull() throws Exception {
+        ServiceCatalog serviceCatalog = new ServiceCatalog();
+        Service service = new Service();
+        service.setName("notMatch");
+        List<Service> serviceList = serviceCatalog.getService();
+        serviceList.add(service);
+        Service result = CloudAuthServiceCatalogFactory.getServiceFromName(serviceCatalog, "service");
+        assertThat("service", result, equalTo(null));
     }
 }

@@ -34,7 +34,7 @@ public class ObjectFactoryTest {
     @Test
     public void createUserType_returnsNewCreatedObject() throws Exception {
         UserType result = objectFactory.createUserType();
-        List<RoleType> roles = result.getRoles();
+        result.getRoles();
         assertThat("id", result.getId(), equalTo(null));
         assertThat("username", result.getUsername(), equalTo(null));
         assertThat("email", result.getEmail(), equalTo(null));
@@ -45,6 +45,8 @@ public class ObjectFactoryTest {
         assertThat("comment", result.getComment(), equalTo(null));
         assertThat("boolean", result.isValid(), equalTo(null));
         assertThat("list", result.getRoles().isEmpty(), equalTo(true));
+        assertThat("mosso id", result.getMossoId(), equalTo(null));
+        assertThat("nast id", result.getNastId(), equalTo(null));
     }
 
     @Test
