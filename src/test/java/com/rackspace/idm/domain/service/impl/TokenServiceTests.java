@@ -24,7 +24,6 @@ import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.AuthHeaderHelper;
-import com.rackspace.idm.validation.InputValidator;
 
 public class TokenServiceTests {
 

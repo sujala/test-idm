@@ -13,7 +13,6 @@ import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import com.sun.jersey.core.spi.factory.ResponseBuilderImpl;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
-import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.NotImplementedException;
 import org.junit.Before;
@@ -590,6 +589,17 @@ public class DelegateCloud20ServiceTest {
         when(scopeAccessService.getScopeAccessByAccessToken(Matchers.<String>any())).thenReturn(mockSA);
         delegateCloud20Service.validateToken(null, null, "test", null);
         verify(defaultCloud20Service).validateToken(null, null, "test", null);
+    }
+
+    @Test(expected = NotAuthorizedException.class)
+    public void validateToken_ExpiredImpersonatedToken_throwsNotAuthorizedException() throws Exception {
+        ImpersonatedScopeAccess sa = new ImpersonatedScopeAccess();
+        sa.setAccessTokenExp(new Date());
+        sa.setAccessTokenString("123");
+        Thread.sleep(100);
+        when(scopeAccessService.getScopeAccessByAccessToken(Matchers.<String>any())).thenReturn(sa);
+        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        delegateCloud20Service.validateToken(null, null, "test", null);
     }
 
     @Test
@@ -3110,6 +3120,15 @@ public class DelegateCloud20ServiceTest {
         when(exceptionHandler.exceptionResponse(any(IdmException.class))).thenReturn(Response.status(500));
         Response.ResponseBuilder responseBuilder = spy.authenticateImpersonated(httpHeaders, authenticationRequest, impersonatedScopeAccess);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(500));
+    }
+
+    @Test
+    public void authenticateImpersonated_impersonatedScopeAccess_throwsNotAuthorizedException() throws Exception {
+        ImpersonatedScopeAccess sa = new ImpersonatedScopeAccess();
+        sa.setAccessTokenExp(new Date());
+        sa.setAccessTokenString("123");
+        spy.authenticateImpersonated(httpHeaders,authenticationRequest, sa);
+        verify(exceptionHandler).exceptionResponse(any(NotAuthorizedException.class));
     }
 
     @Test

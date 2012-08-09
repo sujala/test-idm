@@ -3,13 +3,11 @@ package com.rackspace.idm.api.resource.cloud.v11;
 import com.rackspace.idm.api.resource.cloud.CloudClient;
 import com.rackspace.idm.api.resource.cloud.CloudUserExtractor;
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository;
-import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.UserScopeAccess;
+import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.impl.DefaultUserService;
 import com.rackspacecloud.docs.auth.api.v1.*;
-import com.rackspacecloud.docs.auth.api.v1.AuthData;
-import com.rackspacecloud.docs.auth.api.v1.Credentials;
-import com.rackspacecloud.docs.auth.api.v1.User;
 import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
@@ -611,6 +609,7 @@ public class DelegateCloud11ServiceTest {
         user.setId(userId);
         when(defaultUserService.getUser(userId)).thenReturn(user);
         when(defaultUserService.isMigratedUser(Matchers.<com.rackspace.idm.domain.entity.User>any())).thenReturn(true);
+        when(cloudClient.delete(url + "users/userId", null)).thenReturn(okResponse);
         delegateCloud11Service.deleteUser(null, userId, null);
         verify(defaultCloud11Service).deleteUser(null, userId, null);
     }

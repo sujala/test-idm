@@ -233,10 +233,10 @@ public class DelegateCloud20Service implements Cloud20Service {
             return cloudClient.get(request, httpHeaders);
         }
         if (scopeAccess instanceof ImpersonatedScopeAccess) {
-            if (((HasAccessToken) scopeAccess).isAccessTokenExpired(new DateTime())) {
+            ImpersonatedScopeAccess impersonatedScopeAccess = (ImpersonatedScopeAccess) scopeAccess;
+            if(impersonatedScopeAccess.isAccessTokenExpired(new DateTime())){
                 throw new NotAuthorizedException("Impersonated token has expired.");
             }
-            ImpersonatedScopeAccess impersonatedScopeAccess = (ImpersonatedScopeAccess) scopeAccess;
             ScopeAccess impersonatedUserScopeAccess = scopeAccessService.getScopeAccessByAccessToken(impersonatedScopeAccess.getImpersonatingToken());
             if (impersonatedUserScopeAccess == null) {
                 authorizationService.verifyServiceAdminLevelAccess(defaultCloud20Service.getScopeAccessForValidToken(authToken));

@@ -22,7 +22,6 @@ import com.unboundid.ldap.sdk.SearchResultEntry;
 import org.apache.commons.configuration.Configuration;
 import org.hamcrest.Matchers;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.openstack.docs.common.api.v1.Extension;
@@ -442,7 +441,7 @@ public class DefaultCloud20ServiceTest {
     public void deleteUser_userServiceHasSubUsersWithUserId_returnsResponseBuilder() throws Exception {
         ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        ScopeAccess scopeAccess = new ScopeAccess();
+        UserScopeAccess scopeAccess = new UserScopeAccess();
 
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(new User()).when(spy).checkAndGetUser("userId");
@@ -458,14 +457,14 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void deleteUser_callsScopeAccessService_getScopeAccessByUserId() throws Exception {
-        when(scopeAccessService.getScopeAccessByUserId(userId)).thenReturn(new ScopeAccess());
+        when(scopeAccessService.getScopeAccessByUserId(userId)).thenReturn(new UserScopeAccess());
         spy.deleteUser(httpHeaders, authToken, userId);
         verify(scopeAccessService).getScopeAccessByUserId(userId);
     }
 
     @Test
     public void deleteUser_callsAuthService_hasUserAdminRole() throws Exception {
-        when(scopeAccessService.getScopeAccessByUserId(userId)).thenReturn(new ScopeAccess());
+        when(scopeAccessService.getScopeAccessByUserId(userId)).thenReturn(new UserScopeAccess());
         spy.deleteUser(httpHeaders, authToken, userId);
         verify(authorizationService).hasUserAdminRole(org.mockito.Matchers.any(ScopeAccess.class));
     }
@@ -2120,15 +2119,16 @@ public class DefaultCloud20ServiceTest {
         BadRequestException badRequestException = new BadRequestException();
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doThrow(badRequestException).when(spy).validateGroupId(null);
+        doThrow(badRequestException).when(validator20).validateGroupId(null);
         when(exceptionHandler.exceptionResponse(badRequestException)).thenReturn(responseBuilder);
         assertThat("response builder",spy.getGroupById(null, authToken, null),equalTo(responseBuilder));
     }
 
     @Test
     public void getGroupById_callsValidateGroupId() throws Exception {
+        doReturn(null).when(spy).getScopeAccessForValidToken(null);
         spy.getGroupById(null, authToken, "1");
-        verify(spy).validateGroupId("1");
+        verify(validator20).validateGroupId("1");
     }
 
     @Test
@@ -2447,27 +2447,38 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void checkToken_belongsToNotBlankThrowsNotFoundException_returns404() throws Exception {
-        doReturn(null).when(spy).checkAndGetToken("tokenId");
-        when(tenantService.getTenantRolesForScopeAccess(any(ScopeAccess.class))).thenReturn(null);
-        doReturn(false).when(spy).belongsTo("belongsTo", null);
+    public void checkToken_tenantIdNotBlank_callsIsTenantIdContainedInTenantRoles() throws Exception {
+        UserScopeAccess scopeAccess = new UserScopeAccess();
+        List<TenantRole> roles = new ArrayList<TenantRole>();
+        doReturn(scopeAccess).when(spy).checkAndGetToken("tokenId");
+        when(tenantService.getTenantRolesForScopeAccess(scopeAccess)).thenReturn(roles);
+        spy.checkToken(null, authToken, "tokenId", "tenantId");
+        verify(tenantService).isTenantIdContainedInTenantRoles("tenantId",roles);
+    }
+
+    @Test
+    public void checkToken_tenantIdNotBlankThrowsNotFoundException_returns404() throws Exception {
+        List<TenantRole> roles = new ArrayList<TenantRole>();
+        doReturn(userScopeAccess).when(spy).checkAndGetToken("tokenId");
+        when(tenantService.getTenantRolesForScopeAccess(userScopeAccess)).thenReturn(roles);
+        when(tenantService.isTenantIdContainedInTenantRoles("belongsTo", roles)).thenReturn(false);
         Response.ResponseBuilder responseBuilder = spy.checkToken(null, authToken, "tokenId", "belongsTo");
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(404));
     }
 
     @Test
-    public void checkToken_belongsToBlank_returns200() throws Exception {
-        doReturn(null).when(spy).checkAndGetToken("tokenId");
-        when(tenantService.getTenantRolesForScopeAccess(any(ScopeAccess.class))).thenReturn(null);
-        doReturn(true).when(spy).belongsTo("belongsTo", null);
-        Response.ResponseBuilder responseBuilder = spy.checkToken(null, authToken, "tokenId", "belongsTo");
+    public void checkToken_TenantIdInRoles_returns200() throws Exception {
+        List<TenantRole> roles = new ArrayList<TenantRole>();
+        doReturn(userScopeAccess).when(spy).checkAndGetToken("tokenId");
+        when(tenantService.getTenantRolesForScopeAccess(userScopeAccess)).thenReturn(roles);
+        when(tenantService.isTenantIdContainedInTenantRoles("tenantId",roles)).thenReturn(true);
+        Response.ResponseBuilder responseBuilder = spy.checkToken(null, authToken, "tokenId", "tenantId");
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
     @Test
     public void checkToken_responseOk_returns200() throws Exception {
         doReturn(null).when(spy).checkAndGetToken("tokenId");
-        when(tenantService.getTenantRolesForScopeAccess(any(ScopeAccess.class))).thenReturn(null);
         Response.ResponseBuilder responseBuilder = spy.checkToken(null, authToken, "tokenId", "");
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
@@ -3918,6 +3929,51 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void updateUser_callsGetScopeAccessByUserId() throws Exception {
+        User user = new User();
+        user.setId(userId);
+        userOS.setId(userId);
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doReturn(user).when(spy).checkAndGetUser(anyString());
+        spy.updateUser(null, authToken, userId, userOS);
+        verify(scopeAccessService).getScopeAccessByUserId(userId);
+    }
+
+    @Test
+    public void updateUser_userIsDefaultUser_callsDefaultRegionService() throws Exception {
+        User user = new User();
+        user.setId(userId);
+        userOS.setId(userId);
+        ScopeAccess scopeAccess = new ScopeAccess();
+        UserScopeAccess scopeAccessForDefaultUser = new UserScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doReturn(user).when(spy).checkAndGetUser(anyString());
+        when(scopeAccessService.getScopeAccessByUserId(userId)).thenReturn(scopeAccessForDefaultUser);
+        when(authorizationService.authorizeCloudUser(scopeAccessForDefaultUser)).thenReturn(true);
+        ScopeAccess value = new ScopeAccess();
+        when(scopeAccessService.getScopeAccessByUserId(userId)).thenReturn(value);
+        when(authorizationService.hasDefaultUserRole(value)).thenReturn(true);
+        spy.updateUser(null, authToken, userId, userOS);
+        verify(defaultRegionService).validateDefaultRegion(anyString());
+    }
+
+    @Test
+    public void updateUser_userIsUserAdminUser_callsDefaultRegionService() throws Exception {
+        User user = new User();
+        user.setId(userId);
+        userOS.setId(userId);
+        ScopeAccess scopeAccess = new ScopeAccess();
+        UserScopeAccess scopeAccessForUserAdmin = new UserScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doReturn(user).when(spy).checkAndGetUser(anyString());
+        when(scopeAccessService.getScopeAccessByUserId(userId)).thenReturn(scopeAccessForUserAdmin);
+        when(authorizationService.hasUserAdminRole(scopeAccessForUserAdmin)).thenReturn(true);
+        spy.updateUser(null, authToken, userId, userOS);
+        verify(defaultRegionService).validateDefaultRegion(anyString());
+    }
+
+    @Test
     public void updateUser_passwordNotNull_callsValidatePassword() throws Exception {
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         userOS.setPassword("123");
@@ -3993,6 +4049,21 @@ public class DefaultCloud20ServiceTest {
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
         spy.updateUser(null, authToken, userId, userOS);
         verify(userService).getUserByAuthToken(authToken);
+    }
+
+    @Test
+    public void updateUser_userIdUserAdmin_callsDefaultRegionService() throws Exception {
+        User user = new User();
+        user.setId(userId);
+        userOS.setId(userId);
+        doReturn(user).when(spy).checkAndGetUser(userId);
+        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(userService.getUserByAuthToken(authToken)).thenReturn(user);
+        ScopeAccess value = new ScopeAccess();
+        when(scopeAccessService.getScopeAccessByUserId(userId)).thenReturn(value);
+        when(authorizationService.hasUserAdminRole(value)).thenReturn(true);
+        spy.updateUser(null, authToken, userId, userOS);
+        verify(defaultRegionService).validateDefaultRegion(user.getRegion());
     }
 
     @Test
@@ -4278,6 +4349,13 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void addGroup__callsValidateKsGroup() throws Exception {
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
+        spy.addGroup(httpHeaders,null,authToken,groupKs);
+        verify(validator20).validateKsGroup(groupKs);
+    }
+
+    @Test
     public void addGroup_callsVerifyServiceAdminLevelAccess() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
@@ -4309,7 +4387,6 @@ public class DefaultCloud20ServiceTest {
         CloudGroupBuilder cloudGroupBuilder = mock(CloudGroupBuilder.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doNothing().when(spy).validateKsGroup(groupKs);
         when(cloudGroupBuilder.build((com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group) any())).thenReturn(group);
         doThrow(new DuplicateException("message")).when(userGroupService).addGroup(org.mockito.Matchers.<Group>any());
         when(exceptionHandler.conflictExceptionResponse("message")).thenReturn(responseBuilder);
@@ -4322,52 +4399,9 @@ public class DefaultCloud20ServiceTest {
         BadRequestException badRequestException = new BadRequestException();
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doThrow(badRequestException).when(spy).validateKsGroup(groupKs);
+        doThrow(badRequestException).when(validator20).validateKsGroup(groupKs);
         when(exceptionHandler.exceptionResponse(badRequestException)).thenReturn(responseBuilder);
         assertThat("response builder", spy.addGroup(null, null, authToken, groupKs), equalTo(responseBuilder));
-    }
-
-    @Test
-    public void validateKsGroup_validGroup() {
-        defaultCloud20Service.validateKsGroup(groupKs);
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void validateKsGroup_groupNameIsNull_throwsBadRequestException() {
-        com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group = mock(com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group.class);
-        when(group.getName()).thenReturn("1").thenReturn(null);
-        defaultCloud20Service.validateKsGroup(group);
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void validateKsGroup_groupDescriptionMoreThan1000Characters_throwsBadRequest() {
-        groupKs.setName("valid");
-        String moreThan1000Chars = org.apache.commons.lang.StringUtils.repeat("a", 1001);
-        groupKs.setDescription(moreThan1000Chars);
-        defaultCloud20Service.validateKsGroup(groupKs);
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void validateKsGroup_invalidGroup_throwsBadRequest() {
-        groupKs.setName("");
-        defaultCloud20Service.validateKsGroup(groupKs);
-    }
-
-    @Test
-    public void validateKsGroup_invalidGroupLength_throwsBadRequestMessage() {
-        groupKs.setName("Invalidnamellllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll");
-        try {
-            defaultCloud20Service.validateKsGroup(groupKs);
-        } catch (Exception e) {
-            assertThat("Exception", e.getMessage(), equalTo("Group name length cannot exceed 200 characters"));
-
-        }
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void validateKsGroup_invalidGroupLength_throwsBadRequest() {
-        groupKs.setName("Invalidnamellllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll");
-        defaultCloud20Service.validateKsGroup(groupKs);
     }
 
     @Test
@@ -4391,14 +4425,16 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void updateGroup_callsValidateKsGroup() throws Exception {
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         spy.updateGroup(null, authToken, null, groupKs);
-        verify(spy).validateKsGroup(groupKs);
+        verify(validator20).validateKsGroup(groupKs);
     }
 
     @Test
     public void updateGroup_callsValidateGroupId() throws Exception {
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         spy.updateGroup(null, authToken, "1", groupKs);
-        verify(spy).validateGroupId("1");
+        verify(validator20).validateGroupId("1");
     }
 
     @Test
@@ -4415,8 +4451,6 @@ public class DefaultCloud20ServiceTest {
         spy.setCloudGroupBuilder(cloudGroupBuilder);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doNothing().when(spy).validateKsGroup(groupKs);
-        doNothing().when(spy).validateGroupId("1");
         doThrow(new DuplicateException("message")).when(userGroupService).updateGroup(any(Group.class));
         when(exceptionHandler.conflictExceptionResponse("message")).thenReturn(responseBuilder);
         assertThat("response builder", spy.updateGroup(httpHeaders, authToken, "1", groupKs), equalTo(responseBuilder));
@@ -4435,15 +4469,16 @@ public class DefaultCloud20ServiceTest {
         BadRequestException badRequestException = new BadRequestException();
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doThrow(badRequestException).when(spy).validateGroupId(null);
+        doThrow(badRequestException).when(validator20).validateGroupId(null);
         when(exceptionHandler.exceptionResponse(badRequestException)).thenReturn(responseBuilder);
         assertThat("response builder", spy.deleteGroup(null, authToken, null), equalTo(responseBuilder));
     }
 
     @Test
     public void deleteGroup_callsValidateGroupId() throws Exception {
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         spy.deleteGroup(null, authToken, "1");
-        verify(spy).validateGroupId("1");
+        verify(validator20).validateGroupId("1");
     }
 
     @Test
@@ -4459,44 +4494,6 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void validateGroupId_validGroupId() {
-        defaultCloud20Service.validateGroupId("1");
-    }
-
-    @Test
-    public void validateGroupId_validGroupIdwithSpaces() {
-        defaultCloud20Service.validateGroupId("  1   ");
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void validateGroupId_inValidGroupId() {
-        defaultCloud20Service.validateGroupId("a");
-    }
-
-    @Test
-    public void validateGroupId_inValidGroupId_throwBadRequest() {
-        try {
-            defaultCloud20Service.validateGroupId(" ");
-        } catch (Exception e) {
-            assertThat("Exception", e.getMessage(), equalTo("Invalid group id"));
-        }
-    }
-
-    @Test
-    public void validateGroupId_inValidGroupIdWithSpaces_throwBadRequest() {
-        try {
-            defaultCloud20Service.validateGroupId(" a ");
-        } catch (Exception e) {
-            assertThat("Exception", e.getMessage(), equalTo("Invalid group id"));
-        }
-    }
-
-    @Test(expected = BadRequestException.class)
-    public void validateGroupId_groupIdIsNull_throwsBadRequest() throws Exception {
-        defaultCloud20Service.validateGroupId(null);
-    }
-
-    @Test
     public void addUserToGroup_callsVerifyServiceAdminLevelAccess() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
@@ -4508,15 +4505,16 @@ public class DefaultCloud20ServiceTest {
     public void addUserToGroup_throwsBadRequestException_returnsResponseBuilder() throws Exception {
         BadRequestException badRequestException = new BadRequestException();
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doThrow(badRequestException).when(spy).validateGroupId(null);
+        doThrow(badRequestException).when(validator20).validateGroupId(null);
         when(exceptionHandler.exceptionResponse(badRequestException)).thenReturn(responseBuilder);
         assertThat("response builder", spy.addUserToGroup(null, authToken, null, null), equalTo(responseBuilder));
     }
 
     @Test
     public void addUserToGroup_callsValidateGroupId() throws Exception {
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         spy.addUserToGroup(null, authToken, "1", null);
-        verify(spy).validateGroupId("1");
+        verify(validator20).validateGroupId("1");
     }
 
     @Test
@@ -4541,8 +4539,9 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void removeUserFromGroup_callsValidateGropuId() throws Exception {
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         spy.removeUserFromGroup(null, authToken, "1", null);
-        verify(spy).validateGroupId("1");
+        verify(validator20).validateGroupId("1");
     }
 
     @Test
@@ -4550,7 +4549,6 @@ public class DefaultCloud20ServiceTest {
         ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doNothing().when(spy).validateGroupId("1");
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response builder", spy.removeUserFromGroup(null, authToken, "1", null), equalTo(responseBuilder));
         assertThat("exception type",argumentCaptor.getValue(),instanceOf(BadRequestException.class));
@@ -4561,7 +4559,6 @@ public class DefaultCloud20ServiceTest {
         ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doNothing().when(spy).validateGroupId("1");
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response builder", spy.removeUserFromGroup(null, authToken, "1", " "), equalTo(responseBuilder));
         assertThat("exception type", argumentCaptor.getValue(), instanceOf(BadRequestException.class));
@@ -4587,7 +4584,6 @@ public class DefaultCloud20ServiceTest {
         Users users = new Users();
         users.setUsers(userList);
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doNothing().when(spy).validateGroupId("1");
         when(userGroupService.getGroupById(1)).thenReturn(group);
         when(userGroupService.getAllEnabledUsers(any(FilterParam[].class), anyString(), anyInt())).thenReturn(users);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
@@ -4605,8 +4601,9 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void getUsersForGroup_callsValidateGroupId() throws Exception {
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         spy.getUsersForGroup(null, authToken, "1", null, null);
-        verify(spy).validateGroupId("1");
+        verify(validator20).validateGroupId("1");
     }
 
     @Test
@@ -4614,7 +4611,6 @@ public class DefaultCloud20ServiceTest {
         ArgumentCaptor<NotFoundException> argumentCaptor = ArgumentCaptor.forClass(NotFoundException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doNothing().when(spy).validateGroupId("1");
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response builder", spy.getUsersForGroup(null, authToken, "1", null, null), equalTo(responseBuilder));
     }
@@ -5482,13 +5478,6 @@ public class DefaultCloud20ServiceTest {
         when(cloudKsGroupBuilder.build(group)).thenReturn(new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group());
         Response.ResponseBuilder responseBuilder = spy.listUserGroups(httpHeaders, authToken, "userId");
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
-    }
-
-    @Test (expected = BadRequestException.class)
-    public void validateKsGroup_groupNameIsEmpty() throws Exception {
-        com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group();
-        group.setName("");
-        spy.validateKsGroup(group);
     }
 
     @Test

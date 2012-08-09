@@ -900,8 +900,8 @@
                             <testSuite>FoundationAuth-GA NegativeTestSuite</testSuite>
                             <outputFolder>soapui/test-test-results</outputFolder>
                             <projectProperties>
-                                <property>endpoint=http://t-api2.cidm.iad2.corp.rackspace.com:4931</property>
-                                <property>endpointjson=http://t-api2.cidm.iad2.corp.rackspace.com</property>
+                                <property>endpoint=https://t-api2.cidm.iad2.corp.rackspace.com:4932</property>
+                                <property>endpointjson=https://t-api2.cidm.iad2.corp.rackspace.com</property>
                                 <property>softDeletePath=cloud/v2.0</property>
                                 <property>path=v1</property>
                                 <property>v2.0path=cloud/v2.0</property>
