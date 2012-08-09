@@ -51,6 +51,8 @@ public class  ServiceConfiguration {
     private InputValidator inputValidator;
     @Autowired
     private TenantDao tenantDao;
+    @Autowired
+    private DomainDao domainDao;
 
     public ServiceConfiguration() {
     }
@@ -139,6 +141,11 @@ public class  ServiceConfiguration {
         return new DefaultTenantService(tenantDao, clientDao, userRepo, scopeAccessDao);
     }
     
+    @Bean
+    public DomainService domainService() {
+        return new DefaultDomainService(domainDao);
+    }
+
     @Bean
     public AuthenticationService authenticationService() {
     	return new DefaultAuthenticationService(authDao, tenantService(), scopeAccessService(),

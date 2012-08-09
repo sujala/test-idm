@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
@@ -129,7 +130,41 @@ public class Cloud20VersionResource {
             ImpersonationRequest impersonationRequest) {
         return defaultCloud20Service.impersonate(httpHeaders, authToken, impersonationRequest).build();
     }
-    
+
+    @POST
+    @Path("RAX-AUTH/domains")
+    public Response addDomain(
+            @Context UriInfo uriInfo,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            Domain domain) {
+        return defaultCloud20Service.addDomain(authToken, uriInfo, domain).build();
+    }
+
+    @GET
+    @Path("RAX-AUTH/domains/{domainId}")
+    public Response getDomainById(
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("domainId") String domainId) {
+        return defaultCloud20Service.getDomain(authToken, domainId).build();
+    }
+
+    @PUT
+    @Path("RAX-AUTH/domains/{domainId}")
+    public Response updateDomain(
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("domainId") String domainId,
+            Domain domain) {
+        return defaultCloud20Service.updateDomain(authToken, domainId, domain).build();
+    }
+
+    @DELETE
+    @Path("RAX-AUTH/domains/{domainId}")
+    public Response deleteDomainById(
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("domainId") String domainId) {
+        return defaultCloud20Service.deleteDomain(authToken, domainId).build();
+    }
+
     @GET
     @Path("extensions")
     public Response listExtensions(@Context HttpHeaders httpHeaders) {

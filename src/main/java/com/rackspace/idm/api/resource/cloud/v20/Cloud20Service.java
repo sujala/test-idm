@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
@@ -172,4 +173,12 @@ public interface Cloud20Service {
     ResponseBuilder listDefaultRegionServices(String authToken);
 
     ResponseBuilder setDefaultRegionServices(String authToken, DefaultRegionServices defaultRegionServices);
+
+    ResponseBuilder addDomain(String authToken, UriInfo uriInfo, Domain domain);
+
+    ResponseBuilder getDomain(String authToken, String domainId);
+
+    ResponseBuilder updateDomain(String authToken, String domainId, Domain domain);
+
+    ResponseBuilder deleteDomain(String authToken, String domainId);
 }

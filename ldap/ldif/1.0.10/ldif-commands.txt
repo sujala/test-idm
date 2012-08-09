@@ -1,0 +1,4 @@
+
+1) Update Schema with RackSchema.dxc
+2) execute domains.ldiff
+3) execute nextDomainIds.ldiff

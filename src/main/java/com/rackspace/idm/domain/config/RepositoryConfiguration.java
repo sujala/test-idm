@@ -68,4 +68,9 @@ public class RepositoryConfiguration {
     public TenantDao ldapTenantRepository() {
         return new LdapTenantRepository(connPools, appConfig);
     }
+
+    @Bean
+    public DomainDao ldapDomainRepository() {
+        return new LdapDomainRepository(connPools, appConfig);
+    }
 }
