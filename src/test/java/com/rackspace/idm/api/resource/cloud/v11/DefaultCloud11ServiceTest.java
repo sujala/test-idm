@@ -2570,7 +2570,6 @@ public class DefaultCloud11ServiceTest {
         assertTrue("no Exception thrown", true);
     }
 
-
     @Test
     public void validateToken_belongsToIsBlank_responseOk_returns200() throws Exception {
         UserScopeAccess userScopeAccess = new UserScopeAccess();
@@ -2581,6 +2580,17 @@ public class DefaultCloud11ServiceTest {
         when(request.getRequestURL()).thenReturn(new StringBuffer("url/token/tokenId"));
         Response.ResponseBuilder responseBuilder = spy.validateToken(request, "tokenId", null, null, httpHeaders);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void validateToken_scopeIsImpersonatedScopeAccessAndTokenExpired_returns404() throws Exception {
+        ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
+        impersonatedScopeAccess.setAccessTokenExpired();
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
+        when(request.getRequestURL()).thenReturn(new StringBuffer("url/token/tokenId"));
+        when(scopeAccessService.getScopeAccessByAccessToken("tokenId")).thenReturn(impersonatedScopeAccess);
+        Response.ResponseBuilder responseBuilder = spy.validateToken(request, "tokenId", "belongsTo", null, httpHeaders);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(404));
     }
 
     @Test
