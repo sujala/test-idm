@@ -1,5 +1,7 @@
 package com.rackspace.idm.util;
 
+import java.net.URL;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.xmlrpc.XmlRpcException;
 import org.apache.xmlrpc.client.XmlRpcClient;
@@ -15,12 +17,12 @@ public class NastXmlRpcClientWrapper {
     @Autowired
     private NastConfiguration authConfiguration;
 
-    XmlRpcClient getClient() throws MalformedURLException {
+    XmlRpcClient getClient(URL url) throws MalformedURLException {
         XmlRpcClientConfigImpl config;
         XmlRpcClient client;
 
         config = new XmlRpcClientConfigImpl();
-        config.setServerURL(authConfiguration.getNastXmlRpcUrl());
+        config.setServerURL(url);
         client = new XmlRpcClient();
         client.setConfig(config);
 
@@ -29,15 +31,27 @@ public class NastXmlRpcClientWrapper {
 
 
     public String addResellerStorageAccount(String[] parameters) throws MalformedURLException, XmlRpcException {
-        String response;
+        String response = null;
 
-        response = (String) getClient().execute("reseller.add_storage_account", parameters);
+        for (URL url : authConfiguration.getNastXmlRpcUrl()) {
+            if (response == null) {
+                response = (String) getClient(url).execute("reseller.add_storage_account", parameters);
+            } else {
+                String nthResponse = (String) getClient(url).execute("reseller.add_storage_account", new String[]{parameters[0], removeNastPrefix(response)});
+            }
+        }
 
         return response;
     }
 
     public Boolean removeResellerStorageAccount(String nastAccountId) throws MalformedURLException, XmlRpcException {
-        return removeResellerStorageAccount(nastAccountId, getClient());
+        boolean response = true;
+
+        for (URL url : authConfiguration.getNastXmlRpcUrl()) {
+            response = response && removeResellerStorageAccount(nastAccountId, getClient(url));
+        }
+
+        return response;
     }
 
     public Boolean removeResellerStorageAccount(String nastAccountId, XmlRpcClient rpcClient) throws MalformedURLException, XmlRpcException {

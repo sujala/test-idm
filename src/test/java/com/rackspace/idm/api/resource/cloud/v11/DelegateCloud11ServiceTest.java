@@ -6,6 +6,7 @@ import com.rackspace.idm.domain.dao.impl.LdapUserRepository;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.impl.DefaultUserService;
+import com.rackspace.idm.exception.NotAuthorizedException;
 import com.rackspacecloud.docs.auth.api.v1.*;
 import com.rackspacecloud.docs.auth.api.v1.AuthData;
 import com.rackspacecloud.docs.auth.api.v1.Credentials;
@@ -16,10 +17,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Matchers;
 import org.mockito.internal.verification.VerificationModeFactory;
-import org.mortbay.jetty.HttpHeaders;
+
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBElement;
@@ -611,6 +613,7 @@ public class DelegateCloud11ServiceTest {
         user.setId(userId);
         when(defaultUserService.getUser(userId)).thenReturn(user);
         when(defaultUserService.isMigratedUser(Matchers.<com.rackspace.idm.domain.entity.User>any())).thenReturn(true);
+        when(cloudClient.delete(url + "users/userId", null)).thenReturn(okResponse);
         delegateCloud11Service.deleteUser(null, userId, null);
         verify(defaultCloud11Service).deleteUser(null, userId, null);
     }
@@ -623,6 +626,16 @@ public class DelegateCloud11ServiceTest {
         when(defaultUserService.isMigratedUser(user)).thenReturn(false);
         delegateCloud11Service.deleteUser(null, "userId", httpHeaders);
         verify(defaultCloud11Service).deleteUser(null, "userId", httpHeaders);
+    }
+
+    @Test (expected = NotAuthorizedException.class)
+    public void deleteUser_cloudResponseUnauthorized_throwsNotAuthorizedException() throws Exception {
+        com.rackspace.idm.domain.entity.User user = new com.rackspace.idm.domain.entity.User();
+        when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
+        when(defaultUserService.getUser("userId")).thenReturn(user);
+        when(defaultUserService.isMigratedUser(user)).thenReturn(true);
+        when(cloudClient.delete(anyString(), any(HttpHeaders.class))).thenReturn(Response.status(401));
+        delegateCloud11Service.deleteUser(null, "userId", null);
     }
 
     @Test

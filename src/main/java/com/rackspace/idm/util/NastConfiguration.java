@@ -1,5 +1,8 @@
 package com.rackspace.idm.util;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -31,8 +34,17 @@ public class NastConfiguration {
         return configuration.getString("nast.xmlrpc.reseller");
     }
 
-    public URL getNastXmlRpcUrl() throws MalformedURLException {
-        String rawUrl = configuration.getString("nast.xmlrpc.url");
-        return new URL(rawUrl);
+    public List<URL> getNastXmlRpcUrl() throws MalformedURLException {
+        List<URL> result = new ArrayList<URL>();
+
+        String[] urlList = configuration.getStringArray("nast.xmlrpc.url");
+
+        if (urlList != null) {
+	        for (String rawUrl : urlList) {
+	            result.add(new URL(rawUrl));
+	        }
+        }
+
+        return result;
     }
 }

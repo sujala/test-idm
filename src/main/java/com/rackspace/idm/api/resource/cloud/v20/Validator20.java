@@ -134,4 +134,14 @@ public class Validator20 {
             throw new BadRequestException("Group description length cannot exceed 1000 characters");
         }
     }
+
+    public void validateGroupId(String groupId) {
+        try {
+          Integer.parseInt(groupId.trim());
+        } catch (Exception e) {
+            throw new BadRequestException("Invalid group id");
+        }
+    }
+
+
 }

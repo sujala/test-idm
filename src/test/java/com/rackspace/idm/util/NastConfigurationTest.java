@@ -1,6 +1,9 @@
 package com.rackspace.idm.util;
 
+import java.util.List;
+
 import org.apache.commons.configuration.Configuration;
+import org.hamcrest.Matcher;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -47,13 +50,14 @@ public class NastConfigurationTest {
     public void getNastXmlRpcUrl_callsConfig_getString() throws Exception {
         when(config.getString("nast.xmlrpc.url")).thenReturn("http://services.stg.swift.racklabs.com:10000/RPC2");
         nastConfiguration.getNastXmlRpcUrl();
-        verify(config).getString("nast.xmlrpc.url");
+        verify(config).getStringArray("nast.xmlrpc.url");
     }
 
     @Test
     public void getNastXmlRpcUrl_returnsNewUrl() throws Exception {
-        when(config.getString("nast.xmlrpc.url")).thenReturn("http://services.stg.swift.racklabs.com:10000/RPC2");
-        URL url = nastConfiguration.getNastXmlRpcUrl();
-        assertThat("url", url.toString(), equalTo("http://services.stg.swift.racklabs.com:10000/RPC2"));
+    	String [] nastUrls = new String[] {"http://services.stg.swift.racklabs.com:10000/RPC2"};
+        when(config.getStringArray("nast.xmlrpc.url")).thenReturn(nastUrls);
+        List<URL> url = nastConfiguration.getNastXmlRpcUrl();
+        assertThat("url", url, equalTo(url));
     }
 }

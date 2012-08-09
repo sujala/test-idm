@@ -81,6 +81,7 @@ public class DefaultCloud11ServiceTest {
     HttpServletRequest request;
     private ScopeAccessService scopeAccessService;
     UserScopeAccess userScopeAccess;
+    ImpersonatedScopeAccess impersonatedScopeAccess;
     javax.ws.rs.core.HttpHeaders httpHeaders;
     CloudExceptionResponse cloudExceptionResponse;
     Application application = new Application("id",null,"myApp", null);
@@ -102,6 +103,7 @@ public class DefaultCloud11ServiceTest {
         httpHeaders = mock(javax.ws.rs.core.HttpHeaders.class);
         scopeAccessService = mock(ScopeAccessService.class);
         userScopeAccess = mock(UserScopeAccess.class);
+        impersonatedScopeAccess = mock(ImpersonatedScopeAccess.class);
         endpointService = mock(EndpointService.class);
         endpointConverterCloudV11 = mock(EndpointConverterCloudV11.class);
         uriInfo = mock(UriInfo.class);
@@ -182,7 +184,7 @@ public class DefaultCloud11ServiceTest {
         doNothing().when(spy).authenticateCloudAdminUser(request);
         when(userService.getUser("userId")).thenReturn(userDO);
         spy.deleteUser(request, "userId", httpHeaders);
-        verify(userService).hasSubUsers("userId");
+        verify(userService).hasSubUsers(userDO.getId());
     }
 
     @Test
@@ -881,131 +883,152 @@ public class DefaultCloud11ServiceTest {
     }
 
     @Test
+    public void validateToken_withImpersonated_returnsValid() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
+        when(request.getRequestURL()).thenReturn(new StringBuffer("requestUrl/token/1"));
+        when(scopeAccessService.getScopeAccessByAccessToken(null)).thenReturn(impersonatedScopeAccess);
+        Response.ResponseBuilder responseBuilder = spy.validateToken(request, null, "belongsTo", "CLOUD", null);
+        assertThat("validate token response", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
     public void validateToken_withBadType_returnsBadRequest() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
-        Response.ResponseBuilder responseBuilder = spy.validateToken(null, null, null, "<inV@lid T*pe!", null);
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
+        when(request.getRequestURL()).thenReturn(new StringBuffer("requestUrl/token/1"));
+        Response.ResponseBuilder responseBuilder = spy.validateToken(request, null, null, "<inV@lid T*pe!", null);
         assertThat("validate token response", responseBuilder.build().getStatus(), equalTo(400));
     }
 
     @Test
     public void validateToken_withExpiredToken_returnsNotFound() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
+        when(request.getRequestURL()).thenReturn(new StringBuffer("requestUrl/token/1"));
         when(scopeAccessService.getScopeAccessByAccessToken(null)).thenReturn(new UserScopeAccess());
-        Response.ResponseBuilder responseBuilder = spy.validateToken(null, null, null, null, null);
+        Response.ResponseBuilder responseBuilder = spy.validateToken(request, null, null, null, null);
         assertThat("validate token response", responseBuilder.build().getStatus(), equalTo(404));
     }
 
     @Test
     public void validateToken_withCloudType_callsUserService_getUser() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
+        when(request.getRequestURL()).thenReturn(new StringBuffer("requestUrl/token/1"));
         when(userScopeAccess.isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
         when(scopeAccessService.getScopeAccessByAccessToken(null)).thenReturn(userScopeAccess);
-        spy.validateToken(null, null, "belongsTo", "CLOUD", null);
+        spy.validateToken(request, null, "belongsTo", "CLOUD", null);
         verify(userService).getUser("belongsTo");
     }
 
     @Test
     public void validateToken_withMossoType_callsUserService_getUserByMossoId() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
+        when(request.getRequestURL()).thenReturn(new StringBuffer("requestUrl/token/1"));
         when(userScopeAccess.isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
         when(scopeAccessService.getScopeAccessByAccessToken(null)).thenReturn(userScopeAccess);
-        spy.validateToken(null, null, "123", "MOSSO", null);
+        spy.validateToken(request, null, "123", "MOSSO", null);
         verify(userService).getUserByMossoId(123);
     }
 
     @Test
     public void validateToken_withNastType_callsUserService_getUserByNastId() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
+        when(request.getRequestURL()).thenReturn(new StringBuffer("requestUrl/token/1"));
         when(userScopeAccess.isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
         when(scopeAccessService.getScopeAccessByAccessToken(null)).thenReturn(userScopeAccess);
-        spy.validateToken(null, null, "belongsTo", "NAST", null);
+        spy.validateToken(request, null, "belongsTo", "NAST", null);
         verify(userService).getUserByNastId("belongsTo");
     }
 
     @Test
     public void validateToken_userServiceReturnsNullUser_returnsNotAuthorized() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
+        when(request.getRequestURL()).thenReturn(new StringBuffer("requestUrl/token/1"));
         when(userScopeAccess.isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
         when(scopeAccessService.getScopeAccessByAccessToken(null)).thenReturn(userScopeAccess);
         when(userService.getUser("belongsTo")).thenReturn(null);
-        Response.ResponseBuilder responseBuilder = spy.validateToken(null, null, "belongsTo", "CLOUD", null);
+        Response.ResponseBuilder responseBuilder = spy.validateToken(request, null, "belongsTo", "CLOUD", null);
         assertThat("response builder", responseBuilder.build().getStatus(), equalTo(401));
     }
 
     @Test
     public void validateToken_scopeAccessService_returnsNullScope_throwsNotFoundException() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
+        when(request.getRequestURL()).thenReturn(new StringBuffer("requestUrl/token/1"));
         when(userScopeAccess.isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
         when(scopeAccessService.getScopeAccessByAccessToken(null)).thenReturn(null);
         when(userService.getUser("belongsTo")).thenReturn(null);
-        Response.ResponseBuilder responseBuilder = spy.validateToken(null, null, "belongsTo", "CLOUD", null);
+        Response.ResponseBuilder responseBuilder = spy.validateToken(request, null, "belongsTo", "CLOUD", null);
         assertThat("response builder", responseBuilder.build().getStatus(), equalTo(404));
     }
 
     @Test
     public void validateToken_scopeAccessService_returnsExpiredScope_throwsNotFoundException() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
+        when(request.getRequestURL()).thenReturn(new StringBuffer("requestUrl/token/1"));
         when(userScopeAccess.isAccessTokenExpired(any(DateTime.class))).thenReturn(true);
         when(scopeAccessService.getScopeAccessByAccessToken(null)).thenReturn(userScopeAccess);
         when(userService.getUser("belongsTo")).thenReturn(null);
-        Response.ResponseBuilder responseBuilder = spy.validateToken(null, null, "belongsTo", "CLOUD", null);
+        Response.ResponseBuilder responseBuilder = spy.validateToken(request, null, "belongsTo", "CLOUD", null);
         assertThat("response builder", responseBuilder.build().getStatus(), equalTo(404));
     }
 
     @Test
     public void validateToken_scopeAccessService_returnsNonUserScopeAccess_throwsNotFoundException() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
+        when(request.getRequestURL()).thenReturn(new StringBuffer("requestUrl/token/1"));
         when(userScopeAccess.isAccessTokenExpired(any(DateTime.class))).thenReturn(true);
         when(scopeAccessService.getScopeAccessByAccessToken(null)).thenReturn(new ScopeAccess());
         when(userService.getUser("belongsTo")).thenReturn(null);
-        Response.ResponseBuilder responseBuilder = spy.validateToken(null, null, "belongsTo", "CLOUD", null);
+        Response.ResponseBuilder responseBuilder = spy.validateToken(request, null, "belongsTo", "CLOUD", null);
         assertThat("response builder", responseBuilder.build().getStatus(), equalTo(404));
     }
 
     @Test
     public void validateToken_belongsToIsBlank_doesntCallUserService() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
+        when(request.getRequestURL()).thenReturn(new StringBuffer("requestUrl/token/1"));
         when(userScopeAccess.isAccessTokenExpired(any(DateTime.class))).thenReturn(true);
         when(scopeAccessService.getScopeAccessByAccessToken(null)).thenReturn(new UserScopeAccess());
         when(userService.getUser("belongsTo")).thenReturn(null);
-        spy.validateToken(null, null, null, "CLOUD", null);
+        spy.validateToken(request, null, null, "CLOUD", null);
         verify(userService, never()).getUser("belongsTo");
     }
 
     @Test
     public void validateToken_userServiceReturnsDisabledUser_returnsForbidden() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
+        when(request.getRequestURL()).thenReturn(new StringBuffer("requestUrl/token/1"));
         when(userScopeAccess.isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
         when(scopeAccessService.getScopeAccessByAccessToken(null)).thenReturn(userScopeAccess);
         when(userService.getUser("belongsTo")).thenReturn(userDO);
         userDO.setEnabled(false);
-        Response.ResponseBuilder responseBuilder = spy.validateToken(null, null, "belongsTo", "CLOUD", null);
+        Response.ResponseBuilder responseBuilder = spy.validateToken(request, null, "belongsTo", "CLOUD", null);
         assertThat("response builder", responseBuilder.build().getStatus(), equalTo(403));
     }
 
     @Test
     public void validateToken_apiUsernameAndScopeAccessUsernameAreDifferent_returnsNotAuthorized() throws Exception {
-        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
+        when(request.getRequestURL()).thenReturn(new StringBuffer("requestUrl/token/1"));
         when(userScopeAccess.isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
         when(userScopeAccess.getUsername()).thenReturn("ScopeAccessUsername");
         when(scopeAccessService.getScopeAccessByAccessToken(null)).thenReturn(userScopeAccess);
         userDO.setEnabled(true);
         userDO.setUsername("apiUsername");
         when(userService.getUser("belongsTo")).thenReturn(userDO);
-        Response.ResponseBuilder responseBuilder = spy.validateToken(null, null, "belongsTo", "CLOUD", null);
+        Response.ResponseBuilder responseBuilder = spy.validateToken(request, null, "belongsTo", "CLOUD", null);
         assertThat("response builder", responseBuilder.build().getStatus(), equalTo(401));
     }
 
     @Test
     public void validateToken_withValidData_callsAuthConverterCloudV11_toCloudV11TokenJaxb() throws Exception {
         doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
+        when(request.getRequestURL()).thenReturn(new StringBuffer("requestUrl/token/1"));
         when(userScopeAccess.isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
         when(userScopeAccess.getUsername()).thenReturn("username");
         when(scopeAccessService.getScopeAccessByAccessToken(null)).thenReturn(userScopeAccess);
         userDO.setEnabled(true);
         userDO.setUsername("username");
         when(userService.getUser("belongsTo")).thenReturn(userDO);
-        when(request.getRequestURL()).thenReturn(new StringBuffer("requestUrl/token/1"));
         spy.validateToken(request, null, "belongsTo", "CLOUD", null);
         verify(authConverterCloudv11).toCloudV11TokenJaxb(eq(userScopeAccess), anyString());
     }
@@ -1013,13 +1036,13 @@ public class DefaultCloud11ServiceTest {
     @Test
     public void validateToken_withValidData_returns200Status() throws Exception {
         doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
+        when(request.getRequestURL()).thenReturn(new StringBuffer("requestUrl/token/1"));
         when(userScopeAccess.isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
         when(userScopeAccess.getUsername()).thenReturn("username");
         when(scopeAccessService.getScopeAccessByAccessToken(null)).thenReturn(userScopeAccess);
         userDO.setEnabled(true);
         userDO.setUsername("username");
         when(userService.getUser("belongsTo")).thenReturn(userDO);
-        when(request.getRequestURL()).thenReturn(new StringBuffer("requestUrl/token/1"));
         Response.ResponseBuilder responseBuilder = spy.validateToken(request, null, "belongsTo", "CLOUD", null);
         assertThat("response builder", responseBuilder.build().getStatus(), equalTo(200));
     }
@@ -2547,7 +2570,6 @@ public class DefaultCloud11ServiceTest {
         assertTrue("no Exception thrown", true);
     }
 
-
     @Test
     public void validateToken_belongsToIsBlank_responseOk_returns200() throws Exception {
         UserScopeAccess userScopeAccess = new UserScopeAccess();
@@ -2558,6 +2580,17 @@ public class DefaultCloud11ServiceTest {
         when(request.getRequestURL()).thenReturn(new StringBuffer("url/token/tokenId"));
         Response.ResponseBuilder responseBuilder = spy.validateToken(request, "tokenId", null, null, httpHeaders);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void validateToken_scopeIsImpersonatedScopeAccessAndTokenExpired_returns404() throws Exception {
+        ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
+        impersonatedScopeAccess.setAccessTokenExpired();
+        doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
+        when(request.getRequestURL()).thenReturn(new StringBuffer("url/token/tokenId"));
+        when(scopeAccessService.getScopeAccessByAccessToken("tokenId")).thenReturn(impersonatedScopeAccess);
+        Response.ResponseBuilder responseBuilder = spy.validateToken(request, "tokenId", "belongsTo", null, httpHeaders);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(404));
     }
 
     @Test

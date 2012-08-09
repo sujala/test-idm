@@ -26,28 +26,10 @@ import java.util.Set;
 public class DefaultRegionService {
 
     @Autowired
-    private ScopeAccessService scopeAccessService;
-
-    @Autowired
     private EndpointService endpointService;
 
     @Autowired
     private ApplicationService applicationService;
-
-    public Set<String> getRegionList(String userId) {
-        ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByUserId(userId);
-        List<OpenstackEndpoint> openstackEndpointsForScopeAccess = scopeAccessService.getOpenstackEndpointsForScopeAccess(scopeAccess);
-        Set<String> regions = new HashSet<String>();
-        for (OpenstackEndpoint endpoint : openstackEndpointsForScopeAccess) {
-            List<CloudBaseUrl> baseUrls = endpoint.getBaseUrls();
-            if (baseUrls != null) {
-                for (CloudBaseUrl baseUrl : baseUrls) {
-                    regions.add(baseUrl.getRegion());
-                }
-            }
-        }
-        return regions;
-    }
 
     public void validateDefaultRegion(String defaultRegion) {
         Set<String> defaultRegions = this.getDefaultRegions();
@@ -74,10 +56,6 @@ public class DefaultRegionService {
             }
         }
         return defaultRegions;
-    }
-
-    public void setScopeAccessService(ScopeAccessService scopeAccessService) {
-        this.scopeAccessService = scopeAccessService;
     }
 
     public void setApplicationService(ApplicationService applicationService) {
