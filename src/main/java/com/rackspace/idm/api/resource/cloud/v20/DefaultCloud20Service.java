@@ -1311,12 +1311,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     boolean isDefaultUser(ScopeAccess requesterScopeAccess, List<TenantRole> tenantRoles) {
-        List<TenantRole> tenantRoleList;
-        if (tenantRoles == null) {
+        List<TenantRole> tenantRoleList = tenantRoles;
+        if (tenantRoleList == null) {
             tenantRoleList = tenantService.getTenantRolesForScopeAccess(requesterScopeAccess);
-        }
-        else {
-            tenantRoleList = tenantRoles;
         }
         boolean hasRole = false;
         for (TenantRole tenantRole : tenantRoleList) {
