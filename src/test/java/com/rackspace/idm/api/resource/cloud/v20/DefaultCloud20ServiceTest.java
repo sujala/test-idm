@@ -726,7 +726,6 @@ public class DefaultCloud20ServiceTest {
         scopeAccess.setAccessTokenExp(new Date(5000, 1, 1));
         scopeAccess.setAccessTokenString("uuuuuuuuuu");
         when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
-        doReturn(new User()).when(spy).checkAndGetUser(anyString());
         spy.authenticate(null, authenticationRequest);
         verify(tenantService).hasTenantAccess(org.mockito.Matchers.any(UserScopeAccess.class), eq("tenantId"));
     }
@@ -810,7 +809,6 @@ public class DefaultCloud20ServiceTest {
         scopeAccess.setAccessTokenString("foo");
         when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
         when(tenantService.hasTenantAccess(org.mockito.Matchers.any(UserScopeAccess.class), anyString())).thenReturn(true);
-        doReturn(new User()).when(spy).checkAndGetUser(anyString());
         spy.authenticate(null, authenticationRequest);
         verify(scopeAccessService).getOpenstackEndpointsForScopeAccess(any(ScopeAccess.class));
     }
@@ -828,7 +826,6 @@ public class DefaultCloud20ServiceTest {
         scopeAccess.setAccessTokenString("foo");
         when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
         when(tenantService.hasTenantAccess(org.mockito.Matchers.any(UserScopeAccess.class), anyString())).thenReturn(true);
-        doReturn(new User()).when(spy).checkAndGetUser(anyString());
         spy.authenticate(null, authenticationRequest);
         verify(spy).stripEndpoints(any(List.class));
     }
@@ -847,7 +844,6 @@ public class DefaultCloud20ServiceTest {
         when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
         when(tenantService.hasTenantAccess(org.mockito.Matchers.any(UserScopeAccess.class), anyString())).thenReturn(true);
         when(tokenConverterCloudV20.toToken(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(new Token());
-        doReturn(new User()).when(spy).checkAndGetUser(anyString());
         when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
         spy.authenticate(null, authenticationRequest);
         verify(authConverterCloudV20).toAuthenticationResponse(any(User.class), any(ScopeAccess.class), any(List.class), any(List.class));
@@ -927,7 +923,6 @@ public class DefaultCloud20ServiceTest {
         scopeAccess.setAccessTokenExp(new Date(5000, 1, 1));
         scopeAccess.setAccessTokenString("foo");
         when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
-        doReturn(new User()).when(spy).checkAndGetUser(anyString());
         when(tokenConverterCloudV20.toToken(any(ScopeAccess.class))).thenReturn(token);
         when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(tenantService.hasTenantAccess(any(ScopeAccess.class), eq("tenantId"))).thenReturn(true);
@@ -955,7 +950,6 @@ public class DefaultCloud20ServiceTest {
         scopeAccess.setAccessTokenString("foo");
         when(tokenConverterCloudV20.toToken(any(ScopeAccess.class))).thenReturn(token);
         when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
-        doReturn(new User()).when(spy).checkAndGetUser(anyString());
         when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(tenantService.hasTenantAccess(any(ScopeAccess.class), eq("tenantId"))).thenReturn(true);
         ArrayList<OpenstackEndpoint> openstackEndpoints = new ArrayList<OpenstackEndpoint>();
@@ -1091,7 +1085,6 @@ public class DefaultCloud20ServiceTest {
         when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
         when(tenantService.hasTenantAccess(org.mockito.Matchers.any(UserScopeAccess.class), anyString())).thenReturn(true);
         when(tokenConverterCloudV20.toToken(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(new Token());
-        doReturn(new User()).when(spy).checkAndGetUser(anyString());
         spy.authenticate(null, authenticationRequest);
         verify(tenantService, atLeastOnce()).hasTenantAccess(org.mockito.Matchers.any(UserScopeAccess.class), eq("tenantId"));
     }
@@ -1244,7 +1237,6 @@ public class DefaultCloud20ServiceTest {
         UserForCreate userForCreate = new UserForCreate();
         userForCreate.setId("notSameId");
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doReturn(user).when(spy).checkAndGetUser("123");
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
 
         assertThat("response builder", spy.updateUser(httpHeaders, authToken, "123", userForCreate), equalTo(responseBuilder));
@@ -1261,7 +1253,6 @@ public class DefaultCloud20ServiceTest {
         user.setEnabled(true);
         user.setId(userId);
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doReturn(user).when(spy).checkAndGetUser(userId);
         when(userService.getUserByAuthToken(authToken)).thenReturn(user);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response code", spy.updateUser(httpHeaders, authToken, userId, userForCreate), equalTo(responseBuilder));
@@ -2319,7 +2310,6 @@ public class DefaultCloud20ServiceTest {
         when(httpHeaders.getMediaType()).thenReturn(mediaType);
         when(mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)).thenReturn(true);
         doReturn(new JAXBElement<PasswordCredentialsRequiredUsername>(QName.valueOf("foo"),PasswordCredentialsRequiredUsername.class,passwordCredentialsRequiredUsername)).when(spy).getJSONCredentials(jsonBody);
-        doReturn(user).when(spy).checkAndGetUser(userId);
         spy.addUserCredential(httpHeaders, authToken, userId, jsonBody);
         verify(userService).checkAndGetUserById(userId);
     }
@@ -3038,7 +3028,7 @@ public class DefaultCloud20ServiceTest {
         user.setUsername("username");
         SecretQA secretQA2 = new SecretQA();
         doReturn(null).when(spy).getScopeAccessForValidToken("authToken");
-        doReturn(user).when(spy).checkAndGetUser("userId");
+        when(userService.checkAndGetUserById("userId")).thenReturn(user);
         com.rackspace.docs.identity.api.ext.rax_ksqa.v1.ObjectFactory objectFactory = mock(com.rackspace.docs.identity.api.ext.rax_ksqa.v1.ObjectFactory.class);
         when(jaxbObjectFactories.getRackspaceIdentityExtKsqaV1Factory()).thenReturn(objectFactory);
         when(objectFactory.createSecretQA()).thenReturn(secretQA2);
@@ -3048,7 +3038,7 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void getSecretQA_callsverifyServiceAdminLevelAccess() throws Exception {
+    public void getSecretQA_callsVerifyServiceAdminLevelAccess() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.getSecretQA(null, authToken, null);
@@ -3056,17 +3046,26 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void getSecretQA_callsCheckAndGetUserById() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        spy.getSecretQA(null, authToken, userId);
+        verify(userService).checkAndGetUserById(userId);
+    }
+
+    @Test
     public void getSecretQA_throwsNotFoundException_returnsResponseBuilder() throws Exception {
         NotFoundException notFoundException = new NotFoundException();
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doThrow(notFoundException).when(spy).checkAndGetUser(null);
+        doThrow(notFoundException).when(userService).checkAndGetUserById(userId);
         when(exceptionHandler.exceptionResponse(notFoundException)).thenReturn(responseBuilder);
-        assertThat("response builder", spy.getSecretQA(null, authToken, null), equalTo(responseBuilder));
+        assertThat("response builder", spy.getSecretQA(null, authToken, userId), equalTo(responseBuilder));
     }
 
     @Test
     public void getSecretQA_responseOk_returns200() throws Exception {
+        when(userService.checkAndGetUserById(userId)).thenReturn(user);
         when(jaxbObjectFactories.getRackspaceIdentityExtKsqaV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_ksqa.v1.ObjectFactory());
         Response.ResponseBuilder responseBuilder = spy.getSecretQA(httpHeaders, authToken, userId);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
@@ -3408,6 +3407,13 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void getUserRole_callsCheckAndGetUserById() throws Exception {
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
+        spy.getUserRole(null, authToken, userId, null);
+        verify(userService).checkAndGetUserById(userId);
+    }
+
+    @Test
     public void getUserRole_roleIsNullThrowsNotFoundException_returnsResponseBuilder() throws Exception {
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         User user = new User();
@@ -3417,7 +3423,7 @@ public class DefaultCloud20ServiceTest {
         tenantRoleList.add(tenantRole);
         ArgumentCaptor<NotFoundException> argumentCaptor = ArgumentCaptor.forClass(NotFoundException.class);
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doReturn(user).when(spy).checkAndGetUser("userId");
+        when(userService.checkAndGetUserById("userId")).thenReturn(user);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         when(tenantService.getGlobalRolesForUser(user)).thenReturn(tenantRoleList);
         assertThat("response builder", spy.getUserRole(null, authToken, "userId", "roleId"), equalTo(responseBuilder));
@@ -3442,13 +3448,21 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void listCredentials_callsCheckAndGetUserById() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        spy.listCredentials(null, authToken, userId, null, 0);
+        verify(userService).checkAndGetUserById(userId);
+    }
+
+    @Test
     public void listCredentials_throwsNotFoundException_returnsResponseBuilder() throws Exception {
         NotFoundException notFoundException = new NotFoundException();
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doThrow(notFoundException).when(spy).checkAndGetUser(null);
+        doThrow(notFoundException).when(userService).checkAndGetUserById(userId);
         when(exceptionHandler.exceptionResponse(notFoundException)).thenReturn(responseBuilder);
-        assertThat("response builder", spy.listCredentials(null, authToken, null, null, 0), equalTo(responseBuilder));
+        assertThat("response builder", spy.listCredentials(null, authToken, userId, null, 0), equalTo(responseBuilder));
     }
 
     @Test
@@ -3456,7 +3470,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         User requester = new User();
         User requested = new User();
-        doReturn(requested).when(spy).checkAndGetUser(userId);
+        when(userService.checkAndGetUserById(userId)).thenReturn(requested);
         when(userService.getUserByScopeAccess(scopeAccess)).thenReturn(requester);
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(true).when(spy).isUserAdmin(scopeAccess, null);
@@ -3465,11 +3479,11 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void listCredential_defaultUser_callsVerifySelf() throws Exception {
+    public void listCredentials_defaultUser_callsVerifySelf() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         User requester = new User();
         User requested = new User();
-        doReturn(requested).when(spy).checkAndGetUser(userId);
+        when(userService.checkAndGetUserById(userId)).thenReturn(requested);
         when(userService.getUserByScopeAccess(scopeAccess)).thenReturn(requester);
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(true).when(spy).isDefaultUser(scopeAccess, null);
@@ -3478,9 +3492,9 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void listCredential_userPasswordIsNotBlankResponseOk_returns200() throws Exception {
+    public void listCredentials_userPasswordIsNotBlankResponseOk_returns200() throws Exception {
         user.setPassword("123");
-        doReturn(user).when(spy).checkAndGetUser(userId);
+        when(userService.checkAndGetUserById(userId)).thenReturn(user);
         Response.ResponseBuilder responseBuilder = spy.listCredentials(httpHeaders, authToken, userId, null, null);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
@@ -3488,24 +3502,24 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void listCredential_userApiKeyIsNotBlankResponseOk_returns200() throws Exception {
         user.setApiKey("123");
-        doReturn(user).when(spy).checkAndGetUser(userId);
+        when(userService.checkAndGetUserById(userId)).thenReturn(user);
         when(jaxbObjectFactories.getRackspaceIdentityExtKskeyV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory());
         Response.ResponseBuilder responseBuilder = spy.listCredentials(httpHeaders, authToken, userId, null, null);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
     @Test
-    public void listCredential_userPasswordIsBlankAndApiKeyIsBlankResponseOk_returns200() throws Exception {
-        doReturn(user).when(spy).checkAndGetUser(userId);
+    public void listCredentials_userPasswordIsBlankAndApiKeyIsBlankResponseOk_returns200() throws Exception {
+        when(userService.checkAndGetUserById(userId)).thenReturn(user);
         Response.ResponseBuilder responseBuilder = spy.listCredentials(httpHeaders, authToken, userId, null, null);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
     @Test
-    public void listCredential_userPasswordIsNotBlankAndApiKeyIsNotBlank_returns200() throws Exception {
+    public void listCredentials_userPasswordIsNotBlankAndApiKeyIsNotBlank_returns200() throws Exception {
         user.setApiKey("123");
         user.setPassword("123");
-        doReturn(user).when(spy).checkAndGetUser(userId);
+        when(userService.checkAndGetUserById(userId)).thenReturn(user);
         when(jaxbObjectFactories.getRackspaceIdentityExtKskeyV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory());
         Response.ResponseBuilder responseBuilder = spy.listCredentials(httpHeaders, authToken, userId, null, null);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
@@ -3738,6 +3752,13 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void listRolesForUserOnTenant_callsCheckAndGetUserById() throws Exception {
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
+        spy.listRolesForUserOnTenant(null, authToken, tenantId, userId);
+        verify(userService).checkAndGetUserById(userId);
+    }
+
+    @Test
     public void listRolesForUserOnTenant_throwsNotFoundException_returnsResponseBuilder() throws Exception {
         NotFoundException notFoundException = new NotFoundException();
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
@@ -3843,6 +3864,13 @@ public class DefaultCloud20ServiceTest {
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.listUserGlobalRolesByServiceId(null, authToken, null, null);
         verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+    }
+
+    @Test
+    public void listUserGlobalRolesByServiceId_callsCheckAndGetUserById() throws Exception {
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
+        spy.listUserGlobalRolesByServiceId(null, authToken, userId, null);
+        verify(userService).checkAndGetUserById(userId);
     }
 
     @Test
@@ -3980,19 +4008,27 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void setUserEnabled_callsCheckAndGetUserById() throws Exception {
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
+        spy.setUserEnabled(null, authToken, userId, null);
+        verify(userService).checkAndGetUserById(userId);
+    }
+
+    @Test
     public void setUserEnabled_throwsNotFoundException_returnsResponseBuilder() throws Exception {
         NotFoundException notFoundException = new NotFoundException();
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doThrow(notFoundException).when(spy).checkAndGetUser(null);
+        doThrow(notFoundException).when(userService).checkAndGetUserById(userId);
         when(exceptionHandler.exceptionResponse(notFoundException)).thenReturn(responseBuilder);
-        assertThat("response builder", spy.setUserEnabled(null, authToken, null, null), equalTo(responseBuilder));
+        assertThat("response builder", spy.setUserEnabled(null, authToken, userId, null), equalTo(responseBuilder));
     }
 
     @Test
     public void setUserEnabled_userService_callsUpdateUser() throws Exception {
         org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
         user1.setEnabled(true);
+        when(userService.checkAndGetUserById(userId)).thenReturn(user);
         spy.setUserEnabled(null, authToken, userId, user1);
         verify(userService).updateUser(any(User.class), eq(false));
     }
@@ -4001,6 +4037,7 @@ public class DefaultCloud20ServiceTest {
     public void setUserEnabled_responseOk_returns200() throws Exception {
         org.openstack.docs.identity.api.v2.User user1 = new org.openstack.docs.identity.api.v2.User();
         user1.setEnabled(true);
+        when(userService.checkAndGetUserById(userId)).thenReturn(user);
         Response.ResponseBuilder responseBuilder = spy.setUserEnabled(null, authToken, userId, user1);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
@@ -4011,6 +4048,13 @@ public class DefaultCloud20ServiceTest {
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.updateSecretQA(null, authToken, null, null);
         verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+    }
+
+    @Test
+    public void updateSecretQA_callsCheckAndGetUserById() throws Exception {
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
+        spy.updateSecretQA(null, authToken, userId, secretQA);
+        verify(userService).checkAndGetUserById(userId);
     }
 
     @Test
@@ -4037,12 +4081,14 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void updateSecretQA_userService_callsUpdateUser() throws Exception {
+        when(userService.checkAndGetUserById(userId)).thenReturn(user);
         spy.updateSecretQA(null, authToken, userId, secretQA);
         verify(userService).updateUser(any(User.class), eq(false));
     }
 
     @Test
     public void updateSecretQA_responseOk_returns200() throws Exception {
+        when(userService.checkAndGetUserById(userId)).thenReturn(user);
         Response.ResponseBuilder responseBuilder = spy.updateSecretQA(null, authToken, userId, secretQA);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
@@ -4325,6 +4371,17 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void updateUserApiKeyCredentials_callsCheckAndGetUserById() throws Exception {
+        ApiKeyCredentials creds = new ApiKeyCredentials();
+        creds.setApiKey("123");
+        creds.setUsername("username");
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
+        when(userService.getUser("username")).thenReturn(user);
+        spy.updateUserApiKeyCredentials(null, authToken, userId, null, creds);
+        verify(userService).checkAndGetUserById(userId);
+    }
+
+    @Test
     public void updateUserApiKeyCredentials_credUserIsNullThrowsNotFoundException_returnsResponseBuilder() throws Exception {
         ApiKeyCredentials creds = new ApiKeyCredentials();
         creds.setApiKey("123");
@@ -4346,7 +4403,7 @@ public class DefaultCloud20ServiceTest {
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         when(userService.getUser("username")).thenReturn(user);
-        doReturn(new User()).when(spy).checkAndGetUser(userId);
+        when(userService.checkAndGetUserById(userId)).thenReturn(user);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response code", spy.updateUserApiKeyCredentials(null, authToken, userId, null, creds), equalTo(responseBuilder));
         assertThat("exception type", argumentCaptor.getValue(), instanceOf(BadRequestException.class));
@@ -4358,6 +4415,7 @@ public class DefaultCloud20ServiceTest {
         creds.setApiKey("123");
         creds.setUsername("username");
         user.setUsername("username");
+        when(userService.checkAndGetUserById(userId)).thenReturn(user);
         when(userService.getUser(anyString())).thenReturn(user);
         spy.updateUserApiKeyCredentials(null, authToken, userId, null, creds);
         verify(userService).updateUser(any(User.class), eq(false));
@@ -4369,6 +4427,7 @@ public class DefaultCloud20ServiceTest {
         creds.setApiKey("123");
         creds.setUsername("username");
         user.setUsername("username");
+        when(userService.checkAndGetUserById(userId)).thenReturn(user);
         when(userService.getUser(anyString())).thenReturn(user);
         when(jaxbObjectFactories.getRackspaceIdentityExtKskeyV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory());
         Response.ResponseBuilder responseBuilder = spy.updateUserApiKeyCredentials(null, authToken, userId, null, creds);
@@ -4381,6 +4440,14 @@ public class DefaultCloud20ServiceTest {
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         spy.updateUserPasswordCredentials(null, authToken, null, null, passwordCredentialsRequiredUsername);
         verify(validator20).validatePasswordCredentialsForCreateOrUpdate(passwordCredentialsRequiredUsername);
+    }
+
+    @Test
+    public void updateUserPasswordCredentials_callsCheckAndGetUserById() throws Exception {
+        PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
+        spy.updateUserPasswordCredentials(null, authToken, userId, null, passwordCredentialsRequiredUsername);
+        verify(userService).checkAndGetUserById(userId);
     }
 
     @Test
@@ -4399,7 +4466,7 @@ public class DefaultCloud20ServiceTest {
         ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doReturn(new User()).when(spy).checkAndGetUser(userId);
+        when(userService.checkAndGetUserById(userId)).thenReturn(user);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response builder", spy.updateUserPasswordCredentials(null, authToken, userId, null, creds), equalTo(responseBuilder));
         assertThat("exception type", argumentCaptor.getValue(), instanceOf(BadRequestException.class));
@@ -4410,6 +4477,7 @@ public class DefaultCloud20ServiceTest {
         PasswordCredentialsRequiredUsername creds = new PasswordCredentialsRequiredUsername();
         creds.setUsername(userId);
         creds.setPassword("ABCdef123");
+        when(userService.checkAndGetUserById(userId)).thenReturn(user);
         spy.updateUserPasswordCredentials(null, authToken, userId, null, creds);
         verify(userService).updateUser(user, false);
     }

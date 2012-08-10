@@ -1057,7 +1057,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder getSecretQA(HttpHeaders httpHeaders, String authToken, String userId)  {
         try {
             authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            User user = checkAndGetUser(userId);
+            User user = userService.checkAndGetUserById(userId);
             SecretQA secrets = objFactories.getRackspaceIdentityExtKsqaV1Factory().createSecretQA();
 
             secrets.setAnswer(user.getSecretAnswer());
@@ -1229,7 +1229,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
-            User user = checkAndGetUser(userId);
+            User user = userService.checkAndGetUserById(userId);
 
             List<TenantRole> globalRoles = tenantService.getGlobalRolesForUser(user);
 
@@ -1266,7 +1266,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             ScopeAccess callersScopeAccess = getScopeAccessForValidToken(authToken);
             authorizationService.verifyUserLevelAccess(callersScopeAccess);
 
-            User user = checkAndGetUser(userId);
+            User user = userService.checkAndGetUserById(userId);
 
             if (isUserAdmin(callersScopeAccess, null) || isDefaultUser(callersScopeAccess, null)) {
                 authorizationService.verifySelf(userService.getUserByScopeAccess(callersScopeAccess), user);
@@ -1462,7 +1462,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             Tenant tenant = tenantService.checkAndGetTenant(tenantId);
 
-            User user = checkAndGetUser(userId);
+            User user = userService.checkAndGetUserById(userId);
 
             List<TenantRole> roles = this.tenantService.getTenantRolesForUserOnTenant(user, tenant);
 
@@ -1543,7 +1543,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
-            User user = checkAndGetUser(userId);
+            User user = userService.checkAndGetUserById(userId);
 
             List<TenantRole> roles = tenantService.getGlobalRolesForUser(user, new FilterParam[]{new FilterParam(FilterParamName.APPLICATION_ID, serviceId)});
 
@@ -1924,7 +1924,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
-            User userDO = checkAndGetUser(userId);
+            User userDO = userService.checkAndGetUserById(userId);
 
             userDO.setEnabled(user.isEnabled());
             this.userService.updateUser(userDO, false);
@@ -1960,7 +1960,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException("Excpeting question");
             }
 
-            User user = checkAndGetUser(userId);
+            User user = userService.checkAndGetUserById(userId);
 
             user.setSecretAnswer(secrets.getAnswer());
             user.setSecretQuestion(secrets.getQuestion());
@@ -2020,7 +2020,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
 
-            User user = checkAndGetUser(userId);
+            User user = userService.checkAndGetUserById(userId);
             if (!creds.getUsername().equals(user.getUsername())) {
                 String errMsg = USER_AND_USER_ID_MIS_MATCHED;
                 logger.warn(errMsg);
@@ -2045,7 +2045,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
             validator20.validatePasswordCredentialsForCreateOrUpdate(creds);
 
-            User user = checkAndGetUser(userId);
+            User user = userService.checkAndGetUserById(userId);
             if (!creds.getUsername().equals(user.getUsername())) {
                 String errMsg = USER_AND_USER_ID_MIS_MATCHED;
                 logger.warn(errMsg);
@@ -2155,18 +2155,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
 
         return sa;
-    }
-
-    User checkAndGetUser(String id) {
-        User user = this.userService.getUserById(id);
-
-        if (user == null) {
-            String errMsg = String.format("User %s not found", id);
-            logger.warn(errMsg);
-            throw new NotFoundException("User not found");
-        }
-
-        return user;
     }
 
     User checkAndGetUserByName(String username) {
