@@ -42,11 +42,31 @@ public class TenantTest {
     }
 
     @Test
+    public void addV1Default_baseUrl() throws Exception {
+        String[] test = {"123"};
+        tenant.setV1Default(test);
+        tenant.addV1Default("123");
+        String[] result = tenant.getV1Defaults();
+        assertThat("base url id", result[0], equalTo("123"));
+        assertThat("string list", result.length, equalTo(1));
+    }
+
+    @Test
     public void removeBaseUrlId_baseUrlDoesNotContainUrlId_doesNotRemoveId() throws Exception {
-        String[] test = {"245"};
+        String[] test = {"245","123"};
         tenant.setBaseUrlIds(test);
         tenant.removeBaseUrlId("123");
         String[] result = tenant.getBaseUrlIds();
+        assertThat("base url id", result[0], equalTo("245"));
+        assertThat("string list", result.length, equalTo(1));
+    }
+
+    @Test
+    public void removeV1Default_baseUrl() throws Exception {
+        String[] test = {"245","123"};
+        tenant.setV1Default(test);
+        tenant.removeV1Default("123");
+        String[] result = tenant.getV1Defaults();
         assertThat("base url id", result[0], equalTo("245"));
         assertThat("string list", result.length, equalTo(1));
     }
@@ -66,10 +86,25 @@ public class TenantTest {
     }
 
     @Test
+    public void containsV1Default_baseUrlIdsLengthIs0_returnsFalse() throws Exception {
+        tenant.setV1Default(new String[0]);
+        boolean result = tenant.containsV1Default("123");
+        assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
     public void containsBaseUrlId_baseUrlIdsLengthNotZero_returnsTrue() throws Exception {
         String[] test = {"123"};
         tenant.setBaseUrlIds(test);
         boolean result = tenant.containsBaseUrlId("123");
+        assertThat("boolean", result, equalTo(true));
+    }
+
+    @Test
+    public void containsV1Default_baseUrlIdsLengthNotZero_returnsTrue() throws Exception {
+        String[] test = {"123"};
+        tenant.setV1Default(test);
+        boolean result = tenant.containsV1Default("123");
         assertThat("boolean", result, equalTo(true));
     }
 

@@ -44,6 +44,9 @@ public class Tenant implements Auditable {
     @LDAPField(attribute = LdapRepository.ATTR_BASEURL_ID, objectClass = LdapRepository.OBJECTCLASS_TENANT, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String[] baseUrlIds;
 
+    @LDAPField(attribute = LdapRepository.ATTR_V_ONE_DEFAULT, objectClass = LdapRepository.OBJECTCLASS_TENANT, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
+    private String[] v1Defaults;
+
     public ReadOnlyEntry getLDAPEntry() {
         return ldapEntry;
     }
@@ -116,6 +119,14 @@ public class Tenant implements Auditable {
         return baseUrlIds;
     }
 
+    public String[] getV1Defaults(){
+        return v1Defaults;
+    }
+
+    public void setV1Default(String[] v1Default){
+        this.v1Defaults = (String[]) ArrayUtils.clone(v1Default);
+    }
+
     public void setBaseUrlIds(String[] baseUrlIds) {
         this.baseUrlIds = (String[]) ArrayUtils.clone(baseUrlIds);
     }
@@ -150,6 +161,38 @@ public class Tenant implements Auditable {
         List<String> baseUrls = new ArrayList<String>();
         Collections.addAll(baseUrls, baseUrlIds);
         return baseUrls.contains(baseUrlId);
+    }
+
+    public void addV1Default(String baseUrlId) {
+        List<String> v1DefaultList = new ArrayList<String>();
+        if (v1Defaults != null) {
+            Collections.addAll(v1DefaultList, v1Defaults);
+        }
+        if (!v1DefaultList.contains(baseUrlId)) {
+            v1DefaultList.add(baseUrlId);
+        }
+        v1Defaults = v1DefaultList.toArray(new String[v1DefaultList.size()]);
+    }
+
+    public void removeV1Default(String baseUrlId) {
+        if (v1Defaults == null || v1Defaults.length == 0) {
+            return;
+        }
+        List<String> v1Default = new ArrayList<String>();
+        Collections.addAll(v1Default, v1Defaults);
+        if (v1Default.contains(baseUrlId)) {
+            v1Default.remove(baseUrlId);
+        }
+        v1Defaults = v1Default.toArray(new String[v1Default.size()]);
+    }
+
+    public boolean containsV1Default(String baseUrlId) {
+        if (v1Defaults == null || v1Defaults.length == 0) {
+            return false;
+        }
+        List<String> v1Default = new ArrayList<String>();
+        Collections.addAll(v1Default, v1Defaults);
+        return v1Default.contains(baseUrlId);
     }
 
     public void copyChanges(Tenant modifiedTenant) {

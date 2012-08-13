@@ -68,6 +68,7 @@ public abstract class LdapRepository {
     public static final String ATTR_AUTH_CODE_EXP = "authCodeExp";
     public static final String ATTR_ADMIN_URL = "rsAdminUrl";
     public static final String ATTR_BASEURL_ID = "baseUrlId";
+    public static final String ATTR_V_ONE_DEFAULT = "vOneDefault";
     public static final String ATTR_BASEURL_TYPE = "baseUrlType";
     public static final String ATTR_BLOB = "blob";
     public static final String ATTR_C = "c";
