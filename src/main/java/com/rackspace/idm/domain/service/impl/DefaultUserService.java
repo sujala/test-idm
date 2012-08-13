@@ -42,6 +42,9 @@ public class DefaultUserService implements UserService {
     private TenantService tenantService;
 
     @Autowired
+    private DomainService domainService;
+
+    @Autowired
     private EndpointService endpointService;
 
     @Autowired
@@ -91,7 +94,7 @@ public class DefaultUserService implements UserService {
         }
 
         if (user.getDomainId() == null) {
-            user.setDomainId(user.getId());
+            user.setDomainId(getNewDomainId(user));
         }
 
 
@@ -682,6 +685,20 @@ public class DefaultUserService implements UserService {
                 logger.warn(errorMsg);
                 throw new PasswordValidationException(errorMsg);
             }
+        }
+    }
+
+    private String getNewDomainId(User user){
+        try {
+            Domain domain = new Domain();
+            domain.setEnabled(true);
+            domain.setName(user.getUsername());
+            domain.setDescription("default");
+            domainService.addDomain(domain);
+            return domain.getDomainId();
+        }
+        catch(Exception ex){
+            throw new BadRequestException("Domain could not be created for user");
         }
     }
 

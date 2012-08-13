@@ -24,6 +24,7 @@ public class UserServiceTests {
     CustomerDao mockCustomerDao;
     UserService userService;
     UserService trustedUserService;
+    DomainService mockDomainService;
     AuthDao mockRackerDao;
     ApplicationService mockClientService;
     ScopeAccessService mockScopeAccessService;
@@ -53,6 +54,7 @@ public class UserServiceTests {
 
     String nastId = "nastId";
     int mossoId = 6676;
+    String domainId = "";
 
     int limit = 100;
 
@@ -67,6 +69,7 @@ public class UserServiceTests {
         mockClientService = EasyMock.createMock(ApplicationService.class);
         mockScopeAccessObjectDao = EasyMock.createMock(ScopeAccessDao.class);
         mockScopeAccessService = EasyMock.createMock(ScopeAccessService.class);
+        mockDomainService = EasyMock.createMock(DomainService.class);
         mockPasswordComplexityService = EasyMock.createMock(PasswordComplexityService.class);
         
         Configuration appConfig = new PropertyFileConfiguration().getConfig();
@@ -127,13 +130,17 @@ public class UserServiceTests {
     	//setup
         final UserScopeAccess usa = getFakeUserScopeAccess();
         final User user = getFakeUser();
+        final Domain domain = getFakeDomain();
         final Customer customer = getFakeCustomer();
         customer.setUniqueId(customerDN);
         EasyMock.expect(mockUserDao.isUsernameUnique(user.getUsername())).andReturn(true);
         EasyMock.expect(mockUserDao.getNextUserId()).andReturn(id);
         EasyMock.expect(mockPasswordComplexityService.checkPassword(user.getPassword())).andReturn(new PasswordComplexityResult());
         mockUserDao.addUser(user);
-        
+
+
+
+
         EasyMock.expect(mockScopeAccessObjectDao.addDirectScopeAccess(EasyMock.anyObject(String.class), EasyMock.anyObject(ScopeAccess.class))).andReturn(getFakeUserScopeAccess());
         EasyMock.expect(mockScopeAccessObjectDao.addDirectScopeAccess(EasyMock.anyObject(String.class), EasyMock.anyObject(ScopeAccess.class))).andReturn(getFakeUserScopeAccess());
         
@@ -545,6 +552,15 @@ public class UserServiceTests {
 //        userService.setUserPassword(customerId, username, userCred, token, isRecovery);
 //    }
 //
+
+
+    private Domain getFakeDomain() {
+        final Domain domain = new Domain();
+        domain.setDomainId("1");
+        domain.setName("domain");
+        return domain;
+    }
+
     private User getFakeUser() {
 
         final UserHumanName name = new UserHumanName(firstname, middlename, lastname);
@@ -552,6 +568,7 @@ public class UserServiceTests {
         final UserCredential cred = new UserCredential(userpass, secretQuestion,  secretAnswer);
         final User user = new User(username, customerId, email, name, pref, cred);
         user.setMossoId(1);
+        user.setDomainId("1");
         return user;
     }
     
