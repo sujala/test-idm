@@ -39,4 +39,7 @@ public interface TenantService {
     List<User> getUsersWithTenantRole(Tenant tenant, ClientRole role);
     List<TenantRole> getTenantRolesForTenant(String tenantId);
     boolean isTenantIdContainedInTenantRoles(String tenantId, List<TenantRole> roles);
+
+    List<Tenant> getTenantsByDomainId(String domainId);
+
 }

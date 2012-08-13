@@ -5,6 +5,7 @@ import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.service.DomainService;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.exception.ClientConflictException;
 import com.rackspace.idm.exception.DuplicateException;
@@ -25,6 +26,9 @@ public class DefaultTenantService implements TenantService {
     public static final String GOT_TENANT_ROLES = "Got {} Tenant Roles";
     @Autowired
     private Configuration config;
+
+    @Autowired
+    private DomainService domainService;
 
     private final TenantDao tenantDao;
     private final ApplicationDao clientDao;
@@ -642,6 +646,16 @@ public class DefaultTenantService implements TenantService {
         }
 
         return truth;
+    }
+
+    @Override
+    public List<Tenant> getTenantsByDomainId(String domainId) {
+        Domain domain = domainService.getDomain(domainId);
+        List<Tenant> tenantList = new ArrayList<Tenant>();
+        for (String tenantId : domain.getTenantIds()){
+            tenantList.add(getTenant(tenantId));
+        }
+        return tenantList;
     }
 
     public void setConfig(Configuration config) {

@@ -1,14 +1,18 @@
 package com.rackspace.idm.domain.service.impl;
 
-import com.rackspace.idm.domain.dao.*;
+import com.rackspace.idm.domain.dao.DomainDao;
 import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.service.DomainService;
 import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -64,4 +68,40 @@ public class DefaultDomainService implements DomainService{
     public void deleteDomain(String domainId) {
         domainDao.deleteDomain(domainId);
     }
+
+    @Override
+    public void addTenantToDomain(String tenantId, String domainId) {
+        Domain domain = getDomain(domainId);
+        if(domain == null)
+            throw new NotFoundException("Domain could not be found");
+
+        List<String> tenantIds = setTenantIdList(domain, tenantId);
+        tenantIds.add(tenantId);
+        domain.setTenantIds(tenantIds.toArray(new String[tenantIds.size()]));
+        domainDao.updateDomain(domain);
+    }
+
+    @Override
+    public void removeTenantFromDomain(String tenantId, String domainId) {
+        Domain domain = getDomain(domainId);
+        if(domain == null)
+            throw new NotFoundException("Domain could not be found");
+
+        List<String> tenantIds = setTenantIdList(domain, tenantId);
+        domain.setTenantIds(tenantIds.toArray(new String[tenantIds.size()]));
+        domainDao.updateDomain(domain);
+    }
+
+    private List<String> setTenantIdList(Domain domain, String tenantId) {
+        List<String> tenantIds = new ArrayList<String>();
+        if(domain.getTenantIds() != null){
+            for(String tenant : domain.getTenantIds()){
+                if(!tenant.equals(tenantId)){
+                    tenantIds.add(tenant);
+                }
+            }
+        }
+        return tenantIds;
+    }
+
 }

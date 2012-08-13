@@ -571,6 +571,14 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.78) = {
 	description = "Boolean flag for defining to use for default region"
 };
 
+schema set attribute (1.3.6.1.4.1.20988.2.1.79) = {
+	name = vOneDefault
+	ldap-names = vOneDefault
+	equality = caseIgnoreMatch
+	syntax = directoryString
+	description = "Id for baseurl default"
+};
+
 schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
 	name = rsPerson
 	ldap-names = rsPerson
@@ -867,7 +875,8 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.21) = {
     may-contain
     	description,
         tenantDisplayName,
-        baseUrlId
+        baseUrlId,
+        vOneDefault
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.22) = {
@@ -943,5 +952,6 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.27) = {
         cn,
         enabled
     may-contain
-        description
+        description,
+        tenantRsId
 };

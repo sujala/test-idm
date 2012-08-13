@@ -1,6 +1,6 @@
 package com.rackspace.idm.domain.service;
 
-import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.Domain;
 
 /**
  * Created by IntelliJ IDEA.
@@ -15,5 +15,6 @@ public interface DomainService {
     Domain getDomain(String domainId);
     void updateDomain(Domain domain);
     void deleteDomain(String domainId);
-
+    void addTenantToDomain(String tenantId, String domainId);
+    void removeTenantFromDomain(String tenantId, String domainId);
 }

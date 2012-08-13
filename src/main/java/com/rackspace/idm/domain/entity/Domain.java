@@ -32,6 +32,9 @@ public class Domain implements Auditable{
     @LDAPField(attribute = LdapRepository.ATTR_DESCRIPTION, objectClass = LdapRepository.OBJECTCLASS_DOMAIN, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String description;
 
+    @LDAPField(attribute = LdapRepository.ATTR_TENANT_RS_ID, objectClass = LdapRepository.OBJECTCLASS_DOMAIN, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
+    private String[] tenantIds;
+
     public String getDomainId() {
         return domainId;
     }
@@ -62,6 +65,14 @@ public class Domain implements Auditable{
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String[] getTenantIds() {
+        return tenantIds;
+    }
+
+    public void setTenantIds(String[] tenantIds) {
+        this.tenantIds = tenantIds;
     }
 
     public ReadOnlyEntry getLDAPEntry() {

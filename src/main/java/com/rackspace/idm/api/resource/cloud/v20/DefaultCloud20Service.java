@@ -1753,6 +1753,27 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
+    @Override
+    public ResponseBuilder getDomainTenants(String authToken, String domainId, String enabled) {
+        authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+        List<Tenant> tenants = tenantService.getTenantsByDomainId(domainId);
+        return Response.ok(objFactories.getOpenStackIdentityV2Factory().createTenants(tenantConverterCloudV20.toTenantList(tenants)).getValue());
+    }
+
+    @Override
+    public ResponseBuilder addTenantToDomain(String authToken, String domainId, String tenantId) {
+        authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+        domainService.addTenantToDomain(tenantId, domainId);
+        return Response.noContent();
+    }
+
+    @Override
+    public ResponseBuilder removeTenantFromDomain(String authToken, String domainId, String tenantId) {
+        authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+        domainService.removeTenantFromDomain(tenantId, domainId);
+        return Response.noContent();
+    }
+
     public boolean isValidImpersonatee(User user) {
         List<TenantRole> tenantRolesForUser = tenantService.getGlobalRolesForUser(user, null);
         for (TenantRole role : tenantRolesForUser) {
@@ -1944,7 +1965,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
 
             authorizationService.verifyUserAdminLevelAccess(scopeAccess);
-            authorizationService.verifyTokenHasTenantAccess(tenantId,scopeAccess);
+            authorizationService.verifyTokenHasTenantAccess(tenantId, scopeAccess);
 
             Tenant tenant = tenantService.checkAndGetTenant(tenantId);
 
@@ -1964,7 +1985,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
             authorizationService.verifyUserAdminLevelAccess(scopeAccess);
-            authorizationService.verifyTokenHasTenantAccess(tenantId,scopeAccess);
+            authorizationService.verifyTokenHasTenantAccess(tenantId, scopeAccess);
 
             Tenant tenant = tenantService.checkAndGetTenant(tenantId);
 
