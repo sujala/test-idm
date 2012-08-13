@@ -21,6 +21,7 @@ import com.rackspacecloud.docs.auth.api.v1.User;
 import com.sun.jersey.api.uri.UriBuilderImpl;
 import com.sun.jersey.core.util.Base64;
 import org.apache.commons.configuration.Configuration;
+import org.hamcrest.CoreMatchers;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -1218,6 +1219,21 @@ public class DefaultCloud11ServiceTest {
     }
 
     @Test
+    public void addBaseUrlRef_validCloudBaseUrl_v1DefaultSetTrue_addBaseUrlToUser() throws Exception {
+        doNothing().when(spy).authenticateCloudAdminUser(request);
+        when(userService.getUser("userId")).thenReturn(userDO);
+        CloudBaseUrl cloudBaseUrl = mock(CloudBaseUrl.class);
+        when(cloudBaseUrl.getEnabled()).thenReturn(true);
+        when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
+        when(tenantService.getTenant(anyString())).thenReturn(tenant);
+        when(cloudBaseUrl.getBaseUrlType()).thenReturn("NAST");
+        BaseURLRef baseURLRef = new BaseURLRef();
+        baseURLRef.setV1Default(true);
+        spy.addBaseURLRef(request, "userId", null, null, baseURLRef);
+        verify(tenantService).updateTenant(Matchers.<Tenant>anyObject());
+    }
+
+    @Test
     public void addBaseUrlRef_validCloudBaseUrl_returns201Status() throws Exception {
         BaseURLRef baseUrlRef = mock(BaseURLRef.class);
         doNothing().when(spy).authenticateCloudAdminUser(request);
@@ -1365,6 +1381,24 @@ public class DefaultCloud11ServiceTest {
         when(tenantService.getTenant(anyString())).thenReturn(tenant);
         Response.ResponseBuilder responseBuilder = spy.deleteBaseURLRef(null, null, "12345", null);
         assertThat("response builder", responseBuilder.build().getStatus(), equalTo(204));
+    }
+
+    @Test
+    public void deleteBaseUrlRef_deleteV1Default() throws Exception {
+        com.rackspace.idm.domain.entity.User user1 = new com.rackspace.idm.domain.entity.User();
+        user1.setMossoId(123);
+        doNothing().when(spy).authenticateCloudAdminUser(null);
+        when(userService.getUser(null)).thenReturn(user1);
+        when(endpointService.getBaseUrlById(12345)).thenReturn(new CloudBaseUrl());
+        CloudBaseUrl cloudBaseUrl = mock(CloudBaseUrl.class);
+        when(endpointService.getBaseUrlById(anyInt())).thenReturn(cloudBaseUrl);
+        when(cloudBaseUrl.getBaseUrlType()).thenReturn("NAST");
+        when(cloudBaseUrl.getBaseUrlId()).thenReturn(12345);
+        tenant.setBaseUrlIds(new String[] {"12345"});
+        tenant.setV1Default(new String[] {"12345"});
+        when(tenantService.getTenant("123")).thenReturn(tenant);
+        spy.deleteBaseURLRef(null, null, "12345", null);
+        assertThat("Deleted v1Default",tenant.getV1Defaults().length,equalTo(0));
     }
 
     @Test

@@ -44,11 +44,9 @@ import javax.xml.transform.stream.StreamSource;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
+import java.lang.reflect.Array;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Component
 public class DefaultCloud11Service implements Cloud11Service {
@@ -304,14 +302,34 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             Tenant tenant = this.tenantService.getTenant(tenantId);
 
+            if(tenant == null){
+                throw new NotFoundException(String.format("Tenant %s on user does not exist.", tenantId));
+            }
+
             // Check for existing BaseUrl
             for (String bId : tenant.getBaseUrlIds()) {
                 if (bId.equals(String.valueOf(baseUrl.getBaseUrlId()))) {
                     throw new BadRequestException("Attempt to add existing BaseURL!");
                 }
             }
-
             tenant.addBaseUrlId(String.valueOf(baseUrl.getBaseUrlId()));
+
+            //Adding v1Default
+            if (tenant.getV1Defaults() == null && baseUrlRef.isV1Default()) {
+                tenant.addV1Default(String.valueOf(baseUrlRef.getId()));
+            } else if (tenant.getV1Defaults() != null) {
+                // Check for existing v1Default for replace by Service Name
+                CloudBaseUrl newBaseUrl = endpointService.getBaseUrlById(baseUrlRef.getId());
+                for (String v1d : tenant.getV1Defaults()) {
+                    CloudBaseUrl cloudBaseUrl = endpointService.getBaseUrlById(Integer.parseInt(v1d));
+                    if (newBaseUrl.getServiceName().equals(cloudBaseUrl.getServiceName())) {
+                        tenant.removeV1Default(v1d);
+                    }
+                }
+                tenant.addV1Default(String.valueOf(baseUrlRef.getId()));
+            }
+
+
             this.tenantService.updateTenant(tenant);
 
             return Response
@@ -528,6 +546,9 @@ public class DefaultCloud11Service implements Cloud11Service {
                     for (String currentId : tenant.getBaseUrlIds()) {
                         if (currentId.equals(String.valueOf(baseUrl.getBaseUrlId()))){
                             tenant.removeBaseUrlId(String.valueOf(baseUrl.getBaseUrlId()));
+                            if(tenant.containsV1Default(currentId)){
+                                tenant.removeV1Default(String.valueOf(baseUrl.getBaseUrlId()));
+                            }
                             this.tenantService.updateTenant(tenant);
                             found = true;
                         }
@@ -535,7 +556,6 @@ public class DefaultCloud11Service implements Cloud11Service {
                     }
                 }
             }
-
 
             if (!found) {
                 throw new NotFoundException(String.format("Attempting to delete nonexisting baseUrl: %s", String.valueOf(baseUrl.getBaseUrlId())));
