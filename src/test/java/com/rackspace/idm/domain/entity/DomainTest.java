@@ -24,6 +24,20 @@ public class DomainTest {
     }
 
     @Test
+    public void getDomain_returnsDomain() throws Exception {
+        String[] tenants = {"123"};
+        domain.setDomainId("1");
+        domain.setName("name");
+        domain.setDescription("description");
+        domain.setEnabled(true);
+        domain.setTenantIds(tenants);
+        assertThat("id", domain.getDomainId(), equalTo("1"));
+        assertThat("name", domain.getName(), equalTo("name"));
+        assertThat("description", domain.getDescription(), equalTo("description"));
+        assertThat("enabled", domain.isEnabled(), equalTo(true));
+    }
+
+    @Test
     public void getLdapEntry_returnsLdapEntry() throws Exception {
         ReadOnlyEntry readOnlyEntry = new ReadOnlyEntry("uniqueId", new Attribute[0]);
         domain.setLdapEntry(readOnlyEntry);
@@ -33,8 +47,8 @@ public class DomainTest {
 
     @Test
     public void addTenantId_tenantId_doesNotRemoveId() throws Exception {
-        String[] test = {"123"};
-        domain.setTenantIds(test);
+        String[] tenants = {"123"};
+        domain.setTenantIds(tenants);
         String[] result = domain.getTenantIds();
         assertThat("tenant id", result[0], equalTo("123"));
         assertThat("string list", result.length, equalTo(1));
