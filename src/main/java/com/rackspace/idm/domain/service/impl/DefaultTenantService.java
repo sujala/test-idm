@@ -651,6 +651,9 @@ public class DefaultTenantService implements TenantService {
     @Override
     public List<Tenant> getTenantsByDomainId(String domainId) {
         Domain domain = domainService.getDomain(domainId);
+        if(domain.getTenantIds() == null) {
+            throw new NotFoundException("No tenants belong to this domain.");
+        }
         List<Tenant> tenantList = new ArrayList<Tenant>();
         for (String tenantId : domain.getTenantIds()){
             tenantList.add(getTenant(tenantId));
