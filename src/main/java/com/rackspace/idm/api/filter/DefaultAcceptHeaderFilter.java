@@ -2,10 +2,12 @@ package com.rackspace.idm.api.filter;
 
 import com.sun.jersey.spi.container.ContainerRequest;
 import com.sun.jersey.spi.container.ContainerRequestFilter;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
+import java.util.List;
 
 /**
  * @author john.eo Add a default Accept Header for all rest calls if one is
@@ -17,7 +19,8 @@ public class DefaultAcceptHeaderFilter implements ContainerRequestFilter {
 
     @Override
     public ContainerRequest filter(ContainerRequest request) {
-        if (request.getRequestHeaders().containsKey(HttpHeaders.ACCEPT)) {
+        List<String> acceptStrings = request.getRequestHeaders().get(HttpHeaders.ACCEPT);
+        if (acceptStrings.size() > 1 || !acceptStrings.contains("*/*")) {    //If there is an accept header other than */*
             return request;
         }
         

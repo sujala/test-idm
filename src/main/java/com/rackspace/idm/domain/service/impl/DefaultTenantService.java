@@ -86,6 +86,18 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
+    public Tenant checkAndGetTenant(String tenantId) {
+        Tenant tenant = getTenant(tenantId);
+
+        if (tenant == null) {
+            String errMsg = String.format("Tenant with id/name: '%s' was not found.", tenantId);
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+        return tenant;
+    }
+
+    @Override
     public Tenant getTenantByName(String name) {
         logger.info("Getting Tenant {}", name);
         Tenant tenant = this.tenantDao.getTenantByName(name);

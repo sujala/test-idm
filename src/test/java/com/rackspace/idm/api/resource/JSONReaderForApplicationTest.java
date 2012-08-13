@@ -4,15 +4,14 @@ import com.rackspace.api.idm.v1.Application;
 import com.rackspace.api.idm.v1.ApplicationSecretCredentials;
 import com.rackspace.idm.exception.BadRequestException;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
 
 /**
@@ -39,6 +38,7 @@ public class JSONReaderForApplicationTest {
             "       }" +
             "   }" +
             "}";
+
 
     private String applicationJSONWithClientSecret = "{" +
             "   \"applicationSecretCredentials\" : {" +
@@ -214,5 +214,12 @@ public class JSONReaderForApplicationTest {
     public void getSecretCredentialsFromJSONString_withInvalidJsonKey_returnsEmptyCredentials() throws Exception {
         ApplicationSecretCredentials creds = JSONReaderForApplication.getSecretCredentialsFromJSONString(applicationJSON);
         assertThat("Secret", creds.getClientSecret(), equalTo(null));
+    }
+
+    @Ignore
+    @Test
+    public void getApplicationFromJSONString_withValidSecretCredentials_returnsSecretCredentialsCredentials() throws Exception {
+        ApplicationSecretCredentials clientSecret = JSONReaderForApplication.getApplicationFromJSONString(applicationJSON).getSecretCredentials();
+        assertThat("Secret", clientSecret, notNullValue());
     }
 }

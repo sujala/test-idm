@@ -163,6 +163,17 @@ public class DefaultApplicationService implements ApplicationService {
     }
 
     @Override
+    public Application checkAndGetApplication(String applicationId) {
+        Application application = getById(applicationId);
+        if (application == null) {
+            String errMsg = String.format("Service %s not found", applicationId);
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+        return application;
+    }
+
+    @Override
     public Application getClient(String customerId, String clientId) {
         return clientDao.getClientByCustomerIdAndClientId(customerId, clientId);
     }

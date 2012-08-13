@@ -2,6 +2,8 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
+import com.rackspace.idm.exception.NotFoundException;
+import com.rackspacecloud.docs.auth.api.v1.BaseURL;
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
@@ -11,6 +13,7 @@ import java.util.List;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 
 /**
@@ -22,6 +25,7 @@ import static org.mockito.Mockito.*;
 public class DefaultEndpointServiceTest {
 
     DefaultEndpointService defaultEndpointService;
+    DefaultEndpointService spy;
     EndpointDao endpointDao;
     int baseUrlId = 1;
     private String service = "defaultApplicationService";
@@ -30,6 +34,7 @@ public class DefaultEndpointServiceTest {
     public void setUp() throws Exception {
         endpointDao = mock(EndpointDao.class);
         defaultEndpointService = new DefaultEndpointService(endpointDao);
+        spy = spy(defaultEndpointService);
         CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
         cloudBaseUrl.setServiceName(service);
         CloudBaseUrl cloudBaseUrl2 = new CloudBaseUrl();
@@ -150,6 +155,41 @@ public class DefaultEndpointServiceTest {
         when(endpointDao.getBaseUrls()).thenReturn(cloudBaseUrlList);
         List<CloudBaseUrl> result = defaultEndpointService.getDefaultBaseUrls();
         assertThat("cloud base url", result.get(0), equalTo(cloudBaseUrl));
+    }
+
+    @Test
+    public void checkAndGetEndpointTemplate_intParameterAndBaseURLExists_returnsCloudBaseURl() throws Exception {
+        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
+        doReturn(cloudBaseUrl).when(spy).getBaseUrlById(123);
+        assertThat("cloud base url", spy.checkAndGetEndpointTemplate(123), equalTo(cloudBaseUrl));
+    }
+
+    @Test
+    public void checkAndGetEndpointTemplate_intParameterAndBaseURLDoesNotExist_throwsNotFoundException() throws Exception {
+        try{
+            doReturn(null).when(spy).getBaseUrlById(123);
+            spy.checkAndGetEndpointTemplate(123);
+            assertTrue("should throw exception",false);
+        } catch (NotFoundException ex){
+            assertThat("exception message",ex.getMessage(),equalTo("EndpointTemplate 123 not found"));
+        }
+    }
+
+    @Test
+    public void checkAndGetEndpointTemplate_stringParameterAndIntegerParsingSucceeds_returnsCloudBaseURl() throws Exception {
+        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
+        doReturn(cloudBaseUrl).when(spy).checkAndGetEndpointTemplate(123);
+        assertThat("cloud base url",spy.checkAndGetEndpointTemplate("123"),equalTo(cloudBaseUrl));
+    }
+
+    @Test
+    public void checkAndGetEndpointTemplate_stringParameterAndIntegerParsingFails_throwsNotFoundException() throws Exception {
+        try{
+            spy.checkAndGetEndpointTemplate("hi");
+            assertTrue("should throw exception",false);
+        } catch (NotFoundException ex){
+            assertThat("exception message",ex.getMessage(),equalTo("EndpointTemplate hi not found"));
+        }
     }
 
     @Test
