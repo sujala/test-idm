@@ -47,8 +47,12 @@ public class CloudAuthServiceCatalogFactory {
 		endpoint.setPublicURL(baseUrl.getPublicUrl());
 		endpoint.setRegion(baseUrl.getRegion());
 		endpoint.setV1Default(baseUrl.getDef());
-		service.getEndpoint().add(endpoint);
-	}
+        if (endpoint.isV1Default()) {
+            service.getEndpoint().add(0,endpoint);
+        }else{
+            service.getEndpoint().add(endpoint);
+        }
+    }
     
     static Service getServiceFromName(ServiceCatalog serviceCatalog, String name) {
     	for(Service service : serviceCatalog.getService()) {
