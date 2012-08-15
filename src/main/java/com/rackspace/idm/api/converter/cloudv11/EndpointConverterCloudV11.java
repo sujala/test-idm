@@ -105,19 +105,19 @@ public class EndpointConverterCloudV11 {
 
     List<BaseURLRef> toBaseUrlRef(OpenstackEndpoint endpoint) {
     	List<BaseURLRef> result = new ArrayList<BaseURLRef>();
-    	
+
     	if (endpoint == null) {
             return result;
         }
-    	
+
     	for (CloudBaseUrl baseUrl : endpoint.getBaseUrls()) {
             BaseURLRef baseUrlRef = of.createBaseURLRef();
             baseUrlRef.setId(baseUrl.getBaseUrlId());
-            baseUrlRef.setV1Default(baseUrl.getDef());
+            baseUrlRef.setV1Default(baseUrl.isV1Default());
             baseUrlRef.setHref(String.format(getBaseUrlReferenceString(), baseUrl.getBaseUrlId()));
             result.add(baseUrlRef);
     	}
-    	
+
         return result;
 	}
 

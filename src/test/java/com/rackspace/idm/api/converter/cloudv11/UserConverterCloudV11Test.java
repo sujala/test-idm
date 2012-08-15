@@ -109,7 +109,7 @@ public class UserConverterCloudV11Test {
         CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
         cloudBaseUrl.setBaseUrlId(1);
         cloudBaseUrl.setPublicUrl("publicUrl");
-        cloudBaseUrl.setDef(true);
+        cloudBaseUrl.setV1Default(true);
         cloudBaseUrlList.add(cloudBaseUrl);
         when(config.getString(anyString())).thenReturn("http://identity.api.rackspacecloud.com/v1.1/%s");
         openstackEndpoint.setBaseUrls(cloudBaseUrlList);
@@ -143,6 +143,7 @@ public class UserConverterCloudV11Test {
         List<OpenstackEndpoint> endpointList = new ArrayList<OpenstackEndpoint>();
         List<CloudBaseUrl> urlList = new ArrayList<CloudBaseUrl>();
         OpenstackEndpoint openstackEndpoint = new OpenstackEndpoint();
+        cloudBaseUrl.setV1Default(true);
         urlList.add(cloudBaseUrl);
         when(config.getString(anyString())).thenReturn("http://identity.api.rackspacecloud.com/v1.1/%s");
         openstackEndpoint.setBaseUrls(urlList);

@@ -21,7 +21,6 @@ import com.rackspacecloud.docs.auth.api.v1.User;
 import com.sun.jersey.api.uri.UriBuilderImpl;
 import com.sun.jersey.core.util.Base64;
 import org.apache.commons.configuration.Configuration;
-import org.hamcrest.CoreMatchers;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -1395,7 +1394,7 @@ public class DefaultCloud11ServiceTest {
         when(cloudBaseUrl.getBaseUrlType()).thenReturn("NAST");
         when(cloudBaseUrl.getBaseUrlId()).thenReturn(12345);
         tenant.setBaseUrlIds(new String[] {"12345"});
-        tenant.setV1Default(new String[] {"12345"});
+        tenant.setV1Defaults(new String[]{"12345"});
         when(tenantService.getTenant("123")).thenReturn(tenant);
         spy.deleteBaseURLRef(null, null, "12345", null);
         assertThat("Deleted v1Default",tenant.getV1Defaults().length,equalTo(0));

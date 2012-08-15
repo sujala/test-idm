@@ -34,7 +34,8 @@ public class CloudBaseUrl implements Auditable {
     private String versionId = null;
     private String versionInfo = null;
     private String versionList = null;
-    
+    private Boolean v1Default;
+
     public String getUniqueId() {
         return uniqueId;
     }
@@ -105,6 +106,14 @@ public class CloudBaseUrl implements Auditable {
     
     public void setDef(Boolean def) {
         this.def = def;
+    }
+
+    public Boolean isV1Default() {
+        return v1Default;
+    }
+
+    public Boolean setV1Default(Boolean v1Default) {
+        return this.v1Default = v1Default;
     }
     
     public Boolean getEnabled() {

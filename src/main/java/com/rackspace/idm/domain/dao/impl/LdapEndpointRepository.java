@@ -5,6 +5,7 @@ import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.exception.BaseUrlConflictException;
 import com.rackspace.idm.exception.NotFoundException;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import com.unboundid.ldap.sdk.*;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
@@ -295,12 +296,31 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
         List<CloudBaseUrl> baseUrls = new ArrayList<CloudBaseUrl>();
 
         if (tenant.getBaseUrlIds() != null) {
+            Boolean v1DefaultExist = false;
+            if (tenant.getV1Defaults() != null) {
+                v1DefaultExist = true;
+            }
+            Boolean baseUrlContainsV1Default = false;
             for (String baseUrlId : tenant.getBaseUrlIds()) {
                 CloudBaseUrl baseUrl = this.getBaseUrlById(Integer.parseInt(baseUrlId));
-                if (baseUrl != null) {
+                if (v1DefaultExist) {
+                    baseUrlContainsV1Default = Arrays.asList(tenant.getV1Defaults()).contains(String.valueOf(baseUrlId));
+                }
+                if (baseUrl != null && !baseUrlContainsV1Default) {
                     //Add Tenant to end of baseurl
+                    baseUrl.setV1Default(false);
                     appendTenantToBaseUrl(tenant.getName(), baseUrl);
                     baseUrls.add(baseUrl);
+                }
+            }
+            if (v1DefaultExist) {
+                for (String v1DefaultId : tenant.getV1Defaults()) {
+                    CloudBaseUrl v1Default = this.getBaseUrlById(Integer.parseInt(v1DefaultId));
+                    if (v1Default != null) {
+                        v1Default.setV1Default(true);
+                        appendTenantToBaseUrl(tenant.getName(), v1Default);
+                        baseUrls.add(v1Default);
+                    }
                 }
             }
         }

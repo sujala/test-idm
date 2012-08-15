@@ -1808,24 +1808,26 @@ public class CloudMigrationServiceTest {
 
     @Test
     public void addTenantsForUserByToken_baseUrlRefsIsNull_doesNothing() throws Exception {
-        cloudMigrationService.addTenantsForUserByToken(user, null, null);
+        cloudMigrationService.addTenantsForUserByToken(user, null, null,null);
         verify(tenantService, times(0)).getTenant(anyString());
     }
 
     @Test
     public void addTenantsForUserByToken_newTenantIsNull_callsAddTenant() throws Exception {
         ArrayList<String> baseUrlRefs = new ArrayList<String>();
+        ArrayList<String> v1Defaults = new ArrayList<String>();
         when(tenantService.getTenant("tenantId")).thenReturn(null);
-        spy.addTenantsForUserByToken(user, "tenantId", baseUrlRefs);
-        verify(spy).addTenant("tenantId", baseUrlRefs.toArray(new String[0]));
+        spy.addTenantsForUserByToken(user, "tenantId", baseUrlRefs, v1Defaults);
+        verify(spy).addTenant("tenantId", baseUrlRefs.toArray(new String[0]), v1Defaults.toArray(new String[0]));
     }
 
     @Test
     public void addTenantsForUserByToken_newTenantNotNull_doesNotCallAddTenant() throws Exception {
         ArrayList<String> baseUrlRefs = new ArrayList<String>();
+        ArrayList<String> v1Defaults = new ArrayList<String>();
         when(tenantService.getTenant("tenantId")).thenReturn(new Tenant());
-        spy.addTenantsForUserByToken(user, "tenantId", baseUrlRefs);
-        verify(spy, times(0)).addTenant("tenantId", baseUrlRefs.toArray(new String[0]));
+        spy.addTenantsForUserByToken(user, "tenantId", baseUrlRefs, v1Defaults);
+        verify(spy, times(0)).addTenant("tenantId", baseUrlRefs.toArray(new String[0]), v1Defaults.toArray(new String[0]));
     }
 
     @Test
