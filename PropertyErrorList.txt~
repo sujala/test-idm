@@ -1,0 +1,184 @@
+/home/yung5207/workspace/GlobalAuth/src/main/config/INT/STAGING/ORD/idm.properties:
+	nast.xmlrpc.url
+	token.dataCenterPrefix
+	atomHopperDeletedUrl
+	atomHopperDisabledUrl
+	migrationAdminGroup
+	atomHopperMigratedUrl
+
+/home/yung5207/workspace/GlobalAuth/src/main/config/EXT/UAT/idm.properties:
+	nast.xmlrpc.url
+	cloudAuth10url
+	token.dataCenterPrefix
+	atomHopperDeletedUrl
+	cloudAuth11url
+	cloud.baseurl.ref.string
+	auth.ldap.server.pool.size.init
+	rsa.host
+	atomHopperDisabledUrl
+	ldap.server.pool.size.init
+	auth.ldap.server.pool.size.max
+	auth.ldap.server.port
+	migrationAdminGroup
+	cloudAuth20url
+	ldap.server.trusted
+	auth.ldap.server
+	auth.ldap.base.dn
+	atomHopperMigratedUrl
+
+/home/yung5207/workspace/GlobalAuth/src/main/config/INT/PRODUCTION/DFW/idm.properties:
+	token.dataCenterPrefix
+	cloud.baseurl.ref.string
+
+/home/yung5207/workspace/GlobalAuth/src/main/config/TEST/idm.properties:
+	nast.xmlrpc.url
+	cloudAuth10url
+	token.dataCenterPrefix
+	cloudAuth11url
+	cloud.baseurl.ref.string
+	ldap.server.pool.size.init
+	migrationAdminGroup
+	cloudAuth20url
+
+/home/yung5207/workspace/GlobalAuth/src/main/config/UAT/idm.properties:
+	nast.xmlrpc.url
+	cloudAuth10url
+	token.dataCenterPrefix
+	atomHopperDeletedUrl
+	cloudAuth11url
+	cloud.baseurl.ref.string
+	atomHopperDisabledUrl
+	ldap.server.pool.size.init
+	migrationAdminGroup
+	cloudAuth20url
+	atomHopperMigratedUrl
+
+/home/yung5207/workspace/GlobalAuth/src/main/config/INT/TEST/idm.properties:
+	nast.xmlrpc.url
+	cloudAuth10url
+	token.dataCenterPrefix
+	atomHopperDeletedUrl
+	cloudAuth11url
+	cloud.baseurl.ref.string
+	atomHopperDisabledUrl
+	ldap.server.pool.size.init
+	migrationAdminGroup
+	cloudAuth20url
+	atomHopperMigratedUrl
+
+/home/yung5207/workspace/GlobalAuth/src/main/config/EXT/PRODUCTION/ORD/idm.properties:
+	cloud.baseurl.ref.string
+	auth.ldap.server.pool.size.init
+	rsa.host
+	auth.ldap.server.pool.size.max
+	auth.ldap.server.port
+	ldap.server.trusted
+	auth.ldap.server
+	auth.ldap.base.dn
+
+/home/yung5207/workspace/GlobalAuth/src/main/config/EXT/TEST/idm.properties:
+	nast.xmlrpc.url
+	cloudAuth10url
+	token.dataCenterPrefix
+	atomHopperDeletedUrl
+	cloudAuth11url
+	cloud.baseurl.ref.string
+	auth.ldap.server.pool.size.init
+	rsa.host
+	atomHopperDisabledUrl
+	ldap.server.pool.size.init
+	auth.ldap.server.pool.size.max
+	auth.ldap.server.port
+	migrationAdminGroup
+	cloudAuth20url
+	ldap.server.trusted
+	auth.ldap.server
+	auth.ldap.base.dn
+	atomHopperMigratedUrl
+
+/home/yung5207/workspace/GlobalAuth/src/main/config/INT/STAGING/LON/idm.properties:
+	nast.xmlrpc.url
+	token.dataCenterPrefix
+	esb.cloud.us.servers.service
+	migrationAdminGroup
+
+/home/yung5207/workspace/GlobalAuth/src/main/config/INT/PRODUCTION/IAD/idm.properties:
+	token.dataCenterPrefix
+	cloud.baseurl.ref.string
+
+/home/yung5207/workspace/GlobalAuth/src/main/config/INT/PRODUCTION/ORD/idm.properties:
+	token.dataCenterPrefix
+	cloud.baseurl.ref.string
+
+/home/yung5207/workspace/GlobalAuth/src/main/config/EXT/PRODUCTION/IAD/idm.properties:
+	cloud.baseurl.ref.string
+	auth.ldap.server.pool.size.init
+	rsa.host
+	auth.ldap.server.pool.size.max
+	auth.ldap.server.port
+	ldap.server.trusted
+	auth.ldap.server
+	auth.ldap.base.dn
+
+/home/yung5207/workspace/GlobalAuth/src/main/config/EXT/PRODUCTION/LON/idm.properties:
+	cloud.baseurl.ref.string
+	auth.ldap.server.pool.size.init
+	esb.cloud.us.servers.service
+	rsa.host
+	auth.ldap.server.pool.size.max
+	auth.ldap.server.port
+	ldap.server.trusted
+	auth.ldap.server
+	auth.ldap.base.dn
+
+/home/yung5207/workspace/GlobalAuth/src/main/config/DEV/idm.properties:
+	nast.xmlrpc.url
+	cloudAuth10url
+	token.dataCenterPrefix
+	cloudAuth11url
+	esb.cloud.us.servers.service
+	ldap.server.pool.size.init
+	migrationAdminGroup
+	cloudAuth20url
+
+/home/yung5207/workspace/GlobalAuth/src/main/config/EXT/STAGING/LON/idm.properties:
+	nast.xmlrpc.url
+	auth.ldap.server.pool.size.init
+	esb.cloud.us.servers.service
+	rsa.host
+	auth.ldap.server.pool.size.max
+	auth.ldap.server.port
+	migrationAdminGroup
+	ldap.server.trusted
+	auth.ldap.server
+	auth.ldap.base.dn
+
+/home/yung5207/workspace/GlobalAuth/src/main/config/INT/PRODUCTION/LON/idm.properties:
+	token.dataCenterPrefix
+	cloud.baseurl.ref.string
+	esb.cloud.us.servers.service
+
+/home/yung5207/workspace/GlobalAuth/src/main/config/EXT/STAGING/ORD/idm.properties:
+	nast.xmlrpc.url
+	atomHopperDeletedUrl
+	auth.ldap.server.pool.size.init
+	rsa.host
+	atomHopperDisabledUrl
+	auth.ldap.server.pool.size.max
+	auth.ldap.server.port
+	migrationAdminGroup
+	ldap.server.trusted
+	auth.ldap.server
+	auth.ldap.base.dn
+	atomHopperMigratedUrl
+
+/home/yung5207/workspace/GlobalAuth/src/main/config/EXT/PRODUCTION/DFW/idm.properties:
+	cloud.baseurl.ref.string
+	auth.ldap.server.pool.size.init
+	rsa.host
+	auth.ldap.server.pool.size.max
+	auth.ldap.server.port
+	ldap.server.trusted
+	auth.ldap.server
+	auth.ldap.base.dn
+
