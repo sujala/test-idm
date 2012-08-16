@@ -20,6 +20,9 @@ public class DefaultAcceptHeaderFilter implements ContainerRequestFilter {
     @Override
     public ContainerRequest filter(ContainerRequest request) {
         List<String> acceptStrings = request.getRequestHeaders().get(HttpHeaders.ACCEPT);
+        if(acceptStrings == null){
+            return request;
+        }
         if (acceptStrings.size() > 1 || !acceptStrings.contains("*/*")) {    //If there is an accept header other than */*
             return request;
         }
