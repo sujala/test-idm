@@ -539,4 +539,12 @@ public class CloudBaseUrlTest {
         cloudBaseUrl.setVersionList("versionList");
         assertThat("equals",cloudBaseUrl.equals(cloudBaseUrl1),equalTo(true));
     }
+
+    @Test
+    public void setV1Default() throws Exception {
+        cloudBaseUrl.setV1Default(true);
+        assertThat("equals", cloudBaseUrl.isV1Default(),equalTo(true));
+    }
+
 }
+

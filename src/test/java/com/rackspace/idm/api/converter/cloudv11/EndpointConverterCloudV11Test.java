@@ -205,6 +205,7 @@ public class EndpointConverterCloudV11Test {
         OpenstackEndpoint openstackEndpoint = new OpenstackEndpoint();
         List<CloudBaseUrl> urlList = new ArrayList<CloudBaseUrl>();
         List<OpenstackEndpoint> endpointList = new ArrayList<OpenstackEndpoint>();
+        cloudBaseUrl.setV1Default(true);
         urlList.add(cloudBaseUrl);
         openstackEndpoint.setBaseUrls(urlList);
         endpointList.add(openstackEndpoint);
@@ -226,6 +227,7 @@ public class EndpointConverterCloudV11Test {
     public void toBaseUrlRef_openStackEndpointIsNotNull_returnsListWithAddedEndpointInfo() throws Exception {
         OpenstackEndpoint openstackEndpoint = new OpenstackEndpoint();
         List<CloudBaseUrl> urlList = new ArrayList<CloudBaseUrl>();
+        cloudBaseUrl.setV1Default(true);
         urlList.add(cloudBaseUrl);
         openstackEndpoint.setBaseUrls(urlList);
         when(config.getString(anyString())).thenReturn("http://identity.api.rackspacecloud.com/v1.1/%s");
@@ -283,6 +285,7 @@ public class EndpointConverterCloudV11Test {
         openstackEndpoint.setTenantId("nastId");
         openstackEndpoint.setTenantName("nastId");
         List<CloudBaseUrl> baseURLs = new ArrayList<CloudBaseUrl>();
+        cloudBaseUrl.setV1Default(true);
         baseURLs.add(cloudBaseUrl);
         cloudBaseUrl.setAdminUrl(cloudBaseUrl.getAdminUrl()+"/nastId");
         cloudBaseUrl.setPublicUrl(cloudBaseUrl.getPublicUrl()+"/nastId");

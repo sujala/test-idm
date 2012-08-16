@@ -123,7 +123,7 @@ public class Tenant implements Auditable {
         return v1Defaults;
     }
 
-    public void setV1Default(String[] v1Default){
+    public void setV1Defaults(String[] v1Default){
         this.v1Defaults = (String[]) ArrayUtils.clone(v1Default);
     }
 

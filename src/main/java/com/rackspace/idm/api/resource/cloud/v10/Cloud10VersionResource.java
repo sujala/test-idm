@@ -2,22 +2,23 @@ package com.rackspace.idm.api.resource.cloud.v10;
 
 import com.rackspace.idm.api.converter.cloudv11.EndpointConverterCloudV11;
 import com.rackspace.idm.api.resource.cloud.CloudClient;
-import com.rackspace.idm.domain.entity.OpenstackEndpoint;
-import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.UserScopeAccess;
+import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.UserDisabledException;
-import com.rackspacecloud.docs.auth.api.v1.Endpoint;
-import com.rackspacecloud.docs.auth.api.v1.Service;
-import com.rackspacecloud.docs.auth.api.v1.ServiceCatalog;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import com.rackspacecloud.docs.auth.api.v1.Endpoint;
+import com.rackspacecloud.docs.auth.api.v1.Service;
+import com.rackspacecloud.docs.auth.api.v1.ServiceCatalog;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Consumes;
@@ -69,6 +70,12 @@ public class Cloud10VersionResource {
     private final UserService userService;
 
     @Autowired
+    private EndpointService endpointService;
+
+    @Autowired
+    private TenantService tenantService;
+
+    @Autowired
     public Cloud10VersionResource(Configuration config,
         CloudClient cloudClient, ScopeAccessService scopeAccessService,
         EndpointConverterCloudV11 endpointConverterCloudV11,
@@ -108,9 +115,40 @@ public class Cloud10VersionResource {
             return builder.status(HttpServletResponse.SC_UNAUTHORIZED).entity(AUTH_V1_0_FAILED_MSG).build();
         }
 
+        Boolean cloudFilesSet = false;
+        Boolean cloudFilesCDNSet = false;
+        Boolean cloudServersSet = false;
+
         try {
             UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(username, key, getCloudAuthClientId());
             List<OpenstackEndpoint> endpointlist = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
+
+            //Search for V1Default
+            for (OpenstackEndpoint openstackEndpoint : endpointlist) {
+                Tenant tenant = tenantService.getTenant(openstackEndpoint.getTenantId());
+                if (tenant.getV1Defaults() != null) {
+                    for (String v1Default : tenant.getV1Defaults()) {
+                        CloudBaseUrl cloudBaseUrl = endpointService.getBaseUrlById(Integer.parseInt(v1Default));
+                        if (SERVICENAME_CLOUD_FILES.equals(cloudBaseUrl.getServiceName())) {
+                            addValuetoHeather(HEADER_STORAGE_URL, cloudBaseUrl.getPublicUrl() + "/" + tenant.getTenantId() , builder);
+                            builder.header(HEADER_STORAGE_TOKEN, usa.getAccessTokenString());
+                            addValuetoHeather(HEADER_STORAGE_INTERNAL_URL, cloudBaseUrl.getInternalUrl() + "/" + tenant.getTenantId(), builder);
+                            cloudFilesSet = true;
+                        }
+
+                        if (SERVICENAME_CLOUD_FILES_CDN.equals(cloudBaseUrl.getServiceName())) {
+                            addValuetoHeather(HEADER_CDN_URL, cloudBaseUrl.getPublicUrl() + "/" + tenant.getTenantId(), builder);
+                            cloudFilesCDNSet = true;
+                        }
+
+                        if (SERVICENAME_CLOUD_SERVERS.equals(cloudBaseUrl.getServiceName())) {
+                            addValuetoHeather(HEADER_SERVER_MANAGEMENT_URL, cloudBaseUrl.getPublicUrl() + "/" + tenant.getTenantId(), builder);
+                            cloudServersSet = true;
+                        }
+                    }
+                }
+            }
+
 
             ServiceCatalog catalog = endpointConverterCloudV11.toServiceCatalog(endpointlist);
 
@@ -118,8 +156,9 @@ public class Cloud10VersionResource {
 
             builder.header(HEADER_AUTH_TOKEN, usa.getAccessTokenString());
 
+            //Sets if no v1Default is found
             for (Service service : services) {
-                if (SERVICENAME_CLOUD_FILES.equals(service.getName())) {
+                if (SERVICENAME_CLOUD_FILES.equals(service.getName()) && !cloudFilesSet) {
                     List<Endpoint> endpoints = service.getEndpoint();
                     for (Endpoint endpoint : endpoints) {
                         // Use single existing endpoint even if it's not default
@@ -131,7 +170,7 @@ public class Cloud10VersionResource {
                     }
                 }
 
-                if (SERVICENAME_CLOUD_FILES_CDN.equals(service.getName())) {
+                if (SERVICENAME_CLOUD_FILES_CDN.equals(service.getName()) && !cloudFilesCDNSet) {
                     List<Endpoint> endpoints = service.getEndpoint();
                     for (Endpoint endpoint : endpoints) {
                         // Use single existing endpoint even if it's not default
@@ -141,7 +180,7 @@ public class Cloud10VersionResource {
                     }
                 }
 
-                if (SERVICENAME_CLOUD_SERVERS.equals(service.getName())) {
+                if (SERVICENAME_CLOUD_SERVERS.equals(service.getName()) && !cloudServersSet) {
                     List<Endpoint> endpoints = service.getEndpoint();
                     for (Endpoint endpoint : endpoints) {
                         // Use single existing endpoint even if it's not default
@@ -196,5 +235,13 @@ public class Cloud10VersionResource {
 
     private int getDefaultCloudAuthTokenExpirationSeconds() {
         return config.getInt("token.cloudAuthExpirationSeconds");
+    }
+
+    public void setTenantService(TenantService tenantService) {
+        this.tenantService = tenantService;
+    }
+
+    public void setEndpointService(EndpointService endpointService) {
+        this.endpointService = endpointService;
     }
 }

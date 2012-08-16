@@ -56,6 +56,11 @@ public class EndpointConverterCloudV11 {
         url.setRegion(baseURL.getRegion());
         url.setServiceName(baseURL.getServiceName());
         url.setEnabled(baseURL.isEnabled());
+        if(String.valueOf(baseURL.getUserType()).equals("NAST")){
+            url.setOpenstackType("object-store");
+        }else{
+            url.setOpenstackType("compute");
+        }
         return url;
     }
 
@@ -100,19 +105,19 @@ public class EndpointConverterCloudV11 {
 
     List<BaseURLRef> toBaseUrlRef(OpenstackEndpoint endpoint) {
     	List<BaseURLRef> result = new ArrayList<BaseURLRef>();
-    	
+
     	if (endpoint == null) {
             return result;
         }
-    	
+
     	for (CloudBaseUrl baseUrl : endpoint.getBaseUrls()) {
             BaseURLRef baseUrlRef = of.createBaseURLRef();
             baseUrlRef.setId(baseUrl.getBaseUrlId());
-            baseUrlRef.setV1Default(baseUrl.getDef());
+            baseUrlRef.setV1Default(baseUrl.isV1Default());
             baseUrlRef.setHref(String.format(getBaseUrlReferenceString(), baseUrl.getBaseUrlId()));
             result.add(baseUrlRef);
     	}
-    	
+
         return result;
 	}
 

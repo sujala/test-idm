@@ -44,7 +44,7 @@ public class TenantTest {
     @Test
     public void addV1Default_baseUrl() throws Exception {
         String[] test = {"123"};
-        tenant.setV1Default(test);
+        tenant.setV1Defaults(test);
         tenant.addV1Default("123");
         String[] result = tenant.getV1Defaults();
         assertThat("base url id", result[0], equalTo("123"));
@@ -64,7 +64,7 @@ public class TenantTest {
     @Test
     public void removeV1Default_baseUrl() throws Exception {
         String[] test = {"245","123"};
-        tenant.setV1Default(test);
+        tenant.setV1Defaults(test);
         tenant.removeV1Default("123");
         String[] result = tenant.getV1Defaults();
         assertThat("base url id", result[0], equalTo("245"));
@@ -87,7 +87,7 @@ public class TenantTest {
 
     @Test
     public void containsV1Default_baseUrlIdsLengthIs0_returnsFalse() throws Exception {
-        tenant.setV1Default(new String[0]);
+        tenant.setV1Defaults(new String[0]);
         boolean result = tenant.containsV1Default("123");
         assertThat("boolean", result, equalTo(false));
     }
@@ -103,7 +103,7 @@ public class TenantTest {
     @Test
     public void containsV1Default_baseUrlIdsLengthNotZero_returnsTrue() throws Exception {
         String[] test = {"123"};
-        tenant.setV1Default(test);
+        tenant.setV1Defaults(test);
         boolean result = tenant.containsV1Default("123");
         assertThat("boolean", result, equalTo(true));
     }

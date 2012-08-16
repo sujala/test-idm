@@ -330,6 +330,10 @@ public class CloudMigrationService {
             List<String> mossoBaseUrlRef = new ArrayList<String>();
             List<String> nastBaseUrlRef = new ArrayList<String>();
 
+            // Get v1Default endpoints
+            List<String> mossoV1Default = new ArrayList<String>();
+            List<String> nastV1Default = new ArrayList<String>();
+
             for (BaseURLRef baseUrlRef : user11.getBaseURLRefs().getBaseURLRef()) {
                 CloudBaseUrl cloudBaseUrl = endpointService.getBaseUrlById(baseUrlRef.getId());
 
@@ -340,18 +344,24 @@ public class CloudMigrationService {
 
                 if ("MOSSO".equals(cloudBaseUrl.getBaseUrlType())) {
                     mossoBaseUrlRef.add(String.valueOf(baseUrlId));
+                    if(baseUrlRef.isV1Default()){
+                        mossoV1Default.add(String.valueOf(baseUrlId));
+                    }
                 }
 
                 if ("NAST".equals(cloudBaseUrl.getBaseUrlType())) {
                     nastBaseUrlRef.add(String.valueOf(baseUrlId));
+                    if(baseUrlRef.isV1Default()){
+                        nastV1Default.add(String.valueOf(baseUrlId));
+                    }
                 }
             }
 
             if(user11.getMossoId() != null) {
-                addTenantsForUserByToken(newUser, user11.getMossoId().toString(), mossoBaseUrlRef);
+                addTenantsForUserByToken(newUser, user11.getMossoId().toString(), mossoBaseUrlRef, mossoV1Default);
             }
             if(user11.getNastId() != null) {
-                addTenantsForUserByToken(newUser, user11.getNastId(), nastBaseUrlRef);
+                addTenantsForUserByToken(newUser, user11.getNastId(), nastBaseUrlRef, nastV1Default);
             }
 
             // Groups
@@ -792,13 +802,13 @@ public class CloudMigrationService {
         }
     }
 
-    void addTenantsForUserByToken(com.rackspace.idm.domain.entity.User user, String tenantId, List<String> baseUrlRefs) {
+    void addTenantsForUserByToken(com.rackspace.idm.domain.entity.User user, String tenantId, List<String> baseUrlRefs, List<String> v1Defaults) {
         if (baseUrlRefs != null) {
             com.rackspace.idm.domain.entity.Tenant newTenant = tenantService.getTenant(tenantId);
             // Add the Tenant if it doesn't exist.
             if (newTenant == null) {
                 // Add new Tenant
-                addTenant(tenantId, baseUrlRefs.toArray(new String[0]));
+                addTenant(tenantId, baseUrlRefs.toArray(new String[0]), v1Defaults.toArray(new String[0]));
             }
             // Add roles to user on tenant
 
@@ -808,12 +818,13 @@ public class CloudMigrationService {
         }
     }
 
-    void addTenant(String tenantId, String[] baseUrls) {
+    void addTenant(String tenantId, String[] baseUrls, String[] v1Defaults) {
         com.rackspace.idm.domain.entity.Tenant newTenant = new com.rackspace.idm.domain.entity.Tenant();
         newTenant.setTenantId(tenantId);
         newTenant.setName(tenantId);
         newTenant.setEnabled(true);
         newTenant.setBaseUrlIds(baseUrls);
+        newTenant.setV1Defaults(v1Defaults);
         tenantService.addTenant(newTenant);
     }
 
