@@ -2,7 +2,7 @@
 
 BASEDIR=$(dirname $(readlink -f $0))
 
-if [ $# -ne 3 ]
+if [ $# -ne 2 ]
 then
     echo "usage: editProperties.sh <current> <update>"
 else
