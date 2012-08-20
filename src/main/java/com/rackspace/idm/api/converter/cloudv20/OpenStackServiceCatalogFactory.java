@@ -49,8 +49,11 @@ public class OpenStackServiceCatalogFactory {
             if (!StringUtils.isBlank(version.getId())) {
                 endpointItem.setVersion(version);
             }
-            
-            currentService.getEndpoint().add(endpointItem);
+            if (baseUrl.isV1Default()) {
+                currentService.getEndpoint().add(0, endpointItem);
+            } else {
+                currentService.getEndpoint().add(endpointItem);
+            }
         }
     }
 }
