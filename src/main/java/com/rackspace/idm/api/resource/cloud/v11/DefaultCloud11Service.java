@@ -944,6 +944,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             }
 
             if (gaUser.isDisabled()) {
+                scopeAccessService.expireAllTokensForUser(gaUser.getUsername());
                 UserScopeAccess usa = getAuthtokenFromRequest(request);
                 atomHopperClient.asyncPost(gaUser, usa.getAccessTokenString(), AtomHopperConstants.DISABLED, null);
             }
