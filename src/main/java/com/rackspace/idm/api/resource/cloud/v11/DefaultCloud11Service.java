@@ -18,7 +18,6 @@ import com.rackspacecloud.docs.auth.api.v1.*;
 import com.rackspacecloud.docs.auth.api.v1.Credentials;
 import com.rackspacecloud.docs.auth.api.v1.Group;
 import com.rackspacecloud.docs.auth.api.v1.PasswordCredentials;
-import com.sun.jersey.api.ConflictException;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
@@ -1259,7 +1258,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             domainService.addDomain(domain);
             return domain.getDomainId();
         }
-        catch(ConflictException ex){
+        catch(DuplicateException ex){
             // ToDo: Use existing domain ?
             logger.error("Domain already exists.");
             return domainId;
