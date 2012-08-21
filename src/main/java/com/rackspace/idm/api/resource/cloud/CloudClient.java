@@ -118,7 +118,7 @@ public class CloudClient {
             Response.ResponseBuilder builder = Response.status(Response.Status.MOVED_PERMANENTLY); //.header("Location", uri);
             for (Header header : response.getAllHeaders()) {
                 String key = header.getName();
-                if (!key.equalsIgnoreCase("content-encoding") && !key.equalsIgnoreCase("content-length") && !key.equalsIgnoreCase("transfer-encoding")) {
+                if (!key.equalsIgnoreCase("content-encoding") && !key.equalsIgnoreCase("content-length") && !key.equalsIgnoreCase("transfer-encoding") && !key.equalsIgnoreCase("vary")) {
                     builder.header(key, header.getValue());
                 }
             }
