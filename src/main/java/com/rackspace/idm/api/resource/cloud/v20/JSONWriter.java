@@ -704,6 +704,10 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             if (!StringUtils.isEmpty(password)) {
                 outer.put(JSONConstants.OS_KSADM_PASSWORD, password);
             }
+            String domainId = user.getOtherAttributes().get(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","domainId"));
+            if (!StringUtils.isEmpty(domainId)) {
+                outer.put(JSONConstants.DOMAIN_ID, domainId);
+            }
         }
         return outer;
     }
