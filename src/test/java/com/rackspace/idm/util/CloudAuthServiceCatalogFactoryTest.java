@@ -2,8 +2,10 @@ package com.rackspace.idm.util;
 
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.OpenstackEndpoint;
+import com.rackspacecloud.docs.auth.api.v1.Endpoint;
 import com.rackspacecloud.docs.auth.api.v1.Service;
 import com.rackspacecloud.docs.auth.api.v1.ServiceCatalog;
+import gherkin.lexer.i18n.EN;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -63,5 +65,23 @@ public class CloudAuthServiceCatalogFactoryTest {
         serviceList.add(service);
         Service result = CloudAuthServiceCatalogFactory.getServiceFromName(serviceCatalog, "service");
         assertThat("service", result, equalTo(null));
+    }
+
+    @Test
+    public void addEndpoint_checkOrder() throws Exception {
+        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
+        cloudBaseUrl.setV1Default(true);
+        cloudBaseUrl.setPublicUrl("http://publicUrl2");
+        cloudBaseUrl.setInternalUrl("http://internal2");
+        Endpoint endpoint = new Endpoint();
+        endpoint.setPublicURL("http://publicUrl");
+        endpoint.setV1Default(false);
+        endpoint.setInternalURL("http://internal");
+        Service service = new Service();
+        service.getEndpoint().add(0,endpoint);
+        CloudAuthServiceCatalogFactory.addEndpoint(service,cloudBaseUrl);
+        assertThat("Check order",service.getEndpoint().get(0).isV1Default(),equalTo(true));
+        assertThat("Check order",service.getEndpoint().get(0).getPublicURL(),equalTo("http://publicUrl2"));
+        assertThat("Check order",service.getEndpoint().get(0).getInternalURL(),equalTo("http://internal2"));
     }
 }

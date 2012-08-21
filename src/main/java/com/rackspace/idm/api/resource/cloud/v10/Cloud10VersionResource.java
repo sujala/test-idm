@@ -115,40 +115,9 @@ public class Cloud10VersionResource {
             return builder.status(HttpServletResponse.SC_UNAUTHORIZED).entity(AUTH_V1_0_FAILED_MSG).build();
         }
 
-        Boolean cloudFilesSet = false;
-        Boolean cloudFilesCDNSet = false;
-        Boolean cloudServersSet = false;
-
         try {
             UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(username, key, getCloudAuthClientId());
             List<OpenstackEndpoint> endpointlist = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
-
-            //Search for V1Default
-            for (OpenstackEndpoint openstackEndpoint : endpointlist) {
-                Tenant tenant = tenantService.getTenant(openstackEndpoint.getTenantId());
-                if (tenant.getV1Defaults() != null) {
-                    for (String v1Default : tenant.getV1Defaults()) {
-                        CloudBaseUrl cloudBaseUrl = endpointService.getBaseUrlById(Integer.parseInt(v1Default));
-                        if (SERVICENAME_CLOUD_FILES.equals(cloudBaseUrl.getServiceName())) {
-                            addValuetoHeather(HEADER_STORAGE_URL, cloudBaseUrl.getPublicUrl() + "/" + tenant.getTenantId() , builder);
-                            builder.header(HEADER_STORAGE_TOKEN, usa.getAccessTokenString());
-                            addValuetoHeather(HEADER_STORAGE_INTERNAL_URL, cloudBaseUrl.getInternalUrl() + "/" + tenant.getTenantId(), builder);
-                            cloudFilesSet = true;
-                        }
-
-                        if (SERVICENAME_CLOUD_FILES_CDN.equals(cloudBaseUrl.getServiceName())) {
-                            addValuetoHeather(HEADER_CDN_URL, cloudBaseUrl.getPublicUrl() + "/" + tenant.getTenantId(), builder);
-                            cloudFilesCDNSet = true;
-                        }
-
-                        if (SERVICENAME_CLOUD_SERVERS.equals(cloudBaseUrl.getServiceName())) {
-                            addValuetoHeather(HEADER_SERVER_MANAGEMENT_URL, cloudBaseUrl.getPublicUrl() + "/" + tenant.getTenantId(), builder);
-                            cloudServersSet = true;
-                        }
-                    }
-                }
-            }
-
 
             ServiceCatalog catalog = endpointConverterCloudV11.toServiceCatalog(endpointlist);
 
@@ -156,39 +125,22 @@ public class Cloud10VersionResource {
 
             builder.header(HEADER_AUTH_TOKEN, usa.getAccessTokenString());
 
-            //Sets if no v1Default is found
             for (Service service : services) {
-                if (SERVICENAME_CLOUD_FILES.equals(service.getName()) && !cloudFilesSet) {
+                if (SERVICENAME_CLOUD_FILES.equals(service.getName())) {
                     List<Endpoint> endpoints = service.getEndpoint();
-                    for (Endpoint endpoint : endpoints) {
-                        // Use single existing endpoint even if it's not default
-                        if (endpoints.size() == 1 || endpoint.isV1Default()) {
-                            addValuetoHeather(HEADER_STORAGE_URL, endpoint.getPublicURL(), builder);
-                            builder.header(HEADER_STORAGE_TOKEN, usa.getAccessTokenString());
-                            addValuetoHeather(HEADER_STORAGE_INTERNAL_URL, endpoint.getInternalURL(), builder);
-                        }
-                    }
+                    addValuetoHeather(HEADER_STORAGE_URL, endpoints.get(0).getPublicURL(), builder);
+                    builder.header(HEADER_STORAGE_TOKEN, usa.getAccessTokenString());
+                    addValuetoHeather(HEADER_STORAGE_INTERNAL_URL, endpoints.get(0).getInternalURL(), builder);
                 }
 
-                if (SERVICENAME_CLOUD_FILES_CDN.equals(service.getName()) && !cloudFilesCDNSet) {
+                if (SERVICENAME_CLOUD_FILES_CDN.equals(service.getName())) {
                     List<Endpoint> endpoints = service.getEndpoint();
-                    for (Endpoint endpoint : endpoints) {
-                        // Use single existing endpoint even if it's not default
-                        if (endpoints.size() == 1 || endpoint.isV1Default()) {
-                            addValuetoHeather(HEADER_CDN_URL, endpoint.getPublicURL(), builder);
-                        }
-                    }
+                    addValuetoHeather(HEADER_CDN_URL, endpoints.get(0).getPublicURL(), builder);
                 }
 
-                if (SERVICENAME_CLOUD_SERVERS.equals(service.getName()) && !cloudServersSet) {
+                if (SERVICENAME_CLOUD_SERVERS.equals(service.getName())) {
                     List<Endpoint> endpoints = service.getEndpoint();
-                    for (Endpoint endpoint : endpoints) {
-                        // Use single existing endpoint even if it's not default
-                        if (endpoints.size() == 1 || endpoint.isV1Default()) {
-                            addValuetoHeather(HEADER_SERVER_MANAGEMENT_URL,
-                                endpoint.getPublicURL(), builder);
-                        }
-                    }
+                    addValuetoHeather(HEADER_SERVER_MANAGEMENT_URL, endpoints.get(0).getPublicURL(), builder);
                 }
 
             }

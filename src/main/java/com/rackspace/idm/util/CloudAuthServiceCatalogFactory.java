@@ -6,6 +6,8 @@ import com.rackspacecloud.docs.auth.api.v1.Endpoint;
 import com.rackspacecloud.docs.auth.api.v1.Service;
 import com.rackspacecloud.docs.auth.api.v1.ServiceCatalog;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class CloudAuthServiceCatalogFactory {
@@ -40,13 +42,13 @@ public class CloudAuthServiceCatalogFactory {
         }
     }
 
-	private static void addEndpoint(Service service, CloudBaseUrl baseUrl) {
+	public static void addEndpoint(Service service, CloudBaseUrl baseUrl) {
 		Endpoint endpoint = new Endpoint();
 		endpoint.setAdminURL(baseUrl.getAdminUrl());
 		endpoint.setInternalURL(baseUrl.getInternalUrl());
 		endpoint.setPublicURL(baseUrl.getPublicUrl());
 		endpoint.setRegion(baseUrl.getRegion());
-		endpoint.setV1Default(baseUrl.isV1Default());
+        endpoint.setV1Default(baseUrl.isV1Default());
         if (endpoint.isV1Default()) {
             service.getEndpoint().add(0,endpoint);
         }else{
