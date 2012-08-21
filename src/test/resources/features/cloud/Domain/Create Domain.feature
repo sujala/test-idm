@@ -4,6 +4,7 @@ Feature: Create Domain
     Background:
         Given a auth 2.0 endpoint
         And a foundation endpoint
+        And a valid Foundation-Api X-Auth-Token
         And a valid Identity-Admin X-Auth-Token
         And a valid Service-Admin X-Auth-Token
 

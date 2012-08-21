@@ -17,7 +17,7 @@ Given(~'^a valid Identity-Admin X-Auth-Token$') { ->
                             .header("Accept", "application/xml")
                             .entity("<auth xmlns=\"http://docs.openstack.org/identity/api/v2.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"><passwordCredentials password=\"Auth1234\" username=\"auth\"/></auth>")
                             .post(ClientResponse.class)
-
+                            A
     authentication_response = response.getEntity(AuthenticateResponse.class).getValue()
     identity_admin_token = authentication_response.getToken().getId()
 }
