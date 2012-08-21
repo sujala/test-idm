@@ -1196,6 +1196,25 @@ public class JSONWriterTest {
         assertThat("string", myOut.toString(), equalTo("[]"));
     }
 
+    @Test
+    public void getServiceCatalog11_fullyPopulated_returnsFullJSONObject() throws Exception {
+        com.rackspacecloud.docs.auth.api.v1.ServiceCatalog serviceCatalog = new com.rackspacecloud.docs.auth.api.v1.ServiceCatalog();
+        com.rackspacecloud.docs.auth.api.v1.Service service = new com.rackspacecloud.docs.auth.api.v1.Service();
+        com.rackspacecloud.docs.auth.api.v1.Endpoint endpoint = new com.rackspacecloud.docs.auth.api.v1.Endpoint();
+        endpoint.setV1Default(true);
+        endpoint.setAdminURL("http://adminUrl");
+        endpoint.setInternalURL("http://internal");
+        service.getEndpoint().add(endpoint);
+        service.setName("cloudFiles");
+        serviceCatalog.getService().add(service);
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONObject result = spy.getServiceCatalog11(serviceCatalog);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("{\"cloudFiles\":[{\"publicURL\":null,\"v1Default\":true,\"internalURL\":\"http:\\/\\/internal\"}]}"));
+    }
+
     @Test (expected = BadRequestException.class)
     public void getToken_nullExpired_throwsBadRequestException() throws Exception {
         Token token = new Token();
@@ -1261,6 +1280,42 @@ public class JSONWriterTest {
         myOut.write(jsonText.getBytes());
         assertThat("string", myOut.toString(), equalTo("[{\"region\":\"USA\",\"tenantId\":\"123\",\"publicURL\":\"www.publicURL.com\",\"versionInfo\":null," +
                 "\"versionList\":null,\"versionId\":null,\"internalURL\":\"www.internalURL.com\"}]"));
+
+    }
+
+    @Test
+    public void getEndpointsForCatalog11_fullyPopulated_returnsJSONObjectAllFields() throws Exception {
+        com.rackspacecloud.docs.auth.api.v1.Endpoint endpoint = new com.rackspacecloud.docs.auth.api.v1.Endpoint();
+        endpoint.setPublicURL("www.publicURL.com");
+        endpoint.setInternalURL("www.internalURL.com");
+        endpoint.setRegion("USA");
+        endpoint.setV1Default(true);
+        List<com.rackspacecloud.docs.auth.api.v1.Endpoint> list = new ArrayList<com.rackspacecloud.docs.auth.api.v1.Endpoint>();
+        list.add(endpoint);
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONArray result = writer.getEndpointsForCatalog11(list);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("[{\"region\":\"USA\",\"publicURL\":\"www.publicURL.com\",\"v1Default\":true,\"internalURL\":\"www.internalURL.com\"}]"));
+
+    }
+
+    @Test
+    public void getEndpointsForCatalog11_noV1Default_returnsJSONObject() throws Exception {
+        com.rackspacecloud.docs.auth.api.v1.Endpoint endpoint = new com.rackspacecloud.docs.auth.api.v1.Endpoint();
+        endpoint.setPublicURL("www.publicURL.com");
+        endpoint.setInternalURL("www.internalURL.com");
+        endpoint.setRegion("USA");
+        endpoint.setV1Default(false);
+        List<com.rackspacecloud.docs.auth.api.v1.Endpoint> list = new ArrayList<com.rackspacecloud.docs.auth.api.v1.Endpoint>();
+        list.add(endpoint);
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        JSONArray result = writer.getEndpointsForCatalog11(list);
+        String jsonText = JSONValue.toJSONString(result);
+        myOut.write(jsonText.getBytes());
+        assertThat("string", myOut.toString(), equalTo("[{\"region\":\"USA\",\"publicURL\":\"www.publicURL.com\",\"internalURL\":\"www.internalURL.com\"}]"));
 
     }
 

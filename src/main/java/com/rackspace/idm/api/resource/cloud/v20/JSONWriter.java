@@ -13,12 +13,15 @@ import com.rackspace.idm.domain.config.providers.PackageClassDiscoverer;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.IdmException;
 import com.rackspacecloud.docs.auth.api.v1.*;
+import com.rsa.cryptoj.c.J;
 import com.sun.jersey.api.json.JSONJAXBContext;
 import com.sun.jersey.api.json.JSONMarshaller;
 import org.apache.cxf.common.util.StringUtils;
+import org.apache.http.auth.AUTH;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
+import org.mortbay.util.ajax.JSON;
 import org.openstack.docs.common.api.v1.Extension;
 import org.openstack.docs.common.api.v1.Extensions;
 import org.openstack.docs.common.api.v1.MediaTypeList;
@@ -378,6 +381,17 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             JSONObject outer = new JSONObject();
             outer.put(JSONConstants.DOMAIN, getDomainWithoutWrapper(domain));
             jsonText = JSONValue.toJSONString(outer);
+        } else if(object.getClass().equals(AuthData.class)) {
+            JSONObject outer = new JSONObject();
+            JSONObject inner = new JSONObject();
+            AuthData authData = (AuthData) object;
+
+            if (authData.getServiceCatalog() != null) {
+                inner.put(JSONConstants.SERVICECATALOG, getServiceCatalog11(authData.getServiceCatalog()));
+            }
+            inner.put(JSONConstants.TOKEN, getToken11(authData.getToken()));
+            outer.put(JSONConstants.AUTH, inner);
+            jsonText = JSONValue.toJSONString(outer);
         } else {
             try {
                 getMarshaller().marshallToJSON(object, outputStream);
@@ -525,6 +539,19 @@ public class JSONWriter implements MessageBodyWriter<Object> {
     }
 
     @SuppressWarnings("unchecked")
+    JSONObject getServiceCatalog11(com.rackspacecloud.docs.auth.api.v1.ServiceCatalog serviceCatalog) {
+        JSONObject catalogItem = new JSONObject();
+        if (serviceCatalog != null) {
+            for (com.rackspacecloud.docs.auth.api.v1.Service service : serviceCatalog.getService()) {
+                if (service.getName() != null) {
+                    catalogItem.put(service.getName(), getEndpointsForCatalog11(service.getEndpoint()));
+                }
+            }
+        }
+        return catalogItem;
+    }
+
+    @SuppressWarnings("unchecked")
     JSONObject getToken(Token token) {
         if(token == null || token.getExpires() == null){
             throw new BadRequestException("Invalid token.");
@@ -544,6 +571,18 @@ public class JSONWriter implements MessageBodyWriter<Object> {
     }
 
     @SuppressWarnings("unchecked")
+    JSONObject getToken11(com.rackspacecloud.docs.auth.api.v1.Token token) {
+        if(token == null || token.getExpires() == null){
+            throw new BadRequestException("Invalid token.");
+        }
+
+        JSONObject tokenInner = new JSONObject();
+        tokenInner.put(JSONConstants.ID, token.getId());
+        tokenInner.put(JSONConstants.EXPIRES, token.getExpires().toString());
+        return tokenInner;
+    }
+
+    @SuppressWarnings("unchecked")
     JSONArray getTenants(List<TenantForAuthenticateResponse> tenants) {
         JSONArray tenantList = new JSONArray();
         for (TenantForAuthenticateResponse tenant : tenants) {
@@ -553,6 +592,31 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             tenantList.add(tenantItem);
         }
         return tenantList;
+    }
+
+    @SuppressWarnings("unchecked")
+    JSONArray getEndpointsForCatalog11(List<com.rackspacecloud.docs.auth.api.v1.Endpoint> endpoints) {
+        JSONArray endpointList = new JSONArray();
+        for (com.rackspacecloud.docs.auth.api.v1.Endpoint endpoint : endpoints) {
+            JSONObject endpointItem = new JSONObject();
+            if (endpoint.getPublicURL() != null) {
+                endpointItem.put(JSONConstants.PUBLIC_URL, endpoint.getPublicURL());
+            }
+            if (endpoint.getInternalURL() != null) {
+                endpointItem.put(JSONConstants.INTERNAL_URL, endpoint.getInternalURL());
+            }
+            if (endpoint.getRegion() != null) {
+                endpointItem.put(JSONConstants.REGION, endpoint.getRegion());
+            }
+            if (endpoint.getAdminURL() != null) {
+                endpointItem.put(JSONConstants.PUBLIC_URL, endpoint.getPublicURL());
+            }
+            if (endpoint.isV1Default()) {
+                endpointItem.put(JSONConstants.V1_DEFAULT, endpoint.isV1Default());
+            }
+            endpointList.add(endpointItem);
+        }
+        return endpointList;
     }
 
     @SuppressWarnings("unchecked")
