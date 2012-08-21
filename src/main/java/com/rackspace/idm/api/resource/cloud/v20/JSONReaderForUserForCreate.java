@@ -61,9 +61,14 @@ public class JSONReaderForUserForCreate implements MessageBodyReader<UserForCrea
                 Object enabled = obj3.get(JSONConstants.ENABLED);
                 Object password = obj3.get(JSONConstants.OS_KSADM_PASSWORD);
                 Object defaultRegion = obj3.get(JSONConstants.RAX_AUTH_DEFAULT_REGION);
+                Object domainId = obj3.get(JSONConstants.DOMAIN_ID);
 
                 if (defaultRegion != null) {
                     user.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","defaultRegion"), defaultRegion.toString());
+                }
+
+                if (domainId != null) {
+                    user.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","domainId"), domainId.toString());
                 }
 
                 if (password != null) {

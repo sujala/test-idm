@@ -38,6 +38,7 @@ public class UserConverterCloudV20 {
         }
         if(user.getOtherAttributes()!=null){
             userDO.setRegion(user.getOtherAttributes().get(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","defaultRegion")));
+            userDO.setDomainId(user.getOtherAttributes().get(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","domainId")));
         }
         return userDO;
     }
@@ -78,6 +79,9 @@ public class UserConverterCloudV20 {
         if(user.getRegion() != null){
             jaxbUser.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","defaultRegion"),user.getRegion());
         }
+        if(user.getDomainId() != null){
+            jaxbUser.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","domainId"),user.getDomainId());
+        }
 
         try {
             if (user.getCreated() != null) {
@@ -110,6 +114,9 @@ public class UserConverterCloudV20 {
         jaxbUser.setUsername(user.getUsername());
         if(user.getRegion() != null){
             jaxbUser.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","defaultRegion"),user.getRegion());
+        }
+        if(user.getDomainId() != null){
+            jaxbUser.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","domainId"),user.getDomainId());
         }
 
         try {

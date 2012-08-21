@@ -15,5 +15,4 @@ public interface DomainDao {
     Domain getDomain(String domainId);
     void updateDomain(Domain domain);
     void deleteDomain(String domainId);
-    String getNextDomainId();
 }

@@ -18,6 +18,7 @@ import com.rackspacecloud.docs.auth.api.v1.*;
 import com.rackspacecloud.docs.auth.api.v1.Credentials;
 import com.rackspacecloud.docs.auth.api.v1.Group;
 import com.rackspacecloud.docs.auth.api.v1.PasswordCredentials;
+import com.sun.jersey.api.ConflictException;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
@@ -44,9 +45,11 @@ import javax.xml.transform.stream.StreamSource;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
-import java.lang.reflect.Array;
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Component
 public class DefaultCloud11Service implements Cloud11Service {
@@ -99,6 +102,9 @@ public class DefaultCloud11Service implements Cloud11Service {
     private TenantService tenantService;
 
     @Autowired
+    private DomainService domainService;
+
+    @Autowired
     private GroupService cloudGroupService;
 
     @Autowired
@@ -115,7 +121,8 @@ public class DefaultCloud11Service implements Cloud11Service {
                                  EndpointConverterCloudV11 endpointConverterCloudV11,
                                  CloudExceptionResponse cloudExceptionResponse,
                                  ApplicationService clientService,
-                                 TenantService tenantService) {
+                                 TenantService tenantService,
+                                 DomainService domainService) {
         this.config = config;
         this.scopeAccessService = scopeAccessService;
         this.endpointService = endpointService;
@@ -126,6 +133,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         this.cloudExceptionResponse = cloudExceptionResponse;
         this.clientService = clientService;
         this.tenantService = tenantService;
+        this.domainService = domainService;
     }
 
     public ResponseBuilder getVersion(UriInfo uriInfo) throws JAXBException {
@@ -370,6 +378,10 @@ public class DefaultCloud11Service implements Cloud11Service {
             userDO.setEnabled(true);
 
             validateMossoId(user.getMossoId());
+
+            // V1.1 Setting Domain ID as Mosso ID
+            userDO.setDomainId(this.createNewDomain(userDO.getMossoId().toString()));
+
             userService.addUser(userDO);
             addMossoTenant(user);
             String nastId = addNastTenant(user);
@@ -1237,6 +1249,25 @@ public class DefaultCloud11Service implements Cloud11Service {
         }
     }
 
+    private String createNewDomain(String domainId){
+        try {
+            Domain domain = new Domain();
+            domain.setDomainId(domainId);
+            domain.setEnabled(true);
+            domain.setName(domainId);
+            domain.setDescription("Default Cloud Account Domain");
+            domainService.addDomain(domain);
+            return domain.getDomainId();
+        }
+        catch(ConflictException ex){
+            // ToDo: Use existing domain ?
+            logger.error("Domain already exists.");
+            return domainId;
+        }
+        catch(Exception ex){
+            throw new BadRequestException("Domain could not be created for user");
+        }
+    }
 
     public void setNastFacade(NastFacade nastFacade) {
         this.nastFacade = nastFacade;

@@ -138,7 +138,7 @@ public class  ServiceConfiguration {
     
     @Bean
     public TenantService tenantService() {
-        return new DefaultTenantService(tenantDao, clientDao, userRepo, scopeAccessDao);
+        return new DefaultTenantService(tenantDao, clientDao, userRepo, endpointDao, scopeAccessDao);
     }
     
     @Bean

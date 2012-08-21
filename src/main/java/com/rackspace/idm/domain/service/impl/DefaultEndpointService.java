@@ -2,6 +2,8 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
+import com.rackspace.idm.domain.entity.OpenstackEndpoint;
+import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.exception.BaseUrlConflictException;
 import com.rackspace.idm.exception.NotFoundException;
@@ -153,5 +155,17 @@ public class DefaultEndpointService implements EndpointService {
         }
         logger.debug("Got {} baseurls", filteredBaseUrls.size());
         return filteredBaseUrls;
+    }
+
+    @Override
+    public List<OpenstackEndpoint> getEndpointsFromTenantList(List<Tenant> tenantList) {
+        List<OpenstackEndpoint> endpoints = new ArrayList<OpenstackEndpoint>();
+        for (Tenant tenant : tenantList) {
+            OpenstackEndpoint endpoint = this.endpointDao.getOpenstackEndpointsForTenant(tenant);
+            if (endpoint != null && endpoint.getBaseUrls().size() > 0) {
+                endpoints.add(endpoint);
+            }
+        }
+        return endpoints;
     }
 }

@@ -20,6 +20,7 @@ import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.validation.Validator20;
+import com.sun.jersey.api.ConflictException;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
@@ -382,8 +383,18 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
                 userDO.setMossoId(caller.getMossoId());
                 userDO.setNastId(caller.getNastId());
+
+                // If creating sub-user, set DomainId of caller
+                setDomainId(scopeAccessByAccessToken, userDO);
             }
-            setDomainId(scopeAccessByAccessToken, userDO);
+            
+            if(userDO.getDomainId() == null && callerIsUserAdmin){
+                throw new BadRequestException("A Domain ID must be specified.");
+            }
+            else if(callerIsServiceAdmin) {
+                createNewDomain(userDO.getDomainId());
+            }
+
             if(callerIsServiceAdmin || callerIsUserAdmin){
                 defaultRegionService.validateDefaultRegion(userDO.getRegion());
             }
@@ -506,7 +517,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     void setDomainId(ScopeAccess scopeAccessByAccessToken, User userDO) {
         if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
             User caller = getUser(scopeAccessByAccessToken);
-            //is userAdmin
+            if(caller.getDomainId() == null){
+                throw new BadRequestException("User must belong to a domain to create a sub-user");
+            }
             userDO.setDomainId(caller.getDomainId());
         }
     }
@@ -1723,7 +1736,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder getDomain(String authToken, String domainId) {
         authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
-        Domain domain = checkAndGetDomain(domainId);
+        Domain domain = domainService.checkAndGetDomain(domainId);
         com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory objectFactory = objFactories.getRackspaceIdentityExtRaxgaV1Factory();
         com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain value = this.domainConverterCloudV20.toDomain(domain);
         return Response.ok(objectFactory.createDomain(value).getValue());
@@ -1732,7 +1745,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder updateDomain(String authToken, String domainId, com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain) {
         authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
-        Domain domainDO = checkAndGetDomain(domainId);
+        Domain domainDO = domainService.checkAndGetDomain(domainId);
         domainDO.setDescription(domain.getDescription());
         domainDO.setName(domain.getName());
         domainDO.setEnabled(domain.isEnabled());
@@ -1745,7 +1758,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder deleteDomain(String authToken, String domainId) {
         try {
             authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            Domain domain = checkAndGetDomain(domainId);
+            Domain domain = domainService.checkAndGetDomain(domainId);
             domainService.deleteDomain(domain.getDomainId());
             return Response.noContent();
         } catch (Exception ex) {
@@ -1758,6 +1771,34 @@ public class DefaultCloud20Service implements Cloud20Service {
         authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
         List<Tenant> tenants = tenantService.getTenantsByDomainId(domainId);
         return Response.ok(objFactories.getOpenStackIdentityV2Factory().createTenants(tenantConverterCloudV20.toTenantList(tenants)).getValue());
+    }
+
+    @Override
+    public ResponseBuilder getUsersByDomainId(String authToken, String domainId) {
+        authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+        FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParamName.DOMAIN_ID, domainId)};
+        Users users = userService.getAllUsers(filters);
+        return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUsers(this.userConverterCloudV20.toUserList(users.getUsers())).getValue());
+    }
+
+    @Override
+    public ResponseBuilder addUserToDomain(String authToken, String domainId, String userId) {
+        authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+        User userDO = userService.checkAndGetUserById(userId);
+        Domain domain = domainService.checkAndGetDomain(domainId);
+        userDO.setDomainId(domain.getDomainId());
+        this.userService.updateUser(userDO, false);
+        return Response.noContent();
+    }
+
+    @Override
+    public ResponseBuilder getEndpointsByDomainId(String authToken, String domainId) {
+        authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+        Domain domain = domainService.checkAndGetDomain(domainId);
+        List<Tenant> tenantList = tenantService.getTenantsFromNameList(domain.getTenantIds());
+        List<OpenstackEndpoint> endpoints = endpointService.getEndpointsFromTenantList(tenantList);
+        EndpointList list = endpointConverterCloudV20.toEndpointList(endpoints);
+        return Response.ok(objFactories.getOpenStackIdentityV2Factory().createEndpoints(list).getValue());
     }
 
     @Override
@@ -2229,17 +2270,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         return cRole;
     }
 
-    Domain checkAndGetDomain(String domainId) {
-        Domain domain = this.domainService.getDomain(domainId);
-
-        if (domain == null) {
-            String errMsg = String.format("Domain with id: '%s' was not found.", domainId);
-            logger.warn(errMsg);
-            throw new NotFoundException(errMsg);
-        }
-        return domain;
-    }
-
     ScopeAccess checkAndGetToken(String tokenId) {
         ScopeAccess sa = this.scopeAccessService.getScopeAccessByAccessToken(tokenId);
 
@@ -2333,6 +2363,24 @@ public class DefaultCloud20Service implements Cloud20Service {
             for (CloudBaseUrl baseUrl : endpoints.get(i).getBaseUrls()) {
                 baseUrl.setAdminUrl(null);
             }
+        }
+    }
+
+    void createNewDomain(String domainId){
+        try {
+            Domain domain = new Domain();
+            domain.setDomainId(domainId);
+            domain.setEnabled(true);
+            domain.setName(domainId);
+            domain.setDescription("Default Cloud Account Domain");
+            domainService.addDomain(domain);
+        }
+        catch(ConflictException ex){
+            // ToDo: Use existing domain ?
+            logger.error("Domain already exists.");
+        }
+        catch(Exception ex){
+            throw new BadRequestException("Domain could not be created for user");
         }
     }
 

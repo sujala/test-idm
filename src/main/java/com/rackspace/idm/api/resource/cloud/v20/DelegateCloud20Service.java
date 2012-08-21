@@ -481,6 +481,21 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
+    public ResponseBuilder getUsersByDomainId(String authToken, String domainId) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public ResponseBuilder addUserToDomain(String authToken, String domainId, String userId) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public ResponseBuilder getEndpointsByDomainId(String authToken, String domainId) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
     public ResponseBuilder addTenantToDomain(String authToken, String domainId, String tenantId) {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }

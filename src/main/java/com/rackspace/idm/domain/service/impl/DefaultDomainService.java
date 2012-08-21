@@ -27,6 +27,7 @@ public class DefaultDomainService implements DomainService{
     private Configuration config;
 
     public static final String DOMAIN_CANNOT_BE_NULL = "Domain cannot be null";
+    public static final String DOMAIN_ID_CANNOT_BE_NULL = "Domain ID cannot be null";
     public static final String DOMAIN_NAME_CANNOT_BE_NULL = "Domain name cannot be null or empty";
     private final DomainDao domainDao;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -40,11 +41,13 @@ public class DefaultDomainService implements DomainService{
         if(domain == null){
             throw new BadRequestException(DOMAIN_CANNOT_BE_NULL);
         }
+        if(StringUtils.isBlank(domain.getDomainId())) {
+            throw new BadRequestException(DOMAIN_ID_CANNOT_BE_NULL);
+        }
         if(StringUtils.isBlank(domain.getName())) {
             throw new BadRequestException(DOMAIN_NAME_CANNOT_BE_NULL);
         }
         logger.info("Adding Domain: {}", domain);
-        domain.setDomainId(this.domainDao.getNextDomainId());
         domainDao.addDomain(domain);
     }
 
@@ -57,6 +60,9 @@ public class DefaultDomainService implements DomainService{
     public void updateDomain(Domain domain) {
         if(domain == null){
             throw new BadRequestException(DOMAIN_CANNOT_BE_NULL);
+        }
+        if(StringUtils.isBlank(domain.getDomainId())) {
+            throw new BadRequestException(DOMAIN_ID_CANNOT_BE_NULL);
         }
         if(StringUtils.isBlank(domain.getName())) {
             throw new BadRequestException(DOMAIN_NAME_CANNOT_BE_NULL);
@@ -90,6 +96,17 @@ public class DefaultDomainService implements DomainService{
         List<String> tenantIds = setTenantIdList(domain, tenantId);
         domain.setTenantIds(tenantIds.toArray(new String[tenantIds.size()]));
         domainDao.updateDomain(domain);
+    }
+
+    @Override
+    public Domain checkAndGetDomain(String domainId) {
+        Domain domain = this.getDomain(domainId);
+        if (domain == null) {
+            String errMsg = String.format("Domain with id: '%s' was not found.", domainId);
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+        return domain;
     }
 
     private List<String> setTenantIdList(Domain domain, String tenantId) {

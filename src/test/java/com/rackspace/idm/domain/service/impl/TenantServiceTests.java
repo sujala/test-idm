@@ -1,14 +1,10 @@
 package com.rackspace.idm.domain.service.impl;
 
-import com.rackspace.idm.domain.dao.ApplicationDao;
-import com.rackspace.idm.domain.dao.ScopeAccessDao;
-import com.rackspace.idm.domain.dao.TenantDao;
-import com.rackspace.idm.domain.dao.UserDao;
+import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.service.TenantService;
-import com.rackspace.idm.domain.service.impl.DefaultTenantService;
 import com.rackspace.idm.exception.NotFoundException;
 import org.easymock.EasyMock;
 import org.junit.Assert;
@@ -18,14 +14,13 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.rackspace.idm.GlobalConstants;
-
 public class TenantServiceTests {
 
     private TenantDao mockTenantDao;
     private ApplicationDao mockClientDao;
     private UserDao mockUserDao;
     private ScopeAccessDao mockScopeAccessDao;
+    private EndpointDao mockEndpointDao;
     private TenantService tenantService;
 
     private final String tenantName = "tenantName";
@@ -46,8 +41,9 @@ public class TenantServiceTests {
         mockTenantDao = EasyMock.createMock(TenantDao.class);
         mockClientDao = EasyMock.createMock(ApplicationDao.class);
         mockUserDao = EasyMock.createMock(UserDao.class);
+        mockEndpointDao = EasyMock.createMock(EndpointDao.class);
         mockScopeAccessDao = EasyMock.createMock(ScopeAccessDao.class);
-        tenantService = new DefaultTenantService(mockTenantDao, mockClientDao, mockUserDao, mockScopeAccessDao);
+        tenantService = new DefaultTenantService(mockTenantDao, mockClientDao, mockUserDao, mockEndpointDao, mockScopeAccessDao);
     }
 
     @Test

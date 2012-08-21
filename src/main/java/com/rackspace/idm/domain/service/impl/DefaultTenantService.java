@@ -1,9 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
-import com.rackspace.idm.domain.dao.ApplicationDao;
-import com.rackspace.idm.domain.dao.ScopeAccessDao;
-import com.rackspace.idm.domain.dao.TenantDao;
-import com.rackspace.idm.domain.dao.UserDao;
+import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.DomainService;
 import com.rackspace.idm.domain.service.TenantService;
@@ -24,6 +21,7 @@ public class DefaultTenantService implements TenantService {
 
     public static final String GETTING_TENANT_ROLES = "Getting Tenant Roles";
     public static final String GOT_TENANT_ROLES = "Got {} Tenant Roles";
+
     @Autowired
     private Configuration config;
 
@@ -33,14 +31,16 @@ public class DefaultTenantService implements TenantService {
     private final TenantDao tenantDao;
     private final ApplicationDao clientDao;
     private final UserDao userDao;
+    private final EndpointDao endpointDao;
     private final ScopeAccessDao scopeAccessDao;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public DefaultTenantService(TenantDao tenantDao, ApplicationDao clientDao,
-        UserDao userDao, ScopeAccessDao scopeAccessDao) {
+        UserDao userDao, EndpointDao endpointDao, ScopeAccessDao scopeAccessDao) {
         this.tenantDao = tenantDao;
         this.clientDao = clientDao;
         this.userDao = userDao;
+        this.endpointDao = endpointDao;
         this.scopeAccessDao = scopeAccessDao;
     }
 
@@ -564,6 +564,21 @@ public class DefaultTenantService implements TenantService {
         return users;
     }
 
+    @Override
+    public List<Tenant> getTenantsFromNameList(String[] tenants){
+        List<Tenant> tenantList = new ArrayList<Tenant>();
+        if(tenants == null) {
+            return tenantList;
+        }
+        for (String tenantId : tenants) {
+            Tenant tenant = this.tenantDao.getTenant(tenantId);
+            if (tenant != null) {
+                tenantList.add(tenant);
+            }
+        }
+        return tenantList;
+    }
+
     /**
      * get roles in this list that are non-tenant specific
      * @param roles
@@ -665,4 +680,7 @@ public class DefaultTenantService implements TenantService {
         this.config = config;
     }
 
+    public void setDomainService(DomainService domainService) {
+        this.domainService = domainService;
+    }
 }

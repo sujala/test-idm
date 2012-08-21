@@ -42,4 +42,6 @@ public interface TenantService {
 
     List<Tenant> getTenantsByDomainId(String domainId);
 
+    List<Tenant> getTenantsFromNameList(String[] tenants);
+
 }

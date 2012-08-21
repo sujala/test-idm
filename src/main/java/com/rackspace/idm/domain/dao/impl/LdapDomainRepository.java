@@ -130,11 +130,6 @@ public class LdapDomainRepository extends LdapRepository implements DomainDao{
         getLogger().debug("Deleted Domain: {}", domain);
     }
 
-    @Override
-    public String getNextDomainId() {
-        return getNextId(NEXT_DOMAIN_ID);
-    }
-
     Domain getSingleDomain(Filter searchFilter)
         throws LDAPPersistException {
         SearchResultEntry entry = this.getSingleEntry(DOMAIN_BASE_DN, SearchScope.ONE, searchFilter, ATTR_DOMAIN_SEARCH_ATTRIBUTES);

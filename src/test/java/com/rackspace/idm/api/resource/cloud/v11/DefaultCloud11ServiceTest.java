@@ -87,6 +87,7 @@ public class DefaultCloud11ServiceTest {
     Application application = new Application("id",null,"myApp", null);
     AtomHopperClient atomHopperClient;
     GroupService userGroupService, cloudGroupService;
+    DomainService domainService;
     AuthConverterCloudV11 authConverterCloudv11;
     CredentialValidator credentialValidator;
     private CloudContractDescriptionBuilder cloudContratDescriptionBuilder;
@@ -102,6 +103,7 @@ public class DefaultCloud11ServiceTest {
         userService = mock(UserService.class);
         httpHeaders = mock(javax.ws.rs.core.HttpHeaders.class);
         scopeAccessService = mock(ScopeAccessService.class);
+        domainService = mock(DomainService.class);
         userScopeAccess = mock(UserScopeAccess.class);
         impersonatedScopeAccess = mock(ImpersonatedScopeAccess.class);
         endpointService = mock(EndpointService.class);
@@ -145,7 +147,7 @@ public class DefaultCloud11ServiceTest {
         testService.setOpenStackType("foo");
         when(clientService.getByName(any(String.class))).thenReturn(testService);
         when(clientService.getClientRoleByClientIdAndRoleName(anyString(), anyString())).thenReturn(new ClientRole());
-        defaultCloud11Service = new DefaultCloud11Service(config, scopeAccessService, endpointService, userService, authConverterCloudv11, userConverterCloudV11, endpointConverterCloudV11, cloudExceptionResponse, clientService, tenantService);
+        defaultCloud11Service = new DefaultCloud11Service(config, scopeAccessService, endpointService, userService, authConverterCloudv11, userConverterCloudV11, endpointConverterCloudV11, cloudExceptionResponse, clientService, tenantService, domainService);
         nastFacade = mock(NastFacade.class);
         defaultCloud11Service.setNastFacade(nastFacade);
         defaultCloud11Service.setUserValidator(userValidator);
@@ -2461,6 +2463,9 @@ public class DefaultCloud11ServiceTest {
         ClientRole clientRole = new ClientRole();
         clientRole.setId("7");
         clientRole.setName("identity:user-admin");
+        userDO.setId("1");
+        userDO.setMossoId(123456);
+        when(userConverterCloudV11.toUserDO(user)).thenReturn(userDO);
         when(authorizationService.authorizeCloudServiceAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
         when(userService.getUsersByMossoId(123456)).thenReturn(users);
         when(clientService.getClientRoleByClientIdAndRoleName(Matchers.<String>any(), Matchers.<String>any())).thenReturn(clientRole);
@@ -2493,11 +2498,13 @@ public class DefaultCloud11ServiceTest {
         doNothing().when(spy).authenticateCloudAdminUser(null);
         User user = new User();
         user.setId("someId");
-        user.setMossoId(12345);
+        user.setMossoId(123456);
         user.setBaseURLRefs(new BaseURLRefList());
         user.getBaseURLRefs().getBaseURLRef().add(new BaseURLRef());
+        userDO.setId("someId");
+        userDO.setMossoId(123456);
         when(userService.getUser(anyString())).thenReturn(null);
-        when(userConverterCloudV11.toUserDO(user)).thenReturn(new com.rackspace.idm.domain.entity.User());
+        when(userConverterCloudV11.toUserDO(user)).thenReturn(userDO);
         doNothing().when(spy).validateMossoId(anyInt());
         doNothing().when(userService).addUser(any(com.rackspace.idm.domain.entity.User.class));
         doNothing().when(userService).updateUser(any(com.rackspace.idm.domain.entity.User.class), anyBoolean());
@@ -2685,6 +2692,7 @@ public class DefaultCloud11ServiceTest {
         com.rackspace.idm.domain.entity.User userTest = new com.rackspace.idm.domain.entity.User();
         userTest.setUniqueId("uniqueId");
         userTest.setId("userId");
+        userTest.setMossoId(1);
         User user = new User();
         user.setId("userId");
         user.setMossoId(1);

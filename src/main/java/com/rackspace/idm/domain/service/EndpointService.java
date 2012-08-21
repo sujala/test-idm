@@ -1,6 +1,8 @@
 package com.rackspace.idm.domain.service;
 
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
+import com.rackspace.idm.domain.entity.OpenstackEndpoint;
+import com.rackspace.idm.domain.entity.Tenant;
 
 import java.util.List;
 
@@ -28,6 +30,8 @@ public interface EndpointService {
     List<CloudBaseUrl> getBaseUrlsByServiceName(String serviceName);
     
     List<CloudBaseUrl> getBaseUrlsByBaseUrlType(String baseUrlType);
+
+    List<OpenstackEndpoint> getEndpointsFromTenantList(List<Tenant> tenantList);
 
     void updateBaseUrl(CloudBaseUrl baseUrl);
 }

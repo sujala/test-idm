@@ -184,6 +184,12 @@ public interface Cloud20Service {
 
     ResponseBuilder getDomainTenants(String authToken, String domainId, String enabled);
 
+    ResponseBuilder getUsersByDomainId(String authToken, String domainId);
+
+    ResponseBuilder addUserToDomain(String authToken, String domainId, String userId);
+
+    ResponseBuilder getEndpointsByDomainId(String authToken, String domainId);
+
     ResponseBuilder addTenantToDomain(String authToken, String domainId, String tenantId);
 
     ResponseBuilder removeTenantFromDomain(String authToken, String domainId, String tenantId);

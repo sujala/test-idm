@@ -1005,6 +1005,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         checkForMossoIdModification(uOld, uNew, mods);
         checkForMigrationStatusModification(uOld, uNew, mods);
         checkForUserNameModification(uOld, uNew, mods);
+        checkForDomainModification(uOld, uNew, mods);
 
         getLogger().debug("Found {} mods.", mods.size());
 
@@ -1017,6 +1018,14 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_UID));
             } else if (!StringUtils.equals(uOld.getUsername(), uNew.getUsername())) {
                 mods.add(new Modification(ModificationType.REPLACE, ATTR_UID, uNew.getUsername()));
+            }
+        }
+    }
+
+    void checkForDomainModification(User uOld, User uNew, List<Modification> mods) {
+        if (uNew.getDomainId() != null) {
+            if (!StringUtils.equals(uOld.getDomainId(), uNew.getDomainId())) {
+                mods.add(new Modification(ModificationType.REPLACE, ATTR_DOMAIN_ID, uNew.getDomainId()));
             }
         }
     }

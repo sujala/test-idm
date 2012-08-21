@@ -1,16 +1,12 @@
 package com.rackspace.idm.domain.service.impl;
 
-import com.rackspace.idm.domain.dao.ApplicationDao;
-import com.rackspace.idm.domain.dao.ScopeAccessDao;
-import com.rackspace.idm.domain.dao.TenantDao;
-import com.rackspace.idm.domain.dao.UserDao;
+import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.exception.ClientConflictException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.unboundid.ldap.sdk.*;
 import org.apache.commons.configuration.Configuration;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -36,12 +32,13 @@ public class DefaultTenantServiceTest {
     private ApplicationDao clientDao = mock(ApplicationDao.class);
     private ScopeAccessDao scopeAccessDao = mock(ScopeAccessDao.class);
     private UserDao userDao = mock(UserDao.class);
+    private EndpointDao endpointDao = mock(EndpointDao.class);
     DefaultTenantService spy;
     private Configuration config;
 
     @Before
     public void setUp() throws Exception {
-        defaultTenantService = new DefaultTenantService(tenantDao, clientDao, userDao, scopeAccessDao);
+        defaultTenantService = new DefaultTenantService(tenantDao, clientDao, userDao, endpointDao, scopeAccessDao);
         config = mock(Configuration.class);
         defaultTenantService.setConfig(config);
         spy = spy(defaultTenantService);

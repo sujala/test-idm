@@ -193,6 +193,31 @@ public class Cloud20VersionResource {
     }
 
     @GET
+    @Path("RAX-AUTH/domains/{domainId}/users")
+    public Response getUsersByDomain(
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("domainId") String domainId) {
+        return defaultCloud20Service.getUsersByDomainId(authToken, domainId).build();
+    }
+
+    @PUT
+    @Path("RAX-AUTH/domains/{domainId}/users/{userId}")
+    public Response addUserToDomain(
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("domainId") String domainId,
+            @PathParam("userId") String userId) {
+        return defaultCloud20Service.addUserToDomain(authToken, domainId, userId).build();
+    }
+
+    @GET
+    @Path("RAX-AUTH/domains/{domainId}/endpoints")
+    public Response getEndpointsByDomain(
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("domainId") String domainId) {
+        return defaultCloud20Service.getEndpointsByDomainId(authToken, domainId).build();
+    }
+
+    @GET
     @Path("extensions")
     public Response listExtensions(@Context HttpHeaders httpHeaders) {
         return getCloud20Service().listExtensions(httpHeaders).build();
