@@ -379,7 +379,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             validateMossoId(user.getMossoId());
 
             // V1.1 Setting Domain ID as Mosso ID
-            userDO.setDomainId(this.createNewDomain(userDO.getMossoId().toString()));
+            userDO.setDomainId(domainService.createNewDomain(userDO.getMossoId().toString()));
 
             userService.addUser(userDO);
             addMossoTenant(user);
@@ -1245,26 +1245,6 @@ public class DefaultCloud11Service implements Cloud11Service {
             response.sendRedirect(path);
         } catch (IOException e) {
             logger.error("Error in redirecting the " + path + " calls");
-        }
-    }
-
-    private String createNewDomain(String domainId){
-        try {
-            Domain domain = new Domain();
-            domain.setDomainId(domainId);
-            domain.setEnabled(true);
-            domain.setName(domainId);
-            domain.setDescription("Default Cloud Account Domain");
-            domainService.addDomain(domain);
-            return domain.getDomainId();
-        }
-        catch(DuplicateException ex){
-            // ToDo: Use existing domain ?
-            logger.error("Domain already exists.");
-            return domainId;
-        }
-        catch(Exception ex){
-            throw new BadRequestException("Domain could not be created for user");
         }
     }
 

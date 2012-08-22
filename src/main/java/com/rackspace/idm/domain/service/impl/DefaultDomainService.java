@@ -4,6 +4,7 @@ import com.rackspace.idm.domain.dao.DomainDao;
 import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.service.DomainService;
 import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
@@ -107,6 +108,26 @@ public class DefaultDomainService implements DomainService{
             throw new NotFoundException(errMsg);
         }
         return domain;
+    }
+
+    @Override
+    public String createNewDomain(String domainId){
+        try {
+            Domain domain = new Domain();
+            domain.setDomainId(domainId);
+            domain.setEnabled(true);
+            domain.setName(domainId);
+            domain.setDescription("Default Domain");
+            addDomain(domain);
+            return domain.getDomainId();
+        }
+        catch(DuplicateException ex){
+            logger.error("Domain already exists.");
+            return domainId;
+        }
+        catch(Exception ex){
+            throw new BadRequestException("Domain could not be created.");
+        }
     }
 
     private List<String> setTenantIdList(Domain domain, String tenantId) {

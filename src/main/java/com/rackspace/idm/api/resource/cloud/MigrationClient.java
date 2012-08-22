@@ -106,15 +106,20 @@ public class MigrationClient {
     }
 
     public User getUser(String token, String username) throws URISyntaxException, HttpException, IOException, JAXBException {
+        String response = "";
+        try {
+             response = client.url(cloud20Host + "users?name=" + username)
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML)
+                .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML)
+                .header(X_AUTH_TOKEN, token)
+                .get();
 
-        String response = client.url(cloud20Host + "users?name=" + username)
-            .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML)
-            .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML)
-            .header(X_AUTH_TOKEN, token)
-            .get();
-
-        ObjectMarshaller<User> unmarshaller = new ObjectMarshaller<User>();
-        return unmarshaller.unmarshal(response, User.class);
+            ObjectMarshaller<User> unmarshaller = new ObjectMarshaller<User>();
+            return unmarshaller.unmarshal(response, User.class);
+        } catch (Exception ex) {
+            logger.error(response);
+            return null;
+        }
     }
 
     public RoleList getRolesForUser(String token, String userId) {

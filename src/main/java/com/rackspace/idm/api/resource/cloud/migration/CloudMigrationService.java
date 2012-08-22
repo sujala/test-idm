@@ -61,6 +61,9 @@ public class CloudMigrationService {
     private UserService userService;
 
     @Autowired
+    private DomainService domainService;
+
+    @Autowired
     private TenantService tenantService;
 
     @Autowired
@@ -283,6 +286,8 @@ public class CloudMigrationService {
 
             if (domainId == null && isSubUser(roles)) {
                 throw new BadRequestException("Migration is not allowed for subusers");
+            } else if (domainId == null) {
+                domainId = user11.getMossoId().toString();
             }
 
 
@@ -680,12 +685,21 @@ public class CloudMigrationService {
             throw new BadRequestException("Migration is not allowed for subusers");
         }
 
+        Users users = null;
         String domainId = user.getDomainId();
-        FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParam.FilterParamName.DOMAIN_ID, domainId)};
-        Users users = this.userService.getAllUsers(filters, 0, 0);
+        if(domainId != null){
+            FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParam.FilterParamName.DOMAIN_ID, domainId)};
+            users = this.userService.getAllUsers(filters, 0, 0);
+        }
 
-        if (users.getUsers() == null) {// Used so we do not delete a user who wasn't previously migrated.
+        if (users != null && users.getUsers() == null) {// Used so we do not delete a user who wasn't previously migrated.
             throw new NotFoundException(USER_NOT_FOUND);
+        }
+        else if(users == null) { // Add self into the list
+            users = new Users();
+            List<com.rackspace.idm.domain.entity.User> userList = new ArrayList<com.rackspace.idm.domain.entity.User>();
+            userList.add(user);
+            users.setUsers(userList);
         }
 
         for (com.rackspace.idm.domain.entity.User u : users.getUsers()) {
@@ -761,6 +775,7 @@ public class CloudMigrationService {
         if (domainId != null) {
             newUser.setDomainId(domainId);
         }
+        domainService.createNewDomain(domainId);
 
         String defaultRegion = getDefaultRegion(user);
         if (defaultRegion != null) {
@@ -1055,4 +1070,9 @@ public class CloudMigrationService {
     public void setAtomHopperClient(AtomHopperClient atomHopperClient) {
         this.atomHopperClient = atomHopperClient;
     }
+
+    public void setDomainService(DomainService domainService) {
+        this.domainService = domainService;
+    }
+    
 }

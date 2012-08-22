@@ -68,6 +68,7 @@ public class CloudMigrationServiceTest {
     private TenantService tenantService;
     private UserConverterCloudV20 userConverterCloudV20;
     private UserService userService;
+    private DomainService domainService;
     private GroupService groupService;
     private MigrationClient client;
     private GregorianCalendar gc = new GregorianCalendar();
@@ -89,6 +90,7 @@ public class CloudMigrationServiceTest {
         //mocks
         config = mock(Configuration.class);
         applicationService = mock(ApplicationService.class);
+        domainService = mock(DomainService.class);
         client = mock(MigrationClient.class);
         endpointService = mock(EndpointService.class);
         jaxbObjectFactories = mock(JAXBObjectFactories.class);
@@ -116,6 +118,7 @@ public class CloudMigrationServiceTest {
         cloudMigrationService.setEndpointConverterCloudV20(endpointConverterCloudV20);
         cloudMigrationService.setCloudKsGroupBuilder(cloudKsGroupBuilder);
         cloudMigrationService.setAtomHopperClient(atomHopperClient);
+        cloudMigrationService.setDomainService(domainService);
         gc.setTimeInMillis(new Date().getTime());
 
         //setting mocks for endpointconverter
@@ -626,6 +629,7 @@ public class CloudMigrationServiceTest {
     public void unmigrateUserByUsername_usersWithNullSubUsers_throwsNotFoundException() throws Exception {
         User user1 = new User();
         user1.setInMigration(true);
+        user1.setDomainId("domain");
 
         List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
 
@@ -646,10 +650,15 @@ public class CloudMigrationServiceTest {
     public void unmigrateUserByUsername_usersWithSubUsers_withNullInMigration_throwsConflictException() throws Exception {
         User user1 = new User();
         user1.setInMigration(true);
+        user1.setDomainId("domain");
+        User user2 = new User();
+        user2.setDomainId("domain");
+
         when(userService.getUser("username")).thenReturn(user1);
         Users users = new Users();
         users.setUsers(new ArrayList<User>());
-        users.getUsers().add(new User());
+        users.getUsers().add(user1);
+        users.getUsers().add(user2);
 
         List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
 
@@ -659,10 +668,7 @@ public class CloudMigrationServiceTest {
         roles.getRole().add(role);
         
         when(roleConverterCloudV20.toRoleListJaxb(tenantRoles)).thenReturn(roles);
-
         when(tenantService.getGlobalRolesForUser(user1)).thenReturn(tenantRoles);
-
-
         when(userService.getAllUsers(any(FilterParam[].class), eq(0), eq(0))).thenReturn(users);
         spy.unmigrateUserByUsername("username");
     }
@@ -671,6 +677,7 @@ public class CloudMigrationServiceTest {
     public void unmigrateUserByUsername_usersNoUsersInDomain_neverCallsUserService_deleteUser() throws Exception {
         User user1 = new User();
         user1.setInMigration(true);
+        user1.setDomainId("domain");
         when(userService.getUser("username")).thenReturn(user1);
         Users users = new Users();
         users.setUsers(new ArrayList<User>());

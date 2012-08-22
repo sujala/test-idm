@@ -18,4 +18,5 @@ public interface DomainService {
     void addTenantToDomain(String tenantId, String domainId);
     void removeTenantFromDomain(String tenantId, String domainId);
     Domain checkAndGetDomain(String domainId);
+    String createNewDomain(String domainId);
 }
