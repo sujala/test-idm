@@ -168,6 +168,7 @@ public class DefaultCloud20ServiceTest {
         defaultCloud20Service.setExceptionHandler(exceptionHandler);
         defaultCloud20Service.setValidator20(validator20);
         defaultCloud20Service.setDefaultRegionService(defaultRegionService);
+        defaultCloud20Service.setDomainService(domainService);
 
         //fields
         user = new User();
@@ -414,7 +415,7 @@ public class DefaultCloud20ServiceTest {
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         doNothing().when(spy).setDomainId(scopeAccess, user);
         doNothing().when(spy).assignProperRole(httpHeaders, authToken, scopeAccess, user);
-        doNothing().when(spy).createNewDomain(org.mockito.Matchers.<String>anyObject());
+        when(domainService.createNewDomain(org.mockito.Matchers.<String>anyObject())).thenReturn("domain");
         when(authorizationService.authorizeCloudUserAdmin(scopeAccess)).thenReturn(true);
         when(userService.getUserByAuthToken(authToken)).thenReturn(user);
         when(userService.getAllUsers(org.mockito.Matchers.<FilterParam[]>anyObject())).thenReturn(new Users());
@@ -1327,7 +1328,7 @@ public class DefaultCloud20ServiceTest {
         newUser.setDomainId("domain");
         ArgumentCaptor<User> argumentCaptor = ArgumentCaptor.forClass(User.class);
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doNothing().when(spy).createNewDomain(org.mockito.Matchers.<String>anyObject());
+        when(domainService.createNewDomain(org.mockito.Matchers.<String>anyObject())).thenReturn("domain");
         when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(newUser);
         spy.addUser(httpHeaders, uriInfo, authToken, userNoRegion);
         verify(userService).addUser(argumentCaptor.capture());
@@ -1349,7 +1350,7 @@ public class DefaultCloud20ServiceTest {
         users.setUsers(usersList);
         User newUser = new User();
         newUser.setDomainId("domain");
-        doNothing().when(spy).createNewDomain(org.mockito.Matchers.<String>anyObject());
+        when(domainService.createNewDomain(org.mockito.Matchers.<String>anyObject())).thenReturn("domain");
         when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(newUser);
@@ -1373,7 +1374,7 @@ public class DefaultCloud20ServiceTest {
         caller.setNastId("nastId");
         User newUser = new User();
         newUser.setDomainId("domain");
-        doNothing().when(spy).createNewDomain(org.mockito.Matchers.<String>anyObject());
+        when(domainService.createNewDomain(org.mockito.Matchers.<String>anyObject())).thenReturn("domain");
         when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(false);
         when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(newUser);
@@ -1414,7 +1415,7 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void addUser_callsUserService_addUserMethod() throws Exception {
-        doNothing().when(spy).createNewDomain(org.mockito.Matchers.<String>anyObject());
+        when(domainService.createNewDomain(org.mockito.Matchers.<String>anyObject())).thenReturn("domain");
         spy.addUser(null, null, authToken, userOS);
         verify(userService).addUser(user);
     }
@@ -1426,7 +1427,7 @@ public class DefaultCloud20ServiceTest {
         caller.setNastId("nastId");
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
-        doNothing().when(spy).createNewDomain(org.mockito.Matchers.<String>anyObject());
+        when(domainService.createNewDomain(org.mockito.Matchers.<String>anyObject())).thenReturn("domain");
         spy.addUser(null, null, authToken, userOS);
         verify(spy).setDomainId(any(ScopeAccess.class), any(User.class));
     }
@@ -1439,7 +1440,7 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void addUser_callerIsServiceAdmin_callsDefaultRegionService_validateDefaultRegion() throws Exception {
-        doNothing().when(spy).createNewDomain(org.mockito.Matchers.<String>anyObject());
+        when(domainService.createNewDomain(org.mockito.Matchers.<String>anyObject())).thenReturn("domain");
         when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
         spy.addUser(null, null, authToken, userOS);
         verify(defaultRegionService).validateDefaultRegion(user.getRegion());
@@ -1447,7 +1448,7 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void addUser_callerIsServiceAdmin_defaultRegionMatchesUserRegion_setsRegion() throws Exception {
-        doNothing().when(spy).createNewDomain(org.mockito.Matchers.<String>anyObject());
+        when(domainService.createNewDomain(org.mockito.Matchers.<String>anyObject())).thenReturn("domain");
         when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
         HashSet<String> defaultRegions = new HashSet<String>();
         defaultRegions.add("DFW");
@@ -1461,7 +1462,7 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void addUser_callerIsUserAdmin_callsDefaultRegionService() throws Exception {
-        doNothing().when(spy).createNewDomain(org.mockito.Matchers.<String>anyObject());
+        when(domainService.createNewDomain(org.mockito.Matchers.<String>anyObject())).thenReturn("domain");
         doNothing().when(spy).setDomainId(any(ScopeAccess.class), any(User.class));
         when(userService.getUserByAuthToken(authToken)).thenReturn(new User());
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
@@ -1523,7 +1524,7 @@ public class DefaultCloud20ServiceTest {
         when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
         when(userService.getAllUsers(org.mockito.Matchers.<FilterParam[]>any())).thenReturn(users);
         when(config.getInt("numberOfSubUsers")).thenReturn(2);
-        doNothing().when(spy).createNewDomain(org.mockito.Matchers.<String>anyObject());
+        when(domainService.createNewDomain(org.mockito.Matchers.<String>anyObject())).thenReturn("domain");
         doNothing().when(spy).setDomainId(any(ScopeAccess.class), any(User.class));
         doNothing().when(spy).assignProperRole(eq(httpHeaders), eq(authToken), any(ScopeAccess.class), any(User.class));
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
@@ -1539,7 +1540,7 @@ public class DefaultCloud20ServiceTest {
         URI uri = new URI("");
         User user = new User();
         user.setDomainId("domain");
-        doNothing().when(spy).createNewDomain(org.mockito.Matchers.<String>anyObject());
+        when(domainService.createNewDomain(org.mockito.Matchers.<String>anyObject())).thenReturn("domain");
         when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(user);
         when(userConverterCloudV20.toUser(any(User.class))).thenReturn(new org.openstack.docs.identity.api.v2.User());
         doNothing().when(spy).assignProperRole(eq(httpHeaders), eq(authToken), any(ScopeAccess.class), any(User.class));
@@ -1553,7 +1554,7 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void addUser_userServiceDuplicateException_returnsResponseBuilder() throws Exception {
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        doNothing().when(spy).createNewDomain(org.mockito.Matchers.<String>anyObject());
+        when(domainService.createNewDomain(org.mockito.Matchers.<String>anyObject())).thenReturn("domain");
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         User newUser = new User();
         newUser.setDomainId("domain");
@@ -1570,7 +1571,7 @@ public class DefaultCloud20ServiceTest {
         DuplicateUsernameException duplicateUsernameException = new DuplicateUsernameException();
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doNothing().when(spy).createNewDomain(org.mockito.Matchers.<String>anyObject());
+        when(domainService.createNewDomain(org.mockito.Matchers.<String>anyObject())).thenReturn("domain");
         when(userConverterCloudV20.toUserDO(userOS)).thenReturn(caller);
         when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
         when(userService.getAllUsers(any(FilterParam[].class))).thenReturn(null);

@@ -20,7 +20,6 @@ import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.validation.Validator20;
-import com.sun.jersey.api.ConflictException;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
@@ -49,7 +48,10 @@ import javax.xml.transform.stream.StreamSource;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -392,7 +394,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException("A Domain ID must be specified.");
             }
             else if(callerIsServiceAdmin) {
-                createNewDomain(userDO.getDomainId());
+                domainService.createNewDomain(userDO.getDomainId());
             }
 
             if(callerIsServiceAdmin || callerIsUserAdmin){
@@ -2366,24 +2368,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
-    void createNewDomain(String domainId){
-        try {
-            Domain domain = new Domain();
-            domain.setDomainId(domainId);
-            domain.setEnabled(true);
-            domain.setName(domainId);
-            domain.setDescription("Default Cloud Account Domain");
-            domainService.addDomain(domain);
-        }
-        catch(ConflictException ex){
-            // ToDo: Use existing domain ?
-            logger.error("Domain already exists.");
-        }
-        catch(Exception ex){
-            throw new BadRequestException("Domain could not be created for user");
-        }
-    }
-
     private String getCloudAuthClientId() {
         return config.getString("cloudAuth.clientId");
     }
@@ -2533,5 +2517,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     public void setDefaultRegionService(DefaultRegionService defaultRegionService) {
         this.defaultRegionService = defaultRegionService;
+    }
+
+    public void setDomainService(DomainService domainService) {
+        this.domainService = domainService;
     }
 }
