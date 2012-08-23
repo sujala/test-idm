@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * Created by IntelliJ IDEA.
@@ -48,6 +49,10 @@ public class DefaultDomainService implements DomainService{
         if(StringUtils.isBlank(domain.getName())) {
             throw new BadRequestException(DOMAIN_NAME_CANNOT_BE_NULL);
         }
+        if(StringUtils.isBlank(domain.getDescription())) {
+            domain.setDescription("");
+        }
+        verifyDomain(domain);
         logger.info("Adding Domain: {}", domain);
         domainDao.addDomain(domain);
     }
@@ -68,6 +73,7 @@ public class DefaultDomainService implements DomainService{
         if(StringUtils.isBlank(domain.getName())) {
             throw new BadRequestException(DOMAIN_NAME_CANNOT_BE_NULL);
         }
+        verifyDomain(domain);
         domainDao.updateDomain(domain);
     }
 
@@ -142,4 +148,13 @@ public class DefaultDomainService implements DomainService{
         return tenantIds;
     }
 
+    private void verifyDomain(Domain domain) {
+        Pattern alphaNumeric = Pattern.compile("[a-zA-z0-9:]*");
+        if (!alphaNumeric.matcher(domain.getDomainId()).matches()) {
+            throw new BadRequestException("Domain ID has invalid characters.");
+        }
+        if (!alphaNumeric.matcher(domain.getName()).matches()) {
+            throw new BadRequestException("Domain name has invalid characters.");
+        }
+    }
 }
