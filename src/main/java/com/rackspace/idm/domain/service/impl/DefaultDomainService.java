@@ -149,11 +149,12 @@ public class DefaultDomainService implements DomainService{
     }
 
     private void verifyDomain(Domain domain) {
-        Pattern alphaNumeric = Pattern.compile("[a-zA-z0-9:]*");
-        if (!alphaNumeric.matcher(domain.getDomainId()).matches()) {
+        Pattern alphaNumericColonHyphen = Pattern.compile("[a-zA-Z0-9:-]*");
+        Pattern alphaNumericColonHyphenSpace = Pattern.compile("[a-zA-Z0-9\\s:-]*");
+        if (!alphaNumericColonHyphen.matcher(domain.getDomainId()).matches()) {
             throw new BadRequestException("Domain ID has invalid characters.");
         }
-        if (!alphaNumeric.matcher(domain.getName()).matches()) {
+        if (!alphaNumericColonHyphenSpace.matcher(domain.getName()).matches()) {
             throw new BadRequestException("Domain name has invalid characters.");
         }
     }
