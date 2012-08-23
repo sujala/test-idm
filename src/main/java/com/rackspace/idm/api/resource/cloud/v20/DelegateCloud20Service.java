@@ -13,10 +13,7 @@ import com.rackspace.idm.api.resource.cloud.CloudUserExtractor;
 import com.rackspace.idm.api.resource.cloud.HttpHeadersAcceptXml;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
-import com.rackspace.idm.domain.entity.HasAccessToken;
-import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess;
-import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.TenantRole;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import com.sun.jersey.api.json.JSONConfiguration;
@@ -32,6 +29,8 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.*;
+import org.openstack.docs.identity.api.v2.Tenant;
+import org.openstack.docs.identity.api.v2.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -760,15 +759,27 @@ public class DelegateCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder deleteUser(HttpHeaders httpHeaders, String authToken, String userId)  {
         if (isCloudAuthRoutingEnabled()) {
-            com.rackspace.idm.domain.entity.User user = userService.getUserById(userId);
 
-            if (user == null) {
-                return cloudClient.delete(getCloudAuthV20Url() + USERS + "/" + userId, httpHeaders);
+            com.rackspace.idm.domain.entity.User user = userService.getSoftDeletedUser(userId);
+            if(user == null){
+                user = userService.getUserById(userId);
             }
-
-            if (userService.isMigratedUser(user)) {
-                cloudClient.delete(getCloudAuthV20Url() + USERS + "/" + userId, httpHeaders);
-                return defaultCloud20Service.deleteUser(httpHeaders, authToken, userId);
+            if (user != null) {
+                if (userService.isMigratedUser(user)) {
+                    User updateUser = new User();
+                    updateUser.setUsername(user.getUsername());
+                    updateUser.setEnabled(false);
+                    httpHeaders.getRequestHeaders().add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML);
+                    String body = marshallObjectToString(objectFactory.createUser(updateUser));
+                    ResponseBuilder response = cloudClient.post(getCloudAuthV20Url() + USERS + "/" + userId, httpHeaders, body);
+                    if (response.build().getStatus() == 200) {
+                        return defaultCloud20Service.deleteUser(httpHeaders, authToken, userId);
+                    } else {
+                        throw new BadRequestException("Cloud not delete user: " + response.build().getEntity().toString());
+                    }
+                }
+            }else{
+                return cloudClient.delete(getCloudAuthV20Url() + USERS + "/" + userId, httpHeaders);
             }
         }
         return defaultCloud20Service.deleteUser(httpHeaders, authToken, userId);
