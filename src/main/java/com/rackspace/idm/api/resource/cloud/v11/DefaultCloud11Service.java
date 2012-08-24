@@ -437,8 +437,17 @@ public class DefaultCloud11Service implements Cloud11Service {
             tenant.setDisplayName(nastId);
             tenant.setEnabled(true);
 
+            List<String> v1defaultNastList = config.getList("v1defaultNast");
             List<CloudBaseUrl> nastBaseUrls = endpointService.getBaseUrlsByBaseUrlType("NAST");
             for (CloudBaseUrl baseUrl : nastBaseUrls) {
+                String baseUrlId = String.valueOf(baseUrl.getBaseUrlId());
+                for (String v1defaultNastItem : v1defaultNastList) {
+                    if (v1defaultNastItem.equals(baseUrlId)) {
+                        tenant.addV1Default(baseUrlId);
+                        break;
+                    }
+                }
+
                 addbaseUrlToTenant(tenant, baseUrl);
             }
             try {
@@ -470,8 +479,16 @@ public class DefaultCloud11Service implements Cloud11Service {
             tenant.setName(mossoId.toString());
             tenant.setDisplayName(mossoId.toString());
             tenant.setEnabled(true);
-            List<CloudBaseUrl> nastBaseUrls = endpointService.getBaseUrlsByBaseUrlType("MOSSO");
-            for (CloudBaseUrl baseUrl : nastBaseUrls) {
+
+            List<String> v1defaultMossoList = config.getList("v1defaultMosso");
+            List<CloudBaseUrl> mossoBaseUrls = endpointService.getBaseUrlsByBaseUrlType("MOSSO");
+            for (CloudBaseUrl baseUrl : mossoBaseUrls) {
+                String baseUrlId = String.valueOf(baseUrl.getBaseUrlId());
+                for (String v1defaultMossoItem : v1defaultMossoList) {
+                    if (v1defaultMossoItem.equals(baseUrlId)) {
+                        tenant.addV1Default(baseUrlId);
+                    }
+                }
                 addbaseUrlToTenant(tenant, baseUrl);
             }
             try {
