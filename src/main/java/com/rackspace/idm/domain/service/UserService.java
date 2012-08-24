@@ -55,6 +55,8 @@ public interface UserService {
     User getUser(String customerId, String username);
 
     User getSoftDeletedUser(String id);
+
+    User getSoftDeletedUserByUsername(String id);
     
     Applications getUserApplications(User user);
     

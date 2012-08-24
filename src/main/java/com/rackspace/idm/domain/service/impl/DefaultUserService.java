@@ -368,6 +368,14 @@ public class DefaultUserService implements UserService {
         logger.debug(GOT_USER, user);
         return user;
     }
+
+    @Override
+    public User getSoftDeletedUserByUsername(String name) {
+        logger.debug(GETTING_USER, name);
+        User user = userDao.getSoftDeletedUserByUsername(name);
+        logger.debug(GOT_USER, user);
+        return user;
+    }
 //
 //    @Override
 //    public DateTime getUserPasswordExpirationDate(String userName) {

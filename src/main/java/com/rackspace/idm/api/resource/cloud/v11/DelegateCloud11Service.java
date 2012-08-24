@@ -7,6 +7,7 @@ import com.rackspace.idm.domain.dao.impl.LdapUserRepository;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.impl.DefaultUserService;
+import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotAuthorizedException;
 import com.rackspacecloud.docs.auth.api.v1.*;
 import org.apache.commons.configuration.Configuration;
@@ -267,21 +268,28 @@ public class DelegateCloud11Service implements Cloud11Service {
     }
 
     @Override
-    public Response.ResponseBuilder deleteUser(HttpServletRequest request, String userId, HttpHeaders httpHeaders) throws IOException {
-        if(isCloudAuthRoutingEnabled()){
-            com.rackspace.idm.domain.entity.User user = defaultUserService.getUser(userId);
-
-            if(user == null) {
-                return cloudClient.delete(getCloudAuthV11Url().concat(USERS + userId), httpHeaders);
+    public Response.ResponseBuilder deleteUser(HttpServletRequest request, String userId, HttpHeaders httpHeaders) throws IOException, JAXBException {
+        if (isCloudAuthRoutingEnabled()) {
+            com.rackspace.idm.domain.entity.User user = defaultUserService.getSoftDeletedUserByUsername(userId);
+            if(user == null){
+                user = defaultUserService.getUser(userId);
             }
-
-            if(defaultUserService.isMigratedUser(user)){
-                String url = getCloudAuthV11Url().concat(USERS + userId);
-                ResponseBuilder responseBuilder = cloudClient.delete(url, httpHeaders);
-                int status = responseBuilder.build().getStatus();
-                if (status == HttpServletResponse.SC_UNAUTHORIZED) {
-                    throw new NotAuthorizedException("Cloud admin user authorization Failed.");
+            if (user != null) {
+                if (defaultUserService.isMigratedUser(user)) {
+                    User updateUser = new User();
+                    updateUser.setId(user.getUsername());
+                    updateUser.setEnabled(false);
+                    httpHeaders.getRequestHeaders().add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML);
+                    String body = marshallObjectToString(objFactory.createUser(updateUser));
+                    ResponseBuilder response = cloudClient.put(getCloudAuthV11Url().concat(USERS + userId).concat("/enabled"), httpHeaders, body);
+                    if (response.build().getStatus() == 200) {
+                        return defaultCloud11Service.deleteUser(request, userId, httpHeaders);
+                    } else {
+                        throw new BadRequestException("Cloud not delete user");
+                    }
                 }
+            }else{
+                return cloudClient.delete(getCloudAuthV11Url().concat(USERS + userId), httpHeaders);
             }
         }
         return defaultCloud11Service.deleteUser(request, userId, httpHeaders);

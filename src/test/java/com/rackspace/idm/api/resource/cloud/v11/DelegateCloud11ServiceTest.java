@@ -6,6 +6,7 @@ import com.rackspace.idm.domain.dao.impl.LdapUserRepository;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.impl.DefaultUserService;
+import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotAuthorizedException;
 import com.rackspacecloud.docs.auth.api.v1.*;
 import com.rackspacecloud.docs.auth.api.v1.AuthData;
@@ -13,6 +14,7 @@ import com.rackspacecloud.docs.auth.api.v1.Credentials;
 import com.rackspacecloud.docs.auth.api.v1.User;
 import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
 import org.apache.commons.configuration.Configuration;
+import org.apache.http.protocol.HTTP;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Matchers;
@@ -23,6 +25,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
@@ -117,6 +120,7 @@ public class DelegateCloud11ServiceTest {
 
         okResponse = Response.ok();
         notFoundResponse = Response.status(404);
+
     }
 
     @Test
@@ -608,14 +612,18 @@ public class DelegateCloud11ServiceTest {
 
     @Test
     public void deleteUser_routingTrue_userExistsTrue_callsDefaultService() throws Exception {
+        MultivaluedMap httpHeader = mock(MultivaluedMap.class);
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         com.rackspace.idm.domain.entity.User user = new com.rackspace.idm.domain.entity.User();
         user.setId(userId);
+        user.setUsername("userId");
         when(defaultUserService.getUser(userId)).thenReturn(user);
         when(defaultUserService.isMigratedUser(Matchers.<com.rackspace.idm.domain.entity.User>any())).thenReturn(true);
-        when(cloudClient.delete(url + "users/userId", null)).thenReturn(okResponse);
-        delegateCloud11Service.deleteUser(null, userId, null);
-        verify(defaultCloud11Service).deleteUser(null, userId, null);
+        when(httpHeaders.getRequestHeaders()).thenReturn(httpHeader);
+        when(OBJ_FACTORY.createUser(Matchers.<User>any())).thenReturn(new JAXBElement<User>(new QName("http://docs.rackspacecloud.com/auth/api/v1.1", "user"), User.class, null,new User()));
+        when(cloudClient.put(anyString(), Matchers.<HttpHeaders>any(),anyString())).thenReturn(okResponse);
+        delegateCloud11Service.deleteUser(null, userId, httpHeaders);
+        verify(defaultCloud11Service).deleteUser(null, userId, httpHeaders);
     }
 
     @Test
@@ -628,14 +636,19 @@ public class DelegateCloud11ServiceTest {
         verify(defaultCloud11Service).deleteUser(null, "userId", httpHeaders);
     }
 
-    @Test (expected = NotAuthorizedException.class)
+    @Test (expected = BadRequestException.class)
     public void deleteUser_cloudResponseUnauthorized_throwsNotAuthorizedException() throws Exception {
+        MultivaluedMap httpHeader = mock(MultivaluedMap.class);
         com.rackspace.idm.domain.entity.User user = new com.rackspace.idm.domain.entity.User();
+        user.setId(userId);
+        user.setUsername("userId");
+        when(httpHeaders.getRequestHeaders()).thenReturn(httpHeader);
         when(config.getBoolean(DelegateCloud11Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(defaultUserService.getUser("userId")).thenReturn(user);
         when(defaultUserService.isMigratedUser(user)).thenReturn(true);
-        when(cloudClient.delete(anyString(), any(HttpHeaders.class))).thenReturn(Response.status(401));
-        delegateCloud11Service.deleteUser(null, "userId", null);
+        when(OBJ_FACTORY.createUser(Matchers.<User>any())).thenReturn(new JAXBElement<User>(new QName("http://docs.rackspacecloud.com/auth/api/v1.1", "user"), User.class, null,new User()));
+        when(cloudClient.put(anyString(), Matchers.<HttpHeaders>any(),anyString())).thenReturn(Response.status(400));
+        delegateCloud11Service.deleteUser(null, userId, httpHeaders);
     }
 
     @Test

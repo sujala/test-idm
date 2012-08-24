@@ -181,7 +181,7 @@ public class Cloud11VersionResource {
     public Response deleteUser(@Context HttpServletRequest request,
                                @PathParam("userId") String userId,
                                @Context HttpHeaders httpHeaders
-    ) throws IOException {
+    ) throws IOException, JAXBException {
         return getCloud11Service().deleteUser(request, Encoder.encode(userId), httpHeaders).build();
     }
 
