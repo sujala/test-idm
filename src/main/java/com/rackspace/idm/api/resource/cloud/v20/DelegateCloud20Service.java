@@ -1311,7 +1311,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         headers.put(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML);
         Response userResponse = cloudClient.get(getCloudAuthV20Url() + USERS + "?name=" + userName, headers).build();
         if (userResponse.getStatus() != HttpServletResponse.SC_OK && userResponse.getStatus() != HttpServletResponse.SC_NON_AUTHORITATIVE_INFORMATION) {
-            throw new ApiException(userResponse.getStatus(), "", "");
+            throw new NotFoundException("User cannot be impersonated; User is not found.");
         }
         return (User) unmarshallResponse(userResponse.getEntity().toString(), User.class);
     }

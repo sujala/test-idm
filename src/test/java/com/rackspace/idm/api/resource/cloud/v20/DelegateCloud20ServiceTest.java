@@ -2875,7 +2875,7 @@ public class DelegateCloud20ServiceTest {
         assertThat("response", spy.getUserApiCredentials(null, null), equalTo(apiKeyCredentials));
     }
 
-    @Test (expected = ApiException.class)
+    @Test (expected = NotFoundException.class)
     public void getCloudUserByName_ResponseNot200AndNot203_throwsAPIException() throws Exception {
         when(cloudClient.get(anyString(),any(HashMap.class))).thenReturn(Response.status(123));
         delegateCloud20Service.getCloudUserByName(null,null);
