@@ -269,6 +269,11 @@
         "last_deployed": 20120614
     },
     "related_apis": {
+        "ruok": {
+           "Production":  {
+               "US": "http://dashboard.rax.io:8000/firstgen_prod.json"
+           }
+        }
     },
     "dependent_services": [
     ]
