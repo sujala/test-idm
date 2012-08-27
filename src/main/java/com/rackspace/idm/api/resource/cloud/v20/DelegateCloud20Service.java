@@ -775,7 +775,7 @@ public class DelegateCloud20Service implements Cloud20Service {
                     if (response.build().getStatus() == 200) {
                         return defaultCloud20Service.deleteUser(httpHeaders, authToken, userId);
                     } else {
-                        throw new BadRequestException("Cloud not delete user");
+                        throw new BadRequestException("Could not delete user");
                     }
                 }
             }else{

@@ -285,7 +285,7 @@ public class DelegateCloud11Service implements Cloud11Service {
                     if (response.build().getStatus() == 200) {
                         return defaultCloud11Service.deleteUser(request, userId, httpHeaders);
                     } else {
-                        throw new BadRequestException("Cloud not delete user");
+                        throw new BadRequestException("Could not delete user");
                     }
                 }
             }else{
