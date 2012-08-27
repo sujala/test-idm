@@ -133,6 +133,9 @@ public class CloudBaseUrl implements Auditable {
     }
 
     public Boolean getGlobal() {
+    	if (global == null) {
+    		return false;
+    	}
         return global;
     }
 

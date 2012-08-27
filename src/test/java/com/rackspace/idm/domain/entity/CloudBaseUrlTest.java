@@ -546,5 +546,12 @@ public class CloudBaseUrlTest {
         assertThat("equals", cloudBaseUrl.isV1Default(),equalTo(true));
     }
 
+    @Test
+    public void cloudBaseUrl_withNullGlobal_returnsFalse() {
+        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
+        cloudBaseUrl.setGlobal(null);
+        assertThat("equals", cloudBaseUrl.getGlobal(), equalTo(false));
+    }
+
 }
 
