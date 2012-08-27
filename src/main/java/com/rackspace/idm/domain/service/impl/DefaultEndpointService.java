@@ -149,8 +149,10 @@ public class DefaultEndpointService implements EndpointService {
             return filteredBaseUrls;
         }
         for (CloudBaseUrl baseUrl : allBaseUrls) {
-            if (baseUrl.getBaseUrlType().equals(baseUrlType)) {
-                filteredBaseUrls.add(baseUrl);
+            if (baseUrl.getBaseUrlType() != null) {
+                if (baseUrl.getBaseUrlType().equals(baseUrlType)) {
+                    filteredBaseUrls.add(baseUrl);
+                }
             }
         }
         logger.debug("Got {} baseurls", filteredBaseUrls.size());
