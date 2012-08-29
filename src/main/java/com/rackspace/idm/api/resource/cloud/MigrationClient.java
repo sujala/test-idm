@@ -223,13 +223,18 @@ public class MigrationClient {
     }
 
     public com.rackspacecloud.docs.auth.api.v1.User getUserTenantsBaseUrls(String username, String password, String userId) throws URISyntaxException, HttpException, IOException, JAXBException {
-
-        String response = client.url(cloud11Host + USERS + userId + ".xml")
+        String response;
+        try {
+            response = client.url(cloud11Host + USERS + userId + ".xml")
             .header(HttpHeaders.AUTHORIZATION, getBasicAuth(username, password))
             .get();
 
-        ObjectMarshaller<com.rackspacecloud.docs.auth.api.v1.User> unmarshaller = new ObjectMarshaller<com.rackspacecloud.docs.auth.api.v1.User>();
-        return unmarshaller.unmarshal(response, com.rackspacecloud.docs.auth.api.v1.User.class);
+            ObjectMarshaller<com.rackspacecloud.docs.auth.api.v1.User> unmarshaller = new ObjectMarshaller<com.rackspacecloud.docs.auth.api.v1.User>();
+            return unmarshaller.unmarshal(response, com.rackspacecloud.docs.auth.api.v1.User.class);
+        } catch (Exception e) {
+            logger.info("get User Base Urls call to cloud failed: {}", e.getMessage());
+            throw new IdmException(FAILED_TO_CALL_CLOUD, e);
+        }
     }
 
     public BaseURLList getBaseUrls(String username, String password) throws URISyntaxException, HttpException, IOException, JAXBException {
