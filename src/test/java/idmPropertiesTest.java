@@ -64,7 +64,7 @@ public class idmPropertiesTest {
     }
 
     private void setIdmPropertyLocations(File idmPropertyLocation) throws IOException{
-        if (idmPropertyLocation.isDirectory() && !idmPropertyLocation.getName().contains("LOCAL-DEV")) {
+        if (idmPropertyLocation.isDirectory() && !idmPropertyLocation.getName().contains("LOCAL-DEV") && !idmPropertyLocation.getName().contains("JENKINS")) {
             for (File file : idmPropertyLocation.listFiles()) {
                 setIdmPropertyLocations(file);
             }

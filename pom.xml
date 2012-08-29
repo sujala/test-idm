@@ -19,7 +19,7 @@
         <environment.url.prefix>http://idm.rackspace.com</environment.url.prefix>
 
         <!-- Default location for project properties file -->
-        <idm.properties.location>${basedir}/target/config/DEV</idm.properties.location>
+        <idm.properties.location>${basedir}/target/config/LOCAL-DEV</idm.properties.location>
 
         <!--PowerMockito Properties-->
         <powermock.version>1.4.11</powermock.version>
