@@ -625,8 +625,9 @@ public class DefaultUserServiceTest {
     public void softDeleteUser_callsScopeAccessService_expireAllTokensForUser() throws Exception {
         User user = new User();
         user.setUsername("username");
+        user.setId("1");
         defaultUserService.softDeleteUser(user);
-        verify(scopeAccessService).expireAllTokensForUser("username");
+        verify(scopeAccessService).expireAllTokensForUserById("1");
     }
 
     @Test

@@ -618,7 +618,7 @@ public class DefaultUserService implements UserService {
     @Override
     public void softDeleteUser(User user) {
         logger.debug("SoftDeleting User: {}", user);
-        scopeAccessService.expireAllTokensForUser(user.getUsername());
+        scopeAccessService.expireAllTokensForUserById(user.getId());
         userDao.softDeleteUser(user);
         logger.debug("SoftDeleted User: {}", user);
     }

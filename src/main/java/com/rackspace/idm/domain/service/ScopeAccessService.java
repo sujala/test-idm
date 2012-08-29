@@ -40,6 +40,8 @@ public interface ScopeAccessService {
     void expireAllTokensForCustomer(String customerId);
 
     void expireAllTokensForUser(String username);
+    
+    void expireAllTokensForUserById(String userId);
 
     ScopeAccess getAccessTokenByAuthHeader(String authHeader);
 

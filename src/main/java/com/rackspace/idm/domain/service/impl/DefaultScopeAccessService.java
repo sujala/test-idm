@@ -453,6 +453,26 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         }
         logger.debug("Done expiring all tokens for user {}", username);
     }
+    
+    @Override
+    public void expireAllTokensForUserById(String userId) {
+        logger.debug("Expiring all tokens for user {}", userId);
+        final User user = this.userDao.getUserById(userId);
+        if (user == null) {
+            return;
+        }
+
+        final List<ScopeAccess> saList = this.scopeAccessDao
+                .getScopeAccessesByParent(user.getUniqueId());
+
+        for (final ScopeAccess sa : saList) {
+            if (sa instanceof HasAccessToken) {
+                ((HasAccessToken) sa).setAccessTokenExpired();
+                this.scopeAccessDao.updateScopeAccess(sa);
+            }
+        }
+        logger.debug("Done expiring all tokens for user {}", userId);
+    }
 
     @Override
     public ScopeAccess getAccessTokenByAuthHeader(String authHeader) {
