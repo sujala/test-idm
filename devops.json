@@ -274,6 +274,21 @@
            "Production":  {
                "US": "http://dashboard.rax.io:8000/firstgen_prod.json"
            }
+        },
+        "version_one": {
+          "host": "www15.v1host.com",
+          "port": 443,
+          "name": "RACKSPCE",
+          "project": [1046, 15561],
+          "auth": "Reach:{5A7}+WjdC)u(ZN~yms&"
+        },
+        "github": {
+           "url": "https://github.rackspace.com",
+           "org": "GlobalServices",
+           "repo": "GlobalAuth"
+        },
+        "highscores": {
+          "repo": "GlobalAuth"
         }
     },
     "dependent_services": [
