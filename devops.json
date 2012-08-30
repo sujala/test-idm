@@ -285,7 +285,9 @@
         "github": {
            "url": "https://github.rackspace.com",
            "org": "GlobalServices",
-           "repo": "GlobalAuth"
+           "repo": "GlobalAuth",
+           "username": "lucy.mendel",
+           "apikey": "__external__"
         },
         "highscores": {
           "repo": "GlobalAuth"
