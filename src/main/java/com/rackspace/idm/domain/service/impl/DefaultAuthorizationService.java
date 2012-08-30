@@ -485,8 +485,10 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     @Override
     public void verifyDomain(User caller, User retrievedUser) {
-        if (caller.getDomainId() == null || !caller.getDomainId().equals(retrievedUser.getDomainId())) {
-            throw new ForbiddenException(NOT_AUTHORIZED_MSG);
+        if (!caller.getId().equals(retrievedUser.getId())) {
+            if (caller.getDomainId() == null || !caller.getDomainId().equals(retrievedUser.getDomainId())) {
+                throw new ForbiddenException(NOT_AUTHORIZED_MSG);
+            }
         }
     }
 

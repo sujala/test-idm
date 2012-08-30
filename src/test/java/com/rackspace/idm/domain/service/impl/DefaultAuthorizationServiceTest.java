@@ -1307,7 +1307,9 @@ public class DefaultAuthorizationServiceTest {
     public void verifyDomain_domainIdIsNull_throwsForbiddenException() throws Exception {
         try{
             User caller = new User();
+            caller.setId("1");
             User retrievedUser = new User();
+            retrievedUser.setId("2");
             retrievedUser.setDomainId("domainId");
             defaultAuthorizationService.verifyDomain(retrievedUser, caller);
             assertTrue("should throw exception", false);
@@ -1321,10 +1323,25 @@ public class DefaultAuthorizationServiceTest {
         try{
             User caller = new User();
             User retrievedUser = new User();
+            caller.setId("1");
+            retrievedUser.setId("2");
             defaultAuthorizationService.verifyDomain(retrievedUser, caller);
             assertTrue("should throw exception", false);
         } catch (ForbiddenException ex){
             assertThat("exception message", ex.getMessage(),equalTo("Not authorized."));
+        }
+    }
+
+    @Test
+    public void verifyDomain_callerEqualsRetrievedUser_doNothing() throws Exception {
+        try{
+            User caller = new User();
+            User retrievedUser = new User();
+            caller.setId("1");
+            retrievedUser.setId("1");
+            defaultAuthorizationService.verifyDomain(retrievedUser, caller);
+        } catch (ForbiddenException ex){
+            assertTrue("should not throw exception", false);
         }
     }
 
@@ -1335,6 +1352,8 @@ public class DefaultAuthorizationServiceTest {
             caller.setDomainId("notSame");
             User retrievedUser = new User();
             retrievedUser.setDomainId("domainId");
+            caller.setId("1");
+            retrievedUser.setId("2");
             defaultAuthorizationService.verifyDomain(retrievedUser, caller);
             assertTrue("should throw exception",false);
         }catch (ForbiddenException ex){
@@ -1348,6 +1367,8 @@ public class DefaultAuthorizationServiceTest {
         caller.setDomainId("domainId");
         User retrievedUser = new User();
         retrievedUser.setDomainId("domainId");
+        caller.setId("1");
+        retrievedUser.setId("2");
         spy.verifyDomain(retrievedUser, caller);
     }
 
