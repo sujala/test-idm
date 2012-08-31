@@ -1,24 +1,37 @@
 package com.rackspace.idm.api.resource.cloud;
 
-import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups;
-import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
-import com.rackspace.idm.exception.IdmException;
-import com.rackspacecloud.docs.auth.api.v1.*;
-import org.apache.http.HttpHeaders;
-import org.junit.Before;
-import org.junit.Test;
-import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplateList;
-import org.openstack.docs.identity.api.v2.*;
-import org.openstack.docs.identity.api.v2.User;
+import static org.hamcrest.Matchers.equalTo;
+import static org.junit.Assert.assertThat;
+import org.junit.Ignore;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 import javax.ws.rs.core.MediaType;
 
-import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplateList;
+import org.openstack.docs.identity.api.v2.AuthenticateResponse;
+import org.openstack.docs.identity.api.v2.CredentialListType;
+import org.openstack.docs.identity.api.v2.EndpointList;
+import org.openstack.docs.identity.api.v2.RoleList;
+import org.openstack.docs.identity.api.v2.Tenants;
+import org.openstack.docs.identity.api.v2.User;
+import org.openstack.docs.identity.api.v2.UserList;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
+
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups;
+import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
+import com.rackspace.idm.exception.IdmException;
+import com.rackspacecloud.docs.auth.api.v1.BaseURLList;
+import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.WebResource;
 
 /**
  * Created with IntelliJ IDEA.
@@ -27,23 +40,46 @@ import static org.mockito.Mockito.when;
  * Time: 12:08 PM
  * To change this template use File | Settings | File Templates.
  */
+
+@Ignore
+@RunWith(PowerMockRunner.class)
+@PrepareForTest(WebResource.Builder.class)
 public class MigrationClientTest {
+    WebResource webResource;
+    WebResource.Builder builder;
     MigrationClient migrationClient;
-    HttpClientWrapper httpClientWrapper;
+    Client client;
     String cloud20Host;
     String cloud11Host;
 
     @Before
     public void setUp() throws Exception {
+        Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
         migrationClient = new MigrationClient();
 
-        // Mocks
-        httpClientWrapper = mock(HttpClientWrapper.class);
+        client = new Client();
+        client = spy(client);
+
+        webResource = client.resource("http://localhost");
+        webResource = spy(webResource);
+
+        builder = webResource.type(MediaType.APPLICATION_XML);
+        builder = PowerMockito.spy(builder);
+
+        //return webResource
+        doReturn(webResource).when(client).resource(anyString());
+        doReturn(builder).when(webResource).accept(anyString());
+        doReturn(builder).when(webResource).type(anyString());
+        doReturn(builder).when(webResource).header(anyString(), anyString());
+        
+        doReturn(builder).when(builder).accept(anyString());
+        doReturn(builder).when(builder).type(anyString());
+        doReturn(builder).when(builder).header(anyString(), anyString());
 
         // setting up fields
         cloud11Host = "cloud11host/";
         cloud20Host = "cloud20host/";
-        migrationClient.setClient(httpClientWrapper);
+        migrationClient.setClient(client);
         migrationClient.setCloud11Host(cloud11Host);
         migrationClient.setCloud20Host(cloud20Host);
     }
@@ -62,10 +98,8 @@ public class MigrationClientTest {
                 "        </roles>\n" +
                 "    </user>\n" +
                 "</access>";
-        when(httpClientWrapper.url(cloud20Host + "tokens")).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML)).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML)).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.post(anyString())).thenReturn(body);
+
+        doReturn(body).when(builder).post(eq(String.class), anyString());
         AuthenticateResponse result = migrationClient.authenticateWithPassword("username", "password");
         assertThat("user id", result.getUser().getId(), equalTo("123"));
         assertThat("user id", result.getToken().getId(), equalTo("ab48a9efdfedb23ty3494"));
@@ -85,10 +119,7 @@ public class MigrationClientTest {
                 "        </roles>\n" +
                 "    </user>\n" +
                 "</access>";
-        when(httpClientWrapper.url(cloud20Host + "tokens")).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML)).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML)).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.post(anyString())).thenReturn(body);
+        doReturn(body).when(builder).post(eq(String.class), anyString());
         AuthenticateResponse result = migrationClient.authenticateWithApiKey("username", "apikey");
         assertThat("user id", result.getUser().getId(), equalTo("123"));
         assertThat("user id", result.getToken().getId(), equalTo("ab48a9efdfedb23ty3494"));
@@ -105,11 +136,7 @@ public class MigrationClientTest {
                 "        <description>A description...</description>\n" +
                 "    </tenant>\n" +
                 "</tenants>";
-        when(httpClientWrapper.url(cloud20Host + "tenants")).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML)).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML)).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header("X-AUTH-TOKEN", "token")).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.get()).thenReturn(body);
+        doReturn(body).when(builder).get(eq(String.class));
         Tenants result = migrationClient.getTenants("token");
         assertThat("tenant id", result.getTenant().get(0).getId(), equalTo("1234"));
     }
@@ -136,11 +163,7 @@ public class MigrationClientTest {
                 "      />\n" +
                 "  </endpoint>\n" +
                 "</endpoints>";
-        when(httpClientWrapper.url(cloud20Host + "tokens/" + "token" + "/endpoints")).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML)).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML)).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header("X-AUTH-TOKEN", "adminToken")).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.get()).thenReturn(body);
+        doReturn(body).when(builder).get(eq(String.class));
         EndpointList result = migrationClient.getEndpointsByToken("adminToken", "token");
         assertThat("public url", result.getEndpoint().get(0).getPublicURL(), equalTo("https://compute.north.public.com/v1"));
     }
@@ -156,11 +179,7 @@ public class MigrationClientTest {
                 "      email=\"john.smith@example.org\"\n" +
                 "      rax-auth:defaultRegion=\"DFW\">\n" +
                 "</user>";
-        when(httpClientWrapper.url(cloud20Host + "users?name=" + "username")).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML)).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML)).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header("X-AUTH-TOKEN", "token")).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.get()).thenReturn(body);
+        doReturn(body).when(builder).get(eq(String.class));
         User result = migrationClient.getUser("token", "username");
         assertThat("user id", result.getId(), equalTo("123456"));
     }
@@ -173,11 +192,7 @@ public class MigrationClientTest {
                 "  <role id=\"123\" name=\"Admin\" description=\"All Access\" />\n" +
                 "  <role id=\"234\" name=\"Guest\" description=\"Guest Access\" />\n" +
                 "</roles>";
-        when(httpClientWrapper.url(cloud20Host + "users/" + "userId" + "/roles")).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML)).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML)).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header("X-AUTH-TOKEN", "token")).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.get()).thenReturn(body);
+        doReturn(body).when(builder).get(eq(String.class));
         RoleList result = migrationClient.getRolesForUser("token", "userId");
         assertThat("role id", result.getRole().get(0).getId(), equalTo("123"));
         assertThat("role id", result.getRole().get(1).getId(), equalTo("234"));
@@ -186,11 +201,7 @@ public class MigrationClientTest {
     @Test (expected = IdmException.class)
     public void getRolesForUser_badData_throwsIdmExpcetion() throws Exception {
         String body = "bad data";
-        when(httpClientWrapper.url(cloud20Host + "users/" + "userId" + "/roles")).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML)).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML)).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header("X-AUTH-TOKEN", "token")).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.get()).thenReturn(body);
+        doReturn(body).when(builder).get(eq(String.class));
         migrationClient.getRolesForUser("token", "userId");
     }
 
@@ -202,11 +213,7 @@ public class MigrationClientTest {
                 "          enabled=\"true\" email=\"john.smith@example.org\"\n" +
                 "          username=\"jqsmith\" id=\"123456\"/>\n" +
                 "</users>";
-        when(httpClientWrapper.url(cloud20Host + "users")).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML)).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML)).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header("X-AUTH-TOKEN", "token")).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.get()).thenReturn(body);
+        doReturn(body).when(builder).get(eq(String.class));
         UserList result = migrationClient.getUsers("token");
         assertThat("", result.getUser().get(0).getId(), equalTo("123456"));
     }
@@ -222,11 +229,7 @@ public class MigrationClientTest {
                 "      email=\"john.smith@example.org\"\n" +
                 "      rax-auth:defaultRegion=\"DFW\">\n" +
                 "</user>";
-        when(httpClientWrapper.url(cloud20Host + "users")).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML)).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML)).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header("X-AUTH-TOKEN", "token")).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.get()).thenReturn(body);
+        doReturn(body).when(builder).get(eq(String.class));
         UserList result = migrationClient.getUsers("token");
         assertThat("", result.getUser().get(0).getId(), equalTo("123456"));
     }
@@ -234,11 +237,7 @@ public class MigrationClientTest {
     @Test (expected = IdmException.class)
     public void getUsers_badData_throwsIdmException() throws Exception {
         String body = "bad data";
-        when(httpClientWrapper.url(cloud20Host + "users")).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML)).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML)).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header("X-AUTH-TOKEN", "token")).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.get()).thenReturn(body);
+        doReturn(body).when(builder).get(eq(String.class));
         migrationClient.getUsers("token");
     }
 
@@ -248,11 +247,7 @@ public class MigrationClientTest {
                 "<secretQA xmlns=\"http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0\"\n" +
                 "          question=\"What is the color of my eyes?\"\n" +
                 "          answer=\"Leonardo Da Vinci\" />";
-        when(httpClientWrapper.url(cloud20Host + "users/" + "userId" +"/RAX-KSQA/secretqa")).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML)).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML)).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header("X-AUTH-TOKEN", "token")).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.get()).thenReturn(body);
+        doReturn(body).when(builder).get(eq(String.class));
         SecretQA result = migrationClient.getSecretQA("token", "userId");
         assertThat("question", result.getQuestion(), equalTo("What is the color of my eyes?"));
         assertThat("answer", result.getAnswer(), equalTo("Leonardo Da Vinci"));
@@ -266,11 +261,7 @@ public class MigrationClientTest {
                 "        <description>A Description of the group</description>\n" +
                 "    </group>\n" +
                 "</groups>";
-        when(httpClientWrapper.url(cloud20Host + "RAX-GRPADM/groups")).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML)).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML)).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header("X-AUTH-TOKEN", "token")).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.get()).thenReturn(body);
+        doReturn(body).when(builder).get(eq(String.class));
         Groups result = migrationClient.getGroups("token");
         assertThat("group id", result.getGroup().get(0).getId(), equalTo("1234"));
     }
@@ -278,11 +269,7 @@ public class MigrationClientTest {
     @Test (expected = IdmException.class)
     public void getGroups_badData_throwsIdmException() throws Exception {
         String body = "bad data";
-        when(httpClientWrapper.url(cloud20Host + "RAX-GRPADM/groups")).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML)).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML)).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header("X-AUTH-TOKEN", "token")).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.get()).thenReturn(body);
+        doReturn(body).when(builder).get(eq(String.class));
         migrationClient.getGroups("token");
     }
 
@@ -293,11 +280,7 @@ public class MigrationClientTest {
                 "        <description>A Description of the group</description>\n" +
                 "    </group>\n" +
                 "</groups>";
-        when(httpClientWrapper.url(cloud20Host + "users/" + "userId" + "/RAX-KSGRP")).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML)).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML)).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header("X-AUTH-TOKEN", "token")).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.get()).thenReturn(body);
+        doReturn(body).when(builder).get(eq(String.class));
         Groups result = migrationClient.getGroupsForUser("token", "userId");
         assertThat("group id", result.getGroup().get(0).getId(), equalTo("test_global_group_add"));
     }
@@ -305,11 +288,7 @@ public class MigrationClientTest {
     @Test (expected = IdmException.class)
     public void getGroupsForUser_badData_throwsIdmException() throws Exception {
         String body = "bad data";
-        when(httpClientWrapper.url(cloud20Host + "users/" + "userId" + "/RAX-KSGRP")).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML)).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML)).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header("X-AUTH-TOKEN", "token")).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.get()).thenReturn(body);
+        doReturn(body).when(builder).get(eq(String.class));
         migrationClient.getGroupsForUser("token", "userId");
     }
 
@@ -324,11 +303,7 @@ public class MigrationClientTest {
                 "        username=\"bobbuilder\"\n" +
                 "        apiKey=\"0f97f489c848438090250d50c7e1eaXZ\"/>\n" +
                 "</ns2:credentials>";
-        when(httpClientWrapper.url(cloud20Host + "users/" + "userId" + "/OS-KSADM/credentials")).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML)).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML)).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header("X-AUTH-TOKEN", "token")).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.get()).thenReturn(body);
+        doReturn(body).when(builder).get(eq(String.class));
         CredentialListType result = migrationClient.getUserCredentials("token", "userId");
         assertThat("", result.getCredential().get(0).getName().toString().contains("apiKeyCredentials"), equalTo(true));
     }
@@ -351,9 +326,7 @@ public class MigrationClientTest {
                 "                id=\"1\" v1Default=\"true\"/>\n" +
                 "    </baseURLRefs>\n" +
                 "</user>";
-        when(httpClientWrapper.url(cloud11Host + "users/" + "userId" + ".xml")).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header(eq(HttpHeaders.AUTHORIZATION), anyString())).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.get()).thenReturn(body);
+        doReturn(body).when(builder).get(eq(String.class));
         com.rackspacecloud.docs.auth.api.v1.User result = migrationClient.getUserTenantsBaseUrls("username", "password", "userId");
         assertThat("base url ref href", result.getBaseURLRefs().getBaseURLRef().get(0).getHref(), equalTo("https://auth.api.rackspacecloud.com/v1.1/baseURLs/1"));
     }
@@ -373,9 +346,7 @@ public class MigrationClientTest {
                 "   internalURL=\"https://storage-snet.clouddrive.com/v1\"\n" +
                 "   enabled=\"true\"\n/>\n" +
                 "</baseURLs>";
-        when(httpClientWrapper.url(cloud11Host + "baseURLs.xml")).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header(eq(HttpHeaders.AUTHORIZATION), anyString())).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.get()).thenReturn(body);
+        doReturn(body).when(builder).get(eq(String.class));
         BaseURLList result = migrationClient.getBaseUrls("username", "password");
         assertThat("public url", result.getBaseURL().get(0).getPublicURL(), equalTo("https://storage.clouddrive.com/v1"));
         assertThat("userType", result.getBaseURL().get(0).getUserType().value(), equalTo("NAST"));
@@ -388,10 +359,7 @@ public class MigrationClientTest {
                 "  <role id=\"123\" name=\"Admin\" description=\"All Access\" />\n" +
                 "  <role id=\"234\" name=\"Guest\" description=\"Guest Access\" />\n" +
                 "</roles>";
-        when(httpClientWrapper.url(cloud20Host + "OS-KSADM/roles")).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML)).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header("X-AUTH-TOKEN", "token")).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.get()).thenReturn(body);
+        doReturn(body).when(builder).get(eq(String.class));
         RoleList result = migrationClient.getRoles("token");
         assertThat("role id 1", result.getRole().get(0).getId(), equalTo("123"));
         assertThat("role id 2", result.getRole().get(1).getId(), equalTo("234"));
@@ -418,11 +386,7 @@ public class MigrationClientTest {
                 "      />\n" +
                 "  </endpointTemplate>\n" +
                 "</endpointTemplates>";
-        when(httpClientWrapper.url(cloud20Host + "OS-KSCATALOG/endpointTemplates")).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML)).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML)).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header("X-AUTH-TOKEN", "token")).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.get()).thenReturn(body);
+        doReturn(body).when(builder).get(eq(String.class));
         EndpointTemplateList result = migrationClient.getEndpointTemplates("token");
         assertThat("endpoint id", result.getEndpointTemplate().get(0).getId(), equalTo(1));
         assertThat("public url", result.getEndpointTemplate().get(0).getPublicURL(), equalTo("https://compute.north.public.com/v1"));
@@ -431,11 +395,7 @@ public class MigrationClientTest {
     @Test (expected = IdmException.class)
     public void getEndpointTemplates_badData_throwsIdmException() throws Exception {
         String body = "bad data";
-        when(httpClientWrapper.url(cloud20Host + "OS-KSCATALOG/endpointTemplates")).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML)).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header(HttpHeaders.ACCEPT, MediaType.APPLICATION_XML)).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.header("X-AUTH-TOKEN", "token")).thenReturn(httpClientWrapper);
-        when(httpClientWrapper.get()).thenReturn(body);
+        doReturn(body).when(builder).get(eq(String.class));
         migrationClient.getEndpointTemplates("token");
     }
 }
