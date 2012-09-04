@@ -1746,9 +1746,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder updateDomain(String authToken, String domainId, com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain) {
         authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+        Domain domainDO = domainService.checkAndGetDomain(domainId);
         setDomainEmptyValues(domain, domainId);
         validateDomain(domain, domainId);
-        Domain domainDO = domainService.checkAndGetDomain(domainId);
 
         domainDO.setDescription(domain.getDescription());
         domainDO.setName(domain.getName());
