@@ -193,4 +193,12 @@ public interface Cloud20Service {
     ResponseBuilder addTenantToDomain(String authToken, String domainId, String tenantId);
 
     ResponseBuilder removeTenantFromDomain(String authToken, String domainId, String tenantId);
+
+    ResponseBuilder getPoliciesForEndpointTemplate(HttpHeaders httpHeaders, String authToken, String endpointTemplateId);
+
+    ResponseBuilder updatePoliciesForEndpointTemplate(HttpHeaders httpHeaders, String authToken, String endpointTemplateId);
+
+    ResponseBuilder addPolicyToEndpointTemplate(HttpHeaders httpHeaders, String authToken, String endpointTemplateId, String policyId);
+
+    ResponseBuilder deletePolicyToEndpointTemplate(HttpHeaders httpHeaders, String authToken, String endpointTemplateId, String policyId);
 }

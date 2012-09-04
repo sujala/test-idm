@@ -1817,6 +1817,26 @@ public class DefaultCloud20Service implements Cloud20Service {
         return Response.noContent();
     }
 
+    @Override
+    public ResponseBuilder getPoliciesForEndpointTemplate(HttpHeaders httpHeaders, String authToken, String endpointTemplateId) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public ResponseBuilder updatePoliciesForEndpointTemplate(HttpHeaders httpHeaders, String authToken, String endpointTemplateId) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public ResponseBuilder addPolicyToEndpointTemplate(HttpHeaders httpHeaders, String authToken, String endpointTemplateId, String policyId) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public ResponseBuilder deletePolicyToEndpointTemplate(HttpHeaders httpHeaders, String authToken, String endpointTemplateId, String policyId) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
     public boolean isValidImpersonatee(User user) {
         List<TenantRole> tenantRolesForUser = tenantService.getGlobalRolesForUser(user, null);
         for (TenantRole role : tenantRolesForUser) {
