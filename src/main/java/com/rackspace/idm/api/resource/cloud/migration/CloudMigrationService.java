@@ -845,24 +845,25 @@ public class CloudMigrationService {
 
     void addTenantRole(com.rackspace.idm.domain.entity.User user, String tenantId, int endpointId) {
         CloudBaseUrl cloudBaseUrl = endpointService.getBaseUrlById(endpointId);
-        Application application = applicationService.getByName(cloudBaseUrl.getServiceName());
-        if (application == null) {
-            logger.debug("Unknown application detected");
-            // ToDo: Should we throw an error and roll everything back?
-        } else {
-            List<ClientRole> clientRoles = applicationService.getClientRolesByClientId(application.getClientId());
-
-            for (ClientRole role : clientRoles) {
-                try{
-                    TenantRole tenantRole = new TenantRole();
-                    tenantRole.setClientId(application.getClientId());
-                    tenantRole.setUserId(user.getId());
-                    tenantRole.setTenantIds(new String[]{tenantId}); //ToDo: does this overwrite a previous?
-                    tenantRole.setName(role.getName());
-                    tenantRole.setRoleRsId(role.getId());
-                    tenantService.addTenantRoleToUser(user, tenantRole);
-                }catch(Exception ex) {
-                    logger.debug(ex.getMessage());
+        if(cloudBaseUrl != null) {
+            Application application = applicationService.getByName(cloudBaseUrl.getServiceName());
+            if (application == null) {
+                logger.debug("Unknown application detected");
+                // ToDo: Should we throw an error and roll everything back?
+            } else {
+                List<ClientRole> clientRoles = applicationService.getClientRolesByClientId(application.getClientId());
+                for (ClientRole role : clientRoles) {
+                    try{
+                        TenantRole tenantRole = new TenantRole();
+                        tenantRole.setClientId(application.getClientId());
+                        tenantRole.setUserId(user.getId());
+                        tenantRole.setTenantIds(new String[]{tenantId}); //ToDo: does this overwrite a previous?
+                        tenantRole.setName(role.getName());
+                        tenantRole.setRoleRsId(role.getId());
+                        tenantService.addTenantRoleToUser(user, tenantRole);
+                    }catch(Exception ex) {
+                        logger.debug(ex.getMessage());
+                    }
                 }
             }
         }
