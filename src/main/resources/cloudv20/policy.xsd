@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../xslt/schema.xslt"?>
+
+<schema
+        elementFormDefault="qualified"
+        attributeFormDefault="unqualified"
+        xmlns="http://www.w3.org/2001/XMLSchema"
+        xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+        xmlns:policy="http://docs.rackspace.com/identity/policy/v1.0"
+        targetNamespace="http://docs.rackspace.com/identity/policy/v1.0">
+    
+    <element name="policy" type="policy:Policy" />
+    
+    <complexType name="Policy">
+        <sequence>
+            <element name="rule" type="policy:Rule" minOccurs="1" maxOccurs="unbounded"/>
+        </sequence>
+    </complexType>
+
+    <complexType name="Rule">
+        <sequence>
+            <element name="subject" type="policy:Subject" minOccurs="1" maxOccurs="1" />
+            <element name="capabilities" type="policy:Capabilities" minOccurs="1" maxOccurs="1" />
+        </sequence>
+    </complexType>
+    
+    <complexType name="Subject">
+        <annotation>
+            <xsd:documentation>
+                <p>A subject is the entity that requires access.</p>
+            </xsd:documentation>
+        </annotation>
+        <sequence />
+        <attribute name="id" type="xsd:string">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        An ID uniquely identifying the subject. This could be username, userid, ... 
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+        <attribute name="roles" type="policy:StringList">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        Roles that the subject holds.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+        <attribute name="groups" type="policy:StringList">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        Groups that the subject belongs to.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+    </complexType>
+    
+    <complexType name="Capabilities">
+        <sequence>
+            <element name="capability" type="policy:Capability" minOccurs="1" maxOccurs="unbounded" />
+        </sequence>
+    </complexType>
+    
+    <complexType name="Capability">
+        <sequence/>
+        <attribute name="id" type="xsd:string">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        Id of the capability.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+    </complexType>
+       
+    <simpleType name="StringList">
+        <list itemType="xsd:string"/>
+    </simpleType>
+</schema>
