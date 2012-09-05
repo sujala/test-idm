@@ -388,7 +388,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 // If creating sub-user, set DomainId of caller
                 setDomainId(scopeAccessByAccessToken, userDO);
             }
-            
+
             if(userDO.getDomainId() == null && callerIsUserAdmin){
                 throw new BadRequestException("A Domain ID must be specified.");
             }
@@ -1811,10 +1811,26 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder addUserToDomain(String authToken, String domainId, String userId) {
         authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
         User userDO = userService.checkAndGetUserById(userId);
+        if (isAdminOrServiceAdmin(userDO)) {
+            throw new NotAuthorizedException("Cannot add domains to admins or service-admins.");
+        }
         Domain domain = domainService.checkAndGetDomain(domainId);
         userDO.setDomainId(domain.getDomainId());
         this.userService.updateUser(userDO, false);
         return Response.noContent();
+    }
+
+    private boolean isAdminOrServiceAdmin(User userDO) {
+        List<TenantRole> roles = tenantService.getGlobalRolesForUser(userDO);
+        for (TenantRole role : roles) {
+            if (role.getName().contains(config.getString("cloudAuth.adminRole"))) {
+                return true;
+            }
+            if (role.getName().contains(config.getString("cloudAuth.serviceAdminRole"))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
