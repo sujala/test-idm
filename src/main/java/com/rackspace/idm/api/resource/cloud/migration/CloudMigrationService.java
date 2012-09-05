@@ -490,6 +490,10 @@ public class CloudMigrationService {
         for (BaseURLRef baseUrlRef : baseUrlRefs) {
             commentList = new ArrayList<String>();
 
+            if (isUkCloudRegion()) {
+                baseUrlRef.setId(baseUrlRef.getId() + UK_BASEURL_OFFSET);
+            }
+
             String newEndpointId = null;
 
             for (Endpoint newEndpoint : newEndpoints.getEndpoint()) {
