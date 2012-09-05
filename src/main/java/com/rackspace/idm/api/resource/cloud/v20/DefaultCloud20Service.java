@@ -1,8 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.JSONConstants;
@@ -14,6 +12,7 @@ import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
@@ -389,7 +388,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 // If creating sub-user, set DomainId of caller
                 setDomainId(scopeAccessByAccessToken, userDO);
             }
-            
+
             if(userDO.getDomainId() == null && callerIsUserAdmin){
                 throw new BadRequestException("A Domain ID must be specified.");
             }
@@ -1748,12 +1747,37 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder updateDomain(String authToken, String domainId, com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain) {
         authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
         Domain domainDO = domainService.checkAndGetDomain(domainId);
+        setDomainEmptyValues(domain, domainId);
+        validateDomain(domain, domainId);
+
         domainDO.setDescription(domain.getDescription());
         domainDO.setName(domain.getName());
         domainDO.setEnabled(domain.isEnabled());
         domainDO.setName(domain.getName());
         this.domainService.updateDomain(domainDO);
         return Response.ok(objFactories.getRackspaceIdentityExtRaxgaV1Factory().createDomain(domainConverterCloudV20.toDomain(domainDO)).getValue());
+    }
+
+    void validateDomain(com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain, String domainId) {
+        if(!domainId.equalsIgnoreCase(domain.getId())){
+            throw new BadRequestException("Domain Id does not match.");
+        }
+        if(StringUtils.isBlank(domain.getName())){
+            throw new BadRequestException("Domain name cannot be empty.");
+        }
+
+    }
+
+    void setDomainEmptyValues(com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain, String domainId) {
+        if(StringUtils.isBlank(domain.getDescription())){
+            domain.setDescription(null);
+        }
+        if(StringUtils.isBlank(domain.getName())){
+            domain.setName(null);
+        }
+        if(StringUtils.isBlank(domain.getId()) && !StringUtils.isBlank(domainId)){
+            domain.setId(domainId);
+        }
     }
 
     @Override
@@ -1787,10 +1811,26 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder addUserToDomain(String authToken, String domainId, String userId) {
         authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
         User userDO = userService.checkAndGetUserById(userId);
+        if (isAdminOrServiceAdmin(userDO)) {
+            throw new BadRequestException("Cannot add domains to admins or service-admins.");
+        }
         Domain domain = domainService.checkAndGetDomain(domainId);
         userDO.setDomainId(domain.getDomainId());
         this.userService.updateUser(userDO, false);
         return Response.noContent();
+    }
+
+    private boolean isAdminOrServiceAdmin(User userDO) {
+        List<TenantRole> roles = tenantService.getGlobalRolesForUser(userDO);
+        for (TenantRole role : roles) {
+            if (role.getName().contains(config.getString("cloudAuth.adminRole"))) {
+                return true;
+            }
+            if (role.getName().contains(config.getString("cloudAuth.serviceAdminRole"))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
