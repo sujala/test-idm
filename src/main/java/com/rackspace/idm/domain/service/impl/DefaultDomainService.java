@@ -50,7 +50,7 @@ public class DefaultDomainService implements DomainService{
             throw new BadRequestException(DOMAIN_NAME_CANNOT_BE_NULL);
         }
         if(StringUtils.isBlank(domain.getDescription())) {
-            domain.setDescription("");
+            domain.setDescription(null);
         }
         verifyDomain(domain);
         logger.info("Adding Domain: {}", domain);
