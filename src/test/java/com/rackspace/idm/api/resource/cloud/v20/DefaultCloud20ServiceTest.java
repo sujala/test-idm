@@ -5221,7 +5221,7 @@ public class DefaultCloud20ServiceTest {
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
 
         assertThat("returns response builder", spy.impersonate(null, authToken, impersonationRequest), equalTo(responseBuilder));
-        assertThat("exception type", argumentCaptor.getValue(),instanceOf(BadRequestException.class));
+        assertThat("exception type", argumentCaptor.getValue(), instanceOf(BadRequestException.class));
     }
 
     @Test
@@ -5412,7 +5412,7 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void getUserByIdForAuthentication_succeeds_returnsUser() throws Exception {
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
-        assertThat("user",defaultCloud20Service.getUserByIdForAuthentication(userId),equalTo(user));
+        assertThat("user", defaultCloud20Service.getUserByIdForAuthentication(userId), equalTo(user));
     }
 
     @Test (expected = NotAuthenticatedException.class)
@@ -5936,5 +5936,39 @@ public class DefaultCloud20ServiceTest {
     @Test (expected = BadRequestException.class)
     public void getXMLCredentials_callsUnmarshaller_unmarshall_throwsJAXBException() throws Exception {
         spy.getXMLCredentials("body");
+    }
+
+    @Test (expected = BadRequestException.class)
+    public void addUserToDomain_Admin_expectsBadRequest() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        User user = new User();
+        List<TenantRole> roles = new ArrayList<TenantRole>();
+        TenantRole role = new TenantRole();
+        role.setName("identity:user-admin");
+        roles.add(role);
+
+        when(config.getString(anyString())).thenReturn("identity:user-admin");
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doReturn(user).when(userService).checkAndGetUserById(userId);
+        doReturn(roles).when(tenantService).getGlobalRolesForUser(user);
+
+        defaultCloud20Service.addUserToDomain(authToken, null, userId);
+    }
+
+    @Test (expected = BadRequestException.class)
+    public void addUserToDomain_ServiceAdmin_expectsBadRequest() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        User user = new User();
+        List<TenantRole> roles = new ArrayList<TenantRole>();
+        TenantRole role = new TenantRole();
+        role.setName("identity:service-admin");
+        roles.add(role);
+
+        when(config.getString(anyString())).thenReturn("identity:service-admin");
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doReturn(user).when(userService).checkAndGetUserById(userId);
+        doReturn(roles).when(tenantService).getGlobalRolesForUser(user);
+
+        defaultCloud20Service.addUserToDomain(authToken, null, userId);
     }
 }
