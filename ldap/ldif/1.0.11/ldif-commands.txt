@@ -1,0 +1,3 @@
+
+1) Update Schema with RackSchema.dxc
+2) execute policies.ldiff
