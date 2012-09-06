@@ -1784,6 +1784,10 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder deleteDomain(String authToken, String domainId) {
         try {
             authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            Users users = domainService.getUsersByDomainId(domainId);
+            if (!users.getUsers().isEmpty()) {
+                throw new BadRequestException("Cannot delete Domains which contain users");
+            }
             Domain domain = domainService.checkAndGetDomain(domainId);
             domainService.deleteDomain(domain.getDomainId());
             return Response.noContent();
@@ -1802,8 +1806,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder getUsersByDomainId(String authToken, String domainId) {
         authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
-        FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParamName.DOMAIN_ID, domainId)};
-        Users users = userService.getAllUsers(filters);
+        Users users = domainService.getUsersByDomainId(domainId);
         return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUsers(this.userConverterCloudV20.toUserList(users.getUsers())).getValue());
     }
 
@@ -1812,7 +1815,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
         User userDO = userService.checkAndGetUserById(userId);
         if (isAdminOrServiceAdmin(userDO)) {
-            throw new NotAuthorizedException("Cannot add domains to admins or service-admins.");
+            throw new ForbiddenException("Cannot add domains to admins or service-admins.");
         }
         Domain domain = domainService.checkAndGetDomain(domainId);
         userDO.setDomainId(domain.getDomainId());

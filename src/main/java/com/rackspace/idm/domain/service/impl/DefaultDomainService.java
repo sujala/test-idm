@@ -2,7 +2,10 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.domain.dao.DomainDao;
 import com.rackspace.idm.domain.entity.Domain;
+import com.rackspace.idm.domain.entity.FilterParam;
+import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.service.DomainService;
+import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
@@ -27,6 +30,9 @@ public class DefaultDomainService implements DomainService{
 
     @Autowired
     private Configuration config;
+
+    @Autowired
+    private UserService userService;
 
     public static final String DOMAIN_CANNOT_BE_NULL = "Domain cannot be null";
     public static final String DOMAIN_ID_CANNOT_BE_NULL = "Domain ID cannot be null";
@@ -134,6 +140,12 @@ public class DefaultDomainService implements DomainService{
         catch(Exception ex){
             throw new BadRequestException("Domain could not be created.");
         }
+    }
+
+    @Override
+    public Users getUsersByDomainId(String domainId) {
+        FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParam.FilterParamName.DOMAIN_ID, domainId)};
+        return userService.getAllUsers(filters);
     }
 
     private List<String> setTenantIdList(Domain domain, String tenantId) {

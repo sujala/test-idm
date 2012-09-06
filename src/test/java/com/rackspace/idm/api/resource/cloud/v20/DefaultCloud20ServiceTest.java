@@ -5973,8 +5973,8 @@ public class DefaultCloud20ServiceTest {
         assertThat("Description", domain.getId(),equalTo("1"));
     }
     
-    @Test (expected = NotAuthorizedException.class)
-    public void addUserToDomain_Admin_expectsBadRequest() throws Exception {
+    @Test (expected = ForbiddenException.class)
+    public void addUserToDomain_Admin_expectsForbidden() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         User user = new User();
         List<TenantRole> roles = new ArrayList<TenantRole>();
@@ -5990,8 +5990,8 @@ public class DefaultCloud20ServiceTest {
         defaultCloud20Service.addUserToDomain(authToken, null, userId);
     }
 
-    @Test (expected = NotAuthorizedException.class)
-    public void addUserToDomain_ServiceAdmin_expectsBadRequest() throws Exception {
+    @Test (expected = ForbiddenException.class)
+    public void addUserToDomain_ServiceAdmin_expectsForbidden() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         User user = new User();
         List<TenantRole> roles = new ArrayList<TenantRole>();
@@ -6005,5 +6005,37 @@ public class DefaultCloud20ServiceTest {
         doReturn(roles).when(tenantService).getGlobalRolesForUser(user);
 
         defaultCloud20Service.addUserToDomain(authToken, null, userId);
+    }
+
+    @Test
+    public void deleteDomain_emptyDomain_expectsSuccess() {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        List<User> userList = new ArrayList<User>();
+        com.rackspace.idm.domain.entity.Domain domain = new com.rackspace.idm.domain.entity.Domain();
+        domain.setDomainId("123");
+        Users users = new Users();
+        users.setUsers(userList);
+
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        when(domainService.getUsersByDomainId("123")).thenReturn(users);
+        when(domainService.checkAndGetDomain("123")).thenReturn(domain);
+
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.deleteDomain(authToken, "123");
+        assertThat("response status", responseBuilder.build().getStatus(), equalTo(204));
+    }
+
+    @Test
+    public void deleteDomain_nonEmptyDomain_expectsBadRequest() {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        List<User> userList = new ArrayList<User>();
+        User user = new User();
+        userList.add(user);
+        Users users = new Users();
+        users.setUsers(userList);
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doReturn(users).when(domainService).getUsersByDomainId(null);
+
+        defaultCloud20Service.deleteDomain(authToken, null);
+        verify(exceptionHandler).exceptionResponse(any(BadRequestException.class));
     }
 }
