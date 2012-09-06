@@ -53,6 +53,8 @@ public class  ServiceConfiguration {
     private TenantDao tenantDao;
     @Autowired
     private DomainDao domainDao;
+    @Autowired
+    private PolicyDao policyDao;
 
     public ServiceConfiguration() {
     }
@@ -144,6 +146,11 @@ public class  ServiceConfiguration {
     @Bean
     public DomainService domainService() {
         return new DefaultDomainService(domainDao);
+    }
+
+    @Bean
+    public PolicyService policyService() {
+        return new DefaultPolicyService(policyDao);
     }
 
     @Bean

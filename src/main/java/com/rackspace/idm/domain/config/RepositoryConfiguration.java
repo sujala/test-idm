@@ -2,6 +2,8 @@ package com.rackspace.idm.domain.config;
 
 import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.dao.impl.*;
+
+import com.rackspace.idm.domain.dao.PolicyDao;
 import com.unboundid.ldap.sdk.LDAPConnectionPool;
 import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,5 +74,10 @@ public class RepositoryConfiguration {
     @Bean
     public DomainDao ldapDomainRepository() {
         return new LdapDomainRepository(connPools, appConfig);
+    }
+
+    @Bean
+    public PolicyDao ldapPolicyRepository() {
+        return new LdapPolicyRepository(connPools, appConfig);
     }
 }
