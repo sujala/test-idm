@@ -351,6 +351,7 @@ public abstract class LdapRepository {
     protected static final String NEXT_CUSTOMER_ID = "nextCustomerId";
     protected static final String NEXT_GROUP_ID = "nextGroupId";
     protected static final String NEXT_DOMAIN_ID = "nextDomainId";
+    protected static final String NEXT_POLICY_ID = "nextPolicyId";
 
     protected String getNextId(String type) {
         Filter filter = new LdapSearchBuilder()

@@ -15,4 +15,5 @@ public interface PolicyDao {
     Policy getPolicy(String domainId);
     void updatePolicy(Policy domain);
     void deletePolicy(String domainId);
+    String getNextPolicyId();
 }

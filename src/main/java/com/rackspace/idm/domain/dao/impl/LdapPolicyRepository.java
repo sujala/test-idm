@@ -130,6 +130,11 @@ public class LdapPolicyRepository extends LdapRepository implements PolicyDao {
         getLogger().debug("Deleted Policy: {}", policy);
     }
 
+    @Override
+    public String getNextPolicyId() {
+        return getNextId( NEXT_POLICY_ID);
+    }
+
     Policy getSinglePolicy(Filter searchFilter)
         throws LDAPPersistException {
         SearchResultEntry entry = this.getSingleEntry(POLICY_BASE_DN, SearchScope.ONE, searchFilter, ATTR_POLICY_SEARCH_ATTRIBUTES);

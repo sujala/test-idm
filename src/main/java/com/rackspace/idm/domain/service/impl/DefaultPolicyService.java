@@ -64,6 +64,7 @@ public class DefaultPolicyService implements PolicyService {
         if(policy.isGlobal() == null){
             policy.setGlobal(false);
         }
+        policy.setPolicyId(this.policyDao.getNextPolicyId());
         logger.info("Adding Policy: {}", policy);
         policyDao.addPolicy(policy);
     }
