@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v20;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
@@ -521,6 +522,31 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder deletePolicyToEndpointTemplate(HttpHeaders httpHeaders, String authToken, String endpointTemplateId, String policyId) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public ResponseBuilder getPolicies(HttpHeaders httpHeaders, String authToken) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public ResponseBuilder addPolicy(HttpHeaders httpHeaders, String authToken, Policy policy) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public ResponseBuilder getPolicy(HttpHeaders httpHeaders, String authToken, String policyId) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public ResponseBuilder updatePolicy(HttpHeaders httpHeaders, String authToken, String policyId, Policy policy) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public ResponseBuilder deletePolicy(HttpHeaders httpHeaders, String authToken, String policyId) {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 

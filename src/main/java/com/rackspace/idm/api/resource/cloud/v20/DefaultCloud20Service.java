@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.JSONConstants;
@@ -2310,6 +2311,31 @@ public class DefaultCloud20Service implements Cloud20Service {
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
+    }
+
+    @Override
+    public ResponseBuilder getPolicies(HttpHeaders httpHeaders, String authToken) {
+        return Response.ok();  //To change body of created methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public ResponseBuilder addPolicy(HttpHeaders httpHeaders, String authToken, Policy policy) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public ResponseBuilder getPolicy(HttpHeaders httpHeaders, String authToken, String policyId) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public ResponseBuilder updatePolicy(HttpHeaders httpHeaders, String authToken, String policyId, Policy policy) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public ResponseBuilder deletePolicy(HttpHeaders httpHeaders, String authToken, String policyId) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     public List<TenantRole> getRolesForScopeAccess(ScopeAccess scopeAccess) {

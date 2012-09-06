@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v20;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
@@ -14,6 +15,7 @@ import org.openstack.docs.identity.api.v2.*;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.UriInfo;
+import javax.xml.ws.Response;
 
 /**
  * Created by IntelliJ IDEA.
@@ -201,4 +203,14 @@ public interface Cloud20Service {
     ResponseBuilder addPolicyToEndpointTemplate(HttpHeaders httpHeaders, String authToken, String endpointTemplateId, String policyId);
 
     ResponseBuilder deletePolicyToEndpointTemplate(HttpHeaders httpHeaders, String authToken, String endpointTemplateId, String policyId);
+
+    ResponseBuilder getPolicies(HttpHeaders httpHeaders, String authToken);
+
+    ResponseBuilder addPolicy(HttpHeaders httpHeaders, String authToken, Policy policy);
+
+    ResponseBuilder getPolicy(HttpHeaders httpHeaders, String authToken, String policyId);
+
+    ResponseBuilder updatePolicy(HttpHeaders httpHeaders, String authToken, String policyId, Policy policy);
+
+    ResponseBuilder deletePolicy(HttpHeaders httpHeaders, String authToken, String policyId);
 }

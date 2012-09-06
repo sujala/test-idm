@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v20;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
@@ -217,7 +218,50 @@ public class Cloud20VersionResource {
         return defaultCloud20Service.getEndpointsByDomainId(authToken, domainId).build();
     }
 
+    @GET
+    @Path("RAX-AUTH/policies")
+    public Response getPolicies(
+            @Context HttpHeaders httpHeaders,
+            @HeaderParam(X_AUTH_TOKEN) String authToken) {
+        return defaultCloud20Service.getPolicies(httpHeaders, authToken).build();
+    }
 
+    @POST
+    @Path("RAX-AUTH/policies")
+    public Response addPolicy(
+            @Context HttpHeaders httpHeaders,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            Policy policy) {
+        return defaultCloud20Service.addPolicy(httpHeaders, authToken, policy).build();
+    }
+
+    @GET
+    @Path("RAX-AUTH/policies/{policyId}")
+    public Response getPolicy(
+            @Context HttpHeaders httpHeaders,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("policyId") String policyId) {
+        return defaultCloud20Service.getPolicy(httpHeaders, authToken, policyId).build();
+    }
+
+    @PUT
+    @Path("RAX-AUTH/policies/{policyId}")
+    public Response updatePolicy(
+            @Context HttpHeaders httpHeaders,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("policyId") String policyId,
+            Policy policy) {
+        return defaultCloud20Service.updatePolicy(httpHeaders, authToken, policyId, policy).build();
+    }
+
+    @DELETE
+    @Path("RAX-AUTH/policies/{policyId}")
+    public Response deletePolicy(
+            @Context HttpHeaders httpHeaders,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("policyId") String policyId) {
+        return defaultCloud20Service.deletePolicy(httpHeaders, authToken, policyId).build();
+    }
 
     @GET
     @Path("extensions")

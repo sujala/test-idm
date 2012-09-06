@@ -587,14 +587,6 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.80) = {
     description = "The policy type"
 };
 
-schema set attribute (1.3.6.1.4.1.20988.2.1.81) = {
-    name = blob
-    ldap-names = blob
-    equality = caseIgnoreMatch
-    syntax = directoryString
-    description = "The policy blob"
-};
-
 schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
 	name = rsPerson
 	ldap-names = rsPerson
@@ -972,7 +964,7 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.27) = {
         tenantRsId
 };
 
-schema set object-class (1.3.6.1.4.1.20988.2.2.27) = {
+schema set object-class (1.3.6.1.4.1.20988.2.2.28) = {
     name = rsPolicy
     ldap-names = rsPolicy
     subclass-of top
@@ -983,7 +975,8 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.27) = {
         name,
         policyType,
         enabled,
-        rsGlobal
+        rsGlobal,
+        blob
     may-contain
         description
 };
