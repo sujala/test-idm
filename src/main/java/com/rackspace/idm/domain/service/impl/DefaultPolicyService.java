@@ -46,9 +46,6 @@ public class DefaultPolicyService implements PolicyService {
         if(policy == null){
             throw new BadRequestException(POLICY_CANNOT_BE_NULL);
         }
-        if(StringUtils.isBlank(policy.getUniqueId())) {
-            throw new BadRequestException(POLICY_ID_CANNOT_BE_NULL);
-        }
         if(StringUtils.isBlank(policy.getName())) {
             throw new BadRequestException(POLICY_NAME_CANNOT_BE_NULL);
         }
@@ -67,7 +64,7 @@ public class DefaultPolicyService implements PolicyService {
         if(policy.isGlobal() == null){
             policy.setGlobal(false);
         }
-        logger.info("Adding Domain: {}", policy);
+        logger.info("Adding Policy: {}", policy);
         policyDao.addPolicy(policy);
     }
 
