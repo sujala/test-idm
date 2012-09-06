@@ -531,7 +531,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder addPolicy(HttpHeaders httpHeaders, String authToken, Policy policy) {
+    public ResponseBuilder addPolicy(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Policy policy) {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 

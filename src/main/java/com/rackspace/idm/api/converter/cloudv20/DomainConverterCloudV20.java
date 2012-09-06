@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 public class DomainConverterCloudV20 {
     @Autowired
     private JAXBObjectFactories objFactories;
-    private Logger logger = LoggerFactory.getLogger(TenantConverterCloudV20.class);
+    private Logger logger = LoggerFactory.getLogger(DomainConverterCloudV20.class);
 
     public Domain toDomain(com.rackspace.idm.domain.entity.Domain domain) {
         Domain jaxbDomain = objFactories.getRackspaceIdentityExtRaxgaV1Factory().createDomain();

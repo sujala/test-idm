@@ -231,8 +231,9 @@ public class Cloud20VersionResource {
     public Response addPolicy(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @Context UriInfo uriInfo,
             Policy policy) {
-        return defaultCloud20Service.addPolicy(httpHeaders, authToken, policy).build();
+        return defaultCloud20Service.addPolicy(httpHeaders, uriInfo, authToken, policy).build();
     }
 
     @GET

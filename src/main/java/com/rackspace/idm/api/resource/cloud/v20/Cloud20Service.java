@@ -206,7 +206,7 @@ public interface Cloud20Service {
 
     ResponseBuilder getPolicies(HttpHeaders httpHeaders, String authToken);
 
-    ResponseBuilder addPolicy(HttpHeaders httpHeaders, String authToken, Policy policy);
+    ResponseBuilder addPolicy(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Policy policy);
 
     ResponseBuilder getPolicy(HttpHeaders httpHeaders, String authToken, String policyId);
 
