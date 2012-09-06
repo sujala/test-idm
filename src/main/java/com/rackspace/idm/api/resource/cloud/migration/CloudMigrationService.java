@@ -265,8 +265,11 @@ public class CloudMigrationService {
             String legacyId = user.getId();
 
             CredentialListType credentialListType = null;
-            String apiKey = "";
             String cloudPassword = "";
+            String apiKey = "";
+            if(user11.getKey() != null){
+                apiKey = user11.getKey();
+            }
             try {
                 credentialListType = client.getUserCredentials(adminToken, user.getId());
                 credentialListType.getCredential();
