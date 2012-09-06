@@ -5973,7 +5973,7 @@ public class DefaultCloud20ServiceTest {
         assertThat("Description", domain.getId(),equalTo("1"));
     }
     
-    @Test (expected = BadRequestException.class)
+    @Test (expected = NotAuthorizedException.class)
     public void addUserToDomain_Admin_expectsBadRequest() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         User user = new User();
@@ -5990,7 +5990,7 @@ public class DefaultCloud20ServiceTest {
         defaultCloud20Service.addUserToDomain(authToken, null, userId);
     }
 
-    @Test (expected = BadRequestException.class)
+    @Test (expected = NotAuthorizedException.class)
     public void addUserToDomain_ServiceAdmin_expectsBadRequest() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         User user = new User();

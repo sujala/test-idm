@@ -1812,7 +1812,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
         User userDO = userService.checkAndGetUserById(userId);
         if (isAdminOrServiceAdmin(userDO)) {
-            throw new BadRequestException("Cannot add domains to admins or service-admins.");
+            throw new NotAuthorizedException("Cannot add domains to admins or service-admins.");
         }
         Domain domain = domainService.checkAndGetDomain(domainId);
         userDO.setDomainId(domain.getDomainId());
