@@ -223,7 +223,7 @@ public class Cloud20VersionResource {
     public Response getPolicies(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken) {
-        return defaultCloud20Service.getPolicies(httpHeaders, authToken).build();
+        return defaultCloud20Service.getPolicies(authToken).build();
     }
 
     @POST
@@ -233,7 +233,7 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @Context UriInfo uriInfo,
             Policy policy) {
-        return defaultCloud20Service.addPolicy(httpHeaders, uriInfo, authToken, policy).build();
+        return defaultCloud20Service.addPolicy(uriInfo, authToken, policy).build();
     }
 
     @GET
@@ -242,7 +242,7 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("policyId") String policyId) {
-        return defaultCloud20Service.getPolicy(httpHeaders, authToken, policyId).build();
+        return defaultCloud20Service.getPolicy(authToken, policyId).build();
     }
 
     @PUT
@@ -252,7 +252,7 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("policyId") String policyId,
             Policy policy) {
-        return defaultCloud20Service.updatePolicy(httpHeaders, authToken, policyId, policy).build();
+        return defaultCloud20Service.updatePolicy(authToken, policyId, policy).build();
     }
 
     @DELETE
@@ -261,7 +261,7 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("policyId") String policyId) {
-        return defaultCloud20Service.deletePolicy(httpHeaders, authToken, policyId).build();
+        return defaultCloud20Service.deletePolicy(authToken, policyId).build();
     }
 
     @GET
@@ -695,7 +695,7 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("endpointTemplateId") String endpointTemplateId) {
-        return getCloud20Service().getPoliciesForEndpointTemplate(httpHeaders, authToken, endpointTemplateId).build();
+        return getCloud20Service().getPoliciesForEndpointTemplate(authToken, endpointTemplateId).build();
     }
 
     @PUT
@@ -704,7 +704,7 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("endpointTemplateId") String endpointTemplateId) {
-        return getCloud20Service().updatePoliciesForEndpointTemplate(httpHeaders, authToken, endpointTemplateId).build();
+        return getCloud20Service().updatePoliciesForEndpointTemplate(authToken, endpointTemplateId).build();
     }
 
     @PUT
@@ -714,7 +714,7 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("endpointTemplateId") String endpointTemplateId,
             @PathParam("policyId") String policyId){
-        return getCloud20Service().addPolicyToEndpointTemplate(httpHeaders, authToken, endpointTemplateId, policyId).build();
+        return getCloud20Service().addPolicyToEndpointTemplate(authToken, endpointTemplateId, policyId).build();
     }
 
     @DELETE
@@ -724,7 +724,7 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("endpointTemplateId") String endpointTemplateId,
             @PathParam("policyId") String policyId){
-        return getCloud20Service().deletePolicyToEndpointTemplate(httpHeaders, authToken, endpointTemplateId, policyId).build();
+        return getCloud20Service().deletePolicyToEndpointTemplate(authToken, endpointTemplateId, policyId).build();
     }
 
     @GET

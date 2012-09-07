@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.dao;
 
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies;
 import com.rackspace.idm.domain.entity.Policy;
 
 /**
@@ -11,9 +12,11 @@ import com.rackspace.idm.domain.entity.Policy;
  * To change this template use File | Settings | File Templates.
  */
 public interface PolicyDao {
-    void addPolicy(Policy domain);
-    Policy getPolicy(String domainId);
-    void updatePolicy(Policy domain);
-    void deletePolicy(String domainId);
+    void addPolicy(Policy policy);
+    Policy getPolicy(String policyId);
+    Policy getPolicyByName(String name);
+    void updatePolicy(Policy policy);
+    void deletePolicy(String policyId);
     String getNextPolicyId();
+    Policies getPolicies();
 }

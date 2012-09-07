@@ -196,21 +196,21 @@ public interface Cloud20Service {
 
     ResponseBuilder removeTenantFromDomain(String authToken, String domainId, String tenantId);
 
-    ResponseBuilder getPoliciesForEndpointTemplate(HttpHeaders httpHeaders, String authToken, String endpointTemplateId);
+    ResponseBuilder getPoliciesForEndpointTemplate(String authToken, String endpointTemplateId);
 
-    ResponseBuilder updatePoliciesForEndpointTemplate(HttpHeaders httpHeaders, String authToken, String endpointTemplateId);
+    ResponseBuilder updatePoliciesForEndpointTemplate(String authToken, String endpointTemplateId);
 
-    ResponseBuilder addPolicyToEndpointTemplate(HttpHeaders httpHeaders, String authToken, String endpointTemplateId, String policyId);
+    ResponseBuilder addPolicyToEndpointTemplate(String authToken, String endpointTemplateId, String policyId);
 
-    ResponseBuilder deletePolicyToEndpointTemplate(HttpHeaders httpHeaders, String authToken, String endpointTemplateId, String policyId);
+    ResponseBuilder deletePolicyToEndpointTemplate(String authToken, String endpointTemplateId, String policyId);
 
-    ResponseBuilder getPolicies(HttpHeaders httpHeaders, String authToken);
+    ResponseBuilder getPolicies(String authToken);
 
-    ResponseBuilder addPolicy(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Policy policy);
+    ResponseBuilder addPolicy(UriInfo uriInfo, String authToken, Policy policy);
 
-    ResponseBuilder getPolicy(HttpHeaders httpHeaders, String authToken, String policyId);
+    ResponseBuilder getPolicy(String authToken, String policyId);
 
-    ResponseBuilder updatePolicy(HttpHeaders httpHeaders, String authToken, String policyId, Policy policy);
+    ResponseBuilder updatePolicy(String authToken, String policyId, Policy policy);
 
-    ResponseBuilder deletePolicy(HttpHeaders httpHeaders, String authToken, String policyId);
+    ResponseBuilder deletePolicy(String authToken, String policyId);
 }

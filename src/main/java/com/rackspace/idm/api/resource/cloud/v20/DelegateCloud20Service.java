@@ -30,7 +30,6 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.*;
-import org.openstack.docs.identity.api.v2.Tenant;
 import org.openstack.docs.identity.api.v2.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -506,47 +505,47 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getPoliciesForEndpointTemplate(HttpHeaders httpHeaders, String authToken, String endpointTemplateId) {
+    public ResponseBuilder getPoliciesForEndpointTemplate(String authToken, String endpointTemplateId) {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
-    public ResponseBuilder updatePoliciesForEndpointTemplate(HttpHeaders httpHeaders, String authToken, String endpointTemplateId) {
+    public ResponseBuilder updatePoliciesForEndpointTemplate(String authToken, String endpointTemplateId) {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
-    public ResponseBuilder addPolicyToEndpointTemplate(HttpHeaders httpHeaders, String authToken, String endpointTemplateId, String policyId) {
+    public ResponseBuilder addPolicyToEndpointTemplate(String authToken, String endpointTemplateId, String policyId) {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
-    public ResponseBuilder deletePolicyToEndpointTemplate(HttpHeaders httpHeaders, String authToken, String endpointTemplateId, String policyId) {
+    public ResponseBuilder deletePolicyToEndpointTemplate(String authToken, String endpointTemplateId, String policyId) {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
-    public ResponseBuilder getPolicies(HttpHeaders httpHeaders, String authToken) {
+    public ResponseBuilder getPolicies(String authToken) {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
-    public ResponseBuilder addPolicy(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Policy policy) {
+    public ResponseBuilder addPolicy(UriInfo uriInfo, String authToken, Policy policy) {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
-    public ResponseBuilder getPolicy(HttpHeaders httpHeaders, String authToken, String policyId) {
+    public ResponseBuilder getPolicy(String authToken, String policyId) {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
-    public ResponseBuilder updatePolicy(HttpHeaders httpHeaders, String authToken, String policyId, Policy policy) {
+    public ResponseBuilder updatePolicy(String authToken, String policyId, Policy policy) {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
-    public ResponseBuilder deletePolicy(HttpHeaders httpHeaders, String authToken, String policyId) {
+    public ResponseBuilder deletePolicy(String authToken, String policyId) {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 

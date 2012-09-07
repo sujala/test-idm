@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.PolicyDao;
 import com.rackspace.idm.domain.entity.Policy;
@@ -25,6 +26,7 @@ public class LdapPolicyRepository extends LdapRepository implements PolicyDao {
 
     private final Configuration config;
     public static final String NULL_OR_EMPTY_POLICY_ID_PARAMETER = "Null or Empty policyId parameter";
+    public static final String NULL_OR_EMPTY_POLICY_NAME_PARAMETER = "Null or Empty policy name parameter";
     public static final String ERROR_GETTING_POLICY_OBJECT = "Error getting policy object";
     public static final String PARENT_UNIQUE_ID_CANNOT_BE_BLANK = "ParentUniqueId cannot be blank";
 
@@ -117,28 +119,84 @@ public class LdapPolicyRepository extends LdapRepository implements PolicyDao {
     }
 
     @Override
-    public void updatePolicy(Policy policy) {
-        if (policy == null || StringUtils.isBlank(policy.getUniqueId())) {
-            String errmsg = "Null instance of Policy was passed";
-            getLogger().error(errmsg);
-            throw new IllegalArgumentException(errmsg);
+    public Policy getPolicyByName(String name) {
+        getLogger().debug("Doing search for policy name: " + name);
+        if (StringUtils.isBlank(name)) {
+            getLogger().error(NULL_OR_EMPTY_POLICY_NAME_PARAMETER);
+            getLogger().info("Invalid policy name parameter.");
+            return null;
         }
-        getLogger().debug("Updating policy: {}", policy);
-        Audit audit = Audit.log(policy);
+
+        Filter searchFilter = new LdapSearchBuilder()
+            .addEqualAttribute(ATTR_NAME, name)
+            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_POLICY).build();
+
+        Policy policy = null;
+
         try {
-            final LDAPPersister<Policy> persister = LDAPPersister.getInstance(Policy.class);
-            List<Modification> modifications = persister.getModifications(policy, true);
-            audit.modify(modifications);
-            if (modifications.size() > 0) {
-                persister.modify(policy, getAppInterface(), null, true);
-            }
-            getLogger().debug("Updated policy: {}", policy);
-            audit.succeed();
-        } catch (final LDAPException e) {
-            getLogger().error("Error updating policy", e);
-            audit.fail();
+            policy = getSinglePolicy(searchFilter);
+        } catch (LDAPPersistException e) {
+            getLogger().error(ERROR_GETTING_POLICY_OBJECT, e);
             throw new IllegalStateException(e);
         }
+        getLogger().debug("Found Policy - {}", policy);
+
+        return policy;
+    }
+
+    @Override
+    public void updatePolicy(Policy policy) {
+        Policy oldPolicy = getPolicy(policy.getPolicyId());
+        getLogger().debug("Found existing policy {}", oldPolicy);
+
+        Audit audit = Audit.log(policy);
+
+        try {
+            List<Modification> mods = getModifications(oldPolicy, policy);
+            audit.modify(mods);
+
+            if (mods.size() < 1) {
+                // No changes!
+                return;
+            }
+            getAppInterface().modify(oldPolicy.getUniqueId(), mods);
+        } catch (LDAPException ldapEx) {
+            getLogger().error("Error updating policy {} - {}", policy.getName(), ldapEx);
+            audit.fail("Error updating policy");
+            throw new IllegalStateException(ldapEx.getMessage(), ldapEx);
+        }
+        audit.succeed();
+        getLogger().info("Updated policy - {}", policy);
+    }
+
+    private List<Modification> getModifications(Policy oldPolicy, Policy newPolicy) {
+        List<Modification> mods = new ArrayList<Modification>();
+
+        if (newPolicy.getName() != null && !newPolicy.getName().equals(oldPolicy.getName())) {
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_NAME, String.valueOf(newPolicy.getName())));
+        }
+
+        if (newPolicy.getDescription()!= null && !newPolicy.getDescription().equals(oldPolicy.getDescription())) {
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_DESCRIPTION, String.valueOf(newPolicy.getDescription())));
+        }
+
+        if (newPolicy.isEnabled() != null && !newPolicy.isEnabled().equals(oldPolicy.isEnabled())) {
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(newPolicy.isEnabled())));
+        }
+
+        if (newPolicy.isGlobal() != null && !newPolicy.isGlobal().equals(oldPolicy.isGlobal())) {
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_GLOBAL, String.valueOf(newPolicy.isGlobal())));
+        }
+
+        if (newPolicy.getBlob() != null && !newPolicy.getBlob().equals(oldPolicy.getBlob())) {
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_BLOB, String.valueOf(newPolicy.getBlob())));
+        }
+
+        if (newPolicy.getPolicyType() != null && !newPolicy.getPolicyType().equals(oldPolicy.getPolicyType())) {
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_POLICYTYPE, String.valueOf(newPolicy.getPolicyType())));
+        }
+
+        return mods;
     }
 
     @Override
@@ -165,6 +223,45 @@ public class LdapPolicyRepository extends LdapRepository implements PolicyDao {
     @Override
     public String getNextPolicyId() {
         return getNextId( NEXT_POLICY_ID);
+    }
+
+    @Override
+    public Policies getPolicies() {
+        getLogger().debug("Getting Policies");
+
+        Policies policies = new Policies();
+        SearchResult searchResult = null;
+
+        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_POLICY).build();
+
+        try {
+            searchResult = getAppInterface().search(POLICY_BASE_DN, SearchScope.ONE, searchFilter);
+            getLogger().info("Got Policies");
+        } catch (LDAPSearchException ldapEx) {
+            getLogger().error("Error searching for Polices - {}", ldapEx);
+            throw new IllegalStateException(ldapEx);
+        }
+
+        if (searchResult.getEntryCount() > 0) {
+            for (SearchResultEntry entry : searchResult.getSearchEntries()) {
+                policies.getPolicy().add(getEntryPolicy(entry));
+            }
+        }
+
+        return policies;
+    }
+
+    private com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy getEntryPolicy(SearchResultEntry entry) {
+        getLogger().debug("Inside getEntryPolicy");
+        com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy policy = new com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy();
+        policy.setType(entry.getAttributeValue(ATTR_POLICYTYPE));
+        policy.setBlob(entry.getAttributeValue(ATTR_BLOB));
+        policy.setDescription(entry.getAttributeValue(ATTR_DESCRIPTION));
+        policy.setEnabled(entry.getAttributeValueAsBoolean(ATTR_ENABLED));
+        policy.setGlobal(entry.getAttributeValueAsBoolean(ATTR_GLOBAL));
+        policy.setId(entry.getAttributeValue(ATTR_ID));
+        policy.setName(entry.getAttributeValue(ATTR_NAME));
+        return policy;
     }
 
     Policy getSinglePolicy(Filter searchFilter)

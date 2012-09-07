@@ -18,7 +18,6 @@ import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
-import com.rackspace.idm.domain.service.impl.DefaultPolicyService;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.validation.Validator20;
 import org.apache.commons.configuration.Configuration;
@@ -1869,22 +1868,22 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getPoliciesForEndpointTemplate(HttpHeaders httpHeaders, String authToken, String endpointTemplateId) {
+    public ResponseBuilder getPoliciesForEndpointTemplate(String authToken, String endpointTemplateId) {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
-    public ResponseBuilder updatePoliciesForEndpointTemplate(HttpHeaders httpHeaders, String authToken, String endpointTemplateId) {
+    public ResponseBuilder updatePoliciesForEndpointTemplate(String authToken, String endpointTemplateId) {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
-    public ResponseBuilder addPolicyToEndpointTemplate(HttpHeaders httpHeaders, String authToken, String endpointTemplateId, String policyId) {
+    public ResponseBuilder addPolicyToEndpointTemplate(String authToken, String endpointTemplateId, String policyId) {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
-    public ResponseBuilder deletePolicyToEndpointTemplate(HttpHeaders httpHeaders, String authToken, String endpointTemplateId, String policyId) {
+    public ResponseBuilder deletePolicyToEndpointTemplate(String authToken, String endpointTemplateId, String policyId) {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
@@ -2324,19 +2323,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getPolicies(HttpHeaders httpHeaders, String authToken) {
+    public ResponseBuilder getPolicies(String authToken) {
         return Response.ok();  //To change body of created methods use File | Settings | File Templates.
     }
 
     @Override
-    public ResponseBuilder addPolicy(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Policy policy) {
+    public ResponseBuilder addPolicy(UriInfo uriInfo, String authToken, Policy policy) {
         try {
             authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            if (StringUtils.isBlank(policy.getName())) {
-                String errMsg = "Expecting name";
-                logger.warn(errMsg);
-                throw new BadRequestException(errMsg);
-            }
             com.rackspace.idm.domain.entity.Policy savedPolicy = this.policyConverterCloudV20.toPolicyDO(policy);
             this.policyService.addPolicy(savedPolicy);
             String policyId = savedPolicy.getPolicyId();
@@ -2353,17 +2347,17 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getPolicy(HttpHeaders httpHeaders, String authToken, String policyId) {
+    public ResponseBuilder getPolicy(String authToken, String policyId) {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
-    public ResponseBuilder updatePolicy(HttpHeaders httpHeaders, String authToken, String policyId, Policy policy) {
+    public ResponseBuilder updatePolicy(String authToken, String policyId, Policy policy) {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
-    public ResponseBuilder deletePolicy(HttpHeaders httpHeaders, String authToken, String policyId) {
+    public ResponseBuilder deletePolicy(String authToken, String policyId) {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 

@@ -38,7 +38,7 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
             searchResult = getAppInterface().search(GROUP_BASE_DN, SearchScope.ONE, searchFilter);
             getLogger().info("Got groups");
         } catch (LDAPSearchException ldapEx) {
-            getLogger().error("Error searching for baseUrls - {}", ldapEx);
+            getLogger().error("Error searching for groups - {}", ldapEx);
             throw new IllegalStateException(ldapEx);
         }
 

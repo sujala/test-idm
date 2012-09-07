@@ -6,6 +6,8 @@ import com.rackspace.idm.domain.dao.PolicyDao;
 import com.rackspace.idm.domain.entity.Policy;
 import com.rackspace.idm.domain.service.PolicyService;
 import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.DuplicateException;
+import com.sun.jersey.api.ConflictException;
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +40,7 @@ public class DefaultPolicyService implements PolicyService {
 
     @Override
     public Policies getPolicies() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return policyDao.getPolicies();
     }
 
     @Override
@@ -65,22 +67,53 @@ public class DefaultPolicyService implements PolicyService {
             policy.setGlobal(false);
         }
         policy.setPolicyId(this.policyDao.getNextPolicyId());
+        validateUniqueNamePolicy(policy.getName());
         logger.info("Adding Policy: {}", policy);
         policyDao.addPolicy(policy);
     }
 
+    private void validateUniqueNamePolicy(String name) {
+        Policy policy = policyDao.getPolicyByName(name);
+        if(policy !=  null){
+            logger.info("Attempting to add existing Policy: {}", policy);
+            String err = String.format("Policy with name %s already exist", name);
+            throw new DuplicateException(err);
+        }
+    }
+
     @Override
     public Policy getPolicy(String policyId) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return policyDao.getPolicy(policyId);
     }
 
     @Override
     public void updatePolicy(Policy policy) {
-        //To change body of implemented methods use File | Settings | File Templates.
+        if(policy == null){
+            throw new BadRequestException(POLICY_CANNOT_BE_NULL);
+        }
+        if(StringUtils.isBlank(policy.getPolicyId())){
+            throw new BadRequestException(POLICY_ID_CANNOT_BE_NULL);
+        }
+        if(StringUtils.isBlank(policy.getName())) {
+            throw new BadRequestException(POLICY_NAME_CANNOT_BE_NULL);
+        }
+        if(StringUtils.isBlank(policy.getBlob())){
+            policy.setBlob(null);
+        }
+        if(StringUtils.isBlank(policy.getDescription())) {
+            policy.setDescription(null);
+        }
+        if(StringUtils.isBlank(policy.getPolicyType())) {
+            throw new BadRequestException(POLICY_TYPE_CANNOT_BE_NULL);
+        }
+        policy.setPolicyId(this.policyDao.getNextPolicyId());
+        validateUniqueNamePolicy(policy.getName());
+        logger.info("Adding Policy: {}", policy);
+        policyDao.updatePolicy(policy);
     }
 
     @Override
     public void deletePolicy(String policyId) {
-        //To change body of implemented methods use File | Settings | File Templates.
+        policyDao.deletePolicy(policyId);
     }
 }
