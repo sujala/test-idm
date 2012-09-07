@@ -1,4 +1,4 @@
 dn: ou=policies,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: organizationalUnit
 objectClass: top
-ou: domains
+ou: policies

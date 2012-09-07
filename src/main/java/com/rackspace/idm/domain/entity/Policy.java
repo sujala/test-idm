@@ -41,8 +41,6 @@ public class Policy implements Auditable{
     @LDAPField(attribute = LdapRepository.ATTR_DESCRIPTION, objectClass = LdapRepository.OBJECTCLASS_POLICY, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String description;
 
-
-
     public String getPolicyId() {
         return policyId;
     }

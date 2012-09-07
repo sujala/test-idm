@@ -11,6 +11,7 @@ import com.unboundid.ldap.sdk.persist.LDAPPersister;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -35,27 +36,58 @@ public class LdapPolicyRepository extends LdapRepository implements PolicyDao {
     @Override
     public void addPolicy(Policy policy) {
         if (policy == null) {
-            String errmsg = "Null instance of Policy was passed";
-            getLogger().error(errmsg);
-            throw new IllegalArgumentException(errmsg);
+            getLogger().error("Null instance of policy was passed");
+            throw new IllegalArgumentException("Null instance of policy was passed.");
         }
-        getLogger().info("Adding Policy: {}", policy);
+
+        String policyDN = new LdapDnBuilder(POLICY_BASE_DN).addAttribute(ATTR_ID, policy.getPolicyId().toString()).build();
+
         Audit audit = Audit.log(policy).add();
-        try {
-            final LDAPPersister<Policy> persister = LDAPPersister.getInstance(Policy.class);
-            persister.add(policy, getAppInterface(), POLICY_BASE_DN);
-            audit.succeed();
-            getLogger().info("Added Policy: {}", policy);
-        } catch (final LDAPException e) {
-            if (e.getResultCode() == ResultCode.ENTRY_ALREADY_EXISTS) {
-                String errMsg = String.format("Policy %s already exists", policy.getPolicyId());
-                getLogger().warn(errMsg);
-                throw new DuplicateException(errMsg, e);
-            }
-            getLogger().error("Error adding policy object", e);
-            audit.fail(e.getMessage());
-            throw new IllegalStateException(e);
+
+        Attribute[] attributes = getAddAttributes(policy);
+        addEntry(policyDN, attributes, audit);
+        audit.succeed();
+
+        getLogger().debug("Added policy {}", policy);
+    }
+
+    Attribute[] getAddAttributes(Policy policy) {
+
+        List<Attribute> atts = new ArrayList<Attribute>();
+
+        atts.add(new Attribute(ATTR_OBJECT_CLASS, ATTR_POLICY_OBJECT_CLASS_VALUES));
+
+        if (!StringUtils.isBlank(policy.getPolicyId().toString())) {
+            atts.add(new Attribute(ATTR_ID, policy.getPolicyId().toString()));
         }
+
+        if (!StringUtils.isBlank(policy.getName())) {
+            atts.add(new Attribute(ATTR_NAME, policy.getName()));
+        }
+
+        if (!StringUtils.isBlank(policy.getDescription())) {
+            atts.add(new Attribute(ATTR_DESCRIPTION, policy.getDescription()));
+        }
+
+        if (!StringUtils.isBlank(policy.getBlob())) {
+            atts.add(new Attribute(ATTR_BLOB, policy.getBlob()));
+        }
+
+        if (!StringUtils.isBlank(policy.getPolicyType())) {
+            atts.add(new Attribute(ATTR_POLICYTYPE, policy.getPolicyType()));
+        }
+
+        if (policy.isEnabled() != null) {
+            atts.add(new Attribute(ATTR_ENABLED, String.valueOf(policy.isEnabled())));
+        }
+
+        if (policy.isGlobal() != null) {
+            atts.add(new Attribute(ATTR_GLOBAL, String.valueOf(policy.isGlobal())));
+        }
+
+        Attribute[] attributes = atts.toArray(new Attribute[0]);
+        getLogger().debug("Found {} attributes to add", attributes.length);
+        return attributes;
     }
 
     @Override
