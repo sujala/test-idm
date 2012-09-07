@@ -144,8 +144,8 @@ public class LdapPolicyRepository extends LdapRepository implements PolicyDao {
     }
 
     @Override
-    public void updatePolicy(Policy policy) {
-        Policy oldPolicy = getPolicy(policy.getPolicyId());
+    public void updatePolicy(Policy policy, String policyId) {
+        Policy oldPolicy = getPolicy(policyId);
         getLogger().debug("Found existing policy {}", oldPolicy);
 
         Audit audit = Audit.log(policy);

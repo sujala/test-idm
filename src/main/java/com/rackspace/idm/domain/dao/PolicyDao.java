@@ -15,7 +15,7 @@ public interface PolicyDao {
     void addPolicy(Policy policy);
     Policy getPolicy(String policyId);
     Policy getPolicyByName(String name);
-    void updatePolicy(Policy policy);
+    void updatePolicy(Policy policy, String policyId);
     void deletePolicy(String policyId);
     String getNextPolicyId();
     com.rackspace.idm.domain.entity.Policies getPolicies();

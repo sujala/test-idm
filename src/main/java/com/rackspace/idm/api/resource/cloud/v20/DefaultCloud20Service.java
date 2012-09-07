@@ -2353,7 +2353,13 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder updatePolicy(String authToken, String policyId, Policy policy) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+        com.rackspace.idm.domain.entity.Policy updatePolicy = this.policyConverterCloudV20.toPolicyDO(policy);
+        this.policyService.updatePolicy(updatePolicy, policyId);
+        com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory objectFactory = objFactories.getRackspaceIdentityExtRaxgaV1Factory();
+        Policy value = this.policyConverterCloudV20.toPolicy(updatePolicy);
+        return Response.ok().entity(objectFactory.createPolicy(value).getValue());
+
     }
 
     @Override

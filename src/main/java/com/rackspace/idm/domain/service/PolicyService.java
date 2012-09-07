@@ -16,6 +16,6 @@ public interface PolicyService {
     com.rackspace.idm.domain.entity.Policies getPolicies();
     void addPolicy(Policy policy);
     Policy getPolicy(String policyId);
-    void updatePolicy(Policy policy);
+    void updatePolicy(Policy policy, String policyId);
     void deletePolicy(String policyId);
 }

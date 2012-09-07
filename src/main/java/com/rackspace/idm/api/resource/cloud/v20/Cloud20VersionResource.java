@@ -221,7 +221,6 @@ public class Cloud20VersionResource {
     @GET
     @Path("RAX-AUTH/policies")
     public Response getPolicies(
-            @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken) {
         return defaultCloud20Service.getPolicies(authToken).build();
     }
@@ -229,7 +228,6 @@ public class Cloud20VersionResource {
     @POST
     @Path("RAX-AUTH/policies")
     public Response addPolicy(
-            @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @Context UriInfo uriInfo,
             Policy policy) {
@@ -239,7 +237,6 @@ public class Cloud20VersionResource {
     @GET
     @Path("RAX-AUTH/policies/{policyId}")
     public Response getPolicy(
-            @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("policyId") String policyId) {
         return defaultCloud20Service.getPolicy(authToken, policyId).build();
@@ -248,7 +245,6 @@ public class Cloud20VersionResource {
     @PUT
     @Path("RAX-AUTH/policies/{policyId}")
     public Response updatePolicy(
-            @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("policyId") String policyId,
             Policy policy) {
@@ -258,7 +254,6 @@ public class Cloud20VersionResource {
     @DELETE
     @Path("RAX-AUTH/policies/{policyId}")
     public Response deletePolicy(
-            @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("policyId") String policyId) {
         return defaultCloud20Service.deletePolicy(authToken, policyId).build();
@@ -692,7 +687,6 @@ public class Cloud20VersionResource {
     @GET
     @Path("OS-KSCATALOG/endpointTemplates/{endpointTemplateId}/RAX-AUTH/policies")
     public Response getPoliciesForEndpointTemplate(
-            @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("endpointTemplateId") String endpointTemplateId) {
         return getCloud20Service().getPoliciesForEndpointTemplate(authToken, endpointTemplateId).build();
@@ -701,7 +695,6 @@ public class Cloud20VersionResource {
     @PUT
     @Path("OS-KSCATALOG/endpointTemplates/{endpointTemplateId}/RAX-AUTH/policies")
     public Response updatePoliciesForEndpointTemplate(
-            @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("endpointTemplateId") String endpointTemplateId) {
         return getCloud20Service().updatePoliciesForEndpointTemplate(authToken, endpointTemplateId).build();
@@ -710,7 +703,6 @@ public class Cloud20VersionResource {
     @PUT
     @Path("OS-KSCATALOG/endpointTemplates/{endpointTemplateId}/RAX-AUTH/policies/{policyId}")
     public Response addPolicyToEndpointTemplate(
-            @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("endpointTemplateId") String endpointTemplateId,
             @PathParam("policyId") String policyId){
@@ -720,7 +712,6 @@ public class Cloud20VersionResource {
     @DELETE
     @Path("OS-KSCATALOG/endpointTemplates/{endpointTemplateId}/RAX-AUTH/policies/{policyId}")
     public Response deletePolicyToEndpointTemplate(
-            @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("endpointTemplateId") String endpointTemplateId,
             @PathParam("policyId") String policyId){
