@@ -1,10 +1,9 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.PolicyDao;
+import com.rackspace.idm.domain.entity.Policies;
 import com.rackspace.idm.domain.entity.Policy;
-import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.unboundid.ldap.sdk.*;
 import com.unboundid.ldap.sdk.persist.LDAPPersistException;
@@ -251,15 +250,15 @@ public class LdapPolicyRepository extends LdapRepository implements PolicyDao {
         return policies;
     }
 
-    private com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy getEntryPolicy(SearchResultEntry entry) {
+    private Policy getEntryPolicy(SearchResultEntry entry) {
         getLogger().debug("Inside getEntryPolicy");
-        com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy policy = new com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy();
-        policy.setType(entry.getAttributeValue(ATTR_POLICYTYPE));
+        Policy policy = new Policy();
+        policy.setPolicyType(entry.getAttributeValue(ATTR_POLICYTYPE));
         policy.setBlob(entry.getAttributeValue(ATTR_BLOB));
         policy.setDescription(entry.getAttributeValue(ATTR_DESCRIPTION));
         policy.setEnabled(entry.getAttributeValueAsBoolean(ATTR_ENABLED));
         policy.setGlobal(entry.getAttributeValueAsBoolean(ATTR_GLOBAL));
-        policy.setId(entry.getAttributeValue(ATTR_ID));
+        policy.setPolicyId(entry.getAttributeValue(ATTR_ID));
         policy.setName(entry.getAttributeValue(ATTR_NAME));
         return policy;
     }

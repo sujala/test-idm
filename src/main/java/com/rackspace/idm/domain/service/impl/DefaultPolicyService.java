@@ -1,13 +1,11 @@
 package com.rackspace.idm.domain.service.impl;
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies;
-
 import com.rackspace.idm.domain.dao.PolicyDao;
+import com.rackspace.idm.domain.entity.Policies;
 import com.rackspace.idm.domain.entity.Policy;
 import com.rackspace.idm.domain.service.PolicyService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateException;
-import com.sun.jersey.api.ConflictException;
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

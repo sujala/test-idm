@@ -13,7 +13,7 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public interface PolicyService {
-    Policies getPolicies();
+    com.rackspace.idm.domain.entity.Policies getPolicies();
     void addPolicy(Policy policy);
     Policy getPolicy(String policyId);
     void updatePolicy(Policy policy);
