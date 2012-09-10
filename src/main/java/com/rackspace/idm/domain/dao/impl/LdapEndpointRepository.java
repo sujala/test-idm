@@ -440,6 +440,66 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
         audit.succeed();
     }
 
+	@Override
+	public void addPolicyToEndpoint(int baseUrlId, int policyId) {
+        getLogger().debug("Adding Policy %s to baseUrl %s", policyId, baseUrlId);
+
+        CloudBaseUrl baseUrl = getBaseUrlById(baseUrlId);
+
+        if (baseUrl == null) {
+            String errMsg = String.format("BaseUrlId %s not found", baseUrlId);
+            getLogger().error(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+
+        String policy = String.valueOf(policyId);
+
+        if (!baseUrl.getPolicyList().contains(policy)) {
+            List<Modification> mods = new ArrayList<Modification>();
+            mods.add(new Modification(ModificationType.ADD, ATTR_POLICY_ID, policy));
+
+            Audit audit = Audit.log(baseUrl).modify(mods);
+
+            this.updateEntry(baseUrl.getUniqueId(), mods, audit);
+
+            audit.succeed();
+        }
+
+        getLogger().debug("Added Policy %s to baseUrl %s", policyId, baseUrlId);
+	}
+
+	@Override
+	public void deletePolicyFromEndpoint(int baseUrlId, int policyId) {
+        getLogger().debug("Deleting Policy %s to baseUrl %s", policyId, baseUrlId);
+
+        CloudBaseUrl baseUrl = getBaseUrlById(baseUrlId);
+
+        if (baseUrl == null) {
+            String errMsg = String.format("BaseUrlId %s not found", baseUrlId);
+            getLogger().error(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+
+        String policy = String.valueOf(policyId);
+
+        if (baseUrl.getPolicyList() == null || !baseUrl.getPolicyList().contains(policy)) {
+            String errMsg = String.format("PolicyId %s not found", policyId);
+            getLogger().error(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+
+        List<Modification> mods = new ArrayList<Modification>();
+        mods.add(new Modification(ModificationType.DELETE, ATTR_POLICY_ID, policy));
+
+        Audit audit = Audit.log(baseUrl).modify(mods);
+
+        this.updateEntry(baseUrl.getUniqueId(), mods, audit);
+
+        audit.succeed();
+
+        getLogger().debug("Deleted Policy %s to baseUrl %s", policyId, baseUrlId);
+	}
+
     CloudBaseUrl getBaseUrl(SearchResultEntry resultEntry) {
         if(resultEntry == null){
             return null;
@@ -462,6 +522,12 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
         baseUrl.setVersionInfo(resultEntry.getAttributeValue(ATTR_VERSION_INFO));
         baseUrl.setVersionList(resultEntry.getAttributeValue(ATTR_VERSION_LIST));
         baseUrl.setGlobal(resultEntry.getAttributeValueAsBoolean(ATTR_GLOBAL));
+
+        String[] policyList = resultEntry.getAttributeValues(ATTR_POLICY_ID);
+
+        if (policyList != null) { 
+            baseUrl.getPolicyList().addAll(Arrays.asList(policyList));
+        }
 
         getLogger().debug("Exiting getBaseUrl");
         return baseUrl;

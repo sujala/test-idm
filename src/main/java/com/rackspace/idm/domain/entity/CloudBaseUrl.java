@@ -1,5 +1,8 @@
 package com.rackspace.idm.domain.entity;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.rackspace.idm.validation.MessageTexts;
 import com.rackspace.idm.validation.RegexPatterns;
 
@@ -35,6 +38,7 @@ public class CloudBaseUrl implements Auditable {
     private String versionInfo = null;
     private String versionList = null;
     private Boolean v1Default;
+    private List<String> policyList = null;
 
     public String getUniqueId() {
         return uniqueId;
@@ -116,6 +120,13 @@ public class CloudBaseUrl implements Auditable {
         return this.v1Default = v1Default;
     }
     
+    public List<String> getPolicyList() {
+        if (this.policyList == null) {
+            this.policyList = new ArrayList<String>();
+        }
+        return this.policyList;
+    }
+
     public Boolean getEnabled() {
         return enabled;
     }

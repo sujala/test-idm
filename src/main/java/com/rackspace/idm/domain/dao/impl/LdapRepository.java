@@ -152,6 +152,7 @@ public abstract class LdapRepository {
     public static final String ATTR_IMPERSONATING_ID = "impersonatingId";
     public static final String ATTR_IMPERSONATING_USERNAME = "impersonatingUsername";
     public static final String ATTR_IMPERSONATING_TOKEN = "impersonatingToken";
+    public static final String ATTR_POLICY_ID = "policyId";
 
     public static final String ATTR_TENANT_RS_ID = "tenantRsId";
     public static final String ATTR_ROLE_RS_ID = "roleRsId";

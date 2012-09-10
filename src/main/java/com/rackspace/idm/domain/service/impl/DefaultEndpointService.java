@@ -170,4 +170,14 @@ public class DefaultEndpointService implements EndpointService {
         }
         return endpoints;
     }
+
+	@Override
+	public void addPolicyToEndpoint(int baseUrlId, int policyId) {
+        endpointDao.addPolicyToEndpoint(baseUrlId, policyId);
+	}
+
+	@Override
+	public void deletePolicyToEndpoint(int baseUrlId, int policyId) {
+        endpointDao.deletePolicyFromEndpoint(baseUrlId, policyId);
+	}
 }

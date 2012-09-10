@@ -1886,12 +1886,19 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder addPolicyToEndpointTemplate(String authToken, String endpointTemplateId, String policyId) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+
+        com.rackspace.idm.domain.entity.Policy policyEntity = this.policyService.getPolicy(policyId);
+        endpointService.addPolicyToEndpoint(Integer.valueOf(endpointTemplateId), Integer.valueOf(policyEntity.getPolicyId()));
+        return Response.noContent();
     }
 
     @Override
     public ResponseBuilder deletePolicyToEndpointTemplate(String authToken, String endpointTemplateId, String policyId) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+
+        endpointService.deletePolicyToEndpoint(Integer.valueOf(endpointTemplateId), Integer.valueOf(policyId));
+        return Response.noContent();
     }
 
     public boolean isValidImpersonatee(User user) {
