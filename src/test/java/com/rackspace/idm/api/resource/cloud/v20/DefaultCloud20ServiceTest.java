@@ -426,6 +426,18 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void addUser_withUserAdminCaller_noDomainId_throwBadRequestException() throws Exception {
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
+        ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);
+        user.setDomainId(null);
+        when(authorizationService.authorizeCloudUserAdmin((ScopeAccess) any())).thenReturn(true);
+        when(userService.getUserByAuthToken(authToken)).thenReturn(user);
+        when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
+        defaultCloud20Service.addUser(httpHeaders, uriInfo, authToken, userOS);
+        assertThat("exception type", argumentCaptor.getValue(),instanceOf(BadRequestException.class));
+    }
+
+    @Test
     public void deleteUser_isUserAdmin_callsVerifyDomain() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         User caller = new User();
@@ -1342,6 +1354,7 @@ public class DefaultCloud20ServiceTest {
         User caller = new User();
         caller.setMossoId(123);
         caller.setNastId("nastId");
+        caller.setDomainId("someDomain");
         users = mock(Users.class);
         List<User> usersList = new ArrayList();
         User tempUser = new User();
@@ -1426,6 +1439,7 @@ public class DefaultCloud20ServiceTest {
         User caller = new User();
         caller.setMossoId(123);
         caller.setNastId("nastId");
+        caller.setDomainId("someDomainId");
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
         when(domainService.createNewDomain(org.mockito.Matchers.<String>anyObject())).thenReturn("domain");
@@ -1463,9 +1477,11 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void addUser_callerIsUserAdmin_callsDefaultRegionService() throws Exception {
+        User caller = new User();
+        caller.setDomainId("someDomainId");
         when(domainService.createNewDomain(org.mockito.Matchers.<String>anyObject())).thenReturn("domain");
         doNothing().when(spy).setDomainId(any(ScopeAccess.class), any(User.class));
-        when(userService.getUserByAuthToken(authToken)).thenReturn(new User());
+        when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
         spy.addUser(null, null, authToken, userOS);
         verify(defaultRegionService).validateDefaultRegion(user.getRegion());
@@ -1510,6 +1526,7 @@ public class DefaultCloud20ServiceTest {
         UriBuilder uriBuilder = mock(UriBuilder.class);
         URI uri = new URI("");
         User caller = new User();
+        caller.setDomainId("someDomainId");
         users = mock(Users.class);
         List<User> userList = new ArrayList();
         User tempUser = new User();
