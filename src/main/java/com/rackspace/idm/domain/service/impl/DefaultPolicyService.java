@@ -6,6 +6,7 @@ import com.rackspace.idm.domain.entity.Policy;
 import com.rackspace.idm.domain.service.PolicyService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateException;
+import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,7 +82,17 @@ public class DefaultPolicyService implements PolicyService {
 
     @Override
     public Policy getPolicy(String policyId) {
-        return policyDao.getPolicy(policyId);
+        Policy policy = checkAndGetPolicy(policyId);
+        return policy;
+    }
+
+    private Policy checkAndGetPolicy(String policyId) {
+        Policy policy = policyDao.getPolicy(policyId);
+        if(policy == null){
+            String err = String.format("Policy with Id %s does not exist", policyId);
+            throw new NotFoundException(err);
+        }
+        return policy;
     }
 
     @Override
@@ -107,6 +118,7 @@ public class DefaultPolicyService implements PolicyService {
 
     @Override
     public void deletePolicy(String policyId) {
-        policyDao.deletePolicy(policyId);
+        Policy policy = checkAndGetPolicy(policyId);
+        policyDao.deletePolicy(policy.getPolicyId());
     }
 }

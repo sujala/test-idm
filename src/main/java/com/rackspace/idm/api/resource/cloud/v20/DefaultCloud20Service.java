@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
@@ -140,6 +141,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private PolicyConverterCloudV20 policyConverterCloudV20;
+
+    @Autowired
+    private PoliciesConverterCloudV20 policiesConverterCloudV20;
 
     @Autowired
     private DomainService domainService;
@@ -2324,7 +2328,11 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getPolicies(String authToken) {
-        return Response.ok();  //To change body of created methods use File | Settings | File Templates.
+        authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+        com.rackspace.idm.domain.entity.Policies savedPolicies = this.policyService.getPolicies();
+        com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory objectFactory = objFactories.getRackspaceIdentityExtRaxgaV1Factory();
+        Policies policies = policiesConverterCloudV20.toPolicies(savedPolicies);
+        return Response.ok().entity(objectFactory.createPolicies(policies));
     }
 
     @Override
@@ -2348,23 +2356,41 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getPolicy(String authToken, String policyId) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        try {
+            authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            com.rackspace.idm.domain.entity.Policy policyEnt = this.policyService.getPolicy(policyId);
+            com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory objectFactory = objFactories.getRackspaceIdentityExtRaxgaV1Factory();
+            Policy policy = policyConverterCloudV20.toPolicy(policyEnt);
+            return Response.ok().entity(objectFactory.createPolicy(policy).getValue());
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
     }
 
     @Override
     public ResponseBuilder updatePolicy(String authToken, String policyId, Policy policy) {
-        authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
-        com.rackspace.idm.domain.entity.Policy updatePolicy = this.policyConverterCloudV20.toPolicyDO(policy);
-        this.policyService.updatePolicy(updatePolicy, policyId);
-        com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory objectFactory = objFactories.getRackspaceIdentityExtRaxgaV1Factory();
-        Policy value = this.policyConverterCloudV20.toPolicy(updatePolicy);
-        return Response.ok().entity(objectFactory.createPolicy(value).getValue());
+        try {
+            authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            com.rackspace.idm.domain.entity.Policy updatePolicy = this.policyConverterCloudV20.toPolicyDO(policy);
+            this.policyService.updatePolicy(updatePolicy, policyId);
+            com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory objectFactory = objFactories.getRackspaceIdentityExtRaxgaV1Factory();
+            Policy value = this.policyConverterCloudV20.toPolicy(updatePolicy);
+            return Response.ok().entity(objectFactory.createPolicy(value).getValue());
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
 
     }
 
     @Override
     public ResponseBuilder deletePolicy(String authToken, String policyId) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        try {
+            authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            this.policyService.deletePolicy(policyId);
+            return Response.noContent();
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
     }
 
     public List<TenantRole> getRolesForScopeAccess(ScopeAccess scopeAccess) {
