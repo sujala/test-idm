@@ -27,7 +27,6 @@ public class LdapPolicyRepository extends LdapRepository implements PolicyDao {
     public static final String NULL_OR_EMPTY_POLICY_ID_PARAMETER = "Null or Empty policyId parameter";
     public static final String NULL_OR_EMPTY_POLICY_NAME_PARAMETER = "Null or Empty policy name parameter";
     public static final String ERROR_GETTING_POLICY_OBJECT = "Error getting policy object";
-    public static final String PARENT_UNIQUE_ID_CANNOT_BE_BLANK = "ParentUniqueId cannot be blank";
 
     public LdapPolicyRepository(LdapConnectionPools connPools, Configuration config) {
         super(connPools, config);
@@ -37,58 +36,21 @@ public class LdapPolicyRepository extends LdapRepository implements PolicyDao {
     @Override
     public void addPolicy(Policy policy) {
         if (policy == null) {
-            getLogger().error("Null instance of policy was passed");
-            throw new IllegalArgumentException("Null instance of policy was passed.");
+            getLogger().error(ERROR_GETTING_POLICY_OBJECT);
+            throw new IllegalArgumentException(ERROR_GETTING_POLICY_OBJECT);
         }
-
-        String policyDN = new LdapDnBuilder(POLICY_BASE_DN).addAttribute(ATTR_ID, policy.getPolicyId().toString()).build();
-
+        getLogger().info("Adding policy: {}", policy);
         Audit audit = Audit.log(policy).add();
-
-        Attribute[] attributes = getAddAttributes(policy);
-        addEntry(policyDN, attributes, audit);
-        audit.succeed();
-
-        getLogger().debug("Added policy {}", policy);
-    }
-
-    Attribute[] getAddAttributes(Policy policy) {
-
-        List<Attribute> atts = new ArrayList<Attribute>();
-
-        atts.add(new Attribute(ATTR_OBJECT_CLASS, ATTR_POLICY_OBJECT_CLASS_VALUES));
-
-        if (!StringUtils.isBlank(policy.getPolicyId().toString())) {
-            atts.add(new Attribute(ATTR_ID, policy.getPolicyId().toString()));
+        try {
+            final LDAPPersister<Policy> persister = LDAPPersister.getInstance(Policy.class);
+            persister.add(policy, getAppInterface(), POLICY_BASE_DN);
+            audit.succeed();
+            getLogger().info("Added policy: {}", policy);
+        } catch (final LDAPException e) {
+            getLogger().error("Error adding policy object", e);
+            audit.fail(e.getMessage());
+            throw new IllegalStateException(e);
         }
-
-        if (!StringUtils.isBlank(policy.getName())) {
-            atts.add(new Attribute(ATTR_NAME, policy.getName()));
-        }
-
-        if (!StringUtils.isBlank(policy.getDescription())) {
-            atts.add(new Attribute(ATTR_DESCRIPTION, policy.getDescription()));
-        }
-
-        if (!StringUtils.isBlank(policy.getBlob())) {
-            atts.add(new Attribute(ATTR_BLOB, policy.getBlob()));
-        }
-
-        if (!StringUtils.isBlank(policy.getPolicyType())) {
-            atts.add(new Attribute(ATTR_POLICYTYPE, policy.getPolicyType()));
-        }
-
-        if (policy.isEnabled() != null) {
-            atts.add(new Attribute(ATTR_ENABLED, String.valueOf(policy.isEnabled())));
-        }
-
-        if (policy.isGlobal() != null) {
-            atts.add(new Attribute(ATTR_GLOBAL, String.valueOf(policy.isGlobal())));
-        }
-
-        Attribute[] attributes = atts.toArray(new Attribute[0]);
-        getLogger().debug("Found {} attributes to add", attributes.length);
-        return attributes;
     }
 
     @Override

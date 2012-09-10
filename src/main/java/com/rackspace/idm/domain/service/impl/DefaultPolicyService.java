@@ -59,12 +59,6 @@ public class DefaultPolicyService implements PolicyService {
         if(StringUtils.isBlank(policy.getPolicyType())) {
             throw new BadRequestException(POLICY_TYPE_CANNOT_BE_NULL);
         }
-        if(policy.isEnabled() == null){
-            policy.setEnabled(false);
-        }
-        if(policy.isGlobal() == null){
-            policy.setGlobal(false);
-        }
         policy.setPolicyId(this.policyDao.getNextPolicyId());
         validateUniqueNamePolicy(policy.getName());
         logger.info("Adding Policy: {}", policy);

@@ -2335,7 +2335,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         com.rackspace.idm.domain.entity.Policies savedPolicies = this.policyService.getPolicies();
         com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory objectFactory = objFactories.getRackspaceIdentityExtRaxgaV1Factory();
         Policies policies = policiesConverterCloudV20.toPolicies(savedPolicies);
-        return Response.ok().entity(objectFactory.createPolicies(policies));
+        return Response.ok().entity(objectFactory.createPolicies(policies).getValue());
     }
 
     @Override
