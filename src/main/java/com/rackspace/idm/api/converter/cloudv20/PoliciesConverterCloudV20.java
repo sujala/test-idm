@@ -2,6 +2,7 @@ package com.rackspace.idm.api.converter.cloudv20;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PolicyAlgorithm;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +26,7 @@ public class PoliciesConverterCloudV20 {
 
     public Policies toPolicies(com.rackspace.idm.domain.entity.Policies policies) {
         Policies jaxbPolicies = objFactories.getRackspaceIdentityExtRaxgaV1Factory().createPolicies();
-        jaxbPolicies.setAlgorithm(policies.getAlgorithm());
+        jaxbPolicies.setAlgorithm(PolicyAlgorithm.IF_FALSE_DENY);
         for(com.rackspace.idm.domain.entity.Policy policy : policies.getPolicy()){
             Policy jaxbPolicy = policyConverterCloudV20.toPolicy(policy);
             jaxbPolicies.getPolicy().add(jaxbPolicy);
