@@ -375,6 +375,9 @@ public class DefaultCloud20Service implements Cloud20Service {
                 Users users;
                 User caller = userService.getUserByAuthToken(authToken);
                 String domainId = caller.getDomainId();
+                if(domainId == null){
+                    throw new BadRequestException("User-Admin does not have a Domain");
+                }
                 FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParamName.DOMAIN_ID, domainId)};
                 users = userService.getAllUsers(filters);
                 int numSubUsers = config.getInt("numberOfSubUsers");
