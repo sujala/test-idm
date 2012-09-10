@@ -66,9 +66,6 @@ public class JSONReaderForDomain implements MessageBodyReader<Domain> {
                 if (description != null) {
                     domain.setDescription(description.toString());
                 }
-                if (name != null) {
-                    domain.setName(name.toString());
-                }
             }
         } catch (Exception e) {
             throw new BadRequestException("Invalid json request body", e);

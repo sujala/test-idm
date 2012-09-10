@@ -1,5 +1,7 @@
 package com.rackspace.idm;
 
+import com.rsa.cryptoj.c.O;
+
 public final class JSONConstants {
 
     private JSONConstants() {}
@@ -109,4 +111,8 @@ public final class JSONConstants {
     public static final Object IMPERSONATION_EXPIRE_IN_SECONDS = "expire-in-seconds";
     public static final Object DOMAIN = "RAX-AUTH:domain";
     public static final Object DOMAIN_ID = "RAX-AUTH:domainId";
+    public static final Object POLICY = "RAX-AUTH:policy";
+    public static final Object POLICIES = "RAX-AUTH:policies";
+    public static final Object POLICIES_ALGORITHM = "algorithm";
+    public static final Object BLOB = "blob";
 }

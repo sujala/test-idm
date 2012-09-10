@@ -60,7 +60,8 @@ public class DefaultPolicyService implements PolicyService {
             throw new BadRequestException(POLICY_TYPE_CANNOT_BE_NULL);
         }
         policy.setPolicyId(this.policyDao.getNextPolicyId());
-        validateUniqueNamePolicy(policy.getName());
+        //Not doing unique name right now, maybe later.
+        //validateUniqueNamePolicy(policy.getName());
         logger.info("Adding Policy: {}", policy);
         policyDao.addPolicy(policy);
     }

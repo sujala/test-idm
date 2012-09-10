@@ -1,8 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
@@ -381,7 +379,17 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             JSONObject outer = new JSONObject();
             outer.put(JSONConstants.DOMAIN, getDomainWithoutWrapper(domain));
             jsonText = JSONValue.toJSONString(outer);
-        } else if(object.getClass().equals(AuthData.class)) {
+        } else if (object.getClass().equals(Policy.class)) {
+            Policy policy = (Policy) object;
+            JSONObject outer = new JSONObject();
+            outer.put(JSONConstants.POLICY, getPolicyWithoutWrapper(policy));
+            jsonText = JSONValue.toJSONString(outer);
+        } else if (object.getClass().equals(Policies.class)) {
+            Policies policies = (Policies) object;
+            JSONObject outer = new JSONObject();
+            outer.put(JSONConstants.POLICIES, getPoliciesWithoutWrapper(policies));
+            jsonText = JSONValue.toJSONString(outer);
+        }else if (object.getClass().equals(AuthData.class)) {
             JSONObject outer = new JSONObject();
             JSONObject inner = new JSONObject();
             AuthData authData = (AuthData) object;
@@ -517,6 +525,54 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             domainInner.put(JSONConstants.DESCRIPTION, domain.getDescription());
         }
         return domainInner;
+    }
+
+    @SuppressWarnings("unchecked")
+    JSONObject getPolicyWithoutWrapper(Policy policy) {
+        JSONObject policyInner = new JSONObject();
+        policyInner.put(JSONConstants.ID, policy.getId());
+        policyInner.put(JSONConstants.ENABLED, policy.isEnabled());
+        policyInner.put(JSONConstants.GLOBAL, policy.isGlobal());
+        policyInner.put(JSONConstants.BLOB, policy.getBlob());
+        if( policy.getType() != null){
+            policyInner.put(JSONConstants.TYPE, policy.getType());
+        }
+        if (policy.getName() != null) {
+            policyInner.put(JSONConstants.NAME, policy.getName());
+        }
+        if (policy.getDescription() != null) {
+            policyInner.put(JSONConstants.DESCRIPTION, policy.getDescription());
+        }
+        return policyInner;
+    }
+
+    @SuppressWarnings("unchecked")
+    JSONObject getPoliciesWithoutWrapper(Policies policies) {
+        JSONObject policyOuter = new JSONObject();
+        JSONArray policyInner = new JSONArray();
+        if(policies != null){
+            for(Policy policy : policies.getPolicy()){
+                JSONObject policySave = new JSONObject();
+                if(policy.getId() != null){
+                    policySave.put(JSONConstants.ID,policy.getId());
+                }
+                if(policy.getName() != null){
+                    policySave.put(JSONConstants.NAME, policy.getName());
+                }
+                if(policy.getType() != null){
+                    policySave.put(JSONConstants.TYPE, policy.getType());
+                }
+                policySave.put(JSONConstants.ENABLED, policy.isEnabled());
+                policySave.put(JSONConstants.GLOBAL, policy.isGlobal());
+
+                policyInner.add(policySave);
+            }
+        }
+        policyOuter.put(JSONConstants.POLICY, policyInner);
+        if (policies.getAlgorithm() != null) {
+            policyOuter.put(JSONConstants.POLICIES_ALGORITHM, policies.getAlgorithm().value());
+        }
+        return policyOuter;
     }
 
     @SuppressWarnings("unchecked")
