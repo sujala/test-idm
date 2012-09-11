@@ -785,7 +785,14 @@ public class DefaultCloud11Service implements Cloud11Service {
             }
             ScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), getCloudAuthClientId());
             List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(sa);
-            return Response.status(HttpServletResponse.SC_MOVED_PERMANENTLY).entity(OBJ_FACTORY.createUser(this.userConverterCloudV11.openstackToCloudV11User(user, endpoints)));
+
+            String newLocation = "/v1.1/users/" + user.getUsername();
+
+            return Response
+                .status(HttpServletResponse.SC_MOVED_PERMANENTLY)
+                .header("Location", newLocation)
+                .entity(OBJ_FACTORY.createUser(this.userConverterCloudV11.openstackToCloudV11User(user, endpoints)));
+
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }
@@ -806,7 +813,14 @@ public class DefaultCloud11Service implements Cloud11Service {
             }
             ScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), getCloudAuthClientId());
             List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(sa);
-            return Response.status(HttpServletResponse.SC_MOVED_PERMANENTLY).entity(OBJ_FACTORY.createUser(this.userConverterCloudV11.openstackToCloudV11User(user, endpoints)));
+
+            String newLocation = "/v1.1/users/" + user.getUsername();
+
+            return Response
+                .status(HttpServletResponse.SC_MOVED_PERMANENTLY)
+                .header("Location", newLocation)
+                .entity(OBJ_FACTORY.createUser(this.userConverterCloudV11.openstackToCloudV11User(user, endpoints)));
+
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }
