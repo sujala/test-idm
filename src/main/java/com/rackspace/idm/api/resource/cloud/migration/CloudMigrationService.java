@@ -845,6 +845,11 @@ public class CloudMigrationService {
         newTenant.setName(tenantId);
         newTenant.setEnabled(true);
         newTenant.setBaseUrlIds(baseUrls);
+        
+        if (v1Defaults != null && v1Defaults.length == 0) {
+        	v1Defaults = null;
+        }
+        
         newTenant.setV1Defaults(v1Defaults);
         tenantService.addTenant(newTenant);
     }
