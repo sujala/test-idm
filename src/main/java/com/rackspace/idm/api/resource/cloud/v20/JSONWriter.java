@@ -412,6 +412,11 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             inner.put(JSONConstants.TOKEN, getToken11(authData.getToken()));
             outer.put(JSONConstants.AUTH, inner);
             jsonText = JSONValue.toJSONString(outer);
+        } else if (object.getClass().equals(com.rackspacecloud.docs.auth.api.v1.ServiceCatalog.class)) {
+            com.rackspacecloud.docs.auth.api.v1.ServiceCatalog serviceCatalog = (com.rackspacecloud.docs.auth.api.v1.ServiceCatalog) object;
+            JSONObject outer = new JSONObject();
+            outer.put(JSONConstants.SERVICECATALOG, getServiceCatalog11(serviceCatalog));
+            jsonText = JSONValue.toJSONString(outer);
         } else {
             try {
                 getMarshaller().marshallToJSON(object, outputStream);

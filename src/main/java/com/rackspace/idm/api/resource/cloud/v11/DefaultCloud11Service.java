@@ -173,8 +173,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         try {
             authenticateCloudAdminUserForGetRequests(request);
 
-            String requestURL = request.getRequestURL().toString();
-            String versionBaseUrl = requestURL.substring(0, requestURL.lastIndexOf("/token/") + 1);
+            String versionBaseUrl = config.getString("cloud.user.ref.string") + "v1.1/";
 
             UserType userType = null;
 
