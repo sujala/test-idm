@@ -1,7 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest;
-import com.rackspace.idm.domain.config.JAXBXMLContextResolver;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import org.hamcrest.Matchers;
@@ -30,6 +29,10 @@ import static org.junit.Assert.assertThat;
  */
 public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJerseyTest {
 
+    static String userName = "kurtUserAdmin";
+    static String userId = "193346";
+    static String invalidTenant = "999999";
+    static String testDomain = "135792468";
 
     @Before
     public void setUp() throws Exception {
@@ -391,7 +394,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     @Test
     public void listUserGlobalRoles() throws Exception {
         String token = getAuthToken("hectorServiceAdmin", "Password1");
-        WebResource resource = resource().path("cloud/v2.0/users/10022622/roles");
+        WebResource resource = resource().path("cloud/v2.0/users/" + userId + "/roles");
         ClientResponse clientResponse = resource.header("X-Auth-Token", token).accept(MediaType.APPLICATION_XML_TYPE).get(ClientResponse.class);
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
     }
@@ -453,31 +456,49 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     }
 
     @Test
-    public void updateUser_withNewUsername_withUsernameAlreadyInUse_returns409() throws Exception {
+    public void updateUser_withNewUsernameEqualToOldUsername_returns200() throws Exception {
         String token = getAuthToken("hectorServiceAdmin", "Password1");
-        WebResource resource = resource().path("cloud/v2.0/users/10022622"); //kurtUserAdmin
+        WebResource resource = resource().path("cloud/v2.0/users/" + userId);
         ClientResponse clientResponse = resource.header("X-Auth-Token", token).type(MediaType.APPLICATION_JSON_TYPE).post(ClientResponse.class, "{\n" +
                 "  \"user\": {\n" +
-                "    \"id\": \"10022622\",\n" +
+                "    \"id\":\"" + userId + "\",\n" +
+                "    \"username\":\"kurUserAdmin\",\n" +
+                "    \"email\": \"testuser@example.org\"\n" +
+                "  }\n" +
+                "}");
+        assertThat("response code", clientResponse.getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void updateUser_withNewUsername_withUsernameAlreadyInUse_returns409() throws Exception {
+        String token = getAuthToken("hectorServiceAdmin", "Password1");
+        WebResource resource = resource().path("cloud/v2.0/users/" + userId);
+        ClientResponse clientResponse = resource.header("X-Auth-Token", token).type(MediaType.APPLICATION_JSON_TYPE).post(ClientResponse.class, "{\n" +
+                "  \"user\": {\n" +
+                "    \"id\":\"" + userId + "\",\n" +
                 "    \"username\": \"hectorServiceAdmin\",\n" +
-                "    \"email\": \"kurt@example.org\"\n" +
+                "    \"email\": \"testuser@example.org\"\n" +
                 "  }\n" +
                 "}");
         assertThat("response code", clientResponse.getStatus(), equalTo(409));
     }
 
     @Test
-    public void updateUser_withNewUsernameEqualToOldUsername_returns200() throws Exception {
+    public void getUsersByDomainId_invalidDomainId_returns404() throws Exception {
         String token = getAuthToken("hectorServiceAdmin", "Password1");
-        WebResource resource = resource().path("cloud/v2.0/users/10022622"); //kurtUserAdmin
-        ClientResponse clientResponse = resource.header("X-Auth-Token", token).type(MediaType.APPLICATION_JSON_TYPE).post(ClientResponse.class, "{\n" +
-                "  \"user\": {\n" +
-                "    \"id\": \"10022622\",\n" +
-                "    \"username\": \"kurtUserAdmin\",\n" +
-                "    \"email\": \"kurt@example.org\"\n" +
-                "  }\n" +
-                "}");
-        assertThat("response code", clientResponse.getStatus(), equalTo(200));
+        WebResource resource = resource().path("RAX-AUTH/domains/" + testDomain + "/users");
+        ClientResponse clientResponse = resource.header("X-Auth-Token", token).type(MediaType.APPLICATION_JSON_TYPE).get(ClientResponse.class);
+
+        assertThat("response code", clientResponse.getStatus(), equalTo(404));
+    }
+
+    @Test
+    public void addTenantToDomain_withInvalidTenantId_returns404() throws Exception {
+        String token = getAuthToken("hectorServiceAdmin", "Password1");
+        WebResource resource = resource().path("cloud/v2.0/RAX-AUTH/domains/" + testDomain + "/tenants/" + invalidTenant);
+        ClientResponse clientResponse = resource.header("X-Auth-Token", token).type(MediaType.APPLICATION_JSON_TYPE).put(ClientResponse.class);
+
+        assertThat("response code", clientResponse.getStatus(), equalTo(404));
     }
 
     private String getAuthToken(String username, String password) {
