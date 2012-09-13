@@ -101,6 +101,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     private TenantConverterCloudV20 tenantConverterCloudV20;
 
     @Autowired
+    private TenantService tenantService;
+
+    @Autowired
     private TokenConverterCloudV20 tokenConverterCloudV20;
 
     @Autowired
@@ -147,10 +150,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private PolicyService policyService;
-
-    @Autowired
-    private TenantService tenantService;
-
 
     private com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
 
@@ -1821,7 +1820,6 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder getUsersByDomainId(String authToken, String domainId) {
         authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
-        domainService.checkAndGetDomain(domainId);
         Users users = domainService.getUsersByDomainId(domainId);
         return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUsers(this.userConverterCloudV20.toUserList(users.getUsers())).getValue());
     }
@@ -1865,7 +1863,6 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder addTenantToDomain(String authToken, String domainId, String tenantId) {
         authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
-        tenantService.checkAndGetTenant(tenantId);
         domainService.addTenantToDomain(tenantId, domainId);
         return Response.noContent();
     }
@@ -1892,7 +1889,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
         com.rackspace.idm.domain.entity.Policy policyEntity = this.policyService.getPolicy(policyId);
-        endpointService.addPolicyToEndpoint(Integer.valueOf(endpointTemplateId), Integer.valueOf(policyEntity.getPolicyId()));
+        endpointService.addPolicyToEndpoint(Integer.valueOf(endpointTemplateId), policyEntity.getPolicyId());
         return Response.noContent();
     }
 
@@ -1900,7 +1897,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder deletePolicyToEndpointTemplate(String authToken, String endpointTemplateId, String policyId) {
         authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
-        endpointService.deletePolicyToEndpoint(Integer.valueOf(endpointTemplateId), Integer.valueOf(policyId));
+        endpointService.deletePolicyToEndpoint(Integer.valueOf(endpointTemplateId), policyId);
         return Response.noContent();
     }
 
@@ -2317,7 +2314,6 @@ public class DefaultCloud20Service implements Cloud20Service {
                     user = userService.getUserByScopeAccess(usa);
                     roles = getRolesForScopeAccess(sa);
                     validator20.validateTenantIdInRoles(tenantId, roles);
-                    access.setToken(tokenConverterCloudV20.toToken(sa, roles));
                     access.setUser(userConverterCloudV20.toUserForAuthenticateResponse(user, roles));
                 } else {
                     ImpersonatedScopeAccess isa = (ImpersonatedScopeAccess) sa;

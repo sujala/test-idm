@@ -5,7 +5,6 @@ import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.exception.BaseUrlConflictException;
 import com.rackspace.idm.exception.NotFoundException;
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import com.unboundid.ldap.sdk.*;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
@@ -441,7 +440,7 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
     }
 
 	@Override
-	public void addPolicyToEndpoint(int baseUrlId, int policyId) {
+	public void addPolicyToEndpoint(int baseUrlId, String policyId) {
         getLogger().debug("Adding Policy %s to baseUrl %s", policyId, baseUrlId);
 
         CloudBaseUrl baseUrl = getBaseUrlById(baseUrlId);
@@ -452,11 +451,9 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
             throw new NotFoundException(errMsg);
         }
 
-        String policy = String.valueOf(policyId);
-
-        if (!baseUrl.getPolicyList().contains(policy)) {
+        if (!baseUrl.getPolicyList().contains(policyId)) {
             List<Modification> mods = new ArrayList<Modification>();
-            mods.add(new Modification(ModificationType.ADD, ATTR_POLICY_ID, policy));
+            mods.add(new Modification(ModificationType.ADD, ATTR_POLICY_ID, policyId));
 
             Audit audit = Audit.log(baseUrl).modify(mods);
 
@@ -469,7 +466,7 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
 	}
 
 	@Override
-	public void deletePolicyFromEndpoint(int baseUrlId, int policyId) {
+	public void deletePolicyFromEndpoint(int baseUrlId, String policyId) {
         getLogger().debug("Deleting Policy %s to baseUrl %s", policyId, baseUrlId);
 
         CloudBaseUrl baseUrl = getBaseUrlById(baseUrlId);
@@ -480,16 +477,14 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
             throw new NotFoundException(errMsg);
         }
 
-        String policy = String.valueOf(policyId);
-
-        if (baseUrl.getPolicyList() == null || !baseUrl.getPolicyList().contains(policy)) {
+        if (baseUrl.getPolicyList() == null || !baseUrl.getPolicyList().contains(policyId)) {
             String errMsg = String.format("PolicyId %s not found", policyId);
             getLogger().error(errMsg);
             throw new NotFoundException(errMsg);
         }
 
         List<Modification> mods = new ArrayList<Modification>();
-        mods.add(new Modification(ModificationType.DELETE, ATTR_POLICY_ID, policy));
+        mods.add(new Modification(ModificationType.DELETE, ATTR_POLICY_ID, policyId));
 
         Audit audit = Audit.log(baseUrl).modify(mods);
 
