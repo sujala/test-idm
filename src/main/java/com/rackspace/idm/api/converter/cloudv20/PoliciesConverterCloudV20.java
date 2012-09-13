@@ -46,4 +46,8 @@ public class PoliciesConverterCloudV20 {
     public void setObjFactories(JAXBObjectFactories objFactories) {
         this.objFactories = objFactories;
     }
+
+    public void setPolicyConverter(PolicyConverterCloudV20 policyConverter) {
+        this.policyConverterCloudV20 = policyConverter;
+    }
 }

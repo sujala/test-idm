@@ -25,6 +25,7 @@ public class PolicyConverterCloudV20Test{
 
     PolicyConverterCloudV20 policyConverterCloudV20;
     JAXBObjectFactories objectFactories;
+    private final ObjectFactory rackspaceIdentityExtRaxgaV1Factory = mock(ObjectFactory.class);
 
     @Before
     public void setUp() throws Exception {
@@ -54,7 +55,7 @@ public class PolicyConverterCloudV20Test{
         assertThat("check policy", policyDO.getName(),equalTo("name"));
         assertThat("check policy", policyDO.getBlob(),equalTo("blob"));
         assertThat("check policy", policyDO.getPolicyType(),equalTo("type"));
-        assertThat("check policy", policyDO.getDescription(),equalTo("Des"));
+        assertThat("check policy", policyDO.getDescription(),equalTo("des"));
         assertThat("check policy", policyDO.isEnabled(),equalTo(true));
         assertThat("check policy", policyDO.isGlobal(),equalTo(false));
     }
@@ -80,7 +81,7 @@ public class PolicyConverterCloudV20Test{
         com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy policy = new com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy();
         policy.setId("1");
         policy.setBlob("blob");
-        policy.setDescription("Des");
+        policy.setDescription("des");
         policy.setEnabled(true);
         policy.setGlobal(false);
         policy.setName("name");
