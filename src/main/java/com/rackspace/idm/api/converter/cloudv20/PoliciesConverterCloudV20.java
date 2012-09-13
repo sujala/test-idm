@@ -22,7 +22,6 @@ public class PoliciesConverterCloudV20 {
     private JAXBObjectFactories objFactories;
     @Autowired
     private PolicyConverterCloudV20 policyConverterCloudV20;
-    private Logger logger = LoggerFactory.getLogger(PoliciesConverterCloudV20.class);
 
     public Policies toPolicies(com.rackspace.idm.domain.entity.Policies policies) {
         Policies jaxbPolicies = objFactories.getRackspaceIdentityExtRaxgaV1Factory().createPolicies();

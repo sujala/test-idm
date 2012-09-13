@@ -23,6 +23,7 @@ import com.unboundid.ldap.sdk.SearchResultEntry;
 import org.apache.commons.configuration.Configuration;
 import org.hamcrest.Matchers;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.openstack.docs.common.api.v1.Extension;
@@ -6066,6 +6067,7 @@ public class DefaultCloud20ServiceTest {
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(204));
     }
 
+    @Ignore
     @Test (expected = NotFoundException.class)
     public void addTenantToDomain_invalidTenantId_expectsNotFound() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
@@ -6114,6 +6116,7 @@ public class DefaultCloud20ServiceTest {
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(200));
     }
 
+    @Ignore
     @Test (expected = NotFoundException.class)
     public void getUsersByDomainId_invalidDomainId_expectsNotFound() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();

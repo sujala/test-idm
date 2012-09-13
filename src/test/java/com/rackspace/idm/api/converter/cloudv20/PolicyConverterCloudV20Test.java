@@ -25,7 +25,6 @@ public class PolicyConverterCloudV20Test{
 
     PolicyConverterCloudV20 policyConverterCloudV20;
     JAXBObjectFactories objectFactories;
-    private final ObjectFactory rackspaceIdentityExtRaxgaV1Factory = mock(ObjectFactory.class);
 
     @Before
     public void setUp() throws Exception {

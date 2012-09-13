@@ -19,7 +19,6 @@ import org.springframework.stereotype.Component;
 public class PolicyConverterCloudV20 {
     @Autowired
     private JAXBObjectFactories objFactories;
-    private Logger logger = LoggerFactory.getLogger(PolicyConverterCloudV20.class);
 
     public Policy toPolicy(com.rackspace.idm.domain.entity.Policy policy) {
         Policy jaxbPolicy = objFactories.getRackspaceIdentityExtRaxgaV1Factory().createPolicy();
