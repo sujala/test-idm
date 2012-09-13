@@ -1802,6 +1802,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder getDomainTenants(String authToken, String domainId, String enabled) {
         authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+        domainService.checkAndGetDomain(domainId);
         List<Tenant> tenants = tenantService.getTenantsByDomainId(domainId);
         return Response.ok(objFactories.getOpenStackIdentityV2Factory().createTenants(tenantConverterCloudV20.toTenantList(tenants)).getValue());
     }
@@ -1817,6 +1818,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder addUserToDomain(String authToken, String domainId, String userId) {
         authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+        domainService.checkAndGetDomain(domainId);
         User userDO = userService.checkAndGetUserById(userId);
         if (isAdminOrServiceAdmin(userDO)) {
             throw new ForbiddenException("Cannot add domains to admins or service-admins.");

@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest;
+import com.rackspace.idm.domain.service.UserService;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import org.hamcrest.Matchers;
@@ -29,10 +30,12 @@ import static org.junit.Assert.assertThat;
  */
 public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJerseyTest {
 
+    private UserService userService;
     static String userName = "kurtUserAdmin";
-    static String userId = "193346";
+    String userId = userService.getUser(userName).getId();
     static String invalidTenant = "999999";
     static String testDomain = "135792468";
+    static String invalidDomain = "999999";
 
     @Before
     public void setUp() throws Exception {
@@ -499,6 +502,24 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
         ClientResponse clientResponse = resource.header("X-Auth-Token", token).type(MediaType.APPLICATION_JSON_TYPE).put(ClientResponse.class);
 
         assertThat("response code", clientResponse.getStatus(), equalTo(404));
+    }
+
+    @Test
+    public void getTenantDomain_withInvalidDomain_returns404() throws Exception {
+        String token = getAuthToken("hectorServiceAdmin", "Password1");
+        WebResource resource = resource().path("cloud/v2.0/RAX-AUTH/domains/" + invalidDomain + "/tenants");
+        ClientResponse clientResponse = resource.header("X-Auth-Token", token).type(MediaType.APPLICATION_JSON_TYPE).get(ClientResponse.class);
+
+        assertThat("response code", clientResponse.getStatus(), equalTo(404));
+    }
+
+    @Test
+    public void getTenantDomain_validDomain_returns200() throws Exception {
+        String token = getAuthToken("hectorServiceAdmin", "Password1");
+        WebResource resource = resource().path("cloud/v2.0/RAX-AUTH/domains/" + testDomain + "/tenants");
+        ClientResponse clientResponse = resource.header("X-Auth-Token", token).type(MediaType.APPLICATION_JSON_TYPE).get(ClientResponse.class);
+
+        assertThat("response code", clientResponse.getStatus(), equalTo(200));
     }
 
     private String getAuthToken(String username, String password) {
