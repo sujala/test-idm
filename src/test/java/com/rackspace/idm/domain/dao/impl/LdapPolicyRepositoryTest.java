@@ -159,18 +159,4 @@ public class LdapPolicyRepositoryTest{
         List<Modification> mod = ldapPolicyRepository.getModifications(oldPolicy,newPolicy);
         assertThat("Check Modification",mod.size(),equalTo(6));
     }
-
-    @Test
-    public void getEntryPolicy_returnPolicyPolicy() throws Exception {
-        SearchResultEntry entry = mock(SearchResultEntry.class);
-        entry.setAttribute(LdapRepository.ATTR_NAME,"name");
-        entry.setAttribute(LdapRepository.ATTR_POLICYTYPE,"type");
-        entry.setAttribute(LdapRepository.ATTR_BLOB,"blob");
-        entry.setAttribute(LdapRepository.ATTR_DESCRIPTION,"des");
-        entry.setAttribute(LdapRepository.ATTR_ENABLED,"true");
-        entry.setAttribute(LdapRepository.ATTR_GLOBAL,"false");
-        entry.setAttribute(LdapRepository.ATTR_ID,"1234");
-        Policy policy = ldapPolicyRepository.getEntryPolicy(entry);
-        assertThat("Entry Policy", policy.getName(),equalTo("name"));
-    }
 }

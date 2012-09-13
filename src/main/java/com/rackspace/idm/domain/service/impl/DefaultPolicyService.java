@@ -26,7 +26,6 @@ public class DefaultPolicyService implements PolicyService {
     private Configuration config;
 
     public static final String POLICY_CANNOT_BE_NULL = "Policy cannot be null";
-    public static final String POLICY_ID_CANNOT_BE_NULL = "Policy ID cannot be null";
     public static final String POLICY_NAME_CANNOT_BE_NULL = "Policy name cannot be null or empty";
     public static final String POLICY_BLOB_CANNOT_BE_NULL = "Policy Blob cannot be null";
     public static final String POLICY_TYPE_CANNOT_BE_NULL = "Policy type cannot be null";
