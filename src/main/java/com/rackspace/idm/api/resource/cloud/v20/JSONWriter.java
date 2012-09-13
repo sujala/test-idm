@@ -368,6 +368,26 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             outer.put(JSONConstants.USER, inner);
             jsonText = JSONValue.toJSONString(outer);
 
+        } else if (object.getClass().equals(BaseURLRefList.class)) {
+
+            BaseURLRefList baseList = (BaseURLRefList) object;
+
+            JSONObject outer = new JSONObject();
+            JSONArray baseUrls = new JSONArray();
+
+            if (baseList != null) {
+                for (BaseURLRef url : baseList.getBaseURLRef()) {
+                    JSONObject urlItem = new JSONObject();
+                    urlItem.put(JSONConstants.ID, url.getId());
+                    urlItem.put(JSONConstants.HREF, url.getHref());
+                    urlItem.put(JSONConstants.V1_DEFAULT, url.isV1Default());
+                    baseUrls.add(urlItem);
+                }
+            }
+
+            outer.put(JSONConstants.BASE_URL_REFS, baseUrls);
+            jsonText = JSONValue.toJSONString(outer);
+            
         } else if (object.getClass().equals(User.class)) {
             User user = (User) object;
             JSONObject outer = new JSONObject();
@@ -399,6 +419,11 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             }
             inner.put(JSONConstants.TOKEN, getToken11(authData.getToken()));
             outer.put(JSONConstants.AUTH, inner);
+            jsonText = JSONValue.toJSONString(outer);
+        } else if (object.getClass().equals(com.rackspacecloud.docs.auth.api.v1.ServiceCatalog.class)) {
+            com.rackspacecloud.docs.auth.api.v1.ServiceCatalog serviceCatalog = (com.rackspacecloud.docs.auth.api.v1.ServiceCatalog) object;
+            JSONObject outer = new JSONObject();
+            outer.put(JSONConstants.SERVICECATALOG, getServiceCatalog11(serviceCatalog));
             jsonText = JSONValue.toJSONString(outer);
         } else {
             try {
@@ -494,6 +519,18 @@ public class JSONWriter implements MessageBodyWriter<Object> {
                 roleInner.add(getRole(role));
             }
         }
+        
+        if (user.getOtherAttributes().size() != 0) {
+            String defaultRegion = user.getOtherAttributes().get(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "defaultRegion"));
+            if (!StringUtils.isEmpty(defaultRegion)) {
+            	userInner.put(JSONConstants.RAX_AUTH_DEFAULT_REGION, defaultRegion);
+            } else {
+            	userInner.put(JSONConstants.RAX_AUTH_DEFAULT_REGION, "");
+            }
+        } else {
+        	userInner.put(JSONConstants.RAX_AUTH_DEFAULT_REGION, "");
+        }
+        
         return userInner;
     }
 
@@ -738,7 +775,9 @@ public class JSONWriter implements MessageBodyWriter<Object> {
         JSONObject outer = new JSONObject();
         outer.put(JSONConstants.ID, user.getId());
         outer.put(JSONConstants.USERNAME, user.getUsername());
-        outer.put(JSONConstants.EMAIL, user.getEmail());
+        if (user.getEmail() != null) {
+            outer.put(JSONConstants.EMAIL, user.getEmail());
+        }
         outer.put(JSONConstants.ENABLED, user.isEnabled());
         if (user instanceof UserForCreate && ((UserForCreate) user).getPassword() != null) {
             outer.put(JSONConstants.OS_KSADM_PASSWORD, ((UserForCreate) user).getPassword());
@@ -755,6 +794,8 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             String defaultRegion = user.getOtherAttributes().get(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "defaultRegion"));
             if (!StringUtils.isEmpty(defaultRegion)) {
                 outer.put(JSONConstants.RAX_AUTH_DEFAULT_REGION, defaultRegion);
+            } else {
+                outer.put(JSONConstants.RAX_AUTH_DEFAULT_REGION, "");
             }
             String password = user.getOtherAttributes().get(new QName("http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0", "password"));
             if (!StringUtils.isEmpty(password)) {

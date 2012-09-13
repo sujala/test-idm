@@ -1027,7 +1027,7 @@ public class JSONWriterTest {
         JSONObject result = spy.getTokenUser(userForAuthenticateResponse);
         String jsonText = JSONValue.toJSONString(result);
         myOut.write(jsonText.getBytes());
-        assertThat("string", myOut.toString(), equalTo("{\"id\":null,\"roles\":[{\"success\":\"This test worked!\"},{\"success\":\"This test worked!\"}],\"name\":\"John Smith\"}"));
+        assertThat("string", myOut.toString(), equalTo("{\"id\":null,\"roles\":[{\"success\":\"This test worked!\"},{\"success\":\"This test worked!\"}],\"name\":\"John Smith\",\"RAX-AUTH:defaultRegion\":\"\"}"));
     }
 
     @Test
@@ -1050,7 +1050,7 @@ public class JSONWriterTest {
         JSONObject result = spy.getTokenUser(userForAuthenticateResponse);
         String jsonText = JSONValue.toJSONString(result);
         myOut.write(jsonText.getBytes());
-        assertThat("string", myOut.toString(), equalTo("{\"id\":null,\"roles\":[{\"success\":\"This test worked!\"},{\"success\":\"This test worked!\"}]}"));
+        assertThat("string", myOut.toString(), equalTo("{\"id\":null,\"roles\":[{\"success\":\"This test worked!\"},{\"success\":\"This test worked!\"}],\"RAX-AUTH:defaultRegion\":\"\"}"));
     }
 
     @Test
@@ -1068,7 +1068,7 @@ public class JSONWriterTest {
         JSONObject result = writer.getTokenUser(userForAuthenticateResponse);
         String jsonText = JSONValue.toJSONString(result);
         myOut.write(jsonText.getBytes());
-        assertThat("string", myOut.toString(), equalTo("{\"id\":null,\"roles\":[],\"name\":\"John Smith\"}"));
+        assertThat("string", myOut.toString(), equalTo("{\"id\":null,\"roles\":[],\"name\":\"John Smith\",\"RAX-AUTH:defaultRegion\":\"\"}"));
     }
 
     @Test
@@ -1083,7 +1083,7 @@ public class JSONWriterTest {
         JSONObject result = writer.getTokenUser(userForAuthenticateResponse);
         String jsonText = JSONValue.toJSONString(result);
         myOut.write(jsonText.getBytes());
-        assertThat("string", myOut.toString(), equalTo("{\"id\":null,\"roles\":[],\"name\":\"John Smith\"}"));
+        assertThat("string", myOut.toString(), equalTo("{\"id\":null,\"roles\":[],\"name\":\"John Smith\",\"RAX-AUTH:defaultRegion\":\"\"}"));
     }
 
     @Test
@@ -1523,7 +1523,7 @@ public class JSONWriterTest {
         myOut.write(jsonText.getBytes());
         assertThat("user", myOut.toString().startsWith("{\"id\":\"10019805\",\"enabled\":true,\"username\":\"kurt\",\"updated\":\"0001-02-01T00:00:00.000-"), equalTo(true));
         assertThat("user", myOut.toString().contains("\",\"created\":\"0001-02-01T00:00:00.000-"), equalTo(true));
-        assertThat("user", myOut.toString().endsWith("\"email\":\"myEmail\"}"), equalTo(true));
+        assertThat("user", myOut.toString().endsWith("\"email\":\"myEmail\",\"RAX-AUTH:defaultRegion\":\"\"}"), equalTo(true));
     }
 
     @Test
@@ -2571,7 +2571,7 @@ public class JSONWriterTest {
 
         final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
         writer.writeTo(authenticateResponse, AuthenticateResponse.class, null, null, null, null, myOut);
-        Assert.assertEquals("{\"access\":{\"token\":{\"id\":\"id\",\"expires\":\"2012-01-01\",\"tenant\":{\"id\":\"id\",\"name\":\"name\"}},\"serviceCatalog\":[],\"user\":{\"id\":\"id\",\"roles\":[],\"name\":\"name\"}}}", myOut.toString());
+        Assert.assertEquals("{\"access\":{\"token\":{\"id\":\"id\",\"expires\":\"2012-01-01\",\"tenant\":{\"id\":\"id\",\"name\":\"name\"}},\"serviceCatalog\":[],\"user\":{\"id\":\"id\",\"roles\":[],\"name\":\"name\",\"RAX-AUTH:defaultRegion\":\"\"}}}", myOut.toString());
     }
 
     @Test
