@@ -6055,4 +6055,73 @@ public class DefaultCloud20ServiceTest {
         defaultCloud20Service.deleteDomain(authToken, null);
         verify(exceptionHandler).exceptionResponse(any(BadRequestException.class));
     }
+
+    @Test
+    public void addTenantToDomain_validTenantId() {
+        ScopeAccess scopeAccess = new ScopeAccess();
+
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.addTenantToDomain(authToken, "135792468", "999999");
+        assertThat("response status", responseBuilder.build().getStatus(), equalTo(204));
+    }
+
+    @Test (expected = NotFoundException.class)
+    public void addTenantToDomain_invalidTenantId_expectsNotFound() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        NotFoundException exception = new NotFoundException();
+
+        doThrow(exception).when(tenantService).checkAndGetTenant("9999999");
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+
+        defaultCloud20Service.addTenantToDomain(authToken, "135792468", "9999999");
+    }
+
+    @Test
+    public void getDomainTenants_validDomainId() {
+        ScopeAccess scopeAccess = new ScopeAccess();
+
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.getDomainTenants(authToken, "135792468", "999999");
+        assertThat("response status", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test (expected = NotFoundException.class)
+    public void getDomainTenants_invalidDomainId_expectsNotFound() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        NotFoundException exception = new NotFoundException();
+
+        doThrow(exception).when(domainService).checkAndGetDomain("135792468");
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+
+        defaultCloud20Service.getDomainTenants(authToken, "135792468", "true");
+    }
+
+    @Test
+    public void getUsersByDomainId_validDomainId() {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        List<User> userList = new ArrayList<User>();
+        User user = new User();
+        userList.add(user);
+        Users users = new Users();
+        users.setUsers(userList);
+
+        doReturn(users).when(domainService).getUsersByDomainId("135792468");
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.getUsersByDomainId(authToken, "135792468");
+        assertThat("response status", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test (expected = NotFoundException.class)
+    public void getUsersByDomainId_invalidDomainId_expectsNotFound() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        NotFoundException exception = new NotFoundException();
+
+        doThrow(exception).when(domainService).checkAndGetDomain("135792468");
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+
+        defaultCloud20Service.getUsersByDomainId(authToken, "135792468");
+    }
 }
