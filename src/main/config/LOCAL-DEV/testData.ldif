@@ -46,7 +46,7 @@ objectClass: inetOrgPerson
 objectClass: top
 cn: devops_user
 sn: devops_user
-description: Mon Sep 10 18:20:02 2012 Batch account
+description: Tue Sep 11 11:50:02 2012 Batch account
 uid: devops_user
 userPassword:: e1NTSEE1MTJ9UDRSQlVDSmN5MGVmMHNteFZBNUYxaEU2Z1oyaCtxdEg3bFFVS
  zR5MHpSaXhWTG5VOG5ORm5vb3huNnZEa0ltOHd2Kzg5QUUycHVMWG8rcVpmZXdEVG1PMWFrZz0=
@@ -60,6 +60,48 @@ dn: ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: organizationalUnit
 ou: users
+
+dn: rsId=10042917,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPerson
+rsId: 10042917
+clearPassword:: snnmOckJY2mx+8HetOWQww==
+enabled: TRUE
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20120911152510.862Z
+rsDisplayName:: toc7qqdeVCkX1sO10/+DZg==
+rsMail:: 4i7LTv+XXeaFIxwOWaLQj9I3QuOnETlRvsRy7/OtgsE=
+uid: adminD
+userPassword:: e1NTSEE1MTJ9VVZ3c1ZaaFI4c3pzWVB3MWdIYkNnS3h1Zkl3eWErWGkvL1MxM
+ DQ5Y2NCMmd2bnIzTHVaNGtyK1J6WVFxdUtQUzFjRSttdWFkclFwV0xPb2I0eWhVbE1LVklmVT0=
+
+dn: cn=DIRECT TOKENS,rsId=10042917,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: DIRECT TOKENS
+
+dn: clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,cn=DIRECT TOKENS,rsId=
+ 10042917,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: userScopeAccess
+objectClass: scopeAccess
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+userRsId: 10042917
+clientRCN: RACKSPACE
+uid: adminD
+
+dn: roleRsId=4,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,cn=DIRECT T
+ OKENS,rsId=10042917,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: tenantRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+roleRsId: 4
+
+dn: clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,cn=DIRECT TOKENS,rsId=
+ 10042917,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: userScopeAccess
+objectClass: scopeAccess
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+userRsId: 10042917
+clientRCN: RACKSPACE
+uid: adminD
 
 dn: rsId=10036440,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -8835,8 +8877,8 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 userRsId: 104476
-accessToken: 335f5581-a47d-44a0-844f-084805a3771f
-accessTokenExp: 20120905174357.203Z
+accessToken: 5553beb9-5b21-4c67-b75f-c9e2ca06da48
+accessTokenExp: 20120912140357Z
 clientRCN: RACKSPACE
 uid: cmarin3
 userRCN: RACKSPACE
@@ -8920,8 +8962,8 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 userRsId: 104472
-accessToken: f9a69987-6c2c-4fa9-871a-c18eb648e947
-accessTokenExp: 20120905152921Z
+accessToken: 663679b6-1933-42bc-9600-1d0022411c44
+accessTokenExp: 20120912140727Z
 clientRCN: RACKSPACE
 uid: cmarin2
 userRCN: RACKSPACE
@@ -12842,8 +12884,8 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 userRsId: 3
-accessToken: 5ec00880b4ff40e7bee9faacaa402ec1
-accessTokenExp: 20120911070229.081Z
+accessToken: 432d9d5a81214fcb89b9a89e34606dc1
+accessTokenExp: 20120912070224.685Z
 clientRCN: RACKSPACE
 uid: jmunoz
 
@@ -12962,8 +13004,8 @@ objectClass: scopeAccess
 objectClass: userScopeAccess
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 userRsId: 173189
-accessToken: 877c8f017f35422db737f5ce207e086f
-accessTokenExp: 20120911141126.335Z
+accessToken: b2054271-2741-42ce-866a-5cd2448c7ec1
+accessTokenExp: 20120912115023Z
 clientRCN: RACKSPACE
 uid: auth
 userRCN: RACKSPACE
@@ -13991,13 +14033,13 @@ dn: cn=nextUserId,ou=nextIds,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsNextId
 cn: nextUserId
-rsId: 10042878
+rsId: 10042918
 
 dn: cn=nextRoleId,ou=nextIds,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: rsNextId
 cn: nextRoleId
-rsId: 10017422
+rsId: 10017449
 
 dn: cn=nextCustomerId,ou=nextIds,o=rackspace,dc=rackspace,dc=com
 objectClass: top
@@ -17376,6 +17418,13 @@ dn: ou=domains,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: organizationalUnit
 ou: domains
+
+dn: rsId=6800100,ou=domains,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsDomain
+cn: TestDomain
+enabled: TRUE
+rsId: 6800100
+description: Create a new domain in json
 
 dn: rsId=6800102,ou=domains,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: rsDomain
@@ -24998,82 +25047,4 @@ baseUrlId: 3
 baseUrlId: 11
 baseUrlId: 7
 tenantDisplayName: StagingUS_19f87a4a-d502-4f70-b83e-6f0537854b1d
-
-dn: rsId=StagingUS_b7363060-c0ab-4a4f-b1f8-796c32e6fdf8,ou=tenants,ou=cloud,
- o=rackspace,dc=rackspace,dc=com
-objectClass: tenant
-cn: StagingUS_b7363060-c0ab-4a4f-b1f8-796c32e6fdf8
-enabled: TRUE
-rsId: StagingUS_b7363060-c0ab-4a4f-b1f8-796c32e6fdf8
-baseUrlId: 1013
-baseUrlId: 3
-baseUrlId: 7
-baseUrlId: 9
-baseUrlId: 11
-tenantDisplayName: StagingUS_b7363060-c0ab-4a4f-b1f8-796c32e6fdf8
-
-dn: rsId=StagingUS_6922eeb8-625a-4d56-946c-9f68dd6bbe03,ou=tenants,ou=cloud,
- o=rackspace,dc=rackspace,dc=com
-objectClass: tenant
-cn: StagingUS_6922eeb8-625a-4d56-946c-9f68dd6bbe03
-enabled: TRUE
-rsId: StagingUS_6922eeb8-625a-4d56-946c-9f68dd6bbe03
-baseUrlId: 9
-baseUrlId: 11
-baseUrlId: 1013
-baseUrlId: 3
-baseUrlId: 7
-tenantDisplayName: StagingUS_6922eeb8-625a-4d56-946c-9f68dd6bbe03
-
-dn: rsId=StagingUS_5bdaefc1-b96d-4a58-8329-50b313842b08,ou=tenants,ou=cloud,
- o=rackspace,dc=rackspace,dc=com
-objectClass: tenant
-cn: StagingUS_5bdaefc1-b96d-4a58-8329-50b313842b08
-enabled: TRUE
-rsId: StagingUS_5bdaefc1-b96d-4a58-8329-50b313842b08
-baseUrlId: 1013
-baseUrlId: 3
-baseUrlId: 7
-baseUrlId: 9
-baseUrlId: 11
-tenantDisplayName: StagingUS_5bdaefc1-b96d-4a58-8329-50b313842b08
-
-dn: rsId=StagingUS_a8ac0977-9cbc-4c92-9df9-f4c1030b52e7,ou=tenants,ou=cloud,
- o=rackspace,dc=rackspace,dc=com
-objectClass: tenant
-cn: StagingUS_a8ac0977-9cbc-4c92-9df9-f4c1030b52e7
-enabled: TRUE
-rsId: StagingUS_a8ac0977-9cbc-4c92-9df9-f4c1030b52e7
-baseUrlId: 1013
-baseUrlId: 3
-baseUrlId: 7
-baseUrlId: 9
-baseUrlId: 11
-tenantDisplayName: StagingUS_a8ac0977-9cbc-4c92-9df9-f4c1030b52e7
-
-dn: rsId=StagingUS_1db95ffb-b12f-4f12-b4af-0cc4ec84c292,ou=tenants,ou=cloud,
- o=rackspace,dc=rackspace,dc=com
-objectClass: tenant
-cn: StagingUS_1db95ffb-b12f-4f12-b4af-0cc4ec84c292
-enabled: TRUE
-rsId: StagingUS_1db95ffb-b12f-4f12-b4af-0cc4ec84c292
-baseUrlId: 9
-baseUrlId: 11
-baseUrlId: 3
-baseUrlId: 1013
-baseUrlId: 7
-tenantDisplayName: StagingUS_1db95ffb-b12f-4f12-b4af-0cc4ec84c292
-
-dn: rsId=StagingUS_572660b4-b70f-4817-a85c-5c7a6d81503a,ou=tenants,ou=cloud,
- o=rackspace,dc=rackspace,dc=com
-objectClass: tenant
-cn: StagingUS_572660b4-b70f-4817-a85c-5c7a6d81503a
-enabled: TRUE
-rsId: StagingUS_572660b4-b70f-4817-a85c-5c7a6d81503a
-baseUrlId: 1013
-baseUrlId: 3
-baseUrlId: 7
-baseUrlId: 9
-baseUrlId: 11
-tenantDisplayName: StagingUS_572660b4-b70f-4817-a85c-5c7a6d81503a
 

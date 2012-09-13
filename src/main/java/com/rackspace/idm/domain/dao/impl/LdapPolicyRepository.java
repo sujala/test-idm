@@ -23,14 +23,12 @@ import java.util.List;
  */
 public class LdapPolicyRepository extends LdapRepository implements PolicyDao {
 
-    private final Configuration config;
     public static final String NULL_OR_EMPTY_POLICY_ID_PARAMETER = "Null or Empty policyId parameter";
     public static final String NULL_OR_EMPTY_POLICY_NAME_PARAMETER = "Null or Empty policy name parameter";
     public static final String ERROR_GETTING_POLICY_OBJECT = "Error getting policy object";
 
     public LdapPolicyRepository(LdapConnectionPools connPools, Configuration config) {
         super(connPools, config);
-        this.config = config;
     }
 
     @Override
