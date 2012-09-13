@@ -35,7 +35,7 @@ public interface EndpointService {
 
     void updateBaseUrl(CloudBaseUrl baseUrl);
 
-	void addPolicyToEndpoint(int baseUrlId, int policyId);
+	void addPolicyToEndpoint(int baseUrlId, String policyId);
 
-	void deletePolicyToEndpoint(int baseUrlId, int policyId);
+	void deletePolicyToEndpoint(int baseUrlId, String policyId);
 }

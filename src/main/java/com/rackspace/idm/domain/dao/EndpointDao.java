@@ -30,7 +30,7 @@ public interface EndpointDao {
 
     void updateCloudBaseUrl(CloudBaseUrl cloudBaseUrl);
 
-    void addPolicyToEndpoint(int baseUrlId, int policyId);
+    void addPolicyToEndpoint(int baseUrlId, String policyId);
 
-    void deletePolicyFromEndpoint(int baseUrlId, int policyId);
+    void deletePolicyFromEndpoint(int baseUrlId, String policyId);
 }
