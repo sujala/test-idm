@@ -128,7 +128,7 @@ public class LdapPolicyRepository extends LdapRepository implements PolicyDao {
         getLogger().info("Updated policy - {}", policy);
     }
 
-    private List<Modification> getModifications(Policy oldPolicy, Policy newPolicy) {
+    List<Modification> getModifications(Policy oldPolicy, Policy newPolicy) {
         List<Modification> mods = new ArrayList<Modification>();
 
         if (newPolicy.getName() != null && !newPolicy.getName().equals(oldPolicy.getName())) {
@@ -210,7 +210,7 @@ public class LdapPolicyRepository extends LdapRepository implements PolicyDao {
         return policies;
     }
 
-    private Policy getEntryPolicy(SearchResultEntry entry) {
+    Policy getEntryPolicy(SearchResultEntry entry) {
         getLogger().debug("Inside getEntryPolicy");
         Policy policy = new Policy();
         policy.setPolicyType(entry.getAttributeValue(ATTR_POLICYTYPE));

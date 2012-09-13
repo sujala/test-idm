@@ -4,11 +4,15 @@ import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.entity.Policy;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.LDAPInterface;
+import com.unboundid.ldap.sdk.Modification;
+import com.unboundid.ldap.sdk.SearchResultEntry;
 import junit.framework.TestCase;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Matchers;
+
+import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -117,5 +121,56 @@ public class LdapPolicyRepositoryTest{
         verify(spy,times(4)).getLogger();
     }
 
+    @Test
+    public void listModifications_noDifferences() throws Exception {
+        Policy oldPolicy = new Policy();
+        oldPolicy.setDescription("someDes");
+        oldPolicy.setEnabled(true);
+        oldPolicy.setGlobal(false);
+        oldPolicy.setName("name");
+        oldPolicy.setBlob("blob");
+        oldPolicy.setPolicyType("type");
+        oldPolicy.setPolicyId("2");
+        Policy newPolicy = new Policy();
+        newPolicy.setDescription("someDes");
+        newPolicy.setName("name");
+        List<Modification> mod = ldapPolicyRepository.getModifications(oldPolicy,newPolicy);
+        assertThat("Check Modification",mod.size(),equalTo(0));
+    }
 
+    @Test
+    public void listModifications_someDifferences() throws Exception {
+        Policy oldPolicy = new Policy();
+        oldPolicy.setDescription("someDes");
+        oldPolicy.setEnabled(true);
+        oldPolicy.setGlobal(false);
+        oldPolicy.setName("name");
+        oldPolicy.setBlob("blob");
+        oldPolicy.setPolicyType("type");
+        oldPolicy.setPolicyId("2");
+        Policy newPolicy = new Policy();
+        newPolicy.setDescription("newDes");
+        newPolicy.setName("newName");
+        newPolicy.setGlobal(true);
+        newPolicy.setEnabled(false);
+        newPolicy.setBlob("newBlob");
+        newPolicy.setPolicyId("2");
+        newPolicy.setPolicyType("newType");
+        List<Modification> mod = ldapPolicyRepository.getModifications(oldPolicy,newPolicy);
+        assertThat("Check Modification",mod.size(),equalTo(6));
+    }
+
+    @Test
+    public void getEntryPolicy_returnPolicyPolicy() throws Exception {
+        SearchResultEntry entry = mock(SearchResultEntry.class);
+        entry.setAttribute(LdapRepository.ATTR_NAME,"name");
+        entry.setAttribute(LdapRepository.ATTR_POLICYTYPE,"type");
+        entry.setAttribute(LdapRepository.ATTR_BLOB,"blob");
+        entry.setAttribute(LdapRepository.ATTR_DESCRIPTION,"des");
+        entry.setAttribute(LdapRepository.ATTR_ENABLED,"true");
+        entry.setAttribute(LdapRepository.ATTR_GLOBAL,"false");
+        entry.setAttribute(LdapRepository.ATTR_ID,"1234");
+        Policy policy = ldapPolicyRepository.getEntryPolicy(entry);
+        assertThat("Entry Policy", policy.getName(),equalTo("name"));
+    }
 }

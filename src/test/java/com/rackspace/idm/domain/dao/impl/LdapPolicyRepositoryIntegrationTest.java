@@ -4,13 +4,7 @@ import com.rackspace.idm.domain.config.LdapConfiguration;
 import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.entity.Policies;
 import com.rackspace.idm.domain.entity.Policy;
-import junit.framework.TestCase;
 import org.junit.*;
-
-import java.util.List;
-
-import static org.hamcrest.EasyMock2Matchers.equalTo;
-import static org.junit.Assert.assertThat;
 
 /**
  * Created by IntelliJ IDEA.
