@@ -6,8 +6,10 @@ import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import org.hamcrest.Matchers;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.openstack.docs.identity.api.v2.AuthenticateResponse;
+import org.openstack.docs.identity.api.v2.User;
 
 import javax.ws.rs.core.MediaType;
 import javax.xml.bind.JAXBContext;
@@ -20,6 +22,7 @@ import java.io.OutputStream;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertThat;
 
 /**
@@ -31,15 +34,23 @@ import static org.junit.Assert.assertThat;
 public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJerseyTest {
 
     private UserService userService;
-    static String userName = "kurtUserAdmin";
-    String userId = userService.getUser(userName).getId();
+
+    static String userName = "testServiceAdmin_doNotDelete";
     static String invalidTenant = "999999";
     static String testDomain = "135792468";
     static String invalidDomain = "999999";
 
+    User testUser;
+
+
     @Before
     public void setUp() throws Exception {
         ensureGrizzlyStarted("classpath:app-config.xml");
+        String token = getAuthToken("auth","Auth1234");
+        testUser = getUserByName(token, userName);
+        if(testUser == null){
+            testUser = createServiceAdminUser(token,userName);
+        }
     }
 
     @Test
@@ -397,7 +408,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     @Test
     public void listUserGlobalRoles() throws Exception {
         String token = getAuthToken("hectorServiceAdmin", "Password1");
-        WebResource resource = resource().path("cloud/v2.0/users/" + userId + "/roles");
+        WebResource resource = resource().path("cloud/v2.0/users/" + testUser.getId() + "/roles");
         ClientResponse clientResponse = resource.header("X-Auth-Token", token).accept(MediaType.APPLICATION_XML_TYPE).get(ClientResponse.class);
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
     }
@@ -461,10 +472,11 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     @Test
     public void updateUser_withNewUsernameEqualToOldUsername_returns200() throws Exception {
         String token = getAuthToken("hectorServiceAdmin", "Password1");
-        WebResource resource = resource().path("cloud/v2.0/users/" + userId);
+        User user = getUserByName(token,"kurUserAdmin");
+        WebResource resource = resource().path("cloud/v2.0/users/" + user.getId());
         ClientResponse clientResponse = resource.header("X-Auth-Token", token).type(MediaType.APPLICATION_JSON_TYPE).post(ClientResponse.class, "{\n" +
                 "  \"user\": {\n" +
-                "    \"id\":\"" + userId + "\",\n" +
+                "    \"id\":\"" + user.getId() + "\",\n" +
                 "    \"username\":\"kurUserAdmin\",\n" +
                 "    \"email\": \"testuser@example.org\"\n" +
                 "  }\n" +
@@ -475,10 +487,11 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     @Test
     public void updateUser_withNewUsername_withUsernameAlreadyInUse_returns409() throws Exception {
         String token = getAuthToken("hectorServiceAdmin", "Password1");
-        WebResource resource = resource().path("cloud/v2.0/users/" + userId);
+        User user = getUserByName(token,"kurUserAdmin");
+        WebResource resource = resource().path("cloud/v2.0/users/" + user.getId());
         ClientResponse clientResponse = resource.header("X-Auth-Token", token).type(MediaType.APPLICATION_JSON_TYPE).post(ClientResponse.class, "{\n" +
                 "  \"user\": {\n" +
-                "    \"id\":\"" + userId + "\",\n" +
+                "    \"id\":\"" + user.getId() + "\",\n" +
                 "    \"username\": \"hectorServiceAdmin\",\n" +
                 "    \"email\": \"testuser@example.org\"\n" +
                 "  }\n" +
@@ -495,6 +508,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
         assertThat("response code", clientResponse.getStatus(), equalTo(404));
     }
 
+    @Ignore
     @Test
     public void addTenantToDomain_withInvalidTenantId_returns404() throws Exception {
         String token = getAuthToken("hectorServiceAdmin", "Password1");
@@ -513,6 +527,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
         assertThat("response code", clientResponse.getStatus(), equalTo(404));
     }
 
+    @Ignore
     @Test
     public void getTenantDomain_validDomain_returns200() throws Exception {
         String token = getAuthToken("hectorServiceAdmin", "Password1");
@@ -537,5 +552,33 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
         else{
             return "BadToken";
         }
+    }
+
+    private User createServiceAdminUser(String token, String name){
+        WebResource resource = resource().path("cloud/v2.0/users");
+        ClientResponse clientResponse = resource
+                .header("X-Auth-Token",token)
+                .type(MediaType.APPLICATION_XML_TYPE)
+                .accept(MediaType.APPLICATION_XML_TYPE)
+                .post(ClientResponse.class,
+                        "<user username=\""+name+"\" email=\"testEmail@rackspace.com\" enabled=\"true\" ns1:password=\"Password1\" xmlns:ns1=\"http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0\" xmlns:ns2=\"http://docs.openstack.org/identity/api/v2.0\" xmlns:RAX-AUTH=\"http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0\"/>");
+        if (clientResponse.getStatus() == 201) {
+            Object response = clientResponse.getEntity(User.class);
+            return (User)response;
+        }
+        return null;
+    }
+
+    private User getUserByName(String token, String name){
+        WebResource resource = resource().path("cloud/v2.0/users").queryParam("name",name);
+        ClientResponse clientResponse = resource
+                .header("X-Auth-Token",token)
+                .accept(MediaType.APPLICATION_XML_TYPE)
+                .get(ClientResponse.class);
+        if (clientResponse.getStatus() == 200) {
+            Object response = clientResponse.getEntity(User.class);
+            return (User)response;
+        }
+        return null;
     }
 }
