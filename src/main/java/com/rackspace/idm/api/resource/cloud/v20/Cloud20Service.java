@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v20;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
@@ -198,12 +199,12 @@ public interface Cloud20Service {
 
     ResponseBuilder getPoliciesForEndpointTemplate(String authToken, String endpointTemplateId);
 
-    ResponseBuilder updatePoliciesForEndpointTemplate(String authToken, String endpointTemplateId);
+    ResponseBuilder updatePoliciesForEndpointTemplate(String authToken, String endpointTemplateId, Policies policies);
 
     ResponseBuilder addPolicyToEndpointTemplate(String authToken, String endpointTemplateId, String policyId);
 
     ResponseBuilder deletePolicyToEndpointTemplate(String authToken, String endpointTemplateId, String policyId);
-
+    
     ResponseBuilder getPolicies(String authToken);
 
     ResponseBuilder addPolicy(UriInfo uriInfo, String authToken, Policy policy);

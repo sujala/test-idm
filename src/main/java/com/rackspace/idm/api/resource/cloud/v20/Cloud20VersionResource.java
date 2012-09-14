@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v20;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
@@ -696,8 +697,10 @@ public class Cloud20VersionResource {
     @Path("OS-KSCATALOG/endpointTemplates/{endpointTemplateId}/RAX-AUTH/policies")
     public Response updatePoliciesForEndpointTemplate(
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("endpointTemplateId") String endpointTemplateId) {
-        return getCloud20Service().updatePoliciesForEndpointTemplate(authToken, endpointTemplateId).build();
+            @PathParam("endpointTemplateId") String endpointTemplateId,
+            Policies policies
+            ) {
+        return getCloud20Service().updatePoliciesForEndpointTemplate(authToken, endpointTemplateId, policies).build();
     }
 
     @PUT

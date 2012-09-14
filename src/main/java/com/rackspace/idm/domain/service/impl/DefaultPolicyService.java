@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.service.impl;
 
+import java.util.List;
+
 import com.rackspace.idm.domain.dao.PolicyDao;
 import com.rackspace.idm.domain.entity.Policies;
 import com.rackspace.idm.domain.entity.Policy;
@@ -40,6 +42,18 @@ public class DefaultPolicyService implements PolicyService {
     public Policies getPolicies() {
         return policyDao.getPolicies();
     }
+
+	@Override
+	public Policies getPolicies(List<String> policyIds) {
+        Policies policies = new Policies();
+
+        for (String policyId : policyIds) {
+            Policy policy = checkAndGetPolicy(policyId);
+            policies.getPolicy().add(policy);
+        }
+
+        return policies;
+	}
 
     @Override
     public void addPolicy(Policy policy) {

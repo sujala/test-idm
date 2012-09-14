@@ -1878,20 +1878,40 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getPoliciesForEndpointTemplate(String authToken, String endpointTemplateId) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+
+        CloudBaseUrl cloudBaseUrl = endpointService.checkAndGetEndpointTemplate(endpointTemplateId);
+        com.rackspace.idm.domain.entity.Policies savedPolicies = policyService.getPolicies(cloudBaseUrl.getPolicyList());
+
+        com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory objectFactory = objFactories.getRackspaceIdentityExtRaxgaV1Factory();
+        Policies policies = policiesConverterCloudV20.toPolicies(savedPolicies);
+        return Response.ok().entity(objectFactory.createPolicies(policies).getValue());
     }
 
     @Override
-    public ResponseBuilder updatePoliciesForEndpointTemplate(String authToken, String endpointTemplateId) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    public ResponseBuilder updatePoliciesForEndpointTemplate(String authToken, String endpointTemplateId, Policies policies) {
+        authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+
+        CloudBaseUrl cloudBaseUrl = endpointService.checkAndGetEndpointTemplate(endpointTemplateId);
+        cloudBaseUrl.getPolicyList().clear();
+
+        for (Policy policy : policies.getPolicy()) {
+            cloudBaseUrl.getPolicyList().add(policy.getId());
+        }
+
+        endpointService.updateBaseUrl(cloudBaseUrl);
+
+        return Response.noContent();
     }
 
     @Override
     public ResponseBuilder addPolicyToEndpointTemplate(String authToken, String endpointTemplateId, String policyId) {
         authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
+        CloudBaseUrl cloudBaseUrl = endpointService.checkAndGetEndpointTemplate(endpointTemplateId);
         com.rackspace.idm.domain.entity.Policy policyEntity = this.policyService.getPolicy(policyId);
-        endpointService.addPolicyToEndpoint(Integer.valueOf(endpointTemplateId), policyEntity.getPolicyId());
+
+        endpointService.addPolicyToEndpoint(cloudBaseUrl.getBaseUrlId(), policyEntity.getPolicyId());
         return Response.noContent();
     }
 
@@ -1899,7 +1919,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder deletePolicyToEndpointTemplate(String authToken, String endpointTemplateId, String policyId) {
         authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
-        endpointService.deletePolicyToEndpoint(Integer.valueOf(endpointTemplateId), policyId);
+        CloudBaseUrl cloudBaseUrl = endpointService.checkAndGetEndpointTemplate(endpointTemplateId);
+        
+        endpointService.deletePolicyToEndpoint(cloudBaseUrl.getBaseUrlId(), policyId);
         return Response.noContent();
     }
 

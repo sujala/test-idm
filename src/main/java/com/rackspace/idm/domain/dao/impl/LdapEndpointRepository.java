@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import org.apache.commons.collections.ListUtils;
+
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.entity.*;
@@ -623,6 +625,26 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
 
         if (gNew.getOpenstackType() != null && !gNew.getOpenstackType().equals(gOld.getOpenstackType())) {
             mods.add(new Modification(ModificationType.REPLACE, ATTR_OPENSTACK_TYPE, String.valueOf(gNew.getOpenstackType())));
+        }
+
+        List<String> removePolicies = new ArrayList<String>();
+        List<String> addPolicies = new ArrayList<String>();
+
+        if (gOld.getPolicyList().size() > 0 && gNew.getPolicyList().size() > 0) {
+            removePolicies = ListUtils.subtract(gOld.getPolicyList(), gNew.getPolicyList());
+            addPolicies = ListUtils.subtract(gNew.getPolicyList(), gOld.getPolicyList());
+        } else if (gOld.getPolicyList().size() > 0) {
+            removePolicies.addAll(gOld.getPolicyList());
+        } else if (gNew.getPolicyList().size() > 0) {
+            addPolicies.addAll(gNew.getPolicyList());
+        }
+
+        for (String policyId : removePolicies) {
+            mods.add(new Modification(ModificationType.DELETE, ATTR_POLICY_ID, policyId));
+        }
+
+        for (String policyId : addPolicies) {
+            mods.add(new Modification(ModificationType.ADD, ATTR_POLICY_ID, policyId));
         }
 
         return mods;

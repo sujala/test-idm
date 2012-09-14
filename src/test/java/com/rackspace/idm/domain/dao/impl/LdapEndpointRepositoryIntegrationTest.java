@@ -21,7 +21,8 @@ public class LdapEndpointRepositoryIntegrationTest extends InMemoryLdapIntegrati
     private static LdapConnectionPools connectionPools;
 
     private int baseUrlId = 100000000;
-    private String policyId = "100000000";
+    private String policyId1 = "100000000";
+    private String policyId2 = "100000002";
 
     @BeforeClass
     public static void setUp() {
@@ -37,9 +38,14 @@ public class LdapEndpointRepositoryIntegrationTest extends InMemoryLdapIntegrati
             endpointRepository.deleteBaseUrl(baseUrlId);
         }
 
-        Policy repositoryPolicy = policyRepository.getPolicy(policyId);
-        if (repositoryPolicy != null) {
-            policyRepository.deletePolicy(policyId);
+        Policy repositoryPolicy1 = policyRepository.getPolicy(policyId1);
+        if (repositoryPolicy1 != null) {
+            policyRepository.deletePolicy(policyId1);
+        }
+
+        Policy repositoryPolicy2 = policyRepository.getPolicy(policyId2);
+        if (repositoryPolicy2 != null) {
+            policyRepository.deletePolicy(policyId2);
         }
     }
 
@@ -63,19 +69,19 @@ public class LdapEndpointRepositoryIntegrationTest extends InMemoryLdapIntegrati
         CloudBaseUrl cloudBaseUrl = getCloudBaseUrl();
         endpointRepository.addBaseUrl(cloudBaseUrl);
 
-        Policy policy = getPolicy();
+        Policy policy = getPolicy(policyId1);
         policyRepository.addPolicy(policy);
 
         endpointRepository.addPolicyToEndpoint(baseUrlId, policy.getPolicyId());
 
         cloudBaseUrl = endpointRepository.getBaseUrlById(baseUrlId);
 
-        assertThat("repositoryCloudBaseUrl", cloudBaseUrl.getPolicyList().get(0), equalTo(policyId));
+        assertThat("repositoryCloudBaseUrl", cloudBaseUrl.getPolicyList().get(0), equalTo(policyId1));
     }
 
     @Test(expected = NotFoundException.class)
     public void addPolicyToBaseUrl_withoutBaseUrl_containsPolicy() {
-        Policy policy = getPolicy();
+        Policy policy = getPolicy(policyId1);
         policyRepository.addPolicy(policy);
 
         endpointRepository.addPolicyToEndpoint(baseUrlId, policy.getPolicyId());
@@ -86,7 +92,7 @@ public class LdapEndpointRepositoryIntegrationTest extends InMemoryLdapIntegrati
         CloudBaseUrl cloudBaseUrl = getCloudBaseUrl();
         endpointRepository.addBaseUrl(cloudBaseUrl);
 
-        Policy policy = getPolicy();
+        Policy policy = getPolicy(policyId1);
         policyRepository.addPolicy(policy);
 
         endpointRepository.addPolicyToEndpoint(Integer.valueOf(cloudBaseUrl.getBaseUrlId()), policy.getPolicyId());
@@ -97,7 +103,79 @@ public class LdapEndpointRepositoryIntegrationTest extends InMemoryLdapIntegrati
         assertThat("repositoryCloudBaseUrl", cloudBaseUrl.getPolicyList().size(), equalTo(0));
     }
 
-    private Policy getPolicy() {
+    @Test
+    public void updatePolicyToBaseUrl_noPolicy_addsPolicy() {
+        CloudBaseUrl cloudBaseUrl = getCloudBaseUrl();
+        endpointRepository.addBaseUrl(cloudBaseUrl);
+
+        Policy policy1 = getPolicy(policyId1);
+        policyRepository.addPolicy(policy1);
+
+        Policy policy2 = getPolicy(policyId2);
+        policyRepository.addPolicy(policy2);
+
+        cloudBaseUrl = endpointRepository.getBaseUrlById(baseUrlId);
+        cloudBaseUrl.getPolicyList().add(policyId1);
+        cloudBaseUrl.getPolicyList().add(policyId2);
+
+        endpointRepository.updateCloudBaseUrl(cloudBaseUrl);
+
+        cloudBaseUrl = endpointRepository.getBaseUrlById(baseUrlId);
+
+        assertThat("repositoryCloudBaseUrl", cloudBaseUrl.getPolicyList().size(), equalTo(2));
+    }
+
+    @Test
+    public void updatePolicyToBaseUrl_withPolicy_removesPolicy() {
+        CloudBaseUrl cloudBaseUrl = getCloudBaseUrl();
+        endpointRepository.addBaseUrl(cloudBaseUrl);
+
+        Policy policy1 = getPolicy(policyId1);
+        policyRepository.addPolicy(policy1);
+
+        Policy policy2 = getPolicy(policyId2);
+        policyRepository.addPolicy(policy2);
+
+        cloudBaseUrl = endpointRepository.getBaseUrlById(baseUrlId);
+        endpointRepository.addPolicyToEndpoint(baseUrlId, policyId1);
+        endpointRepository.addPolicyToEndpoint(baseUrlId, policyId2);
+
+        cloudBaseUrl = endpointRepository.getBaseUrlById(baseUrlId);
+        cloudBaseUrl.getPolicyList().clear();
+
+        endpointRepository.updateCloudBaseUrl(cloudBaseUrl);
+
+        cloudBaseUrl = endpointRepository.getBaseUrlById(baseUrlId);
+
+        assertThat("repositoryCloudBaseUrl", cloudBaseUrl.getPolicyList().size(), equalTo(0));
+    }
+
+    @Test
+    public void updatePolicyToBaseUrl_withPolicy_removesPolicyAndAdds() {
+        CloudBaseUrl cloudBaseUrl = getCloudBaseUrl();
+        endpointRepository.addBaseUrl(cloudBaseUrl);
+
+        Policy policy1 = getPolicy(policyId1);
+        policyRepository.addPolicy(policy1);
+
+        Policy policy2 = getPolicy(policyId2);
+        policyRepository.addPolicy(policy2);
+
+        cloudBaseUrl = endpointRepository.getBaseUrlById(baseUrlId);
+        endpointRepository.addPolicyToEndpoint(baseUrlId, policyId1);
+
+        cloudBaseUrl = endpointRepository.getBaseUrlById(baseUrlId);
+        cloudBaseUrl.getPolicyList().clear();
+        cloudBaseUrl.getPolicyList().add(policyId2);
+
+        endpointRepository.updateCloudBaseUrl(cloudBaseUrl);
+
+        cloudBaseUrl = endpointRepository.getBaseUrlById(baseUrlId);
+
+        assertThat("repositoryCloudBaseUrl", cloudBaseUrl.getPolicyList().size(), equalTo(1));
+    }
+
+    private Policy getPolicy(String policyId) {
         Policy policy = new Policy();
         policy.setBlob("blob");
         policy.setDescription("description");

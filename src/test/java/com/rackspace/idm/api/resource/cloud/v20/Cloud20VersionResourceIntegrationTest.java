@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest;
 import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.test.IntegrationTestHelper;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import org.hamcrest.Matchers;
@@ -12,17 +13,11 @@ import org.openstack.docs.identity.api.v2.AuthenticateResponse;
 import org.openstack.docs.identity.api.v2.User;
 
 import javax.ws.rs.core.MediaType;
-import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
-import javax.xml.transform.Result;
-
-import java.io.OutputStream;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
 
 /**
@@ -34,6 +29,7 @@ import static org.junit.Assert.assertThat;
 public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJerseyTest {
 
     private UserService userService;
+    IntegrationTestHelper integrationTestHelper = new IntegrationTestHelper();
 
     static String userName = "testServiceAdmin_doNotDelete";
     static String invalidTenant = "999999";
@@ -188,7 +184,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     @Test
     public void validateToken_asDefaultUser_returns403() throws Exception {
         String token = getAuthToken("kurtDefaultUser", "Password1");
-        WebResource resource = resource().path("cloud/v2.0/tokens/"+token);
+        WebResource resource = resource().path("cloud/v2.0/tokens/" + token);
         ClientResponse clientResponse = resource.header("x-auth-token", token).get(ClientResponse.class);
 
         assertThat("response code", clientResponse.getStatus(), equalTo(403));
@@ -242,7 +238,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     @Test
     public void checkToken_asDefaultUser_returns403() throws Exception {
         String token = getAuthToken("kurtDefaultUser", "Password1");
-        WebResource resource = resource().path("cloud/v2.0/tokens/"+token);
+        WebResource resource = resource().path("cloud/v2.0/tokens/" + token);
         ClientResponse clientResponse = resource.header("x-auth-token", token).get(ClientResponse.class);
 
         assertThat("response code", clientResponse.getStatus(), equalTo(403));
@@ -334,7 +330,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     public void impersonate_withInvalidBody_returns400() throws Exception {
         String token = getAuthToken("hectorServiceAdmin", "Password1");
         WebResource resource = resource().path("cloud/v2.0/RAX-AUTH/impersonation-tokens");
-        ClientResponse clientResponse = resource.header("x-auth-token", token).type(MediaType.APPLICATION_XML_TYPE).post(ClientResponse.class , "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" +
+        ClientResponse clientResponse = resource.header("x-auth-token", token).type(MediaType.APPLICATION_XML_TYPE).post(ClientResponse.class, "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" +
                 "<impersonation\n" +
                 "</impersonation>");
 
@@ -345,7 +341,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     public void impersonate_withDefaultUserAuth_returns403() throws Exception {
         String token = getAuthToken("kurtDefaultUser", "Password1");
         WebResource resource = resource().path("cloud/v2.0/RAX-AUTH/impersonation-tokens");
-        ClientResponse clientResponse = resource.header("x-auth-token", token).type(MediaType.APPLICATION_XML_TYPE).post(ClientResponse.class , "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" +
+        ClientResponse clientResponse = resource.header("x-auth-token", token).type(MediaType.APPLICATION_XML_TYPE).post(ClientResponse.class, "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" +
                 "<impersonation\n" +
                 "    xmlns=\"http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0\"\n" +
                 "    xmlns:ns2=\"http://docs.openstack.org/identity/api/v2.0\"\n" +
@@ -472,7 +468,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     @Test
     public void updateUser_withNewUsernameEqualToOldUsername_returns200() throws Exception {
         String token = getAuthToken("hectorServiceAdmin", "Password1");
-        User user = getUserByName(token,"kurUserAdmin");
+        User user = getUserByName(token, "kurUserAdmin");
         WebResource resource = resource().path("cloud/v2.0/users/" + user.getId());
         ClientResponse clientResponse = resource.header("X-Auth-Token", token).type(MediaType.APPLICATION_JSON_TYPE).post(ClientResponse.class, "{\n" +
                 "  \"user\": {\n" +
@@ -527,6 +523,26 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
         assertThat("response code", clientResponse.getStatus(), equalTo(404));
     }
 
+    @Test
+    public void test() throws JAXBException {
+        String token = authenticate("testServiceAdmin_doNotDelete", "Password1");
+
+        assertThat("token", token, notNullValue());
+    }
+
+    private String authenticate(String testServiceAdmin_doNotDelete, String password1) throws JAXBException {
+        String request = integrationTestHelper.authenticationRequestToXml(testServiceAdmin_doNotDelete, password1);
+
+        String response = getXmlWebResourceBuilder("cloud/v2.0/tokens").post(String.class, request);
+
+        AuthenticateResponse authenticateResponse = integrationTestHelper.xmlToAuthenticateResponse(response);
+        return authenticateResponse.getToken().getId();
+    }
+
+    private WebResource.Builder getXmlWebResourceBuilder(String path) {
+        return resource().path(path).type(MediaType.APPLICATION_XML).accept(MediaType.APPLICATION_XML);
+    }
+
     @Ignore
     @Test
     public void getTenantDomain_validDomain_returns200() throws Exception {
@@ -543,7 +559,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
                 .type(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML_TYPE)
                 .post(ClientResponse.class,
-                        "<auth xmlns=\"http://docs.openstack.org/identity/api/v2.0\"><passwordCredentials username=\""+username+"\" password=\""+password+"\"/></auth>");
+                        "<auth xmlns=\"http://docs.openstack.org/identity/api/v2.0\"><passwordCredentials username=\"" + username + "\" password=\"" + password + "\"/></auth>");
         Object response =  clientResponse.getEntity(AuthenticateResponse.class);
         if(((JAXBElement) response).getDeclaredType() == AuthenticateResponse.class){
             JAXBElement<AuthenticateResponse> res = (JAXBElement<AuthenticateResponse>)response;
@@ -561,7 +577,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
                 .type(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML_TYPE)
                 .post(ClientResponse.class,
-                        "<user username=\""+name+"\" email=\"testEmail@rackspace.com\" enabled=\"true\" ns1:password=\"Password1\" xmlns:ns1=\"http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0\" xmlns:ns2=\"http://docs.openstack.org/identity/api/v2.0\" xmlns:RAX-AUTH=\"http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0\"/>");
+                        "<user username=\"" + name + "\" email=\"testEmail@rackspace.com\" enabled=\"true\" ns1:password=\"Password1\" xmlns:ns1=\"http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0\" xmlns:ns2=\"http://docs.openstack.org/identity/api/v2.0\" xmlns:RAX-AUTH=\"http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0\"/>");
         if (clientResponse.getStatus() == 201) {
             Object response = clientResponse.getEntity(User.class);
             return (User)response;
@@ -570,9 +586,9 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     }
 
     private User getUserByName(String token, String name){
-        WebResource resource = resource().path("cloud/v2.0/users").queryParam("name",name);
+        WebResource resource = resource().path("cloud/v2.0/users").queryParam("name", name);
         ClientResponse clientResponse = resource
-                .header("X-Auth-Token",token)
+                .header("X-Auth-Token", token)
                 .accept(MediaType.APPLICATION_XML_TYPE)
                 .get(ClientResponse.class);
         if (clientResponse.getStatus() == 200) {
