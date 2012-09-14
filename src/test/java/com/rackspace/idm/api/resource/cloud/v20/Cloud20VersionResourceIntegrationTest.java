@@ -2,7 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest;
 import com.rackspace.idm.domain.service.UserService;
-import com.rackspace.test.TestHelper;
+import com.rackspace.test.Cloud20TestHelper;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import org.hamcrest.Matchers;
@@ -28,7 +28,7 @@ import static org.junit.Assert.assertThat;
 public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJerseyTest {
 
     private UserService userService;
-    TestHelper testHelper = new TestHelper();
+    Cloud20TestHelper cloud20TestHelper = new Cloud20TestHelper();
 
     static String X_AUTH_TOKEN = "X-Auth-Token";
     static String userName = "testServiceAdmin_doNotDelete";
@@ -542,17 +542,17 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     }
 
     private EndpointTemplate createEndpointTemplate(String token, String endpointTemplateId) throws JAXBException {
-        String request = testHelper.getEndpointTemplateString(endpointTemplateId);
+        String request = cloud20TestHelper.getEndpointTemplateString(endpointTemplateId);
         String response = getWebResourceBuilder("cloud/v2.0/OS-KSCATALOG/endpointTemplates", MediaType.APPLICATION_XML)
                 .header(X_AUTH_TOKEN, token).post(String.class, request);
 
-        return testHelper.getEndpointTemplateObject(response);
+        return cloud20TestHelper.getEndpointTemplateObject(response);
     }
 
     private EndpointTemplate getEndpointTemplate(String token, String endpointTemplateId) throws JAXBException {
         String response = getWebResourceBuilder("cloud/v2.0/OS-KSCATALOG/endpointTemplates/" + endpointTemplateId, MediaType.APPLICATION_XML)
                 .header(X_AUTH_TOKEN, token).get(String.class);
-        return testHelper.getEndpointTemplateObject(response);
+        return cloud20TestHelper.getEndpointTemplateObject(response);
     }
 
     private void deleteEndpointTemplate(String token, String endpointTemplateId) throws JAXBException {
@@ -561,11 +561,11 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     }
 
     private String authenticate(String user, String pwd, String mediaType) throws JAXBException {
-        String request = testHelper.getAuthenticationRequest(user, pwd);
+        String request = cloud20TestHelper.getAuthenticationRequest(user, pwd);
 
         String response = getWebResourceBuilder("cloud/v2.0/tokens", mediaType).post(String.class, request);
 
-        AuthenticateResponse authenticateResponse = testHelper.getAuthenticateResponse(response);
+        AuthenticateResponse authenticateResponse = cloud20TestHelper.getAuthenticateResponse(response);
         return authenticateResponse.getToken().getId();
     }
 

@@ -7,7 +7,7 @@ import org.openstack.docs.identity.api.v2.*;
 
 import javax.xml.bind.JAXBException;
 
-public class TestHelper {
+public class Cloud20TestHelper {
 
 
     private ObjectFactory objectFactory = new ObjectFactory();
