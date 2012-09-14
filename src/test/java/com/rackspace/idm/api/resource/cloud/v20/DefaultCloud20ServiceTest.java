@@ -1283,7 +1283,7 @@ public class DefaultCloud20ServiceTest {
         UserForCreate userNoRegion = new UserForCreate();
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(new User());
-        User retrievedUser = new User("testUser");
+        User retrievedUser = new User("testServiceAdminUser");
         retrievedUser.setId("id");
         retrievedUser.setRegion("US of A");
         when(userService.checkAndGetUserById("id")).thenReturn(retrievedUser);
@@ -1301,7 +1301,7 @@ public class DefaultCloud20ServiceTest {
         userWithRegion.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "defaultRegion"), "foo");
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         spy.setUserConverterCloudV20(new UserConverterCloudV20());
-        User retrievedUser = new User("testUser");
+        User retrievedUser = new User("testServiceAdminUser");
         retrievedUser.setId("id");
         retrievedUser.setRegion("US of A");
         when(userService.checkAndGetUserById("id")).thenReturn(retrievedUser);
@@ -1316,7 +1316,7 @@ public class DefaultCloud20ServiceTest {
     public void addUser_userPasswordIsNull_generateRandomPassword() throws Exception {
         UriBuilder uriBuilder = mock(UriBuilder.class);
         UserForCreate userNullPassword = new UserForCreate();
-        userNullPassword.setUsername("testUser");
+        userNullPassword.setUsername("testServiceAdminUser");
         User user = new User();
         ArgumentCaptor<UserForCreate> argumentCaptor = ArgumentCaptor.forClass(UserForCreate.class);
 
@@ -1337,7 +1337,7 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void addUser_withNoRegion_RegionIsNull() throws Exception {
         UserForCreate userNoRegion = new UserForCreate();
-        userNoRegion.setUsername("testUser");
+        userNoRegion.setUsername("testServiceAdminUser");
         User newUser = new User();
         newUser.setDomainId("domain");
         ArgumentCaptor<User> argumentCaptor = ArgumentCaptor.forClass(User.class);

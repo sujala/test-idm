@@ -5,12 +5,14 @@ import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.service.DomainService;
+import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
+import org.openstack.docs.identity.api.v2.Tenant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +35,9 @@ public class DefaultDomainService implements DomainService{
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private TenantService tenantService;
 
     public static final String DOMAIN_CANNOT_BE_NULL = "Domain cannot be null";
     public static final String DOMAIN_ID_CANNOT_BE_NULL = "Domain ID cannot be null";
@@ -93,6 +98,8 @@ public class DefaultDomainService implements DomainService{
         Domain domain = getDomain(domainId);
         if(domain == null)
             throw new NotFoundException("Domain could not be found");
+
+        tenantService.checkAndGetTenant(tenantId);
 
         List<String> tenantIds = setTenantIdList(domain, tenantId);
         tenantIds.add(tenantId);

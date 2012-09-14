@@ -15,9 +15,10 @@ import org.openstack.docs.identity.api.v2.User;
 import javax.ws.rs.core.MediaType;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
-
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
+
+
 import static org.junit.Assert.assertThat;
 
 /**
@@ -37,16 +38,16 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     static String testDomain = "135792468";
     static String invalidDomain = "999999";
 
-    User testUser;
+    User testServiceAdminUser;
 
 
     @Before
     public void setUp() throws Exception {
         ensureGrizzlyStarted("classpath:app-config.xml");
         String token = getAuthToken("auth","Auth1234");
-        testUser = getUserByName(token, userName);
-        if(testUser == null){
-            testUser = createServiceAdminUser(token,userName);
+        testServiceAdminUser = getUserByName(token, userName);
+        if(testServiceAdminUser == null){
+            testServiceAdminUser = createServiceAdminUser(token,userName);
         }
     }
 
@@ -405,7 +406,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     @Test
     public void listUserGlobalRoles() throws Exception {
         String token = getAuthToken("hectorServiceAdmin", "Password1");
-        WebResource resource = resource().path("cloud/v2.0/users/" + testUser.getId() + "/roles");
+        WebResource resource = resource().path("cloud/v2.0/users/" + testServiceAdminUser.getId() + "/roles");
         ClientResponse clientResponse = resource.header("X-Auth-Token", token).accept(MediaType.APPLICATION_XML_TYPE).get(ClientResponse.class);
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
     }
@@ -505,7 +506,6 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
         assertThat("response code", clientResponse.getStatus(), equalTo(404));
     }
 
-    @Ignore
     @Test
     public void addTenantToDomain_withInvalidTenantId_returns404() throws Exception {
         String token = getAuthToken("hectorServiceAdmin", "Password1");
@@ -561,12 +561,11 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
         }
     }
 
-    @Ignore
     @Test
     public void getTenantDomain_validDomain_returns200() throws Exception {
-        String token = getAuthToken("hectorServiceAdmin", "Password1");
+        String token = getAuthToken(testServiceAdminUser.getUsername(), "Password1");
         WebResource resource = resource().path("cloud/v2.0/RAX-AUTH/domains/" + testDomain + "/tenants");
-        ClientResponse clientResponse = resource.header("X-Auth-Token", token).type(MediaType.APPLICATION_JSON_TYPE).get(ClientResponse.class);
+        ClientResponse clientResponse = resource.header("X-Auth-Token", token).get(ClientResponse.class);
 
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
     }

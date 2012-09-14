@@ -671,7 +671,11 @@ public class DefaultTenantService implements TenantService {
         }
         List<Tenant> tenantList = new ArrayList<Tenant>();
         for (String tenantId : domain.getTenantIds()){
-            tenantList.add(getTenant(tenantId));
+            Tenant tenant = getTenant(tenantId);
+            if(tenant != null){
+                tenantList.add(tenant);
+            }
+
         }
         return tenantList;
     }

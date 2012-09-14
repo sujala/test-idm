@@ -150,6 +150,7 @@ public class LdapPolicyRepositoryIntegrationTest extends InMemoryLdapIntegration
         }
         Assert.assertEquals("compare policies", result1, true);
         Assert.assertEquals("compare policies", result2, true);
+        repo.deletePolicy(policy.getPolicyId());
     }
 
     private Policy getTestPolicy() {
