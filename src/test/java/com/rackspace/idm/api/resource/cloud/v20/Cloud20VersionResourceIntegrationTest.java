@@ -2,7 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest;
 import com.rackspace.idm.domain.service.UserService;
-import com.rackspace.test.IntegrationTestHelper;
+import com.rackspace.test.TestHelper;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import org.hamcrest.Matchers;
@@ -29,8 +29,9 @@ import static org.junit.Assert.assertThat;
 public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJerseyTest {
 
     private UserService userService;
-    IntegrationTestHelper integrationTestHelper = new IntegrationTestHelper();
+    TestHelper testHelper = new TestHelper();
 
+    static String X_AUTH_TOKEN = "X-Auth-Token";
     static String userName = "testServiceAdmin_doNotDelete";
     static String invalidTenant = "999999";
     static String testDomain = "135792468";
@@ -523,24 +524,41 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
         assertThat("response code", clientResponse.getStatus(), equalTo(404));
     }
 
+    @Ignore
     @Test
-    public void test() throws JAXBException {
-        String token = authenticate("testServiceAdmin_doNotDelete", "Password1");
+    public void createEndpoint_validEndpoint_returnsEndpoint() throws JAXBException {
+        String token = authenticate("testServiceAdmin_doNotDelete", "Password1", TestHelper.Type.Xml);
+
+        String request = testHelper.getEndpointTemplate(100000000);
+
+        String response = getWebResourceBuilder("cloud/v2.0/OS-KSCATALOG/endpointTemplates", token, TestHelper.Type.Xml).post(String.class, request);
 
         assertThat("token", token, notNullValue());
     }
 
-    private String authenticate(String testServiceAdmin_doNotDelete, String password1) throws JAXBException {
-        String request = integrationTestHelper.authenticationRequestToXml(testServiceAdmin_doNotDelete, password1);
+    private String authenticate(String testServiceAdmin_doNotDelete, String password1, TestHelper.Type type) throws JAXBException {
+        String request = testHelper.getAuthenticationRequest(testServiceAdmin_doNotDelete, password1, TestHelper.Type.Xml);
 
-        String response = getXmlWebResourceBuilder("cloud/v2.0/tokens").post(String.class, request);
+        String response = getWebResourceBuilder("cloud/v2.0/tokens", TestHelper.Type.Xml).post(String.class, request);
 
-        AuthenticateResponse authenticateResponse = integrationTestHelper.xmlToAuthenticateResponse(response);
+        AuthenticateResponse authenticateResponse = testHelper.getAuthenticateResponse(response, TestHelper.Type.Xml);
         return authenticateResponse.getToken().getId();
     }
 
-    private WebResource.Builder getXmlWebResourceBuilder(String path) {
-        return resource().path(path).type(MediaType.APPLICATION_XML).accept(MediaType.APPLICATION_XML);
+    private WebResource.Builder getWebResourceBuilder(String path, TestHelper.Type type) {
+        if (type == TestHelper.Type.Xml) {
+            return resource().path(path).type(MediaType.APPLICATION_XML).accept(MediaType.APPLICATION_XML);
+        } else {
+            return resource().path(path).type(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON);
+        }
+    }
+
+    private WebResource.Builder getWebResourceBuilder(String path, String token, TestHelper.Type type) {
+        if (type == TestHelper.Type.Xml) {
+            return resource().path(path).type(MediaType.APPLICATION_XML).accept(MediaType.APPLICATION_XML).header(X_AUTH_TOKEN, token);
+        } else {
+            return resource().path(path).type(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON).header(X_AUTH_TOKEN, token);
+        }
     }
 
     @Ignore
