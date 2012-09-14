@@ -1,11 +1,9 @@
 package com.rackspace.test;
 
-import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.api.resource.cloud.ObjectMarshaller;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.*;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.xml.bind.JAXBException;
 
@@ -34,11 +32,11 @@ public class TestHelper {
         return unmarshaller.unmarshal(response, AuthenticateResponse.class);
     }
 
-    public String getEndpointTemplate(int id) throws JAXBException {
+    public String getEndpointTemplateString(String endpointTemplateId) throws JAXBException {
         ObjectMarshaller<EndpointTemplate> marshaller = new ObjectMarshaller<EndpointTemplate>();
 
         EndpointTemplate endpoint = new EndpointTemplate();
-        endpoint.setId(id);
+        endpoint.setId(Integer.valueOf(endpointTemplateId));
         endpoint.setType("type");
         endpoint.setPublicURL("http://public.url");
 
@@ -54,5 +52,10 @@ public class TestHelper {
         user.setPassword(password);
 
         return marshaller.marshal(openStackIdentityV2Factory.createUser(user), User.class);
+    }
+
+    public EndpointTemplate getEndpointTemplateObject(String endpointTemplate) throws JAXBException {
+        ObjectMarshaller<EndpointTemplate> unmarshaller = new ObjectMarshaller<EndpointTemplate>();
+        return unmarshaller.unmarshal(endpointTemplate, EndpointTemplate.class);
     }
 }

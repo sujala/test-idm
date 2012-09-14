@@ -7,17 +7,16 @@ import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import org.hamcrest.Matchers;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.AuthenticateResponse;
 import org.openstack.docs.identity.api.v2.User;
 
 import javax.ws.rs.core.MediaType;
 import javax.xml.bind.JAXBException;
+
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
-
-
 import static org.junit.Assert.assertThat;
 
 /**
@@ -525,16 +524,40 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
         assertThat("response code", clientResponse.getStatus(), equalTo(404));
     }
 
-    @Ignore
     @Test
     public void createEndpoint_validEndpoint_returnsEndpoint() throws JAXBException {
         String token = authenticate("testServiceAdmin_doNotDelete", "Password1", MediaType.APPLICATION_XML);
 
-        String request = testHelper.getEndpointTemplate(100000000);
+        String endpointTemplateId = "105009002";
 
-        String response = getWebResourceBuilder("cloud/v2.0/OS-KSCATALOG/endpointTemplates", token, MediaType.APPLICATION_XML).post(String.class, request);
+        try {
+            EndpointTemplate endpointTemplate = getEndpointTemplate(token, endpointTemplateId);
+            deleteEndpointTemplate(token, endpointTemplateId);
+        } catch (Exception e) {
+        }
 
-        assertThat("token", token, notNullValue());
+        EndpointTemplate endpointTemplate = createEndpointTemplate(token, endpointTemplateId);
+
+        assertThat("endpointTemplate", endpointTemplate, notNullValue());
+    }
+
+    private EndpointTemplate createEndpointTemplate(String token, String endpointTemplateId) throws JAXBException {
+        String request = testHelper.getEndpointTemplateString(endpointTemplateId);
+        String response = getWebResourceBuilder("cloud/v2.0/OS-KSCATALOG/endpointTemplates", MediaType.APPLICATION_XML)
+                .header(X_AUTH_TOKEN, token).post(String.class, request);
+
+        return testHelper.getEndpointTemplateObject(response);
+    }
+
+    private EndpointTemplate getEndpointTemplate(String token, String endpointTemplateId) throws JAXBException {
+        String response = getWebResourceBuilder("cloud/v2.0/OS-KSCATALOG/endpointTemplates/" + endpointTemplateId, MediaType.APPLICATION_XML)
+                .header(X_AUTH_TOKEN, token).get(String.class);
+        return testHelper.getEndpointTemplateObject(response);
+    }
+
+    private void deleteEndpointTemplate(String token, String endpointTemplateId) throws JAXBException {
+        getWebResourceBuilder("cloud/v2.0/OS-KSCATALOG/endpointTemplates/" + endpointTemplateId, MediaType.APPLICATION_XML)
+                .header(X_AUTH_TOKEN, token).delete();
     }
 
     private String authenticate(String user, String pwd, String mediaType) throws JAXBException {
@@ -546,20 +569,18 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
         return authenticateResponse.getToken().getId();
     }
 
-    private WebResource.Builder getWebResourceBuilder(String path, String mediaType) {
-        if (mediaType == MediaType.APPLICATION_XML) {
-            return resource().path(path).type(MediaType.APPLICATION_XML).accept(MediaType.APPLICATION_XML);
-        } else {
-            return resource().path(path).type(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON);
-        }
-    }
 
-    private WebResource.Builder getWebResourceBuilder(String path, String token, String mediaType) {
+
+    private WebResource.Builder getWebResourceBuilder(String path, String mediaType) {
+        WebResource.Builder builder = null;
+
         if (mediaType == MediaType.APPLICATION_XML) {
-            return resource().path(path).type(MediaType.APPLICATION_XML).accept(MediaType.APPLICATION_XML).header(X_AUTH_TOKEN, token);
+            builder = resource().path(path).type(MediaType.APPLICATION_XML).accept(MediaType.APPLICATION_XML);
         } else {
-            return resource().path(path).type(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON).header(X_AUTH_TOKEN, token);
+            builder = resource().path(path).type(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON);
         }
+
+        return builder;
     }
 
     @Test
