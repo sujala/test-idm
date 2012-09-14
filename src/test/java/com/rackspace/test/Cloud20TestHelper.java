@@ -6,6 +6,7 @@ import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.*;
 
 import javax.xml.bind.JAXBException;
+import javax.xml.namespace.QName;
 
 public class Cloud20TestHelper {
 
@@ -43,13 +44,12 @@ public class Cloud20TestHelper {
         return marshaller.marshal(catalogObjectFactory.createEndpointTemplate(endpoint), EndpointTemplate.class);
     }
 
-    public String createServiceAdmin(String token, String username, String password, String email) throws JAXBException {
-        ObjectMarshaller<UserForCreate> marshaller = new ObjectMarshaller<UserForCreate>();
-
-        UserForCreate user = new UserForCreate();
+    public String createServiceAdmin(String username, String password, String email) throws JAXBException {
+        ObjectMarshaller<User> marshaller = new ObjectMarshaller<User>();
+        User user = new User();
         user.setUsername(username);
+        user.getOtherAttributes().put(new QName("http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0", "password"),password);
         user.setEmail(email);
-        user.setPassword(password);
 
         return marshaller.marshal(openStackIdentityV2Factory.createUser(user), User.class);
     }
@@ -57,5 +57,10 @@ public class Cloud20TestHelper {
     public EndpointTemplate getEndpointTemplateObject(String endpointTemplate) throws JAXBException {
         ObjectMarshaller<EndpointTemplate> unmarshaller = new ObjectMarshaller<EndpointTemplate>();
         return unmarshaller.unmarshal(endpointTemplate, EndpointTemplate.class);
+    }
+
+    public User getUser(String response) throws JAXBException {
+        ObjectMarshaller<User> unmarshaller = new ObjectMarshaller<User>();
+        return unmarshaller.unmarshal(response, User.class);
     }
 }

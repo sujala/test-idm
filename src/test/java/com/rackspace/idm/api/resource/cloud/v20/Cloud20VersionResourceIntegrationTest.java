@@ -46,7 +46,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
         String token = authenticate("auth", "Auth1234", MediaType.APPLICATION_XML);
         testServiceAdminUser = getUserByName(token, userName);
         if(testServiceAdminUser == null){
-            testServiceAdminUser = createServiceAdminUser(token,userName,email,password);
+            testServiceAdminUser = createServiceAdminUser(token,userName,email,password, MediaType.APPLICATION_XML);
         }
     }
 
@@ -592,19 +592,12 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
     }
 
-    private User createServiceAdminUser(String token, String name, String email, String password){
-        WebResource resource = resource().path("cloud/v2.0/users");
-        ClientResponse clientResponse = resource
-                .header("X-Auth-Token",token)
-                .type(MediaType.APPLICATION_XML_TYPE)
-                .accept(MediaType.APPLICATION_XML_TYPE)
-                .post(ClientResponse.class,
-                        "<user username=\"" + name + "\" email=\"" + email + "\" enabled=\"true\" ns1:password=\"" + password + "\" xmlns:ns1=\"http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0\" xmlns:ns2=\"http://docs.openstack.org/identity/api/v2.0\" xmlns:RAX-AUTH=\"http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0\"/>");
-        if (clientResponse.getStatus() == 201) {
-            Object response = clientResponse.getEntity(User.class);
-            return (User)response;
-        }
-        return null;
+    private User createServiceAdminUser(String token, String name, String email, String password, String mediaType) throws JAXBException {
+        String request = cloud20TestHelper.createServiceAdmin(name, password, email);
+        String response = getWebResourceBuilder("cloud/v2.0/users", mediaType)
+                .header(X_AUTH_TOKEN, token)
+                .post(String.class, request);
+        return cloud20TestHelper.getUser(response);
     }
 
     private User getUserByName(String token, String name){
