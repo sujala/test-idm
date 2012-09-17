@@ -36,6 +36,7 @@ public class ObjectMarshaller <T> {
             "org.openstack.docs.identity.api.ext.os_kscatalog.v1:" +
             "org.openstack.docs.identity.api.ext.os_ksec2.v1:" +
             "org.openstack.docs.identity.api.v2:" +
+            "com.rackspace.docs.identity.api.ext.rax_auth.v1:" +
             "org.w3._2005.atom"
         );
 

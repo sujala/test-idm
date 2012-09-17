@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy;
 import com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.test.Cloud20TestHelper;
@@ -21,9 +22,9 @@ import static org.junit.Assert.assertThat;
 
 /**
  * Created by IntelliJ IDEA.
- * User: Hector
- * Date: 9/14/11
- * Time: 4:21 PM
+ * User: Werner
+ * Date: 9/17/12
+ * Time: 4:21 AM
  */
 public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJerseyTest {
 
@@ -525,20 +526,73 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     }
 
     @Test
-    public void createEndpoint_validEndpoint_returnsEndpoint() throws JAXBException {
+    public void endpointCrud_validEndpoint_returnsCorrectValues() throws JAXBException {
         String token = authenticate("testServiceAdmin_doNotDelete", "Password1", MediaType.APPLICATION_XML);
 
         String endpointTemplateId = "105009002";
 
+        EndpointTemplate endpointTemplate = createEndpointTemplate(token, endpointTemplateId);
+
+        assertThat("create endpointTemplate", endpointTemplate, notNullValue());
+
+        endpointTemplate = getEndpointTemplate(token, endpointTemplateId);
+
+        assertThat("get endpointTemplate", endpointTemplate, notNullValue());
+
+        deleteEndpointTemplate(token, endpointTemplateId);
+
+        endpointTemplate = null;
+
         try {
-            EndpointTemplate endpointTemplate = getEndpointTemplate(token, endpointTemplateId);
-            deleteEndpointTemplate(token, endpointTemplateId);
+            endpointTemplate = getEndpointTemplate(token, endpointTemplateId);
         } catch (Exception e) {
         }
 
-        EndpointTemplate endpointTemplate = createEndpointTemplate(token, endpointTemplateId);
+        assertThat("delete endpointTemplate", endpointTemplate, equalTo(null));
+    }
 
-        assertThat("endpointTemplate", endpointTemplate, notNullValue());
+    @Test
+    public void policyCrud_validPolicy_returnsCorrectValues() throws JAXBException {
+        String token = authenticate("testServiceAdmin_doNotDelete", "Password1", MediaType.APPLICATION_XML);
+
+        Policy policy = createPolicy(token);
+
+        assertThat("create policy", policy, notNullValue());
+
+        policy = getPolicy(token, policy.getId());
+
+        assertThat("get policy", policy, notNullValue());
+
+        deletePolicy(token, policy.getId());
+
+        policy = null;
+
+        try {
+            policy = getPolicy(token, policy.getId());
+        } catch (Exception e) {
+        }
+
+        assertThat("delete policy", policy, equalTo(null));
+    }
+
+    private Policy createPolicy(String token) throws JAXBException {
+        String request = cloud20TestHelper.getPolicyString();
+        String response = getWebResourceBuilder("cloud/v2.0/RAX-AUTH/policies", MediaType.APPLICATION_XML)
+                .header(X_AUTH_TOKEN, token).post(String.class, request);
+
+        return cloud20TestHelper.getPolicyObject(response);
+    }
+
+    private Policy getPolicy(String token, String policyId) throws JAXBException {
+        String response = getWebResourceBuilder("cloud/v2.0/RAX-AUTH/policies/" + policyId, MediaType.APPLICATION_XML)
+                .header(X_AUTH_TOKEN, token).get(String.class);
+
+        return cloud20TestHelper.getPolicyObject(response);
+    }
+
+    private void deletePolicy(String token, String policyId) {
+        getWebResourceBuilder("cloud/v2.0/RAX-AUTH/policies/" + policyId, MediaType.APPLICATION_XML)
+                .header(X_AUTH_TOKEN, token).delete();
     }
 
     private EndpointTemplate createEndpointTemplate(String token, String endpointTemplateId) throws JAXBException {

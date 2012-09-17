@@ -1,7 +1,7 @@
 package com.rackspace.test;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy;
 import com.rackspace.idm.api.resource.cloud.ObjectMarshaller;
-import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.*;
 
@@ -14,6 +14,7 @@ public class Cloud20TestHelper {
     private ObjectFactory objectFactory = new ObjectFactory();
     private org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory catalogObjectFactory = new org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory();
     private org.openstack.docs.identity.api.v2.ObjectFactory openStackIdentityV2Factory = new org.openstack.docs.identity.api.v2.ObjectFactory();
+    private com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory policyObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
 
     public String getAuthenticationRequest(String username, String password) throws JAXBException {
         ObjectMarshaller<AuthenticationRequest> marshaller = new ObjectMarshaller<AuthenticationRequest>();
@@ -62,5 +63,20 @@ public class Cloud20TestHelper {
     public User getUser(String response) throws JAXBException {
         ObjectMarshaller<User> unmarshaller = new ObjectMarshaller<User>();
         return unmarshaller.unmarshal(response, User.class);
+    }
+
+    public String getPolicyString() throws JAXBException {
+        Policy policy = new Policy();
+        policy.setName("name");
+        policy.setBlob("blob");
+        policy.setType("type");
+
+        ObjectMarshaller<Policy> marshaller = new ObjectMarshaller<Policy>();
+        return marshaller.marshal(policyObjectFactory.createPolicy(policy), Policy.class);
+    }
+
+    public Policy getPolicyObject(String policy) throws JAXBException {
+        ObjectMarshaller<Policy> unmarshaller = new ObjectMarshaller<Policy>();
+        return unmarshaller.unmarshal(policy, Policy.class);
     }
 }
