@@ -2,14 +2,19 @@ package com.rackspace.idm.domain.service.impl;
 
 import java.util.List;
 
+import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.dao.PolicyDao;
+import com.rackspace.idm.domain.dao.impl.LdapEndpointRepository;
+import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.Policies;
 import com.rackspace.idm.domain.entity.Policy;
+import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.domain.service.PolicyService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.configuration.Configuration;
+import org.openstack.docs.identity.api.v2.Endpoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +31,9 @@ public class DefaultPolicyService implements PolicyService {
 
     @Autowired
     private Configuration config;
+
+    @Autowired
+    private EndpointDao endpointDao;
 
     public static final String POLICY_CANNOT_BE_NULL = "Policy cannot be null";
     public static final String POLICY_NAME_CANNOT_BE_NULL = "Policy name cannot be null or empty";
@@ -127,6 +135,11 @@ public class DefaultPolicyService implements PolicyService {
     @Override
     public void deletePolicy(String policyId) {
         Policy policy = checkAndGetPolicy(policyId);
-        policyDao.deletePolicy(policy.getPolicyId());
+        List<CloudBaseUrl> cloudBaseUrlList = this.endpointDao.getBaseUrlsWithPolicyId(policy.getPolicyId());
+        if (cloudBaseUrlList.isEmpty()) {
+            policyDao.deletePolicy(policy.getPolicyId());
+        }else{
+            throw new BadRequestException("Cannot delete policy that belongs to endpoint");
+        }
     }
 }

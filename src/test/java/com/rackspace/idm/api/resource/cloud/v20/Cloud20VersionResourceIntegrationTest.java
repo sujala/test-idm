@@ -758,6 +758,26 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
         }
     }
 
+    @Test
+    public void deletePolicy_policyBelongsToEndpoint_return400() throws Exception {
+        String token = null;
+        EndpointTemplate endpointTemplate = null;
+        String policyId = null;
+        try {
+            token = authenticate("testServiceAdmin_doNotDelete", "Password1", MediaType.APPLICATION_XML);
+            endpointTemplate = createEndpointTemplate(token, endpointTemplateId);
+            Policy policy = createPolicy(token, "name", "blob", "type");
+            policyId = policy.getId();
+            addPolicyToEndpointTemplate(token, String.valueOf(endpointTemplate.getId()), policyId);
+            deletePolicy(token,policyId);
+
+        } catch (Exception ex) {
+            assertThat("Status Code", ((UniformInterfaceException) ex).getResponse().getStatus(), equalTo(400));
+            deleteEndpointTemplate(token, String.valueOf(endpointTemplate.getId()));
+            deletePolicy(token,policyId);
+        }
+    }
+
     private Policy createPolicy(String token, String name, String blob, String type) throws JAXBException {
         String request = cloud20TestHelper.getPolicyString(name, blob, type);
         String response =  getWebResourceBuilder("cloud/v2.0/RAX-AUTH/policies", MediaType.APPLICATION_XML)
