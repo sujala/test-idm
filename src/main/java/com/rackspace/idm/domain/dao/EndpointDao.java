@@ -18,6 +18,8 @@ public interface EndpointDao {
 
     List<CloudBaseUrl> getBaseUrlsByService(String service);
 
+    List<CloudBaseUrl> getBaseUrlsWithPolicyId(String policyId);
+
     List<CloudBaseUrl> getBaseUrls();
 
     List<CloudEndpoint> getEndpointsForUser(String username);

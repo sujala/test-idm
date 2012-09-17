@@ -235,6 +235,25 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
     }
 
     @Override
+    public List<CloudBaseUrl> getBaseUrlsWithPolicyId(String policyId) {
+        getLogger().debug("Getting baseUrls with policyId {}", policyId);
+        List<CloudBaseUrl> cloudBaseUrls = new ArrayList<CloudBaseUrl>();
+        List<SearchResultEntry> searchResultEntries = null;
+
+        Filter searchFilter = new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_POLICY_ID, policyId)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_BASEURL).build();
+
+        searchResultEntries = getMultipleEntries(BASEURL_BASE_DN, SearchScope.ONE, searchFilter);
+        getLogger().info("Got baseUrls with policyId {}", policyId);
+
+        for (SearchResultEntry e : searchResultEntries) {
+            cloudBaseUrls.add(getBaseUrl(e));
+        }
+        return cloudBaseUrls;
+    }
+
+    @Override
     public List<CloudBaseUrl> getBaseUrls() {
 
         getLogger().debug("Getting baseurls");
