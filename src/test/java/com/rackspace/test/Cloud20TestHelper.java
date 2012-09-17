@@ -66,11 +66,11 @@ public class Cloud20TestHelper {
         return unmarshaller.unmarshal(response, User.class);
     }
 
-    public String getPolicyString() throws JAXBException {
+    public String getPolicyString(String name, String blob, String type) throws JAXBException {
         Policy policy = new Policy();
-        policy.setName("name");
-        policy.setBlob("blob");
-        policy.setType("type");
+        policy.setName(name);
+        policy.setBlob(blob);
+        policy.setType(type);
 
         ObjectMarshaller<Policy> marshaller = new ObjectMarshaller<Policy>();
         return marshaller.marshal(policyObjectFactory.createPolicy(policy), Policy.class);
