@@ -1,5 +1,6 @@
 package com.rackspace.test;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy;
 import com.rackspace.idm.api.resource.cloud.ObjectMarshaller;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
@@ -49,7 +50,7 @@ public class Cloud20TestHelper {
         ObjectMarshaller<User> marshaller = new ObjectMarshaller<User>();
         User user = new User();
         user.setUsername(username);
-        user.getOtherAttributes().put(new QName("http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0", "password"),password);
+        user.getOtherAttributes().put(new QName("http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0", "password"), password);
         user.setEmail(email);
 
         return marshaller.marshal(openStackIdentityV2Factory.createUser(user), User.class);
@@ -78,5 +79,15 @@ public class Cloud20TestHelper {
     public Policy getPolicyObject(String policy) throws JAXBException {
         ObjectMarshaller<Policy> unmarshaller = new ObjectMarshaller<Policy>();
         return unmarshaller.unmarshal(policy, Policy.class);
+    }
+
+    public Policies getPolicies(String policies) throws JAXBException {
+        ObjectMarshaller<Policies> unmarshaller = new ObjectMarshaller<Policies>();
+        return unmarshaller.unmarshal(policies, Policies.class);
+    }
+
+    public String getPolicies(Policies policies) throws JAXBException {
+        ObjectMarshaller<Policies> marshaller = new ObjectMarshaller<Policies>();
+        return marshaller.marshal(policyObjectFactory.createPolicies(policies), Policies.class);
     }
 }

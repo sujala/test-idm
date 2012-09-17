@@ -1896,7 +1896,9 @@ public class DefaultCloud20Service implements Cloud20Service {
         cloudBaseUrl.getPolicyList().clear();
 
         for (Policy policy : policies.getPolicy()) {
-            cloudBaseUrl.getPolicyList().add(policy.getId());
+            String policyId = policy.getId();
+            this.policyService.getPolicy(policyId);
+            cloudBaseUrl.getPolicyList().add(policyId);
         }
 
         endpointService.updateBaseUrl(cloudBaseUrl);
