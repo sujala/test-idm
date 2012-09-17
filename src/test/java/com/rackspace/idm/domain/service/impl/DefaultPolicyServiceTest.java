@@ -1,13 +1,18 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.dao.PolicyDao;
 import com.rackspace.idm.domain.dao.impl.LdapPolicyRepository;
+import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.Policies;
 import com.rackspace.idm.domain.entity.Policy;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.any;
@@ -25,11 +30,13 @@ public class DefaultPolicyServiceTest{
 
     PolicyDao policyDao = mock(PolicyDao.class);
     DefaultPolicyService defaultPolicyService = new DefaultPolicyService(policyDao);
+    EndpointDao endpointDao = mock(EndpointDao.class);
     DefaultPolicyService spy;
 
     @Before
     public void setUp() throws Exception {
         defaultPolicyService = new DefaultPolicyService(policyDao);
+        defaultPolicyService.setEndpointDao(endpointDao);
         spy = spy(defaultPolicyService);
     }
 
@@ -138,11 +145,13 @@ public class DefaultPolicyServiceTest{
 
     @Test
     public void testDeletePolicy() throws Exception {
+        List<CloudBaseUrl> cloudBaseUrlList = new ArrayList<CloudBaseUrl>();
         Policy policy = new Policy();
         policy.setPolicyId("1");
         policy.setName("name");
         policy.setBlob("someBlob");
         policy.setPolicyType("someType");
+        when(endpointDao.getBaseUrlsWithPolicyId(anyString())).thenReturn(cloudBaseUrlList);
         when(policyDao.getPolicy(anyString())).thenReturn(policy);
         defaultPolicyService.deletePolicy("1");
         verify(policyDao).deletePolicy(policy.getPolicyId());

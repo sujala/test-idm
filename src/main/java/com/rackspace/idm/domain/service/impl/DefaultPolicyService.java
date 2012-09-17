@@ -142,4 +142,8 @@ public class DefaultPolicyService implements PolicyService {
             throw new BadRequestException("Cannot delete policy that belongs to endpoint");
         }
     }
+
+    public void setEndpointDao(EndpointDao endpointDao) {
+        this.endpointDao = endpointDao;
+    }
 }
