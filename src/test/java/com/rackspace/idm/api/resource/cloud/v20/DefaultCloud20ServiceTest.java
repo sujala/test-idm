@@ -1,7 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.api.converter.cloudv20.*;
@@ -32,7 +32,6 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.ext.os_ksec2.v1.Ec2CredentialsType;
 import org.openstack.docs.identity.api.v2.*;
-import org.openstack.docs.identity.api.v2.ObjectFactory;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import javax.ws.rs.core.*;
@@ -5186,23 +5185,23 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void impersonate_userNotNullAndNotEnabledThrowsForbiddenException_returnsResponseBuilder() throws Exception {
+    public void impersonate_userNotNullAndNotEnabled_returnsResponseBuilder() throws Exception {
+        UserScopeAccess userScopeAccess = new UserScopeAccess();
+        userScopeAccess.setAccessTokenExpired();
+        userScopeAccess.setAccessTokenString("token");
         user.setEnabled(false);
-        ArgumentCaptor<ForbiddenException> argumentCaptor = ArgumentCaptor.forClass(ForbiddenException.class);
-        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-
         org.openstack.docs.identity.api.v2.User impersonateUser = new org.openstack.docs.identity.api.v2.User();
         impersonateUser.setUsername("impersonateUser");
         impersonateUser.setId("impersonateUserId");
         ImpersonationRequest impersonationRequest = new ImpersonationRequest();
         impersonationRequest.setUser(impersonateUser);
-
         when(authorizationService.authorizeRacker(any(ScopeAccess.class))).thenReturn(true);
         when(userService.getUser("impersonateUser")).thenReturn(user);
-        when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
-
-        assertThat("response builder",spy.impersonate(null, authToken, impersonationRequest),equalTo(responseBuilder));
-        assertThat("exception type",argumentCaptor.getValue(),instanceOf(ForbiddenException.class));
+        doReturn(true).when(spy).isValidImpersonatee(user);
+        when(scopeAccessService.getDirectScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(userScopeAccess);
+        when(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory());
+        spy.impersonate(null, authToken, impersonationRequest);
+        verify(scopeAccessService).updateExpiredUserScopeAccess(userScopeAccess, true);
     }
 
     @Test
@@ -5242,7 +5241,7 @@ public class DefaultCloud20ServiceTest {
         when(scopeAccessService.getDirectScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(userScopeAccess);
         when(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory());
         spy.impersonate(null, authToken, impersonationRequest);
-        verify(scopeAccessService).updateExpiredUserScopeAccess(userScopeAccess);
+        verify(scopeAccessService).updateExpiredUserScopeAccess(userScopeAccess, false);
     }
 
     @Test

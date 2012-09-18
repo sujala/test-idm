@@ -47,10 +47,7 @@ import javax.xml.transform.stream.StreamSource;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -1619,16 +1616,20 @@ public class DefaultCloud20Service implements Cloud20Service {
                 logger.info("Impersonation call - calling cloud auth to get user");
                 // Get from cloud.
                 impersonatingToken = delegateCloud20Service.impersonateUser(impersonatingUsername, config.getString("ga.username"), config.getString("ga.password"));
-            } else if (!user.isEnabled()) {
-                throw new ForbiddenException("User cannot be impersonated; User is not enabled");
             } else {
                 if (!isValidImpersonatee(user)) {
                     throw new BadRequestException("User cannot be impersonated; No valid impersonation roles assigned");
                 }
+
                 UserScopeAccess impAccess = (UserScopeAccess) scopeAccessService.getDirectScopeAccessForParentByClientId(user.getUniqueId(), getCloudAuthClientId());
 
                 if (impAccess.isAccessTokenExpired(new DateTime())) {
-                    scopeAccessService.updateExpiredUserScopeAccess(impAccess);
+                    if (!user.isEnabled()) {
+                        logger.info("Impersonating a disabled user");
+                        scopeAccessService.updateExpiredUserScopeAccess(impAccess, true); // only set token for hour
+                    } else {
+                        scopeAccessService.updateExpiredUserScopeAccess(impAccess, false); // set for full default 24
+                    }
                 }
                 impersonatingToken = impAccess.getAccessTokenString();
             }
