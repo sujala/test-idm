@@ -48,6 +48,9 @@ public class UserConverterCloudV20 {
 
         jaxbUser.setId(user.getId());
         jaxbUser.setName(user.getUsername());
+        if(user.getRegion() != null){
+            jaxbUser.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","defaultRegion"),user.getRegion());
+        }
         if(roles != null){
             jaxbUser.setRoles(this.roleConverterCloudV20.toRoleListJaxb(roles));
         }
