@@ -243,7 +243,7 @@ public class LdapEndpointRepositoryIntegrationTest extends InMemoryLdapIntegrati
 
     private CloudBaseUrl getCloudBaseUrl(Integer baseUrlId) {
         CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
-        cloudBaseUrl.setBaseUrlType("test");
+        cloudBaseUrl.setBaseUrlType("MOSSO");
         cloudBaseUrl.setServiceName("test");
         cloudBaseUrl.setPublicUrl("test");
         cloudBaseUrl.setBaseUrlId(baseUrlId);
@@ -254,7 +254,7 @@ public class LdapEndpointRepositoryIntegrationTest extends InMemoryLdapIntegrati
 
     private CloudBaseUrl getCloudBaseUrl() {
         CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
-        cloudBaseUrl.setBaseUrlType("test");
+        cloudBaseUrl.setBaseUrlType("NAST");
         cloudBaseUrl.setServiceName("test");
         cloudBaseUrl.setPublicUrl("test");
         cloudBaseUrl.setBaseUrlId(baseUrlId1);
