@@ -3,12 +3,15 @@ package com.rackspace.idm.api.resource.cloud.v20;
 import com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
+import org.apache.commons.configuration.Configuration;
 import org.hamcrest.Matchers;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.openstack.docs.identity.api.v2.AuthenticateResponse;
 
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
@@ -20,6 +23,7 @@ import java.io.OutputStream;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -516,5 +520,42 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
         else{
             return "BadToken";
         }
+    }
+
+//    Uncomment once refactored tests are merged
+//    Blame me, but it won't compile if this is 'just' ignored since Cloud20TestHelper doesn't exist
+//    @Test
+//    public void PROPER_delegateAuthenticate_returnGlobalResponseAfterSync() throws Exception {
+//        WebResource resource = resource().path("/cloud/v2.0/tokens");
+//        String authRequest = Cloud20TestHelper.getAuthenticationRequest(userName, password);
+//
+//        ClientResponse clientResponse = resource.post(ClientResponse.class, authRequest);
+//
+//        MultivaluedMap<String, String> headers = clientResponse.getHeaders();
+//
+//        String source = headers.getFirst("response-source");
+//
+//        assertThat(source, equalTo(null));
+//    }
+
+    @Test
+    public void Authenticate_returnGlobalResponseAfterSync() throws Exception {
+        WebResource resource = resource().path("/cloud/v2.0/tokens");
+        String authRequest = "{\n" +
+                "    \"auth\":{\n" +
+                "        \"passwordCredentials\":{\n" +
+                "            \"username\":" + userName + ",\n" +
+                "            \"password\":\"Password1\n" +
+                "        }\n" +
+                "    }\n" +
+                "}";
+
+        ClientResponse clientResponse = resource.post(ClientResponse.class, authRequest);
+
+        MultivaluedMap<String, String> headers = clientResponse.getHeaders();
+
+        String source = headers.getFirst("response-source");
+
+        assertThat(source, equalTo(null));
     }
 }

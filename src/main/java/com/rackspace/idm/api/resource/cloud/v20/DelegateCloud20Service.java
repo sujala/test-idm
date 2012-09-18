@@ -150,6 +150,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             int status = dummyResponse.getStatus();
             if (status == HttpServletResponse.SC_OK && user != null) {
                 Token token = unmarshallAuthenticateResponse(dummyResponse.getEntity().toString()).getToken();
+
                 if (token == null) {
                     throw new IdmException("Unable to sync tokens");
                 }
@@ -161,9 +162,9 @@ public class DelegateCloud20Service implements Cloud20Service {
                 Date expires = gregorianCalendar.getTime();
                 LOG.info("expires = " + expires);
                 scopeAccessService.updateUserScopeAccessTokenForClientIdByUser(user, getCloudAuthClientId(), token.getId(), expires);
-                return serviceResponse;
+                return defaultCloud20Service.authenticate(httpHeaders, authenticationRequest);
             } else if (user == null) { //If "user" is null return cloud response
-                return serviceResponse;
+                return defaultCloud20Service.authenticate(httpHeaders, authenticationRequest);
             } else { //If we get this far, return Default Service Response
                 return defaultCloud20Service.authenticate(httpHeaders, authenticationRequest);
             }
