@@ -1,9 +1,0 @@
-dn: rsId=4,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
-changetype: modify
-replace: cn
-cn: identity:super-admin
-
-dn: rsId=4,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
-changetype: modify
-replace: description
-description: Super Admin Role.
