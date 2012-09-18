@@ -522,7 +522,7 @@ public class DefaultCloud11ServiceTest {
         user.setId("userId");
         user.setMossoId(123);
         when(userService.getUsersByMossoId(123)).thenReturn(users);
-        when(authorizationService.authorizeCloudIdentityAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
         defaultCloud11Service.addNastTenant(user);
         Mockito.verify(nastFacade).addNastUser(user);
     }
@@ -536,7 +536,7 @@ public class DefaultCloud11ServiceTest {
         user.setId("userId");
         user.setMossoId(123);
         when(userService.getUsersByMossoId(123)).thenReturn(users);
-        when(authorizationService.authorizeCloudIdentityAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
         defaultCloud11Service.addMossoTenant(user);
         verify(tenantService).addTenant(any(Tenant.class));
     }
@@ -562,7 +562,7 @@ public class DefaultCloud11ServiceTest {
         user.setNastId("nastId");
         user.setMossoId(123);
         when(userService.getUsersByMossoId(123)).thenReturn(users);
-        when(authorizationService.authorizeCloudIdentityAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
         defaultCloud11Service.addNastTenant(user);
         verify(endpointService).getBaseUrlsByBaseUrlType("NAST");
     }
@@ -792,7 +792,7 @@ public class DefaultCloud11ServiceTest {
         user.setNastId("nastId");
         user.setMossoId(123);
         when(userService.getUsersByMossoId(123)).thenReturn(users);
-        when(authorizationService.authorizeCloudIdentityAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
         defaultCloud11Service.addMossoTenant(user);
         Mockito.verify(endpointService).getBaseUrlsByBaseUrlType("MOSSO");
     }
@@ -1492,24 +1492,24 @@ public class DefaultCloud11ServiceTest {
     }
 
     @Test
-    public void authenticateCloudAdminUserForGetRequests_withServiceAndIdentityAdmin_withoutExceptions() throws Exception {
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
+    public void authenticateCloudAdminUserForGetRequests_withServiceAndServiceAdmin_withoutExceptions() throws Exception {
         when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
         defaultCloud11Service.authenticateCloudAdminUserForGetRequests(request);
     }
 
     @Test
     public void authenticateCloudAdminUserForGetRequests_withService() throws Exception {
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
         defaultCloud11Service.authenticateCloudAdminUserForGetRequests(request);
         assertTrue("no Exception thrown", true);
     }
 
     @Test
-    public void authenticateCloudAdminUserForGetRequests_withIdentityAdmin() throws Exception {
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
+    public void authenticateCloudAdminUserForGetRequests_withServiceAdmin() throws Exception {
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
         defaultCloud11Service.authenticateCloudAdminUserForGetRequests(request);
         assertTrue("no Exception thrown", true);
     }
@@ -1796,14 +1796,14 @@ public class DefaultCloud11ServiceTest {
 
     @Test
     public void updateUser_callsValidateUser() throws Exception {
-        when(authorizationService.authorizeCloudServiceAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
+        when(authorizationService.authorizeCloudIdentityAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
         spy.updateUser(request, null, null, null);
         verify(userValidator).validate(null);
     }
 
     @Test
     public void updateUser_whenValidatorThrowsBadRequestException_returns400() throws Exception {
-        when(authorizationService.authorizeCloudServiceAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
+        when(authorizationService.authorizeCloudIdentityAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
         doThrow(new BadRequestException("test exception")).when(userValidator).validate(null);
         Response.ResponseBuilder responseBuilder = spy.updateUser(request, null, null, null);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
@@ -2415,7 +2415,7 @@ public class DefaultCloud11ServiceTest {
     public void createUser_validMossoId_callValidateMossoId() throws Exception{
         user.setId("1");
         user.setMossoId(123456);
-        when(authorizationService.authorizeCloudServiceAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
+        when(authorizationService.authorizeCloudIdentityAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
         spy.createUser(request,httpHeaders,uriInfo,user);
         verify(spy).validateMossoId(123456);
     }
@@ -2466,7 +2466,7 @@ public class DefaultCloud11ServiceTest {
         userDO.setId("1");
         userDO.setMossoId(123456);
         when(userConverterCloudV11.toUserDO(user)).thenReturn(userDO);
-        when(authorizationService.authorizeCloudServiceAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
+        when(authorizationService.authorizeCloudIdentityAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
         when(userService.getUsersByMossoId(123456)).thenReturn(users);
         when(clientService.getClientRoleByClientIdAndRoleName(Matchers.<String>any(), Matchers.<String>any())).thenReturn(clientRole);
         when(clientService.getClientRoleById(Matchers.<String>any())).thenReturn(clientRole);
@@ -2581,31 +2581,31 @@ public class DefaultCloud11ServiceTest {
     }
 
     @Test
-    public void authenticateCloudAdminUser_withServiceAndIdentityAdmin_withoutExceptions() throws Exception {
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
+    public void authenticateCloudAdminUser_withServiceAndServiceAdmin_withoutExceptions() throws Exception {
         when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
         defaultCloud11Service.authenticateCloudAdminUser(request);
     }
 
     @Test(expected = CloudAdminAuthorizationException.class)
-    public void authenticateCloudAdminUser_withServiceAndIdentityAdminFalse() throws Exception {
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
+    public void authenticateCloudAdminUser_withServiceAndServiceAdminFalse() throws Exception {
         when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
         defaultCloud11Service.authenticateCloudAdminUser(request);
     }
 
     @Test
     public void authenticateCloudAdminUser_withService() throws Exception {
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
         defaultCloud11Service.authenticateCloudAdminUser(request);
         assertTrue("no Exception thrown", true);
     }
 
     @Test
-    public void authenticateCloudAdminUser_withIdentityAdmin() throws Exception {
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
+    public void authenticateCloudAdminUser_withServiceAdmin() throws Exception {
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
         defaultCloud11Service.authenticateCloudAdminUser(request);
         assertTrue("no Exception thrown", true);
     }

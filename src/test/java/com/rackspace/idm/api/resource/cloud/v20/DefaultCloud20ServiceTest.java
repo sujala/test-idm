@@ -1,7 +1,11 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
+
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
+
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.api.converter.cloudv20.*;
@@ -32,6 +36,7 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.ext.os_ksec2.v1.Ec2CredentialsType;
 import org.openstack.docs.identity.api.v2.*;
+import org.openstack.docs.identity.api.v2.ObjectFactory;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import javax.ws.rs.core.*;
@@ -233,7 +238,7 @@ public class DefaultCloud20ServiceTest {
         when(jaxbObjectFactories.getRackspaceIdentityExtKsgrpV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.ObjectFactory());
         when(jaxbObjectFactories.getOpenStackIdentityV2Factory()).thenReturn(new org.openstack.docs.identity.api.v2.ObjectFactory());
         when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(userScopeAccess);
-        when(authorizationService.authorizeCloudIdentityAdmin(userScopeAccess)).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(userScopeAccess)).thenReturn(true);
         when(endpointService.getBaseUrlById(101)).thenReturn(cloudBaseUrl);
         when(clientService.getById(role.getServiceId())).thenReturn(application);
         when(clientService.getById("clientId")).thenReturn(application);
@@ -330,7 +335,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.setDefaultRegionServices(authToken, new DefaultRegionServices());
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -350,7 +355,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.listDefaultRegionServices(authToken);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -543,7 +548,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(null);
         spy.validateToken(null, null, null, null);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -819,7 +824,7 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void authenticate_notCloudIdentityAdmin_callsStripEndpoints() throws Exception {
+    public void authenticate_notCloudServiceAdmin_callsStripEndpoints() throws Exception {
         AuthenticationRequest authenticationRequest = new AuthenticationRequest();
         TokenForAuthenticationRequest tokenForAuthenticationRequest = new TokenForAuthenticationRequest();
         tokenForAuthenticationRequest.setId("tokenId");
@@ -849,7 +854,7 @@ public class DefaultCloud20ServiceTest {
         when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
         when(tenantService.hasTenantAccess(org.mockito.Matchers.any(UserScopeAccess.class), anyString())).thenReturn(true);
         when(tokenConverterCloudV20.toToken(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(new Token());
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
         spy.authenticate(null, authenticationRequest);
         verify(authConverterCloudV20).toAuthenticationResponse(any(User.class), any(ScopeAccess.class), any(List.class), any(List.class));
     }
@@ -901,7 +906,7 @@ public class DefaultCloud20ServiceTest {
         when(scopeAccessService.getScopeAccessByAccessToken("tokenId")).thenReturn(scopeAccess);
         doReturn(new User()).when(spy).getUserByIdForAuthentication("userRsId");
         when(tokenConverterCloudV20.toToken(any(ScopeAccess.class))).thenReturn(token);
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(tenantService.hasTenantAccess(any(ScopeAccess.class), eq("tenantId"))).thenReturn(true);
         when(authConverterCloudV20.toAuthenticationResponse(any(User.class), any(ScopeAccess.class), any(List.class), any(List.class))).thenReturn(authenticateResponse);
 
@@ -929,7 +934,7 @@ public class DefaultCloud20ServiceTest {
         scopeAccess.setAccessTokenString("foo");
         when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
         when(tokenConverterCloudV20.toToken(any(ScopeAccess.class))).thenReturn(token);
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(tenantService.hasTenantAccess(any(ScopeAccess.class), eq("tenantId"))).thenReturn(true);
         when(authConverterCloudV20.toAuthenticationResponse(any(User.class), any(ScopeAccess.class), any(List.class), any(List.class))).thenReturn(authenticateResponse);
         Response.ResponseBuilder responseBuilder = spy.authenticate(null, authenticationRequest);
@@ -955,7 +960,7 @@ public class DefaultCloud20ServiceTest {
         scopeAccess.setAccessTokenString("foo");
         when(tokenConverterCloudV20.toToken(any(ScopeAccess.class))).thenReturn(token);
         when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(tenantService.hasTenantAccess(any(ScopeAccess.class), eq("tenantId"))).thenReturn(true);
         ArrayList<OpenstackEndpoint> openstackEndpoints = new ArrayList<OpenstackEndpoint>();
         OpenstackEndpoint endpoint = new OpenstackEndpoint();
@@ -1008,7 +1013,7 @@ public class DefaultCloud20ServiceTest {
         when(userService.getUser("test_user")).thenReturn(user);
         when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
         doReturn(new User()).when(spy).getUserByUsernameForAuthentication("test_user");
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(tenantService.hasTenantAccess(null, "tenantId")).thenReturn(false);
         when(authConverterCloudV20.toAuthenticationResponse(any(User.class), any(ScopeAccess.class), any(List.class), any(List.class))).thenReturn(authenticateResponse);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
@@ -1068,7 +1073,7 @@ public class DefaultCloud20ServiceTest {
         when(userService.getUser("test_user")).thenReturn(user);
         when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
         doReturn(new User()).when(spy).getUserByUsernameForAuthentication("test_user");
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(tenantService.hasTenantAccess(null, "tenantId")).thenReturn(false);
         when(authConverterCloudV20.toAuthenticationResponse(any(User.class), any(ScopeAccess.class), any(List.class), any(List.class))).thenReturn(authenticateResponse);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
@@ -1435,13 +1440,13 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void addUser_callsAuthorizationService_authorizeServiceAdmin() throws Exception {
         spy.addUser(null, null, authToken, userOS);
-        verify(authorizationService).authorizeCloudServiceAdmin(any(ScopeAccess.class));
+        verify(authorizationService).authorizeCloudIdentityAdmin(any(ScopeAccess.class));
     }
 
     @Test
     public void addUser_callerIsServiceAdmin_callsDefaultRegionService_validateDefaultRegion() throws Exception {
         when(domainService.createNewDomain(org.mockito.Matchers.<String>anyObject())).thenReturn("domain");
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
         spy.addUser(null, null, authToken, userOS);
         verify(defaultRegionService).validateDefaultRegion(user.getRegion());
     }
@@ -1449,7 +1454,7 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void addUser_callerIsServiceAdmin_defaultRegionMatchesUserRegion_setsRegion() throws Exception {
         when(domainService.createNewDomain(org.mockito.Matchers.<String>anyObject())).thenReturn("domain");
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
         HashSet<String> defaultRegions = new HashSet<String>();
         defaultRegions.add("DFW");
         when(defaultRegionService.getDefaultRegions()).thenReturn(defaultRegions);
@@ -1644,7 +1649,7 @@ public class DefaultCloud20ServiceTest {
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        doThrow(forbiddenException).when(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
+        doThrow(forbiddenException).when(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
         when(exceptionHandler.exceptionResponse(forbiddenException)).thenReturn(responseBuilder);
         assertThat("code", spy.deleteRole(null, authToken, "roleId"), equalTo(responseBuilder));
     }
@@ -1755,7 +1760,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.addTenant(null, null, authToken, null);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -1883,7 +1888,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.addRole(null, null, authToken, role1);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -1934,14 +1939,14 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void addRole_roleWithIdentityName_callsVerifyIdentityAdminLevelAccess() throws Exception {
+    public void addRole_roleWithIdentityName_callsVerifyServiceAdminLevelAccess() throws Exception {
         Role role1 = new Role();
         role1.setName("Identity:role");
         role1.setServiceId("serviceId");
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.addRole(null, null, authToken, role1);
-        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -1953,14 +1958,14 @@ public class DefaultCloud20ServiceTest {
         role1.setServiceId("serviceId");
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        doThrow(new ForbiddenException()).when(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
+        doThrow(new ForbiddenException()).when(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response builder", spy.addRole(null, null, authToken, role1), equalTo(responseBuilder));
         assertThat("exception type",argumentCaptor.getValue(),instanceOf(ForbiddenException.class));
     }
 
     @Test
-    public void addRole_roleWithIdentityNameWithIdentityAdmin_returns201Status() throws Exception {
+    public void addRole_roleWithIdentityNameWithServiceAdmin_returns201Status() throws Exception {
         Role role1 = new Role();
         role1.setName("Identity:role");
         role1.setServiceId("applicationId");
@@ -2057,7 +2062,7 @@ public class DefaultCloud20ServiceTest {
     public void addRolesToUserOnTenant_roleNameEqualsCloudServiceAdmin_returnsResponseBuilder() throws Exception {
         ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        clientRole.setName("identity:service-admin");
+        clientRole.setName("identity:admin");
         doReturn(null).when(spy).getScopeAccessForValidToken(null);
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
         doReturn(clientRole).when(spy).checkAndGetClientRole(null);
@@ -2147,7 +2152,7 @@ public class DefaultCloud20ServiceTest {
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        doThrow(badRequestException).when(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        doThrow(badRequestException).when(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
         when(exceptionHandler.exceptionResponse(badRequestException)).thenReturn(responseBuilder);
         assertThat("response builder", spy.listUserGroups(null, authToken, null), equalTo(responseBuilder));
     }
@@ -2157,7 +2162,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.listUserGroups(null, authToken, null);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -2186,7 +2191,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.getGroupById(null, authToken, null);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -2232,7 +2237,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.addEndpoint(null, authToken, null, null);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -2240,7 +2245,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.addEndpointTemplate(null, null, authToken, null);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -2302,7 +2307,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.addUserCredential(null, authToken, null, null);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -2475,13 +2480,13 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void addUserRole_userNotIdentityAdminAndRoleIsIdentityAdmin_returnsResponseBuilder() throws Exception {
+    public void addUserRole_userNotServiceAdminAndRoleIsServiceAdmin_returnsResponseBuilder() throws Exception {
         ArgumentCaptor<ForbiddenException> argumentCaptor = ArgumentCaptor.forClass(ForbiddenException.class);
         ScopeAccess scopeAccess = new ScopeAccess();
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
 
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(false);
         when(config.getString("cloudAuth.adminRole")).thenReturn("admin");
         ClientRole clientRole1 = new ClientRole();
         doNothing().when(spy).checkForMultipleIdentityRoles(user,clientRole1);
@@ -2495,10 +2500,10 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void addUserRole_userNotIdentityAdminAndRoleNotIdentityAdmin_returns200() throws Exception {
+    public void addUserRole_userNotServiceAdminAndRoleNotServiceAdmin_returns200() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(false);
         when(config.getString("cloudAuth.adminRole")).thenReturn("admin");
         ClientRole clientRole1 = new ClientRole();
         clientRole1.setName("notAdmin");
@@ -2509,11 +2514,11 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void addUserRole_userIsIdentityAdminAndRoleNotIdentityAdmin_returns200() throws Exception {
+    public void addUserRole_userIsServiceAdminAndRoleNotServiceAdmin_returns200() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
 
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(true);
         when(config.getString("cloudAuth.adminRole")).thenReturn("admin");
         ClientRole clientRole1 = new ClientRole();
         clientRole1.setName("notAdmin");
@@ -2524,11 +2529,11 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void addUserRole_userIsIdentityAdminAndRoleIsIdentityAdmin_returns200() throws Exception {
+    public void addUserRole_userIsServiceAdminAndRoleIsServiceAdmin_returns200() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
 
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(true);
         when(config.getString("cloudAuth.adminRole")).thenReturn("admin");
         ClientRole clientRole1 = new ClientRole();
         clientRole1.setName("admin");
@@ -2543,7 +2548,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.checkToken(null, authToken, authToken, null);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -2595,7 +2600,7 @@ public class DefaultCloud20ServiceTest {
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        doThrow(new BadRequestException("message")).when(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        doThrow(new BadRequestException("message")).when(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
         when(exceptionHandler.badRequestExceptionResponse("message")).thenReturn(responseBuilder);
         assertThat("response builder", spy.checkToken(null, authToken, null, null), equalTo(responseBuilder));
     }
@@ -2604,7 +2609,7 @@ public class DefaultCloud20ServiceTest {
     public void checkToken_throwsNotAuthorizedException_returns401() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        doThrow(new NotAuthorizedException()).when(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        doThrow(new NotAuthorizedException()).when(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
         Response.ResponseBuilder responseBuilder = spy.checkToken(null, authToken, null, null);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(401));
     }
@@ -2613,7 +2618,7 @@ public class DefaultCloud20ServiceTest {
     public void checkToken_throwsForbiddenException_returns403() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        doThrow(new ForbiddenException()).when(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        doThrow(new ForbiddenException()).when(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
         Response.ResponseBuilder responseBuilder = spy.checkToken(null, authToken, null, null);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(403));
     }
@@ -2622,7 +2627,7 @@ public class DefaultCloud20ServiceTest {
     public void checkToken_throwsNotFoundException_returns404() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        doThrow(new NotFoundException()).when(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        doThrow(new NotFoundException()).when(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
         Response.ResponseBuilder responseBuilder = spy.checkToken(null, authToken, null, null);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(404));
     }
@@ -2631,7 +2636,7 @@ public class DefaultCloud20ServiceTest {
     public void checkToken_throwsException_returns500() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        doThrow(new NullPointerException()).when(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        doThrow(new NullPointerException()).when(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
         Response.ResponseBuilder responseBuilder = spy.checkToken(null, authToken, null, null);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(500));
     }
@@ -2641,7 +2646,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.deleteEndpoint(null, authToken, authToken, null);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -2660,7 +2665,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.deleteEndpointTemplate(null, authToken, null);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -2675,11 +2680,11 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void deleteRole_callsVerifyIdentityAdminLevelAccess() throws Exception {
+    public void deleteRole_callsVerifyServiceAdminLevelAccess() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy). getScopeAccessForValidToken(authToken);
         spy.deleteRole(null, authToken, roleId);
-        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -2715,7 +2720,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.deleteService(null, authToken, null);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -2733,7 +2738,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.deleteTenant(null, authToken, null);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -2778,7 +2783,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.deleteUserCredential(null, authToken, null, null);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -2876,7 +2881,7 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void deleteUserRole_notCloudIdentityAdminAndAdminRoleThrowsForbiddenException_returnsResponseBuilder() throws Exception {
+    public void deleteUserRole_notCloudServiceAdminAndAdminRoleThrowsForbiddenException_returnsResponseBuilder() throws Exception {
         ArgumentCaptor<ForbiddenException> argumentCaptor = ArgumentCaptor.forClass(ForbiddenException.class);
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         List<TenantRole> globalRoles = new ArrayList<TenantRole>();
@@ -2885,8 +2890,8 @@ public class DefaultCloud20ServiceTest {
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
         when(tenantService.getGlobalRolesForUser(user)).thenReturn(globalRoles);
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(config.getString("cloudAuth.adminRole")).thenReturn("identity:admin");
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response builder", spy.deleteUserRole(httpHeaders, authToken, userId, "tenantRoleId"), equalTo(responseBuilder));
@@ -2894,39 +2899,39 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void deleteUserRole_notCloudIdentityAdminAndNotAdminRole_returns204() throws Exception {
+    public void deleteUserRole_notCloudServiceAdminAndNotAdminRole_returns204() throws Exception {
         List<TenantRole> globalRoles = new ArrayList<TenantRole>();
         tenantRole.setName("notAdmin");
         globalRoles.add(tenantRole);
         when(tenantService.getGlobalRolesForUser(any(User.class))).thenReturn(globalRoles);
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
-        when(config.getString("cloudAuth.adminRole")).thenReturn("identity:admin");
-        Response.ResponseBuilder responseBuilder = spy.deleteUserRole(httpHeaders, authToken, userId, "tenantRoleId");
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(204));
-    }
-
-    @Test
-    public void deleteUserRole_isCloudIdentityAdminAndNotAdminRole_returns204() throws Exception {
-        List<TenantRole> globalRoles = new ArrayList<TenantRole>();
-        tenantRole.setName("notAdmin");
-        globalRoles.add(tenantRole);
-        when(tenantService.getGlobalRolesForUser(any(User.class))).thenReturn(globalRoles);
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
         when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(config.getString("cloudAuth.adminRole")).thenReturn("identity:admin");
         Response.ResponseBuilder responseBuilder = spy.deleteUserRole(httpHeaders, authToken, userId, "tenantRoleId");
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(204));
     }
 
     @Test
-    public void deleteUserRole_isCloudIdentityAdminAndIsAdminRole_returns204() throws Exception {
+    public void deleteUserRole_isCloudServiceAdminAndNotAdminRole_returns204() throws Exception {
+        List<TenantRole> globalRoles = new ArrayList<TenantRole>();
+        tenantRole.setName("notAdmin");
+        globalRoles.add(tenantRole);
+        when(tenantService.getGlobalRolesForUser(any(User.class))).thenReturn(globalRoles);
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(config.getString("cloudAuth.adminRole")).thenReturn("identity:admin");
+        Response.ResponseBuilder responseBuilder = spy.deleteUserRole(httpHeaders, authToken, userId, "tenantRoleId");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(204));
+    }
+
+    @Test
+    public void deleteUserRole_isCloudServiceAdminAndIsAdminRole_returns204() throws Exception {
         List<TenantRole> globalRoles = new ArrayList<TenantRole>();
         tenantRole.setName("identity:admin");
         globalRoles.add(tenantRole);
         when(tenantService.getGlobalRolesForUser(any(User.class))).thenReturn(globalRoles);
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(config.getString("cloudAuth.adminRole")).thenReturn("identity:admin");
         Response.ResponseBuilder responseBuilder = spy.deleteUserRole(httpHeaders, authToken, userId, "tenantRoleId");
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(204));
@@ -2956,7 +2961,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.getEndpoint(null, authToken, null, null);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -3000,7 +3005,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.getEndpointTemplate(null, authToken, null);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -3035,7 +3040,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.getRole(null, authToken, null);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -3076,7 +3081,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.getSecretQA(null, authToken, null);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -3110,7 +3115,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.getService(null, authToken, null);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -3145,7 +3150,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.getTenantById(null, authToken, null);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -3176,7 +3181,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.getTenantByName(null, authToken, null);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -3437,7 +3442,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.getUserRole(null, authToken, null, null);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -3624,7 +3629,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.listEndpoints(null, authToken, null);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -3678,7 +3683,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.listEndpointTemplates(null, authToken, null);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -3694,7 +3699,7 @@ public class DefaultCloud20ServiceTest {
         NotAuthorizedException notAuthorizedException = new NotAuthorizedException();
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        doThrow(notAuthorizedException).when(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        doThrow(notAuthorizedException).when(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
         when(exceptionHandler.exceptionResponse(notAuthorizedException)).thenReturn(responseBuilder);
         assertThat("response builder", spy.listEndpointTemplates(null, authToken, null), equalTo(responseBuilder));
     }
@@ -3721,7 +3726,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.listRoles(null, authToken, null, null, 0);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -3743,7 +3748,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.listRolesForTenant(null, authToken, null, null, 0);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -3775,7 +3780,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.listRolesForUserOnTenant(null, authToken, null, null);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -3813,7 +3818,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.listServices(null, authToken, null, null);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -3822,7 +3827,7 @@ public class DefaultCloud20ServiceTest {
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        doThrow(forbiddenException).when(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        doThrow(forbiddenException).when(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
         when(exceptionHandler.exceptionResponse(forbiddenException)).thenReturn(responseBuilder);
         assertThat("response builder",spy.listServices(null, authToken, null, null),equalTo(responseBuilder));
     }
@@ -3842,8 +3847,8 @@ public class DefaultCloud20ServiceTest {
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(caller).when(spy).getUser(scopeAccess);
         when(userService.getUserById(userId)).thenReturn(user);
-        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(false);
         when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(false);
+        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(false);
         when(authorizationService.authorizeCloudUser(scopeAccess)).thenReturn(false);
 
         spy.listUserGlobalRoles(null, authToken, userId);
@@ -3858,8 +3863,8 @@ public class DefaultCloud20ServiceTest {
         doReturn(user).when(spy).getUser(scopeAccess);
         when(userService.getUserById(userId)).thenReturn(user);
         doReturn(requester).when(spy).getUser(scopeAccess);
-        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(false);
         when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(false);
+        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(false);
         when(authorizationService.authorizeCloudUser(scopeAccess)).thenReturn(true);
         spy.listUserGlobalRoles(null, authToken, userId);
         verify(authorizationService).verifySelf(requester, user);
@@ -3884,10 +3889,10 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void listUserGlobalRoles_notCloudIdentityAdminAndNotCloudServiceAdminResponseOk_returns200() throws Exception {
+    public void listUserGlobalRoles_notCloudServiceAdminAndNotCloudServiceAdminResponseOk_returns200() throws Exception {
         doReturn(user).when(spy).getUser(any(ScopeAccess.class));
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
         Response.ResponseBuilder responseBuilder = spy.listUserGlobalRoles(httpHeaders, authToken, userId);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
@@ -3897,7 +3902,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.listUserGlobalRolesByServiceId(null, authToken, null, null);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -3913,7 +3918,7 @@ public class DefaultCloud20ServiceTest {
         Response.ResponseBuilder  responseBuilder = new ResponseBuilderImpl();
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        doThrow(forbiddenException).when(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        doThrow(forbiddenException).when(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
         when(exceptionHandler.exceptionResponse(forbiddenException)).thenReturn(responseBuilder);
         assertThat("response builder", spy.listUserGlobalRolesByServiceId(null, authToken, null, null), equalTo(responseBuilder));
     }
@@ -3930,7 +3935,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.listGroups(null, authToken, null, null, null);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -4038,7 +4043,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.setUserEnabled(null, authToken, null, null);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -4081,7 +4086,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.updateSecretQA(null, authToken, null, null);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -4132,7 +4137,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.updateTenant(null, authToken, null, null);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -4379,7 +4384,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.updateUserApiKeyCredentials(null, authToken, null, null, null);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -4489,7 +4494,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.updateUserPasswordCredentials(null, authToken, null, null, null);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -4540,7 +4545,7 @@ public class DefaultCloud20ServiceTest {
 
     @Test(expected = ForbiddenException.class)
     public void checkXAUTHTOKEN_notAuthorized_throwsForbiddenException() throws Exception {
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
         defaultCloud20Service.checkXAUTHTOKEN(authToken, true, tenantId);
     }
 
@@ -4548,7 +4553,7 @@ public class DefaultCloud20ServiceTest {
     public void checkXAUTHTOKEN_isCloudUserAdminAndAdminTenantIdNotMatch_throwsForbidden() throws Exception {
         List<Tenant> adminTenants = new ArrayList<Tenant>();
         adminTenants.add(tenant);
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(tenantService.getTenantsForScopeAccessByTenantRoles(any(ScopeAccess.class))).thenReturn(adminTenants);
         defaultCloud20Service.checkXAUTHTOKEN(authToken, false, "notMatch");
@@ -4558,29 +4563,29 @@ public class DefaultCloud20ServiceTest {
     public void checkXAUTHTOKEN_isCloudUserAdminAndAdminTenantIdMatch_succeeds() throws Exception {
         List<Tenant> adminTenants = new ArrayList<Tenant>();
         adminTenants.add(tenant);
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(tenantService.getTenantsForScopeAccessByTenantRoles(any(ScopeAccess.class))).thenReturn(adminTenants);
         defaultCloud20Service.checkXAUTHTOKEN(authToken, false, tenantId);
     }
 
     @Test(expected = ForbiddenException.class)
-    public void checkXAUTHTOKEN_notCloudIdentityAdminAndNotCloudUserAdmin_throwsForbidden() throws Exception {
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
+    public void checkXAUTHTOKEN_notCloudServiceAdminAndNotCloudUserAdmin_throwsForbidden() throws Exception {
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(false);
         defaultCloud20Service.checkXAUTHTOKEN(authToken, false, tenantId);
     }
 
     @Test
     public void checkXAUTHTOKEN_authorizationServiceReturnsTrue_doesNotThrowException() throws Exception {
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
         defaultCloud20Service.checkXAUTHTOKEN(authToken, false, "tenantId");
         assertTrue("no exceptions", true);
     }
 
     @Test
     public void checkXAUTHTOKEN_hasUserAdminAccessAndTenantIdIsNull_doesNotThrowException() throws Exception {
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
         defaultCloud20Service.checkXAUTHTOKEN(authToken, false, null);
         assertTrue("no exceptions", true);
@@ -4602,7 +4607,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(null);
         spy.listEndpointsForToken(null, null, null);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -4611,7 +4616,7 @@ public class DefaultCloud20ServiceTest {
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(null);
-        doThrow(notAuthorizedException).when(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        doThrow(notAuthorizedException).when(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
         when(exceptionHandler.exceptionResponse(notAuthorizedException)).thenReturn(responseBuilder);
         assertThat("response builder", spy.listEndpointsForToken(null, null, null), equalTo(responseBuilder));
     }
@@ -4666,7 +4671,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.addGroup(httpHeaders,null,authToken,null);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -4715,7 +4720,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.updateGroup(null, authToken, null, null);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -4724,7 +4729,7 @@ public class DefaultCloud20ServiceTest {
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        doThrow(forbiddenException).when(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        doThrow(forbiddenException).when(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
         when(exceptionHandler.exceptionResponse(forbiddenException)).thenReturn(responseBuilder);
         assertThat("response builder", spy.updateGroup(null, authToken, null, null), equalTo(responseBuilder));
     }
@@ -4767,7 +4772,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.deleteGroup(null, authToken, null);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -4804,7 +4809,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.addUserToGroup(null, authToken, null, null);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -4840,7 +4845,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.removeUserFromGroup(null, authToken, null, null);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -4902,7 +4907,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.getUsersForGroup(null, authToken, null, null, null);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -4934,31 +4939,31 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void listUsers_callerIsIdentityAdmin_callsGetAllUsers() throws Exception {
+    public void listUsers_callerIsServiceAdmin_callsGetAllUsers() throws Exception {
         UserScopeAccess scopeAccess = new UserScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         User user1 = new User();
         user1.setDomainId("testDomain");
         doReturn(user1).when(spy).getUser(any(ScopeAccess.class));
-        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(true);
-        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(true);
+        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(false);
         spy.listUsers(null, authToken, null, null);
         verify(userService).getAllUsers(any(FilterParam[].class), any(Integer.class), any(Integer.class));
     }
 
     @Test
-    public void listUsers_callerIsServiceAdmin_callsGetAllUsers() throws Exception {
+    public void listUsers_callerIsIdentityAdmin_callsGetAllUsers() throws Exception {
         UserScopeAccess scopeAccess = new UserScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(new User()).when(spy).getUser(any(ScopeAccess.class));
-        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(false);
-        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(false);
+        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(true);
         spy.listUsers(null, authToken, null, null);
         verify(userService).getAllUsers(null, null, null);
     }
 
     @Test
-    public void listUsers_callerIsNotServiceOrIdentityAdmin_domainIdIsNull_responseOk_returns200() throws Exception {
+    public void listUsers_callerIsNotServiceOrServiceAdmin_domainIdIsNull_responseOk_returns200() throws Exception {
         User userTest = new User();
         userTest.setDomainId(null);
         ScopeAccess scopeAccess = new ScopeAccess();
@@ -4966,14 +4971,14 @@ public class DefaultCloud20ServiceTest {
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(userTest).when(spy).getUser(scopeAccess);
         when(authorizationService.authorizeCloudUser(scopeAccess)).thenReturn(false);
-        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(false);
         when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(false);
+        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(false);
         Response.ResponseBuilder responseBuilder = spy.listUsers(httpHeaders, authToken, 1, 1);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
     @Test
-    public void listUsers_callerIsNotServiceOrIdentityAdmin_domainIdNotNull_responseOk_returns200() throws Exception {
+    public void listUsers_callerIsNotServiceOrServiceAdmin_domainIdNotNull_responseOk_returns200() throws Exception {
         User userTest = new User();
         userTest.setDomainId("domainId");
         ScopeAccess scopeAccess = new ScopeAccess();
@@ -4981,8 +4986,8 @@ public class DefaultCloud20ServiceTest {
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(userTest).when(spy).getUser(scopeAccess);
         when(authorizationService.authorizeCloudUser(scopeAccess)).thenReturn(false);
-        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(false);
         when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(false);
+        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(false);
         when(userService.getAllUsers(any(FilterParam[].class), any(Integer.class), any(Integer.class))).thenReturn(new Users());
         Response.ResponseBuilder responseBuilder = spy.listUsers(httpHeaders, authToken, 1, 1);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
@@ -5021,15 +5026,15 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void assignProperRole_callsAuthorizeCloudServiceAdmin() throws Exception {
-        defaultCloud20Service.assignProperRole(null, authToken, null, null);
-        verify(authorizationService).authorizeCloudServiceAdmin(null);
-    }
-
-    @Test
     public void assignProperRole_callsAuthorizeCloudIdentityAdmin() throws Exception {
         defaultCloud20Service.assignProperRole(null, authToken, null, null);
         verify(authorizationService).authorizeCloudIdentityAdmin(null);
+    }
+
+    @Test
+    public void assignProperRole_callsAuthorizeCloudServiceAdmin() throws Exception {
+        defaultCloud20Service.assignProperRole(null, authToken, null, null);
+        verify(authorizationService).authorizeCloudServiceAdmin(null);
     }
 
     @Test
@@ -5041,16 +5046,16 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void assignProperRole_cloudServiceAdmin_callsAddUserRole() throws Exception {
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
+    public void assignProperRole_cloudIdentityAdmin_callsAddUserRole() throws Exception {
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(clientService.getClientRoleByClientIdAndRoleName(anyString(), anyString())).thenReturn(clientRole);
         spy.assignProperRole(null, authToken, null, user);
         verify(spy).addUserRole(null, authToken, user.getId(), clientRole.getId());
     }
 
     @Test
-    public void assignProperRole_cloudIdentityAdmin_callsAddUserRole() throws Exception {
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
+    public void assignProperRole_cloudServiceAdmin_callsAddUserRole() throws Exception {
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(clientService.getClientRoleByClientIdAndRoleName(anyString(), anyString())).thenReturn(clientRole);
         spy.assignProperRole(null, authToken, null, user);
         verify(spy).addUserRole(null, authToken, user.getId(), clientRole.getId());
@@ -5075,7 +5080,7 @@ public class DefaultCloud20ServiceTest {
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        doThrow(forbiddenException).when(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        doThrow(forbiddenException).when(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
         when(exceptionHandler.exceptionResponse(forbiddenException)).thenReturn(responseBuilder);
         assertThat("response builder", spy.deleteTenant(null, authToken, "1"), equalTo(responseBuilder));
     }
@@ -5140,7 +5145,7 @@ public class DefaultCloud20ServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.getGroup(null, authToken, null);
-        verify(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
@@ -5165,7 +5170,7 @@ public class DefaultCloud20ServiceTest {
         when(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory());
 
         spy.impersonate(null, authToken, impersonationRequest);
-        verify(authorizationService).verifyRackerOrServiceAdminAccess(scopeAccess);
+        verify(authorizationService).verifyRackerOrIdentityAdminAccess(scopeAccess);
     }
 
     @Test
@@ -5572,7 +5577,7 @@ public class DefaultCloud20ServiceTest {
         doReturn(userTest).when(spy).getUserByIdForAuthentication("rsId");
         when(tenantService.hasTenantAccess(userScopeAccess, "tenantName")).thenReturn(true);
         when(scopeAccessService.getOpenstackEndpointsForScopeAccess(userScopeAccess)).thenReturn(openstackEndpoints);
-        when(authorizationService.authorizeCloudIdentityAdmin(userScopeAccess)).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(userScopeAccess)).thenReturn(true);
         when(tenantService.getTenantRolesForScopeAccess(userScopeAccess)).thenReturn(tenantRoles);
         when(tenantService.getTenantByName("tenantName")).thenReturn(new Tenant());
         when(tenantService.hasTenantAccess(org.mockito.Matchers.any(UserScopeAccess.class), anyString())).thenReturn(true);
@@ -5627,7 +5632,7 @@ public class DefaultCloud20ServiceTest {
         when(config.getString("cloudAuth.clientId")).thenReturn("clientId");
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword("username", "password", "clientId")).thenReturn(userScopeAccess);
         when(scopeAccessService.getOpenstackEndpointsForScopeAccess(userScopeAccess)).thenReturn(endpoints);
-        when(authorizationService.authorizeCloudIdentityAdmin(userScopeAccess)).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(userScopeAccess)).thenReturn(true);
         when(tenantService.getTenantRolesForScopeAccess(userScopeAccess)).thenReturn(roles);
         when(tokenConverterCloudV20.toToken(userScopeAccess)).thenReturn(token);
         when(tenantService.getTenantByName("tenantName")).thenReturn(tenant);
@@ -5670,7 +5675,7 @@ public class DefaultCloud20ServiceTest {
         when(config.getString("cloudAuth.clientId")).thenReturn("clientId");
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword("username", "password", "clientId")).thenReturn(userScopeAccess);
         when(scopeAccessService.getOpenstackEndpointsForScopeAccess(userScopeAccess)).thenReturn(endpoints);
-        when(authorizationService.authorizeCloudIdentityAdmin(userScopeAccess)).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(userScopeAccess)).thenReturn(true);
         when(tenantService.getTenantRolesForScopeAccess(userScopeAccess)).thenReturn(roles);
         when(tokenConverterCloudV20.toToken(userScopeAccess)).thenReturn(token);
         when(tenantService.getTenantByName("tenantName")).thenReturn(tenant);
@@ -5685,7 +5690,7 @@ public class DefaultCloud20ServiceTest {
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        doThrow(forbiddenException).when(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        doThrow(forbiddenException).when(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
         when(exceptionHandler.exceptionResponse(forbiddenException)).thenReturn(responseBuilder);
         assertThat("response builder", spy.listRoles(httpHeaders, authToken, null, null, null), equalTo(responseBuilder));
     }
@@ -5698,26 +5703,26 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void listUserGlobalRoles_notIdentityAdminAndIsServiceAdmin_responseOk_returns200() throws Exception {
+    public void listUserGlobalRoles_notServiceAdminAndIsServiceAdmin_responseOk_returns200() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         when(userService.getUserById("userId")).thenReturn(user);
         doReturn(new User()).when(spy).getUser(scopeAccess);
-        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(false);
-        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(false);
+        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(true);
         when(tenantService.getGlobalRolesForUser(user)).thenReturn(new ArrayList<TenantRole>());
         Response.ResponseBuilder responseBuilder = spy.listUserGlobalRoles(httpHeaders, authToken, "userId");
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
     @Test
-    public void listUserGlobalRoles_isIdentityAdminAndNotServiceAdmin_responseOk_returns200() throws Exception {
+    public void listUserGlobalRoles_isServiceAdminAndNotServiceAdmin_responseOk_returns200() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         when(userService.getUserById("userId")).thenReturn(user);
         doReturn(new User()).when(spy).getUser(scopeAccess);
-        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(true);
-        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(true);
+        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(false);
         when(tenantService.getGlobalRolesForUser(user)).thenReturn(new ArrayList<TenantRole>());
         Response.ResponseBuilder responseBuilder = spy.listUserGlobalRoles(httpHeaders, authToken, "userId");
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
@@ -5729,7 +5734,7 @@ public class DefaultCloud20ServiceTest {
         ForbiddenException forbiddenException = new ForbiddenException();
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        doThrow(forbiddenException).when(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        doThrow(forbiddenException).when(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
         when(exceptionHandler.exceptionResponse(forbiddenException)).thenReturn(responseBuilder);
         assertThat("response code", spy.listGroups(httpHeaders, authToken, null, null, null), equalTo(responseBuilder));
     }
@@ -5740,7 +5745,7 @@ public class DefaultCloud20ServiceTest {
         Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        doThrow(forbiddenException).when(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
+        doThrow(forbiddenException).when(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
         when(exceptionHandler.exceptionResponse(forbiddenException)).thenReturn(responseBuilder);
         assertThat("response code", spy.getGroup(httpHeaders, authToken, null), equalTo(responseBuilder));
     }

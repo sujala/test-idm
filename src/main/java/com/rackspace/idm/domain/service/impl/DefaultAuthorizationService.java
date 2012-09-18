@@ -32,7 +32,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     private static String idmAdminGroupDn = null;
     private static ClientRole cloudAdminRole = null;
-    private static ClientRole cloudServiceAdminRole = null;
+    private static ClientRole cloudIdentityAdminRole = null;
     private static ClientRole cloudUserRole = null;
     private static ClientRole cloudUserAdminRole = null;
     private static ClientRole idmSuperAdminRole = null;
@@ -117,7 +117,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
 	}
 
 	@Override
-    public boolean authorizeCloudIdentityAdmin(ScopeAccess scopeAccess) {
+    public boolean authorizeCloudServiceAdmin(ScopeAccess scopeAccess) {
         logger.debug("Authorizing {} as cloud admin", scopeAccess);
 
         if (scopeAccess == null || ((HasAccessToken) scopeAccess).isAccessTokenExpired(new DateTime())) {
@@ -125,7 +125,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         }
 
         if (cloudAdminRole == null) {
-            ClientRole role = clientDao.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthIdentityAdminRole());
+            ClientRole role = clientDao.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthServiceAdminRole());
             cloudAdminRole = role;
         }
 
@@ -157,21 +157,21 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
 
     @Override
-    public boolean authorizeCloudServiceAdmin(ScopeAccess scopeAccess) {
-        logger.debug("Authorizing {} as cloud defaultApplicationService admin", scopeAccess);
+    public boolean authorizeCloudIdentityAdmin(ScopeAccess scopeAccess) {
+        logger.debug("Authorizing {} as cloud defaultApplication admin", scopeAccess);
 
         if (scopeAccess == null || ((HasAccessToken) scopeAccess).isAccessTokenExpired(new DateTime())) {
             return false;
         }
 
-        if (cloudServiceAdminRole == null) {
-            ClientRole role = clientDao.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthServiceAdminRole());
-            cloudServiceAdminRole = role;
+        if (cloudIdentityAdminRole == null) {
+            ClientRole role = clientDao.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthIdentityAdminRole());
+            cloudIdentityAdminRole = role;
         }
 
-        boolean authorized = this.tenantDao.doesScopeAccessHaveTenantRole(scopeAccess, cloudServiceAdminRole);
+        boolean authorized = this.tenantDao.doesScopeAccessHaveTenantRole(scopeAccess, cloudIdentityAdminRole);
 
-        logger.debug("Authorized {} as cloud defaultApplicationService admin - {}", scopeAccess, authorized);
+        logger.debug("Authorized {} as cloud defaultApplication admin - {}", scopeAccess, authorized);
         return authorized;
     }
 
@@ -408,26 +408,26 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
-    public void verifyIdentityAdminLevelAccess(ScopeAccess authScopeAccess) {
-        if (!authorizeCloudIdentityAdmin(authScopeAccess)) {
-            String errMsg = NOT_AUTHORIZED_MSG;
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
-    }
-
-    @Override
-    public void verifyRackerOrServiceAdminAccess(ScopeAccess authScopeAccess) {
-        if (!authorizeRacker(authScopeAccess) && !authorizeCloudServiceAdmin(authScopeAccess)) {
-            String errMsg = NOT_AUTHORIZED_MSG;
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg);
-        }
-    }
-
-    @Override
     public void verifyServiceAdminLevelAccess(ScopeAccess authScopeAccess) {
-        if (!authorizeCloudIdentityAdmin(authScopeAccess) && !authorizeCloudServiceAdmin(authScopeAccess)) {
+        if (!authorizeCloudServiceAdmin(authScopeAccess)) {
+            String errMsg = NOT_AUTHORIZED_MSG;
+            logger.warn(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
+    }
+
+    @Override
+    public void verifyRackerOrIdentityAdminAccess(ScopeAccess authScopeAccess) {
+        if (!authorizeRacker(authScopeAccess) && !authorizeCloudIdentityAdmin(authScopeAccess)) {
+            String errMsg = NOT_AUTHORIZED_MSG;
+            logger.warn(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
+    }
+
+    @Override
+    public void verifyIdentityAdminLevelAccess(ScopeAccess authScopeAccess) {
+        if (!authorizeCloudServiceAdmin(authScopeAccess) && !authorizeCloudIdentityAdmin(authScopeAccess)) {
             String errMsg = NOT_AUTHORIZED_MSG;
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
@@ -436,7 +436,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     @Override
     public void verifyUserAdminLevelAccess(ScopeAccess authScopeAccess) {
-        if (!authorizeCloudIdentityAdmin(authScopeAccess) && !authorizeCloudServiceAdmin(authScopeAccess)
+        if (!authorizeCloudServiceAdmin(authScopeAccess) && !authorizeCloudIdentityAdmin(authScopeAccess)
                 && !authorizeCloudUserAdmin(authScopeAccess)) {
             String errMsg = NOT_AUTHORIZED_MSG;
             logger.warn(errMsg);
@@ -446,7 +446,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     @Override
     public void verifyUserLevelAccess(ScopeAccess authScopeAccess) {
-        if (!authorizeCloudIdentityAdmin(authScopeAccess) && !authorizeCloudServiceAdmin(authScopeAccess)
+        if (!authorizeCloudServiceAdmin(authScopeAccess) && !authorizeCloudIdentityAdmin(authScopeAccess)
                 && !authorizeCloudUserAdmin(authScopeAccess) && !authorizeCloudUser(authScopeAccess)) {
 
             String errMsg = NOT_AUTHORIZED_MSG;
@@ -466,7 +466,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     @Override
     public void verifyTokenHasTenantAccess(String tenantId, ScopeAccess authScopeAccess) {
-        if (authorizeCloudIdentityAdmin(authScopeAccess) || authorizeCloudServiceAdmin(authScopeAccess)) {
+        if (authorizeCloudServiceAdmin(authScopeAccess) || authorizeCloudIdentityAdmin(authScopeAccess)) {
             return;
         }
 
@@ -522,12 +522,12 @@ public class DefaultAuthorizationService implements AuthorizationService {
         DefaultAuthorizationService.rackerRole = rackerRole;
     }
 
-    public static ClientRole getCloudServiceAdminRole() {
-        return cloudServiceAdminRole;
+    public static ClientRole getCloudIdentityAdminRole() {
+        return cloudIdentityAdminRole;
     }
 
-    public static void setCloudServiceAdminRole(ClientRole cloudServiceAdminRole) {
-        DefaultAuthorizationService.cloudServiceAdminRole = cloudServiceAdminRole;
+    public static void setCloudIdentityAdminRole(ClientRole cloudIdentityAdminRole) {
+        DefaultAuthorizationService.cloudIdentityAdminRole = cloudIdentityAdminRole;
     }
 
     public static ClientRole getCloudUserAdminRole() {
@@ -582,12 +582,12 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return config.getString("cloudAuth.clientId");
     }
 
-    private String getCloudAuthIdentityAdminRole() {
-        return config.getString("cloudAuth.adminRole");
-    }
-
     private String getCloudAuthServiceAdminRole() {
         return config.getString("cloudAuth.serviceAdminRole");
+    }
+
+    private String getCloudAuthIdentityAdminRole() {
+        return config.getString("cloudAuth.adminRole");
     }
 
     private String getCloudAuthUserAdminRole() {

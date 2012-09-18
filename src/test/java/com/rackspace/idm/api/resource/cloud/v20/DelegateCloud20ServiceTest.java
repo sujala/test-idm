@@ -535,7 +535,7 @@ public class DelegateCloud20ServiceTest {
         when(scopeAccessService.getScopeAccessByAccessToken("token")).thenReturn(impersonatedScopeAccess);
         doReturn(new ResponseBuilderImpl()).when(spy).validateImpersonatedTokenFromCloud(null, null, null, impersonatedScopeAccess);
         spy.validateToken(null, "token", "token", null);
-        verify(authorizationService).verifyServiceAdminLevelAccess(impersonatedScopeAccess);
+        verify(authorizationService).verifyIdentityAdminLevelAccess(impersonatedScopeAccess);
     }
 
     @Test

@@ -29,7 +29,6 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.*;
-import org.openstack.docs.identity.api.v2.Tenant;
 import org.openstack.docs.identity.api.v2.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -240,7 +239,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             }
             ScopeAccess impersonatedUserScopeAccess = scopeAccessService.getScopeAccessByAccessToken(impersonatedScopeAccess.getImpersonatingToken());
             if (impersonatedUserScopeAccess == null) {
-                authorizationService.verifyServiceAdminLevelAccess(defaultCloud20Service.getScopeAccessForValidToken(authToken));
+                authorizationService.verifyIdentityAdminLevelAccess(defaultCloud20Service.getScopeAccessForValidToken(authToken));
                 return validateImpersonatedTokenFromCloud(httpHeaders, impersonatedScopeAccess.getImpersonatingToken(), belongsTo, impersonatedScopeAccess);
             } else {
                 return defaultCloud20Service.validateToken(httpHeaders, authToken, tokenId, belongsTo);
