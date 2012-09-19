@@ -12,13 +12,17 @@ import javax.xml.bind.annotation.*;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "AtomFeed", propOrder = {
-    "user"
+    "user","content"
+
 })
 @XmlRootElement(name = "entry", namespace = "http://www.w3.org/2005/Atom")
 public class AtomFeed {
 
     @XmlElement(required = true, namespace = "http://www.w3.org/2005/Atom")
     protected FeedUser user;
+
+    @XmlElement(required = true, namespace = "http://www.w3.org/2005/Atom")
+    protected Content content;
 
     public FeedUser getUser() {
         return user;
@@ -27,5 +31,15 @@ public class AtomFeed {
     public void setUser(FeedUser value) {
         this.user = value;
     }
+
+    public Content getContentType() {
+        return content;
+    }
+
+    public void setContentType(Content value) {
+        this.content = value;
+    }
+
+
 
 }
