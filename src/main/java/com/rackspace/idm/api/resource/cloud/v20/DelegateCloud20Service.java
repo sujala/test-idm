@@ -163,7 +163,7 @@ public class DelegateCloud20Service implements Cloud20Service {
                 scopeAccessService.updateUserScopeAccessTokenForClientIdByUser(user, getCloudAuthClientId(), token.getId(), expires);
                 return defaultCloud20Service.authenticate(httpHeaders, authenticationRequest);
             } else if (user == null) { //If "user" is null return cloud response
-                return defaultCloud20Service.authenticate(httpHeaders, authenticationRequest);
+                return serviceResponse;
             } else { //If we get this far, return Default Service Response
                 return defaultCloud20Service.authenticate(httpHeaders, authenticationRequest);
             }
