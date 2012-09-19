@@ -1346,6 +1346,7 @@ public class DefaultCloud20ServiceTest {
         User caller = new User();
         caller.setMossoId(123);
         caller.setNastId("nastId");
+        caller.setDomainId("someId");
         users = mock(Users.class);
         List<User> usersList = new ArrayList();
         User tempUser = new User();
@@ -1430,6 +1431,7 @@ public class DefaultCloud20ServiceTest {
         User caller = new User();
         caller.setMossoId(123);
         caller.setNastId("nastId");
+        caller.setDomainId("someId");
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
         when(domainService.createNewDomain(org.mockito.Matchers.<String>anyObject())).thenReturn("domain");
@@ -1467,9 +1469,12 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void addUser_callerIsUserAdmin_callsDefaultRegionService() throws Exception {
+        User user = new User();
+        user.setDomainId("someId");
+        user.setRegion("region");
         when(domainService.createNewDomain(org.mockito.Matchers.<String>anyObject())).thenReturn("domain");
         doNothing().when(spy).setDomainId(any(ScopeAccess.class), any(User.class));
-        when(userService.getUserByAuthToken(authToken)).thenReturn(new User());
+        when(userService.getUserByAuthToken(authToken)).thenReturn(user);
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
         spy.addUser(null, null, authToken, userOS);
         verify(defaultRegionService).validateDefaultRegion(user.getRegion());
@@ -1514,11 +1519,13 @@ public class DefaultCloud20ServiceTest {
         UriBuilder uriBuilder = mock(UriBuilder.class);
         URI uri = new URI("");
         User caller = new User();
+        caller.setDomainId("someId");
         users = mock(Users.class);
         List<User> userList = new ArrayList();
         User tempUser = new User();
         tempUser.setId("1");
         tempUser.setUsername("tempUser");
+        tempUser.setDomainId("someDomain");
         userList.add(tempUser);
         users.setUsers(userList);
         User newUser = new User();

@@ -166,13 +166,13 @@ public class AtomHopperClientTest {
     @Test
     public void postMigrateUser_callsCreateAtomFeed() throws Exception {
         spy.postMigrateUser(new User(),  "token", "migrated", "migrationStatus");
-        verify(spy).createAtomFeed(any(User.class), AtomHopperConstants.CONTENT_TYPE, eq("migrationStatus"));
+        verify(spy).createAtomFeed(any(User.class), eq(AtomHopperConstants.CONTENT_TYPE), eq("migrationStatus"));
     }
 
     @Test
     public void postMigrateUser_callsMarshallFeed() throws Exception {
         AtomFeed atomFeed = new AtomFeed();
-        doReturn(atomFeed).when(spy).createAtomFeed(any(User.class), AtomHopperConstants.CONTENT_TYPE, eq("migrationStatus"));
+        doReturn(atomFeed).when(spy).createAtomFeed(any(User.class), eq(AtomHopperConstants.CONTENT_TYPE), eq("migrationStatus"));
         spy.postMigrateUser(new User(),  "token", "migrated", "migrationStatus");
         verify(spy).marshalFeed(atomFeed);
     }
@@ -180,7 +180,7 @@ public class AtomHopperClientTest {
     @Test
     public void postMigrateUser_withUserStatusMigrated_callsExecutePostRequest() throws Exception {
         AtomFeed atomFeed = new AtomFeed();
-        doReturn(atomFeed).when(spy).createAtomFeed(any(User.class), AtomHopperConstants.CONTENT_TYPE,  eq("migrationStatus"));
+        doReturn(atomFeed).when(spy).createAtomFeed(any(User.class), eq(AtomHopperConstants.CONTENT_TYPE),  eq("migrationStatus"));
         spy.postMigrateUser(new User(),  "token", "migrated", "migrationStatus");
         verify(spy).executePostRequest(eq("token"), any(Writer.class), anyString());
     }
@@ -188,7 +188,7 @@ public class AtomHopperClientTest {
     @Test
     public void postMigrateUser_withUserStatusNotMigrated_DoesNotCallExecutePostRequest() throws Exception {
         AtomFeed atomFeed = new AtomFeed();
-        doReturn(atomFeed).when(spy).createAtomFeed(any(User.class), AtomHopperConstants.CONTENT_TYPE, eq("migrationStatus"));
+        doReturn(atomFeed).when(spy).createAtomFeed(any(User.class), eq(AtomHopperConstants.CONTENT_TYPE), eq("migrationStatus"));
         spy.postMigrateUser(new User(),  "token", "notMgrated", "migrationStatus");
         verify(spy, never()).executePostRequest(eq("token"), any(Writer.class), anyString());
     }
@@ -196,7 +196,7 @@ public class AtomHopperClientTest {
     @Test
     public void postMigrateUser_withResponseStatusNot201_throwsNoErrors() throws Exception {
         AtomFeed atomFeed = new AtomFeed();
-        doReturn(atomFeed).when(spy).createAtomFeed(any(User.class), AtomHopperConstants.CONTENT_TYPE, eq("migrationStatus"));
+        doReturn(atomFeed).when(spy).createAtomFeed(any(User.class), eq(AtomHopperConstants.CONTENT_TYPE), eq("migrationStatus"));
         when(httpResponse.getStatusLine()).thenReturn(new BasicStatusLine(new ProtocolVersion("http", 1,1), 404, "not found"));
         spy.postMigrateUser(new User(),  "token", AtomHopperConstants.MIGRATED, "migrationStatus");
         verify(spy).executePostRequest(eq("token"), any(Writer.class), anyString());
@@ -205,7 +205,7 @@ public class AtomHopperClientTest {
     @Test
     public void postMigrateUser_withResponseStatus201_throwsNoErrors() throws Exception {
         AtomFeed atomFeed = new AtomFeed();
-        doReturn(atomFeed).when(spy).createAtomFeed(any(User.class), AtomHopperConstants.CONTENT_TYPE, eq("migrationStatus"));
+        doReturn(atomFeed).when(spy).createAtomFeed(any(User.class), eq(AtomHopperConstants.CONTENT_TYPE), eq("migrationStatus"));
         when(httpResponse.getStatusLine()).thenReturn(new BasicStatusLine(new ProtocolVersion("http", 1,1), 201, "not found"));
         spy.postMigrateUser(new User(),  "token", AtomHopperConstants.MIGRATED, "migrationStatus");
         verify(spy).executePostRequest(eq("token"), any(Writer.class), anyString());
@@ -214,7 +214,7 @@ public class AtomHopperClientTest {
     @Test
     public void postMigrateUser_withExceptionThrown_exceptionIsCaught() throws Exception {
         AtomFeed atomFeed = new AtomFeed();
-        doReturn(atomFeed).when(spy).createAtomFeed(any(User.class), AtomHopperConstants.CONTENT_TYPE, eq("migrationStatus"));
+        doReturn(atomFeed).when(spy).createAtomFeed(any(User.class), eq(AtomHopperConstants.CONTENT_TYPE), eq("migrationStatus"));
         doThrow(new NullPointerException()).when(spy).executePostRequest(eq("token"), any(Writer.class), anyString());
         spy.postMigrateUser(new User(),  "token", "migrated", "migrationStatus");
         verify(spy).executePostRequest(eq("token"), any(Writer.class), anyString());
@@ -230,7 +230,7 @@ public class AtomHopperClientTest {
     @Test
     public void asyncPost_callsPostMigrateUser() throws Exception {
         AtomFeed atomFeed = new AtomFeed();
-        doReturn(atomFeed).when(spy).createAtomFeed(any(User.class), AtomHopperConstants.CONTENT_TYPE, eq("migrationStatus"));
+        doReturn(atomFeed).when(spy).createAtomFeed(any(User.class), eq(AtomHopperConstants.CONTENT_TYPE), eq("migrationStatus"));
         when(httpResponse.getStatusLine()).thenReturn(new BasicStatusLine(new ProtocolVersion("http", 1, 1), 404, "not found"));
         spy.asyncPost(user, "token", AtomHopperConstants.MIGRATED, "migrationStatus");
         verify(spy, timeout(100)).postMigrateUser(any(User.class), eq("token"),eq(AtomHopperConstants.MIGRATED), eq("migrationStatus"));
@@ -239,7 +239,7 @@ public class AtomHopperClientTest {
     @Test
     public void asyncPost_callsPostUser() throws Exception {
         AtomFeed atomFeed = new AtomFeed();
-        doReturn(atomFeed).when(spy).createAtomFeed(any(User.class), AtomHopperConstants.CONTENT_TYPE, eq("migrationStatus"));
+        doReturn(atomFeed).when(spy).createAtomFeed(any(User.class), eq(AtomHopperConstants.CONTENT_TYPE), eq("migrationStatus"));
         when(httpResponse.getStatusLine()).thenReturn(new BasicStatusLine(new ProtocolVersion("http", 1,1), 404, "not found"));
         spy.asyncPost(user, "token", "notMigrated", "migrationStatus");
         verify(spy, timeout(100)).postUser(user, "token", "notMigrated");
