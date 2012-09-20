@@ -11,11 +11,11 @@ import javax.xml.namespace.QName;
 
 public class Cloud20TestHelper {
 
-
     private ObjectFactory objectFactory = new ObjectFactory();
     private org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory catalogObjectFactory = new org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory();
     private org.openstack.docs.identity.api.v2.ObjectFactory openStackIdentityV2Factory = new org.openstack.docs.identity.api.v2.ObjectFactory();
     private com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory policyObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
+
 
     public String getAuthenticationRequest(String username, String password) throws JAXBException {
         ObjectMarshaller<AuthenticationRequest> marshaller = new ObjectMarshaller<AuthenticationRequest>();
@@ -46,7 +46,7 @@ public class Cloud20TestHelper {
         return marshaller.marshal(catalogObjectFactory.createEndpointTemplate(endpoint), EndpointTemplate.class);
     }
 
-    public String createServiceAdmin(String username, String password, String email) throws JAXBException {
+    public String createIdentityAdmin(String username, String password, String email) throws JAXBException {
         ObjectMarshaller<User> marshaller = new ObjectMarshaller<User>();
         User user = new User();
         user.setUsername(username);
@@ -90,4 +90,5 @@ public class Cloud20TestHelper {
         ObjectMarshaller<Policies> marshaller = new ObjectMarshaller<Policies>();
         return marshaller.marshal(policyObjectFactory.createPolicies(policies), Policies.class);
     }
+
 }

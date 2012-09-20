@@ -990,8 +990,16 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     @Override
     public UserScopeAccess updateExpiredUserScopeAccess(UserScopeAccess scopeAccess) {
+        return updateExpiredUserScopeAccess(scopeAccess, false);
+    }
+
+    @Override
+    public UserScopeAccess updateExpiredUserScopeAccess(UserScopeAccess scopeAccess, boolean impersonated) {
         if (scopeAccess.isAccessTokenExpired(new DateTime()) || scopeAccess.isAccessTokenWithinRefreshWindow(getRefreshTokenWindow())) {
             Date accessTokenExp = new DateTime().plusSeconds(getDefaultCloudAuthTokenExpirationSeconds()).toDate();
+            if (impersonated) {
+                accessTokenExp = new DateTime().plusSeconds(getDefaultImpersonatedTokenExpirationSeconds()).toDate();
+            }
             scopeAccess.setAccessTokenString(this.generateToken());
             scopeAccess.setAccessTokenExp(accessTokenExp);
             scopeAccessDao.updateScopeAccess(scopeAccess);

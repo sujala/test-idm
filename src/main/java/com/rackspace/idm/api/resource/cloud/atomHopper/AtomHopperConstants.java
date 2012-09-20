@@ -17,5 +17,6 @@ public final class AtomHopperConstants {
     public static final String MIGRATED = "migrated";
     public static final String ATOM_HOPPER_MIGRATED_URL = "atomHopperMigratedUrl";
     public static final String ATOM_HOPPER_DELETED_URL = "atomHopperDeletedUrl";
-    public static final String ATOM_HOPPER_DISABLED_URL = "atomHopperDisabledUrl"; 
+    public static final String ATOM_HOPPER_DISABLED_URL = "atomHopperDisabledUrl";
+    public static final String CONTENT_TYPE="application/atom+xml";
 }

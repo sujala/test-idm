@@ -126,7 +126,7 @@ public class DefaultEndpointService implements EndpointService {
         List<CloudBaseUrl> allBaseUrls = this.endpointDao.getBaseUrls();
         List<CloudBaseUrl> filteredBaseUrls = new ArrayList<CloudBaseUrl>();
         for (CloudBaseUrl baseUrl : allBaseUrls) {
-            if (baseUrl.getOpenstackType().equals(serviceType)) {
+            if (baseUrl.getOpenstackType() != null && baseUrl.getOpenstackType().equals(serviceType)) {
                 filteredBaseUrls.add(baseUrl);
             }
         }

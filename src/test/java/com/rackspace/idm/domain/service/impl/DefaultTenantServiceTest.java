@@ -1141,7 +1141,7 @@ public class DefaultTenantServiceTest {
     }
 
     @Test
-    public void getTenantRolesToUser_tenantRoleGetNameOnlyMatchIdentityAdmin_doesNotCallAddTenantRoleToUser() throws Exception {
+    public void getTenantRolesToUser_tenantRoleGetNameOnlyMatchServiceAdmin_doesNotCallAddTenantRoleToUser() throws Exception {
         User user = new User();
         user.setId("userId");
         TenantRole tenantRole = new TenantRole();

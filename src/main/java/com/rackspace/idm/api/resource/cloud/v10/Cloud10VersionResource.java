@@ -2,23 +2,24 @@ package com.rackspace.idm.api.resource.cloud.v10;
 
 import com.rackspace.idm.api.converter.cloudv11.EndpointConverterCloudV11;
 import com.rackspace.idm.api.resource.cloud.CloudClient;
-import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.OpenstackEndpoint;
+import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.UserDisabledException;
-import com.sun.org.apache.xpath.internal.operations.Bool;
+import com.rackspacecloud.docs.auth.api.v1.Endpoint;
+import com.rackspacecloud.docs.auth.api.v1.Service;
+import com.rackspacecloud.docs.auth.api.v1.ServiceCatalog;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import com.rackspacecloud.docs.auth.api.v1.Endpoint;
-import com.rackspacecloud.docs.auth.api.v1.Service;
-import com.rackspacecloud.docs.auth.api.v1.ServiceCatalog;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Consumes;
@@ -90,9 +91,16 @@ public class Cloud10VersionResource {
     @GET
     public Response getCloud10VersionInfo(@Context HttpHeaders httpHeaders,
         @HeaderParam(HEADER_AUTH_USER) String username,
-        @HeaderParam(HEADER_AUTH_KEY) String key) throws IOException {
+        @HeaderParam(HEADER_AUTH_KEY) String key,
+        @HeaderParam(HEADER_STORAGE_USER) String storageUser,
+        @HeaderParam(HEADER_STORAGE_PASS) String storagePass) throws IOException {
 
         Response.ResponseBuilder builder = Response.noContent();
+
+        if(username == null && storageUser != null) {
+            username = storageUser;
+            key = storagePass;
+        }
 
         if(StringUtils.isBlank(username)){
             return builder.status(HttpServletResponse.SC_UNAUTHORIZED).entity(AUTH_V1_0_FAILED_MSG).build();

@@ -34,6 +34,15 @@ public class Cloud10VersionResourceIntegrationTest extends AbstractAroundClassJe
     }
 
     @Test
+    public void getVersion_withValidLocalOnlyStorage_returns204() throws Exception {
+        WebResource resource = resource().path("cloud/v1.0");
+        ClientResponse clientResponse = resource.header("X-Storage-User", "mkovacs")
+                .header("X-Storage-Pass", "1234567890")
+                .get(ClientResponse.class);
+        assertThat("response code", clientResponse.getStatus(), equalTo(204));
+    }
+
+    @Test
     @Ignore
     public void getVersion_withValidCloudOnly_returns204() throws Exception {
         WebResource resource = resource().path("cloud/v1.0");

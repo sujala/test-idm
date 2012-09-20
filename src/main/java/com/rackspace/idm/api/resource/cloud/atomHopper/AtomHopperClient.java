@@ -107,7 +107,7 @@ public class AtomHopperClient {
 
     public void postMigrateUser(User user, String authToken, String userStatus, String migrationStatus) throws JAXBException, IOException, HttpException, URISyntaxException {
         try {
-            AtomFeed atomFeed = createAtomFeed(user,migrationStatus);
+            AtomFeed atomFeed = createAtomFeed(user, AtomHopperConstants.CONTENT_TYPE, migrationStatus);
             Writer writer = marshalFeed(atomFeed);
             HttpResponse response;
             if (userStatus.equals(AtomHopperConstants.MIGRATED)) {
@@ -126,7 +126,7 @@ public class AtomHopperClient {
 
     public void postUser(User user, String authToken, String userStatus) throws JAXBException, IOException, HttpException, URISyntaxException {
         try {
-            AtomFeed atomFeed = createAtomFeed(user,null);
+            AtomFeed atomFeed = createAtomFeed(user,AtomHopperConstants.CONTENT_TYPE, null);
             Writer writer = marshalFeed(atomFeed);
             HttpResponse response;
             if (userStatus.equals(AtomHopperConstants.DELETED)) {
@@ -168,14 +168,17 @@ public class AtomHopperClient {
         return new InputStreamEntity(isStream, -1);
     }
 
-    public AtomFeed createAtomFeed(User user, String status) {
+    public AtomFeed createAtomFeed(User user, String type, String status) {
         AtomFeed atomFeed = new AtomFeed();
         FeedUser feedUser = new FeedUser();
+        Content content = new Content();
+        content.setType(type);
         feedUser.setDisplayName(user.getDisplayName());
         feedUser.setId(user.getId());
         feedUser.setUsername(user.getUsername());
         feedUser.setMigrationStatus(status);
         atomFeed.setUser(feedUser);
+        atomFeed.setContentType(content);
         return atomFeed;
     }
 

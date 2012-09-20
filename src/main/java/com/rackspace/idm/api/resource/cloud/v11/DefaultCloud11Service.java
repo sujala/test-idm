@@ -1296,9 +1296,9 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(
                     stringStringMap.get("username"), stringStringMap.get("password"), getCloudAuthClientId());
-            boolean authenticated = authorizationService.authorizeCloudServiceAdmin(usa);
+            boolean authenticated = authorizationService.authorizeCloudIdentityAdmin(usa);
             if (!authenticated) {
-                authenticated = authorizationService.authorizeCloudIdentityAdmin(usa);
+                authenticated = authorizationService.authorizeCloudServiceAdmin(usa);
             } if (!authenticated) {
                 throw new NotAuthorizedException("You are not authorized to access this resource.");
             }
@@ -1317,7 +1317,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         } else {
             UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(
                     stringStringMap.get("username"), stringStringMap.get("password"), getCloudAuthClientId());
-            boolean authenticated = authorizationService.authorizeCloudServiceAdmin(usa) || authorizationService.authorizeCloudIdentityAdmin(usa);
+            boolean authenticated = authorizationService.authorizeCloudIdentityAdmin(usa) || authorizationService.authorizeCloudServiceAdmin(usa);
             if (!authenticated) {
                 throw new CloudAdminAuthorizationException("Cloud admin user authorization Failed.");
             }

@@ -40,9 +40,9 @@ public interface AuthorizationService {
 
     void checkAuthAndHandleFailure(boolean authorized, ScopeAccess token);
 
-    boolean authorizeCloudIdentityAdmin(ScopeAccess scopeAccess);
-
     boolean authorizeCloudServiceAdmin(ScopeAccess scopeAccess);
+
+    boolean authorizeCloudIdentityAdmin(ScopeAccess scopeAccess);
 
     boolean authorizeCloudUserAdmin(ScopeAccess scopeAccess);
 
@@ -54,9 +54,9 @@ public interface AuthorizationService {
     void authorizeIdmSuperAdminOrRackspaceClient(ScopeAccess scopeAccess);
 
     void verifyIdmSuperAdminAccess(String authToken);
-    void verifyIdentityAdminLevelAccess(ScopeAccess authScopeAccess);
-    void verifyRackerOrServiceAdminAccess(ScopeAccess authScopeAccess);
     void verifyServiceAdminLevelAccess(ScopeAccess authScopeAccess);
+    void verifyRackerOrIdentityAdminAccess(ScopeAccess authScopeAccess);
+    void verifyIdentityAdminLevelAccess(ScopeAccess authScopeAccess);
     void verifyUserAdminLevelAccess(ScopeAccess authScopeAccess);
     void verifyUserLevelAccess(ScopeAccess authScopeAccess);
     void verifySelf(User requester, User requestedUser);

@@ -13,21 +13,17 @@ import com.rackspacecloud.docs.auth.api.v1.Endpoint;
 import com.rackspacecloud.docs.auth.api.v1.Service;
 import com.rackspacecloud.docs.auth.api.v1.ServiceCatalog;
 import org.apache.commons.configuration.Configuration;
-import org.hamcrest.CoreMatchers;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
-
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -67,14 +63,25 @@ public class Cloud10VersionResourceTest {
 
     @Test
     public void getCloud10VersionInfo_withBlankUsername_returns401Status() throws Exception {
-        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "   ", null);
+        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "   ", null, null, null);
         assertThat("response status", response.getStatus(), equalTo(401));
     }
 
     @Test
     public void getCloud10VersionInfo_withNullUsername_returns401Status() throws Exception {
-        Response response = cloud10VersionResource.getCloud10VersionInfo(null, null, null);
+        Response response = cloud10VersionResource.getCloud10VersionInfo(null, null, null, null, null);
         assertThat("response status", response.getStatus(), equalTo(401));
+    }
+
+    @Test
+    public void getCloud10VersionInfo_usingCloudAuthAndNotMigratedUser_with204ResponseAndNotNullStorageUser_callsScopeAccessService_updateUserScopeAccessTokenForClientIdByUser() throws Exception {
+        when(userService.getUser("username")).thenReturn(new User());
+        when(userService.isMigratedUser(any(User.class))).thenReturn(false);
+        when(config.getBoolean("useCloudAuth", false)).thenReturn(true);
+        when(cloudClient.get(anyString(), any(HttpHeaders.class))).thenReturn(Response.status(204).header("x-auth-token", "token"));
+        Response response = cloud10VersionResource.getCloud10VersionInfo(null, null, null, "username", "password");
+        verify(scopeAccessService).updateUserScopeAccessTokenForClientIdByUser(any(User.class), anyString(), anyString(), any(Date.class));
+        assertThat("response status", response.getStatus(), equalTo(204));
     }
 
     @Test
@@ -83,7 +90,7 @@ public class Cloud10VersionResourceTest {
         when(userService.isMigratedUser(any(User.class))).thenReturn(false);
         when(config.getBoolean("useCloudAuth", false)).thenReturn(true);
         when(cloudClient.get(anyString(), any(HttpHeaders.class))).thenReturn(Response.status(204).header("x-auth-token", "token"));
-        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password");
+        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password", null, null);
         verify(scopeAccessService).updateUserScopeAccessTokenForClientIdByUser(any(User.class), anyString(), anyString(), any(Date.class));
         assertThat("response status", response.getStatus(), equalTo(204));
     }
@@ -94,7 +101,7 @@ public class Cloud10VersionResourceTest {
         when(userService.isMigratedUser(any(User.class))).thenReturn(false);
         when(config.getBoolean("useCloudAuth", false)).thenReturn(true);
         when(cloudClient.get(anyString(), any(HttpHeaders.class))).thenReturn(Response.status(204));
-        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password");
+        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password", null, null);
         verify(scopeAccessService, never()).updateUserScopeAccessTokenForClientIdByUser(any(User.class), anyString(), anyString(), any(Date.class));
         assertThat("response status", response.getStatus(), equalTo(204));
     }
@@ -110,7 +117,7 @@ public class Cloud10VersionResourceTest {
         when(userScopeAccess.getAccessTokenString()).thenReturn("token");
         when(endpointConverterCloudV11.toServiceCatalog(anyList())).thenReturn(new ServiceCatalog());
         when(userScopeAccess.getAccessTokenExp()).thenReturn(new DateTime(1).toDate());
-        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password");
+        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password", null, null);
         verify(scopeAccessService, never()).updateUserScopeAccessTokenForClientIdByUser(any(User.class), anyString(), anyString(), any(Date.class));
         assertThat("response status", response.getStatus(), equalTo(204));
     }
@@ -119,7 +126,7 @@ public class Cloud10VersionResourceTest {
     public void getCloud10VersionInfo_notRouting_withNullUser_returnsUnauthorizedResponse() throws Exception {
         when(userService.getUser("username")).thenReturn(null);
         when(config.getBoolean("useCloudAuth", false)).thenReturn(false);
-        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password");
+        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password", null, null);
         assertThat("response status", response.getStatus(), equalTo(401));
     }
 
@@ -131,7 +138,7 @@ public class Cloud10VersionResourceTest {
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString())).thenReturn(userScopeAccess);
         when(userScopeAccess.getAccessTokenString()).thenReturn("token");
         when(endpointConverterCloudV11.toServiceCatalog(anyList())).thenReturn(new ServiceCatalog());
-        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password");
+        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password", null, null);
         assertThat("response token", response.getMetadata().getFirst("X-Auth-Token").toString(), equalTo("token"));
     }
 
@@ -142,7 +149,7 @@ public class Cloud10VersionResourceTest {
         when(userService.isMigratedUser(user)).thenReturn(true);
         when(config.getBoolean("useCloudAuth", false)).thenReturn(false);
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString())).thenThrow(new NotAuthenticatedException());
-        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password");
+        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password", null, null);
         assertThat("response token", response.getStatus(), equalTo(401));
     }
 
@@ -151,7 +158,7 @@ public class Cloud10VersionResourceTest {
         when(userService.getUser("username")).thenReturn(new User());
         when(config.getBoolean("useCloudAuth", false)).thenReturn(false);
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString())).thenThrow(new UserDisabledException());
-        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password");
+        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password", null, null);
         assertThat("response token", response.getStatus(), equalTo(403));
     }
 
@@ -173,7 +180,7 @@ public class Cloud10VersionResourceTest {
         when(endpointConverterCloudV11.toServiceCatalog(anyList())).thenReturn(serviceCatalog);
 
 
-        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password");
+        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password", null, null);
         assertThat("response header", response.getMetadata().getFirst("X-Storage-Url").toString(), equalTo("publicUrl"));
         assertThat("response header", response.getMetadata().getFirst("X-Storage-Internal-Url").toString(), equalTo("internalUrl"));
         assertThat("response header", response.getMetadata().getFirst("X-Storage-token").toString(), equalTo("token"));
@@ -196,7 +203,7 @@ public class Cloud10VersionResourceTest {
         when(endpointConverterCloudV11.toServiceCatalog(anyList())).thenReturn(serviceCatalog);
 
 
-        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password");
+        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password", null, null);
         assertThat("response header", response.getMetadata().getFirst("X-CDN-Management-Url").toString(), equalTo("publicUrl"));
     }
 
@@ -217,7 +224,7 @@ public class Cloud10VersionResourceTest {
         when(endpointConverterCloudV11.toServiceCatalog(anyList())).thenReturn(serviceCatalog);
 
 
-        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password");
+        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password", null, null);
         assertThat("response header", response.getMetadata().toString().contains("X-CDN-Management-Url"), equalTo(false));
     }
 
@@ -238,7 +245,7 @@ public class Cloud10VersionResourceTest {
         when(endpointConverterCloudV11.toServiceCatalog(anyList())).thenReturn(serviceCatalog);
 
 
-        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password");
+        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password", null, null);
         assertThat("response header", response.getMetadata().getFirst("X-Server-Management-Url").toString(), equalTo("publicUrl"));
     }
 
@@ -265,7 +272,7 @@ public class Cloud10VersionResourceTest {
         when(endpointConverterCloudV11.toServiceCatalog(anyList())).thenReturn(serviceCatalog);
 
 
-        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password");
+        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password", null, null);
         assertThat("response header", response.getMetadata().getFirst("X-Storage-Url").toString(), equalTo("publicUrl2"));
         assertThat("response header", response.getMetadata().getFirst("X-Storage-Internal-Url").toString(), equalTo("internalUrl2"));
         assertThat("response header", response.getMetadata().getFirst("X-Storage-token").toString(), equalTo("token"));
@@ -312,7 +319,7 @@ public class Cloud10VersionResourceTest {
         when(endpointConverterCloudV11.toServiceCatalog(anyList())).thenReturn(serviceCatalog);
 
 
-        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password");
+        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password", null, null);
         assertThat("response header", response.getMetadata().getFirst("X-Storage-Url").toString(), equalTo("http://someEndpoint/1"));
     }
 
@@ -337,7 +344,7 @@ public class Cloud10VersionResourceTest {
         when(endpointConverterCloudV11.toServiceCatalog(anyList())).thenReturn(serviceCatalog);
 
 
-        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password");
+        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password", null, null);
         assertThat("response header", response.getMetadata().getFirst("X-CDN-Management-Url").toString(), equalTo("publicUrl2"));
     }
 
@@ -362,7 +369,7 @@ public class Cloud10VersionResourceTest {
         when(endpointConverterCloudV11.toServiceCatalog(anyList())).thenReturn(serviceCatalog);
 
 
-        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password");
+        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password", null, null);
         assertThat("response header", response.getMetadata().getFirst("X-Server-Management-Url").toString(), equalTo("publicUrl2"));
     }
 
@@ -377,7 +384,7 @@ public class Cloud10VersionResourceTest {
         when(endpointConverterCloudV11.toServiceCatalog(anyList())).thenReturn(serviceCatalog);
 
 
-        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password");
+        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password", null, null);
         assertThat("response header", response.getMetadata().getFirst("X-Server-Management-Url"), nullValue());
         assertThat("response header", response.getMetadata().getFirst("X-CDN-Management-Url"), nullValue());
         assertThat("response header", response.getMetadata().getFirst("X-Storage-Url"), nullValue());
@@ -396,7 +403,7 @@ public class Cloud10VersionResourceTest {
         when(endpointConverterCloudV11.toServiceCatalog(anyList())).thenReturn(serviceCatalog);
         when(userScopeAccess.getAccessTokenExp()).thenReturn(new DateTime(1).toDate());
 
-        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password");
+        Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password", null, null);
         assertThat("response header", response.getMetadata().getFirst("Cache-Control"), notNullValue());
     }
 }

@@ -107,4 +107,6 @@ public interface ScopeAccessService {
     List<OpenstackEndpoint> getOpenstackEndpointsForScopeAccess(ScopeAccess scopeAccess);
 
     UserScopeAccess updateExpiredUserScopeAccess(UserScopeAccess scopeAccess);
+
+    UserScopeAccess updateExpiredUserScopeAccess(UserScopeAccess scopeAccess, boolean impersonated);
 }
