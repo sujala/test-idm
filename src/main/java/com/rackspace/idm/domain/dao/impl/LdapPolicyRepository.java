@@ -210,6 +210,21 @@ public class LdapPolicyRepository extends LdapRepository implements PolicyDao {
         return policies;
     }
 
+    @Override
+    public void softDeletePolicy(Policy policy) {
+          getLogger().info("SoftDeleting policy - {}", policy);
+        try {
+            String oldRdn = policy.getUniqueId();
+            // Move the Policy
+            String newRdn = ATTR_ID + "=" + policy.getPolicyId();
+            getAppInterface().modifyDN(oldRdn, newRdn, true, SOFT_DELETED_POLICIES_BASE_DN);
+        } catch (LDAPException e) {
+            getLogger().error("Error soft deleting user", e);
+            throw new IllegalStateException(e.getMessage(), e);
+        }
+        getLogger().info("SoftDeleted policy - {}", policy);
+    }
+
     Policy getEntryPolicy(SearchResultEntry entry) {
         getLogger().debug("Inside getEntryPolicy");
         Policy policy = new Policy();

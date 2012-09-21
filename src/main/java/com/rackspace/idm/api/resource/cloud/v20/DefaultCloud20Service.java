@@ -2425,7 +2425,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder deletePolicy(String authToken, String policyId) {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            this.policyService.deletePolicy(policyId);
+            this.policyService.softDeletePolicy(policyId);
             return Response.noContent();
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);

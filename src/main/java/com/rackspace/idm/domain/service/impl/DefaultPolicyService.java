@@ -143,6 +143,14 @@ public class DefaultPolicyService implements PolicyService {
         }
     }
 
+    @Override
+    public void softDeletePolicy(String policyId) {
+        logger.debug("SoftDeleting Policy: {}", policyId);
+        Policy policy = checkAndGetPolicy(policyId);
+        policyDao.softDeletePolicy(policy);
+        logger.debug("SoftDeleted User: {}", policyId);
+    }
+
     public void setEndpointDao(EndpointDao endpointDao) {
         this.endpointDao = endpointDao;
     }

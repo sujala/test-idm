@@ -172,6 +172,7 @@ public abstract class LdapRepository {
     protected static final String RACKERS_BASE_DN = "ou=rackers,o=rackspace,dc=rackspace,dc=com";
     protected static final String NEXT_IDS_BASE_DN = "ou=nextIds,o=rackspace,dc=rackspace,dc=com";
     protected static final String SOFT_DELETED_USERS_BASE_DN = "ou=users,ou=softDeleted,o=rackspace,dc=rackspace,dc=com";
+    protected static final String SOFT_DELETED_POLICIES_BASE_DN = "ou=policies,ou=softDeleted,o=rackspace,dc=rackspace,dc=com";
     protected static final String SOFT_DELETED_CUSTOMERS_BASE_DN = "ou=customers,ou=softDeleted,o=rackspace,dc=rackspace,dc=com";
     protected static final String SOFT_DELETED_APPLICATIONS_BASE_DN = "ou=applications,ou=softDeleted,o=rackspace,dc=rackspace,dc=com";
 

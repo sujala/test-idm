@@ -19,4 +19,5 @@ public interface PolicyDao {
     void deletePolicy(String policyId);
     String getNextPolicyId();
     com.rackspace.idm.domain.entity.Policies getPolicies();
+    void softDeletePolicy(Policy policy);
 }

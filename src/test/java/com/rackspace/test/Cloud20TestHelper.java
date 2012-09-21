@@ -91,4 +91,14 @@ public class Cloud20TestHelper {
         return marshaller.marshal(policyObjectFactory.createPolicies(policies), Policies.class);
     }
 
+    public String createUserAdmin(String name, String password, String email, String domainId) throws JAXBException {
+        ObjectMarshaller<User> marshaller = new ObjectMarshaller<User>();
+        User user = new User();
+        user.setUsername(name);
+        user.getOtherAttributes().put(new QName("http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0", "password"), password);
+        user.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","domainId"), domainId);
+        user.setEmail(email);
+
+        return marshaller.marshal(openStackIdentityV2Factory.createUser(user), User.class);
+    }
 }
