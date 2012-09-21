@@ -1,5 +1,6 @@
 package com.rackspace.test;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy;
 import com.rackspace.idm.api.resource.cloud.ObjectMarshaller;
@@ -14,7 +15,7 @@ public class Cloud20TestHelper {
     private ObjectFactory objectFactory = new ObjectFactory();
     private org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory catalogObjectFactory = new org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory();
     private org.openstack.docs.identity.api.v2.ObjectFactory openStackIdentityV2Factory = new org.openstack.docs.identity.api.v2.ObjectFactory();
-    private com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory policyObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
+    private com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
 
 
     public String getAuthenticationRequest(String username, String password) throws JAXBException {
@@ -73,7 +74,7 @@ public class Cloud20TestHelper {
         policy.setType(type);
 
         ObjectMarshaller<Policy> marshaller = new ObjectMarshaller<Policy>();
-        return marshaller.marshal(policyObjectFactory.createPolicy(policy), Policy.class);
+        return marshaller.marshal(raxAuthObjectFactory.createPolicy(policy), Policy.class);
     }
 
     public Policy getPolicyObject(String policy) throws JAXBException {
@@ -88,7 +89,7 @@ public class Cloud20TestHelper {
 
     public String getPolicies(Policies policies) throws JAXBException {
         ObjectMarshaller<Policies> marshaller = new ObjectMarshaller<Policies>();
-        return marshaller.marshal(policyObjectFactory.createPolicies(policies), Policies.class);
+        return marshaller.marshal(raxAuthObjectFactory.createPolicies(policies), Policies.class);
     }
 
     public String createUserAdmin(String name, String password, String email, String domainId) throws JAXBException {
@@ -100,5 +101,20 @@ public class Cloud20TestHelper {
         user.setEmail(email);
 
         return marshaller.marshal(openStackIdentityV2Factory.createUser(user), User.class);
+    }
+
+    public String createDomain(String domainId, String domainName, boolean enabled) throws JAXBException {
+        ObjectMarshaller<Domain> marshaller = new ObjectMarshaller<Domain>();
+        Domain domain = new Domain();
+        domain.setName(domainName);
+        domain.setEnabled(enabled);
+        domain.setId(domainId);
+
+        return marshaller.marshal(raxAuthObjectFactory.createDomain(domain), Domain.class);
+    }
+
+    public Domain getDomain(String response) throws JAXBException {
+        ObjectMarshaller<Domain> unmarshaller = new ObjectMarshaller<Domain>();
+        return unmarshaller.unmarshal(response, Domain.class);
     }
 }
