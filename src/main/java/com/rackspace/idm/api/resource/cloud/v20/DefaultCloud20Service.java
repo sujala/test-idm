@@ -1830,12 +1830,16 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder addUserToDomain(String authToken, String domainId, String userId) {
         authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-        domainService.checkAndGetDomain(domainId);
+        Domain domain = domainService.checkAndGetDomain(domainId);
+        if (!domain.isEnabled()) {
+            throw new ForbiddenException("Cannot add users to a disabled domain.");
+        }
         User userDO = userService.checkAndGetUserById(userId);
+
         if (isServiceAdminOrIdentityAdmin(userDO)) {
             throw new ForbiddenException("Cannot add domains to admins or service-admins.");
         }
-        Domain domain = domainService.checkAndGetDomain(domainId);
+
         userDO.setDomainId(domain.getDomainId());
         this.userService.updateUser(userDO, false);
         return Response.noContent();
@@ -1925,7 +1929,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
         CloudBaseUrl cloudBaseUrl = endpointService.checkAndGetEndpointTemplate(endpointTemplateId);
-        
+
         endpointService.deletePolicyToEndpoint(cloudBaseUrl.getBaseUrlId(), policyId);
         return Response.noContent();
     }

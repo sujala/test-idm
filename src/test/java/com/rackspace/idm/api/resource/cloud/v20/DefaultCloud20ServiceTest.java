@@ -15,6 +15,7 @@ import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
@@ -6006,13 +6007,16 @@ public class DefaultCloud20ServiceTest {
         TenantRole role = new TenantRole();
         role.setName("identity:user-admin");
         roles.add(role);
+        Domain domain = new Domain();
+        domain.setEnabled(true);
 
         when(config.getString(anyString())).thenReturn("identity:user-admin");
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(user).when(userService).checkAndGetUserById(userId);
-        doReturn(roles).when(tenantService).getGlobalRolesForUser(user);        
+        doReturn(roles).when(tenantService).getGlobalRolesForUser(user);
+        doReturn(domain).when(domainService).checkAndGetDomain("123");
 
-        defaultCloud20Service.addUserToDomain(authToken, null, userId);
+        defaultCloud20Service.addUserToDomain(authToken, "123", userId);
     }
 
     @Test (expected = ForbiddenException.class)
@@ -6023,13 +6027,28 @@ public class DefaultCloud20ServiceTest {
         TenantRole role = new TenantRole();
         role.setName("identity:service-admin");
         roles.add(role);
+        Domain domain = new Domain();
+        domain.setEnabled(true);
 
         when(config.getString(anyString())).thenReturn("identity:service-admin");
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(user).when(userService).checkAndGetUserById(userId);
         doReturn(roles).when(tenantService).getGlobalRolesForUser(user);
+        doReturn(domain).when(domainService).checkAndGetDomain("123");
 
-        defaultCloud20Service.addUserToDomain(authToken, null, userId);
+        defaultCloud20Service.addUserToDomain(authToken, "123", userId);
+    }
+
+    @Test (expected = ForbiddenException.class)
+    public void addUserToDomain_disabledDomain_expectsForbidden() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        Domain domain = new Domain();
+        domain.setEnabled(false);
+
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doReturn(domain).when(domainService).checkAndGetDomain("123");
+
+        defaultCloud20Service.addUserToDomain(authToken, "123", userId);
     }
 
     @Test
