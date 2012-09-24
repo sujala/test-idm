@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.domain.dao.ApplicationDao;
+import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
@@ -41,9 +42,10 @@ public class DefaultAuthenticationServiceTest {
     TenantService tenantService = mock(TenantService.class);
     CustomerDao customerDao = mock(CustomerDao.class);
     InputValidator inputValidator = mock(InputValidator.class);
+    AuthDao authDao = mock(AuthDao.class);
 
     private Configuration config = mock(Configuration.class);
-    DefaultAuthenticationService defaultAuthenticationService = new DefaultAuthenticationService(null,tenantService,scopeAccessService,applicationDao,config,userDao,customerDao,inputValidator);
+    DefaultAuthenticationService defaultAuthenticationService = new DefaultAuthenticationService(authDao,tenantService,scopeAccessService,applicationDao,config,userDao,customerDao,inputValidator);
     DefaultAuthenticationService spy;
     RSAClient rsaClient = mock(RSAClient.class);
 
@@ -898,6 +900,7 @@ public class DefaultAuthenticationServiceTest {
         rsaCredentials.setPassword("p");
         rsaCredentials.setGrantType("password");
         rsaCredentials.setClientId("id");
+        when(authDao.getRackerRoles(anyString())).thenReturn(new ArrayList<String>());
         doNothing().when(spy).validateCredentials(rsaCredentials);
         doReturn(new RackerScopeAccess()).when(spy).getAndUpdateRackerScopeAccessForClientId(any(Racker.class), any(Application.class));
         spy.authenticate(rsaCredentials);

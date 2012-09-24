@@ -4,13 +4,9 @@ import com.rackspace.idm.domain.config.LdapConfiguration;
 import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.DuplicateUsernameException;
 import com.rackspace.idm.exception.PasswordSelfUpdateTooSoonException;
 import com.unboundid.ldap.sdk.Modification;
 import com.unboundid.ldap.sdk.ModificationType;
-import org.apache.commons.configuration.Configuration;
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.commons.configuration.PropertiesConfiguration;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -19,11 +15,6 @@ import org.junit.*;
 import java.security.GeneralSecurityException;
 import java.util.List;
 import java.util.Locale;
-
-import static junit.framework.Assert.fail;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.*;
 
 public class LdapUserRepositoryIntegrationTest extends InMemoryLdapIntegrationTest{
 
@@ -212,7 +203,7 @@ public class LdapUserRepositoryIntegrationTest extends InMemoryLdapIntegrationTe
 
     @Test
     public void shouldNotFindOneUserThatDoesNotExistsByMossoId() {
-        Users users = repo.getUsersByMossoId(0);
+        Users users = repo.getUsersByMossoId(-1);
         Assert.assertEquals(0, users.getUsers().size());
     }
 

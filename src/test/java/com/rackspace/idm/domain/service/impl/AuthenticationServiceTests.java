@@ -353,6 +353,7 @@ public class AuthenticationServiceTests {
         EasyMock.expect(mockAuthDao.authenticate(authCredentials.getUsername(), userpass.getValue())).andReturn(true);
         EasyMock.expect(mockUserDao.getRackerByRackerId(authCredentials.getUsername())).andReturn(racker);
         EasyMock.expect(mockScopeAccessService.getRackerScopeAccessForClientId(racker.getUniqueId(), testClient.getClientId())).andReturn(getFakeRackerScopeAcces());
+        EasyMock.expect(mockAuthDao.getRackerRoles(rackerId)).andReturn(new ArrayList<String>());
 
         TenantRole tenantRole = new TenantRole();
         tenantRole.setName("Racker");
@@ -421,6 +422,7 @@ public class AuthenticationServiceTests {
         final List<String> rackerRoles = Arrays.asList("role1", "role2");
 
         EasyMock.expect(mockScopeAccessService.loadScopeAccessByAccessToken(tokenVal)).andReturn(scopeAccess);
+        EasyMock.expect(mockAuthDao.getRackerRoles(rackerId)).andReturn(rackerRoles);
         EasyMock.expect(mockAuthDao.getRackerRoles(rackerId)).andReturn(rackerRoles);
 
         EasyMock.replay(mockScopeAccessService, mockAuthDao);

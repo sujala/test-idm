@@ -190,6 +190,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
 
             Racker racker = new Racker();
             racker.setRackerId(rackerScopeAccess.getRackerId());
+            racker.setRackerRoles(authDao.getRackerRoles(racker.getRackerId()));
             authData.setRacker(racker);
         }
     }
