@@ -6051,6 +6051,20 @@ public class DefaultCloud20ServiceTest {
         defaultCloud20Service.addUserToDomain(authToken, "123", userId);
     }
 
+    @Test (expected = ForbiddenException.class)
+    public void addUserToDomain_noRoles_expectsForbidden() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        Domain domain = new Domain();
+        domain.setEnabled(true);
+        User user = new User();
+
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doReturn(domain).when(domainService).checkAndGetDomain("123");
+        doReturn(user).when(userService).checkAndGetUserById("123");
+
+        defaultCloud20Service.addUserToDomain(authToken, "123", "123");
+    }
+
     @Test
     public void deleteDomain_emptyDomain_expectsSuccess() {
         ScopeAccess scopeAccess = new ScopeAccess();

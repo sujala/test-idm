@@ -17,6 +17,7 @@ import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.exception.PasswordValidationException;
 import com.rackspacecloud.docs.auth.api.v1.BaseURL;
 import com.rackspacecloud.docs.auth.api.v1.BaseURLList;
 import com.rackspacecloud.docs.auth.api.v1.BaseURLRef;
@@ -234,6 +235,8 @@ public class CloudMigrationService {
         } catch (ConflictException e) {
             throw e;
         } catch (BadRequestException e) {
+            throw e;
+        } catch (PasswordValidationException e) {
             throw e;
         } catch (Exception e) {
             logger.info("failed to migrate user: {}", username);

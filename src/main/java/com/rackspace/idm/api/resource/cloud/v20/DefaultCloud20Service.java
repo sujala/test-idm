@@ -1834,7 +1834,13 @@ public class DefaultCloud20Service implements Cloud20Service {
         if (!domain.isEnabled()) {
             throw new ForbiddenException("Cannot add users to a disabled domain.");
         }
+
         User userDO = userService.checkAndGetUserById(userId);
+
+        List<TenantRole> roles = userDO.getRoles();
+        if (roles == null || roles.size() == 0) {
+            throw new ForbiddenException("Cannot add user with no roles to a domain.");
+        }
 
         if (isServiceAdminOrIdentityAdmin(userDO)) {
             throw new ForbiddenException("Cannot add domains to admins or service-admins.");
