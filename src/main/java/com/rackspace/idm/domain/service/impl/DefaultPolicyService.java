@@ -147,7 +147,12 @@ public class DefaultPolicyService implements PolicyService {
     public void softDeletePolicy(String policyId) {
         logger.debug("SoftDeleting Policy: {}", policyId);
         Policy policy = checkAndGetPolicy(policyId);
-        policyDao.softDeletePolicy(policy);
+        List<CloudBaseUrl> cloudBaseUrlList = this.endpointDao.getBaseUrlsWithPolicyId(policy.getPolicyId());
+        if (cloudBaseUrlList.isEmpty()) {
+            policyDao.softDeletePolicy(policy);
+        }else{
+            throw new BadRequestException("Cannot delete policy that belongs to endpoint");
+        }
         logger.debug("SoftDeleted User: {}", policyId);
     }
 

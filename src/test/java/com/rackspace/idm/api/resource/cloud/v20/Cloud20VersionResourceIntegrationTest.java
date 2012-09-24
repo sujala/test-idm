@@ -815,12 +815,12 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
             endpointTemplate = createEndpointTemplate(token, endpointTemplateId);
             Policy policy = createPolicy(token, "name", "blob", "type");
             policyId = policy.getId();
-            addPolicyToEndpointTemplate(token, String.valueOf(endpointTemplate.getId()), policyId);
+            addPolicyToEndpointTemplate(token, endpointTemplateId, policyId);
             deletePolicy(token,policyId);
 
         } catch (Exception ex) {
             assertThat("Status Code", ((UniformInterfaceException) ex).getResponse().getStatus(), equalTo(400));
-            deleteEndpointTemplate(token, String.valueOf(endpointTemplate.getId()));
+            deleteEndpointTemplate(token, endpointTemplateId);
             deletePolicy(token,policyId);
         }
     }
