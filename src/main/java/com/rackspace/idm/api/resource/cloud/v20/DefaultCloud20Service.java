@@ -378,6 +378,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             //if caller is a user-admin, give user same mosso and nastId and verifies that it has less then 100 subusers
             boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken);
             boolean callerIsIdentityAdmin = authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken);
+            boolean callerIsServiceAdmin = authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken);
             if (callerIsUserAdmin) {
                 //TODO Pagination index and offset
                 Users users;
@@ -403,7 +404,10 @@ public class DefaultCloud20Service implements Cloud20Service {
             if(userDO.getDomainId() == null && callerIsUserAdmin){
                 throw new BadRequestException("A Domain ID must be specified.");
             }
-            else if(callerIsIdentityAdmin) {
+            else if (callerIsServiceAdmin && userDO.getDomainId() != null) {
+                throw new BadRequestException("Identity-admin cannot be created with a domain");
+            }
+            else if (callerIsIdentityAdmin) {
                 domainService.createNewDomain(userDO.getDomainId());
             }
 

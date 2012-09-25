@@ -59,37 +59,39 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     static Domain disabledDomain;
     static Domain testDomain;
     static String identityToken;
+    static String uberToken;
 
     @Before
     public void setUp() throws Exception {
         ensureGrizzlyStarted("classpath:app-config.xml");
         if (!setupComplete) {
             setupComplete = true;
-            String token = authenticate("authQE", "Auth1234", MediaType.APPLICATION_XML);
+            uberToken = authenticate("authQE", "Auth1234", MediaType.APPLICATION_XML);
 
-            disabledDomain = getDomainById(token, disabledDomainId);
+            disabledDomain = getDomainById(uberToken, disabledDomainId);
             if (disabledDomain == null) {
-                disabledDomain = createDomain(token, "DEV-999-999-998", disabledDomainId, false, MediaType.APPLICATION_XML);
+                disabledDomain = createDomain(uberToken, "DEV-999-999-998", disabledDomainId, false, MediaType.APPLICATION_XML);
             }
 
-            testDomain = getDomainById(token, testDomainId);
+            testDomain = getDomainById(uberToken, testDomainId);
             if (testDomain == null) {
-                testDomain = createDomain(token, "DEV-999-999-999", testDomainId, true, MediaType.APPLICATION_XML);
+                testDomain = createDomain(uberToken, "DEV-999-999-999", testDomainId, true, MediaType.APPLICATION_XML);
             }
 
             //Create Users if they do not exist.
-            testIdentityAdminUser = getUserByName(token, identityUserName);
+            testIdentityAdminUser = getUserByName(uberToken, identityUserName);
             if(testIdentityAdminUser == null){
-                testIdentityAdminUser = createIdentityAdminUser(token, identityUserName, email, password, MediaType.APPLICATION_XML);
+                testIdentityAdminUser = createIdentityAdminUser(uberToken, identityUserName, email, password, MediaType.APPLICATION_XML);
             }
 
             identityToken = authenticate(identityUserName, "Password1", MediaType.APPLICATION_XML);
             testUserAdmin = getUserByName(identityToken, userAdminName);
             if(testUserAdmin == null){
                 testUserAdmin = createUserAdminUser(identityToken, userAdminName, email, password, testDomainId, MediaType.APPLICATION_XML);
-                addRolesToUserOnTenant(token, tenantId, testUserAdmin.getId(), roleId);
+                addRolesToUserOnTenant(uberToken, tenantId, testUserAdmin.getId(), roleId);
             }
-            testUserNoRoles = getUserByName(token, noRolesName);
+
+            testUserNoRoles = getUserByName(uberToken, noRolesName);
             if (testUserNoRoles == null) {
                 testUserNoRoles = createUserAdminUser(identityToken, noRolesName, email, password, testDomainId, MediaType.APPLICATION_XML);
             }
@@ -395,6 +397,22 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
         ClientResponse clientResponse = resource.header(X_AUTH_TOKEN, token).accept(MediaType.APPLICATION_XML_TYPE).get(ClientResponse.class);
 
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void addUser_identityAdminWithDomain_returns400() throws Exception {
+        WebResource resource = resource().path("cloud/v2.0/users");
+        ClientResponse clientResponse = resource.header(X_AUTH_TOKEN, uberToken).type(MediaType.APPLICATION_XML_TYPE).post(ClientResponse.class,
+                "<user username=\"serviceAdminD1\"\n" +
+                        "    email=\"domainxml@example.com\"\n" +
+                        "    enabled=\"true\"\n" +
+                        "    ns1:password=\"Password1\"\n" +
+                        "    rax-auth:domainId=\"135792468\"\n" +
+                        "    xmlns:rax-auth=\"http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0\"\n" +
+                        "    xmlns:ns1=\"http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0\"\n" +
+                        "    xmlns:ns2=\"http://docs.openstack.org/identity/api/v2.0\" />");
+
+        assertThat("response code", clientResponse.getStatus(), equalTo(400));
     }
 
     @Test
