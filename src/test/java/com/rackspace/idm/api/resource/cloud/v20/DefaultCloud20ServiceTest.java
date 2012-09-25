@@ -4,8 +4,6 @@ package com.rackspace.idm.api.resource.cloud.v20;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
-
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.api.converter.cloudv20.*;
@@ -6189,10 +6187,10 @@ public class DefaultCloud20ServiceTest {
         Users users = new Users();
         users.setUsers(userList);
 
-        doReturn(users).when(domainService).getUsersByDomainId("135792468");
+        doReturn(users).when(domainService).getUsersByDomainId("135792468", true);
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
 
-        Response.ResponseBuilder responseBuilder = defaultCloud20Service.getUsersByDomainId(authToken, "135792468");
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.getUsersByDomainId(authToken, "135792468", "true");
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(200));
     }
 
@@ -6205,6 +6203,6 @@ public class DefaultCloud20ServiceTest {
         doThrow(exception).when(domainService).checkAndGetDomain("135792468");
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
 
-        defaultCloud20Service.getUsersByDomainId(authToken, "135792468");
+        defaultCloud20Service.getUsersByDomainId(authToken, "135792468", "true");
     }
 }

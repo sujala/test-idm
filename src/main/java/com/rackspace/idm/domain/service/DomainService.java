@@ -19,6 +19,7 @@ public interface DomainService {
     void addTenantToDomain(String tenantId, String domainId);
     void removeTenantFromDomain(String tenantId, String domainId);
     Users getUsersByDomainId(String domainId);
+    Users getUsersByDomainId(String domainId, boolean enabled);
     Domain checkAndGetDomain(String domainId);
     String createNewDomain(String domainId);
 }

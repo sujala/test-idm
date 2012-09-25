@@ -12,7 +12,6 @@ import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
-import org.openstack.docs.identity.api.v2.Tenant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -152,6 +151,17 @@ public class DefaultDomainService implements DomainService{
     @Override
     public Users getUsersByDomainId(String domainId) {
         FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParam.FilterParamName.DOMAIN_ID, domainId)};
+        return userService.getAllUsers(filters);
+    }
+
+    @Override
+    public Users getUsersByDomainId(String domainId, boolean enabled) {
+
+        FilterParam[] filters = new FilterParam[]
+            {
+                new FilterParam(FilterParam.FilterParamName.DOMAIN_ID, domainId),
+                new FilterParam(FilterParam.FilterParamName.ENABLED, String.valueOf(enabled))
+            };
         return userService.getAllUsers(filters);
     }
 

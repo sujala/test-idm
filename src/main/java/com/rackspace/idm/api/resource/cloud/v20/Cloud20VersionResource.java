@@ -198,8 +198,9 @@ public class Cloud20VersionResource {
     @Path("RAX-AUTH/domains/{domainId}/users")
     public Response getUsersByDomain(
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("domainId") String domainId) {
-        return defaultCloud20Service.getUsersByDomainId(authToken, domainId).build();
+            @PathParam("domainId") String domainId,
+            @QueryParam("enabled") String enabled) {
+        return defaultCloud20Service.getUsersByDomainId(authToken, domainId, enabled).build();
     }
 
     @PUT

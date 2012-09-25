@@ -440,6 +440,8 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                     searchBuilder.addEqualAttribute(ATTR_IN_MIGRATION, "true");
                 } else if (filter.getParam() == FilterParamName.MIGRATED) {
                     searchBuilder.addEqualAttribute(ATTR_IN_MIGRATION, "false");
+                } else if (filter.getParam() == FilterParamName.ENABLED) {
+                    searchBuilder.addEqualAttribute(ATTR_ENABLED, filter.getStrValue());
                 }
             }
         }

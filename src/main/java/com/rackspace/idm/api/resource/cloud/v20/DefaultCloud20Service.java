@@ -1824,10 +1824,16 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getUsersByDomainId(String authToken, String domainId) {
+    public ResponseBuilder getUsersByDomainId(String authToken, String domainId, String enabled) {
         authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
         domainService.checkAndGetDomain(domainId);
-        Users users = domainService.getUsersByDomainId(domainId);
+        Users users;
+        if (enabled == null) {
+            users = domainService.getUsersByDomainId(domainId);
+        } else {
+            users = domainService.getUsersByDomainId(domainId, Boolean.valueOf(enabled));
+        }
+
         return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUsers(this.userConverterCloudV20.toUserList(users.getUsers())).getValue());
     }
 

@@ -187,7 +187,7 @@ public interface Cloud20Service {
 
     ResponseBuilder getDomainTenants(String authToken, String domainId, String enabled);
 
-    ResponseBuilder getUsersByDomainId(String authToken, String domainId);
+    ResponseBuilder getUsersByDomainId(String authToken, String domainId, String enabled);
 
     ResponseBuilder addUserToDomain(String authToken, String domainId, String userId);
 
