@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ClientConflictException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
@@ -451,6 +452,29 @@ public class DefaultTenantServiceTest {
         assertThat("list size",roles.size(),equalTo(0));
      }
 
+    @Test (expected = BadRequestException.class)
+    public void addTenantRoleToUser_existingGlobalRole_throwsBadRequest() throws Exception {
+        User user = new User();
+        user.setUniqueId("123456789");
+        List<TenantRole>  roleList = new ArrayList<TenantRole>();
+        TenantRole globalRole = new TenantRole();
+        TenantRole globalRole2 = new TenantRole();
+        ClientRole clientRole = new ClientRole();
+
+        globalRole.setRoleRsId("1");
+        globalRole2.setRoleRsId("4");
+        clientRole.setName("name");
+        clientRole.setDescription("description");
+        roleList.add(globalRole);
+        user.setRoles(roleList);
+
+        doReturn(roleList).when(spy).getGlobalRolesForUser(any(User.class));
+        when(tenantDao.getTenantRolesForUser(user)).thenReturn(roleList);
+        when(clientDao.getClientRoleById("1")).thenReturn(clientRole);
+
+        defaultTenantService.addTenantRoleToUser(user, globalRole2);
+    }
+
     @Test (expected = IllegalArgumentException.class)
     public void addTenantRoleToUser_userIsNullAndRoleIsNull_throwsIllegalArgumentException() throws Exception {
         defaultTenantService.addTenantRoleToUser(null,null);
@@ -489,6 +513,7 @@ public class DefaultTenantServiceTest {
         User user = new User();
         user.setUniqueId("123");
         TenantRole role = new TenantRole();
+        doReturn(null).when(spy).getGlobalRolesForUser(user);
         when(clientDao.getClientByClientId(null)).thenReturn(null);
         defaultTenantService.addTenantRoleToUser(user,role);
 

@@ -4,6 +4,7 @@ import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.DomainService;
 import com.rackspace.idm.domain.service.TenantService;
+import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ClientConflictException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
@@ -337,6 +338,10 @@ public class DefaultTenantService implements TenantService {
         if (user == null || StringUtils.isBlank(user.getUniqueId()) || role == null) {
             throw new IllegalArgumentException(
                 "User cannot be null and must have uniqueID; role cannot be null");
+        }
+
+        if (getGlobalRolesForUser(user) != null && getGlobalRolesForUser(user).size() > 0) {
+            throw new BadRequestException("User cannot have more than one global role.");
         }
 
         Application client = this.clientDao.getClientByClientId(role.getClientId());
