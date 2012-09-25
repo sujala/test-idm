@@ -5,6 +5,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain;
 import com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest;
 import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.test.Cloud20TestHelper;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.UniformInterfaceException;
@@ -24,6 +25,7 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.Assert.assertThat;
 
@@ -408,6 +410,21 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
                         "    enabled=\"true\"\n" +
                         "    ns1:password=\"Password1\"\n" +
                         "    rax-auth:domainId=\"135792468\"\n" +
+                        "    xmlns:rax-auth=\"http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0\"\n" +
+                        "    xmlns:ns1=\"http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0\"\n" +
+                        "    xmlns:ns2=\"http://docs.openstack.org/identity/api/v2.0\" />");
+
+        assertThat("response code", clientResponse.getStatus(), equalTo(400));
+    }
+
+    @Test
+    public void addUser_userAdminWithoutDomain_returns400() throws Exception {
+        WebResource resource = resource().path("cloud/v2.0/users");
+        ClientResponse clientResponse = resource.header(X_AUTH_TOKEN, identityToken).type(MediaType.APPLICATION_XML_TYPE).post(ClientResponse.class,
+                "<user username=\"userAdminNoDomain\"\n" +
+                        "    email=\"domainxml@example.com\"\n" +
+                        "    enabled=\"true\"\n" +
+                        "    ns1:password=\"Password1\"\n" +
                         "    xmlns:rax-auth=\"http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0\"\n" +
                         "    xmlns:ns1=\"http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0\"\n" +
                         "    xmlns:ns2=\"http://docs.openstack.org/identity/api/v2.0\" />");

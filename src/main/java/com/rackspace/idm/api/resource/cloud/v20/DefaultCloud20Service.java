@@ -408,6 +408,9 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException("Identity-admin cannot be created with a domain");
             }
             else if (callerIsIdentityAdmin) {
+                if (userDO.getDomainId() == null) {
+                    throw new BadRequestException("User-admin cannot be created without a domain");
+                }
                 domainService.createNewDomain(userDO.getDomainId());
             }
 

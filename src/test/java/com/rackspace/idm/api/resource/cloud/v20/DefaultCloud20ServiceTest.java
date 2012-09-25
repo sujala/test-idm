@@ -459,6 +459,25 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void addUser_withIdentityAdmin_noDomainId_throwsBadRequest() throws Exception {
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
+        ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);
+        ScopeAccess scopeAccess = new ScopeAccess();
+        User userDO = new User();
+
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(userConverterCloudV20.toUserDO(any(UserForCreate.class))).thenReturn(userDO);
+        when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
+
+        defaultCloud20Service.addUser(httpHeaders, uriInfo, authToken, userOS);
+
+        assertThat("exception type", argumentCaptor.getValue(), instanceOf(BadRequestException.class));
+    }
+
+    @Test
     public void deleteUser_isUserAdmin_callsVerifyDomain() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         User caller = new User();
