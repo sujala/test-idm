@@ -61,13 +61,13 @@ public class  ServiceConfiguration {
 
     /**
      * Use for unit tests.
-     * 
+     *
      * @param config
      */
     public ServiceConfiguration(Configuration config) {
         this.config = config;
     }
-    
+
     @Bean
     public AuthHeaderHelper authHeaderHelper() {
         return new AuthHeaderHelper();
@@ -137,12 +137,12 @@ public class  ServiceConfiguration {
     public ApiDocService apiDocService() {
         return new DefaultApiDocService(apiDocDao);
     }
-    
+
     @Bean
     public TenantService tenantService() {
         return new DefaultTenantService(tenantDao, clientDao, userRepo, endpointDao, scopeAccessDao);
     }
-    
+
     @Bean
     public DomainService domainService() {
         return new DefaultDomainService(domainDao);
@@ -158,7 +158,7 @@ public class  ServiceConfiguration {
     	return new DefaultAuthenticationService(authDao, tenantService(), scopeAccessService(),
     			clientDao, config, userRepo, customerDao, inputValidator);
     }
-    
+
     @Bean
     public MBeanExporter exporter() {
         final MBeanExporter exp = new MBeanExporter();

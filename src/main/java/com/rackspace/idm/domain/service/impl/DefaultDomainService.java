@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.service.impl;
 import com.rackspace.idm.domain.dao.DomainDao;
 import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.FilterParam;
+import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.service.DomainService;
 import com.rackspace.idm.domain.service.TenantService;
@@ -146,6 +147,11 @@ public class DefaultDomainService implements DomainService{
         catch(Exception ex){
             throw new BadRequestException("Domain could not be created.");
         }
+    }
+
+    @Override
+    public List<Domain> getDomainsForTenants(List<Tenant> tenantIds) {
+        return domainDao.getDomainsForTenant(tenantIds);
     }
 
     @Override

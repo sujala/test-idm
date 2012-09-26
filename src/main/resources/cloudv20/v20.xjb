@@ -154,6 +154,11 @@
                 <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="domain"/>
             </annox:annotate>
         </jaxb:bindings>
+        <jaxb:bindings node="xs:complexType[@name='Domains']">
+            <annox:annotate>
+                <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="domains"/>
+            </annox:annotate>
+        </jaxb:bindings>
         <jaxb:bindings node="xs:complexType[@name='Policy']">
             <annox:annotate>
                 <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="policy"/>

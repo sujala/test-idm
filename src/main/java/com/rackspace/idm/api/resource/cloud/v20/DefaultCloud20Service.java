@@ -15,6 +15,7 @@ import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Domain;
+import com.rackspace.idm.domain.entity.Domains;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
@@ -135,6 +136,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private DomainConverterCloudV20 domainConverterCloudV20;
+
+    @Autowired
+    private DomainsConverterCloudV20 domainsConverterCloudV20;
 
     @Autowired
     private PolicyConverterCloudV20 policyConverterCloudV20;
@@ -2453,6 +2457,56 @@ public class DefaultCloud20Service implements Cloud20Service {
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
+    }
+
+    @Override
+    public ResponseBuilder getAccessibleDomains(String authToken) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public ResponseBuilder getAccessibleDomainsForUser(String authToken, String userId) {
+        ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
+
+        CloudUserAccessibility cloudUserAccessibility = getUserAccessibility(scopeAccessByAccessToken);
+
+        User user = userService.checkAndGetUserById(userId);
+        ScopeAccess scopeAccessByUserId = scopeAccessService.getScopeAccessByUserId(user.getId());
+
+        Domains domains = cloudUserAccessibility.getAccessibleDomainsByScopeAccess(scopeAccessByUserId);
+
+        domains = cloudUserAccessibility.addUserDomainToDomains(user, domains);
+        domains = cloudUserAccessibility.removeDuplicateDomains(domains);
+
+        com.rackspace.docs.identity.api.ext.rax_auth.v1.Domains domainsObj = domainsConverterCloudV20.toDomains(domains);
+
+        return Response.ok().entity(raxAuthObjectFactory.createDomains(domainsObj).getValue());
+    }
+
+    public CloudUserAccessibility getUserAccessibility(ScopeAccess scopeAccess){
+        if(this.authorizationService.authorizeCloudUser(scopeAccess)){
+            return new CloudDefaultUserAccessibility(tenantService, domainService,
+                    authorizationService, userService, scopeAccess);
+        }
+        if(this.authorizationService.authorizeCloudUserAdmin(scopeAccess)){
+            return new CloudUserAdminAccessibility(tenantService, domainService,
+                    authorizationService, userService, scopeAccess);
+        }
+        if(this.authorizationService.authorizeCloudIdentityAdmin(scopeAccess)){
+            return new CloudIdentityAdminAccessibility(tenantService, domainService,
+                    authorizationService, userService, scopeAccess);
+        }
+        if(this.authorizationService.authorizeCloudServiceAdmin(scopeAccess)){
+            return new CloudServiceAdminAccessibility(tenantService, domainService,
+                    authorizationService, userService, scopeAccess);
+        }
+        return new CloudUserAccessibility(tenantService, domainService,
+                    authorizationService, userService, scopeAccess);
+    }
+
+    @Override
+    public ResponseBuilder getAccessibleDomainsEndpointsForUser(String authToken, String userId, String domainId) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     public List<TenantRole> getRolesForScopeAccess(ScopeAccess scopeAccess) {

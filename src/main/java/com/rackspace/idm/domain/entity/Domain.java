@@ -102,4 +102,16 @@ public class Domain implements Auditable{
         this.ldapEntry = ldapEntry;
     }
 
+    @Override
+    public boolean equals(Object obj){
+        if(obj == this){
+            return true;
+        }
+        if(!(obj instanceof Domain)){
+            return false;
+        }
+        Domain other = (Domain) obj;
+        return this.domainId.equals(other.getDomainId());
+    }
+
 }
