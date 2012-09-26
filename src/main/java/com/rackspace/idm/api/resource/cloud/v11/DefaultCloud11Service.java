@@ -790,7 +790,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             return Response
                 .status(HttpServletResponse.SC_MOVED_PERMANENTLY)
                 .header("Location", newLocation)
-                .entity(OBJ_FACTORY.createUser(this.userConverterCloudV11.openstackToCloudV11User(user, endpoints)));
+                .entity(OBJ_FACTORY.createUser(this.userConverterCloudV11.openstackToCloudV11User(user, endpoints)).getValue());
 
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
@@ -818,7 +818,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             return Response
                 .status(HttpServletResponse.SC_MOVED_PERMANENTLY)
                 .header("Location", newLocation)
-                .entity(OBJ_FACTORY.createUser(this.userConverterCloudV11.openstackToCloudV11User(user, endpoints)));
+                .entity(OBJ_FACTORY.createUser(this.userConverterCloudV11.openstackToCloudV11User(user, endpoints)).getValue());
 
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
