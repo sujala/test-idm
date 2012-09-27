@@ -8,6 +8,7 @@ import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.lang.CharUtils;
 import org.apache.commons.lang.StringUtils;
+import org.hibernate.validator.constraints.impl.EmailValidator;
 import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
 import org.openstack.docs.identity.api.v2.User;
 import org.slf4j.Logger;
@@ -28,6 +29,7 @@ import java.util.regex.Pattern;
 @Component
 public class Validator20 {
 
+    private EmailValidator emailValidator = new EmailValidator();
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     public static final int PASSWORD_MIN_LENGTH = 8;
     public static final int MAX_GROUP_NAME = 200;
@@ -59,7 +61,8 @@ public class Validator20 {
     }
 
     public void validateEmail(String email) {
-        if (StringUtils.isBlank(email) || !email.matches("[a-zA-Z0-9_\\-\\.\"]+@[a-zA-Z0-9_\\.]+\\.[a-zA-Z]+")) {
+        
+        if (StringUtils.isBlank(email) || !emailValidator.isValid(email, null)) {
             String errorMsg = "Expecting valid email address";
             logger.warn(errorMsg);
             throw new BadRequestException(errorMsg);
