@@ -204,7 +204,7 @@ public class Validator20Test {
 
     @Test
     public void validateEmail_withValidEmail4_succeeds() throws Exception {
-        validator20.validateEmail("john.\"elGuapo\".smith@rackspace.com");
+        validator20.validateEmail("john.elGuapo.smith@rackspace.com");
     }
 
     @Test
