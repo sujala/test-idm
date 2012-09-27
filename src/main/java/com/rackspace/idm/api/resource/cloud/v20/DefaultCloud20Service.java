@@ -379,6 +379,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken);
             boolean callerIsIdentityAdmin = authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken);
             boolean callerIsServiceAdmin = authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken);
+
             if (callerIsUserAdmin) {
                 //TODO Pagination index and offset
                 Users users;
@@ -2366,6 +2367,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                     user = userService.getUserByScopeAccess(usa);
                     roles = getRolesForScopeAccess(sa);
                     validator20.validateTenantIdInRoles(tenantId, roles);
+                    access.setToken(tokenConverterCloudV20.toToken(sa, roles));
                     access.setUser(userConverterCloudV20.toUserForAuthenticateResponse(user, roles));
                 } else {
                     ImpersonatedScopeAccess isa = (ImpersonatedScopeAccess) sa;

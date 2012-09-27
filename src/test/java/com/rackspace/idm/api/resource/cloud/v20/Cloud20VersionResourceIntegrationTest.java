@@ -10,6 +10,13 @@ import com.rackspace.test.Cloud20TestHelper;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain;
+import com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest;
+import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.test.Cloud20TestHelper;
+import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.WebResource;
+import org.apache.commons.configuration.Configuration;
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -28,6 +35,23 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.Assert.assertThat;
+import org.openstack.docs.identity.api.v2.AuthenticateResponse;
+import org.openstack.docs.identity.api.v2.User;
+
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import javax.xml.transform.Result;
+
+import java.io.OutputStream;
+
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -102,17 +126,15 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
 
     @Test
     public void getVersion_withValidPath_returns200() throws Exception {
-        String token = getAuthToken(identityUserName, "Password1");
         WebResource resource = resource().path("cloud/v2.0");
-        ClientResponse clientResponse = resource.header(X_AUTH_TOKEN, token).get(ClientResponse.class);
+        ClientResponse clientResponse = resource.header(X_AUTH_TOKEN, identityToken).get(ClientResponse.class);
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
     }
 
     @Test
     public void getDefaultRegionServices_returns200() throws Exception {
-        String token = getAuthToken(identityUserName, "Password1");
         WebResource resource = resource().path("cloud/v2.0/RAX-AUTH/default-region/services");
-        ClientResponse clientResponse = resource.header(X_AUTH_TOKEN, token).get(ClientResponse.class);
+        ClientResponse clientResponse = resource.header(X_AUTH_TOKEN, identityToken).get(ClientResponse.class);
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
     }
 
@@ -139,7 +161,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
                 .type(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML_TYPE)
                 .post(ClientResponse.class,
-                        "<auth xmlns=\"http://docs.openstack.org/identity/api/v2.0\"><passwordCredentials username=\""+identityUserName+"\" password=\"Password1\"/></auth>");
+                        "<auth xmlns=\"http://docs.openstack.org/identity/api/v2.0\"><passwordCredentials username=\"" + identityUserName + "\" password=\"Password1\"/></auth>");
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
     }
 
@@ -153,7 +175,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
                         "{\n" +
                                 "    \"auth\":{\n" +
                                 "        \"passwordCredentials\":{\n" +
-                                "            \"username\":\""+identityUserName+"\",\n" +
+                                "            \"username\":\"" + identityUserName + "\",\n" +
                                 "            \"password\":\"Password1\"\n" +
                                 "        }\n" +
                                 "    }\n" +
@@ -170,7 +192,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .accept(MediaType.APPLICATION_JSON_TYPE)
                 .post(ClientResponse.class,
-                        "{" + "\"auth\":{" + "\"passwordCredentials\":{" + "\"username\":\""+identityUserName+"\",\"password\":\"Password1\"},\"tenantId\":\"1234\" }");
+                        "{" + "\"auth\":{" + "\"passwordCredentials\":{" + "\"username\":\"" + identityUserName + "\",\"password\":\"Password1\"},\"tenantId\":\"1234\" }");
         assertThat("response code", clientResponse.getStatus(), equalTo(400));
     }
 
@@ -183,7 +205,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .accept(MediaType.APPLICATION_JSON_TYPE)
                 .post(ClientResponse.class,
-                        "{" + "\"auth\":{" + "\"passwordCredentials\":{" + "\"username\":\""+identityUserName+"\"},\"tenantId\":\"1234\" }}");
+                        "{" + "\"auth\":{" + "\"passwordCredentials\":{" + "\"username\":\"" + identityUserName + "\"},\"tenantId\":\"1234\" }}");
         assertThat("response code", clientResponse.getStatus(), equalTo(400));
     }
 
@@ -259,8 +281,8 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     @Test
     public void validateToken_belongsToIsTrue_returns200() throws Exception {
         String token = authenticate(userAdminName, "Password1", MediaType.APPLICATION_XML);
-        WebResource resource = resource().path("cloud/v2.0/tokens/" + token).queryParam("belongsTo", tenantId);
-        ClientResponse clientResponse = resource.header("x-auth-token", identityToken).get(ClientResponse.class);
+        WebResource resource = resource().path("cloud/v2.0/tokens/" + token).queryParam("belongsTo", "kurtTestTenant");
+        ClientResponse clientResponse = resource.header(X_AUTH_TOKEN, identityToken).get(ClientResponse.class);
 
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
     }
@@ -443,33 +465,31 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     @Test
     public void getUser_withDefaultUser_searchingUserAdmin_returns403() throws Exception {
         String token = authenticate("kurtDefaultUser", "Password1", MediaType.APPLICATION_XML);
-        WebResource resource = resource().path("cloud/v2.0/users").queryParam("name", "kurtUserAdmin");
+        WebResource resource = resource().path("cloud/v2.0/users").queryParam("name", userAdminName);
         ClientResponse clientResponse = resource.header(X_AUTH_TOKEN, token).accept(MediaType.APPLICATION_XML_TYPE).get(ClientResponse.class);
         assertThat("response code", clientResponse.getStatus(), equalTo(403));
     }
 
     @Test
     public void getUser_withUserAdmin_searchingUserAdmin_returns200() throws Exception {
-        String token = getAuthToken("kurtUserAdmin", "Password1");
-        WebResource resource = resource().path("cloud/v2.0/users").queryParam("name", "kurtUserAdmin");
+        String token = getAuthToken(userAdminName, "Password1");
+        WebResource resource = resource().path("cloud/v2.0/users").queryParam("name", userAdminName);
         ClientResponse clientResponse = resource.header(X_AUTH_TOKEN, token).accept(MediaType.APPLICATION_XML_TYPE).get(ClientResponse.class);
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
     }
 
     @Test
     public void getUser_withUserAdmin_searchingServiceAdmin_returns403() throws Exception {
-        String token = getAuthToken("kurtUserAdmin", "Password1");
+        String token = getAuthToken(userAdminName, "Password1");
         WebResource resource = resource().path("cloud/v2.0/users").queryParam("name", identityUserName);
-        ClientResponse clientResponse = resource.header("X-Auth-Token", token).accept(MediaType.APPLICATION_XML_TYPE).get(ClientResponse.class);
-
+        ClientResponse clientResponse = resource.header(X_AUTH_TOKEN, token).accept(MediaType.APPLICATION_XML_TYPE).get(ClientResponse.class);
         assertThat("response code", clientResponse.getStatus(), equalTo(403));
     }
 
     @Test
     public void getUser_withServiceAdmin_searchingServiceAdmin_returns200() throws Exception {
         WebResource resource = resource().path("cloud/v2.0/users").queryParam("name", identityUserName);
-        ClientResponse clientResponse = resource.header("X-Auth-Token", identityToken).accept(MediaType.APPLICATION_XML_TYPE).get(ClientResponse.class);
-
+        ClientResponse clientResponse = resource.header(X_AUTH_TOKEN, identityToken).accept(MediaType.APPLICATION_XML_TYPE).get(ClientResponse.class);
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
     }
 
@@ -482,7 +502,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
 
     @Test
     public void getTenants_withDefaultUser_returns200() throws Exception {
-        String token = authenticate("kurtDefaultUser", "Password1", MediaType.APPLICATION_XML);
+        String token = authenticate(userAdminName, "Password1", MediaType.APPLICATION_XML);
         WebResource resource = resource().path("cloud/v2.0/tenants");
         ClientResponse clientResponse = resource.header(X_AUTH_TOKEN, token).accept(MediaType.APPLICATION_XML_TYPE).get(ClientResponse.class);
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
@@ -491,7 +511,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
 
     @Test
     public void getTenants_UserAdmin_returns200() throws Exception {
-        String token = getAuthToken("kurtUserAdmin", "Password1");
+        String token = getAuthToken(userAdminName, "Password1");
         WebResource resource = resource().path("cloud/v2.0/tenants");
         ClientResponse clientResponse = resource.header(X_AUTH_TOKEN, token).accept(MediaType.APPLICATION_XML_TYPE).get(ClientResponse.class);
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
@@ -506,9 +526,8 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
 
     @Test
     public void listUserGroups_returns200() throws Exception {
-        WebResource resource = resource().path("cloud/v2.0/users/" + testUserAdmin.getId() +"/RAX-KSGRP");
+        WebResource resource = resource().path("cloud/v2.0/users/" + testIdentityAdminUser.getId() + "/RAX-KSGRP");
         ClientResponse clientResponse = resource.header(X_AUTH_TOKEN, identityToken).accept(MediaType.APPLICATION_XML_TYPE).get(ClientResponse.class);
-
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
     }
 
@@ -516,7 +535,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     public void listUserGroups_invalidAuthToken_returns401() throws Exception {
         String token = "invalid";
         WebResource resource = resource().path("cloud/v2.0/users/104472/RAX-KSGRP");
-        ClientResponse clientResponse = resource.header(X_AUTH_TOKEN,token).accept(MediaType.APPLICATION_XML_TYPE).get(ClientResponse.class);
+        ClientResponse clientResponse = resource.header(X_AUTH_TOKEN, token).accept(MediaType.APPLICATION_XML_TYPE).get(ClientResponse.class);
         assertThat("response code", clientResponse.getStatus(), equalTo(401));
     }
 
@@ -550,11 +569,11 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
 
     @Test
     public void updateUser_withNewUsername_withUsernameAlreadyInUse_returns409() throws Exception {
-        WebResource resource = resource().path("cloud/v2.0/users/"+testUserAdmin.getId());
-        ClientResponse clientResponse = resource.header("X-Auth-Token", identityToken).type(MediaType.APPLICATION_JSON_TYPE).post(ClientResponse.class, "{\n" +
+        WebResource resource = resource().path("cloud/v2.0/users/" + testUserAdmin.getId());
+        ClientResponse clientResponse = resource.header(X_AUTH_TOKEN, identityToken).type(MediaType.APPLICATION_JSON_TYPE).post(ClientResponse.class, "{\n" +
                 "  \"user\": {\n" +
-                "    \"id\":\""+testUserAdmin.getId()+"\",\n" +
-                "    \"username\": \""+identityUserName+"\",\n" +
+                "    \"id\":\"" + testUserAdmin.getId() + "\",\n" +
+                "    \"username\": \"" + identityUserName + "\",\n" +
                 "    \"email\": \"testuser@example.org\"\n" +
                 "  }\n" +
                 "}");
@@ -564,7 +583,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     @Test
     public void getUsersByDomainId_invalidDomainId_returns404() throws Exception {
         WebResource resource = resource().path("RAX-AUTH/domains/" + testDomainId + "/users");
-        ClientResponse clientResponse = resource.header("X-Auth-Token", identityToken).type(MediaType.APPLICATION_JSON_TYPE).get(ClientResponse.class);
+        ClientResponse clientResponse = resource.header(X_AUTH_TOKEN, identityToken).type(MediaType.APPLICATION_JSON_TYPE).get(ClientResponse.class);
 
         assertThat("response code", clientResponse.getStatus(), equalTo(404));
     }
