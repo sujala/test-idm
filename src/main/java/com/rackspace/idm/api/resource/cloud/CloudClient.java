@@ -145,6 +145,18 @@ public class CloudClient {
                 if (!key.equalsIgnoreCase("content-encoding") && !key.equalsIgnoreCase("content-length") && !key.equalsIgnoreCase("transfer-encoding") && !key.equalsIgnoreCase("vary")) {
                     builder.header(key, header.getValue());
                 }
+                if (key.equalsIgnoreCase("location")) {
+                    String globalLocation = config.getString("ga.endpoint") + "v1.1";
+                    String cloudLocation = header.getValue();
+                    try {
+                        URL u = new URL(cloudLocation);
+                        globalLocation += u.getPath();
+                    } catch (MalformedURLException e) {
+                        globalLocation = cloudLocation;
+                    }
+
+                    builder.header(key, globalLocation);
+                }
             }
             //builder.entity(response.getEntity());
             if (responseBody != null) {
