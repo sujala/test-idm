@@ -212,7 +212,7 @@ public class LdapUserRepositoryIntegrationTest extends InMemoryLdapIntegrationTe
 
     @Test
     public void shouldNotFindOneUserThatDoesNotExistsByMossoId() {
-        Users users = repo.getUsersByMossoId(0);
+        Users users = repo.getUsersByMossoId(-1);
         Assert.assertEquals(0, users.getUsers().size());
     }
 
