@@ -1,5 +1,7 @@
 package com.rackspace.idm.api.resource.cloud;
 
+import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
+import org.apache.commons.configuration.Configuration;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -11,6 +13,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletResponse;
@@ -18,8 +21,10 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.*;
+import java.net.MalformedURLException;
 import java.util.Map;
 import java.util.Set;
+import java.net.URL;
 
 /**
  * Created by IntelliJ IDEA.
@@ -27,8 +32,15 @@ import java.util.Set;
  * Date: 8/12/11
  * Time: 1:53 PM
  */
-@Component
+
 public class CloudClient {
+
+    private final Configuration config;
+
+    @Autowired
+    public CloudClient(Configuration config) {
+        this.config = config;
+    }
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -103,6 +115,18 @@ public class CloudClient {
             if (!key.equalsIgnoreCase("content-encoding") && !key.equalsIgnoreCase("content-length")
                     && !key.equalsIgnoreCase("transfer-encoding") && !key.equalsIgnoreCase("vary")) {
                 responseBuilder = responseBuilder.header(key, header.getValue());
+            }
+            if (key.equalsIgnoreCase("location")) {
+                String globalLocation = config.getString("ga.endpoint") + "v1.1";
+                String cloudLocation = header.getValue();
+                try {
+                    URL u = new URL(cloudLocation);
+                    globalLocation += u.getPath();
+                } catch (MalformedURLException e) {
+                    globalLocation = cloudLocation;
+                }
+
+                responseBuilder.header(key, globalLocation);
             }
         }
         if (statusCode == HttpServletResponse.SC_INTERNAL_SERVER_ERROR) {
