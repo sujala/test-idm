@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20;
 
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
@@ -1358,7 +1359,11 @@ public class DefaultCloud20ServiceTest {
         newUser.setDomainId("domain");
         when(domainService.createNewDomain(org.mockito.Matchers.<String>anyObject())).thenReturn("domain");
         when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
+
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
+
         when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(newUser);
         when(userService.getAllUsers(org.mockito.Matchers.<FilterParam[]>any())).thenReturn(users);
         when(config.getInt("numberOfSubUsers")).thenReturn(100);
@@ -1382,7 +1387,11 @@ public class DefaultCloud20ServiceTest {
         newUser.setDomainId("domain");
         when(domainService.createNewDomain(org.mockito.Matchers.<String>anyObject())).thenReturn("domain");
         when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
+
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
+
         when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(newUser);
         doNothing().when(spy).setDomainId(any(ScopeAccess.class), any(User.class));
         UserForCreate userForCreate = new UserForCreate();
@@ -1422,6 +1431,11 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void addUser_callsUserService_addUserMethod() throws Exception {
         when(domainService.createNewDomain(org.mockito.Matchers.<String>anyObject())).thenReturn("domain");
+
+        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
+
         spy.addUser(null, null, authToken, userOS);
         verify(userService).addUser(user);
     }
@@ -1448,7 +1462,11 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void addUser_callerIsServiceAdmin_callsDefaultRegionService_validateDefaultRegion() throws Exception {
         when(domainService.createNewDomain(org.mockito.Matchers.<String>anyObject())).thenReturn("domain");
+
+        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
         when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
+
         spy.addUser(null, null, authToken, userOS);
         verify(defaultRegionService).validateDefaultRegion(user.getRegion());
     }
@@ -1456,7 +1474,11 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void addUser_callerIsServiceAdmin_defaultRegionMatchesUserRegion_setsRegion() throws Exception {
         when(domainService.createNewDomain(org.mockito.Matchers.<String>anyObject())).thenReturn("domain");
+
+        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
         when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
+
         HashSet<String> defaultRegions = new HashSet<String>();
         defaultRegions.add("DFW");
         when(defaultRegionService.getDefaultRegions()).thenReturn(defaultRegions);
@@ -1475,7 +1497,11 @@ public class DefaultCloud20ServiceTest {
         when(domainService.createNewDomain(org.mockito.Matchers.<String>anyObject())).thenReturn("domain");
         doNothing().when(spy).setDomainId(any(ScopeAccess.class), any(User.class));
         when(userService.getUserByAuthToken(authToken)).thenReturn(user);
+
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
+
         spy.addUser(null, null, authToken, userOS);
         verify(defaultRegionService).validateDefaultRegion(user.getRegion());
     }
@@ -1532,7 +1558,11 @@ public class DefaultCloud20ServiceTest {
         newUser.setDomainId("domain");
         when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(newUser);
         when(userConverterCloudV20.toUser(any(User.class))).thenReturn(new org.openstack.docs.identity.api.v2.User());
+
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
+
         when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
         when(userService.getAllUsers(org.mockito.Matchers.<FilterParam[]>any())).thenReturn(users);
         when(config.getInt("numberOfSubUsers")).thenReturn(2);
@@ -1551,6 +1581,11 @@ public class DefaultCloud20ServiceTest {
         UriBuilder uriBuilder = mock(UriBuilder.class);
         URI uri = new URI("");
         User user = new User();
+
+        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
+
         user.setDomainId("domain");
         when(domainService.createNewDomain(org.mockito.Matchers.<String>anyObject())).thenReturn("domain");
         when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(user);
@@ -5988,6 +6023,8 @@ public class DefaultCloud20ServiceTest {
     public void addUserToDomain_Admin_expectsForbidden() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         User user = new User();
+        com.rackspace.idm.domain.entity.Domain domain = new com.rackspace.idm.domain.entity.Domain();
+        domain.setEnabled(true);
         List<TenantRole> roles = new ArrayList<TenantRole>();
         TenantRole role = new TenantRole();
         role.setName("identity:user-admin");
@@ -5997,13 +6034,16 @@ public class DefaultCloud20ServiceTest {
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(user).when(userService).checkAndGetUserById(userId);
         doReturn(roles).when(tenantService).getGlobalRolesForUser(user);        
+        doReturn(domain).when(domainService).checkAndGetDomain("123");
 
-        defaultCloud20Service.addUserToDomain(authToken, null, userId);
+        defaultCloud20Service.addUserToDomain(authToken, "123", userId);
     }
 
     @Test (expected = ForbiddenException.class)
     public void addUserToDomain_ServiceAdmin_expectsForbidden() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
+        com.rackspace.idm.domain.entity.Domain domain = new com.rackspace.idm.domain.entity.Domain();
+        domain.setEnabled(true);
         User user = new User();
         List<TenantRole> roles = new ArrayList<TenantRole>();
         TenantRole role = new TenantRole();
@@ -6014,8 +6054,9 @@ public class DefaultCloud20ServiceTest {
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(user).when(userService).checkAndGetUserById(userId);
         doReturn(roles).when(tenantService).getGlobalRolesForUser(user);
+        doReturn(domain).when(domainService).checkAndGetDomain("123");
 
-        defaultCloud20Service.addUserToDomain(authToken, null, userId);
+        defaultCloud20Service.addUserToDomain(authToken, "123", userId);
     }
 
     @Test

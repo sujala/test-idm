@@ -367,6 +367,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             //if caller is a user-admin, give user same mosso and nastId and verifies that it has less then 100 subusers
             boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken);
             boolean callerIsIdentityAdmin = authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken);
+            boolean callerIsServiceAdmin = authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken);
             if (callerIsUserAdmin) {
                 //TODO Pagination index and offset
                 Users users;
@@ -392,7 +393,13 @@ public class DefaultCloud20Service implements Cloud20Service {
             if(userDO.getDomainId() == null && callerIsUserAdmin){
                 throw new BadRequestException("A Domain ID must be specified.");
             }
-            else if(callerIsIdentityAdmin) {
+            else if (callerIsServiceAdmin && userDO.getDomainId() != null) {
+                throw new BadRequestException("Identity-admin cannot be created with a domain");
+            }
+            else if (callerIsIdentityAdmin) {
+                if (userDO.getDomainId() == null) {
+                    throw new BadRequestException("User-admin cannot be created without a domain");
+                }
                 domainService.createNewDomain(userDO.getDomainId());
             }
 
@@ -1818,11 +1825,23 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder addUserToDomain(String authToken, String domainId, String userId) {
         authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+        Domain domain = domainService.checkAndGetDomain(domainId);
+        if (!domain.isEnabled()) {
+            throw new ForbiddenException("Cannot add users to a disabled domain.");
+        }
+
         User userDO = userService.checkAndGetUserById(userId);
+
         if (isServiceAdminOrIdentityAdmin(userDO)) {
             throw new ForbiddenException("Cannot add domains to admins or service-admins.");
         }
-        Domain domain = domainService.checkAndGetDomain(domainId);
+
+        List<TenantRole> roles = userDO.getRoles();
+        List<TenantRole> globalRoles = tenantService.getGlobalRolesForUser(userDO);
+        if ((roles == null || roles.size() == 0) && (globalRoles == null || globalRoles.size() == 0)) {
+            throw new ForbiddenException("Cannot add user with no roles to a domain.");
+        }
+
         userDO.setDomainId(domain.getDomainId());
         this.userService.updateUser(userDO, false);
         return Response.noContent();
