@@ -604,10 +604,10 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
         assertThat("response code", clientResponse.getStatus(), equalTo(403));
     }
 
+    @Ignore
     @Test
     public void addUserToDomain_noRole_returns403() throws Exception {
-        String userId = testUserNoRoles.getId();
-        WebResource resource = resource().path("cloud/v2.0/RAX-AUTH/domains/" + testDomainId + "/users/" + userId);
+        WebResource resource = resource().path("cloud/v2.0/RAX-AUTH/domains/" + testDomainId + "/users/" + testUserNoRoles.getId());
         ClientResponse clientResponse = resource.header(X_AUTH_TOKEN, identityToken).type(MediaType.APPLICATION_JSON_TYPE).put(ClientResponse.class);
 
         assertThat("response code", clientResponse.getStatus(), equalTo(403));

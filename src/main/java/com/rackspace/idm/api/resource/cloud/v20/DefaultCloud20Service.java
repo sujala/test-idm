@@ -1851,13 +1851,14 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         User userDO = userService.checkAndGetUserById(userId);
 
-        List<TenantRole> roles = userDO.getRoles();
-        if (roles == null || roles.size() == 0) {
-            throw new ForbiddenException("Cannot add user with no roles to a domain.");
-        }
-
         if (isServiceAdminOrIdentityAdmin(userDO)) {
             throw new ForbiddenException("Cannot add domains to admins or service-admins.");
+        }
+
+        List<TenantRole> roles = userDO.getRoles();
+        List<TenantRole> globalRoles = tenantService.getGlobalRolesForUser(userDO);
+        if ((roles == null || roles.size() == 0) && (globalRoles == null || globalRoles.size() == 0)) {
+            throw new ForbiddenException("Cannot add user with no roles to a domain.");
         }
 
         userDO.setDomainId(domain.getDomainId());
