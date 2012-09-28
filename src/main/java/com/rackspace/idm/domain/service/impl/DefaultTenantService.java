@@ -340,8 +340,10 @@ public class DefaultTenantService implements TenantService {
                 "User cannot be null and must have uniqueID; role cannot be null");
         }
 
-        if (getGlobalRolesForUser(user) != null && getGlobalRolesForUser(user).size() > 0) {
-            throw new BadRequestException("User cannot have more than one global role.");
+        if (role.getTenantIds() == null || role.getTenantIds().length == 0) {
+            if (getGlobalRolesForUser(user) != null && getGlobalRolesForUser(user).size() > 0) {
+                throw new BadRequestException("User cannot have more than one global role.");
+            }
         }
 
         Application client = this.clientDao.getClientByClientId(role.getClientId());
