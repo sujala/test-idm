@@ -86,6 +86,7 @@ public class RoleConverterCloudV20 {
         Role jaxbRole = objFactories.getOpenStackIdentityV2Factory().createRole();
         jaxbRole.setDescription(role.getDescription());
         jaxbRole.setId(role.getId());
+        jaxbRole.setName(role.getName());
         //jaxbRole.setServiceId(role.getClientId()); // ToDo: Removed from displaying for now.
         return jaxbRole;
     }
