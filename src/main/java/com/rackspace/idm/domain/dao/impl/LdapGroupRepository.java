@@ -195,7 +195,7 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
     @Override
     public void addGroupToUser(int groupId, String userId) {
         getLogger().debug("Adding group {} to user {}", groupId, userId);
-        Group group;
+        Group group = null;
         List<String> groups = new ArrayList<String>();
 
         try{ //TODO: should this catch exist... The getGroupById method already logs and throws accordingly
@@ -213,7 +213,9 @@ public class LdapGroupRepository extends LdapRepository implements GroupDao {
             oldGroups = this.getGroupsForUser(userId);
 
             for (Group s : oldGroups) {
-                groups.add(s.getGroupId().toString());
+                if(s.getGroupId() != 0){
+                    groups.add(s.getGroupId().toString());
+                }
             }
 
         }catch(Exception e){

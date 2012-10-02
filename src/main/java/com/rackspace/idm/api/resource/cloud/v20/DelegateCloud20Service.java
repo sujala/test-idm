@@ -708,7 +708,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         if (accessTokenByAuthHeader != null) {
             isUserAdminInGA = authorizationService.authorizeCloudUserAdmin(accessTokenByAuthHeader);
         }
-        if (isCloudAuthRoutingEnabled() && !isUserAdminInGA) {
+        if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth() && !isUserAdminInGA) {
             String request = getCloudAuthV20Url() + USERS;
             String body = marshallObjectToString(objectFactory.createUser(user));
             if (user != null && userService.userExistsByUsername(user.getUsername())) {
