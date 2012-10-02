@@ -1300,11 +1300,13 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
             CredentialListType creds = objFactories.getOpenStackIdentityV2Factory().createCredentialListType();
 
-            if (!StringUtils.isBlank(user.getPassword())) {
-                PasswordCredentialsRequiredUsername userCreds = new PasswordCredentialsRequiredUsername();
-                userCreds.setPassword(user.getPassword());
-                userCreds.setUsername(user.getUsername());
-                creds.getCredential().add(objFactories.getOpenStackIdentityV2Factory().createPasswordCredentials(userCreds));
+            if (authorizationService.authorizeCloudServiceAdmin(callersScopeAccess)) {
+                if (!StringUtils.isBlank(user.getPassword())) {
+                    PasswordCredentialsRequiredUsername userCreds = new PasswordCredentialsRequiredUsername();
+                    userCreds.setPassword(user.getPassword());
+                    userCreds.setUsername(user.getUsername());
+                    creds.getCredential().add(objFactories.getOpenStackIdentityV2Factory().createPasswordCredentials(userCreds));
+                }
             }
 
             if (!StringUtils.isBlank(user.getApiKey())) {
