@@ -6,9 +6,7 @@ import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.service.DomainService;
 import com.rackspace.idm.domain.service.UserService;
-import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.DuplicateException;
-import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.exception.*;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -93,6 +91,8 @@ public class DefaultDomainService implements DomainService{
         Domain domain = getDomain(domainId);
         if(domain == null)
             throw new NotFoundException("Domain could not be found");
+        if(!domain.isEnabled())
+            throw new ForbiddenException("Cannot add tenant to disabled domain");
 
         List<String> tenantIds = setTenantIdList(domain, tenantId);
         tenantIds.add(tenantId);
