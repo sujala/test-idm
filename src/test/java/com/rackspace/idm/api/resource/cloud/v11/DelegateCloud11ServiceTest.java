@@ -12,7 +12,7 @@ import com.rackspacecloud.docs.auth.api.v1.*;
 import com.rackspacecloud.docs.auth.api.v1.AuthData;
 import com.rackspacecloud.docs.auth.api.v1.Credentials;
 import com.rackspacecloud.docs.auth.api.v1.User;
-import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
+
 import org.apache.commons.configuration.Configuration;
 import org.apache.http.protocol.HTTP;
 import org.junit.Before;
@@ -30,6 +30,7 @@ import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
+import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.namespace.QName;
 import java.net.URI;
@@ -1031,7 +1032,8 @@ public class DelegateCloud11ServiceTest {
     public void authenticate_statusIsOKAndUserIsNotNullAndAuthResultIsNotNull_returnsServiceResponse() throws Exception {
         Response.ResponseBuilder response = Response.status(200).entity("notNull");
         HttpServletResponse httpServletResponse = mock(HttpServletResponse.class);
-        XMLGregorianCalendar xmlGregorianCalendar = new XMLGregorianCalendarImpl();
+        DatatypeFactory f = DatatypeFactory.newInstance();
+        XMLGregorianCalendar xmlGregorianCalendar = f.newXMLGregorianCalendar("2012-03-12T19:23:45");
         Token token = new Token();
         token.setId("tokenId");
         token.setExpires(xmlGregorianCalendar);
@@ -1091,7 +1093,8 @@ public class DelegateCloud11ServiceTest {
     public void adminAuthenticate_statusIsOKAndUserIsNotNullAndAuthResultIsNotNull_returnsServiceResponse() throws Exception {
         Response.ResponseBuilder response = Response.status(200).entity("notNull");
         HttpServletResponse httpServletResponse = mock(HttpServletResponse.class);
-        XMLGregorianCalendar xmlGregorianCalendar = new XMLGregorianCalendarImpl();
+        DatatypeFactory f = DatatypeFactory.newInstance();
+        XMLGregorianCalendar xmlGregorianCalendar = f.newXMLGregorianCalendar("2012-03-12T19:23:45");
         Token token = new Token();
         token.setId("tokenId");
         token.setExpires(xmlGregorianCalendar);

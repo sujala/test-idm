@@ -2,7 +2,6 @@ package com.rackspace.idm.api.resource.cloud.v10;
 
 import com.rackspace.api.idm.v1.Tenant;
 import com.rackspace.idm.exception.BadRequestException;
-import org.apache.commons.lang.StringUtils;
 import org.junit.Before;
 import org.junit.Test;
 
