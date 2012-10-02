@@ -2597,7 +2597,7 @@ public class JSONWriterTest {
 
         final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
         writer.writeTo(user, com.rackspacecloud.docs.auth.api.v1.User.class, null, null, null, null, myOut);
-        Assert.assertEquals("{\"user\":{\"id\":\"id\",\"enabled\":true,\"nastId\":\"nast\",\"mossoId\":1,\"baseURLRefs\":[],\"key\":\"key\"}}", myOut.toString());
+        Assert.assertEquals("{\"user\":{\"id\":\"id\",\"enabled\":true,\"nastId\":\"nast\",\"updated\":\"2012-01-01\",\"created\":\"2012-01-01\",\"mossoId\":1,\"baseURLRefs\":[],\"key\":\"key\"}}", myOut.toString());
     }
 
     @Test

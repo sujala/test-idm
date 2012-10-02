@@ -18,6 +18,7 @@ import com.sun.jersey.api.json.JSONJAXBContext;
 import com.sun.jersey.api.json.JSONMarshaller;
 import org.apache.cxf.common.util.StringUtils;
 import org.apache.http.auth.AUTH;
+import org.codehaus.groovy.util.StringUtil;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -353,8 +354,12 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             if (user.getNastId() != null) {
                 inner.put(JSONConstants.NAST_ID, user.getNastId());
             }
-            //inner.put(JSONConstants.CREATED, user.getCreated());
-            //inner.put(JSONConstants.UPDATED, user.getUpdated());
+            if (user.getCreated() != null) {
+                inner.put(JSONConstants.CREATED, String.valueOf(user.getCreated()));
+            }
+            if (user.getUpdated() != null) {
+                inner.put(JSONConstants.UPDATED, String.valueOf(user.getUpdated()));
+            }
             JSONArray baseUrls = new JSONArray();
             BaseURLRefList baseList = user.getBaseURLRefs();
             if (baseList != null) {
