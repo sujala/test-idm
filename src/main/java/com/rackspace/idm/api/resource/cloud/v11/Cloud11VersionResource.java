@@ -69,8 +69,8 @@ public class Cloud11VersionResource {
     @POST
     @Path("auth-admin")
     public Response adminAuthenticate(@Context HttpServletRequest request, @Context HttpServletResponse response, @Context HttpHeaders httpHeaders, String body)
-            throws IOException, JAXBException {
-        return getCloud11Service().adminAuthenticate(request, response, httpHeaders, body).build();
+            throws IOException, JAXBException, URISyntaxException {
+        return getCloud11Service().authenticate(request, response, httpHeaders, body).build();
     }
 
     @GET
