@@ -115,10 +115,9 @@ public class CloudClient {
             if (!key.equalsIgnoreCase("content-encoding") && !key.equalsIgnoreCase("content-length")
                     && !key.equalsIgnoreCase("transfer-encoding") && !key.equalsIgnoreCase("vary")) {
                 responseBuilder = responseBuilder.header(key, header.getValue());
-            }
-            if (key.equalsIgnoreCase("location")) {
-            	replaceLocationHeader(responseBuilder, key, header.getValue());
-            }
+            } else if (key.equalsIgnoreCase("location")) {
+            	responseBuilder.header(key, replaceLocationHeader(header.getValue()));
+            } 
         }
         if (statusCode == HttpServletResponse.SC_INTERNAL_SERVER_ERROR) {
             logger.info("Cloud Auth returned a 500 status code.");
@@ -135,10 +134,9 @@ public class CloudClient {
                 String key = header.getName();
                 if (!key.equalsIgnoreCase("content-encoding") && !key.equalsIgnoreCase("content-length") && !key.equalsIgnoreCase("transfer-encoding") && !key.equalsIgnoreCase("vary")) {
                     builder.header(key, header.getValue());
-                }
-                if (key.equalsIgnoreCase("location")) {
-                	replaceLocationHeader(builder, key, header.getValue());
-                }
+                } else if (key.equalsIgnoreCase("location")) {
+                	builder.header(key, replaceLocationHeader(header.getValue()));
+                } 
             }
             //builder.entity(response.getEntity());
             if (responseBody != null) {
@@ -151,8 +149,7 @@ public class CloudClient {
         }
     }
     
-	private void replaceLocationHeader(Response.ResponseBuilder responseBuilder,
-			String key, String value) {
+	private String replaceLocationHeader(String value) {
 		
 	    String globalLocation = config.getString("ga.endpoint");
 
@@ -168,7 +165,7 @@ public class CloudClient {
 	        globalLocation = cloudLocation;
 	    }
 
-	    responseBuilder.header(key, globalLocation);
+	    return globalLocation;
 	}
 
     private BasicHttpEntity getHttpEntity(String body) {
