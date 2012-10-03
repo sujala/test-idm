@@ -2303,6 +2303,35 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
+    public ResponseBuilder resetUserApiKeyCredentials(HttpHeaders httpHeaders, String authToken, String userId, String credentialType)  {
+
+        try {
+            ScopeAccess authScopeAccess = getScopeAccessForValidToken(authToken);
+            authorizationService.verifyUserAdminLevelAccess(authScopeAccess);
+            boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(authScopeAccess);
+
+            User caller = userService.getUserByAuthToken(authToken);
+            User credUser = this.userService.checkAndGetUserById(userId);
+            if (callerIsUserAdmin) {
+                authorizationService.verifyDomain(caller,  credUser);
+            }
+
+            final String apiKey = UUID.randomUUID().toString().replaceAll("-", "");
+            ApiKeyCredentials creds = new ApiKeyCredentials();
+            creds.setApiKey(apiKey);
+            creds.setUsername(credUser.getUsername());
+
+            credUser.setApiKey(creds.getApiKey());
+            this.userService.updateUser(credUser, false);
+
+            return Response.ok(objFactories.getRackspaceIdentityExtKskeyV1Factory().createApiKeyCredentials(creds).getValue());
+
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
     public ResponseBuilder updateUserPasswordCredentials(HttpHeaders httpHeaders, String authToken, String userId,
                                                          String credentialType, PasswordCredentialsRequiredUsername creds)  {
 

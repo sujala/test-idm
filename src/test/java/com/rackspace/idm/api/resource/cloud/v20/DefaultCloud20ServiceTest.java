@@ -3,9 +3,6 @@ package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
-
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
-
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.api.converter.cloudv20.*;
@@ -15,7 +12,6 @@ import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
@@ -38,7 +34,6 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.ext.os_ksec2.v1.Ec2CredentialsType;
 import org.openstack.docs.identity.api.v2.*;
-import org.openstack.docs.identity.api.v2.ObjectFactory;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import javax.ws.rs.core.*;
@@ -4554,6 +4549,54 @@ public class DefaultCloud20ServiceTest {
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
+    @Test
+    public void resetUserApiKeyCredentials_callsVerifyUserAdminLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        spy.resetUserApiKeyCredentials(null, authToken, null, null);
+        verify(authorizationService).verifyUserAdminLevelAccess(scopeAccess);
+    }
+
+    @Test
+    public void resetUserApiKeyCredentials_callsCheckAndGetUserById() throws Exception {
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
+        when(userService.getUser("username")).thenReturn(user);
+        spy.resetUserApiKeyCredentials(null, authToken, userId, null);
+        verify(userService).checkAndGetUserById(userId);
+    }
+
+    @Test
+    public void resetUserApiKeyCredentialsSelf_responseOk_returns200() throws Exception {
+        when(userService.checkAndGetUserById(userId)).thenReturn(user);
+        when(userService.getUserByAuthToken(anyString())).thenReturn(user);
+        when(jaxbObjectFactories.getRackspaceIdentityExtKskeyV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory());
+        Response.ResponseBuilder responseBuilder = spy.resetUserApiKeyCredentials(null, authToken, userId, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void resetUserApiKeyCredentialsSubUser_responseOk_returns200() throws Exception {
+        User subuser = new User();
+        subuser.setId("2");
+        subuser.setDomainId(user.getDomainId());
+        subuser.setUsername("subuser");
+        when(authorizationService.authorizeCloudUserAdmin(org.mockito.Matchers.<ScopeAccess>anyObject())).thenReturn(true);
+        when(userService.checkAndGetUserById("2")).thenReturn(subuser);
+        when(userService.getUserByAuthToken(anyString())).thenReturn(user);
+        when(jaxbObjectFactories.getRackspaceIdentityExtKskeyV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory());
+        Response.ResponseBuilder responseBuilder = spy.resetUserApiKeyCredentials(null, authToken, subuser.getId(), null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+
+
+
+
+
+
+
+
+    
     @Test
     public void updateUserPasswordCredentials_callsValidatePasswordCredentialsForCreateOrUpdate() throws Exception {
         PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();

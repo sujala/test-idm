@@ -716,6 +716,14 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
+    public ResponseBuilder resetUserApiKeyCredentials(HttpHeaders httpHeaders, String authToken, String userId, String credentialType) {
+        if(!isUserInGAbyId(userId)) {
+            throw new NotImplementedException();
+        }
+        return defaultCloud20Service.resetUserApiKeyCredentials(httpHeaders, authToken, userId, credentialType);
+    }
+
+    @Override
     public ResponseBuilder getUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String credentialType)
              {
         if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
