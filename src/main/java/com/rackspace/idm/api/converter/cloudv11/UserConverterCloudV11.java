@@ -2,6 +2,7 @@ package com.rackspace.idm.api.converter.cloudv11;
 
 import com.rackspace.idm.domain.entity.OpenstackEndpoint;
 import com.rackspace.idm.domain.entity.User;
+import org.openstack.docs.identity.api.v2.Endpoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,12 +82,26 @@ public class UserConverterCloudV11 {
 		return jaxbUser;
 	}
     
-    public com.rackspacecloud.docs.auth.api.v1.UserWithOnlyEnabled toCloudV11UserWithOnlyEnabled(User user) {
+    public com.rackspacecloud.docs.auth.api.v1.UserWithOnlyEnabled toCloudV11UserWithOnlyEnabled(User user, List<OpenstackEndpoint> endpoints) {
         
         com.rackspacecloud.docs.auth.api.v1.UserWithOnlyEnabled jaxbUser = OBJ_FACTORY.createUserWithOnlyEnabled();
         jaxbUser.setId(user.getUsername());
         jaxbUser.setEnabled(user.isEnabled());
-        
+        if (user.getMossoId() != null) {
+            jaxbUser.setMossoId(user.getMossoId());
+        }
+        if (user.getNastId() != null) {
+            jaxbUser.setNastId(user.getNastId());
+        }
+
+        if (user.getApiKey() != null) {
+            jaxbUser.setKey(user.getApiKey());
+        }
+
+        if (endpoints != null && endpoints.size() > 0) {
+            jaxbUser.setBaseURLRefs(this.enpointConverterCloudV11.openstackToBaseUrlRefs(endpoints));
+        }
+
         return jaxbUser;
     }
     
@@ -98,10 +113,23 @@ public class UserConverterCloudV11 {
         return jaxbUser;
     }
     
-    public com.rackspacecloud.docs.auth.api.v1.UserWithOnlyKey toCloudV11UserWithOnlyKey(User user) {
+    public com.rackspacecloud.docs.auth.api.v1.UserWithOnlyKey toCloudV11UserWithOnlyKey(User user, List<OpenstackEndpoint> endpoints) {
         
         com.rackspacecloud.docs.auth.api.v1.UserWithOnlyKey jaxbUser = OBJ_FACTORY.createUserWithOnlyKey();
         jaxbUser.setKey(user.getApiKey());
+        jaxbUser.setId(user.getUsername());
+        jaxbUser.setEnabled(user.isEnabled());
+
+        if (user.getMossoId() != null) {
+            jaxbUser.setMossoId(user.getMossoId());
+        }
+        if (user.getNastId() != null) {
+            jaxbUser.setNastId(user.getNastId());
+        }
+
+        if (endpoints != null && endpoints.size() > 0) {
+            jaxbUser.setBaseURLRefs(this.enpointConverterCloudV11.openstackToBaseUrlRefs(endpoints));
+        }
         return jaxbUser;
     }
 }

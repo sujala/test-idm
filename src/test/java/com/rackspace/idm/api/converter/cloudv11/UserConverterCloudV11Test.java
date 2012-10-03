@@ -197,18 +197,20 @@ public class UserConverterCloudV11Test {
 
     @Test
     public void toCloudV11UserWithOnlyEnabled_createsUser_returnsUser() throws Exception {
+        List<OpenstackEndpoint> endpoints = new ArrayList<OpenstackEndpoint>();
         User user = new User();
         user.setUsername("username");
         user.setEnabled(true);
-        UserWithOnlyEnabled jaxbUser = userConverterCloudV11.toCloudV11UserWithOnlyEnabled(user);
+        UserWithOnlyEnabled jaxbUser = userConverterCloudV11.toCloudV11UserWithOnlyEnabled(user,endpoints);
         assertThat("id", jaxbUser.getId(), equalTo("username"));
         assertThat("enabled", jaxbUser.isEnabled(), equalTo(true));
     }
 
     @Test
     public void toCloudV11UserWithOnlyEnabled_emptyUser_returnsEmptyUser() throws Exception {
+        List<OpenstackEndpoint> endpoints = new ArrayList<OpenstackEndpoint>();
         User user = new User();
-        UserWithOnlyEnabled jaxbUser = userConverterCloudV11.toCloudV11UserWithOnlyEnabled(user);
+        UserWithOnlyEnabled jaxbUser = userConverterCloudV11.toCloudV11UserWithOnlyEnabled(user,endpoints);
         assertThat("id", jaxbUser.getId(), equalTo(null));
         assertThat("enabled", jaxbUser.isEnabled(), equalTo(true));
     }
@@ -230,16 +232,18 @@ public class UserConverterCloudV11Test {
 
     @Test
     public void toCloudV11UserWithOnlyKeys_emptyUser_returnsEmptyUser() throws Exception {
+         List<OpenstackEndpoint> endpoints = new ArrayList<OpenstackEndpoint>();
         User user = new User();
-        UserWithOnlyKey jaxbUser = userConverterCloudV11.toCloudV11UserWithOnlyKey(user);
+        UserWithOnlyKey jaxbUser = userConverterCloudV11.toCloudV11UserWithOnlyKey(user,endpoints);
         assertThat("key", jaxbUser.getKey(), equalTo(null));
     }
 
     @Test
     public void toCloudV11UserWithOnlyKeys_createsUser_returnsUser() throws Exception {
+         List<OpenstackEndpoint> endpoints = new ArrayList<OpenstackEndpoint>();
         User user = new User();
         user.setApiKey("apiKey");
-        UserWithOnlyKey jaxbUser = userConverterCloudV11.toCloudV11UserWithOnlyKey(user);
+        UserWithOnlyKey jaxbUser = userConverterCloudV11.toCloudV11UserWithOnlyKey(user,endpoints);
         assertThat("key", jaxbUser.getKey(), equalTo("apiKey"));
     }
 }

@@ -117,16 +117,7 @@ public class CloudClient {
                 responseBuilder = responseBuilder.header(key, header.getValue());
             }
             if (key.equalsIgnoreCase("location")) {
-                String globalLocation = config.getString("ga.endpoint") + "v1.1";
-                String cloudLocation = header.getValue();
-                try {
-                    URL u = new URL(cloudLocation);
-                    globalLocation += u.getPath();
-                } catch (MalformedURLException e) {
-                    globalLocation = cloudLocation;
-                }
-
-                responseBuilder.header(key, globalLocation);
+            	replaceLocationHeader(responseBuilder, key, header.getValue());
             }
         }
         if (statusCode == HttpServletResponse.SC_INTERNAL_SERVER_ERROR) {
@@ -146,16 +137,7 @@ public class CloudClient {
                     builder.header(key, header.getValue());
                 }
                 if (key.equalsIgnoreCase("location")) {
-                    String globalLocation = config.getString("ga.endpoint") + "v1.1";
-                    String cloudLocation = header.getValue();
-                    try {
-                        URL u = new URL(cloudLocation);
-                        globalLocation += u.getPath();
-                    } catch (MalformedURLException e) {
-                        globalLocation = cloudLocation;
-                    }
-
-                    builder.header(key, globalLocation);
+                	replaceLocationHeader(builder, key, header.getValue());
                 }
             }
             //builder.entity(response.getEntity());
@@ -168,6 +150,26 @@ public class CloudClient {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
+    
+	private void replaceLocationHeader(Response.ResponseBuilder responseBuilder,
+			String key, String value) {
+		
+	    String globalLocation = config.getString("ga.endpoint");
+
+	    if (globalLocation.endsWith("/")) {
+	        globalLocation = globalLocation.substring(0, globalLocation.length() -1);
+	    }
+
+	    String cloudLocation = value;
+	    try {
+	        URL u = new URL(cloudLocation);
+	        globalLocation += u.getPath();
+	    } catch (MalformedURLException e) {
+	        globalLocation = cloudLocation;
+	    }
+
+	    responseBuilder.header(key, globalLocation);
+	}
 
     private BasicHttpEntity getHttpEntity(String body) {
         if (body == null) { return null; }

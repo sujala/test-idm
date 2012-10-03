@@ -21,6 +21,7 @@ import com.rackspacecloud.docs.auth.api.v1.User;
 import com.sun.jersey.api.uri.UriBuilderImpl;
 import com.sun.jersey.core.util.Base64;
 import org.apache.commons.configuration.Configuration;
+import org.hamcrest.CoreMatchers;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -1750,10 +1751,11 @@ public class DefaultCloud11ServiceTest {
 
     @Test
     public void getUserEnabled_withValidUser_callsUserConverterCloudV11_toCloudV11UserWithOnlyEnabled() throws Exception {
+        List<OpenstackEndpoint> openstackEndpoints = new ArrayList<OpenstackEndpoint>();
         doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
         when(userService.getUser("userId")).thenReturn(userDO);
         spy.getUserEnabled(null, "userId", null);
-        verify(userConverterCloudV11).toCloudV11UserWithOnlyEnabled(userDO);
+        verify(userConverterCloudV11).toCloudV11UserWithOnlyEnabled(userDO,openstackEndpoints);
     }
 
     @Test
@@ -1967,12 +1969,13 @@ public class DefaultCloud11ServiceTest {
 
     @Test
     public void setUserEnabled_withValidUser_callsUserConverterCloudV11_toCloudV11UserWithOnlyEnabled() throws Exception {
+        List<OpenstackEndpoint> openstackEndpoints = new ArrayList<OpenstackEndpoint>();
         UserWithOnlyEnabled enabledUser = mock(UserWithOnlyEnabled.class);
         doNothing().when(spy).authenticateCloudAdminUser(request);
         when(userService.getUser("userId")).thenReturn(userDO);
         when(enabledUser.isEnabled()).thenReturn(true);
         spy.setUserEnabled(request, "userId", enabledUser, null);
-        verify(userConverterCloudV11).toCloudV11UserWithOnlyEnabled(userDO);
+        verify(userConverterCloudV11).toCloudV11UserWithOnlyEnabled(userDO,openstackEndpoints);
     }
 
     @Test
@@ -2041,12 +2044,13 @@ public class DefaultCloud11ServiceTest {
 
     @Test
     public void setUserKey_withValidUser_callsUserConverterCloudV11_toCloudV11UserWithOnlyKey() throws Exception {
+        List<OpenstackEndpoint> endpoints = new ArrayList<OpenstackEndpoint>();
         UserWithOnlyKey keyUser = mock(UserWithOnlyKey.class);
         doNothing().when(spy).authenticateCloudAdminUser(request);
         when(userService.getUser("userId")).thenReturn(userDO);
         when(keyUser.isEnabled()).thenReturn(true);
         spy.setUserKey(request, "userId", null, keyUser);
-        verify(userConverterCloudV11).toCloudV11UserWithOnlyKey(userDO);
+        verify(userConverterCloudV11).toCloudV11UserWithOnlyKey(userDO,endpoints);
     }
 
     @Test

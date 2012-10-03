@@ -402,10 +402,11 @@ public class DefaultCloud20Service implements Cloud20Service {
                 setDomainId(scopeAccessByAccessToken, userDO);
             }
 
-            if(userDO.getDomainId() == null && callerIsUserAdmin){
+            if(StringUtils.isEmpty(userDO.getDomainId()) && callerIsUserAdmin){
                 throw new BadRequestException("A Domain ID must be specified.");
             }
-            else if (callerIsServiceAdmin && userDO.getDomainId() != null) {
+            else if (callerIsServiceAdmin && (!StringUtils.isEmpty(userDO.getDomainId()))) {
+
                 throw new BadRequestException("Identity-admin cannot be created with a domain");
             }
             else if (callerIsIdentityAdmin) {
@@ -1312,11 +1313,13 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
             CredentialListType creds = objFactories.getOpenStackIdentityV2Factory().createCredentialListType();
 
-            if (!StringUtils.isBlank(user.getPassword())) {
-                PasswordCredentialsRequiredUsername userCreds = new PasswordCredentialsRequiredUsername();
-                userCreds.setPassword(user.getPassword());
-                userCreds.setUsername(user.getUsername());
-                creds.getCredential().add(objFactories.getOpenStackIdentityV2Factory().createPasswordCredentials(userCreds));
+            if (authorizationService.authorizeCloudServiceAdmin(callersScopeAccess)) {
+                if (!StringUtils.isBlank(user.getPassword())) {
+                    PasswordCredentialsRequiredUsername userCreds = new PasswordCredentialsRequiredUsername();
+                    userCreds.setPassword(user.getPassword());
+                    userCreds.setUsername(user.getUsername());
+                    creds.getCredential().add(objFactories.getOpenStackIdentityV2Factory().createPasswordCredentials(userCreds));
+                }
             }
 
             if (!StringUtils.isBlank(user.getApiKey())) {

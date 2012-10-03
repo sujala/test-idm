@@ -50,7 +50,9 @@ public class DefaultRegionService {
                 if (application.getUseForDefaultRegion() != null && application.getUseForDefaultRegion()) {
                     List<CloudBaseUrl> baseUrls = endpointService.getBaseUrlsByServiceName(application.getName());
                     for (CloudBaseUrl baseUrl : baseUrls) {
-                        defaultRegions.add(baseUrl.getRegion());
+                    	if (baseUrl.getRegion() != null) {
+                    		defaultRegions.add(baseUrl.getRegion());
+                    	}
                     }
                 }
             }

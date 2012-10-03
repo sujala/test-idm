@@ -24,7 +24,6 @@ import com.rackspacecloud.docs.auth.api.v1.BaseURLList;
 import com.rackspacecloud.docs.auth.api.v1.BaseURLRef;
 import com.rackspacecloud.docs.auth.api.v1.BaseURLRefList;
 import com.sun.jersey.api.ConflictException;
-import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -38,6 +37,7 @@ import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.namespace.QName;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -80,6 +80,7 @@ public class CloudMigrationServiceTest {
     private User user;
     private org.openstack.docs.identity.api.v2.User cloudUser;
     private CloudKsGroupBuilder cloudKsGroupBuilder;
+    private XMLGregorianCalendar calendar;
     AtomHopperClient atomHopperClient;
 
     @Before
@@ -161,6 +162,12 @@ public class CloudMigrationServiceTest {
         cloudBaseUrl.setVersionInfo("versionInfo");
         cloudBaseUrl.setVersionList("versionList");
         cloudBaseUrl.setUniqueId("uniqueId");
+
+        //calender
+        calendar = DatatypeFactory.newInstance().newXMLGregorianCalendar();
+        calendar.setDay(1);
+        calendar.setMonth(1);
+        calendar.setYear(2012);
 
         //stubbing
         when(jaxbObjectFactories.getRackspaceIdentityExtKsgrpV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.ObjectFactory());
@@ -399,7 +406,7 @@ public class CloudMigrationServiceTest {
         doReturn(authenticateResponse).when(spy).authenticate(anyString(), anyString(), anyString());
         Token value = new Token();
         value.setId("notBlank");
-        value.setExpires(new XMLGregorianCalendarImpl());
+        value.setExpires(calendar);
         when(authenticateResponse.getToken()).thenReturn(value);
         when(config.getString("cloud.region")).thenReturn("notUK");
         spy.migrateUserByUsername("cmarin2", true, "1");
@@ -1341,8 +1348,8 @@ public class CloudMigrationServiceTest {
         secretQA.setAnswer("answer");
         secretQA.setQuestion("question");
         org.openstack.docs.identity.api.v2.User user2 = new org.openstack.docs.identity.api.v2.User();
-        user2.setCreated(new XMLGregorianCalendarImpl());
-        user2.setUpdated(new XMLGregorianCalendarImpl());
+        user2.setCreated(calendar);
+        user2.setUpdated(calendar);
         user2.setEmail("email");
         Map<QName, String> otherAttributes = user2.getOtherAttributes();
         otherAttributes.put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","defaultRegion"), "region");
