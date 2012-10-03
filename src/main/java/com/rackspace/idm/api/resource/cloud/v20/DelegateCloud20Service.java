@@ -16,6 +16,7 @@ import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
+import com.rackspace.idm.validation.Validator20;
 import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.api.json.JSONJAXBContext;
 import com.sun.jersey.api.json.JSONUnmarshaller;
@@ -104,6 +105,9 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Autowired
     private CloudUserExtractor cloudUserExtractor;
+
+    @Autowired
+    private Validator20 validator20;
 
     public static final String CLOUD_AUTH_ROUTING = "useCloudAuth";
 
@@ -704,6 +708,8 @@ public class DelegateCloud20Service implements Cloud20Service {
 
         ScopeAccess accessTokenByAuthHeader = scopeAccessService.getAccessTokenByAuthHeader(authToken);
         boolean isUserAdminInGA = false;
+
+        validator20.validateUserForCreate(user);
 
         if (accessTokenByAuthHeader != null) {
             isUserAdminInGA = authorizationService.authorizeCloudUserAdmin(accessTokenByAuthHeader);
@@ -1384,5 +1390,9 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     public void setExceptionHandler(ExceptionHandler exceptionHandler) {
         this.exceptionHandler = exceptionHandler;
+    }
+
+    public void setValidator20(Validator20 validator20) {
+        this.validator20 = validator20;
     }
 }

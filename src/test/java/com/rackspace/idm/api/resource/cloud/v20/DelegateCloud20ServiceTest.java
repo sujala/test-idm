@@ -11,6 +11,7 @@ import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
+import com.rackspace.idm.validation.Validator20;
 import com.sun.jersey.core.spi.factory.ResponseBuilderImpl;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.apache.commons.configuration.Configuration;
@@ -46,6 +47,7 @@ public class DelegateCloud20ServiceTest {
     UserService userService = mock(UserService.class);
     TokenService tokenService = mock(TokenService.class);
     CloudClient cloudClient = mock(CloudClient.class);
+    Validator20 validator20 = new Validator20();
     AuthorizationService authorizationService = mock(AuthorizationService.class);
     ScopeAccessService scopeAccessService = mock(ScopeAccessService.class);
     TenantService tenantService = mock(TenantService.class);
@@ -81,6 +83,7 @@ public class DelegateCloud20ServiceTest {
         delegateCloud20Service.setTenantService(tenantService);
         delegateCloud20Service.setAuthorizationService(authorizationService);
         delegateCloud20Service.setExceptionHandler(exceptionHandler);
+        delegateCloud20Service.setValidator20(validator20);
         when(config.getString("cloudAuth20url")).thenReturn(url);
         when(config.getString("cloudAuthUK20url")).thenReturn(url);
         when(config.getBoolean("GAKeystoneDisabled")).thenReturn(disabled);
@@ -120,6 +123,15 @@ public class DelegateCloud20ServiceTest {
         verify(authorizationService).authorizeCloudUserAdmin(scopeAccess);
     }
 
+    @Test(expected = BadRequestException.class)
+    public void addUser_validateUsername_returnBadRequestException() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        when(authorizationService.authorizeCloudUserAdmin(scopeAccess)).thenReturn(true);
+        when(scopeAccessService.getAccessTokenByAuthHeader("token")).thenReturn(scopeAccess);
+        UserForCreate user = new UserForCreate();
+        user.setUsername("bad name");
+        spy.addUser(null, null, "token", user);
+    }
 
     @Test
     public void addUser_routingTrueAndCallerExistsInGAAndCallerIsUserAdmin_callsDefaultService() throws Exception {
