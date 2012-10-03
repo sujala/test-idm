@@ -112,12 +112,12 @@ public class CloudClient {
         Response.ResponseBuilder responseBuilder = Response.status(statusCode).entity(responseBody);
         for (Header header : response.getAllHeaders()) {
             String key = header.getName();
-            if (!key.equalsIgnoreCase("content-encoding") && !key.equalsIgnoreCase("content-length")
+            if (key.equalsIgnoreCase("location")) {
+            	responseBuilder.header(key, replaceLocationHeader(header.getValue()));
+            } else if (!key.equalsIgnoreCase("content-encoding") && !key.equalsIgnoreCase("content-length")
                     && !key.equalsIgnoreCase("transfer-encoding") && !key.equalsIgnoreCase("vary")) {
                 responseBuilder = responseBuilder.header(key, header.getValue());
-            } else if (key.equalsIgnoreCase("location")) {
-            	responseBuilder.header(key, replaceLocationHeader(header.getValue()));
-            } 
+            }
         }
         if (statusCode == HttpServletResponse.SC_INTERNAL_SERVER_ERROR) {
             logger.info("Cloud Auth returned a 500 status code.");
@@ -132,10 +132,10 @@ public class CloudClient {
             Response.ResponseBuilder builder = Response.status(Response.Status.MOVED_PERMANENTLY); //.header("Location", uri);
             for (Header header : response.getAllHeaders()) {
                 String key = header.getName();
-                if (!key.equalsIgnoreCase("content-encoding") && !key.equalsIgnoreCase("content-length") && !key.equalsIgnoreCase("transfer-encoding") && !key.equalsIgnoreCase("vary")) {
-                    builder.header(key, header.getValue());
-                } else if (key.equalsIgnoreCase("location")) {
+                if (key.equalsIgnoreCase("location")) {
                 	builder.header(key, replaceLocationHeader(header.getValue()));
+                } else if (!key.equalsIgnoreCase("content-encoding") && !key.equalsIgnoreCase("content-length") && !key.equalsIgnoreCase("transfer-encoding") && !key.equalsIgnoreCase("vary")) {
+                    builder.header(key, header.getValue());
                 } 
             }
             //builder.entity(response.getEntity());
