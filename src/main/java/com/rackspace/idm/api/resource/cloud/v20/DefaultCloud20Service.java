@@ -1152,12 +1152,12 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
             authorizationService.verifyUserAdminLevelAccess(scopeAccessByAccessToken);
             User user = this.userService.getUserById(userId);
-            setEmptyUserValues(user);
             if (user == null) {
                 String errMsg = String.format("User with id: '%s' was not found", userId);
                 logger.warn(errMsg);
                 throw new NotFoundException(errMsg);
             }
+            setEmptyUserValues(user);
             if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
                 authorizationService.verifyDomain(caller, user);
             }
