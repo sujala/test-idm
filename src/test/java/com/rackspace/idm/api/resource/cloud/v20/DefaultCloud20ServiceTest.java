@@ -6090,4 +6090,14 @@ public class DefaultCloud20ServiceTest {
         defaultCloud20Service.deleteDomain(authToken, null);
         verify(exceptionHandler).exceptionResponse(any(BadRequestException.class));
     }
+
+
+    @Test
+    public void setEmptyUserValues() throws Exception {
+        User user = new User();
+        defaultCloud20Service.setEmptyUserValues(user);
+        assertThat("email",user.getEmail(),equalTo(""));
+        assertThat("domain",user.getDomainId(),equalTo(""));
+        assertThat("region",user.getRegion(),equalTo(""));
+    }
 }

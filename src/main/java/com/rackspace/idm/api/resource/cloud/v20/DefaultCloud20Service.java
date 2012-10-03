@@ -1152,6 +1152,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
             authorizationService.verifyUserAdminLevelAccess(scopeAccessByAccessToken);
             User user = this.userService.getUserById(userId);
+            setEmptyUserValues(user);
             if (user == null) {
                 String errMsg = String.format("User with id: '%s' was not found", userId);
                 logger.warn(errMsg);
@@ -1163,6 +1164,18 @@ public class DefaultCloud20Service implements Cloud20Service {
             return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUser(this.userConverterCloudV20.toUser(user)).getValue());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    void setEmptyUserValues(User user) {
+        if(StringUtils.isEmpty(user.getEmail())){
+            user.setEmail("");
+        }
+        if(StringUtils.isEmpty(user.getRegion())){
+            user.setRegion("");
+        }
+        if(StringUtils.isEmpty(user.getDomainId())){
+            user.setDomainId("");
         }
     }
 
