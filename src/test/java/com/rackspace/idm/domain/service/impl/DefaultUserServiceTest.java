@@ -1085,4 +1085,44 @@ public class DefaultUserServiceTest {
         defaultUserService.removeBaseUrlFromUser(1, user);
         verify(tenantService).updateTenant(tenant);
     }
+
+    @Test
+    public void getSubUsers_withoutSubUsers_returnsEmptyList() {
+        User user = new User();
+        user.setId("1");
+
+        String domainId = "1";
+
+        Users domainUsers = new Users();
+        domainUsers.setUsers(new ArrayList<User>());
+        domainUsers.getUsers().add(user);
+
+        when(userDao.getUsersByDomainId(anyString())).thenReturn(domainUsers);
+
+        List<User> subUsers = defaultUserService.getSubUsers(user);
+
+        assertThat("ldap offset default", subUsers.size(), equalTo(0));
+    }
+
+    @Test
+    public void getSubUsers_withSubUsers_returnsSubUsers() {
+        User user = new User();
+        user.setId("1");
+
+        User sub = new User();
+        sub.setId("2");
+
+        String domainId = "1";
+
+        Users domainUsers = new Users();
+        domainUsers.setUsers(new ArrayList<User>());
+        domainUsers.getUsers().add(user);
+        domainUsers.getUsers().add(sub);
+
+        when(userDao.getUsersByDomainId(anyString())).thenReturn(domainUsers);
+
+        List<User> subUsers = defaultUserService.getSubUsers(user);
+
+        assertThat("ldap offset default", subUsers.size(), equalTo(1));
+    }
 }

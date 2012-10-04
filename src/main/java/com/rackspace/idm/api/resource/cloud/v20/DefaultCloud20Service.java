@@ -2003,6 +2003,12 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
             validator20.validateGroupId(groupId);
+            User user = userService.checkAndGetUserById(userId);
+            List<User> subUsers = userService.getSubUsers(user);
+            
+            for (User subUser : subUsers) {
+            	cloudGroupService.addGroupToUser(Integer.parseInt(groupId), subUser.getId());
+            }
             cloudGroupService.addGroupToUser(Integer.parseInt(groupId), userId);
             return Response.noContent();
         } catch (Exception e) {
@@ -2017,6 +2023,12 @@ public class DefaultCloud20Service implements Cloud20Service {
             validator20.validateGroupId(groupId);
             if (userId == null || userId.trim().isEmpty()) {
                 throw new BadRequestException("Invalid user id");
+            }
+            User user = userService.checkAndGetUserById(userId);
+            List<User> subUsers = userService.getSubUsers(user);
+            
+            for (User subUser: subUsers) {
+            	cloudGroupService.deleteGroupFromUser(Integer.parseInt(groupId), subUser.getId());
             }
             cloudGroupService.deleteGroupFromUser(Integer.parseInt(groupId), userId);
             return Response.noContent();

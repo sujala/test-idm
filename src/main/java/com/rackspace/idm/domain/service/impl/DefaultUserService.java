@@ -454,6 +454,25 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
+    public List<User> getSubUsers(User user) {
+    	List<User> result = new ArrayList<User>();
+    	
+        if (user != null) {
+            Users users = userDao.getUsersByDomainId(user.getDomainId());
+
+            if(users != null) {
+            	for (User subUser : users.getUsers()) {
+            		if (!subUser.getId().equalsIgnoreCase(user.getId())){
+            			result.add(subUser);
+            		}
+            	}
+            }
+        }
+
+        return result;
+    }
+
+    @Override
     public boolean hasSubUsers(String userId) {
         User user = userDao.getUserById(userId);
         if (user == null) {
