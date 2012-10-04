@@ -135,7 +135,7 @@ public class DefaultCloud11ServiceTest {
         when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn("Basic YXV0aDphdXRoMTIz");
         UriBuilderImpl uriBuilder = mock(UriBuilderImpl.class);
         when(uriBuilder.build()).thenReturn(new URI(""));
-        when(uriBuilder.path("userId")).thenReturn(uriBuilder);
+        when(uriBuilder.path(anyString())).thenReturn(uriBuilder);
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         com.rackspace.idm.domain.entity.User user1 = new com.rackspace.idm.domain.entity.User();
         user1.setId("userId");
@@ -2649,6 +2649,8 @@ public class DefaultCloud11ServiceTest {
         userTest.setMossoId(1);
         BaseURLRef baseUrlRef = new BaseURLRef();
         baseUrlRef.setId(1);
+        baseUrlRef.setHref("href");
+        baseUrlRef.setV1Default(false);
         doNothing().when(spy).authenticateCloudAdminUser(request);
         when(userService.getUser("userId")).thenReturn(userTest);
         when(endpointService.getBaseUrlById(1)).thenReturn(cloudBaseUrl);
