@@ -247,6 +247,7 @@ public class LdapEndpointRepositoryIntegrationTest extends InMemoryLdapIntegrati
         cloudBaseUrl.setServiceName("test");
         cloudBaseUrl.setPublicUrl("test");
         cloudBaseUrl.setBaseUrlId(baseUrlId);
+        cloudBaseUrl.setDef(false);
 
         return cloudBaseUrl;
     }
@@ -258,6 +259,7 @@ public class LdapEndpointRepositoryIntegrationTest extends InMemoryLdapIntegrati
         cloudBaseUrl.setServiceName("test");
         cloudBaseUrl.setPublicUrl("test");
         cloudBaseUrl.setBaseUrlId(baseUrlId1);
+        cloudBaseUrl.setDef(false);
 
         return cloudBaseUrl;
     }
