@@ -5,18 +5,10 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain;
 import com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest;
 import com.rackspace.idm.domain.service.UserService;
-import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.test.Cloud20TestHelper;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain;
-import com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest;
-import com.rackspace.idm.domain.service.UserService;
-import com.rackspace.test.Cloud20TestHelper;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
-import org.apache.commons.configuration.Configuration;
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -24,34 +16,15 @@ import org.junit.Test;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.AuthenticateResponse;
 import org.openstack.docs.identity.api.v2.User;
-
-import javax.sound.midi.MidiDevice;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.Assert.assertThat;
-import org.openstack.docs.identity.api.v2.AuthenticateResponse;
-import org.openstack.docs.identity.api.v2.User;
 
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
-import javax.xml.transform.Result;
-
-import java.io.OutputStream;
-
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.*;
 
 /**
  * Created by IntelliJ IDEA.
