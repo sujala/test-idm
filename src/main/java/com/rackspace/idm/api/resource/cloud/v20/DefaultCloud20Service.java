@@ -21,6 +21,7 @@ import com.rackspace.idm.exception.*;
 import com.rackspace.idm.validation.Validator20;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
+import org.hamcrest.text.pattern.Parse;
 import org.joda.time.DateTime;
 import org.openstack.docs.common.api.v1.Extension;
 import org.openstack.docs.common.api.v1.Extensions;
@@ -2043,21 +2044,36 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
             validator20.validateGroupId(groupId);
             FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParamName.GROUP_ID, groupId)};
-            String iMarker = (marker != null) ? marker : "0";
-            int iLimit = (limit != null) ? limit : 0;
+            String iMarker = validateMarker(marker);
+            int iLimit =  validateLimit(limit);
             Group exist = cloudGroupService.getGroupById(Integer.parseInt(groupId));
             if (exist == null) {
                 String errorMsg = String.format("Group %s not found", groupId);
                 throw new NotFoundException(errorMsg);
             }
             Users users = cloudGroupService.getAllEnabledUsers(filters, iMarker, iLimit);
-            if (users.getUsers().isEmpty()) {
-                throw new NotFoundException();
-            }
+
             return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUsers(this.userConverterCloudV20.toUserList(users.getUsers())).getValue());
         } catch (Exception e) {
             return exceptionHandler.exceptionResponse(e);
         }
+    }
+
+    String validateMarker(String marker) {
+        String iMarker = "0";
+        try {
+            if (!StringUtils.isEmpty(marker)) {
+                Integer.parseInt(marker);
+                iMarker = marker;
+            }
+        } catch (Exception ex) {
+            throw new BadRequestException("Marker must be a number");
+        }
+        return iMarker;
+    }
+
+    int validateLimit(Integer limit) {
+        return ((limit != null) ? limit : 0);
     }
 
     // KSADM Extension User methods
