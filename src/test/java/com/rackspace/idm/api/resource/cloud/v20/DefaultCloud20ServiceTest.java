@@ -5013,17 +5013,15 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void getUsersForGroup_emptyGroup_returnsResponseBuilder() throws Exception {
-        ArgumentCaptor<NotFoundException> argumentCaptor = ArgumentCaptor.forClass(NotFoundException.class);
-        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
+        ArgumentCaptor<UserList> argumentCaptor = ArgumentCaptor.forClass(UserList.class);
         List<User> userList = new ArrayList<User>();
         Users users = new Users();
         users.setUsers(userList);
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         when(userGroupService.getGroupById(1)).thenReturn(group);
         when(userGroupService.getAllEnabledUsers(any(FilterParam[].class), anyString(), anyInt())).thenReturn(users);
-        when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
-        assertThat("response code", spy.getUsersForGroup(null, authToken, "1", "1", 1), equalTo(responseBuilder));
-        assertThat("exception type", argumentCaptor.getValue(), instanceOf(NotFoundException.class));
+        Response.ResponseBuilder responseBuilder = spy.getUsersForGroup(null, authToken, "1", "1", 1);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
     @Test
@@ -6269,5 +6267,31 @@ public class DefaultCloud20ServiceTest {
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
 
         defaultCloud20Service.getUsersByDomainId(authToken, "135792468", "true");
+    }
+
+    @Test
+    public void setEmptyUserValues() throws Exception {
+        User user = new User();
+        defaultCloud20Service.setEmptyUserValues(user);
+        assertThat("email",user.getEmail(),equalTo(""));
+        assertThat("domain",user.getDomainId(),equalTo(""));
+        assertThat("region",user.getRegion(),equalTo(""));
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void validateMaker_return400() throws Exception {
+        defaultCloud20Service.validateMarker("asdf");
+    }
+
+    @Test
+    public void validateMaker_validMarker_returnsStringValue() throws Exception {
+        String marker = defaultCloud20Service.validateMarker("1");
+        assertThat("Check Marker",marker,equalTo("1"));
+    }
+
+    @Test
+    public void validateMaker_nullMarker_returnsZero() throws Exception {
+        String marker = defaultCloud20Service.validateMarker(null);
+        assertThat("Check Marker",marker,equalTo("0"));
     }
 }

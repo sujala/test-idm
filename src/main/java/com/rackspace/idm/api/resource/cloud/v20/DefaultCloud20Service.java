@@ -23,6 +23,7 @@ import com.rackspace.idm.exception.*;
 import com.rackspace.idm.validation.Validator20;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
+import org.hamcrest.text.pattern.Parse;
 import org.joda.time.DateTime;
 import org.openstack.docs.common.api.v1.Extension;
 import org.openstack.docs.common.api.v1.Extensions;
@@ -1170,12 +1171,25 @@ public class DefaultCloud20Service implements Cloud20Service {
                 logger.warn(errMsg);
                 throw new NotFoundException(errMsg);
             }
+            setEmptyUserValues(user);
             if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
                 authorizationService.verifyDomain(caller, user);
             }
             return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUser(this.userConverterCloudV20.toUser(user)).getValue());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    void setEmptyUserValues(User user) {
+        if(StringUtils.isEmpty(user.getEmail())){
+            user.setEmail("");
+        }
+        if(StringUtils.isEmpty(user.getRegion())){
+            user.setRegion("");
+        }
+        if(StringUtils.isEmpty(user.getDomainId())){
+            user.setDomainId("");
         }
     }
 
@@ -2061,6 +2075,12 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
             validator20.validateGroupId(groupId);
+            User user = userService.checkAndGetUserById(userId);
+            List<User> subUsers = userService.getSubUsers(user);
+            
+            for (User subUser : subUsers) {
+            	cloudGroupService.addGroupToUser(Integer.parseInt(groupId), subUser.getId());
+            }
             cloudGroupService.addGroupToUser(Integer.parseInt(groupId), userId);
             return Response.noContent();
         } catch (Exception e) {
@@ -2076,6 +2096,12 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (userId == null || userId.trim().isEmpty()) {
                 throw new BadRequestException("Invalid user id");
             }
+            User user = userService.checkAndGetUserById(userId);
+            List<User> subUsers = userService.getSubUsers(user);
+            
+            for (User subUser: subUsers) {
+            	cloudGroupService.deleteGroupFromUser(Integer.parseInt(groupId), subUser.getId());
+            }
             cloudGroupService.deleteGroupFromUser(Integer.parseInt(groupId), userId);
             return Response.noContent();
         } catch (Exception e) {
@@ -2089,21 +2115,36 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
             validator20.validateGroupId(groupId);
             FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParamName.GROUP_ID, groupId)};
-            String iMarker = (marker != null) ? marker : "0";
-            int iLimit = (limit != null) ? limit : 0;
+            String iMarker = validateMarker(marker);
+            int iLimit =  validateLimit(limit);
             Group exist = cloudGroupService.getGroupById(Integer.parseInt(groupId));
             if (exist == null) {
                 String errorMsg = String.format("Group %s not found", groupId);
                 throw new NotFoundException(errorMsg);
             }
             Users users = cloudGroupService.getAllEnabledUsers(filters, iMarker, iLimit);
-            if (users.getUsers().isEmpty()) {
-                throw new NotFoundException();
-            }
+
             return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUsers(this.userConverterCloudV20.toUserList(users.getUsers())).getValue());
         } catch (Exception e) {
             return exceptionHandler.exceptionResponse(e);
         }
+    }
+
+    String validateMarker(String marker) {
+        String iMarker = "0";
+        try {
+            if (!StringUtils.isEmpty(marker)) {
+                Integer.parseInt(marker);
+                iMarker = marker;
+            }
+        } catch (Exception ex) {
+            throw new BadRequestException("Marker must be a number");
+        }
+        return iMarker;
+    }
+
+    int validateLimit(Integer limit) {
+        return ((limit != null) ? limit : 0);
     }
 
     // KSADM Extension User methods

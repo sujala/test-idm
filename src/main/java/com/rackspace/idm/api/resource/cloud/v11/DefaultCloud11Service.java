@@ -320,9 +320,10 @@ public class DefaultCloud11Service implements Cloud11Service {
             }
             tenant.addBaseUrlId(String.valueOf(baseUrl.getBaseUrlId()));
 
+            String baseUrlRefId = String.valueOf(baseUrlRef.getId());
             //Adding v1Default
             if (tenant.getV1Defaults() == null && baseUrlRef.isV1Default()) {
-                tenant.addV1Default(String.valueOf(baseUrlRef.getId()));
+                tenant.addV1Default(baseUrlRefId);
             } else if (tenant.getV1Defaults() != null) {
                 // Check for existing v1Default for replace by Service Name
                 CloudBaseUrl newBaseUrl = endpointService.getBaseUrlById(baseUrlRef.getId());
@@ -332,7 +333,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                         tenant.removeV1Default(v1d);
                     }
                 }
-                tenant.addV1Default(String.valueOf(baseUrlRef.getId()));
+                tenant.addV1Default(baseUrlRefId);
             }
 
 
@@ -340,7 +341,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             return Response
                     .status(Response.Status.CREATED)
-                    .header("Location", uriInfo.getRequestUriBuilder().path(userId).build().toString())
+                    .header("Location", uriInfo.getRequestUriBuilder().path(baseUrlRefId).build())
                     .entity(OBJ_FACTORY.createBaseURLRef(baseUrlRef).getValue());
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);

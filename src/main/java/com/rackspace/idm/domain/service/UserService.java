@@ -88,4 +88,6 @@ public interface UserService {
     void addBaseUrlToUser(Integer baseUrlId, User user);
 
     void removeBaseUrlFromUser(Integer baseUrlId, User user);
+
+	List<User> getSubUsers(User user);
 }
