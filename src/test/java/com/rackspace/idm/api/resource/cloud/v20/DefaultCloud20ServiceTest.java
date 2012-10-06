@@ -26,6 +26,7 @@ import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.Control;
 import com.unboundid.ldap.sdk.SearchResultEntry;
 import org.apache.commons.configuration.Configuration;
+import org.apache.http.client.utils.URIBuilder;
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
@@ -484,12 +485,16 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void addUserCredential_returns200() throws Exception {
         ApiKeyCredentials apiKeyCredentials1 = new ApiKeyCredentials();
+        UriBuilder uriBuilder = mock(UriBuilder.class);
         apiKeyCredentials1.setUsername(userId);
         apiKeyCredentials1.setApiKey("bar");
         doReturn(new JAXBElement<CredentialType>(new QName(""), CredentialType.class, apiKeyCredentials1)).when(spy).getXMLCredentials(anyString());
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
-        Response.ResponseBuilder responseBuilder = spy.addUserCredential(httpHeaders, authToken, userId, null);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+        when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
+        when(uriBuilder.build()).thenReturn(new URI("uri"));
+
+        Response.ResponseBuilder responseBuilder = spy.addUserCredential(httpHeaders, uriInfo, authToken, userId, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(201));
     }
 
     @Test
@@ -2348,7 +2353,7 @@ public class DefaultCloud20ServiceTest {
     public void addUserCredential_callsVerifyServiceAdminLevelAccess() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        spy.addUserCredential(null, authToken, null, null);
+        spy.addUserCredential(null, uriInfo, authToken, null, null);
         verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
@@ -2357,7 +2362,7 @@ public class DefaultCloud20ServiceTest {
         MediaType mediaType = mock(MediaType.class);
         when(httpHeaders.getMediaType()).thenReturn(mediaType);
         when(mediaType.isCompatible(MediaType.APPLICATION_XML_TYPE)).thenReturn(true);
-        spy.addUserCredential(httpHeaders, authToken, null, null);
+        spy.addUserCredential(httpHeaders, uriInfo, authToken, null, null);
         verify(spy).getXMLCredentials(null);
     }
 
@@ -2366,7 +2371,7 @@ public class DefaultCloud20ServiceTest {
         MediaType mediaType = mock(MediaType.class);
         when(httpHeaders.getMediaType()).thenReturn(mediaType);
         when(mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)).thenReturn(true);
-        spy.addUserCredential(httpHeaders, authToken, null, null);
+        spy.addUserCredential(httpHeaders, uriInfo, authToken, null, null);
         verify(spy).getJSONCredentials(null);
     }
 
@@ -2379,7 +2384,7 @@ public class DefaultCloud20ServiceTest {
         when(mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)).thenReturn(true);
         doReturn(new JAXBElement<PasswordCredentialsRequiredUsername>(QName.valueOf("foo"),PasswordCredentialsRequiredUsername.class,passwordCredentialsRequiredUsername)).when(spy).getJSONCredentials(jsonBody);
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
-        spy.addUserCredential(httpHeaders, authToken, userId, jsonBody);
+        spy.addUserCredential(httpHeaders, uriInfo, authToken, userId, jsonBody);
         verify(validator20).validatePasswordCredentialsForCreateOrUpdate(passwordCredentialsRequiredUsername);
     }
 
@@ -2391,7 +2396,7 @@ public class DefaultCloud20ServiceTest {
         when(httpHeaders.getMediaType()).thenReturn(mediaType);
         when(mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)).thenReturn(true);
         doReturn(new JAXBElement<PasswordCredentialsRequiredUsername>(QName.valueOf("foo"),PasswordCredentialsRequiredUsername.class,passwordCredentialsRequiredUsername)).when(spy).getJSONCredentials(jsonBody);
-        spy.addUserCredential(httpHeaders, authToken, userId, jsonBody);
+        spy.addUserCredential(httpHeaders, uriInfo, authToken, userId, jsonBody);
         verify(userService).checkAndGetUserById(userId);
     }
 
@@ -2402,7 +2407,7 @@ public class DefaultCloud20ServiceTest {
         when(httpHeaders.getMediaType()).thenReturn(mediaType);
         when(mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)).thenReturn(true);
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
-        spy.addUserCredential(httpHeaders, authToken, userId, jsonBody);
+        spy.addUserCredential(httpHeaders, uriInfo, authToken, userId, jsonBody);
         verify(userService).updateUser(user, false);
     }
 
@@ -2421,19 +2426,22 @@ public class DefaultCloud20ServiceTest {
         when(mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)).thenReturn(true);
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
-        assertThat("response builder",spy.addUserCredential(httpHeaders, authToken, userId, jsonBody), equalTo(responseBuilder));
+        assertThat("response builder",spy.addUserCredential(httpHeaders, uriInfo, authToken, userId, jsonBody), equalTo(responseBuilder));
         assertThat("exception type",argumentCaptor.getValue(),instanceOf(BadRequestException.class));
     }
 
     @Test
     public void addUserCredential_passwordCredentialOkResponseCreated_returns200() throws Exception {
         MediaType mediaType = mock(MediaType.class);
+        UriBuilder uriBuilder = mock(UriBuilder.class);
         user.setUsername("test_user");
         when(httpHeaders.getMediaType()).thenReturn(mediaType);
         when(mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)).thenReturn(true);
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
-        Response.ResponseBuilder responseBuilder = spy.addUserCredential(httpHeaders, authToken, userId, jsonBody);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+        when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
+        when(uriBuilder.build()).thenReturn(new URI("uri"));
+        Response.ResponseBuilder responseBuilder = spy.addUserCredential(httpHeaders, uriInfo, authToken, userId, jsonBody);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(201));
     }
 
     @Test
@@ -2444,7 +2452,7 @@ public class DefaultCloud20ServiceTest {
         when(mediaType.isCompatible(MediaType.APPLICATION_XML_TYPE)).thenReturn(true);
         doReturn(new JAXBElement<ApiKeyCredentials>(QName.valueOf("foo"),ApiKeyCredentials.class,apiKeyCredentials1)).when(spy).getXMLCredentials(jsonBody);
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
-        spy.addUserCredential(httpHeaders, authToken, userId, jsonBody);
+        spy.addUserCredential(httpHeaders, uriInfo, authToken, userId, jsonBody);
         verify(validator20).validateApiKeyCredentials(apiKeyCredentials1);
     }
 
@@ -2456,7 +2464,7 @@ public class DefaultCloud20ServiceTest {
         when(mediaType.isCompatible(MediaType.APPLICATION_XML_TYPE)).thenReturn(true);
         doReturn(new JAXBElement<ApiKeyCredentials>(QName.valueOf("foo"),ApiKeyCredentials.class,apiKeyCredentials1)).when(spy).getXMLCredentials(jsonBody);
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
-        spy.addUserCredential(httpHeaders, authToken, userId, jsonBody);
+        spy.addUserCredential(httpHeaders, uriInfo, authToken, userId, jsonBody);
         verify(userService).checkAndGetUserById(userId);
     }
 
@@ -2476,7 +2484,7 @@ public class DefaultCloud20ServiceTest {
         when(mediaType.isCompatible(MediaType.APPLICATION_XML_TYPE)).thenReturn(true);
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
-        assertThat("response builder", spy.addUserCredential(httpHeaders, authToken, userId, jsonBody), equalTo(responseBuilder));
+        assertThat("response builder", spy.addUserCredential(httpHeaders, uriInfo, authToken, userId, jsonBody), equalTo(responseBuilder));
         assertThat("exception type",argumentCaptor.getValue(),instanceOf(BadRequestException.class));
     }
 
@@ -2488,21 +2496,27 @@ public class DefaultCloud20ServiceTest {
                 "    username=\"id\"\n" +
                 "    apiKey=\"aaaaa-bbbbb-ccccc-12345678\"/>";
         MediaType mediaType = mock(MediaType.class);
+        UriBuilder uriBuilder = mock(UriBuilder.class);
+        when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
+        when(uriBuilder.build()).thenReturn(new URI("uri"));
         when(httpHeaders.getMediaType()).thenReturn(mediaType);
         when(mediaType.isCompatible(MediaType.APPLICATION_XML_TYPE)).thenReturn(true);
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
-        Response.ResponseBuilder responseBuilder = spy.addUserCredential(httpHeaders, authToken, userId, jsonBody);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+        Response.ResponseBuilder responseBuilder = spy.addUserCredential(httpHeaders, uriInfo, authToken, userId, jsonBody);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(201));
     }
 
     @Test
     public void addUserCredential_notApiKeyCredentialsAndNotPasswordCredentials_returns200() throws Exception {
         JAXBElement<Ec2CredentialsType> credentials = new JAXBElement<Ec2CredentialsType>(new QName("ec2"), Ec2CredentialsType.class, new Ec2CredentialsType());
+        UriBuilder uriBuilder = mock(UriBuilder.class);
+        when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
+        when(uriBuilder.build()).thenReturn(new URI("uri"));
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         when(httpHeaders.getMediaType()).thenReturn(MediaType.APPLICATION_XML_TYPE);
         doReturn(credentials).when(spy).getXMLCredentials("body");
-        Response.ResponseBuilder responseBuilder = spy.addUserCredential(httpHeaders, authToken, "userId", "body");
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+        Response.ResponseBuilder responseBuilder = spy.addUserCredential(httpHeaders, uriInfo, authToken, "userId", "body");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(201));
     }
 
     @Test

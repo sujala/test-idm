@@ -534,7 +534,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder addUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String body)  {
+    public ResponseBuilder addUserCredential(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String userId, String body)  {
 
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
@@ -573,7 +573,9 @@ public class DefaultCloud20Service implements Cloud20Service {
                 user.setApiKey(userCredentials.getApiKey());
                 userService.updateUser(user, false);
             }
-            return Response.ok(credentials.getValue()).status(Status.OK);
+            UriBuilder requestUriBuilder = uriInfo.getRequestUriBuilder();
+            URI build = requestUriBuilder.build();
+            return Response.created(build).entity(credentials.getValue());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
@@ -1825,9 +1827,14 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getDomainTenants(String authToken, String domainId, String enabled) {
-        authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-        List<Tenant> tenants = tenantService.getTenantsByDomainId(domainId);
-        return Response.ok(objFactories.getOpenStackIdentityV2Factory().createTenants(tenantConverterCloudV20.toTenantList(tenants)).getValue());
+        try{
+            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            domainService.checkAndGetDomain(domainId);
+            List<Tenant> tenants = tenantService.getTenantsByDomainId(domainId);
+            return Response.ok(objFactories.getOpenStackIdentityV2Factory().createTenants(tenantConverterCloudV20.toTenantList(tenants)).getValue());
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
     }
 
     @Override

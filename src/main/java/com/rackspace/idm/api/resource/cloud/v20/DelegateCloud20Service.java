@@ -20,6 +20,7 @@ import com.rackspace.idm.validation.Validator20;
 import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.api.json.JSONJAXBContext;
 import com.sun.jersey.api.json.JSONUnmarshaller;
+import com.sun.jndi.toolkit.url.Uri;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
@@ -603,7 +604,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder addUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String body)  {
+    public ResponseBuilder addUserCredential(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String userId, String body)  {
         if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
             String xmlBody = body;
             if (httpHeaders.getMediaType().isCompatible(MediaType.APPLICATION_JSON_TYPE)) {
@@ -612,7 +613,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             String request = getCloudAuthV20Url() + USERS + "/" + userId + "/OS-KSADM/credentials";
             return cloudClient.post(request, httpHeaders, xmlBody);
         }
-        return defaultCloud20Service.addUserCredential(httpHeaders, authToken, userId, body);
+        return defaultCloud20Service.addUserCredential(httpHeaders, uriInfo, authToken, userId, body);
     }
 
     String convertCredentialToXML(String body) {

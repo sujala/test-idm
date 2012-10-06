@@ -382,9 +382,10 @@ public class Cloud20VersionResource {
     @Path("users/{userId}/OS-KSADM/credentials")
     public Response addUserCredential(
             @Context HttpHeaders httpHeaders,
+            @Context UriInfo uriInfo,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("userId") String userId, String body) {
-        return getCloud20Service().addUserCredential(httpHeaders, authToken, userId, body).build();
+        return getCloud20Service().addUserCredential(httpHeaders, uriInfo, authToken, userId, body).build();
     }
 
     @GET
