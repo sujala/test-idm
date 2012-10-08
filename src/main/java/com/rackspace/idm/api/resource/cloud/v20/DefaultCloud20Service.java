@@ -391,14 +391,19 @@ public class DefaultCloud20Service implements Cloud20Service {
                 setDomainId(scopeAccessByAccessToken, userDO);
             }
 
-            if(StringUtils.isEmpty(userDO.getDomainId()) && callerIsUserAdmin){
+            String domainId = userDO.getDomainId();
+            if (domainId != null) {
+                domainId = domainId.trim();
+            }
+
+            if (StringUtils.isEmpty(domainId) && callerIsUserAdmin) {
                 throw new BadRequestException("A Domain ID must be specified.");
             }
             else if (callerIsServiceAdmin && (!StringUtils.isEmpty(userDO.getDomainId()))) {
                 throw new BadRequestException("Identity-admin cannot be created with a domain");
             }
             else if (callerIsIdentityAdmin) {
-                if (userDO.getDomainId() == null) {
+                if (StringUtils.isEmpty(domainId)) {
                     throw new BadRequestException("User-admin cannot be created without a domain");
                 }
                 domainService.createNewDomain(userDO.getDomainId());
