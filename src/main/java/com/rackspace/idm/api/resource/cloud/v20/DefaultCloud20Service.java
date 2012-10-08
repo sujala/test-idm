@@ -524,10 +524,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
             retrievedUser.copyChanges(userDO);
             ScopeAccess scopeAccessForUserBeingUpdated = scopeAccessService.getScopeAccessByUserId(userId);
-            boolean userBeingUpdatedIsDefaultUser = authorizationService.hasDefaultUserRole(scopeAccessForUserBeingUpdated);
-            boolean userBeingUpdatedIsUserAdmin = authorizationService.hasUserAdminRole(scopeAccessForUserBeingUpdated);
-            if(userBeingUpdatedIsDefaultUser || userBeingUpdatedIsUserAdmin){
-                defaultRegionService.validateDefaultRegion(userDO.getRegion());
+            if (userDO.getRegion() != null) {
+                defaultRegionService.validateDefaultRegion(userDO.getRegion(), scopeAccessForUserBeingUpdated);
             }
             userService.updateUserById(retrievedUser, false);
             return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(retrievedUser)).getValue());
