@@ -450,9 +450,10 @@ public class Cloud20VersionResource {
     @Path("users/{userId}/OS-KSADM/credentials")
     public Response addUserCredential(
             @Context HttpHeaders httpHeaders,
+            @Context UriInfo uriInfo,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("userId") String userId, String body) {
-        return getCloud20Service().addUserCredential(httpHeaders, authToken, userId, body).build();
+        return getCloud20Service().addUserCredential(httpHeaders, uriInfo, authToken, userId, body).build();
     }
 
     @GET
@@ -483,6 +484,15 @@ public class Cloud20VersionResource {
         @HeaderParam(X_AUTH_TOKEN) String authToken,
         @PathParam("userId") String userId, ApiKeyCredentials creds) {
         return getCloud20Service().updateUserApiKeyCredentials(httpHeaders, authToken, userId, JSONConstants.APIKEY_CREDENTIALS, creds).build();
+    }
+
+    @POST
+    @Path("users/{userId}/OS-KSADM/credentials/" + JSONConstants.APIKEY_CREDENTIALS + "/RAX-AUTH/reset")
+    public Response resetUserApiKeyCredentials(
+        @Context HttpHeaders httpHeaders,
+        @HeaderParam(X_AUTH_TOKEN) String authToken,
+        @PathParam("userId") String userId) {
+        return getCloud20Service().resetUserApiKeyCredentials(httpHeaders, authToken, userId, JSONConstants.APIKEY_CREDENTIALS).build();
     }
 
     @GET

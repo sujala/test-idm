@@ -320,9 +320,10 @@ public class DefaultCloud11Service implements Cloud11Service {
             }
             tenant.addBaseUrlId(String.valueOf(baseUrl.getBaseUrlId()));
 
+            String baseUrlRefId = String.valueOf(baseUrlRef.getId());
             //Adding v1Default
             if (tenant.getV1Defaults() == null && baseUrlRef.isV1Default()) {
-                tenant.addV1Default(String.valueOf(baseUrlRef.getId()));
+                tenant.addV1Default(baseUrlRefId);
             } else if (tenant.getV1Defaults() != null) {
                 // Check for existing v1Default for replace by Service Name
                 CloudBaseUrl newBaseUrl = endpointService.getBaseUrlById(baseUrlRef.getId());
@@ -332,7 +333,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                         tenant.removeV1Default(v1d);
                     }
                 }
-                tenant.addV1Default(String.valueOf(baseUrlRef.getId()));
+                tenant.addV1Default(baseUrlRefId);
             }
 
 
@@ -340,7 +341,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             return Response
                     .status(Response.Status.CREATED)
-                    .header("Location", uriInfo.getRequestUriBuilder().path(userId).build().toString())
+                    .header("Location", uriInfo.getRequestUriBuilder().path(baseUrlRefId).build())
                     .entity(OBJ_FACTORY.createBaseURLRef(baseUrlRef).getValue());
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
@@ -742,12 +743,16 @@ public class DefaultCloud11Service implements Cloud11Service {
                 throw new NotFoundException(errMsg);
             }
 
-            ScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), getCloudAuthClientId());
-            List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(sa);
-            return Response.ok(OBJ_FACTORY.createUser(this.userConverterCloudV11.openstackToCloudV11User(user, endpoints)).getValue());
+            return Response.ok(getJAXBElementUserWithEndpoints(user).getValue());
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }
+    }
+
+    private JAXBElement<com.rackspacecloud.docs.auth.api.v1.User> getJAXBElementUserWithEndpoints(User user) {
+        ScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), getCloudAuthClientId());
+        List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(sa);
+        return OBJ_FACTORY.createUser(this.userConverterCloudV11.openstackToCloudV11User(user, endpoints));
     }
 
     @Override
@@ -764,10 +769,16 @@ public class DefaultCloud11Service implements Cloud11Service {
                 throw new NotFoundException(errMsg);
             }
 
-            return Response.ok(OBJ_FACTORY.createUser(this.userConverterCloudV11.toCloudV11UserWithOnlyEnabled(user)).getValue());
+            return Response.ok(getJAXBElementUserEnabledWithEndpoints(user).getValue());
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }
+    }
+
+    private JAXBElement<com.rackspacecloud.docs.auth.api.v1.User> getJAXBElementUserEnabledWithEndpoints(User user) {
+        ScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), getCloudAuthClientId());
+        List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(sa);
+        return OBJ_FACTORY.createUser(this.userConverterCloudV11.toCloudV11UserWithOnlyEnabled(user,endpoints));
     }
 
     @Override
@@ -782,15 +793,13 @@ public class DefaultCloud11Service implements Cloud11Service {
             if (user == null) {
                 throw new NotFoundException(String.format("User with MossoId %s not found", mossoId));
             }
-            ScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), getCloudAuthClientId());
-            List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(sa);
 
             String newLocation = "/v1.1/users/" + user.getUsername();
 
             return Response
                 .status(HttpServletResponse.SC_MOVED_PERMANENTLY)
                 .header("Location", newLocation)
-                .entity(OBJ_FACTORY.createUser(this.userConverterCloudV11.openstackToCloudV11User(user, endpoints)));
+                .entity(getJAXBElementUserWithEndpoints(user).getValue());
 
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
@@ -810,15 +819,13 @@ public class DefaultCloud11Service implements Cloud11Service {
             if (user == null) {
                 throw new NotFoundException(String.format("User with NastId %s not found", nastId));
             }
-            ScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), getCloudAuthClientId());
-            List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(sa);
 
             String newLocation = "/v1.1/users/" + user.getUsername();
 
             return Response
                 .status(HttpServletResponse.SC_MOVED_PERMANENTLY)
                 .header("Location", newLocation)
-                .entity(OBJ_FACTORY.createUser(this.userConverterCloudV11.openstackToCloudV11User(user, endpoints)));
+                .entity(getJAXBElementUserWithEndpoints(user).getValue());
 
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
@@ -878,10 +885,16 @@ public class DefaultCloud11Service implements Cloud11Service {
                 throw new NotFoundException(errMsg);
             }
 
-            return Response.ok(OBJ_FACTORY.createUser(this.userConverterCloudV11.toCloudV11UserWithOnlyKey(user)).getValue());
+            return Response.ok(getJAXBElementUserKeyWithEndpoints(user).getValue());
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }
+    }
+
+    private JAXBElement<com.rackspacecloud.docs.auth.api.v1.User> getJAXBElementUserKeyWithEndpoints(User user) {
+        ScopeAccess sa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), getCloudAuthClientId());
+        List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(sa);
+        return OBJ_FACTORY.createUser(this.userConverterCloudV11.toCloudV11UserWithOnlyKey(user,endpoints));
     }
 
     @Override
@@ -907,7 +920,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 atomHopperClient.asyncPost(gaUser, usa.getAccessTokenString(), AtomHopperConstants.DISABLED, null);
             }
 
-            return Response.ok(OBJ_FACTORY.createUser(this.userConverterCloudV11.toCloudV11UserWithOnlyEnabled(gaUser)).getValue());
+            return Response.ok(getJAXBElementUserEnabledWithEndpoints(gaUser).getValue());
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }
@@ -930,7 +943,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             gaUser.setApiKey(user.getKey());
             this.userService.updateUser(gaUser, false);
 
-            return Response.ok(OBJ_FACTORY.createUser(this.userConverterCloudV11.toCloudV11UserWithOnlyKey(gaUser)).getValue());
+            return Response.ok(getJAXBElementUserKeyWithEndpoints(gaUser).getValue());
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }
@@ -1150,7 +1163,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     Response.ResponseBuilder adminAuthenticateResponse(JAXBElement<? extends Credentials> cred, HttpServletResponse response)
             throws IOException {
         if (cred.getValue() instanceof UserCredentials) {
-            handleRedirect(response, "cloud/auth");
+            handleRedirect(response, "auth");
         }
 
         User user = null;

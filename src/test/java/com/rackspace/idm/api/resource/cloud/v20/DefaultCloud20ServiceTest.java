@@ -2,8 +2,8 @@ package com.rackspace.idm.api.resource.cloud.v20;
 
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
-
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.api.converter.cloudv20.*;
@@ -13,7 +13,6 @@ import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
@@ -24,6 +23,7 @@ import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.Control;
 import com.unboundid.ldap.sdk.SearchResultEntry;
 import org.apache.commons.configuration.Configuration;
+import org.apache.http.client.utils.URIBuilder;
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -36,7 +36,6 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.ext.os_ksec2.v1.Ec2CredentialsType;
 import org.openstack.docs.identity.api.v2.*;
-import org.openstack.docs.identity.api.v2.ObjectFactory;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import javax.ws.rs.core.*;
@@ -249,6 +248,7 @@ public class DefaultCloud20ServiceTest {
         when(config.getString("rackspace.customerId")).thenReturn(null);
         when(userConverterCloudV20.toUserDO(userOS)).thenReturn(user);
         when(httpHeaders.getMediaType()).thenReturn(MediaType.APPLICATION_XML_TYPE);
+        when(userGroupService.checkAndGetGroupById(anyInt())).thenReturn(group);
 
         spy = spy(defaultCloud20Service);
         doNothing().when(spy).checkXAUTHTOKEN(eq(authToken), anyBoolean(), any(String.class));
@@ -531,12 +531,16 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void addUserCredential_returns200() throws Exception {
         ApiKeyCredentials apiKeyCredentials1 = new ApiKeyCredentials();
+        UriBuilder uriBuilder = mock(UriBuilder.class);
         apiKeyCredentials1.setUsername(userId);
         apiKeyCredentials1.setApiKey("bar");
         doReturn(new JAXBElement<CredentialType>(new QName(""), CredentialType.class, apiKeyCredentials1)).when(spy).getXMLCredentials(anyString());
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
-        Response.ResponseBuilder responseBuilder = spy.addUserCredential(httpHeaders, authToken, userId, null);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+        when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
+        when(uriBuilder.build()).thenReturn(new URI("uri"));
+
+        Response.ResponseBuilder responseBuilder = spy.addUserCredential(httpHeaders, uriInfo, authToken, userId, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(201));
     }
 
     @Test
@@ -1322,7 +1326,7 @@ public class DefaultCloud20ServiceTest {
         UserForCreate userNoRegion = new UserForCreate();
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(new User());
-        User retrievedUser = new User("testServiceAdminUser");
+        User retrievedUser = new User("testUser");
         retrievedUser.setId("id");
         retrievedUser.setRegion("US of A");
         when(userService.checkAndGetUserById("id")).thenReturn(retrievedUser);
@@ -1340,7 +1344,7 @@ public class DefaultCloud20ServiceTest {
         userWithRegion.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "defaultRegion"), "foo");
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         spy.setUserConverterCloudV20(new UserConverterCloudV20());
-        User retrievedUser = new User("testServiceAdminUser");
+        User retrievedUser = new User("testUser");
         retrievedUser.setId("id");
         retrievedUser.setRegion("US of A");
         when(userService.checkAndGetUserById("id")).thenReturn(retrievedUser);
@@ -1355,7 +1359,7 @@ public class DefaultCloud20ServiceTest {
     public void addUser_userPasswordIsNull_generateRandomPassword() throws Exception {
         UriBuilder uriBuilder = mock(UriBuilder.class);
         UserForCreate userNullPassword = new UserForCreate();
-        userNullPassword.setUsername("testServiceAdminUser");
+        userNullPassword.setUsername("testUser");
         User user = new User();
         ArgumentCaptor<UserForCreate> argumentCaptor = ArgumentCaptor.forClass(UserForCreate.class);
 
@@ -1376,7 +1380,7 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void addUser_withNoRegion_RegionIsNull() throws Exception {
         UserForCreate userNoRegion = new UserForCreate();
-        userNoRegion.setUsername("testServiceAdminUser");
+        userNoRegion.setUsername("testUser");
         User newUser = new User();
         newUser.setDomainId("domain");
         ArgumentCaptor<User> argumentCaptor = ArgumentCaptor.forClass(User.class);
@@ -1406,9 +1410,10 @@ public class DefaultCloud20ServiceTest {
         newUser.setDomainId("domain");
         when(domainService.createNewDomain(org.mockito.Matchers.<String>anyObject())).thenReturn("domain");
         when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
+
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
         when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
         when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(newUser);
         when(userService.getAllUsers(org.mockito.Matchers.<FilterParam[]>any())).thenReturn(users);
         when(config.getInt("numberOfSubUsers")).thenReturn(100);
@@ -1432,9 +1437,11 @@ public class DefaultCloud20ServiceTest {
         newUser.setDomainId("domain");
         when(domainService.createNewDomain(org.mockito.Matchers.<String>anyObject())).thenReturn("domain");
         when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
+
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(false);
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
+
         when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(newUser);
         doNothing().when(spy).setDomainId(any(ScopeAccess.class), any(User.class));
         UserForCreate userForCreate = new UserForCreate();
@@ -1475,8 +1482,8 @@ public class DefaultCloud20ServiceTest {
     public void addUser_callsUserService_addUserMethod() throws Exception {
         when(domainService.createNewDomain(org.mockito.Matchers.<String>anyObject())).thenReturn("domain");
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(false);
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
         spy.addUser(null, null, authToken, userOS);
         verify(userService).addUser(user);
     }
@@ -1504,8 +1511,8 @@ public class DefaultCloud20ServiceTest {
     public void addUser_callerIsServiceAdmin_callsDefaultRegionService_validateDefaultRegion() throws Exception {
         when(domainService.createNewDomain(org.mockito.Matchers.<String>anyObject())).thenReturn("domain");
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(false);
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
         spy.addUser(null, null, authToken, userOS);
         verify(defaultRegionService).validateDefaultRegion(user.getRegion());
     }
@@ -1514,8 +1521,9 @@ public class DefaultCloud20ServiceTest {
     public void addUser_callerIsServiceAdmin_defaultRegionMatchesUserRegion_setsRegion() throws Exception {
         when(domainService.createNewDomain(org.mockito.Matchers.<String>anyObject())).thenReturn("domain");
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(false);
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
+
         HashSet<String> defaultRegions = new HashSet<String>();
         defaultRegions.add("DFW");
         when(defaultRegionService.getDefaultRegions()).thenReturn(defaultRegions);
@@ -1536,8 +1544,8 @@ public class DefaultCloud20ServiceTest {
         when(userService.getUserByAuthToken(authToken)).thenReturn(user);
 
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
         when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
 
         spy.addUser(null, null, authToken, userOS);
         verify(defaultRegionService).validateDefaultRegion(user.getRegion());
@@ -1597,9 +1605,8 @@ public class DefaultCloud20ServiceTest {
         when(userConverterCloudV20.toUser(any(User.class))).thenReturn(new org.openstack.docs.identity.api.v2.User());
 
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
         when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
-
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
         when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
         when(userService.getAllUsers(org.mockito.Matchers.<FilterParam[]>any())).thenReturn(users);
         when(config.getInt("numberOfSubUsers")).thenReturn(2);
@@ -1618,6 +1625,11 @@ public class DefaultCloud20ServiceTest {
         UriBuilder uriBuilder = mock(UriBuilder.class);
         URI uri = new URI("");
         User user = new User();
+
+        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
+        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
+
         user.setDomainId("domain");
 
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(false);
@@ -2385,7 +2397,7 @@ public class DefaultCloud20ServiceTest {
     public void addUserCredential_callsVerifyServiceAdminLevelAccess() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        spy.addUserCredential(null, authToken, null, null);
+        spy.addUserCredential(null, uriInfo, authToken, null, null);
         verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
@@ -2394,7 +2406,7 @@ public class DefaultCloud20ServiceTest {
         MediaType mediaType = mock(MediaType.class);
         when(httpHeaders.getMediaType()).thenReturn(mediaType);
         when(mediaType.isCompatible(MediaType.APPLICATION_XML_TYPE)).thenReturn(true);
-        spy.addUserCredential(httpHeaders, authToken, null, null);
+        spy.addUserCredential(httpHeaders, uriInfo, authToken, null, null);
         verify(spy).getXMLCredentials(null);
     }
 
@@ -2403,7 +2415,7 @@ public class DefaultCloud20ServiceTest {
         MediaType mediaType = mock(MediaType.class);
         when(httpHeaders.getMediaType()).thenReturn(mediaType);
         when(mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)).thenReturn(true);
-        spy.addUserCredential(httpHeaders, authToken, null, null);
+        spy.addUserCredential(httpHeaders, uriInfo, authToken, null, null);
         verify(spy).getJSONCredentials(null);
     }
 
@@ -2416,7 +2428,7 @@ public class DefaultCloud20ServiceTest {
         when(mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)).thenReturn(true);
         doReturn(new JAXBElement<PasswordCredentialsRequiredUsername>(QName.valueOf("foo"),PasswordCredentialsRequiredUsername.class,passwordCredentialsRequiredUsername)).when(spy).getJSONCredentials(jsonBody);
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
-        spy.addUserCredential(httpHeaders, authToken, userId, jsonBody);
+        spy.addUserCredential(httpHeaders, uriInfo, authToken, userId, jsonBody);
         verify(validator20).validatePasswordCredentialsForCreateOrUpdate(passwordCredentialsRequiredUsername);
     }
 
@@ -2428,7 +2440,7 @@ public class DefaultCloud20ServiceTest {
         when(httpHeaders.getMediaType()).thenReturn(mediaType);
         when(mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)).thenReturn(true);
         doReturn(new JAXBElement<PasswordCredentialsRequiredUsername>(QName.valueOf("foo"),PasswordCredentialsRequiredUsername.class,passwordCredentialsRequiredUsername)).when(spy).getJSONCredentials(jsonBody);
-        spy.addUserCredential(httpHeaders, authToken, userId, jsonBody);
+        spy.addUserCredential(httpHeaders, uriInfo, authToken, userId, jsonBody);
         verify(userService).checkAndGetUserById(userId);
     }
 
@@ -2439,7 +2451,7 @@ public class DefaultCloud20ServiceTest {
         when(httpHeaders.getMediaType()).thenReturn(mediaType);
         when(mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)).thenReturn(true);
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
-        spy.addUserCredential(httpHeaders, authToken, userId, jsonBody);
+        spy.addUserCredential(httpHeaders, uriInfo, authToken, userId, jsonBody);
         verify(userService).updateUser(user, false);
     }
 
@@ -2458,19 +2470,22 @@ public class DefaultCloud20ServiceTest {
         when(mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)).thenReturn(true);
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
-        assertThat("response builder",spy.addUserCredential(httpHeaders, authToken, userId, jsonBody), equalTo(responseBuilder));
+        assertThat("response builder",spy.addUserCredential(httpHeaders, uriInfo, authToken, userId, jsonBody), equalTo(responseBuilder));
         assertThat("exception type",argumentCaptor.getValue(),instanceOf(BadRequestException.class));
     }
 
     @Test
     public void addUserCredential_passwordCredentialOkResponseCreated_returns200() throws Exception {
         MediaType mediaType = mock(MediaType.class);
+        UriBuilder uriBuilder = mock(UriBuilder.class);
         user.setUsername("test_user");
         when(httpHeaders.getMediaType()).thenReturn(mediaType);
         when(mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)).thenReturn(true);
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
-        Response.ResponseBuilder responseBuilder = spy.addUserCredential(httpHeaders, authToken, userId, jsonBody);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+        when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
+        when(uriBuilder.build()).thenReturn(new URI("uri"));
+        Response.ResponseBuilder responseBuilder = spy.addUserCredential(httpHeaders, uriInfo, authToken, userId, jsonBody);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(201));
     }
 
     @Test
@@ -2481,7 +2496,7 @@ public class DefaultCloud20ServiceTest {
         when(mediaType.isCompatible(MediaType.APPLICATION_XML_TYPE)).thenReturn(true);
         doReturn(new JAXBElement<ApiKeyCredentials>(QName.valueOf("foo"),ApiKeyCredentials.class,apiKeyCredentials1)).when(spy).getXMLCredentials(jsonBody);
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
-        spy.addUserCredential(httpHeaders, authToken, userId, jsonBody);
+        spy.addUserCredential(httpHeaders, uriInfo, authToken, userId, jsonBody);
         verify(validator20).validateApiKeyCredentials(apiKeyCredentials1);
     }
 
@@ -2493,7 +2508,7 @@ public class DefaultCloud20ServiceTest {
         when(mediaType.isCompatible(MediaType.APPLICATION_XML_TYPE)).thenReturn(true);
         doReturn(new JAXBElement<ApiKeyCredentials>(QName.valueOf("foo"),ApiKeyCredentials.class,apiKeyCredentials1)).when(spy).getXMLCredentials(jsonBody);
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
-        spy.addUserCredential(httpHeaders, authToken, userId, jsonBody);
+        spy.addUserCredential(httpHeaders, uriInfo, authToken, userId, jsonBody);
         verify(userService).checkAndGetUserById(userId);
     }
 
@@ -2513,7 +2528,7 @@ public class DefaultCloud20ServiceTest {
         when(mediaType.isCompatible(MediaType.APPLICATION_XML_TYPE)).thenReturn(true);
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
-        assertThat("response builder", spy.addUserCredential(httpHeaders, authToken, userId, jsonBody), equalTo(responseBuilder));
+        assertThat("response builder", spy.addUserCredential(httpHeaders, uriInfo, authToken, userId, jsonBody), equalTo(responseBuilder));
         assertThat("exception type",argumentCaptor.getValue(),instanceOf(BadRequestException.class));
     }
 
@@ -2525,21 +2540,27 @@ public class DefaultCloud20ServiceTest {
                 "    username=\"id\"\n" +
                 "    apiKey=\"aaaaa-bbbbb-ccccc-12345678\"/>";
         MediaType mediaType = mock(MediaType.class);
+        UriBuilder uriBuilder = mock(UriBuilder.class);
+        when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
+        when(uriBuilder.build()).thenReturn(new URI("uri"));
         when(httpHeaders.getMediaType()).thenReturn(mediaType);
         when(mediaType.isCompatible(MediaType.APPLICATION_XML_TYPE)).thenReturn(true);
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
-        Response.ResponseBuilder responseBuilder = spy.addUserCredential(httpHeaders, authToken, userId, jsonBody);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+        Response.ResponseBuilder responseBuilder = spy.addUserCredential(httpHeaders, uriInfo, authToken, userId, jsonBody);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(201));
     }
 
     @Test
     public void addUserCredential_notApiKeyCredentialsAndNotPasswordCredentials_returns200() throws Exception {
         JAXBElement<Ec2CredentialsType> credentials = new JAXBElement<Ec2CredentialsType>(new QName("ec2"), Ec2CredentialsType.class, new Ec2CredentialsType());
+        UriBuilder uriBuilder = mock(UriBuilder.class);
+        when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
+        when(uriBuilder.build()).thenReturn(new URI("uri"));
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         when(httpHeaders.getMediaType()).thenReturn(MediaType.APPLICATION_XML_TYPE);
         doReturn(credentials).when(spy).getXMLCredentials("body");
-        Response.ResponseBuilder responseBuilder = spy.addUserCredential(httpHeaders, authToken, "userId", "body");
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+        Response.ResponseBuilder responseBuilder = spy.addUserCredential(httpHeaders, uriInfo, authToken, "userId", "body");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(201));
     }
 
     @Test
@@ -4322,7 +4343,7 @@ public class DefaultCloud20ServiceTest {
         when(scopeAccessService.getScopeAccessByUserId(userId)).thenReturn(value);
         when(authorizationService.hasDefaultUserRole(value)).thenReturn(true);
         spy.updateUser(null, authToken, userId, userOS);
-        verify(defaultRegionService).validateDefaultRegion(anyString());
+        verify(defaultRegionService).validateDefaultRegion(anyString(), any(ScopeAccess.class));
     }
 
     @Test
@@ -4337,7 +4358,7 @@ public class DefaultCloud20ServiceTest {
         when(scopeAccessService.getScopeAccessByUserId(userId)).thenReturn(scopeAccessForUserAdmin);
         when(authorizationService.hasUserAdminRole(scopeAccessForUserAdmin)).thenReturn(true);
         spy.updateUser(null, authToken, userId, userOS);
-        verify(defaultRegionService).validateDefaultRegion(anyString());
+        verify(defaultRegionService).validateDefaultRegion(anyString(), any(ScopeAccess.class));
     }
 
     @Test
@@ -4421,6 +4442,7 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void updateUser_userIdUserAdmin_callsDefaultRegionService() throws Exception {
         User user = new User();
+        user.setRegion("region");
         user.setId(userId);
         userOS.setId(userId);
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
@@ -4430,7 +4452,7 @@ public class DefaultCloud20ServiceTest {
         when(scopeAccessService.getScopeAccessByUserId(userId)).thenReturn(value);
         when(authorizationService.hasUserAdminRole(value)).thenReturn(true);
         spy.updateUser(null, authToken, userId, userOS);
-        verify(defaultRegionService).validateDefaultRegion(user.getRegion());
+        verify(defaultRegionService).validateDefaultRegion(anyString(), any(ScopeAccess.class));
     }
 
     @Test
@@ -4456,6 +4478,25 @@ public class DefaultCloud20ServiceTest {
         when(user.isDisabled()).thenReturn(true);
         spy.updateUser(httpHeaders, authToken, userId, userOS);
         verify(scopeAccessService).expireAllTokensForUser(user.getUsername());
+    }
+
+    @Test
+    public void updateUser_regionDefined_callsValidateDefaultRegion() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+
+        User user = new User();
+        user.setId(userId);
+        user.setRegion("region");
+        userOS.setId(userId);
+
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        when(userService.checkAndGetUserById(userId)).thenReturn(user);
+        doReturn(true).when(authorizationService).authorizeCloudUser(any(ScopeAccess.class));
+        doReturn(false).when(authorizationService).authorizeCloudUserAdmin(any(ScopeAccess.class));
+        when(userService.getUserByAuthToken(authToken)).thenReturn(user);
+
+        spy.updateUser(null, authToken, userId, userOS);
+        verify(defaultRegionService).validateDefaultRegion(anyString(), any(ScopeAccess.class));
     }
 
     @Test
@@ -4549,6 +4590,45 @@ public class DefaultCloud20ServiceTest {
         when(userService.getUser(anyString())).thenReturn(user);
         when(jaxbObjectFactories.getRackspaceIdentityExtKskeyV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory());
         Response.ResponseBuilder responseBuilder = spy.updateUserApiKeyCredentials(null, authToken, userId, null, creds);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void resetUserApiKeyCredentials_callsVerifyUserAdminLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        spy.resetUserApiKeyCredentials(null, authToken, null, null);
+        verify(authorizationService).verifyUserAdminLevelAccess(scopeAccess);
+    }
+
+    @Test
+    public void resetUserApiKeyCredentials_callsCheckAndGetUserById() throws Exception {
+        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
+        when(userService.getUser("username")).thenReturn(user);
+        spy.resetUserApiKeyCredentials(null, authToken, userId, null);
+        verify(userService).checkAndGetUserById(userId);
+    }
+
+    @Test
+    public void resetUserApiKeyCredentialsSelf_responseOk_returns200() throws Exception {
+        when(userService.checkAndGetUserById(userId)).thenReturn(user);
+        when(userService.getUserByAuthToken(anyString())).thenReturn(user);
+        when(jaxbObjectFactories.getRackspaceIdentityExtKskeyV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory());
+        Response.ResponseBuilder responseBuilder = spy.resetUserApiKeyCredentials(null, authToken, userId, null);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void resetUserApiKeyCredentialsSubUser_responseOk_returns200() throws Exception {
+        User subuser = new User();
+        subuser.setId("2");
+        subuser.setDomainId(user.getDomainId());
+        subuser.setUsername("subuser");
+        when(authorizationService.authorizeCloudUserAdmin(org.mockito.Matchers.<ScopeAccess>anyObject())).thenReturn(true);
+        when(userService.checkAndGetUserById("2")).thenReturn(subuser);
+        when(userService.getUserByAuthToken(anyString())).thenReturn(user);
+        when(jaxbObjectFactories.getRackspaceIdentityExtKskeyV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory());
+        Response.ResponseBuilder responseBuilder = spy.resetUserApiKeyCredentials(null, authToken, subuser.getId(), null);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
@@ -4887,7 +4967,7 @@ public class DefaultCloud20ServiceTest {
     public void addUserToGroup_callsVerifyServiceAdminLevelAccess() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        spy.addUserToGroup(null, authToken, null, null);
+        spy.addUserToGroup(null, authToken, "1", null);
         verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
@@ -4956,29 +5036,29 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void removeUserFromGroup_cloudGroupService_callsDeleteGroupFromUser() throws Exception {
-        spy.removeUserFromGroup(null, authToken, "1", userId);
+    	when(userGroupService.isUserInGroup(anyString(), anyInt())).thenReturn(true);
+    	spy.removeUserFromGroup(null, authToken, "1", userId);
         verify(userGroupService).deleteGroupFromUser(1, userId);
     }
 
     @Test
     public void removeUserFromGroup_responseNoContent_returns204() throws Exception {
+    	when(userGroupService.isUserInGroup(anyString(), anyInt())).thenReturn(true);
         Response.ResponseBuilder responseBuilder = spy.removeUserFromGroup(httpHeaders, authToken, "1", userId);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(204));
     }
 
     @Test
     public void getUsersForGroup_emptyGroup_returnsResponseBuilder() throws Exception {
-        ArgumentCaptor<NotFoundException> argumentCaptor = ArgumentCaptor.forClass(NotFoundException.class);
-        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
+        ArgumentCaptor<UserList> argumentCaptor = ArgumentCaptor.forClass(UserList.class);
         List<User> userList = new ArrayList<User>();
         Users users = new Users();
         users.setUsers(userList);
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         when(userGroupService.getGroupById(1)).thenReturn(group);
         when(userGroupService.getAllEnabledUsers(any(FilterParam[].class), anyString(), anyInt())).thenReturn(users);
-        when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
-        assertThat("response code", spy.getUsersForGroup(null, authToken, "1", "1", 1), equalTo(responseBuilder));
-        assertThat("exception type", argumentCaptor.getValue(), instanceOf(NotFoundException.class));
+        Response.ResponseBuilder responseBuilder = spy.getUsersForGroup(null, authToken, "1", "1", 1);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
     @Test
@@ -6060,12 +6140,12 @@ public class DefaultCloud20ServiceTest {
     public void addUserToDomain_Admin_expectsForbidden() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         User user = new User();
+        com.rackspace.idm.domain.entity.Domain domain = new com.rackspace.idm.domain.entity.Domain();
+        domain.setEnabled(true);
         List<TenantRole> roles = new ArrayList<TenantRole>();
         TenantRole role = new TenantRole();
         role.setName("identity:user-admin");
         roles.add(role);
-        Domain domain = new Domain();
-        domain.setEnabled(true);
 
         when(config.getString(anyString())).thenReturn("identity:user-admin");
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
@@ -6079,27 +6159,28 @@ public class DefaultCloud20ServiceTest {
     @Test (expected = ForbiddenException.class)
     public void addUserToDomain_ServiceAdmin_expectsForbidden() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
+        com.rackspace.idm.domain.entity.Domain domain = new com.rackspace.idm.domain.entity.Domain();
+        domain.setEnabled(true);
         User user = new User();
         List<TenantRole> roles = new ArrayList<TenantRole>();
         TenantRole role = new TenantRole();
         role.setName("identity:service-admin");
         roles.add(role);
-        Domain domain = new Domain();
-        domain.setEnabled(true);
+        Domain domain1 = new Domain();
+        domain1.setEnabled(true);
 
         when(config.getString(anyString())).thenReturn("identity:service-admin");
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(user).when(userService).checkAndGetUserById(userId);
         doReturn(roles).when(tenantService).getGlobalRolesForUser(user);
         doReturn(domain).when(domainService).checkAndGetDomain("123");
-
         defaultCloud20Service.addUserToDomain(authToken, "123", userId);
     }
 
     @Test (expected = ForbiddenException.class)
     public void addUserToDomain_disabledDomain_expectsForbidden() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
-        Domain domain = new Domain();
+        com.rackspace.idm.domain.entity.Domain domain = new com.rackspace.idm.domain.entity.Domain();
         domain.setEnabled(false);
 
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
@@ -6111,7 +6192,7 @@ public class DefaultCloud20ServiceTest {
     @Test (expected = ForbiddenException.class)
     public void addUserToDomain_noRoles_expectsForbidden() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
-        Domain domain = new Domain();
+        com.rackspace.idm.domain.entity.Domain domain = new com.rackspace.idm.domain.entity.Domain();
         domain.setEnabled(true);
         User user = new User();
 
@@ -6186,6 +6267,7 @@ public class DefaultCloud20ServiceTest {
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(200));
     }
 
+    @Ignore
     @Test (expected = NotFoundException.class)
     public void getDomainTenants_invalidDomainId_expectsNotFound() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
@@ -6223,5 +6305,31 @@ public class DefaultCloud20ServiceTest {
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
 
         defaultCloud20Service.getUsersByDomainId(authToken, "135792468", "true");
+    }
+
+    @Test
+    public void setEmptyUserValues() throws Exception {
+        User user = new User();
+        defaultCloud20Service.setEmptyUserValues(user);
+        assertThat("email",user.getEmail(),equalTo(""));
+        assertThat("domain",user.getDomainId(),equalTo(""));
+        assertThat("region",user.getRegion(),equalTo(""));
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void validateMaker_return400() throws Exception {
+        defaultCloud20Service.validateMarker("asdf");
+    }
+
+    @Test
+    public void validateMaker_validMarker_returnsStringValue() throws Exception {
+        String marker = defaultCloud20Service.validateMarker("1");
+        assertThat("Check Marker",marker,equalTo("1"));
+    }
+
+    @Test
+    public void validateMaker_nullMarker_returnsZero() throws Exception {
+        String marker = defaultCloud20Service.validateMarker(null);
+        assertThat("Check Marker",marker,equalTo("0"));
     }
 }

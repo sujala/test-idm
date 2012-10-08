@@ -18,6 +18,7 @@ public interface GroupService {
     List<Group> getGroupsByMossoId(Integer mossoAccountId);
     List<Group> getGroupListByMossoId(Integer mossoAccountId);
     Group getGroupById(Integer groupId);
+    Group checkAndGetGroupById(Integer groupId);
     Group getGroupByName(String groupName);
     void addGroup(Group group);
     void insertGroup(Group group);
@@ -27,4 +28,5 @@ public interface GroupService {
     void deleteGroupFromUser(int groupId, String userId);
     List<Group> getGroupsForUser(String userId);
     Users getAllEnabledUsers(FilterParam[] filters, String offset, int limit);
+	boolean isUserInGroup(String userId, Integer groupId);
 }

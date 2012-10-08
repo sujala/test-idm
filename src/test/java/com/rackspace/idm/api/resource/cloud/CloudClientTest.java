@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud;
 
 import com.sun.jersey.core.spi.factory.ResponseBuilderImpl;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
+import org.apache.commons.configuration.Configuration;
 import org.apache.http.*;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.*;
@@ -33,12 +34,14 @@ import static org.mockito.Mockito.*;
  */
 public class CloudClientTest {
 
+    Configuration config;
     CloudClient cloudClient;
     CloudClient spy;
 
     @Before
     public void setUp() throws Exception {
-        cloudClient = new CloudClient();
+        config = mock(Configuration.class);
+        cloudClient = new CloudClient(config);
         spy = spy(cloudClient);
     }
 

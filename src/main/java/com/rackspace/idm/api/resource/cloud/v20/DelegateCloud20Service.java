@@ -18,9 +18,11 @@ import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
+import com.rackspace.idm.validation.Validator20;
 import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.api.json.JSONJAXBContext;
 import com.sun.jersey.api.json.JSONUnmarshaller;
+import com.sun.jndi.toolkit.url.Uri;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
@@ -106,6 +108,9 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Autowired
     private CloudUserExtractor cloudUserExtractor;
+
+    @Autowired
+    private Validator20 validator20;
 
     public static final String CLOUD_AUTH_ROUTING = "useCloudAuth";
 
@@ -661,7 +666,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder addUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String body)  {
+    public ResponseBuilder addUserCredential(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String userId, String body)  {
         if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
             String xmlBody = body;
             if (httpHeaders.getMediaType().isCompatible(MediaType.APPLICATION_JSON_TYPE)) {
@@ -670,7 +675,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             String request = getCloudAuthV20Url() + USERS + "/" + userId + "/OS-KSADM/credentials";
             return cloudClient.post(request, httpHeaders, xmlBody);
         }
-        return defaultCloud20Service.addUserCredential(httpHeaders, authToken, userId, body);
+        return defaultCloud20Service.addUserCredential(httpHeaders, uriInfo, authToken, userId, body);
     }
 
     String convertCredentialToXML(String body) {
@@ -731,6 +736,14 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
+    public ResponseBuilder resetUserApiKeyCredentials(HttpHeaders httpHeaders, String authToken, String userId, String credentialType) {
+        if(!isUserInGAbyId(userId)) {
+            throw new NotImplementedException();
+        }
+        return defaultCloud20Service.resetUserApiKeyCredentials(httpHeaders, authToken, userId, credentialType);
+    }
+
+    @Override
     public ResponseBuilder getUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String credentialType)
              {
         if (isCloudAuthRoutingEnabled() && !isUserInGAbyId(userId)) {
@@ -767,10 +780,12 @@ public class DelegateCloud20Service implements Cloud20Service {
         ScopeAccess accessTokenByAuthHeader = scopeAccessService.getAccessTokenByAuthHeader(authToken);
         boolean isUserAdminInGA = false;
 
+        validator20.validateUserForCreate(user);
+
         if (accessTokenByAuthHeader != null) {
             isUserAdminInGA = authorizationService.authorizeCloudUserAdmin(accessTokenByAuthHeader);
         }
-        if (isCloudAuthRoutingEnabled() && !isUserAdminInGA) {
+        if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth() && !isUserAdminInGA) {
             String request = getCloudAuthV20Url() + USERS;
             String body = marshallObjectToString(objectFactory.createUser(user));
             if (user != null && userService.userExistsByUsername(user.getUsername())) {
@@ -1446,5 +1461,9 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     public void setExceptionHandler(ExceptionHandler exceptionHandler) {
         this.exceptionHandler = exceptionHandler;
+    }
+
+    public void setValidator20(Validator20 validator20) {
+        this.validator20 = validator20;
     }
 }

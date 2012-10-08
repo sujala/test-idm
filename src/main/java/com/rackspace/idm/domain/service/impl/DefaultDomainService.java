@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.domain.dao.DomainDao;
+import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.Tenant;
@@ -8,9 +9,7 @@ import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.service.DomainService;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.UserService;
-import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.DuplicateException;
-import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.exception.*;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -98,6 +97,8 @@ public class DefaultDomainService implements DomainService{
         Domain domain = getDomain(domainId);
         if(domain == null)
             throw new NotFoundException("Domain could not be found");
+        if(!domain.isEnabled())
+            throw new ForbiddenException("Cannot add tenant to disabled domain");
 
         tenantService.checkAndGetTenant(tenantId);
 
@@ -192,5 +193,9 @@ public class DefaultDomainService implements DomainService{
         if (!alphaNumericColonHyphenSpace.matcher(domain.getName()).matches()) {
             throw new BadRequestException("Domain name has invalid characters.");
         }
+    }
+
+    public void setTenantService(TenantService tenantService) {
+        this.tenantService = tenantService;
     }
 }

@@ -1,5 +1,7 @@
 package com.rackspace.idm.api.resource.cloud;
 
+import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
+import org.apache.commons.configuration.Configuration;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -11,6 +13,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletResponse;
@@ -18,8 +21,10 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.*;
+import java.net.MalformedURLException;
 import java.util.Map;
 import java.util.Set;
+import java.net.URL;
 
 /**
  * Created by IntelliJ IDEA.
@@ -27,8 +32,15 @@ import java.util.Set;
  * Date: 8/12/11
  * Time: 1:53 PM
  */
-@Component
+
 public class CloudClient {
+
+    private final Configuration config;
+
+    @Autowired
+    public CloudClient(Configuration config) {
+        this.config = config;
+    }
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -100,7 +112,9 @@ public class CloudClient {
         Response.ResponseBuilder responseBuilder = Response.status(statusCode).entity(responseBody);
         for (Header header : response.getAllHeaders()) {
             String key = header.getName();
-            if (!key.equalsIgnoreCase("content-encoding") && !key.equalsIgnoreCase("content-length")
+            if (key.equalsIgnoreCase("location")) {
+            	responseBuilder.header(key, replaceLocationHeader(header.getValue()));
+            } else if (!key.equalsIgnoreCase("content-encoding") && !key.equalsIgnoreCase("content-length")
                     && !key.equalsIgnoreCase("transfer-encoding") && !key.equalsIgnoreCase("vary")) {
                 responseBuilder = responseBuilder.header(key, header.getValue());
             }
@@ -118,9 +132,11 @@ public class CloudClient {
             Response.ResponseBuilder builder = Response.status(Response.Status.MOVED_PERMANENTLY); //.header("Location", uri);
             for (Header header : response.getAllHeaders()) {
                 String key = header.getName();
-                if (!key.equalsIgnoreCase("content-encoding") && !key.equalsIgnoreCase("content-length") && !key.equalsIgnoreCase("transfer-encoding") && !key.equalsIgnoreCase("vary")) {
+                if (key.equalsIgnoreCase("location")) {
+                	builder.header(key, replaceLocationHeader(header.getValue()));
+                } else if (!key.equalsIgnoreCase("content-encoding") && !key.equalsIgnoreCase("content-length") && !key.equalsIgnoreCase("transfer-encoding") && !key.equalsIgnoreCase("vary")) {
                     builder.header(key, header.getValue());
-                }
+                } 
             }
             //builder.entity(response.getEntity());
             if (responseBody != null) {
@@ -132,6 +148,25 @@ public class CloudClient {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
+    
+	private String replaceLocationHeader(String value) {
+		
+	    String globalLocation = config.getString("ga.endpoint");
+
+	    if (globalLocation.endsWith("/")) {
+	        globalLocation = globalLocation.substring(0, globalLocation.length() -1);
+	    }
+
+	    String cloudLocation = value;
+	    try {
+	        URL u = new URL(cloudLocation);
+	        globalLocation += u.getPath();
+	    } catch (MalformedURLException e) {
+	        globalLocation = cloudLocation;
+	    }
+
+	    return globalLocation;
+	}
 
     private BasicHttpEntity getHttpEntity(String body) {
         if (body == null) { return null; }

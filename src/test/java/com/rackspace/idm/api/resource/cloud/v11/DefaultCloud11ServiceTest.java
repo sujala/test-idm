@@ -21,6 +21,7 @@ import com.rackspacecloud.docs.auth.api.v1.User;
 import com.sun.jersey.api.uri.UriBuilderImpl;
 import com.sun.jersey.core.util.Base64;
 import org.apache.commons.configuration.Configuration;
+import org.hamcrest.CoreMatchers;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -134,7 +135,7 @@ public class DefaultCloud11ServiceTest {
         when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn("Basic YXV0aDphdXRoMTIz");
         UriBuilderImpl uriBuilder = mock(UriBuilderImpl.class);
         when(uriBuilder.build()).thenReturn(new URI(""));
-        when(uriBuilder.path("userId")).thenReturn(uriBuilder);
+        when(uriBuilder.path(anyString())).thenReturn(uriBuilder);
         when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
         com.rackspace.idm.domain.entity.User user1 = new com.rackspace.idm.domain.entity.User();
         user1.setId("userId");
@@ -404,7 +405,7 @@ public class DefaultCloud11ServiceTest {
         when(credentials.getValue()).thenReturn(new UserCredentials());
         doThrow(new IOException()).when(response).sendRedirect(anyString());
         defaultCloud11Service.adminAuthenticateResponse(credentials, response);
-        verify(response).sendRedirect("cloud/auth");
+        verify(response).sendRedirect("auth");
     }
 
     @Test
@@ -413,7 +414,7 @@ public class DefaultCloud11ServiceTest {
         HttpServletResponse response = mock(HttpServletResponse.class);
         when(credentials.getValue()).thenReturn(new UserCredentials());
         defaultCloud11Service.adminAuthenticateResponse(credentials, response);
-        verify(response).sendRedirect("cloud/auth");
+        verify(response).sendRedirect("auth");
     }
 
     @Test
@@ -1750,10 +1751,11 @@ public class DefaultCloud11ServiceTest {
 
     @Test
     public void getUserEnabled_withValidUser_callsUserConverterCloudV11_toCloudV11UserWithOnlyEnabled() throws Exception {
+        List<OpenstackEndpoint> openstackEndpoints = new ArrayList<OpenstackEndpoint>();
         doNothing().when(spy).authenticateCloudAdminUserForGetRequests(null);
         when(userService.getUser("userId")).thenReturn(userDO);
         spy.getUserEnabled(null, "userId", null);
-        verify(userConverterCloudV11).toCloudV11UserWithOnlyEnabled(userDO);
+        verify(userConverterCloudV11).toCloudV11UserWithOnlyEnabled(userDO,openstackEndpoints);
     }
 
     @Test
@@ -1967,12 +1969,13 @@ public class DefaultCloud11ServiceTest {
 
     @Test
     public void setUserEnabled_withValidUser_callsUserConverterCloudV11_toCloudV11UserWithOnlyEnabled() throws Exception {
+        List<OpenstackEndpoint> openstackEndpoints = new ArrayList<OpenstackEndpoint>();
         UserWithOnlyEnabled enabledUser = mock(UserWithOnlyEnabled.class);
         doNothing().when(spy).authenticateCloudAdminUser(request);
         when(userService.getUser("userId")).thenReturn(userDO);
         when(enabledUser.isEnabled()).thenReturn(true);
         spy.setUserEnabled(request, "userId", enabledUser, null);
-        verify(userConverterCloudV11).toCloudV11UserWithOnlyEnabled(userDO);
+        verify(userConverterCloudV11).toCloudV11UserWithOnlyEnabled(userDO,openstackEndpoints);
     }
 
     @Test
@@ -2041,12 +2044,13 @@ public class DefaultCloud11ServiceTest {
 
     @Test
     public void setUserKey_withValidUser_callsUserConverterCloudV11_toCloudV11UserWithOnlyKey() throws Exception {
+        List<OpenstackEndpoint> endpoints = new ArrayList<OpenstackEndpoint>();
         UserWithOnlyKey keyUser = mock(UserWithOnlyKey.class);
         doNothing().when(spy).authenticateCloudAdminUser(request);
         when(userService.getUser("userId")).thenReturn(userDO);
         when(keyUser.isEnabled()).thenReturn(true);
         spy.setUserKey(request, "userId", null, keyUser);
-        verify(userConverterCloudV11).toCloudV11UserWithOnlyKey(userDO);
+        verify(userConverterCloudV11).toCloudV11UserWithOnlyKey(userDO,endpoints);
     }
 
     @Test
@@ -2645,6 +2649,8 @@ public class DefaultCloud11ServiceTest {
         userTest.setMossoId(1);
         BaseURLRef baseUrlRef = new BaseURLRef();
         baseUrlRef.setId(1);
+        baseUrlRef.setHref("href");
+        baseUrlRef.setV1Default(false);
         doNothing().when(spy).authenticateCloudAdminUser(request);
         when(userService.getUser("userId")).thenReturn(userTest);
         when(endpointService.getBaseUrlById(1)).thenReturn(cloudBaseUrl);

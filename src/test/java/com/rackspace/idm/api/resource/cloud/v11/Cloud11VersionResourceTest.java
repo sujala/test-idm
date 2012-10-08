@@ -1,7 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v11;
 
 import com.rackspace.idm.api.resource.cloud.CloudClient;
-import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Test;
@@ -91,14 +90,8 @@ public class Cloud11VersionResourceTest {
     }
 
     @Test
-    public void adminAuthenticate_callsGetCloud11Service() throws Exception {
-        when(delegateCloud11Service.adminAuthenticate(null, null, null, null)).thenReturn(Response.ok());
-        spy.adminAuthenticate(null, null, null, null);
-        verify(spy).getCloud11Service();
-    }
-
-    @Test
     public void adminAuthenticate_callsGetCloud11Service_callsAdminAuthenticate() throws Exception {
+        when(config.getBoolean("useCloudAuth")).thenReturn(true);
         when(delegateCloud11Service.adminAuthenticate(null, null, null, null)).thenReturn(Response.ok());
         spy.adminAuthenticate(null, null, null, null);
         verify(delegateCloud11Service).adminAuthenticate(null, null, null, null);
@@ -106,8 +99,8 @@ public class Cloud11VersionResourceTest {
 
     @Test
     public void adminAuthenticate_responseOk_returns200() throws Exception {
-        when(delegateCloud11Service.adminAuthenticate(null, null, null, null)).thenReturn(Response.ok());
-        Response result = spy.adminAuthenticate(null, null, null, null);
+        when(delegateCloud11Service.authenticate(null, null, null, null)).thenReturn(Response.ok());
+        Response result = spy.authenticate(null, null, null, null);
         assertThat("response code", result.getStatus(), equalTo(200));
     }
 

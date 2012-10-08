@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.config;
 
+import com.rackspace.idm.api.resource.cloud.CloudClient;
 import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.domain.service.impl.*;
@@ -66,6 +67,11 @@ public class  ServiceConfiguration {
      */
     public ServiceConfiguration(Configuration config) {
         this.config = config;
+    }
+
+    @Bean
+    public CloudClient cloudClient() {
+        return new CloudClient(config);
     }
 
     @Bean

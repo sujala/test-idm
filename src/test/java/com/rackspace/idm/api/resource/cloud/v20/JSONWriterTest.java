@@ -13,7 +13,6 @@ import com.rackspacecloud.docs.auth.api.v1.*;
 import com.rackspacecloud.docs.auth.api.v1.BaseURLList;
 import com.rackspacecloud.docs.auth.api.v1.BaseURLRefList;
 import com.rackspacecloud.docs.auth.api.v1.GroupsList;
-import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
 import junit.framework.Assert;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.json.simple.JSONArray;
@@ -849,10 +848,8 @@ public class JSONWriterTest {
         MediaTypeList mediaTypeList = new MediaTypeList();
         mediaTypeList.getMediaType().add(new MediaType());
         VersionStatus versionStatus = VersionStatus.ALPHA;
-        XMLGregorianCalendar calendar1 = new XMLGregorianCalendarImpl();
-        calendar1.setMonth(11);
-        calendar1.setDay(27);
-        calendar1.setYear(1992);
+        DatatypeFactory f = DatatypeFactory.newInstance();
+        XMLGregorianCalendar calendar1 = f.newXMLGregorianCalendar("2012-03-12T19:23:45");
 
         VersionChoice versionChoice = new VersionChoice();
         versionChoice.setStatus(versionStatus);
@@ -864,7 +861,7 @@ public class JSONWriterTest {
         JSONObject jsonObject = writer.getVersionChoice(versionChoice);
         String jsonText = JSONValue.toJSONString(jsonObject);
         myOut.write(jsonText.getBytes());
-        assertThat("string",myOut.toString(), equalTo("{\"version\":{\"id\":null,\"updated\":\"1992-11-27\",\"status\":\"ALPHA\",\"links\":[{}]," +
+        assertThat("string",myOut.toString(), equalTo("{\"version\":{\"id\":null,\"updated\":\"2012-03-12T19:23:45\",\"status\":\"ALPHA\",\"links\":[{}]," +
             "\"media-types\":{\"values\":[{\"base\":\"\",\"type\":null}]}}}"));
     }
 
@@ -874,10 +871,8 @@ public class JSONWriterTest {
         JAXBElement<Link> jaxbElement = new JAXBElement<Link>(QName.valueOf("foo"),Link.class,link);
         MediaTypeList mediaTypeList = new MediaTypeList();
         mediaTypeList.getMediaType().add(new MediaType());
-        XMLGregorianCalendar calendar1 = new XMLGregorianCalendarImpl();
-        calendar1.setMonth(11);
-        calendar1.setDay(27);
-        calendar1.setYear(1992);
+        DatatypeFactory f = DatatypeFactory.newInstance();
+        XMLGregorianCalendar calendar1 = f.newXMLGregorianCalendar("2012-03-12T19:23:45");
 
         VersionChoice versionChoice = new VersionChoice();
         versionChoice.setUpdated(calendar1);
@@ -888,7 +883,7 @@ public class JSONWriterTest {
         JSONObject jsonObject = writer.getVersionChoice(versionChoice);
         String jsonText = JSONValue.toJSONString(jsonObject);
         myOut.write(jsonText.getBytes());
-        assertThat("string",myOut.toString(), equalTo("{\"version\":{\"id\":null,\"updated\":\"1992-11-27\",\"links\":[{}]," +
+        assertThat("string",myOut.toString(), equalTo("{\"version\":{\"id\":null,\"updated\":\"2012-03-12T19:23:45\",\"links\":[{}]," +
                 "\"media-types\":{\"values\":[{\"base\":\"\",\"type\":null}]}}}"));
     }
 
@@ -918,10 +913,8 @@ public class JSONWriterTest {
         MediaTypeList mediaTypeList = new MediaTypeList();
         mediaTypeList.getMediaType().add(new MediaType());
         VersionStatus versionStatus = VersionStatus.ALPHA;
-        XMLGregorianCalendar calendar1 = new XMLGregorianCalendarImpl();
-        calendar1.setMonth(11);
-        calendar1.setDay(27);
-        calendar1.setYear(1992);
+        DatatypeFactory f = DatatypeFactory.newInstance();
+        XMLGregorianCalendar calendar1 = f.newXMLGregorianCalendar("2012-03-12T19:23:45");
 
         VersionChoice versionChoice = new VersionChoice();
         versionChoice.setStatus(versionStatus);
@@ -933,7 +926,7 @@ public class JSONWriterTest {
         JSONObject jsonObject = writer.getVersionChoice(versionChoice);
         String jsonText = JSONValue.toJSONString(jsonObject);
         myOut.write(jsonText.getBytes());
-        assertThat("string",myOut.toString(), equalTo("{\"version\":{\"id\":null,\"updated\":\"1992-11-27\",\"status\":\"ALPHA\"," +
+        assertThat("string",myOut.toString(), equalTo("{\"version\":{\"id\":null,\"updated\":\"2012-03-12T19:23:45\",\"status\":\"ALPHA\"," +
                 "\"media-types\":{\"values\":[{\"base\":\"\",\"type\":null}]}}}"));
     }
 
@@ -942,10 +935,8 @@ public class JSONWriterTest {
         MediaTypeList mediaTypeList = new MediaTypeList();
         mediaTypeList.getMediaType().add(new MediaType());
         VersionStatus versionStatus = VersionStatus.ALPHA;
-        XMLGregorianCalendar calendar1 = new XMLGregorianCalendarImpl();
-        calendar1.setMonth(11);
-        calendar1.setDay(27);
-        calendar1.setYear(1992);
+        DatatypeFactory f = DatatypeFactory.newInstance();
+        XMLGregorianCalendar calendar1 = f.newXMLGregorianCalendar("2012-03-12T19:23:45");
 
         VersionChoice versionChoice = new VersionChoice();
         versionChoice.setStatus(versionStatus);
@@ -956,7 +947,7 @@ public class JSONWriterTest {
         JSONObject jsonObject = writer.getVersionChoice(versionChoice);
         String jsonText = JSONValue.toJSONString(jsonObject);
         myOut.write(jsonText.getBytes());
-        assertThat("string",myOut.toString(), equalTo("{\"version\":{\"id\":null,\"updated\":\"1992-11-27\",\"status\":\"ALPHA\"," +
+        assertThat("string",myOut.toString(), equalTo("{\"version\":{\"id\":null,\"updated\":\"2012-03-12T19:23:45\",\"status\":\"ALPHA\"," +
                 "\"media-types\":{\"values\":[{\"base\":\"\",\"type\":null}]}}}"));
     }
 
@@ -965,10 +956,8 @@ public class JSONWriterTest {
         Link link = new Link();
         JAXBElement<Link> jaxbElement = new JAXBElement<Link>(QName.valueOf("foo"),Link.class,link);
         VersionStatus versionStatus = VersionStatus.ALPHA;
-        XMLGregorianCalendar calendar1 = new XMLGregorianCalendarImpl();
-        calendar1.setMonth(11);
-        calendar1.setDay(27);
-        calendar1.setYear(1992);
+        DatatypeFactory f = DatatypeFactory.newInstance();
+        XMLGregorianCalendar calendar1 = f.newXMLGregorianCalendar("2012-03-12T19:23:45");
 
         VersionChoice versionChoice = new VersionChoice();
         versionChoice.setStatus(versionStatus);
@@ -979,7 +968,7 @@ public class JSONWriterTest {
         JSONObject jsonObject = writer.getVersionChoice(versionChoice);
         String jsonText = JSONValue.toJSONString(jsonObject);
         myOut.write(jsonText.getBytes());
-        assertThat("string",myOut.toString(), equalTo("{\"version\":{\"id\":null,\"updated\":\"1992-11-27\",\"status\":\"ALPHA\",\"links\":[{}]}}"));
+        assertThat("string",myOut.toString(), equalTo("{\"version\":{\"id\":null,\"updated\":\"2012-03-12T19:23:45\",\"status\":\"ALPHA\",\"links\":[{}]}}"));
     }
 
     @Test
@@ -988,11 +977,8 @@ public class JSONWriterTest {
         JAXBElement<Link> jaxbElement = new JAXBElement<Link>(QName.valueOf("foo"),Link.class,link);
         MediaTypeList mediaTypeList = new MediaTypeList();
         VersionStatus versionStatus = VersionStatus.ALPHA;
-        XMLGregorianCalendar calendar1 = new XMLGregorianCalendarImpl();
-        calendar1.setMonth(11);
-        calendar1.setDay(27);
-        calendar1.setYear(1992);
-
+        DatatypeFactory f = DatatypeFactory.newInstance();
+        XMLGregorianCalendar calendar1 = f.newXMLGregorianCalendar("2012-03-12T19:23:45");
         VersionChoice versionChoice = new VersionChoice();
         versionChoice.setStatus(versionStatus);
         versionChoice.setUpdated(calendar1);
@@ -1003,7 +989,7 @@ public class JSONWriterTest {
         JSONObject jsonObject = writer.getVersionChoice(versionChoice);
         String jsonText = JSONValue.toJSONString(jsonObject);
         myOut.write(jsonText.getBytes());
-        assertThat("string",myOut.toString(), equalTo("{\"version\":{\"id\":null,\"updated\":\"1992-11-27\",\"status\":\"ALPHA\",\"links\":[{}]}}"));
+        assertThat("string",myOut.toString(), equalTo("{\"version\":{\"id\":null,\"updated\":\"2012-03-12T19:23:45\",\"status\":\"ALPHA\",\"links\":[{}]}}"));
     }
 
     @Test
@@ -1229,13 +1215,15 @@ public class JSONWriterTest {
     @Test
     public void getToken_nullTenant_returnsJSONObjectNoTenant() throws Exception {
         Token token = new Token();
-        token.setExpires(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
+        DatatypeFactory f = DatatypeFactory.newInstance();
+        XMLGregorianCalendar calendar1 = f.newXMLGregorianCalendar("2012-03-12T19:23:45");
+        token.setExpires(calendar1);
         token.setId("123");
         final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
         JSONObject result = writer.getToken(token);
         String jsonText = JSONValue.toJSONString(result);
         myOut.write(jsonText.getBytes());
-        assertThat("string", myOut.toString().startsWith("{\"id\":\"123\",\"expires\":\"0001-02-01T00:00:00.000-"), equalTo(true));
+        assertThat("string", myOut.toString().startsWith("{\"id\":\"123\",\"expires\":\"2012-03-12T19:23:45"), equalTo(true));
         assertThat("string", myOut.toString().endsWith("\"}"), equalTo(true));
 
     }
@@ -1446,12 +1434,14 @@ public class JSONWriterTest {
         user.setUsername("kurt");
         user.setEmail("myEmail");
         ((UserForCreate)user).setPassword("myPassword");
-        user.setCreated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
+        DatatypeFactory f = DatatypeFactory.newInstance();
+        XMLGregorianCalendar calendar1 = f.newXMLGregorianCalendar("2012-03-12T19:23:45");
+        user.setCreated(calendar1);
         final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
         JSONObject result = writer.getUser(user);
         String jsonText = JSONValue.toJSONString(result);
         myOut.write(jsonText.getBytes());
-        assertThat("user", myOut.toString().startsWith("{\"id\":\"10019805\",\"enabled\":true,\"username\":\"kurt\",\"OS-KSADM:password\":\"myPassword\",\"created\":\"0001-02-01T00:00:00.000-"), equalTo(true));
+        assertThat("user", myOut.toString().startsWith("{\"id\":\"10019805\",\"enabled\":true,\"username\":\"kurt\",\"OS-KSADM:password\":\"myPassword\",\"created\":\"2012-03-12T19:23:45"), equalTo(true));
         assertThat("user", myOut.toString().endsWith("\",\"email\":\"myEmail\"}"),equalTo(true));
     }
 
@@ -1461,12 +1451,14 @@ public class JSONWriterTest {
         user.setId("10019805");
         user.setUsername("kurt");
         user.setEmail("myEmail");
-        user.setCreated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
+        DatatypeFactory f = DatatypeFactory.newInstance();
+        XMLGregorianCalendar calendar1 = f.newXMLGregorianCalendar("2012-03-12T19:23:45");
+        user.setCreated(calendar1);
         final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
         JSONObject result = writer.getUser(user);
         String jsonText = JSONValue.toJSONString(result);
         myOut.write(jsonText.getBytes());
-        assertThat("user", myOut.toString().startsWith("{\"id\":\"10019805\",\"enabled\":true,\"username\":\"kurt\",\"created\":\"0001-02-01T00:00:00.000-"), equalTo(true));
+        assertThat("user", myOut.toString().startsWith("{\"id\":\"10019805\",\"enabled\":true,\"username\":\"kurt\",\"created\":\"2012-03-12T19:23:45"), equalTo(true));
         assertThat("user", myOut.toString().endsWith("\",\"email\":\"myEmail\"}"),equalTo(true));
     }
 
@@ -1476,8 +1468,10 @@ public class JSONWriterTest {
         user.setId("10019805");
         user.setUsername("kurt");
         user.setEmail("myEmail");
-        user.setCreated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
-        user.setUpdated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
+        DatatypeFactory f = DatatypeFactory.newInstance();
+        XMLGregorianCalendar calendar1 = f.newXMLGregorianCalendar("2012-03-12T19:23:45");
+        user.setCreated(calendar1);
+        user.setUpdated(calendar1);
         user.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "defaultRegion"), "myRegion");
         user.getOtherAttributes().put(new QName("http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0", "password"), "myPassword");
 
@@ -1485,7 +1479,7 @@ public class JSONWriterTest {
         JSONObject result = writer.getUser(user);
         String jsonText = JSONValue.toJSONString(result);
         myOut.write(jsonText.getBytes());
-        assertThat("user", myOut.toString().startsWith("{\"id\":\"10019805\",\"enabled\":true," +"\"username\":\"kurt\",\"OS-KSADM:password\":\"myPassword\",\"updated\":\"0001-02-01T00:00:00.000-"), equalTo(true));
+        assertThat("user", myOut.toString().startsWith("{\"id\":\"10019805\",\"enabled\":true," +"\"username\":\"kurt\",\"OS-KSADM:password\":\"myPassword\",\"updated\":\"2012-03-12T19:23:45"), equalTo(true));
         assertThat("user", myOut.toString().endsWith("\",\"email\":\"myEmail\",\"RAX-AUTH:defaultRegion\":\"myRegion\"}"), equalTo(true));
     }
 
@@ -1495,15 +1489,15 @@ public class JSONWriterTest {
         user.setId("10019805");
         user.setUsername("kurt");
         user.setEmail("myEmail");
-        user.setCreated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
-        user.setUpdated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
+        user.setCreated(calendar);
+        user.setUpdated(calendar);
 
         final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
         JSONObject result = writer.getUser(user);
         String jsonText = JSONValue.toJSONString(result);
         myOut.write(jsonText.getBytes());
-        assertThat("user", myOut.toString().startsWith("{\"id\":\"10019805\",\"enabled\":true,\"username\":\"kurt\",\"updated\":\"0001-02-01T00:00:00.000-"), equalTo(true));
-        assertThat("user", myOut.toString().contains("\",\"created\":\"0001-02-01T00:00:00.000-"), equalTo(true));
+        assertThat("user", myOut.toString().startsWith("{\"id\":\"10019805\",\"enabled\":true,\"username\":\"kurt\",\"updated\":\"2012-01-01"), equalTo(true));
+        assertThat("user", myOut.toString().contains("\",\"created\":\"2012-01-01"), equalTo(true));
         assertThat("user", myOut.toString().endsWith("\"email\":\"myEmail\"}"), equalTo(true));
     }
 
@@ -1513,16 +1507,16 @@ public class JSONWriterTest {
         user.setId("10019805");
         user.setUsername("kurt");
         user.setEmail("myEmail");
-        user.setCreated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
-        user.setUpdated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
+        user.setCreated(calendar);
+        user.setUpdated(calendar);
         user.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "defaultRegion"), "");
 
         final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
         JSONObject result = writer.getUser(user);
         String jsonText = JSONValue.toJSONString(result);
         myOut.write(jsonText.getBytes());
-        assertThat("user", myOut.toString().startsWith("{\"id\":\"10019805\",\"enabled\":true,\"username\":\"kurt\",\"updated\":\"0001-02-01T00:00:00.000-"), equalTo(true));
-        assertThat("user", myOut.toString().contains("\",\"created\":\"0001-02-01T00:00:00.000-"), equalTo(true));
+        assertThat("user", myOut.toString().startsWith("{\"id\":\"10019805\",\"enabled\":true,\"username\":\"kurt\",\"updated\":\"2012-01-01"), equalTo(true));
+        assertThat("user", myOut.toString().contains("\",\"created\":\"2012-01-01"), equalTo(true));
         assertThat("user", myOut.toString().endsWith("\"email\":\"myEmail\",\"RAX-AUTH:defaultRegion\":\"\"}"), equalTo(true));
     }
 
@@ -1532,14 +1526,14 @@ public class JSONWriterTest {
         user.setId("10019805");
         user.setUsername("kurt");
         user.setEmail("myEmail");
-        user.setUpdated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
+        user.setUpdated(calendar);
         user.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "defaultRegion"), "myRegion");
 
         final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
         JSONObject result = writer.getUser(user);
         String jsonText = JSONValue.toJSONString(result);
         myOut.write(jsonText.getBytes());
-        assertThat("user", myOut.toString().startsWith("{\"id\":\"10019805\",\"enabled\":true," +"\"username\":\"kurt\",\"updated\":\"0001-02-01T00:00:00.000-"), equalTo(true));
+        assertThat("user", myOut.toString().startsWith("{\"id\":\"10019805\",\"enabled\":true," +"\"username\":\"kurt\",\"updated\":\"2012-01-01"), equalTo(true));
         assertThat("user", myOut.toString().endsWith("\",\"email\":\"myEmail\",\"RAX-AUTH:defaultRegion\":\"myRegion\"}"), equalTo(true));
     }
 
@@ -1549,14 +1543,14 @@ public class JSONWriterTest {
         user.setId("10019805");
         user.setUsername("kurt");
         user.setEmail("myEmail");
-        user.setCreated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
+        user.setCreated(calendar);
         user.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "defaultRegion"), "myRegion");
 
         final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
         JSONObject result = writer.getUser(user);
         String jsonText = JSONValue.toJSONString(result);
         myOut.write(jsonText.getBytes());
-        assertThat("user", myOut.toString().startsWith("{\"id\":\"10019805\",\"enabled\":true," +"\"username\":\"kurt\",\"created\":\"0001-02-01T00:00:00.000-"), equalTo(true));
+        assertThat("user", myOut.toString().startsWith("{\"id\":\"10019805\",\"enabled\":true," +"\"username\":\"kurt\",\"created\":\"2012-01-01"), equalTo(true));
         assertThat("user", myOut.toString().endsWith("\",\"email\":\"myEmail\",\"RAX-AUTH:defaultRegion\":\"myRegion\"}"), equalTo(true));
     }
 
@@ -2311,13 +2305,13 @@ public class JSONWriterTest {
     @Test
     public void getExtensionWithoutWrapper_anyEmpty_returnsJSONObject() throws Exception {
         Extension extension = new Extension();
-        extension.setUpdated(new XMLGregorianCalendarImpl(new GregorianCalendar(1,1,1)));
+        extension.setUpdated(calendar);
 
         final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
         JSONObject result = writer.getExtensionWithoutWrapper(extension);
         String jsonText = JSONValue.toJSONString(result);
         myOut.write(jsonText.getBytes());
-        assertThat("string", myOut.toString().startsWith("{\"updated\":\"0001-02-01T00:00:00.000-"), equalTo(true));
+        assertThat("string", myOut.toString().startsWith("{\"updated\":\"2012-01-01"), equalTo(true));
         assertThat("string", myOut.toString().endsWith("\",\"alias\":null,\"description\":null,\"name\":null,\"namespace\":null}"), equalTo(true));
 
     }
@@ -2597,7 +2591,7 @@ public class JSONWriterTest {
 
         final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
         writer.writeTo(user, com.rackspacecloud.docs.auth.api.v1.User.class, null, null, null, null, myOut);
-        Assert.assertEquals("{\"user\":{\"id\":\"id\",\"enabled\":true,\"nastId\":\"nast\",\"mossoId\":1,\"baseURLRefs\":[],\"key\":\"key\"}}", myOut.toString());
+        Assert.assertEquals("{\"user\":{\"id\":\"id\",\"enabled\":true,\"nastId\":\"nast\",\"updated\":\"2012-01-01\",\"created\":\"2012-01-01\",\"mossoId\":1,\"baseURLRefs\":[],\"key\":\"key\"}}", myOut.toString());
     }
 
     @Test

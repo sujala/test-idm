@@ -90,4 +90,7 @@ public interface UserService {
     void removeBaseUrlFromUser(Integer baseUrlId, User user);
 
     List<Tenant> getUserTenants(String userId);
+
+	List<User> getSubUsers(User user);
+
 }
