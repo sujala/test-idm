@@ -3,23 +3,17 @@ package com.rackspace.idm.api.resource.cloud.v11;
 import com.rackspace.idm.api.resource.cloud.CloudClient;
 import com.rackspace.idm.api.resource.cloud.CloudUserExtractor;
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository;
-import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.UserScopeAccess;
+import com.rackspace.idm.domain.entity.Users;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.impl.DefaultUserService;
 import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.NotAuthorizedException;
 import com.rackspacecloud.docs.auth.api.v1.*;
-import com.rackspacecloud.docs.auth.api.v1.AuthData;
-import com.rackspacecloud.docs.auth.api.v1.Credentials;
-import com.rackspacecloud.docs.auth.api.v1.User;
-
 import org.apache.commons.configuration.Configuration;
-import org.apache.http.protocol.HTTP;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Matchers;
 import org.mockito.internal.verification.VerificationModeFactory;
-
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -1008,7 +1002,7 @@ public class DelegateCloud11ServiceTest {
         when(cloudClient.post(eq(url + "auth"), Matchers.<javax.ws.rs.core.HttpHeaders>any(), anyString())).thenReturn(response);
         when(response.clone()).thenReturn(Response.status(302).clone());
         delegateCloud11Service.authenticate(request, httpServletResponse, httpHeaders, jsonBody);
-        verify(response).location(new URI(config.getString("ga.endpoint")+"cloud/v1.1/auth-admin"));
+        verify(response).location(new URI(config.getString("ga.endpoint")+"v1.1/auth-admin"));
     }
 
     @Test

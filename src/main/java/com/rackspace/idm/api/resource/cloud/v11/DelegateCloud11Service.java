@@ -8,7 +8,6 @@ import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.impl.DefaultUserService;
 import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.NotAuthorizedException;
 import com.rackspacecloud.docs.auth.api.v1.*;
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
@@ -90,61 +89,58 @@ public class DelegateCloud11Service implements Cloud11Service {
 
     @Override
     public Response.ResponseBuilder authenticate(HttpServletRequest request, HttpServletResponse response,
-                                                 HttpHeaders httpHeaders, String body) throws IOException, JAXBException, URISyntaxException {
+                                                 HttpHeaders httpHeaders, String body)
+            throws IOException, JAXBException, URISyntaxException {
 
-         //Get "user" from LDAP
         JAXBElement<? extends Credentials> cred = extractCredentials(httpHeaders, body);
+        if(cred != null) {
+            if((cred.getValue() instanceof MossoCredentials) ||
+                    (cred.getValue() instanceof NastCredentials) ||
+                    (cred.getValue() instanceof PasswordCredentials)
+                    ) {
+               //defaultCloud11Service.authenticateCloudAdminUserForGetRequests(request);
+                return Response
+                    .status(HttpServletResponse.SC_MOVED_TEMPORARILY)
+                    .header("Location", new URI(config.getString("ga.endpoint") + "v1.1/auth-admin"));
+            }
+        }
         com.rackspace.idm.domain.entity.User user = cloudUserExtractor.getUserByCredentialType(cred);
         if(defaultUserService.isMigratedUser(user)) {
             return defaultCloud11Service.authenticate(request, response, httpHeaders, body);
         }
-
-         //Get Cloud Auth response
-        String xmlBody = body;
-        if (!httpHeaders.getMediaType().isCompatible(MediaType.APPLICATION_XML_TYPE)) {
-            xmlBody = marshallObjectToString(cred);
-        }
-        Response.ResponseBuilder serviceResponse = cloudClient.post(getCloudAuthV11Url().concat("auth"), httpHeaders, xmlBody);
-        Response dummyResponse = serviceResponse.clone().build();
-         //If SUCCESS and "user" is not null, store token to "user" and return cloud response
-        int status = dummyResponse.getStatus();
-        if (status == HttpServletResponse.SC_MOVED_TEMPORARILY){
-            serviceResponse.location(new URI(config.getString("ga.endpoint")+"cloud/v1.1/auth-admin"));
-        }
-        if (status == HttpServletResponse.SC_OK && user != null) {
-            AuthData authResult = getAuthFromResponse(dummyResponse.getEntity().toString());
-            if(authResult != null) {
-                String token = authResult.getToken().getId();
-                Date expires = authResult.getToken().getExpires().toGregorianCalendar().getTime();
-                scopeAccessService.updateUserScopeAccessTokenForClientIdByUser(user, getCloudAuthClientId(), token, expires);
-            }
-            return serviceResponse;
-        }else if(user == null){ //If "user" is null return cloud response
-            return serviceResponse;
-        }
-        else { //If we get this far, return Default Service Response
-            return defaultCloud11Service.authenticate(request, response, httpHeaders, body);
-        }
+        return authenticateByCred(request, response, cred, user, body, httpHeaders, "auth");
     }
 
     @Override
     public Response.ResponseBuilder adminAuthenticate(HttpServletRequest request, HttpServletResponse response,
-                                                      HttpHeaders httpHeaders, String body) throws IOException, JAXBException {
-
-        //Get "user" from LDAP
+                                                      HttpHeaders httpHeaders, String body)
+            throws IOException, JAXBException, URISyntaxException {
         JAXBElement<? extends Credentials> cred = extractCredentials(httpHeaders, body);
 
         com.rackspace.idm.domain.entity.User user = cloudUserExtractor.getUserByCredentialType(cred);
+        if(defaultUserService.isMigratedUser(user)) {
+            return defaultCloud11Service.adminAuthenticate(request, response, httpHeaders, body);
+        }
+        return authenticateByCred(request, response, cred, user, body, httpHeaders, "auth-admin");
+    }
 
-         //Get Cloud Auth response
+    private ResponseBuilder authenticateByCred(HttpServletRequest request, HttpServletResponse response,
+                                               JAXBElement<? extends Credentials> cred, com.rackspace.idm.domain.entity.User user, String body,
+                                               HttpHeaders httpHeaders, String resource)
+        throws IOException, JAXBException, URISyntaxException {
+
+        //Get Cloud Auth response
         String xmlBody = body;
         if (!httpHeaders.getMediaType().isCompatible(MediaType.APPLICATION_XML_TYPE)) {
             xmlBody = marshallObjectToString(cred);
         }
-        Response.ResponseBuilder serviceResponse = cloudClient.post(getCloudAuthV11Url().concat("auth-admin"), httpHeaders, xmlBody);
+        Response.ResponseBuilder serviceResponse = cloudClient.post(getCloudAuthV11Url().concat(resource), httpHeaders, xmlBody);
         Response dummyResponse = serviceResponse.clone().build();
          //If SUCCESS and "user" is not null, store token to "user" and return cloud response
         int status = dummyResponse.getStatus();
+        if (status == HttpServletResponse.SC_MOVED_TEMPORARILY){
+            serviceResponse.location(new URI(config.getString("ga.endpoint")+"v1.1/auth-admin"));
+        }
         if (status == HttpServletResponse.SC_OK && user != null) {
             AuthData authResult = getAuthFromResponse(dummyResponse.getEntity().toString());
             if(authResult != null) {
@@ -157,23 +153,12 @@ public class DelegateCloud11Service implements Cloud11Service {
             return serviceResponse;
         }
         else { //If we get this far, return Default Service Response
-            return defaultCloud11Service.adminAuthenticate(request, response, httpHeaders, body);
-        }
-
-        /*
-        Response.ResponseBuilder serviceResponse = getCloud11Service().adminAuthenticate(request, response, httpHeaders, body);
-        // We have to clone the ResponseBuilder from above because once we build
-        // it below its gone.
-        Response.ResponseBuilder clonedServiceResponse = serviceResponse.clone();
-        int status = clonedServiceResponse.build().getStatus();
-        if (status == HttpServletResponse.SC_NOT_FOUND || status == HttpServletResponse.SC_UNAUTHORIZED) {
-            if (!httpHeaders.getMediaType().isCompatible(MediaType.APPLICATION_XML_TYPE)) {
-                body = marshallObjectToString(credentialUnmarshaller.unmarshallCredentialsFromJSON(body));
+            if(resource.equals("auth")) {
+                return defaultCloud11Service.authenticate(request, response, httpHeaders, body);
+            }else{
+                return defaultCloud11Service.adminAuthenticate(request, response, httpHeaders, body);
             }
-            return cloudClient.post(getCloudAuthV11Url().concat("auth-admin"), httpHeaders, body);
         }
-        return serviceResponse;
-        */
     }
 
     @Override

@@ -405,7 +405,7 @@ public class DefaultCloud11ServiceTest {
         when(credentials.getValue()).thenReturn(new UserCredentials());
         doThrow(new IOException()).when(response).sendRedirect(anyString());
         defaultCloud11Service.adminAuthenticateResponse(credentials, response);
-        verify(response).sendRedirect("cloud/auth");
+        verify(response).sendRedirect("auth");
     }
 
     @Test
@@ -414,7 +414,7 @@ public class DefaultCloud11ServiceTest {
         HttpServletResponse response = mock(HttpServletResponse.class);
         when(credentials.getValue()).thenReturn(new UserCredentials());
         defaultCloud11Service.adminAuthenticateResponse(credentials, response);
-        verify(response).sendRedirect("cloud/auth");
+        verify(response).sendRedirect("auth");
     }
 
     @Test
