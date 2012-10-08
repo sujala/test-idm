@@ -70,12 +70,7 @@ public class Cloud11VersionResource {
     @Path("auth-admin")
     public Response adminAuthenticate(@Context HttpServletRequest request, @Context HttpServletResponse response, @Context HttpHeaders httpHeaders, String body)
             throws IOException, JAXBException, URISyntaxException {
-    	
-    	if (config.getBoolean("useCloudAuth")) {
-            return delegateCloud11Service.adminAuthenticate(request, response, httpHeaders, body).build();
-        } else {
-            return defaultCloud11Service.authenticate(request, response, httpHeaders, body).build();
-        }
+        return getCloud11Service().adminAuthenticate(request, response, httpHeaders, body).build();
     }
 
     @GET

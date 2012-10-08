@@ -1163,7 +1163,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     Response.ResponseBuilder adminAuthenticateResponse(JAXBElement<? extends Credentials> cred, HttpServletResponse response)
             throws IOException {
         if (cred.getValue() instanceof UserCredentials) {
-            handleRedirect(response, "cloud/auth");
+            handleRedirect(response, "auth");
         }
 
         User user = null;
