@@ -251,6 +251,7 @@ public class DefaultCloud20ServiceTest {
         when(config.getString("rackspace.customerId")).thenReturn(null);
         when(userConverterCloudV20.toUserDO(userOS)).thenReturn(user);
         when(httpHeaders.getMediaType()).thenReturn(MediaType.APPLICATION_XML_TYPE);
+        when(userGroupService.checkAndGetGroupById(anyInt())).thenReturn(group);
 
         spy = spy(defaultCloud20Service);
         doNothing().when(spy).checkXAUTHTOKEN(eq(authToken), anyBoolean(), any(String.class));
@@ -4864,7 +4865,7 @@ public class DefaultCloud20ServiceTest {
     public void addUserToGroup_callsVerifyServiceAdminLevelAccess() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        spy.addUserToGroup(null, authToken, null, null);
+        spy.addUserToGroup(null, authToken, "1", null);
         verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
@@ -4933,12 +4934,14 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void removeUserFromGroup_cloudGroupService_callsDeleteGroupFromUser() throws Exception {
-        spy.removeUserFromGroup(null, authToken, "1", userId);
+    	when(userGroupService.isUserInGroup(anyString(), anyInt())).thenReturn(true);
+    	spy.removeUserFromGroup(null, authToken, "1", userId);
         verify(userGroupService).deleteGroupFromUser(1, userId);
     }
 
     @Test
     public void removeUserFromGroup_responseNoContent_returns204() throws Exception {
+    	when(userGroupService.isUserInGroup(anyString(), anyInt())).thenReturn(true);
         Response.ResponseBuilder responseBuilder = spy.removeUserFromGroup(httpHeaders, authToken, "1", userId);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(204));
     }
