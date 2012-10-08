@@ -184,4 +184,28 @@ public class DefaultGroupService implements GroupService {
     public void setDefaultUserService(DefaultUserService defaultUserService) {
         this.defaultUserService = defaultUserService;
     }
+
+	@Override
+	public Group checkAndGetGroupById(Integer groupId) {
+		Group group = getGroupById(groupId);
+        
+        if (group == null) {
+            String errorMsg = String.format("Group %s not found", groupId);
+            throw new NotFoundException(errorMsg);
+        } 
+        
+        return group;
+	}
+
+	@Override
+	public boolean isUserInGroup(String userId, Integer groupId) {
+		List<Group> groups = getGroupsForUser(userId);
+		
+        for (Group currentGroup : groups) {
+            if (currentGroup.getGroupId().equals(groupId)) {
+                return true;
+            }
+        }
+        return false;
+	}
 }

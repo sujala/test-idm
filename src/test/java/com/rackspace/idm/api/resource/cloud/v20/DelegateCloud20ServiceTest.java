@@ -1841,16 +1841,16 @@ public class DelegateCloud20ServiceTest {
     public void addUserCredential_RoutingFalseAndUserExistsFalse_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(userService.userExistsById(userId)).thenReturn(false);
-        delegateCloud20Service.addUserCredential(null, null, userId, null);
-        verify(defaultCloud20Service).addUserCredential(null, null, userId, null);
+        delegateCloud20Service.addUserCredential(null, null, null, userId, null);
+        verify(defaultCloud20Service).addUserCredential(null, null, null, userId, null);
     }
 
     @Test
     public void addUserCredential_RoutingFalseAndUserExistsTrue_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(userService.userExistsById(userId)).thenReturn(true);
-        delegateCloud20Service.addUserCredential(null, null, userId, null);
-        verify(defaultCloud20Service).addUserCredential(null, null, userId, null);
+        delegateCloud20Service.addUserCredential(null, null, null, userId, null);
+        verify(defaultCloud20Service).addUserCredential(null, null, null, userId, null);
     }
 
     @Test
@@ -1858,7 +1858,7 @@ public class DelegateCloud20ServiceTest {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(userService.userExistsById(userId)).thenReturn(false);
         when(httpHeaders.getMediaType()).thenReturn(MediaType.APPLICATION_XML_TYPE);
-        delegateCloud20Service.addUserCredential(httpHeaders, null, userId, null);
+        delegateCloud20Service.addUserCredential(httpHeaders, null, null, userId, null);
         verify(cloudClient).post(url + "users/" + userId + "/OS-KSADM/credentials", httpHeaders, null);
     }
 
@@ -1868,7 +1868,7 @@ public class DelegateCloud20ServiceTest {
         when(userService.userExistsById(userId)).thenReturn(false);
         when(httpHeaders.getMediaType()).thenReturn(MediaType.APPLICATION_JSON_TYPE);
         doReturn("foo").when(spy).convertCredentialToXML(anyString());
-        spy.addUserCredential(httpHeaders, null, userId, null);
+        spy.addUserCredential(httpHeaders, null, null, userId, null);
         verify(spy).convertCredentialToXML(anyString());
     }
 
@@ -1876,8 +1876,8 @@ public class DelegateCloud20ServiceTest {
     public void addUserCredential_RoutingTrueAndUserExistsTrue_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(userService.userExistsById(userId)).thenReturn(true);
-        delegateCloud20Service.addUserCredential(null, null, userId, null);
-        verify(defaultCloud20Service).addUserCredential(null, null, userId, null);
+        delegateCloud20Service.addUserCredential(null, null, null, userId, null);
+        verify(defaultCloud20Service).addUserCredential(null, null, null, userId, null);
     }
 
     @Test

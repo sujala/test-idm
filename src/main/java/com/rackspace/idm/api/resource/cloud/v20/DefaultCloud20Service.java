@@ -403,7 +403,12 @@ public class DefaultCloud20Service implements Cloud20Service {
                 setDomainId(scopeAccessByAccessToken, userDO);
             }
 
-            if(StringUtils.isEmpty(userDO.getDomainId()) && callerIsUserAdmin){
+            String domainId = userDO.getDomainId();
+            if (domainId != null) {
+                domainId = domainId.trim();
+            }
+
+            if (StringUtils.isEmpty(domainId) && callerIsUserAdmin) {
                 throw new BadRequestException("A Domain ID must be specified.");
             }
             else if (callerIsServiceAdmin && (!StringUtils.isEmpty(userDO.getDomainId()))) {
@@ -411,7 +416,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException("Identity-admin cannot be created with a domain");
             }
             else if (callerIsIdentityAdmin) {
-                if (userDO.getDomainId() == null) {
+                if (StringUtils.isEmpty(domainId)) {
                     throw new BadRequestException("User-admin cannot be created without a domain");
                 }
                 domainService.createNewDomain(userDO.getDomainId());
@@ -547,7 +552,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder addUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String body)  {
+    public ResponseBuilder addUserCredential(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String userId, String body)  {
 
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
@@ -586,7 +591,9 @@ public class DefaultCloud20Service implements Cloud20Service {
                 user.setApiKey(userCredentials.getApiKey());
                 userService.updateUser(user, false);
             }
-            return Response.ok(credentials.getValue()).status(Status.OK);
+            UriBuilder requestUriBuilder = uriInfo.getRequestUriBuilder();
+            URI build = requestUriBuilder.build();
+            return Response.created(build).entity(credentials.getValue());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
@@ -1838,10 +1845,14 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getDomainTenants(String authToken, String domainId, String enabled) {
-        authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-        domainService.checkAndGetDomain(domainId);
-        List<Tenant> tenants = tenantService.getTenantsByDomainId(domainId);
-        return Response.ok(objFactories.getOpenStackIdentityV2Factory().createTenants(tenantConverterCloudV20.toTenantList(tenants)).getValue());
+        try{
+            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            domainService.checkAndGetDomain(domainId);
+            List<Tenant> tenants = tenantService.getTenantsByDomainId(domainId);
+            return Response.ok(objFactories.getOpenStackIdentityV2Factory().createTenants(tenantConverterCloudV20.toTenantList(tenants)).getValue());
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
     }
 
     @Override
@@ -2073,14 +2084,21 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder addUserToGroup(HttpHeaders httpHeaders, String authToken, String groupId, String userId)  {
         try {
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
+            authorizationService.verifyIdentityAdminLevelAccess(scopeAccess);
             validator20.validateGroupId(groupId);
+            Group group = cloudGroupService.checkAndGetGroupById(Integer.parseInt(groupId));
+
             User user = userService.checkAndGetUserById(userId);
-            List<User> subUsers = userService.getSubUsers(user);
-            
-            for (User subUser : subUsers) {
-            	cloudGroupService.addGroupToUser(Integer.parseInt(groupId), subUser.getId());
+
+            if (authorizationService.authorizeCloudUserAdmin(scopeAccess)) {
+                List<User> subUsers = userService.getSubUsers(user);
+                
+                for (User subUser : subUsers) {
+                    cloudGroupService.addGroupToUser(Integer.parseInt(groupId), subUser.getId());
+                }
             }
+
             cloudGroupService.addGroupToUser(Integer.parseInt(groupId), userId);
             return Response.noContent();
         } catch (Exception e) {
@@ -2091,16 +2109,28 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder removeUserFromGroup(HttpHeaders httpHeaders, String authToken, String groupId, String userId)  {
         try {
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
+            authorizationService.verifyIdentityAdminLevelAccess(scopeAccess);
             validator20.validateGroupId(groupId);
+            Group group = cloudGroupService.checkAndGetGroupById(Integer.parseInt(groupId));
+
             if (userId == null || userId.trim().isEmpty()) {
                 throw new BadRequestException("Invalid user id");
             }
+
+
+            if (!cloudGroupService.isUserInGroup(userId, group.getGroupId())) {
+                throw new NotFoundException("Group '" + group.getName() + "' is not assigned to user.");
+            }
+
             User user = userService.checkAndGetUserById(userId);
-            List<User> subUsers = userService.getSubUsers(user);
-            
-            for (User subUser: subUsers) {
-            	cloudGroupService.deleteGroupFromUser(Integer.parseInt(groupId), subUser.getId());
+
+            if (authorizationService.authorizeCloudUserAdmin(scopeAccess)) {
+                List<User> subUsers = userService.getSubUsers(user);
+                
+                for (User subUser: subUsers) {
+                    cloudGroupService.deleteGroupFromUser(Integer.parseInt(groupId), subUser.getId());
+                }
             }
             cloudGroupService.deleteGroupFromUser(Integer.parseInt(groupId), userId);
             return Response.noContent();
@@ -2117,11 +2147,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParamName.GROUP_ID, groupId)};
             String iMarker = validateMarker(marker);
             int iLimit =  validateLimit(limit);
-            Group exist = cloudGroupService.getGroupById(Integer.parseInt(groupId));
-            if (exist == null) {
-                String errorMsg = String.format("Group %s not found", groupId);
-                throw new NotFoundException(errorMsg);
-            }
+            cloudGroupService.checkAndGetGroupById(Integer.parseInt(groupId));
             Users users = cloudGroupService.getAllEnabledUsers(filters, iMarker, iLimit);
 
             return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUsers(this.userConverterCloudV20.toUserList(users.getUsers())).getValue());

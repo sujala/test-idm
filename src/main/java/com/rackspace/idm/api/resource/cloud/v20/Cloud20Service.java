@@ -45,7 +45,7 @@ public interface Cloud20Service {
 
     ResponseBuilder getTenantById(HttpHeaders httpHeaders, String authToken, String tenantsId) ;
 
-    ResponseBuilder addUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String body) ;
+    ResponseBuilder addUserCredential(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String userId, String body) ;
 
     ResponseBuilder listCredentials(HttpHeaders httpHeaders, String authToken, String userId, String marker, Integer limit) ;
 
