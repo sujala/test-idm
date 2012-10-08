@@ -2043,6 +2043,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException("Invalid user id");
             }
 
+
             if (!cloudGroupService.isUserInGroup(userId, group.getGroupId())) {
                 throw new NotFoundException("Group '" + group.getName() + "' is not assigned to user.");
             }
