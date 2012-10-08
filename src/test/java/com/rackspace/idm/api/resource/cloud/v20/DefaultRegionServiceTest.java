@@ -128,6 +128,64 @@ public class DefaultRegionServiceTest {
         spy.validateDefaultRegion("   ");
     }
 
+    @Test (expected = BadRequestException.class)
+    public void validateDefaultRegionByScopeAccess_invalidRegion_throwsBadRequest() throws Exception {
+        DefaultRegionService spy = spy(defaultRegionService);
+        ScopeAccess sa = new ScopeAccess();
+        Set<String> regions = new HashSet<String>();
+        regions.add("ORD-TEST");
+        regions.add("ORD");
+        doReturn(regions).when(spy).getDefaultRegionsForUser(sa);
+
+        spy.validateDefaultRegion("DFW", sa);
+    }
+
+    @Test (expected = BadRequestException.class)
+    public void validateDefaultRegionByScopeAccess_emptyString_throwsBadRequest() throws Exception {
+        DefaultRegionService spy = spy(defaultRegionService);
+        ScopeAccess sa = new ScopeAccess();
+        Set<String> regions = new HashSet<String>();
+        regions.add("ORD-TEST");
+        regions.add("ORD");
+        doReturn(regions).when(spy).getDefaultRegionsForUser(sa);
+
+        spy.validateDefaultRegion("", sa);
+    }
+
+    @Test (expected = BadRequestException.class)
+    public void validateDefaultRegionByScopeAccess_spaceString_throwsBadRequest() throws Exception {
+        DefaultRegionService spy = spy(defaultRegionService);
+        ScopeAccess sa = new ScopeAccess();
+        Set<String> regions = new HashSet<String>();
+        regions.add("ORD-TEST");
+        regions.add("ORD");
+        doReturn(regions).when(spy).getDefaultRegionsForUser(sa);
+
+        spy.validateDefaultRegion(" ", sa);
+    }
+
+    @Test (expected = BadRequestException.class)
+    public void checkDefaultRegion_nonMatchingRegion_throwsBadRequest() throws Exception {
+        DefaultRegionService spy = spy(defaultRegionService);
+        Set<String> regions = new HashSet<String>();
+        regions.add("ORD");
+        regions.add("ORD-TEST");
+
+        spy.checkDefaultRegion("DFW", regions);
+    }
+
+    @Test
+    public void checkDefaultRegion_matchingRegion_noException() throws Exception {
+        DefaultRegionService spy = spy(defaultRegionService);
+        Set<String> regions = new HashSet<String>();
+        regions.add("ORD");
+        regions.add("ORD-TEST");
+
+        spy.checkDefaultRegion("ORD", regions);
+    }
+
+
+
     @Test
     public void getDefaultRegions_returnsNonNullValue() throws Exception {
         Set<String> regionList = defaultRegionService.getDefaultRegions();
