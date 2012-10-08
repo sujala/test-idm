@@ -4300,7 +4300,7 @@ public class DefaultCloud20ServiceTest {
         when(scopeAccessService.getScopeAccessByUserId(userId)).thenReturn(value);
         when(authorizationService.hasDefaultUserRole(value)).thenReturn(true);
         spy.updateUser(null, authToken, userId, userOS);
-        verify(defaultRegionService).validateDefaultRegion(anyString());
+        verify(defaultRegionService).validateDefaultRegion(anyString(), any(ScopeAccess.class));
     }
 
     @Test
@@ -4315,7 +4315,7 @@ public class DefaultCloud20ServiceTest {
         when(scopeAccessService.getScopeAccessByUserId(userId)).thenReturn(scopeAccessForUserAdmin);
         when(authorizationService.hasUserAdminRole(scopeAccessForUserAdmin)).thenReturn(true);
         spy.updateUser(null, authToken, userId, userOS);
-        verify(defaultRegionService).validateDefaultRegion(anyString());
+        verify(defaultRegionService).validateDefaultRegion(anyString(), any(ScopeAccess.class));
     }
 
     @Test
@@ -4399,6 +4399,7 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void updateUser_userIdUserAdmin_callsDefaultRegionService() throws Exception {
         User user = new User();
+        user.setRegion("region");
         user.setId(userId);
         userOS.setId(userId);
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
@@ -4408,7 +4409,7 @@ public class DefaultCloud20ServiceTest {
         when(scopeAccessService.getScopeAccessByUserId(userId)).thenReturn(value);
         when(authorizationService.hasUserAdminRole(value)).thenReturn(true);
         spy.updateUser(null, authToken, userId, userOS);
-        verify(defaultRegionService).validateDefaultRegion(user.getRegion());
+        verify(defaultRegionService).validateDefaultRegion(anyString(), any(ScopeAccess.class));
     }
 
     @Test

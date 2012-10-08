@@ -8,6 +8,7 @@ import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.BadRequestException;
+import org.apache.taglibs.standard.tag.common.core.SetSupport;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -24,9 +25,12 @@ import java.util.Set;
  */
 @Component
 public class DefaultRegionService {
-
+    // TODO: Remove Repeated Code aka Hector's weird Messy Function (jacob should do this)
     @Autowired
     private EndpointService endpointService;
+
+    @Autowired
+    private ScopeAccessService scopeAccessService;
 
     @Autowired
     private ApplicationService applicationService;
@@ -40,6 +44,31 @@ public class DefaultRegionService {
         if (defaultRegion != null && !defaultRegions.contains(defaultRegion)) {
             throw new BadRequestException("Invalid defaultRegion value, accepted values are:" + regionString + ".");
         }
+    }
+
+    public void validateDefaultRegion(String defaultRegion, ScopeAccess usa) {
+        Set<String> defaultRegions = this.getDefaultRegionsForUser(usa);
+        String regionString = "";
+        for (String region : defaultRegions) {
+            regionString += " " + region;
+        }
+        if (defaultRegion != null && !defaultRegions.contains(defaultRegion)) {
+            throw new BadRequestException("Invalid defaultRegion value, accepted values are:" + regionString + ".");
+        }
+    }
+
+    private Set<String> getDefaultRegionsForUser(ScopeAccess usa) {
+        List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
+        Set<String> defaultRegions = new HashSet<String>();
+        for (OpenstackEndpoint endpoint : endpoints) {
+            List<CloudBaseUrl> baseUrls = endpoint.getBaseUrls();
+            for (CloudBaseUrl baseUrl : baseUrls) {
+                if (baseUrl.getServiceName().equalsIgnoreCase("cloudserversopenstack")) {
+                    defaultRegions.add(baseUrl.getRegion());
+                }
+            }
+        }
+        return defaultRegions;
     }
 
     public Set<String> getDefaultRegions() {
