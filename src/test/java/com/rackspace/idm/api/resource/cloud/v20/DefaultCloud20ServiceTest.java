@@ -4438,6 +4438,25 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void updateUser_regionDefined_callsValidateDefaultRegion() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+
+        User user = new User();
+        user.setId(userId);
+        user.setRegion("region");
+        userOS.setId(userId);
+
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        when(userService.checkAndGetUserById(userId)).thenReturn(user);
+        doReturn(true).when(authorizationService).authorizeCloudUser(any(ScopeAccess.class));
+        doReturn(false).when(authorizationService).authorizeCloudUserAdmin(any(ScopeAccess.class));
+        when(userService.getUserByAuthToken(authToken)).thenReturn(user);
+
+        spy.updateUser(null, authToken, userId, userOS);
+        verify(defaultRegionService).validateDefaultRegion(anyString(), any(ScopeAccess.class));
+    }
+
+    @Test
     public void updateUserApiKeyCredentials_callsVerifyServiceAdminLevelAccess() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);

@@ -526,6 +526,20 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     }
 
     @Test
+    public void updateUser_withInvalidRegion_returns400() throws Exception {
+        WebResource resource = resource().path("cloud/v2.0/users/" + testUserAdmin.getId());
+        ClientResponse clientResponse = resource.header(X_AUTH_TOKEN, identityToken).type(MediaType.APPLICATION_JSON_TYPE).post(ClientResponse.class, "{\n" +
+                "  \"user\": {\n" +
+                "    \"id\":\"" + testUserAdmin.getId() + "\",\n" +
+                "    \"username\": \"" + identityUserName + "\",\n" +
+                "    \"email\": \"testuser@example.org\",\n" +
+                "    \"RAX-AUTH:defaultRegion\": \"BLAH\"\n" +
+                "  }\n" +
+                "}");
+        assertThat("response code", clientResponse.getStatus(), equalTo(400));
+    }
+
+    @Test
     public void getUsersByDomainId_invalidDomainId_returns404() throws Exception {
         WebResource resource = resource().path("RAX-AUTH/domains/" + testDomainId + "/users");
         ClientResponse clientResponse = resource.header(X_AUTH_TOKEN, identityToken).type(MediaType.APPLICATION_JSON_TYPE).get(ClientResponse.class);

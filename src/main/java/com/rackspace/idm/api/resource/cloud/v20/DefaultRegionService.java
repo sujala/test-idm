@@ -25,7 +25,9 @@ import java.util.Set;
  */
 @Component
 public class DefaultRegionService {
-    // TODO: Remove Repeated Code aka Hector's weird Messy Function (jacob should do this)
+
+    static String CLOUD_SERVERS_OPENSTACK = "cloudserversopenstack";
+
     @Autowired
     private EndpointService endpointService;
 
@@ -36,34 +38,32 @@ public class DefaultRegionService {
     private ApplicationService applicationService;
 
     public void validateDefaultRegion(String defaultRegion) {
-        Set<String> defaultRegions = this.getDefaultRegions();
-        String regionString = "";
-        for (String region : defaultRegions) {
-            regionString += " " + region;
-        }
-        if (defaultRegion != null && !defaultRegions.contains(defaultRegion)) {
-            throw new BadRequestException("Invalid defaultRegion value, accepted values are:" + regionString + ".");
-        }
+        Set<String> regions = this.getDefaultRegions();
+        checkDefaultRegion(defaultRegion, regions);
     }
 
     public void validateDefaultRegion(String defaultRegion, ScopeAccess usa) {
-        Set<String> defaultRegions = this.getDefaultRegionsForUser(usa);
+        Set<String> regions = this.getDefaultRegionsForUser(usa);
+        checkDefaultRegion(defaultRegion, regions);
+    }
+
+    public void checkDefaultRegion(String region, Set<String> defaultRegions) {
         String regionString = "";
-        for (String region : defaultRegions) {
-            regionString += " " + region;
+        for (String defaultRegion : defaultRegions) {
+            regionString += " " + defaultRegion;
         }
-        if (defaultRegion != null && !defaultRegions.contains(defaultRegion)) {
+        if (region != null && !defaultRegions.contains(region)) {
             throw new BadRequestException("Invalid defaultRegion value, accepted values are:" + regionString + ".");
         }
     }
 
-    private Set<String> getDefaultRegionsForUser(ScopeAccess usa) {
+    public Set<String> getDefaultRegionsForUser(ScopeAccess usa) {
         List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
         Set<String> defaultRegions = new HashSet<String>();
         for (OpenstackEndpoint endpoint : endpoints) {
             List<CloudBaseUrl> baseUrls = endpoint.getBaseUrls();
             for (CloudBaseUrl baseUrl : baseUrls) {
-                if (baseUrl.getServiceName().equalsIgnoreCase("cloudserversopenstack")) {
+                if (baseUrl.getServiceName().equalsIgnoreCase(CLOUD_SERVERS_OPENSTACK)) {
                     defaultRegions.add(baseUrl.getRegion());
                 }
             }
