@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.domain.dao.DomainDao;
+import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.Users;
@@ -186,5 +187,9 @@ public class DefaultDomainService implements DomainService{
         if (!alphaNumericColonHyphenSpace.matcher(domain.getName()).matches()) {
             throw new BadRequestException("Domain name has invalid characters.");
         }
+    }
+
+    public void setTenantService(TenantService tenantService) {
+        this.tenantService = tenantService;
     }
 }
