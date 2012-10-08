@@ -2019,7 +2019,10 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             User user = userService.checkAndGetUserById(userId);
 
-            if (authorizationService.authorizeCloudUserAdmin(scopeAccess)) {
+            boolean callerIsIdentityAdmin = authorizationService.authorizeCloudIdentityAdmin(scopeAccess);
+            boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccess);
+
+            if (callerIsIdentityAdmin || callerIsUserAdmin) {
                 List<User> subUsers = userService.getSubUsers(user);
                 
                 for (User subUser : subUsers) {
@@ -2053,7 +2056,10 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             User user = userService.checkAndGetUserById(userId);
 
-            if (authorizationService.authorizeCloudUserAdmin(scopeAccess)) {
+            boolean callerIsIdentityAdmin = authorizationService.authorizeCloudIdentityAdmin(scopeAccess);
+            boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccess);
+
+            if (callerIsIdentityAdmin || callerIsUserAdmin) {
                 List<User> subUsers = userService.getSubUsers(user);
                 
                 for (User subUser: subUsers) {
