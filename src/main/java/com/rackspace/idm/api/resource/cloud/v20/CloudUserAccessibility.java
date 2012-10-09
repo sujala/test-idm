@@ -2,15 +2,9 @@ package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.idm.api.converter.cloudv20.DomainConverterCloudV20;
 import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.service.AuthorizationService;
-import com.rackspace.idm.domain.service.DomainService;
-import com.rackspace.idm.domain.service.TenantService;
-import com.rackspace.idm.domain.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import com.rackspace.idm.domain.service.*;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -31,11 +25,11 @@ public class CloudUserAccessibility {
 
     private DomainService domainService;
 
-    private DomainConverterCloudV20 domainConverterCloudV20;
-
     private AuthorizationService authorizationService;
 
     private UserService userService;
+
+    private EndpointService endpointService;
 
     public CloudUserAccessibility(TenantService tenantService, DomainService domainService,
                                   AuthorizationService authorizationService, UserService userService,
@@ -81,6 +75,24 @@ public class CloudUserAccessibility {
             }
         }
         return noDup;
+    }
+
+    public List<OpenstackEndpoint> getAccessibleDomainEndpoints(List<OpenstackEndpoint> endpoints, List<Tenant> tenants) {
+        List<OpenstackEndpoint> openstackEndpoints = new ArrayList<OpenstackEndpoint>();
+        if(endpoints.isEmpty() || tenants.isEmpty()){
+            return openstackEndpoints;
+        }
+        for(OpenstackEndpoint openstackEndpoint : endpoints){
+            String tenantId = openstackEndpoint.getTenantId();
+            for(Tenant tenant : tenants){
+                if(tenantId.equals(tenant.getTenantId())){
+                    openstackEndpoints.add(openstackEndpoint);
+                }
+            }
+
+        }
+
+        return openstackEndpoints;
     }
 
     public User getCallerByScopeAccess(ScopeAccess scopeAccess){

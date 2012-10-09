@@ -1987,39 +1987,47 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getAccessibleDomains(String authToken) {
-        ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
+        try {
+            ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
 
-        CloudUserAccessibility cloudUserAccessibility = getUserAccessibility(scopeAccessByAccessToken);
-        User user = userService.getUserByScopeAccess(scopeAccessByAccessToken);
-        ScopeAccess scopeAccessByUserId = scopeAccessService.getScopeAccessByUserId(user.getId());
+            CloudUserAccessibility cloudUserAccessibility = getUserAccessibility(scopeAccessByAccessToken);
+            User user = userService.getUserByScopeAccess(scopeAccessByAccessToken);
+            ScopeAccess scopeAccessByUserId = scopeAccessService.getScopeAccessByUserId(user.getId());
 
-        Domains domains = cloudUserAccessibility.getAccessibleDomainsByScopeAccess(scopeAccessByUserId);
+            Domains domains = cloudUserAccessibility.getAccessibleDomainsByScopeAccess(scopeAccessByUserId);
 
-        domains = cloudUserAccessibility.addUserDomainToDomains(user, domains);
-        domains = cloudUserAccessibility.removeDuplicateDomains(domains);
+            domains = cloudUserAccessibility.addUserDomainToDomains(user, domains);
+            domains = cloudUserAccessibility.removeDuplicateDomains(domains);
 
-        com.rackspace.docs.identity.api.ext.rax_auth.v1.Domains domainsObj = domainsConverterCloudV20.toDomains(domains);
+            com.rackspace.docs.identity.api.ext.rax_auth.v1.Domains domainsObj = domainsConverterCloudV20.toDomains(domains);
 
-        return Response.ok().entity(raxAuthObjectFactory.createDomains(domainsObj).getValue());
+            return Response.ok().entity(raxAuthObjectFactory.createDomains(domainsObj).getValue());
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
     }
 
     @Override
     public ResponseBuilder getAccessibleDomainsForUser(String authToken, String userId) {
-        ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
+        try {
+            ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
 
-        CloudUserAccessibility cloudUserAccessibility = getUserAccessibility(scopeAccessByAccessToken);
+            CloudUserAccessibility cloudUserAccessibility = getUserAccessibility(scopeAccessByAccessToken);
 
-        User user = userService.checkAndGetUserById(userId);
-        ScopeAccess scopeAccessByUserId = scopeAccessService.getScopeAccessByUserId(user.getId());
+            User user = userService.checkAndGetUserById(userId);
+            ScopeAccess scopeAccessByUserId = scopeAccessService.getScopeAccessByUserId(user.getId());
 
-        Domains domains = cloudUserAccessibility.getAccessibleDomainsByScopeAccess(scopeAccessByUserId);
+            Domains domains = cloudUserAccessibility.getAccessibleDomainsByScopeAccess(scopeAccessByUserId);
 
-        domains = cloudUserAccessibility.addUserDomainToDomains(user, domains);
-        domains = cloudUserAccessibility.removeDuplicateDomains(domains);
+            domains = cloudUserAccessibility.addUserDomainToDomains(user, domains);
+            domains = cloudUserAccessibility.removeDuplicateDomains(domains);
 
-        com.rackspace.docs.identity.api.ext.rax_auth.v1.Domains domainsObj = domainsConverterCloudV20.toDomains(domains);
+            com.rackspace.docs.identity.api.ext.rax_auth.v1.Domains domainsObj = domainsConverterCloudV20.toDomains(domains);
 
-        return Response.ok().entity(raxAuthObjectFactory.createDomains(domainsObj).getValue());
+            return Response.ok().entity(raxAuthObjectFactory.createDomains(domainsObj).getValue());
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
     }
 
     public CloudUserAccessibility getUserAccessibility(ScopeAccess scopeAccess){
@@ -2045,7 +2053,26 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getAccessibleDomainsEndpointsForUser(String authToken, String userId, String domainId) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        try {
+            ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
+
+            CloudUserAccessibility cloudUserAccessibility = getUserAccessibility(scopeAccessByAccessToken);
+
+            User user = userService.checkAndGetUserById(userId);
+            domainService.checkAndGetDomain(domainId);
+            ScopeAccess scopeAccessByUserId = scopeAccessService.getScopeAccessByUserId(user.getId());
+
+            List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(scopeAccessByUserId);
+            List<Tenant> tenants = tenantService.getTenantsByDomainId(domainId);
+
+            List<OpenstackEndpoint> domainEndpoints = cloudUserAccessibility.getAccessibleDomainEndpoints(endpoints,tenants);
+
+            EndpointList list = endpointConverterCloudV20.toEndpointList(domainEndpoints);
+
+            return Response.ok(objFactories.getOpenStackIdentityV2Factory().createEndpoints(list).getValue());
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
     }
 
     public boolean isValidImpersonatee(User user) {
