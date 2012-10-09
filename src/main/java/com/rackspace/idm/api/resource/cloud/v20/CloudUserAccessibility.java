@@ -48,9 +48,11 @@ public class CloudUserAccessibility {
     }
 
     public Domains getAccessibleDomainsByScopeAccessForUser(ScopeAccess scopeAccessByAccessToken) {
-        List<Tenant> tenants;
-        tenants = tenantService.getTenantsForScopeAccessByTenantRoles(scopeAccessByAccessToken);
         Domains domains = new Domains();
+        List<Tenant> tenants = tenantService.getTenantsForScopeAccessByTenantRoles(scopeAccessByAccessToken);
+        if(tenants == null || tenants.size() == 0){
+            return domains;
+        }
         List<Domain> listDomains = domainService.getDomainsForTenants(tenants);
         for (Domain domain : listDomains) {
             domains.getDomain().add(domain);
@@ -64,6 +66,9 @@ public class CloudUserAccessibility {
 
     public Domains addUserDomainToDomains(User user, Domains domains){
         Domain domain = domainService.getDomain(user.getDomainId());
+        if(domain == null){
+            return domains;
+        }
         domains.getDomain().add(domain);
         return domains;
     }
