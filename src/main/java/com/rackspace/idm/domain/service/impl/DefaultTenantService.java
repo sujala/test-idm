@@ -4,7 +4,6 @@ import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.DomainService;
 import com.rackspace.idm.domain.service.TenantService;
-import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ClientConflictException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
@@ -497,7 +496,7 @@ public class DefaultTenantService implements TenantService {
                 role.setDescription(cRole.getDescription());
             }
         }
-        return getTenantOnlyRoles(roles);
+        return roles;
     }
 
     @Override

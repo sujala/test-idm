@@ -25,6 +25,10 @@ public interface Cloud20Service {
 
     ResponseBuilder validateToken(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo);
 
+    ResponseBuilder revokeToken(HttpHeaders httpHeaders, String authToken);
+
+    ResponseBuilder revokeToken(HttpHeaders httpHeaders, String authToken, String userToken);
+
     ResponseBuilder checkToken(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo) ;
 
     ResponseBuilder listEndpointsForToken(HttpHeaders httpHeaders, String authToken, String tokenId) ;

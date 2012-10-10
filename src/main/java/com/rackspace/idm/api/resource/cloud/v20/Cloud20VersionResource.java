@@ -81,6 +81,20 @@ public class Cloud20VersionResource {
         return getCloud20Service().authenticate(httpHeaders, authenticationRequest).build();
     }
 
+    @DELETE
+    @Path("tokens")
+    public Response revokeToken(@Context HttpHeaders httpHeaders, @HeaderParam(X_AUTH_TOKEN) String authToken) {
+        return defaultCloud20Service.revokeToken(httpHeaders, authToken).build();
+    }
+
+    @DELETE
+    @Path("tokens/{tokenId}")
+    public Response revokeUserToken(@Context HttpHeaders httpHeaders,
+                                    @HeaderParam(X_AUTH_TOKEN) String authToken,
+                                    @PathParam("tokenId") String tokenId) {
+        return defaultCloud20Service.revokeToken(httpHeaders, authToken, tokenId).build();
+    }
+
     @GET
     @Path("tokens/{tokenId}")
     public Response validateToken(

@@ -23,7 +23,6 @@ import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.Control;
 import com.unboundid.ldap.sdk.SearchResultEntry;
 import org.apache.commons.configuration.Configuration;
-import org.apache.http.client.utils.URIBuilder;
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -737,6 +736,24 @@ public class DefaultCloud20ServiceTest {
         when(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory());
         Response.ResponseBuilder responseBuilder = spy.validateToken(httpHeaders, authToken, "token", "belongsTo");
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void revokeSelfToken_returnsAccepted() throws Exception {
+        Response.ResponseBuilder responseBuilder = spy.revokeToken(httpHeaders, authToken);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(204));
+    }
+
+    @Test
+    public void revokeToken_returnsAccepted() throws Exception {
+        Response.ResponseBuilder responseBuilder = spy.revokeToken(httpHeaders, authToken, "token");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(204));
+    }
+
+    @Test(expected = NotFoundException.class)
+    public void revokeInvalidToken_returnsNotFound() throws Exception {
+        when(scopeAccessService.getScopeAccessByAccessToken("invalid")).thenReturn(null);
+        Response.ResponseBuilder responseBuilder = spy.revokeToken(httpHeaders, authToken, "invalid");
     }
 
     @Test
