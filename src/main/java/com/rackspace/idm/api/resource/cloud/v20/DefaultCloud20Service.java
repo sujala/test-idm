@@ -1989,19 +1989,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder getAccessibleDomains(String authToken) {
         try {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
-
-            CloudUserAccessibility cloudUserAccessibility = getUserAccessibility(scopeAccessByAccessToken);
             User user = userService.getUserByScopeAccess(scopeAccessByAccessToken);
-            ScopeAccess scopeAccessByUserId = scopeAccessService.getScopeAccessByUserId(user.getId());
 
-            Domains domains = cloudUserAccessibility.getAccessibleDomainsByScopeAccess(scopeAccessByUserId);
-
-            domains = cloudUserAccessibility.addUserDomainToDomains(user, domains);
-            domains = cloudUserAccessibility.removeDuplicateDomains(domains);
-
-            com.rackspace.docs.identity.api.ext.rax_auth.v1.Domains domainsObj = domainsConverterCloudV20.toDomains(domains);
-
-            return Response.ok().entity(raxAuthObjectFactory.createDomains(domainsObj).getValue());
+            return getAccessibleDomainsForUser(authToken, user.getId());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }

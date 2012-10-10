@@ -1,6 +1,5 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.idm.api.converter.cloudv20.DomainConverterCloudV20;
 import com.rackspace.idm.domain.entity.Domains;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
@@ -9,7 +8,7 @@ import com.rackspace.idm.domain.service.DomainService;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.ForbiddenException;
-import org.springframework.stereotype.Component;
+
 
 /**
  * Created by IntelliJ IDEA.
@@ -25,15 +24,12 @@ public class CloudDefaultUserAccessibility extends CloudUserAccessibility {
         super(tenantService, domainService, authorizationService, userService, callerScopeAccess);
     }
 
-    public Domains getAccessibleDomainsByScopeAccess(ScopeAccess userScopeAccess) {
-        Domains domains;
-        User caller = getCallerByScopeAccess(callerScopeAccess);
-        User user = getCallerByScopeAccess(userScopeAccess);
-        if (caller.getId().equals(user.getId())) {
-            domains = getAccessibleDomainsByScopeAccessForUser(userScopeAccess);
-        } else {
-            throw new ForbiddenException(NOT_AUTHORIZED);
+    public boolean hasAccess(ScopeAccess userScopeAccess){
+        User caller = userService.getUserByScopeAccess(callerScopeAccess);
+        User user = userService.getUserByScopeAccess(userScopeAccess);
+        if(caller.getId().equals(user.getId())){
+            return true;
         }
-        return domains;
+        return false;
     }
 }

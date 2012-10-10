@@ -25,13 +25,13 @@ public class CloudServiceAdminAccessibility extends CloudUserAccessibility {
         super(tenantService, domainService, authorizationService, userService, callerScopeAccess);
     }
 
-    public Domains getAccessibleDomainsByScopeAccess(ScopeAccess userScopeAccess) {
-        if (isIdentityAdmin(callerScopeAccess) || isServiceAdmin(callerScopeAccess)) {
-            Domains domains = getAccessibleDomainsByScopeAccessForUser(userScopeAccess);
-            return domains;
-        } else {
-            throw new ForbiddenException(NOT_AUTHORIZED);
+    public boolean hasAccess(ScopeAccess scopeAccess){
+        Boolean isIdentityAdmin = authorizationService.authorizeCloudIdentityAdmin(callerScopeAccess);
+        Boolean isServiceAdmin = authorizationService.authorizeCloudServiceAdmin(callerScopeAccess);
+        if(isIdentityAdmin || isServiceAdmin){
+            return true;
         }
+        return false;
     }
 
 }

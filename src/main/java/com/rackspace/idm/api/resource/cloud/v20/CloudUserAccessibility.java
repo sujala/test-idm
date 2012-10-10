@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v20;
 import com.rackspace.idm.api.converter.cloudv20.DomainConverterCloudV20;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
+import com.rackspace.idm.exception.ForbiddenException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,11 +26,9 @@ public class CloudUserAccessibility {
 
     private DomainService domainService;
 
-    private AuthorizationService authorizationService;
+    protected AuthorizationService authorizationService;
 
-    private UserService userService;
-
-    private EndpointService endpointService;
+    protected UserService userService;
 
     public CloudUserAccessibility(TenantService tenantService, DomainService domainService,
                                   AuthorizationService authorizationService, UserService userService,
@@ -44,7 +43,7 @@ public class CloudUserAccessibility {
     public Domains getAccessibleDomainsByScopeAccessForUser(ScopeAccess scopeAccessByAccessToken) {
         Domains domains = new Domains();
         List<Tenant> tenants = tenantService.getTenantsForScopeAccessByTenantRoles(scopeAccessByAccessToken);
-        if(tenants == null || tenants.size() == 0){
+        if (tenants == null || tenants.size() == 0) {
             return domains;
         }
         List<Domain> listDomains = domainService.getDomainsForTenants(tenants);
@@ -54,68 +53,57 @@ public class CloudUserAccessibility {
         return domains;
     }
 
-    public Domains getAccessibleDomainsByScopeAccess(ScopeAccess scopeAccess){
-        return null;
+    public Domains getAccessibleDomainsByScopeAccess(ScopeAccess scopeAccess) {
+        Domains domains;
+        if (hasAccess(scopeAccess)) {
+            domains = getAccessibleDomainsByScopeAccessForUser(scopeAccess);
+        } else {
+            throw new ForbiddenException(NOT_AUTHORIZED);
+        }
+        return domains;
     }
 
-    public Domains addUserDomainToDomains(User user, Domains domains){
+    public Domains addUserDomainToDomains(User user, Domains domains) {
         Domain domain = domainService.getDomain(user.getDomainId());
-        if(domain == null){
+        if (domain == null) {
             return domains;
         }
         domains.getDomain().add(domain);
         return domains;
     }
 
-    public Domains removeDuplicateDomains(Domains domains){
+    public Domains removeDuplicateDomains(Domains domains) {
         Domains noDup = new Domains();
-        for(Domain domain : domains.getDomain()) {
-            if(!noDup.getDomain().contains(domain)){
+        for (Domain domain : domains.getDomain()) {
+            if (!noDup.getDomain().contains(domain)) {
                 noDup.getDomain().add(domain);
             }
         }
         return noDup;
     }
 
-    public List<OpenstackEndpoint> getAccessibleDomainEndpoints(List<OpenstackEndpoint> endpoints, List<Tenant> tenants) {
-        List<OpenstackEndpoint> openstackEndpoints = new ArrayList<OpenstackEndpoint>();
-        if(endpoints.isEmpty() || tenants.isEmpty()){
-            return openstackEndpoints;
-        }
-        for(OpenstackEndpoint openstackEndpoint : endpoints){
-            String tenantId = openstackEndpoint.getTenantId();
-            for(Tenant tenant : tenants){
-                if(tenantId.equals(tenant.getTenantId())){
-                    openstackEndpoints.add(openstackEndpoint);
-                }
+    public List<OpenstackEndpoint> getAccessibleDomainEndpoints(List<OpenstackEndpoint> endpoints, List<Tenant> tenants, ScopeAccess scopeAccess) {
+        if(hasAccess(scopeAccess)) {
+            List<OpenstackEndpoint> openstackEndpoints = new ArrayList<OpenstackEndpoint>();
+            if (endpoints.isEmpty() || tenants.isEmpty()) {
+                return openstackEndpoints;
             }
+            for (OpenstackEndpoint openstackEndpoint : endpoints) {
+                String tenantId = openstackEndpoint.getTenantId();
+                for (Tenant tenant : tenants) {
+                    if (tenantId.equals(tenant.getTenantId())) {
+                        openstackEndpoints.add(openstackEndpoint);
+                    }
+                }
 
+            }
+            return openstackEndpoints;
+        } else {
+            throw new ForbiddenException(NOT_AUTHORIZED);
         }
-
-        return openstackEndpoints;
     }
 
-    public User getCallerByScopeAccess(ScopeAccess scopeAccess){
-        return this.userService.getUserByScopeAccess(scopeAccess);
-    }
-
-    public Boolean isDefaultUser(ScopeAccess userScope){
-        return this.authorizationService.authorizeCloudUser(userScope);
-    }
-
-    public Boolean isUserAdmin(ScopeAccess userScope){
-        return this.authorizationService.authorizeCloudUserAdmin(userScope);
-    }
-
-    public Boolean isIdentityAdmin(ScopeAccess userScope){
-        return this.authorizationService.authorizeCloudIdentityAdmin(userScope);
-    }
-
-    public Boolean isServiceAdmin(ScopeAccess userScope){
-        return this.authorizationService.authorizeCloudServiceAdmin(userScope);
-    }
-
-    public void setScopeAccess(ScopeAccess scopeAccess) {
-        this.callerScopeAccess = scopeAccess;
+    public boolean hasAccess(ScopeAccess scopeAccess) {
+        return false;
     }
 }
