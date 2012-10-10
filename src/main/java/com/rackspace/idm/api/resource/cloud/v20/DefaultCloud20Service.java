@@ -1244,11 +1244,16 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
             User user = this.userService.getUserById(userId);
 
-            if (authorizationService.authorizeCloudUser(scopeAccessByAccessToken) ||
-                    authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
-                User caller = getUser(scopeAccessByAccessToken);
-                if (!caller.getId().equals(userId)) {
-                    throw new ForbiddenException("Access denied.");
+            boolean callerIsDefaultUser = authorizationService.authorizeCloudUser(scopeAccessByAccessToken);
+            boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken);
+
+            User caller = getUser(scopeAccessByAccessToken);
+
+            if (callerIsDefaultUser || callerIsUserAdmin) {
+                if (callerIsUserAdmin && credentialType.equals(JSONConstants.APIKEY_CREDENTIALS)) {
+                    authorizationService.verifyDomain(caller, user);
+                } else if (!caller.getId().equals(userId)) {
+                    throw new ForbiddenException(NOT_AUTHORIZED);
                 }
             }
 
@@ -2178,7 +2183,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             if (callerIsIdentityAdmin || callerIsUserAdmin) {
                 List<User> subUsers = userService.getSubUsers(user);
-                
+
                 for (User subUser : subUsers) {
                     cloudGroupService.addGroupToUser(Integer.parseInt(groupId), subUser.getId());
                 }
@@ -2215,7 +2220,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             if (callerIsIdentityAdmin || callerIsUserAdmin) {
                 List<User> subUsers = userService.getSubUsers(user);
-                
+
                 for (User subUser: subUsers) {
                     cloudGroupService.deleteGroupFromUser(Integer.parseInt(groupId), subUser.getId());
                 }
@@ -2465,11 +2470,15 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         try {
             ScopeAccess authScopeAccess = getScopeAccessForValidToken(authToken);
-            authorizationService.verifyUserAdminLevelAccess(authScopeAccess);
+            authorizationService.verifyUserLevelAccess(authScopeAccess);
             boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(authScopeAccess);
+            boolean callerIsDefaultUser = authorizationService.authorizeCloudUser(authScopeAccess);
 
             User caller = userService.getUserByAuthToken(authToken);
             User credUser = this.userService.checkAndGetUserById(userId);
+            if (callerIsDefaultUser && !caller.getId().equals(userId)) {
+                throw new ForbiddenException("This user can only reset their own apiKey");
+            }
             if (callerIsUserAdmin) {
                 authorizationService.verifyDomain(caller,  credUser);
             }
