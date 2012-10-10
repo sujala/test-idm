@@ -1,12 +1,13 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import org.springframework.stereotype.Component;
+
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.GroupDao;
 import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.unboundid.ldap.sdk.*;
-import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.ArrayList;
@@ -19,11 +20,8 @@ import java.util.List;
  * Time: 2:33 PM
  * To change this template use File | Settings | File Templates.
  */
+@Component
 public class LdapGroupRepository extends LdapRepository implements GroupDao {
-
-    public LdapGroupRepository(LdapConnectionPools connPools, Configuration config) {
-        super(connPools, config);
-    }
 
     @Override
     public List<Group> getGroups(String marker, Integer limit) {

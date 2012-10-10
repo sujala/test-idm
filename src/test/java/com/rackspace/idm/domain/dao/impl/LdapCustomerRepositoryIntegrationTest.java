@@ -1,34 +1,30 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import com.rackspace.idm.domain.config.LdapConfiguration;
-import com.rackspace.idm.domain.config.PropertyFileConfiguration;
+import org.junit.runner.RunWith;
+
+import org.springframework.beans.factory.annotation.Autowired;
+
+import org.springframework.test.context.ContextConfiguration;
+
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
 import com.rackspace.idm.domain.entity.Customer;
 import com.unboundid.ldap.sdk.Modification;
 import org.junit.*;
 
 import java.util.List;
 
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(locations = "classpath:app-config.xml")
 public class LdapCustomerRepositoryIntegrationTest extends InMemoryLdapIntegrationTest{
 
-    private static LdapCustomerRepository repo;
-    private static LdapConnectionPools connPools;
+    @Autowired
+    private LdapCustomerRepository repo;
+    @Autowired
+    private LdapConnectionPools connPools;
 
     static String customerId = "DELETE_My_CustomerId";
     String id = "XXXX";
-
-    private static LdapCustomerRepository getRepo(LdapConnectionPools connPools) {
-        return new LdapCustomerRepository(connPools, new PropertyFileConfiguration().getConfig());
-    }
-
-    private static LdapConnectionPools getConnPools() {
-        return new LdapConfiguration(new PropertyFileConfiguration().getConfig()).connectionPools();
-    }
-
-    @BeforeClass
-    public static void setUp() {
-        connPools = getConnPools();
-        repo = getRepo(connPools);
-    }
 
     @Before
     public void preTestSetUp() throws Exception {
@@ -37,11 +33,6 @@ public class LdapCustomerRepositoryIntegrationTest extends InMemoryLdapIntegrati
             repo.deleteCustomer(customerId);
         }
         addNewTestCustomer(customerId);
-    }
-
-    @AfterClass
-    public static void tearDown() {
-        connPools.close();
     }
 
     @Test

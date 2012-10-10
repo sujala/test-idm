@@ -1,5 +1,12 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import org.junit.runner.RunWith;
+
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+
+import org.mockito.runners.MockitoJUnitRunner;
+
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.exception.DuplicateClientGroupException;
@@ -32,14 +39,22 @@ import static org.mockito.Mockito.*;
  * Time: 12:59 PM
  * To change this template use File | Settings | File Templates.
  */
+@RunWith(MockitoJUnitRunner.class)
 public class LdapApplicationRepositoryTest{
-    private LdapApplicationRepository ldapApplicationRepository;
+
+    @InjectMocks 
+    private LdapApplicationRepository ldapApplicationRepository = new LdapApplicationRepository();
+    @Mock
+    private LdapConnectionPools ldapConnectionPools;
+    @Mock
+    private Configuration configuration;
+
+
     private LdapApplicationRepository spy;
     private LDAPInterface ldapInterface;
 
     @Before
     public void setUp() throws Exception {
-        ldapApplicationRepository = new LdapApplicationRepository(mock(LdapConnectionPools.class), mock(Configuration.class));
         ldapInterface = mock(LDAPInterface.class);
         spy = spy(ldapApplicationRepository);
 

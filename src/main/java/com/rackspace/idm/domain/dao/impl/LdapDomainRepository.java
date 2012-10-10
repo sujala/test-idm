@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import org.springframework.stereotype.Component;
+
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.DomainDao;
 import com.rackspace.idm.domain.entity.Domain;
@@ -8,7 +10,6 @@ import com.rackspace.idm.exception.NotFoundException;
 import com.unboundid.ldap.sdk.*;
 import com.unboundid.ldap.sdk.persist.LDAPPersistException;
 import com.unboundid.ldap.sdk.persist.LDAPPersister;
-import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.List;
@@ -20,17 +21,12 @@ import java.util.List;
  * Time: 3:46 PM
  * To change this template use File | Settings | File Templates.
  */
+@Component
 public class LdapDomainRepository extends LdapRepository implements DomainDao{
 
-    private final Configuration config;
     public static final String NULL_OR_EMPTY_DOMAIN_ID_PARAMETER = "Null or Empty domainId parameter";
     public static final String ERROR_GETTING_DOMAIN_OBJECT = "Error getting domain object";
     public static final String PARENT_UNIQUE_ID_CANNOT_BE_BLANK = "ParentUniqueId cannot be blank";
-
-    public LdapDomainRepository(LdapConnectionPools connPools, Configuration config) {
-        super(connPools, config);
-        this.config = config;
-    }
 
     @Override
     public void addDomain(Domain domain) {

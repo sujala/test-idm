@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
 import com.rackspace.idm.audit.Audit;
 import com.unboundid.ldap.sdk.*;
 import com.unboundid.ldap.sdk.controls.ServerSideSortRequestControl;
@@ -183,16 +185,13 @@ public abstract class LdapRepository {
     protected static final String[] ATTR_DOMAIN_SEARCH_ATTRIBUTES = {"*"};
     public static final String LDAP_SEARCH_ERROR = "LDAP Search error - {}";
 
-    private final LdapConnectionPools connPools;
+    @Autowired
+    protected LdapConnectionPools connPools;
 
-    private final Configuration config;
+    @Autowired
+    protected Configuration config;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-
-    protected LdapRepository(LdapConnectionPools conn, Configuration config) {
-        this.connPools = conn;
-        this.config = config;
-    }
 
     protected LDAPConnectionPool getAppConnPool() {
         return connPools.getAppConnPool();

@@ -1,7 +1,13 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import com.rackspace.idm.domain.config.LdapConfiguration;
-import com.rackspace.idm.domain.config.PropertyFileConfiguration;
+import org.junit.runner.RunWith;
+
+import org.springframework.beans.factory.annotation.Autowired;
+
+import org.springframework.test.context.ContextConfiguration;
+
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.entity.*;
 import junit.framework.Assert;
@@ -12,11 +18,18 @@ import java.util.List;
 
 import static org.junit.Assert.fail;
 
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(locations = "classpath:app-config.xml")
 public class LdapScopeAccessPeristenceRepositoryIntegrationTest extends InMemoryLdapIntegrationTest{
-    private static LdapCustomerRepository customerRepo;
-    private static ScopeAccessDao repo;
-    private static LdapApplicationRepository clientRepo;
-    private static LdapConnectionPools connPools;
+
+    @Autowired
+    private LdapCustomerRepository customerRepo;
+    @Autowired
+    private ScopeAccessDao repo;
+    @Autowired
+    private LdapApplicationRepository clientRepo;
+    @Autowired
+    private LdapConnectionPools connPools;
 
     static String customerId = "DELETE_My_CustomerId";
 
@@ -35,30 +48,6 @@ public class LdapScopeAccessPeristenceRepositoryIntegrationTest extends InMemory
     Customer customer = null;
 
     String id = "XXXX";
-
-    @BeforeClass
-    public static void setUp() {
-        connPools = getConnPools();
-        repo = getSaRepo(connPools);
-        customerRepo = getCustomerRepo(connPools);
-        clientRepo = getClientRepo(connPools);
-    }
-
-    private static LdapApplicationRepository getClientRepo(LdapConnectionPools connPools) {
-        return new LdapApplicationRepository(connPools, new PropertyFileConfiguration().getConfig());
-    }
-
-    private static ScopeAccessDao getSaRepo(LdapConnectionPools connPools) {
-        return new LdapScopeAccessPeristenceRepository(connPools, new PropertyFileConfiguration().getConfig());
-    }
-
-    private static LdapCustomerRepository getCustomerRepo(LdapConnectionPools connPools) {
-        return new LdapCustomerRepository(connPools, new PropertyFileConfiguration().getConfig());
-    }
-
-    private static LdapConnectionPools getConnPools() {
-        return new LdapConfiguration(new PropertyFileConfiguration().getConfig()).connectionPools();
-    }
 
     @Before
     public void preTestSetUp() throws Exception {
@@ -89,11 +78,6 @@ public class LdapScopeAccessPeristenceRepositoryIntegrationTest extends InMemory
         customerRepo.deleteCustomer(customer.getRcn());
         clientRepo.deleteClient(client);
         clientRepo.deleteClient(client2);
-    }
-
-    @AfterClass
-    public static void tearDown() {
-        connPools.close();
     }
 
     @Test

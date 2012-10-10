@@ -1,5 +1,12 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import org.junit.runner.RunWith;
+
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+
+import org.mockito.runners.MockitoJUnitRunner;
+
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.exception.BadRequestException;
@@ -27,15 +34,20 @@ import static org.mockito.Mockito.*;
  * Time: 4:56 PM
  * To change this template use File | Settings | File Templates.
  */
+@RunWith(MockitoJUnitRunner.class)
 public class LdapGroupRepositoryTest extends InMemoryLdapIntegrationTest{
-    LdapGroupRepository ldapGroupRepository;
+    @InjectMocks
+    LdapGroupRepository ldapGroupRepository = new LdapGroupRepository();
+    @Mock
+    LdapConnectionPools ldapConnectionPools;
+    @Mock
+    Configuration configuration;
+
     LdapGroupRepository spy;
     LDAPInterface ldapInterface;
 
     @Before
     public void setUp() throws Exception {
-        ldapGroupRepository = new LdapGroupRepository(mock(LdapConnectionPools.class), mock(Configuration.class));
-
         ldapInterface = mock(LDAPInterface.class);
 
         spy = spy(ldapGroupRepository);

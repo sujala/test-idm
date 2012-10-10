@@ -1,5 +1,12 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import org.junit.runner.RunWith;
+
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+
+import org.mockito.runners.MockitoJUnitRunner;
+
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.entity.*;
 import com.unboundid.ldap.sdk.*;
@@ -31,16 +38,19 @@ import static org.mockito.Mockito.any;
  * Time: 5:20 PM
  * To change this template use File | Settings | File Templates.
  */
+@RunWith(MockitoJUnitRunner.class)
 public class LdapScopeAccessPeristenceRepositoryTest extends InMemoryLdapIntegrationTest{
 
-    Configuration config = mock(Configuration.class);
-    LdapConnectionPools ldapConnectionPools = mock(LdapConnectionPools.class);
-    LdapScopeAccessPeristenceRepository ldapScopeAccessPeristenceRepository;
+    @Mock
+    Configuration config;
+    @Mock
+    LdapConnectionPools ldapConnectionPools;
+    @InjectMocks
+    LdapScopeAccessPeristenceRepository ldapScopeAccessPeristenceRepository = new LdapScopeAccessPeristenceRepository();
     LdapScopeAccessPeristenceRepository spy;
 
     @Before
     public void setUp() throws Exception {
-        ldapScopeAccessPeristenceRepository = new LdapScopeAccessPeristenceRepository(ldapConnectionPools,config);
         spy = spy(ldapScopeAccessPeristenceRepository);
     }
 

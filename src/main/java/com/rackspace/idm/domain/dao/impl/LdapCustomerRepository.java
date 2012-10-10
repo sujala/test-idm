@@ -1,24 +1,20 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import org.springframework.stereotype.Component;
+
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.CustomerDao;
 import com.rackspace.idm.domain.entity.Customer;
 import com.unboundid.ldap.sdk.*;
-import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Component
 public class LdapCustomerRepository extends LdapRepository implements
     CustomerDao {
 
-    public LdapCustomerRepository(LdapConnectionPools connPools,
-        Configuration config) {
-        super(connPools, config);
-    }
-
-    
     @Override
     public void addCustomer(Customer customer) {
         getLogger().info("Adding customer {}", customer);

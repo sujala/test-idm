@@ -1,5 +1,13 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import org.junit.runner.RunWith;
+
+import org.springframework.beans.factory.annotation.Autowired;
+
+import org.springframework.test.context.ContextConfiguration;
+
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
 import com.rackspace.idm.domain.config.LdapConfiguration;
 import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.entity.Tenant;
@@ -11,10 +19,13 @@ import org.junit.*;
 
 import java.util.List;
 
-
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(locations = "classpath:app-config.xml")
 public class LdapTenantRepositoryIntegrationTest extends InMemoryLdapIntegrationTest{
-    private static LdapTenantRepository repo;
-    private static LdapConnectionPools connPools;
+    @Autowired
+    private LdapTenantRepository repo;
+    @Autowired
+    private LdapConnectionPools connPools;
     
     private final String clientId = "YYYY";
     private final String tenantId = "XXXX";
@@ -27,21 +38,6 @@ public class LdapTenantRepositoryIntegrationTest extends InMemoryLdapIntegration
     private final String id = "XXX";
     private final String userId = "1";
     
-    private static LdapTenantRepository getRepo(LdapConnectionPools connPools) {
-        return new LdapTenantRepository(connPools, new PropertyFileConfiguration().getConfig());
-    }
-
-    private static LdapConnectionPools getConnPools() {
-        LdapConfiguration config = new LdapConfiguration(new PropertyFileConfiguration().getConfig());
-        return config.connectionPools();
-    }
-    
-    @BeforeClass
-    public static void setUp() {
-        connPools = getConnPools();
-        repo = getRepo(connPools);
-    }
-
     @Before
     public void preTestSetUp() throws Exception {
         //cleanup before test
@@ -52,11 +48,6 @@ public class LdapTenantRepositoryIntegrationTest extends InMemoryLdapIntegration
         }
     }
 
-    @AfterClass
-    public static void tearDown() {
-        connPools.close();
-    }
-    
     @Test
     public void shouldAddGetDeleteTenant() {
         this.repo.addTenant(getTestTenant());

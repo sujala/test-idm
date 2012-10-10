@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import org.springframework.stereotype.Component;
+
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.entity.*;
@@ -9,23 +11,18 @@ import com.rackspace.idm.exception.NotFoundException;
 import com.unboundid.ldap.sdk.*;
 import com.unboundid.ldap.sdk.persist.LDAPPersistException;
 import com.unboundid.ldap.sdk.persist.LDAPPersister;
-import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Component
 public class LdapTenantRepository extends LdapRepository implements TenantDao {
 
     public static final String NULL_OR_EMPTY_TENANT_ID_PARAMETER = "Null or Empty tenantId parameter";
     public static final String ERROR_GETTING_TENANT_OBJECT = "Error getting tenant object";
     public static final String PARENT_UNIQUE_ID_CANNOT_BE_BLANK = "ParentUniqueId cannot be blank";
     public static final String GOT_TENANT_ROLES = "Got {} Tenant Roles";
-
-    public LdapTenantRepository(LdapConnectionPools connPools,
-        Configuration config) {
-        super(connPools, config);
-    }
 
     @Override
     public void addTenant(Tenant tenant) {

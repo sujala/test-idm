@@ -1,5 +1,8 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+
 import com.rackspace.idm.exception.NotFoundException;
 import com.unboundid.ldap.sdk.*;
 import org.apache.commons.configuration.Configuration;
@@ -30,15 +33,15 @@ import static org.mockito.Mockito.*;
 @PrepareForTest(LDAPConnectionPool.class)
 public class LdapAuthRepositoryTest {
 
-    LdapAuthRepository authRepo;
+    @InjectMocks
+    LdapAuthRepository authRepo = new LdapAuthRepository();
+    @Mock
     LDAPConnectionPool connPool;
+    @Mock
     Configuration config;
     
     @Before
     public void setUp() throws Exception {
-        connPool = PowerMockito.mock(LDAPConnectionPool.class);
-        config = mock(Configuration.class);
-        authRepo = new LdapAuthRepository(connPool, config);
         authRepo = spy(authRepo);
     }
 
@@ -88,13 +91,6 @@ public class LdapAuthRepositoryTest {
         List<String> rackerRoles = authRepo.getRackerRoles("");
         assertThat("racker roles size", rackerRoles.size(), equalTo(1));
         assertThat("racker roles", rackerRoles.get(0), equalTo("otherPart"));
-    }
-
-    @Test
-    public void getLdapInterface_returnsConnPool() throws Exception {
-        authRepo = new LdapAuthRepository(null, null);
-        LDAPInterface ldapInterface = authRepo.getLdapInterface();
-        assertThat("ldap interface", ldapInterface, nullValue());
     }
 
     @Test
