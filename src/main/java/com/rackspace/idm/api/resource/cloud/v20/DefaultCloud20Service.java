@@ -2515,15 +2515,16 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder revokeToken(HttpHeaders httpHeaders, String authToken, String tokenId) {
         ScopeAccess scopeAccessAdmin = getScopeAccessForValidToken(authToken);
-        authorizationService.verifyUserLevelAccess(scopeAccessAdmin);
-        ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByAccessToken(tokenId);
-        if(scopeAccess == null){
-            throw new NotFoundException("Token not found");
-        }
 
         if(authToken.equals(tokenId)){
             scopeAccessService.expireAccessToken(tokenId);
             return Response.status(204);
+        }
+
+        authorizationService.verifyUserAdminLevelAccess(scopeAccessAdmin);
+        ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByAccessToken(tokenId);
+        if(scopeAccess == null){
+            throw new NotFoundException("Token not found");
         }
 
         if(authorizationService.authorizeCloudUserAdmin(scopeAccessAdmin)) {
