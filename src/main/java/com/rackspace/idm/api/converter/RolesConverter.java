@@ -1,5 +1,7 @@
 package com.rackspace.idm.api.converter;
 
+import org.springframework.stereotype.Component;
+
 import com.rackspace.api.idm.v1.ObjectFactory;
 import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.TenantRole;
@@ -8,6 +10,7 @@ import javax.xml.bind.JAXBElement;
 import java.util.ArrayList;
 import java.util.List;
 
+@Component
 public class RolesConverter {
 
     private final ObjectFactory objectFactory = new ObjectFactory();

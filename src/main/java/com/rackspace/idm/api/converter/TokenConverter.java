@@ -1,5 +1,7 @@
 package com.rackspace.idm.api.converter;
 
+import org.springframework.stereotype.Component;
+
 import com.rackspace.api.idm.v1.ObjectFactory;
 import com.rackspace.api.idm.v1.Token;
 import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess;
@@ -14,13 +16,11 @@ import javax.xml.datatype.DatatypeFactory;
 import java.util.Date;
 import java.util.List;
 
+@Component
 public class TokenConverter {
     
     private final ObjectFactory of = new ObjectFactory();
     private Logger logger = LoggerFactory.getLogger(TokenConverter.class);
-
-    public TokenConverter() {
-    }
 
     public JAXBElement<com.rackspace.api.idm.v1.Token> toTokenJaxb(String tokenString,
         Date expiration) {

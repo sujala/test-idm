@@ -1,5 +1,9 @@
 package com.rackspace.idm.api.converter;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
+import org.springframework.stereotype.Component;
+
 import com.rackspace.api.idm.v1.*;
 import com.rackspace.idm.domain.entity.AuthData;
 import org.joda.time.DateTime;
@@ -12,21 +16,18 @@ import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 import java.util.GregorianCalendar;
 
+@Component
 public class AuthConverter {
 
-    private final UserConverter userConverter;
-    private final ApplicationConverter clientConverter;
-    private final TokenConverter tokenConverter;
+    @Autowired
+    private UserConverter userConverter;
+    @Autowired
+    private ApplicationConverter clientConverter;
+    @Autowired
+    private TokenConverter tokenConverter;
 
     private final ObjectFactory objectFactory = new ObjectFactory();
     private Logger logger = LoggerFactory.getLogger(AuthConverter.class);
-
-    public AuthConverter(TokenConverter tokenConverter,
-        ApplicationConverter clientConverter, UserConverter userConverter) {
-        this.tokenConverter = tokenConverter;
-        this.clientConverter = clientConverter;
-        this.userConverter = userConverter;
-    }
 
     public JAXBElement<com.rackspace.api.idm.v1.AuthData> toAuthDataJaxb(AuthData authData) {
         com.rackspace.api.idm.v1.AuthData authJaxb = objectFactory.createAuthData();

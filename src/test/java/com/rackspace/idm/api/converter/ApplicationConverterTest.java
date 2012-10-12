@@ -41,7 +41,8 @@ public class ApplicationConverterTest {
     @Before
     public void setUp() throws Exception {
         rolesConverter = mock(RolesConverter.class);
-        applicationConverter = new ApplicationConverter(rolesConverter);
+        applicationConverter = new ApplicationConverter();
+        applicationConverter.setRolesConverter(rolesConverter);
         clientDO = new com.rackspace.idm.domain.entity.Application();
         client = new Application();
     }

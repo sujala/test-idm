@@ -1,5 +1,9 @@
 package com.rackspace.idm.api.converter;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
+import org.springframework.stereotype.Component;
+
 import com.rackspace.api.idm.v1.ObjectFactory;
 import com.rackspace.api.idm.v1.Role;
 import com.rackspace.idm.domain.entity.Racker;
@@ -14,16 +18,15 @@ import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import java.util.List;
 
+@Component
 public class UserConverter {
 
     private final ObjectFactory objectFactory = new ObjectFactory();
 
-    private final RolesConverter rolesConverter;
-    private Logger logger = LoggerFactory.getLogger(UserConverter.class);
+    @Autowired
+    private RolesConverter rolesConverter;
 
-    public UserConverter(RolesConverter rolesConverter) {
-        this.rolesConverter = rolesConverter;
-    }
+    private Logger logger = LoggerFactory.getLogger(UserConverter.class);
 
     public User toUserDO(com.rackspace.api.idm.v1.User jaxbUser) {
         User user = new User();
