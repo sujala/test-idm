@@ -49,9 +49,17 @@ public class DefaultRegionService {
 
     public void checkDefaultRegion(String region, Set<String> defaultRegions) {
         String regionString = "";
+        Integer size = defaultRegions.size();
+        Integer counter = 0;
         for (String defaultRegion : defaultRegions) {
-            regionString += " " + defaultRegion;
+            counter = counter + 1;
+            if (counter < size) {
+                regionString += " " + defaultRegion + ",";
+            } else {
+                regionString += " " + defaultRegion;
+            }
         }
+        regionString.toUpperCase();
         if (region != null && !defaultRegions.contains(region)) {
             throw new BadRequestException("Invalid defaultRegion value, accepted values are:" + regionString + ".");
         }
