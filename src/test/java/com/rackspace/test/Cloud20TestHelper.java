@@ -1,6 +1,7 @@
 package com.rackspace.test;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domains;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy;
 import com.rackspace.idm.api.resource.cloud.ObjectMarshaller;
@@ -61,6 +62,16 @@ public class Cloud20TestHelper {
         return unmarshaller.unmarshal(endpointTemplate, EndpointTemplate.class);
     }
 
+    public Domains getDomainsObject(String domains) throws JAXBException {
+        ObjectMarshaller<Domains> unMarshaller = new ObjectMarshaller<Domains>();
+        return unMarshaller.unmarshal(domains, Domains.class);
+    }
+
+    public EndpointList getEndpointListObject(String endpoints) throws JAXBException {
+        ObjectMarshaller<EndpointList> unMarshaller = new ObjectMarshaller<EndpointList>();
+        return unMarshaller.unmarshal(endpoints, EndpointList.class);
+    }
+
     public User getUser(String response) throws JAXBException {
         ObjectMarshaller<User> unmarshaller = new ObjectMarshaller<User>();
         return unmarshaller.unmarshal(response, User.class);
@@ -92,6 +103,17 @@ public class Cloud20TestHelper {
     }
 
     public String createUserAdmin(String name, String password, String email, String domainId) throws JAXBException {
+        ObjectMarshaller<User> marshaller = new ObjectMarshaller<User>();
+        User user = new User();
+        user.setUsername(name);
+        user.getOtherAttributes().put(new QName("http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0", "password"), password);
+        user.getOtherAttributes().put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","domainId"), domainId);
+        user.setEmail(email);
+
+        return marshaller.marshal(openStackIdentityV2Factory.createUser(user), User.class);
+    }
+
+    public String createDefaultUser(String name, String password, String email, String domainId) throws JAXBException {
         ObjectMarshaller<User> marshaller = new ObjectMarshaller<User>();
         User user = new User();
         user.setUsername(name);

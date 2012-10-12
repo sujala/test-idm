@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domains;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain;
@@ -15,7 +16,10 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.AuthenticateResponse;
+import org.openstack.docs.identity.api.v2.EndpointList;
 import org.openstack.docs.identity.api.v2.User;
+
+import javax.print.attribute.standard.Media;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.xml.bind.JAXBElement;
@@ -41,6 +45,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     static String X_AUTH_TOKEN = "X-Auth-Token";
     static String identityUserName = "testIdentityAdmin_doNotDelete";
     static String userAdminName = "testUserAdmin_doNotDelete";
+    static String defaultUserName = "testDefaultUser_doNotDelete";
     static String noRolesName = "testUserNoRoles_doNotDelete";
     static String tenantId="kurtTestTenant";
     static String roleId="10010967";
@@ -54,10 +59,13 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
 
     static User testIdentityAdminUser;
     static User testUserAdmin;
+    static User testDefaultUser;
     static User testUserNoRoles;
     static Domain disabledDomain;
     static Domain testDomain;
     static String identityToken;
+    static String userAdminToken;
+    static String defaultUserToken;
     static String uberToken;
 
     @Before
@@ -89,6 +97,14 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
                 testUserAdmin = createUserAdminUser(identityToken, userAdminName, email, password, testDomainId, MediaType.APPLICATION_XML);
                 addRolesToUserOnTenant(uberToken, tenantId, testUserAdmin.getId(), roleId);
             }
+
+            userAdminToken = authenticate(userAdminName,"Password1", MediaType.APPLICATION_XML);
+            testDefaultUser = getUserByName(identityToken, defaultUserName);
+            if(testDefaultUser == null){
+                testDefaultUser = createDefaultUser(userAdminToken, defaultUserName, email, password, testDomainId, MediaType.APPLICATION_XML);
+            }
+
+            defaultUserToken = authenticate(defaultUserName,"Password1", MediaType.APPLICATION_XML);
 
             testUserNoRoles = getUserByName(uberToken, noRolesName);
             if (testUserNoRoles == null) {
@@ -844,6 +860,112 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
         }
     }
 
+    @Test
+    public void getAccessibleDomains_invalidToken_return401() throws JAXBException {
+        try{
+            String token = "badToken";
+            getAccessibleDomains(token);
+        } catch (Exception ex) {
+            assertThat("Status Code", ((UniformInterfaceException) ex).getResponse().getStatus(), equalTo(401));
+        }
+    }
+
+    @Test
+    public void getAccessibleDomains_serviceAdmin_emptyList() throws JAXBException {
+        Domains domains = getAccessibleDomains(identityToken);
+        assertThat("domains",domains.getDomain().size(),equalTo(0));
+    }
+
+    @Test
+    public void getAccessibleDomains_userAdmin_returnsListDomains() throws Exception {
+        Domains domains = getAccessibleDomains(userAdminToken);
+        assertThat("domains",domains.getDomain().size(),equalTo(1));
+    }
+
+    @Test
+    public void getAccessibleDomains_defaultUser_returnsListDomains() throws Exception {
+        Domains domains = getAccessibleDomains(defaultUserToken);
+        assertThat("domains",domains.getDomain().size(),equalTo(1));
+    }
+
+    @Test
+    public void getAccessibleDomainsForUser_identityAdminToken_userAdmin_returnDomains() throws JAXBException {
+        Domains domains = getAccessibleDomainsForUser(identityToken,testUserAdmin.getId());
+        assertThat("domains",domains.getDomain().size(),equalTo(1));
+    }
+
+    @Test
+    public void getAccessibleDomainsForUser_userAdminToken_userAdmin_returnDomains() throws JAXBException {
+        Domains domains = getAccessibleDomainsForUser(userAdminToken,testUserAdmin.getId());
+        assertThat("domains",domains.getDomain().size(),equalTo(1));
+    }
+
+    @Test
+    public void getAccessibleDomainsForUser_defaultUserToken_userAdmin_return403() throws JAXBException {
+        try{
+            getAccessibleDomainsForUser(defaultUserToken, testUserAdmin.getId());
+            assertThat("make it fail", false, equalTo(true));
+        } catch (Exception ex) {
+            assertThat("Status Code", ((UniformInterfaceException) ex).getResponse().getStatus(), equalTo(403));
+        }
+    }
+
+    @Test
+    public void getAccessibleDomainsEndpointsForUser_identityAdminToken_identityAdmin_returnsEmptyList() throws JAXBException {
+        EndpointList endpointList = getAccessibleDomainsEndpointsForUser(identityToken, testIdentityAdminUser.getId(), testDomainId);
+        assertThat("endpoints",endpointList.getEndpoint().size(),equalTo(0));
+    }
+
+    @Test
+    public void getAccessibleDomainsEndpointsForUser_identityAdminToken_userAdmin_returnsList() throws JAXBException {
+        EndpointList endpointList = getAccessibleDomainsEndpointsForUser(identityToken, testUserAdmin.getId(), testDomainId);
+        assertThat("endpoints",endpointList.getEndpoint().size(),equalTo(5));
+    }
+
+    @Test
+    public void getAccessibleDomainsEndpointsForUser_userAdminToken_defaultUser_returnsList() throws JAXBException {
+        EndpointList endpointList = getAccessibleDomainsEndpointsForUser(userAdminToken, testDefaultUser.getId(), testDomainId);
+        assertThat("endpoints",endpointList.getEndpoint().size(),equalTo(5));
+    }
+
+    @Test
+    public void getAccessibleDomainsEndpointsForUser_userAdminToken_identityAdmin_returns401() throws JAXBException {
+        try {
+            getAccessibleDomainsEndpointsForUser(userAdminToken, testIdentityAdminUser.getId(), testDomainId);
+            assertThat("make it fail", false, equalTo(true));
+        } catch (Exception ex) {
+            assertThat("Status Code", ((UniformInterfaceException) ex).getResponse().getStatus(), equalTo(403));
+        }
+    }
+
+    @Test
+    public void getAccessibleDomainsEndpointsForUser_defaultUserToken_UserAdmin_returns401() throws JAXBException {
+        try {
+            getAccessibleDomainsEndpointsForUser(defaultUserToken, testUserAdmin.getId(), testDomainId);
+            assertThat("make it fail", false, equalTo(true));
+        } catch (Exception ex) {
+            assertThat("Status Code", ((UniformInterfaceException) ex).getResponse().getStatus(), equalTo(403));
+        }
+    }
+
+    private Domains getAccessibleDomains(String token) throws JAXBException {
+        String response = getWebResourceBuilder("cloud/v2.0/RAX-AUTH/domains", MediaType.APPLICATION_XML)
+                .header(X_AUTH_TOKEN, token).get(String.class);
+        return cloud20TestHelper.getDomainsObject(response);
+    }
+
+    private Domains getAccessibleDomainsForUser(String token, String userId) throws JAXBException {
+        String response = getWebResourceBuilder("cloud/v2.0/users/"+ userId + "/RAX-AUTH/domains", MediaType.APPLICATION_XML)
+                .header(X_AUTH_TOKEN, token).get(String.class);
+        return cloud20TestHelper.getDomainsObject(response);
+    }
+
+    private EndpointList getAccessibleDomainsEndpointsForUser(String token, String userId, String domainId) throws JAXBException {
+        String response = getWebResourceBuilder("cloud/v2.0/users/" + userId + "/RAX-AUTH/domains/" + domainId + "/endpoints", MediaType.APPLICATION_XML)
+                .header(X_AUTH_TOKEN, token).get(String.class);
+        return cloud20TestHelper.getEndpointListObject(response);
+    }
+
     private Policy createPolicy(String token, String name, String blob, String type) throws JAXBException {
         String request = cloud20TestHelper.getPolicyString(name, blob, type);
         String response =  getWebResourceBuilder("cloud/v2.0/RAX-AUTH/policies", MediaType.APPLICATION_XML)
@@ -908,6 +1030,14 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
 
     private User createUserAdminUser(String token, String name, String email, String password, String domainId, String mediaType) throws JAXBException {
         String request = cloud20TestHelper.createUserAdmin(name, password, email, domainId);
+        String response = getWebResourceBuilder("cloud/v2.0/users", mediaType)
+                .header(X_AUTH_TOKEN, token)
+                .post(String.class, request);
+        return cloud20TestHelper.getUser(response);
+    }
+
+    private User createDefaultUser(String token, String name, String email, String password, String domainId, String mediaType) throws JAXBException {
+        String request = cloud20TestHelper.createDefaultUser(name, password, email, domainId);
         String response = getWebResourceBuilder("cloud/v2.0/users", mediaType)
                 .header(X_AUTH_TOKEN, token)
                 .post(String.class, request);

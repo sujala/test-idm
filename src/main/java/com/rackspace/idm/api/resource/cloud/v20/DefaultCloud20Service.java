@@ -2028,22 +2028,22 @@ public class DefaultCloud20Service implements Cloud20Service {
     public CloudUserAccessibility getUserAccessibility(ScopeAccess scopeAccess){
         if(this.authorizationService.authorizeCloudUser(scopeAccess)){
             return new CloudDefaultUserAccessibility(tenantService, domainService,
-                    authorizationService, userService, scopeAccess);
+                    authorizationService, userService, config, objFactories.getOpenStackIdentityV2Factory(), scopeAccess);
         }
         if(this.authorizationService.authorizeCloudUserAdmin(scopeAccess)){
             return new CloudUserAdminAccessibility(tenantService, domainService,
-                    authorizationService, userService, scopeAccess);
+                    authorizationService, userService, config, objFactories.getOpenStackIdentityV2Factory(), scopeAccess);
         }
         if(this.authorizationService.authorizeCloudIdentityAdmin(scopeAccess)){
             return new CloudIdentityAdminAccessibility(tenantService, domainService,
-                    authorizationService, userService, scopeAccess);
+                    authorizationService, userService, config, objFactories.getOpenStackIdentityV2Factory(), scopeAccess);
         }
         if(this.authorizationService.authorizeCloudServiceAdmin(scopeAccess)){
             return new CloudServiceAdminAccessibility(tenantService, domainService,
-                    authorizationService, userService, scopeAccess);
+                    authorizationService, userService, config, objFactories.getOpenStackIdentityV2Factory(), scopeAccess);
         }
         return new CloudUserAccessibility(tenantService, domainService,
-                    authorizationService, userService, scopeAccess);
+                    authorizationService, userService, config, objFactories.getOpenStackIdentityV2Factory(), scopeAccess);
     }
 
     @Override
@@ -2060,9 +2060,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(scopeAccessByUserId);
             List<Tenant> tenants = tenantService.getTenantsByDomainId(domainId);
 
-            List<OpenstackEndpoint> domainEndpoints = cloudUserAccessibility.getAccessibleDomainEndpoints(endpoints,tenants);
+            List<OpenstackEndpoint> domainEndpoints = cloudUserAccessibility.getAccessibleDomainEndpoints(endpoints,tenants,scopeAccessByUserId);
 
-            EndpointList list = endpointConverterCloudV20.toEndpointList(domainEndpoints);
+            EndpointList list = cloudUserAccessibility.convertPopulateEndpointList(domainEndpoints);
 
             return Response.ok(objFactories.getOpenStackIdentityV2Factory().createEndpoints(list).getValue());
         } catch (Exception ex) {
