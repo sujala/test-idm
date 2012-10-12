@@ -38,7 +38,7 @@ public class AuthenticationServiceTests {
     ScopeAccessService mockScopeAccessService;
     UserDao mockUserDao;
     TenantService mockTenantService;
-    AuthenticationService authenticationService;
+    DefaultAuthenticationService authenticationService;
     DefaultAuthenticationService authSpy;
     ApplicationDao mockApplicationDao;
     AuthDao mockAuthDao;
@@ -86,14 +86,17 @@ public class AuthenticationServiceTests {
         appConfig.addProperty("ldap.server.trusted", "true");
         appConfig.addProperty("idm.clientId", "TESTING");
 
-        authenticationService = new DefaultAuthenticationService(
-                mockAuthDao, mockTenantService,
-                mockScopeAccessService, mockApplicationDao, appConfig,
-                mockUserDao, mockCustomerDao, inputValidator);
-        authSpy = PowerMockito.spy(new DefaultAuthenticationService(
-                mockAuthDao, mockTenantService,
-                mockScopeAccessService, mockApplicationDao, appConfig,
-                mockUserDao, mockCustomerDao, inputValidator));
+        authenticationService = new DefaultAuthenticationService();
+        authenticationService.setAuthDao(mockAuthDao);
+        authenticationService.setTenantService(mockTenantService);
+        authenticationService.setScopeAccessService(mockScopeAccessService);
+        authenticationService.setApplicationDao(mockApplicationDao);
+        authenticationService.setConfig(appConfig);
+        authenticationService.setUserDao(mockUserDao);
+        authenticationService.setCustomerDao(mockCustomerDao);
+        authenticationService.setInputValidator(inputValidator);
+
+        authSpy = PowerMockito.spy(authenticationService);
     }
 
     @Test

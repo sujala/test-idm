@@ -42,8 +42,10 @@ public class CustomerServiceTests {
         mockCustomerDao = EasyMock.createMock(CustomerDao.class);
         mockUserDao = EasyMock.createMock(UserDao.class);
 
-        service = new DefaultCustomerService(applicationDao, mockCustomerDao,
-            mockUserDao);
+        service = new DefaultCustomerService();
+        service.setApplicationDao(applicationDao);
+        service.setCustomerDao(mockCustomerDao);
+        service.setUserDao(mockUserDao);
     }
 
     @Test

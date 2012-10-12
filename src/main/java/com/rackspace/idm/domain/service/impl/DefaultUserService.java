@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.service.impl;
 
+import org.springframework.stereotype.Component;
+
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.UserDao;
@@ -19,21 +21,32 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@Component
 public class DefaultUserService implements UserService {
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile(".+@.+\\.[\\w]+");
     public static final String GETTING_USER = "Getting User: {}";
     public static final String GOT_USER = "Got User: {}";
-    private final AuthDao authDao;
-    private final ApplicationService clientService;
-    private final Configuration config;
 
-    private final PasswordComplexityService passwordComplexityService;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    private final ScopeAccessDao scopeAccessDao;
+    @Autowired
+    private PasswordComplexityService passwordComplexityService;
 
-    private final UserDao userDao;
+    @Autowired
+    private ScopeAccessDao scopeAccessDao;
+
+    @Autowired
+    private AuthDao authDao;
+
+    @Autowired
+    private ApplicationService clientService;
+
+    @Autowired
+    private Configuration config;
+
+    @Autowired
+    private UserDao userDao;
 
     @Autowired
     private ScopeAccessService scopeAccessService;
@@ -46,19 +59,6 @@ public class DefaultUserService implements UserService {
 
     @Autowired
     private AuthorizationService authorizationService;
-
-    public DefaultUserService(UserDao userDao, AuthDao rackerDao,
-                              ScopeAccessDao scopeAccessDao,
-                              ApplicationService clientService, Configuration config,
-                              PasswordComplexityService passwordComplexityService) {
-
-        this.userDao = userDao;
-        this.authDao = rackerDao;
-        this.scopeAccessDao = scopeAccessDao;
-        this.clientService = clientService;
-        this.config = config;
-        this.passwordComplexityService = passwordComplexityService;
-    }
 
     @Override
     public void addRacker(Racker racker) {
@@ -470,6 +470,36 @@ public class DefaultUserService implements UserService {
         }
 
         return result;
+    }
+
+    @Override
+    public void setUserDao(UserDao userDao) {
+        this.userDao = userDao;
+    }
+
+    @Override
+    public void setAuthDao(AuthDao authDao) {
+        this.authDao = authDao;
+    }
+
+    @Override
+    public void setScopeAccesss(ScopeAccessDao scopeAccessObjectDao) {
+        this.scopeAccessDao = scopeAccessObjectDao;
+    }
+
+    @Override
+    public void setClientService(ApplicationService clientService) {
+        this.clientService = clientService;
+    }
+
+    @Override
+    public void setConfig(Configuration config) {
+        this.config = config;
+    }
+
+    @Override
+    public void setPasswordComplexityService(PasswordComplexityService passwordComplexityService) {
+        this.passwordComplexityService = passwordComplexityService;
     }
 
     @Override

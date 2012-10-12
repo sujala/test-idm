@@ -1,5 +1,9 @@
 package com.rackspace.idm.domain.service.impl;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
+import org.springframework.stereotype.Component;
+
 import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
 import com.rackspace.idm.domain.dao.UserDao;
@@ -14,21 +18,17 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
+@Component
 public class DefaultCustomerService implements CustomerService {
 
-    private final ApplicationDao clientDao;
-    private final CustomerDao customerDao;
-    private final UserDao userDao;
+    @Autowired
+    private ApplicationDao clientDao;
+    @Autowired
+    private CustomerDao customerDao;
+    @Autowired
+    private UserDao userDao;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-
-    public DefaultCustomerService(ApplicationDao clientDao, CustomerDao customerDao,
-        UserDao userDao) {
-
-        this.clientDao = clientDao;
-        this.customerDao = customerDao;
-        this.userDao = userDao;
-    }
 
     @Override
     public void addCustomer(Customer customer) {
@@ -168,4 +168,22 @@ public class DefaultCustomerService implements CustomerService {
 
         return clientList;
     }
+
+
+	@Override
+	public void setApplicationDao(ApplicationDao applicationDao) {
+		this.clientDao = applicationDao;
+	}
+
+
+	@Override
+	public void setCustomerDao(CustomerDao customerDao) {
+		this.customerDao = customerDao;
+	}
+
+
+	@Override
+	public void setUserDao(UserDao userDao) {
+		this.userDao = userDao;
+	}
 }

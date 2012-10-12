@@ -1,5 +1,12 @@
 package com.rackspace.idm.domain.service.impl;
 
+import org.junit.runner.RunWith;
+
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+
+import org.mockito.runners.MockitoJUnitRunner;
+
 import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.CustomerDao;
@@ -33,19 +40,30 @@ import static org.mockito.Mockito.*;
  * Date: 3/1/12
  * Time: 4:07 PM
  */
+@RunWith(MockitoJUnitRunner.class)
 public class DefaultAuthenticationServiceTest {
 
-    ApplicationDao applicationDao = mock(ApplicationDao.class);
-    UserDao userDao = mock(UserDao.class);
-    ScopeAccessService scopeAccessService = mock(ScopeAccessService.class);
-    TenantService tenantService = mock(TenantService.class);
-    CustomerDao customerDao = mock(CustomerDao.class);
-    InputValidator inputValidator = mock(InputValidator.class);
+    @Mock
+    ApplicationDao applicationDao;
+    @Mock
+    UserDao userDao;
+    @Mock
+    ScopeAccessService scopeAccessService;
+    @Mock
+    TenantService tenantService;
+    @Mock
+    CustomerDao customerDao;
+    @Mock
+    InputValidator inputValidator;
+    @Mock
+    Configuration config;
+    @Mock
+    RSAClient rsaClient;
 
-    private Configuration config = mock(Configuration.class);
-    DefaultAuthenticationService defaultAuthenticationService = new DefaultAuthenticationService(null,tenantService,scopeAccessService,applicationDao,config,userDao,customerDao,inputValidator);
+    @InjectMocks
+    DefaultAuthenticationService defaultAuthenticationService = new DefaultAuthenticationService();
+
     DefaultAuthenticationService spy;
-    RSAClient rsaClient = mock(RSAClient.class);
 
     @Before
     public void setUp() throws Exception {

@@ -75,16 +75,26 @@ public class UserServiceTests {
         Configuration appConfig = new PropertyFileConfiguration().getConfig();
         appConfig.setProperty("ldap.server.trusted", false);
 
-        userService = new DefaultUserService(mockUserDao, mockRackerDao,
-                mockScopeAccessObjectDao,
-                mockClientService, appConfig, mockPasswordComplexityService);
-        
+        userService = new DefaultUserService();
+        userService.setUserDao(mockUserDao);
+        userService.setAuthDao(mockRackerDao);
+        userService.setScopeAccesss(mockScopeAccessObjectDao);
+        userService.setClientService(mockClientService);
+        userService.setConfig(appConfig);
+        userService.setPasswordComplexityService(mockPasswordComplexityService);
+
         Configuration appConfig2 = new PropertyFileConfiguration().getConfig();
         
         appConfig2.setProperty("ldap.server.trusted", true);
-        trustedUserService =  new DefaultUserService(mockUserDao, mockRackerDao,
-                mockScopeAccessObjectDao,
-                mockClientService, appConfig2, mockPasswordComplexityService);
+
+        trustedUserService =  new DefaultUserService();
+
+        trustedUserService.setUserDao(mockUserDao);
+        trustedUserService.setAuthDao(mockRackerDao);
+        trustedUserService.setScopeAccesss(mockScopeAccessObjectDao);
+        trustedUserService.setClientService(mockClientService);
+        trustedUserService.setConfig(appConfig2);
+        trustedUserService.setPasswordComplexityService(mockPasswordComplexityService);
     }
 
     @Test

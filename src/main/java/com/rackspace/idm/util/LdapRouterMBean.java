@@ -1,5 +1,7 @@
 	package com.rackspace.idm.util;
 
+import org.springframework.stereotype.Component;
+
     import com.rackspace.idm.domain.dao.impl.LdapConnectionPools;
     import com.unboundid.ldap.sdk.LDAPConnection;
     import com.unboundid.ldap.sdk.LDAPException;
@@ -15,6 +17,7 @@
     import java.util.regex.Pattern;
 
 @ManagedResource
+@Component
 public class LdapRouterMBean {
 
     @Autowired

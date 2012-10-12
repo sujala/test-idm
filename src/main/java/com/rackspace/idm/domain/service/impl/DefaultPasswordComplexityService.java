@@ -4,10 +4,13 @@ import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.PasswordComplexityService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
 
+@Component
 public class DefaultPasswordComplexityService implements
     PasswordComplexityService {
 
@@ -20,8 +23,8 @@ public class DefaultPasswordComplexityService implements
 
     private List<PasswordRule> rules = new ArrayList<PasswordRule>();
 
-    public DefaultPasswordComplexityService() {
-        
+    @PostConstruct
+    public void initialize() {
         rules.add(minLengthRule);
         rules.add(uppercaseRule);
         rules.add(lowercaseRule);

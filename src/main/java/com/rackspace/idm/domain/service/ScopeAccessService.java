@@ -1,7 +1,10 @@
 package com.rackspace.idm.domain.service;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
+import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.util.AuthHeaderHelper;
+import org.apache.commons.configuration.Configuration;
 
 import java.util.Date;
 import java.util.List;
@@ -109,4 +112,19 @@ public interface ScopeAccessService {
     UserScopeAccess updateExpiredUserScopeAccess(UserScopeAccess scopeAccess);
 
     UserScopeAccess updateExpiredUserScopeAccess(UserScopeAccess scopeAccess, boolean impersonated);
+
+    void setUserDao(UserDao userDao);
+
+    void setApplicationDao(ApplicationDao applicationDao);
+
+    void setTenantDao(TenantDao tenantDao);
+
+    void setEndpointDao(EndpointDao endpointDao);
+
+    void setAuthHeaderHelper(AuthHeaderHelper authHeaderHelper);
+
+    void setAppConfig(Configuration appConfig);
+
+
+    void setScopeAcessDao(ScopeAccessDao scopeAccessDao);
 }

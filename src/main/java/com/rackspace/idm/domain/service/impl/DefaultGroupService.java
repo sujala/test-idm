@@ -1,5 +1,9 @@
 package com.rackspace.idm.domain.service.impl;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
+import org.springframework.stereotype.Component;
+
 import com.rackspace.idm.domain.dao.GroupDao;
 import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.Group;
@@ -22,17 +26,17 @@ import java.util.List;
  * Date: 10/12/11
  * Time: 5:26 PM
  */
+@Component
 public class DefaultGroupService implements GroupService {
 
     public static final String GROUP_CANNOT_BE_NULL = "Group cannot be null";
-    private UserService defaultUserService;
-    private final GroupDao groupDao;
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public DefaultGroupService(GroupDao groupDao, UserService defaultUserService) {
-        this.groupDao = groupDao;
-        this.defaultUserService = defaultUserService;
-    }
+    @Autowired
+    private UserService defaultUserService;
+    @Autowired
+    private GroupDao groupDao;
+
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Override
     public List<Group> getGroups(String marker, Integer limit) {

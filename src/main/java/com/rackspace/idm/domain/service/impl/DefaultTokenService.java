@@ -1,5 +1,9 @@
 package com.rackspace.idm.domain.service.impl;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
+import org.springframework.stereotype.Component;
+
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
@@ -13,35 +17,27 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
+@Component
 public class DefaultTokenService implements TokenService {
-    private final AuthorizationService authorizationService;
-    private final ApplicationService clientService;
-    private final Configuration config;
-    private final Logger logger = LoggerFactory
-        .getLogger(DefaultTokenService.class);
-    private final ScopeAccessService scopeAccessService;
-    private final UserDao userDao;
-	private final TenantService tenantService;
+    private final Logger logger = LoggerFactory.getLogger(DefaultTokenService.class);
+
+    @Autowired
+    private AuthorizationService authorizationService;
+    @Autowired
+    private ApplicationService clientService;
+    @Autowired
+    private Configuration config;
+    @Autowired
+    private ScopeAccessService scopeAccessService;
+    @Autowired
+    private UserDao userDao;
+    @Autowired
+	private TenantService tenantService;
 
     {
         logger.info("Instantiating DefaultTokenService");
     }
 
-    public DefaultTokenService(
-        final ApplicationService clientService,
-        final AuthorizationService authorizationService,
-        final Configuration config,
-        final ScopeAccessService scopeAccessService,
-        final UserDao userDao, final TenantService tenantService) {
-    	this.userDao = userDao;
-        this.clientService = clientService;
-        this.authorizationService = authorizationService;
-        this.config = config;
-        this.scopeAccessService = scopeAccessService;
-        this.tenantService = tenantService;
-    }
-
-    
     @Override
     public ScopeAccess getAccessTokenByAuthHeader(final String authHeader) {
         return this.scopeAccessService.getAccessTokenByAuthHeader(authHeader);
@@ -158,6 +154,36 @@ public class DefaultTokenService implements TokenService {
         logger.debug("Deleting all access tokens for user {}.", username);
         this.scopeAccessService.expireAllTokensForUser(username);
         logger.debug("Deleted all access tokens for user {}.", username);
+    }
+
+    @Override
+    public void setClientService(ApplicationService clientService) {
+        this.clientService = clientService;
+    }
+
+    @Override
+    public void setAuthorizationService(AuthorizationService authorizationService) {
+        this.authorizationService = authorizationService;
+    }
+
+    @Override
+    public void setConfig(Configuration config) {
+        this.config = config;
+    }
+
+    @Override
+    public void setScopeAccessService(ScopeAccessService scopeAccessService) {
+        this.scopeAccessService = scopeAccessService;
+    }
+
+    @Override
+    public void setUserDao(UserDao userDao) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public void setTenantService(TenantService tenantService) {
+        //To change body of implemented methods use File | Settings | File Templates.
     }
 
     List<Application> getAllClientsForCustomerId(final String customerId) {

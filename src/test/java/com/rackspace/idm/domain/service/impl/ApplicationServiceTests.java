@@ -60,8 +60,12 @@ public class ApplicationServiceTests {
         mockScopeAccessDao = EasyMock.createMock(ScopeAccessDao.class);
         mockTenantDao = EasyMock.createMock(TenantDao.class);
 
-        clientService = new DefaultApplicationService(mockScopeAccessDao,
-            mockApplicationDao, mockCustomerDao, mockUserDao, mockTenantDao);
+        clientService = new DefaultApplicationService();
+        clientService.setScopeAccessDao(mockScopeAccessDao);
+        clientService.setApplicationDao(mockApplicationDao);
+        clientService.setCustomerDao(mockCustomerDao);
+        clientService.setUserDao(mockUserDao);
+        clientService.setTenantDao(mockTenantDao);
     }
 
     @Test

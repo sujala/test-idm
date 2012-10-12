@@ -1,5 +1,12 @@
 package com.rackspace.idm.domain.service.impl;
 
+import org.junit.runner.RunWith;
+
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+
+import org.mockito.runners.MockitoJUnitRunner;
+
 import com.rackspace.idm.domain.dao.DomainDao;
 import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.exception.BadRequestException;
@@ -15,15 +22,18 @@ import static org.mockito.Mockito.*;
  * Time: 10:30 AM
  * To change this template use File | Settings | File Templates.
  */
+@RunWith(MockitoJUnitRunner.class)
 public class DefaultDomainServiceTest {
 
-    DefaultDomainService defaultDomainService;
-    private DomainDao domainDao = mock(DomainDao.class);
+    @InjectMocks
+    DefaultDomainService defaultDomainService = new DefaultDomainService();
+    @Mock
+    DomainDao domainDao;
+
     DefaultDomainService spy;
 
     @Before
     public void setUp() throws Exception {
-        defaultDomainService = new DefaultDomainService(domainDao);
         spy = spy(defaultDomainService);
     }
 

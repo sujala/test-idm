@@ -1,6 +1,10 @@
 package com.rackspace.idm.domain.service;
 
+import com.rackspace.idm.domain.dao.AuthDao;
+import com.rackspace.idm.domain.dao.ScopeAccessDao;
+import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
+import org.apache.commons.configuration.Configuration;
 
 import java.util.List;
 
@@ -90,4 +94,16 @@ public interface UserService {
     void removeBaseUrlFromUser(Integer baseUrlId, User user);
 
 	List<User> getSubUsers(User user);
+
+    void setUserDao(UserDao userDao);
+
+    void setAuthDao(AuthDao rackerDao);
+
+    void setScopeAccesss(ScopeAccessDao scopeAccessObjectDao);
+
+    void setClientService(ApplicationService clientService);
+
+    void setConfig(Configuration config);
+
+    void setPasswordComplexityService(PasswordComplexityService passwordComplexityService);
 }

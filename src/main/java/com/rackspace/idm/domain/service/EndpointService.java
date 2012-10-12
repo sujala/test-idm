@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service;
 
+import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.OpenstackEndpoint;
 import com.rackspace.idm.domain.entity.Tenant;
@@ -34,4 +35,6 @@ public interface EndpointService {
     List<OpenstackEndpoint> getEndpointsFromTenantList(List<Tenant> tenantList);
 
     void updateBaseUrl(CloudBaseUrl baseUrl);
+
+	void setEndpointDao(EndpointDao endpointDao);
 }

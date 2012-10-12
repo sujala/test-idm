@@ -43,7 +43,8 @@ public class EndpointServiceTests {
 
         mockEndpointDao = EasyMock.createMock(EndpointDao.class);
 
-        endpointService = new DefaultEndpointService(mockEndpointDao);
+        endpointService = new DefaultEndpointService();
+        endpointService.setEndpointDao(mockEndpointDao);
         
         baseUrl = new CloudBaseUrl();
         baseUrl.setAdminUrl(adminUrl);

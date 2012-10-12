@@ -3,10 +3,12 @@ package com.rackspace.idm.domain.service.impl;
 import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.exception.NotFoundException;
-import com.rackspacecloud.docs.auth.api.v1.BaseURL;
-import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,18 +24,19 @@ import static org.mockito.Mockito.*;
  * Date: 12/6/11
  * Time: 4:26 PM
  */
+@RunWith(MockitoJUnitRunner.class)
 public class DefaultEndpointServiceTest {
 
-    DefaultEndpointService defaultEndpointService;
+    @InjectMocks
+    DefaultEndpointService defaultEndpointService = new DefaultEndpointService();
     DefaultEndpointService spy;
+    @Mock
     EndpointDao endpointDao;
     int baseUrlId = 1;
     private String service = "defaultApplicationService";
 
     @Before
     public void setUp() throws Exception {
-        endpointDao = mock(EndpointDao.class);
-        defaultEndpointService = new DefaultEndpointService(endpointDao);
         spy = spy(defaultEndpointService);
         CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
         cloudBaseUrl.setServiceName(service);

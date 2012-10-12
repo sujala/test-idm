@@ -1,5 +1,12 @@
 package com.rackspace.idm.domain.service.impl;
 
+import org.junit.runner.RunWith;
+
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+
+import org.mockito.runners.MockitoJUnitRunner;
+
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
 import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.*;
@@ -34,18 +41,28 @@ import static org.mockito.Mockito.*;
  * Date: 5/31/12
  * Time: 10:30 AM
  */
+@RunWith(MockitoJUnitRunner.class)
 public class DefaultScopeAccessServiceTest {
 
-    DefaultScopeAccessService defaultScopeAccessService;
+    @InjectMocks
+    DefaultScopeAccessService defaultScopeAccessService = new DefaultScopeAccessService();
     DefaultScopeAccessService spy;
+    @Mock
     ScopeAccessDao scopeAccessDao;
+    @Mock
     Configuration configuration;
-    ImpersonationRequest impersonationRequest;
+    @Mock
     private UserDao userDao;
+    @Mock
     private ApplicationDao clientDao;
+    @Mock
     private TenantDao tenantDao;
+    @Mock
     private EndpointDao endpointDao;
+    @Mock
     private AuthHeaderHelper authHeaderHelper;
+
+    ImpersonationRequest impersonationRequest;
 
     @Before
     public void setUp() throws Exception {
@@ -53,20 +70,10 @@ public class DefaultScopeAccessServiceTest {
         org.openstack.docs.identity.api.v2.User user = new org.openstack.docs.identity.api.v2.User();
         user.setUsername("impersonatedUser");
         impersonationRequest.setUser(user);
-        userDao = mock(UserDao.class);
-        clientDao =  mock(ApplicationDao.class);
-        scopeAccessDao = mock(ScopeAccessDao.class);
-        tenantDao = mock(TenantDao.class);
-        endpointDao = mock(EndpointDao.class);
-        authHeaderHelper = mock(AuthHeaderHelper.class);
-        configuration = mock(Configuration.class);
         when(configuration.getInt("token.cloudAuthExpirationSeconds")).thenReturn(86400);
         when(configuration.getInt("token.cloudAuthExpirationSeconds")).thenReturn(86400);
         when(configuration.getInt("token.refreshWindowHours")).thenReturn(12);
 
-        defaultScopeAccessService = new DefaultScopeAccessService(userDao, clientDao, scopeAccessDao,
-                                                                  tenantDao, endpointDao, authHeaderHelper,
-                                                                  configuration);
         spy = spy(defaultScopeAccessService);
 
     }

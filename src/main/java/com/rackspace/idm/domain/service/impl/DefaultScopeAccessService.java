@@ -1,5 +1,9 @@
 package com.rackspace.idm.domain.service.impl;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
+import org.springframework.stereotype.Component;
+
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.*;
@@ -23,6 +27,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
+@Component
 public class DefaultScopeAccessService implements ScopeAccessService {
 
     private static final String PASSWORD_RESET_CLIENT_ID = "PASSWORDRESET";
@@ -32,28 +37,22 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     public static final String NULL_SCOPE_ACCESS_OBJECT_INSTANCE = "Null scope access object instance.";
     public static final String GETTING_PERMISSION_ON_SCOPE_ACCESS = "Getting Permission {} on ScopeAccess {}";
 
-    private final AuthHeaderHelper authHeaderHelper;
-    private final ApplicationDao clientDao;
-    private final Configuration config;
-
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-    private final ScopeAccessDao scopeAccessDao;
-    private final UserDao userDao;
-    private final TenantDao tenantDao;
-    private final EndpointDao endpointDao;
 
-    public DefaultScopeAccessService(UserDao userDao, ApplicationDao clientDao,
-                                     ScopeAccessDao scopeAccessDao, TenantDao tenantDao,
-                                     EndpointDao endpointDao, AuthHeaderHelper authHeaderHelper,
-                                     Configuration config) {
-        this.userDao = userDao;
-        this.clientDao = clientDao;
-        this.scopeAccessDao = scopeAccessDao;
-        this.tenantDao = tenantDao;
-        this.endpointDao = endpointDao;
-        this.authHeaderHelper = authHeaderHelper;
-        this.config = config;
-    }
+    @Autowired
+    private ScopeAccessDao scopeAccessDao;
+    @Autowired
+    private UserDao userDao;
+    @Autowired
+    private TenantDao tenantDao;
+    @Autowired
+    private EndpointDao endpointDao;
+    @Autowired
+    private AuthHeaderHelper authHeaderHelper;
+    @Autowired
+    private ApplicationDao clientDao;
+    @Autowired
+    private Configuration config;
 
     @Override
     public List<OpenstackEndpoint> getOpenstackEndpointsForScopeAccess(ScopeAccess token) {
@@ -1005,6 +1004,41 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             scopeAccessDao.updateScopeAccess(scopeAccess);
         }
         return scopeAccess;
+    }
+
+    @Override
+    public void setUserDao(UserDao userDao) {
+        this.userDao = userDao;
+    }
+
+    @Override
+    public void setApplicationDao(ApplicationDao applicationDao) {
+        this.clientDao = applicationDao;
+    }
+
+    @Override
+    public void setTenantDao(TenantDao tenantDao) {
+        this.tenantDao = tenantDao;
+    }
+
+    @Override
+    public void setEndpointDao(EndpointDao endpointDao) {
+        this.endpointDao = endpointDao;
+    }
+
+    @Override
+    public void setAuthHeaderHelper(AuthHeaderHelper authHeaderHelper) {
+        this.authHeaderHelper = authHeaderHelper;
+    }
+
+    @Override
+    public void setAppConfig(Configuration config) {
+        this.config = config;
+    }
+
+    @Override
+    public void setScopeAcessDao(ScopeAccessDao scopeAccessDao) {
+        this.scopeAccessDao = scopeAccessDao;
     }
 
     String generateToken() {

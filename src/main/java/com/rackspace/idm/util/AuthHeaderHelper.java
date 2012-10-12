@@ -1,5 +1,7 @@
 package com.rackspace.idm.util;
 
+import org.springframework.stereotype.Component;
+
 import com.rackspace.idm.exception.CloudAdminAuthorizationException;
 import com.rackspace.idm.exception.NotAuthorizedException;
 import org.apache.commons.codec.binary.Base64;
@@ -8,6 +10,7 @@ import org.apache.commons.lang.StringUtils;
 import java.util.HashMap;
 import java.util.Map;
 
+@Component
 public class AuthHeaderHelper {
 
     public static final String INVALID_AUTH_HEADER = "Invalid Auth Header";

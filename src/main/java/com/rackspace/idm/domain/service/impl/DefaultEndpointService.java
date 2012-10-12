@@ -1,5 +1,9 @@
 package com.rackspace.idm.domain.service.impl;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
+import org.springframework.stereotype.Component;
+
 import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.OpenstackEndpoint;
@@ -13,14 +17,13 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
+@Component
 public class DefaultEndpointService implements EndpointService {
 
-    private final EndpointDao endpointDao;
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    @Autowired
+    private EndpointDao endpointDao;
 
-    public DefaultEndpointService(EndpointDao endpointDao) {
-        this.endpointDao = endpointDao;
-    }
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Override
     public void addBaseUrl(CloudBaseUrl baseUrl) {
@@ -170,4 +173,9 @@ public class DefaultEndpointService implements EndpointService {
         }
         return endpoints;
     }
+
+	@Override
+	public void setEndpointDao(EndpointDao endpointDao) {
+		this.endpointDao = endpointDao;
+	}
 }

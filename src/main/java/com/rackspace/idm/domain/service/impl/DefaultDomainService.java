@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.service.impl;
 
+import org.springframework.stereotype.Component;
+
 import com.rackspace.idm.domain.dao.DomainDao;
 import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.FilterParam;
@@ -24,6 +26,7 @@ import java.util.regex.Pattern;
  * Time: 3:42 PM
  * To change this template use File | Settings | File Templates.
  */
+@Component
 public class DefaultDomainService implements DomainService{
 
     @Autowired
@@ -35,12 +38,11 @@ public class DefaultDomainService implements DomainService{
     public static final String DOMAIN_CANNOT_BE_NULL = "Domain cannot be null";
     public static final String DOMAIN_ID_CANNOT_BE_NULL = "Domain ID cannot be null";
     public static final String DOMAIN_NAME_CANNOT_BE_NULL = "Domain name cannot be null or empty";
-    private final DomainDao domainDao;
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public DefaultDomainService(DomainDao domainDao) {
-        this.domainDao = domainDao;
-    }
+    @Autowired
+    private DomainDao domainDao;
+
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Override
     public void addDomain(Domain domain) {
