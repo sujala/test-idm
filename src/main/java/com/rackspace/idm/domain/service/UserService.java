@@ -97,6 +97,7 @@ public interface UserService {
 
 	List<User> getSubUsers(User user);
 
+
     void setUserDao(UserDao userDao);
 
     void setAuthDao(AuthDao rackerDao);
@@ -108,4 +109,6 @@ public interface UserService {
     void setConfig(Configuration config);
 
     void setPasswordComplexityService(PasswordComplexityService passwordComplexityService);
+
+
 }
