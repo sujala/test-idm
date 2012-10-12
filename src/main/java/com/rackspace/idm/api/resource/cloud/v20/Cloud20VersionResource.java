@@ -276,6 +276,13 @@ public class Cloud20VersionResource {
     }
 
     @GET
+    @Path("RAX-AUTH/domains")
+    public Response getAccessibleDomains(
+            @HeaderParam(X_AUTH_TOKEN) String authToken) {
+        return defaultCloud20Service.getAccessibleDomains(authToken).build();
+    }
+
+    @GET
     @Path("extensions")
     public Response listExtensions(@Context HttpHeaders httpHeaders) {
         return getCloud20Service().listExtensions(httpHeaders).build();
@@ -323,6 +330,23 @@ public class Cloud20VersionResource {
         } else {
             return getCloud20Service().listUserGlobalRoles(httpHeaders, authToken, userId).build();
         }
+    }
+
+    @GET
+    @Path("users/{userId}/RAX-AUTH/domains")
+    public Response getAccessibleDomainsForUser(
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("userId") String userId) {
+        return getCloud20Service().getAccessibleDomainsForUser(authToken, userId).build();
+    }
+
+    @GET
+    @Path("users/{userId}/RAX-AUTH/domains/{domainId}/endpoints")
+    public Response getAccessibleDomainsEndpointsForUser(
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("userId") String userId,
+            @PathParam("domainId") String domainId) {
+        return getCloud20Service().getAccessibleDomainsEndpointsForUser(authToken, userId, domainId).build();
     }
 
     @GET

@@ -5,6 +5,7 @@ import org.springframework.stereotype.Component;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.DomainDao;
 import com.rackspace.idm.domain.entity.Domain;
+import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.unboundid.ldap.sdk.*;
@@ -12,6 +13,7 @@ import com.unboundid.ldap.sdk.persist.LDAPPersistException;
 import com.unboundid.ldap.sdk.persist.LDAPPersister;
 import org.apache.commons.lang.StringUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -25,6 +27,7 @@ import java.util.List;
 public class LdapDomainRepository extends LdapRepository implements DomainDao{
 
     public static final String NULL_OR_EMPTY_DOMAIN_ID_PARAMETER = "Null or Empty domainId parameter";
+    public static final String NULL_OR_EMPTY_TENANT_ID_PARAMETER = "Null or Empty tenantId parameter";
     public static final String ERROR_GETTING_DOMAIN_OBJECT = "Error getting domain object";
     public static final String PARENT_UNIQUE_ID_CANNOT_BE_BLANK = "ParentUniqueId cannot be blank";
 
@@ -124,6 +127,38 @@ public class LdapDomainRepository extends LdapRepository implements DomainDao{
         deleteEntryAndSubtree(dn, audit);
         audit.succeed();
         getLogger().debug("Deleted Domain: {}", domain);
+    }
+
+    @Override
+    public List<Domain> getDomainsForTenant(List<Tenant> tenants) {
+        getLogger().debug("Doing search for domains with tenant Ids ");
+        if (tenants == null || tenants.size() < 1) {
+            getLogger().error(NULL_OR_EMPTY_TENANT_ID_PARAMETER);
+            getLogger().info("Invalid tenantIds parameter.");
+            return null;
+        }
+        List<Filter> filterList = new ArrayList<Filter>();
+        for(Tenant tenant: tenants){
+            filterList.add(Filter.createEqualityFilter(ATTR_TENANT_RS_ID,tenant.getTenantId()));
+        }
+        Filter orFilter = Filter.createORFilter(filterList);
+        Filter andFilter = Filter.createANDFilter(Filter.createEqualityFilter(ATTR_OBJECT_CLASS,OBJECTCLASS_DOMAIN),orFilter);
+
+        List<Domain> domains = new ArrayList<Domain>();
+
+        try {
+            List<SearchResultEntry> entries = getMultipleEntries(DOMAIN_BASE_DN,SearchScope.SUB, andFilter,null);
+            for(SearchResultEntry entry : entries){
+                Domain domain = getDomain(entry.getAttributeValue(ATTR_ID));
+                domains.add(domain);
+            }
+        } catch (Exception e) {
+            getLogger().error(ERROR_GETTING_DOMAIN_OBJECT, e);
+            throw new IllegalStateException(e);
+        }
+        getLogger().debug("Found Domains - {}", domains);
+
+        return domains;
     }
 
     Domain getSingleDomain(Filter searchFilter)

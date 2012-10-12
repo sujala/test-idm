@@ -1,8 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.api.idm.v1.Application;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups;
@@ -42,6 +41,7 @@ import javax.xml.bind.JAXBException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.namespace.QName;
+import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -2604,5 +2604,22 @@ public class JSONWriterTest {
         final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
         writer.writeTo(user, UserForAuthenticateResponse.class, null, null, null, null, myOut);
         Assert.assertEquals("{\"access\":{\"name\":\"name\",\"id\":\"id\"}}", myOut.toString());
+    }
+
+    @Test
+    public void getDomainsWithoutWrapper() throws IOException {
+        Domains domains = new Domains();
+        Domain domain = new Domain();
+        domain.setId("1");
+        domain.setDescription("des");
+        domain.setEnabled(true);
+        domain.setName("name");
+        domains.getDomain().add(domain);
+
+        final ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+
+        writer.writeTo(domains,Domains.class, null, null, null, null, myOut);
+
+        Assert.assertEquals("{\"RAX-AUTH:domains\":[{\"id\":\"1\",\"enabled\":true,\"description\":\"des\",\"name\":\"name\"}]}",myOut.toString());
     }
 }

@@ -2,6 +2,9 @@ package com.rackspace.idm.domain.dao;
 
 
 import com.rackspace.idm.domain.entity.Domain;
+import com.rackspace.idm.domain.entity.Tenant;
+
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -15,4 +18,5 @@ public interface DomainDao {
     Domain getDomain(String domainId);
     void updateDomain(Domain domain);
     void deleteDomain(String domainId);
+    List<Domain> getDomainsForTenant(List<Tenant> tenants);
 }

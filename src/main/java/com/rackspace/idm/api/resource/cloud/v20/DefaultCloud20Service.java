@@ -15,6 +15,7 @@ import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Domain;
+import com.rackspace.idm.domain.entity.Domains;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
@@ -137,6 +138,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private DomainConverterCloudV20 domainConverterCloudV20;
+
+    @Autowired
+    private DomainsConverterCloudV20 domainsConverterCloudV20;
 
     @Autowired
     private PolicyConverterCloudV20 policyConverterCloudV20;
@@ -1987,6 +1991,86 @@ public class DefaultCloud20Service implements Cloud20Service {
         return Response.noContent();
     }
 
+    @Override
+    public ResponseBuilder getAccessibleDomains(String authToken) {
+        try {
+            ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
+            User user = userService.getUserByScopeAccess(scopeAccessByAccessToken);
+
+            return getAccessibleDomainsForUser(authToken, user.getId());
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public ResponseBuilder getAccessibleDomainsForUser(String authToken, String userId) {
+        try {
+            ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
+
+            CloudUserAccessibility cloudUserAccessibility = getUserAccessibility(scopeAccessByAccessToken);
+
+            User user = userService.checkAndGetUserById(userId);
+            ScopeAccess scopeAccessByUserId = scopeAccessService.getScopeAccessByUserId(user.getId());
+
+            Domains domains = cloudUserAccessibility.getAccessibleDomainsByScopeAccess(scopeAccessByUserId);
+
+            domains = cloudUserAccessibility.addUserDomainToDomains(user, domains);
+            domains = cloudUserAccessibility.removeDuplicateDomains(domains);
+
+            com.rackspace.docs.identity.api.ext.rax_auth.v1.Domains domainsObj = domainsConverterCloudV20.toDomains(domains);
+
+            return Response.ok().entity(raxAuthObjectFactory.createDomains(domainsObj).getValue());
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    public CloudUserAccessibility getUserAccessibility(ScopeAccess scopeAccess){
+        if(this.authorizationService.authorizeCloudUser(scopeAccess)){
+            return new CloudDefaultUserAccessibility(tenantService, domainService,
+                    authorizationService, userService, config, objFactories.getOpenStackIdentityV2Factory(), scopeAccess);
+        }
+        if(this.authorizationService.authorizeCloudUserAdmin(scopeAccess)){
+            return new CloudUserAdminAccessibility(tenantService, domainService,
+                    authorizationService, userService, config, objFactories.getOpenStackIdentityV2Factory(), scopeAccess);
+        }
+        if(this.authorizationService.authorizeCloudIdentityAdmin(scopeAccess)){
+            return new CloudIdentityAdminAccessibility(tenantService, domainService,
+                    authorizationService, userService, config, objFactories.getOpenStackIdentityV2Factory(), scopeAccess);
+        }
+        if(this.authorizationService.authorizeCloudServiceAdmin(scopeAccess)){
+            return new CloudServiceAdminAccessibility(tenantService, domainService,
+                    authorizationService, userService, config, objFactories.getOpenStackIdentityV2Factory(), scopeAccess);
+        }
+        return new CloudUserAccessibility(tenantService, domainService,
+                    authorizationService, userService, config, objFactories.getOpenStackIdentityV2Factory(), scopeAccess);
+    }
+
+    @Override
+    public ResponseBuilder getAccessibleDomainsEndpointsForUser(String authToken, String userId, String domainId) {
+        try {
+            ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
+
+            CloudUserAccessibility cloudUserAccessibility = getUserAccessibility(scopeAccessByAccessToken);
+
+            User user = userService.checkAndGetUserById(userId);
+            domainService.checkAndGetDomain(domainId);
+            ScopeAccess scopeAccessByUserId = scopeAccessService.getScopeAccessByUserId(user.getId());
+
+            List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(scopeAccessByUserId);
+            List<Tenant> tenants = tenantService.getTenantsByDomainId(domainId);
+
+            List<OpenstackEndpoint> domainEndpoints = cloudUserAccessibility.getAccessibleDomainEndpoints(endpoints,tenants,scopeAccessByUserId);
+
+            EndpointList list = cloudUserAccessibility.convertPopulateEndpointList(domainEndpoints);
+
+            return Response.ok(objFactories.getOpenStackIdentityV2Factory().createEndpoints(list).getValue());
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
     public boolean isValidImpersonatee(User user) {
         List<TenantRole> tenantRolesForUser = tenantService.getGlobalRolesForUser(user, null);
         for (TenantRole role : tenantRolesForUser) {
@@ -2877,3 +2961,4 @@ public class DefaultCloud20Service implements Cloud20Service {
         this.domainService = domainService;
     }
 }
+

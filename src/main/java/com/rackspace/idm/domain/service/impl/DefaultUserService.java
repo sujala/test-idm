@@ -7,11 +7,14 @@ import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.Tenant;
+import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.util.HashHelper;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
+import org.openstack.docs.identity.api.v2.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -805,6 +808,13 @@ public class DefaultUserService implements UserService {
         Tenant tenant = this.tenantService.getTenant(tenantId);
         tenant.removeBaseUrlId(String.valueOf(baseUrl.getBaseUrlId()));
         this.tenantService.updateTenant(tenant);
+    }
+
+    @Override
+    public List<Tenant> getUserTenants(String userId) {
+        List<Tenant> tenantList = new ArrayList<Tenant>();
+
+        return tenantList;
     }
 
     private boolean isPasswordRulesEnforced() {
