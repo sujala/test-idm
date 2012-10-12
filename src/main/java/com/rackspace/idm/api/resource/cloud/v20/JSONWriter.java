@@ -404,6 +404,12 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             JSONObject outer = new JSONObject();
             outer.put(JSONConstants.DOMAIN, getDomainWithoutWrapper(domain));
             jsonText = JSONValue.toJSONString(outer);
+        } else if(object.getClass().equals(Domains.class)){
+            Domains domains = (Domains) object;
+            JSONObject outer = new JSONObject();
+            outer.put(JSONConstants.DOMAINS, getDomainsWithoutWrapper(domains));
+            jsonText = JSONValue.toJSONString(outer);
+
         } else if (object.getClass().equals(Policy.class)) {
             Policy policy = (Policy) object;
             JSONObject outer = new JSONObject();
@@ -439,6 +445,21 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             }
         }
         outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
+    }
+
+    @SuppressWarnings("unchecked")
+    JSONArray getDomainsWithoutWrapper(Domains domains) {
+        JSONArray domainArray = new JSONArray();
+
+        for( Domain domain : domains.getDomain()){
+            JSONObject domainSave = new JSONObject();
+            domainSave.put(JSONConstants.ID,domain.getId());
+            domainSave.put(JSONConstants.ENABLED,domain.isEnabled());
+            domainSave.put(JSONConstants.NAME, domain.getName());
+            domainSave.put(JSONConstants.DESCRIPTION, domain.getDescription());
+            domainArray.add(domainSave);
+        }
+        return domainArray;
     }
 
     @SuppressWarnings("unchecked")
