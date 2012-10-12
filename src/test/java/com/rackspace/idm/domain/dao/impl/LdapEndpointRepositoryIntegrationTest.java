@@ -1,5 +1,13 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import org.junit.runner.RunWith;
+
+import org.springframework.beans.factory.annotation.Autowired;
+
+import org.springframework.test.context.ContextConfiguration;
+
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
 import com.rackspace.idm.domain.config.LdapConfiguration;
 import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
@@ -16,23 +24,21 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
 
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(locations = "classpath:app-config.xml")
 public class LdapEndpointRepositoryIntegrationTest extends InMemoryLdapIntegrationTest {
 
-    private static LdapEndpointRepository endpointRepository;
-    private static LdapPolicyRepository policyRepository;
-    private static LdapConnectionPools connectionPools;
+    @Autowired
+    private LdapEndpointRepository endpointRepository;
+    @Autowired
+    private LdapPolicyRepository policyRepository;
+    @Autowired
+    private LdapConnectionPools connectionPools;
 
     private int baseUrlId1 = 100000000;
     private int baseUrlId2 = 1010110110;
     private String policyId1 = "100000000";
     private String policyId2 = "100000002";
-
-    @BeforeClass
-    public static void setUp() {
-        connectionPools = new LdapConfiguration(new PropertyFileConfiguration().getConfig()).connectionPools();
-        endpointRepository = new LdapEndpointRepository(connectionPools, new PropertyFileConfiguration().getConfig());
-        policyRepository = new LdapPolicyRepository(connectionPools, new PropertyFileConfiguration().getConfig());
-    }
 
     @Before
     public void preTestSetUp() throws Exception {
@@ -55,11 +61,6 @@ public class LdapEndpointRepositoryIntegrationTest extends InMemoryLdapIntegrati
         if (repositoryPolicy2 != null) {
             policyRepository.deletePolicy(policyId2);
         }
-    }
-
-    @AfterClass
-    public static void tearDown() {
-        connectionPools.close();
     }
 
     @Test

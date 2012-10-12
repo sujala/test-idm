@@ -9,6 +9,10 @@ import com.rackspacecloud.docs.auth.api.v1.Service;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -16,8 +20,6 @@ import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * Created with IntelliJ IDEA.
@@ -26,26 +28,22 @@ import static org.mockito.Mockito.when;
  * Time: 1:25 PM
  * To change this template use File | Settings | File Templates.
  */
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(locations = "classpath:app-config.xml")
 public class AuthConverterCloudV11Test {
+    @Autowired
     private AuthConverterCloudV11 authConverterCloudV11;
+    @Autowired
     private Configuration config;
+    @Autowired
     private TokenConverterCloudV11 tokenConverterCloudV11;
+    @Autowired
     private EndpointConverterCloudV11 endpointConverterCloudV11;
     private CloudBaseUrl cloudBaseUrl;
 
     @Before
     public void setUp() throws Exception {
-
-        // Setting up mock
-        config = mock(Configuration.class);
-
-        // Initiations
-        endpointConverterCloudV11 = new EndpointConverterCloudV11(config);
-        tokenConverterCloudV11 = new TokenConverterCloudV11();
-        authConverterCloudV11 = new AuthConverterCloudV11(config, tokenConverterCloudV11, endpointConverterCloudV11);
         cloudBaseUrl = new CloudBaseUrl();
-
-        // Setting fields
         cloudBaseUrl.setBaseUrlId(1);
         cloudBaseUrl.setAdminUrl("adminUrl");
         cloudBaseUrl.setBaseUrlType("cloud");
@@ -105,8 +103,6 @@ public class AuthConverterCloudV11Test {
         userScopeAccess.setUsername("username");
         userScopeAccess.setAccessTokenString("token");
         userScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
-        when(config.getString("cloud.user.ref.string")).thenReturn("https://identity.api.rackspacecloud.com/");
-        when(config.getInt("token.cloudAuthExpirationSeconds")).thenReturn(86400);
         FullToken token = authConverterCloudV11.toCloudV11TokenJaxb(userScopeAccess, "requestUrl");
         assertThat("token id", token.getId(), equalTo("token"));
         assertThat("token userId", token.getUserId(), equalTo("username"));

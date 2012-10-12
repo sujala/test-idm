@@ -1,5 +1,13 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import org.junit.runner.RunWith;
+
+import org.springframework.beans.factory.annotation.Autowired;
+
+import org.springframework.test.context.ContextConfiguration;
+
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
 import com.rackspace.idm.domain.config.LdapConfiguration;
 import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.entity.*;
@@ -15,34 +23,20 @@ import java.security.GeneralSecurityException;
 import java.util.List;
 import java.util.Locale;
 
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(locations = "classpath:app-config.xml")
 public class LdapApplicationRepositoryIntegrationTest extends InMemoryLdapIntegrationTest{
 
-    private static LdapUserRepository userRepo;
-    private static LdapApplicationRepository repo;
-    private static LdapConnectionPools connPools;
+    @Autowired
+    private LdapUserRepository userRepo;
+    @Autowired
+    private LdapApplicationRepository repo;
+    @Autowired
+    private LdapConnectionPools connPools;
     
     String id = "XXXX";
     
     String userDN = "inum=@!FFFF.FFFF.FFFF.FFFF!EEEE.EEEE!1111,ou=users,o=rackspace,dc=rackspace,dc=com";
-
-    @BeforeClass
-    public static void setUpRepos(){
-        connPools = getConnPools();
-        repo = getRepo(connPools);
-        userRepo = getUserRepo(connPools);
-    }
-
-    private static LdapApplicationRepository getRepo(LdapConnectionPools connPools) {
-        return new LdapApplicationRepository(connPools, new PropertyFileConfiguration().getConfig());
-    }
-    
-    private static LdapUserRepository getUserRepo(LdapConnectionPools connPools) {
-        return new LdapUserRepository(connPools, new PropertyFileConfiguration().getConfig());
-    }
-
-    private static LdapConnectionPools getConnPools() {
-        return new LdapConfiguration(new PropertyFileConfiguration().getConfig()).connectionPools();
-    }
 
     @Before
     public void preTestCleanUp() {
@@ -489,12 +483,6 @@ public class LdapApplicationRepositoryIntegrationTest extends InMemoryLdapIntegr
         Assert.assertTrue(clients.size() > 0);
     }
     
-
-    @AfterClass
-    public static void tearDown() {
-        connPools.close();
-    }
-
     private Application addNewTestClient() {
         Application newClient = createTestClientInstance();
         repo.addClient(newClient);

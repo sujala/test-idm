@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import org.apache.commons.collections.ListUtils;
+import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.EndpointDao;
@@ -8,18 +9,14 @@ import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.exception.BaseUrlConflictException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.unboundid.ldap.sdk.*;
-import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+@Component
 public class LdapEndpointRepository extends LdapRepository implements EndpointDao {
-
-    public LdapEndpointRepository(LdapConnectionPools connPools, Configuration config) {
-        super(connPools, config);
-    }
 
     @Override
     public void addBaseUrl(CloudBaseUrl baseUrl) {

@@ -1,5 +1,10 @@
 package com.rackspace.idm.domain.service;
 
+import com.rackspace.idm.domain.dao.ApplicationDao;
+import com.rackspace.idm.domain.dao.EndpointDao;
+import com.rackspace.idm.domain.dao.ScopeAccessDao;
+import com.rackspace.idm.domain.dao.TenantDao;
+import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 
 import java.util.List;
@@ -43,5 +48,10 @@ public interface TenantService {
     List<Tenant> getTenantsByDomainId(String domainId);
 
     List<Tenant> getTenantsFromNameList(String[] tenants);
+	void setTenantDao(TenantDao tenantDao);
+	void setClientDao(ApplicationDao applicationDao);
+	void setUserDao(UserDao userDao);
+	void setEndpointDao(EndpointDao endpointDao);
+	void setScopeAccessDao(ScopeAccessDao scopeAccessDao);
 
 }

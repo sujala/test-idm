@@ -1,25 +1,30 @@
 package com.rackspace.idm.domain.service.impl;
 
+import org.junit.runner.RunWith;
+
+import org.springframework.beans.factory.annotation.Autowired;
+
+import org.springframework.test.context.ContextConfiguration;
+
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
 import com.rackspace.idm.domain.entity.PasswordComplexityResult;
 import com.rackspace.idm.domain.entity.PasswordRule;
 import com.rackspace.idm.domain.service.PasswordComplexityService;
 import junit.framework.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
 
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(locations = "classpath:app-config.xml")
 public class PasswordComplexityServiceTests {
 
+    @Autowired
     PasswordComplexityService service;
 
     String badPassword = "";
     String goodPassword = "Ab1$XXXXXX";
-
-    @Before
-    public void setUp() {
-        service = new DefaultPasswordComplexityService();
-    }
 
     @Test
     public void shouldFailAllPasswordChecks() {

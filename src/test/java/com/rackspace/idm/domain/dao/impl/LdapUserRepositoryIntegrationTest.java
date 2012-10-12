@@ -1,5 +1,13 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import org.junit.runner.RunWith;
+
+import org.springframework.beans.factory.annotation.Autowired;
+
+import org.springframework.test.context.ContextConfiguration;
+
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
 import com.rackspace.idm.domain.config.LdapConfiguration;
 import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.entity.*;
@@ -16,29 +24,23 @@ import java.security.GeneralSecurityException;
 import java.util.List;
 import java.util.Locale;
 
+import static junit.framework.Assert.fail;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.*;
+
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(locations = "classpath:app-config.xml")
 public class LdapUserRepositoryIntegrationTest extends InMemoryLdapIntegrationTest{
 
-    private static LdapUserRepository repo;
-    private static LdapConnectionPools connPools;
+    @Autowired
+    private LdapUserRepository repo;
+    @Autowired
+    private LdapConnectionPools connPools;
 
     String rackerId = "racker";
     
     String id = "XXXX";
-
-    private static LdapUserRepository getRepo(LdapConnectionPools connPools) {
-        return new LdapUserRepository(connPools, new PropertyFileConfiguration().getConfig());
-    }
-
-    private static LdapConnectionPools getConnPools() {
-        LdapConfiguration config = new LdapConfiguration(new PropertyFileConfiguration().getConfig());
-        return config.connectionPools();
-    }
-
-    @BeforeClass
-    public static void setUp() {
-        connPools = getConnPools();
-        repo = getRepo(connPools);
-    }
 
     @Before
     public void preTestSetUp(){
@@ -54,11 +56,6 @@ public class LdapUserRepositoryIntegrationTest extends InMemoryLdapIntegrationTe
         if (deleteme3 != null) {
             repo.deleteUser("delete,me");
         }
-    }
-
-    @AfterClass
-    public static void tearDown() {
-        connPools.close();
     }
 
     @Test

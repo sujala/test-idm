@@ -1,5 +1,12 @@
 package com.rackspace.idm.domain.service.impl;
 
+import org.junit.runner.RunWith;
+
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+
+import org.mockito.runners.MockitoJUnitRunner;
+
 import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.exception.DuplicateException;
@@ -22,25 +29,26 @@ import static org.mockito.Mockito.*;
  * Date: 4/3/12
  * Time: 1:52 PM
  */
+@RunWith(MockitoJUnitRunner.class)
 public class DefaultApplicationServiceTest {
 
-    private DefaultApplicationService defaultApplicationService;
+    @InjectMocks
+    private DefaultApplicationService defaultApplicationService = new DefaultApplicationService();
+    @Mock
     private ApplicationDao clientDao;
+    @Mock
     private CustomerDao customerDao;
+    @Mock
     private UserDao userDao;
+    @Mock
     private ScopeAccessDao scopeAccessDao;
+    @Mock
     private TenantDao tenantDao;
+
     private DefaultApplicationService spy;
 
     @Before
     public void setUp() throws Exception {
-        clientDao = mock(ApplicationDao.class);
-        customerDao = mock(CustomerDao.class);
-        userDao = mock(UserDao.class);
-        scopeAccessDao = mock(ScopeAccessDao.class);
-        tenantDao = mock(TenantDao.class);
-        defaultApplicationService = new DefaultApplicationService(scopeAccessDao, clientDao,customerDao,userDao,tenantDao);
-
         spy = spy(defaultApplicationService);
     }
 

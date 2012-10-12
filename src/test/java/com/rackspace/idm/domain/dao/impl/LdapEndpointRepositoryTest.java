@@ -1,5 +1,12 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import org.junit.runner.RunWith;
+
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+
+import org.mockito.runners.MockitoJUnitRunner;
+
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.exception.BaseUrlConflictException;
@@ -29,17 +36,20 @@ import static org.mockito.Mockito.any;
  * Time: 12:21 PM
  * To change this template use File | Settings | File Templates.
  */
+@RunWith(MockitoJUnitRunner.class)
 public class LdapEndpointRepositoryTest extends InMemoryLdapIntegrationTest{
-    LdapEndpointRepository ldapEndpointRepository;
+    @InjectMocks
+    LdapEndpointRepository ldapEndpointRepository = new LdapEndpointRepository();
     LdapEndpointRepository spy;
     LDAPInterface ldapInterface;
     EndPoints endPoints;
+    @Mock
     LdapConnectionPools connPools = mock(LdapConnectionPools.class);
+    @Mock
     Configuration config = mock(Configuration.class);
 
     @Before
     public void setUp() throws Exception {
-        ldapEndpointRepository = new LdapEndpointRepository(connPools, config);
         ldapInterface = mock(LDAPInterface.class);
 
         //setup fields

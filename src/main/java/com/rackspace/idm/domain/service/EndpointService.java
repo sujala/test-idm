@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service;
 
+import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.OpenstackEndpoint;
 import com.rackspace.idm.domain.entity.Tenant;
@@ -38,4 +39,6 @@ public interface EndpointService {
 	void addPolicyToEndpoint(int baseUrlId, String policyId);
 
 	void deletePolicyToEndpoint(int baseUrlId, String policyId);
+
+	void setEndpointDao(EndpointDao endpointDao);
 }

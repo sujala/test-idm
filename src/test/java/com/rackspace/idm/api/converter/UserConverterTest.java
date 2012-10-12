@@ -1,5 +1,13 @@
 package com.rackspace.idm.api.converter;
 
+import org.junit.runner.RunWith;
+
+import org.springframework.beans.factory.annotation.Autowired;
+
+import org.springframework.test.context.ContextConfiguration;
+
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
 import com.rackspace.api.idm.v1.*;
 import com.rackspace.api.idm.v1.Racker;
 import com.rackspace.api.idm.v1.User;
@@ -24,23 +32,27 @@ import static org.junit.Assert.assertThat;
  * Time: 1:24 PM
  * To change this template use File | Settings | File Templates.
  */
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(locations = "classpath:app-config.xml")
 public class UserConverterTest {
 
+    @Autowired
     UserConverter userConverter;
+    @Autowired
     RolesConverter rolesConverter;
-    User jaxbUser;
+
     com.rackspace.idm.domain.entity.User userDo;
+    User jaxbUser;
 
     @Before
     public void setUp() throws Exception {
-        jaxbUser = new User();
         userDo = new com.rackspace.idm.domain.entity.User();
-        rolesConverter = new RolesConverter();
-        userConverter = new UserConverter(rolesConverter);
+        jaxbUser = new User();
     }
 
     @Test
     public void toUserDO_withJaxbUser_setsFields() throws Exception {
+        jaxbUser = new User();
         jaxbUser.setId("userId");
         jaxbUser.setCountry("country");
         jaxbUser.setTimeZone("CET");
@@ -232,6 +244,7 @@ public class UserConverterTest {
 
     @Test
     public void toUserJaxb_withDomainUser_setsFields() throws Exception {
+        userDo = new com.rackspace.idm.domain.entity.User();
         userDo.setCountry("country");
         userDo.setCreated(new DateTime(1));
         userDo.setUpdated(new DateTime(2));

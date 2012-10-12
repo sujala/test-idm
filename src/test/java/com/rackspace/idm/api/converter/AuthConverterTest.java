@@ -1,5 +1,13 @@
 package com.rackspace.idm.api.converter;
 
+import org.junit.runner.RunWith;
+
+import org.springframework.beans.factory.annotation.Autowired;
+
+import org.springframework.test.context.ContextConfiguration;
+
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
 import com.rackspace.idm.domain.entity.*;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -12,7 +20,6 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 
-
 /**
  * Created with IntelliJ IDEA.
  * User: kurt
@@ -20,13 +27,15 @@ import static org.junit.Assert.assertThat;
  * Time: 10:23 AM
  * To change this template use File | Settings | File Templates.
  */
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(locations = "classpath:app-config.xml")
 public class AuthConverterTest {
+    @Autowired
     AuthConverter authConverter;
     private AuthData authData;
 
     @Before
     public void setUp() throws Exception {
-        authConverter = new AuthConverter(new TokenConverter(), new ApplicationConverter(new RolesConverter()), new UserConverter(new RolesConverter()));
         authData = new AuthData();
     }
 

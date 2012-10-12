@@ -8,8 +8,6 @@ import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import junit.framework.Assert;
 import org.apache.commons.configuration.Configuration;
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.commons.configuration.PropertiesConfiguration;
 import org.easymock.EasyMock;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -38,8 +36,14 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
         scopeAccessDao = EasyMock.createMock(ScopeAccessDao.class);
         endpointDao = EasyMock.createMock(EndpointDao.class);
         tenantDao = EasyMock.createMock(TenantDao.class);
-        scopeAccessService = new DefaultScopeAccessService(mockUserDao,
-            mockClientDao, scopeAccessDao, tenantDao, endpointDao, authHeaderHelper, appConfig);
+        scopeAccessService = new DefaultScopeAccessService();
+        scopeAccessService.setUserDao(mockUserDao);
+        scopeAccessService.setApplicationDao(mockClientDao);
+        scopeAccessService.setScopeAcessDao(scopeAccessDao);
+        scopeAccessService.setTenantDao(tenantDao);
+        scopeAccessService.setEndpointDao(endpointDao);
+        scopeAccessService.setAuthHeaderHelper(authHeaderHelper);
+        scopeAccessService.setAppConfig(appConfig);
     }
 
     @Test

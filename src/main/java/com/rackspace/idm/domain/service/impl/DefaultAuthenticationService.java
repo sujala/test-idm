@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.service.impl;
 
+import org.springframework.stereotype.Component;
+
 import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.AuthDao;
@@ -28,37 +30,32 @@ import java.util.UUID;
 
 import static com.rackspace.idm.domain.entity.OAuthGrantType.*;
 
+@Component
 public class DefaultAuthenticationService implements AuthenticationService {
 
     public static final int YEARS = 100;
-    private final ApplicationDao clientDao;
-    private final TenantService tenantService;
-    private final ScopeAccessService scopeAccessService;
-    private final AuthDao authDao;
-    private final Configuration config;
-    private final UserDao userDao;
-    private final CustomerDao customerDao;
-    private final InputValidator inputValidator;
+
+    @Autowired
+    private ApplicationDao clientDao;
+    @Autowired
+    private TenantService tenantService;
+    @Autowired
+    private ScopeAccessService scopeAccessService;
+    @Autowired
+    private AuthDao authDao;
+    @Autowired
+    private Configuration config;
+    @Autowired
+    private UserDao userDao;
+    @Autowired
+    private CustomerDao customerDao;
+    @Autowired
+    private InputValidator inputValidator;
 
     @Autowired
     private RSAClient rsaClient;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-
-    public DefaultAuthenticationService(AuthDao authDao, TenantService tenantService,
-                                        ScopeAccessService scopeAccessService,
-                                        ApplicationDao clientDao,
-                                        Configuration config, UserDao userDao,
-                                        CustomerDao customerDao, InputValidator inputValidator) {
-        this.authDao = authDao;
-        this.tenantService = tenantService;
-        this.scopeAccessService = scopeAccessService;
-        this.clientDao = clientDao;
-        this.config = config;
-        this.userDao = userDao;
-        this.customerDao = customerDao;
-        this.inputValidator = inputValidator;
-    }
 
     @Override
     public AuthData authenticate(Credentials credentials) {
@@ -76,6 +73,46 @@ public class DefaultAuthenticationService implements AuthenticationService {
                 .loadScopeAccessByAccessToken(authToken);
 
         return getAuthDataWithClientRoles(scopeAccess);
+    }
+
+    @Override
+    public void setAuthDao(AuthDao authDao) {
+        this.authDao = authDao;
+    }
+
+    @Override
+    public void setTenantService(TenantService tenantService) {
+        this.tenantService = tenantService;
+    }
+
+    @Override
+    public void setScopeAccessService(ScopeAccessService scopeAccessService) {
+        this.scopeAccessService = scopeAccessService;
+    }
+
+    @Override
+    public void setApplicationDao(ApplicationDao applicationDao) {
+        this.clientDao = applicationDao;
+    }
+
+    @Override
+    public void setConfig(Configuration appConfig) {
+        this.config = appConfig;
+    }
+
+    @Override
+    public void setUserDao(UserDao userDao) {
+        this.userDao = userDao;
+    }
+
+    @Override
+    public void setCustomerDao(CustomerDao customerDao) {
+        this.customerDao = customerDao;
+    }
+
+    @Override
+    public void setInputValidator(InputValidator inputValidator) {
+        this.inputValidator = inputValidator;
     }
 
     /**

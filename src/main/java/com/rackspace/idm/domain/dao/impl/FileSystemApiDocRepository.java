@@ -1,10 +1,13 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import org.springframework.stereotype.Component;
+
 import com.rackspace.idm.domain.dao.ApiDocDao;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.*;
 
+@Component
 public class FileSystemApiDocRepository implements ApiDocDao {
 
 

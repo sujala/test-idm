@@ -1,5 +1,12 @@
 package com.rackspace.idm.domain.service.impl;
 
+import org.junit.runner.RunWith;
+
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+
+import org.mockito.runners.MockitoJUnitRunner;
+
 import com.rackspace.idm.domain.dao.GroupDao;
 import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.User;
@@ -26,21 +33,23 @@ import static org.mockito.Mockito.*;
  * Time: 11:34:03 AM
  * To change this template use File | Settings | File Templates.
  */
+@RunWith(MockitoJUnitRunner.class)
 public class DefaultGroupServiceTest{
-    private DefaultUserService defaultUserService;
-    private DefaultGroupService defaultGroupService;
+    @InjectMocks
+    DefaultGroupService defaultGroupService = new DefaultGroupService();
     User user1 = new User();
     User user2 = new User();
     Users listUsers = new Users();
     List<User> listUser;
+    @Mock
     GroupDao groupDao;
+    @Mock
+    DefaultUserService defaultUserService;
+
     DefaultGroupService spy;
 
     @Before
     public void setup(){
-        groupDao = mock(GroupDao.class);
-        defaultUserService = mock(DefaultUserService.class);
-        defaultGroupService = new DefaultGroupService(groupDao,defaultUserService);
         user1.setDisplayName("user1");
         user1.setUsername("user1");
         user1.setEnabled(true);
@@ -54,8 +63,6 @@ public class DefaultGroupServiceTest{
         listUser.add(user2);
         listUsers.setUsers(listUser);
         spy = spy(defaultGroupService);
-        //set mock
-        defaultGroupService.setDefaultUserService(defaultUserService);
     }
 
 

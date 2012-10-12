@@ -1,5 +1,12 @@
 package com.rackspace.idm.api.resource.cloud;
 
+import org.junit.runner.RunWith;
+
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+
+import org.mockito.runners.MockitoJUnitRunner;
+
 import com.sun.jersey.core.spi.factory.ResponseBuilderImpl;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.apache.commons.configuration.Configuration;
@@ -32,16 +39,17 @@ import static org.mockito.Mockito.*;
  * Time: 10:30 AM
  * To change this template use File | Settings | File Templates.
  */
+@RunWith(MockitoJUnitRunner.class)
 public class CloudClientTest {
 
+    @Mock
     Configuration config;
-    CloudClient cloudClient;
+    @InjectMocks
+    CloudClient cloudClient = new CloudClient();
     CloudClient spy;
 
     @Before
     public void setUp() throws Exception {
-        config = mock(Configuration.class);
-        cloudClient = new CloudClient(config);
         spy = spy(cloudClient);
     }
 

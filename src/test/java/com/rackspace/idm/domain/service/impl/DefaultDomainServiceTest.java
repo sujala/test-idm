@@ -1,5 +1,12 @@
 package com.rackspace.idm.domain.service.impl;
 
+import org.junit.runner.RunWith;
+
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+
+import org.mockito.runners.MockitoJUnitRunner;
+
 import com.rackspace.idm.domain.dao.DomainDao;
 import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.entity.Domain;
@@ -21,17 +28,20 @@ import static org.hamcrest.Matchers.equalTo;
  * Time: 10:30 AM
  * To change this template use File | Settings | File Templates.
  */
+@RunWith(MockitoJUnitRunner.class)
 public class DefaultDomainServiceTest {
 
-    DefaultDomainService defaultDomainService;
-    private DomainDao domainDao = mock(DomainDao.class);
-    private TenantService tenantService = mock(TenantService.class);
+    @InjectMocks
+    DefaultDomainService defaultDomainService = new DefaultDomainService();
+    @Mock
+    DomainDao domainDao;
+    @Mock
+    private TenantService tenantService;
+
     DefaultDomainService spy;
 
     @Before
     public void setUp() throws Exception {
-        defaultDomainService = new DefaultDomainService(domainDao);
-        defaultDomainService.setTenantService(tenantService);
         spy = spy(defaultDomainService);
     }
 

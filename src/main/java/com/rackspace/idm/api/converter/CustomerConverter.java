@@ -1,17 +1,17 @@
 package com.rackspace.idm.api.converter;
 
+import org.springframework.stereotype.Component;
+
 import com.rackspace.api.idm.v1.IdentityProfile;
 import com.rackspace.api.idm.v1.ObjectFactory;
 import com.rackspace.idm.domain.entity.Customer;
 
 import javax.xml.bind.JAXBElement;
 
+@Component
 public class CustomerConverter {
 
     private final ObjectFactory objectFactory = new ObjectFactory();
-
-    public CustomerConverter() {
-    }
 
     public Customer toCustomerDO(com.rackspace.api.idm.v1.IdentityProfile jaxbCustomer) {
 

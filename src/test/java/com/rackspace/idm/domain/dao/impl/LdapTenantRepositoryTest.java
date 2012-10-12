@@ -1,5 +1,12 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import org.junit.runner.RunWith;
+
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+
+import org.mockito.runners.MockitoJUnitRunner;
+
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.exception.NotFoundException;
@@ -25,14 +32,20 @@ import static org.mockito.Mockito.*;
  * Time: 8:07 AM
  * To change this template use File | Settings | File Templates.
  */
+@RunWith(MockitoJUnitRunner.class)
 public class LdapTenantRepositoryTest extends InMemoryLdapIntegrationTest{
-    LdapTenantRepository ldapTenantRepository;
+    @InjectMocks
+    LdapTenantRepository ldapTenantRepository = new LdapTenantRepository();
+    @Mock
+    LdapConnectionPools ldapConnectionPools;
+    @Mock
+    Configuration configuration;
+
     LdapTenantRepository spy;
     LDAPInterface ldapInterface;
 
     @Before
     public void setUp() throws Exception {
-        ldapTenantRepository = new LdapTenantRepository(mock(LdapConnectionPools.class), mock(Configuration.class));
         ldapInterface = mock(LDAPInterface.class);
         spy = spy(ldapTenantRepository);
 

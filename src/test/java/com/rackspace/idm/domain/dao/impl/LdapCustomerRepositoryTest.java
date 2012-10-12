@@ -1,5 +1,12 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import org.junit.runner.RunWith;
+
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+
+import org.mockito.runners.MockitoJUnitRunner;
+
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.entity.Customer;
 import com.unboundid.ldap.sdk.*;
@@ -21,15 +28,22 @@ import static org.mockito.Mockito.*;
  * Date: 4/25/12
  * Time: 10:55 AM
  */
+
+@RunWith(MockitoJUnitRunner.class)
 public class LdapCustomerRepositoryTest extends InMemoryLdapIntegrationTest{
 
-    LdapCustomerRepository ldapCustomerRepository;
+    @InjectMocks
+    LdapCustomerRepository ldapCustomerRepository = new LdapCustomerRepository();
+    @Mock
+    LdapConnectionPools ldapConnectionPools;
+    @Mock
+    Configuration configuration;
+
     LdapCustomerRepository spy;
     LDAPInterface ldapInterface;
 
     @Before
     public void setUp() throws Exception {
-        ldapCustomerRepository = new LdapCustomerRepository(mock(LdapConnectionPools.class),mock(Configuration.class));
         ldapInterface = mock(LDAPInterface.class);
         spy = spy(ldapCustomerRepository);
 

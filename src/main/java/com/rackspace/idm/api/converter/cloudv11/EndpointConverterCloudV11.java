@@ -1,5 +1,9 @@
 package com.rackspace.idm.api.converter.cloudv11;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
+import org.springframework.stereotype.Component;
+
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.CloudEndpoint;
 import com.rackspace.idm.domain.entity.OpenstackEndpoint;
@@ -10,15 +14,13 @@ import org.apache.commons.configuration.Configuration;
 import java.util.ArrayList;
 import java.util.List;
 
+@Component
 public class EndpointConverterCloudV11 {
-    private final Configuration config;
+    @Autowired
+    private Configuration config;
 
     private final ObjectFactory of = new ObjectFactory();
     private final CloudAuthServiceCatalogFactory sf = new CloudAuthServiceCatalogFactory();
-
-    public EndpointConverterCloudV11(Configuration config) {
-        this.config = config;
-    }
 
     public BaseURL toBaseUrl(CloudBaseUrl url) {
         if (url == null) {

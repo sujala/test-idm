@@ -10,6 +10,10 @@ import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import javax.xml.datatype.DatatypeFactory;
 import java.util.ArrayList;
@@ -17,9 +21,6 @@ import java.util.List;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * Created with IntelliJ IDEA.
@@ -28,19 +29,20 @@ import static org.mockito.Mockito.when;
  * Time: 1:35 PM
  * To change this template use File | Settings | File Templates.
  */
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(locations = "classpath:app-config.xml")
 public class UserConverterCloudV11Test {
+    @Autowired
     private UserConverterCloudV11 userConverterCloudV11;
+    @Autowired
     private EndpointConverterCloudV11 endpointConverterCloudV11;
-    private CloudBaseUrl cloudBaseUrl;
+    @Autowired
     private Configuration config;
+    private CloudBaseUrl cloudBaseUrl;
 
     @Before
     public void setUp() throws Exception {
-        config = mock(Configuration.class);
-        endpointConverterCloudV11 = new EndpointConverterCloudV11(config);
-        userConverterCloudV11 = new UserConverterCloudV11(endpointConverterCloudV11);
         cloudBaseUrl = new CloudBaseUrl();
-
         // Fields
         cloudBaseUrl.setBaseUrlId(1);
         cloudBaseUrl.setAdminUrl("adminUrl");
@@ -111,14 +113,13 @@ public class UserConverterCloudV11Test {
         cloudBaseUrl.setPublicUrl("publicUrl");
         cloudBaseUrl.setV1Default(true);
         cloudBaseUrlList.add(cloudBaseUrl);
-        when(config.getString(anyString())).thenReturn("http://identity.api.rackspacecloud.com/v1.1/%s");
         openstackEndpoint.setBaseUrls(cloudBaseUrlList);
         endpointList.add(openstackEndpoint);
         com.rackspacecloud.docs.auth.api.v1.User jaxbUser = userConverterCloudV11.toCloudV11User(user, endpointList);
         assertThat("username", jaxbUser.getId(), equalTo("username"));
         assertThat("id", jaxbUser.getBaseURLRefs().getBaseURLRef().get(0).getId(), equalTo(1));
         assertThat("v1default", jaxbUser.getBaseURLRefs().getBaseURLRef().get(0).isV1Default(), equalTo(true));
-        assertThat("reference string", jaxbUser.getBaseURLRefs().getBaseURLRef().get(0).getHref(), equalTo("http://identity.api.rackspacecloud.com/v1.1/1"));
+        assertThat("reference string", jaxbUser.getBaseURLRefs().getBaseURLRef().get(0).getHref(), equalTo("https://dev.identity.api.rackspacecloud.com/v1.1/baseURLs/1"));
     }
 
     @Test
@@ -145,7 +146,6 @@ public class UserConverterCloudV11Test {
         OpenstackEndpoint openstackEndpoint = new OpenstackEndpoint();
         cloudBaseUrl.setV1Default(true);
         urlList.add(cloudBaseUrl);
-        when(config.getString(anyString())).thenReturn("http://identity.api.rackspacecloud.com/v1.1/%s");
         openstackEndpoint.setBaseUrls(urlList);
         endpointList.add(openstackEndpoint);
         User user = new User();
@@ -154,7 +154,7 @@ public class UserConverterCloudV11Test {
         assertThat("username", jaxbUser.getId(), equalTo("username"));
         assertThat("id", jaxbUser.getBaseURLRefs().getBaseURLRef().get(0).getId(), equalTo(1));
         assertThat("v1default", jaxbUser.getBaseURLRefs().getBaseURLRef().get(0).isV1Default(), equalTo(true));
-        assertThat("reference string", jaxbUser.getBaseURLRefs().getBaseURLRef().get(0).getHref(), equalTo("http://identity.api.rackspacecloud.com/v1.1/1"));
+        assertThat("reference string", jaxbUser.getBaseURLRefs().getBaseURLRef().get(0).getHref(), equalTo("https://dev.identity.api.rackspacecloud.com/v1.1/baseURLs/1"));
     }
 
     @Test

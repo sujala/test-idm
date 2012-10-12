@@ -1,5 +1,12 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import org.junit.runner.RunWith;
+
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+
+import org.mockito.runners.MockitoJUnitRunner;
+
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.OpenstackEndpoint;
@@ -32,17 +39,15 @@ import static org.mockito.Mockito.*;
  * Time: 3:32 PM
  * To change this template use File | Settings | File Templates.
  */
+@RunWith(MockitoJUnitRunner.class)
 public class DefaultRegionServiceTest {
 
+    @InjectMocks
     DefaultRegionService defaultRegionService = new DefaultRegionService();
-    EndpointService endpointService = mock(EndpointService.class);
-    ApplicationService applicationService = mock(ApplicationService.class);
-
-    @Before
-    public void setUp() throws Exception {
-        defaultRegionService.setEndpointService(endpointService);
-        defaultRegionService.setApplicationService(applicationService);
-    }
+    @Mock
+    EndpointService endpointService;
+    @Mock
+    ApplicationService applicationService;
 
     @Test
     public void addUser_callerIsServiceAdmin_defaultRegionDoesNotMatchUserRegion_returnsCorrectMessage() throws Exception {

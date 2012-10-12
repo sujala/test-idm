@@ -2,6 +2,8 @@ package com.rackspace.idm.domain.service.impl;
 
 import java.util.List;
 
+import org.springframework.stereotype.Component;
+
 import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.dao.PolicyDao;
 import com.rackspace.idm.domain.dao.impl.LdapEndpointRepository;
@@ -27,6 +29,7 @@ import org.apache.commons.lang.StringUtils;
  * Time: 11:12 AM
  * To change this template use File | Settings | File Templates.
  */
+@Component
 public class DefaultPolicyService implements PolicyService {
 
     @Autowired
@@ -35,16 +38,14 @@ public class DefaultPolicyService implements PolicyService {
     @Autowired
     private EndpointDao endpointDao;
 
+    @Autowired
+    private PolicyDao policyDao;
+
     public static final String POLICY_CANNOT_BE_NULL = "Policy cannot be null";
     public static final String POLICY_NAME_CANNOT_BE_NULL = "Policy name cannot be null or empty";
     public static final String POLICY_BLOB_CANNOT_BE_NULL = "Policy Blob cannot be null";
     public static final String POLICY_TYPE_CANNOT_BE_NULL = "Policy type cannot be null";
-    private final PolicyDao policyDao;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-
-    public DefaultPolicyService(PolicyDao policyDao) {
-        this.policyDao = policyDao;
-    }
 
     @Override
     public Policies getPolicies() {

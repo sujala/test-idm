@@ -1,5 +1,12 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import org.junit.runner.RunWith;
+
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+
+import org.mockito.runners.MockitoJUnitRunner;
+
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.entity.Policy;
 import com.unboundid.ldap.sdk.Filter;
@@ -27,18 +34,23 @@ import static org.mockito.Mockito.*;
  * Time: 5:21 PM
  * To change this template use File | Settings | File Templates.
  */
+@RunWith(MockitoJUnitRunner.class)
 public class LdapPolicyRepositoryTest{
-
-    LdapPolicyRepository ldapPolicyRepository;
-    LdapPolicyRepository spy;
+    @InjectMocks
+    LdapPolicyRepository ldapPolicyRepository = new LdapPolicyRepository();
+    @Mock
+    LdapConnectionPools ldapConnectionPools;
+    @Mock
+    Configuration configuration;
+    @Mock
     LDAPInterface ldapInterface;
+
     Policy policy;
+    LdapPolicyRepository spy;
 
 
     @Before
     public void setUp() throws Exception {
-        ldapPolicyRepository = new LdapPolicyRepository(mock(LdapConnectionPools.class), mock(Configuration.class));
-        ldapInterface = mock(LDAPInterface.class);
         spy = spy(ldapPolicyRepository);
         doReturn(ldapInterface).when(spy).getAppInterface();
         policy = new Policy();

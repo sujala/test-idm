@@ -1,10 +1,13 @@
 package com.rackspace.idm.api.converter;
 
+import org.springframework.stereotype.Component;
+
 import com.rackspace.idm.domain.entity.AuthCredentials;
 import com.rackspace.idm.domain.entity.Credentials;
 import com.rackspace.idm.domain.entity.RSACredentials;
 import com.rackspace.idm.domain.entity.RackerCredentials;
 
+@Component
 public class CredentialsConverter {
 
     public CredentialsConverter() {

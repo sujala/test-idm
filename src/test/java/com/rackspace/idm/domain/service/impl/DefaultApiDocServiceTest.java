@@ -1,5 +1,12 @@
 package com.rackspace.idm.domain.service.impl;
 
+import org.junit.runner.RunWith;
+
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+
+import org.mockito.runners.MockitoJUnitRunner;
+
 import com.rackspace.idm.domain.dao.ApiDocDao;
 import org.junit.Before;
 import org.junit.Test;
@@ -16,15 +23,13 @@ import static org.mockito.Mockito.when;
  * Time: 4:50 PM
  * To change this template use File | Settings | File Templates.
  */
+@RunWith(MockitoJUnitRunner.class)
 public class DefaultApiDocServiceTest {
 
-    DefaultApiDocService defaultApiDocService;
-    ApiDocDao apiDocDao = mock(ApiDocDao.class);
-
-    @Before
-    public void setUp() throws Exception {
-        defaultApiDocService = new DefaultApiDocService(apiDocDao);
-    }
+    @InjectMocks
+    DefaultApiDocService defaultApiDocService = new DefaultApiDocService();
+    @Mock
+    ApiDocDao apiDocDao;
 
     @Test
     public void getXsd_returnsString() throws Exception {

@@ -1,5 +1,13 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import org.junit.runner.RunWith;
+
+import org.springframework.beans.factory.annotation.Autowired;
+
+import org.springframework.test.context.ContextConfiguration;
+
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
 import com.rackspace.idm.domain.config.LdapConfiguration;
 import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.entity.Policies;
@@ -13,10 +21,14 @@ import org.junit.*;
  * Time: 10:17 AM
  * To change this template use File | Settings | File Templates.
  */
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(locations = "classpath:app-config.xml")
 public class LdapPolicyRepositoryIntegrationTest extends InMemoryLdapIntegrationTest{
 
-    private static LdapPolicyRepository repo;
-    private static LdapConnectionPools connPools;
+    @Autowired
+    private LdapPolicyRepository repo;
+    @Autowired
+    private LdapConnectionPools connPools;
 
     private final String policyId = "XXXX";
     private final String description = "Description";
@@ -27,23 +39,6 @@ public class LdapPolicyRepositoryIntegrationTest extends InMemoryLdapIntegration
     private final String type = "someType";
     private final String dn = LdapRepository.BASE_DN;
 
-
-
-    private static LdapPolicyRepository getRepo(LdapConnectionPools connPools) {
-        return new LdapPolicyRepository(connPools, new PropertyFileConfiguration().getConfig());
-    }
-
-    private static LdapConnectionPools getConnPools() {
-        LdapConfiguration config = new LdapConfiguration(new PropertyFileConfiguration().getConfig());
-        return config.connectionPools();
-    }
-
-    @BeforeClass
-    public static void setUp() {
-        connPools = getConnPools();
-        repo = getRepo(connPools);
-    }
-
     @Before
     public void preTestSetUp() throws Exception {
         //cleanup before test
@@ -52,11 +47,6 @@ public class LdapPolicyRepositoryIntegrationTest extends InMemoryLdapIntegration
         }catch (Exception e){
             System.out.println("failed to delete policy");
         }
-    }
-
-    @AfterClass
-    public static void tearDown() {
-        connPools.close();
     }
 
     @Test

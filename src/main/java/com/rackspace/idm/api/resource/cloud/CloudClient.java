@@ -33,14 +33,11 @@ import java.net.URL;
  * Time: 1:53 PM
  */
 
+@Component
 public class CloudClient {
 
-    private final Configuration config;
-
     @Autowired
-    public CloudClient(Configuration config) {
-        this.config = config;
-    }
+    private Configuration config;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 

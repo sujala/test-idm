@@ -1,5 +1,9 @@
 package com.rackspace.idm.domain.service.impl;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
+import org.springframework.stereotype.Component;
+
 import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.ApplicationService;
@@ -14,23 +18,21 @@ import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 import java.util.ArrayList;
 import java.util.List;
 
+@Component
 public class DefaultApplicationService implements ApplicationService {
 
-    private final ScopeAccessDao scopeAccessDao;
-    private final ApplicationDao clientDao;
-    private final CustomerDao customerDao;
-    private final UserDao userDao;
-    private final TenantDao tenantDao;
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    @Autowired
+    private ScopeAccessDao scopeAccessDao;
+    @Autowired
+    private ApplicationDao clientDao;
+    @Autowired
+    private CustomerDao customerDao;
+    @Autowired
+    private UserDao userDao;
+    @Autowired
+    private TenantDao tenantDao;
 
-    public DefaultApplicationService(ScopeAccessDao scopeAccessDao,
-        ApplicationDao clientDao, CustomerDao customerDao, UserDao userDao, TenantDao tenantDao) {
-        this.clientDao = clientDao;
-        this.customerDao = customerDao;
-        this.userDao = userDao;
-        this.tenantDao = tenantDao;
-        this.scopeAccessDao = scopeAccessDao;
-    }
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Override
     public void add(Application client) {
@@ -633,4 +635,30 @@ public class DefaultApplicationService implements ApplicationService {
         clientDao.softDeleteApplication(application);
         logger.debug("SoftDeleted Application: {}", application);
     }
+
+	@Override
+	public void setScopeAccessDao(ScopeAccessDao scopeAccessDao) {
+		this.scopeAccessDao = scopeAccessDao;
+	}
+
+	@Override
+	public void setApplicationDao(ApplicationDao applicationDao) {
+		this.clientDao = applicationDao;
+	}
+
+	@Override
+	public void setCustomerDao(CustomerDao customerDao) {
+		this.customerDao = customerDao;
+		
+	}
+
+	@Override
+	public void setUserDao(UserDao userDao) {
+		this.userDao = userDao;
+	}
+
+	@Override
+	public void setTenantDao(TenantDao tenantDao) {
+		this.tenantDao = tenantDao;
+	}
 }

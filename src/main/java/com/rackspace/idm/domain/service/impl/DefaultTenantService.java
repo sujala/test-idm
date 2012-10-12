@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.service.impl;
 
+import org.springframework.stereotype.Component;
+
 import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.DomainService;
@@ -17,6 +19,7 @@ import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 import java.util.ArrayList;
 import java.util.List;
 
+@Component
 public class DefaultTenantService implements TenantService {
 
     public static final String GETTING_TENANT_ROLES = "Getting Tenant Roles";
@@ -28,21 +31,22 @@ public class DefaultTenantService implements TenantService {
     @Autowired
     private DomainService domainService;
 
-    private final TenantDao tenantDao;
-    private final ApplicationDao clientDao;
-    private final UserDao userDao;
-    private final EndpointDao endpointDao;
-    private final ScopeAccessDao scopeAccessDao;
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    @Autowired
+    private TenantDao tenantDao;
 
-    public DefaultTenantService(TenantDao tenantDao, ApplicationDao clientDao,
-        UserDao userDao, EndpointDao endpointDao, ScopeAccessDao scopeAccessDao) {
-        this.tenantDao = tenantDao;
-        this.clientDao = clientDao;
-        this.userDao = userDao;
-        this.endpointDao = endpointDao;
-        this.scopeAccessDao = scopeAccessDao;
-    }
+    @Autowired
+    private ApplicationDao clientDao;
+
+    @Autowired
+    private UserDao userDao;
+
+    @Autowired
+    private EndpointDao endpointDao;
+
+    @Autowired
+    private ScopeAccessDao scopeAccessDao;
+
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Override
     public void addTenant(Tenant tenant) {
@@ -687,4 +691,30 @@ public class DefaultTenantService implements TenantService {
     public void setDomainService(DomainService domainService) {
         this.domainService = domainService;
     }
+
+	@Override
+	public void setTenantDao(TenantDao tenantDao) {
+		this.tenantDao = tenantDao;
+	}
+
+	@Override
+	public void setClientDao(ApplicationDao applicationDao) {
+		this.clientDao = applicationDao;
+		
+	}
+
+	@Override
+	public void setUserDao(UserDao userDao) {
+		this.userDao = userDao;
+	}
+
+	@Override
+	public void setEndpointDao(EndpointDao endpointDao) {
+		this.endpointDao = endpointDao;
+	}
+
+	@Override
+	public void setScopeAccessDao(ScopeAccessDao scopeAccessDao) {
+		this.scopeAccessDao = scopeAccessDao;
+	}
 }

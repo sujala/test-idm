@@ -1,5 +1,12 @@
 package com.rackspace.idm.domain.service.impl;
 
+import org.junit.runner.RunWith;
+
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+
+import org.mockito.runners.MockitoJUnitRunner;
+
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.UserDao;
@@ -27,42 +34,36 @@ import static org.mockito.Mockito.*;
  * Date: 12/1/11
  * Time: 11:26 AM
  */
+@RunWith(MockitoJUnitRunner.class)
 public class DefaultUserServiceTest {
-
-    private DefaultUserService defaultUserService;
-    private DefaultUserService spy;
+    @InjectMocks
+    private DefaultUserService defaultUserService = new DefaultUserService();
+    @Mock
     private UserDao userDao;
+    @Mock
     private AuthDao authDao;
+    @Mock
     private ScopeAccessDao scopeAccessDao;
+    @Mock
     private ApplicationService applicationService;
+    @Mock
     private Configuration config;
+    @Mock
     private PasswordComplexityService passwordComplexityService;
+    @Mock
     private ScopeAccessService scopeAccessService;
+    @Mock
     private AuthorizationService authorizationService;
+    @Mock
     private TenantService tenantService;
+    @Mock
     private EndpointService endpointService;
+
+    private DefaultUserService spy;
 
     @Before
     public void setUp() throws Exception {
-        userDao = mock(UserDao.class);
-        authDao = mock(AuthDao.class);
-        scopeAccessDao = mock(ScopeAccessDao.class);
-        applicationService = mock(ApplicationService.class);
-        config = mock(Configuration.class);
-        passwordComplexityService = mock(PasswordComplexityService.class);
-        scopeAccessService = mock(ScopeAccessService.class);
-        authorizationService = mock(AuthorizationService.class);
-        tenantService = mock(TenantService.class);
-        endpointService = mock(EndpointService.class);
-
-        defaultUserService = new DefaultUserService(userDao, authDao, scopeAccessDao, applicationService, config, passwordComplexityService);
-
-        defaultUserService.setAuthorizationService(authorizationService);
-        defaultUserService.setScopeAccessService(scopeAccessService);
-        defaultUserService.setTenantService(tenantService);
-        defaultUserService.setEndpointService(endpointService);
         spy = spy(defaultUserService);
-
     }
 
     @Test

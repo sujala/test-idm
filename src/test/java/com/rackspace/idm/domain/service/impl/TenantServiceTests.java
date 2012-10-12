@@ -43,7 +43,12 @@ public class TenantServiceTests {
         mockUserDao = EasyMock.createMock(UserDao.class);
         mockEndpointDao = EasyMock.createMock(EndpointDao.class);
         mockScopeAccessDao = EasyMock.createMock(ScopeAccessDao.class);
-        tenantService = new DefaultTenantService(mockTenantDao, mockClientDao, mockUserDao, mockEndpointDao, mockScopeAccessDao);
+        tenantService = new DefaultTenantService();
+        tenantService.setTenantDao(mockTenantDao);
+        tenantService.setClientDao(mockClientDao);
+        tenantService.setUserDao(mockUserDao);
+        tenantService.setEndpointDao(mockEndpointDao);
+        tenantService.setScopeAccessDao(mockScopeAccessDao);
     }
 
     @Test

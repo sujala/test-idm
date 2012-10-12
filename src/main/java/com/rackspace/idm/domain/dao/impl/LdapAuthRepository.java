@@ -1,5 +1,9 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
+import org.springframework.stereotype.Component;
+
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.impl.LdapRepository.LdapSearchBuilder;
@@ -12,18 +16,15 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
+@Component
 public class LdapAuthRepository implements AuthDao {
 
     private static final String BASE_DN = "ou=users,o=rackspace";
-    private final LDAPConnectionPool connPool;
-    private final Configuration config;
+    @Autowired
+    private LDAPConnectionPool connPool;
+    @Autowired
+    private Configuration config;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-
-    public LdapAuthRepository(LDAPConnectionPool connPool, Configuration config) {
-        this.connPool = connPool;
-        this.config = config;
-    }
-
 
     @Override
     public boolean authenticate(String userName, String password) {

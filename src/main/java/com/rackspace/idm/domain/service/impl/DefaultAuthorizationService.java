@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.service.impl;
 
+import org.springframework.stereotype.Component;
+
 import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.TenantDao;
@@ -17,14 +19,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.ArrayList;
 import java.util.List;
 
+@Component
 public class DefaultAuthorizationService implements AuthorizationService {
 
     public static final String NOT_AUTHORIZED_MSG = "Not authorized.";
-    private final ApplicationDao clientDao;
-    private final Configuration config;
-    private final ScopeAccessDao scopeAccessDao;
-    private final TenantDao tenantDao;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    @Autowired
+    private ApplicationDao clientDao;
+    @Autowired
+    private Configuration config;
+    @Autowired
+    private ScopeAccessDao scopeAccessDao;
+    @Autowired
+    private TenantDao tenantDao;
     @Autowired
     private ScopeAccessService scopeAccessService;
     @Autowired
@@ -37,16 +45,6 @@ public class DefaultAuthorizationService implements AuthorizationService {
     private static ClientRole cloudUserAdminRole = null;
     private static ClientRole idmSuperAdminRole = null;
     private static ClientRole rackerRole = null ;
-
-    public DefaultAuthorizationService(ScopeAccessDao scopeAccessDao,
-        ApplicationDao clientDao, TenantDao tenantDao,
-        Configuration config) {
-        this.scopeAccessDao = scopeAccessDao;
-        this.clientDao = clientDao;
-        this.tenantDao = tenantDao;
-        this.config = config;
-    }
-
     
     @Override
 	public void authorize(String token, Entity object, String... authorizedRoles) {
@@ -597,4 +595,20 @@ public class DefaultAuthorizationService implements AuthorizationService {
     private String getCloudAuthUserRole() {
         return config.getString("cloudAuth.userRole");
     }
+
+	public void setScopeAccessDao(ScopeAccessDao accessDao) {
+		this.scopeAccessDao = accessDao;
+	}
+
+	public void setApplicationDao(ApplicationDao applicationDao) {
+		this.clientDao = applicationDao;
+	}
+
+	public void setTenantDao(TenantDao tenantDao) {
+		this.tenantDao = tenantDao;
+	}
+
+	public void setConfig(Configuration config) {
+		this.config = config;
+	}
 }

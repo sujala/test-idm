@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import org.springframework.stereotype.Component;
+
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.entity.*;
@@ -7,20 +9,15 @@ import com.unboundid.ldap.sdk.*;
 import com.unboundid.ldap.sdk.persist.LDAPPersistException;
 import com.unboundid.ldap.sdk.persist.LDAPPersister;
 import com.unboundid.util.LDAPSDKRuntimeException;
-import org.apache.commons.configuration.Configuration;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Component
 public class LdapScopeAccessPeristenceRepository extends LdapRepository implements ScopeAccessDao {
 
     public static final String FIND_SCOPE_ACCESS_FOR_PARENT_BY_CLIENT_ID = "Find ScopeAccess for Parent: {} by ClientId: {}";
     public static final String ERROR_READING_SCOPE_ACCESS_BY_CLIENT_ID = "Error reading scope access by clientId";
-
-    public LdapScopeAccessPeristenceRepository(LdapConnectionPools connPools,
-        Configuration config) {
-        super(connPools, config);
-    }
 
     @Override
     public ScopeAccess addDelegateScopeAccess(String parentUniqueId, ScopeAccess scopeAccess) {

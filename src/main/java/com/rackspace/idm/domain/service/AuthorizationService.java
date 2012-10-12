@@ -1,5 +1,10 @@
 package com.rackspace.idm.domain.service;
 
+import org.apache.commons.configuration.Configuration;
+
+import com.rackspace.idm.domain.dao.ApplicationDao;
+import com.rackspace.idm.domain.dao.ScopeAccessDao;
+import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.entity.Entity;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
@@ -62,4 +67,8 @@ public interface AuthorizationService {
     void verifySelf(User requester, User requestedUser);
     void verifyTokenHasTenantAccess(String tenantId, ScopeAccess authScopeAccess);
     void verifyDomain(User retrievedUser, User caller);
+	public void setScopeAccessDao(ScopeAccessDao accessDao);
+	public void setApplicationDao(ApplicationDao applicationDao);
+	public void setTenantDao(TenantDao tenantDao);
+	public void setConfig(Configuration config);
 }

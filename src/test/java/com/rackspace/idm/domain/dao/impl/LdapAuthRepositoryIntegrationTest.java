@@ -1,5 +1,13 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import org.junit.runner.RunWith;
+
+import org.springframework.beans.factory.annotation.Autowired;
+
+import org.springframework.test.context.ContextConfiguration;
+
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
 import com.rackspace.idm.domain.config.AuthRepositoryLdapConfiguration;
 import com.unboundid.ldap.sdk.LDAPConnectionPool;
 import org.apache.commons.configuration.Configuration;
@@ -9,31 +17,13 @@ import org.junit.*;
 
 import java.util.List;
 
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(locations = "classpath:app-config.xml")
 public class LdapAuthRepositoryIntegrationTest {
-    private static LdapAuthRepository repo;
-    private static LDAPConnectionPool connPool;
-
-    @BeforeClass
-    public static void setUp() {
-        connPool = getConnPool();
-        repo = getRepo(connPool);
-    }
-
-    private static LdapAuthRepository getRepo(LDAPConnectionPool connPool) {
-        Configuration config = null;
-        try {
-            config = new PropertiesConfiguration("auth.repository.properties");
-
-        } catch (ConfigurationException e) {
-            System.out.println(e);
-        }
-        return new LdapAuthRepository(connPool, config);
-    }
-
-    private static LDAPConnectionPool getConnPool() {
-        return new AuthRepositoryLdapConfiguration(true)
-            .connection();
-    }
+    @Autowired
+    private LdapAuthRepository repo;
+    @Autowired
+    private LDAPConnectionPool connPool;
 
     public boolean authenticateRacker() {
         return repo.authenticate("cidm_user1", "lr7dy8qO");
@@ -65,10 +55,5 @@ public class LdapAuthRepositoryIntegrationTest {
     public void shouldGetRoles() {
         List<String> roles = repo.getRackerRoles("matt.kovacs");
         Assert.assertTrue(roles.size()>0);
-    }
-
-    @AfterClass
-    public static void tearDown() {
-        connPool.close();
     }
 }

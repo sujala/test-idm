@@ -43,7 +43,11 @@ public class DefaultAuthorizationServiceTest {
 
     @Before
     public void setUp() throws Exception {
-        defaultAuthorizationService = new DefaultAuthorizationService(scopeAccessDao,clientDao,tenantDao,config);
+        defaultAuthorizationService = new DefaultAuthorizationService();
+        defaultAuthorizationService.setScopeAccessDao(scopeAccessDao);
+        defaultAuthorizationService.setApplicationDao(clientDao);
+        defaultAuthorizationService.setTenantDao(tenantDao);
+        defaultAuthorizationService.setConfig(config);
         defaultAuthorizationService.setTenantService(tenantSerivce);
         spy = spy(defaultAuthorizationService);
 

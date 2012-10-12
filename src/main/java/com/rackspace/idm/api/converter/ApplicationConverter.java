@@ -1,5 +1,9 @@
 package com.rackspace.idm.api.converter;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
+import org.springframework.stereotype.Component;
+
 import com.rackspace.api.idm.v1.ApplicationList;
 import com.rackspace.api.idm.v1.ObjectFactory;
 import com.rackspace.idm.domain.entity.Application;
@@ -7,16 +11,14 @@ import org.apache.commons.lang.StringUtils;
 
 import javax.xml.bind.JAXBElement;
 
+@Component
 public class ApplicationConverter {
 
     private final ObjectFactory objectFactory = new ObjectFactory();
 
-    private final RolesConverter rolesConverter;
+    @Autowired
+    private RolesConverter rolesConverter;
     
-    public ApplicationConverter(RolesConverter rolesConverter) {
-    	this.rolesConverter = rolesConverter;
-    }
-
     public Application toClientDO(com.rackspace.api.idm.v1.Application jaxbClient) {
         Application application = new Application();
         application.setClientId(jaxbClient.getClientId());
@@ -140,5 +142,9 @@ public class ApplicationConverter {
         jaxbApplication.setRoles(rolesConverter.toRoleJaxbFromTenantRole(client.getRoles()).getValue());
 
         return objectFactory.createApplication(jaxbApplication);
-    }   
+    }
+
+	public void setRolesConverter(RolesConverter rolesConverter) {
+		this.rolesConverter = rolesConverter;
+	}   
 }

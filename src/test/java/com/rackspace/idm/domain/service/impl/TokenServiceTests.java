@@ -69,9 +69,13 @@ public class TokenServiceTests {
         appConfig.addProperty("token.expirationSeconds", expireInSeconds);
         appConfig.addProperty("rackspace.customerId", "RACKSPACE");
 
-        tokenService = new DefaultTokenService(
-                mockClientService, mockAuthorizationService, appConfig,
-                mockScopeAccessService, mockUserDao, mockTenantService);
+        tokenService = new DefaultTokenService();
+        tokenService.setClientService(mockClientService);
+        tokenService.setAuthorizationService(mockAuthorizationService);
+        tokenService.setConfig(appConfig);
+        tokenService.setScopeAccessService(mockScopeAccessService);
+        tokenService.setUserDao(mockUserDao);
+        tokenService.setTenantService(mockTenantService);
     }
 
     @Test

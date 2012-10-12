@@ -1,5 +1,12 @@
 package com.rackspace.idm.domain.service.impl;
 
+import org.junit.runner.RunWith;
+
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+
+import org.mockito.runners.MockitoJUnitRunner;
+
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.ApplicationService;
@@ -25,20 +32,28 @@ import static org.mockito.Mockito.*;
  * Time: 1:24 PM
  * To change this template use File | Settings | File Templates.
  */
+@RunWith(MockitoJUnitRunner.class)
 public class DefaultTokenServiceTest {
 
-    DefaultTokenService defaultTokenService;
-    UserDao userDao = mock(UserDao.class);
-    ApplicationService clientService = mock(ApplicationService.class);
-    AuthorizationService authorizationService = mock(AuthorizationService.class);
-    Configuration config = mock(Configuration.class);
-    ScopeAccessService scopeAccessService = mock(ScopeAccessService.class);
-    TenantService tenantService = mock(TenantService.class);
+    @InjectMocks
+    DefaultTokenService defaultTokenService = new DefaultTokenService();
+    @Mock
+    UserDao userDao;
+    @Mock
+    ApplicationService clientService;
+    @Mock
+    AuthorizationService authorizationService;
+    @Mock
+    Configuration config;
+    @Mock
+    ScopeAccessService scopeAccessService;
+    @Mock
+    TenantService tenantService;
+
     DefaultTokenService spy;
 
     @Before
     public void setUp() throws Exception {
-        defaultTokenService = new DefaultTokenService(clientService,authorizationService,config,scopeAccessService,userDao,tenantService);
         spy = spy(defaultTokenService);
     }
 

@@ -1,5 +1,9 @@
 package com.rackspace.idm.api.converter.cloudv11;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
+import org.springframework.stereotype.Component;
+
 import com.rackspace.idm.domain.entity.OpenstackEndpoint;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspacecloud.docs.auth.api.v1.AuthData;
@@ -14,17 +18,15 @@ import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import java.util.List;
 
+@Component
 public class AuthConverterCloudV11 {
-    private final Configuration config;
-    private final TokenConverterCloudV11 tokenConverter;
-    private final EndpointConverterCloudV11 endpointConverter;
+    @Autowired
+    private Configuration config;
+    @Autowired
+    private TokenConverterCloudV11 tokenConverter;
+    @Autowired
+    private EndpointConverterCloudV11 endpointConverter;
     private Logger logger = LoggerFactory.getLogger(AuthConverterCloudV11.class);
-
-    public AuthConverterCloudV11(Configuration config, TokenConverterCloudV11 tokenConverter, EndpointConverterCloudV11 endpointConverter) {
-        this.config = config;
-        this.tokenConverter = tokenConverter;
-        this.endpointConverter = endpointConverter;
-    }
 
     private final com.rackspacecloud.docs.auth.api.v1.ObjectFactory objFactory = new com.rackspacecloud.docs.auth.api.v1.ObjectFactory();
 

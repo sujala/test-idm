@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import org.springframework.stereotype.Component;
+
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.PolicyDao;
 import com.rackspace.idm.domain.entity.Policies;
@@ -21,15 +23,12 @@ import java.util.List;
  * Time: 3:46 PM
  * To change this template use File | Settings | File Templates.
  */
+@Component
 public class LdapPolicyRepository extends LdapRepository implements PolicyDao {
 
     public static final String NULL_OR_EMPTY_POLICY_ID_PARAMETER = "Null or Empty policyId parameter";
     public static final String NULL_OR_EMPTY_POLICY_NAME_PARAMETER = "Null or Empty policy name parameter";
     public static final String ERROR_GETTING_POLICY_OBJECT = "Error getting policy object";
-
-    public LdapPolicyRepository(LdapConnectionPools connPools, Configuration config) {
-        super(connPools, config);
-    }
 
     @Override
     public void addPolicy(Policy policy) {

@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import org.springframework.stereotype.Component;
+
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
@@ -8,7 +10,6 @@ import com.rackspace.idm.exception.*;
 import com.rackspace.idm.util.CryptHelper;
 import com.unboundid.ldap.sdk.*;
 import com.unboundid.util.StaticUtils;
-import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.joda.time.DateTime;
@@ -21,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+@Component
 public class LdapUserRepository extends LdapRepository implements UserDao {
 
     // NOTE: This is pretty fragile way of handling the specific error, so we
@@ -30,12 +32,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     public static final String NULL_OR_EMPTY_USERNAME_PARAMETER = "Null or Empty username parameter";
     public static final String FOUND_USER = "Found User - {}";
     public static final String FOUND_USERS = "Found Users - {}";
-    private final Configuration config;
-
-    public LdapUserRepository(LdapConnectionPools connPools, Configuration config) {
-        super(connPools, config);
-        this.config = config;
-    }
 
     @Override
     public void addRacker(Racker racker) {
