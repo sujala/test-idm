@@ -1,10 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
@@ -15,14 +11,16 @@ import com.rackspace.idm.api.resource.cloud.CloudUserExtractor;
 import com.rackspace.idm.api.resource.cloud.HttpHeadersAcceptXml;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
-import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.HasAccessToken;
+import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess;
+import com.rackspace.idm.domain.entity.ScopeAccess;
+import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.validation.Validator20;
 import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.api.json.JSONJAXBContext;
 import com.sun.jersey.api.json.JSONUnmarshaller;
-import com.sun.jndi.toolkit.url.Uri;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
@@ -33,7 +31,7 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.*;
-import org.openstack.docs.identity.api.v2.User;
+import org.openstack.docs.identity.api.v2.ObjectFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -253,6 +251,16 @@ public class DelegateCloud20Service implements Cloud20Service {
             }
         }
         return defaultCloud20Service.validateToken(httpHeaders, authToken, tokenId, belongsTo);
+    }
+
+    @Override
+    public ResponseBuilder revokeToken(HttpHeaders httpHeaders, String authToken) {
+        throw new NotImplementedException("Not implemented");
+    }
+
+    @Override
+    public ResponseBuilder revokeToken(HttpHeaders httpHeaders, String authToken, String userToken) {
+        throw new NotImplementedException("Not implemented");
     }
 
     ResponseBuilder validateImpersonatedTokenFromCloud(HttpHeaders httpHeaders, String impersonatedCloudToken, String belongsTo, ImpersonatedScopeAccess impersonatedScopeAccess) {

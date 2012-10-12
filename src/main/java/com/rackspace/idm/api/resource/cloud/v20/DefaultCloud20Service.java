@@ -24,7 +24,6 @@ import com.rackspace.idm.exception.*;
 import com.rackspace.idm.validation.Validator20;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
-import org.hamcrest.text.pattern.Parse;
 import org.joda.time.DateTime;
 import org.openstack.docs.common.api.v1.Extension;
 import org.openstack.docs.common.api.v1.Extensions;
@@ -52,6 +51,8 @@ import java.io.InputStream;
 import java.io.StringReader;
 import java.net.URI;
 import java.util.*;
+
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory;
 
 /**
  * Created by IntelliJ IDEA.
@@ -2572,7 +2573,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                     user = userService.getUser(isa.getImpersonatingUsername());
                     roles = tenantService.getTenantRolesForUser(user, null);
                     validator20.validateTenantIdInRoles(tenantId, roles);
-                    access.setToken(tokenConverterCloudV20.toToken(isa));
+                    access.setToken(tokenConverterCloudV20.toToken(isa, roles));
                     access.setUser(userConverterCloudV20.toUserForAuthenticateResponse(user, roles));
                     List<TenantRole> impRoles = this.tenantService.getGlobalRolesForUser(impersonator, null);
                     UserForAuthenticateResponse userForAuthenticateResponse = userConverterCloudV20.toUserForAuthenticateResponse(impersonator, impRoles);
@@ -2585,6 +2586,41 @@ public class DefaultCloud20Service implements Cloud20Service {
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
+    }
+
+    @Override
+    public ResponseBuilder revokeToken(HttpHeaders httpHeaders, String authToken) {
+        ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
+        authorizationService.verifyUserLevelAccess(scopeAccessByAccessToken);
+        scopeAccessService.expireAccessToken(authToken);
+        return Response.status(204);
+    }
+
+    @Override
+    public ResponseBuilder revokeToken(HttpHeaders httpHeaders, String authToken, String tokenId) {
+        ScopeAccess scopeAccessAdmin = getScopeAccessForValidToken(authToken);
+
+        if(authToken.equals(tokenId)){
+            scopeAccessService.expireAccessToken(tokenId);
+            return Response.status(204);
+        }
+
+        authorizationService.verifyUserAdminLevelAccess(scopeAccessAdmin);
+        ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByAccessToken(tokenId);
+        if(scopeAccess == null){
+            throw new NotFoundException("Token not found");
+        }
+
+        if(authorizationService.authorizeCloudUserAdmin(scopeAccessAdmin)) {
+            User caller = userService.getUserByAuthToken(authToken);
+            User user = userService.getUserByAuthToken(tokenId);
+            authorizationService.verifyDomain(caller,  user);
+            scopeAccessService.expireAccessToken(tokenId);
+            return Response.status(204);
+        }
+
+        scopeAccessService.expireAccessToken(tokenId);
+        return Response.status(204);
     }
 
     @Override
