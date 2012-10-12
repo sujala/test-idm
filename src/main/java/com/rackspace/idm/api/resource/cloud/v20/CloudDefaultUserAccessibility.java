@@ -1,13 +1,13 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.idm.domain.entity.Domains;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.DomainService;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.UserService;
-import com.rackspace.idm.exception.ForbiddenException;
+import org.apache.commons.configuration.Configuration;
+import org.openstack.docs.identity.api.v2.ObjectFactory;
 
 
 /**
@@ -20,8 +20,10 @@ import com.rackspace.idm.exception.ForbiddenException;
 
 public class CloudDefaultUserAccessibility extends CloudUserAccessibility {
 
-    public CloudDefaultUserAccessibility(TenantService tenantService, DomainService domainService, AuthorizationService authorizationService, UserService userService, ScopeAccess callerScopeAccess) {
-        super(tenantService, domainService, authorizationService, userService, callerScopeAccess);
+    public CloudDefaultUserAccessibility(TenantService tenantService, DomainService domainService,
+                                         AuthorizationService authorizationService, UserService userService,
+                                         Configuration config, ObjectFactory objFactory, ScopeAccess callerScopeAccess) {
+        super(tenantService, domainService, authorizationService, userService, config, objFactory, callerScopeAccess);
     }
 
     public boolean hasAccess(ScopeAccess userScopeAccess){

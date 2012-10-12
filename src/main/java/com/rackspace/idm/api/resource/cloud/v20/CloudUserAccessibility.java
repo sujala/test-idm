@@ -1,9 +1,14 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.idm.api.converter.cloudv20.DomainConverterCloudV20;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.ForbiddenException;
+import org.apache.commons.configuration.Configuration;
+import org.openstack.docs.identity.api.v2.Endpoint;
+import org.openstack.docs.identity.api.v2.EndpointList;
+import org.openstack.docs.identity.api.v2.ObjectFactory;
+import org.openstack.docs.identity.api.v2.VersionForService;
+import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,11 +23,13 @@ import java.util.List;
 
 public class CloudUserAccessibility {
 
+    protected Configuration config;
+
     public static final String NOT_AUTHORIZED = "Not authorized.";
 
     public ScopeAccess callerScopeAccess;
 
-    private TenantService tenantService;
+    protected TenantService tenantService;
 
     private DomainService domainService;
 
@@ -30,13 +37,17 @@ public class CloudUserAccessibility {
 
     protected UserService userService;
 
+    private ObjectFactory objFactory;
+
     public CloudUserAccessibility(TenantService tenantService, DomainService domainService,
                                   AuthorizationService authorizationService, UserService userService,
-                                  ScopeAccess callerScopeAccess) {
+                                  Configuration config, ObjectFactory objFactory, ScopeAccess callerScopeAccess) {
         this.tenantService = tenantService;
         this.domainService = domainService;
         this.authorizationService = authorizationService;
         this.userService = userService;
+        this.objFactory = objFactory;
+        this.config = config;
         this.callerScopeAccess = callerScopeAccess;
     }
 
@@ -103,7 +114,59 @@ public class CloudUserAccessibility {
         }
     }
 
+    public EndpointList convertPopulateEndpointList(List<OpenstackEndpoint> endpoints) {
+        EndpointList list = objFactory.createEndpointList();
+        Boolean isIdentityAdmin = userContainsRole(callerScopeAccess, config.getString("cloudAuth.adminRole"));
+        Boolean isServiceAdmin = userContainsRole(callerScopeAccess, config.getString("cloudAuth.serviceAdminRole"));
+
+        if (endpoints == null || endpoints.size() == 0) {
+            return list;
+        }
+
+        for (OpenstackEndpoint point : endpoints) {
+            for (CloudBaseUrl baseUrl : point.getBaseUrls()) {
+                VersionForService version = new VersionForService();
+                version.setId(baseUrl.getVersionId());
+                version.setInfo(baseUrl.getVersionInfo());
+                version.setList(baseUrl.getVersionList());
+
+                Endpoint endpoint = objFactory.createEndpoint();
+                if (isIdentityAdmin || isServiceAdmin) {
+                    endpoint.setAdminURL(baseUrl.getAdminUrl());
+                }
+                if (baseUrl.getBaseUrlId() != null) {
+                    endpoint.setId(baseUrl.getBaseUrlId());
+                }
+                endpoint.setInternalURL(baseUrl.getInternalUrl());
+                endpoint.setName(baseUrl.getServiceName());
+                endpoint.setPublicURL(baseUrl.getPublicUrl());
+                endpoint.setRegion(baseUrl.getRegion());
+                endpoint.setType(baseUrl.getOpenstackType());
+                endpoint.setTenantId(point.getTenantId());
+                if (!StringUtils.isBlank(version.getId())) {
+                    endpoint.setVersion(version);
+                }
+                list.getEndpoint().add(endpoint);
+            }
+        }
+        return list;
+    }
+
     public boolean hasAccess(ScopeAccess scopeAccess) {
         return false;
     }
+
+    boolean userContainsRole(ScopeAccess requesterScopeAccess, String role) {
+        List<TenantRole> tenantRoleList = tenantService.getTenantRolesForScopeAccess(requesterScopeAccess);
+        boolean hasRole = false;
+        for (TenantRole tenantRole : tenantRoleList) {
+            String name = tenantRole.getName();
+            if (name.equals(role)) {
+                hasRole = true;
+            }
+        }
+        return hasRole;
+    }
+
+
 }

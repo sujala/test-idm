@@ -250,6 +250,7 @@ public class LdapEndpointRepositoryIntegrationTest extends InMemoryLdapIntegrati
         cloudBaseUrl.setDef(false);
         cloudBaseUrl.setEnabled(true);
         cloudBaseUrl.setGlobal(false);
+        cloudBaseUrl.setOpenstackType("cloudServers");
         return cloudBaseUrl;
     }
 
@@ -263,6 +264,7 @@ public class LdapEndpointRepositoryIntegrationTest extends InMemoryLdapIntegrati
         cloudBaseUrl.setDef(false);
         cloudBaseUrl.setEnabled(true);
         cloudBaseUrl.setGlobal(false);
+        cloudBaseUrl.setOpenstackType("cloudServers");
         return cloudBaseUrl;
     }
 }

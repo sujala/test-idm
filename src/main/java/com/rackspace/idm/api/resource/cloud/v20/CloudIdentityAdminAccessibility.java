@@ -1,14 +1,12 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.idm.api.converter.cloudv20.DomainConverterCloudV20;
-import com.rackspace.idm.domain.entity.Domains;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.DomainService;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.UserService;
-import com.rackspace.idm.exception.ForbiddenException;
-import org.springframework.stereotype.Component;
+import org.apache.commons.configuration.Configuration;
+import org.openstack.docs.identity.api.v2.ObjectFactory;
 
 /**
  * Created by IntelliJ IDEA.
@@ -20,13 +18,15 @@ import org.springframework.stereotype.Component;
 
 public class CloudIdentityAdminAccessibility extends CloudUserAccessibility {
 
-    public CloudIdentityAdminAccessibility(TenantService tenantService, DomainService domainService, AuthorizationService authorizationService, UserService userService, ScopeAccess callerScopeAccess) {
-        super(tenantService, domainService, authorizationService, userService, callerScopeAccess);
+    public CloudIdentityAdminAccessibility(TenantService tenantService, DomainService domainService,
+                                           AuthorizationService authorizationService, UserService userService,
+                                           Configuration config, ObjectFactory objFactory, ScopeAccess callerScopeAccess) {
+        super(tenantService, domainService, authorizationService, userService, config, objFactory,callerScopeAccess);
     }
 
     public boolean hasAccess(ScopeAccess scopeAccess){
-        Boolean isIdentityAdmin = authorizationService.authorizeCloudIdentityAdmin(callerScopeAccess);
-        Boolean isServiceAdmin = authorizationService.authorizeCloudServiceAdmin(callerScopeAccess);
+        Boolean isIdentityAdmin = userContainsRole(callerScopeAccess, config.getString("cloudAuth.adminRole"));
+        Boolean isServiceAdmin = userContainsRole(callerScopeAccess, config.getString("cloudAuth.serviceAdminRole"));
         if(isIdentityAdmin || isServiceAdmin){
             return true;
         }
