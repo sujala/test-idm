@@ -2489,7 +2489,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                     user = userService.getUser(isa.getImpersonatingUsername());
                     roles = tenantService.getTenantRolesForUser(user, null);
                     validator20.validateTenantIdInRoles(tenantId, roles);
-                    access.setToken(tokenConverterCloudV20.toToken(isa));
+                    access.setToken(tokenConverterCloudV20.toToken(isa, roles));
                     access.setUser(userConverterCloudV20.toUserForAuthenticateResponse(user, roles));
                     List<TenantRole> impRoles = this.tenantService.getGlobalRolesForUser(impersonator, null);
                     UserForAuthenticateResponse userForAuthenticateResponse = userConverterCloudV20.toUserForAuthenticateResponse(impersonator, impRoles);
