@@ -2483,8 +2483,14 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (callerIsDefaultUser && !caller.getId().equals(userId)) {
                 throw new ForbiddenException("This user can only reset their own apiKey");
             }
-            if (callerIsUserAdmin) {
+            else if (callerIsUserAdmin) {
                 authorizationService.verifyDomain(caller,  credUser);
+            }
+            else if (authorizationService.authorizeCloudIdentityAdmin(authScopeAccess)) {
+                UserScopeAccess userScopeAccess = scopeAccessService.getUserScopeAccessForClientId(credUser.getUniqueId(), getCloudAuthClientId());
+                if(authorizationService.hasServiceAdminRole(userScopeAccess)){
+                    throw new ForbiddenException("This user cannot set or reset Service Admin apiKey.");
+                }
             }
 
             final String apiKey = UUID.randomUUID().toString().replaceAll("-", "");
@@ -2847,6 +2853,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     JAXBElement<? extends CredentialType> getXMLCredentials(String body) {
         JAXBElement<? extends CredentialType> cred = null;
         try {
+            body = fixApiKeyCredentialEmptyNamespace(body); // ToDo: remove if not needed!
             JAXBContext context = JAXBContextResolver.get();
             Unmarshaller unmarshaller = context.createUnmarshaller();
             cred = (JAXBElement<? extends CredentialType>) unmarshaller.unmarshal(new StringReader(body));
@@ -2854,6 +2861,14 @@ public class DefaultCloud20Service implements Cloud20Service {
             throw new BadRequestException(e);
         }
         return cred;
+    }
+
+    // Silly patch to implement Cloud Auth allowing empty/invalid namespaces. We will just allow empty for ApiKeyCreds.
+    String fixApiKeyCredentialEmptyNamespace(String body){
+        if(body != null && body.contains("apiKeyCredentials") && !body.contains("xmlns")){
+            body = body.replace("<apiKeyCredentials", "<apiKeyCredentials xmlns=\"http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0\"");
+        }
+        return body;
     }
 
     TenantForAuthenticateResponse convertTenantEntityToApi(Tenant tenant) {

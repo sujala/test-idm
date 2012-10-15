@@ -16,7 +16,6 @@ import com.sun.jersey.api.json.JSONJAXBContext;
 import com.sun.jersey.api.json.JSONMarshaller;
 import org.apache.cxf.common.util.StringUtils;
 import org.apache.http.auth.AUTH;
-import org.codehaus.groovy.util.StringUtil;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;

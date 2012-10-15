@@ -41,6 +41,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
     private static String idmAdminGroupDn = null;
     private static ClientRole cloudAdminRole = null;
     private static ClientRole cloudIdentityAdminRole = null;
+    private static ClientRole cloudServiceAdminRole = null;
     private static ClientRole cloudUserRole = null;
     private static ClientRole cloudUserAdminRole = null;
     private static ClientRole idmSuperAdminRole = null;
@@ -253,6 +254,20 @@ public class DefaultAuthorizationService implements AuthorizationService {
             cloudUserAdminRole = role;
         }
         return tenantDao.doesScopeAccessHaveTenantRole(scopeAccess, cloudUserAdminRole);
+    }
+
+    //This method does not check if the scope access has an access token.
+    //This method checks if the scope access has the cloud default user role.
+    @Override
+    public boolean hasServiceAdminRole(ScopeAccess scopeAccess) {
+        if (scopeAccess == null) {
+            return false;
+        }
+        if (cloudServiceAdminRole == null) {
+            ClientRole role = clientDao.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthServiceAdminRole());
+            cloudServiceAdminRole = role;
+        }
+        return tenantDao.doesScopeAccessHaveTenantRole(scopeAccess, cloudServiceAdminRole);
     }
 
     @Override

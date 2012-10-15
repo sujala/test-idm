@@ -2568,6 +2568,23 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
+    public void addUserCredentialEmptyXMLNamespace_apiKeyCredentialsOkResponse_returns200() throws Exception {
+        String jsonBody = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<apiKeyCredentials\n" +
+                "    username=\"id\"\n" +
+                "    apiKey=\"aaaaa-bbbbb-ccccc-12345678\"/>";
+        MediaType mediaType = mock(MediaType.class);
+        UriBuilder uriBuilder = mock(UriBuilder.class);
+        when(uriInfo.getRequestUriBuilder()).thenReturn(uriBuilder);
+        when(uriBuilder.build()).thenReturn(new URI("uri"));
+        when(httpHeaders.getMediaType()).thenReturn(mediaType);
+        when(mediaType.isCompatible(MediaType.APPLICATION_XML_TYPE)).thenReturn(true);
+        when(userService.checkAndGetUserById(userId)).thenReturn(user);
+        Response.ResponseBuilder responseBuilder = spy.addUserCredential(httpHeaders, uriInfo, authToken, userId, jsonBody);
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(201));
+    }
+
+    @Test
     public void addUserCredential_notApiKeyCredentialsAndNotPasswordCredentials_returns200() throws Exception {
         JAXBElement<Ec2CredentialsType> credentials = new JAXBElement<Ec2CredentialsType>(new QName("ec2"), Ec2CredentialsType.class, new Ec2CredentialsType());
         UriBuilder uriBuilder = mock(UriBuilder.class);
