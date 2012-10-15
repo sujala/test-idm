@@ -6,7 +6,6 @@ import com.rackspace.idm.domain.service.DomainService;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.ForbiddenException;
-import gherkin.lexer.i18n.EN;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Test;

@@ -5,7 +5,6 @@ import com.rackspace.idm.domain.entity.OpenstackEndpoint;
 import com.rackspacecloud.docs.auth.api.v1.Endpoint;
 import com.rackspacecloud.docs.auth.api.v1.Service;
 import com.rackspacecloud.docs.auth.api.v1.ServiceCatalog;
-import gherkin.lexer.i18n.EN;
 import org.junit.Ignore;
 import org.junit.Test;
 
