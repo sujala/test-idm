@@ -47,4 +47,14 @@ public class PolicyConverterCloudV20 {
     public void setObjFactories(JAXBObjectFactories objFactories) {
         this.objFactories = objFactories;
     }
+
+    public Policy toPolicyForPolicies(com.rackspace.idm.domain.entity.Policy policy) {
+        Policy jaxbPolicy = objFactories.getRackspaceIdentityExtRaxgaV1Factory().createPolicy();
+        jaxbPolicy.setId(policy.getPolicyId());
+        jaxbPolicy.setName(policy.getName());
+        jaxbPolicy.setEnabled(policy.isEnabled());
+        jaxbPolicy.setGlobal(policy.isGlobal());
+        jaxbPolicy.setType(policy.getPolicyType());
+        return jaxbPolicy;
+    }
 }

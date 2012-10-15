@@ -154,6 +154,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Autowired
     private PolicyService policyService;
 
+    @Autowired
+    private PolicyValidator policyValidator;
+
     private com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
 
     private Map<String, JAXBElement<Extension>> extensionMap;
@@ -2637,13 +2640,12 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
             com.rackspace.idm.domain.entity.Policy savedPolicy = this.policyConverterCloudV20.toPolicyDO(policy);
+            policyValidator.validatePolicyName(policy.getName());
             this.policyService.addPolicy(savedPolicy);
             String policyId = savedPolicy.getPolicyId();
-            com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory objectFactory = objFactories.getRackspaceIdentityExtRaxgaV1Factory();
-            Policy value = this.policyConverterCloudV20.toPolicy(savedPolicy);
             UriBuilder requestUriBuilder = uriInfo.getRequestUriBuilder();
             URI build = requestUriBuilder.path(policyId).build();
-            return Response.created(build).entity(objectFactory.createPolicy(value).getValue());
+            return Response.created(build);
         } catch (DuplicateException de) {
             return exceptionHandler.conflictExceptionResponse(de.getMessage());
         } catch (Exception ex) {
@@ -2668,11 +2670,11 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder updatePolicy(String authToken, String policyId, Policy policy) {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            policyService.checkAndGetPolicy(policyId);
+            policyValidator.validatePolicyName(policy.getName());
             com.rackspace.idm.domain.entity.Policy updatePolicy = this.policyConverterCloudV20.toPolicyDO(policy);
             this.policyService.updatePolicy(updatePolicy, policyId);
-            com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory objectFactory = objFactories.getRackspaceIdentityExtRaxgaV1Factory();
-            Policy value = this.policyConverterCloudV20.toPolicy(updatePolicy);
-            return Response.ok().entity(objectFactory.createPolicy(value).getValue());
+            return Response.noContent();
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }

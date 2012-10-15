@@ -44,8 +44,6 @@ public class PolicyConverterCloudV20Test{
         assertThat("check policy", policy.getDescription(),equalTo("des"));
         assertThat("check policy", policy.isEnabled(),equalTo(true));
         assertThat("check policy", policy.isGlobal(),equalTo(false));
-
-
     }
 
     @Test
@@ -87,5 +85,29 @@ public class PolicyConverterCloudV20Test{
         policy.setName("name");
         policy.setType("type");
         return policy;
+    }
+
+    @Test
+    public void testtoPolicyForPolicies() throws Exception {
+        com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy policy = policyConverterCloudV20.toPolicy(getTestPolicyDAO());
+        assertThat("check policy", policy.getId(),equalTo("id"));
+        assertThat("check policy", policy.getName(),equalTo("name"));
+        assertThat("check policy", policy.getBlob(),equalTo("blob"));
+        assertThat("check policy", policy.getType(),equalTo("type"));
+        assertThat("check policy", policy.getDescription(),equalTo("des"));
+        assertThat("check policy", policy.isEnabled(),equalTo(true));
+        assertThat("check policy", policy.isGlobal(),equalTo(false));
+    }
+
+    @Test
+    public void testToPolicyForPolicies() throws Exception {
+        Policy policyDO = policyConverterCloudV20.toPolicyDO(getTestPolicy());
+        assertThat("check policy", policyDO.getPolicyId(),equalTo("1"));
+        assertThat("check policy", policyDO.getName(),equalTo("name"));
+        assertThat("check policy", policyDO.getBlob(),equalTo("blob"));
+        assertThat("check policy", policyDO.getPolicyType(),equalTo("type"));
+        assertThat("check policy", policyDO.getDescription(),equalTo("des"));
+        assertThat("check policy", policyDO.isEnabled(),equalTo(true));
+        assertThat("check policy", policyDO.isGlobal(),equalTo(false));
     }
 }

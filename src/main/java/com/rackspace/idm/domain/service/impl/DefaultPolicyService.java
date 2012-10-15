@@ -42,7 +42,6 @@ public class DefaultPolicyService implements PolicyService {
     private PolicyDao policyDao;
 
     public static final String POLICY_CANNOT_BE_NULL = "Policy cannot be null";
-    public static final String POLICY_NAME_CANNOT_BE_NULL = "Policy name cannot be null or empty";
     public static final String POLICY_BLOB_CANNOT_BE_NULL = "Policy Blob cannot be null";
     public static final String POLICY_TYPE_CANNOT_BE_NULL = "Policy type cannot be null";
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -69,9 +68,6 @@ public class DefaultPolicyService implements PolicyService {
         if(policy == null){
             throw new BadRequestException(POLICY_CANNOT_BE_NULL);
         }
-        if(StringUtils.isBlank(policy.getName())) {
-            throw new BadRequestException(POLICY_NAME_CANNOT_BE_NULL);
-        }
         if(StringUtils.isBlank(policy.getBlob())){
             throw new BadRequestException(POLICY_BLOB_CANNOT_BE_NULL);
         }
@@ -82,6 +78,9 @@ public class DefaultPolicyService implements PolicyService {
             throw new BadRequestException(POLICY_TYPE_CANNOT_BE_NULL);
         }
         policy.setPolicyId(this.policyDao.getNextPolicyId());
+        //Trim the name
+        String name = policy.getName().trim();
+        policy.setName(name);
         //Not doing unique name right now, maybe later.
         //validateUniqueNamePolicy(policy.getName());
         logger.info("Adding Policy: {}", policy);
@@ -103,7 +102,8 @@ public class DefaultPolicyService implements PolicyService {
         return policy;
     }
 
-    private Policy checkAndGetPolicy(String policyId) {
+    @Override
+    public Policy checkAndGetPolicy(String policyId) {
         Policy policy = policyDao.getPolicy(policyId);
         if(policy == null){
             String err = String.format("Policy with Id %s does not exist", policyId);
@@ -116,9 +116,6 @@ public class DefaultPolicyService implements PolicyService {
     public void updatePolicy(Policy policy, String policyId) {
         if(policy == null){
             throw new BadRequestException(POLICY_CANNOT_BE_NULL);
-        }
-        if(StringUtils.isBlank(policy.getName())) {
-            throw new BadRequestException(POLICY_NAME_CANNOT_BE_NULL);
         }
         if(StringUtils.isBlank(policy.getBlob())){
             policy.setBlob(null);

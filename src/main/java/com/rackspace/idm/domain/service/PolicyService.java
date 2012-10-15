@@ -20,4 +20,5 @@ public interface PolicyService {
     void updatePolicy(Policy policy, String policyId);
     void deletePolicy(String policyId);
     void softDeletePolicy(String policyId);
+    Policy checkAndGetPolicy(String policyId);
 }

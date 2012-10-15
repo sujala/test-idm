@@ -27,7 +27,7 @@ public class PoliciesConverterCloudV20 {
         Policies jaxbPolicies = objFactories.getRackspaceIdentityExtRaxgaV1Factory().createPolicies();
         jaxbPolicies.setAlgorithm(PolicyAlgorithm.IF_FALSE_DENY);
         for(com.rackspace.idm.domain.entity.Policy policy : policies.getPolicy()){
-            Policy jaxbPolicy = policyConverterCloudV20.toPolicy(policy);
+            Policy jaxbPolicy = policyConverterCloudV20.toPolicyForPolicies(policy);
             jaxbPolicies.getPolicy().add(jaxbPolicy);
         }
         return jaxbPolicies;

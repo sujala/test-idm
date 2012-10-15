@@ -121,15 +121,6 @@ public class DefaultPolicyServiceTest{
         defaultPolicyService.updatePolicy(null,"1");
     }
 
-    @Test(expected = BadRequestException.class)
-    public void testUpdatePolicy_nullName() throws Exception {
-        Policy policy = new Policy();
-        policy.setPolicyId("1");
-        policy.setBlob("someBlob");
-        policy.setPolicyType("someType");
-        defaultPolicyService.updatePolicy(policy,"1");
-    }
-
     @Test
     public void testUpdatePolicy() throws Exception {
         Policy policy = new Policy();

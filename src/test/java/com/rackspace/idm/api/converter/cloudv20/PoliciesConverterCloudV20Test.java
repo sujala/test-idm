@@ -40,9 +40,7 @@ public class PoliciesConverterCloudV20Test{
         com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies policies = policiesConverterCloudV20.toPolicies(getTestPoliciesDO());
         assertThat("check policy", policies.getPolicy().get(0).getId(),equalTo("1"));
         assertThat("check policy", policies.getPolicy().get(0).getName(),equalTo("name"));
-        assertThat("check policy", policies.getPolicy().get(0).getBlob(),equalTo("blob"));
         assertThat("check policy", policies.getPolicy().get(0).getType(),equalTo("type"));
-        assertThat("check policy", policies.getPolicy().get(0).getDescription(),equalTo("des"));
         assertThat("check policy", policies.getPolicy().get(0).isEnabled(),equalTo(true));
         assertThat("check policy", policies.getPolicy().get(0).isGlobal(),equalTo(false));
 
