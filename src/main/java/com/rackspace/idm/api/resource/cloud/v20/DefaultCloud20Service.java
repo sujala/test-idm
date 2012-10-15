@@ -2480,8 +2480,14 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (callerIsDefaultUser && !caller.getId().equals(userId)) {
                 throw new ForbiddenException("This user can only reset their own apiKey");
             }
-            if (callerIsUserAdmin) {
+            else if (callerIsUserAdmin) {
                 authorizationService.verifyDomain(caller,  credUser);
+            }
+            else if (authorizationService.authorizeCloudIdentityAdmin(authScopeAccess)) {
+                UserScopeAccess userScopeAccess = scopeAccessService.getUserScopeAccessForClientId(credUser.getUniqueId(), getCloudAuthClientId());
+                if(authorizationService.hasServiceAdminRole(userScopeAccess)){
+                    throw new ForbiddenException("This user cannot set or reset Service Admin apiKey.");
+                }
             }
 
             final String apiKey = UUID.randomUUID().toString().replaceAll("-", "");
