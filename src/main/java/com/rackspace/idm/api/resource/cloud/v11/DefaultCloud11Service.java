@@ -442,12 +442,11 @@ public class DefaultCloud11Service implements Cloud11Service {
             for (CloudBaseUrl baseUrl : nastBaseUrls) {
                 String baseUrlId = String.valueOf(baseUrl.getBaseUrlId());
                 for (String v1defaultNastItem : v1defaultNastList) {
-                    if (v1defaultNastItem.equals(baseUrlId)) {
+                    if (v1defaultNastItem.equals(baseUrlId) && baseUrl.getDef()) {
                         tenant.addV1Default(baseUrlId);
                         break;
                     }
                 }
-
                 addbaseUrlToTenant(tenant, baseUrl);
             }
             try {
@@ -485,7 +484,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             for (CloudBaseUrl baseUrl : mossoBaseUrls) {
                 String baseUrlId = String.valueOf(baseUrl.getBaseUrlId());
                 for (String v1defaultMossoItem : v1defaultMossoList) {
-                    if (v1defaultMossoItem.equals(baseUrlId)) {
+                    if (v1defaultMossoItem.equals(baseUrlId) && baseUrl.getDef()) {
                         tenant.addV1Default(baseUrlId);
                     }
                 }
