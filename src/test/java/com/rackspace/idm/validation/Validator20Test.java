@@ -7,7 +7,6 @@ import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
-import com.rackspace.idm.validation.Validator20;
 import org.junit.Before;
 import org.junit.Test;
 import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
@@ -20,7 +19,6 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.when;
 
 /**
  * Created with IntelliJ IDEA.
@@ -610,4 +608,19 @@ public class Validator20Test {
         }
     }
 
+    @Test
+    public void validateToken_tokenInvalid_throwsBadRequestException() throws Exception {
+        try{
+            validator20.validateToken("token$");
+            assertTrue("should throw exception",false);
+        }catch (BadRequestException ex){
+            assertThat("exception message", ex.getMessage(), equalTo("Invalid token"));
+        }
+    }
+
+    @Test
+    public void validateToken_tokenIsValid_throwsBadRequestException() throws Exception {
+        validator20.validateToken("token");
+        assertTrue("should not throw exception", true);
+    }
 }

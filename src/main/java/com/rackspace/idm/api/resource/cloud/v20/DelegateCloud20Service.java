@@ -229,6 +229,7 @@ public class DelegateCloud20Service implements Cloud20Service {
         if (tokenId.trim().equals("")) {
             throw new BadRequestException("Token cannot be empty.");
         }
+        validator20.validateToken(tokenId);
         ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByAccessToken(tokenId);
         if (isCloudAuthRoutingEnabled() && scopeAccess == null) {
             String request = getCloudAuthV20Url() + TOKENS + "/" + tokenId;

@@ -160,6 +160,13 @@ public class Validator20 {
             throw new NotFoundException(errMsg);
         }
     }
+    public void validateToken(String token) {
+        if (!token.matches("^[A-Za-z0-9-]+$")) {
+            String errMsg = "Invalid token";
+            logger.warn(errMsg);
+            throw new BadRequestException(errMsg);
+        }
+    }
 
     public void setTenantService(TenantService tenantService) {
         this.tenantService = tenantService;
