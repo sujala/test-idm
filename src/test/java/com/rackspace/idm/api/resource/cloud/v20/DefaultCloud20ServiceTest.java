@@ -425,7 +425,7 @@ public class DefaultCloud20ServiceTest {
         when(userService.getAllUsers(org.mockito.Matchers.<FilterParam[]>anyObject())).thenReturn(new Users());
 
         spy.addUser(httpHeaders, uriInfo, authToken, userOS);
-        verify(tenantService).addTenantRolesToUser(scopeAccess,user);
+        verify(tenantService).addTenantRolesToUser(scopeAccess, user);
     }
 
     @Test
@@ -437,7 +437,7 @@ public class DefaultCloud20ServiceTest {
         when(userService.getUserByAuthToken(authToken)).thenReturn(user);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         defaultCloud20Service.addUser(httpHeaders, uriInfo, authToken, userOS);
-        assertThat("exception type", argumentCaptor.getValue(),instanceOf(BadRequestException.class));
+        assertThat("exception type", argumentCaptor.getValue(), instanceOf(BadRequestException.class));
     }
 
     @Test
@@ -484,8 +484,8 @@ public class DefaultCloud20ServiceTest {
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
         when(authorizationService.authorizeCloudUserAdmin(scopeAccess)).thenReturn(true);
         when(userService.getUserByAuthToken(authToken)).thenReturn(caller);
-        spy.deleteUser(null,authToken,userId);
-        verify(authorizationService).verifyDomain(caller,user);
+        spy.deleteUser(null, authToken, userId);
+        verify(authorizationService).verifyDomain(caller, user);
     }
 
     @Test
@@ -510,7 +510,7 @@ public class DefaultCloud20ServiceTest {
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
 
         assertThat("response builder", spy.deleteUser(null, authToken, "userId"), equalTo(responseBuilder));
-        assertThat("exception type",argumentCaptor.getValue(),instanceOf(BadRequestException.class));
+        assertThat("exception type", argumentCaptor.getValue(), instanceOf(BadRequestException.class));
     }
 
     @Test
@@ -613,7 +613,7 @@ public class DefaultCloud20ServiceTest {
         doReturn(rackerScopeAccess).when(spy).checkAndGetToken("token");
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("Response Builder", spy.validateToken(null, authToken, "token", null), equalTo(responseBuilder));
-        assertThat("exception type", argumentCaptor.getValue(),instanceOf(NotFoundException.class));
+        assertThat("exception type", argumentCaptor.getValue(), instanceOf(NotFoundException.class));
     }
 
     @Test
@@ -724,7 +724,7 @@ public class DefaultCloud20ServiceTest {
         when(tenantService.getTenantRolesForUser(user,null)).thenReturn(roles);
 
         spy.validateToken(httpHeaders, authToken, "token", "tenantId");
-        verify(validator20).validateTenantIdInRoles("tenantId",roles);
+        verify(validator20).validateTenantIdInRoles("tenantId", roles);
     }
 
     @Test
@@ -747,6 +747,26 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void revokeToken_returnsAccepted() throws Exception {
         Response.ResponseBuilder responseBuilder = spy.revokeToken(httpHeaders, authToken, "token");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(204));
+    }
+
+    @Test
+    public void revokeToken_userAdminReturnsAccepted() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        ScopeAccess scopeAccessAdmin = new ScopeAccess();
+        when(scopeAccessService.getScopeAccessByAccessToken("tokenXXX")).thenReturn(scopeAccess);
+        when(authorizationService.authorizeCloudUserAdmin(org.mockito.Matchers.<ScopeAccess>anyObject())).thenReturn(true);
+        Response.ResponseBuilder responseBuilder = spy.revokeToken(httpHeaders, authToken, "tokenXXX");
+        assertThat("response code", responseBuilder.build().getStatus(), equalTo(204));
+    }
+
+    @Test
+    public void revokeToken_userIdentityAdminReturnsAccepted() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        ScopeAccess scopeAccessAdmin = new ScopeAccess();
+        when(scopeAccessService.getScopeAccessByAccessToken("tokenXXX")).thenReturn(scopeAccess);
+        when(authorizationService.authorizeCloudUserAdmin(org.mockito.Matchers.<ScopeAccess>anyObject())).thenReturn(false);
+        Response.ResponseBuilder responseBuilder = spy.revokeToken(httpHeaders, authToken, "tokenXXX");
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(204));
     }
 
@@ -833,7 +853,7 @@ public class DefaultCloud20ServiceTest {
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
 
         assertThat("response code", spy.authenticate(null, authenticationRequest), equalTo(responseBuilder));
-        assertThat("exception type",argumentCaptor.getValue(),instanceOf(NotAuthenticatedException.class));
+        assertThat("exception type", argumentCaptor.getValue(), instanceOf(NotAuthenticatedException.class));
     }
 
     @Test
@@ -950,7 +970,7 @@ public class DefaultCloud20ServiceTest {
         Response.ResponseBuilder authenticate = spy.authenticate(httpHeaders, authenticationRequest);
 
         assertThat("response builder", authenticate, notNullValue());
-        assertThat("message",argumentCaptor.getValue().getMessage(),equalTo("Invalid request. Specify tenantId OR tenantName, not both."));
+        assertThat("message", argumentCaptor.getValue().getMessage(), equalTo("Invalid request. Specify tenantId OR tenantName, not both."));
     }
 
     @Test
@@ -1179,7 +1199,7 @@ public class DefaultCloud20ServiceTest {
         authenticationRequest.setTenantId("tenantId");
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response code", spy.authenticate(null, authenticationRequest), equalTo(responseBuilder));
-        assertThat("exception type",argumentCaptor.getValue(),instanceOf(NotAuthenticatedException.class));
+        assertThat("exception type", argumentCaptor.getValue(), instanceOf(NotAuthenticatedException.class));
     }
 
     @Test
@@ -1259,7 +1279,7 @@ public class DefaultCloud20ServiceTest {
         authenticationRequest.setToken(null);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
 
-        assertThat("response builder",  spy.authenticate(null, authenticationRequest), equalTo(responseBuilder));
+        assertThat("response builder", spy.authenticate(null, authenticationRequest), equalTo(responseBuilder));
         assertThat("response message", argumentCaptor.getValue().getMessage(), equalTo("Invalid request body: unable to parse Auth data. Please review XML or JSON formatting."));
     }
 
@@ -1891,7 +1911,7 @@ public class DefaultCloud20ServiceTest {
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         tenantOS.setName(null);
         assertThat("response builder", spy.addTenant(null, null, authToken, tenantOS), equalTo(responseBuilder));
-        assertThat("exception type",argumentCaptor.getValue(), instanceOf(BadRequestException.class));
+        assertThat("exception type", argumentCaptor.getValue(), instanceOf(BadRequestException.class));
     }
 
     @Test
@@ -1941,7 +1961,7 @@ public class DefaultCloud20ServiceTest {
         doNothing().when(spy).checkXAUTHTOKEN(authToken, true, null);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response builder", spy.addService(null, null, authToken, null), equalTo(responseBuilder));
-        assertThat("exception type",argumentCaptor.getValue(),instanceOf(BadRequestException.class));
+        assertThat("exception type", argumentCaptor.getValue(), instanceOf(BadRequestException.class));
     }
 
     @Test
@@ -2023,7 +2043,7 @@ public class DefaultCloud20ServiceTest {
         Role role1 = new Role();
         role1.setName(null);
         assertThat("response builder", spy.addRole(null, null, authToken, role1), equalTo(responseBuilder));
-        assertThat("exception type",argumentCaptor.getValue(),instanceOf(BadRequestException.class));
+        assertThat("exception type", argumentCaptor.getValue(), instanceOf(BadRequestException.class));
     }
 
     @Test
@@ -2069,7 +2089,7 @@ public class DefaultCloud20ServiceTest {
         doThrow(new ForbiddenException()).when(authorizationService).verifyServiceAdminLevelAccess(scopeAccess);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response builder", spy.addRole(null, null, authToken, role1), equalTo(responseBuilder));
-        assertThat("exception type",argumentCaptor.getValue(),instanceOf(ForbiddenException.class));
+        assertThat("exception type", argumentCaptor.getValue(), instanceOf(ForbiddenException.class));
     }
 
     @Test
@@ -2179,7 +2199,7 @@ public class DefaultCloud20ServiceTest {
         when(config.getString("cloudAuth.userAdminRole")).thenReturn("identity:user-admin");
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response builder", spy.addRolesToUserOnTenant(null, null, null, userId, null), equalTo(responseBuilder));
-        assertThat("exception type",argumentCaptor.getValue(),instanceOf(BadRequestException.class));
+        assertThat("exception type", argumentCaptor.getValue(), instanceOf(BadRequestException.class));
     }
 
     @Test
@@ -2243,7 +2263,7 @@ public class DefaultCloud20ServiceTest {
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         cloudBaseUrl.setGlobal(true);
         assertThat("response builder", spy.addEndpoint(null, authToken, tenantId, endpointTemplate), equalTo(responseBuilder));
-        assertThat("exception type",argumentCaptor.getValue(),instanceOf(BadRequestException.class));
+        assertThat("exception type", argumentCaptor.getValue(), instanceOf(BadRequestException.class));
     }
 
     @Test
@@ -2309,7 +2329,7 @@ public class DefaultCloud20ServiceTest {
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         doThrow(badRequestException).when(validator20).validateGroupId(null);
         when(exceptionHandler.exceptionResponse(badRequestException)).thenReturn(responseBuilder);
-        assertThat("response builder",spy.getGroupById(null, authToken, null),equalTo(responseBuilder));
+        assertThat("response builder", spy.getGroupById(null, authToken, null), equalTo(responseBuilder));
     }
 
     @Test
@@ -2487,8 +2507,8 @@ public class DefaultCloud20ServiceTest {
         when(mediaType.isCompatible(MediaType.APPLICATION_JSON_TYPE)).thenReturn(true);
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
-        assertThat("response builder",spy.addUserCredential(httpHeaders, uriInfo, authToken, userId, jsonBody), equalTo(responseBuilder));
-        assertThat("exception type",argumentCaptor.getValue(),instanceOf(BadRequestException.class));
+        assertThat("response builder", spy.addUserCredential(httpHeaders, uriInfo, authToken, userId, jsonBody), equalTo(responseBuilder));
+        assertThat("exception type", argumentCaptor.getValue(), instanceOf(BadRequestException.class));
     }
 
     @Test
@@ -2546,7 +2566,7 @@ public class DefaultCloud20ServiceTest {
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response builder", spy.addUserCredential(httpHeaders, uriInfo, authToken, userId, jsonBody), equalTo(responseBuilder));
-        assertThat("exception type",argumentCaptor.getValue(),instanceOf(BadRequestException.class));
+        assertThat("exception type", argumentCaptor.getValue(), instanceOf(BadRequestException.class));
     }
 
     @Test
@@ -4669,6 +4689,41 @@ public class DefaultCloud20ServiceTest {
         when(jaxbObjectFactories.getRackspaceIdentityExtKskeyV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory());
         Response.ResponseBuilder responseBuilder = spy.resetUserApiKeyCredentials(null, authToken, subuser.getId(), null);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+    }
+
+    @Test
+    public void resetUserApiKeyCredentials_callerUserHasNoAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        User subuser = new User();
+        subuser.setId("2");
+        subuser.setDomainId(user.getDomainId());
+        subuser.setUsername("subuser");
+        when(authorizationService.authorizeCloudUserAdmin(org.mockito.Matchers.<ScopeAccess>anyObject())).thenReturn(false);
+        when(authorizationService.authorizeCloudUser(org.mockito.Matchers.<ScopeAccess>anyObject())).thenReturn(true);
+        when(userService.checkAndGetUserById(anyString())).thenReturn(user);
+        when(userService.getUserByAuthToken(anyString())).thenReturn(subuser);
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        spy.resetUserApiKeyCredentials(null, authToken, null, null);
+        verify(exceptionHandler).exceptionResponse(any(ForbiddenException.class));
+    }
+
+    @Test
+    public void resetUserApiKeyCredentials_callerIdentityAdminHasNoAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        UserScopeAccess userScopeAccess = new UserScopeAccess();
+        User svcuser = new User();
+        svcuser.setId("999");
+        svcuser.setUsername("svcAdmin");
+        when(authorizationService.authorizeCloudUserAdmin(org.mockito.Matchers.<ScopeAccess>anyObject())).thenReturn(false);
+        when(authorizationService.authorizeCloudUser(org.mockito.Matchers.<ScopeAccess>anyObject())).thenReturn(false);
+        when(authorizationService.authorizeCloudIdentityAdmin(org.mockito.Matchers.<ScopeAccess>anyObject())).thenReturn(true);
+        when(userService.checkAndGetUserById(anyString())).thenReturn(user);
+        when(userService.getUserByAuthToken(anyString())).thenReturn(svcuser);
+        when(scopeAccessService.getUserScopeAccessForClientId(anyString(), anyString())).thenReturn(userScopeAccess);
+        when(authorizationService.hasServiceAdminRole(scopeAccess)).thenReturn(true);
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        spy.resetUserApiKeyCredentials(null, authToken, null, null);
+        verify(exceptionHandler).exceptionResponse(any(ForbiddenException.class));
     }
 
     @Test
