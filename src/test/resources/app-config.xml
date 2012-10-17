@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:util="http://www.springframework.org/schema/util"
+
+
+       xsi:schemaLocation="http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.0.xsd
+			http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+			http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd
+			http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.0.xsd">
+
+
+    <!--
+        Uses Apache Commons DBCP for connection pooling. See Commons DBCP documentation
+        for the required JAR files. See the PetStore sample application also shipped with
+        Spring, for an example of Commons DBCP usage and the necessary build script.
+        Alternatively you can use another connection pool such as C3P0, similarly configured
+        using Spring.
+        A standalone connection pool such as Commons DBCP is a good choice for use outside an
+        application server environment, including web applications running in a web container without
+        JTA, or integration testing using the org.springframework.test package.
+    <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close"
+            p:driverClassName="${jdbc.driverClassName}" p:url="${jdbc.url}" p:username="${jdbc.username}"
+            p:password="${jdbc.password}"/>
+
+    -->
+    <!-- Transaction manager for a single JDBC DataSource (alternative to JTA)
+        <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager"
+                p:dataSource-ref="dataSource"/>
+
+    -->
+
+    <!-- ========================= COMPONENT DEFINITIONS =========================
+    -->
+
+    <!--
+         Activates various annotations to be detected in bean classes: Spring's
+         @Required and @Autowired, as well as JSR 250's @PostConstruct,
+         @PreDestroy and @Resource (if available) and JPA's @PersistenceContext
+         and @PersistenceUnit (if available).
+     -->
+    <context:annotation-config/>
+
+    <!-- Scans within the base package of the application for @Components to configure as beans-->
+    <context:component-scan base-package="com.rackspace.idm">
+        <context:exclude-filter type="regex" expression="com.rackspace.idm.domain.config.PropertyFileConfiguration"/>
+    </context:component-scan>
+
+    <!--
+         Instruct Spring to perform automatic transaction management on annotated classes.
+         The SpringJdbcIntro class uses @Transactional annotations.
+     <tx:annotation-driven/>
+     -->
+
+    <util:map id="osCommonNsPrefixMap"
+              key-type="java.lang.String"
+              value-type="java.lang.String">
+
+        <entry key="http://docs.openstack.org/common/api/v1.0">
+            <value/>
+        </entry>
+
+        <entry key="http://www.w3.org/2005/Atom">
+            <value>atom</value>
+        </entry>
+
+    </util:map>
+
+    <util:map id="corev11NsPrefixMap"
+
+              key-type="java.lang.String"
+
+              value-type="java.lang.String">
+
+        <entry key="http://docs.rackspacecloud.com/auth/api/v1.1">
+            <value/>
+        </entry>
+
+        <entry key="http://www.w3.org/2005/Atom">
+            <value>atom</value>
+        </entry>
+
+        <entry key="http://idm.api.rackspace.com/v1.0">
+            <value>rax-idmv10</value>
+        </entry>
+
+        <entry key="http://docs.openstack.org/common/api/v1.0">
+            <value>os-v10</value>
+        </entry>
+
+    </util:map>
+
+    <util:map id="corev20NsPrefixMap"
+
+              key-type="java.lang.String"
+
+              value-type="java.lang.String">
+
+        <entry key="http://docs.openstack.org/identity/api/v2.0">
+            <value/>
+        </entry>
+
+        <entry key="http://docs.openstack.org/identity/api/ext/OS-KSEC2/v1.0">
+            <value>os-ksec2</value>
+        </entry>
+
+        <entry key="http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0">
+            <value>rax-kskey</value>
+        </entry>
+
+        <entry key="http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0">
+            <value>os-ksadm</value>
+        </entry>
+
+        <entry key="http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0">
+            <value>rax-ksqa</value>
+        </entry>
+
+        <entry key="http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0">
+            <value>rax-auth</value>
+        </entry>
+
+    </util:map>
+
+    <util:map id="osksadmNsPrefixMap"
+
+              key-type="java.lang.String"
+
+              value-type="java.lang.String">
+
+        <entry key="http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0">
+            <value/>
+        </entry>
+        <entry key="http://docs.openstack.org/identity/api/v2.0">
+            <value>v20</value>
+        </entry>
+        <entry key="http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0">
+            <value>rax-auth</value>
+        </entry>
+    </util:map>
+
+    <util:map id="raxkskeyNsPrefixMap"
+
+              key-type="java.lang.String"
+
+              value-type="java.lang.String">
+
+        <entry key="http://docs.rackspace.com/identity/api/ext/RAX-KSGRP/v1.0">
+            <value/>
+        </entry>
+    </util:map>
+
+    <util:map id="raxAuthNsPrefixMap"
+              key-type="java.lang.String"
+              value-type="java.lang.String">
+        <entry key="http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0">
+            <value/>
+        </entry>
+        <entry key="http://docs.openstack.org/identity/api/v2.0">
+            <value>v20</value>
+        </entry>
+        <entry key="http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0">
+            <value>os-ksadm</value>
+        </entry>
+        <entry key="http://docs.openstack.org/identity/api/ext/OS-KSEC2/v1.0">
+            <value>os-ksec2</value>
+        </entry>
+        <entry key="http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0">
+            <value>rax-kskey</value>
+        </entry>
+        <entry key="http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0">
+            <value>rax-ksqa</value>
+        </entry>
+    </util:map>
+
+    <util:map id="raxgrpNsPrefixMap"
+
+              key-type="java.lang.String"
+
+              value-type="java.lang.String">
+
+        <entry key="http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0">
+            <value/>
+        </entry>
+        <entry key="http://docs.openstack.org/identity/api/v2.0">
+            <value>v20</value>
+        </entry>
+        <entry key="http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0">
+            <value>os-ksadm</value>
+        </entry>
+        <entry key="http://docs.openstack.org/identity/api/ext/OS-KSEC2/v1.0">
+            <value>os-ksec2</value>
+        </entry>
+        <entry key="http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0">
+            <value>rax-ksqa</value>
+        </entry>
+
+    </util:map>
+
+    <util:map id="oskscatalogNsPrefixMap"
+
+              key-type="java.lang.String"
+
+              value-type="java.lang.String">
+
+        <entry key="http://docs.openstack.org/identity/api/ext/OS-KSCATALOG/v1.0">
+            <value/>
+        </entry>
+    </util:map>
+
+    <util:map id="raxksqaNsPrefixMap"
+
+              key-type="java.lang.String"
+
+              value-type="java.lang.String">
+
+        <entry key="http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0">
+            <value/>
+        </entry>
+        <entry key="http://docs.openstack.org/identity/api/v2.0">
+            <value>v20</value>
+        </entry>
+        <entry key="http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0">
+            <value>os-ksadmn</value>
+        </entry>
+        <entry key="http://docs.openstack.org/identity/api/ext/OS-KSEC2/v1.0">
+            <value>os-ksec2</value>
+        </entry>
+        <entry key="http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0">
+            <value>rax-kskey</value>
+        </entry>
+    </util:map>
+
+
+</beans>
