@@ -13,10 +13,8 @@ import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest
 import static com.rackspace.idm.domain.dao.impl.InMemoryLdapIntegrationTest.tearDownServer
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON
 import static javax.ws.rs.core.MediaType.APPLICATION_XML
-import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
-import org.syntax.jedit.InputHandler.delete
 import org.junit.Test
-import com.sun.jersey.api.client.WebResource
+
 
 class Cloud20IntegrationTest extends Specification {
     @Shared def resource
@@ -32,10 +30,8 @@ class Cloud20IntegrationTest extends Specification {
     }
 
     def cleanupSpec() {
-        tearDownServer()
     }
 
-    @Test
     def 'User CRUD'(){
         when:
         //Create user
@@ -45,7 +41,7 @@ class Cloud20IntegrationTest extends Specification {
         //Get user
         def getUserResponse = getUser(serviceAdminToken, response.location)
         def userEntity = getUserResponse.getEntity(User)
-        def userForUpdate = userForUpdate("Test", "Bob", "test@rackspace.com", true, null, null)
+        def userForUpdate = userForUpdate("updatedBob"+randmon, "Bob", "test@rackspace.com", true, null, null)
         def updateUserResponse = updateUser(serviceAdminToken, userEntity.getId(), userForUpdate)
         //Delete user
         def deleteResponses = deleteUser(serviceAdminToken, userEntity.getId())
