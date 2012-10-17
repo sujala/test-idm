@@ -1168,6 +1168,7 @@
                                 <exclude>**/*Cukes*.java</exclude>
                             </excludes>
                             <includes>
+                                <include>**/*IntegrationTest*.groovy</include>
                                 <include>**/*IntegrationTest*.java</include>
                                 <!--<include>**/*IT.java</include>-->
                             </includes>
