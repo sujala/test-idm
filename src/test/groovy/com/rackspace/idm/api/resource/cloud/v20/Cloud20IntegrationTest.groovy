@@ -21,9 +21,10 @@ import com.sun.jersey.api.client.WebResource
 class Cloud20IntegrationTest extends Specification {
     @Shared def resource
     @Shared def path = "cloud/v2.0/"
-    @Shared def X_AUTH_TOKEN="X-Auth-Token"
     @Shared def serviceAdminToken
+
     def randomness = UUID.randomUUID()
+    def X_AUTH_TOKEN="X-Auth-Token"
 
     def setupSpec() {
         this.resource = ensureGrizzlyStarted("classpath:app-config.xml");
@@ -44,6 +45,8 @@ class Cloud20IntegrationTest extends Specification {
         //Get user
         def getUserResponse = getUser(serviceAdminToken, response.location)
         def userEntity = getUserResponse.getEntity(User)
+        def userForUpdate = userForUpdate("Test", "Bob", "test@rackspace.com", true, null, null)
+        def updateUserResponse = updateUser(serviceAdminToken, userEntity.getId(), userForUpdate)
         //Delete user
         def deleteResponses = deleteUser(serviceAdminToken, userEntity.getId())
         //Hard delete user
@@ -52,7 +55,7 @@ class Cloud20IntegrationTest extends Specification {
         then:
         response.status == 201
         response.location != null
-
+        updateUserResponse.status == 200
         getUserResponse.status == 200
         deleteResponses.status == 204
         hardDeleteResponses.status == 204
@@ -68,8 +71,8 @@ class Cloud20IntegrationTest extends Specification {
         resource.uri(location).accept(APPLICATION_XML).header(X_AUTH_TOKEN,token).get(ClientResponse)
     }
 
-    def updateUser(String token, userId, user){
-        resource.path(path + "users/" + userId).header(X_AUTH_TOKEN,token).entity(user).put(ClientResponse)
+    def updateUser(String token, String userId, user){
+        resource.path(path + "users/" + userId).header(X_AUTH_TOKEN,token).entity(user).post(ClientResponse)
     }
 
     def deleteUser(String token, String userId){
@@ -114,8 +117,20 @@ class Cloud20IntegrationTest extends Specification {
         }
     }
 
-    def userForUpdate(String name, String email, Boolean enabled, String region, String ){
-
+    def userForUpdate(String username,String displayName, String email, Boolean enabled, String defaultRegion, String password ){
+        new User().with {
+            it.username = username
+            it.email = email
+            it.enabled = enabled
+            it.displayName = displayName
+            if (password != null) {
+                it.otherAttributes.put(new QName("http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0", "password"), password)
+            }
+            if (defaultRegion != null) {
+                it.otherAttributes.put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "defaultRegion"), defaultRegion)
+            }
+            return it
+        }
     }
 
 }
