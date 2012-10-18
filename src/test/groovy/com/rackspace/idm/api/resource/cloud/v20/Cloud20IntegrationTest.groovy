@@ -71,7 +71,7 @@ class Cloud20IntegrationTest extends Specification {
 
 
     def createUser(String token, user){
-        resource.path(path + 'users').header(X_AUTH_TOKEN,token).entity(user).post(ClientResponse)
+        resource.path(path).path('users').header(X_AUTH_TOKEN,token).entity(user).post(ClientResponse)
     }
 
     def getUser(String token, URI location){
@@ -79,20 +79,19 @@ class Cloud20IntegrationTest extends Specification {
     }
 
     def getUserById(String token, String userId){
-        String resourcePath = path + "users/" + userId
         resource.path(path).path('users').path(userId).accept(APPLICATION_XML).header(X_AUTH_TOKEN,token).get(ClientResponse)
     }
 
     def updateUser(String token, String userId, user){
-        resource.path(path + "users/" + userId).header(X_AUTH_TOKEN,token).entity(user).post(ClientResponse)
+        resource.path(path).path('users').path(userId).header(X_AUTH_TOKEN,token).entity(user).post(ClientResponse)
     }
 
     def deleteUser(String token, String userId){
-        resource.path(path + "users/" + userId).header(X_AUTH_TOKEN,token).delete(ClientResponse)
+        resource.path(path).path('users').path(userId).header(X_AUTH_TOKEN,token).delete(ClientResponse)
     }
 
     def hardDeleteUser(String token, String userId){
-        resource.path(path + "softDeleted/users/" + userId).header(X_AUTH_TOKEN,token).delete(ClientResponse)
+        resource.path(path).path('softDeleted').path('users').path(userId).header(X_AUTH_TOKEN,token).delete(ClientResponse)
     }
 
     def identityAdminUser(String username, String email, Boolean enabled, String password, String defaultRegion){
