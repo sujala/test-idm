@@ -44,7 +44,9 @@
     <context:annotation-config/>
 
     <!-- Scans within the base package of the application for @Components to configure as beans-->
-    <context:component-scan base-package="com.rackspace.idm"/>
+    <context:component-scan base-package="com.rackspace.idm">
+        <context:exclude-filter type="regex" expression="com.rackspace.idm.domain.config.PropertyFileConfiguration"/>
+    </context:component-scan>
 
     <!--
          Instruct Spring to perform automatic transaction management on annotated classes.
@@ -53,5 +55,6 @@
      -->
 
     <import resource="namespaces.xml"/>
+
 
 </beans>

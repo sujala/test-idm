@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:util="http://www.springframework.org/schema/util"
+
+       xsi:schemaLocation="
+			http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+			http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.0.xsd">
+
+
+    <util:map id="osCommonNsPrefixMap"
+              key-type="java.lang.String"
+              value-type="java.lang.String">
+
+        <entry key="http://docs.openstack.org/common/api/v1.0">
+            <value/>
+        </entry>
+
+        <entry key="http://www.w3.org/2005/Atom">
+            <value>atom</value>
+        </entry>
+
+    </util:map>
+
+    <util:map id="corev11NsPrefixMap"
+
+              key-type="java.lang.String"
+
+              value-type="java.lang.String">
+
+        <entry key="http://docs.rackspacecloud.com/auth/api/v1.1">
+            <value/>
+        </entry>
+
+        <entry key="http://www.w3.org/2005/Atom">
+            <value>atom</value>
+        </entry>
+
+        <entry key="http://idm.api.rackspace.com/v1.0">
+            <value>rax-idmv10</value>
+        </entry>
+
+        <entry key="http://docs.openstack.org/common/api/v1.0">
+            <value>os-v10</value>
+        </entry>
+
+    </util:map>
+
+    <util:map id="corev20NsPrefixMap"
+
+              key-type="java.lang.String"
+
+              value-type="java.lang.String">
+
+        <entry key="http://docs.openstack.org/identity/api/v2.0">
+            <value/>
+        </entry>
+
+        <entry key="http://docs.openstack.org/identity/api/ext/OS-KSEC2/v1.0">
+            <value>os-ksec2</value>
+        </entry>
+
+        <entry key="http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0">
+            <value>rax-kskey</value>
+        </entry>
+
+        <entry key="http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0">
+            <value>os-ksadm</value>
+        </entry>
+
+        <entry key="http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0">
+            <value>rax-ksqa</value>
+        </entry>
+
+        <entry key="http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0">
+            <value>rax-auth</value>
+        </entry>
+
+    </util:map>
+
+    <util:map id="osksadmNsPrefixMap"
+
+              key-type="java.lang.String"
+
+              value-type="java.lang.String">
+
+        <entry key="http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0">
+            <value/>
+        </entry>
+        <entry key="http://docs.openstack.org/identity/api/v2.0">
+            <value>v20</value>
+        </entry>
+        <entry key="http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0">
+            <value>rax-auth</value>
+        </entry>
+    </util:map>
+
+    <util:map id="raxkskeyNsPrefixMap"
+
+              key-type="java.lang.String"
+
+              value-type="java.lang.String">
+
+        <entry key="http://docs.rackspace.com/identity/api/ext/RAX-KSGRP/v1.0">
+            <value/>
+        </entry>
+    </util:map>
+
+    <util:map id="raxAuthNsPrefixMap"
+              key-type="java.lang.String"
+              value-type="java.lang.String">
+        <entry key="http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0">
+            <value/>
+        </entry>
+        <entry key="http://docs.openstack.org/identity/api/v2.0">
+            <value>v20</value>
+        </entry>
+        <entry key="http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0">
+            <value>os-ksadm</value>
+        </entry>
+        <entry key="http://docs.openstack.org/identity/api/ext/OS-KSEC2/v1.0">
+            <value>os-ksec2</value>
+        </entry>
+        <entry key="http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0">
+            <value>rax-kskey</value>
+        </entry>
+        <entry key="http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0">
+            <value>rax-ksqa</value>
+        </entry>
+    </util:map>
+
+    <util:map id="raxgrpNsPrefixMap"
+
+              key-type="java.lang.String"
+
+              value-type="java.lang.String">
+
+        <entry key="http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0">
+            <value/>
+        </entry>
+        <entry key="http://docs.openstack.org/identity/api/v2.0">
+            <value>v20</value>
+        </entry>
+        <entry key="http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0">
+            <value>os-ksadm</value>
+        </entry>
+        <entry key="http://docs.openstack.org/identity/api/ext/OS-KSEC2/v1.0">
+            <value>os-ksec2</value>
+        </entry>
+        <entry key="http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0">
+            <value>rax-ksqa</value>
+        </entry>
+
+    </util:map>
+
+    <util:map id="oskscatalogNsPrefixMap"
+
+              key-type="java.lang.String"
+
+              value-type="java.lang.String">
+
+        <entry key="http://docs.openstack.org/identity/api/ext/OS-KSCATALOG/v1.0">
+            <value/>
+        </entry>
+    </util:map>
+
+    <util:map id="raxksqaNsPrefixMap"
+
+              key-type="java.lang.String"
+
+              value-type="java.lang.String">
+
+        <entry key="http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0">
+            <value/>
+        </entry>
+        <entry key="http://docs.openstack.org/identity/api/v2.0">
+            <value>v20</value>
+        </entry>
+        <entry key="http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0">
+            <value>os-ksadmn</value>
+        </entry>
+        <entry key="http://docs.openstack.org/identity/api/ext/OS-KSEC2/v1.0">
+            <value>os-ksec2</value>
+        </entry>
+        <entry key="http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0">
+            <value>rax-kskey</value>
+        </entry>
+    </util:map>
+
+</beans>
