@@ -10,19 +10,17 @@ import javax.xml.namespace.QName
 import org.openstack.docs.identity.api.v2.*
 
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.ensureGrizzlyStarted
-import static com.rackspace.idm.domain.dao.impl.InMemoryLdapIntegrationTest.tearDownServer
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON
 import static javax.ws.rs.core.MediaType.APPLICATION_XML
-import org.junit.Test
-
+import com.sun.jersey.api.client.WebResource
 
 class Cloud20IntegrationTest extends Specification {
-    @Shared def resource
+    @Shared WebResource resource
+
     @Shared def path = "cloud/v2.0/"
     @Shared def serviceAdminToken
 
     def randomness = UUID.randomUUID()
-    def X_AUTH_TOKEN="X-Auth-Token"
+    static def X_AUTH_TOKEN="X-Auth-Token"
 
     def setupSpec() {
         this.resource = ensureGrizzlyStarted("classpath:app-config.xml");
@@ -41,6 +39,7 @@ class Cloud20IntegrationTest extends Specification {
         //Get user
         def getUserResponse = getUser(serviceAdminToken, response.location)
         def userEntity = getUserResponse.getEntity(User)
+        //Update User
         def userForUpdate = userForUpdate("updatedBob"+randmon, "Bob", "test@rackspace.com", true, null, null)
         def updateUserResponse = updateUser(serviceAdminToken, userEntity.getId(), userForUpdate)
         //Delete user
@@ -51,10 +50,22 @@ class Cloud20IntegrationTest extends Specification {
         then:
         response.status == 201
         response.location != null
-        updateUserResponse.status == 200
         getUserResponse.status == 200
+        updateUserResponse.status == 200
         deleteResponses.status == 204
         hardDeleteResponses.status == 204
+    }
+
+    def "operations on non-existent users return 'not found'" () {
+        expect:
+        response.status == 404
+
+        where:
+        response << [
+                getUserById(serviceAdminToken, "badId"),
+                updateUser(serviceAdminToken, "badId", new User()),
+                deleteUser(serviceAdminToken, "badId")
+        ]
     }
 
 
@@ -65,6 +76,11 @@ class Cloud20IntegrationTest extends Specification {
 
     def getUser(String token, URI location){
         resource.uri(location).accept(APPLICATION_XML).header(X_AUTH_TOKEN,token).get(ClientResponse)
+    }
+
+    def getUserById(String token, String userId){
+        String resourcePath = path + "users/" + userId
+        resource.path(path).path('users').path(userId).accept(APPLICATION_XML).header(X_AUTH_TOKEN,token).get(ClientResponse)
     }
 
     def updateUser(String token, String userId, user){
