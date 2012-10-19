@@ -3206,14 +3206,18 @@ public class DelegateCloud20ServiceTest {
         spy.addUser(httpHeaders, uriInfo, "authToken", user);
     }
 
-    @Test (expected = NotImplementedException.class)
+    @Test
     public void listDefaultRegionServices_throwsNotImplementedException() throws Exception {
-        delegateCloud20Service.listDefaultRegionServices(null);
+        when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
+        Response.ResponseBuilder responseBuilder = delegateCloud20Service.listDefaultRegionServices(null);
+        assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
     }
 
-    @Test (expected = NotImplementedException.class)
+    @Test
     public void setDefaultRegionServices_throwsNotImplementedException() throws Exception {
-        delegateCloud20Service.setDefaultRegionServices(null, null);
+        when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
+        Response.ResponseBuilder responseBuilder = delegateCloud20Service.setDefaultRegionServices(null, null);
+        assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
     }
 
     @Test

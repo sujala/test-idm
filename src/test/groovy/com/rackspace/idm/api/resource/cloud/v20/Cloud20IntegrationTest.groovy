@@ -133,7 +133,7 @@ class Cloud20IntegrationTest extends Specification {
         response << [
                 createUser("invalidToken", userForCreate("someName", "display", "test@rackspace.com", true, "ORD", null, "Password1")),
                 createUser(null, userForCreate("someName", "display", "test@rackspace.com", true, "ORD", null, "Password1")),  \
-                  getUserById("invalidToken", "badId"),
+                getUserById("invalidToken", "badId"),
                 getUserById(null, "badId"),
                 getUserByName("invalidToken", "badId"),
                 getUserByName(null, "badId"),
