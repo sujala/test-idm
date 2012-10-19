@@ -22,6 +22,8 @@ class Cloud20IntegrationTest extends Specification {
     @Shared def userAdminToken
     @Shared def defaultUserToken
 
+    @Shared def serviceAdmin
+    @Shared def identityAdmin
     @Shared def userAdmin
     @Shared def defaultUser
 
@@ -31,7 +33,9 @@ class Cloud20IntegrationTest extends Specification {
     def setupSpec() {
         this.resource = ensureGrizzlyStarted("classpath:app-config.xml");
         serviceAdminToken = authenticate("authQE", "Auth1234").getEntity(AuthenticateResponse).value.token.id
+        serviceAdmin = getUserByName(serviceAdminToken, "authQE").getEntity(User)
         identityAdminToken = authenticate("auth", "auth123").getEntity(AuthenticateResponse).value.token.id
+        identityAdmin = getUserByName(serviceAdminToken, "auth").getEntity(User)
         //User Admin
         def userAdminResponse = getUserByName(identityAdminToken, "testUserAdmin_doNotDeleteMe")
         if (userAdminResponse.getStatus() == 404) {
@@ -66,7 +70,7 @@ class Cloud20IntegrationTest extends Specification {
         def getUserByIdResponse = getUserById(serviceAdminToken, userEntity.getId())
         def getUserByNameResponse = getUserByName(serviceAdminToken, userEntity.getUsername())
         //Update User
-        def userForUpdate = userForUpdate("updatedBob" + random, "Bob", "test@rackspace.com", true, null, null)
+        def userForUpdate = userForUpdate(null, "updatedBob" + random, "Bob", "test@rackspace.com", true, null, null)
         def updateUserResponse = updateUser(serviceAdminToken, userEntity.getId(), userForUpdate)
         //Delete user
         def deleteResponses = deleteUser(serviceAdminToken, userEntity.getId())
@@ -93,11 +97,12 @@ class Cloud20IntegrationTest extends Specification {
                 getUserById(serviceAdminToken, "badId"),
                 getUserByName(serviceAdminToken, "badName"),
                 updateUser(serviceAdminToken, "badId", new User()),
-                deleteUser(serviceAdminToken, "badId")
+                deleteUser(serviceAdminToken, "badId"),
+                addCredential(serviceAdminToken, "badId", getCredentials("someUser", "SomePassword1"))
         ]
     }
 
-    def "invalid operations on create user returns 'bad request'"() {
+    def "invalid operations on create/update user returns 'bad request'"() {
         expect:
         response.status == 400
 
@@ -109,11 +114,14 @@ class Cloud20IntegrationTest extends Specification {
                 createUser(serviceAdminToken, userForCreate("", "display", "test@rackspace.com", true, "ORD", null, "Password1")),
                 createUser(serviceAdminToken, userForCreate(null, "display", "test@rackspace.com", true, "ORD", null, "Password1")),
                 createUser(serviceAdminToken, userForCreate("goodName", "display", "junk!@#", true, "ORD", null, "Password1")),
+                createUser(serviceAdminToken, userForCreate("goodName", "display", null, true, "ORD", null, "Password1")),
                 createUser(serviceAdminToken, userForCreate("goodName", "display", "test@rackspace.com", true, "ORD", null, "Pop1")),
                 createUser(serviceAdminToken, userForCreate("goodName", "display", "test@rackspace.com", true, "ORD", null, "longpassword1")),
                 createUser(serviceAdminToken, userForCreate("goodName", "display", "test@rackspace.com", true, "ORD", null, "Longpassword")),
                 createUser(serviceAdminToken, userForCreate("goodName", "display", "test@rackspace.com", true, "ORD", "someId", "Longpassword")),
-                createUser(identityAdminToken, userForCreate("goodName", "display", "test@rackspace.com", true, "ORD", null, "Longpassword1"))
+                createUser(identityAdminToken, userForCreate("goodName", "display", "test@rackspace.com", true, "ORD", null, "Longpassword1")),
+                updateUser(userAdminToken, defaultUser.getId(), userForUpdate("1", "someOtherName", "someOtherDisplay", "some@rackspace.com", true, "ORD", "SomeOtherPassword1")),
+                updateUser(defaultUserToken, defaultUser.getId(), userForUpdate(null, "someOtherName", "someOtherDisplay", "some@rackspace.com", false, "ORD", "SomeOtherPassword1"))
         ]
     }
 
@@ -124,8 +132,8 @@ class Cloud20IntegrationTest extends Specification {
         where:
         response << [
                 createUser("invalidToken", userForCreate("someName", "display", "test@rackspace.com", true, "ORD", null, "Password1")),
-                createUser(null, userForCreate("someName", "display", "test@rackspace.com", true, "ORD", null, "Password1")),
-                getUserById("invalidToken", "badId"),
+                createUser(null, userForCreate("someName", "display", "test@rackspace.com", true, "ORD", null, "Password1")),  \
+                  getUserById("invalidToken", "badId"),
                 getUserById(null, "badId"),
                 getUserByName("invalidToken", "badId"),
                 getUserByName(null, "badId"),
@@ -145,24 +153,46 @@ class Cloud20IntegrationTest extends Specification {
 
         where:
         response << [
-                createUser(defaultUserToken, userForCreate("someName", "display", "test@rackspace.com", true, "ORD", null, "Password1"))
+                createUser(defaultUserToken, userForCreate("someName", "display", "test@rackspace.com", true, "ORD", null, "Password1")),
+                updateUser(defaultUserToken, userAdmin.getId(), userForUpdate(null, "someOtherName", "someOtherDisplay", "some@rackspace.com", true, "ORD", "SomeOtherPassword1")),
+                getUserById(defaultUserToken, userAdmin.getId()),
+                getUserById(defaultUserToken, identityAdmin.getId()),
+                getUserById(defaultUserToken, serviceAdmin.getId()),
+                getUserById(userAdminToken, identityAdmin.getId()),
+                getUserById(userAdminToken, serviceAdmin.getId()),
+                getUserByName(defaultUserToken, userAdmin.getUsername()),
+                getUserByName(defaultUserToken, identityAdmin.getUsername()),
+                getUserByName(defaultUserToken, serviceAdmin.getUsername()),
+                getUserByName(userAdminToken, identityAdmin.getUsername()),
+                getUserByName(userAdminToken, serviceAdmin.getUsername()),
         ]
     }
 
-    def 'valid operations on list users'() {
+    def 'valid operations on retrieving users'() {
         expect:
         response.status == 200
 
         where:
         response << [
                 listUser(serviceAdminToken),
-                listUser(identityAdminToken)
+                listUser(identityAdminToken),
+                listUser(userAdminToken),
+                listUser(defaultUserToken),
+                getUserById(defaultUserToken, defaultUser.getId()),
+                getUserById(userAdminToken, defaultUser.getId()),
+                getUserById(userAdminToken, userAdmin.getId()),
+                getUserById(identityAdminToken, userAdmin.getId()),
+                getUserById(serviceAdminToken, userAdmin.getId()),
+                getUserByName(defaultUserToken, defaultUser.getUsername()),
+                getUserByName(userAdminToken, defaultUser.getUsername()),
+                getUserByName(userAdminToken, userAdmin.getUsername()),
+                getUserByName(identityAdminToken, userAdmin.getUsername()),
+                getUserByName(serviceAdminToken, userAdmin.getUsername())
         ]
 
     }
 
-
-
+    //Resource Calls
     def createUser(String token, user) {
         resource.path(path).path('users').header(X_AUTH_TOKEN, token).entity(user).post(ClientResponse)
     }
@@ -187,6 +217,10 @@ class Cloud20IntegrationTest extends Specification {
         resource.path(path).path('users').path(userId).header(X_AUTH_TOKEN, token).entity(user).post(ClientResponse)
     }
 
+    def addCredential(String token, String userId, credential) {
+        resource.path(path).path('users').path(userId).path('OS-KSADM').path('credentials').entity(credential).header(X_AUTH_TOKEN, token).post(ClientResponse)
+    }
+
     def deleteUser(String token, String userId) {
         resource.path(path).path('users').path(userId).header(X_AUTH_TOKEN, token).delete(ClientResponse)
     }
@@ -199,6 +233,7 @@ class Cloud20IntegrationTest extends Specification {
         resource.path(path + 'tokens').accept(APPLICATION_XML).entity(authenticateRequest(username, password)).post(ClientResponse)
     }
 
+    //Helper Methods
     def getCredentials(String username, String password) {
         new PasswordCredentialsRequiredUsername().with {
             it.username = username
@@ -218,8 +253,9 @@ class Cloud20IntegrationTest extends Specification {
         }
     }
 
-    def userForUpdate(String username, String displayName, String email, Boolean enabled, String defaultRegion, String password) {
+    def userForUpdate(String id, String username, String displayName, String email, Boolean enabled, String defaultRegion, String password) {
         new User().with {
+            it.id = id
             it.username = username
             it.email = email
             it.enabled = enabled
