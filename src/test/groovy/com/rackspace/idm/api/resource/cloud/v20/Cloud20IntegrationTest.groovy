@@ -32,15 +32,22 @@ class Cloud20IntegrationTest extends Specification {
         this.resource = ensureGrizzlyStarted("classpath:app-config.xml");
         serviceAdminToken = authenticate("authQE", "Auth1234").getEntity(AuthenticateResponse).value.token.id
         identityAdminToken = authenticate("auth", "auth123").getEntity(AuthenticateResponse).value.token.id
-//        userAdmin = getUserByName(identityAdminToken, "testUserAdmin_doNotDeleteMe").getEntity(User)
-//        if (userAdmin == null) {
-//            userAdmin = createUser(identityAdminToken, userForCreate("testUserAdmin_doNotDeleteMe", "display", "test@rackspace.com", true, "ORD", "domainId", "Password1"))
-//        }
-//        userAdminToken = authenticate("auth", "auth123").getEntity(AuthenticateResponse).value.token.id
-//        defaultUser = getUserByName(userAdminToken, "testDefaultUser_doNotDeleteMe").getEntity(User)
-//        if( defaultUser == null){
-//            defaultUser = createUser(userAdminToken,  userForCreate("testDefaultUser_doNotDeleteMe", "display", "test@rackspace.com", true, null, null, "Password1"))
-//        }
+        //User Admin
+        def userAdminResponse = getUserByName(identityAdminToken, "testUserAdmin_doNotDeleteMe")
+        if (userAdminResponse.getStatus() == 404) {
+            userAdmin = createUser(identityAdminToken, userForCreate("testUserAdmin_doNotDeleteMe", "display", "test@rackspace.com", true, "ORD", "domainId", "Password1")).getEntity(User)
+        } else if (userAdminResponse.getStatus() == 200) {
+            userAdmin = userAdminResponse.getEntity(User)
+        }
+        userAdminToken = authenticate("testUserAdmin_doNotDeleteMe", "Password1").getEntity(AuthenticateResponse).value.token.id
+        //Default User
+        def defaultUserResponse = getUserByName(userAdminToken, "testDefaultUser_doNotDeleteMe")
+        if (defaultUserResponse.getStatus() == 404) {
+            defaultUser = createUser(userAdminToken, userForCreate("testDefaultUser_doNotDeleteMe", "display", "test@rackspace.com", true, null, null, "Password1")).getEntity(User)
+        } else if (defaultUserResponse.getStatus() == 200) {
+            defaultUser = defaultUserResponse.getEntity(User)
+        }
+        defaultUserToken = authenticate("testDefaultUser_doNotDeleteMe", "Password1").getEntity(AuthenticateResponse).value.token.id
     }
 
     def cleanupSpec() {
@@ -110,7 +117,7 @@ class Cloud20IntegrationTest extends Specification {
         ]
     }
 
-    def 'operations with invalid tokens'(){
+    def 'operations with invalid tokens'() {
         expect:
         response.status == 401
 
@@ -132,7 +139,17 @@ class Cloud20IntegrationTest extends Specification {
 
     }
 
-    def 'valid operations on list users'(){
+    def 'forbidden operations for users'() {
+        expect:
+        response.status == 403
+
+        where:
+        response << [
+                createUser(defaultUserToken, userForCreate("someName", "display", "test@rackspace.com", true, "ORD", null, "Password1"))
+        ]
+    }
+
+    def 'valid operations on list users'() {
         expect:
         response.status == 200
 
@@ -154,7 +171,7 @@ class Cloud20IntegrationTest extends Specification {
         resource.uri(location).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
-    def listUser(String token){
+    def listUser(String token) {
         resource.path(path).path('users').accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
@@ -163,7 +180,7 @@ class Cloud20IntegrationTest extends Specification {
     }
 
     def getUserByName(String token, String name) {
-        resource.path(path).path('users').queryParam("name",name).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
+        resource.path(path).path('users').queryParam("name", name).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
     def updateUser(String token, String userId, user) {
@@ -227,7 +244,7 @@ class Cloud20IntegrationTest extends Specification {
                 it.otherAttributes.put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "defaultRegion"), defaultRegion)
             }
             if (domainId != null) {
-                it.otherAttributes.put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0","domainId"), domainId)
+                it.otherAttributes.put(new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "domainId"), domainId)
             }
             if (password != null) {
                 it.otherAttributes.put(new QName("http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0", "password"), password)
