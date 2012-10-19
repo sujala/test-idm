@@ -140,6 +140,11 @@ public class Validator20 {
         if (checkName.length() > MAX_GROUP_NAME) {
             throw new BadRequestException("Group name length cannot exceed 200 characters");
         }
+
+        if (group.getDescription() == null) {
+            throw new BadRequestException("Missing description");
+        }
+
         if (group.getDescription().length() > MAX_GROUP_DESC) {
             throw new BadRequestException("Group description length cannot exceed 1000 characters");
         }
