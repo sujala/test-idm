@@ -13,6 +13,7 @@ import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest
 import static javax.ws.rs.core.MediaType.APPLICATION_XML
 import com.sun.jersey.api.client.WebResource
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 
 class Cloud20IntegrationTest extends Specification {
     @Shared WebResource resource
@@ -32,7 +33,8 @@ class Cloud20IntegrationTest extends Specification {
 
     def randomness = UUID.randomUUID()
     static def X_AUTH_TOKEN = "X-Auth-Token"
-    @Shared def groupId
+    @Shared def groupLocation
+    @Shared def group
 
     static def RAX_GRPADM= "RAX-GRPADM"
 
@@ -66,13 +68,13 @@ class Cloud20IntegrationTest extends Specification {
 
         //create group
         def createGroupResponse = createGroup(serviceAdminToken, group("group$sharedRandom", "this is a group"))
-        def getGroupResponse = getGroup(serviceAdminToken, createGroupResponse.location)
-        def groupEntity = getGroupResponse.getEntity(Group)
-        groupId = groupEntity.value.id
+        groupLocation = createGroupResponse.location
+        def getGroupResponse = getGroup(serviceAdminToken, groupLocation)
+        group = getGroupResponse.getEntity(Group).value
     }
 
     def cleanupSpec() {
-        deleteGroup(serviceAdminToken, groupId)
+        deleteGroup(serviceAdminToken, group.getId())
     }
 
     def 'User CRUD'() {
@@ -183,6 +185,11 @@ class Cloud20IntegrationTest extends Specification {
                 getUserByName(defaultUserToken, serviceAdmin.getUsername()),
                 getUserByName(userAdminToken, identityAdmin.getUsername()),
                 getUserByName(userAdminToken, serviceAdmin.getUsername()),
+                createGroup(defaultUserToken, group()),
+                updateGroup(defaultUserToken, group.getId(), group()),
+                deleteGroup(defaultUserToken, group.getId()),
+                getGroup(defaultUserToken, groupLocation),
+                getGroups(defaultUserToken),
         ]
     }
 
@@ -219,16 +226,45 @@ class Cloud20IntegrationTest extends Specification {
         def groupEntity = getGroupResponse.getEntity(Group)
         def groupId = groupEntity.value.id
 
+        def getGroupsResponse = getGroups(serviceAdminToken)
+        def groupsEntity = getGroupsResponse.getEntity(Groups)
+
         def updateGroupResponse = updateGroup(serviceAdminToken, groupId, group("group$random", "updated group"))
 
         def deleteGroupResponse = deleteGroup(serviceAdminToken, groupId)
+
 
         then:
         createGroupResponse.status == 201
         createGroupResponse.location != null
         getGroupResponse.status == 200
+        getGroupsResponse.status == 200
+        groupsEntity.value.getGroup().size() > 0
         updateGroupResponse.status == 200
         deleteGroupResponse.status == 204
+    }
+
+    def "Group Assignment CRUD" () {
+        when:
+        def addUserToGroupResponse = addUserToGroup(serviceAdminToken, group.getId(), defaultUser.getId())
+
+        def listGroupsForUserResponse = listGroupsForUser(serviceAdminToken, defaultUser.getId())
+        def groups = listGroupsForUserResponse.getEntity(Groups).value
+
+        def getUsersFromGroupResponse = getUsersFromGroup(serviceAdminToken, group.getId())
+        def users = getUsersFromGroupResponse.getEntity(UserList).value
+
+        def removeUserFromGroupRespone = removeUserFromGroup(serviceAdminToken, group.getId(), defaultUser.getId())
+
+        then:
+        addUserToGroupResponse.status == 204
+
+        listGroupsForUserResponse.status == 200
+        groups.getGroup().size() == 1
+        getUsersFromGroupResponse.status == 200
+        users.getUser().size() == 1
+
+        removeUserFromGroupRespone.status == 204
     }
 
     def "invalid operations on create/update group returns 'bad request'"() {
@@ -240,9 +276,20 @@ class Cloud20IntegrationTest extends Specification {
                 createGroup(serviceAdminToken, group(null, "this is a group")),
                 createGroup(serviceAdminToken, group("", "this is a group")),
                 createGroup(serviceAdminToken, group("group", null)),
-                updateGroup(serviceAdminToken, groupId, group(null, "this is a group")),
-                updateGroup(serviceAdminToken, groupId, group("", "this is a group")),
-                updateGroup(serviceAdminToken, groupId, group("group", null))
+                updateGroup(serviceAdminToken, group.getId(), group(null, "this is a group")),
+                updateGroup(serviceAdminToken, group.getId(), group("", "this is a group")),
+                updateGroup(serviceAdminToken, group.getId(), group("group", null)),
+                addUserToGroup(serviceAdminToken, "doesnotexist", defaultUser.getId()),
+        ]
+    }
+
+    def "invalid operations on create/update group returns 'not found'"() {
+        expect:
+        response.status == 404
+
+        where:
+        response << [
+                addUserToGroup(serviceAdminToken, group.getId(), "doesnotexist"),
         ]
     }
 
@@ -291,12 +338,32 @@ class Cloud20IntegrationTest extends Specification {
         resource.uri(uri).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
+    def getGroups(String token) {
+        resource.path(path).path(RAX_GRPADM).path('groups').accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
+    }
+
     def updateGroup(String token, String groupId, group) {
         resource.path(path).path(RAX_GRPADM).path('groups').path(groupId).header(X_AUTH_TOKEN, token).type(APPLICATION_XML).accept(APPLICATION_XML).entity(group).put(ClientResponse)
     }
 
     def deleteGroup(String  token, String groupId) {
         resource.path(path).path(RAX_GRPADM).path('groups').path(groupId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
+    }
+
+    def addUserToGroup(String token, String groupId, String userId) {
+        resource.path(path).path(RAX_GRPADM).path('groups').path(groupId).path("users").path(userId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).put(ClientResponse)
+    }
+
+    def removeUserFromGroup(String token, String groupId, String userId) {
+        resource.path(path).path(RAX_GRPADM).path('groups').path(groupId).path("users").path(userId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
+    }
+
+    def listGroupsForUser(String token, String userId) {
+        resource.path(path).path('users').path(userId).path("RAX-KSGRP").accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
+    }
+
+    def getUsersFromGroup(String token, String groupId) {
+        resource.path(path).path(RAX_GRPADM).path('groups').path(groupId).path("users").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     def authenticate(username, password) {
@@ -365,5 +432,9 @@ class Cloud20IntegrationTest extends Specification {
             it.description = description
             return it
         }
+    }
+
+    def group() {
+        return group("group", "description")
     }
 }
