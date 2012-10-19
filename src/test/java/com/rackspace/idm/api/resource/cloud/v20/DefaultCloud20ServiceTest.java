@@ -2,7 +2,6 @@ package com.rackspace.idm.api.resource.cloud.v20;
 
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
@@ -82,6 +81,7 @@ public class DefaultCloud20ServiceTest {
     private TokenConverterCloudV20 tokenConverterCloudV20;
     private EndpointConverterCloudV20 endpointConverterCloudV20;
     private RoleConverterCloudV20 roleConverterCloudV20;
+    private DomainConverterCloudV20 domainConverterCloudV20;
     private String authToken = "token";
     private EndpointTemplate endpointTemplate;
     private String userId = "id";
@@ -117,6 +117,7 @@ public class DefaultCloud20ServiceTest {
     private DelegateCloud20Service delegateCloud20Service;
     private SecretQA secretQA;
     private Validator20 validator20;
+    private Domain domain;
 
     @Before
     public void setUp() throws Exception {
@@ -134,6 +135,7 @@ public class DefaultCloud20ServiceTest {
         tokenConverterCloudV20 = mock(TokenConverterCloudV20.class);
         endpointConverterCloudV20 = mock(EndpointConverterCloudV20.class);
         roleConverterCloudV20 = mock(RoleConverterCloudV20.class);
+        domainConverterCloudV20 = mock(DomainConverterCloudV20.class);
         tenantService = mock(TenantService.class);
         endpointService = mock(EndpointService.class);
         clientService = mock(ApplicationService.class);
@@ -172,6 +174,7 @@ public class DefaultCloud20ServiceTest {
         defaultCloud20Service.setValidator20(validator20);
         defaultCloud20Service.setDefaultRegionService(defaultRegionService);
         defaultCloud20Service.setDomainService(domainService);
+        defaultCloud20Service.setDomainConverterCloudV20(domainConverterCloudV20);
 
         //fields
         user = new User();
@@ -231,10 +234,16 @@ public class DefaultCloud20ServiceTest {
         secretQA.setQuestion("question");
         token = new Token();
         token.setId("abcdefg");
-
+        domain = new Domain();
+        domain.setDomainId("1");
+        domain.setName("domain");
+        domain.setDescription("");
+        domain.setEnabled(true);
+        
         //stubbing
         when(jaxbObjectFactories.getRackspaceIdentityExtKsgrpV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.ObjectFactory());
         when(jaxbObjectFactories.getOpenStackIdentityV2Factory()).thenReturn(new org.openstack.docs.identity.api.v2.ObjectFactory());
+        when(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory());
         when(scopeAccessService.getScopeAccessByAccessToken(authToken)).thenReturn(userScopeAccess);
         when(authorizationService.authorizeCloudServiceAdmin(userScopeAccess)).thenReturn(true);
         when(endpointService.getBaseUrlById(101)).thenReturn(cloudBaseUrl);
@@ -6194,6 +6203,43 @@ public class DefaultCloud20ServiceTest {
     @Test (expected = BadRequestException.class)
     public void getXMLCredentials_callsUnmarshaller_unmarshall_throwsJAXBException() throws Exception {
         spy.getXMLCredentials("body");
+    }
+
+    @Test
+    public void addDomain_emptyName_throwBadRequest() {
+        ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
+        com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain = new com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain();
+        domain.setId("1");
+        domain.setName("");
+        when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
+        assertThat("response builder",spy.addDomain(authToken, null, domain),equalTo(responseBuilder));
+        assertThat("exception type",argumentCaptor.getValue(),instanceOf(BadRequestException.class));
+    }
+
+    @Test
+    public void addDomain_valid_SuccessRequest() throws Exception {
+        com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain newDomain = new com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain();
+        newDomain.setId("1");
+        newDomain.setName("domain");
+        doReturn(domain).when(domainConverterCloudV20).toDomainDO(newDomain);
+        doReturn(newDomain).when(domainConverterCloudV20).toDomain(domain);
+        when(uriInfo.getRequestUriBuilder()).thenReturn(UriBuilder.fromPath("path"));
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.addDomain(authToken, uriInfo, newDomain);
+        assertThat("response status", responseBuilder.build().getStatus(), equalTo(201));
+    }
+
+    @Test
+    public void updateDomain_valid_SuccessRequest() throws Exception {
+        com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain newDomain = new com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain();
+        newDomain.setId("1");
+        newDomain.setName("domain");
+        when(domainService.checkAndGetDomain("1")).thenReturn(domain);
+        doReturn(domain).when(domainConverterCloudV20).toDomainDO(newDomain);
+        doReturn(newDomain).when(domainConverterCloudV20).toDomain(domain);
+        when(uriInfo.getRequestUriBuilder()).thenReturn(UriBuilder.fromPath("path"));
+        Response.ResponseBuilder responseBuilder = defaultCloud20Service.updateDomain(authToken, "1", newDomain);
+        assertThat("response status", responseBuilder.build().getStatus(), equalTo(200));
     }
 
     @Test (expected = BadRequestException.class)
