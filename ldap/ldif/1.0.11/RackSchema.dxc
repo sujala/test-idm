@@ -603,6 +603,38 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.82) = {
     description = "The cloud region"
 };
 
+schema set attribute (1.3.6.1.4.1.20988.2.1.83) = {
+    name = rsAction
+    ldap-names = rsAction
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "Action of a capability"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.84) = {
+    name = rsUrl
+    ldap-names = rsUrl
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "Url for a capability"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.85) = {
+    name = rsResources
+    ldap-names = rsResources
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "List of resources for a capability"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.86) = {
+    name = secretId
+    ldap-names = secretId
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "secret id"
+};
+
 schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
 	name = rsPerson
 	ldap-names = rsPerson
@@ -624,6 +656,7 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
 		rsMossoId,
 		rsNastId,
 		secretQuestion,
+		secretId,
 		secretAnswer,
 		clearPassword,
 		rsSn,
@@ -1007,4 +1040,19 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.29) = {
         cn,
         rsCloud,
         useForDefaultRegion
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.30) = {
+    name = rsCapability
+    ldap-names = rsCapability
+    subclass-of top
+    kind = structural
+    must-contain
+        rsId,
+        cn,
+        rsAction,
+        rsUrl
+    may-contain
+        description,
+        rsResources
 };
