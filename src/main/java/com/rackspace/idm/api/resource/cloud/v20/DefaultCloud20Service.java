@@ -2074,6 +2074,11 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
+    @Override
+    public ResponseBuilder listUsersWithRole(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String roleId, int marker, int limit) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
     public boolean isValidImpersonatee(User user) {
         List<TenantRole> tenantRolesForUser = tenantService.getGlobalRolesForUser(user, null);
         for (TenantRole role : tenantRolesForUser) {

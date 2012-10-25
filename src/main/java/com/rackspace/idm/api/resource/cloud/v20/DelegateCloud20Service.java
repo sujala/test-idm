@@ -564,7 +564,6 @@ public class DelegateCloud20Service implements Cloud20Service {
     public ResponseBuilder deletePolicy(String authToken, String policyId) {
         throw new NotImplementedException();  //To change body of implemented methods use File | Settings | File Templates.
     }
-
     @Override
     public ResponseBuilder getAccessibleDomains(String authToken) {
         throw new NotImplementedException();  //To change body of implemented methods use File | Settings | File Templates.
@@ -577,6 +576,11 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getAccessibleDomainsEndpointsForUser(String authToken, String userId, String domainId) {
+        throw new NotImplementedException();  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public ResponseBuilder listUsersWithRole(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String roleId, int marker, int limit) {
         throw new NotImplementedException();  //To change body of implemented methods use File | Settings | File Templates.
     }
 
