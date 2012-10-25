@@ -15,7 +15,6 @@ import com.rackspace.idm.validation.Validator20;
 import com.sun.jersey.core.spi.factory.ResponseBuilderImpl;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.apache.commons.configuration.Configuration;
-import org.apache.commons.lang.NotImplementedException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Matchers;
@@ -25,8 +24,10 @@ import org.openstack.docs.identity.api.v2.*;
 import javax.ws.rs.core.*;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
-import java.util.*;
-
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.assertThat;
@@ -2015,11 +2016,12 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
-    public void listUsers_RoutingTrue_gaSourceOfTruthTrue_callsDefaultService() throws Exception {
+    public void listUsers_RoutingTrue_gaSourceOfTruthTrue_callsClient() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
-        delegateCloud20Service.listUsers(null, null, null, null);
-        verify(defaultCloud20Service).listUsers(null, null, null, null);
+        HttpHeaders mockHeaders = mock(HttpHeaders.class);
+        delegateCloud20Service.listUsers(mockHeaders, null, null, null);
+        verify(cloudClient).get(url + "users", mockHeaders);
     }
 
     @Test

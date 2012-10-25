@@ -353,7 +353,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             return defaultCloud20Service.listUsers(httpHeaders, authToken, marker, limit);
         }
 
-        if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
+        if (isCloudAuthRoutingEnabled()) {
             String request = getCloudAuthV20Url() + USERS;
             HashMap<String, Object> params = new HashMap<String, Object>();
             params.put(MARKER, marker);
