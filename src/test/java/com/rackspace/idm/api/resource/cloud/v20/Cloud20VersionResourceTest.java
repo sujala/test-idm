@@ -1526,4 +1526,12 @@ public class Cloud20VersionResourceTest {
         Response result = spy.getUserById(httpHeaders, null, null);
         assertThat("response code", result.getStatus(), equalTo(200));
     }
+
+    @Test
+    public void listUsersWithRole_callsDefaultCloud20ServiceListUsersWithRole() throws Exception {
+        when(defaultCloud20Service.listUsersWithRole(httpHeaders, null, null, "33", 12, 88)).thenReturn(Response.ok());
+        spy.listUsersWithRole(httpHeaders, null, null, "33", 12, 88);
+
+        verify(defaultCloud20Service).listUsersWithRole(httpHeaders, null, null, "33", 12, 88);
+    }
 }

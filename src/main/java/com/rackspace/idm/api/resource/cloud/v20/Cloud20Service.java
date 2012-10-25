@@ -222,4 +222,6 @@ public interface Cloud20Service {
     ResponseBuilder getAccessibleDomainsForUser(String authToken, String userId);
 
     ResponseBuilder getAccessibleDomainsEndpointsForUser(String authToken, String userId, String domainId);
+
+    ResponseBuilder listUsersWithRole(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String roleId, int marker, int limit);
 }

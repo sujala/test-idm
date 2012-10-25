@@ -390,7 +390,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             boolean callerIsServiceAdmin = authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken);
 
             if (callerIsUserAdmin) {
-                //TODO Pagination index and offset
+                //TODO pagination index and offset
                 Users users;
                 User caller = userService.getUserByAuthToken(authToken);
                 String domainId = caller.getDomainId();

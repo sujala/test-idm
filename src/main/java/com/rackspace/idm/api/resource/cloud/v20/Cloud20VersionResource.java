@@ -661,6 +661,18 @@ public class Cloud20VersionResource {
     }
 
     @GET
+    @Path("OS-KSADM/roles/{roleId}/RAX-AUTH/users")
+    public Response listUsersWithRole(
+            @Context HttpHeaders httpHeaders,
+            @Context UriInfo uriInfo,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("roleId") String roleId,
+            @QueryParam("marker") int marker,
+            @QueryParam("limit") int limit) {
+        return defaultCloud20Service.listUsersWithRole(httpHeaders, uriInfo, authToken, roleId, marker, limit).build();
+    }
+
+    @GET
     @Path("OS-KSADM/services")
     public Response listServices(
             @Context HttpHeaders httpHeaders,
