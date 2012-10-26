@@ -23,9 +23,17 @@ public interface Paginator<T> {
 
     void valueList(List<T> list);
 
-    SearchRequest createSearchRequestWithPaging(String sortAttribute, SearchRequest searchRequest, int offset, int limit);
+    void createSearchRequest(String sortAttribute, SearchRequest searchRequest, int offset, int limit);
 
-    void createPageFromResult(SearchResult searchResult, int offset, int limit);
+    void createPage(SearchResult searchResult, int offset, int limit);
 
     List<SearchResultEntry> searchResultEntries();
+
+    int limit();
+
+    DefaultPaginator<T> limit(int limit);
+
+    int offset();
+
+    DefaultPaginator<T> offset(int offset);
 }

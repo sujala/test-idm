@@ -1079,7 +1079,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         Filter filter = searchBuilder.build();
 
         spy.getMultipleUsersPaginated(filter, LdapUserRepository.ATTR_USER_SEARCH_ATTRIBUTES, 0, 10);
-        verify(userPaginator).createSearchRequestWithPaging(anyString(), any(SearchRequest.class), anyInt(), anyInt());
+        verify(userPaginator).createSearchRequest(anyString(), any(SearchRequest.class), anyInt(), anyInt());
     }
 
     @Test
@@ -1113,7 +1113,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
 
         doReturn(result).when(spy).getMultipleEntries(any(SearchRequest.class));
         spy.getMultipleUsersPaginated(filter, LdapUserRepository.ATTR_USER_SEARCH_ATTRIBUTES, 0, 10);
-        verify(userPaginator).createPageFromResult(any(SearchResult.class), anyInt(), anyInt());
+        verify(userPaginator).createPage(any(SearchResult.class), anyInt(), anyInt());
     }
 
     @Test

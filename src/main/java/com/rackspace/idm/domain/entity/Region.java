@@ -15,6 +15,7 @@ import lombok.Data;
  * Time: 2:45 PM
  * To change this template use File | Settings | File Templates.
  */
+
 @Data
 @LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_REGION)
 public class Region implements Auditable {
