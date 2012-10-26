@@ -317,6 +317,16 @@ class Cloud20IntegrationTest extends Specification {
 
         where:
         response << [
+                getCapabilities(serviceAdminToken, "1000001234")
+        ]
+    }
+
+    def "bad operations on capabilities return 'bad request'" () {
+        expect:
+        response.status == 400
+
+        where:
+        response << [
                 getCapabilities(serviceAdminToken, "badId")
         ]
     }
@@ -328,7 +338,7 @@ class Cloud20IntegrationTest extends Specification {
         where:
         response << [
                 getCapabilities(serviceAdminToken, "blah"),
-                updateCapabilities(serviceAdminToken, "blah", createCapabilities(new Capabilities().capability.add(createCapability("GET", "get_server", "get_server", "http://someUrl", "desc", null))))
+                updateCapabilities(serviceAdminToken, "blah", createCapabilities(createCapability("GET", "get_server", "get_server", "http://someUrl", "desc", null)))
         ]
     }
 
@@ -406,11 +416,11 @@ class Cloud20IntegrationTest extends Specification {
     }
 
     def updateCapabilities(String token, String endpointTemplateId, capabilities) {
-        resource.path(path).path('OS-KSCATALOG').path('endpointTemplates').path(endpointTemplateId).path('RAX-AUTH').path('capabilites').header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).entity(capabilities).put(ClientResponse)
+        resource.path(path).path('OS-KSCATALOG').path('endpointTemplates').path(endpointTemplateId).path('RAX-AUTH').path('capabilities').header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).entity(capabilities).put(ClientResponse)
     }
 
     def getCapabilities(String token, String endpointTemplateId) {
-        resource.path(path).path('OS-KSCATALOG').path('endpointTemplates').path(endpointTemplateId).path('RAX-AUTH').path('capabilites').header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+        resource.path(path).path('OS-KSCATALOG').path('endpointTemplates').path(endpointTemplateId).path('RAX-AUTH').path('capabilities').header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     def authenticate(username, password) {
@@ -493,7 +503,7 @@ class Cloud20IntegrationTest extends Specification {
             it.url = url
             it.description = description
             if (resources != null) {
-                for (String resource: resources.iterator()) {
+                for (String resource: resources) {
                     it.resources.add(resource)
                 }
             }
@@ -501,9 +511,10 @@ class Cloud20IntegrationTest extends Specification {
         }
     }
 
-    def createCapabilities(capabilities) {
+    def createCapabilities(Capability capability) {
         new Capabilities().with {
-            it.capability(capabilities)
+            it.capability.add(capability)
+            return it
         }
     }
 

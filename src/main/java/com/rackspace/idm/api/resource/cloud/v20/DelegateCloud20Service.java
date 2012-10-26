@@ -581,6 +581,26 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
+    public ResponseBuilder updateCapabilities(String token, String endpointTemplateId, Capabilities capabilities) {
+        return exceptionHandler.exceptionResponse(new NotImplementedException());
+    }
+
+    @Override
+    public ResponseBuilder getCapabilities(String token, String endpointTemplateId) {
+        return exceptionHandler.exceptionResponse(new NotImplementedException());
+    }
+
+    @Override
+    public ResponseBuilder getCapability(String token, String capabilityId, String endpointTemplateId) {
+        return exceptionHandler.exceptionResponse(new NotImplementedException());
+    }
+
+    @Override
+    public ResponseBuilder removeCapabilities(String token, String endpointTemplateId) {
+        return exceptionHandler.exceptionResponse(new NotImplementedException());
+    }
+
+    @Override
     public ResponseBuilder getUserByName(HttpHeaders httpHeaders, String authToken, String name)  {
         if (isCloudAuthRoutingEnabled() && !userService.userExistsByUsername(name)) {
             String request = getCloudAuthV20Url() + USERS;
