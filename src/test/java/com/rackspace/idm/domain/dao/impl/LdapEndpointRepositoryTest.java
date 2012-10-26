@@ -594,12 +594,6 @@ public class LdapEndpointRepositoryTest extends InMemoryLdapIntegrationTest{
     }
 
     @Test
-    public void deleteBaseUrl_resultCodeSuccess_deletesSuccessfully() throws Exception {
-        when(ldapInterface.delete(anyString())).thenReturn(new LDAPResult(1, ResultCode.SUCCESS));
-        spy.deleteBaseUrl(1);
-    }
-
-    @Test
     public void getBaseUrlById_returnsBaseUrl() throws Exception {
         CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
         SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0]);

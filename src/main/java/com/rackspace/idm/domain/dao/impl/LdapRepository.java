@@ -46,6 +46,7 @@ public abstract class LdapRepository {
     public static final String OBJECTCLASS_TENANT_ROLE = "tenantRole";
     public static final String OBJECTCLASS_DOMAIN = "rsDomain";
     public static final String OBJECTCLASS_POLICY = "rsPolicy";
+    public static final String OBJECTCLASS_CAPABILITY = "rsCapability";
 
     public static final String OBJECTCLASS_NEXT_ID = "rsNextId";
     public static final String ATTR_ID = "rsId";
@@ -155,6 +156,9 @@ public abstract class LdapRepository {
     public static final String ATTR_IMPERSONATING_USERNAME = "impersonatingUsername";
     public static final String ATTR_IMPERSONATING_TOKEN = "impersonatingToken";
     public static final String ATTR_POLICY_ID = "policyId";
+    public static final String ATTR_ACTION = "rsAction";
+    public static final String ATTR_URL = "rsUrl";
+    public static final String ATTR_RESOURCES = "rsResources";
 
     public static final String ATTR_TENANT_RS_ID = "tenantRsId";
     public static final String ATTR_ROLE_RS_ID = "roleRsId";
@@ -190,6 +194,7 @@ public abstract class LdapRepository {
     protected static final String[] ATTR_TENANT_SEARCH_ATTRIBUTES = {"*", ATTR_CREATED_DATE, ATTR_UPDATED_DATE};
     protected static final String[] ATTR_DOMAIN_SEARCH_ATTRIBUTES = {"*"};
     protected static final String[] ATTR_POLICY_SEARCH_ATTRIBUTES = {"*"};
+    protected static final String[] ATTR_CAPABILITY_SEARCH_ATTRIBUTES = {"*",ATTR_ACTION,ATTR_NAME};
     public static final String LDAP_SEARCH_ERROR = "LDAP Search error - {}";
 
     @Autowired

@@ -771,6 +771,9 @@ public class Cloud20VersionResource {
     }
 
     @GET
+    @Path("OS-KSCATALOG/enpdointTemplates/{enpdointTemplateId}")
+
+    @GET
     @Path("/tenants/{tenantId}/OS-KSCATALOG/endpoints")
     public Response listEndpoints(
             @Context HttpHeaders httpHeaders,

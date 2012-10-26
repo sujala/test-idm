@@ -172,24 +172,16 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
     public void deleteBaseUrl(int baseUrlId) {
         getLogger().debug("Deleting baseUrl - {}", baseUrlId);
 
-        LDAPResult result = null;
-
         String baseUrlDN = new LdapDnBuilder(BASEURL_BASE_DN).addAttribute(
                 ATTR_ID, String.valueOf(baseUrlId)).build();
 
         try {
-            result = getAppInterface().delete(String.format(baseUrlDN, baseUrlId));
+            Audit audit = Audit.log(String.valueOf(baseUrlId)).delete();
+            deleteEntryAndSubtree(baseUrlDN, audit);
             getLogger().info("Deleted baseUrl - {}", baseUrlId);
-        } catch (LDAPException ldapEx) {
-            getLogger().error("Error deleting baseUlr {} - {}", baseUrlId, ldapEx);
-            throw new IllegalStateException(ldapEx.getMessage(), ldapEx);
-        }
-
-        if (!ResultCode.SUCCESS.equals(result.getResultCode())) {
-            getLogger().error("Error deleting baseUrl {} - {}", baseUrlId, result.getResultCode());
-            throw new IllegalStateException(String.format(
-                    "LDAP error encountered when deleting baseUrl: %s - %s",
-                    baseUrlId, result.getResultCode().toString()));
+        } catch (Exception ex) {
+            getLogger().error("Error deleting baseUlr {} - {}", baseUrlId, ex);
+            throw new IllegalStateException(ex.getMessage(), ex);
         }
 
         getLogger().debug("Deleted baseUrl - {}", baseUrlId);

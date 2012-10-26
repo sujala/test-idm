@@ -1,5 +1,8 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.domain.entity.Capabilities;
+import com.rackspace.idm.domain.service.CapabilityService;
+import com.rackspace.idm.exception.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.stereotype.Component;
@@ -22,6 +25,9 @@ public class DefaultEndpointService implements EndpointService {
 
     @Autowired
     private EndpointDao endpointDao;
+
+    @Autowired
+    private CapabilityService capabilityService;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 

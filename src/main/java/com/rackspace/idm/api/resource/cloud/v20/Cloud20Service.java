@@ -12,6 +12,7 @@ import org.openstack.docs.identity.api.v2.*;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.UriInfo;
+import javax.xml.ws.Response;
 
 /**
  * Created by IntelliJ IDEA.
@@ -222,4 +223,12 @@ public interface Cloud20Service {
     ResponseBuilder getAccessibleDomainsForUser(String authToken, String userId);
 
     ResponseBuilder getAccessibleDomainsEndpointsForUser(String authToken, String userId, String domainId);
+
+    ResponseBuilder updateCapabilities(String token, String endpointTemplateId, Capabilities capabilities);
+
+    ResponseBuilder getCapabilities(String token, String endpointTemplateId);
+
+    ResponseBuilder getCapability(String token, String capabilityId, String endpointTemplateId);
+
+    ResponseBuilder removeCapabilities(String token, String endpointTemplateId);
 }
