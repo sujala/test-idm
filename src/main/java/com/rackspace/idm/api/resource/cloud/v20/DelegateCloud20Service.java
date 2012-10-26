@@ -353,7 +353,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             return defaultCloud20Service.listUsers(httpHeaders, authToken, marker, limit);
         }
 
-        if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
+        if (isCloudAuthRoutingEnabled()) {
             String request = getCloudAuthV20Url() + USERS;
             HashMap<String, Object> params = new HashMap<String, Object>();
             params.put(MARKER, marker);
@@ -462,121 +462,146 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder listDefaultRegionServices(String authToken) {
-        throw new NotImplementedException();  //To change body of implemented methods use File | Settings | File Templates.
+        return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
     public ResponseBuilder setDefaultRegionServices(String authToken, DefaultRegionServices defaultRegionServices) {
-        throw new NotImplementedException();  //To change body of implemented methods use File | Settings | File Templates.
+        return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
     public ResponseBuilder addDomain(String authToken, UriInfo uriInfo, Domain domain) {
-        throw new NotImplementedException();  //To change body of implemented methods use File | Settings | File Templates.
+        return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
     public ResponseBuilder getDomain(String authToken, String domainId) {
-       throw new NotImplementedException();  //To change body of implemented methods use File | Settings | File Templates.
+       return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
     public ResponseBuilder updateDomain(String authToken, String domainId, Domain domain) {
-        throw new NotImplementedException();  //To change body of implemented methods use File | Settings | File Templates.
+        return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
     public ResponseBuilder deleteDomain(String authToken, String domainId) {
-        throw new NotImplementedException();  //To change body of implemented methods use File | Settings | File Templates.
+        return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
     public ResponseBuilder getDomainTenants(String authToken, String domainId, String enabled) {
-        throw new NotImplementedException();  //To change body of implemented methods use File | Settings | File Templates.
+        return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
     public ResponseBuilder getUsersByDomainId(String authToken, String domainId, String enabled) {
-        throw new NotImplementedException();  //To change body of implemented methods use File | Settings | File Templates.
+        return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
     public ResponseBuilder addUserToDomain(String authToken, String domainId, String userId) {
-        throw new NotImplementedException();  //To change body of implemented methods use File | Settings | File Templates.
+        return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
     public ResponseBuilder getEndpointsByDomainId(String authToken, String domainId) {
-        throw new NotImplementedException();  //To change body of implemented methods use File | Settings | File Templates.
+        return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
     public ResponseBuilder addTenantToDomain(String authToken, String domainId, String tenantId) {
-        throw new NotImplementedException();  //To change body of implemented methods use File | Settings | File Templates.
+        return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
     public ResponseBuilder removeTenantFromDomain(String authToken, String domainId, String tenantId) {
-        throw new NotImplementedException();  //To change body of implemented methods use File | Settings | File Templates.
+        return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
     public ResponseBuilder getPoliciesForEndpointTemplate(String authToken, String endpointTemplateId) {
-        throw new NotImplementedException();  //To change body of implemented methods use File | Settings | File Templates.
+        return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
     public ResponseBuilder updatePoliciesForEndpointTemplate(String authToken, String endpointTemplateId, Policies policies) {
-        throw new NotImplementedException();  //To change body of implemented methods use File | Settings | File Templates.
+        return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
     public ResponseBuilder addPolicyToEndpointTemplate(String authToken, String endpointTemplateId, String policyId) {
-        throw new NotImplementedException();  //To change body of implemented methods use File | Settings | File Templates.
+        return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
     public ResponseBuilder deletePolicyToEndpointTemplate(String authToken, String endpointTemplateId, String policyId) {
-        throw new NotImplementedException();  //To change body of implemented methods use File | Settings | File Templates.
+        return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
     public ResponseBuilder getPolicies(String authToken) {
-        throw new NotImplementedException();  //To change body of implemented methods use File | Settings | File Templates.
+        return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
     public ResponseBuilder addPolicy(UriInfo uriInfo, String authToken, Policy policy) {
-        throw new NotImplementedException();  //To change body of implemented methods use File | Settings | File Templates.
+        return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
     public ResponseBuilder getPolicy(String authToken, String policyId) {
-        throw new NotImplementedException();  //To change body of implemented methods use File | Settings | File Templates.
+        return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
     public ResponseBuilder updatePolicy(String authToken, String policyId, Policy policy) {
-        throw new NotImplementedException();  //To change body of implemented methods use File | Settings | File Templates.
+        return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
     public ResponseBuilder deletePolicy(String authToken, String policyId) {
-        throw new NotImplementedException();  //To change body of implemented methods use File | Settings | File Templates.
+        return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
     }
     @Override
     public ResponseBuilder getAccessibleDomains(String authToken) {
-        throw new NotImplementedException();  //To change body of implemented methods use File | Settings | File Templates.
+        return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
     public ResponseBuilder getAccessibleDomainsForUser(String authToken, String userId) {
-        throw new NotImplementedException();  //To change body of implemented methods use File | Settings | File Templates.
+        return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
     public ResponseBuilder getAccessibleDomainsEndpointsForUser(String authToken, String userId, String domainId) {
-        throw new NotImplementedException();  //To change body of implemented methods use File | Settings | File Templates.
+        return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public ResponseBuilder addRegion(UriInfo uriInfo, String authToken, Region region) {
+        return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public ResponseBuilder getRegion(String authToken, String name) {
+        return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public ResponseBuilder getRegions(String authToken) {
+        return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public ResponseBuilder updateRegion(String authToken, String name, Region region) {
+        return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public ResponseBuilder deleteRegion(String authToken, String name) {
+        return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override

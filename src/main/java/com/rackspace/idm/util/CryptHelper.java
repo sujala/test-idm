@@ -1,5 +1,7 @@
 package com.rackspace.idm.util;
 
+import com.rackspace.idm.exception.IdmException;
+import org.apache.commons.configuration.Configuration;
 import org.bouncycastle.crypto.BufferedBlockCipher;
 import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.InvalidCipherTextException;
@@ -11,24 +13,25 @@ import org.bouncycastle.crypto.modes.CBCBlockCipher;
 import org.bouncycastle.crypto.paddings.PKCS7Padding;
 import org.bouncycastle.crypto.paddings.PaddedBufferedBlockCipher;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.io.UnsupportedEncodingException;
 import java.security.GeneralSecurityException;
 import java.security.InvalidParameterException;
 import java.security.Security;
 
+@Component
 public class CryptHelper {
 
-	// Salt
-	private static final byte[] SALT = { (byte) 0xc7, (byte) 0x73, (byte) 0x21, (byte) 0x8c, (byte) 0x7e, (byte) 0xc8,
-			(byte) 0xee, (byte) 0x99 };
-
-	// TODO: get this from secrets.idm.properties
-	private static char[] password = "this is a super secret key!".toCharArray();
+    @Autowired
+    public void setConfiguration(Configuration configuration){
+        CryptHelper.config = configuration;
+    }
+    
+    private static Configuration config;
 
 	private static PBEParametersGenerator keyGenerator;
-	private static CipherParameters keyParams;
 
     public static final int ITERATION_COUNT = 20;
 
@@ -36,18 +39,24 @@ public class CryptHelper {
 
     public static final int IV_SIZE = 128;
 
-    static {
+    private CipherParameters getKeyParams() {
+        CipherParameters keyParams = null;
 		try {
+            char[] password = config.getString("crypto.password").toCharArray();
+            byte[] salt = fromHexString(config.getString("crypto.salt"));
 			Security.addProvider(new BouncyCastleProvider());
 			keyGenerator = new PKCS12ParametersGenerator(new SHA256Digest());
-			keyGenerator.init(PKCS12ParametersGenerator.PKCS12PasswordToBytes(password), SALT, ITERATION_COUNT);
+			keyGenerator.init(PKCS12ParametersGenerator.PKCS12PasswordToBytes(password), salt, ITERATION_COUNT);
 			keyParams = keyGenerator.generateDerivedParameters(KEY_SIZE, IV_SIZE);
 		} catch (Exception e) {
-			LoggerFactory.getLogger(CryptHelper.class).error("Error initializing encryption provider", e);
+			throw new IdmException(e.getMessage());
 		}
+        return keyParams;
 	}
 
-	private static CryptHelper instance = new CryptHelper();
+    private static CryptHelper instance = new CryptHelper();
+
+    public CryptHelper(){};
 
 	public static CryptHelper getInstance() {
 		return instance;
@@ -58,10 +67,9 @@ public class CryptHelper {
 			throw new InvalidParameterException("Null argument is not valid");
 		}
 		
-		BufferedBlockCipher cipher = new PaddedBufferedBlockCipher(new CBCBlockCipher(new AESEngine()),
-				new PKCS7Padding());
+		BufferedBlockCipher cipher = new PaddedBufferedBlockCipher(new CBCBlockCipher(new AESEngine()), new PKCS7Padding());
 
-		cipher.init(true, keyParams);
+		cipher.init(true, getKeyParams());
 		byte[] bytes;
 		try {
 			bytes = plainText.getBytes("UTF8");
@@ -82,9 +90,8 @@ public class CryptHelper {
 			return null;
 		}
 		
-		final BufferedBlockCipher cipher = new PaddedBufferedBlockCipher(new CBCBlockCipher(new AESEngine()),
-				new PKCS7Padding());
-		cipher.init(false, keyParams);
+		final BufferedBlockCipher cipher = new PaddedBufferedBlockCipher(new CBCBlockCipher(new AESEngine()), new PKCS7Padding());
+		cipher.init(false, getKeyParams());
 
 		final byte[] processed = new byte[cipher.getOutputSize(bytes.length)];
 		int outputLength = cipher.processBytes(bytes, 0, bytes.length, processed, 0);
@@ -98,4 +105,18 @@ public class CryptHelper {
 			return new String(results);
 		}
 	}
+
+    private static final byte[] fromHexString(final String s) {
+        try {
+            String[] v = s.split(" ");
+            byte[] arr = new byte[v.length];
+            int i = 0;
+            for(String val: v) {
+                arr[i++] =  Integer.decode("0x" + val).byteValue();
+            }
+            return arr;
+        } catch (Exception e) {
+			throw new IdmException("Error creating byte array from Hex string");
+		}
+    }
 }

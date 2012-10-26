@@ -1,7 +1,12 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
+import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.sun.jersey.api.client.ClientResponse
+import com.sun.jersey.api.client.WebResource
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -11,11 +16,11 @@ import org.openstack.docs.identity.api.v2.*
 
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.ensureGrizzlyStarted
 import static javax.ws.rs.core.MediaType.APPLICATION_XML
-import com.sun.jersey.api.client.WebResource
-import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Regions
 
 class Cloud20IntegrationTest extends Specification {
     @Shared WebResource resource
+    @Shared JAXBObjectFactories objFactories;
 
     @Shared def path = "cloud/v2.0/"
     @Shared def serviceAdminToken
@@ -32,15 +37,20 @@ class Cloud20IntegrationTest extends Specification {
 
     def randomness = UUID.randomUUID()
     static def X_AUTH_TOKEN = "X-Auth-Token"
-    @Shared def groupId
+    @Shared def groupLocation
+    @Shared def group
+    @Shared Region sharedRegion
 
     static def RAX_GRPADM= "RAX-GRPADM"
+    static def RAX_AUTH = "RAX-AUTH"
+
 
 
     def setupSpec() {
         sharedRandom = ("$sharedRandomness").replace('-',"")
 
         this.resource = ensureGrizzlyStarted("classpath:app-config.xml");
+        this.objFactories = new JAXBObjectFactories()
         serviceAdminToken = authenticate("authQE", "Auth1234").getEntity(AuthenticateResponse).value.token.id
         serviceAdmin = getUserByName(serviceAdminToken, "authQE").getEntity(User)
         identityAdminToken = authenticate("auth", "auth123").getEntity(AuthenticateResponse).value.token.id
@@ -66,13 +76,19 @@ class Cloud20IntegrationTest extends Specification {
 
         //create group
         def createGroupResponse = createGroup(serviceAdminToken, group("group$sharedRandom", "this is a group"))
-        def getGroupResponse = getGroup(serviceAdminToken, createGroupResponse.location)
-        def groupEntity = getGroupResponse.getEntity(Group)
-        groupId = groupEntity.value.id
+        groupLocation = createGroupResponse.location
+        def getGroupResponse = getGroup(serviceAdminToken, groupLocation)
+        group = getGroupResponse.getEntity(Group).value
+
+        def createRegionResponse = createRegion(serviceAdminToken, region("region$sharedRandom", true, false))
+        def getRegionResponse = getRegion(serviceAdminToken, "region$sharedRandom")
+        sharedRegion = getRegionResponse.getEntity(Region)
+
     }
 
     def cleanupSpec() {
-        deleteGroup(serviceAdminToken, groupId)
+        deleteGroup(serviceAdminToken, group.getId())
+        deleteRegion(serviceAdminToken, sharedRegion.getName())
     }
 
     def 'User CRUD'() {
@@ -151,7 +167,7 @@ class Cloud20IntegrationTest extends Specification {
         response << [
                 createUser("invalidToken", userForCreate("someName", "display", "test@rackspace.com", true, "ORD", null, "Password1")),
                 createUser(null, userForCreate("someName", "display", "test@rackspace.com", true, "ORD", null, "Password1")),  \
-                  getUserById("invalidToken", "badId"),
+                getUserById("invalidToken", "badId"),
                 getUserById(null, "badId"),
                 getUserByName("invalidToken", "badId"),
                 getUserByName(null, "badId"),
@@ -183,6 +199,15 @@ class Cloud20IntegrationTest extends Specification {
                 getUserByName(defaultUserToken, serviceAdmin.getUsername()),
                 getUserByName(userAdminToken, identityAdmin.getUsername()),
                 getUserByName(userAdminToken, serviceAdmin.getUsername()),
+                createGroup(defaultUserToken, group()),
+                updateGroup(defaultUserToken, group.getId(), group()),
+                deleteGroup(defaultUserToken, group.getId()),
+                getGroup(defaultUserToken, groupLocation),
+                getGroups(defaultUserToken),
+                createRegion(defaultUserToken, region()),
+                updateRegion(defaultUserToken, sharedRegion.getName(), sharedRegion),
+                deleteRegion(defaultUserToken, sharedRegion.getName()),
+                getRegion(defaultUserToken, sharedRegion.getName())
         ]
     }
 
@@ -219,16 +244,45 @@ class Cloud20IntegrationTest extends Specification {
         def groupEntity = getGroupResponse.getEntity(Group)
         def groupId = groupEntity.value.id
 
+        def getGroupsResponse = getGroups(serviceAdminToken)
+        def groupsEntity = getGroupsResponse.getEntity(Groups)
+
         def updateGroupResponse = updateGroup(serviceAdminToken, groupId, group("group$random", "updated group"))
 
         def deleteGroupResponse = deleteGroup(serviceAdminToken, groupId)
+
 
         then:
         createGroupResponse.status == 201
         createGroupResponse.location != null
         getGroupResponse.status == 200
+        getGroupsResponse.status == 200
+        groupsEntity.value.getGroup().size() > 0
         updateGroupResponse.status == 200
         deleteGroupResponse.status == 204
+    }
+
+    def "Group Assignment CRUD" () {
+        when:
+        def addUserToGroupResponse = addUserToGroup(serviceAdminToken, group.getId(), defaultUser.getId())
+
+        def listGroupsForUserResponse = listGroupsForUser(serviceAdminToken, defaultUser.getId())
+        def groups = listGroupsForUserResponse.getEntity(Groups).value
+
+        def getUsersFromGroupResponse = getUsersFromGroup(serviceAdminToken, group.getId())
+        def users = getUsersFromGroupResponse.getEntity(UserList).value
+
+        def removeUserFromGroupRespone = removeUserFromGroup(serviceAdminToken, group.getId(), defaultUser.getId())
+
+        then:
+        addUserToGroupResponse.status == 204
+
+        listGroupsForUserResponse.status == 200
+        groups.getGroup().size() == 1
+        getUsersFromGroupResponse.status == 200
+        users.getUser().size() == 1
+
+        removeUserFromGroupRespone.status == 204
     }
 
     def "invalid operations on create/update group returns 'bad request'"() {
@@ -240,10 +294,102 @@ class Cloud20IntegrationTest extends Specification {
                 createGroup(serviceAdminToken, group(null, "this is a group")),
                 createGroup(serviceAdminToken, group("", "this is a group")),
                 createGroup(serviceAdminToken, group("group", null)),
-                updateGroup(serviceAdminToken, groupId, group(null, "this is a group")),
-                updateGroup(serviceAdminToken, groupId, group("", "this is a group")),
-                updateGroup(serviceAdminToken, groupId, group("group", null))
+                updateGroup(serviceAdminToken, group.getId(), group(null, "this is a group")),
+                updateGroup(serviceAdminToken, group.getId(), group("", "this is a group")),
+                updateGroup(serviceAdminToken, group.getId(), group("group", null)),
+                addUserToGroup(serviceAdminToken, "doesnotexist", defaultUser.getId()),
         ]
+    }
+
+    def "invalid operations on create/update group returns 'not found'"() {
+        expect:
+        response.status == 404
+
+        where:
+        response << [
+                addUserToGroup(serviceAdminToken, group.getId(), "doesnotexist"),
+        ]
+    }
+
+    def "update region name is not allowed"() {
+        given:
+        Region region1 = region("somename", false, false)
+
+        when:
+        def updateRegionResponse = updateRegion(serviceAdminToken, sharedRegion.getName(), region1)
+
+        then:
+        updateRegionResponse.status == 400
+    }
+
+    def "region crud"() {
+        given:
+        def random = ("$randomness").replace('-', "")
+        def regionName = "region${random}"
+        Region region1 = region(regionName, false, false)
+        Region region2 = region(regionName, true, true)
+
+        when:
+        def createRegionResponse = createRegion(serviceAdminToken, region1)
+        def getRegionResponse = getRegion(serviceAdminToken, regionName)
+        Region createdRegion = getRegionResponse.getEntity(Region)
+
+        def updateRegionResponse = updateRegion(serviceAdminToken, regionName, region2)
+        def getUpdatedRegionResponse = getRegion(serviceAdminToken, regionName)
+        Region updatedRegion = getUpdatedRegionResponse.getEntity(Region)
+
+        def getRegionsResponse = getRegions(serviceAdminToken)
+        Regions regions = getRegionsResponse.getEntity(Regions)
+
+        def deleteRegionResponse = deleteRegion(serviceAdminToken, regionName)
+        def getDeletedRegionResponse = getRegion(serviceAdminToken, regionName)
+
+
+        then:
+        createRegionResponse.status == 201
+        createRegionResponse.location != null
+        getRegionResponse.status == 200
+        region1.name.equals(createdRegion.name)
+        region1.enabled.equals(createdRegion.enabled)
+        region1.isDefault.equals(createdRegion.isDefault)
+        updateRegionResponse.status == 204
+        region2.name.equals(updatedRegion.name)
+        region2.enabled.equals(updatedRegion.enabled)
+        region2.isDefault.equals(updatedRegion.isDefault)
+        getRegionsResponse.status == 200
+        regions.region.size() > 0
+        deleteRegionResponse.status == 204
+        getDeletedRegionResponse.status == 404
+    }
+
+    def "invalid operations on region returns 'not found'"() {
+        expect:
+        response.status == 404
+
+        where:
+        response << [
+                updateRegion(serviceAdminToken, "notfound", region()),
+                deleteRegion(serviceAdminToken, "notfound"),
+                getRegion(serviceAdminToken, "notfound"),
+        ]
+    }
+
+    def "invalid operations on create regions returns 'bad request'"() {
+        expect:
+        response.status == 400
+
+        where:
+        response << [
+                createRegion(serviceAdminToken, region(null, true, false)),
+        ]
+    }
+
+    def "create region that already exists returns conflict"() {
+        when:
+        def createRegionResponse = createRegion(serviceAdminToken, sharedRegion)
+
+        then:
+        createRegionResponse.status == 409
     }
 
     //Resource Calls
@@ -291,6 +437,10 @@ class Cloud20IntegrationTest extends Specification {
         resource.uri(uri).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
+    def getGroups(String token) {
+        resource.path(path).path(RAX_GRPADM).path('groups').accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
+    }
+
     def updateGroup(String token, String groupId, group) {
         resource.path(path).path(RAX_GRPADM).path('groups').path(groupId).header(X_AUTH_TOKEN, token).type(APPLICATION_XML).accept(APPLICATION_XML).entity(group).put(ClientResponse)
     }
@@ -299,8 +449,44 @@ class Cloud20IntegrationTest extends Specification {
         resource.path(path).path(RAX_GRPADM).path('groups').path(groupId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
     }
 
+    def addUserToGroup(String token, String groupId, String userId) {
+        resource.path(path).path(RAX_GRPADM).path('groups').path(groupId).path("users").path(userId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).put(ClientResponse)
+    }
+
+    def removeUserFromGroup(String token, String groupId, String userId) {
+        resource.path(path).path(RAX_GRPADM).path('groups').path(groupId).path("users").path(userId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
+    }
+
+    def listGroupsForUser(String token, String userId) {
+        resource.path(path).path('users').path(userId).path("RAX-KSGRP").accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
+    }
+
+    def getUsersFromGroup(String token, String groupId) {
+        resource.path(path).path(RAX_GRPADM).path('groups').path(groupId).path("users").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+    }
+
     def authenticate(username, password) {
         resource.path(path + 'tokens').accept(APPLICATION_XML).entity(authenticateRequest(username, password)).post(ClientResponse)
+    }
+
+    def createRegion(String token, region) {
+        resource.path(path).path(RAX_AUTH).path("regions").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(region).post(ClientResponse)
+    }
+
+    def getRegion(String token, String regionId) {
+        resource.path(path).path(RAX_AUTH).path("regions").path(regionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+    }
+
+    def getRegions(String token) {
+        resource.path(path).path(RAX_AUTH).path("regions").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+    }
+
+    def updateRegion(String token, String regionId, region) {
+        resource.path(path).path(RAX_AUTH).path("regions").path(regionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(region).put(ClientResponse)
+    }
+
+    def deleteRegion(String token, String regionId) {
+        resource.path(path).path(RAX_AUTH).path("regions").path(regionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
     }
 
     //Helper Methods
@@ -365,5 +551,26 @@ class Cloud20IntegrationTest extends Specification {
             it.description = description
             return it
         }
+    }
+
+    def group() {
+        return group("group", "description")
+    }
+
+    def region(String name, Boolean enabled, Boolean isDefault) {
+        Region regionEntity = new Region().with {
+            it.name = name
+            it.enabled = enabled
+            it.isDefault = isDefault
+            return it
+        }
+    }
+
+    def region(String name) {
+        return region(name, true, false)
+    }
+
+    def region() {
+        return region("name", true, false)
     }
 }

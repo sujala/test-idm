@@ -47,6 +47,12 @@
     <element name="capabilities" type="RAX-AUTH:Capabilities" />
     <element name="capability" type="RAX-AUTH:Capability" />
     <element name="policyMetadata" type="RAX-AUTH:PolicyMetadata" />
+    <element name="regions" type="RAX-AUTH:Regions" />
+    <element name="region" type="RAX-AUTH:Region" />
+    <element name="questions" type="RAX-AUTH:Questions" />
+    <element name="question" type="RAX-AUTH:Question" />
+    <element name="secretqas" type="RAX-AUTH:SecretQAs" />
+    <element name="secretqa" type="RAX-AUTH:SecretQA" />
 
     <!-- Complex Types -->
     <complexType name="ImpersonationRequest">
@@ -348,7 +354,106 @@
             </annotation>
         </attribute>
     </complexType>
-    
+
+    <complexType name="Region">
+        <attribute name="name" type="xsd:string" use="required">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        The name of the region.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+        <attribute name="isDefault" type="xsd:boolean" use="optional" default="false">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        A boolean indicating if region is active or not.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+        <attribute name="enabled" type="xsd:boolean" use="optional" default="false">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        A boolean indicating if region is active or not.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+    </complexType>
+
+    <complexType name="Regions">
+        <sequence>
+            <element name="region" type="RAX-AUTH:Region" minOccurs="0" maxOccurs="unbounded"/>
+        </sequence>
+    </complexType>
+
+    <complexType name="Question">
+        <attribute name="id" type="xsd:string" use="required">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        The id of the question.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+        <attribute name="question" type="xsd:string" use="required">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        A question.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+    </complexType>
+
+    <complexType name="Questions">
+        <sequence>
+            <element name="question" type="RAX-AUTH:Question" minOccurs="0" maxOccurs="unbounded"/>
+        </sequence>
+    </complexType>
+
+    <complexType name="SecretQA">
+        <attribute name="id" type="xsd:string" use="required">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        The id of the question.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+        <attribute name="question" type="xsd:string" use="required">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        The question.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+        <attribute name="answer" type="xsd:string" use="required">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        The answer.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+    </complexType>
+
+    <complexType name="SecretQAs">
+        <sequence>
+            <element name="secretqa" type="RAX-AUTH:SecretQA" minOccurs="0" maxOccurs="unbounded"/>
+        </sequence>
+    </complexType>
+
     <simpleType name="StringList">
         <list itemType="xsd:string"/>
     </simpleType>

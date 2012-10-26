@@ -1,6 +1,7 @@
 package com.rackspace.idm.exception;
 
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
+import org.apache.commons.lang.NotImplementedException;
 import org.openstack.docs.identity.api.v2.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -51,6 +52,10 @@ public class ExceptionHandler {
         fault.setMessage(message);
         return Response.status(HttpServletResponse.SC_NOT_FOUND).entity(
                 objFactories.getOpenStackIdentityV2Factory().createItemNotFound(fault).getValue());
+    }
+
+    public Response.ResponseBuilder notImplementedExceptionResponse() {
+        return Response.status(HttpServletResponse.SC_NOT_IMPLEMENTED);
     }
 
     public Response.ResponseBuilder tenantConflictExceptionResponse(String message) {
@@ -107,7 +112,10 @@ public class ExceptionHandler {
         } else if (ex instanceof DuplicateUsernameException || ex instanceof BaseUrlConflictException) {
             return conflictExceptionResponse(ex.getMessage());
 
-        } else {
+        } else if (ex instanceof NotImplementedException) {
+            return notImplementedExceptionResponse();
+
+        }else {
             return serviceExceptionResponse();
         }
     }

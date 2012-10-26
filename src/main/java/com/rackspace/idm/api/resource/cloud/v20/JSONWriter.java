@@ -11,15 +11,12 @@ import com.rackspace.idm.domain.config.providers.PackageClassDiscoverer;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.IdmException;
 import com.rackspacecloud.docs.auth.api.v1.*;
-import com.rsa.cryptoj.c.J;
 import com.sun.jersey.api.json.JSONJAXBContext;
 import com.sun.jersey.api.json.JSONMarshaller;
 import org.apache.cxf.common.util.StringUtils;
-import org.apache.http.auth.AUTH;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
-import org.mortbay.util.ajax.JSON;
 import org.openstack.docs.common.api.v1.Extension;
 import org.openstack.docs.common.api.v1.Extensions;
 import org.openstack.docs.common.api.v1.MediaTypeList;
@@ -434,6 +431,16 @@ public class JSONWriter implements MessageBodyWriter<Object> {
             com.rackspacecloud.docs.auth.api.v1.ServiceCatalog serviceCatalog = (com.rackspacecloud.docs.auth.api.v1.ServiceCatalog) object;
             JSONObject outer = new JSONObject();
             outer.put(JSONConstants.SERVICECATALOG, getServiceCatalog11(serviceCatalog));
+            jsonText = JSONValue.toJSONString(outer);
+        } else if (object.getClass().equals(Region.class)) {
+            Region region = (Region) object;
+            JSONObject outer = new JSONObject();
+            outer.put(JSONConstants.RAX_AUTH_REGION, getRegion(region));
+            jsonText = JSONValue.toJSONString(outer);
+        } else if (object.getClass().equals(Regions.class)) {
+            Regions regions = (Regions) object;
+            JSONObject outer = new JSONObject();
+            outer.put(JSONConstants.RAX_AUTH_REGIONS, getRegions(regions));
             jsonText = JSONValue.toJSONString(outer);
         } else {
             try {
@@ -1083,6 +1090,29 @@ public class JSONWriter implements MessageBodyWriter<Object> {
         }
 
         return outer;
+    }
+
+    @SuppressWarnings("unchecked")
+    JSONObject getRegion(Region region) {
+        JSONObject regionInner = new JSONObject();
+        regionInner.put(JSONConstants.NAME, region.getName());
+        regionInner.put(JSONConstants.ENABLED, region.isEnabled());
+        regionInner.put(JSONConstants.IS_DEFAULT, region.isIsDefault());
+
+        return regionInner;
+    }
+
+    @SuppressWarnings("unchecked")
+    JSONArray getRegions(Regions regions) {
+        JSONArray regionInner = new JSONArray();
+
+        if(regions != null){
+            for(Region region : regions.getRegion()){
+                JSONObject jsonObject = getRegion(region);
+                regionInner.add(jsonObject);
+            }
+        }
+        return regionInner;
     }
 
     JSONMarshaller getMarshaller() throws JAXBException {

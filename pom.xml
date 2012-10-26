@@ -33,9 +33,24 @@
         <jetty.host>http://localhost:${jetty.port}/idm/</jetty.host>
     </properties>
     <dependencies>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>0.11.4</version>
+            <scope>provided</scope>
+        </dependency>
+
         <dependency>
             <groupId>org.spockframework</groupId>
             <artifactId>spock-core</artifactId>
+            <version>0.6-groovy-1.8</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.spockframework</groupId>
+            <artifactId>spock-spring</artifactId>
             <version>0.6-groovy-1.8</version>
             <scope>test</scope>
         </dependency>

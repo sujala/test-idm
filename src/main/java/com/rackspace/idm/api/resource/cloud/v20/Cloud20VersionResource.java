@@ -1,10 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
@@ -938,6 +934,36 @@ public class Cloud20VersionResource {
         else{
             throw new NotFoundException("Not Found");
         }
+    }
+
+    @POST
+    @Path("RAX-AUTH/regions")
+    public Response createRegion(@Context UriInfo uriInfo, @HeaderParam(X_AUTH_TOKEN) String authToken, Region region) {
+        return getCloud20Service().addRegion(uriInfo, authToken, region).build();
+    }
+
+    @GET
+    @Path("RAX-AUTH/regions/{name}")
+    public Response getRegion(@HeaderParam(X_AUTH_TOKEN) String authToken, @PathParam("name") String name) {
+        return getCloud20Service().getRegion(authToken, name).build();
+    }
+
+    @GET
+    @Path("RAX-AUTH/regions")
+    public Response getRegions(@HeaderParam(X_AUTH_TOKEN) String authToken) {
+        return getCloud20Service().getRegions(authToken).build();
+    }
+
+    @PUT
+    @Path("RAX-AUTH/regions/{name}")
+    public Response updateRegion(@HeaderParam(X_AUTH_TOKEN) String authToken, @PathParam("name") String name, Region region) {
+        return getCloud20Service().updateRegion(authToken, name, region).build();
+    }
+
+    @DELETE
+    @Path("RAX-AUTH/regions/{name}")
+    public Response deleteRegion(@HeaderParam(X_AUTH_TOKEN) String authToken, @PathParam("name") String name) {
+        return getCloud20Service().deleteRegion(authToken, name).build();
     }
 
     Cloud20Service getCloud20Service() {
