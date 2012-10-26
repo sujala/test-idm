@@ -1,12 +1,5 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import org.junit.runner.RunWith;
-
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-
-import org.mockito.runners.MockitoJUnitRunner;
-
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.exception.DuplicateClientGroupException;
@@ -15,12 +8,15 @@ import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.CryptHelper;
 import com.unboundid.ldap.sdk.*;
 import com.unboundid.ldap.sdk.persist.LDAPPersistException;
-import org.apache.commons.collections.list.AbstractLinkedList;
 import org.apache.commons.configuration.Configuration;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
@@ -28,8 +24,6 @@ import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasEntry;
-import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.*;
 
 /**
@@ -49,7 +43,7 @@ public class LdapApplicationRepositoryTest{
     @Mock
     private Configuration configuration;
 
-
+    private CryptHelper cryptHelper;
     private LdapApplicationRepository spy;
     private LDAPInterface ldapInterface;
 
@@ -57,6 +51,11 @@ public class LdapApplicationRepositoryTest{
     public void setUp() throws Exception {
         ldapInterface = mock(LDAPInterface.class);
         spy = spy(ldapApplicationRepository);
+
+        cryptHelper = new CryptHelper();
+        cryptHelper.setConfiguration(configuration);
+        when(configuration.getString("crypto.password")).thenReturn("password");
+        when(configuration.getString("crypto.salt")).thenReturn("a1 b1");
 
         doReturn(ldapInterface).when(spy).getAppInterface();
     }
@@ -660,7 +659,6 @@ public class LdapApplicationRepositoryTest{
         client.setScope("scope");
         client.setCallBackUrl("url");
         client.setUseForDefaultRegion(true);
-        CryptHelper cryptHelper = new CryptHelper();
         Attribute[] result = ldapApplicationRepository.getAddAttributesForClient(client);
         assertThat("client id", result[1].getValue(), equalTo("clientId"));
         assertThat("open stack type", result[2].getValue(), equalTo("openStack"));

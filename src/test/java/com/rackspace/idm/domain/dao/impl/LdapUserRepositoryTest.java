@@ -50,12 +50,18 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
 
     LdapUserRepository spy;
     LDAPInterface ldapInterface;
+    CryptHelper cryptHelper;
 
     @Before
     public void setUp() throws Exception {
         spy = spy(ldapUserRepository);
 
         ldapInterface = mock(LDAPInterface.class);
+
+        cryptHelper = new CryptHelper();
+        cryptHelper.setConfiguration(configuration);
+        when(configuration.getString("crypto.password")).thenReturn("password");
+        when(configuration.getString("crypto.salt")).thenReturn("a1 b1");
 
         doReturn(ldapInterface).when(spy).getAppInterface();
     }
@@ -994,7 +1000,6 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         user.setDomainId("345");
         user.setInMigration(true);
         user.setMigrationDate(new DateTime());
-        CryptHelper cryptHelper = CryptHelper.getInstance();
         Attribute[] result = ldapUserRepository.getAddAttributes(user);
         assertThat("id", result[1].getValue(), equalTo("123"));
         assertThat("country", result[2].getValue(), equalTo("us"));
