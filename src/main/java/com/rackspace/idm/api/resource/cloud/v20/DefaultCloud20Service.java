@@ -2076,7 +2076,30 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder listUsersWithRole(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String roleId, int marker, int limit) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        try {
+            ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
+            authorizationService.verifyUserAdminLevelAccess(scopeAccess);
+            ClientRole role = this.clientService.getClientRoleById(roleId);
+            if (role == null) {
+                throw new NotFoundException(String.format("Role with id: %s not found", roleId));
+            }
+
+            FilterParam[] filters;
+            boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccess);
+            if (callerIsUserAdmin) {
+                User caller = this.userService.getUserByScopeAccess(scopeAccess);
+                if (caller.getDomainId() == null || StringUtils.isBlank(caller.getDomainId())) {
+                    throw new BadRequestException("User-admin has no domain");
+                }
+            }
+
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    protected FilterParam[] setFilters(String roleName, String domainId) {
+
     }
 
     public boolean isValidImpersonatee(User user) {

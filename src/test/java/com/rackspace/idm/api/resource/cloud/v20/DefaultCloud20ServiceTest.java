@@ -6472,4 +6472,76 @@ public class DefaultCloud20ServiceTest {
         String marker = defaultCloud20Service.validateMarker(null);
         assertThat("Check Marker",marker,equalTo("0"));
     }
+
+    @Test
+    public void listUsersWithRole_callsVerifyUserAdminLevelAccess() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        URI uri = new URI("http://test:3000/uri");
+
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doReturn(clientRole).when(clientService).getClientRoleById(anyString());
+
+        defaultCloud20Service.listUsersWithRole(null, uriInfo, authToken, roleId, 0, 10);
+        verify(authorizationService).verifyUserAdminLevelAccess(any(ScopeAccess.class));
+    }
+
+    @Test
+    public void listUsersWithRole_callsGetClientRoleById_validRole() throws Exception {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        URI uri = new URI("http://test:3000/uri");
+
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doReturn(clientRole).when(clientService).getClientRoleById(anyString());
+
+        defaultCloud20Service.listUsersWithRole(null, uriInfo, authToken, roleId, 0, 10);
+        verify(clientService).getClientRoleById(anyString());
+    }
+
+    @Test (expected = NotFoundException.class)
+    public void listUsersWithRole_nonExistantRole_throwsNotFoundException() {
+        ScopeAccess scopeAccess = new ScopeAccess();
+
+        doReturn(null).when(clientService).getClientRoleById("-1");
+        
+        defaultCloud20Service.listUsersWithRole(null, uriInfo, authToken, "-1", 0, 10);   
+    }
+
+    @Test
+    public void listUsersWithRole_callAuthorizeCloudUserAdmin() {
+        ScopeAccess scopeAccess = new ScopeAccess();
+
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doReturn(clientRole).when(clientService).getClientRoleById(roleId);
+
+        defaultCloud20Service.listUSersWithRole(null, uriInfo, authToken, roleId, 0, 10);
+        verify(authorizationService).authorizeCloudUserAdmin(any(ScopeAccess.class));
+    }
+
+    @Test (expected = BadRequestException.class)
+    public void listUsersWithRole_userAdmin_noDomain_throwsBadRequest() {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        User caller = new User();
+
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doReturn(clientRole).when(clientService).getClientRoleById(roleId);
+        doReturn(caller).when(userService).getUserByScopeAccess(any(ScopeAccess.class));
+        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
+
+        defaultCloud20Service.listUSersWithRole(null, uriInfo, authToken, roleId, 0, 10);
+    }
+
+    @Test
+    public void listUSersWithRole_callsSetFilters() {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        User caller = new User();
+        caller.setDomainId("123456789");
+
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doReturn(clientRole).when(clientService).getClientRoleById(roleId);
+        doReturn(caller).when(userService).getUserByScopeAccess(any(ScopeAccess.class));
+        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
+
+        defaultCloud20Service.listUSersWithRole(null, uriInfo, authToken, roleId, 0, 10);
+        verify(spy).setFilters(anyString(), anyString());
+    }
 }

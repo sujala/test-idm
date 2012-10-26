@@ -14,6 +14,7 @@ import org.openstack.docs.identity.api.v2.AuthenticationRequest;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -37,6 +38,7 @@ public class Cloud20VersionResourceTest {
     DelegateCloud20Service delegateCloud20Service;
     Cloud20VersionResource spy;
     DefaultCloud20Service defaultCloud20Service;
+    UriInfo uriInfo;
 
     @Before
     public void setUp() throws Exception {
@@ -53,6 +55,7 @@ public class Cloud20VersionResourceTest {
         delegateCloud20Service = mock(DelegateCloud20Service.class);
         authenticationRequest = mock(AuthenticationRequest.class);
         defaultCloud20Service = mock(DefaultCloud20Service.class);
+        uriInfo = mock(UriInfo.class);
 
         // setter
         cloud20VersionResource.setDefaultCloud20Service(defaultCloud20Service);
@@ -1528,10 +1531,15 @@ public class Cloud20VersionResourceTest {
     }
 
     @Test
-    public void listUsersWithRole_callsDefaultCloud20ServiceListUsersWithRole() throws Exception {
-        when(defaultCloud20Service.listUsersWithRole(httpHeaders, null, null, "33", 12, 88)).thenReturn(Response.ok());
-        spy.listUsersWithRole(httpHeaders, null, null, "33", 12, 88);
-
-        verify(defaultCloud20Service).listUsersWithRole(httpHeaders, null, null, "33", 12, 88);
+    public void listUsersWithRole_responseOk_returns200() throws Exception {
+        when(defaultCloud20Service.listUsersWithRole(httpHeaders, uriInfo, "token", "3", 0, 10)).thenReturn(Response.ok());
+        Response response = spy.listUsersWithRole(httpHeaders, uriInfo, "token", "3", 0, 10);
+        assertThat("response code", response.getStatus(), equalTo(200));
     }
+
+    @Test
+    public void listUsersWithRole_callsDefaultCloud20Service_listUsersWithRole() throws Exception {
+        when(defaultCloud20Service.listUsersWithRole(httpHeaders, uriInfo, "token", "3", 0, 10)).thenReturn(Response.ok());
+        spy.listUsersWithRole(httpHeaders, uriInfo, "token", "3", 0, 10));
+        verify(defaultCloud20Service).listUsersWithRole(httpHeaders, uriInfo, "token", "3", 0, 10)
 }
