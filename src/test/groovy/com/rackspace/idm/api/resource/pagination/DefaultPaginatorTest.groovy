@@ -32,78 +32,52 @@ public class DefaultPaginatorTest extends Specification {
     @Shared def globalLimitMax = 50
 
     @Autowired
-    private DefaultPaginator<User> userPaginator;
+    private DefaultPaginator<User> userPaginator
+
+    @Autowired
+    private Configuration config
 
     def setupSpec() {
     }
 
     def "setting limit to 0 sets to default"() {
-        given:
-        Configuration config = Mock();
-        userPaginator.config = config;
-        config.getInt("ldap.paging.offset.default") >> globalLimitDefault
-        config.getInt("ldap.paging.limit.max") >> globalLimitMax
-
         when:
         userPaginator.limit(0)
 
         then:
-        userPaginator.limit == globalLimitDefault
+        userPaginator.limit() == config.getInt("ldap.paging.limit.default")
     }
 
-    def "setting limit to negative value sets to 1"() {
-        given:
-        Configuration config = Mock();
-        userPaginator.config = config;
-        config.getInt("ldap.paging.limit.default") >> globalLimitDefault
-        config.getInt("ldap.paging.limit.max") >> globalLimitMax
-
+    def "setting limit to negative value sets to default"() {
         when:
         userPaginator.limit(-5)
 
         then:
-        userPaginator.limit() == globalLimitDefault
+        userPaginator.limit() == config.getInt("ldap.paging.limit.default")
     }
 
     def "setting limit above max sets value to max"() {
-        given:
-        Configuration config = Mock();
-        userPaginator.config = config;
-        config.getInt("ldap.paging.offset.default") >> globalLimitDefault
-        config.getInt("ldap.paging.limit.max") >> globalLimitMax
-
         when:
-        userPaginator.limit(100)
+        userPaginator.limit(10000)
 
         then:
-        userPaginator.limit() == globalLimitMax
+        userPaginator.limit() == config.getInt("ldap.paging.limit.max")
     }
 
     def "setting limit to max sets value to max"() {
-        given:
-        Configuration config = Mock();
-        userPaginator.config = config;
-        config.getInt("ldap.paging.offset.default") >> globalLimitDefault
-        config.getInt("ldap.paging.limit.max") >> globalLimitMax
-
         when:
-        userPaginator.limit(globalLimitMax)
+        userPaginator.limit(config.getInt("ldap.paging.limit.max"))
 
         then:
-        userPaginator.limit() == globalLimitMax
+        userPaginator.limit() == config.getInt("ldap.paging.limit.max")
     }
 
     def "setting limit to default sets value to default"() {
-        given:
-        Configuration config = Mock();
-        userPaginator.config = config;
-        config.getInt("ldap.paging.offset.default") >> globalLimitDefault
-        config.getInt("ldap.paging.limit.max") >> globalLimitMax
 
         when:
-        userPaginator.limit(globalLimitDefault)
+        userPaginator.limit(config.getInt("ldap.paging.limit.default"))
 
         then:
-        userPaginator.limit() == globalLimitDefault
+        userPaginator.limit() == config.getInt("ldap.paging.limit.default")
     }
 }
