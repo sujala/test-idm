@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.dao;
 
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.api.resource.pagination.DefaultPaginator;
 
 public interface UserDao {
 
@@ -60,4 +61,6 @@ public interface UserDao {
     User getSoftDeletedUserByUsername(String username);
 
     void unSoftDeleteUser(User user);
+
+    DefaultPaginator<User> getPaginatedUsers(FilterParam[] filterParams, int offset, int limit);
 }

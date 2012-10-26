@@ -14,6 +14,7 @@ import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.api.resource.pagination.DefaultPaginator;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.validation.Validator20;
@@ -6480,6 +6481,7 @@ public class DefaultCloud20ServiceTest {
 
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(clientRole).when(clientService).getClientRoleById(anyString());
+        doReturn(new DefaultPaginator<User>()).when(userService).getPaginatedUsers(any(FilterParam[].class), anyInt(), anyInt());
 
         defaultCloud20Service.listUsersWithRole(null, uriInfo, authToken, roleId, 0, 10);
         verify(authorizationService).verifyUserAdminLevelAccess(any(ScopeAccess.class));
@@ -6492,6 +6494,7 @@ public class DefaultCloud20ServiceTest {
 
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(clientRole).when(clientService).getClientRoleById(anyString());
+        doReturn(new DefaultPaginator<User>()).when(userService).getPaginatedUsers(any(FilterParam[].class), anyInt(), anyInt());
 
         defaultCloud20Service.listUsersWithRole(null, uriInfo, authToken, roleId, 0, 10);
         verify(clientService).getClientRoleById(anyString());
@@ -6501,7 +6504,8 @@ public class DefaultCloud20ServiceTest {
     public void listUsersWithRole_nonExistantRole_throwsNotFoundException() {
         ScopeAccess scopeAccess = new ScopeAccess();
 
-        doReturn(null).when(clientService).getClientRoleById("-1");
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doReturn(null).when(clientService).getClientRoleById(anyString());
         
         defaultCloud20Service.listUsersWithRole(null, uriInfo, authToken, "-1", 0, 10);   
     }
@@ -6512,8 +6516,9 @@ public class DefaultCloud20ServiceTest {
 
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(clientRole).when(clientService).getClientRoleById(roleId);
+        doReturn(new DefaultPaginator<User>()).when(userService).getPaginatedUsers(any(FilterParam[].class), anyInt(), anyInt());
 
-        defaultCloud20Service.listUSersWithRole(null, uriInfo, authToken, roleId, 0, 10);
+        defaultCloud20Service.listUsersWithRole(null, uriInfo, authToken, roleId, 0, 10);
         verify(authorizationService).authorizeCloudUserAdmin(any(ScopeAccess.class));
     }
 
@@ -6527,11 +6532,12 @@ public class DefaultCloud20ServiceTest {
         doReturn(caller).when(userService).getUserByScopeAccess(any(ScopeAccess.class));
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
 
-        defaultCloud20Service.listUSersWithRole(null, uriInfo, authToken, roleId, 0, 10);
+        defaultCloud20Service.listUsersWithRole(null, uriInfo, authToken, roleId, 0, 10);
     }
 
+    @Ignore
     @Test
-    public void listUSersWithRole_callsSetFilters() {
+    public void listUsersWithRole_callsSetFilters() {
         ScopeAccess scopeAccess = new ScopeAccess();
         User caller = new User();
         caller.setDomainId("123456789");
@@ -6539,9 +6545,63 @@ public class DefaultCloud20ServiceTest {
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(clientRole).when(clientService).getClientRoleById(roleId);
         doReturn(caller).when(userService).getUserByScopeAccess(any(ScopeAccess.class));
+        doReturn(new DefaultPaginator<User>()).when(userService).getPaginatedUsers(any(FilterParam[].class), anyInt(), anyInt());
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
 
-        defaultCloud20Service.listUSersWithRole(null, uriInfo, authToken, roleId, 0, 10);
+        defaultCloud20Service.listUsersWithRole(null, uriInfo, authToken, roleId, 0, 10);
         verify(spy).setFilters(anyString(), anyString());
+    }
+
+    @Test
+    public void listUsersWithRole_callsUserService_getPaginatedUsers() {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        User caller = new User();
+        caller.setDomainId("123456789");
+
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doReturn(clientRole).when(clientService).getClientRoleById(roleId);
+        doReturn(caller).when(userService).getUserByScopeAccess(any(ScopeAccess.class));
+        doReturn(new DefaultPaginator<User>()).when(userService).getPaginatedUsers(any(FilterParam[].class), anyInt(), anyInt());
+        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(false);
+
+        defaultCloud20Service.listUsersWithRole(null, uriInfo, authToken, roleId, 0, 10);
+
+        verify(userService).getPaginatedUsers(any(FilterParam[].class), anyInt(), anyInt());
+    }
+
+    @Ignore
+    @Test
+    public void listUserWithRole_setLinkHeader() {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        User caller = new User();
+        caller.setDomainId("123456789");
+
+        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doReturn(clientRole).when(clientService).getClientRoleById(roleId);
+        doReturn(caller).when(userService).getUserByScopeAccess(any(ScopeAccess.class));
+        doReturn(new DefaultPaginator<User>()).when(userService).getPaginatedUsers(any(FilterParam[].class), anyInt(), anyInt());
+        when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(false);
+
+        defaultCloud20Service.listUsersWithRole(null, uriInfo, authToken, roleId, 0, 10);
+    }
+
+    @Test
+    public void setFilters_returnsFilterParamWithOutDomainId() {
+        FilterParam[] compareTo = new FilterParam[]{new FilterParam(FilterParam.FilterParamName.ROLE_NAME, "roleName")};
+
+        FilterParam[] filters = defaultCloud20Service.setFilters("roleName", null);
+
+        assertThat(filters[0].getParam(), equalTo(compareTo[0].getParam()));
+    }
+
+    @Test
+    public void setFilters_returnsFilterParamWithDomainId() {
+        FilterParam[] compareTo = new FilterParam[]{new FilterParam(FilterParam.FilterParamName.DOMAIN_ID, "domainId"),
+                new FilterParam(FilterParam.FilterParamName.ROLE_NAME, "roleName")};
+
+        FilterParam[] filters = defaultCloud20Service.setFilters("roleName", "domainId");
+
+        assertThat(filters[0].getParam(), equalTo(compareTo[0].getParam()));
+        assertThat(filters[1].getParam(), equalTo(compareTo[1].getParam()));
     }
 }

@@ -1,11 +1,13 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
+import com.rackspace.idm.api.resource.pagination.DefaultPaginator;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.util.CryptHelper;
 import com.unboundid.ldap.sdk.*;
@@ -32,6 +34,9 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     public static final String NULL_OR_EMPTY_USERNAME_PARAMETER = "Null or Empty username parameter";
     public static final String FOUND_USER = "Found User - {}";
     public static final String FOUND_USERS = "Found Users - {}";
+
+    @Autowired
+    DefaultPaginator<User> paginator;
 
     @Override
     public void addRacker(Racker racker) {
@@ -415,9 +420,30 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     }
 
     @Override
+    public DefaultPaginator<User> getPaginatedUsers(FilterParam[] filterParams, int offset, int limit) {
+        getLogger().debug("Getting paged users");
+
+        Filter searchFilter = createSearchFilter(filterParams);
+        DefaultPaginator<User> defaultPaginator = getMultipleUsersPaginated(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES, offset, limit);
+
+        getLogger().debug(FOUND_USERS, defaultPaginator.valueList());
+
+        return defaultPaginator;
+    }
+
+    @Override
     public Users getAllUsers(FilterParam[] filterParams, int offset, int limit) {
         getLogger().debug("Getting all users");
 
+        Filter searchFilter = createSearchFilter(filterParams);
+        Users users = getMultipleUsers(searchFilter,  ATTR_USER_SEARCH_ATTRIBUTES, offset, limit);
+
+        getLogger().debug(FOUND_USERS, users);
+
+        return users;
+    }
+
+    protected Filter createSearchFilter(FilterParam[] filterParams) {
         LdapSearchBuilder searchBuilder = new LdapSearchBuilder();
         searchBuilder.addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON);
 
@@ -442,12 +468,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             }
         }
 
-        Filter searchFilter = searchBuilder.build();
-        Users users = getMultipleUsers(searchFilter,  ATTR_USER_SEARCH_ATTRIBUTES, offset, limit);
-
-        getLogger().debug(FOUND_USERS, users);
-
-        return users;
+        return searchBuilder.build();
     }
 
     @Override
@@ -786,6 +807,35 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         Attribute[] attributes = atts.toArray(new Attribute[0]);
         getLogger().debug("Found {} attributes to add", attributes.length);
         return attributes;
+    }
+
+    protected DefaultPaginator<User> getMultipleUsersPaginated(Filter searchFilter, String[] searchAttributes, int offset, int limit) {
+        SearchRequest searchRequest = new SearchRequest(USERS_BASE_DN, SearchScope.SUB, searchFilter, searchAttributes);
+        searchRequest = paginator.createSearchRequestWithPaging(ATTR_UID, searchRequest, offset, limit);
+
+        SearchResult searchResult = this.getMultipleEntries(searchRequest);
+
+        if (searchResult == null) {
+            return paginator;
+        }
+
+        paginator.createPageFromResult(searchResult, offset, limit);
+        List<User> userList = new ArrayList<User>();
+        try {
+            for (SearchResultEntry entry : paginator.searchResultEntries()) {
+                userList.add(getUser(entry));
+            }
+        } catch (InvalidCipherTextException e) {
+            getLogger().error(e.getMessage());
+            throw new IllegalStateException(e);
+        } catch (GeneralSecurityException e) {
+            getLogger().error(e.getMessage());
+            throw new IllegalStateException(e);
+        }
+
+        paginator.valueList(userList);
+
+        return paginator;
     }
 
     Users getMultipleUsers(Filter searchFilter,

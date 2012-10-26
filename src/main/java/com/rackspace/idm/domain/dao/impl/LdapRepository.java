@@ -274,7 +274,14 @@ public abstract class LdapRepository {
         return searchResult.getSearchEntries();
     }
 
-
+    protected SearchResult getMultipleEntries(SearchRequest searchRequest) {
+        try {
+            return getAppInterface().search(searchRequest);
+        } catch (LDAPException ldapEx) {
+            getLogger().error(LDAP_SEARCH_ERROR, ldapEx.getMessage());
+            return null;
+        }
+    }
 
     protected SearchResultEntry getSingleEntry(String baseDN,
         SearchScope scope, Filter searchFilter, String... attributes) {

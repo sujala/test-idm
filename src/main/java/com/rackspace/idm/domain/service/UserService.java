@@ -5,6 +5,7 @@ import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import org.apache.commons.configuration.Configuration;
+import com.rackspace.idm.api.resource.pagination.DefaultPaginator;
 
 import java.util.List;
 
@@ -110,5 +111,5 @@ public interface UserService {
 
     void setPasswordComplexityService(PasswordComplexityService passwordComplexityService);
 
-
+    DefaultPaginator<User> getPaginatedUsers(FilterParam[] filters, int offset, int limit);
 }

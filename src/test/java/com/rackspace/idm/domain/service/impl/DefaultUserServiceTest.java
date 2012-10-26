@@ -1126,4 +1126,11 @@ public class DefaultUserServiceTest {
 
         assertThat("ldap offset default", subUsers.size(), equalTo(1));
     }
+
+    @Test
+    public void getPaginatedUsers_callsUserDao_getPaginatedUsers() {
+        FilterParam[] filters = new FilterParam[]{};
+        defaultUserService.getPaginatedUsers(filters, 0, 5);
+        verify(userDao).getPaginatedUsers(any(FilterParam[].class), anyInt(), anyInt());
+    }
 }

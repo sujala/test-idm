@@ -9,6 +9,7 @@ import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.api.resource.pagination.DefaultPaginator;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.util.HashHelper;
@@ -815,6 +816,17 @@ public class DefaultUserService implements UserService {
         List<Tenant> tenantList = new ArrayList<Tenant>();
 
         return tenantList;
+    }
+
+    @Override
+    public DefaultPaginator<User> getPaginatedUsers(FilterParam[] filters, int offset, int limit) {
+        logger.debug("Getting Users Paged");
+
+        DefaultPaginator<User> defaultPaginator = this.userDao.getPaginatedUsers(filters, offset, limit);
+
+        logger.debug("Got Users {}", filters);
+
+        return defaultPaginator;
     }
 
     private boolean isPasswordRulesEnforced() {

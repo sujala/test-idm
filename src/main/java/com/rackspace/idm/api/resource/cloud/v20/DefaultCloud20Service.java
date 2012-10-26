@@ -19,6 +19,7 @@ import com.rackspace.idm.domain.entity.Domains;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.api.resource.pagination.DefaultPaginator;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.validation.Validator20;
@@ -2076,30 +2077,40 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder listUsersWithRole(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String roleId, int marker, int limit) {
-        try {
-            ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
-            authorizationService.verifyUserAdminLevelAccess(scopeAccess);
-            ClientRole role = this.clientService.getClientRoleById(roleId);
-            if (role == null) {
-                throw new NotFoundException(String.format("Role with id: %s not found", roleId));
-            }
-
-            FilterParam[] filters;
-            boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccess);
-            if (callerIsUserAdmin) {
-                User caller = this.userService.getUserByScopeAccess(scopeAccess);
-                if (caller.getDomainId() == null || StringUtils.isBlank(caller.getDomainId())) {
-                    throw new BadRequestException("User-admin has no domain");
-                }
-            }
-
-        } catch (Exception ex) {
-            return exceptionHandler.exceptionResponse(ex);
+        ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
+        authorizationService.verifyUserAdminLevelAccess(scopeAccess);
+        ClientRole role = this.clientService.getClientRoleById(roleId);
+            
+        if (role == null) {
+            throw new NotFoundException(String.format("Role with id: %s not found", roleId));
         }
+
+        FilterParam[] filters;
+        boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccess);
+            
+        if (callerIsUserAdmin) {
+            User caller = this.userService.getUserByScopeAccess(scopeAccess);
+            if (caller.getDomainId() == null || StringUtils.isBlank(caller.getDomainId())) {
+                throw new BadRequestException("User-admin has no domain");
+            }
+            filters = setFilters(role.getName(), caller.getDomainId());
+        } else {
+            filters = setFilters(role.getName(), null);
+        }
+
+        DefaultPaginator<User> paginator = this.userService.getPaginatedUsers(filters, marker, limit);
+        String linkHeader = paginator.createLinkHeader(uriInfo);
+
+        return Response.status(200).header("Link", linkHeader).entity(objFactories.getOpenStackIdentityV2Factory()
+                .createUsers(this.userConverterCloudV20.toUserList(paginator.valueList())).getValue());
     }
 
     protected FilterParam[] setFilters(String roleName, String domainId) {
-
+        if (domainId == null) {
+            return new FilterParam[]{new FilterParam(FilterParamName.ROLE_NAME, roleName)};
+        }
+        return new FilterParam[]{new FilterParam(FilterParamName.DOMAIN_ID, domainId),
+                                    new FilterParam(FilterParamName.ROLE_NAME, roleName)};
     }
 
     public boolean isValidImpersonatee(User user) {

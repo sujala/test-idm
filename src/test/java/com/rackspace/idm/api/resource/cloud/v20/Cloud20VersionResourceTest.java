@@ -1540,6 +1540,7 @@ public class Cloud20VersionResourceTest {
     @Test
     public void listUsersWithRole_callsDefaultCloud20Service_listUsersWithRole() throws Exception {
         when(defaultCloud20Service.listUsersWithRole(httpHeaders, uriInfo, "token", "3", 0, 10)).thenReturn(Response.ok());
-        spy.listUsersWithRole(httpHeaders, uriInfo, "token", "3", 0, 10));
-        verify(defaultCloud20Service).listUsersWithRole(httpHeaders, uriInfo, "token", "3", 0, 10)
+        spy.listUsersWithRole(httpHeaders, uriInfo, "token", "3", 0, 10);
+        verify(defaultCloud20Service).listUsersWithRole(httpHeaders, uriInfo, "token", "3", 0, 10);
+    }
 }
