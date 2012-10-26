@@ -1,7 +1,12 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
+import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.sun.jersey.api.client.ClientResponse
+import com.sun.jersey.api.client.WebResource
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -11,12 +16,11 @@ import org.openstack.docs.identity.api.v2.*
 
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.ensureGrizzlyStarted
 import static javax.ws.rs.core.MediaType.APPLICATION_XML
-import com.sun.jersey.api.client.WebResource
-import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
-import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Regions
 
 class Cloud20IntegrationTest extends Specification {
     @Shared WebResource resource
+    @Shared JAXBObjectFactories objFactories;
 
     @Shared def path = "cloud/v2.0/"
     @Shared def serviceAdminToken
@@ -35,14 +39,18 @@ class Cloud20IntegrationTest extends Specification {
     static def X_AUTH_TOKEN = "X-Auth-Token"
     @Shared def groupLocation
     @Shared def group
+    @Shared Region sharedRegion
 
     static def RAX_GRPADM= "RAX-GRPADM"
+    static def RAX_AUTH = "RAX-AUTH"
+
 
 
     def setupSpec() {
         sharedRandom = ("$sharedRandomness").replace('-',"")
 
         this.resource = ensureGrizzlyStarted("classpath:app-config.xml");
+        this.objFactories = new JAXBObjectFactories()
         serviceAdminToken = authenticate("authQE", "Auth1234").getEntity(AuthenticateResponse).value.token.id
         serviceAdmin = getUserByName(serviceAdminToken, "authQE").getEntity(User)
         identityAdminToken = authenticate("auth", "auth123").getEntity(AuthenticateResponse).value.token.id
@@ -71,10 +79,16 @@ class Cloud20IntegrationTest extends Specification {
         groupLocation = createGroupResponse.location
         def getGroupResponse = getGroup(serviceAdminToken, groupLocation)
         group = getGroupResponse.getEntity(Group).value
+
+        def createRegionResponse = createRegion(serviceAdminToken, region("region$sharedRandom", true, false))
+        def getRegionResponse = getRegion(serviceAdminToken, "region$sharedRandom")
+        sharedRegion = getRegionResponse.getEntity(Region)
+
     }
 
     def cleanupSpec() {
         deleteGroup(serviceAdminToken, group.getId())
+        deleteRegion(serviceAdminToken, sharedRegion.getName())
     }
 
     def 'User CRUD'() {
@@ -190,6 +204,10 @@ class Cloud20IntegrationTest extends Specification {
                 deleteGroup(defaultUserToken, group.getId()),
                 getGroup(defaultUserToken, groupLocation),
                 getGroups(defaultUserToken),
+                createRegion(defaultUserToken, region()),
+                updateRegion(defaultUserToken, sharedRegion.getName(), sharedRegion),
+                deleteRegion(defaultUserToken, sharedRegion.getName()),
+                getRegion(defaultUserToken, sharedRegion.getName())
         ]
     }
 
@@ -293,6 +311,87 @@ class Cloud20IntegrationTest extends Specification {
         ]
     }
 
+    def "update region name is not allowed"() {
+        given:
+        Region region1 = region("somename", false, false)
+
+        when:
+        def updateRegionResponse = updateRegion(serviceAdminToken, sharedRegion.getName(), region1)
+
+        then:
+        updateRegionResponse.status == 400
+    }
+
+    def "region crud"() {
+        given:
+        def random = ("$randomness").replace('-', "")
+        def regionName = "region${random}"
+        Region region1 = region(regionName, false, false)
+        Region region2 = region(regionName, true, true)
+
+        when:
+        def createRegionResponse = createRegion(serviceAdminToken, region1)
+        def getRegionResponse = getRegion(serviceAdminToken, regionName)
+        Region createdRegion = getRegionResponse.getEntity(Region)
+
+        def updateRegionResponse = updateRegion(serviceAdminToken, regionName, region2)
+        def getUpdatedRegionResponse = getRegion(serviceAdminToken, regionName)
+        Region updatedRegion = getUpdatedRegionResponse.getEntity(Region)
+
+        def getRegionsResponse = getRegions(serviceAdminToken)
+        Regions regions = getRegionsResponse.getEntity(Regions)
+
+        def deleteRegionResponse = deleteRegion(serviceAdminToken, regionName)
+        def getDeletedRegionResponse = getRegion(serviceAdminToken, regionName)
+
+
+        then:
+        createRegionResponse.status == 201
+        createRegionResponse.location != null
+        getRegionResponse.status == 200
+        region1.name.equals(createdRegion.name)
+        region1.enabled.equals(createdRegion.enabled)
+        region1.isDefault.equals(createdRegion.isDefault)
+        updateRegionResponse.status == 204
+        region2.name.equals(updatedRegion.name)
+        region2.enabled.equals(updatedRegion.enabled)
+        region2.isDefault.equals(updatedRegion.isDefault)
+        getRegionsResponse.status == 200
+        regions.region.size() > 0
+        deleteRegionResponse.status == 204
+        getDeletedRegionResponse.status == 404
+    }
+
+    def "invalid operations on region returns 'not found'"() {
+        expect:
+        response.status == 404
+
+        where:
+        response << [
+                updateRegion(serviceAdminToken, "notfound", region()),
+                deleteRegion(serviceAdminToken, "notfound"),
+                getRegion(serviceAdminToken, "notfound"),
+        ]
+    }
+
+    def "invalid operations on create regions returns 'bad request'"() {
+        expect:
+        response.status == 400
+
+        where:
+        response << [
+                createRegion(serviceAdminToken, region(null, true, false)),
+        ]
+    }
+
+    def "create region that already exists returns conflict"() {
+        when:
+        def createRegionResponse = createRegion(serviceAdminToken, sharedRegion)
+
+        then:
+        createRegionResponse.status == 409
+    }
+
     //Resource Calls
     def createUser(String token, user) {
         resource.path(path).path('users').header(X_AUTH_TOKEN, token).entity(user).post(ClientResponse)
@@ -370,6 +469,26 @@ class Cloud20IntegrationTest extends Specification {
         resource.path(path + 'tokens').accept(APPLICATION_XML).entity(authenticateRequest(username, password)).post(ClientResponse)
     }
 
+    def createRegion(String token, region) {
+        resource.path(path).path(RAX_AUTH).path("regions").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(region).post(ClientResponse)
+    }
+
+    def getRegion(String token, String regionId) {
+        resource.path(path).path(RAX_AUTH).path("regions").path(regionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+    }
+
+    def getRegions(String token) {
+        resource.path(path).path(RAX_AUTH).path("regions").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+    }
+
+    def updateRegion(String token, String regionId, region) {
+        resource.path(path).path(RAX_AUTH).path("regions").path(regionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(region).put(ClientResponse)
+    }
+
+    def deleteRegion(String token, String regionId) {
+        resource.path(path).path(RAX_AUTH).path("regions").path(regionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
+    }
+
     //Helper Methods
     def getCredentials(String username, String password) {
         new PasswordCredentialsRequiredUsername().with {
@@ -436,5 +555,22 @@ class Cloud20IntegrationTest extends Specification {
 
     def group() {
         return group("group", "description")
+    }
+
+    def region(String name, Boolean enabled, Boolean isDefault) {
+        Region regionEntity = new Region().with {
+            it.name = name
+            it.enabled = enabled
+            it.isDefault = isDefault
+            return it
+        }
+    }
+
+    def region(String name) {
+        return region(name, true, false)
+    }
+
+    def region() {
+        return region("name", true, false)
     }
 }

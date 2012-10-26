@@ -20,7 +20,7 @@ public class EndpointServiceTests {
     
     String adminUrl = "http://admin.com";
     int baseUrlId = 1;
-    String baseUrlType = "CLOUD";
+    String baseUrlType = "US_CLOUD";
     boolean def = false;
     String internalUrl = "http://internal.com";
     String publicUrl = "http://public.com";

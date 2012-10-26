@@ -581,6 +581,31 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
+    public ResponseBuilder addRegion(UriInfo uriInfo, String authToken, Region region) {
+        return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public ResponseBuilder getRegion(String authToken, String name) {
+        return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public ResponseBuilder getRegions(String authToken) {
+        return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public ResponseBuilder updateRegion(String authToken, String name, Region region) {
+        return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public ResponseBuilder deleteRegion(String authToken, String name) {
+        return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
     public ResponseBuilder getUserByName(HttpHeaders httpHeaders, String authToken, String name)  {
         if (isCloudAuthRoutingEnabled() && !userService.userExistsByUsername(name)) {
             String request = getCloudAuthV20Url() + USERS;

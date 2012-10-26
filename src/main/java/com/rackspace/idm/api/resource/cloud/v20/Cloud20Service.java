@@ -222,4 +222,14 @@ public interface Cloud20Service {
     ResponseBuilder getAccessibleDomainsForUser(String authToken, String userId);
 
     ResponseBuilder getAccessibleDomainsEndpointsForUser(String authToken, String userId, String domainId);
+
+    ResponseBuilder addRegion(UriInfo uriInfo, String authToken, Region region);
+
+    ResponseBuilder getRegion(String authToken, String name);
+
+    ResponseBuilder getRegions(String authToken);
+
+    ResponseBuilder updateRegion(String authToken, String name, Region region);
+
+    ResponseBuilder deleteRegion(String authToken, String name);
 }

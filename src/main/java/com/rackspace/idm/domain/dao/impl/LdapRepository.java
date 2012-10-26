@@ -46,6 +46,7 @@ public abstract class LdapRepository {
     public static final String OBJECTCLASS_TENANT_ROLE = "tenantRole";
     public static final String OBJECTCLASS_DOMAIN = "rsDomain";
     public static final String OBJECTCLASS_POLICY = "rsPolicy";
+    public static final String OBJECTCLASS_REGION = "rsCloudRegion";
 
     public static final String OBJECTCLASS_NEXT_ID = "rsNextId";
     public static final String ATTR_ID = "rsId";
@@ -155,6 +156,7 @@ public abstract class LdapRepository {
     public static final String ATTR_IMPERSONATING_USERNAME = "impersonatingUsername";
     public static final String ATTR_IMPERSONATING_TOKEN = "impersonatingToken";
     public static final String ATTR_POLICY_ID = "policyId";
+    public static final String ATTR_CLOUD = "rsCloud";
 
     public static final String ATTR_TENANT_RS_ID = "tenantRsId";
     public static final String ATTR_ROLE_RS_ID = "roleRsId";
@@ -167,6 +169,7 @@ public abstract class LdapRepository {
     protected static final String TENANT_BASE_DN = "ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com";
     protected static final String DOMAIN_BASE_DN = "ou=domains,ou=cloud,o=rackspace,dc=rackspace,dc=com";
     protected static final String POLICY_BASE_DN = "ou=policies,ou=cloud,o=rackspace,dc=rackspace,dc=com";
+    protected static final String REGION_BASE_DN = "ou=regions,ou=cloud,o=rackspace,dc=rackspace,dc=com";
     protected static final String CLOUD_ADMIN_BASE_DN = "ou=adminUsers,ou=cloud,o=rackspace,dc=rackspace,dc=com";
     protected static final String CUSTOMERS_BASE_DN = "ou=customers,o=rackspace,dc=rackspace,dc=com";
     protected static final String APPLICATIONS_BASE_DN = "ou=applications,o=rackspace,dc=rackspace,dc=com";
@@ -190,6 +193,7 @@ public abstract class LdapRepository {
     protected static final String[] ATTR_TENANT_SEARCH_ATTRIBUTES = {"*", ATTR_CREATED_DATE, ATTR_UPDATED_DATE};
     protected static final String[] ATTR_DOMAIN_SEARCH_ATTRIBUTES = {"*"};
     protected static final String[] ATTR_POLICY_SEARCH_ATTRIBUTES = {"*"};
+    protected static final String[] ATTR_REGION_SEARCH_ATTRIBUTES = {"*"};
     public static final String LDAP_SEARCH_ERROR = "LDAP Search error - {}";
 
     @Autowired

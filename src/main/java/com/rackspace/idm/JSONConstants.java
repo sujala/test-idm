@@ -1,7 +1,5 @@
 package com.rackspace.idm;
 
-import com.rsa.cryptoj.c.O;
-
 public final class JSONConstants {
 
     private JSONConstants() {}
@@ -20,6 +18,7 @@ public final class JSONConstants {
     public static final String CREDENTIALS = "credentials";
     public static final String DESCRIPTION = "description";
     public static final String ENABLED = "enabled";
+    public static final String IS_DEFAULT = "isDefault";
     public static final String ENDPOINT = "endpoint";
     public static final String ENDPOINT_TEMPLATE = "OS-KSCATALOG:endpointTemplate";
     public static final String ENDPOINT_TEMPLATES = "OS-KSCATALOG:endpointTemplates";
@@ -113,6 +112,8 @@ public final class JSONConstants {
     public static final Object DOMAINS = "RAX-AUTH:domains";
     public static final Object DOMAIN_ID = "RAX-AUTH:domainId";
     public static final Object POLICY = "RAX-AUTH:policy";
+    public static final Object RAX_AUTH_REGION = "RAX-AUTH:region";
+    public static final Object RAX_AUTH_REGIONS = "RAX-AUTH:regions";
     public static final Object POLICIES = "RAX-AUTH:policies";
     public static final Object POLICIES_ALGORITHM = "algorithm";
     public static final Object BLOB = "blob";
