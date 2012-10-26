@@ -1,10 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
@@ -771,7 +767,38 @@ public class Cloud20VersionResource {
     }
 
     @GET
-    @Path("OS-KSCATALOG/enpdointTemplates/{enpdointTemplateId}")
+    @Path("OS-KSCATALOG/endpointTemplates/{endpointTemplateId}/RAX-AUTH/capabilities")
+    public Response getCapabilities(
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("endpointTemplateId") String endpointTemplateId){
+        return getCloud20Service().getCapabilities(authToken, endpointTemplateId).build();
+    }
+
+    @PUT
+    @Path("OS-KSCATALOG/endpointTemplates/{endpointTemplateId}/RAX-AUTH/capabilities")
+    public Response updateCapabilities(
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("endpointTemplateId") String endpointTemplateId,
+            Capabilities capabilities){
+        return getCloud20Service().updateCapabilities(authToken, endpointTemplateId, capabilities).build();
+    }
+
+    @DELETE
+    @Path("OS-KSCATALOG/endpointTemplates/{endpointTemplateId}/RAX-AUTH/capabilities")
+    public Response removeCapabilities(
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("endpointTemplateId") String endpointTemplateId){
+        return getCloud20Service().removeCapabilities(authToken, endpointTemplateId).build();
+    }
+
+    @GET
+    @Path("OS-KSCATALOG/endpointTemplates/{endpointTemplateId}/RAX-AUTH/capabilities/{capabilityId}")
+    public Response getCapabilities(
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("endpointTemplateId") String endpointTemplateId,
+            @PathParam("capabilityId") String capabilityId){
+        return getCloud20Service().getCapability(authToken, capabilityId, endpointTemplateId).build();
+    }
 
     @GET
     @Path("/tenants/{tenantId}/OS-KSCATALOG/endpoints")
