@@ -93,6 +93,23 @@ class LdapRegionRepositoryIntegrationTest extends Specification {
         regions.size() >= 2
     }
 
+    def "get default region returns default region only if enabled"() {
+        when:
+        Region region1 = region(name1, US_CLOUD_REGION, false, true)
+        Region region2 = region(name2, US_CLOUD_REGION, false, false)
+
+        regionDao.addRegion(region1)
+        regionDao.addRegion(region2)
+
+        Region newRegion = regionDao.getDefaultRegion(US_CLOUD_REGION)
+
+        regionDao.deleteRegion(name1)
+        regionDao.deleteRegion(name2)
+
+        then:
+        newRegion == null
+    }
+
     def region(String name, String cloud, Boolean isEnabled, Boolean isDefault) {
         new Region().with {
             it.name = name

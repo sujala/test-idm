@@ -123,6 +123,7 @@ public class LdapRegionRepository extends LdapRepository implements RegionDao {
         Filter searchFilter = new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_CLOUD, cloud)
                 .addEqualAttribute(ATTR_USE_FOR_DEFAULT_REGION, "true")
+                .addEqualAttribute(ATTR_ENABLED, "true")
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_REGION).build();
 
         return getRegion(searchFilter);
