@@ -1,10 +1,7 @@
 package com.rackspace.idm.domain.dao;
 
 
-import com.rackspace.idm.domain.entity.Question;
-import com.rackspace.idm.domain.entity.Questions;
 import com.unboundid.ldap.sdk.Filter;
-import com.unboundid.ldap.sdk.SearchResultEntry;
 
 import java.util.List;
 
@@ -23,8 +20,5 @@ public interface GenericDao<T> {
     void deleteObject(String objectId, Filter searchFilter);
     String getBaseDn();
     String[] getSearchAttributes();
-    String getObjectClass();
-    String getUniqueId(T object);
-    T getEntry(SearchResultEntry entry);
-    Class getGenericType();
+    String getLdapEntityClass();
 }

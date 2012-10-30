@@ -1,7 +1,6 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.domain.entity.Question;
-import com.unboundid.ldap.sdk.SearchResultEntry;
 import org.springframework.stereotype.Component;
 
 /**
@@ -18,27 +17,11 @@ public class LdapQuestionRepository extends LdapGenericRepository<Question>{
         return QUESTION_BASE_DN;
     }
 
-    public String[] getSearchAttributes(){
-        return ATTR_QUESTION_SEARCH_ATTRIBUTES;
-    }
-
-    public String getObjectClass(){
+    public String getLdapEntityClass(){
         return OBJECTCLASS_QUESTION;
     }
 
-    public String getUniqueId(Question question){
-        return question.getUniqueId();
-    }
-
-    public Question getEntry(SearchResultEntry entry) {
-        getLogger().debug("Inside getEntryPolicy");
-        Question question = new Question();
-        question.setId(entry.getAttributeValue(ATTR_ID));
-        question.setQuestion(entry.getAttributeValue(ATTR_QUESTION));
-        return question;
-    }
-
-    public Class getGenericType(){
-        return Question.class;
+    public String[] getSearchAttributes(){
+        return ATTR_QUESTION_SEARCH_ATTRIBUTES;
     }
 }
