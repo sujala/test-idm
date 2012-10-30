@@ -88,7 +88,7 @@ public interface UserService {
     void softDeleteUser(User user);
     boolean userExistsById(String userId);
     boolean userExistsByUsername(String username);
-    boolean isMigratedUser(User user);
+boolean isMigratedUser(User user);
 
     void addBaseUrlToUser(Integer baseUrlId, User user);
 
@@ -112,4 +112,6 @@ public interface UserService {
     void setPasswordComplexityService(PasswordComplexityService passwordComplexityService);
 
     DefaultPaginator<User> getPaginatedUsers(FilterParam[] filters, int offset, int limit);
+    
+    void setCloudRegionService(CloudRegionService cloudRegionService);
 }

@@ -30,6 +30,7 @@ public class UserServiceTests {
     ScopeAccessService mockScopeAccessService;
     ScopeAccessDao mockScopeAccessObjectDao;
     PasswordComplexityService mockPasswordComplexityService;
+    CloudRegionService cloudRegionService;
 
     String customerId = "123456";
     String username = "testuser";
@@ -71,6 +72,7 @@ public class UserServiceTests {
         mockScopeAccessService = EasyMock.createMock(ScopeAccessService.class);
         mockDomainService = EasyMock.createMock(DomainService.class);
         mockPasswordComplexityService = EasyMock.createMock(PasswordComplexityService.class);
+        cloudRegionService = EasyMock.createMock(DefaultCloudRegionService.class);
         
         Configuration appConfig = new PropertyFileConfiguration().getConfig();
         appConfig.setProperty("ldap.server.trusted", false);
@@ -82,6 +84,7 @@ public class UserServiceTests {
         userService.setClientService(mockClientService);
         userService.setConfig(appConfig);
         userService.setPasswordComplexityService(mockPasswordComplexityService);
+        userService.setCloudRegionService(cloudRegionService);
 
         Configuration appConfig2 = new PropertyFileConfiguration().getConfig();
         
@@ -157,7 +160,12 @@ public class UserServiceTests {
         EasyMock.replay(mockUserDao);
         EasyMock.replay(mockPasswordComplexityService);
         EasyMock.replay(mockScopeAccessObjectDao);
-        
+
+        Region region = new Region();
+        region.setName("DFW");
+        EasyMock.expect(cloudRegionService.getDefaultRegion(EasyMock.anyObject(String.class))).andReturn(region);
+        EasyMock.replay(cloudRegionService);
+
         //executions
         userService.addUser(user);
     }

@@ -58,6 +58,8 @@ public class DefaultUserServiceTest {
     private TenantService tenantService;
     @Mock
     private EndpointService endpointService;
+    @Mock
+    private CloudRegionService cloudRegionService;
 
     private DefaultUserService spy;
 
@@ -887,6 +889,9 @@ public class DefaultUserServiceTest {
         user.setId("id");
         user.setDomainId("domainId");
         when(userDao.isUsernameUnique("username")).thenReturn(true);
+        Region region = new Region();
+        region.setName("DFW");
+        when(cloudRegionService.getDefaultRegion(anyString())).thenReturn(region);
         defaultUserService.addUser(user);
         assertThat("password", user.getPasswordObj().toString().length(), not(0));
     }
