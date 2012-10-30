@@ -11,6 +11,8 @@ import com.rackspace.idm.api.converter.cloudv20.*;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
+import com.rackspace.idm.api.resource.pagination.Paginator;
+import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.Application;
@@ -2103,11 +2105,11 @@ public class DefaultCloud20Service implements Cloud20Service {
             filters = setFilters(role.getName(), null);
         }
 
-        DefaultPaginator<User> paginator = this.userService.getPaginatedUsers(filters, marker, limit);
+        PaginatorContext<User> paginator = this.userService.getPaginatedUsers(filters, marker, limit);
         String linkHeader = paginator.createLinkHeader(uriInfo);
 
         return Response.status(200).header("Link", linkHeader).entity(objFactories.getOpenStackIdentityV2Factory()
-                .createUsers(this.userConverterCloudV20.toUserList(paginator.valueList())).getValue());
+                .createUsers(this.userConverterCloudV20.toUserList(paginator.getValueList())).getValue());
     }
 
     protected FilterParam[] setFilters(String roleName, String domainId) {

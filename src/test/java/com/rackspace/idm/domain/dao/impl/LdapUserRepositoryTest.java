@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.api.resource.pagination.DefaultPaginator;
+import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import org.junit.runner.RunWith;
 
 import org.mockito.InjectMocks;
@@ -49,7 +50,9 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
     @Mock
     Configuration configuration;
     @Mock
-    DefaultPaginator userPaginator;
+    PaginatorContext<User> paginatorContext;
+    @Mock
+    DefaultPaginator<User> paginator;
 
     LdapUserRepository spy;
     LDAPInterface ldapInterface;
@@ -470,7 +473,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         filterParam.setValue("rcn");
         FilterParam[] filterParamArray = {filterParam};
 
-        doReturn(userPaginator).when(spy).getMultipleUsersPaginated(any(Filter.class), any(String[].class), anyInt(), anyInt());
+        doReturn(paginatorContext).when(spy).getMultipleUsersPaginated(any(Filter.class), any(String[].class), anyInt(), anyInt());
         spy.getPaginatedUsers(filterParamArray, 0, 10);
         verify(spy).createSearchFilter(filterParamArray);
     }
@@ -486,7 +489,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         searchBuilder.addEqualAttribute(LdapUserRepository.ATTR_RACKSPACE_CUSTOMER_NUMBER, filterParam.getStrValue());
         Filter filter = searchBuilder.build();
 
-        doReturn(userPaginator).when(spy).getMultipleUsersPaginated(any(Filter.class), any(String[].class), anyInt(), anyInt());
+        doReturn(paginatorContext).when(spy).getMultipleUsersPaginated(any(Filter.class), any(String[].class), anyInt(), anyInt());
         spy.getPaginatedUsers(filterParamArray, 0, 10);
         verify(spy).getMultipleUsersPaginated(filter, LdapUserRepository.ATTR_USER_SEARCH_ATTRIBUTES, 0, 10);
     }
@@ -1079,7 +1082,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         Filter filter = searchBuilder.build();
 
         spy.getMultipleUsersPaginated(filter, LdapUserRepository.ATTR_USER_SEARCH_ATTRIBUTES, 0, 10);
-        verify(userPaginator).createSearchRequest(anyString(), any(SearchRequest.class), anyInt(), anyInt());
+        verify(paginator).createSearchRequest(anyString(), any(SearchRequest.class), anyInt(), anyInt());
     }
 
     @Test
@@ -1094,9 +1097,9 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         Filter filter = searchBuilder.build();
 
         doReturn(null).when(spy).getMultipleEntries(any(SearchRequest.class));
-        DefaultPaginator<User> page = spy.getMultipleUsersPaginated(filter, LdapUserRepository.ATTR_USER_SEARCH_ATTRIBUTES, 0, 10);
+        PaginatorContext<User> page = spy.getMultipleUsersPaginated(filter, LdapUserRepository.ATTR_USER_SEARCH_ATTRIBUTES, 0, 10);
 
-        assertThat("result length", page.searchResultEntries().size(), equalTo(0));
+        assertThat("result length", page.getSearchResultEntryList().size(), equalTo(0));
     }
 
     @Test
@@ -1113,7 +1116,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
 
         doReturn(result).when(spy).getMultipleEntries(any(SearchRequest.class));
         spy.getMultipleUsersPaginated(filter, LdapUserRepository.ATTR_USER_SEARCH_ATTRIBUTES, 0, 10);
-        verify(userPaginator).createPage(any(SearchResult.class), anyInt(), anyInt());
+        verify(paginator).createPage(any(SearchResult.class), any(PaginatorContext.class));
     }
 
     @Test
@@ -1144,8 +1147,8 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
 
         doReturn(user).when(spy).getUser(any(SearchResultEntry.class));
         doReturn(result).when(spy).getMultipleEntries(any(SearchRequest.class));
-        doReturn(searchResultEntryList).when(userPaginator).searchResultEntries();
-        doNothing().when(userPaginator).valueList(captor.capture());
+        doReturn(searchResultEntryList).when(paginatorContext).getSearchResultEntryList();
+        doNothing().when(paginatorContext).setValueList(captor.capture());
         spy.getMultipleUsersPaginated(filter, LdapUserRepository.ATTR_USER_SEARCH_ATTRIBUTES, 0, 10);
 
         assertThat("userList", captor.getValue().equals(userList));

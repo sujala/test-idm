@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.pagination;
 import com.unboundid.ldap.sdk.SearchRequest;
 import com.unboundid.ldap.sdk.SearchResult;
 import com.unboundid.ldap.sdk.SearchResultEntry;
+import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 
 import javax.ws.rs.core.UriInfo;
 import java.util.List;
@@ -17,23 +18,7 @@ import java.util.List;
 
 public interface Paginator<T> {
 
-	String createLinkHeader(UriInfo uriInfo);
+    PaginatorContext<T> createSearchRequest(String sortAttribute, SearchRequest searchRequest, int offset, int limit);
 
-    List<T> valueList();
-
-    void valueList(List<T> list);
-
-    void createSearchRequest(String sortAttribute, SearchRequest searchRequest, int offset, int limit);
-
-    void createPage(SearchResult searchResult, int offset, int limit);
-
-    List<SearchResultEntry> searchResultEntries();
-
-    int limit();
-
-    DefaultPaginator<T> limit(int limit);
-
-    int offset();
-
-    DefaultPaginator<T> offset(int offset);
+    void createPage(SearchResult searchResult, PaginatorContext<T> context);
 }

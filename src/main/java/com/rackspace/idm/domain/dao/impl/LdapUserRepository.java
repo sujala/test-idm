@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -420,15 +421,15 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     }
 
     @Override
-    public DefaultPaginator<User> getPaginatedUsers(FilterParam[] filterParams, int offset, int limit) {
+    public PaginatorContext<User> getPaginatedUsers(FilterParam[] filterParams, int offset, int limit) {
         getLogger().debug("Getting paged users");
 
         Filter searchFilter = createSearchFilter(filterParams);
-        DefaultPaginator<User> defaultPaginator = getMultipleUsersPaginated(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES, offset, limit);
+        PaginatorContext<User> context = getMultipleUsersPaginated(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES, offset, limit);
 
-        getLogger().debug(FOUND_USERS, defaultPaginator.valueList());
+        getLogger().debug(FOUND_USERS, context.getValueList());
 
-        return defaultPaginator;
+        return context;
     }
 
     @Override
@@ -809,20 +810,20 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return attributes;
     }
 
-    protected DefaultPaginator<User> getMultipleUsersPaginated(Filter searchFilter, String[] searchAttributes, int offset, int limit) {
+    protected PaginatorContext<User> getMultipleUsersPaginated(Filter searchFilter, String[] searchAttributes, int offset, int limit) {
         SearchRequest searchRequest = new SearchRequest(USERS_BASE_DN, SearchScope.SUB, searchFilter, searchAttributes);
-        paginator.createSearchRequest(ATTR_UID, searchRequest, offset, limit);
+        PaginatorContext<User> paginatorContext = paginator.createSearchRequest(ATTR_UID, searchRequest, offset, limit);
 
         SearchResult searchResult = this.getMultipleEntries(searchRequest);
 
         if (searchResult == null) {
-            return paginator;
+            return paginatorContext;
         }
 
-        paginator.createPage(searchResult, offset, limit);
+        paginator.createPage(searchResult, paginatorContext);
         List<User> userList = new ArrayList<User>();
         try {
-            for (SearchResultEntry entry : paginator.searchResultEntries()) {
+            for (SearchResultEntry entry : paginatorContext.getSearchResultEntryList()) {
                 userList.add(getUser(entry));
             }
         } catch (InvalidCipherTextException e) {
@@ -833,9 +834,9 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             throw new IllegalStateException(e);
         }
 
-        paginator.valueList(userList);
+        paginatorContext.setValueList(userList);
 
-        return paginator;
+        return paginatorContext;
     }
 
     Users getMultipleUsers(Filter searchFilter,

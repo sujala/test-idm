@@ -1,11 +1,11 @@
 package com.rackspace.idm.domain.service;
 
+import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import org.apache.commons.configuration.Configuration;
-import com.rackspace.idm.api.resource.pagination.DefaultPaginator;
 
 import java.util.List;
 
@@ -111,7 +111,7 @@ boolean isMigratedUser(User user);
 
     void setPasswordComplexityService(PasswordComplexityService passwordComplexityService);
 
-    DefaultPaginator<User> getPaginatedUsers(FilterParam[] filters, int offset, int limit);
-    
     void setCloudRegionService(CloudRegionService cloudRegionService);
+    
+    PaginatorContext<User> getPaginatedUsers(FilterParam[] filters, int offset, int limit);
 }

@@ -392,6 +392,30 @@ class Cloud20IntegrationTest extends Specification {
         createRegionResponse.status == 409
     }
 
+    def "listUsersWithRole called by default-user returns forbidden"() {
+        when:
+        def response = listUsersWithRole(defaultUserToken, "1")
+
+        then:
+        response.status == 403
+    }
+
+    def "listUsersWithRole called by admin invalid roleId returns not found"() {
+        when:
+        def response = listUsersWithRole(serviceAdminToken, "-5")
+
+        then:
+        response.status == 404
+    }
+
+    def "listUsersWithRole called by admin returns list"() {
+        when:
+        def response = listUsersWithRole(serviceAdminToken, "3")
+
+        then:
+        response.headers.getFirst("Link") != null
+    }
+
     //Resource Calls
     def createUser(String token, user) {
         resource.path(path).path('users').header(X_AUTH_TOKEN, token).entity(user).post(ClientResponse)
@@ -487,6 +511,10 @@ class Cloud20IntegrationTest extends Specification {
 
     def deleteRegion(String token, String regionId) {
         resource.path(path).path(RAX_AUTH).path("regions").path(regionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
+    }
+
+    def listUsersWithRole(String token, String roleId) {
+        resource.path(path).path("OS-KSADM/roles").path(roleId).path("RAX-AUTH/users").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     //Helper Methods

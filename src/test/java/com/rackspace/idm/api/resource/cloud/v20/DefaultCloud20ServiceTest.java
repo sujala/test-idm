@@ -14,7 +14,7 @@ import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.api.resource.pagination.DefaultPaginator;
+import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.validation.Validator20;
@@ -256,6 +256,7 @@ public class DefaultCloud20ServiceTest {
         when(userConverterCloudV20.toUserDO(userOS)).thenReturn(user);
         when(httpHeaders.getMediaType()).thenReturn(MediaType.APPLICATION_XML_TYPE);
         when(userGroupService.checkAndGetGroupById(anyInt())).thenReturn(group);
+        when(uriInfo.getAbsolutePath()).thenReturn(new URI("http://absolute.path/to/resource"));
 
         spy = spy(defaultCloud20Service);
         doNothing().when(spy).checkXAUTHTOKEN(eq(authToken), anyBoolean(), any(String.class));
@@ -6479,7 +6480,7 @@ public class DefaultCloud20ServiceTest {
 
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(clientRole).when(clientService).getClientRoleById(anyString());
-        doReturn(new DefaultPaginator<User>()).when(userService).getPaginatedUsers(any(FilterParam[].class), anyInt(), anyInt());
+        doReturn(new PaginatorContext<User>()).when(userService).getPaginatedUsers(any(FilterParam[].class), anyInt(), anyInt());
 
         defaultCloud20Service.listUsersWithRole(null, uriInfo, authToken, roleId, 0, 10);
         verify(authorizationService).verifyUserAdminLevelAccess(any(ScopeAccess.class));
@@ -6492,7 +6493,7 @@ public class DefaultCloud20ServiceTest {
 
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(clientRole).when(clientService).getClientRoleById(anyString());
-        doReturn(new DefaultPaginator<User>()).when(userService).getPaginatedUsers(any(FilterParam[].class), anyInt(), anyInt());
+        doReturn(makeUserPaginatorContext()).when(userService).getPaginatedUsers(any(FilterParam[].class), anyInt(), anyInt());
 
         defaultCloud20Service.listUsersWithRole(null, uriInfo, authToken, roleId, 0, 10);
         verify(clientService).getClientRoleById(anyString());
@@ -6514,7 +6515,7 @@ public class DefaultCloud20ServiceTest {
 
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(clientRole).when(clientService).getClientRoleById(roleId);
-        doReturn(new DefaultPaginator<User>()).when(userService).getPaginatedUsers(any(FilterParam[].class), anyInt(), anyInt());
+        doReturn(makeUserPaginatorContext()).when(userService).getPaginatedUsers(any(FilterParam[].class), anyInt(), anyInt());
 
         defaultCloud20Service.listUsersWithRole(null, uriInfo, authToken, roleId, 0, 10);
         verify(authorizationService).authorizeCloudUserAdmin(any(ScopeAccess.class));
@@ -6533,7 +6534,7 @@ public class DefaultCloud20ServiceTest {
         defaultCloud20Service.listUsersWithRole(null, uriInfo, authToken, roleId, 0, 10);
     }
 
-    @Ignore
+    @Ignore // Not picking up method call
     @Test
     public void listUsersWithRole_callsSetFilters() {
         ScopeAccess scopeAccess = new ScopeAccess();
@@ -6543,7 +6544,7 @@ public class DefaultCloud20ServiceTest {
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(clientRole).when(clientService).getClientRoleById(roleId);
         doReturn(caller).when(userService).getUserByScopeAccess(any(ScopeAccess.class));
-        doReturn(new DefaultPaginator<User>()).when(userService).getPaginatedUsers(any(FilterParam[].class), anyInt(), anyInt());
+        doReturn(makeUserPaginatorContext()).when(userService).getPaginatedUsers(any(FilterParam[].class), anyInt(), anyInt());
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
 
         defaultCloud20Service.listUsersWithRole(null, uriInfo, authToken, roleId, 0, 10);
@@ -6559,7 +6560,7 @@ public class DefaultCloud20ServiceTest {
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(clientRole).when(clientService).getClientRoleById(roleId);
         doReturn(caller).when(userService).getUserByScopeAccess(any(ScopeAccess.class));
-        doReturn(new DefaultPaginator<User>()).when(userService).getPaginatedUsers(any(FilterParam[].class), anyInt(), anyInt());
+        doReturn(makeUserPaginatorContext()).when(userService).getPaginatedUsers(any(FilterParam[].class), anyInt(), anyInt());
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(false);
 
         defaultCloud20Service.listUsersWithRole(null, uriInfo, authToken, roleId, 0, 10);
@@ -6567,7 +6568,6 @@ public class DefaultCloud20ServiceTest {
         verify(userService).getPaginatedUsers(any(FilterParam[].class), anyInt(), anyInt());
     }
 
-    @Ignore
     @Test
     public void listUserWithRole_setLinkHeader() {
         ScopeAccess scopeAccess = new ScopeAccess();
@@ -6577,7 +6577,7 @@ public class DefaultCloud20ServiceTest {
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(clientRole).when(clientService).getClientRoleById(roleId);
         doReturn(caller).when(userService).getUserByScopeAccess(any(ScopeAccess.class));
-        doReturn(new DefaultPaginator<User>()).when(userService).getPaginatedUsers(any(FilterParam[].class), anyInt(), anyInt());
+        doReturn(makeUserPaginatorContext()).when(userService).getPaginatedUsers(any(FilterParam[].class), anyInt(), anyInt());
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(false);
 
         defaultCloud20Service.listUsersWithRole(null, uriInfo, authToken, roleId, 0, 10);
@@ -6601,5 +6601,22 @@ public class DefaultCloud20ServiceTest {
 
         assertThat(filters[0].getParam(), equalTo(compareTo[0].getParam()));
         assertThat(filters[1].getParam(), equalTo(compareTo[1].getParam()));
+    }
+
+    protected PaginatorContext<User> makeUserPaginatorContext() {
+        PaginatorContext<User> context = new PaginatorContext<User>();
+        context.setOffset(0);
+        context.setLimit(10, 25, 100);
+        ArrayList<User> userList = new ArrayList<User>();
+        userList.add(new User());
+        context.setValueList(userList);
+        HashMap<String, String> links = new HashMap<String, String>(4);
+        links.put("first", "?marker=0&limit=2");
+        links.put("prev", "?marker=0&limit=2");
+        links.put("last", "?marker=0&limit=2");
+        links.put("next", "?marker=0&limit=2");
+        context.setPageLinks(links);
+
+        return context;
     }
 }

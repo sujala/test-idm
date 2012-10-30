@@ -1,5 +1,8 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.api.resource.pagination.PaginatorContext;
+import org.springframework.stereotype.Component;
+
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.UserDao;
@@ -7,7 +10,6 @@ import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.api.resource.pagination.DefaultPaginator;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.util.HashHelper;
@@ -829,14 +831,14 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public DefaultPaginator<User> getPaginatedUsers(FilterParam[] filters, int offset, int limit) {
+    public PaginatorContext<User> getPaginatedUsers(FilterParam[] filters, int offset, int limit) {
         logger.debug("Getting Users Paged");
 
-        DefaultPaginator<User> defaultPaginator = this.userDao.getPaginatedUsers(filters, offset, limit);
+        PaginatorContext<User> context = this.userDao.getPaginatedUsers(filters, offset, limit);
 
         logger.debug("Got Users {}", filters);
 
-        return defaultPaginator;
+        return context;
     }
 
     private boolean isPasswordRulesEnforced() {
