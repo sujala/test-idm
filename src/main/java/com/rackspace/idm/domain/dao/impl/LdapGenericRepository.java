@@ -10,8 +10,7 @@ import com.unboundid.ldap.sdk.persist.LDAPPersister;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
 
-import javax.annotation.PostConstruct;
-import javax.validation.groups.Default;
+import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,27 +26,39 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
     public static final String NULL_OR_EMPTY_NAME_PARAMETER = "Null or Empty name parameter";
     public static final String ERROR_GETTING_OBJECT = "Error getting object";
 
+    final private Class<T> entityType = (Class<T>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
+
     @Override
     public List<T> getObjects() {
-        getLogger().debug("Getting all" + getGenericType().toString());
+        getLogger().debug("Getting all" + entityType.toString());
 
         List<T> objects = new ArrayList<T>();
         SearchResult searchResult = null;
 
-        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(ATTR_OBJECT_CLASS, getObjectClass()).build();
+        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(ATTR_OBJECT_CLASS, getLdapEntityClass()).build();
 
         try {
             searchResult = getAppInterface().search(getBaseDn(), SearchScope.ONE, searchFilter);
-            getLogger().info("Got" + getGenericType().toString());
+            getLogger().info("Got" + entityType.toString());
         } catch (LDAPSearchException ldapEx) {
-            String loggerMsg = String.format("Error searching for %s - {}",getGenericType().toString(),ldapEx);
+            String loggerMsg = String.format("Error searching for %s - {}", entityType.toString(), ldapEx);
             getLogger().error(loggerMsg);
             throw new IllegalStateException(ldapEx);
         }
 
         if (searchResult.getEntryCount() > 0) {
             for (SearchResultEntry entry : searchResult.getSearchEntries()) {
-                objects.add(getEntry(entry));
+                getLogger().debug("Getting % entry", entityType.toString());
+
+                T entity = null;
+                try {
+                    entity = LDAPPersister.getInstance(entityType).decode(entry);
+                } catch (LDAPPersistException e) {
+                    String loggerMsg = String.format("Error converting entity for %s - {}", entityType.toString(), e);
+                    getLogger().error(loggerMsg);
+                }
+
+                objects.add(entity);
             }
         }
 
@@ -63,7 +74,7 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         getLogger().info("Adding object: {}", object);
         Audit audit = Audit.log((Auditable)object).add();
         try {
-            final LDAPPersister<T> persister = LDAPPersister.getInstance(getGenericType());
+            final LDAPPersister<T> persister = LDAPPersister.getInstance(entityType);
             persister.add(object, getAppInterface(), getBaseDn());
             audit.succeed();
             getLogger().info("Added: {}", object);
@@ -76,7 +87,8 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
 
     @Override
     public T getObject(String objectId, Filter searchFilter) {
-        getLogger().debug("Doing search for " + objectId);
+        String loggerMsg = String.format("Doing search for %s with id %s", entityType.toString(), objectId);
+        getLogger().debug(loggerMsg);
         if (StringUtils.isBlank(objectId)) {
             getLogger().error(NULL_OR_EMPTY_ID_PARAMETER);
             getLogger().info("Invalid parameter.");
@@ -97,7 +109,9 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
 
     @Override
     public void updateObject(T object) {
-        if (object == null || StringUtils.isBlank(getUniqueId(object))) {
+        String loggerMsg = String.format("Updating object %s", entityType.toString());
+        getLogger().debug(loggerMsg);
+        if (object == null || StringUtils.isBlank(object.getUniqueId())) {
             getLogger().error(ERROR_GETTING_OBJECT);
             getLogger().info("Invalid parameter.");
             throw new IllegalArgumentException("Missing argument on update");
@@ -105,7 +119,7 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         Audit audit = Audit.log((Auditable)object).modify();
 
         try {
-            LDAPPersister<T> persister = LDAPPersister.getInstance(getGenericType());
+            LDAPPersister<T> persister = LDAPPersister.getInstance(entityType);
             List<Modification> mods = persister.getModifications(object, true);
             audit.modify(mods);
 
@@ -123,10 +137,12 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
 
     @Override
     public void deleteObject(String objectId, Filter searchFilter) {
+        String loggerMsg = String.format("Deleting object %s", entityType.toString());
+        getLogger().debug(loggerMsg);
+
         if (StringUtils.isBlank(objectId)) {
             getLogger().error(NULL_OR_EMPTY_ID_PARAMETER);
-            throw new IllegalArgumentException(
-                "Null or Empty id parameter.");
+            throw new IllegalArgumentException(NULL_OR_EMPTY_ID_PARAMETER);
         }
         T object = getObject(objectId, searchFilter);
         getLogger().debug("Deleting: {}", object);
@@ -142,7 +158,7 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         if (entry == null) {
             return null;
         }
-        T object = (T)LDAPPersister.getInstance(getGenericType()).decode(entry);
+        T object = LDAPPersister.getInstance(entityType).decode(entry);
         return object;
     }
 
@@ -157,24 +173,8 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
     }
 
     @Override
-    public String getObjectClass(){
+    public String getLdapEntityClass(){
         throw new NotImplementedException();
     }
-
-    @Override
-    public String getUniqueId(T object){
-        throw new NotImplementedException();
-    }
-
-    @Override
-    public T getEntry(SearchResultEntry entry){
-        throw new NotImplementedException();
-    }
-
-    @Override
-    public Class getGenericType(){
-        throw new NotImplementedException();
-    }
-
 }
 
