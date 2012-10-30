@@ -1,15 +1,14 @@
 package com.rackspace.idm.api.resource.cloud;
 
-import com.rackspace.idm.api.filter.UriExtensionFilter;
 import com.rackspace.idm.domain.dao.impl.InMemoryLdapIntegrationTest;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.spi.spring.container.servlet.SpringServlet;
-import org.junit.AfterClass;
 import com.sun.jersey.test.framework.AppDescriptor;
 import com.sun.jersey.test.framework.JerseyTest;
 import com.sun.jersey.test.framework.WebAppDescriptor;
+import org.junit.AfterClass;
 
 /**
  * Runs a Jersey server for the duration of a test class. Jersey has a convenient test support class,

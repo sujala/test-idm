@@ -179,6 +179,16 @@
                 <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="capability"/>
             </annox:annotate>
         </jaxb:bindings>
+        <jaxb:bindings node="xs:complexType[@name='Region']">
+            <annox:annotate>
+                <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="region"/>
+            </annox:annotate>
+        </jaxb:bindings>
+        <jaxb:bindings node="xs:complexType[@name='Regions']">
+            <annox:annotate>
+                <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="regions"/>
+            </annox:annotate>
+        </jaxb:bindings>
     </jaxb:bindings>
 
     <jaxb:bindings schemaLocation="RAX-KSGRP-groups.xsd" node="/xs:schema">

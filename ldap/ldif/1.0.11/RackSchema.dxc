@@ -628,11 +628,19 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.85) = {
 };
 
 schema set attribute (1.3.6.1.4.1.20988.2.1.86) = {
-    name = secretId
-    ldap-names = secretId
+    name = secretQuestionId
+    ldap-names = secretQuestionId
     equality = caseIgnoreMatch
     syntax = directoryString
     description = "secret id"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.87) = {
+    name = question
+    ldap-names = question
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "question"
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
@@ -656,7 +664,7 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
 		rsMossoId,
 		rsNastId,
 		secretQuestion,
-		secretId,
+		secretQuestionId,
 		secretAnswer,
 		clearPassword,
 		rsSn,
@@ -1036,9 +1044,9 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.29) = {
     subclass-of top
     kind = structural
     must-contain
-        rsId,
         cn,
         rsCloud,
+        enabled,
         useForDefaultRegion
 };
 
@@ -1055,4 +1063,14 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.30) = {
     may-contain
         description,
         rsResources
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.31) = {
+    name = rsQuestion
+    ldap-names = rsQuestion
+    subclass-of top
+    kind = structural
+    must-contain
+        rsId,
+        question
 };

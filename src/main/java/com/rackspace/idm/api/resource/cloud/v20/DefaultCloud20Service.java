@@ -5,6 +5,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.Capabilities;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Capability;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.JSONConstants;
@@ -54,8 +55,6 @@ import java.io.StringReader;
 import java.net.URI;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-
-import org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory;
 
 /**
  * Created by IntelliJ IDEA.
@@ -165,6 +164,12 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private CapabilityConverterCloudV20 capabilityConverterCloudV20;
+
+    @Autowired
+    private CloudRegionService cloudRegionService;
+
+    @Autowired
+    private RegionConverterCloudV20 regionConverterCloudV20;
 
     private com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
 
@@ -2085,6 +2090,23 @@ public class DefaultCloud20Service implements Cloud20Service {
             com.rackspace.idm.domain.entity.Capabilities capabilitiesObj = capabilityConverterCloudV20.toCapabilitiesDO(capabilities);
             capabilityService.updateCapabilities(endpointTemplateId, capabilitiesObj);
             return Response.noContent();
+        }catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public ResponseBuilder addRegion(UriInfo uriInfo, String authToken, Region region) {
+        try {
+            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+
+            cloudRegionService.addRegion(regionConverterCloudV20.fromRegion(region));
+            String regionName = region.getName();
+            UriBuilder requestUriBuilder = uriInfo.getRequestUriBuilder();
+            URI build = requestUriBuilder.path(regionName).build();
+            return Response.created(build);
+        } catch (DuplicateException de) {
+            return exceptionHandler.conflictExceptionResponse(de.getMessage());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
@@ -2103,6 +2125,17 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
+    public ResponseBuilder getRegion(String authToken, String name) {
+        try {
+            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            com.rackspace.idm.domain.entity.Region region = this.cloudRegionService.checkAndGetRegion(name);
+            return Response.ok().entity(regionConverterCloudV20.toRegion(region).getValue());
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
     public ResponseBuilder getCapability(String authToken, String capabilityId, String endpointTemplateId) {
         try{
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
@@ -2115,12 +2148,45 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
+    public ResponseBuilder getRegions(String authToken) {
+        authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+        List<com.rackspace.idm.domain.entity.Region> regions = this.cloudRegionService.getRegions();
+        return Response.ok().entity(regionConverterCloudV20.toRegions(regions).getValue());
+    }
+
+    @Override
+    public ResponseBuilder updateRegion(String authToken, String name, Region region) {
+        try {
+            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+
+            cloudRegionService.checkAndGetRegion(name);
+            com.rackspace.idm.domain.entity.Region updateRegion = regionConverterCloudV20.fromRegion(region);
+            cloudRegionService.updateRegion(name, updateRegion);
+            return Response.noContent();
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
     public ResponseBuilder removeCapabilities(String authToken, String endpointTemplateId) {
         try{
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
             capabilityService.removeCapabilities(endpointTemplateId);
             return Response.noContent();  //To change body of implemented methods use File | Settings | File Templates.
         }catch (Exception ex){
+                 return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public ResponseBuilder deleteRegion(String authToken, String name) {
+        try {
+            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            cloudRegionService.checkAndGetRegion(name);
+            cloudRegionService.deleteRegion(name);
+            return Response.noContent();
+        } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
     }
