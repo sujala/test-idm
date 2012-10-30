@@ -553,6 +553,7 @@ public class DelegateCloud11Service implements Cloud11Service {
             cred = (JAXBElement<? extends Credentials>) unmarshaller.unmarshal(new StringReader(body));
         } catch (JAXBException e) {
             logger.info("failed to extract XMLCredentials: " + e.getMessage());
+            throw new BadRequestException("malformed XML");
         }
         return cred;
     }
