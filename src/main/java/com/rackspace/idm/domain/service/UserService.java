@@ -110,5 +110,5 @@ public interface UserService {
 
     void setPasswordComplexityService(PasswordComplexityService passwordComplexityService);
 
-
+    void setCloudRegionService(CloudRegionService cloudRegionService);
 }

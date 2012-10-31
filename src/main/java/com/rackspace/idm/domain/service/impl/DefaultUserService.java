@@ -1,23 +1,19 @@
 package com.rackspace.idm.domain.service.impl;
 
-import org.springframework.stereotype.Component;
-
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.entity.Tenant;
-import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.util.HashHelper;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
-import org.openstack.docs.identity.api.v2.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,6 +59,9 @@ public class DefaultUserService implements UserService {
     @Autowired
     private AuthorizationService authorizationService;
 
+    @Autowired
+    private CloudRegionService cloudRegionService;
+
     @Override
     public void addRacker(Racker racker) {
         logger.info("Adding Racker {}", racker);
@@ -80,10 +79,14 @@ public class DefaultUserService implements UserService {
 
         validateUserEmailAddress(user);
         validateUsername(user);
-//        if (user.getMossoId() != null) {
-//            validateMossoId(user.getMossoId());
-//        }
         setPasswordIfNecessary(user);
+
+        Region region = cloudRegionService.getDefaultRegion(config.getString("cloud.region"));
+        if (region == null) {
+            throw new BadRequestException("default cloud region was not found");
+        }
+
+        user.setRegion(region.getName());
 
         if (user.isEnabled() == null) {
             user.setEnabled(user.isEnabled());
@@ -503,6 +506,11 @@ public class DefaultUserService implements UserService {
     @Override
     public void setPasswordComplexityService(PasswordComplexityService passwordComplexityService) {
         this.passwordComplexityService = passwordComplexityService;
+    }
+
+    @Override
+    public void setCloudRegionService(CloudRegionService cloudRegionService) {
+        this.cloudRegionService = cloudRegionService;
     }
 
     @Override
