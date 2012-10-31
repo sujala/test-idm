@@ -1,5 +1,9 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.api.resource.pagination.PaginatorContext;
+import com.rackspace.idm.domain.dao.TenantDao;
+import com.unboundid.ldap.sdk.SearchResultEntry;
+import org.junit.Ignore;
 import org.junit.runner.RunWith;
 
 import org.mockito.InjectMocks;
@@ -60,6 +64,8 @@ public class DefaultUserServiceTest {
     private EndpointService endpointService;
     @Mock
     private CloudRegionService cloudRegionService;
+    @Mock
+    private TenantDao tenantDao;
 
     private DefaultUserService spy;
 
@@ -1137,5 +1143,63 @@ public class DefaultUserServiceTest {
         FilterParam[] filters = new FilterParam[]{};
         defaultUserService.getPaginatedUsers(filters, 0, 5);
         verify(userDao).getPaginatedUsers(any(FilterParam[].class), anyInt(), anyInt());
+    }
+
+    @Test
+    public void getUsersWithRole_nonUserAdmin_callsUserDao_getUserById() throws Exception {
+        FilterParam filter = new FilterParam(FilterParam.FilterParamName.ROLE_ID, "123456789");
+        FilterParam[] filters = {filter};
+
+        TenantRole tenantRole = new TenantRole();
+        tenantRole.setUserId("userId");
+        List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
+        tenantRoles.add(tenantRole);
+        List<SearchResultEntry> searchResultEntries = new ArrayList<SearchResultEntry>(20);
+        User user = new User();
+
+        PaginatorContext<TenantRole> tenantRoleContext = new PaginatorContext<TenantRole>();
+        tenantRoleContext.setValueList(tenantRoles);
+        tenantRoleContext.setSearchResultEntryList(searchResultEntries);
+        tenantRoleContext.setOffset(1);
+        tenantRoleContext.setLimit(5, 10, 20);
+
+        doReturn(tenantRoleContext).when(tenantDao).getMultipleTenantRoles(anyString(), anyInt(), anyInt());
+        doReturn(user).when(userDao).getUserById(anyString());
+
+        defaultUserService.getUsersWithRole(filters, "123456789", 0, 10);
+        verify(userDao).getUserById(anyString());
+    }
+
+    @Ignore // need to mock this.getAllUsers call
+    @Test
+    public void getUsersWithRole_UserAdmin_callsgetAllUsers() throws Exception {
+        FilterParam filter = new FilterParam(FilterParam.FilterParamName.ROLE_ID, "123456789");
+        FilterParam filter2 = new FilterParam(FilterParam.FilterParamName.DOMAIN_ID, "123456789");
+        FilterParam[] filters = {filter, filter2};
+
+        TenantRole tenantRole = new TenantRole();
+        tenantRole.setUserId("userId");
+        tenantRole.setRoleRsId("123456789");
+        List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
+        tenantRoles.add(tenantRole);
+        List<SearchResultEntry> searchResultEntries = new ArrayList<SearchResultEntry>(20);
+        User user = new User();
+        user.setRoles(tenantRoles);
+        List<User> userList = new ArrayList<User>();
+        userList.add(user);
+        Users users = new Users();
+        users.setUsers(userList);
+
+        PaginatorContext<TenantRole> tenantRoleContext = new PaginatorContext<TenantRole>();
+        tenantRoleContext.setValueList(tenantRoles);
+        tenantRoleContext.setSearchResultEntryList(searchResultEntries);
+        tenantRoleContext.setOffset(1);
+        tenantRoleContext.setLimit(5, 10, 20);
+
+        when(spy.getAllUsers(any(FilterParam[].class))).thenReturn(users);
+        doReturn(user).when(userDao).getUserById(anyString());
+
+        defaultUserService.getUsersWithRole(filters, "123456789", 0, 10);
+        verify(spy).getAllUsers(any(FilterParam[].class));
     }
 }

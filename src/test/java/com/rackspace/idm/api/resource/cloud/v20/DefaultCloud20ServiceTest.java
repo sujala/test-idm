@@ -6476,9 +6476,11 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void listUsersWithRole_callsVerifyUserAdminLevelAccess() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
+        PaginatorContext<User> userContext = new PaginatorContext<User>();
         URI uri = new URI("http://test:3000/uri");
 
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doReturn(userContext).when(userService).getUsersWithRole(any(FilterParam[].class), anyString(), anyInt(), anyInt());
         doReturn(clientRole).when(clientService).getClientRoleById(anyString());
         doReturn(new PaginatorContext<User>()).when(userService).getPaginatedUsers(any(FilterParam[].class), anyInt(), anyInt());
 
@@ -6489,9 +6491,11 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void listUsersWithRole_callsGetClientRoleById_validRole() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
+        PaginatorContext<User> userContext = new PaginatorContext<User>();
         URI uri = new URI("http://test:3000/uri");
 
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doReturn(userContext).when(userService).getUsersWithRole(any(FilterParam[].class), anyString(), anyInt(), anyInt());
         doReturn(clientRole).when(clientService).getClientRoleById(anyString());
         doReturn(makeUserPaginatorContext()).when(userService).getPaginatedUsers(any(FilterParam[].class), anyInt(), anyInt());
 
@@ -6511,9 +6515,11 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void listUsersWithRole_callAuthorizeCloudUserAdmin() {
+        PaginatorContext<User> userContext = new PaginatorContext<User>();
         ScopeAccess scopeAccess = new ScopeAccess();
 
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doReturn(userContext).when(userService).getUsersWithRole(any(FilterParam[].class), anyString(), anyInt(), anyInt());
         doReturn(clientRole).when(clientService).getClientRoleById(roleId);
         doReturn(makeUserPaginatorContext()).when(userService).getPaginatedUsers(any(FilterParam[].class), anyInt(), anyInt());
 
@@ -6544,7 +6550,7 @@ public class DefaultCloud20ServiceTest {
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(clientRole).when(clientService).getClientRoleById(roleId);
         doReturn(caller).when(userService).getUserByScopeAccess(any(ScopeAccess.class));
-        doReturn(makeUserPaginatorContext()).when(userService).getPaginatedUsers(any(FilterParam[].class), anyInt(), anyInt());
+        doReturn(makeUserPaginatorContext()).when(userService).getUsersWithRole(any(FilterParam[].class), anyString(), anyInt(), anyInt());
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
 
         defaultCloud20Service.listUsersWithRole(null, uriInfo, authToken, roleId, 0, 10);
@@ -6552,12 +6558,14 @@ public class DefaultCloud20ServiceTest {
     }
 
     @Test
-    public void listUsersWithRole_callsUserService_getPaginatedUsers() {
+    public void listUsersWithRole_callsUserService_getUsersWithRole() {
+        PaginatorContext<User> userContext = new PaginatorContext<User>();
         ScopeAccess scopeAccess = new ScopeAccess();
         User caller = new User();
         caller.setDomainId("123456789");
 
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+        doReturn(userContext).when(userService).getUsersWithRole(any(FilterParam[].class), anyString(), anyInt(), anyInt());
         doReturn(clientRole).when(clientService).getClientRoleById(roleId);
         doReturn(caller).when(userService).getUserByScopeAccess(any(ScopeAccess.class));
         doReturn(makeUserPaginatorContext()).when(userService).getPaginatedUsers(any(FilterParam[].class), anyInt(), anyInt());
@@ -6565,7 +6573,7 @@ public class DefaultCloud20ServiceTest {
 
         defaultCloud20Service.listUsersWithRole(null, uriInfo, authToken, roleId, 0, 10);
 
-        verify(userService).getPaginatedUsers(any(FilterParam[].class), anyInt(), anyInt());
+        verify(userService).getUsersWithRole(any(FilterParam[].class), anyString(), anyInt(), anyInt());
     }
 
     @Test
@@ -6577,7 +6585,7 @@ public class DefaultCloud20ServiceTest {
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(clientRole).when(clientService).getClientRoleById(roleId);
         doReturn(caller).when(userService).getUserByScopeAccess(any(ScopeAccess.class));
-        doReturn(makeUserPaginatorContext()).when(userService).getPaginatedUsers(any(FilterParam[].class), anyInt(), anyInt());
+        doReturn(makeUserPaginatorContext()).when(userService).getUsersWithRole(any(FilterParam[].class), anyString(), anyInt(), anyInt());
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(false);
 
         defaultCloud20Service.listUsersWithRole(null, uriInfo, authToken, roleId, 0, 10);
@@ -6585,7 +6593,7 @@ public class DefaultCloud20ServiceTest {
 
     @Test
     public void setFilters_returnsFilterParamWithOutDomainId() {
-        FilterParam[] compareTo = new FilterParam[]{new FilterParam(FilterParam.FilterParamName.ROLE_NAME, "roleName")};
+        FilterParam[] compareTo = new FilterParam[]{new FilterParam(FilterParam.FilterParamName.ROLE_ID, "roleName")};
 
         FilterParam[] filters = defaultCloud20Service.setFilters("roleName", null);
 
@@ -6595,7 +6603,7 @@ public class DefaultCloud20ServiceTest {
     @Test
     public void setFilters_returnsFilterParamWithDomainId() {
         FilterParam[] compareTo = new FilterParam[]{new FilterParam(FilterParam.FilterParamName.DOMAIN_ID, "domainId"),
-                new FilterParam(FilterParam.FilterParamName.ROLE_NAME, "roleName")};
+                new FilterParam(FilterParam.FilterParamName.ROLE_ID, "roleName")};
 
         FilterParam[] filters = defaultCloud20Service.setFilters("roleName", "domainId");
 

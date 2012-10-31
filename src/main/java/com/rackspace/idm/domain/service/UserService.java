@@ -114,4 +114,6 @@ boolean isMigratedUser(User user);
     void setCloudRegionService(CloudRegionService cloudRegionService);
     
     PaginatorContext<User> getPaginatedUsers(FilterParam[] filters, int offset, int limit);
+
+    PaginatorContext<User> getUsersWithRole(FilterParam[] filters, String roleId, int offset, int limit);
 }

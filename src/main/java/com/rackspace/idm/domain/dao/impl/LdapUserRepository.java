@@ -437,7 +437,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().debug("Getting all users");
 
         Filter searchFilter = createSearchFilter(filterParams);
-        Users users = getMultipleUsers(searchFilter,  ATTR_USER_SEARCH_ATTRIBUTES, offset, limit);
+        Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES, offset, limit);
 
         getLogger().debug(FOUND_USERS, users);
 
@@ -450,7 +450,6 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         if (filterParams != null) {
             for (FilterParam filter : filterParams) {
-                // can only filter on rcn and username for now
                 if (filter.getParam() == FilterParamName.RCN) {
                     searchBuilder.addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, filter.getStrValue());
                 } else if (filter.getParam() == FilterParamName.USERNAME) {
@@ -812,7 +811,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
     protected PaginatorContext<User> getMultipleUsersPaginated(Filter searchFilter, String[] searchAttributes, int offset, int limit) {
         SearchRequest searchRequest = new SearchRequest(USERS_BASE_DN, SearchScope.SUB, searchFilter, searchAttributes);
-        PaginatorContext<User> paginatorContext = paginator.createSearchRequest(ATTR_UID, searchRequest, offset, limit);
+        PaginatorContext<User> paginatorContext = paginator.createSearchRequest(ATTR_ID, searchRequest, offset, limit);
 
         SearchResult searchResult = this.getMultipleEntries(searchRequest);
 

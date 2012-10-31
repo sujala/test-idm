@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service;
 
+import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
@@ -53,5 +54,4 @@ public interface TenantService {
 	void setUserDao(UserDao userDao);
 	void setEndpointDao(EndpointDao endpointDao);
 	void setScopeAccessDao(ScopeAccessDao scopeAccessDao);
-
 }

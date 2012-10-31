@@ -472,6 +472,8 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         filterParam.setParam(FilterParam.FilterParamName.RCN);
         filterParam.setValue("rcn");
         FilterParam[] filterParamArray = {filterParam};
+        LdapRepository.LdapSearchBuilder searchBuilder = new LdapRepository.LdapSearchBuilder();
+        searchBuilder.addEqualAttribute(LdapUserRepository.ATTR_OBJECT_CLASS, LdapUserRepository.OBJECTCLASS_TENANT_ROLE);
 
         doReturn(paginatorContext).when(spy).getMultipleUsersPaginated(any(Filter.class), any(String[].class), anyInt(), anyInt());
         spy.getPaginatedUsers(filterParamArray, 0, 10);
@@ -523,6 +525,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         filterParam.setParam(FilterParam.FilterParamName.RCN);
         filterParam.setValue("rcn");
         FilterParam[] filterParamArray = {filterParam};
+        LdapRepository.LdapSearchBuilder searchBuilder = new LdapRepository.LdapSearchBuilder();
 
         Filter filter = spy.createSearchFilter(filterParamArray);
         assertThat("attribute", filter.getComponents()[1].toNormalizedString(), containsString("=rcn"));
@@ -534,6 +537,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         filterParam.setParam(FilterParam.FilterParamName.USERNAME);
         filterParam.setValue("username");
         FilterParam[] filterParamArray = {filterParam};
+        LdapRepository.LdapSearchBuilder searchBuilder = new LdapRepository.LdapSearchBuilder();
 
         Filter filter = spy.createSearchFilter(filterParamArray);
         assertThat("atttribute", filter.getComponents()[1].toNormalizedString(), containsString("=username"));
@@ -545,6 +549,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         filterParam.setParam(FilterParam.FilterParamName.DOMAIN_ID);
         filterParam.setValue("domainid");
         FilterParam[] filterParamArray = {filterParam};
+        LdapRepository.LdapSearchBuilder searchBuilder = new LdapRepository.LdapSearchBuilder();
 
         Filter filter = spy.createSearchFilter(filterParamArray);
         assertThat("atttribute", filter.getComponents()[1].toNormalizedString(), containsString("=domainid"));
@@ -556,6 +561,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         filterParam.setParam(FilterParam.FilterParamName.GROUP_ID);
         filterParam.setValue("groupid");
         FilterParam[] filterParamArray = {filterParam};
+        LdapRepository.LdapSearchBuilder searchBuilder = new LdapRepository.LdapSearchBuilder();
 
         Filter filter = spy.createSearchFilter(filterParamArray);
         assertThat("atttribute", filter.getComponents()[1].toNormalizedString(), containsString("=groupid"));
@@ -566,6 +572,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         FilterParam filterParam = new FilterParam();
         filterParam.setParam(FilterParam.FilterParamName.IN_MIGRATION);
         FilterParam[] filterParamArray = {filterParam};
+        LdapRepository.LdapSearchBuilder searchBuilder = new LdapRepository.LdapSearchBuilder();
 
         Filter filter = spy.createSearchFilter(filterParamArray);
         assertThat("atttribute", filter.getComponents()[1].toNormalizedString(), containsString("=true"));
@@ -576,6 +583,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         FilterParam filterParam = new FilterParam();
         filterParam.setParam(FilterParam.FilterParamName.MIGRATED);
         FilterParam[] filterParamArray = {filterParam};
+        LdapRepository.LdapSearchBuilder searchBuilder = new LdapRepository.LdapSearchBuilder();
 
         Filter filter = spy.createSearchFilter(filterParamArray);
         assertThat("atttribute", filter.getComponents()[1].toNormalizedString(), containsString("=false"));
@@ -587,6 +595,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         filterParam.setParam(FilterParam.FilterParamName.ROLE_NAME);
         filterParam.setValue("role");
         FilterParam[] filterParamArray = {filterParam};
+        LdapRepository.LdapSearchBuilder searchBuilder = new LdapRepository.LdapSearchBuilder();
 
         Filter filter = spy.createSearchFilter(filterParamArray);
         assertThat("atttribute", filter.getComponents().length, equalTo(0));
@@ -1087,6 +1096,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
 
     @Test
     public void getMultipleUsersPaginated_returnsEmptyPaginator() throws Exception {
+        PaginatorContext<User> userContext = new PaginatorContext<User>();
         FilterParam filterParam = new FilterParam();
         filterParam.setParam(FilterParam.FilterParamName.RCN);
         filterParam.setValue("rcn");
@@ -1097,6 +1107,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         Filter filter = searchBuilder.build();
 
         doReturn(null).when(spy).getMultipleEntries(any(SearchRequest.class));
+        doReturn(userContext).when(paginator).createSearchRequest(anyString(), any(SearchRequest.class), anyInt(), anyInt());
         PaginatorContext<User> page = spy.getMultipleUsersPaginated(filter, LdapUserRepository.ATTR_USER_SEARCH_ATTRIBUTES, 0, 10);
 
         assertThat("result length", page.getSearchResultEntryList().size(), equalTo(0));
@@ -1104,6 +1115,7 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
 
     @Test
     public void getMultipleUsersPaginated_callsCreatePageFromResult() throws Exception {
+        PaginatorContext<User> userContext = new PaginatorContext<User>();
         FilterParam filterParam = new FilterParam();
         filterParam.setParam(FilterParam.FilterParamName.RCN);
         filterParam.setValue("rcn");
@@ -1115,13 +1127,14 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         SearchResult result = new SearchResult(0, ResultCode.SUCCESS, null, null, null, 10, 10, null);
 
         doReturn(result).when(spy).getMultipleEntries(any(SearchRequest.class));
+        doReturn(userContext).when(paginator).createSearchRequest(anyString(), any(SearchRequest.class), anyInt(), anyInt());
         spy.getMultipleUsersPaginated(filter, LdapUserRepository.ATTR_USER_SEARCH_ATTRIBUTES, 0, 10);
         verify(paginator).createPage(any(SearchResult.class), any(PaginatorContext.class));
     }
 
     @Test
     public void getMultipleUsersPaginated_returnsNonEmptyPaginator() throws Exception {
-        ArgumentCaptor<List<User>> captor = new ArgumentCaptor<List<User>>();
+        PaginatorContext<User> userContext = new PaginatorContext<User>();
         FilterParam filterParam = new FilterParam();
         filterParam.setParam(FilterParam.FilterParamName.RCN);
         filterParam.setValue("rcn");
@@ -1145,13 +1158,14 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         String[] referralUrls = new String[]{"this", "that"};
         SearchResult result = new SearchResult(0, ResultCode.SUCCESS, "ok", "dn", referralUrls, searchResultEntryList, searchResultReferenceList, 1, 1, null);
 
+        userContext.setSearchResultEntryList(searchResultEntryList);
         doReturn(user).when(spy).getUser(any(SearchResultEntry.class));
         doReturn(result).when(spy).getMultipleEntries(any(SearchRequest.class));
-        doReturn(searchResultEntryList).when(paginatorContext).getSearchResultEntryList();
-        doNothing().when(paginatorContext).setValueList(captor.capture());
-        spy.getMultipleUsersPaginated(filter, LdapUserRepository.ATTR_USER_SEARCH_ATTRIBUTES, 0, 10);
+        doReturn(userContext).when(paginator).createSearchRequest(anyString(), any(SearchRequest.class), anyInt(), anyInt());
 
-        assertThat("userList", captor.getValue().equals(userList));
+        PaginatorContext<User> context = spy.getMultipleUsersPaginated(filter, LdapUserRepository.ATTR_USER_SEARCH_ATTRIBUTES, 0, 10);
+
+        assertThat("userList", context.getValueList().equals(userList));
     }
 
     @Test

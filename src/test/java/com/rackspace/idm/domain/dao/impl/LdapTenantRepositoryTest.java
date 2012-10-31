@@ -1,5 +1,8 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.api.resource.pagination.DefaultPaginator;
+import com.rackspace.idm.api.resource.pagination.PaginatorContext;
+import org.hamcrest.Matchers;
 import org.junit.runner.RunWith;
 
 import org.mockito.InjectMocks;
@@ -17,6 +20,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
+import javax.naming.directory.SearchControls;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,6 +44,8 @@ public class LdapTenantRepositoryTest extends InMemoryLdapIntegrationTest{
     LdapConnectionPools ldapConnectionPools;
     @Mock
     Configuration configuration;
+    @Mock
+    DefaultPaginator<TenantRole> paginator;
 
     LdapTenantRepository spy;
     LDAPInterface ldapInterface;
@@ -542,5 +548,103 @@ public class LdapTenantRepositoryTest extends InMemoryLdapIntegrationTest{
         doReturn(null).when(spy).getTenantRoleForParentById("uniqueId", "roleId");
         boolean result = spy.doesScopeAccessHaveTenantRole(scopeAccess, clientRole);
         assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
+    public void getMultipleTenantRoles_callsPaginator_createSearchRequest() throws Exception {
+        PaginatorContext<TenantRole> context = new PaginatorContext<TenantRole>();
+        String[] referalURLs = {"123"};
+        Attribute attribute = new Attribute("attribute");
+        Attribute[] attributes = {attribute};
+        Control control = new Control("oid");
+        Control[] controls = {control};
+        List<SearchResultEntry> searchResultEntries = new ArrayList<SearchResultEntry>();
+        List<SearchResultReference> searchResultReferences = new ArrayList<SearchResultReference>();
+        SearchResultEntry entry = new SearchResultEntry("", attributes, control);
+        SearchResultReference reference = new SearchResultReference(referalURLs, controls);
+        searchResultEntries.add(entry);
+        searchResultReferences.add(reference);
+
+        SearchResult searchResult = new SearchResult(0, ResultCode.SUCCESS, "", "", referalURLs,
+                searchResultEntries, searchResultReferences, 1, 1, null);
+        doReturn(context).when(paginator).createSearchRequest(anyString(), any(SearchRequest.class), anyInt(), anyInt());
+        doReturn(searchResult).when(spy).getMultipleEntries(any(SearchRequest.class));
+
+        spy.getMultipleTenantRoles("1", 0, 10);
+        verify(paginator).createSearchRequest(anyString(), any(SearchRequest.class), anyInt(), anyInt());
+    }
+
+    @Test
+    public void getMultipleTenantRoles_callsGetMultipleEntries() throws Exception {
+        PaginatorContext<TenantRole> context = new PaginatorContext<TenantRole>();
+        String[] referalURLs = {"123"};
+        Attribute attribute = new Attribute("attribute");
+        Attribute[] attributes = {attribute};
+        Control control = new Control("oid");
+        Control[] controls = {control};
+        List<SearchResultEntry> searchResultEntries = new ArrayList<SearchResultEntry>();
+        List<SearchResultReference> searchResultReferences = new ArrayList<SearchResultReference>();
+        SearchResultEntry entry = new SearchResultEntry("", attributes, control);
+        SearchResultReference reference = new SearchResultReference(referalURLs, controls);
+        searchResultEntries.add(entry);
+        searchResultReferences.add(reference);
+
+        SearchResult searchResult = new SearchResult(0, ResultCode.SUCCESS, "", "", referalURLs,
+                searchResultEntries, searchResultReferences, 1, 1, null);
+        doReturn(searchResult).when(spy).getMultipleEntries(any(SearchRequest.class));
+        doReturn(context).when(paginator).createSearchRequest(anyString(), any(SearchRequest.class), anyInt(), anyInt());
+
+        spy.getMultipleTenantRoles("1", 0, 10);
+        verify(spy).getMultipleEntries(any(SearchRequest.class));
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void getMultipleTenantRoles_throwsIllegalStateExcepton() throws Exception {
+        String[] referalURLs = {"123"};
+        Attribute attribute = new Attribute("attribute");
+        Attribute[] attributes = {attribute};
+        Control control = new Control("oid");
+        Control[] controls = {control};
+        List<SearchResultEntry> searchResultEntries = new ArrayList<SearchResultEntry>();
+        List<SearchResultReference> searchResultReferences = new ArrayList<SearchResultReference>();
+        SearchResultEntry entry = new SearchResultEntry("", attributes, control);
+        SearchResultReference reference = new SearchResultReference(referalURLs, controls);
+        searchResultEntries.add(entry);
+        searchResultReferences.add(reference);
+
+        SearchResult searchResult = new SearchResult(0, ResultCode.SUCCESS, "", "", referalURLs,
+                searchResultEntries, searchResultReferences, 1, 1, null);
+        doReturn(searchResult).when(spy).getMultipleEntries(any(SearchRequest.class));
+        doThrow(new LDAPPersistException("")).when(spy).getTenantRole(any(SearchResultEntry.class));
+
+        spy.getMultipleTenantRoles("1", 0, 10);
+    }
+
+    @Test
+    public void getMultipleTenantRoles_returnsContext() throws Exception {
+        PaginatorContext<TenantRole> context = new PaginatorContext<TenantRole>();
+        String[] referalURLs = {"123"};
+        Attribute attribute = new Attribute("attribute");
+        Attribute[] attributes = {attribute};
+        Control control = new Control("oid");
+        Control[] controls = {control};
+        List<SearchResultEntry> searchResultEntries = new ArrayList<SearchResultEntry>();
+        List<SearchResultReference> searchResultReferences = new ArrayList<SearchResultReference>();
+        SearchResultEntry entry = new SearchResultEntry("", attributes, control);
+        SearchResultReference reference = new SearchResultReference(referalURLs, controls);
+        searchResultEntries.add(entry);
+        searchResultReferences.add(reference);
+
+        SearchResult searchResult = new SearchResult(0, ResultCode.SUCCESS, "", "", referalURLs,
+                searchResultEntries, searchResultReferences, 1, 1, null);
+        TenantRole role = new TenantRole();
+
+        doReturn(searchResult).when(spy).getMultipleEntries(any(SearchRequest.class));
+        doReturn(context).when(paginator).createSearchRequest(anyString(), any(SearchRequest.class), anyInt(), anyInt());
+        doReturn(role).when(spy).getTenantRole(any(SearchResultEntry.class));
+
+        PaginatorContext<TenantRole> tenantRolePaginatorContext = spy.getMultipleTenantRoles("1", 0, 10);
+
+        assertThat("valueList", tenantRolePaginatorContext.getValueList().size(), equalTo(1));
     }
 }

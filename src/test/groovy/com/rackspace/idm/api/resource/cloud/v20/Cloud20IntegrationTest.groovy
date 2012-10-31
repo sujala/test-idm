@@ -17,6 +17,7 @@ import org.openstack.docs.identity.api.v2.*
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.ensureGrizzlyStarted
 import static javax.ws.rs.core.MediaType.APPLICATION_XML
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Regions
+import com.rackspace.idm.domain.entity.Users
 
 class Cloud20IntegrationTest extends Specification {
     @Shared WebResource resource
@@ -34,6 +35,7 @@ class Cloud20IntegrationTest extends Specification {
     @Shared def defaultUser
     @Shared def sharedRandomness = UUID.randomUUID()
     @Shared def sharedRandom
+    @Shared def sharedRoleId
 
     def randomness = UUID.randomUUID()
     static def X_AUTH_TOKEN = "X-Auth-Token"
@@ -84,11 +86,17 @@ class Cloud20IntegrationTest extends Specification {
         def getRegionResponse = getRegion(serviceAdminToken, "region$sharedRandom")
         sharedRegion = getRegionResponse.getEntity(Region)
 
+        //create role
+        if (sharedRoleId == null) {
+            def response = createRole(serviceAdminToken, role())
+            sharedRoleId = response.getEntity(Role).id
+        }
     }
 
     def cleanupSpec() {
         deleteGroup(serviceAdminToken, group.getId())
         deleteRegion(serviceAdminToken, sharedRegion.getName())
+        deleteRole(serviceAdminToken, sharedRoleId)
     }
 
     def 'User CRUD'() {
@@ -408,12 +416,67 @@ class Cloud20IntegrationTest extends Specification {
         response.status == 404
     }
 
-    def "listUsersWithRole called by admin returns list"() {
+    def "listUsersWithRole called by admins returns success"() {
+        expect:
+        response.status == 200
+
+        where:
+        response << [
+                listUsersWithRole(identityAdminToken, "3"),
+                listUsersWithRole(serviceAdminToken, "3"),
+                listUsersWithRole(userAdminToken, "4")
+        ]
+    }
+
+    def "listUsersWithRole empty list returns"() {
         when:
-        def response = listUsersWithRole(serviceAdminToken, "3")
+        def response = listUsersWithRole(serviceAdminToken, sharedRoleId)
 
         then:
-        response.headers.getFirst("Link") != null
+        response.status == 200
+        response.getEntity(Users).users.size() == 0
+        response.headers.getFirst("Link") == null
+    }
+
+    def "listUsersWithRole "() {
+        given:
+        addRoleToUser(serviceAdminToken, sharedRoleId, defaultUser.id)
+
+        when:
+        def userAdminResponse = listUsersWithRole(userAdminToken, sharedRoleId)
+        def serviceAdminResponse = listUsersWithRole(serviceAdminToken, sharedRoleId)
+
+        then:
+        serviceAdminResponse.status == 200
+        userAdminResponse.status == 200
+        serviceAdminResponse.getEntity(Users).users.size() == 1
+        userAdminResponse.getEntity(Users).users.size() == 1
+        userAdminResponse.getEntity(Users).equals(serviceAdminResponse.getEntity(Users))
+    }
+
+    def "listUsersWithRole negative offset returns same response"() {
+        given:
+        addRoleToUser(serviceAdmin, sharedRoleId, defaultUser.id)
+
+        when:
+        def response1 = listUsersWithRole(serviceAdminToken, sharedRoleId)
+        def response2 = listUser(serviceAdminToken, sharedRoleId, -5, 10)
+
+        then:
+        response1.status == 200
+        response2.status == 200
+        response1.getEntity(Users).equals(response2.getEntity(Users))
+    }
+
+    def "listUsersWithRole offset greater than result set length"() {
+        given:
+        addRoleToUser(serviceAdmin, sharedRoleId, defaultUser.id)
+
+        when:
+        def response = listUsersWithRole(serviceAdminToken, sharedRoleId, 100, 10)
+
+        then:
+        response.status == 400
     }
 
     //Resource Calls
@@ -517,6 +580,14 @@ class Cloud20IntegrationTest extends Specification {
         resource.path(path).path("OS-KSADM/roles").path(roleId).path("RAX-AUTH/users").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
+    def createRole(String token, Role role) {
+        resource.path(path).path("OS-KSADM/roles").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).entity(role).post(ClientResponse)
+    }
+
+    def deleteRole(String token, String roleId) {
+        resource.path(path).path("OS-KSADM/roles").path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
+    }
+
     //Helper Methods
     def getCredentials(String username, String password) {
         new PasswordCredentialsRequiredUsername().with {
@@ -600,5 +671,13 @@ class Cloud20IntegrationTest extends Specification {
 
     def region() {
         return region("name", true, false)
+    }
+
+    def role() {
+        new Role().with {
+            it.name = "testGlobalRole"
+            it.description = "Test Global Role"
+            return it
+        }
     }
 }

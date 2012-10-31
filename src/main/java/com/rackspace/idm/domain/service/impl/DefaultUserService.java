@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
+import com.rackspace.idm.domain.dao.TenantDao;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.domain.dao.AuthDao;
@@ -57,6 +58,9 @@ public class DefaultUserService implements UserService {
 
     @Autowired
     private TenantService tenantService;
+
+    @Autowired
+    private TenantDao tenantDao;
 
     @Autowired
     private EndpointService endpointService;
@@ -839,6 +843,51 @@ public class DefaultUserService implements UserService {
         logger.debug("Got Users {}", filters);
 
         return context;
+    }
+
+    @Override
+    public PaginatorContext<User> getUsersWithRole(FilterParam[] filters, String roleId, int offset, int limit) {
+        logger.debug("Getting Users Paged");
+
+        PaginatorContext<User> userContext = new PaginatorContext<User>();
+
+        if (filters.length == 1) {
+            PaginatorContext<TenantRole> tenantRoleContext = this.tenantDao.getMultipleTenantRoles(roleId, offset, limit);
+
+            ArrayList<User> userList = new ArrayList<User>();
+            for (TenantRole tenantRole : tenantRoleContext.getValueList()) {
+                if (tenantRole.getUserId() != null) {
+                    userList.add(this.userDao.getUserById(tenantRole.getUserId()));
+                }
+            }
+
+            setUserContext(userContext, tenantRoleContext.getLimit(), tenantRoleContext.getOffset(),
+                            tenantRoleContext.getSearchResultEntryList().size(), userList);
+        } else {
+            Users users = this.getAllUsers(filters);
+            ArrayList<User> usersWithRoleList = new ArrayList<User>();
+            for (User user : users.getUsers()) {
+                for (TenantRole tenantRole : user.getRoles()) {
+                    if (tenantRole.getRoleRsId().equals(roleId)) {
+                        usersWithRoleList.add(user);
+                        break;
+                    }
+                }
+            }
+
+            setUserContext(userContext, limit, offset, users.getUsers().size(), usersWithRoleList);
+        }
+
+        logger.debug("Got Users {}", filters);
+
+        return userContext;
+    }
+
+    protected void setUserContext(PaginatorContext<User> userContext, int limit, int offset, int totalRecords, List<User> userList) {
+        userContext.setLimit(limit, config.getInt("ldap.paging.limit.default"), config.getInt("ldap.paging.limit.max"));
+        userContext.setOffset(offset);
+        userContext.setValueList(userList);
+        userContext.makePageLinks(totalRecords);
     }
 
     private boolean isPasswordRulesEnforced() {

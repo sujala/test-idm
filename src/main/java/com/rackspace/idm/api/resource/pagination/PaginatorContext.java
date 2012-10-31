@@ -31,6 +31,10 @@ public class PaginatorContext<T> {
         return searchResultEntryList;
     }
 
+    public void setSearchResultEntryList(List<SearchResultEntry> searchResultEntries) {
+        this.searchResultEntryList = searchResultEntries;
+    }
+
 
     public int getLimit() {
         return limit;
@@ -54,8 +58,12 @@ public class PaginatorContext<T> {
         }
     }
 
-    protected void makePageLinks(int totalRecords) {
+    public void makePageLinks(int totalRecords) {
         if (totalRecords > 0) {
+            if (offset > totalRecords) {
+                offset = 1;
+            }
+
             int lastIndex = (totalRecords - limit) < 0 ? 0 : (totalRecords - limit);
             getPageLinks().put("first", String.format("?marker=%s&limit=%s", 0, limit));
             getPageLinks().put("last", String.format("?marker=%s&limit=%s", lastIndex, limit));

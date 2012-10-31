@@ -2087,39 +2087,39 @@ public class DefaultCloud20Service implements Cloud20Service {
         ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
         authorizationService.verifyUserAdminLevelAccess(scopeAccess);
         ClientRole role = this.clientService.getClientRoleById(roleId);
-            
+
         if (role == null) {
             throw new NotFoundException(String.format("Role with id: %s not found", roleId));
         }
 
         FilterParam[] filters;
         boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccess);
-            
+
         if (callerIsUserAdmin) {
             User caller = this.userService.getUserByScopeAccess(scopeAccess);
             if (caller.getDomainId() == null || StringUtils.isBlank(caller.getDomainId())) {
                 throw new BadRequestException("User-admin has no domain");
             }
-            filters = setFilters(role.getName(), caller.getDomainId());
+            filters = setFilters(role.getId(), caller.getDomainId());
         } else {
-            filters = setFilters(role.getName(), null);
+            filters = setFilters(role.getId(), null);
         }
 
-        PaginatorContext<User> paginator = this.userService.getPaginatedUsers(filters, marker, limit);
+        PaginatorContext<User> paginator = this.userService.getUsersWithRole(filters, roleId, marker, limit);
         String linkHeader = paginator.createLinkHeader(uriInfo);
 
         return Response.status(200).header("Link", linkHeader).entity(objFactories.getOpenStackIdentityV2Factory()
                 .createUsers(this.userConverterCloudV20.toUserList(paginator.getValueList())).getValue());
     }
 
-    protected FilterParam[] setFilters(String roleName, String domainId) {
+    protected FilterParam[] setFilters(String roleId, String domainId) {
         if (domainId == null) {
-            return new FilterParam[]{new FilterParam(FilterParamName.ROLE_NAME, roleName)};
+            return new FilterParam[]{new FilterParam(FilterParamName.ROLE_ID, roleId)};
         }
         return new FilterParam[]{new FilterParam(FilterParamName.DOMAIN_ID, domainId),
-                                    new FilterParam(FilterParamName.ROLE_NAME, roleName)};
+                                    new FilterParam(FilterParamName.ROLE_ID, roleId)};
     }
-    
+
     @Override
     public ResponseBuilder addRegion(UriInfo uriInfo, String authToken, Region region) {
         try {

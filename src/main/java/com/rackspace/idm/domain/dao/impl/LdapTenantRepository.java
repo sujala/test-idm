@@ -1,5 +1,9 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.api.resource.pagination.*;
+import com.sun.jndi.toolkit.dir.SearchFilter;
+import com.unboundid.ldap.listener.SearchEntryTransformer;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.audit.Audit;
@@ -18,6 +22,9 @@ import java.util.List;
 
 @Component
 public class LdapTenantRepository extends LdapRepository implements TenantDao {
+
+    @Autowired
+    DefaultPaginator<TenantRole> paginator;
 
     public static final String NULL_OR_EMPTY_TENANT_ID_PARAMETER = "Null or Empty tenantId parameter";
     public static final String ERROR_GETTING_TENANT_OBJECT = "Error getting tenant object";
@@ -169,7 +176,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
     List<Tenant> getMultipleTenants(Filter searchFilter)
         throws LDAPPersistException {
         List<SearchResultEntry> entries = this.getMultipleEntries(
-            TENANT_BASE_DN, SearchScope.ONE, ATTR_ID, searchFilter,
+                TENANT_BASE_DN, SearchScope.ONE, ATTR_ID, searchFilter,
                 ATTR_TENANT_SEARCH_ATTRIBUTES);
 
         List<Tenant> tenants = new ArrayList<Tenant>();
@@ -493,6 +500,32 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         getLogger().debug(GOT_TENANT_ROLES, roles.size());
 
         return roles;
+    }
+
+    @Override
+    public PaginatorContext<TenantRole> getMultipleTenantRoles(String roleId, int offset, int limit) {
+        LdapSearchBuilder searchBuilder = new LdapSearchBuilder();
+        searchBuilder.addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TENANT_ROLE);
+        searchBuilder.addEqualAttribute(ATTR_ROLE_RS_ID, roleId);
+        Filter searchFilter = searchBuilder.build();
+
+        SearchRequest searchRequest = new SearchRequest(USERS_BASE_DN, SearchScope.SUB, searchFilter, "*");
+        PaginatorContext<TenantRole> context = paginator.createSearchRequest(ATTR_ID, searchRequest, offset, limit);
+
+        SearchResult searchResult = this.getMultipleEntries(searchRequest);
+
+        List<TenantRole> roles = new ArrayList<TenantRole>();
+        for (SearchResultEntry entry : searchResult.getSearchEntries()) {
+            try {
+                roles.add(getTenantRole(entry));
+            } catch (LDAPPersistException e) {
+                getLogger().error(e.getMessage());
+                throw new IllegalStateException(e);
+            }
+        }
+        context.setValueList(roles);
+
+        return context;
     }
 
     @Override
