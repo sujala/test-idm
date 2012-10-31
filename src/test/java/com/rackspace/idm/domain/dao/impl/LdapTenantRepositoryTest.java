@@ -45,7 +45,7 @@ public class LdapTenantRepositoryTest extends InMemoryLdapIntegrationTest{
     @Mock
     Configuration configuration;
     @Mock
-    DefaultPaginator<TenantRole> paginator;
+    DefaultPaginator<String> stringPaginator;
 
     LdapTenantRepository spy;
     LDAPInterface ldapInterface;
@@ -552,9 +552,9 @@ public class LdapTenantRepositoryTest extends InMemoryLdapIntegrationTest{
 
     @Test
     public void getMultipleTenantRoles_callsPaginator_createSearchRequest() throws Exception {
-        PaginatorContext<TenantRole> context = new PaginatorContext<TenantRole>();
+        PaginatorContext<String> context = new PaginatorContext<String>();
         String[] referalURLs = {"123"};
-        Attribute attribute = new Attribute("attribute");
+        Attribute attribute = new Attribute("o", "rackspace");
         Attribute[] attributes = {attribute};
         Control control = new Control("oid");
         Control[] controls = {control};
@@ -567,16 +567,16 @@ public class LdapTenantRepositoryTest extends InMemoryLdapIntegrationTest{
 
         SearchResult searchResult = new SearchResult(0, ResultCode.SUCCESS, "", "", referalURLs,
                 searchResultEntries, searchResultReferences, 1, 1, null);
-        doReturn(context).when(paginator).createSearchRequest(anyString(), any(SearchRequest.class), anyInt(), anyInt());
+        doReturn(context).when(stringPaginator).createSearchRequest(anyString(), any(SearchRequest.class), anyInt(), anyInt());
         doReturn(searchResult).when(spy).getMultipleEntries(any(SearchRequest.class));
 
         spy.getMultipleTenantRoles("1", 0, 10);
-        verify(paginator).createSearchRequest(anyString(), any(SearchRequest.class), anyInt(), anyInt());
+        verify(stringPaginator).createSearchRequest(anyString(), any(SearchRequest.class), anyInt(), anyInt());
     }
 
     @Test
     public void getMultipleTenantRoles_callsGetMultipleEntries() throws Exception {
-        PaginatorContext<TenantRole> context = new PaginatorContext<TenantRole>();
+        PaginatorContext<String> context = new PaginatorContext<String>();
         String[] referalURLs = {"123"};
         Attribute attribute = new Attribute("attribute");
         Attribute[] attributes = {attribute};
@@ -592,14 +592,15 @@ public class LdapTenantRepositoryTest extends InMemoryLdapIntegrationTest{
         SearchResult searchResult = new SearchResult(0, ResultCode.SUCCESS, "", "", referalURLs,
                 searchResultEntries, searchResultReferences, 1, 1, null);
         doReturn(searchResult).when(spy).getMultipleEntries(any(SearchRequest.class));
-        doReturn(context).when(paginator).createSearchRequest(anyString(), any(SearchRequest.class), anyInt(), anyInt());
+        doReturn(context).when(stringPaginator).createSearchRequest(anyString(), any(SearchRequest.class), anyInt(), anyInt());
 
         spy.getMultipleTenantRoles("1", 0, 10);
         verify(spy).getMultipleEntries(any(SearchRequest.class));
     }
 
-    @Test (expected = IllegalStateException.class)
-    public void getMultipleTenantRoles_throwsIllegalStateExcepton() throws Exception {
+    @Test
+    public void getMultipleTenantRoles_returnsContext() throws Exception {
+        PaginatorContext<String> context = new PaginatorContext<String>();
         String[] referalURLs = {"123"};
         Attribute attribute = new Attribute("attribute");
         Attribute[] attributes = {attribute};
@@ -614,37 +615,32 @@ public class LdapTenantRepositoryTest extends InMemoryLdapIntegrationTest{
 
         SearchResult searchResult = new SearchResult(0, ResultCode.SUCCESS, "", "", referalURLs,
                 searchResultEntries, searchResultReferences, 1, 1, null);
-        doReturn(searchResult).when(spy).getMultipleEntries(any(SearchRequest.class));
-        doThrow(new LDAPPersistException("")).when(spy).getTenantRole(any(SearchResultEntry.class));
 
-        spy.getMultipleTenantRoles("1", 0, 10);
+        doReturn(searchResult).when(spy).getMultipleEntries(any(SearchRequest.class));
+        doReturn(context).when(stringPaginator).createSearchRequest(anyString(), any(SearchRequest.class), anyInt(), anyInt());
+        doReturn("123456").when(spy).getUserIdFromDN(any(DN.class));
+
+        PaginatorContext<String> userIdPaginatorContext = spy.getMultipleTenantRoles("1", 0, 10);
+
+        assertThat("valueList", userIdPaginatorContext.getValueList().size(), equalTo(1));
     }
 
     @Test
-    public void getMultipleTenantRoles_returnsContext() throws Exception {
-        PaginatorContext<TenantRole> context = new PaginatorContext<TenantRole>();
-        String[] referalURLs = {"123"};
-        Attribute attribute = new Attribute("attribute");
-        Attribute[] attributes = {attribute};
-        Control control = new Control("oid");
-        Control[] controls = {control};
-        List<SearchResultEntry> searchResultEntries = new ArrayList<SearchResultEntry>();
-        List<SearchResultReference> searchResultReferences = new ArrayList<SearchResultReference>();
-        SearchResultEntry entry = new SearchResultEntry("", attributes, control);
-        SearchResultReference reference = new SearchResultReference(referalURLs, controls);
-        searchResultEntries.add(entry);
-        searchResultReferences.add(reference);
+    public void getUserIdFromRDN_returnsUserId() throws Exception {
+        DN rootDN = createDN();
 
-        SearchResult searchResult = new SearchResult(0, ResultCode.SUCCESS, "", "", referalURLs,
-                searchResultEntries, searchResultReferences, 1, 1, null);
-        TenantRole role = new TenantRole();
+        String userId = spy.getUserIdFromDN(rootDN);
+        assertThat("userId match", userId.equalsIgnoreCase("123456789"));
+    }
 
-        doReturn(searchResult).when(spy).getMultipleEntries(any(SearchRequest.class));
-        doReturn(context).when(paginator).createSearchRequest(anyString(), any(SearchRequest.class), anyInt(), anyInt());
-        doReturn(role).when(spy).getTenantRole(any(SearchResultEntry.class));
+    protected DN createDN() {
+        RDN rdn = new RDN("clientId", "abcd12345");
+        RDN rdn1 = new RDN("cn", "DIRECT TOKENS");
+        RDN rdn2 = new RDN("rsId", "123456789");
+        RDN rdn3 = new RDN("ou", "users");
+        RDN rdn4 = new RDN("o", "rackspace");
+        RDN rdn5 = new RDN("dc", "rackspace");
 
-        PaginatorContext<TenantRole> tenantRolePaginatorContext = spy.getMultipleTenantRoles("1", 0, 10);
-
-        assertThat("valueList", tenantRolePaginatorContext.getValueList().size(), equalTo(1));
+        return new DN(rdn, rdn1, rdn2, rdn3, rdn4, rdn5);
     }
 }

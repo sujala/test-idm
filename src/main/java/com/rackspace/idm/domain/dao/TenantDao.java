@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.dao;
 
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.entity.*;
+import com.unboundid.ldap.sdk.RDN;
 
 import java.util.List;
 
@@ -28,5 +29,5 @@ public interface TenantDao {
     boolean doesScopeAccessHaveTenantRole(ScopeAccess scopeAccess, ClientRole role);
     List<TenantRole> getAllTenantRolesForClientRole(ClientRole role);
 
-    PaginatorContext<TenantRole> getMultipleTenantRoles(String roleId, int offset, int limit);
+    PaginatorContext<String> getMultipleTenantRoles(String roleId, int offset, int limit);
 }

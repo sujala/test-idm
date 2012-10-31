@@ -18,13 +18,15 @@ import com.unboundid.ldap.sdk.persist.LDAPPersister;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 @Component
 public class LdapTenantRepository extends LdapRepository implements TenantDao {
 
     @Autowired
-    DefaultPaginator<TenantRole> paginator;
+    DefaultPaginator<String> userIdPaginator;
 
     public static final String NULL_OR_EMPTY_TENANT_ID_PARAMETER = "Null or Empty tenantId parameter";
     public static final String ERROR_GETTING_TENANT_OBJECT = "Error getting tenant object";
@@ -503,29 +505,52 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
     }
 
     @Override
-    public PaginatorContext<TenantRole> getMultipleTenantRoles(String roleId, int offset, int limit) {
+    public PaginatorContext<String> getMultipleTenantRoles(String roleId, int offset, int limit) {
         LdapSearchBuilder searchBuilder = new LdapSearchBuilder();
         searchBuilder.addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TENANT_ROLE);
         searchBuilder.addEqualAttribute(ATTR_ROLE_RS_ID, roleId);
         Filter searchFilter = searchBuilder.build();
 
         SearchRequest searchRequest = new SearchRequest(USERS_BASE_DN, SearchScope.SUB, searchFilter, "*");
-        PaginatorContext<TenantRole> context = paginator.createSearchRequest(ATTR_ID, searchRequest, offset, limit);
+        PaginatorContext<String> context = userIdPaginator.createSearchRequest(ATTR_ID, searchRequest, offset, limit);
 
         SearchResult searchResult = this.getMultipleEntries(searchRequest);
 
-        List<TenantRole> roles = new ArrayList<TenantRole>();
+        if (searchResult == null) {
+            return context;
+        }
+
+        userIdPaginator.createPage(searchResult, context);
+        List<String> userIds = new ArrayList<String>();
         for (SearchResultEntry entry : searchResult.getSearchEntries()) {
             try {
-                roles.add(getTenantRole(entry));
-            } catch (LDAPPersistException e) {
-                getLogger().error(e.getMessage());
+                userIds.add(getUserIdFromDN(entry.getParsedDN()));
+            } catch (LDAPException e) {
                 throw new IllegalStateException(e);
+            } catch (Exception e) {
+                // noop
             }
         }
-        context.setValueList(roles);
+
+        context.setValueList(userIds);
 
         return context;
+    }
+
+    protected String getUserIdFromDN(DN dn) throws Exception {
+        DN parentDN = dn.getParent();
+        List<RDN> rdns = new ArrayList<RDN>(Arrays.asList(dn.getRDNs()));
+        List<RDN> parentRDNs = new ArrayList<RDN>(Arrays.asList(parentDN.getRDNs()));
+        List<RDN> remainder = new ArrayList<RDN>(rdns);
+
+        remainder.removeAll(parentRDNs);
+        RDN rdn = remainder.get(0);
+        if (!rdn.hasAttribute("rsId")) {
+            return getUserIdFromDN(parentDN);
+        } else {
+            String rdnString = rdn.toString();
+            return rdnString.substring(rdnString.indexOf("=") + 1);
+        }
     }
 
     @Override

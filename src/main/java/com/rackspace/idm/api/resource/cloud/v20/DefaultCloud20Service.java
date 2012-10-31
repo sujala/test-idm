@@ -2105,6 +2105,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             filters = setFilters(role.getId(), null);
         }
 
+        marker = validateOffset(marker);
+        limit = validateLimit(limit);
+
         PaginatorContext<User> paginator = this.userService.getUsersWithRole(filters, roleId, marker, limit);
         String linkHeader = paginator.createLinkHeader(uriInfo);
 
@@ -2118,6 +2121,23 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
         return new FilterParam[]{new FilterParam(FilterParamName.DOMAIN_ID, domainId),
                                     new FilterParam(FilterParamName.ROLE_ID, roleId)};
+    }
+
+    protected int validateOffset(Integer offset) {
+        if (offset == null) {
+            return 0;
+        }
+        return offset < 0 ? 0 : offset;
+    }
+
+    protected int validateLimit(Integer limit) {
+        if (limit < 1) {
+            return config.getInt("ldap.paging.limit.default");
+        } else if (limit >= config.getInt("ldap.paging.limit.max")) {
+            return config.getInt("ldap.paging.limit.max");
+        } else {
+            return limit;
+        }
     }
 
     @Override
@@ -2371,10 +2391,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             throw new BadRequestException("Marker must be a number");
         }
         return iMarker;
-    }
-
-    int validateLimit(Integer limit) {
-        return ((limit != null) ? limit : 0);
     }
 
     // KSADM Extension User methods

@@ -134,7 +134,7 @@ public class DefaultPaginatorTest {
 
         PaginatorContext<User> context = new PaginatorContext<User>();
         context.setOffset(1);
-        context.setLimit(10, 10, 100);
+        context.setLimit(10);
 
         userPaginator.createPage(searchResult, context);
 

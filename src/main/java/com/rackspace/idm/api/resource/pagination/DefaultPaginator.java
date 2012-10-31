@@ -38,12 +38,16 @@ public class DefaultPaginator<T> implements Paginator<T> {
     	int contentCount = 0;
         PaginatorContext<T> context = new PaginatorContext<T>();
         context.setOffset(offset);
-        context.setLimit(limit, config.getInt("ldap.paging.limit.default"), config.getInt("ldap.paging.limit.max"));
+        context.setLimit(limit);
 
     	ServerSideSortRequestControl sortRequest = new ServerSideSortRequestControl(new SortKey(sortAttribute));
 
-        VirtualListViewRequestControl vlvRequest = new VirtualListViewRequestControl(context.getOffset(), 0, context.getLimit() - 1, contentCount, null);
-        searchRequest.setControls(new Control[]{sortRequest, vlvRequest});
+        if (context.getOffset() == 0) {
+            offset = 1;
+        }
+
+        VirtualListViewRequestControl vlvRequest = new VirtualListViewRequestControl(offset, 0, context.getLimit() - 1, contentCount, null);
+        searchRequest.setControls(sortRequest, vlvRequest);
 
         return context;
     }
@@ -54,9 +58,10 @@ public class DefaultPaginator<T> implements Paginator<T> {
 
         try {
             VirtualListViewResponseControl vlvResponseControl = VirtualListViewResponseControl.get(searchResult);
-            context.makePageLinks(vlvResponseControl.getContentCount());
+            context.setTotalRecords(vlvResponseControl.getContentCount());
+            context.makePageLinks();
         } catch (LDAPException e) {
-            context.makePageLinks(0);
+            context.makePageLinks();
         }
     }
 

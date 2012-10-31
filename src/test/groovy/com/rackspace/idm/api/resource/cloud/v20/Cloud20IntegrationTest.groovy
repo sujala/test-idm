@@ -17,7 +17,6 @@ import org.openstack.docs.identity.api.v2.*
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.ensureGrizzlyStarted
 import static javax.ws.rs.core.MediaType.APPLICATION_XML
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Regions
-import com.rackspace.idm.domain.entity.Users
 
 class Cloud20IntegrationTest extends Specification {
     @Shared WebResource resource
@@ -33,9 +32,11 @@ class Cloud20IntegrationTest extends Specification {
     @Shared def identityAdmin
     @Shared def userAdmin
     @Shared def defaultUser
+    @Shared def defaultUserTwo
+    @Shared def defaultUserThree
     @Shared def sharedRandomness = UUID.randomUUID()
     @Shared def sharedRandom
-    @Shared def sharedRoleId
+    @Shared def sharedRole
 
     def randomness = UUID.randomUUID()
     static def X_AUTH_TOKEN = "X-Auth-Token"
@@ -87,16 +88,16 @@ class Cloud20IntegrationTest extends Specification {
         sharedRegion = getRegionResponse.getEntity(Region)
 
         //create role
-        if (sharedRoleId == null) {
+        if (sharedRole == null) {
             def response = createRole(serviceAdminToken, role())
-            sharedRoleId = response.getEntity(Role).id
+            sharedRole = response.getEntity(Role).value
         }
     }
 
     def cleanupSpec() {
         deleteGroup(serviceAdminToken, group.getId())
         deleteRegion(serviceAdminToken, sharedRegion.getName())
-        deleteRole(serviceAdminToken, sharedRoleId)
+        deleteRole(serviceAdminToken, sharedRole.getId())
     }
 
     def 'User CRUD'() {
@@ -430,50 +431,40 @@ class Cloud20IntegrationTest extends Specification {
 
     def "listUsersWithRole empty list returns"() {
         when:
-        def response = listUsersWithRole(serviceAdminToken, sharedRoleId)
+        def response = listUsersWithRole(serviceAdminToken, sharedRole.getId())
 
         then:
         response.status == 200
-        response.getEntity(Users).users.size() == 0
+        response.getEntity(UserList).value.user.size == 0
         response.headers.getFirst("Link") == null
     }
 
-    def "listUsersWithRole "() {
+    def "listUsersWithRole non empty list"() {
         given:
-        addRoleToUser(serviceAdminToken, sharedRoleId, defaultUser.id)
+        addRoleToUser(serviceAdminToken, sharedRole.getId(), identityAdmin.getId())
+        addRoleToUser(serviceAdminToken, sharedRole.getId(), defaultUser.getId())
 
         when:
-        def userAdminResponse = listUsersWithRole(userAdminToken, sharedRoleId)
-        def serviceAdminResponse = listUsersWithRole(serviceAdminToken, sharedRoleId)
+        def userAdminResponse = listUsersWithRole(userAdminToken, sharedRole.getId())
+        def serviceAdminResponse = listUsersWithRole(serviceAdminToken, sharedRole.getId())
+        def identityAdminResponse = listUsersWithRole(identityAdminToken, sharedRole.getId())
 
         then:
-        serviceAdminResponse.status == 200
         userAdminResponse.status == 200
-        serviceAdminResponse.getEntity(Users).users.size() == 1
-        userAdminResponse.getEntity(Users).users.size() == 1
-        userAdminResponse.getEntity(Users).equals(serviceAdminResponse.getEntity(Users))
+        userAdminResponse.getEntity(UserList).value.user.size == 1
+        serviceAdminResponse.status == 200
+        serviceAdminResponse.getEntity(UserList).value.user.size == 2
+        identityAdminResponse.status == 200
+        identityAdminResponse.getEntity(UserList).value.user.size == 2
+
     }
 
-    def "listUsersWithRole negative offset returns same response"() {
+    def "listUsersWithRole offset greater than result set length returns 400"() {
         given:
-        addRoleToUser(serviceAdmin, sharedRoleId, defaultUser.id)
+        addRoleToUser(serviceAdminToken, sharedRole.getId(), defaultUser.getId())
 
         when:
-        def response1 = listUsersWithRole(serviceAdminToken, sharedRoleId)
-        def response2 = listUser(serviceAdminToken, sharedRoleId, -5, 10)
-
-        then:
-        response1.status == 200
-        response2.status == 200
-        response1.getEntity(Users).equals(response2.getEntity(Users))
-    }
-
-    def "listUsersWithRole offset greater than result set length"() {
-        given:
-        addRoleToUser(serviceAdmin, sharedRoleId, defaultUser.id)
-
-        when:
-        def response = listUsersWithRole(serviceAdminToken, sharedRoleId, 100, 10)
+        def response = listUsersWithRole(serviceAdminToken, sharedRole.getId(), 100, 10)
 
         then:
         response.status == 400
@@ -580,12 +571,24 @@ class Cloud20IntegrationTest extends Specification {
         resource.path(path).path("OS-KSADM/roles").path(roleId).path("RAX-AUTH/users").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
+    def listUsersWithRole(String token, String roleId, int offset, int limit) {
+        resource.path(path).path("OS-KSADM/roles").path(roleId).path("RAX-AUTH/users").path(String.format("?offset=%s&limit=%s", offset, limit)).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+    }
+
     def createRole(String token, Role role) {
         resource.path(path).path("OS-KSADM/roles").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).entity(role).post(ClientResponse)
     }
 
     def deleteRole(String token, String roleId) {
         resource.path(path).path("OS-KSADM/roles").path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
+    }
+
+    def addRoleToUser(String token, String roleId, String userId) {
+        resource.path(path).path("users").path(userId).path("roles/OS-KSADM").path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).put(ClientResponse)
+    }
+
+    def removeRoleFromUser(String token, String roleId, String userId) {
+        resource.path(path).path("users").path(userId).path("roles/OS-KSADM").path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete()
     }
 
     //Helper Methods
@@ -675,7 +678,7 @@ class Cloud20IntegrationTest extends Specification {
 
     def role() {
         new Role().with {
-            it.name = "testGlobalRole"
+            it.name = "role$sharedRandom"
             it.description = "Test Global Role"
             return it
         }

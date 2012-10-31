@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.pagination;
 
+import com.rackspace.idm.exception.BadRequestException;
 import com.unboundid.ldap.sdk.SearchResultEntry;
 
 import javax.ws.rs.core.UriInfo;
@@ -22,6 +23,7 @@ public class PaginatorContext<T> {
 
     private int offset;
     private int limit;
+    private int totalRecords;
 
 
     public List<SearchResultEntry> getSearchResultEntryList() {
@@ -45,23 +47,17 @@ public class PaginatorContext<T> {
     }
 
     public void setOffset(int offset) {
-        this.offset = offset < 1 ? 1 : offset;
+        this.offset = offset;
     }
 
-    public void setLimit(int limit, int limitDefault, int limitMax) {
-        if (limit < 1) {
-            this.limit = limitDefault;
-        } else if (limit >= limitMax) {
-            this.limit = limitMax;
-        } else {
-            this.limit = limit;
-        }
+    public void setLimit(int limit) {
+        this.limit = limit;
     }
 
-    public void makePageLinks(int totalRecords) {
+    public void makePageLinks() {
         if (totalRecords > 0) {
             if (offset > totalRecords) {
-                offset = 1;
+                throw new BadRequestException("Offset greater than total number of records");
             }
 
             int lastIndex = (totalRecords - limit) < 0 ? 0 : (totalRecords - limit);
@@ -143,5 +139,13 @@ public class PaginatorContext<T> {
         rel = String.format("\"%s\"", rel);
         link.append("<").append(path).append(query).append(">; rel=").append(rel);
         return link.toString();
+    }
+
+    public int getTotalRecords() {
+        return totalRecords;
+    }
+
+    public void setTotalRecords(int totalRecords) {
+        this.totalRecords = totalRecords;
     }
 }

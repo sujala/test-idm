@@ -1150,54 +1150,32 @@ public class DefaultUserServiceTest {
         FilterParam filter = new FilterParam(FilterParam.FilterParamName.ROLE_ID, "123456789");
         FilterParam[] filters = {filter};
 
-        TenantRole tenantRole = new TenantRole();
-        tenantRole.setUserId("userId");
-        List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
-        tenantRoles.add(tenantRole);
         List<SearchResultEntry> searchResultEntries = new ArrayList<SearchResultEntry>(20);
         User user = new User();
+        user.setId("123456789");
+        List<String> userIds = new ArrayList<String>();
+        userIds.add("123456789");
+        userIds.add("135792468");
 
-        PaginatorContext<TenantRole> tenantRoleContext = new PaginatorContext<TenantRole>();
-        tenantRoleContext.setValueList(tenantRoles);
-        tenantRoleContext.setSearchResultEntryList(searchResultEntries);
-        tenantRoleContext.setOffset(1);
-        tenantRoleContext.setLimit(5, 10, 20);
+        PaginatorContext<String> userIdContext = new PaginatorContext<String>();
+        userIdContext.setValueList(userIds);
+        userIdContext.setSearchResultEntryList(searchResultEntries);
+        userIdContext.setOffset(1);
+        userIdContext.setLimit(5);
 
-        doReturn(tenantRoleContext).when(tenantDao).getMultipleTenantRoles(anyString(), anyInt(), anyInt());
-        doReturn(user).when(userDao).getUserById(anyString());
+        doReturn(userIdContext).when(tenantDao).getMultipleTenantRoles(anyString(), anyInt(), anyInt());
+        doReturn(user).when(spy).getUserById(anyString());
 
-        defaultUserService.getUsersWithRole(filters, "123456789", 0, 10);
-        verify(userDao).getUserById(anyString());
+        PaginatorContext<User> userContext = defaultUserService.getUsersWithRole(filters, "123456789", 0, 10);
+
+        assertThat("context", userContext.getValueList().size(), equalTo(0));
     }
 
-    @Ignore // need to mock this.getAllUsers call
     @Test
     public void getUsersWithRole_UserAdmin_callsgetAllUsers() throws Exception {
         FilterParam filter = new FilterParam(FilterParam.FilterParamName.ROLE_ID, "123456789");
         FilterParam filter2 = new FilterParam(FilterParam.FilterParamName.DOMAIN_ID, "123456789");
         FilterParam[] filters = {filter, filter2};
-
-        TenantRole tenantRole = new TenantRole();
-        tenantRole.setUserId("userId");
-        tenantRole.setRoleRsId("123456789");
-        List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
-        tenantRoles.add(tenantRole);
-        List<SearchResultEntry> searchResultEntries = new ArrayList<SearchResultEntry>(20);
-        User user = new User();
-        user.setRoles(tenantRoles);
-        List<User> userList = new ArrayList<User>();
-        userList.add(user);
-        Users users = new Users();
-        users.setUsers(userList);
-
-        PaginatorContext<TenantRole> tenantRoleContext = new PaginatorContext<TenantRole>();
-        tenantRoleContext.setValueList(tenantRoles);
-        tenantRoleContext.setSearchResultEntryList(searchResultEntries);
-        tenantRoleContext.setOffset(1);
-        tenantRoleContext.setLimit(5, 10, 20);
-
-        when(spy.getAllUsers(any(FilterParam[].class))).thenReturn(users);
-        doReturn(user).when(userDao).getUserById(anyString());
 
         defaultUserService.getUsersWithRole(filters, "123456789", 0, 10);
         verify(spy).getAllUsers(any(FilterParam[].class));

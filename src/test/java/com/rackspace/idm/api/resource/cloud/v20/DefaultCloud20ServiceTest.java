@@ -6614,7 +6614,7 @@ public class DefaultCloud20ServiceTest {
     protected PaginatorContext<User> makeUserPaginatorContext() {
         PaginatorContext<User> context = new PaginatorContext<User>();
         context.setOffset(0);
-        context.setLimit(10, 25, 100);
+        context.setLimit(10);
         ArrayList<User> userList = new ArrayList<User>();
         userList.add(new User());
         context.setValueList(userList);
