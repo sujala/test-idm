@@ -5,7 +5,6 @@ import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.Question;
 import com.rackspace.idm.domain.service.QuestionService;
 import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.unboundid.ldap.sdk.Filter;
 import org.apache.cxf.common.util.StringUtils;
@@ -21,15 +20,11 @@ public class DefaultQuestionService implements QuestionService {
     LdapQuestionRepository questionDao;
 
     @Override
-    public void addQuestion(Question question) {
+    public String addQuestion(Question question) {
         validateQuestion(question);
-        Question duplicateQuestion = getQuestionSearchFilter(question.getId());
-
-        if (duplicateQuestion != null) {
-            throw new DuplicateException("question with id already exists");
-        }
-
+        question.setId(questionDao.getNextId());
         questionDao.addObject(question);
+        return question.getId();
     }
 
     @Override
@@ -37,7 +32,7 @@ public class DefaultQuestionService implements QuestionService {
         validateQuestionId(questionId);
         validateQuestion(question);
 
-        if (!questionId.equals(question.getId())) {
+        if (question.getId() != null && !questionId.equals(question.getId())) {
             throw new BadRequestException("question id does not match");
         }
 
@@ -72,8 +67,6 @@ public class DefaultQuestionService implements QuestionService {
         if (question == null) {
             throw new BadRequestException("question cannot be null");
         }
-
-        validateQuestionId(question.getId());
 
         if (StringUtils.isEmpty(question.getQuestion())) {
             throw new BadRequestException("missing required question");

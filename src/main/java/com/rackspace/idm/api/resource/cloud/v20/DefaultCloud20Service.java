@@ -2151,10 +2151,10 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder addQuestion(UriInfo uriInfo, String authToken, Question question) {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            questionService.addQuestion(questionConverter.fromQuestion(question));
+            String questionId = questionService.addQuestion(questionConverter.fromQuestion(question));
 
             UriBuilder requestUriBuilder = uriInfo.getRequestUriBuilder();
-            URI build = requestUriBuilder.path(question.getId()).build();
+            URI build = requestUriBuilder.path(questionId).build();
             return Response.created(build);
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);

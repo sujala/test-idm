@@ -399,22 +399,21 @@ class Cloud20IntegrationTest extends Specification {
 
     def "question crud"() {
         given:
-        def random = ("$randomness").replace('-', "")
-        def questionId = "region${random}"
-        def question1 = question(questionId, "question")
-        def question2 = question(questionId, "question changed")
+        def question1 = question(null, "question")
+        def question2 = question(null, "question changed")
 
         when:
         def createResponse = createQuestion(serviceAdminToken, question1)
-        def getCreateResponse = getQuestion(serviceAdminToken, questionId)
+        def getCreateResponse = getQuestionFromLocation(serviceAdminToken, createResponse.location)
         def createEntity = getCreateResponse.getEntity(Question)
+        question2.id = createEntity.id
 
-        def updateResponse = updateQuestion(serviceAdminToken, questionId, question2)
-        def getUpdateResponse = getQuestion(serviceAdminToken, questionId)
+        def updateResponse = updateQuestion(serviceAdminToken, createEntity.id, question2)
+        def getUpdateResponse = getQuestion(serviceAdminToken, createEntity.id)
         def updateEntity = getUpdateResponse.getEntity(Question)
 
-        def deleteResponse = deleteQuestion(serviceAdminToken, questionId)
-        def getDeleteResponse = getQuestion(serviceAdminToken, questionId)
+        def deleteResponse = deleteQuestion(serviceAdminToken, createEntity.id)
+        def getDeleteResponse = getQuestion(serviceAdminToken, createEntity.id)
 
         def getQuestionResponse = getQuestions(serviceAdminToken)
         def questions = getQuestionResponse.getEntity(Questions)
@@ -422,7 +421,7 @@ class Cloud20IntegrationTest extends Specification {
         then:
         createResponse.status == 201
         createResponse.location != null
-        question1.id == createEntity.id
+        createEntity.id != null
         question1.question == createEntity.question
 
         updateResponse.status == 204
@@ -455,10 +454,8 @@ class Cloud20IntegrationTest extends Specification {
         where:
         response << [
                 updateQuestion(serviceAdminToken, "ids", question("dontmatch", "question")),
-                updateQuestion(serviceAdminToken, "id", question(null, "question")),
                 updateQuestion(serviceAdminToken, "id", question("id", null)),
                 createQuestion(serviceAdminToken, question("id", null)),
-                createQuestion(serviceAdminToken, question(null, "question")),
         ]
     }
 
@@ -565,6 +562,10 @@ class Cloud20IntegrationTest extends Specification {
 
     def getQuestion(String token, questionId) {
         resource.path(path).path(RAX_AUTH).path("secretqa/questions").path(questionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).get(ClientResponse)
+    }
+
+    def getQuestionFromLocation(String token, location) {
+        resource.uri(location).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).get(ClientResponse)
     }
 
     def getQuestions(String token) {

@@ -21,4 +21,5 @@ public interface GenericDao<T> {
     String getBaseDn();
     String[] getSearchAttributes();
     String getLdapEntityClass();
+    String getNextId();
 }
