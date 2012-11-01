@@ -2131,7 +2131,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     protected int validateLimit(Integer limit) {
-        if (limit < 1) {
+        if (limit == null || limit < 1) {
             return config.getInt("ldap.paging.limit.default");
         } else if (limit >= config.getInt("ldap.paging.limit.max")) {
             return config.getInt("ldap.paging.limit.max");

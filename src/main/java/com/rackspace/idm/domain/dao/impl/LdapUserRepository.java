@@ -444,6 +444,19 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return users;
     }
 
+    @Override
+    public Users getAllUsersNoLimit(FilterParam[] filters) {
+        getLogger().debug("Getting all users");
+
+        Filter searchFilter = createSearchFilter(filters);
+        Users users = getMultipleUsers(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES);
+
+        getLogger().debug(FOUND_USERS, users);
+
+        return users;
+    }
+
+
     protected Filter createSearchFilter(FilterParam[] filterParams) {
         LdapSearchBuilder searchBuilder = new LdapSearchBuilder();
         searchBuilder.addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON);
@@ -885,6 +898,30 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         users.setTotalRecords(contentCount);
         users.setUsers(userList);
         getLogger().debug("Returning {} Users.", users.getTotalRecords());
+        return users;
+    }
+
+    Users getMultipleUsers(Filter searchFilter, String[] searchAttributes) {
+        List<User> userList = new ArrayList<User>();
+
+        try {
+            List<SearchResultEntry> entries = this.getMultipleEntries(
+                    USERS_BASE_DN, SearchScope.SUB, ATTR_UID, searchFilter, searchAttributes);
+            for (SearchResultEntry entry : entries) {
+                userList.add(getUser(entry));
+            }
+        } catch (GeneralSecurityException e) {
+            getLogger().error(e.getMessage());
+            throw new IllegalStateException(e);
+        } catch (InvalidCipherTextException e) {
+            getLogger().error(e.getMessage());
+            throw new IllegalStateException(e);
+        }
+
+        Users users = new Users();
+        users.setUsers(userList);
+
+        getLogger().debug("returning {} users", userList.size());
         return users;
     }
 

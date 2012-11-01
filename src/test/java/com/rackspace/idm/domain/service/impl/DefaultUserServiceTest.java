@@ -1144,40 +1144,4 @@ public class DefaultUserServiceTest {
         defaultUserService.getPaginatedUsers(filters, 0, 5);
         verify(userDao).getPaginatedUsers(any(FilterParam[].class), anyInt(), anyInt());
     }
-
-    @Test
-    public void getUsersWithRole_nonUserAdmin_callsUserDao_getUserById() throws Exception {
-        FilterParam filter = new FilterParam(FilterParam.FilterParamName.ROLE_ID, "123456789");
-        FilterParam[] filters = {filter};
-
-        List<SearchResultEntry> searchResultEntries = new ArrayList<SearchResultEntry>(20);
-        User user = new User();
-        user.setId("123456789");
-        List<String> userIds = new ArrayList<String>();
-        userIds.add("123456789");
-        userIds.add("135792468");
-
-        PaginatorContext<String> userIdContext = new PaginatorContext<String>();
-        userIdContext.setValueList(userIds);
-        userIdContext.setSearchResultEntryList(searchResultEntries);
-        userIdContext.setOffset(1);
-        userIdContext.setLimit(5);
-
-        doReturn(userIdContext).when(tenantDao).getMultipleTenantRoles(anyString(), anyInt(), anyInt());
-        doReturn(user).when(spy).getUserById(anyString());
-
-        PaginatorContext<User> userContext = defaultUserService.getUsersWithRole(filters, "123456789", 0, 10);
-
-        assertThat("context", userContext.getValueList().size(), equalTo(0));
-    }
-
-    @Test
-    public void getUsersWithRole_UserAdmin_callsgetAllUsers() throws Exception {
-        FilterParam filter = new FilterParam(FilterParam.FilterParamName.ROLE_ID, "123456789");
-        FilterParam filter2 = new FilterParam(FilterParam.FilterParamName.DOMAIN_ID, "123456789");
-        FilterParam[] filters = {filter, filter2};
-
-        defaultUserService.getUsersWithRole(filters, "123456789", 0, 10);
-        verify(spy).getAllUsers(any(FilterParam[].class));
-    }
 }

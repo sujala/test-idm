@@ -848,7 +848,7 @@ public class DefaultUserService implements UserService {
 
     @Override
     public PaginatorContext<User> getUsersWithRole(FilterParam[] filters, String roleId, int offset, int limit) {
-        logger.debug("Getting Users Paged");
+        logger.debug("Getting Users with Role {}", roleId);
 
         PaginatorContext<User> userContext = new PaginatorContext<User>();
 
@@ -866,35 +866,11 @@ public class DefaultUserService implements UserService {
             setUserContext(userContext, context.getLimit(), context.getOffset(),
                             context.getTotalRecords(), userList);
         } else {
-            Users users = this.getAllUsers(filters);
+            Users users = this.getAllUsersNoLimit(filters);
             List<User> usersWithRoleList = new ArrayList<User>();
-            for (User user : users.getUsers()) {
-                List<TenantRole> roles = tenantService.getGlobalRolesForUser(user);
-                if (user.getRoles() != null) {
-                    roles.addAll(user.getRoles());
-                }
+            filterUsersForRole(users, usersWithRoleList, roleId);
 
-                for (TenantRole tenantRole : roles) {
-                    if (tenantRole.getRoleRsId().equals(roleId)) {
-                        usersWithRoleList.add(user);
-                        break;
-                    }
-                }
-            }
-
-            if (offset > usersWithRoleList.size()) {
-                throw new BadRequestException(String.format("offset greater than total result set size: %s", usersWithRoleList.size()));
-            }
-            List<User> subList;
-            if (usersWithRoleList.size() > limit) {
-                try {
-                    subList = usersWithRoleList.subList(offset, offset + limit);
-                } catch (Exception ex) {
-                    subList = usersWithRoleList.subList(offset, usersWithRoleList.size() - 1);
-                }
-            } else {
-                subList = usersWithRoleList;
-            }
+            List<User> subList = getSubList(usersWithRoleList, offset, limit);
 
             setUserContext(userContext, limit, offset, usersWithRoleList.size(), subList);
         }
@@ -902,6 +878,48 @@ public class DefaultUserService implements UserService {
         logger.debug("Got Users {}", filters);
 
         return userContext;
+    }
+
+    protected Users getAllUsersNoLimit(FilterParam[] filters) {
+        logger.debug("Getting all users with {}", filters);
+
+        Users users = this.userDao.getAllUsersNoLimit(filters);
+
+        logger.debug("Got users {}", users);
+
+        return users;
+    }
+
+    protected void filterUsersForRole(Users users, List<User> usersWithRole, String roleId) {
+        for (User user : users.getUsers()) {
+            List<TenantRole> roles = tenantService.getGlobalRolesForUser(user);
+            if (user.getRoles() != null) {
+                roles.addAll(user.getRoles());
+            }
+
+            for (TenantRole tenantRole : roles) {
+                if (tenantRole.getRoleRsId().equals(roleId)) {
+                    usersWithRole.add(user);
+                    break;
+                }
+            }
+        }
+    }
+
+    protected List<User> getSubList(List<User> userList, int offset, int limit) {
+        if (offset > userList.size()) {
+            throw new BadRequestException(String.format("offset greater than total result set size: %s", userList.size()));
+        }
+
+        if (userList.size() > limit) {
+            if (userList.size() > offset + limit) {
+                return userList.subList(offset, offset + limit);
+            } else {
+                return userList.subList(offset, userList.size());
+            }
+        } else {
+            return userList.subList(offset, userList.size());
+        }
     }
 
     protected void setUserContext(PaginatorContext<User> userContext, int limit, int offset, int totalRecords, List<User> userList) {

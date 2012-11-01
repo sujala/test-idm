@@ -66,6 +66,7 @@ class Cloud20IntegrationTest extends Specification {
             userAdmin = userAdminResponse.getEntity(User)
         }
         userAdminToken = authenticate("testUserAdmin_doNotDeleteMe", "Password1").getEntity(AuthenticateResponse).value.token.id
+
         //Default User
         def defaultUserResponse = getUserByName(userAdminToken, "testDefaultUser_doNotDeleteMe")
         if (defaultUserResponse.getStatus() == 404) {

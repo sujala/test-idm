@@ -63,4 +63,6 @@ public interface UserDao {
     void unSoftDeleteUser(User user);
 
     PaginatorContext<User> getPaginatedUsers(FilterParam[] filterParams, int offset, int limit);
+
+    Users getAllUsersNoLimit(FilterParam[] filters);
 }

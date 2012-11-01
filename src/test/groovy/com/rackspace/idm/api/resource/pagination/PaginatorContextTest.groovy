@@ -7,6 +7,7 @@ import com.rackspace.idm.domain.entity.User
 import org.springframework.beans.factory.annotation.Autowired
 import org.apache.commons.configuration.Configuration
 import javax.ws.rs.core.UriInfo
+import com.unboundid.ldap.sdk.SearchResultEntry
 
 /**
  * Created with IntelliJ IDEA.
@@ -19,15 +20,13 @@ import javax.ws.rs.core.UriInfo
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class PaginatorContextTest extends Specification {
 
-    @Autowired
-    private Configuration config
-
     @Shared PaginatorContext<User> paginatorContext
 
     def setupSpec() {
         paginatorContext = new PaginatorContext<User>().with() {
             it.setOffset(1)
-            it.setLimit(10, 25, 100)
+            it.setLimit(10)
+            it.setTotalRecords(25)
             return it
         }
     }
@@ -35,45 +34,33 @@ class PaginatorContextTest extends Specification {
     def cleanupSpec() {
     }
 
-    def "setOffset with invalid value sets to default"() {
+    def "getSearchResultEntryList returns empty list"() {
         when:
-        paginatorContext.setOffset(-10)
+        def list = paginatorContext.getSearchResultEntryList()
 
         then:
-        paginatorContext.getOffset() == 1
+        list.size == 0
     }
 
-    def "setOffset with valid value sets to value"() {
+    def "getValueList returns empty list"() {
         when:
-        paginatorContext.setOffset(10)
+        def list = paginatorContext.getValueList()
 
         then:
-        paginatorContext.getOffset() == 10
+        list.size == 0
     }
 
-    def "setLimit with negative sets to default"() {
+    def "getPageLinks returns empty list"() {
         when:
-        paginatorContext.setLimit(-5, config.getInt("ldap.paging.limit.default"), config.getInt("ldap.paging.limit.max"))
+        def list = paginatorContext.getPageLinks()
 
         then:
-        paginatorContext.getLimit() == config.getInt("ldap.paging.limit.default")
-    }
-
-    def "setLimit with value to large sets to default max"() {
-        when:
-        paginatorContext.setLimit(config.getInt("ldap.paging.limit.max") + 100, config.getInt("ldap.paging.limit.default"), config.getInt("ldap.paging.limit.max"))
-
-        then:
-        paginatorContext.getLimit() == config.getInt("ldap.paging.limit.max")
+        ((HashMap) list).size() == 0
     }
 
     def "makePageLinks within first page"() {
-        given:
-        paginatorContext.setOffset(5)
-        paginatorContext.setLimit(10, 25, 100)
-
         when:
-        paginatorContext.makePageLinks(25)
+        paginatorContext.makePageLinks()
 
         then:
         paginatorContext.getPageLinks().get("first").equals(paginatorContext.getPageLinks().get("prev"))
@@ -82,10 +69,10 @@ class PaginatorContextTest extends Specification {
     def "makePageLinks within last page"() {
         given:
         paginatorContext.setOffset(20)
-        paginatorContext.setLimit(10, 25, 100)
+        paginatorContext.setLimit(10)
 
         when:
-        paginatorContext.makePageLinks(25)
+        paginatorContext.makePageLinks()
 
         then:
         paginatorContext.getPageLinks().get("last").equals(paginatorContext.getPageLinks().get("next"))
@@ -94,10 +81,11 @@ class PaginatorContextTest extends Specification {
     def "makePageLinks not on first or last page"() {
         given:
         paginatorContext.setOffset(15)
-        paginatorContext.setLimit(10, 25, 100)
+        paginatorContext.setLimit(10)
+        paginatorContext.setTotalRecords(50)
 
         when:
-        paginatorContext.makePageLinks(50)
+        paginatorContext.makePageLinks()
 
         then:
         def pageLinks = paginatorContext.getPageLinks()
@@ -110,49 +98,50 @@ class PaginatorContextTest extends Specification {
     def "within first page returns true"() {
         given:
         paginatorContext.setOffset(5)
-        paginatorContext.setLimit(10, 25, 100)
+        paginatorContext.setLimit(10)
+        paginatorContext.setTotalRecords(25)
 
         when:
         def isOnPage = paginatorContext.withinFirstPage()
 
         then:
-        isOnPage == true
+        isOnPage
     }
 
     def "within first page returns false"() {
         given:
         paginatorContext.setOffset(20)
-        paginatorContext.setLimit(10, 25, 100)
+        paginatorContext.setLimit(10)
 
         when:
         def isOnPage = paginatorContext.withinFirstPage()
 
         then:
-        isOnPage == false
+        !isOnPage
     }
 
     def "within last page returns true"() {
         given:
         paginatorContext.setOffset(20)
-        paginatorContext.setLimit(10, 25, 100)
+        paginatorContext.setLimit(10)
 
         when:
-        def isOnPage = paginatorContext.withinLastPage(25)
+        def isOnPage = paginatorContext.withinLastPage()
 
         then:
-        isOnPage == true
+        isOnPage
     }
 
     def "within last page returns false"() {
         given:
         paginatorContext.setOffset(5)
-        paginatorContext.setLimit(10, 25, 100)
+        paginatorContext.setLimit(10)
 
         when:
-        def isOnPage = paginatorContext.withinLastPage(25)
+        def isOnPage = paginatorContext.withinLastPage()
 
         then:
-        isOnPage == false
+        !isOnPage
     }
 
     def  "createLinkHeader returns null"() {

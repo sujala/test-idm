@@ -518,7 +518,34 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         spy.getAllUsers(filterParamArray, 0, 10);
         verify(spy).getMultipleUsers(filter, LdapUserRepository.ATTR_USER_SEARCH_ATTRIBUTES, 0, 10);
     }
-    
+
+    @Test
+    public void getAllUsersNoLimit_callsCreateSearchFilter() throws Exception {
+        FilterParam[] filters = makeFilterParamArray("123456789", "123456879");
+
+        doReturn(new Users()).when(spy).getMultipleUsers(any(Filter.class), any(String[].class));
+
+        spy.getAllUsersNoLimit(filters);
+        verify(spy).createSearchFilter(filters);
+    }
+
+    private FilterParam[] makeFilterParamArray(String role, String domain) {
+        return new FilterParam[]{new FilterParam(FilterParam.FilterParamName.ROLE_ID, role),
+                                                new FilterParam(FilterParam.FilterParamName.DOMAIN_ID, domain)};
+    }
+
+    @Test
+    public void getAllUsersNoLit_callsGetMultipleUsers() throws Exception {
+        FilterParam[] filterParams = makeFilterParamArray("123456789", "123456789");
+        Filter filter = spy.createSearchFilter(filterParams);
+        String[] attributes = new String[]{"*", "createTimestamp", "modifyTimestamp", "dxPwdFailedTime"};
+
+        doReturn(new Users()).when(spy).getMultipleUsers(any(Filter.class), any(String[].class));
+
+        spy.getAllUsersNoLimit(filterParams);
+        verify(spy).getMultipleUsers(filter, attributes);
+    }
+
     @Test
     public void createSearchFilter_filterParamHasRCN_addsAttribute() throws Exception {
         FilterParam filterParam = new FilterParam();
@@ -1244,6 +1271,70 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         doReturn(new User()).when(spy).getUser(searchResultEntry);
         Users result = spy.getMultipleUsers(null, null, -1, 0);
         assertThat("user list", result.getUsers().size(), equalTo(1));
+    }
+
+    @Test
+    public void getMultipleUsers_callsGetMultipleEntries() throws Exception {
+        SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0]);
+        ArrayList<SearchResultEntry> entries = new ArrayList<SearchResultEntry>();
+        entries.add(searchResultEntry);
+        doReturn(entries).when(spy).getMultipleEntries(anyString(), any(SearchScope.class), anyString(), any(Filter.class), any(String[].class));
+        doReturn(new User()).when(spy).getUser(searchResultEntry);
+
+        Filter searchFilter = spy.createSearchFilter(makeFilterParamArray("123456798", "123456789"));
+        spy.getMultipleUsers(searchFilter, new String[]{"*"});
+        verify(spy).getMultipleEntries(anyString(), any(SearchScope.class), anyString(), any(Filter.class), any(String[].class));
+    }
+
+    @Test
+    public void getMultipleUsers_callsGetUser() throws Exception {
+        SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0]);
+        ArrayList<SearchResultEntry> entries = new ArrayList<SearchResultEntry>();
+        entries.add(searchResultEntry);
+        doReturn(entries).when(spy).getMultipleEntries(anyString(), any(SearchScope.class), anyString(), any(Filter.class), any(String[].class));
+        doReturn(new User()).when(spy).getUser(searchResultEntry);
+
+        Filter searchFilter = spy.createSearchFilter(makeFilterParamArray("123456798", "123456789"));
+        spy.getMultipleUsers(searchFilter, new String[]{"*"});
+        verify(spy).getUser(searchResultEntry);
+    }
+
+    @Test
+    public void getMultipleUsers_returnsUsers() throws Exception {
+        SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0]);
+        ArrayList<SearchResultEntry> entries = new ArrayList<SearchResultEntry>();
+        entries.add(searchResultEntry);
+        doReturn(entries).when(spy).getMultipleEntries(anyString(), any(SearchScope.class), anyString(), any(Filter.class), any(String[].class));
+        doReturn(new User()).when(spy).getUser(searchResultEntry);
+
+        Filter searchFilter = spy.createSearchFilter(makeFilterParamArray("123456798", "123456789"));
+        Users users = spy.getMultipleUsers(searchFilter, new String[]{"*"});
+
+        assertThat("users contains one user", users.getUsers().size(), equalTo(1));
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void getMultipleUsers_throwsIllegalStateFromGeneralSecurityException() throws Exception {
+        SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0]);
+        ArrayList<SearchResultEntry> entries = new ArrayList<SearchResultEntry>();
+        entries.add(searchResultEntry);
+        doReturn(entries).when(spy).getMultipleEntries(anyString(), any(SearchScope.class), anyString(), any(Filter.class), any(String[].class));
+        doThrow(new GeneralSecurityException()).when(spy).getUser(searchResultEntry);
+
+        Filter searchFilter = spy.createSearchFilter(makeFilterParamArray("123456798", "123456789"));
+        Users users = spy.getMultipleUsers(searchFilter, new String[]{"*"});
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void getMultipleUsers_throwsIllegalStateFromInvalidCipherTextException() throws Exception {
+        SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0]);
+        ArrayList<SearchResultEntry> entries = new ArrayList<SearchResultEntry>();
+        entries.add(searchResultEntry);
+        doReturn(entries).when(spy).getMultipleEntries(anyString(), any(SearchScope.class), anyString(), any(Filter.class), any(String[].class));
+        doThrow(new InvalidCipherTextException()).when(spy).getUser(searchResultEntry);
+
+        Filter searchFilter = spy.createSearchFilter(makeFilterParamArray("123456798", "123456789"));
+        Users users = spy.getMultipleUsers(searchFilter, new String[]{"*"});
     }
 
     @Test (expected = IllegalStateException.class)

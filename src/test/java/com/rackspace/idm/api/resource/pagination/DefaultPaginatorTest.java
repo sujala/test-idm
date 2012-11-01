@@ -60,33 +60,6 @@ public class DefaultPaginatorTest {
     }
 
     @Test
-    public void createSearchRequest_setsOffset_default() throws Exception {
-        SearchRequest searchRequest = makeSearchRequest();
-
-        PaginatorContext<User> context = userPaginator.createSearchRequest(sortAttribute, searchRequest, -5, 10);
-
-        assertThat("offset", context.getOffset(), equalTo(1));
-    }
-
-    @Test
-    public void createSearchRequest_setsLimit_defaultMax() throws Exception {
-        SearchRequest searchRequest = makeSearchRequest();
-
-        PaginatorContext<User> context = userPaginator.createSearchRequest(sortAttribute, searchRequest, offset, 1000000);
-
-        assertThat("context limit", context.getLimit(), equalTo(100));
-    }
-
-    @Test
-    public void createSearchRequest_setsLimit_default() throws Exception {
-        SearchRequest searchRequest = makeSearchRequest();
-
-        PaginatorContext<User> context = userPaginator.createSearchRequest(sortAttribute, searchRequest, offset, -100);
-
-        assertThat("context limit", context.getLimit(), equalTo(25));
-    }
-
-    @Test
     public void createSearchRequest_setsControls() throws Exception {
         SearchRequest searchRequest = makeSearchRequest();
         SearchRequest compareRequest = makeSearchRequest();
@@ -106,7 +79,7 @@ public class DefaultPaginatorTest {
 
         PaginatorContext<User> context = userPaginator.createSearchRequest(sortAttribute, searchRequest, offset, limit);
 
-        assertThat("context offset", context.getOffset(), equalTo(1));
+        assertThat("context offset", context.getOffset(), equalTo(0));
         assertThat("context limit", context.getLimit(), equalTo(10));
     }
 
@@ -133,7 +106,7 @@ public class DefaultPaginatorTest {
         when(VirtualListViewResponseControl.get(searchResult)).thenReturn(responseControl);
 
         PaginatorContext<User> context = new PaginatorContext<User>();
-        context.setOffset(1);
+        context.setOffset(0);
         context.setLimit(10);
 
         userPaginator.createPage(searchResult, context);
@@ -157,6 +130,7 @@ public class DefaultPaginatorTest {
         userPaginator.createPage(searchResult, context);
 
         assertThat("context result set", context.getSearchResultEntryList().size(), equalTo(0));
+        assertThat("context pageLinks", context.getPageLinks().size(), equalTo(0));
     }
 
     protected VirtualListViewRequestControl makeVLVRequestControl() {

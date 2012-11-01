@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.pagination;
 
 import com.rackspace.idm.exception.BadRequestException;
 import com.unboundid.ldap.sdk.SearchResultEntry;
+import lombok.Data;
 
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
@@ -16,6 +17,7 @@ import java.util.List;
  * Time: 09:23
  * To change this template use File | Settings | File Templates.
  */
+@Data
 public class PaginatorContext<T> {
     private List<SearchResultEntry> searchResultEntryList;
     private List<T> valueList;
@@ -31,27 +33,6 @@ public class PaginatorContext<T> {
             searchResultEntryList = new ArrayList<SearchResultEntry>();
         }
         return searchResultEntryList;
-    }
-
-    public void setSearchResultEntryList(List<SearchResultEntry> searchResultEntries) {
-        this.searchResultEntryList = searchResultEntries;
-    }
-
-
-    public int getLimit() {
-        return limit;
-    }
-
-    public int getOffset() {
-        return offset;
-    }
-
-    public void setOffset(int offset) {
-        this.offset = offset;
-    }
-
-    public void setLimit(int limit) {
-        this.limit = limit;
     }
 
     public void makePageLinks() {
@@ -70,7 +51,7 @@ public class PaginatorContext<T> {
                 getPageLinks().put("prev", String.format("?marker=%s&limit=%s", offset - limit, limit));
             }
 
-            if (withinLastPage(totalRecords)) {
+            if (withinLastPage()) {
                 getPageLinks().put("next", getPageLinks().get("last"));
             } else {
                 getPageLinks().put("next", String.format("?marker=%s&limit=%s", offset + limit, limit));
@@ -79,10 +60,10 @@ public class PaginatorContext<T> {
     }
 
     protected boolean withinFirstPage() {
-        return (1 > this.offset - this.limit);
+        return (0 > this.offset - this.limit);
     }
 
-    protected boolean withinLastPage(int totalRecords) {
+    protected boolean withinLastPage() {
         return (offset + limit > totalRecords - 1);
     }
 
@@ -93,19 +74,11 @@ public class PaginatorContext<T> {
         return valueList;
     }
 
-    public void setValueList(List<T> valueList) {
-        this.valueList = valueList;
-    }
-
     public HashMap<String, String> getPageLinks() {
         if (pageLinks == null) {
             pageLinks = new HashMap<String, String>(4);
         }
         return pageLinks;
-    }
-
-    public void setPageLinks(HashMap<String, String> pageLinks) {
-        this.pageLinks = pageLinks;
     }
 
     public String createLinkHeader(UriInfo uriInfo) {
@@ -139,13 +112,5 @@ public class PaginatorContext<T> {
         rel = String.format("\"%s\"", rel);
         link.append("<").append(path).append(query).append(">; rel=").append(rel);
         return link.toString();
-    }
-
-    public int getTotalRecords() {
-        return totalRecords;
-    }
-
-    public void setTotalRecords(int totalRecords) {
-        this.totalRecords = totalRecords;
     }
 }

@@ -7,17 +7,7 @@ import com.unboundid.ldap.sdk.controls.ServerSideSortRequestControl;
 import com.unboundid.ldap.sdk.controls.SortKey;
 import com.unboundid.ldap.sdk.controls.VirtualListViewRequestControl;
 import com.unboundid.ldap.sdk.controls.VirtualListViewResponseControl;
-import org.apache.commons.configuration.Configuration;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import javax.annotation.PostConstruct;
-import javax.ws.rs.core.UriInfo;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-
 
 /**
  * Created with IntelliJ IDEA.
@@ -29,9 +19,6 @@ import java.util.List;
 
 @Component
 public class DefaultPaginator<T> implements Paginator<T> {
-
-    @Autowired
-    private Configuration config;
 
     @Override
     public PaginatorContext<T> createSearchRequest(String sortAttribute, SearchRequest searchRequest, int offset, int limit) {
@@ -61,6 +48,7 @@ public class DefaultPaginator<T> implements Paginator<T> {
             context.setTotalRecords(vlvResponseControl.getContentCount());
             context.makePageLinks();
         } catch (LDAPException e) {
+            context.setTotalRecords(0);
             context.makePageLinks();
         }
     }
