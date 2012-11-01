@@ -29,13 +29,11 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
     final private Class<T> entityType = (Class<T>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
 
     @Override
-    public List<T> getObjects() {
-        getLogger().debug("Getting all" + entityType.toString());
+    public List<T> getObjects(Filter searchFilter) {
+        getLogger().debug("Getting all " + entityType.toString());
 
         List<T> objects = new ArrayList<T>();
         SearchResult searchResult = null;
-
-        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(ATTR_OBJECT_CLASS, getLdapEntityClass()).build();
 
         try {
             searchResult = getAppInterface().search(getBaseDn(), SearchScope.ONE, searchFilter);
@@ -86,14 +84,9 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
     }
 
     @Override
-    public T getObject(String objectId, Filter searchFilter) {
-        String loggerMsg = String.format("Doing search for %s with id %s", entityType.toString(), objectId);
+    public T getObject(Filter searchFilter) {
+        String loggerMsg = String.format("Doing search for %s", entityType.toString());
         getLogger().debug(loggerMsg);
-        if (StringUtils.isBlank(objectId)) {
-            getLogger().error(NULL_OR_EMPTY_ID_PARAMETER);
-            getLogger().info("Invalid parameter.");
-            throw new IllegalArgumentException("Invalid parameter.");
-        }
 
         T object;
         try {
@@ -109,13 +102,13 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
 
     @Override
     public void updateObject(T object) {
-        String loggerMsg = String.format("Updating object %s", entityType.toString());
-        getLogger().debug(loggerMsg);
         if (object == null || StringUtils.isBlank(object.getUniqueId())) {
             getLogger().error(ERROR_GETTING_OBJECT);
             getLogger().info("Invalid parameter.");
             throw new IllegalArgumentException("Missing argument on update");
         }
+        String loggerMsg = String.format("Updating object %s with id %s", entityType.toString(), object.getUniqueId());
+        getLogger().debug(loggerMsg);
         Audit audit = Audit.log((Auditable)object).modify();
 
         try {
@@ -136,15 +129,11 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
     }
 
     @Override
-    public void deleteObject(String objectId, Filter searchFilter) {
+    public void deleteObject(Filter searchFilter) {
         String loggerMsg = String.format("Deleting object %s", entityType.toString());
         getLogger().debug(loggerMsg);
 
-        if (StringUtils.isBlank(objectId)) {
-            getLogger().error(NULL_OR_EMPTY_ID_PARAMETER);
-            throw new IllegalArgumentException(NULL_OR_EMPTY_ID_PARAMETER);
-        }
-        T object = getObject(objectId, searchFilter);
+        T object = getObject(searchFilter);
         getLogger().debug("Deleting: {}", object);
         final String dn = object.getUniqueId();
         final Audit audit = Audit.log((Auditable)object).delete();

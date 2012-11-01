@@ -14,7 +14,7 @@ class RegionConverterCloudV20Test extends Specification {
 
     def setupSpec() {
         converterCloudV20 = new RegionConverterCloudV20().with {
-            it.objFactories = new JAXBObjectFactories();
+            it.objFactories = new JAXBObjectFactories()
             return it
         }
     }

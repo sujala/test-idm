@@ -13,11 +13,11 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public interface GenericDao<T> {
-    List<T> getObjects();
+    List<T> getObjects(Filter searchFilter);
     void addObject(T object);
-    T getObject(String objectId, Filter searchFilter);
+    T getObject(Filter searchFilter);
     void updateObject(T object);
-    void deleteObject(String objectId, Filter searchFilter);
+    void deleteObject(Filter searchFilter);
     String getBaseDn();
     String[] getSearchAttributes();
     String getLdapEntityClass();
