@@ -2149,38 +2149,58 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder addQuestion(UriInfo uriInfo, String authToken, Question question) {
-        authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-        questionService.addQuestion(questionConverter.fromQuestion(question));
+        try {
+            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            questionService.addQuestion(questionConverter.fromQuestion(question));
 
-        UriBuilder requestUriBuilder = uriInfo.getRequestUriBuilder();
-        URI build = requestUriBuilder.path(question.getId()).build();
-        return Response.created(build);
+            UriBuilder requestUriBuilder = uriInfo.getRequestUriBuilder();
+            URI build = requestUriBuilder.path(question.getId()).build();
+            return Response.created(build);
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
     }
 
     @Override
     public ResponseBuilder getQuestion(String authToken, String questionId) {
-        authorizationService.verifyUserLevelAccess(getScopeAccessForValidToken(authToken));
-        return Response.ok().entity(questionConverter.toQuestion(questionService.getQuestion(questionId)).getValue());
+        try {
+            authorizationService.verifyUserLevelAccess(getScopeAccessForValidToken(authToken));
+            return Response.ok().entity(questionConverter.toQuestion(questionService.getQuestion(questionId)).getValue());
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
     }
 
     @Override
     public ResponseBuilder getQuestions(String authToken) {
-        authorizationService.verifyUserLevelAccess(getScopeAccessForValidToken(authToken));
-        return Response.ok().entity(questionConverter.toQuestions(questionService.getQuestions()).getValue());
+        try {
+            authorizationService.verifyUserLevelAccess(getScopeAccessForValidToken(authToken));
+            return Response.ok().entity(questionConverter.toQuestions(questionService.getQuestions()).getValue());
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
     }
 
     @Override
     public ResponseBuilder updateQuestion(String authToken, String questionId, Question question) {
-        authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-        questionService.updateQuestion(questionId, questionConverter.fromQuestion(question));
-        return Response.noContent();
+        try {
+            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            questionService.updateQuestion(questionId, questionConverter.fromQuestion(question));
+            return Response.noContent();
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
     }
 
     @Override
     public ResponseBuilder deleteQuestion(String authToken, String questionId) {
-        authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-        questionService.deleteQuestion(questionId);
-        return Response.noContent();
+        try {
+            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            questionService.deleteQuestion(questionId);
+            return Response.noContent();
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
     }
 
     public boolean isValidImpersonatee(User user) {
