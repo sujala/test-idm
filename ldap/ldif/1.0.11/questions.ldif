@@ -2,3 +2,34 @@ dn: ou=questions,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: organizationalUnit
 objectClass: top
 ou: questions
+
+dn: rsId=6,ou=questions,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsQuestion
+rsId: 6
+question: What is your pass phrase?
+
+dn: rsId=5,ou=questions,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsQuestion
+rsId: 5
+question: Who let the dogs out?
+
+dn: rsId=4,ou=questions,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsQuestion
+rsId: 4
+question: What is your favorite color?
+
+dn: rsId=3,ou=questions,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsQuestion
+rsId: 3
+question: What is your favorite book?
+
+dn: rsId=2,ou=questions,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsQuestion
+rsId: 2
+question: Where is the best place to live?
+
+dn: rsId=1,ou=questions,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsQuestion
+rsId: 1
+question: What is the location of a dream vacation?
+
