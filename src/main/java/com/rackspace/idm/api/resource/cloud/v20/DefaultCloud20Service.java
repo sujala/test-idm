@@ -160,11 +160,11 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Autowired
     private PolicyValidator policyValidator;
 
-    @Autowired
-    private CapabilityService capabilityService;
-
-    @Autowired
-    private CapabilityConverterCloudV20 capabilityConverterCloudV20;
+//    @Autowired
+//    private CapabilityService capabilityService;
+//
+//    @Autowired
+//    private CapabilityConverterCloudV20 capabilityConverterCloudV20;
 
     @Autowired
     private CloudRegionService cloudRegionService;
@@ -2094,8 +2094,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder updateCapabilities(String authToken, String endpointTemplateId, Capabilities capabilities) {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            com.rackspace.idm.domain.entity.Capabilities capabilitiesObj = capabilityConverterCloudV20.toCapabilitiesDO(capabilities);
-            capabilityService.updateCapabilities(endpointTemplateId, capabilitiesObj);
+//            com.rackspace.idm.domain.entity.Capabilities capabilitiesObj = capabilityConverterCloudV20.toCapabilitiesDO(capabilities);
+//            capabilityService.updateCapabilities(endpointTemplateId, capabilitiesObj);
             return Response.noContent();
         }catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
@@ -2123,9 +2123,10 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder getCapabilities(String authToken, String endpointTemplateId) {
         try{
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            com.rackspace.idm.domain.entity.Capabilities capabilities = capabilityService.getCapabilities(endpointTemplateId);
-            Capabilities capabilitiesObj = capabilityConverterCloudV20.toCapabilities(capabilities);
-            return Response.ok(objFactories.getRackspaceIdentityExtRaxgaV1Factory().createCapabilities(capabilitiesObj).getValue());
+//            com.rackspace.idm.domain.entity.Capabilities capabilities = capabilityService.getCapabilities(endpointTemplateId);
+//            Capabilities capabilitiesObj = capabilityConverterCloudV20.toCapabilities(capabilities);
+//           return Response.ok(objFactories.getRackspaceIdentityExtRaxgaV1Factory().createCapabilities(capabilitiesObj).getValue());
+            return Response.ok();
         }catch (Exception ex){
             return exceptionHandler.exceptionResponse(ex);
         }
@@ -2146,9 +2147,10 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder getCapability(String authToken, String capabilityId, String endpointTemplateId) {
         try{
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            com.rackspace.idm.domain.entity.Capability capability = capabilityService.getCapability(capabilityId, endpointTemplateId);
-            Capability capabilityObj = capabilityConverterCloudV20.toCapability(capability);
-            return Response.ok(objFactories.getRackspaceIdentityExtRaxgaV1Factory().createCapability(capabilityObj).getValue());
+//            com.rackspace.idm.domain.entity.Capability capability = capabilityService.getCapability(capabilityId, endpointTemplateId);
+//            Capability capabilityObj = capabilityConverterCloudV20.toCapability(capability);
+//            return Response.ok(objFactories.getRackspaceIdentityExtRaxgaV1Factory().createCapability(capabilityObj).getValue());
+            return Response.ok();
         } catch (Exception ex){
             return exceptionHandler.exceptionResponse(ex);
         }
@@ -2179,7 +2181,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder removeCapabilities(String authToken, String endpointTemplateId) {
         try{
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            capabilityService.removeCapabilities(endpointTemplateId);
+//            capabilityService.removeCapabilities(endpointTemplateId);
             return Response.noContent();  //To change body of implemented methods use File | Settings | File Templates.
         }catch (Exception ex){
                  return exceptionHandler.exceptionResponse(ex);
@@ -2200,38 +2202,58 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder addQuestion(UriInfo uriInfo, String authToken, Question question) {
-        authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-        questionService.addQuestion(questionConverter.fromQuestion(question));
+        try {
+            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            questionService.addQuestion(questionConverter.fromQuestion(question));
 
-        UriBuilder requestUriBuilder = uriInfo.getRequestUriBuilder();
-        URI build = requestUriBuilder.path(question.getId()).build();
-        return Response.created(build);
+            UriBuilder requestUriBuilder = uriInfo.getRequestUriBuilder();
+            URI build = requestUriBuilder.path(question.getId()).build();
+            return Response.created(build);
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
     }
 
     @Override
     public ResponseBuilder getQuestion(String authToken, String questionId) {
-        authorizationService.verifyUserLevelAccess(getScopeAccessForValidToken(authToken));
-        return Response.ok().entity(questionConverter.toQuestion(questionService.getQuestion(questionId)).getValue());
+        try {
+            authorizationService.verifyUserLevelAccess(getScopeAccessForValidToken(authToken));
+            return Response.ok().entity(questionConverter.toQuestion(questionService.getQuestion(questionId)).getValue());
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
     }
 
     @Override
     public ResponseBuilder getQuestions(String authToken) {
-        authorizationService.verifyUserLevelAccess(getScopeAccessForValidToken(authToken));
-        return Response.ok().entity(questionConverter.toQuestions(questionService.getQuestions()).getValue());
+        try {
+            authorizationService.verifyUserLevelAccess(getScopeAccessForValidToken(authToken));
+            return Response.ok().entity(questionConverter.toQuestions(questionService.getQuestions()).getValue());
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
     }
 
     @Override
     public ResponseBuilder updateQuestion(String authToken, String questionId, Question question) {
-        authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-        questionService.updateQuestion(questionId, questionConverter.fromQuestion(question));
-        return Response.noContent();
+        try {
+            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            questionService.updateQuestion(questionId, questionConverter.fromQuestion(question));
+            return Response.noContent();
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
     }
 
     @Override
     public ResponseBuilder deleteQuestion(String authToken, String questionId) {
-        authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-        questionService.deleteQuestion(questionId);
-        return Response.noContent();
+        try {
+            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            questionService.deleteQuestion(questionId);
+            return Response.noContent();
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
     }
 
     public boolean isValidImpersonatee(User user) {

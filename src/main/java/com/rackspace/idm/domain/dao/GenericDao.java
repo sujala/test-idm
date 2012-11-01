@@ -19,6 +19,5 @@ public interface GenericDao<T> {
     void updateObject(T object);
     void deleteObject(Filter searchFilter);
     String getBaseDn();
-    String[] getSearchAttributes();
     String getLdapEntityClass();
 }

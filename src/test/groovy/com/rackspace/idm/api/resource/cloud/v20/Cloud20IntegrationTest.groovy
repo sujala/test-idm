@@ -1,5 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Question
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Questions
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.sun.jersey.api.client.ClientResponse
 import spock.lang.Shared
@@ -208,6 +210,10 @@ class Cloud20IntegrationTest extends Specification {
                 createRegion(defaultUserToken, region()),
                 updateRegion(defaultUserToken, sharedRegion.getName(), sharedRegion),
                 deleteRegion(defaultUserToken, sharedRegion.getName()),
+                getRegion(defaultUserToken, sharedRegion.getName()),
+                createQuestion(defaultUserToken, question()),
+                updateQuestion(defaultUserToken, "id", question()),
+                deleteQuestion(defaultUserToken, "id"),
         ]
     }
 
@@ -425,6 +431,71 @@ class Cloud20IntegrationTest extends Specification {
         createRegionResponse.status == 409
     }
 
+    def "question crud"() {
+        given:
+        def random = ("$randomness").replace('-', "")
+        def questionId = "region${random}"
+        def question1 = question(questionId, "question")
+        def question2 = question(questionId, "question changed")
+
+        when:
+        def createResponse = createQuestion(serviceAdminToken, question1)
+        def getCreateResponse = getQuestion(serviceAdminToken, questionId)
+        def createEntity = getCreateResponse.getEntity(Question)
+
+        def updateResponse = updateQuestion(serviceAdminToken, questionId, question2)
+        def getUpdateResponse = getQuestion(serviceAdminToken, questionId)
+        def updateEntity = getUpdateResponse.getEntity(Question)
+
+        def deleteResponse = deleteQuestion(serviceAdminToken, questionId)
+        def getDeleteResponse = getQuestion(serviceAdminToken, questionId)
+
+        def getQuestionResponse = getQuestions(serviceAdminToken)
+        def questions = getQuestionResponse.getEntity(Questions)
+
+        then:
+        createResponse.status == 201
+        createResponse.location != null
+        question1.id == createEntity.id
+        question1.question == createEntity.question
+
+        updateResponse.status == 204
+        updateEntity.id == question2.id
+        updateEntity.question == question2.question
+
+        deleteResponse.status == 204
+        getDeleteResponse.status == 404
+
+        getQuestionResponse.status == 200
+        questions != null
+    }
+
+    def "invalid operations on question returns 'not found'"() {
+        expect:
+        response.status == 404
+
+        where:
+        response << [
+                updateQuestion(serviceAdminToken, "notfound", question("notfound", "question")),
+                deleteQuestion(serviceAdminToken, "notfound"),
+                getQuestion(serviceAdminToken, "notfound"),
+        ]
+    }
+
+    def "invalid operations on question returns 'bad request'"() {
+        expect:
+        response.status == 400
+
+        where:
+        response << [
+                updateQuestion(serviceAdminToken, "ids", question("dontmatch", "question")),
+                updateQuestion(serviceAdminToken, "id", question(null, "question")),
+                updateQuestion(serviceAdminToken, "id", question("id", null)),
+                createQuestion(serviceAdminToken, question("id", null)),
+                createQuestion(serviceAdminToken, question(null, "question")),
+        ]
+    }
+
     //Resource Calls
     def createUser(String token, user) {
         resource.path(path).path('users').header(X_AUTH_TOKEN, token).entity(user).post(ClientResponse)
@@ -528,6 +599,26 @@ class Cloud20IntegrationTest extends Specification {
 
     def deleteRegion(String token, String regionId) {
         resource.path(path).path(RAX_AUTH).path("regions").path(regionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
+    }
+
+    def createQuestion(String token, question) {
+        resource.path(path).path(RAX_AUTH).path("secretqa/questions").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(question).post(ClientResponse)
+    }
+
+    def getQuestion(String token, questionId) {
+        resource.path(path).path(RAX_AUTH).path("secretqa/questions").path(questionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).get(ClientResponse)
+    }
+
+    def getQuestions(String token) {
+        resource.path(path).path(RAX_AUTH).path("secretqa/questions").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).get(ClientResponse)
+    }
+
+    def updateQuestion(String token, String questionId, question) {
+        resource.path(path).path(RAX_AUTH).path("secretqa/questions").path(questionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(question).put(ClientResponse)
+    }
+
+    def deleteQuestion(String token, String questionId) {
+        resource.path(path).path(RAX_AUTH).path("secretqa/questions").path(questionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).delete(ClientResponse)
     }
 
     //Helper Methods
@@ -638,5 +729,17 @@ class Cloud20IntegrationTest extends Specification {
 
     def region() {
         return region("name", true, false)
+    }
+
+    def question() {
+        question("id", "question")
+    }
+
+    def question(String id, String question) {
+        new Question().with {
+            it.id = id
+            it.question = question
+            return it
+        }
     }
 }

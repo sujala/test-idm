@@ -22,7 +22,7 @@ public class CapabilityConverterCloudV20 {
     public Capability toCapability(com.rackspace.idm.domain.entity.Capability capability) {
         Capability jaxbCapability = objFactories.getRackspaceIdentityExtRaxgaV1Factory().createCapability();
         jaxbCapability.setAction(capability.getAction());
-        jaxbCapability.setId(capability.getCapabilityId());
+        jaxbCapability.setId(capability.getId());
         jaxbCapability.setName(capability.getName());
         jaxbCapability.setUrl(capability.getUrl());
         jaxbCapability.setDescription(capability.getDescription());
@@ -36,7 +36,7 @@ public class CapabilityConverterCloudV20 {
     public com.rackspace.idm.domain.entity.Capability toCapabilityDO(Capability capability){
         com.rackspace.idm.domain.entity.Capability capabilityDO = new com.rackspace.idm.domain.entity.Capability();
         capabilityDO.setAction(capability.getAction());
-        capabilityDO.setCapabilityId(capability.getId());
+        capabilityDO.setId(capability.getId());
         capabilityDO.setName(capability.getName());
         capabilityDO.setUrl(capability.getUrl());
         capabilityDO.setDescription(capability.getDescription());

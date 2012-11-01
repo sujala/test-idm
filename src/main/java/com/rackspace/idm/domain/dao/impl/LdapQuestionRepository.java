@@ -20,8 +20,4 @@ public class LdapQuestionRepository extends LdapGenericRepository<Question>{
     public String getLdapEntityClass(){
         return OBJECTCLASS_QUESTION;
     }
-
-    public String[] getSearchAttributes(){
-        return ATTR_QUESTION_SEARCH_ATTRIBUTES;
-    }
 }

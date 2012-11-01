@@ -15,14 +15,16 @@
 
     <!-- <import namespace="http://docs.openstack.org/identity/api/v2.0" schemaLocation="token.xsd" />
          <import namespace="http://docs.openstack.org/identity/api/v2.0" schemaLocation="user.xsd" /> -->
-    
-    <!--import namespace="http://docs.openstack.org/identity/api/v2.0" schemaLocation="https://raw.github.com/openstack/identity-api/master/openstack-identity-api/src/docbkx/common/xsd/api.xsd" />
-    <import namespace="http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0" schemaLocation="https://raw.github.com/openstack/identity-api/master/openstack-identity-api/src/docbkx/extensions/RAX-KSKEY/xsd/RAX-KSKEY-credentials.xsd" /-->
+
+    <!--<import namespace="http://docs.openstack.org/identity/api/v2.0" schemaLocation="https://raw.github.com/openstack/identity-api/master/openstack-identity-api/src/docbkx/common/xsd/api.xsd" />-->
+    <!--<import namespace="http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0" schemaLocation="https://raw.github.com/openstack/identity-api/master/openstack-identity-api/src/docbkx/extensions/RAX-KSKEY/xsd/RAX-KSKEY-credentials.xsd" />-->
+    <!--<import namespace="http://docs.openstack.org/identity/api/ext/OS-KSCATALOG/v1.0" schemaLocation="https://raw.github.com/openstack/identity-api/master/openstack-identity-api/src/docbkx/extensions/OS-KSCATALOG/xsd/OS-KSCATALOG.xsd" />-->
 
     <attribute name="defaultRegion" type="xsd:string" />
     <attribute name="domainId" type="xsd:string" />
 
     <element name="defaultRegionServices" type="RAX-AUTH:DefaultRegionServices" />
+    <element name="serviceApis" type="RAX-AUTH:ServiceApis" />
     <element name="impersonation" type="RAX-AUTH:ImpersonationRequest" />
     <element name="access" type="RAX-AUTH:ImpersonationResponse" />
     <element name="impersonator" type="identity:UserForAuthenticateResponse" >
@@ -53,6 +55,7 @@
     <element name="question" type="RAX-AUTH:Question" />
     <element name="secretqas" type="RAX-AUTH:SecretQAs" />
     <element name="secretqa" type="RAX-AUTH:SecretQA" />
+    <element name="rsaCredentials" type="RAX-AUTH:RsaCredentials" />
 
     <!-- Complex Types -->
     <complexType name="ImpersonationRequest">
@@ -79,7 +82,7 @@
             </element>
         </sequence>
     </complexType>
-    
+
     <complexType name="Domain">
         <sequence>
             <element name="description" type="xsd:string">
@@ -96,7 +99,7 @@
             <annotation>
                 <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
                     <p>
-                        An ID uniquely identifying the domain. 
+                        An ID uniquely identifying the domain.
                     </p>
                 </xsd:documentation>
             </annotation>
@@ -120,13 +123,13 @@
             </annotation>
         </attribute>
     </complexType>
-    
+
     <complexType name="Domains">
         <sequence>
             <element name="domain" type="RAX-AUTH:Domain" minOccurs="0" maxOccurs="unbounded"/>
         </sequence>
     </complexType>
-    
+
     <complexType name="DefaultRegionServices">
         <sequence>
             <element name="serviceName" type="xsd:string" minOccurs="0" maxOccurs="unbounded">
@@ -157,7 +160,7 @@
             <annotation>
                 <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
                     <p>
-                        An ID uniquely identifying the policy. 
+                        An ID uniquely identifying the policy.
                     </p>
                 </xsd:documentation>
             </annotation>
@@ -208,7 +211,7 @@
             </annotation>
         </attribute>
     </complexType>
-    
+
     <complexType name="Policies">
         <sequence>
             <element name="policy" type="RAX-AUTH:Policy" minOccurs="0" maxOccurs="unbounded"/>
@@ -223,7 +226,7 @@
             </annotation>
         </attribute>
     </complexType>
-    
+
     <complexType name="PolicySet">
         <annotation>
             <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
@@ -263,13 +266,13 @@
             </annotation>
         </attribute>
     </complexType>
-    
+
     <complexType name="PolicySets">
         <sequence>
             <element name="policySet" type="RAX-AUTH:PolicySet" minOccurs="0" maxOccurs="unbounded"/>
         </sequence>
     </complexType>
-    
+
     <complexType name="Capability">
         <sequence>
             <element name="description" type="xsd:string">
@@ -328,13 +331,13 @@
             </annotation>
         </attribute>
     </complexType>
-    
+
     <complexType name="Capabilities">
         <sequence>
             <element name="capability" type="RAX-AUTH:Capability" minOccurs="0" maxOccurs="unbounded"/>
         </sequence>
     </complexType>
-    
+
     <complexType name="PolicyMetadata">
         <annotation>
             <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
@@ -454,10 +457,49 @@
         </sequence>
     </complexType>
 
+    <complexType name="ServiceApis">
+        <sequence>
+            <element name="serviceApi" type="RAX-AUTH:ServiceApi" minOccurs="0" maxOccurs="unbounded" />
+        </sequence>
+    </complexType>
+
+    <complexType name="ServiceApi">
+        <sequence>
+        	<element name="description" type="xsd:string" minOccurs="0" maxOccurs="1"/>
+        </sequence>
+        <attribute name="type" type="identity:ExtensibleServiceType">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                       Type of the service api e.g compute, object-store, ..
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+        <attribute name="version" type="xsd:string">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                       Version of the service api
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+    </complexType>
+
+    <complexType name="RsaCredentials">
+        <complexContent>
+            <extension base="identity:CredentialType">
+                <attribute name="username" type="xsd:string" use="required" />
+                <attribute name="tokenKey" type="xsd:string" use="required" />
+            </extension>
+        </complexContent>
+    </complexType>
+
     <simpleType name="StringList">
         <list itemType="xsd:string"/>
     </simpleType>
-    
+
     <xsd:simpleType name="PolicyAlgorithm">
         <xsd:annotation>
             <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
@@ -471,15 +513,23 @@
             <xsd:enumeration value="if-false-deny"/>
         </xsd:restriction>
     </xsd:simpleType>
-    
-    <simpleType  name="Action"> 
+
+    <simpleType  name="Action">
         <restriction base="xsd:string">
             <enumeration value="GET"/>
-            <enumeration value="POST"/> 
+            <enumeration value="POST"/>
             <enumeration value="PUT"/>
             <enumeration value="DELETE"/>
             <enumeration value="PATCH"/>
             <enumeration value="*" />
         </restriction>
     </simpleType>
+
+    <simpleType  name="PolicyType">
+        <restriction base="xsd:string">
+            <enumeration value="json-policy-format"/>
+            <enumeration value="standard-policy-format"/>
+        </restriction>
+    </simpleType>
+
 </schema>

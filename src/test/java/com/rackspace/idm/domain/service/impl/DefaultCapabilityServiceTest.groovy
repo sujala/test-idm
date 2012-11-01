@@ -4,13 +4,14 @@ import org.springframework.test.context.ContextConfiguration
 import spock.lang.Specification
 import spock.lang.Shared
 import org.springframework.beans.factory.annotation.Autowired
-import com.rackspace.idm.domain.service.EndpointService
-import com.rackspace.idm.domain.entity.CloudBaseUrl
+
 import com.rackspace.idm.domain.entity.Capabilities
 import com.rackspace.idm.domain.entity.Capability
 import com.rackspace.idm.domain.service.CapabilityService
 import com.rackspace.idm.exception.NotFoundException
-import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.BadRequestException
+import com.rackspace.idm.exception.DuplicateException
+import com.rackspace.idm.domain.dao.impl.LdapCapabilityRepository
 
 /**
  * Created by IntelliJ IDEA.
@@ -23,109 +24,131 @@ import com.rackspace.idm.exception.BadRequestException;
 class DefaultCapabilityServiceTest extends Specification {
     @Shared def randomness = UUID.randomUUID()
     @Shared def random
-    @Shared CloudBaseUrl cloudBaseUrl
-    @Shared Integer baseUrlId
+
+    @Shared LdapCapabilityRepository ldapCapabilityRepository
+    @Shared DefaultCapabilityService defaultCapabilityService;
 
     @Autowired
     private CapabilityService capabilityService;
 
-    @Autowired
-    private EndpointService endpointService;
-
     def setupSpec() {
         random = ("$randomness").replace('-', "")
-        baseUrlId = 1000332132
-        cloudBaseUrl = getCloudBaseUrl(baseUrlId, "NAST", "test", "http://someUrl", true, true, false, "cloudServers")
+        defaultCapabilityService = new DefaultCapabilityService()
     }
 
     def cleanupSpec() {
-
     }
 
     def "Crud Capabilities"() {
         when:
-        endpointService.addBaseUrl(cloudBaseUrl)
         Capabilities capabilities1 = new Capabilities()
         List<String> list = new ArrayList<String>()
-        capabilities1.capability.add(getCapability("GET", "get_server", "get_server", "description", "http://someUrl", list))
-        capabilityService.updateCapabilities(String.valueOf(baseUrlId), capabilities1)
-        Capability capability = capabilityService.getCapability("get_server", String.valueOf(baseUrlId))
-        Capabilities capabilities = capabilityService.getCapabilities(String.valueOf(baseUrlId))
-        capabilityService.removeCapabilities(String.valueOf(baseUrlId))
-        capabilityService.getCapability("get_server", String.valueOf(baseUrlId))
+        capabilities1.capability.add(getCapability("GET", "get_server", "get_server", "description", "http://someUrl", list, "1", "computeTest"))
+        capabilityService.updateCapabilities(capabilities1)
+        Capability capability = capabilityService.getCapability("get_server", "1", "computeTest")
+        Capabilities capabilities = capabilityService.getCapabilities("1", "computeTest")
+        capabilityService.removeCapabilities("1","computeTest")
+        capabilityService.getCapability("get_server", "1", "computeTest")
+
 
         then:
         capability.getAction() == "GET"
-        capabilities.capabilities.get(0).name == "get_server"
-        endpointService.deleteBaseUrl(baseUrlId)
+        capability.getId() == "get_server"
+        capabilities.capability.get(0).getId() == "get_server"
+        capabilities.capability.get(0).type == "computeTest"
         thrown(NotFoundException)
     }
 
     def "null values updateCapabilities"() {
-        when: capabilityService.updateCapabilities(null, null)
+        when: capabilityService.updateCapabilities(null)
         then: thrown(BadRequestException)
     }
 
-    def "invalid value for endpoint template updateCapabilities"() {
-        when: capabilityService.updateCapabilities("a", null)
-        then: thrown(BadRequestException)
+    def "duplicate capabilities updateCapabilities"() {
+        when:
+        Capabilities capabilities = new Capabilities()
+        capabilities.capability.add(getCapability("GET", "get_server", "get_server", "description", "http://someUrl", null, "1", "computeTest"))
+        capabilities.capability.add(getCapability("GET", "get_server", "get_server", null, "http://someUrl", null, "1", "computeTest"))
+        capabilityService.updateCapabilities(capabilities)
+
+        then:
+        thrown(DuplicateException)
     }
 
-    def "not found endpoint template updateCapabilities"() {
-        when: capabilityService.updateCapabilities("1000000001", null)
-        then: thrown(NotFoundException)
+    def "capability already exist - updateCapabilities"() {
+        when:
+        Capabilities capabilities = new Capabilities()
+        capabilities.capability.add(getCapability("GET", "get_server", "get_server", "description", "http://someUrl", null, "1", "computeTest"))
+        capabilityService.updateCapabilities(capabilities)
+        capabilityService.updateCapabilities(capabilities)
+
+        then:
+        capabilityService.removeCapabilities("1","computeTest")
+        thrown(DuplicateException)
     }
 
     def "invalid action capabilities updateCapabilities"() {
         when:
-        endpointService.addBaseUrl(cloudBaseUrl)
         Capabilities capabilities1 = new Capabilities()
-        List<String> list = new ArrayList<String>()
-        capabilities1.capability.add(getCapability(null, "get_server", "get_server", "description", "http://someUrl", list))
-        capabilityService.updateCapabilities(String.valueOf(baseUrlId), capabilities1)
+        capabilities1.capability.add(getCapability(null, "get_server", "get_server", "description", "http://someUrl", null, "1", "computeTest"))
+        capabilityService.updateCapabilities(capabilities1)
 
         then:
-        endpointService.deleteBaseUrl(baseUrlId)
         thrown(BadRequestException)
     }
 
     def "invalid id capabilities updateCapabilities"() {
         when:
-        endpointService.addBaseUrl(cloudBaseUrl)
         Capabilities capabilities1 = new Capabilities()
-        List<String> list = new ArrayList<String>()
-        capabilities1.capability.add(getCapability("GET", null, "get_server", "description", "http://someUrl", list))
-        capabilityService.updateCapabilities(String.valueOf(baseUrlId), capabilities1)
+        capabilities1.capability.add(getCapability("GET", null, "get_server", "description", "http://someUrl", null, "1", "computeTest"))
+        capabilityService.updateCapabilities(capabilities1)
 
         then:
-        endpointService.deleteBaseUrl(baseUrlId)
         thrown(BadRequestException)
     }
 
     def "invalid name capabilities updateCapabilities"() {
         when:
-        endpointService.addBaseUrl(cloudBaseUrl)
         Capabilities capabilities1 = new Capabilities()
-        List<String> list = new ArrayList<String>()
-        capabilities1.capability.add(getCapability("GET", "get_server", null, "description", "http://someUrl", list))
-        capabilityService.updateCapabilities(String.valueOf(baseUrlId), capabilities1)
+        capabilities1.capability.add(getCapability("GET", "get_server", null, "description", "http://someUrl", null, "1", "computeTest"))
+        capabilityService.updateCapabilities(capabilities1)
 
         then:
-        endpointService.deleteBaseUrl(baseUrlId)
         thrown(BadRequestException)
     }
 
+    def "invalid version capabilities updateCapabilities"() {
+        when:
+        Capabilities capabilities1 = new Capabilities()
+        capabilities1.capability.add(getCapability("GET", "get_server", "get_server", "description", "http://someUrl", null, null, "computeTest"))
+        capabilityService.updateCapabilities(capabilities1)
+
+        then:
+        thrown(BadRequestException)
+    }
+
+    def "invalid type capabilities updateCapabilities"() {
+        when:
+        Capabilities capabilities1 = new Capabilities()
+        capabilities1.capability.add(getCapability("GET", "get_server", "get_server", "description", "http://someUrl", null, "1", null))
+        capabilityService.updateCapabilities(capabilities1)
+
+        then:
+        thrown(BadRequestException)
+    }
+
+
+
     def "valid capabilities updateCapabilities"() {
         when:
-        endpointService.addBaseUrl(cloudBaseUrl)
         Capabilities capabilities1 = new Capabilities()
         List<String> list = new ArrayList<String>()
         list.add("123")
         list.add("321")
-        capabilities1.capability.add(getCapability("GET", "get_server", "get_servers", null, "http://someUrl", list))
-        capabilityService.updateCapabilities(String.valueOf(baseUrlId), capabilities1)
-        Capabilities capabilities = capabilityService.getCapabilities(String.valueOf(baseUrlId))
-        endpointService.deleteBaseUrl(baseUrlId)
+        capabilities1.capability.add(getCapability("GET", "get_server", "get_servers", null, "http://someUrl", list, "1", "computeTest"))
+        capabilityService.updateCapabilities(capabilities1)
+        Capabilities capabilities = capabilityService.getCapabilities("1","computeTest")
+        capabilityService.removeCapabilities("1","computeTest")
 
         then:
         capabilities.getCapability().size() == 1
@@ -133,64 +156,104 @@ class DefaultCapabilityServiceTest extends Specification {
     }
 
     def "null values on getCapabilities" () {
-        when: capabilityService.getCapabilities(null)
+        when: capabilityService.getCapabilities(null, null)
         then: thrown(BadRequestException)
     }
 
-    def "non-numeric values on getCapabilities" () {
-        when: capabilityService.getCapabilities("a")
+    def "null value on getCapabilities" () {
+        when: capabilityService.getCapabilities("1", null)
         then: thrown(BadRequestException)
+    }
+
+    def "Get all correct values on getCapabilities" () {
+        when:
+        Capabilities capabilities = new Capabilities()
+        capabilities.capability.add(getCapability("GET", "get_server", "get_server", "description", "http://someUrl", null, "1", "computeTest"))
+        capabilities.capability.add(getCapability("POST", "post_server", "get_server", null, "http://someUrl", null, "1", "computeTest"))
+        capabilityService.updateCapabilities(capabilities)
+        Capabilities capabilities1 = capabilityService.getCapabilities("1", "computeTest")
+        capabilityService.removeCapabilities("1","computeTest")
+
+        then:
+        capabilities1.capability.size() == 2
+        capabilities1.capability.get(0).version == "1"
+        capabilities1.capability.get(0).action == "GET"
+        capabilities1.capability.get(1).version == "1"
+        capabilities1.capability.get(1).action == "POST"
     }
 
     def "not found on getCapabilities" () {
-        when: capabilityService.getCapabilities("1000000001")
-        then: thrown(NotFoundException)
+        when:
+        Capabilities capabilities = capabilityService.getCapabilities("10","computeTest")
+        then:
+        capabilities.capability.size() == 0
     }
 
     def "not found on getCapability" () {
-        when: capabilityService.getCapability("get_server","1000000001")
+        when: capabilityService.getCapability("get_server","10","computeTest")
         then: thrown(NotFoundException)
     }
 
     def "null values on getCapability" () {
-        when: capabilityService.getCapability(null,null)
+        when: capabilityService.getCapability(null,null,null)
+        then: thrown(BadRequestException)
+    }
+
+    def "null version value on getCapability" () {
+        when: capabilityService.getCapability("get_servers",null,"computeTest")
+        then: thrown(BadRequestException)
+    }
+
+    def "null type value on getCapability" () {
+        when: capabilityService.getCapability("get_servers","1",null)
+        then: thrown(BadRequestException)
+    }
+
+    def "empty string type value on getCapability" () {
+        when: capabilityService.getCapability("","1","computeTest")
         then: thrown(BadRequestException)
     }
 
     def "not found on removeCapabilities" () {
-        when: capabilityService.removeCapabilities("1000000001")
-        then: thrown(NotFoundException)
+        given:
+        setupMocks()
+        List<Capability> capabilityList = new ArrayList<Capability>()
+        ldapCapabilityRepository.getObjects(_) >> capabilityList
+
+        when:
+        defaultCapabilityService.removeCapabilities("10","someType")
+
+        then:
+        0 * ldapCapabilityRepository.deleteObject(_)
     }
 
-    def "null value on removeCapabilities" () {
-        when: capabilityService.removeCapabilities(null)
+    def "null values on removeCapabilities" () {
+        when: capabilityService.removeCapabilities(null, null)
+        then: thrown(BadRequestException)
+    }
+
+    def "null type value on removeCapabilities" () {
+        when: capabilityService.removeCapabilities("1", null)
         then: thrown(BadRequestException)
     }
 
     //Helper Methods
-    def getCloudBaseUrl(Integer id, String type, String serviceName, String publicUrl, Boolean defaultValue, Boolean enabled, Boolean global, String OSType) {
-        new CloudBaseUrl().with {
-            it.setBaseUrlId(id);
-            it.setBaseUrlType(type);
-            it.setServiceName(serviceName);
-            it.setPublicUrl(publicUrl);
-            it.setDef(defaultValue);
-            it.setEnabled(enabled);
-            it.setGlobal(global);
-            it.setOpenstackType(OSType);
-            return it
-        }
-    }
-
-    def getCapability(String action, String id, String name, String description, String url, List<String> resources) {
+    def getCapability(String action, String id, String name, String description, String url, List<String> resources, String version, String type) {
         new Capability().with {
             it.action = action
-            it.capabilityId = id
+            it.id = id
             it.name = name
             it.description = description
             it.url = url
             it.resources = resources
+            it.version = version
+            it.type = type
             return it
         }
+    }
+
+    def setupMocks() {
+        ldapCapabilityRepository = Mock()
+        defaultCapabilityService.ldapCapabilityRepository = ldapCapabilityRepository
     }
 }

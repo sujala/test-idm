@@ -54,6 +54,11 @@ class LdapQuestionRepositoryTest extends Specification {
         question3 == null
     }
 
+    def "null value operations on getQuestion" () {
+        when: ldapQuestionRepository.getObject(createSearchFilter(null).build())
+        then: thrown(IllegalArgumentException)
+    }
+
     def createQuestion(String id, String question, String uniqueId) {
         new Question().with {
             it.id = id

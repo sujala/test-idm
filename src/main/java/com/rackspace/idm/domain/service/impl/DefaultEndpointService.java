@@ -26,9 +26,6 @@ public class DefaultEndpointService implements EndpointService {
     @Autowired
     private EndpointDao endpointDao;
 
-    @Autowired
-    private CapabilityService capabilityService;
-
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Override

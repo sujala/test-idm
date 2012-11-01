@@ -22,8 +22,6 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public class LdapGenericRepository<T extends UniqueId> extends LdapRepository implements GenericDao<T> {
-    public static final String NULL_OR_EMPTY_ID_PARAMETER = "Null or Empty Id parameter";
-    public static final String NULL_OR_EMPTY_NAME_PARAMETER = "Null or Empty name parameter";
     public static final String ERROR_GETTING_OBJECT = "Error getting object";
 
     final private Class<T> entityType = (Class<T>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
@@ -33,13 +31,13 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         getLogger().debug("Getting all " + entityType.toString());
 
         List<T> objects = new ArrayList<T>();
-        SearchResult searchResult = null;
+        SearchResult searchResult;
 
         try {
             searchResult = getAppInterface().search(getBaseDn(), SearchScope.ONE, searchFilter);
             getLogger().info("Got" + entityType.toString());
         } catch (LDAPSearchException ldapEx) {
-            String loggerMsg = String.format("Error searching for %s - {}", entityType.toString(), ldapEx);
+            String loggerMsg = String.format("Error searching for %s - {}", entityType.toString());
             getLogger().error(loggerMsg);
             throw new IllegalStateException(ldapEx);
         }
@@ -52,7 +50,7 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
                 try {
                     entity = LDAPPersister.getInstance(entityType).decode(entry);
                 } catch (LDAPPersistException e) {
-                    String loggerMsg = String.format("Error converting entity for %s - {}", entityType.toString(), e);
+                    String loggerMsg = String.format("Error converting entity for %s - {}", entityType.toString());
                     getLogger().error(loggerMsg);
                 }
 
@@ -143,21 +141,15 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
     }
 
     private T getSingleObject(Filter searchFilter) throws LDAPPersistException {
-        SearchResultEntry entry = this.getSingleEntry(getBaseDn(), SearchScope.ONE, searchFilter, getSearchAttributes());
+        SearchResultEntry entry = this.getSingleEntry(getBaseDn(), SearchScope.ONE, searchFilter);
         if (entry == null) {
             return null;
         }
-        T object = LDAPPersister.getInstance(entityType).decode(entry);
-        return object;
+        return LDAPPersister.getInstance(entityType).decode(entry);
     }
 
     @Override
     public String getBaseDn(){
-        throw new NotImplementedException();
-    }
-
-    @Override
-    public String[] getSearchAttributes(){
         throw new NotImplementedException();
     }
 
