@@ -1,15 +1,12 @@
 package com.rackspace.idm.domain.dao.impl
 
-import spock.lang.Specification
-import org.springframework.test.context.ContextConfiguration
-import org.springframework.beans.factory.annotation.Autowired
-
+import com.rackspace.idm.domain.dao.impl.LdapRepository.LdapSearchBuilder
 import com.rackspace.idm.domain.entity.Question
 import com.rackspace.idm.domain.entity.Questions
-
-import com.rackspace.idm.domain.dao.impl.LdapRepository.LdapSearchBuilder
-import com.unboundid.ldap.sdk.ReadOnlyEntry;
-
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.test.context.ContextConfiguration
+import spock.lang.Shared
+import spock.lang.Specification
 
 /**
  * Created by IntelliJ IDEA.
@@ -24,7 +21,11 @@ class LdapQuestionRepositoryTest extends Specification {
     @Autowired
     private LdapQuestionRepository ldapQuestionRepository;
 
+    @Shared def sharedRandomness = UUID.randomUUID()
+    @Shared def sharedRandom
+
     def setupSpec(){
+        sharedRandom = ("$sharedRandomness").replace('-',"")
     }
 
     def cleanSpec(){
@@ -32,33 +33,26 @@ class LdapQuestionRepositoryTest extends Specification {
 
     def "question CRUD" () {
         given:
-        def questionId = "100123321"
+        def questionId = "question$sharedRandom"
 
         when:
         ldapQuestionRepository.addObject(createQuestion(questionId,"What is this?", null))
-        Question question = ldapQuestionRepository.getObject(questionId,createSearchFilter(questionId).build())
+        Question question = ldapQuestionRepository.getObject(createSearchFilter(questionId).build())
         Questions questions = new Questions()
-        questions.getQuestion().addAll(ldapQuestionRepository.getObjects())
+        questions.getQuestion().addAll(ldapQuestionRepository.getObjects(createSearchFilter().build()))
         question.question = "What is this now?";
         ldapQuestionRepository.updateObject(question)
-        Question question2 = ldapQuestionRepository.getObject(questionId, createSearchFilter(questionId).build())
-        ldapQuestionRepository.deleteObject(questionId, createSearchFilter(questionId).build())
-        Question question3 = ldapQuestionRepository.getObject(questionId, createSearchFilter(questionId).build())
+        Question question2 = ldapQuestionRepository.getObject(createSearchFilter(questionId).build())
+        ldapQuestionRepository.deleteObject(createSearchFilter(questionId).build())
+        Question question3 = ldapQuestionRepository.getObject(createSearchFilter(questionId).build())
 
         then:
         question.question == "What is this now?"
-        question.id == "100123321"
+        question.id == questionId
         questions.question.size() > 0
         question2.question == "What is this now?"
         question3 == null
     }
-
-    def "null value operations on getQuestion" () {
-        given: def questionId = "100123321"
-        when: ldapQuestionRepository.getObject(null, createSearchFilter(questionId).build())
-        then: thrown(IllegalArgumentException)
-    }
-
 
     def createQuestion(String id, String question, String uniqueId) {
         new Question().with {
@@ -79,4 +73,10 @@ class LdapQuestionRepositoryTest extends Specification {
          }
     }
 
+    def createSearchFilter(){
+         new LdapSearchBuilder().with {
+             it.addEqualAttribute("objectClass","rsQuestion")
+             return it
+         }
+    }
 }

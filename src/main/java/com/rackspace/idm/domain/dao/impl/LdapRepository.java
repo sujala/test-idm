@@ -449,7 +449,7 @@ public abstract class LdapRepository {
         }
     }
 
-    protected static class LdapSearchBuilder {
+    public static class LdapSearchBuilder {
         private List<Filter> filters;
 
         public LdapSearchBuilder() {

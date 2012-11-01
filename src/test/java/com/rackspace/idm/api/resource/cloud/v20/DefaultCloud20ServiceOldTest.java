@@ -60,7 +60,7 @@ import static org.mockito.Mockito.*;
  */
 
 
-public class DefaultCloud20ServiceTest {
+public class DefaultCloud20ServiceOldTest {
 
     private DefaultCloud20Service defaultCloud20Service;
     private DefaultCloud20Service spy;

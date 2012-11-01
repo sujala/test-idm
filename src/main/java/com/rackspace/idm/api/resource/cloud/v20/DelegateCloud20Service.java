@@ -625,6 +625,31 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
+    public ResponseBuilder addQuestion(UriInfo uriInfo, String authToken, Question question) {
+        return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public ResponseBuilder getQuestion(String authToken, String questionId) {
+        return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public ResponseBuilder getQuestions(String authToken) {
+        return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public ResponseBuilder updateQuestion(String authToken, String questionId, Question question) {
+        return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public ResponseBuilder deleteQuestion(String authToken, String questionId) {
+        return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
     public ResponseBuilder getUserByName(HttpHeaders httpHeaders, String authToken, String name)  {
         if (isCloudAuthRoutingEnabled() && !userService.userExistsByUsername(name)) {
             String request = getCloudAuthV20Url() + USERS;
