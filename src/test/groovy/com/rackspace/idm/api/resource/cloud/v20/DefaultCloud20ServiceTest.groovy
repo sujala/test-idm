@@ -18,6 +18,10 @@ import javax.ws.rs.core.UriInfo
 
 import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.domain.service.impl.*
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Capabilities
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Capability
+import com.rackspace.idm.domain.dao.impl.LdapCapabilityRepository
+import com.rackspace.idm.api.converter.cloudv20.CapabilityConverterCloudV20
 
 /*
  This class uses the application context but mocks the ldap interactions
@@ -31,6 +35,8 @@ class DefaultCloud20ServiceTest extends Specification {
     @Autowired DefaultCloud20Service cloud20Service
     @Autowired DefaultQuestionService questionService
     @Autowired QuestionConverterCloudV20 questionConverter
+    @Autowired DefaultCapabilityService capabilityService
+    @Autowired CapabilityConverterCloudV20 capabilityConverter
 
     @Shared DefaultScopeAccessService scopeAccessService
     @Shared DefaultAuthorizationService authorizationService
@@ -38,6 +44,7 @@ class DefaultCloud20ServiceTest extends Specification {
     @Shared LdapUserRepository userDao
     @Shared LdapScopeAccessPeristenceRepository scopeAccessDao
     @Shared LdapQuestionRepository questionDao
+    @Shared LdapCapabilityRepository capabilityDao
 
 
     @Shared def authToken = "token"
@@ -263,6 +270,38 @@ class DefaultCloud20ServiceTest extends Specification {
         response.status == 204
     }
 
+    def "updateCapabilities return 201" (){
+        given:
+        createMocks()
+        allowAccess()
+        Capabilities capabilities = new Capabilities();
+        capabilities.capability.add(getCapability("GET", "get_server", "get_server", "description", "http://someUrl", null))
+        capabilityDao.getNextCapabilityId() >> "123321"
+        capabilityDao.getObjects(_) >> capabilities
+        when:
+        def responseBuilder = cloud20Service.updateCapabilities(authToken,capabilities,"computeTest","1")
+
+        then:
+        Response response = responseBuilder.build()
+        response.status == 204
+    }
+
+//    def "updateCapabilities return 400" (){
+//        given:
+//        createMocks()
+//        allowAccess()
+//        Capabilities capabilities = new Capabilities();
+//        capabilities.capability.add(getCapability("GET", "get_server", "get_server", "description", "http://someUrl", null))
+//        capabilityDao.getNextCapabilityId() >> "123321"
+//        capabilityDao.getObjects(_) >> capabilities
+//        when:
+//        def responseBuilder = cloud20Service.updateCapabilities(authToken,capabilities,"computeTest","1")
+//
+//        then:
+//        Response response = responseBuilder.build()
+//        response.status == 400
+//    }
+
     def createMocks() {
         scopeAccessDao = Mock()
 
@@ -281,6 +320,9 @@ class DefaultCloud20ServiceTest extends Specification {
 
         questionDao = Mock()
         questionService.questionDao = questionDao
+
+        capabilityDao = Mock()
+        capabilityService.ldapCapabilityRepository = capabilityDao
     }
 
     def allowAccess() {
@@ -338,6 +380,20 @@ class DefaultCloud20ServiceTest extends Specification {
         new Question().with {
             it.id = id
             it.question = question
+            return it
+        }
+    }
+
+    def getCapability(String action, String id, String name, String description, String url, List<String> resources) {
+        new Capability().with {
+            it.action = action
+            it.id = id
+            it.name = name
+            it.description = description
+            it.url = url
+            for(String list : resources){
+                it.resources.add(list)
+            }
             return it
         }
     }

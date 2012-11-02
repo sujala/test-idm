@@ -12,6 +12,7 @@ import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.exception.DuplicateException
 import com.rackspace.idm.domain.dao.impl.LdapCapabilityRepository
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Capabilities
 
 /**
  * Created by IntelliJ IDEA.
@@ -41,35 +42,30 @@ class DefaultCapabilityServiceTest extends Specification {
 
     def "Crud Capabilities"() {
         when:
-        Capabilities capabilities1 = new Capabilities()
+        List<Capability> capabilities1 = new ArrayList<Capability>()
         List<String> list = new ArrayList<String>()
-        capabilities1.capability.add(getCapability("GET", "get_server", "get_server", "description", "http://someUrl", list, "1", "computeTest"))
-        capabilityService.updateCapabilities(capabilities1)
-        Capability capability = capabilityService.getCapability("get_server", "1", "computeTest")
-        Capabilities capabilities = capabilityService.getCapabilities("1", "computeTest")
-        capabilityService.removeCapabilities("1","computeTest")
-        capabilityService.getCapability("get_server", "1", "computeTest")
+        capabilities1.add(getCapability("GET", "get_server", "get_server", "description", "http://someUrl", list, null, null))
+        capabilityService.updateCapabilities(capabilities1, "computeTest", "1")
+        List<Capability> capabilities = capabilityService.getCapabilities("computeTest", "1")
+        capabilityService.removeCapabilities("computeTest", "1")
 
 
         then:
-        capability.getAction() == "GET"
-        capability.getId() == "get_server"
-        capabilities.capability.get(0).getId() == "get_server"
-        capabilities.capability.get(0).type == "computeTest"
-        thrown(NotFoundException)
+        capabilities.get(0).getId() == "get_server"
+        capabilities.get(0).type == "computeTest"
     }
 
     def "null values updateCapabilities"() {
-        when: capabilityService.updateCapabilities(null)
+        when: capabilityService.updateCapabilities(null, null, null)
         then: thrown(BadRequestException)
     }
 
     def "duplicate capabilities updateCapabilities"() {
         when:
-        Capabilities capabilities = new Capabilities()
-        capabilities.capability.add(getCapability("GET", "get_server", "get_server", "description", "http://someUrl", null, "1", "computeTest"))
-        capabilities.capability.add(getCapability("GET", "get_server", "get_server", null, "http://someUrl", null, "1", "computeTest"))
-        capabilityService.updateCapabilities(capabilities)
+        List<Capability> capabilities = new ArrayList<Capability>()
+        capabilities.add(getCapability("GET", "get_server", "get_server", "description", "http://someUrl", null, null, null))
+        capabilities.add(getCapability("GET", "get_server", "get_server", null, "http://someUrl", null, null, null))
+        capabilityService.updateCapabilities(capabilities, "computeTest", "1")
 
         then:
         thrown(DuplicateException)
@@ -77,21 +73,21 @@ class DefaultCapabilityServiceTest extends Specification {
 
     def "capability already exist - updateCapabilities"() {
         when:
-        Capabilities capabilities = new Capabilities()
-        capabilities.capability.add(getCapability("GET", "get_server", "get_server", "description", "http://someUrl", null, "1", "computeTest"))
-        capabilityService.updateCapabilities(capabilities)
-        capabilityService.updateCapabilities(capabilities)
+        List<Capability> capabilities = new ArrayList<Capability>()
+        capabilities.add(getCapability("GET", "get_server", "get_server", "description", "http://someUrl", null, null, null))
+        capabilityService.updateCapabilities(capabilities, "computeTest", "1")
+        capabilityService.updateCapabilities(capabilities, "computeTest", "1")
 
         then:
-        capabilityService.removeCapabilities("1","computeTest")
+        capabilityService.removeCapabilities("computeTest", "1")
         thrown(DuplicateException)
     }
 
     def "invalid action capabilities updateCapabilities"() {
         when:
-        Capabilities capabilities1 = new Capabilities()
-        capabilities1.capability.add(getCapability(null, "get_server", "get_server", "description", "http://someUrl", null, "1", "computeTest"))
-        capabilityService.updateCapabilities(capabilities1)
+        List<Capability> capabilities1 = new ArrayList<Capability>()
+        capabilities1.add(getCapability(null, "get_server", "get_server", "description", "http://someUrl", null, null, null))
+        capabilityService.updateCapabilities(capabilities1, "computeTest", "1")
 
         then:
         thrown(BadRequestException)
@@ -99,9 +95,9 @@ class DefaultCapabilityServiceTest extends Specification {
 
     def "invalid id capabilities updateCapabilities"() {
         when:
-        Capabilities capabilities1 = new Capabilities()
-        capabilities1.capability.add(getCapability("GET", null, "get_server", "description", "http://someUrl", null, "1", "computeTest"))
-        capabilityService.updateCapabilities(capabilities1)
+        List<Capability> capabilities1 = new ArrayList<Capability>()
+        capabilities1.add(getCapability("GET", null, "get_server", "description", "http://someUrl", null, null, null))
+        capabilityService.updateCapabilities(capabilities1, "computeTest", "1")
 
         then:
         thrown(BadRequestException)
@@ -109,9 +105,9 @@ class DefaultCapabilityServiceTest extends Specification {
 
     def "invalid name capabilities updateCapabilities"() {
         when:
-        Capabilities capabilities1 = new Capabilities()
-        capabilities1.capability.add(getCapability("GET", "get_server", null, "description", "http://someUrl", null, "1", "computeTest"))
-        capabilityService.updateCapabilities(capabilities1)
+        List<Capability> capabilities1 = new ArrayList<Capability>()
+        capabilities1.add(getCapability("GET", "get_server", null, "description", "http://someUrl", null, null, null))
+        capabilityService.updateCapabilities(capabilities1, "computeTest", "1")
 
         then:
         thrown(BadRequestException)
@@ -119,9 +115,9 @@ class DefaultCapabilityServiceTest extends Specification {
 
     def "invalid version capabilities updateCapabilities"() {
         when:
-        Capabilities capabilities1 = new Capabilities()
-        capabilities1.capability.add(getCapability("GET", "get_server", "get_server", "description", "http://someUrl", null, null, "computeTest"))
-        capabilityService.updateCapabilities(capabilities1)
+        List<Capability> capabilities1 = new ArrayList<Capability>()
+        capabilities1.add(getCapability("GET", "get_server", "get_server", "description", "http://someUrl", null, null, null))
+        capabilityService.updateCapabilities(capabilities1, "computeTest", null)
 
         then:
         thrown(BadRequestException)
@@ -129,9 +125,9 @@ class DefaultCapabilityServiceTest extends Specification {
 
     def "invalid type capabilities updateCapabilities"() {
         when:
-        Capabilities capabilities1 = new Capabilities()
-        capabilities1.capability.add(getCapability("GET", "get_server", "get_server", "description", "http://someUrl", null, "1", null))
-        capabilityService.updateCapabilities(capabilities1)
+        List<Capability> capabilities1 = new ArrayList<Capability>()
+        capabilities1.add(getCapability("GET", "get_server", "get_server", "description", "http://someUrl", null, null, null))
+        capabilityService.updateCapabilities(capabilities1, null, "1")
 
         then:
         thrown(BadRequestException)
@@ -141,18 +137,18 @@ class DefaultCapabilityServiceTest extends Specification {
 
     def "valid capabilities updateCapabilities"() {
         when:
-        Capabilities capabilities1 = new Capabilities()
+        List<Capability> capabilities1 = new ArrayList<Capability>()
         List<String> list = new ArrayList<String>()
         list.add("123")
         list.add("321")
-        capabilities1.capability.add(getCapability("GET", "get_server", "get_servers", null, "http://someUrl", list, "1", "computeTest"))
-        capabilityService.updateCapabilities(capabilities1)
-        Capabilities capabilities = capabilityService.getCapabilities("1","computeTest")
-        capabilityService.removeCapabilities("1","computeTest")
+        capabilities1.add(getCapability("GET", "get_server", "get_servers", null, "http://someUrl", list, null, null))
+        capabilityService.updateCapabilities(capabilities1, "computeTest", "1")
+        List<Capability> capabilities = capabilityService.getCapabilities("computeTest", "1")
+        capabilityService.removeCapabilities("computeTest", "1")
 
         then:
-        capabilities.getCapability().size() == 1
-        capabilities.getCapability().get(0).resources.get(0) == "123"
+        capabilities.size() == 1
+        capabilities.get(0).resources.get(0) == "123"
     }
 
     def "null values on getCapabilities" () {
@@ -167,51 +163,26 @@ class DefaultCapabilityServiceTest extends Specification {
 
     def "Get all correct values on getCapabilities" () {
         when:
-        Capabilities capabilities = new Capabilities()
-        capabilities.capability.add(getCapability("GET", "get_server", "get_server", "description", "http://someUrl", null, "1", "computeTest"))
-        capabilities.capability.add(getCapability("POST", "post_server", "get_server", null, "http://someUrl", null, "1", "computeTest"))
-        capabilityService.updateCapabilities(capabilities)
-        Capabilities capabilities1 = capabilityService.getCapabilities("1", "computeTest")
-        capabilityService.removeCapabilities("1","computeTest")
+        List<Capability> capabilities = new ArrayList<Capability>()
+        capabilities.add(getCapability("GET", "get_server", "get_server", "description", "http://someUrl", null, null, null))
+        capabilities.add(getCapability("POST", "post_server", "get_server", null, "http://someUrl", null, null, null))
+        capabilityService.updateCapabilities(capabilities, "computeTest", "1")
+        List<Capability> capabilities1 = capabilityService.getCapabilities("computeTest", "1")
+        capabilityService.removeCapabilities("computeTest", "1")
 
         then:
-        capabilities1.capability.size() == 2
-        capabilities1.capability.get(0).version == "1"
-        capabilities1.capability.get(0).action == "GET"
-        capabilities1.capability.get(1).version == "1"
-        capabilities1.capability.get(1).action == "POST"
+        capabilities1.size() == 2
+        capabilities1.get(0).version == "1"
+        capabilities1.get(0).action == "GET"
+        capabilities1.get(1).version == "1"
+        capabilities1.get(1).action == "POST"
     }
 
     def "not found on getCapabilities" () {
         when:
-        Capabilities capabilities = capabilityService.getCapabilities("10","computeTest")
+        List<Capability> capabilities = capabilityService.getCapabilities("computeTest","10")
         then:
-        capabilities.capability.size() == 0
-    }
-
-    def "not found on getCapability" () {
-        when: capabilityService.getCapability("get_server","10","computeTest")
-        then: thrown(NotFoundException)
-    }
-
-    def "null values on getCapability" () {
-        when: capabilityService.getCapability(null,null,null)
-        then: thrown(BadRequestException)
-    }
-
-    def "null version value on getCapability" () {
-        when: capabilityService.getCapability("get_servers",null,"computeTest")
-        then: thrown(BadRequestException)
-    }
-
-    def "null type value on getCapability" () {
-        when: capabilityService.getCapability("get_servers","1",null)
-        then: thrown(BadRequestException)
-    }
-
-    def "empty string type value on getCapability" () {
-        when: capabilityService.getCapability("","1","computeTest")
-        then: thrown(BadRequestException)
+        capabilities.size() == 0
     }
 
     def "not found on removeCapabilities" () {
@@ -221,7 +192,7 @@ class DefaultCapabilityServiceTest extends Specification {
         ldapCapabilityRepository.getObjects(_) >> capabilityList
 
         when:
-        defaultCapabilityService.removeCapabilities("10","someType")
+        defaultCapabilityService.removeCapabilities("someType", "10")
 
         then:
         0 * ldapCapabilityRepository.deleteObject(_)
@@ -233,12 +204,12 @@ class DefaultCapabilityServiceTest extends Specification {
     }
 
     def "null type value on removeCapabilities" () {
-        when: capabilityService.removeCapabilities("1", null)
+        when: capabilityService.removeCapabilities(null, "1")
         then: thrown(BadRequestException)
     }
 
     //Helper Methods
-    def getCapability(String action, String id, String name, String description, String url, List<String> resources, String version, String type) {
+    def getCapability(String action, String id, String name, String description, String url, List<String> resources, String type, String version) {
         new Capability().with {
             it.action = action
             it.id = id

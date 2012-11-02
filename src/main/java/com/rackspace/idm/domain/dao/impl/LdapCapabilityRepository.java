@@ -23,7 +23,7 @@ public class LdapCapabilityRepository  extends LdapGenericRepository<Capability>
         return OBJECTCLASS_CAPABILITY;
     }
 
-    public String getNextGroupId() {
+    public String getNextCapabilityId() {
         return getNextId(NEXT_CAPABILITY_ID);
     }
 }

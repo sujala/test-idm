@@ -767,37 +767,31 @@ public class Cloud20VersionResource {
     }
 
     @GET
-    @Path("OS-KSCATALOG/endpointTemplates/{endpointTemplateId}/RAX-AUTH/capabilities")
+    @Path("RAX-AUTH/service-apis/{type}/{version}/capabilities")
     public Response getCapabilities(
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("endpointTemplateId") String endpointTemplateId){
-        return getCloud20Service().getCapabilities(authToken, endpointTemplateId).build();
+            @PathParam("type") String type,
+            @PathParam("version") String version){
+        return getCloud20Service().getCapabilities(authToken, type, version).build();
     }
 
     @PUT
-    @Path("OS-KSCATALOG/endpointTemplates/{endpointTemplateId}/RAX-AUTH/capabilities")
+    @Path("RAX-AUTH/service-apis/{type}/{version}/capabilities")
     public Response updateCapabilities(
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("endpointTemplateId") String endpointTemplateId,
+            @PathParam("type") String type,
+            @PathParam("version") String version,
             Capabilities capabilities){
-        return getCloud20Service().updateCapabilities(authToken, endpointTemplateId, capabilities).build();
+        return getCloud20Service().updateCapabilities(authToken, capabilities, type, version).build();
     }
 
     @DELETE
-    @Path("OS-KSCATALOG/endpointTemplates/{endpointTemplateId}/RAX-AUTH/capabilities")
+    @Path("RAX-AUTH/service-apis/{type}/{version}/capabilities")
     public Response removeCapabilities(
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("endpointTemplateId") String endpointTemplateId){
-        return getCloud20Service().removeCapabilities(authToken, endpointTemplateId).build();
-    }
-
-    @GET
-    @Path("OS-KSCATALOG/endpointTemplates/{endpointTemplateId}/RAX-AUTH/capabilities/{capabilityId}")
-    public Response getCapabilities(
-            @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("endpointTemplateId") String endpointTemplateId,
-            @PathParam("capabilityId") String capabilityId){
-        return getCloud20Service().getCapability(authToken, capabilityId, endpointTemplateId).build();
+            @PathParam("type") String type,
+            @PathParam("version") String version){
+        return getCloud20Service().removeCapabilities(authToken, type, version).build();
     }
 
     @GET

@@ -29,19 +29,25 @@ public class DefaultCapabilityService extends LdapRepository implements Capabili
     private LdapCapabilityRepository ldapCapabilityRepository;
 
     @Override
-    public void updateCapabilities(Capabilities capabilities) {
-        if(capabilities == null || capabilities.getCapability().size() == 0){
+    public void updateCapabilities(List<Capability> capabilities, String type, String version) {
+        if(capabilities == null || capabilities.size() == 0){
             throw new BadRequestException("Capabilities cannot be null or empty.");
         }
-        validateCapabilities(capabilities);
-        for(Capability capability : capabilities.getCapability()){
+        if(StringUtils.isBlank(type)){
+            throw new BadRequestException("Capabilities type cannot be null or empty");
+        }
+        if(StringUtils.isBlank(version)){
+            throw new BadRequestException("Capabilities version cannot be null or empty");
+        }
+        validateCapabilities(capabilities, type, version);
+        for(Capability capability : capabilities){
             capability.setRsId(ldapCapabilityRepository.getNextGroupId());
             ldapCapabilityRepository.addObject(capability);
         }
     }
 
-    private void validateCapabilities(Capabilities capabilities) {
-        for (Capability capability : capabilities.getCapability()) {
+    private void validateCapabilities(List<Capability> capabilities, String type, String version) {
+        for (Capability capability : capabilities) {
             if (StringUtils.isBlank(capability.getId())) {
                 throw new BadRequestException("Capability Id cannot be empty.");
             }
@@ -57,23 +63,17 @@ public class DefaultCapabilityService extends LdapRepository implements Capabili
                 String errMsg = String.format("Capability %s is missing url.", capability.getId());
                 throw new BadRequestException(errMsg);
             }
-            if (StringUtils.isBlank(capability.getVersion())) {
-                String errMsg = String.format("Capability %s is missing version.", capability.getId());
-                throw new BadRequestException(errMsg);
-            }
-            if (StringUtils.isBlank(capability.getType())) {
-                String errMsg = String.format("Capability %s is missing openStackType.", capability.getId());
-                throw new BadRequestException(errMsg);
-            }
             if (StringUtils.isBlank(capability.getDescription())) {
                 capability.setDescription(null);
             }
             if (capability.getResources() == null || capability.getResources().isEmpty()) {
                 capability.setResources(null);
             }
-            Capability exist = ldapCapabilityRepository.getObject(createCapabilityFilter(capability.getId(), capability.getVersion(), capability.getType()));
+            capability.setType(type);
+            capability.setVersion(version);
+            Capability exist = ldapCapabilityRepository.getObject(createCapabilityFilter(capability.getId(), capability.getType(), capability.getVersion()));
             if(exist != null){
-                String errMsg = String.format("Capability with id: %s, version: %s, and OpenStackType: %s already exist."
+                String errMsg = String.format("Capability with id: %s, version: %s, and type: %s already exist."
                         ,exist.getId(), exist.getVersion(), exist.getType());
                 throw new DuplicateException(errMsg);
             }
@@ -81,13 +81,13 @@ public class DefaultCapabilityService extends LdapRepository implements Capabili
         checkDuplicatesInCapabilities(capabilities);
     }
 
-    private void checkDuplicatesInCapabilities(Capabilities capabilities) {
+    private void checkDuplicatesInCapabilities(List<Capability> capabilities) {
         Capabilities noDup = new Capabilities();
-        for(Capability capability : capabilities.getCapability()){
+        for(Capability capability : capabilities){
             if(!noDup.getCapability().contains(capability)){
                 noDup.getCapability().add(capability);
             }else{
-                String errMsg = String.format("Capability with id: %s, version: %s, and OpenStackType: %s must be unique."
+                String errMsg = String.format("Capability with id: %s, version: %s, and type: %s must be unique."
                         ,capability.getId() , capability.getVersion(), capability.getType());
                 throw new DuplicateException(errMsg);
             }
@@ -95,67 +95,43 @@ public class DefaultCapabilityService extends LdapRepository implements Capabili
     }
 
     @Override
-    public Capabilities getCapabilities(String version, String openStackType) {
+    public List<Capability> getCapabilities(String type, String version) {
         if(StringUtils.isBlank(version)){
             throw new BadRequestException("Capability's version cannot be null.");
         }
-        if(StringUtils.isBlank(openStackType)){
+        if(StringUtils.isBlank(type)){
             throw new BadRequestException("Capability's type cannot be null.");
         }
-        List<Capability> capabilityList = ldapCapabilityRepository.getObjects(createCapabilitiesFilter(version, openStackType));
-        Capabilities capabilities = new Capabilities();
-        capabilities.getCapability().addAll(capabilityList);
-        return capabilities;
+        return ldapCapabilityRepository.getObjects(createCapabilitiesFilter(type, version));
     }
 
     @Override
-    public Capability getCapability(String capabilityId, String version, String openStackType) {
-        if(StringUtils.isBlank(capabilityId)){
-            throw new BadRequestException("Capability's id cannot be null.");
-        }
+    public void removeCapabilities(String type, String version) {
         if(StringUtils.isBlank(version)){
             throw new BadRequestException("Capability's version cannot be null.");
         }
-        if(StringUtils.isBlank(openStackType)){
+        if(StringUtils.isBlank(type)){
             throw new BadRequestException("Capability's type cannot be null.");
         }
-        Capability capability = ldapCapabilityRepository.getObject(createCapabilityFilter(capabilityId,version,openStackType));
-        if(capability == null){
-            String errMsg = String.format("Capability with id: %s, version: %s, and OpenStackType: %s is not found."
-                        ,capabilityId , version, openStackType);
-            throw new NotFoundException(errMsg);
-        }
-        return capability;
-    }
-
-    @Override
-    public void removeCapabilities(String version, String openStackType) {
-        if(StringUtils.isBlank(version)){
-            throw new BadRequestException("Capability's version cannot be null.");
-        }
-        if(StringUtils.isBlank(openStackType)){
-            throw new BadRequestException("Capability's type cannot be null.");
-        }
-        List<Capability> capabilityList = ldapCapabilityRepository.getObjects(createCapabilitiesFilter(version, openStackType));
+        List<Capability> capabilityList = ldapCapabilityRepository.getObjects(createCapabilitiesFilter(type, version));
         for(Capability capability : capabilityList){
-            ldapCapabilityRepository.deleteObject(createCapabilityFilter(capability.getId(), capability.getVersion(), capability.getType()));
+            ldapCapabilityRepository.deleteObject(createCapabilityFilter(capability.getId(), capability.getType(), capability.getVersion()));
         }
     }
 
-    private Filter createCapabilityFilter(String capabilityId, String version, String openStackType) {
-        Filter filter = new LdapSearchBuilder()
+    private Filter createCapabilityFilter(String capabilityId, String type, String version) {
+        return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_CAPABILITY_ID, capabilityId)
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CAPABILITY)
                 .addEqualAttribute(ATTR_VERSION_ID, version)
-                .addEqualAttribute(ATTR_OPENSTACK_TYPE, openStackType).build();
-        return filter;
+                .addEqualAttribute(ATTR_OPENSTACK_TYPE, type).build();
     }
 
-    private Filter createCapabilitiesFilter(String version, String openStackType) {
+    private Filter createCapabilitiesFilter(String type, String version) {
         Filter filter = new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CAPABILITY)
                 .addEqualAttribute(ATTR_VERSION_ID, version)
-                .addEqualAttribute(ATTR_OPENSTACK_TYPE, openStackType).build();
+                .addEqualAttribute(ATTR_OPENSTACK_TYPE, type).build();
         return filter;
     }
 }

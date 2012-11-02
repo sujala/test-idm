@@ -55,7 +55,6 @@ import java.io.InputStream;
 import java.io.StringReader;
 import java.net.URI;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 
 /**
  * Created by IntelliJ IDEA.
@@ -160,11 +159,11 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Autowired
     private PolicyValidator policyValidator;
 
-//    @Autowired
-//    private CapabilityService capabilityService;
-//
-//    @Autowired
-//    private CapabilityConverterCloudV20 capabilityConverterCloudV20;
+    @Autowired
+    private CapabilityService capabilityService;
+
+    @Autowired
+    private CapabilityConverterCloudV20 capabilityConverterCloudV20;
 
     @Autowired
     private CloudRegionService cloudRegionService;
@@ -2091,11 +2090,11 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder updateCapabilities(String authToken, String endpointTemplateId, Capabilities capabilities) {
+    public ResponseBuilder updateCapabilities(String authToken, Capabilities capabilities, String type, String version) {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-//            com.rackspace.idm.domain.entity.Capabilities capabilitiesObj = capabilityConverterCloudV20.toCapabilitiesDO(capabilities);
-//            capabilityService.updateCapabilities(endpointTemplateId, capabilitiesObj);
+            com.rackspace.idm.domain.entity.Capabilities capabilitiesObj = capabilityConverterCloudV20.fromCapabilities(capabilities);
+            capabilityService.updateCapabilities(capabilitiesObj.getCapability(),type, version);
             return Response.noContent();
         }catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
@@ -2120,13 +2119,11 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getCapabilities(String authToken, String endpointTemplateId) {
+    public ResponseBuilder getCapabilities(String authToken, String type, String version) {
         try{
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-//            com.rackspace.idm.domain.entity.Capabilities capabilities = capabilityService.getCapabilities(endpointTemplateId);
-//            Capabilities capabilitiesObj = capabilityConverterCloudV20.toCapabilities(capabilities);
-//           return Response.ok(objFactories.getRackspaceIdentityExtRaxgaV1Factory().createCapabilities(capabilitiesObj).getValue());
-            return Response.ok();
+            Capabilities capabilities = capabilityConverterCloudV20.toCapabilities(capabilityService.getCapabilities(type, version)).getValue();
+            return Response.ok(objFactories.getRackspaceIdentityExtRaxgaV1Factory().createCapabilities(capabilities));
         }catch (Exception ex){
             return exceptionHandler.exceptionResponse(ex);
         }
@@ -2139,19 +2136,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             com.rackspace.idm.domain.entity.Region region = this.cloudRegionService.checkAndGetRegion(name);
             return Response.ok().entity(regionConverterCloudV20.toRegion(region).getValue());
         } catch (Exception ex) {
-            return exceptionHandler.exceptionResponse(ex);
-        }
-    }
-
-    @Override
-    public ResponseBuilder getCapability(String authToken, String capabilityId, String endpointTemplateId) {
-        try{
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-//            com.rackspace.idm.domain.entity.Capability capability = capabilityService.getCapability(capabilityId, endpointTemplateId);
-//            Capability capabilityObj = capabilityConverterCloudV20.toCapability(capability);
-//            return Response.ok(objFactories.getRackspaceIdentityExtRaxgaV1Factory().createCapability(capabilityObj).getValue());
-            return Response.ok();
-        } catch (Exception ex){
             return exceptionHandler.exceptionResponse(ex);
         }
     }
@@ -2178,10 +2162,10 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder removeCapabilities(String authToken, String endpointTemplateId) {
+    public ResponseBuilder removeCapabilities(String authToken, String type, String version) {
         try{
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-//            capabilityService.removeCapabilities(endpointTemplateId);
+            capabilityService.removeCapabilities(type, version);
             return Response.noContent();  //To change body of implemented methods use File | Settings | File Templates.
         }catch (Exception ex){
                  return exceptionHandler.exceptionResponse(ex);

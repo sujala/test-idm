@@ -3,8 +3,12 @@ package com.rackspace.idm.api.converter.cloudv20;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Capabilities;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Capability;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
+import org.dozer.Mapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import javax.xml.bind.JAXBElement;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -15,49 +19,38 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class CapabilityConverterCloudV20 {
+    @Autowired
+    Mapper mapper;
 
     @Autowired
     private JAXBObjectFactories objFactories;
 
-    public Capability toCapability(com.rackspace.idm.domain.entity.Capability capability) {
-        Capability jaxbCapability = objFactories.getRackspaceIdentityExtRaxgaV1Factory().createCapability();
-        jaxbCapability.setAction(capability.getAction());
-        jaxbCapability.setId(capability.getId());
-        jaxbCapability.setName(capability.getName());
-        jaxbCapability.setUrl(capability.getUrl());
-        jaxbCapability.setDescription(capability.getDescription());
-        for(String resource : capability.getResources()){
-            jaxbCapability.getResources().add(resource);
-        }
-        return jaxbCapability;
+    public JAXBElement<Capability> toCapability(com.rackspace.idm.domain.entity.Capability capability) {
+        Capability capabilityEntity = mapper.map(
+                capability, Capability.class
+        );
 
+        return objFactories.getRackspaceIdentityExtRaxgaV1Factory().createCapability(capabilityEntity);
     }
 
-    public com.rackspace.idm.domain.entity.Capability toCapabilityDO(Capability capability){
-        com.rackspace.idm.domain.entity.Capability capabilityDO = new com.rackspace.idm.domain.entity.Capability();
-        capabilityDO.setAction(capability.getAction());
-        capabilityDO.setId(capability.getId());
-        capabilityDO.setName(capability.getName());
-        capabilityDO.setUrl(capability.getUrl());
-        capabilityDO.setDescription(capability.getDescription());
-        for(String resource : capability.getResources()){
-            capabilityDO.getResources().add(resource);
-        }
-        return capabilityDO;
+    public com.rackspace.idm.domain.entity.Capability fromCapability(Capability capabilityEntity) {
+        return mapper.map(capabilityEntity, com.rackspace.idm.domain.entity.Capability.class);
     }
 
-    public Capabilities toCapabilities(com.rackspace.idm.domain.entity.Capabilities capabilities){
-        Capabilities jaxbCapabilities = objFactories.getRackspaceIdentityExtRaxgaV1Factory().createCapabilities();
-        for(com.rackspace.idm.domain.entity.Capability capability : capabilities.getCapability()){
-            jaxbCapabilities.getCapability().add(toCapability(capability));
+    public JAXBElement<Capabilities> toCapabilities(List<com.rackspace.idm.domain.entity.Capability> capabilities) {
+        Capabilities capabilitiesEntity = objFactories.getRackspaceIdentityExtRaxgaV1Factory().createCapabilities();
+
+        for(com.rackspace.idm.domain.entity.Capability capability: capabilities) {
+            capabilitiesEntity.getCapability().add(toCapability(capability).getValue());
         }
-        return jaxbCapabilities;
+
+        return objFactories.getRackspaceIdentityExtRaxgaV1Factory().createCapabilities(capabilitiesEntity);
     }
 
-    public com.rackspace.idm.domain.entity.Capabilities toCapabilitiesDO(Capabilities capabilities){
+    public com.rackspace.idm.domain.entity.Capabilities fromCapabilities(Capabilities capabilities) {
         com.rackspace.idm.domain.entity.Capabilities capabilitiesDO = new com.rackspace.idm.domain.entity.Capabilities();
         for(Capability capability : capabilities.getCapability()){
-            capabilitiesDO.getCapability().add(toCapabilityDO(capability));
+            capabilitiesDO.getCapability().add(fromCapability(capability));
         }
         return capabilitiesDO;
     }

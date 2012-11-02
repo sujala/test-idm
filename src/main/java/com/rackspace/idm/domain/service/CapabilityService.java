@@ -3,6 +3,8 @@ package com.rackspace.idm.domain.service;
 import com.rackspace.idm.domain.entity.Capabilities;
 import com.rackspace.idm.domain.entity.Capability;
 
+import java.util.List;
+
 /**
  * Created by IntelliJ IDEA.
  * User: jorge
@@ -11,8 +13,7 @@ import com.rackspace.idm.domain.entity.Capability;
  * To change this template use File | Settings | File Templates.
  */
 public interface CapabilityService {
-    void updateCapabilities(Capabilities capabilities);
-    Capabilities getCapabilities(String version, String openStackType);
-    Capability getCapability(String capabilityId, String version, String openStackType);
-    void removeCapabilities(String version, String openStackType);
+    void updateCapabilities(List<Capability> capabilities, String type, String version);
+    List<Capability> getCapabilities(String type, String version);
+    void removeCapabilities(String type, String version);
 }
