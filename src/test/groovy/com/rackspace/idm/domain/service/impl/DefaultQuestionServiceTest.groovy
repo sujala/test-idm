@@ -1,12 +1,11 @@
 package com.rackspace.idm.domain.service.impl
 
-import spock.lang.Specification
-import spock.lang.Shared
 import com.rackspace.idm.domain.dao.impl.LdapQuestionRepository
-import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.domain.entity.Question
-import com.rackspace.idm.exception.DuplicateException
+import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.exception.NotFoundException
+import spock.lang.Shared
+import spock.lang.Specification
 
 class DefaultQuestionServiceTest extends Specification {
 
@@ -32,12 +31,16 @@ class DefaultQuestionServiceTest extends Specification {
         thrown(BadRequestException)
     }
 
-    def "create question id is required"() {
+    def "create question id is generated"() {
+        given:
+        setupMocks()
+        questionDao.getNextId() >> "1"
+
         when:
-        questionService.addQuestion(question(null, "question"))
+        def questionId = questionService.addQuestion(question(null, "question"))
 
         then:
-        thrown(BadRequestException)
+        questionId == "1"
     }
 
     def "create question question is required"(){
@@ -59,14 +62,6 @@ class DefaultQuestionServiceTest extends Specification {
     def "update question with null question throws bad request"() {
         when:
         questionService.updateQuestion("id", null)
-
-        then:
-        thrown(BadRequestException)
-    }
-
-    def "update question id is required"() {
-        when:
-        questionService.updateQuestion("id", question(null, "question"))
 
         then:
         thrown(BadRequestException)
@@ -94,18 +89,6 @@ class DefaultQuestionServiceTest extends Specification {
 
         then:
         thrown(BadRequestException)
-    }
-
-    def "add question with already exisiting questionId throws duplicate"() {
-        given:
-        setupMocks()
-        questionDao.getObject(_) >> question("id", "some question")
-
-        when:
-        questionService.addQuestion(question("id", "question"))
-
-        then:
-        thrown(DuplicateException)
     }
 
     def "update question with wrong questionId in entity throws bad request"() {

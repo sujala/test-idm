@@ -157,5 +157,10 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
     public String getLdapEntityClass(){
         throw new NotImplementedException();
     }
+
+    @Override
+    public String getNextId() {
+        throw new NotImplementedException();
+    }
 }
 

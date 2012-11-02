@@ -20,4 +20,5 @@ public interface GenericDao<T> {
     void deleteObject(Filter searchFilter);
     String getBaseDn();
     String getLdapEntityClass();
+    String getNextId();
 }

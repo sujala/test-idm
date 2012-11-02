@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
  * To change this template use File | Settings | File Templates.
  */
 @Component
-public class LdapQuestionRepository extends LdapGenericRepository<Question>{
+public class LdapQuestionRepository extends LdapGenericRepository<Question> {
 
     public String getBaseDn(){
         return QUESTION_BASE_DN;
@@ -20,4 +20,9 @@ public class LdapQuestionRepository extends LdapGenericRepository<Question>{
     public String getLdapEntityClass(){
         return OBJECTCLASS_QUESTION;
     }
+
+    public String getNextId() {
+        return getNextId(NEXT_QUESTION_ID);
+    }
+
 }
