@@ -966,6 +966,36 @@ public class Cloud20VersionResource {
         return getCloud20Service().deleteRegion(authToken, name).build();
     }
 
+    @POST
+    @Path("RAX-AUTH/secretqa/questions")
+    public Response createQuestion(@Context UriInfo uriInfo, @HeaderParam(X_AUTH_TOKEN) String authToken, Question question) {
+        return getCloud20Service().addQuestion(uriInfo, authToken, question).build();
+    }
+
+    @GET
+    @Path("RAX-AUTH/secretqa/questions/{questionId}")
+    public Response getQuestion(@HeaderParam(X_AUTH_TOKEN) String authToken, @PathParam("questionId") String questionId) {
+        return getCloud20Service().getQuestion(authToken, questionId).build();
+    }
+
+    @GET
+    @Path("RAX-AUTH/secretqa/questions")
+    public Response getQuestions(@HeaderParam(X_AUTH_TOKEN) String authToken) {
+        return getCloud20Service().getQuestions(authToken).build();
+    }
+
+    @PUT
+    @Path("RAX-AUTH/secretqa/questions/{name}")
+    public Response updateQuestion(@HeaderParam(X_AUTH_TOKEN) String authToken, @PathParam("name") String name, Question question) {
+        return getCloud20Service().updateQuestion(authToken, name, question).build();
+    }
+
+    @DELETE
+    @Path("RAX-AUTH/secretqa/questions/{questionId}")
+    public Response deleteQuestion(@HeaderParam(X_AUTH_TOKEN) String authToken, @PathParam("questionId") String questionId) {
+        return getCloud20Service().deleteQuestion(authToken, questionId).build();
+    }
+
     Cloud20Service getCloud20Service() {
         if (config.getBoolean("useCloudAuth")) {
             return delegateCloud20Service;

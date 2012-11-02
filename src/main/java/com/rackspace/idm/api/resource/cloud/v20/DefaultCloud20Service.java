@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v20;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Question;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
@@ -164,6 +165,12 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private RegionConverterCloudV20 regionConverterCloudV20;
+
+    @Autowired
+    private QuestionService questionService;
+
+    @Autowired
+    private QuestionConverterCloudV20 questionConverter;
 
     private com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
 
@@ -2195,6 +2202,62 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
             cloudRegionService.checkAndGetRegion(name);
             cloudRegionService.deleteRegion(name);
+            return Response.noContent();
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public ResponseBuilder addQuestion(UriInfo uriInfo, String authToken, Question question) {
+        try {
+            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            String questionId = questionService.addQuestion(questionConverter.fromQuestion(question));
+
+            UriBuilder requestUriBuilder = uriInfo.getRequestUriBuilder();
+            URI build = requestUriBuilder.path(questionId).build();
+            return Response.created(build);
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public ResponseBuilder getQuestion(String authToken, String questionId) {
+        try {
+            authorizationService.verifyUserLevelAccess(getScopeAccessForValidToken(authToken));
+            return Response.ok().entity(questionConverter.toQuestion(questionService.getQuestion(questionId)).getValue());
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public ResponseBuilder getQuestions(String authToken) {
+        try {
+            authorizationService.verifyUserLevelAccess(getScopeAccessForValidToken(authToken));
+            return Response.ok().entity(questionConverter.toQuestions(questionService.getQuestions()).getValue());
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public ResponseBuilder updateQuestion(String authToken, String questionId, Question question) {
+        try {
+            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            questionService.updateQuestion(questionId, questionConverter.fromQuestion(question));
+            return Response.noContent();
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public ResponseBuilder deleteQuestion(String authToken, String questionId) {
+        try {
+            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            questionService.deleteQuestion(questionId);
             return Response.noContent();
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);

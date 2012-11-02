@@ -1,7 +1,10 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Question
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Questions
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Regions
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
@@ -17,8 +20,6 @@ import org.openstack.docs.identity.api.v2.*
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.ensureGrizzlyStarted
 import static javax.ws.rs.core.MediaType.APPLICATION_XML
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Regions
-import javax.ws.rs.core.MultivaluedMap
-import org.springframework.util.MultiValueMap
 import com.sun.jersey.core.util.MultivaluedMapImpl
 
 class Cloud20IntegrationTest extends Specification {
@@ -244,7 +245,10 @@ class Cloud20IntegrationTest extends Specification {
                 createRegion(defaultUserToken, region()),
                 updateRegion(defaultUserToken, sharedRegion.getName(), sharedRegion),
                 deleteRegion(defaultUserToken, sharedRegion.getName()),
-                getRegion(defaultUserToken, sharedRegion.getName())
+                getRegion(defaultUserToken, sharedRegion.getName()),
+                createQuestion(defaultUserToken, question()),
+                updateQuestion(defaultUserToken, "id", question()),
+                deleteQuestion(defaultUserToken, "id"),
         ]
     }
 
@@ -539,6 +543,68 @@ class Cloud20IntegrationTest extends Specification {
         responseSix.getEntity(UserList).value.user.size == 0
     }
 
+    def "question crud"() {
+        given:
+        def question1 = question(null, "question")
+        def question2 = question(null, "question changed")
+
+        when:
+        def createResponse = createQuestion(serviceAdminToken, question1)
+        def getCreateResponse = getQuestionFromLocation(serviceAdminToken, createResponse.location)
+        def createEntity = getCreateResponse.getEntity(Question)
+        question2.id = createEntity.id
+
+        def updateResponse = updateQuestion(serviceAdminToken, createEntity.id, question2)
+        def getUpdateResponse = getQuestion(serviceAdminToken, createEntity.id)
+        def updateEntity = getUpdateResponse.getEntity(Question)
+
+        def deleteResponse = deleteQuestion(serviceAdminToken, createEntity.id)
+        def getDeleteResponse = getQuestion(serviceAdminToken, createEntity.id)
+
+        def getQuestionResponse = getQuestions(serviceAdminToken)
+        def questions = getQuestionResponse.getEntity(Questions)
+
+        then:
+        createResponse.status == 201
+        createResponse.location != null
+        createEntity.id != null
+        question1.question == createEntity.question
+
+        updateResponse.status == 204
+        updateEntity.id == question2.id
+        updateEntity.question == question2.question
+
+        deleteResponse.status == 204
+        getDeleteResponse.status == 404
+
+        getQuestionResponse.status == 200
+        questions != null
+    }
+
+    def "invalid operations on question returns 'not found'"() {
+        expect:
+        response.status == 404
+
+        where:
+        response << [
+                updateQuestion(serviceAdminToken, "notfound", question("notfound", "question")),
+                deleteQuestion(serviceAdminToken, "notfound"),
+                getQuestion(serviceAdminToken, "notfound"),
+        ]
+    }
+
+    def "invalid operations on question returns 'bad request'"() {
+        expect:
+        response.status == 400
+
+        where:
+        response << [
+                updateQuestion(serviceAdminToken, "ids", question("dontmatch", "question")),
+                updateQuestion(serviceAdminToken, "id", question("id", null)),
+                createQuestion(serviceAdminToken, question("id", null)),
+        ]
+    }
+
     //Resource Calls
     def createUser(String token, user) {
         resource.path(path).path('users').header(X_AUTH_TOKEN, token).entity(user).post(ClientResponse)
@@ -660,6 +726,30 @@ class Cloud20IntegrationTest extends Specification {
         resource.path(path).path("users").path(userId).path("roles/OS-KSADM").path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete()
     }
 
+    def createQuestion(String token, question) {
+        resource.path(path).path(RAX_AUTH).path("secretqa/questions").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(question).post(ClientResponse)
+    }
+
+    def getQuestion(String token, questionId) {
+        resource.path(path).path(RAX_AUTH).path("secretqa/questions").path(questionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).get(ClientResponse)
+    }
+
+    def getQuestionFromLocation(String token, location) {
+        resource.uri(location).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).get(ClientResponse)
+    }
+
+    def getQuestions(String token) {
+        resource.path(path).path(RAX_AUTH).path("secretqa/questions").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).get(ClientResponse)
+    }
+
+    def updateQuestion(String token, String questionId, question) {
+        resource.path(path).path(RAX_AUTH).path("secretqa/questions").path(questionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(question).put(ClientResponse)
+    }
+
+    def deleteQuestion(String token, String questionId) {
+        resource.path(path).path(RAX_AUTH).path("secretqa/questions").path(questionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).delete(ClientResponse)
+    }
+
     //Helper Methods
     def getCredentials(String username, String password) {
         new PasswordCredentialsRequiredUsername().with {
@@ -758,6 +848,18 @@ class Cloud20IntegrationTest extends Specification {
         new MultivaluedMapImpl().with {
             it.add("marker", "$offset")
             it.add("limit", "$limit")
+            return it
+        }
+    }
+
+    def question() {
+        question("id", "question")
+    }
+
+    def question(String id, String question) {
+        new Question().with {
+            it.id = id
+            it.question = question
             return it
         }
     }

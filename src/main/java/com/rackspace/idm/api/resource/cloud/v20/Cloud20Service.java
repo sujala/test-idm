@@ -234,4 +234,14 @@ public interface Cloud20Service {
     ResponseBuilder updateRegion(String authToken, String name, Region region);
 
     ResponseBuilder deleteRegion(String authToken, String name);
+
+    ResponseBuilder addQuestion(UriInfo uriInfo, String authToken, Question question);
+
+    ResponseBuilder getQuestion(String authToken, String questionId);
+
+    ResponseBuilder getQuestions(String authToken);
+
+    ResponseBuilder updateQuestion(String authToken, String questionId, Question question);
+
+    ResponseBuilder deleteQuestion(String authToken, String questionId);
 }
