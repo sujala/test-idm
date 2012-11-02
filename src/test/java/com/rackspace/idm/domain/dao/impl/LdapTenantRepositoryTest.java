@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.api.resource.pagination.DefaultPaginator;
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
+import org.apache.commons.lang.StringUtils;
 import org.hamcrest.Matchers;
 import org.junit.runner.RunWith;
 
@@ -627,13 +628,21 @@ public class LdapTenantRepositoryTest extends InMemoryLdapIntegrationTest{
 
     @Test
     public void getUserIdFromRDN_returnsUserId() throws Exception {
-        DN rootDN = createDN();
+        DN rootDN = createDN(true);
 
         String userId = spy.getUserIdFromDN(rootDN);
         assertThat("userId match", userId.equalsIgnoreCase("123456789"));
     }
 
-    protected DN createDN() {
+    @Test
+    public void getUserIdFromRDN_rsIdNotInDN_returnsEmptyString() throws Exception {
+        DN rootDN = createDN(false);
+
+        String userId = spy.getUserIdFromDN(rootDN);
+        assertThat("userId is blank", StringUtils.isBlank(userId));
+    }
+
+    protected DN createDN(boolean withRsId) {
         RDN rdn = new RDN("clientId", "abcd12345");
         RDN rdn1 = new RDN("cn", "DIRECT TOKENS");
         RDN rdn2 = new RDN("rsId", "123456789");
@@ -641,6 +650,10 @@ public class LdapTenantRepositoryTest extends InMemoryLdapIntegrationTest{
         RDN rdn4 = new RDN("o", "rackspace");
         RDN rdn5 = new RDN("dc", "rackspace");
 
-        return new DN(rdn, rdn1, rdn2, rdn3, rdn4, rdn5);
+        if (withRsId) {
+            return new DN(rdn, rdn1, rdn2, rdn3, rdn4, rdn5);
+        } else {
+            return new DN(rdn, rdn1, rdn3, rdn4, rdn5);
+        }
     }
 }

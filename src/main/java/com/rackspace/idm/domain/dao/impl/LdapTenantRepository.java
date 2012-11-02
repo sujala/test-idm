@@ -537,7 +537,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         return context;
     }
 
-    protected String getUserIdFromDN(DN dn) throws Exception {
+    protected String getUserIdFromDN(DN dn) {
         DN parentDN = dn.getParent();
         List<RDN> rdns = new ArrayList<RDN>(Arrays.asList(dn.getRDNs()));
         List<RDN> parentRDNs = new ArrayList<RDN>(Arrays.asList(parentDN.getRDNs()));
@@ -545,11 +545,13 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
 
         remainder.removeAll(parentRDNs);
         RDN rdn = remainder.get(0);
-        if (!rdn.hasAttribute("rsId")) {
-            return getUserIdFromDN(parentDN);
-        } else {
+        if (rdn.hasAttribute("rsId")) {
             String rdnString = rdn.toString();
             return rdnString.substring(rdnString.indexOf("=") + 1);
+        } else if (parentDN.getParent() == null) {
+            return "";
+        } else {
+            return getUserIdFromDN(parentDN);
         }
     }
 

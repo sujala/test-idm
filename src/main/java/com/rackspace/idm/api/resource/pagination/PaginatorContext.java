@@ -38,7 +38,7 @@ public class PaginatorContext<T> {
     public void makePageLinks() {
         if (totalRecords > 0) {
             if (offset > totalRecords) {
-                throw new BadRequestException("Offset greater than total number of records");
+                throw new BadRequestException(String.format("Offset greater than total number of records (%s)", totalRecords));
             }
 
             int lastIndex = (totalRecords - limit) < 0 ? 0 : (totalRecords - limit);

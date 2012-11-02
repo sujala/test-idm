@@ -17,6 +17,9 @@ import org.openstack.docs.identity.api.v2.*
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.ensureGrizzlyStarted
 import static javax.ws.rs.core.MediaType.APPLICATION_XML
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Regions
+import javax.ws.rs.core.MultivaluedMap
+import org.springframework.util.MultiValueMap
+import com.sun.jersey.core.util.MultivaluedMapImpl
 
 class Cloud20IntegrationTest extends Specification {
     @Shared WebResource resource
@@ -26,17 +29,20 @@ class Cloud20IntegrationTest extends Specification {
     @Shared def serviceAdminToken
     @Shared def identityAdminToken
     @Shared def userAdminToken
+    @Shared def userAdminTwoToken
     @Shared def defaultUserToken
 
     @Shared def serviceAdmin
     @Shared def identityAdmin
     @Shared def userAdmin
+    @Shared def userAdminTwo
     @Shared def defaultUser
     @Shared def defaultUserTwo
     @Shared def defaultUserThree
     @Shared def sharedRandomness = UUID.randomUUID()
     @Shared def sharedRandom
     @Shared def sharedRole
+    @Shared def sharedRoleTwo
 
     def randomness = UUID.randomUUID()
     static def X_AUTH_TOKEN = "X-Auth-Token"
@@ -56,27 +62,28 @@ class Cloud20IntegrationTest extends Specification {
         this.objFactories = new JAXBObjectFactories()
         serviceAdminToken = authenticate("authQE", "Auth1234").getEntity(AuthenticateResponse).value.token.id
         serviceAdmin = getUserByName(serviceAdminToken, "authQE").getEntity(User)
-        identityAdminToken = authenticate("auth", "auth123").getEntity(AuthenticateResponse).value.token.id
+
         identityAdmin = getUserByName(serviceAdminToken, "auth").getEntity(User)
-        //User Admin
-        def userAdminResponse = getUserByName(identityAdminToken, "testUserAdmin_doNotDeleteMe")
-        if (userAdminResponse.getStatus() == 404) {
-            userAdmin = createUser(identityAdminToken, userForCreate("testUserAdmin_doNotDeleteMe", "display", "test@rackspace.com", true, "ORD", "domainId", "Password1")).getEntity(User)
-        } else if (userAdminResponse.getStatus() == 200) {
-            userAdmin = userAdminResponse.getEntity(User)
-        }
-        userAdminToken = authenticate("testUserAdmin_doNotDeleteMe", "Password1").getEntity(AuthenticateResponse).value.token.id
-
-        //Default User
-        def defaultUserResponse = getUserByName(userAdminToken, "testDefaultUser_doNotDeleteMe")
-        if (defaultUserResponse.getStatus() == 404) {
-            defaultUser = createUser(userAdminToken, userForCreate("testDefaultUser_doNotDeleteMe", "display", "test@rackspace.com", true, null, null, "Password1")).getEntity(User)
-        } else if (defaultUserResponse.getStatus() == 200) {
-            defaultUser = defaultUserResponse.getEntity(User)
-        }
-        defaultUserToken = authenticate("testDefaultUser_doNotDeleteMe", "Password1").getEntity(AuthenticateResponse).value.token.id
-
         identityAdminToken = authenticate("auth", "auth123").getEntity(AuthenticateResponse).value.token.id
+
+        //User Admin
+        def createUserAdminRes1 = createUser(identityAdminToken, userForCreate("userAdmin1$sharedRandom", "display", "test@rackspace.com", true, "ORD", "domainId", "Password1"))
+        userAdmin = getUserByName(identityAdminToken, "userAdmin1$sharedRandom").getEntity(User)
+        def createUserAdminRes2 = createUser(identityAdminToken, userForCreate("userAdmin2$sharedRandom", "display", "test@rackspace.com", true, "ORD", "domainId2", "Password1"))
+        userAdminTwo = getUserByName(identityAdminToken, "userAdmin2$sharedRandom").getEntity(User)
+
+        userAdminToken = authenticate("userAdmin1$sharedRandom", "Password1").getEntity(AuthenticateResponse).value.token.id
+        userAdminTwoToken = authenticate("userAdmin2$sharedRandom", "Password1").getEntity(AuthenticateResponse).value.token.id
+
+        // Default Users
+        def createUserResponse1 = createUser(userAdminToken, userForCreate("defaultUser1$sharedRandom", "display", "test@rackspace.com", true, null, null, "Password1"))
+        defaultUser = getUserByName(userAdminToken, "defaultUser1$sharedRandom").getEntity(User)
+        def createUserResponse2 = createUser(userAdminToken, userForCreate("defaultUser2$sharedRandom", "display", "test@rackspace.com", true, null, null, "Password1"))
+        defaultUserTwo = getUserByName(userAdminToken, "defaultUser2$sharedRandom").getEntity(User)
+        def createUserResponse3 = createUser(userAdminToken, userForCreate("defaultUser3$sharedRandom", "display", "test@rackspace.com", true, null, null, "Password1"))
+        defaultUserThree = getUserByName(userAdminToken, "defaultUser3$sharedRandom").getEntity(User)
+
+        defaultUserToken = authenticate("defaultUser1$sharedRandom", "Password1").getEntity(AuthenticateResponse).value.token.id
 
         //create group
         def createGroupResponse = createGroup(serviceAdminToken, group("group$sharedRandom", "this is a group"))
@@ -90,15 +97,35 @@ class Cloud20IntegrationTest extends Specification {
 
         //create role
         if (sharedRole == null) {
-            def response = createRole(serviceAdminToken, role())
-            sharedRole = response.getEntity(Role).value
+            def roleResponse = createRole(serviceAdminToken, role())
+            sharedRole = roleResponse.getEntity(Role).value
         }
+        if (sharedRoleTwo == null) {
+            def roleResponse2 = createRole(serviceAdminToken, role())
+            sharedRoleTwo = roleResponse2.getEntity(Role).value
+        }
+
+        //Add role to identity-admin and default-users
+        addRoleToUser(serviceAdminToken, sharedRole.getId(), identityAdmin.getId())
+        addRoleToUser(serviceAdminToken, sharedRole.getId(), defaultUser.getId())
+        addRoleToUser(serviceAdminToken, sharedRole.getId(), defaultUserTwo.getId())
+        addRoleToUser(serviceAdminToken, sharedRole.getId(), defaultUserThree.getId())
+//        setupUsersWithRole(sharedRole)
     }
 
     def cleanupSpec() {
         deleteGroup(serviceAdminToken, group.getId())
         deleteRegion(serviceAdminToken, sharedRegion.getName())
+
         deleteRole(serviceAdminToken, sharedRole.getId())
+        deleteRole(serviceAdminToken, sharedRoleTwo.getId())
+
+        deleteUser(serviceAdminToken, userAdmin.getId())
+        deleteUser(serviceAdminToken, userAdminTwo.getId())
+
+        deleteUser(serviceAdminToken, defaultUser.getId())
+        deleteUser(serviceAdminToken, defaultUserTwo.getId())
+        deleteUser(serviceAdminToken, defaultUserThree.getId())
     }
 
     def 'User CRUD'() {
@@ -424,15 +451,15 @@ class Cloud20IntegrationTest extends Specification {
 
         where:
         response << [
-                listUsersWithRole(identityAdminToken, "3"),
-                listUsersWithRole(serviceAdminToken, "3"),
-                listUsersWithRole(userAdminToken, "4")
+                listUsersWithRole(identityAdminToken, sharedRole.getId()),
+                listUsersWithRole(serviceAdminToken, sharedRole.getId()),
+                listUsersWithRole(userAdminToken, sharedRole.getId())
         ]
     }
 
     def "listUsersWithRole empty list returns"() {
         when:
-        def response = listUsersWithRole(serviceAdminToken, sharedRole.getId())
+        def response = listUsersWithRole(userAdminTwoToken, sharedRole.getId())
 
         then:
         response.status == 200
@@ -441,10 +468,6 @@ class Cloud20IntegrationTest extends Specification {
     }
 
     def "listUsersWithRole non empty list"() {
-        given:
-        addRoleToUser(serviceAdminToken, sharedRole.getId(), identityAdmin.getId())
-        addRoleToUser(serviceAdminToken, sharedRole.getId(), defaultUser.getId())
-
         when:
         def userAdminResponse = listUsersWithRole(userAdminToken, sharedRole.getId())
         def serviceAdminResponse = listUsersWithRole(serviceAdminToken, sharedRole.getId())
@@ -452,23 +475,68 @@ class Cloud20IntegrationTest extends Specification {
 
         then:
         userAdminResponse.status == 200
-        userAdminResponse.getEntity(UserList).value.user.size == 1
+        def userAdminResponseObj = userAdminResponse.getEntity(UserList).value
+        userAdminResponseObj.user.size() == 3
         serviceAdminResponse.status == 200
-        serviceAdminResponse.getEntity(UserList).value.user.size == 2
+        def serviceAdminResponseObj = serviceAdminResponse.getEntity(UserList).value
+        serviceAdminResponseObj.user.size == 4
         identityAdminResponse.status == 200
-        identityAdminResponse.getEntity(UserList).value.user.size == 2
+        def identityAdminResponseObj = identityAdminResponse.getEntity(UserList).value
+        identityAdminResponseObj.user.size == 4
+    }
 
+    def "listUsersWithRole pages results"() {
+        when:
+        def userAdminResponse1 = listUsersWithRole(userAdminToken, sharedRole.getId(), 0, 1)
+        def userAdminResponse2 = listUsersWithRole(userAdminToken, sharedRole.getId(), 1, 1)
+        def userAdminResponse3 = listUsersWithRole(userAdminToken, sharedRole.getId(), 2, 1)
+        def serviceAdminResponse1 = listUsersWithRole(serviceAdminToken, sharedRole.getId(), 1, 2)
+        def serviceAdminResponse2 = listUsersWithRole(serviceAdminToken, sharedRole.getId(), 0, 2)
+        def serviceAdminResponse3 = listUsersWithRole(serviceAdminToken, sharedRole.getId(), 2, 2)
+        def serviceAdminResponse4 = listUsersWithRole(serviceAdminToken, sharedRole.getId(), 4, 4)
+
+        then:
+        userAdminResponse1.getEntity(UserList).value.user.size == 1
+        userAdminResponse2.getEntity(UserList).value.user.size == 1
+        userAdminResponse3.getEntity(UserList).value.user.size == 1
+        serviceAdminResponse1.getEntity(UserList).value.user.size == 2
+        serviceAdminResponse2.getEntity(UserList).value.user.size == 2
+        serviceAdminResponse3.getEntity(UserList).value.user.size == 2
+        serviceAdminResponse4.getEntity(UserList).value.user.size == 1
+
+        def serviceAdminHeaders = serviceAdminResponse3.headers
+        serviceAdminHeaders.getFirst("Link") != null
+
+        def userAdminHeaders = userAdminResponse2.headers
+        userAdminHeaders.getFirst("Link") != null
     }
 
     def "listUsersWithRole offset greater than result set length returns 400"() {
-        given:
-        addRoleToUser(serviceAdminToken, sharedRole.getId(), defaultUser.getId())
-
         when:
-        def response = listUsersWithRole(serviceAdminToken, sharedRole.getId(), 100, 10)
+        def responseOne = listUsersWithRole(serviceAdminToken, sharedRole.getId(), 100, 10)
+        def responseTwo = listUsersWithRole(userAdminToken, sharedRole.getId(), 100, 10)
 
         then:
-        response.status == 400
+        responseOne.status == 400
+        responseTwo.status == 400
+    }
+
+    def "listUsersWithRole role assigned to no one"() {
+        when:
+        def responseOne = listUsersWithRole(serviceAdminToken, sharedRoleTwo.getId())
+        def responseTwo = listUsersWithRole(serviceAdminToken, sharedRoleTwo.getId(), 0, 10)
+        def responseThree = listUsersWithRole(identityAdminToken, sharedRoleTwo.getId())
+        def responseFour = listUsersWithRole(identityAdminToken, sharedRoleTwo.getId(), 0, 10)
+        def responseFive = listUsersWithRole(userAdminToken, sharedRoleTwo.getId())
+        def responseSix = listUsersWithRole(userAdminToken, sharedRoleTwo.getId(), 0, 10)
+
+        then:
+        responseOne.getEntity(UserList).value.user.size == 0
+        responseTwo.getEntity(UserList).value.user.size == 0
+        responseThree.getEntity(UserList).value.user.size == 0
+        responseFour.getEntity(UserList).value.user.size == 0
+        responseFive.getEntity(UserList).value.user.size == 0
+        responseSix.getEntity(UserList).value.user.size == 0
     }
 
     //Resource Calls
@@ -573,7 +641,7 @@ class Cloud20IntegrationTest extends Specification {
     }
 
     def listUsersWithRole(String token, String roleId, int offset, int limit) {
-        resource.path(path).path("OS-KSADM/roles").path(roleId).path("RAX-AUTH/users").path(String.format("?offset=%s&limit=%s", offset, limit)).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+        resource.path(path).path("OS-KSADM/roles").path(roleId).path("RAX-AUTH/users").queryParams(pageParams(offset, limit)).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     def createRole(String token, Role role) {
@@ -679,8 +747,17 @@ class Cloud20IntegrationTest extends Specification {
 
     def role() {
         new Role().with {
-            it.name = "role$sharedRandom"
+            def random = ((String) UUID.randomUUID()).replace('-',"")
+            it.name = "role$random"
             it.description = "Test Global Role"
+            return it
+        }
+    }
+
+    def pageParams(offset, limit) {
+        new MultivaluedMapImpl().with {
+            it.add("marker", "$offset")
+            it.add("limit", "$limit")
             return it
         }
     }

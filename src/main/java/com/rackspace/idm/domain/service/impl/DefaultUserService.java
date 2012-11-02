@@ -908,7 +908,7 @@ public class DefaultUserService implements UserService {
 
     protected List<User> getSubList(List<User> userList, int offset, int limit) {
         if (offset > userList.size()) {
-            throw new BadRequestException(String.format("offset greater than total result set size: %s", userList.size()));
+            throw new BadRequestException(String.format("Offset greater than total number of records (%s)", userList.size()));
         }
 
         if (userList.size() > limit) {

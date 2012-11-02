@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.apache.commons.configuration.Configuration
 import javax.ws.rs.core.UriInfo
 import com.unboundid.ldap.sdk.SearchResultEntry
+import com.rackspace.idm.exception.BadRequestException
 
 /**
  * Created with IntelliJ IDEA.
@@ -58,8 +59,22 @@ class PaginatorContextTest extends Specification {
         ((HashMap) list).size() == 0
     }
 
+    def "makePageLinks throws bad request"() {
+        given:
+        paginatorContext.setOffset(100)
+
+        when:
+        paginatorContext.makePageLinks()
+
+        then:
+        BadRequestException exception = thrown()
+        exception.getMessage().equals("Offset greater than total number of records (25)")
+    }
+
+
     def "makePageLinks within first page"() {
         when:
+        paginatorContext.setOffset(0)
         paginatorContext.makePageLinks()
 
         then:
