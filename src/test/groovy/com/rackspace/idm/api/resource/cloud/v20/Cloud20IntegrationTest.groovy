@@ -387,6 +387,7 @@ class Cloud20IntegrationTest extends Specification {
         def getRegionsResponse = getRegions(serviceAdminToken)
         Regions regions = getRegionsResponse.getEntity(Regions)
 
+        updateRegion(serviceAdminToken, "DFW", region("DFW", true, true))
         def deleteRegionResponse = deleteRegion(serviceAdminToken, regionName)
         def getDeletedRegionResponse = getRegion(serviceAdminToken, regionName)
 

@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.entity;
 
+import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.FilterUsage;
@@ -18,7 +19,7 @@ import lombok.Data;
 
 @Data
 @LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_REGION)
-public class Region implements Auditable {
+public class Region implements Auditable, UniqueId {
     @LDAPEntryField()
     private ReadOnlyEntry ldapEntry;
 
