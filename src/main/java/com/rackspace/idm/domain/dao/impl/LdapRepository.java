@@ -371,6 +371,7 @@ public abstract class LdapRepository {
     protected static final String NEXT_DOMAIN_ID = "nextDomainId";
     protected static final String NEXT_CAPABILITY_ID = "nextCapabilityId";
     protected static final String NEXT_QUESTION_ID = "nextQuestionId";
+    protected static final String NEXT_POLICY_ID = "nextPolicyId";
 
 
     protected String getNextId(String type) {

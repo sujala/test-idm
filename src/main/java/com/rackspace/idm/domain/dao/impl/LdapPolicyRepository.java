@@ -180,7 +180,7 @@ public class LdapPolicyRepository extends LdapRepository implements PolicyDao {
 
     @Override
     public String getNextPolicyId() {
-        return getNextId( NEXT_POLICY_ID);
+        return getNextId(NEXT_POLICY_ID);
     }
 
     @Override
