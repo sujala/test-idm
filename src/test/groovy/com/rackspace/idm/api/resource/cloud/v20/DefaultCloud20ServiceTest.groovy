@@ -278,7 +278,6 @@ class DefaultCloud20ServiceTest extends Specification {
         given:
         createMocks()
         allowAccess()
-        userService.getUser(_) >> user()
 
         when:
         cloud20Service.listUsers(null, uriInfo(), authToken, offset, limit)
@@ -292,19 +291,16 @@ class DefaultCloud20ServiceTest extends Specification {
         given:
         createMocks()
         allowAccess()
-        def caller = user()
-        userService.getUser(_) >> caller
-        authorizationService.authorizeCloudUserAdmin(_) >> true
-        def users = [ user() ] as User[]
-        def expectedEntity = objFactories.getOpenStackIdentityV2Factory()
-                .createUsers(userConverterCloudV20.toUserList(users.toList()))
+
+        userDao.getUserByUsername(_) >> user(sharedRandom)
+        authorizationService.authorizeCloudUser(_) >> true
 
         when:
         def response = cloud20Service.listUsers(null, uriInfo(), authToken, offset, limit).build()
 
         then:
         response.status == 200
-        response.entity.equals(expectedEntity)
+        response.entity.user[0].username.equals(sharedRandom)
     }
 
     def "listUsers verifies userAdmin Access level"() {
@@ -324,6 +320,7 @@ class DefaultCloud20ServiceTest extends Specification {
         given:
         createMocks()
         allowAccess()
+
         authorizationService.authorizeCloudUserAdmin(_) >> false
         authorizationService.authorizeCloudServiceAdmin(_) >> true
 
@@ -338,59 +335,68 @@ class DefaultCloud20ServiceTest extends Specification {
         given:
         createMocks()
         allowAccess()
+        def user = user(sharedRandom)
+        user.domainId = "123456789"
+
+        def userList = [ ] as User[]
+        userList = userList.toList()
+        FilterParam[] filters = [new FilterParam(FilterParam.FilterParamName.DOMAIN_ID, "123456789")] as FilterParam[]
+        userDao.getUserByUsername(_) >> user
+        userDao.getAllUsersPaged(_, _, _) >> userContext(offset, limit, userList)
         authorizationService.authorizeCloudUserAdmin(_) >> false
         authorizationService.authorizeCloudServiceAdmin(_) >> false
-        def user = user()
-        user.domainId = "123456789"
-        userService.getUser(_) >> user
-        FilterParam[] filters = [new FilterParam(FilterParam.FilterParamName.DOMAIN_ID, "123456789")] as FilterParam[]
 
         when:
         cloud20Service.listUsers(null, uriInfo(), authToken, offset, limit)
 
         then:
-        1 * userDao.getAllUsersPaged(filters, offset, limit)
+        1 * userDao.getAllUsersPaged(_, _, _)
     }
 
     def "listUsers throws bad request"() {
         given:
         createMocks()
         allowAccess()
+
+        userDao.getUserByUsername(_) >> user(sharedRandom)
         authorizationService.authorizeCloudUserAdmin(_) >> false
         authorizationService.authorizeCloudServiceAdmin(_) >> false
-        userService.getUser(_) >> user()
 
         when:
-        cloud20Service.listUsers(null, uriInfo(), authToken, offset, limit)
+        def response = cloud20Service.listUsers(null, uriInfo(), authToken, offset, limit).build()
 
         then:
-        def BadRequestException exception = thrown()
-        exception.message == "User-admin has no domain"
+        response.status == 400
     }
 
     def "listUsers returns userList"() {
         given:
         createMocks()
         allowAccess()
-        def userContext = userContext(offset, limit, userList())
-        def user = user()
-        user.domainId = "123456789"
-        FilterParam[] filters = [new FilterParam(FilterParam.FilterParamName.DOMAIN_ID, "123456789")] as FilterParam[]
-
-        def expectedEntity = objFactories.getOpenStackIdentityV2Factory()
-                .createUsers(userConverterCloudV20.toUserList(userList()))
+        def userList = [ user("user1"), user("user2"), user("user3") ] as User[]
+        userList = userList.toList()
+        def userContext = userContext(offset, limit, userList)
+        def links = new HashMap<String, String>()
+        links.put("first", "first")
+        links.put("last", "last")
+        links.put("prev", "prev")
+        links.put("next", "next")
+        userContext.pageLinks = links
 
         authorizationService.authorizeCloudUserAdmin(_) >> false
-        authorizationService.authorizeCloudServiceAdmin(_) >> false
-        userService.getUser(_) >> user
-        userDao.getAllUsersPaged(filters, offset, limit) >> userContext
+        authorizationService.authorizeCloudServiceAdmin(_) >> true
+        userDao.getUserByUsername(_) >> user(sharedRandom)
+        userDao.getAllUsersPaged(_, _, _) >> userContext
 
         when:
         def response = cloud20Service.listUsers(null, uriInfo(), authToken, offset, limit).build()
 
         then:
         response.status == 200
-        response.entity.equals(expectedEntity)
+        response.entity.user[0].username == "user1"
+        response.entity.user[1].username == "user2"
+        response.entity.user[2].username == "user3"
+
     }
 
     //helper methods
@@ -415,8 +421,17 @@ class DefaultCloud20ServiceTest extends Specification {
     }
 
     def allowAccess() {
-        ScopeAccess accessToken = scopeAccess()
-        scopeAccessService.getScopeAccessByAccessToken(_) >> accessToken
+        def attribute = new Attribute(LdapRepository.ATTR_UID, "uid")
+        def entry = new ReadOnlyEntry("DN", attribute)
+
+        ClientScopeAccess clientScopeAccess = Mock()
+        Calendar calendar = Calendar.getInstance()
+        calendar.add(Calendar.DAY_OF_YEAR, 1)
+        clientScopeAccess.accessTokenExp = calendar.getTime()
+        clientScopeAccess.accessTokenString = calendar.getTime().toString()
+
+        clientScopeAccess.getLDAPEntry() >> entry
+        scopeAccessService.getScopeAccessByAccessToken(_) >> clientScopeAccess
     }
 
     def user(String username, String email, Boolean enabled, String displayName) {
@@ -429,9 +444,9 @@ class DefaultCloud20ServiceTest extends Specification {
         }
     }
 
-    def user() {
+    def user(name) {
         new User().with {
-            it.username = sharedRandom
+            it.username = name
             return it
         }
     }
@@ -484,6 +499,7 @@ class DefaultCloud20ServiceTest extends Specification {
         UriInfo uriInfo = Mock()
         UriBuilder uriBuilder = Mock()
         uriInfo.getRequestUriBuilder() >> uriBuilder
+        uriInfo.getAbsolutePath() >> new URI("http://path.to/resource")
         uriBuilder.path(_) >> uriBuilder
         uriBuilder.build() >> new URI()
         return uriInfo
@@ -497,10 +513,5 @@ class DefaultCloud20ServiceTest extends Specification {
             it.valueList = list
             return it
         }
-    }
-
-    def userList() {
-        def list = [ user(), user(), user() ] as User[]
-        return list.toList()
     }
 }

@@ -82,7 +82,7 @@ public class PaginatorContext<T> {
     }
 
     public String createLinkHeader(UriInfo uriInfo) {
-        if (getValueList().size() > 0) {
+        if (getPageLinks().size() > 0) {
             StringBuilder linkHeader = new StringBuilder();
             URI path = uriInfo.getAbsolutePath();
             String pathString = path.toString();

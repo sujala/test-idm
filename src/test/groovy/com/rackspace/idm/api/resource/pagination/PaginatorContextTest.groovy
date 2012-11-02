@@ -162,9 +162,10 @@ class PaginatorContextTest extends Specification {
     def  "createLinkHeader returns null"() {
         given:
         paginatorContext.setValueList(new ArrayList<User>())
+        paginatorContext.pageLinks = new HashMap<String, String>()
 
         def uriInfo = Mock(UriInfo.class)
-        uriInfo.getAbsolutePath() >> "http://path.to.resource/here"
+        uriInfo.getAbsolutePath() >> new URI("http://path.to.resource/here")
 
         when:
         def header = paginatorContext.createLinkHeader(uriInfo)

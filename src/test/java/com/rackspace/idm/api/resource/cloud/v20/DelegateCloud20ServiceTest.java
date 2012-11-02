@@ -2012,7 +2012,7 @@ public class DelegateCloud20ServiceTest {
         when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
         HttpHeaders mockHeaders = mock(HttpHeaders.class);
         delegateCloud20Service.listUsers(mockHeaders, null, null, 1, 1);
-        verify(cloudClient).get(url + "users", mockHeaders);
+        verify(cloudClient).get(url + "users?limit=1&marker=1", mockHeaders);
     }
 
     @Test
@@ -2021,7 +2021,7 @@ public class DelegateCloud20ServiceTest {
         when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
         HttpHeaders mockHeaders = mock(HttpHeaders.class);
         delegateCloud20Service.listUsers(mockHeaders, null, null, 1, 1);
-        verify(cloudClient).get(url + "users", mockHeaders);
+        verify(cloudClient).get(url + "users?limit=1&marker=1", mockHeaders);
     }
 
     @Test

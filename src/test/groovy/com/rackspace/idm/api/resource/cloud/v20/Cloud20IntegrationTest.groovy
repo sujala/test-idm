@@ -45,6 +45,9 @@ class Cloud20IntegrationTest extends Specification {
     @Shared def sharedRole
     @Shared def sharedRoleTwo
 
+    @Shared def emptyDomainId
+    @Shared def testDomainId
+
     def randomness = UUID.randomUUID()
     static def X_AUTH_TOKEN = "X-Auth-Token"
     @Shared def groupLocation
@@ -58,6 +61,8 @@ class Cloud20IntegrationTest extends Specification {
 
     def setupSpec() {
         sharedRandom = ("$sharedRandomness").replace('-',"")
+        testDomainId = "domain$sharedRandom"
+        emptyDomainId = "domain2$sharedRandom"
 
         this.resource = ensureGrizzlyStarted("classpath:app-config.xml");
         this.objFactories = new JAXBObjectFactories()
@@ -68,9 +73,9 @@ class Cloud20IntegrationTest extends Specification {
         identityAdminToken = authenticate("auth", "auth123").getEntity(AuthenticateResponse).value.token.id
 
         //User Admin
-        def createUserAdminRes1 = createUser(identityAdminToken, userForCreate("userAdmin1$sharedRandom", "display", "test@rackspace.com", true, "ORD", "domainId", "Password1"))
+        def createUserAdminRes1 = createUser(identityAdminToken, userForCreate("userAdmin1$sharedRandom", "display", "test@rackspace.com", true, "ORD", testDomainId, "Password1"))
         userAdmin = getUserByName(identityAdminToken, "userAdmin1$sharedRandom").getEntity(User)
-        def createUserAdminRes2 = createUser(identityAdminToken, userForCreate("userAdmin2$sharedRandom", "display", "test@rackspace.com", true, "ORD", "domainId2", "Password1"))
+        def createUserAdminRes2 = createUser(identityAdminToken, userForCreate("userAdmin2$sharedRandom", "display", "test@rackspace.com", true, "ORD", emptyDomainId, "Password1"))
         userAdminTwo = getUserByName(identityAdminToken, "userAdmin2$sharedRandom").getEntity(User)
 
         userAdminToken = authenticate("userAdmin1$sharedRandom", "Password1").getEntity(AuthenticateResponse).value.token.id
@@ -607,7 +612,7 @@ class Cloud20IntegrationTest extends Specification {
 
     def "listUsers returns forbidden (invalid token)"() {
         expect:
-        response.status == 403
+        response.status == 401
 
         where:
         response << [
@@ -621,7 +626,7 @@ class Cloud20IntegrationTest extends Specification {
         def users = listUsers(defaultUserToken).getEntity(UserList).value.user
 
         then:
-        users[0].equals(defaultUser)
+        users[0].username.equals(defaultUser.username)
     }
 
     def "listUsers caller is user-admin returns users from domain"() {
@@ -629,7 +634,7 @@ class Cloud20IntegrationTest extends Specification {
         def users = listUsers(userAdminToken).getEntity(UserList).value.user
 
         then:
-        users.size() == 3
+        users.size() == 4
     }
 
     def "listUsers caller is identity-admin or higher returns paged results"() {
@@ -650,12 +655,12 @@ class Cloud20IntegrationTest extends Specification {
 
     def "listUsers sets limit to defaults"() {
         when:
-        def response1 = listUsers(identityAdminToken, 0, 500)
-        def response2 = listUsers(identityAdminToken, 0, -10)
+        def response1 = listUsers(identityAdminToken, 0, 10000).getEntity(UserList).value.user
+        def response2 = listUsers(identityAdminToken, 0, -10).getEntity(UserList).value.user
 
         then:
-        response1.getEntity(UserList).user.size == 100
-        response2.getEntity(UserList).user.size == 25
+        response1.size() <= 1000
+        response2.size() <= 25
     }
 
     def "listUsers throws bad request (offset out of bounds)"() {
