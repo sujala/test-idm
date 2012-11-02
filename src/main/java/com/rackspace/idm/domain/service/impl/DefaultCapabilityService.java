@@ -39,9 +39,13 @@ public class DefaultCapabilityService extends LdapRepository implements Capabili
         if(StringUtils.isBlank(version)){
             throw new BadRequestException("Capabilities version cannot be null or empty");
         }
+
+        //Remove existing capabilities un api with type and version
+        removeCapabilities(type, version);
+
         validateCapabilities(capabilities, type, version);
         for(Capability capability : capabilities){
-            capability.setRsId(ldapCapabilityRepository.getNextGroupId());
+            capability.setRsId(ldapCapabilityRepository.getNextCapabilityId());
             ldapCapabilityRepository.addObject(capability);
         }
     }

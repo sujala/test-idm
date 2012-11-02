@@ -23,6 +23,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.Capability
 import com.rackspace.idm.domain.dao.impl.LdapCapabilityRepository
 import com.rackspace.idm.api.converter.cloudv20.CapabilityConverterCloudV20
 
+
 /*
  This class uses the application context but mocks the ldap interactions
  */
@@ -270,14 +271,16 @@ class DefaultCloud20ServiceTest extends Specification {
         response.status == 204
     }
 
-    def "updateCapabilities return 201" (){
+    def "updateCapabilities return 204" (){
         given:
         createMocks()
         allowAccess()
         Capabilities capabilities = new Capabilities();
         capabilities.capability.add(getCapability("GET", "get_server", "get_server", "description", "http://someUrl", null))
+        List<com.rackspace.idm.domain.entity.Capability> capabilitiesDO = new ArrayList<com.rackspace.idm.domain.entity.Capability>();
         capabilityDao.getNextCapabilityId() >> "123321"
-        capabilityDao.getObjects(_) >> capabilities
+        capabilityDao.getObjects(_) >> capabilitiesDO
+
         when:
         def responseBuilder = cloud20Service.updateCapabilities(authToken,capabilities,"computeTest","1")
 
@@ -286,21 +289,146 @@ class DefaultCloud20ServiceTest extends Specification {
         response.status == 204
     }
 
-//    def "updateCapabilities return 400" (){
-//        given:
-//        createMocks()
-//        allowAccess()
-//        Capabilities capabilities = new Capabilities();
-//        capabilities.capability.add(getCapability("GET", "get_server", "get_server", "description", "http://someUrl", null))
-//        capabilityDao.getNextCapabilityId() >> "123321"
-//        capabilityDao.getObjects(_) >> capabilities
-//        when:
-//        def responseBuilder = cloud20Service.updateCapabilities(authToken,capabilities,"computeTest","1")
-//
-//        then:
-//        Response response = responseBuilder.build()
-//        response.status == 400
-//    }
+    def "updateCapabilities return 400" (){
+        given:
+        createMocks()
+        allowAccess()
+        Capabilities capabilities = new Capabilities();
+        capabilities.capability.add(getCapability(null, "get_server", "get_server", "description", "http://someUrl", null))
+        capabilityDao.getNextCapabilityId() >> "123321"
+        List<com.rackspace.idm.domain.entity.Capability> capabilities2 = new ArrayList<com.rackspace.idm.domain.entity.Capability>();
+        capabilityDao.getObjects(_) >> capabilities2
+        when:
+        def responseBuilder = cloud20Service.updateCapabilities(authToken,capabilities,"computeTest","1")
+        def responseBuilder2 = cloud20Service.updateCapabilities(authToken,capabilities,null,"1")
+        def responseBuilder3 = cloud20Service.updateCapabilities(authToken,null,"computeTest","1")
+
+        then:
+        Response response = responseBuilder.build()
+        response.status == 400
+        Response response2 = responseBuilder2.build()
+        response2.status == 400
+        Response response3 = responseBuilder3.build()
+        response3.status == 400
+    }
+
+    def "updateCapabilities return 401" (){
+        given:
+        createMocks()
+        Capabilities capabilities = new Capabilities();
+
+        when:
+        def responseBuilder = cloud20Service.updateCapabilities("badToken",capabilities,"computeTest","1")
+
+        then:
+        Response response = responseBuilder.build()
+        response.status == 401
+    }
+
+    def "getCapabilities returns 200" () {
+        given:
+        createMocks()
+        allowAccess()
+        List<com.rackspace.idm.domain.entity.Capability> capabilities = new ArrayList<com.rackspace.idm.domain.entity.Capability>();
+        capabilityDao.getObjects(_) >> capabilities
+        when:
+        def responseBuilder = cloud20Service.getCapabilities(authToken,"computeTest","1")
+
+        then:
+        Response response = responseBuilder.build()
+        response.status == 200
+    }
+
+    def "getCapabilities returns 401" () {
+        given:
+        createMocks()
+
+        when:
+        def responseBuilder = cloud20Service.getCapabilities("badToken","computeTest","1")
+
+        then:
+        Response response = responseBuilder.build()
+        response.status == 401
+    }
+
+    def "getCapabilities returns 400" () {
+        given:
+        createMocks()
+        allowAccess()
+
+        when:
+        def responseBuilder = cloud20Service.getCapabilities(authToken, null , null)
+
+        then:
+        Response response = responseBuilder.build()
+        response.status == 400
+    }
+
+    def "getCapabilities null version returns 400" () {
+        given:
+        createMocks()
+        allowAccess()
+
+        when:
+        def responseBuilder = cloud20Service.getCapabilities(authToken, "computeTest" , null)
+
+        then:
+        Response response = responseBuilder.build()
+        response.status == 400
+    }
+
+    def "deleteCapabilities returns 204" () {
+        given:
+        createMocks()
+        allowAccess()
+        List<com.rackspace.idm.domain.entity.Capability> capabilities = new ArrayList<com.rackspace.idm.domain.entity.Capability>();
+        capabilityDao.getObjects(_) >> capabilities
+
+        when:
+        def responseBuilder = cloud20Service.removeCapabilities(authToken , "computeTest", "1")
+
+        then:
+        Response response = responseBuilder.build()
+        response.status == 204
+    }
+
+    def "deleteCapabilities returns 400" () {
+        given:
+        createMocks()
+        allowAccess()
+
+        when:
+        def responseBuilder = cloud20Service.removeCapabilities(authToken, null , null)
+
+        then:
+        Response response = responseBuilder.build()
+        response.status == 400
+    }
+
+    def "deleteCapabilities with null version returns 400" () {
+        given:
+        createMocks()
+        allowAccess()
+
+        when:
+        def responseBuilder = cloud20Service.removeCapabilities(authToken, "computeTest" , null)
+
+        then:
+        Response response = responseBuilder.build()
+        response.status == 400
+    }
+
+    def "deleteCapabilities returns 401" () {
+        given:
+        createMocks()
+
+        when:
+        def responseBuilder = cloud20Service.removeCapabilities("badToken", "computeTest" , null)
+
+        then:
+        Response response = responseBuilder.build()
+        response.status == 401
+    }
 
     def createMocks() {
         scopeAccessDao = Mock()

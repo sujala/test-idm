@@ -3,6 +3,7 @@ package com.rackspace.idm.api.converter.cloudv20;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Capabilities;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Capability;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
+import com.rackspace.idm.exception.BadRequestException;
 import org.dozer.Mapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -39,19 +40,23 @@ public class CapabilityConverterCloudV20 {
 
     public JAXBElement<Capabilities> toCapabilities(List<com.rackspace.idm.domain.entity.Capability> capabilities) {
         Capabilities capabilitiesEntity = objFactories.getRackspaceIdentityExtRaxgaV1Factory().createCapabilities();
-
-        for(com.rackspace.idm.domain.entity.Capability capability: capabilities) {
-            capabilitiesEntity.getCapability().add(toCapability(capability).getValue());
+        if (capabilities != null) {
+            for (com.rackspace.idm.domain.entity.Capability capability : capabilities) {
+                capabilitiesEntity.getCapability().add(toCapability(capability).getValue());
+            }
         }
-
         return objFactories.getRackspaceIdentityExtRaxgaV1Factory().createCapabilities(capabilitiesEntity);
     }
 
     public com.rackspace.idm.domain.entity.Capabilities fromCapabilities(Capabilities capabilities) {
-        com.rackspace.idm.domain.entity.Capabilities capabilitiesDO = new com.rackspace.idm.domain.entity.Capabilities();
-        for(Capability capability : capabilities.getCapability()){
-            capabilitiesDO.getCapability().add(fromCapability(capability));
+        if (capabilities == null || capabilities.getCapability().size() == 0) {
+            throw new BadRequestException("Capabilities can not be empty or null");
         }
+        com.rackspace.idm.domain.entity.Capabilities capabilitiesDO = new com.rackspace.idm.domain.entity.Capabilities();
+            for (Capability capability : capabilities.getCapability()) {
+                capabilitiesDO.getCapability().add(fromCapability(capability));
+            }
+
         return capabilitiesDO;
     }
 }
