@@ -29,12 +29,15 @@ public class DefaultCloudRegionService implements CloudRegionService {
 
     public static final String REGION_CANNOT_BE_NULL = "Region cannot be null";
     public static final String REGIONID_CANNOT_BE_NULL = "Region id cannot be null";
+    public static final String REGIONID_MUST_BE_ALPHA_NUMERIC = "Region id must be alpha numeric";
     public static final String REGION_NAME_CANNOT_BE_NULL = "Region Name cannot be null";
     public static final String REGION_CLOUD_CANNOT_BE_NULL = "Region Cloud cannot be null";
     public static final String REGION_ISDEFAULT_CANNOT_BE_NULL = "Region isDefault cannot be null";
     public static final String REGION_ISENABLED_CANNOT_BE_NULL = "Region isEnabled cannot be null";
     public static final String REGION_NAME_CANNOT_BE_UPDATED = "Region Name cannot be updated";
     public static final String REGION_NAME_ALREADY_EXISTS = "Region Name already exists";
+    public static final String DEFAULT_REGION_CANNOT_BE_SET_NONDEFAULT = "Default region cannot be set to non default";
+    public static final String DEFAULT_REGION_CANNOT_BE_DELETED = "Default region cannot be deleted";
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Override
@@ -51,13 +54,30 @@ public class DefaultCloudRegionService implements CloudRegionService {
             throw new BadRequestException(REGION_CLOUD_CANNOT_BE_NULL);
         }
 
+        if (!StringUtils.isAlphanumeric(region.getName())) {
+            throw new BadRequestException(REGIONID_MUST_BE_ALPHA_NUMERIC);
+        }
+
         Region currentRegion = regionDao.getRegion(region.getName());
         if (currentRegion != null) {
             throw new DuplicateException(REGION_NAME_ALREADY_EXISTS);
         }
 
+        if (region.getIsDefault()) {
+            setAsOnlyDefaultRegion(region);
+        }
+
         logger.info("Adding Region: {}", region);
         regionDao.addRegion(region);
+    }
+
+    private void setAsOnlyDefaultRegion(Region region) {
+        Region defaultRegion = regionDao.getDefaultRegion(region.getCloud());
+
+        if (defaultRegion != null && !defaultRegion.equals(region)) {
+            defaultRegion.setIsDefault(false);
+            regionDao.updateRegion(defaultRegion);
+        }
     }
 
     @Override
@@ -71,12 +91,20 @@ public class DefaultCloudRegionService implements CloudRegionService {
 
         Region updateRegion = checkAndGetRegion(regionId);
 
-        if (!StringUtils.isBlank(region.getName()) && !region.getName().equals(updateRegion.getName())){
+        if (!StringUtils.isBlank(region.getName()) && !region.getName().equals(updateRegion.getName())) {
             throw new BadRequestException(REGION_NAME_CANNOT_BE_UPDATED);
         }
 
         if (StringUtils.isBlank(region.getCloud())) {
             updateRegion.setCloud(null);
+        }
+
+        if (!region.getIsDefault() && updateRegion.getIsDefault()) {
+            throw new BadRequestException(DEFAULT_REGION_CANNOT_BE_SET_NONDEFAULT);
+        }
+
+        if (region.getIsDefault()) {
+            setAsOnlyDefaultRegion(region);
         }
 
         updateRegion.setIsDefault(region.getIsDefault());
@@ -92,7 +120,10 @@ public class DefaultCloudRegionService implements CloudRegionService {
             throw new BadRequestException(REGIONID_CANNOT_BE_NULL);
         }
 
-        checkAndGetRegion(regionId);
+        Region region = checkAndGetRegion(regionId);
+        if (region.getIsDefault()) {
+            throw new BadRequestException(DEFAULT_REGION_CANNOT_BE_DELETED);
+        }
 
         logger.info("Deleting Region: {}", regionId);
         regionDao.deleteRegion(regionId);

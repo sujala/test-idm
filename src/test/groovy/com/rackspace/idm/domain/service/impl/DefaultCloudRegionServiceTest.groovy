@@ -1,6 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
-import com.rackspace.idm.domain.dao.RegionDao
+import com.rackspace.idm.domain.dao.impl.LdapRegionRepository
 import com.rackspace.idm.domain.entity.Region
 import com.rackspace.idm.domain.service.CloudRegionService
 import com.rackspace.idm.domain.service.impl.DefaultCloudRegionService
@@ -16,6 +16,7 @@ class DefaultCloudRegionServiceTest extends Specification {
     @Shared def US_CLOUD_REGION = "us_cloud_region"
 
     @Shared CloudRegionService cloudRegionService
+    @Shared LdapRegionRepository regionDao
 
     def setupSpec() {
         random = ("$randomness").replace('-',"")
@@ -28,6 +29,17 @@ class DefaultCloudRegionServiceTest extends Specification {
     def "create region with null returns bad request"() {
         when:
         cloudRegionService.addRegion(null)
+        then:
+        thrown(BadRequestException)
+    }
+
+    def "create region must be alpha numeric"() {
+        given:
+        setupMocks()
+
+        when:
+        cloudRegionService.addRegion(region("!@#", "cloud", false))
+
         then:
         thrown(BadRequestException)
     }
@@ -63,8 +75,7 @@ class DefaultCloudRegionServiceTest extends Specification {
 
     def "update region returns not found if missing"() {
         given:
-        RegionDao regionDao = Mock()
-        cloudRegionService.regionDao = regionDao
+        setupMocks()
 
         when:
         cloudRegionService.updateRegion("missing", region())
@@ -83,8 +94,7 @@ class DefaultCloudRegionServiceTest extends Specification {
 
     def "delete region returns not found if missing"() {
         given:
-        RegionDao regionDao = Mock()
-        cloudRegionService.regionDao = regionDao
+        setupMocks()
 
         when:
         cloudRegionService.deleteRegion("missing")
@@ -100,6 +110,85 @@ class DefaultCloudRegionServiceTest extends Specification {
         thrown(BadRequestException)
     }
 
+    def "creating a default region sets all others as not default"() {
+        given:
+        setupMocks()
+        def region1 = region("DFW", "US", true)
+
+        regionDao.getRegion(_) >>  null
+        regionDao.getDefaultRegion(_) >> region1
+
+        when:
+        cloudRegionService.addRegion(region("IAD", "US", true))
+
+        then:
+        region1.isDefault == false
+
+    }
+
+    def "creating a non default region does not change other regions"() {
+        given:
+        setupMocks()
+        def regions = new ArrayList<Region>()
+        def region1 = region("DFW", "US", true)
+        regions.add(region1)
+
+        regionDao.getRegions(_) >> regions
+
+        when:
+        cloudRegionService.addRegion(region("IAD", "US", false))
+
+        then:
+        region1.isDefault == true
+    }
+
+    def "updating a default region sets all others as not default"() {
+        given:
+        setupMocks()
+        def region1 = region("DFW", "US", true)
+        def region2 = region("IAD", "US", true)
+
+        regionDao.getRegion(_) >>  region2
+        regionDao.getDefaultRegion(_) >> region1
+
+        when:
+        cloudRegionService.updateRegion("IAD", region2)
+
+        then:
+        region1.isDefault == false
+    }
+
+    def "cannot set default region to non default"() {
+        given:
+        setupMocks()
+        def regions = new ArrayList<Region>()
+        def region1 = region("DFW", "US", true)
+        def region2 = region("DFW", "US", false)
+        regions.add(region1)
+
+        regionDao.getRegion(_) >> region1
+        regionDao.getRegions(_) >> regions
+
+        when:
+        cloudRegionService.updateRegion("IAD", region2)
+
+        then:
+        thrown(BadRequestException)
+    }
+
+    def "default region cannot be deleted"() {
+        given:
+        setupMocks()
+        def region = region("DFW", "US", true)
+        regionDao.getRegion(_) >> region
+
+        when:
+        cloudRegionService.deleteRegion("DFW")
+
+        then:
+        thrown(BadRequestException)
+    }
+
     def region(String name, String cloud, Boolean isDefault) {
         new Region().with {
             it.name = name
@@ -107,6 +196,11 @@ class DefaultCloudRegionServiceTest extends Specification {
             it.isDefault = isDefault
             return it
         }
+    }
+
+    def setupMocks() {
+        regionDao = Mock()
+        cloudRegionService.regionDao = regionDao
     }
 
     def region() {
