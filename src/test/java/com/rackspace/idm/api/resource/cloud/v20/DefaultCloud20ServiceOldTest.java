@@ -4115,15 +4115,15 @@ public class DefaultCloud20ServiceOldTest {
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
-    @Test
-    public void listUsers_callerIsNotDefaultUser_callsVerifyUserAdminLevelAccess() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        doReturn(new User()).when(spy).getUser(any(ScopeAccess.class));
-        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        when(authorizationService.authorizeCloudUser(any(ScopeAccess.class))).thenReturn(false);
-        spy.listUsers(null, authToken, null, 0);
-        verify(authorizationService).verifyUserAdminLevelAccess(scopeAccess);
-    }
+//    @Test
+//    public void listUsers_callerIsNotDefaultUser_callsVerifyUserAdminLevelAccess() throws Exception {
+//        ScopeAccess scopeAccess = new ScopeAccess();
+//        doReturn(new User()).when(spy).getUser(any(ScopeAccess.class));
+//        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+//        when(authorizationService.authorizeCloudUser(any(ScopeAccess.class))).thenReturn(false);
+//        spy.listUsers(null, authToken, null, 0);
+//        verify(authorizationService).verifyUserAdminLevelAccess(scopeAccess);
+//    }
 
     @Test
     public void listUsersForTenant_CallsVerifyUserAdminLevelAccess() throws Exception {
@@ -5200,70 +5200,70 @@ public class DefaultCloud20ServiceOldTest {
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
-    @Test
-    public void listUsers_callerIsServiceAdmin_callsGetAllUsers() throws Exception {
-        UserScopeAccess scopeAccess = new UserScopeAccess();
-        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        User user1 = new User();
-        user1.setDomainId("testDomain");
-        doReturn(user1).when(spy).getUser(any(ScopeAccess.class));
-        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(true);
-        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(false);
-        spy.listUsers(null, authToken, null, null);
-        verify(userService).getAllUsers(any(FilterParam[].class), any(Integer.class), any(Integer.class));
-    }
-
-    @Test
-    public void listUsers_callerIsIdentityAdmin_callsGetAllUsers() throws Exception {
-        UserScopeAccess scopeAccess = new UserScopeAccess();
-        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        doReturn(new User()).when(spy).getUser(any(ScopeAccess.class));
-        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(false);
-        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(true);
-        spy.listUsers(null, authToken, null, null);
-        verify(userService).getAllUsers(null, null, null);
-    }
-
-    @Test
-    public void listUsers_callerIsNotServiceOrServiceAdmin_domainIdIsNull_responseOk_returns200() throws Exception {
-        User userTest = new User();
-        userTest.setDomainId(null);
-        ScopeAccess scopeAccess = new ScopeAccess();
-
-        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        doReturn(userTest).when(spy).getUser(scopeAccess);
-        when(authorizationService.authorizeCloudUser(scopeAccess)).thenReturn(false);
-        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(false);
-        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(false);
-        Response.ResponseBuilder responseBuilder = spy.listUsers(httpHeaders, authToken, 1, 1);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
-    }
-
-    @Test
-    public void listUsers_callerIsNotServiceOrServiceAdmin_domainIdNotNull_responseOk_returns200() throws Exception {
-        User userTest = new User();
-        userTest.setDomainId("domainId");
-        ScopeAccess scopeAccess = new ScopeAccess();
-
-        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        doReturn(userTest).when(spy).getUser(scopeAccess);
-        when(authorizationService.authorizeCloudUser(scopeAccess)).thenReturn(false);
-        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(false);
-        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(false);
-        when(userService.getAllUsers(any(FilterParam[].class), any(Integer.class), any(Integer.class))).thenReturn(new Users());
-        Response.ResponseBuilder responseBuilder = spy.listUsers(httpHeaders, authToken, 1, 1);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
-    }
-
-    @Test
-    public void listUsers_callerIsDefaultUser_returns200() throws Exception {
-        UserScopeAccess scopeAccess = new UserScopeAccess();
-        doReturn(new User()).when(spy).getUser(any(ScopeAccess.class));
-        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        when(authorizationService.authorizeCloudUser(scopeAccess)).thenReturn(true);
-        Response.ResponseBuilder responseBuilder = spy.listUsers(null, authToken, null, null);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
-    }
+//    @Test
+//    public void listUsers_callerIsServiceAdmin_callsGetAllUsers() throws Exception {
+//        UserScopeAccess scopeAccess = new UserScopeAccess();
+//        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+//        User user1 = new User();
+//        user1.setDomainId("testDomain");
+//        doReturn(user1).when(spy).getUser(any(ScopeAccess.class));
+//        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(true);
+//        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(false);
+//        spy.listUsers(null, authToken, null, null);
+//        verify(userService).getAllUsers(any(FilterParam[].class), any(Integer.class), any(Integer.class));
+//    }
+//
+//    @Test
+//    public void listUsers_callerIsIdentityAdmin_callsGetAllUsers() throws Exception {
+//        UserScopeAccess scopeAccess = new UserScopeAccess();
+//        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+//        doReturn(new User()).when(spy).getUser(any(ScopeAccess.class));
+//        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(false);
+//        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(true);
+//        spy.listUsers(null, authToken, null, null);
+//        verify(userService).getAllUsers(null, null, null);
+//    }
+//
+//    @Test
+//    public void listUsers_callerIsNotServiceOrServiceAdmin_domainIdIsNull_responseOk_returns200() throws Exception {
+//        User userTest = new User();
+//        userTest.setDomainId(null);
+//        ScopeAccess scopeAccess = new ScopeAccess();
+//
+//        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+//        doReturn(userTest).when(spy).getUser(scopeAccess);
+//        when(authorizationService.authorizeCloudUser(scopeAccess)).thenReturn(false);
+//        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(false);
+//        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(false);
+//        Response.ResponseBuilder responseBuilder = spy.listUsers(httpHeaders, authToken, 1, 1);
+//        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+//    }
+//
+//    @Test
+//    public void listUsers_callerIsNotServiceOrServiceAdmin_domainIdNotNull_responseOk_returns200() throws Exception {
+//        User userTest = new User();
+//        userTest.setDomainId("domainId");
+//        ScopeAccess scopeAccess = new ScopeAccess();
+//
+//        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+//        doReturn(userTest).when(spy).getUser(scopeAccess);
+//        when(authorizationService.authorizeCloudUser(scopeAccess)).thenReturn(false);
+//        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(false);
+//        when(authorizationService.authorizeCloudIdentityAdmin(scopeAccess)).thenReturn(false);
+//        when(userService.getAllUsers(any(FilterParam[].class), any(Integer.class), any(Integer.class))).thenReturn(new Users());
+//        Response.ResponseBuilder responseBuilder = spy.listUsers(httpHeaders, authToken, 1, 1);
+//        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+//    }
+//
+//    @Test
+//    public void listUsers_callerIsDefaultUser_returns200() throws Exception {
+//        UserScopeAccess scopeAccess = new UserScopeAccess();
+//        doReturn(new User()).when(spy).getUser(any(ScopeAccess.class));
+//        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
+//        when(authorizationService.authorizeCloudUser(scopeAccess)).thenReturn(true);
+//        Response.ResponseBuilder responseBuilder = spy.listUsers(null, authToken, null, null);
+//        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
+//    }
 
     @Test
     public void listGroupWithQueryParam_validName_returns200() throws Exception {

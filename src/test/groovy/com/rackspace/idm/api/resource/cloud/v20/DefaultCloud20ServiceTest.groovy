@@ -21,6 +21,11 @@ import com.rackspace.idm.domain.service.impl.*
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20
 import com.rackspace.idm.api.resource.pagination.PaginatorContext
+import org.openstack.docs.identity.api.v2.UserList
+import com.rackspace.idm.domain.dao.impl.LdapRepository
+import com.unboundid.ldap.sdk.Attribute
+import com.unboundid.ldap.sdk.ReadOnlyEntry
+import org.mockito.Spy;
 
 /*
  This class uses the application context but mocks the ldap interactions
@@ -272,7 +277,7 @@ class DefaultCloud20ServiceTest extends Specification {
     def "listUsers verifies token"() {
         given:
         createMocks()
-        scopeAccess()
+        allowAccess()
         userService.getUser(_) >> user()
 
         when:
@@ -286,11 +291,13 @@ class DefaultCloud20ServiceTest extends Specification {
     def "listUsers returns caller"() {
         given:
         createMocks()
-        def users = new Users().setUsers([user()].toList())
-        userService.getUser(_) >> user()
+        allowAccess()
+        def caller = user()
+        userService.getUser(_) >> caller
         authorizationService.authorizeCloudUserAdmin(_) >> true
+        def users = [ user() ] as User[]
         def expectedEntity = objFactories.getOpenStackIdentityV2Factory()
-                                .createUsers(userConverterCloudV20.toUserList(user))
+                .createUsers(userConverterCloudV20.toUserList(users.toList()))
 
         when:
         def response = cloud20Service.listUsers(null, uriInfo(), authToken, offset, limit).build()
@@ -302,6 +309,8 @@ class DefaultCloud20ServiceTest extends Specification {
 
     def "listUsers verifies userAdmin Access level"() {
         given:
+        createMocks()
+        allowAccess()
         authorizationService.authorizeCloudUserAdmin(_) >> false
 
         when:
@@ -313,6 +322,8 @@ class DefaultCloud20ServiceTest extends Specification {
 
     def "listUsers calls getAllUsersPaged with no filters"() {
         given:
+        createMocks()
+        allowAccess()
         authorizationService.authorizeCloudUserAdmin(_) >> false
         authorizationService.authorizeCloudServiceAdmin(_) >> true
 
@@ -325,6 +336,8 @@ class DefaultCloud20ServiceTest extends Specification {
 
     def "listUsers calls getAllUsersPaged with domainId filter"() {
         given:
+        createMocks()
+        allowAccess()
         authorizationService.authorizeCloudUserAdmin(_) >> false
         authorizationService.authorizeCloudServiceAdmin(_) >> false
         def user = user()
@@ -341,6 +354,8 @@ class DefaultCloud20ServiceTest extends Specification {
 
     def "listUsers throws bad request"() {
         given:
+        createMocks()
+        allowAccess()
         authorizationService.authorizeCloudUserAdmin(_) >> false
         authorizationService.authorizeCloudServiceAdmin(_) >> false
         userService.getUser(_) >> user()
@@ -349,12 +364,14 @@ class DefaultCloud20ServiceTest extends Specification {
         cloud20Service.listUsers(null, uriInfo(), authToken, offset, limit)
 
         then:
-        def exception = thrown()
+        def BadRequestException exception = thrown()
         exception.message == "User-admin has no domain"
     }
 
     def "listUsers returns userList"() {
         given:
+        createMocks()
+        allowAccess()
         def userContext = userContext(offset, limit, userList())
         def user = user()
         user.domainId = "123456789"
@@ -414,9 +431,7 @@ class DefaultCloud20ServiceTest extends Specification {
 
     def user() {
         new User().with {
-            it.id = sharedRandom
-            it.mossoId = sharedRandom
-            it.enabled = true
+            it.username = sharedRandom
             return it
         }
     }

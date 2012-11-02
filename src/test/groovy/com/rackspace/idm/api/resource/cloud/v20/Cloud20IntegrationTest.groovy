@@ -660,7 +660,7 @@ class Cloud20IntegrationTest extends Specification {
 
     def "listUsers throws bad request (offset out of bounds)"() {
         expect:
-        response.status = 400
+        response.status == 400
 
         where:
         response << [
