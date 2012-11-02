@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service;
 
+import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.UserDao;
@@ -87,7 +88,7 @@ public interface UserService {
     void softDeleteUser(User user);
     boolean userExistsById(String userId);
     boolean userExistsByUsername(String username);
-    boolean isMigratedUser(User user);
+boolean isMigratedUser(User user);
 
     void addBaseUrlToUser(Integer baseUrlId, User user);
 
@@ -111,4 +112,8 @@ public interface UserService {
     void setPasswordComplexityService(PasswordComplexityService passwordComplexityService);
 
     void setCloudRegionService(CloudRegionService cloudRegionService);
+    
+    PaginatorContext<User> getAllUsersPaged(FilterParam[] filters, int offset, int limit);
+
+    PaginatorContext<User> getUsersWithRole(FilterParam[] filters, String roleId, int offset, int limit);
 }

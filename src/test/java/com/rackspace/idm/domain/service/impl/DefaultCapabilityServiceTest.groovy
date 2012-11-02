@@ -71,18 +71,6 @@ class DefaultCapabilityServiceTest extends Specification {
         thrown(DuplicateException)
     }
 
-    def "capability already exist - updateCapabilities"() {
-        when:
-        List<Capability> capabilities = new ArrayList<Capability>()
-        capabilities.add(getCapability("GET", "get_server", "get_server", "description", "http://someUrl", null, null, null))
-        capabilityService.updateCapabilities(capabilities, "computeTest", "1")
-        capabilityService.updateCapabilities(capabilities, "computeTest", "1")
-
-        then:
-        capabilityService.removeCapabilities("computeTest", "1")
-        thrown(DuplicateException)
-    }
-
     def "invalid action capabilities updateCapabilities"() {
         when:
         List<Capability> capabilities1 = new ArrayList<Capability>()

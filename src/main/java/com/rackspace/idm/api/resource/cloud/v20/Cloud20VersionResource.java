@@ -294,12 +294,13 @@ public class Cloud20VersionResource {
     @Path("users")
     public Response getUserByName(
             @Context HttpHeaders httpHeaders,
+            @Context UriInfo uriInfo,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @QueryParam("name") String name,
             @QueryParam("marker") int marker,
             @QueryParam("limit") int limit) {
         if (StringUtils.isBlank(name)) {
-            return getCloud20Service().listUsers(httpHeaders, authToken, marker, limit).build();
+            return getCloud20Service().listUsers(httpHeaders, uriInfo, authToken, marker, limit).build();
         } else {
             return getCloud20Service().getUserByName(httpHeaders, authToken, name).build();
         }
@@ -654,6 +655,18 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("roleId") String roleId) {
         return getCloud20Service().deleteRole(httpHeaders, authToken, roleId).build();
+    }
+
+    @GET
+    @Path("OS-KSADM/roles/{roleId}/RAX-AUTH/users")
+    public Response listUsersWithRole(
+            @Context HttpHeaders httpHeaders,
+            @Context UriInfo uriInfo,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("roleId") String roleId,
+            @QueryParam("marker") int marker,
+            @QueryParam("limit") int limit) {
+        return defaultCloud20Service.listUsersWithRole(httpHeaders, uriInfo, authToken, roleId, marker, limit).build();
     }
 
     @GET

@@ -347,10 +347,10 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listUsers(HttpHeaders httpHeaders, String authToken, Integer marker, Integer limit)  {
+    public ResponseBuilder listUsers(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, int marker, int limit)  {
         ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByAccessToken(authToken);
         if (scopeAccess != null) {
-            return defaultCloud20Service.listUsers(httpHeaders, authToken, marker, limit);
+            return defaultCloud20Service.listUsers(httpHeaders, uriInfo, authToken, marker, limit);
         }
 
         if (isCloudAuthRoutingEnabled()) {
@@ -361,7 +361,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             request = appendQueryParams(request, params);
             return cloudClient.get(request, httpHeaders);
         }
-        return defaultCloud20Service.listUsers(httpHeaders, authToken, marker, limit);
+        return defaultCloud20Service.listUsers(httpHeaders, uriInfo, authToken, marker, limit);
     }
 
     @Override
@@ -564,7 +564,6 @@ public class DelegateCloud20Service implements Cloud20Service {
     public ResponseBuilder deletePolicy(String authToken, String policyId) {
         return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
     }
-
     @Override
     public ResponseBuilder getAccessibleDomains(String authToken) {
         return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
@@ -617,6 +616,11 @@ public class DelegateCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder deleteRegion(String authToken, String name) {
         return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public ResponseBuilder listUsersWithRole(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String roleId, int marker, int limit) {
+        throw new NotImplementedException();  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override

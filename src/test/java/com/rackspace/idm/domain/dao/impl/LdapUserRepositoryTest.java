@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.api.resource.pagination.DefaultPaginator;
+import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import org.junit.runner.RunWith;
 
 import org.mockito.InjectMocks;
@@ -19,7 +21,6 @@ import org.joda.time.DateTime;
 import org.joda.time.tz.FixedDateTimeZone;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
 
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
@@ -47,6 +48,10 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
     LdapConnectionPools ldapConnectionPools;
     @Mock
     Configuration configuration;
+    @Mock
+    PaginatorContext<User> paginatorContext;
+    @Mock
+    DefaultPaginator<User> paginator;
 
     LdapUserRepository spy;
     LDAPInterface ldapInterface;
@@ -461,6 +466,36 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
     }
 
     @Test
+    public void getAllUsersPaged_callsCreateSearchFilter() throws Exception {
+        FilterParam filterParam = new FilterParam();
+        filterParam.setParam(FilterParam.FilterParamName.RCN);
+        filterParam.setValue("rcn");
+        FilterParam[] filterParamArray = {filterParam};
+        LdapRepository.LdapSearchBuilder searchBuilder = new LdapRepository.LdapSearchBuilder();
+        searchBuilder.addEqualAttribute(LdapUserRepository.ATTR_OBJECT_CLASS, LdapUserRepository.OBJECTCLASS_TENANT_ROLE);
+
+        doReturn(paginatorContext).when(spy).getMultipleUsersPaged(any(Filter.class), any(String[].class), anyInt(), anyInt());
+        spy.getAllUsersPaged(filterParamArray, 0, 10);
+        verify(spy).createSearchFilter(filterParamArray);
+    }
+
+    @Test
+    public void getAllUsersPaged_callsGetMultipleUsersPaginated() throws Exception {
+        FilterParam filterParam = new FilterParam();
+        filterParam.setParam(FilterParam.FilterParamName.RCN);
+        filterParam.setValue("rcn");
+        FilterParam[] filterParamArray = {filterParam};
+        LdapRepository.LdapSearchBuilder searchBuilder = new LdapRepository.LdapSearchBuilder();
+        searchBuilder.addEqualAttribute(LdapUserRepository.ATTR_OBJECT_CLASS, LdapUserRepository.OBJECTCLASS_RACKSPACEPERSON);
+        searchBuilder.addEqualAttribute(LdapUserRepository.ATTR_RACKSPACE_CUSTOMER_NUMBER, filterParam.getStrValue());
+        Filter filter = searchBuilder.build();
+
+        doReturn(paginatorContext).when(spy).getMultipleUsersPaged(any(Filter.class), any(String[].class), anyInt(), anyInt());
+        spy.getAllUsersPaged(filterParamArray, 0, 10);
+        verify(spy).getMultipleUsersPaged(filter, LdapUserRepository.ATTR_USER_SEARCH_ATTRIBUTES, 0, 10);
+    }
+
+    @Test
     public void getAllUsers_filterParamsIsNull_callsGetMultipleUsers() throws Exception {
         doReturn(null).when(spy).getMultipleUsers(any(Filter.class), any(String[].class), anyInt(), anyInt());
         spy.getAllUsers(null, 1, 1);
@@ -468,93 +503,129 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
     }
 
     @Test
-    public void getAllUsers_filterParamHasRCN_addsAttribute() throws Exception {
-        ArgumentCaptor<Filter> argumentCaptor = ArgumentCaptor.forClass(Filter.class);
+    public void getAllUsers_filterParamNotNull_callsGetMultipleUsers() throws Exception {
         FilterParam filterParam = new FilterParam();
         filterParam.setParam(FilterParam.FilterParamName.RCN);
         filterParam.setValue("rcn");
         FilterParam[] filterParamArray = {filterParam};
+        LdapRepository.LdapSearchBuilder searchBuilder = new LdapRepository.LdapSearchBuilder();
+        searchBuilder.addEqualAttribute(LdapUserRepository.ATTR_OBJECT_CLASS, LdapUserRepository.OBJECTCLASS_RACKSPACEPERSON);
+        searchBuilder.addEqualAttribute(LdapUserRepository.ATTR_RACKSPACE_CUSTOMER_NUMBER, filterParam.getStrValue());
+        Filter filter = searchBuilder.build();
+
         doReturn(null).when(spy).getMultipleUsers(any(Filter.class), any(String[].class), anyInt(), anyInt());
-        spy.getAllUsers(filterParamArray, 1, 1);
-        verify(spy).getMultipleUsers(argumentCaptor.capture(), any(String[].class), anyInt(), anyInt());
-        assertThat("atttribute", argumentCaptor.getValue().getComponents()[1].toNormalizedString(), containsString("=rcn"));
+        spy.getAllUsers(filterParamArray, 0, 10);
+        verify(spy).getMultipleUsers(filter, LdapUserRepository.ATTR_USER_SEARCH_ATTRIBUTES, 0, 10);
     }
 
     @Test
-    public void getAllUsers_filterParamHasUSERNAME_addsAttribute() throws Exception {
-        ArgumentCaptor<Filter> argumentCaptor = ArgumentCaptor.forClass(Filter.class);
+    public void getAllUsersNoLimit_callsCreateSearchFilter() throws Exception {
+        FilterParam[] filters = makeFilterParamArray("123456789", "123456879");
+
+        doReturn(new Users()).when(spy).getMultipleUsers(any(Filter.class), any(String[].class));
+
+        spy.getAllUsersNoLimit(filters);
+        verify(spy).createSearchFilter(filters);
+    }
+
+    private FilterParam[] makeFilterParamArray(String role, String domain) {
+        return new FilterParam[]{new FilterParam(FilterParam.FilterParamName.ROLE_ID, role),
+                                                new FilterParam(FilterParam.FilterParamName.DOMAIN_ID, domain)};
+    }
+
+    @Test
+    public void getAllUsersNoLit_callsGetMultipleUsers() throws Exception {
+        FilterParam[] filterParams = makeFilterParamArray("123456789", "123456789");
+        Filter filter = spy.createSearchFilter(filterParams);
+        String[] attributes = new String[]{"*", "createTimestamp", "modifyTimestamp", "dxPwdFailedTime"};
+
+        doReturn(new Users()).when(spy).getMultipleUsers(any(Filter.class), any(String[].class));
+
+        spy.getAllUsersNoLimit(filterParams);
+        verify(spy).getMultipleUsers(filter, attributes);
+    }
+
+    @Test
+    public void createSearchFilter_filterParamHasRCN_addsAttribute() throws Exception {
+        FilterParam filterParam = new FilterParam();
+        filterParam.setParam(FilterParam.FilterParamName.RCN);
+        filterParam.setValue("rcn");
+        FilterParam[] filterParamArray = {filterParam};
+        LdapRepository.LdapSearchBuilder searchBuilder = new LdapRepository.LdapSearchBuilder();
+
+        Filter filter = spy.createSearchFilter(filterParamArray);
+        assertThat("attribute", filter.getComponents()[1].toNormalizedString(), containsString("=rcn"));
+    }
+
+    @Test
+    public void createSearchFilter_filterParamHasUSERNAME_addsAttribute() throws Exception {
         FilterParam filterParam = new FilterParam();
         filterParam.setParam(FilterParam.FilterParamName.USERNAME);
         filterParam.setValue("username");
         FilterParam[] filterParamArray = {filterParam};
-        doReturn(null).when(spy).getMultipleUsers(any(Filter.class), any(String[].class), anyInt(), anyInt());
-        spy.getAllUsers(filterParamArray, 1, 1);
-        verify(spy).getMultipleUsers(argumentCaptor.capture(), any(String[].class), anyInt(), anyInt());
-        assertThat("atttribute", argumentCaptor.getValue().getComponents()[1].toNormalizedString(), containsString("=username"));
+        LdapRepository.LdapSearchBuilder searchBuilder = new LdapRepository.LdapSearchBuilder();
+
+        Filter filter = spy.createSearchFilter(filterParamArray);
+        assertThat("atttribute", filter.getComponents()[1].toNormalizedString(), containsString("=username"));
     }
 
     @Test
-    public void getAllUsers_filterParamHasDOMAINID_addsAttribute() throws Exception {
-        ArgumentCaptor<Filter> argumentCaptor = ArgumentCaptor.forClass(Filter.class);
+    public void createSearchFilter_filterParamHasDOMAINID_addsAttribute() throws Exception {
         FilterParam filterParam = new FilterParam();
         filterParam.setParam(FilterParam.FilterParamName.DOMAIN_ID);
         filterParam.setValue("domainid");
         FilterParam[] filterParamArray = {filterParam};
-        doReturn(null).when(spy).getMultipleUsers(any(Filter.class), any(String[].class), anyInt(), anyInt());
-        spy.getAllUsers(filterParamArray, 1, 1);
-        verify(spy).getMultipleUsers(argumentCaptor.capture(), any(String[].class), anyInt(), anyInt());
-        assertThat("atttribute", argumentCaptor.getValue().getComponents()[1].toNormalizedString(), containsString("=domainid"));
+        LdapRepository.LdapSearchBuilder searchBuilder = new LdapRepository.LdapSearchBuilder();
+
+        Filter filter = spy.createSearchFilter(filterParamArray);
+        assertThat("atttribute", filter.getComponents()[1].toNormalizedString(), containsString("=domainid"));
     }
 
     @Test
-    public void getAllUsers_filterParamHasGROUPID_addsAttribute() throws Exception {
-        ArgumentCaptor<Filter> argumentCaptor = ArgumentCaptor.forClass(Filter.class);
+    public void createSearchFilter_filterParamHasGROUPID_addsAttribute() throws Exception {
         FilterParam filterParam = new FilterParam();
         filterParam.setParam(FilterParam.FilterParamName.GROUP_ID);
         filterParam.setValue("groupid");
         FilterParam[] filterParamArray = {filterParam};
-        doReturn(null).when(spy).getMultipleUsers(any(Filter.class), any(String[].class), anyInt(), anyInt());
-        spy.getAllUsers(filterParamArray, 1, 1);
-        verify(spy).getMultipleUsers(argumentCaptor.capture(), any(String[].class), anyInt(), anyInt());
-        assertThat("atttribute", argumentCaptor.getValue().getComponents()[1].toNormalizedString(), containsString("=groupid"));
+        LdapRepository.LdapSearchBuilder searchBuilder = new LdapRepository.LdapSearchBuilder();
+
+        Filter filter = spy.createSearchFilter(filterParamArray);
+        assertThat("atttribute", filter.getComponents()[1].toNormalizedString(), containsString("=groupid"));
     }
 
     @Test
-    public void getAllUsers_filterParamHasINMIGRATION_addsAttribute() throws Exception {
-        ArgumentCaptor<Filter> argumentCaptor = ArgumentCaptor.forClass(Filter.class);
+    public void createSearchFilter_filterParamHasINMIGRATION_addsAttribute() throws Exception {
         FilterParam filterParam = new FilterParam();
         filterParam.setParam(FilterParam.FilterParamName.IN_MIGRATION);
         FilterParam[] filterParamArray = {filterParam};
-        doReturn(null).when(spy).getMultipleUsers(any(Filter.class), any(String[].class), anyInt(), anyInt());
-        spy.getAllUsers(filterParamArray, 1, 1);
-        verify(spy).getMultipleUsers(argumentCaptor.capture(), any(String[].class), anyInt(), anyInt());
-        assertThat("atttribute", argumentCaptor.getValue().getComponents()[1].toNormalizedString(), containsString("=true"));
+        LdapRepository.LdapSearchBuilder searchBuilder = new LdapRepository.LdapSearchBuilder();
+
+        Filter filter = spy.createSearchFilter(filterParamArray);
+        assertThat("atttribute", filter.getComponents()[1].toNormalizedString(), containsString("=true"));
     }
 
     @Test
-    public void getAllUsers_filterParamHasMIGRATED_addsAttribute() throws Exception {
-        ArgumentCaptor<Filter> argumentCaptor = ArgumentCaptor.forClass(Filter.class);
+    public void createSearchFilter_filterParamHasMIGRATED_addsAttribute() throws Exception {
         FilterParam filterParam = new FilterParam();
         filterParam.setParam(FilterParam.FilterParamName.MIGRATED);
         FilterParam[] filterParamArray = {filterParam};
-        doReturn(null).when(spy).getMultipleUsers(any(Filter.class), any(String[].class), anyInt(), anyInt());
-        spy.getAllUsers(filterParamArray, 1, 1);
-        verify(spy).getMultipleUsers(argumentCaptor.capture(), any(String[].class), anyInt(), anyInt());
-        assertThat("atttribute", argumentCaptor.getValue().getComponents()[1].toNormalizedString(), containsString("=false"));
+        LdapRepository.LdapSearchBuilder searchBuilder = new LdapRepository.LdapSearchBuilder();
+
+        Filter filter = spy.createSearchFilter(filterParamArray);
+        assertThat("atttribute", filter.getComponents()[1].toNormalizedString(), containsString("=false"));
     }
 
     @Test
-    public void getAllUsers_filterParamDoesNotMatchAny_doesNotAddAttribute() throws Exception {
-        ArgumentCaptor<Filter> argumentCaptor = ArgumentCaptor.forClass(Filter.class);
+    public void createSearchFilter_filterParamDoesNotMatchAny_doesNotAddAttribute() throws Exception {
         FilterParam filterParam = new FilterParam();
         filterParam.setParam(FilterParam.FilterParamName.ROLE_NAME);
         filterParam.setValue("role");
         FilterParam[] filterParamArray = {filterParam};
-        doReturn(null).when(spy).getMultipleUsers(any(Filter.class), any(String[].class), anyInt(), anyInt());
-        spy.getAllUsers(filterParamArray, 1, 1);
-        verify(spy).getMultipleUsers(argumentCaptor.capture(), any(String[].class), anyInt(), anyInt());
-        assertThat("atttribute", argumentCaptor.getValue().getComponents().length, equalTo(0));
-    }
+        LdapRepository.LdapSearchBuilder searchBuilder = new LdapRepository.LdapSearchBuilder();
+
+        Filter filter = spy.createSearchFilter(filterParamArray);
+        assertThat("atttribute", filter.getComponents().length, equalTo(0));
+    } 
 
     @Test
     public void isUsernameUnique_callsSingleEntry() throws Exception {
@@ -1035,6 +1106,95 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
     }
 
     @Test
+    public void getMultipleUsersPaginated_callsCreateSearchRequestWithPaging() throws Exception {
+        FilterParam filterParam = new FilterParam();
+        filterParam.setParam(FilterParam.FilterParamName.RCN);
+        filterParam.setValue("rcn");
+        FilterParam[] filterParamArray = {filterParam};
+        LdapRepository.LdapSearchBuilder searchBuilder = new LdapRepository.LdapSearchBuilder();
+        searchBuilder.addEqualAttribute(LdapUserRepository.ATTR_OBJECT_CLASS, LdapUserRepository.OBJECTCLASS_RACKSPACEPERSON);
+        searchBuilder.addEqualAttribute(LdapUserRepository.ATTR_RACKSPACE_CUSTOMER_NUMBER, filterParam.getStrValue());
+        Filter filter = searchBuilder.build();
+
+        spy.getMultipleUsersPaged(filter, LdapUserRepository.ATTR_USER_SEARCH_ATTRIBUTES, 0, 10);
+        verify(paginator).createSearchRequest(anyString(), any(SearchRequest.class), anyInt(), anyInt());
+    }
+
+    @Test
+    public void getMultipleUsersPaginated_returnsEmptyPaginator() throws Exception {
+        PaginatorContext<User> userContext = new PaginatorContext<User>();
+        FilterParam filterParam = new FilterParam();
+        filterParam.setParam(FilterParam.FilterParamName.RCN);
+        filterParam.setValue("rcn");
+        FilterParam[] filterParamArray = {filterParam};
+        LdapRepository.LdapSearchBuilder searchBuilder = new LdapRepository.LdapSearchBuilder();
+        searchBuilder.addEqualAttribute(LdapUserRepository.ATTR_OBJECT_CLASS, LdapUserRepository.OBJECTCLASS_RACKSPACEPERSON);
+        searchBuilder.addEqualAttribute(LdapUserRepository.ATTR_RACKSPACE_CUSTOMER_NUMBER, filterParam.getStrValue());
+        Filter filter = searchBuilder.build();
+
+        doReturn(null).when(spy).getMultipleEntries(any(SearchRequest.class));
+        doReturn(userContext).when(paginator).createSearchRequest(anyString(), any(SearchRequest.class), anyInt(), anyInt());
+        PaginatorContext<User> page = spy.getMultipleUsersPaged(filter, LdapUserRepository.ATTR_USER_SEARCH_ATTRIBUTES, 0, 10);
+
+        assertThat("result length", page.getSearchResultEntryList().size(), equalTo(0));
+    }
+
+    @Test
+    public void getMultipleUsersPaginated_callsCreatePageFromResult() throws Exception {
+        PaginatorContext<User> userContext = new PaginatorContext<User>();
+        FilterParam filterParam = new FilterParam();
+        filterParam.setParam(FilterParam.FilterParamName.RCN);
+        filterParam.setValue("rcn");
+        FilterParam[] filterParamArray = {filterParam};
+        LdapRepository.LdapSearchBuilder searchBuilder = new LdapRepository.LdapSearchBuilder();
+        searchBuilder.addEqualAttribute(LdapUserRepository.ATTR_OBJECT_CLASS, LdapUserRepository.OBJECTCLASS_RACKSPACEPERSON);
+        searchBuilder.addEqualAttribute(LdapUserRepository.ATTR_RACKSPACE_CUSTOMER_NUMBER, filterParam.getStrValue());
+        Filter filter = searchBuilder.build();
+        SearchResult result = new SearchResult(0, ResultCode.SUCCESS, null, null, null, 10, 10, null);
+
+        doReturn(result).when(spy).getMultipleEntries(any(SearchRequest.class));
+        doReturn(userContext).when(paginator).createSearchRequest(anyString(), any(SearchRequest.class), anyInt(), anyInt());
+        spy.getMultipleUsersPaged(filter, LdapUserRepository.ATTR_USER_SEARCH_ATTRIBUTES, 0, 10);
+        verify(paginator).createPage(any(SearchResult.class), any(PaginatorContext.class));
+    }
+
+    @Test
+    public void getMultipleUsersPaginated_returnsNonEmptyPaginator() throws Exception {
+        PaginatorContext<User> userContext = new PaginatorContext<User>();
+        FilterParam filterParam = new FilterParam();
+        filterParam.setParam(FilterParam.FilterParamName.RCN);
+        filterParam.setValue("rcn");
+        FilterParam[] filterParamArray = {filterParam};
+        LdapRepository.LdapSearchBuilder searchBuilder = new LdapRepository.LdapSearchBuilder();
+        searchBuilder.addEqualAttribute(LdapUserRepository.ATTR_OBJECT_CLASS, LdapUserRepository.OBJECTCLASS_RACKSPACEPERSON);
+        searchBuilder.addEqualAttribute(LdapUserRepository.ATTR_RACKSPACE_CUSTOMER_NUMBER, filterParam.getStrValue());
+        Filter filter = searchBuilder.build();
+
+        List<SearchResultEntry> searchResultEntryList = new ArrayList<SearchResultEntry>();
+        SearchResultEntry searchResultEntry = new SearchResultEntry("dn", new Attribute[]{new Attribute("name")}, new Control[]{new Control("123")});
+        searchResultEntryList.add(searchResultEntry);
+
+        List<SearchResultReference> searchResultReferenceList = new ArrayList<SearchResultReference>();
+        SearchResultReference searchResultReference = new SearchResultReference(new String[]{"123", "456"}, new Control[]{new Control("123")});
+        searchResultReferenceList.add(searchResultReference);
+
+        User user = new User();
+        List<User> userList = new ArrayList<User>();
+        userList.add(user);
+        String[] referralUrls = new String[]{"this", "that"};
+        SearchResult result = new SearchResult(0, ResultCode.SUCCESS, "ok", "dn", referralUrls, searchResultEntryList, searchResultReferenceList, 1, 1, null);
+
+        userContext.setSearchResultEntryList(searchResultEntryList);
+        doReturn(user).when(spy).getUser(any(SearchResultEntry.class));
+        doReturn(result).when(spy).getMultipleEntries(any(SearchRequest.class));
+        doReturn(userContext).when(paginator).createSearchRequest(anyString(), any(SearchRequest.class), anyInt(), anyInt());
+
+        PaginatorContext<User> context = spy.getMultipleUsersPaged(filter, LdapUserRepository.ATTR_USER_SEARCH_ATTRIBUTES, 0, 10);
+
+        assertThat("userList", context.getValueList().equals(userList));
+    }
+
+    @Test
     public void getMultipleUsers_offsetGreaterThanZero_doesNotCallGetLdapPagingOffsetDefault() throws Exception {
         doReturn(1).when(spy).getLdapPagingLimitDefault();
         doReturn(new ArrayList<SearchResultEntry>()).when(spy).getMultipleEntries(LdapRepository.USERS_BASE_DN, SearchScope.SUB, LdapRepository.ATTR_UID, null, null);
@@ -1110,6 +1270,70 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         doReturn(new User()).when(spy).getUser(searchResultEntry);
         Users result = spy.getMultipleUsers(null, null, -1, 0);
         assertThat("user list", result.getUsers().size(), equalTo(1));
+    }
+
+    @Test
+    public void getMultipleUsers_callsGetMultipleEntries() throws Exception {
+        SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0]);
+        ArrayList<SearchResultEntry> entries = new ArrayList<SearchResultEntry>();
+        entries.add(searchResultEntry);
+        doReturn(entries).when(spy).getMultipleEntries(anyString(), any(SearchScope.class), anyString(), any(Filter.class), any(String[].class));
+        doReturn(new User()).when(spy).getUser(searchResultEntry);
+
+        Filter searchFilter = spy.createSearchFilter(makeFilterParamArray("123456798", "123456789"));
+        spy.getMultipleUsers(searchFilter, new String[]{"*"});
+        verify(spy).getMultipleEntries(anyString(), any(SearchScope.class), anyString(), any(Filter.class), any(String[].class));
+    }
+
+    @Test
+    public void getMultipleUsers_callsGetUser() throws Exception {
+        SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0]);
+        ArrayList<SearchResultEntry> entries = new ArrayList<SearchResultEntry>();
+        entries.add(searchResultEntry);
+        doReturn(entries).when(spy).getMultipleEntries(anyString(), any(SearchScope.class), anyString(), any(Filter.class), any(String[].class));
+        doReturn(new User()).when(spy).getUser(searchResultEntry);
+
+        Filter searchFilter = spy.createSearchFilter(makeFilterParamArray("123456798", "123456789"));
+        spy.getMultipleUsers(searchFilter, new String[]{"*"});
+        verify(spy).getUser(searchResultEntry);
+    }
+
+    @Test
+    public void getMultipleUsers_returnsUsers() throws Exception {
+        SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0]);
+        ArrayList<SearchResultEntry> entries = new ArrayList<SearchResultEntry>();
+        entries.add(searchResultEntry);
+        doReturn(entries).when(spy).getMultipleEntries(anyString(), any(SearchScope.class), anyString(), any(Filter.class), any(String[].class));
+        doReturn(new User()).when(spy).getUser(searchResultEntry);
+
+        Filter searchFilter = spy.createSearchFilter(makeFilterParamArray("123456798", "123456789"));
+        Users users = spy.getMultipleUsers(searchFilter, new String[]{"*"});
+
+        assertThat("users contains one user", users.getUsers().size(), equalTo(1));
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void getMultipleUsers_throwsIllegalStateFromGeneralSecurityException() throws Exception {
+        SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0]);
+        ArrayList<SearchResultEntry> entries = new ArrayList<SearchResultEntry>();
+        entries.add(searchResultEntry);
+        doReturn(entries).when(spy).getMultipleEntries(anyString(), any(SearchScope.class), anyString(), any(Filter.class), any(String[].class));
+        doThrow(new GeneralSecurityException()).when(spy).getUser(searchResultEntry);
+
+        Filter searchFilter = spy.createSearchFilter(makeFilterParamArray("123456798", "123456789"));
+        Users users = spy.getMultipleUsers(searchFilter, new String[]{"*"});
+    }
+
+    @Test (expected = IllegalStateException.class)
+    public void getMultipleUsers_throwsIllegalStateFromInvalidCipherTextException() throws Exception {
+        SearchResultEntry searchResultEntry = new SearchResultEntry("", new Attribute[0]);
+        ArrayList<SearchResultEntry> entries = new ArrayList<SearchResultEntry>();
+        entries.add(searchResultEntry);
+        doReturn(entries).when(spy).getMultipleEntries(anyString(), any(SearchScope.class), anyString(), any(Filter.class), any(String[].class));
+        doThrow(new InvalidCipherTextException()).when(spy).getUser(searchResultEntry);
+
+        Filter searchFilter = spy.createSearchFilter(makeFilterParamArray("123456798", "123456789"));
+        Users users = spy.getMultipleUsers(searchFilter, new String[]{"*"});
     }
 
     @Test (expected = IllegalStateException.class)

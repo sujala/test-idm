@@ -1,5 +1,9 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.api.resource.pagination.*;
+import com.sun.jndi.toolkit.dir.SearchFilter;
+import com.unboundid.ldap.listener.SearchEntryTransformer;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.audit.Audit;
@@ -14,10 +18,15 @@ import com.unboundid.ldap.sdk.persist.LDAPPersister;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 @Component
 public class LdapTenantRepository extends LdapRepository implements TenantDao {
+
+    @Autowired
+    DefaultPaginator<String> userIdPaginator;
 
     public static final String NULL_OR_EMPTY_TENANT_ID_PARAMETER = "Null or Empty tenantId parameter";
     public static final String ERROR_GETTING_TENANT_OBJECT = "Error getting tenant object";
@@ -169,7 +178,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
     List<Tenant> getMultipleTenants(Filter searchFilter)
         throws LDAPPersistException {
         List<SearchResultEntry> entries = this.getMultipleEntries(
-            TENANT_BASE_DN, SearchScope.ONE, ATTR_ID, searchFilter,
+                TENANT_BASE_DN, SearchScope.ONE, ATTR_ID, searchFilter,
                 ATTR_TENANT_SEARCH_ATTRIBUTES);
 
         List<Tenant> tenants = new ArrayList<Tenant>();
@@ -493,6 +502,57 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         getLogger().debug(GOT_TENANT_ROLES, roles.size());
 
         return roles;
+    }
+
+    @Override
+    public PaginatorContext<String> getMultipleTenantRoles(String roleId, int offset, int limit) {
+        LdapSearchBuilder searchBuilder = new LdapSearchBuilder();
+        searchBuilder.addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TENANT_ROLE);
+        searchBuilder.addEqualAttribute(ATTR_ROLE_RS_ID, roleId);
+        Filter searchFilter = searchBuilder.build();
+
+        SearchRequest searchRequest = new SearchRequest(USERS_BASE_DN, SearchScope.SUB, searchFilter, "*");
+        PaginatorContext<String> context = userIdPaginator.createSearchRequest(ATTR_ID, searchRequest, offset, limit);
+
+        SearchResult searchResult = this.getMultipleEntries(searchRequest);
+
+        if (searchResult == null) {
+            return context;
+        }
+
+        userIdPaginator.createPage(searchResult, context);
+        List<String> userIds = new ArrayList<String>();
+        for (SearchResultEntry entry : searchResult.getSearchEntries()) {
+            try {
+                userIds.add(getUserIdFromDN(entry.getParsedDN()));
+            } catch (LDAPException e) {
+                throw new IllegalStateException(e);
+            } catch (Exception e) {
+                // noop
+            }
+        }
+
+        context.setValueList(userIds);
+
+        return context;
+    }
+
+    protected String getUserIdFromDN(DN dn) {
+        DN parentDN = dn.getParent();
+        List<RDN> rdns = new ArrayList<RDN>(Arrays.asList(dn.getRDNs()));
+        List<RDN> parentRDNs = new ArrayList<RDN>(Arrays.asList(parentDN.getRDNs()));
+        List<RDN> remainder = new ArrayList<RDN>(rdns);
+
+        remainder.removeAll(parentRDNs);
+        RDN rdn = remainder.get(0);
+        if (rdn.hasAttribute("rsId")) {
+            String rdnString = rdn.toString();
+            return rdnString.substring(rdnString.indexOf("=") + 1);
+        } else if (parentDN.getParent() == null) {
+            return "";
+        } else {
+            return getUserIdFromDN(parentDN);
+        }
     }
 
     @Override

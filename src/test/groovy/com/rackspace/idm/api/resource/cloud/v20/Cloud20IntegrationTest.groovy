@@ -17,7 +17,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.Capabilities
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Capability
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Regions
-
+import com.sun.jersey.core.util.MultivaluedMapImpl
 
 class Cloud20IntegrationTest extends Specification {
     @Shared WebResource resource
@@ -27,14 +27,23 @@ class Cloud20IntegrationTest extends Specification {
     @Shared def serviceAdminToken
     @Shared def identityAdminToken
     @Shared def userAdminToken
+    @Shared def userAdminTwoToken
     @Shared def defaultUserToken
 
     @Shared def serviceAdmin
     @Shared def identityAdmin
     @Shared def userAdmin
+    @Shared def userAdminTwo
     @Shared def defaultUser
+    @Shared def defaultUserTwo
+    @Shared def defaultUserThree
     @Shared def sharedRandomness = UUID.randomUUID()
     @Shared def sharedRandom
+    @Shared def sharedRole
+    @Shared def sharedRoleTwo
+
+    @Shared def emptyDomainId
+    @Shared def testDomainId
 
     def randomness = UUID.randomUUID()
     static def X_AUTH_TOKEN = "X-Auth-Token"
@@ -47,30 +56,36 @@ class Cloud20IntegrationTest extends Specification {
 
 
     def setupSpec() {
-        sharedRandom = ("$sharedRandomness").replace('-', "")
+        sharedRandom = ("$sharedRandomness").replace('-',"")
+        testDomainId = "domain$sharedRandom"
+        emptyDomainId = "domain2$sharedRandom"
 
         this.resource = ensureGrizzlyStarted("classpath:app-config.xml");
         this.objFactories = new JAXBObjectFactories()
         serviceAdminToken = authenticate("authQE", "Auth1234").getEntity(AuthenticateResponse).value.token.id
         serviceAdmin = getUserByName(serviceAdminToken, "authQE").getEntity(User)
-        identityAdminToken = authenticate("auth", "auth123").getEntity(AuthenticateResponse).value.token.id
+
         identityAdmin = getUserByName(serviceAdminToken, "auth").getEntity(User)
+        identityAdminToken = authenticate("auth", "auth123").getEntity(AuthenticateResponse).value.token.id
+
         //User Admin
-        def userAdminResponse = getUserByName(identityAdminToken, "testUserAdmin_doNotDeleteMe")
-        if (userAdminResponse.getStatus() == 404) {
-            userAdmin = createUser(identityAdminToken, userForCreate("testUserAdmin_doNotDeleteMe", "display", "test@rackspace.com", true, "ORD", "domainId", "Password1")).getEntity(User)
-        } else if (userAdminResponse.getStatus() == 200) {
-            userAdmin = userAdminResponse.getEntity(User)
-        }
-        userAdminToken = authenticate("testUserAdmin_doNotDeleteMe", "Password1").getEntity(AuthenticateResponse).value.token.id
-        //Default User
-        def defaultUserResponse = getUserByName(userAdminToken, "testDefaultUser_doNotDeleteMe")
-        if (defaultUserResponse.getStatus() == 404) {
-            defaultUser = createUser(userAdminToken, userForCreate("testDefaultUser_doNotDeleteMe", "display", "test@rackspace.com", true, null, null, "Password1")).getEntity(User)
-        } else if (defaultUserResponse.getStatus() == 200) {
-            defaultUser = defaultUserResponse.getEntity(User)
-        }
-        defaultUserToken = authenticate("testDefaultUser_doNotDeleteMe", "Password1").getEntity(AuthenticateResponse).value.token.id
+        def createUserAdminRes1 = createUser(identityAdminToken, userForCreate("userAdmin1$sharedRandom", "display", "test@rackspace.com", true, "ORD", testDomainId, "Password1"))
+        userAdmin = getUserByName(identityAdminToken, "userAdmin1$sharedRandom").getEntity(User)
+        def createUserAdminRes2 = createUser(identityAdminToken, userForCreate("userAdmin2$sharedRandom", "display", "test@rackspace.com", true, "ORD", emptyDomainId, "Password1"))
+        userAdminTwo = getUserByName(identityAdminToken, "userAdmin2$sharedRandom").getEntity(User)
+
+        userAdminToken = authenticate("userAdmin1$sharedRandom", "Password1").getEntity(AuthenticateResponse).value.token.id
+        userAdminTwoToken = authenticate("userAdmin2$sharedRandom", "Password1").getEntity(AuthenticateResponse).value.token.id
+
+        // Default Users
+        def createUserResponse1 = createUser(userAdminToken, userForCreate("defaultUser1$sharedRandom", "display", "test@rackspace.com", true, null, null, "Password1"))
+        defaultUser = getUserByName(userAdminToken, "defaultUser1$sharedRandom").getEntity(User)
+        def createUserResponse2 = createUser(userAdminToken, userForCreate("defaultUser2$sharedRandom", "display", "test@rackspace.com", true, null, null, "Password1"))
+        defaultUserTwo = getUserByName(userAdminToken, "defaultUser2$sharedRandom").getEntity(User)
+        def createUserResponse3 = createUser(userAdminToken, userForCreate("defaultUser3$sharedRandom", "display", "test@rackspace.com", true, null, null, "Password1"))
+        defaultUserThree = getUserByName(userAdminToken, "defaultUser3$sharedRandom").getEntity(User)
+
+        defaultUserToken = authenticate("defaultUser1$sharedRandom", "Password1").getEntity(AuthenticateResponse).value.token.id
 
         //create group
         def createGroupResponse = createGroup(serviceAdminToken, group("group$sharedRandom", "this is a group"))
@@ -82,11 +97,37 @@ class Cloud20IntegrationTest extends Specification {
         def getRegionResponse = getRegion(serviceAdminToken, "region$sharedRandom")
         sharedRegion = getRegionResponse.getEntity(Region)
 
+        //create role
+        if (sharedRole == null) {
+            def roleResponse = createRole(serviceAdminToken, role())
+            sharedRole = roleResponse.getEntity(Role).value
+        }
+        if (sharedRoleTwo == null) {
+            def roleResponse2 = createRole(serviceAdminToken, role())
+            sharedRoleTwo = roleResponse2.getEntity(Role).value
+        }
+
+        //Add role to identity-admin and default-users
+        addRoleToUser(serviceAdminToken, sharedRole.getId(), identityAdmin.getId())
+        addRoleToUser(serviceAdminToken, sharedRole.getId(), defaultUser.getId())
+        addRoleToUser(serviceAdminToken, sharedRole.getId(), defaultUserTwo.getId())
+        addRoleToUser(serviceAdminToken, sharedRole.getId(), defaultUserThree.getId())
+//        setupUsersWithRole(sharedRole)
     }
 
     def cleanupSpec() {
         deleteGroup(serviceAdminToken, group.getId())
         deleteRegion(serviceAdminToken, sharedRegion.getName())
+
+        deleteRole(serviceAdminToken, sharedRole.getId())
+        deleteRole(serviceAdminToken, sharedRoleTwo.getId())
+
+        deleteUser(serviceAdminToken, userAdmin.getId())
+        deleteUser(serviceAdminToken, userAdminTwo.getId())
+
+        deleteUser(serviceAdminToken, defaultUser.getId())
+        deleteUser(serviceAdminToken, defaultUserTwo.getId())
+        deleteUser(serviceAdminToken, defaultUserThree.getId())
     }
 
     def 'User CRUD'() {
@@ -166,7 +207,7 @@ class Cloud20IntegrationTest extends Specification {
         response << [
                 createUser("invalidToken", userForCreate("someName", "display", "test@rackspace.com", true, "ORD", null, "Password1")),
                 createUser(null, userForCreate("someName", "display", "test@rackspace.com", true, "ORD", null, "Password1")),    \
-                  getUserById("invalidToken", "badId"),
+                getUserById("invalidToken", "badId"),
                 getUserById(null, "badId"),
                 getUserByName("invalidToken", "badId"),
                 getUserByName(null, "badId"),
@@ -174,10 +215,15 @@ class Cloud20IntegrationTest extends Specification {
                 updateUser(null, "badId", new User()),
                 deleteUser("invalidToken", "badId"),
                 deleteUser(null, "badId"),
-                listUser("invalidToken"),
-                listUser(null),
-                getCapabilities("invalidToken", "badId"),
-                getCapabilities(null, "badId")
+                listUsers("invalidToken"),
+                listUsers(null),
+                getCapabilities("invalid","type","version"),
+                getCapabilities(null,"type","version"),
+                updateCapabilities("invalidToken","type","version",new Capabilities()),
+                updateCapabilities(null,"type","version",new Capabilities()),
+                removeCapabilities("invalidToken","type","version"),
+                removeCapabilities(null,"type","version")
+
         ]
 
     }
@@ -205,8 +251,6 @@ class Cloud20IntegrationTest extends Specification {
                 deleteGroup(defaultUserToken, group.getId()),
                 getGroup(defaultUserToken, groupLocation),
                 getGroups(defaultUserToken),
-                getCapabilities(defaultUserToken, "badId"),
-                getCapabilities(userAdminToken, "badId"),
                 createRegion(defaultUserToken, region()),
                 updateRegion(defaultUserToken, sharedRegion.getName(), sharedRegion),
                 deleteRegion(defaultUserToken, sharedRegion.getName()),
@@ -223,10 +267,10 @@ class Cloud20IntegrationTest extends Specification {
 
         where:
         response << [
-                listUser(serviceAdminToken),
-                listUser(identityAdminToken),
-                listUser(userAdminToken),
-                listUser(defaultUserToken),
+                listUsers(serviceAdminToken),
+                listUsers(identityAdminToken),
+                listUsers(userAdminToken),
+                listUsers(defaultUserToken),
                 getUserById(defaultUserToken, defaultUser.getId()),
                 getUserById(userAdminToken, defaultUser.getId()),
                 getUserById(userAdminToken, userAdmin.getId()),
@@ -318,29 +362,6 @@ class Cloud20IntegrationTest extends Specification {
     }
 
 
-//    def "CRUD capabilities"(){
-    //        when:
-    //        List<Capability> capabilityList = new ArrayList<Capability>();
-    //        def capability1 = createCapability("GET","id","name","http://someUrl")
-    //        def capability2 = createCapability("GET","id","name","http://someUrl")
-    //        capabilityList.add(capability1)
-    //        capabilityList.add(capability2)
-    //        Capabilities capabilities = createCapabilities(capabilityList)
-    //        updateCapabilities(serviceAdminToken,"1000",capabilities)
-    //
-    //        then:
-    //    }
-
-    def "operations on non-existing endpoint Template returns 'not found'"() {
-        expect:
-        response.status == 404
-        where:
-        response << [
-                getCapabilities(serviceAdminToken, "1000001234")
-        ]
-    }
-
-
     def "update region name is not allowed"() {
         given:
         Region region1 = region("somename", false, false)
@@ -371,6 +392,7 @@ class Cloud20IntegrationTest extends Specification {
         def getRegionsResponse = getRegions(serviceAdminToken)
         Regions regions = getRegionsResponse.getEntity(Regions)
 
+        updateRegion(serviceAdminToken, "DFW", region("DFW", true, true))
         def deleteRegionResponse = deleteRegion(serviceAdminToken, regionName)
         def getDeletedRegionResponse = getRegion(serviceAdminToken, regionName)
 
@@ -403,17 +425,6 @@ class Cloud20IntegrationTest extends Specification {
         ]
     }
 
-    def "bad operations on capabilities return 'bad request'" () {
-        expect:
-        response.status == 400
-
-        where:
-        response << [
-                getCapabilities(serviceAdminToken, "blah"),
-                updateCapabilities(serviceAdminToken, "blah", createCapabilities(createCapability("GET", "get_server", "get_server", "http://someUrl", "desc", null)))
-        ]
-    }
-
     def "invalid operations on create regions returns 'bad request'"() {
         expect:
         response.status == 400
@@ -429,6 +440,116 @@ class Cloud20IntegrationTest extends Specification {
 
         then:
         createRegionResponse.status == 409
+    }
+
+    def "listUsersWithRole called by default-user returns forbidden"() {
+        when:
+        def response = listUsersWithRole(defaultUserToken, "1")
+
+        then:
+        response.status == 403
+    }
+
+    def "listUsersWithRole called by admin invalid roleId returns not found"() {
+        when:
+        def response = listUsersWithRole(serviceAdminToken, "-5")
+
+        then:
+        response.status == 404
+    }
+
+    def "listUsersWithRole called by admins returns success"() {
+        expect:
+        response.status == 200
+
+        where:
+        response << [
+                listUsersWithRole(identityAdminToken, sharedRole.getId()),
+                listUsersWithRole(serviceAdminToken, sharedRole.getId()),
+                listUsersWithRole(userAdminToken, sharedRole.getId())
+        ]
+    }
+
+    def "listUsersWithRole empty list returns"() {
+        when:
+        def response = listUsersWithRole(userAdminTwoToken, sharedRole.getId())
+
+        then:
+        response.status == 200
+        response.getEntity(UserList).value.user.size == 0
+        response.headers.getFirst("Link") == null
+    }
+
+    def "listUsersWithRole non empty list"() {
+        when:
+        def userAdminResponse = listUsersWithRole(userAdminToken, sharedRole.getId())
+        def serviceAdminResponse = listUsersWithRole(serviceAdminToken, sharedRole.getId())
+        def identityAdminResponse = listUsersWithRole(identityAdminToken, sharedRole.getId())
+
+        then:
+        userAdminResponse.status == 200
+        def userAdminResponseObj = userAdminResponse.getEntity(UserList).value
+        userAdminResponseObj.user.size() == 3
+        serviceAdminResponse.status == 200
+        def serviceAdminResponseObj = serviceAdminResponse.getEntity(UserList).value
+        serviceAdminResponseObj.user.size == 4
+        identityAdminResponse.status == 200
+        def identityAdminResponseObj = identityAdminResponse.getEntity(UserList).value
+        identityAdminResponseObj.user.size == 4
+    }
+
+    def "listUsersWithRole pages results"() {
+        when:
+        def userAdminResponse1 = listUsersWithRole(userAdminToken, sharedRole.getId(), 0, 1)
+        def userAdminResponse2 = listUsersWithRole(userAdminToken, sharedRole.getId(), 1, 1)
+        def userAdminResponse3 = listUsersWithRole(userAdminToken, sharedRole.getId(), 2, 1)
+        def serviceAdminResponse1 = listUsersWithRole(serviceAdminToken, sharedRole.getId(), 1, 2)
+        def serviceAdminResponse2 = listUsersWithRole(serviceAdminToken, sharedRole.getId(), 0, 2)
+        def serviceAdminResponse3 = listUsersWithRole(serviceAdminToken, sharedRole.getId(), 2, 2)
+        def serviceAdminResponse4 = listUsersWithRole(serviceAdminToken, sharedRole.getId(), 4, 4)
+
+        then:
+        userAdminResponse1.getEntity(UserList).value.user.size == 1
+        userAdminResponse2.getEntity(UserList).value.user.size == 1
+        userAdminResponse3.getEntity(UserList).value.user.size == 1
+        serviceAdminResponse1.getEntity(UserList).value.user.size == 2
+        serviceAdminResponse2.getEntity(UserList).value.user.size == 2
+        serviceAdminResponse3.getEntity(UserList).value.user.size == 2
+        serviceAdminResponse4.getEntity(UserList).value.user.size == 1
+
+        def serviceAdminHeaders = serviceAdminResponse3.headers
+        serviceAdminHeaders.getFirst("Link") != null
+
+        def userAdminHeaders = userAdminResponse2.headers
+        userAdminHeaders.getFirst("Link") != null
+    }
+
+    def "listUsersWithRole offset greater than result set length returns 400"() {
+        when:
+        def responseOne = listUsersWithRole(serviceAdminToken, sharedRole.getId(), 100, 10)
+        def responseTwo = listUsersWithRole(userAdminToken, sharedRole.getId(), 100, 10)
+
+        then:
+        responseOne.status == 400
+        responseTwo.status == 400
+    }
+
+    def "listUsersWithRole role assigned to no one"() {
+        when:
+        def responseOne = listUsersWithRole(serviceAdminToken, sharedRoleTwo.getId())
+        def responseTwo = listUsersWithRole(serviceAdminToken, sharedRoleTwo.getId(), 0, 10)
+        def responseThree = listUsersWithRole(identityAdminToken, sharedRoleTwo.getId())
+        def responseFour = listUsersWithRole(identityAdminToken, sharedRoleTwo.getId(), 0, 10)
+        def responseFive = listUsersWithRole(userAdminToken, sharedRoleTwo.getId())
+        def responseSix = listUsersWithRole(userAdminToken, sharedRoleTwo.getId(), 0, 10)
+
+        then:
+        responseOne.getEntity(UserList).value.user.size == 0
+        responseTwo.getEntity(UserList).value.user.size == 0
+        responseThree.getEntity(UserList).value.user.size == 0
+        responseFour.getEntity(UserList).value.user.size == 0
+        responseFive.getEntity(UserList).value.user.size == 0
+        responseSix.getEntity(UserList).value.user.size == 0
     }
 
     def "question crud"() {
@@ -493,6 +614,70 @@ class Cloud20IntegrationTest extends Specification {
         ]
     }
 
+    def "listUsers returns forbidden (invalid token)"() {
+        expect:
+        response.status == 401
+
+        where:
+        response << [
+                listUsers(""),
+                listUsers("1")
+        ]
+    }
+
+    def "listUsers returns default user"() {
+        when:
+        def users = listUsers(defaultUserToken).getEntity(UserList).value.user
+
+        then:
+        users[0].username.equals(defaultUser.username)
+    }
+
+    def "listUsers caller is user-admin returns users from domain"() {
+        when:
+        def users = listUsers(userAdminToken).getEntity(UserList).value.user
+
+        then:
+        users.size() == 4
+    }
+
+    def "listUsers caller is identity-admin or higher returns paged results"() {
+        expect:
+        response.status == 200
+        response.headers.getFirst("Link") != null
+
+        where:
+        response << [
+                listUsers(identityAdminToken),
+                listUsers(identityAdminToken, 0, 10),
+                listUsers(identityAdminToken, 15, 10),
+                listUsers(serviceAdminToken),
+                listUsers(serviceAdminToken, 0, 10),
+                listUsers(serviceAdminToken, 15, 10),
+        ]
+    }
+
+    def "listUsers sets limit to defaults"() {
+        when:
+        def response1 = listUsers(identityAdminToken, 0, 10000).getEntity(UserList).value.user
+        def response2 = listUsers(identityAdminToken, 0, -10).getEntity(UserList).value.user
+
+        then:
+        response1.size() <= 1000
+        response2.size() <= 25
+    }
+
+    def "listUsers throws bad request (offset out of bounds)"() {
+        expect:
+        response.status == 400
+
+        where:
+        response << [
+                listUsers(serviceAdminToken, 100000000, 25),
+                listUsers(identityAdminToken, 10000000, 50)
+        ]
+    }
+
     //Resource Calls
     def createUser(String token, user) {
         resource.path(path).path('users').header(X_AUTH_TOKEN, token).entity(user).post(ClientResponse)
@@ -502,8 +687,12 @@ class Cloud20IntegrationTest extends Specification {
         resource.uri(location).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
-    def listUser(String token) {
-        resource.path(path).path('users').accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
+    def listUsers(String token) {
+        resource.path(path).path("users").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+    }
+
+    def listUsers(String token, int offset, int limit) {
+        resource.path(path).path("users").queryParams(pageParams(offset, limit)).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     def getUserById(String token, String userId) {
@@ -566,14 +755,6 @@ class Cloud20IntegrationTest extends Specification {
         resource.path(path).path(RAX_GRPADM).path('groups').path(groupId).path("users").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
-    def updateCapabilities(String token, String endpointTemplateId, capabilities) {
-        resource.path(path).path('OS-KSCATALOG').path('endpointTemplates').path(endpointTemplateId).path('RAX-AUTH').path('capabilities').header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).entity(capabilities).put(ClientResponse)
-    }
-
-    def getCapabilities(String token, String endpointTemplateId) {
-        resource.path(path).path('OS-KSCATALOG').path('endpointTemplates').path(endpointTemplateId).path('RAX-AUTH').path('capabilities').header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
-    }
-
     def authenticate(username, password) {
         resource.path(path + 'tokens').accept(APPLICATION_XML).entity(authenticateRequest(username, password)).post(ClientResponse)
     }
@@ -598,6 +779,30 @@ class Cloud20IntegrationTest extends Specification {
         resource.path(path).path(RAX_AUTH).path("regions").path(regionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
     }
 
+    def listUsersWithRole(String token, String roleId) {
+        resource.path(path).path("OS-KSADM/roles").path(roleId).path("RAX-AUTH/users").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+    }
+
+    def listUsersWithRole(String token, String roleId, int offset, int limit) {
+        resource.path(path).path("OS-KSADM/roles").path(roleId).path("RAX-AUTH/users").queryParams(pageParams(offset, limit)).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+    }
+
+    def createRole(String token, Role role) {
+        resource.path(path).path("OS-KSADM/roles").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).entity(role).post(ClientResponse)
+    }
+
+    def deleteRole(String token, String roleId) {
+        resource.path(path).path("OS-KSADM/roles").path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
+    }
+
+    def addRoleToUser(String token, String roleId, String userId) {
+        resource.path(path).path("users").path(userId).path("roles/OS-KSADM").path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).put(ClientResponse)
+    }
+
+    def removeRoleFromUser(String token, String roleId, String userId) {
+        resource.path(path).path("users").path(userId).path("roles/OS-KSADM").path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete()
+    }
+
     def createQuestion(String token, question) {
         resource.path(path).path(RAX_AUTH).path("secretqa/questions").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(question).post(ClientResponse)
     }
@@ -620,6 +825,18 @@ class Cloud20IntegrationTest extends Specification {
 
     def deleteQuestion(String token, String questionId) {
         resource.path(path).path(RAX_AUTH).path("secretqa/questions").path(questionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).delete(ClientResponse)
+    }
+
+    def updateCapabilities(String token, String type, String version, capabilities) {
+        resource.path(path).path(RAX_AUTH).path('service-apis').path(type).path(version).path('capabilities').header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(capabilities).put(ClientResponse)
+    }
+
+    def getCapabilities(String token, String type, String version) {
+        resource.path(path).path(RAX_AUTH).path('service-apis').path(type).path(version).path('capabilities').header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).get(ClientResponse)
+    }
+
+    def removeCapabilities(String token, String type, String version) {
+        resource.path(path).path(RAX_AUTH).path('service-apis').path(type).path(version).path('capabilities').header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).delete(ClientResponse)
     }
 
     //Helper Methods
@@ -730,6 +947,23 @@ class Cloud20IntegrationTest extends Specification {
 
     def region() {
         return region("name", true, false)
+    }
+
+    def role() {
+        new Role().with {
+            def random = ((String) UUID.randomUUID()).replace('-',"")
+            it.name = "role$random"
+            it.description = "Test Global Role"
+            return it
+        }
+    }
+
+    def pageParams(offset, limit) {
+        new MultivaluedMapImpl().with {
+            it.add("marker", "$offset")
+            it.add("limit", "$limit")
+            return it
+        }
     }
 
     def question() {

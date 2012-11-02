@@ -1,5 +1,9 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.api.resource.pagination.DefaultPaginator;
+import com.rackspace.idm.api.resource.pagination.PaginatorContext;
+import org.apache.commons.lang.StringUtils;
+import org.hamcrest.Matchers;
 import org.junit.runner.RunWith;
 
 import org.mockito.InjectMocks;
@@ -17,6 +21,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
+import javax.naming.directory.SearchControls;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,6 +45,8 @@ public class LdapTenantRepositoryTest extends InMemoryLdapIntegrationTest{
     LdapConnectionPools ldapConnectionPools;
     @Mock
     Configuration configuration;
+    @Mock
+    DefaultPaginator<String> stringPaginator;
 
     LdapTenantRepository spy;
     LDAPInterface ldapInterface;
@@ -542,5 +549,111 @@ public class LdapTenantRepositoryTest extends InMemoryLdapIntegrationTest{
         doReturn(null).when(spy).getTenantRoleForParentById("uniqueId", "roleId");
         boolean result = spy.doesScopeAccessHaveTenantRole(scopeAccess, clientRole);
         assertThat("boolean", result, equalTo(false));
+    }
+
+    @Test
+    public void getMultipleTenantRoles_callsPaginator_createSearchRequest() throws Exception {
+        PaginatorContext<String> context = new PaginatorContext<String>();
+        String[] referalURLs = {"123"};
+        Attribute attribute = new Attribute("o", "rackspace");
+        Attribute[] attributes = {attribute};
+        Control control = new Control("oid");
+        Control[] controls = {control};
+        List<SearchResultEntry> searchResultEntries = new ArrayList<SearchResultEntry>();
+        List<SearchResultReference> searchResultReferences = new ArrayList<SearchResultReference>();
+        SearchResultEntry entry = new SearchResultEntry("", attributes, control);
+        SearchResultReference reference = new SearchResultReference(referalURLs, controls);
+        searchResultEntries.add(entry);
+        searchResultReferences.add(reference);
+
+        SearchResult searchResult = new SearchResult(0, ResultCode.SUCCESS, "", "", referalURLs,
+                searchResultEntries, searchResultReferences, 1, 1, null);
+        doReturn(context).when(stringPaginator).createSearchRequest(anyString(), any(SearchRequest.class), anyInt(), anyInt());
+        doReturn(searchResult).when(spy).getMultipleEntries(any(SearchRequest.class));
+
+        spy.getMultipleTenantRoles("1", 0, 10);
+        verify(stringPaginator).createSearchRequest(anyString(), any(SearchRequest.class), anyInt(), anyInt());
+    }
+
+    @Test
+    public void getMultipleTenantRoles_callsGetMultipleEntries() throws Exception {
+        PaginatorContext<String> context = new PaginatorContext<String>();
+        String[] referalURLs = {"123"};
+        Attribute attribute = new Attribute("attribute");
+        Attribute[] attributes = {attribute};
+        Control control = new Control("oid");
+        Control[] controls = {control};
+        List<SearchResultEntry> searchResultEntries = new ArrayList<SearchResultEntry>();
+        List<SearchResultReference> searchResultReferences = new ArrayList<SearchResultReference>();
+        SearchResultEntry entry = new SearchResultEntry("", attributes, control);
+        SearchResultReference reference = new SearchResultReference(referalURLs, controls);
+        searchResultEntries.add(entry);
+        searchResultReferences.add(reference);
+
+        SearchResult searchResult = new SearchResult(0, ResultCode.SUCCESS, "", "", referalURLs,
+                searchResultEntries, searchResultReferences, 1, 1, null);
+        doReturn(searchResult).when(spy).getMultipleEntries(any(SearchRequest.class));
+        doReturn(context).when(stringPaginator).createSearchRequest(anyString(), any(SearchRequest.class), anyInt(), anyInt());
+
+        spy.getMultipleTenantRoles("1", 0, 10);
+        verify(spy).getMultipleEntries(any(SearchRequest.class));
+    }
+
+    @Test
+    public void getMultipleTenantRoles_returnsContext() throws Exception {
+        PaginatorContext<String> context = new PaginatorContext<String>();
+        String[] referalURLs = {"123"};
+        Attribute attribute = new Attribute("attribute");
+        Attribute[] attributes = {attribute};
+        Control control = new Control("oid");
+        Control[] controls = {control};
+        List<SearchResultEntry> searchResultEntries = new ArrayList<SearchResultEntry>();
+        List<SearchResultReference> searchResultReferences = new ArrayList<SearchResultReference>();
+        SearchResultEntry entry = new SearchResultEntry("", attributes, control);
+        SearchResultReference reference = new SearchResultReference(referalURLs, controls);
+        searchResultEntries.add(entry);
+        searchResultReferences.add(reference);
+
+        SearchResult searchResult = new SearchResult(0, ResultCode.SUCCESS, "", "", referalURLs,
+                searchResultEntries, searchResultReferences, 1, 1, null);
+
+        doReturn(searchResult).when(spy).getMultipleEntries(any(SearchRequest.class));
+        doReturn(context).when(stringPaginator).createSearchRequest(anyString(), any(SearchRequest.class), anyInt(), anyInt());
+        doReturn("123456").when(spy).getUserIdFromDN(any(DN.class));
+
+        PaginatorContext<String> userIdPaginatorContext = spy.getMultipleTenantRoles("1", 0, 10);
+
+        assertThat("valueList", userIdPaginatorContext.getValueList().size(), equalTo(1));
+    }
+
+    @Test
+    public void getUserIdFromRDN_returnsUserId() throws Exception {
+        DN rootDN = createDN(true);
+
+        String userId = spy.getUserIdFromDN(rootDN);
+        assertThat("userId match", userId.equalsIgnoreCase("123456789"));
+    }
+
+    @Test
+    public void getUserIdFromRDN_rsIdNotInDN_returnsEmptyString() throws Exception {
+        DN rootDN = createDN(false);
+
+        String userId = spy.getUserIdFromDN(rootDN);
+        assertThat("userId is blank", StringUtils.isBlank(userId));
+    }
+
+    protected DN createDN(boolean withRsId) {
+        RDN rdn = new RDN("clientId", "abcd12345");
+        RDN rdn1 = new RDN("cn", "DIRECT TOKENS");
+        RDN rdn2 = new RDN("rsId", "123456789");
+        RDN rdn3 = new RDN("ou", "users");
+        RDN rdn4 = new RDN("o", "rackspace");
+        RDN rdn5 = new RDN("dc", "rackspace");
+
+        if (withRsId) {
+            return new DN(rdn, rdn1, rdn2, rdn3, rdn4, rdn5);
+        } else {
+            return new DN(rdn, rdn1, rdn3, rdn4, rdn5);
+        }
     }
 }

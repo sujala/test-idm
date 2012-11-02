@@ -14,6 +14,8 @@ import com.rackspace.idm.api.converter.cloudv20.*;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
+import com.rackspace.idm.api.resource.pagination.Paginator;
+import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.Application;
@@ -23,6 +25,7 @@ import com.rackspace.idm.domain.entity.Domains;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.api.resource.pagination.DefaultPaginator;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.validation.Validator20;
@@ -410,7 +413,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             boolean callerIsServiceAdmin = authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken);
 
             if (callerIsUserAdmin) {
-                //TODO Pagination index and offset
+                //TODO pagination index and offset
                 Users users;
                 User caller = userService.getUserByAuthToken(authToken);
                 String domainId = caller.getDomainId();
@@ -2124,6 +2127,63 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
+    public ResponseBuilder listUsersWithRole(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String roleId, int marker, int limit) {
+        ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
+        authorizationService.verifyUserAdminLevelAccess(scopeAccess);
+        ClientRole role = this.clientService.getClientRoleById(roleId);
+
+        if (role == null) {
+            throw new NotFoundException(String.format("Role with id: %s not found", roleId));
+        }
+
+        FilterParam[] filters;
+        boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccess);
+
+        if (callerIsUserAdmin) {
+            User caller = this.userService.getUserByScopeAccess(scopeAccess);
+            if (caller.getDomainId() == null || StringUtils.isBlank(caller.getDomainId())) {
+                throw new BadRequestException("User-admin has no domain");
+            }
+            filters = setFilters(role.getId(), caller.getDomainId());
+        } else {
+            filters = setFilters(role.getId(), null);
+        }
+
+        marker = validateOffset(marker);
+        limit = validateLimit(limit);
+
+        PaginatorContext<User> paginator = this.userService.getUsersWithRole(filters, roleId, marker, limit);
+        String linkHeader = paginator.createLinkHeader(uriInfo);
+
+        return Response.status(200).header("Link", linkHeader).entity(objFactories.getOpenStackIdentityV2Factory()
+                .createUsers(this.userConverterCloudV20.toUserList(paginator.getValueList())).getValue());
+    }
+
+    protected FilterParam[] setFilters(String roleId, String domainId) {
+        if (domainId == null) {
+            return new FilterParam[]{new FilterParam(FilterParamName.ROLE_ID, roleId)};
+        }
+        return new FilterParam[]{new FilterParam(FilterParamName.DOMAIN_ID, domainId),
+                                    new FilterParam(FilterParamName.ROLE_ID, roleId)};
+    }
+
+    protected int validateOffset(Integer offset) {
+        if (offset == null) {
+            return 0;
+        }
+        return offset < 0 ? 0 : offset;
+    }
+
+    protected int validateLimit(Integer limit) {
+        if (limit == null || limit < 1) {
+            return config.getInt("ldap.paging.limit.default");
+        } else if (limit >= config.getInt("ldap.paging.limit.max")) {
+            return config.getInt("ldap.paging.limit.max");
+        } else {
+            return limit;
+        }
+    }
+
     @Override
     public ResponseBuilder addRegion(UriInfo uriInfo, String authToken, Region region) {
         try {
@@ -2433,15 +2493,10 @@ public class DefaultCloud20Service implements Cloud20Service {
         return iMarker;
     }
 
-    int validateLimit(Integer limit) {
-        return ((limit != null) ? limit : 0);
-    }
-
     // KSADM Extension User methods
 
     @Override
-    public ResponseBuilder listUsers(HttpHeaders httpHeaders, String authToken, Integer marker, Integer limit) {
-
+    public ResponseBuilder listUsers(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, int marker, int limit) {
         try {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
             User caller = getUser(scopeAccessByAccessToken);
@@ -2454,20 +2509,30 @@ public class DefaultCloud20Service implements Cloud20Service {
                         .createUsers(this.userConverterCloudV20.toUserList(users)).getValue());
             }
             authorizationService.verifyUserAdminLevelAccess(scopeAccessByAccessToken);
-            Users users = new Users();
+
+            marker = validateOffset(marker);
+            limit = validateLimit(limit);
+
+            PaginatorContext<User> userContext;
             if (authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken) ||
                     authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken)) {
-                users = this.userService.getAllUsers(null, marker, limit);
+                userContext = this.userService.getAllUsersPaged(null, marker, limit);
             } else {
                 if (caller.getDomainId() != null) {
                     String domainId = caller.getDomainId();
                     FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParamName.DOMAIN_ID, domainId)};
-                    users = this.userService.getAllUsers(filters, marker, limit);
+                    userContext = this.userService.getAllUsersPaged(filters, marker, limit);
+                } else {
+                    throw new BadRequestException("User-admin has no domain");
                 }
             }
 
-            return Response.ok(objFactories.getOpenStackIdentityV2Factory()
-                    .createUsers(this.userConverterCloudV20.toUserList(users.getUsers())).getValue());
+            String linkHeader = userContext.createLinkHeader(uriInfo);
+
+            return Response.status(200)
+                    .header("Link", linkHeader)
+                    .entity(objFactories.getOpenStackIdentityV2Factory()
+                            .createUsers(this.userConverterCloudV20.toUserList(userContext.getValueList())).getValue());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }

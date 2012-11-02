@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.domain.dao.TenantDao;
 import org.junit.runner.RunWith;
 
 import org.mockito.InjectMocks;
@@ -60,6 +61,8 @@ public class DefaultUserServiceTest {
     private EndpointService endpointService;
     @Mock
     private CloudRegionService cloudRegionService;
+    @Mock
+    private TenantDao tenantDao;
 
     private DefaultUserService spy;
 
@@ -1130,5 +1133,12 @@ public class DefaultUserServiceTest {
         List<User> subUsers = defaultUserService.getSubUsers(user);
 
         assertThat("ldap offset default", subUsers.size(), equalTo(1));
+    }
+
+    @Test
+    public void getPaginatedUsers_callsUserDao_getPaginatedUsers() {
+        FilterParam[] filters = new FilterParam[]{};
+        defaultUserService.getAllUsersPaged(filters, 0, 5);
+        verify(userDao).getAllUsersPaged(any(FilterParam[].class), anyInt(), anyInt());
     }
 }

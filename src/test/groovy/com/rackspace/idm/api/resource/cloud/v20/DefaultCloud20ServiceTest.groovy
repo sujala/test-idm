@@ -23,6 +23,14 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.Capability
 import com.rackspace.idm.domain.dao.impl.LdapCapabilityRepository
 import com.rackspace.idm.api.converter.cloudv20.CapabilityConverterCloudV20
 
+import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20
+import com.rackspace.idm.api.resource.pagination.PaginatorContext
+
+import com.rackspace.idm.domain.dao.impl.LdapRepository
+import com.unboundid.ldap.sdk.Attribute
+import com.unboundid.ldap.sdk.ReadOnlyEntry
+
 
 /*
  This class uses the application context but mocks the ldap interactions
@@ -38,6 +46,7 @@ class DefaultCloud20ServiceTest extends Specification {
     @Autowired QuestionConverterCloudV20 questionConverter
     @Autowired DefaultCapabilityService capabilityService
     @Autowired CapabilityConverterCloudV20 capabilityConverter
+    @Autowired UserConverterCloudV20 userConverterCloudV20
 
     @Shared DefaultScopeAccessService scopeAccessService
     @Shared DefaultAuthorizationService authorizationService
@@ -49,6 +58,8 @@ class DefaultCloud20ServiceTest extends Specification {
 
 
     @Shared def authToken = "token"
+    @Shared def offset = 0
+    @Shared def limit = 25
     @Shared def sharedRandomness = UUID.randomUUID()
     @Shared def sharedRandom
     @Shared def questionId = "id"
@@ -430,6 +441,132 @@ class DefaultCloud20ServiceTest extends Specification {
         response.status == 401
     }
 
+    def "listUsers verifies token"() {
+        given:
+        createMocks()
+        allowAccess()
+
+        when:
+        cloud20Service.listUsers(null, uriInfo(), authToken, offset, limit)
+
+        then:
+        1 * scopeAccessService.getScopeAccessByAccessToken(_)
+
+    }
+
+    def "listUsers returns caller"() {
+        given:
+        createMocks()
+        allowAccess()
+
+        userDao.getUserByUsername(_) >> user(sharedRandom)
+        authorizationService.authorizeCloudUser(_) >> true
+
+        when:
+        def response = cloud20Service.listUsers(null, uriInfo(), authToken, offset, limit).build()
+
+        then:
+        response.status == 200
+        response.entity.user[0].username.equals(sharedRandom)
+    }
+
+    def "listUsers verifies userAdmin Access level"() {
+        given:
+        createMocks()
+        allowAccess()
+        authorizationService.authorizeCloudUserAdmin(_) >> false
+
+        when:
+        cloud20Service.listUsers(null, uriInfo(), authToken, offset, limit)
+
+        then:
+        1 * authorizationService.verifyUserAdminLevelAccess(_)
+    }
+
+    def "listUsers calls getAllUsersPaged with no filters"() {
+        given:
+        createMocks()
+        allowAccess()
+
+        authorizationService.authorizeCloudUserAdmin(_) >> false
+        authorizationService.authorizeCloudServiceAdmin(_) >> true
+
+        when:
+        cloud20Service.listUsers(null, uriInfo(), authToken, offset, limit)
+
+        then:
+        1 * userDao.getAllUsersPaged(null, offset, limit)
+    }
+
+    def "listUsers calls getAllUsersPaged with domainId filter"() {
+        given:
+        createMocks()
+        allowAccess()
+        def user = user(sharedRandom)
+        user.domainId = "123456789"
+
+        def userList = [ ] as User[]
+        userList = userList.toList()
+        FilterParam[] filters = [new FilterParam(FilterParam.FilterParamName.DOMAIN_ID, "123456789")] as FilterParam[]
+        userDao.getUserByUsername(_) >> user
+        userDao.getAllUsersPaged(_, _, _) >> userContext(offset, limit, userList)
+        authorizationService.authorizeCloudUserAdmin(_) >> false
+        authorizationService.authorizeCloudServiceAdmin(_) >> false
+
+        when:
+        cloud20Service.listUsers(null, uriInfo(), authToken, offset, limit)
+
+        then:
+        1 * userDao.getAllUsersPaged(_, _, _)
+    }
+
+    def "listUsers throws bad request"() {
+        given:
+        createMocks()
+        allowAccess()
+
+        userDao.getUserByUsername(_) >> user(sharedRandom)
+        authorizationService.authorizeCloudUserAdmin(_) >> false
+        authorizationService.authorizeCloudServiceAdmin(_) >> false
+
+        when:
+        def response = cloud20Service.listUsers(null, uriInfo(), authToken, offset, limit).build()
+
+        then:
+        response.status == 400
+    }
+
+    def "listUsers returns userList"() {
+        given:
+        createMocks()
+        allowAccess()
+        def userList = [ user("user1"), user("user2"), user("user3") ] as User[]
+        userList = userList.toList()
+        def userContext = userContext(offset, limit, userList)
+        def links = new HashMap<String, String>()
+        links.put("first", "first")
+        links.put("last", "last")
+        links.put("prev", "prev")
+        links.put("next", "next")
+        userContext.pageLinks = links
+
+        authorizationService.authorizeCloudUserAdmin(_) >> false
+        authorizationService.authorizeCloudServiceAdmin(_) >> true
+        userDao.getUserByUsername(_) >> user(sharedRandom)
+        userDao.getAllUsersPaged(_, _, _) >> userContext
+
+        when:
+        def response = cloud20Service.listUsers(null, uriInfo(), authToken, offset, limit).build()
+
+        then:
+        response.status == 200
+        response.entity.user[0].username == "user1"
+        response.entity.user[1].username == "user2"
+        response.entity.user[2].username == "user3"
+
+    }
+
+    //helper methods
     def createMocks() {
         scopeAccessDao = Mock()
 
@@ -454,8 +591,17 @@ class DefaultCloud20ServiceTest extends Specification {
     }
 
     def allowAccess() {
-        ScopeAccess accessToken = scopeAccess()
-        scopeAccessService.getScopeAccessByAccessToken(_) >> accessToken
+        def attribute = new Attribute(LdapRepository.ATTR_UID, "uid")
+        def entry = new ReadOnlyEntry("DN", attribute)
+
+        ClientScopeAccess clientScopeAccess = Mock()
+        Calendar calendar = Calendar.getInstance()
+        calendar.add(Calendar.DAY_OF_YEAR, 1)
+        clientScopeAccess.accessTokenExp = calendar.getTime()
+        clientScopeAccess.accessTokenString = calendar.getTime().toString()
+
+        clientScopeAccess.getLDAPEntry() >> entry
+        scopeAccessService.getScopeAccessByAccessToken(_) >> clientScopeAccess
     }
 
     def user(String username, String email, Boolean enabled, String displayName) {
@@ -464,6 +610,13 @@ class DefaultCloud20ServiceTest extends Specification {
             it.email = email
             it.enabled = enabled
             it.displayName = displayName
+            return it
+        }
+    }
+
+    def user(name) {
+        new User().with {
+            it.username = name
             return it
         }
     }
@@ -530,8 +683,19 @@ class DefaultCloud20ServiceTest extends Specification {
         UriInfo uriInfo = Mock()
         UriBuilder uriBuilder = Mock()
         uriInfo.getRequestUriBuilder() >> uriBuilder
+        uriInfo.getAbsolutePath() >> new URI("http://path.to/resource")
         uriBuilder.path(_) >> uriBuilder
         uriBuilder.build() >> new URI()
         return uriInfo
+    }
+
+    def userContext(offset, limit, list) {
+        new PaginatorContext<User>().with {
+            it.limit = limit
+            it.offset = offset
+            it.totalRecords = list.size
+            it.valueList = list
+            return it
+        }
     }
 }

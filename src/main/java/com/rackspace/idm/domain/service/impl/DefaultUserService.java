@@ -1,10 +1,16 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.api.resource.pagination.PaginatorContext;
+import com.rackspace.idm.domain.dao.TenantDao;
+import org.springframework.stereotype.Component;
+
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.Tenant;
+import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.util.HashHelper;
@@ -13,7 +19,6 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,6 +57,9 @@ public class DefaultUserService implements UserService {
 
     @Autowired
     private TenantService tenantService;
+
+    @Autowired
+    private TenantDao tenantDao;
 
     @Autowired
     private EndpointService endpointService;
@@ -823,6 +831,101 @@ public class DefaultUserService implements UserService {
         List<Tenant> tenantList = new ArrayList<Tenant>();
 
         return tenantList;
+    }
+
+    @Override
+    public PaginatorContext<User> getAllUsersPaged(FilterParam[] filters, int offset, int limit) {
+        logger.debug("Getting Users Paged");
+
+        PaginatorContext<User> context = this.userDao.getAllUsersPaged(filters, offset, limit);
+
+        logger.debug("Got Users {}", filters);
+
+        return context;
+    }
+
+    @Override
+    public PaginatorContext<User> getUsersWithRole(FilterParam[] filters, String roleId, int offset, int limit) {
+        logger.debug("Getting Users with Role {}", roleId);
+
+        PaginatorContext<User> userContext = new PaginatorContext<User>();
+
+        if (filters.length == 1) {
+            PaginatorContext<String> context = this.tenantDao.getMultipleTenantRoles(roleId, offset, limit);
+
+            ArrayList<User> userList = new ArrayList<User>();
+            for (String userId : context.getValueList()) {
+                User user = getUserById(userId);
+                if (user != null) {
+                    userList.add(user);
+                }
+            }
+
+            setUserContext(userContext, context.getLimit(), context.getOffset(),
+                            context.getTotalRecords(), userList);
+        } else {
+            Users users = this.getAllUsersNoLimit(filters);
+            List<User> usersWithRoleList = new ArrayList<User>();
+            filterUsersForRole(users, usersWithRoleList, roleId);
+
+            List<User> subList = getSubList(usersWithRoleList, offset, limit);
+
+            setUserContext(userContext, limit, offset, usersWithRoleList.size(), subList);
+        }
+
+        logger.debug("Got Users {}", filters);
+
+        return userContext;
+    }
+
+    protected Users getAllUsersNoLimit(FilterParam[] filters) {
+        logger.debug("Getting all users with {}", filters);
+
+        Users users = this.userDao.getAllUsersNoLimit(filters);
+
+        logger.debug("Got users {}", users);
+
+        return users;
+    }
+
+    protected void filterUsersForRole(Users users, List<User> usersWithRole, String roleId) {
+        for (User user : users.getUsers()) {
+            List<TenantRole> roles = tenantService.getGlobalRolesForUser(user);
+            if (user.getRoles() != null) {
+                roles.addAll(user.getRoles());
+            }
+
+            for (TenantRole tenantRole : roles) {
+                if (tenantRole.getRoleRsId().equals(roleId)) {
+                    usersWithRole.add(user);
+                    break;
+                }
+            }
+        }
+    }
+
+    protected List<User> getSubList(List<User> userList, int offset, int limit) {
+        if (offset > userList.size()) {
+            throw new BadRequestException(String.format("Offset greater than total number of records (%s)", userList.size()));
+        }
+
+        if (userList.size() > limit) {
+            if (userList.size() > offset + limit) {
+                return userList.subList(offset, offset + limit);
+            } else {
+                return userList.subList(offset, userList.size());
+            }
+        } else {
+            return userList.subList(offset, userList.size());
+        }
+    }
+
+    protected void setUserContext(PaginatorContext<User> userContext, int limit, int offset, int totalRecords, List<User> userList) {
+        userContext.setLimit(limit);
+        userContext.setOffset(offset);
+        userContext.setTotalRecords(totalRecords);
+        userContext.setValueList(userList);
+        userContext.makePageLinks();
     }
 
     private boolean isPasswordRulesEnforced() {

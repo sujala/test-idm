@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.unboundid.util.LDAPSDKUsageException;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.rackspace.idm.audit.Audit;
@@ -290,7 +291,14 @@ public abstract class LdapRepository {
         return searchResult.getSearchEntries();
     }
 
-
+    protected SearchResult getMultipleEntries(SearchRequest searchRequest) {
+        try {
+            return getAppInterface().search(searchRequest);
+        } catch (LDAPException ldapEx) {
+            getLogger().error(LDAP_SEARCH_ERROR, ldapEx.getMessage());
+            return null;
+        }
+    }
 
     protected SearchResultEntry getSingleEntry(String baseDN,
         SearchScope scope, Filter searchFilter, String... attributes) {
@@ -299,6 +307,9 @@ public abstract class LdapRepository {
             entry = getAppInterface().searchForEntry(baseDN, scope,
                 searchFilter, attributes);
         } catch (LDAPSearchException ldapEx) {
+            getLogger().error(LDAP_SEARCH_ERROR, ldapEx.getMessage());
+            throw new IllegalStateException(ldapEx);
+        } catch (LDAPSDKUsageException ldapEx) {
             getLogger().error(LDAP_SEARCH_ERROR, ldapEx.getMessage());
             throw new IllegalStateException(ldapEx);
         }
