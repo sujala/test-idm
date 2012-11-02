@@ -399,13 +399,13 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             if (user.getBaseURLRefs() != null && user.getBaseURLRefs().getBaseURLRef().size() > 0) {
                 // If BaseUrlRefs were sent in then we're going to add the new list
-
                 // Add new list of baseUrls
                 for (BaseURLRef ref : user.getBaseURLRefs().getBaseURLRef()) {
-                    try { // ToDo: throw error
-                        this.userService.addBaseUrlToUser(ref.getId(), userDO);
-                    } catch (Exception e) {
+                    CloudBaseUrl cloudBaseUrl = this.endpointService.getBaseUrlById(ref.getId());
+                    if (cloudBaseUrl == null) {
+                        throw new NotFoundException(String.format("No URLBase with matching id: %s", ref.getId()));
                     }
+                    this.userService.addBaseUrlToUser(ref.getId(), userDO);
                 }
             }
 
