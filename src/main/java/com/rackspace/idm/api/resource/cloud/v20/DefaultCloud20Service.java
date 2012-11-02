@@ -2459,8 +2459,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     // KSADM Extension User methods
 
     @Override
-    public ResponseBuilder listUsers(HttpHeaders httpHeaders, String authToken, Integer marker, Integer limit) {
-
+    public ResponseBuilder listUsers(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, int marker, int limit) {
         try {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
             User caller = getUser(scopeAccessByAccessToken);
@@ -2473,20 +2472,30 @@ public class DefaultCloud20Service implements Cloud20Service {
                         .createUsers(this.userConverterCloudV20.toUserList(users)).getValue());
             }
             authorizationService.verifyUserAdminLevelAccess(scopeAccessByAccessToken);
-            Users users = new Users();
+
+            marker = validateOffset(marker);
+            limit = validateLimit(limit);
+
+            PaginatorContext<User> userContext;
             if (authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken) ||
                     authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken)) {
-                users = this.userService.getAllUsers(null, marker, limit);
+                userContext = this.userService.getAllUsersPaged(null, marker, limit);
             } else {
                 if (caller.getDomainId() != null) {
                     String domainId = caller.getDomainId();
                     FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParamName.DOMAIN_ID, domainId)};
-                    users = this.userService.getAllUsers(filters, marker, limit);
+                    userContext = this.userService.getAllUsersPaged(filters, marker, limit);
+                } else {
+                    throw new BadRequestException("User-admin has no domain");
                 }
             }
 
-            return Response.ok(objFactories.getOpenStackIdentityV2Factory()
-                    .createUsers(this.userConverterCloudV20.toUserList(users.getUsers())).getValue());
+            String linkHeader = userContext.createLinkHeader(uriInfo);
+
+            return Response.status(200)
+                    .header("Link", linkHeader)
+                    .entity(objFactories.getOpenStackIdentityV2Factory()
+                            .createUsers(this.userConverterCloudV20.toUserList(userContext.getValueList())).getValue());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }

@@ -18,6 +18,9 @@ import javax.ws.rs.core.UriInfo
 
 import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.domain.service.impl.*
+import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20
+import com.rackspace.idm.api.resource.pagination.PaginatorContext
 
 /*
  This class uses the application context but mocks the ldap interactions
@@ -31,6 +34,7 @@ class DefaultCloud20ServiceTest extends Specification {
     @Autowired DefaultCloud20Service cloud20Service
     @Autowired DefaultQuestionService questionService
     @Autowired QuestionConverterCloudV20 questionConverter
+    @Autowired UserConverterCloudV20 userConverterCloudV20
 
     @Shared DefaultScopeAccessService scopeAccessService
     @Shared DefaultAuthorizationService authorizationService
@@ -41,6 +45,8 @@ class DefaultCloud20ServiceTest extends Specification {
 
 
     @Shared def authToken = "token"
+    @Shared def offset = 0
+    @Shared def limit = 25
     @Shared def sharedRandomness = UUID.randomUUID()
     @Shared def sharedRandom
     @Shared def questionId = "id"
@@ -263,6 +269,114 @@ class DefaultCloud20ServiceTest extends Specification {
         response.status == 204
     }
 
+    def "listUsers verifies token"() {
+        given:
+        createMocks()
+        scopeAccess()
+        userService.getUser(_) >> user()
+
+        when:
+        cloud20Service.listUsers(null, uriInfo(), authToken, offset, limit)
+
+        then:
+        1 * scopeAccessService.getScopeAccessByAccessToken(_)
+
+    }
+
+    def "listUsers returns caller"() {
+        given:
+        createMocks()
+        def users = new Users().setUsers([user()].toList())
+        userService.getUser(_) >> user()
+        authorizationService.authorizeCloudUserAdmin(_) >> true
+        def expectedEntity = objFactories.getOpenStackIdentityV2Factory()
+                                .createUsers(userConverterCloudV20.toUserList(user))
+
+        when:
+        def response = cloud20Service.listUsers(null, uriInfo(), authToken, offset, limit).build()
+
+        then:
+        response.status == 200
+        response.entity.equals(expectedEntity)
+    }
+
+    def "listUsers verifies userAdmin Access level"() {
+        given:
+        authorizationService.authorizeCloudUserAdmin(_) >> false
+
+        when:
+        cloud20Service.listUsers(null, uriInfo(), authToken, offset, limit)
+
+        then:
+        1 * authorizationService.verifyUserAdminLevelAccess(_)
+    }
+
+    def "listUsers calls getAllUsersPaged with no filters"() {
+        given:
+        authorizationService.authorizeCloudUserAdmin(_) >> false
+        authorizationService.authorizeCloudServiceAdmin(_) >> true
+
+        when:
+        cloud20Service.listUsers(null, uriInfo(), authToken, offset, limit)
+
+        then:
+        1 * userDao.getAllUsersPaged(null, offset, limit)
+    }
+
+    def "listUsers calls getAllUsersPaged with domainId filter"() {
+        given:
+        authorizationService.authorizeCloudUserAdmin(_) >> false
+        authorizationService.authorizeCloudServiceAdmin(_) >> false
+        def user = user()
+        user.domainId = "123456789"
+        userService.getUser(_) >> user
+        FilterParam[] filters = [new FilterParam(FilterParam.FilterParamName.DOMAIN_ID, "123456789")] as FilterParam[]
+
+        when:
+        cloud20Service.listUsers(null, uriInfo(), authToken, offset, limit)
+
+        then:
+        1 * userDao.getAllUsersPaged(filters, offset, limit)
+    }
+
+    def "listUsers throws bad request"() {
+        given:
+        authorizationService.authorizeCloudUserAdmin(_) >> false
+        authorizationService.authorizeCloudServiceAdmin(_) >> false
+        userService.getUser(_) >> user()
+
+        when:
+        cloud20Service.listUsers(null, uriInfo(), authToken, offset, limit)
+
+        then:
+        def exception = thrown()
+        exception.message == "User-admin has no domain"
+    }
+
+    def "listUsers returns userList"() {
+        given:
+        def userContext = userContext(offset, limit, userList())
+        def user = user()
+        user.domainId = "123456789"
+        FilterParam[] filters = [new FilterParam(FilterParam.FilterParamName.DOMAIN_ID, "123456789")] as FilterParam[]
+
+        def expectedEntity = objFactories.getOpenStackIdentityV2Factory()
+                .createUsers(userConverterCloudV20.toUserList(userList()))
+
+        authorizationService.authorizeCloudUserAdmin(_) >> false
+        authorizationService.authorizeCloudServiceAdmin(_) >> false
+        userService.getUser(_) >> user
+        userDao.getAllUsersPaged(filters, offset, limit) >> userContext
+
+        when:
+        def response = cloud20Service.listUsers(null, uriInfo(), authToken, offset, limit).build()
+
+        then:
+        response.status == 200
+        response.entity.equals(expectedEntity)
+    }
+
+    //helper methods
     def createMocks() {
         scopeAccessDao = Mock()
 
@@ -294,6 +408,15 @@ class DefaultCloud20ServiceTest extends Specification {
             it.email = email
             it.enabled = enabled
             it.displayName = displayName
+            return it
+        }
+    }
+
+    def user() {
+        new User().with {
+            it.id = sharedRandom
+            it.mossoId = sharedRandom
+            it.enabled = true
             return it
         }
     }
@@ -349,5 +472,20 @@ class DefaultCloud20ServiceTest extends Specification {
         uriBuilder.path(_) >> uriBuilder
         uriBuilder.build() >> new URI()
         return uriInfo
+    }
+
+    def userContext(offset, limit, list) {
+        new PaginatorContext<User>().with {
+            it.limit = limit
+            it.offset = offset
+            it.totalRecords = list.size
+            it.valueList = list
+            return it
+        }
+    }
+
+    def userList() {
+        def list = [ user(), user(), user() ] as User[]
+        return list.toList()
     }
 }

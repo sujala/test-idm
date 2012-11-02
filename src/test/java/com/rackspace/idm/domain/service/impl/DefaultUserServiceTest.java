@@ -1,9 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
-import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.dao.TenantDao;
-import com.unboundid.ldap.sdk.SearchResultEntry;
-import org.junit.Ignore;
 import org.junit.runner.RunWith;
 
 import org.mockito.InjectMocks;
@@ -1141,7 +1138,7 @@ public class DefaultUserServiceTest {
     @Test
     public void getPaginatedUsers_callsUserDao_getPaginatedUsers() {
         FilterParam[] filters = new FilterParam[]{};
-        defaultUserService.getPaginatedUsers(filters, 0, 5);
-        verify(userDao).getPaginatedUsers(any(FilterParam[].class), anyInt(), anyInt());
+        defaultUserService.getAllUsersPaged(filters, 0, 5);
+        verify(userDao).getAllUsersPaged(any(FilterParam[].class), anyInt(), anyInt());
     }
 }

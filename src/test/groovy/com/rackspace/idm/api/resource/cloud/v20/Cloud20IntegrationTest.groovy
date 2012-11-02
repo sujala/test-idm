@@ -213,8 +213,8 @@ class Cloud20IntegrationTest extends Specification {
                 updateUser(null, "badId", new User()),
                 deleteUser("invalidToken", "badId"),
                 deleteUser(null, "badId"),
-                listUser("invalidToken"),
-                listUser(null)
+                listUsers("invalidToken"),
+                listUsers(null)
         ]
 
     }
@@ -258,10 +258,10 @@ class Cloud20IntegrationTest extends Specification {
 
         where:
         response << [
-                listUser(serviceAdminToken),
-                listUser(identityAdminToken),
-                listUser(userAdminToken),
-                listUser(defaultUserToken),
+                listUsers(serviceAdminToken),
+                listUsers(identityAdminToken),
+                listUsers(userAdminToken),
+                listUsers(defaultUserToken),
                 getUserById(defaultUserToken, defaultUser.getId()),
                 getUserById(userAdminToken, defaultUser.getId()),
                 getUserById(userAdminToken, userAdmin.getId()),
@@ -605,6 +605,70 @@ class Cloud20IntegrationTest extends Specification {
         ]
     }
 
+    def "listUsers returns forbidden (invalid token)"() {
+        expect:
+        response.status == 403
+
+        where:
+        response << [
+                listUsers(""),
+                listUsers("1")
+        ]
+    }
+
+    def "listUsers returns default user"() {
+        when:
+        def users = listUsers(defaultUserToken).getEntity(UserList).value.user
+
+        then:
+        users[0].equals(defaultUser)
+    }
+
+    def "listUsers caller is user-admin returns users from domain"() {
+        when:
+        def users = listUsers(userAdminToken).getEntity(UserList).value.user
+
+        then:
+        users.size() == 3
+    }
+
+    def "listUsers caller is identity-admin or higher returns paged results"() {
+        expect:
+        response.status == 200
+        response.headers.getFirst("Link") != null
+
+        where:
+        response << [
+                listUsers(identityAdminToken),
+                listUsers(identityAdminToken, 0, 10),
+                listUsers(identityAdminToken, 15, 10),
+                listUsers(serviceAdminToken),
+                listUsers(serviceAdminToken, 0, 10),
+                listUsers(serviceAdminToken, 15, 10),
+        ]
+    }
+
+    def "listUsers sets limit to defaults"() {
+        when:
+        def response1 = listUsers(identityAdminToken, 0, 500)
+        def response2 = listUsers(identityAdminToken, 0, -10)
+
+        then:
+        response1.getEntity(UserList).user.size == 100
+        response2.getEntity(UserList).user.size == 25
+    }
+
+    def "listUsers throws bad request (offset out of bounds)"() {
+        expect:
+        response.status = 400
+
+        where:
+        response << [
+                listUsers(serviceAdminToken, 100000000, 25),
+                listUsers(identityAdminToken, 10000000, 50)
+        ]
+    }
+
     //Resource Calls
     def createUser(String token, user) {
         resource.path(path).path('users').header(X_AUTH_TOKEN, token).entity(user).post(ClientResponse)
@@ -614,8 +678,12 @@ class Cloud20IntegrationTest extends Specification {
         resource.uri(location).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
-    def listUser(String token) {
-        resource.path(path).path('users').accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
+    def listUsers(String token) {
+        resource.path(path).path("users").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+    }
+
+    def listUsers(String token, int offset, int limit) {
+        resource.path(path).path("users").queryParams(pageParams(offset, limit)).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     def getUserById(String token, String userId) {

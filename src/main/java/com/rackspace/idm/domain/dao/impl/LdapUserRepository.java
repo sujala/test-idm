@@ -421,11 +421,11 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     }
 
     @Override
-    public PaginatorContext<User> getPaginatedUsers(FilterParam[] filterParams, int offset, int limit) {
+    public PaginatorContext<User> getAllUsersPaged(FilterParam[] filterParams, int offset, int limit) {
         getLogger().debug("Getting paged users");
 
         Filter searchFilter = createSearchFilter(filterParams);
-        PaginatorContext<User> context = getMultipleUsersPaginated(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES, offset, limit);
+        PaginatorContext<User> context = getMultipleUsersPaged(searchFilter, ATTR_USER_SEARCH_ATTRIBUTES, offset, limit);
 
         getLogger().debug(FOUND_USERS, context.getValueList());
 
@@ -822,7 +822,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         return attributes;
     }
 
-    protected PaginatorContext<User> getMultipleUsersPaginated(Filter searchFilter, String[] searchAttributes, int offset, int limit) {
+    protected PaginatorContext<User> getMultipleUsersPaged(Filter searchFilter, String[] searchAttributes, int offset, int limit) {
         SearchRequest searchRequest = new SearchRequest(USERS_BASE_DN, SearchScope.SUB, searchFilter, searchAttributes);
         PaginatorContext<User> paginatorContext = paginator.createSearchRequest(ATTR_ID, searchRequest, offset, limit);
 

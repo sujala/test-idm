@@ -6482,7 +6482,7 @@ public class DefaultCloud20ServiceOldTest {
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(userContext).when(userService).getUsersWithRole(any(FilterParam[].class), anyString(), anyInt(), anyInt());
         doReturn(clientRole).when(clientService).getClientRoleById(anyString());
-        doReturn(new PaginatorContext<User>()).when(userService).getPaginatedUsers(any(FilterParam[].class), anyInt(), anyInt());
+        doReturn(new PaginatorContext<User>()).when(userService).getAllUsersPaged(any(FilterParam[].class), anyInt(), anyInt());
 
         defaultCloud20Service.listUsersWithRole(null, uriInfo, authToken, roleId, 0, 10);
         verify(authorizationService).verifyUserAdminLevelAccess(any(ScopeAccess.class));
@@ -6497,7 +6497,7 @@ public class DefaultCloud20ServiceOldTest {
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(userContext).when(userService).getUsersWithRole(any(FilterParam[].class), anyString(), anyInt(), anyInt());
         doReturn(clientRole).when(clientService).getClientRoleById(anyString());
-        doReturn(makeUserPaginatorContext()).when(userService).getPaginatedUsers(any(FilterParam[].class), anyInt(), anyInt());
+        doReturn(makeUserPaginatorContext()).when(userService).getAllUsersPaged(any(FilterParam[].class), anyInt(), anyInt());
 
         defaultCloud20Service.listUsersWithRole(null, uriInfo, authToken, roleId, 0, 10);
         verify(clientService).getClientRoleById(anyString());
@@ -6521,7 +6521,7 @@ public class DefaultCloud20ServiceOldTest {
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         doReturn(userContext).when(userService).getUsersWithRole(any(FilterParam[].class), anyString(), anyInt(), anyInt());
         doReturn(clientRole).when(clientService).getClientRoleById(roleId);
-        doReturn(makeUserPaginatorContext()).when(userService).getPaginatedUsers(any(FilterParam[].class), anyInt(), anyInt());
+        doReturn(makeUserPaginatorContext()).when(userService).getAllUsersPaged(any(FilterParam[].class), anyInt(), anyInt());
 
         defaultCloud20Service.listUsersWithRole(null, uriInfo, authToken, roleId, 0, 10);
         verify(authorizationService).authorizeCloudUserAdmin(any(ScopeAccess.class));
@@ -6568,7 +6568,7 @@ public class DefaultCloud20ServiceOldTest {
         doReturn(userContext).when(userService).getUsersWithRole(any(FilterParam[].class), anyString(), anyInt(), anyInt());
         doReturn(clientRole).when(clientService).getClientRoleById(roleId);
         doReturn(caller).when(userService).getUserByScopeAccess(any(ScopeAccess.class));
-        doReturn(makeUserPaginatorContext()).when(userService).getPaginatedUsers(any(FilterParam[].class), anyInt(), anyInt());
+        doReturn(makeUserPaginatorContext()).when(userService).getAllUsersPaged(any(FilterParam[].class), anyInt(), anyInt());
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(false);
 
         defaultCloud20Service.listUsersWithRole(null, uriInfo, authToken, roleId, 0, 10);

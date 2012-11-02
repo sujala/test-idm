@@ -294,12 +294,13 @@ public class Cloud20VersionResource {
     @Path("users")
     public Response getUserByName(
             @Context HttpHeaders httpHeaders,
+            @Context UriInfo uriInfo,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @QueryParam("name") String name,
             @QueryParam("marker") int marker,
             @QueryParam("limit") int limit) {
         if (StringUtils.isBlank(name)) {
-            return getCloud20Service().listUsers(httpHeaders, authToken, marker, limit).build();
+            return getCloud20Service().listUsers(httpHeaders, uriInfo, authToken, marker, limit).build();
         } else {
             return getCloud20Service().getUserByName(httpHeaders, authToken, name).build();
         }

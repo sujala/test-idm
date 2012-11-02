@@ -2,7 +2,6 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.dao.TenantDao;
-import com.unboundid.ldap.sdk.RDN;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.domain.dao.AuthDao;
@@ -20,7 +19,6 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -836,10 +834,10 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public PaginatorContext<User> getPaginatedUsers(FilterParam[] filters, int offset, int limit) {
+    public PaginatorContext<User> getAllUsersPaged(FilterParam[] filters, int offset, int limit) {
         logger.debug("Getting Users Paged");
 
-        PaginatorContext<User> context = this.userDao.getPaginatedUsers(filters, offset, limit);
+        PaginatorContext<User> context = this.userDao.getAllUsersPaged(filters, offset, limit);
 
         logger.debug("Got Users {}", filters);
 
