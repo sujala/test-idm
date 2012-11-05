@@ -1,5 +1,8 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RsaCredentials;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.exception.BadRequestException;
@@ -31,6 +34,7 @@ public class JSONReaderForAuthenticationRequest implements
     private static final com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory OBJ_FACTORY_API_KEY = new com.rackspace.docs.identity.api.ext.rax_kskey.v1.ObjectFactory();
     private static final org.openstack.docs.identity.api.v2.ObjectFactory OBJ_FACTORY_PASSWORD = new org.openstack.docs.identity.api.v2.ObjectFactory();
     private static final Logger LOGGER = LoggerFactory.getLogger(JSONReaderForAuthenticationRequest.class);
+    private static final ObjectFactory OBJECT_FACTORY_RAX_AUTH = new ObjectFactory();
 
     @Override
     public boolean isReadable(Class<?> type, Type genericType,
@@ -51,8 +55,7 @@ public class JSONReaderForAuthenticationRequest implements
         return auth;
     }
 
-    public static AuthenticationRequest getAuthenticationRequestFromJSONString(
-        String jsonBody) {
+    public static AuthenticationRequest getAuthenticationRequestFromJSONString(String jsonBody) {
         AuthenticationRequest auth = new AuthenticationRequest();
 
         try {
@@ -60,12 +63,11 @@ public class JSONReaderForAuthenticationRequest implements
             JSONObject outer = (JSONObject) parser.parse(jsonBody);
 
             if (outer.containsKey(JSONConstants.AUTH)) {
-                JSONObject obj3;
+                JSONObject objAuth;
 
-                obj3 = (JSONObject) parser.parse(outer.get(JSONConstants.AUTH)
-                    .toString());
-                Object tenantId = obj3.get(JSONConstants.TENANT_ID);
-                Object tenantName = obj3.get(JSONConstants.TENANT_NAME);
+                objAuth = (JSONObject) parser.parse(outer.get(JSONConstants.AUTH).toString());
+                Object tenantId = objAuth.get(JSONConstants.TENANT_ID);
+                Object tenantName = objAuth.get(JSONConstants.TENANT_NAME);
 
                 if (tenantId != null) {
                     auth.setTenantId(tenantId.toString());
@@ -74,36 +76,35 @@ public class JSONReaderForAuthenticationRequest implements
                     auth.setTenantName(tenantName.toString());
                 }
 
-                if (obj3.containsKey(JSONConstants.TOKEN)) {
-                    JSONObject objToken = (JSONObject) parser.parse(obj3.get(
-                        JSONConstants.TOKEN).toString());
+                if(objAuth.containsKey(JSONConstants.DOMAIN)){
+                    JSONObject domainObj = (JSONObject)objAuth.get(JSONConstants.DOMAIN);
+                    Domain domain = JSONReaderForDomain.getDomainFromInnerJSONString(domainObj);
+                    auth.getAny().add(domain);
+                }
 
+                if (objAuth.containsKey(JSONConstants.TOKEN)) {
+                    JSONObject objToken = (JSONObject) parser.parse(objAuth.get(JSONConstants.TOKEN).toString());
                     TokenForAuthenticationRequest token = new TokenForAuthenticationRequest();
-
                     Object id = objToken.get(JSONConstants.ID);
-
                     if (id != null) {
                         token.setId(id.toString());
                     }
-
                     auth.setToken(token);
                 }
 
-                if (obj3.containsKey(JSONConstants.APIKEY_CREDENTIALS)) {
-
-                    ApiKeyCredentials creds = JSONReaderForApiKeyCredentials
-                        .getApiKeyCredentialsFromJSONString(obj3.toString());
-
-                    auth.setCredential(OBJ_FACTORY_API_KEY
-                        .createApiKeyCredentials(creds));
-
-                } else if (obj3.containsKey(JSONConstants.PASSWORD_CREDENTIALS)) {
-
+                if (objAuth.containsKey(JSONConstants.APIKEY_CREDENTIALS)) {
+                    JSONObject credObj = (JSONObject)objAuth.get(JSONConstants.APIKEY_CREDENTIALS);
+                    ApiKeyCredentials creds = JSONReaderForApiKeyCredentials.getApiKeyCredentialsFromInnerJSONObject(credObj);
+                    auth.setCredential(OBJ_FACTORY_API_KEY.createApiKeyCredentials(creds));
+                } else if (objAuth.containsKey(JSONConstants.PASSWORD_CREDENTIALS)) {
+                    JSONObject credObj = (JSONObject)objAuth.get(JSONConstants.PASSWORD_CREDENTIALS);
                     PasswordCredentialsRequiredUsername creds = JSONReaderForPasswordCredentials
-                        .getPasswordCredentialsFromJSONString(obj3.toString());
-
-                    auth.setCredential(OBJ_FACTORY_PASSWORD
-                        .createPasswordCredentials(creds));
+                        .getPasswordCredentialsFromInnerJSONObject(credObj);
+                    auth.setCredential(OBJ_FACTORY_PASSWORD.createPasswordCredentials(creds));
+                } else if (objAuth.containsKey(JSONConstants.RAX_AUTH_RSA)) {
+                    JSONObject credObj = (JSONObject)objAuth.get(JSONConstants.RAX_AUTH_RSA);
+                    RsaCredentials creds = JSONReaderForRSACredentials.getRSACredentialsFromInnerJSONObject(credObj);
+                    auth.setCredential(OBJECT_FACTORY_RAX_AUTH.createRsaCredentials(creds));
                 }
             }
         } catch (ParseException e) {

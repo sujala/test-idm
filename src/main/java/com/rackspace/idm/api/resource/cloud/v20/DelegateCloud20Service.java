@@ -131,6 +131,10 @@ public class DelegateCloud20Service implements Cloud20Service {
     @Override
     public Response.ResponseBuilder authenticate(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest) {
         try {
+            if(authenticationRequest.getAny() != null && authenticationRequest.getAny().size() > 0) {
+                return defaultCloud20Service.authenticate(httpHeaders, authenticationRequest);
+            }
+
             //Check for impersonated token if authenticating with token creds
             if (authenticationRequest.getToken() != null && !StringUtils.isBlank(authenticationRequest.getToken().getId())) {
                 ScopeAccess sa = scopeAccessService.getScopeAccessByAccessToken(authenticationRequest.getToken().getId());

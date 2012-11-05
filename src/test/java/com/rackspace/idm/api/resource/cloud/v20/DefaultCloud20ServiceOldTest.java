@@ -1,8 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.api.converter.cloudv20.*;
@@ -13,6 +12,7 @@ import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
@@ -34,6 +34,7 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.ext.os_ksec2.v1.Ec2CredentialsType;
 import org.openstack.docs.identity.api.v2.*;
+import org.openstack.docs.identity.api.v2.ObjectFactory;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import javax.ws.rs.core.*;
@@ -73,6 +74,7 @@ public class DefaultCloud20ServiceOldTest {
     private JAXBObjectFactories jaxbObjectFactories;
     private ScopeAccessService scopeAccessService;
     private AuthorizationService authorizationService;
+    private AuthenticationService authenticationService;
     private TenantService tenantService;
     private EndpointService endpointService;
     private ApplicationService clientService;
@@ -131,6 +133,7 @@ public class DefaultCloud20ServiceOldTest {
         jaxbObjectFactories = mock(JAXBObjectFactories.class);
         scopeAccessService = mock(ScopeAccessService.class);
         authorizationService = mock(AuthorizationService.class);
+        authenticationService = mock(AuthenticationService.class);
         userConverterCloudV20 = mock(UserConverterCloudV20.class);
         tenantConverterCloudV20 = mock(TenantConverterCloudV20.class);
         tokenConverterCloudV20 = mock(TokenConverterCloudV20.class);
@@ -178,6 +181,7 @@ public class DefaultCloud20ServiceOldTest {
         defaultCloud20Service.setDefaultRegionService(defaultRegionService);
         defaultCloud20Service.setDomainService(domainService);
         defaultCloud20Service.setDomainConverterCloudV20(domainConverterCloudV20);
+        defaultCloud20Service.setAuthenticationService(authenticationService);
 
         //fields
         user = new User();
@@ -1325,7 +1329,37 @@ public class DefaultCloud20ServiceOldTest {
 
         assertThat("response status", spy.authenticate(null, authenticationRequest), equalTo(responseBuilder));
         assertThat("exception type", argumentCaptor.getValue(),instanceOf(BadRequestException.class));
+
     }
+
+    @Test
+    public void authenticate_withDomain_callsAuthenticateFederatedDomain() throws Exception {
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
+        com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain = new com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain();
+        domain.setName("Rackspace");
+        authenticationRequest.getAny().add(domain);
+        authenticationRequest.setCredential(new JAXBElement(QName.valueOf("foo"), PasswordCredentialsRequiredUsername.class, passwordCredentialsRequiredUsername));
+        spy.authenticate(null, authenticationRequest);
+        verify(spy).authenticateFederatedDomain(null, authenticationRequest, domain);
+    }
+
+    @Test
+    public void authenticate_withInvalidDomain_callsAuthenticateFederatedDomain() throws Exception {
+        AuthenticationRequest authenticationRequest = new AuthenticationRequest();
+        PasswordCredentialsRequiredUsername passwordCredentialsRequiredUsername = new PasswordCredentialsRequiredUsername();
+        com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain = new com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain();
+        domain.setName("NotRackspace");
+        authenticationRequest.getAny().add(domain);
+        authenticationRequest.setCredential(new JAXBElement(QName.valueOf("foo"), PasswordCredentialsRequiredUsername.class, passwordCredentialsRequiredUsername));
+        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
+        ArgumentCaptor<BadRequestException> argumentCaptor = ArgumentCaptor.forClass(BadRequestException.class);
+        when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
+        assertThat("response builder", spy.authenticate(null, authenticationRequest), equalTo(responseBuilder));
+        assertThat("exception type",argumentCaptor.getValue(),instanceOf(BadRequestException.class));
+    }
+
+    
 
     @Test
     public void assignDefaultRegionToDomainUser_withNullRegion_assignsDefaultRegion() throws Exception {

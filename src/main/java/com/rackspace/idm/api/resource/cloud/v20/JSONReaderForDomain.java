@@ -49,28 +49,38 @@ public class JSONReaderForDomain implements MessageBodyReader<Domain> {
 
             if (outer.containsKey(JSONConstants.DOMAIN)) {
                 JSONObject jsonDomain = (JSONObject) parser.parse(outer.get(JSONConstants.DOMAIN).toString());
-                Object id = jsonDomain.get(JSONConstants.ID);
-                Object enabled = jsonDomain.get(JSONConstants.ENABLED);
-                Object description = jsonDomain.get(JSONConstants.DESCRIPTION);
-                Object name = jsonDomain.get(JSONConstants.NAME);
-
-                if (id != null) {
-                    domain.setId(id.toString());
-                }
-                if (enabled != null) {
-                    domain.setEnabled(Boolean.valueOf(enabled.toString()));
-                }
-                if (name != null) {
-                    domain.setName(name.toString());
-                }
-                if (description != null) {
-                    domain.setDescription(description.toString());
-                }
+                domain = getDomainFromInnerJSONString(jsonDomain);
             }
         } catch (Exception e) {
             throw new BadRequestException("Invalid json request body", e);
         }
 
+        return domain;
+    }
+
+    public static Domain getDomainFromInnerJSONString(JSONObject jsonDomain) {
+        Domain domain = new Domain();
+        try {
+            Object id = jsonDomain.get(JSONConstants.ID);
+            Object enabled = jsonDomain.get(JSONConstants.ENABLED);
+            Object description = jsonDomain.get(JSONConstants.DESCRIPTION);
+            Object name = jsonDomain.get(JSONConstants.NAME);
+
+            if (id != null) {
+                domain.setId(id.toString());
+            }
+            if (enabled != null) {
+                domain.setEnabled(Boolean.valueOf(enabled.toString()));
+            }
+            if (name != null) {
+                domain.setName(name.toString());
+            }
+            if (description != null) {
+                domain.setDescription(description.toString());
+            }
+        } catch (Exception e) {
+            throw new BadRequestException("Invalid json request body", e);
+        }
         return domain;
     }
 }

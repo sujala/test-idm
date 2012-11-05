@@ -5,7 +5,6 @@ import com.rackspace.idm.exception.BadRequestException;
 import org.apache.commons.io.IOUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,24 +48,32 @@ public class JSONReaderForPasswordCredentials implements
         try {
             JSONParser parser = new JSONParser();
             JSONObject outer = (JSONObject) parser.parse(jsonBody);
-
             if (outer.containsKey(JSONConstants.PASSWORD_CREDENTIALS)) {
-                JSONObject obj3;
-
-                obj3 = (JSONObject) parser.parse(outer.get(
-                    JSONConstants.PASSWORD_CREDENTIALS).toString());
-                Object username = obj3.get(JSONConstants.USERNAME);
-                Object password = obj3.get(JSONConstants.PASSWORD);
-
-                if (username != null) {
-                    creds.setUsername(username.toString());
-                }
-
-                if (password != null) {
-                    creds.setPassword(password.toString());
-                }
+                JSONObject jsonObject = (JSONObject) parser.parse(outer.get(JSONConstants.PASSWORD_CREDENTIALS).toString());
+                creds = getPasswordCredentialsFromInnerJSONObject(jsonObject);
             }
-        } catch (ParseException e) {
+        } catch (Exception e) {
+            logger.info(e.toString());
+            throw new BadRequestException("JSON Parsing error", e);
+        }
+        return creds;
+    }
+
+    public static PasswordCredentialsRequiredUsername getPasswordCredentialsFromInnerJSONObject(JSONObject jsonBody) {
+        PasswordCredentialsRequiredUsername creds = new PasswordCredentialsRequiredUsername();
+
+        try {
+            Object username = jsonBody.get(JSONConstants.USERNAME);
+            Object password = jsonBody.get(JSONConstants.PASSWORD);
+
+            if (username != null) {
+                creds.setUsername(username.toString());
+            }
+
+            if (password != null) {
+                creds.setPassword(password.toString());
+            }
+        } catch (Exception e) {
             logger.info(e.toString());
             throw new BadRequestException("JSON Parsing error", e);
         }

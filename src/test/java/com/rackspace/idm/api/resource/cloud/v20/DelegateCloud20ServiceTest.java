@@ -242,6 +242,16 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
+    public void authenticate_requestHasDomain_returnsDefaultServiceResponse() throws Exception {
+        AuthenticationRequest auth = new AuthenticationRequest();
+        com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain = new com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain();
+        domain.setName("Test");
+        auth.getAny().add(domain);
+        spy.authenticate(httpHeaders, auth);
+        verify(defaultCloud20Service).authenticate(httpHeaders, auth);
+    }
+
+    @Test
     public void authenticate_userIsMigrated_returnsDefaultServiceResponse() throws Exception {
         when(userService.isMigratedUser(any(User.class))).thenReturn(true);
         when(defaultCloud20Service.authenticate(httpHeaders, authenticationRequest)).thenReturn(Response.noContent());

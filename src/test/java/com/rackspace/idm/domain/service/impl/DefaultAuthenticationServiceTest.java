@@ -94,6 +94,38 @@ public class DefaultAuthenticationServiceTest {
         verify(spy).setClient(eq(scopeAccess),any(AuthData.class));
     }
 
+    @Test(expected = ForbiddenException.class)
+    public void authenticateDomainUsernamePassword_notTrustedServer() throws Exception {
+        doReturn(false).when(spy).isTrustedServer();
+        spy.authenticateDomainUsernamePassword(null,null,null);
+    }
+
+    @Test(expected = ForbiddenException.class)
+    public void authenticateDomainRSA_notTrustedServer() throws Exception {
+        doReturn(false).when(spy).isTrustedServer();
+        spy.authenticateDomainRSA(null,null,null);
+    }
+
+    @Test
+    public void authenticateDomainUsernamePassword_TrustedServer_callsAuthRacker() throws Exception {
+        Racker racker = mock(Racker.class);
+        doReturn(true).when(spy).isTrustedServer();
+        when(authDao.authenticate(null,null)).thenReturn(true);
+        when(userDao.getRackerByRackerId(null)).thenReturn(racker);
+        spy.authenticateDomainUsernamePassword(null,null,null);
+        verify(spy).authenticateRacker(null,null,false);
+    }
+
+    @Test
+    public void authenticateDomainRSA_TrustedServer_callsAuthRacker() throws Exception {
+        Racker racker = mock(Racker.class);
+        doReturn(true).when(spy).isTrustedServer();
+        when(authDao.authenticate(null,null)).thenReturn(true);
+        when(userDao.getRackerByRackerId(null)).thenReturn(racker);
+        spy.authenticateDomainRSA(null,null,null);
+        verify(spy).authenticateRacker(null,null,true);
+    }
+
     @Test
     public void setClient_scopeAccessInstanceOfDelegatedClientScopeAccess_getsDataFromScopeAccess() throws Exception {
         ScopeAccess scopeAccess = new DelegatedClientScopeAccess();

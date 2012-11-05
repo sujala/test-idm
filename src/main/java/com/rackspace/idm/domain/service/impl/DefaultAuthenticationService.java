@@ -1,7 +1,5 @@
 package com.rackspace.idm.domain.service.impl;
 
-import org.springframework.stereotype.Component;
-
 import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.AuthDao;
@@ -22,6 +20,7 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import javax.validation.groups.Default;
@@ -65,6 +64,24 @@ public class DefaultAuthenticationService implements AuthenticationService {
         ScopeAccess scopeAccess = getTokens(credentials, this.getCurrentTime());
 
         return getAuthData(scopeAccess);
+    }
+
+    @Override
+    public UserAuthenticationResult authenticateDomainUsernamePassword(String username, String password, Domain domain) {
+        // ToDo: Check what Domain to authenticate against, default Rackers
+        if(!isTrustedServer()){
+            throw new ForbiddenException();
+        }
+        return authenticateRacker(username, password, false);
+    }
+
+    @Override
+    public UserAuthenticationResult authenticateDomainRSA(String username, String tokenkey, Domain domain) {
+        // ToDo: Check what Domain to authenticate against, default Rackers
+        if(!isTrustedServer()){
+            throw new ForbiddenException();
+        }
+        return authenticateRacker(username, tokenkey, true);
     }
 
     @Override
@@ -553,6 +570,10 @@ public class DefaultAuthenticationService implements AuthenticationService {
             authenticated = authDao.authenticate(username, password);
         }
         logger.debug("Authenticated Racker {} : {}", username, authenticated);
+
+        if(!authenticated) {
+            throw new NotAuthorizedException("Unable to authenticate user with credentials provided.");
+        }
 
         Racker racker = userDao.getRackerByRackerId(username);
         if (racker == null) {
