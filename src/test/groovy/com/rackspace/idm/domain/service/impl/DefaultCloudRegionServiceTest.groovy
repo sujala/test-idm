@@ -38,7 +38,7 @@ class DefaultCloudRegionServiceTest extends Specification {
         setupMocks()
 
         when:
-        cloudRegionService.addRegion(region("!@#", "cloud", false))
+        cloudRegionService.addRegion(region("!@#", "cloud", true, false))
 
         then:
         thrown(BadRequestException)
@@ -46,14 +46,14 @@ class DefaultCloudRegionServiceTest extends Specification {
 
     def "create region must contain a name"() {
         when:
-        cloudRegionService.addRegion(region(null, "cloud", false))
+        cloudRegionService.addRegion(region(null, "cloud", true, false))
         then:
         thrown(BadRequestException)
     }
 
     def "create region must contain a cloud"() {
         when:
-        cloudRegionService.addRegion(region("name", null, false))
+        cloudRegionService.addRegion(region("name", null, true, false))
         then:
         thrown(BadRequestException)
     }
@@ -113,13 +113,13 @@ class DefaultCloudRegionServiceTest extends Specification {
     def "creating a default region sets all others as not default"() {
         given:
         setupMocks()
-        def region1 = region("DFW", "US", true)
+        def region1 = region("DFW", "US", true, true)
 
         regionDao.getRegion(_) >>  null
         regionDao.getDefaultRegion(_) >> region1
 
         when:
-        cloudRegionService.addRegion(region("IAD", "US", true))
+        cloudRegionService.addRegion(region("IAD", "US", true, true))
 
         then:
         region1.isDefault == false
@@ -130,13 +130,13 @@ class DefaultCloudRegionServiceTest extends Specification {
         given:
         setupMocks()
         def regions = new ArrayList<Region>()
-        def region1 = region("DFW", "US", true)
+        def region1 = region("DFW", "US", true, true)
         regions.add(region1)
 
         regionDao.getRegions(_) >> regions
 
         when:
-        cloudRegionService.addRegion(region("IAD", "US", false))
+        cloudRegionService.addRegion(region("IAD", "US", true, false))
 
         then:
         region1.isDefault == true
@@ -145,8 +145,8 @@ class DefaultCloudRegionServiceTest extends Specification {
     def "updating a default region sets all others as not default"() {
         given:
         setupMocks()
-        def region1 = region("DFW", "US", true)
-        def region2 = region("IAD", "US", true)
+        def region1 = region("DFW", "US", true, true)
+        def region2 = region("IAD", "US", true, true)
 
         regionDao.getRegion(_) >>  region2
         regionDao.getDefaultRegion(_) >> region1
@@ -162,8 +162,8 @@ class DefaultCloudRegionServiceTest extends Specification {
         given:
         setupMocks()
         def regions = new ArrayList<Region>()
-        def region1 = region("DFW", "US", true)
-        def region2 = region("DFW", "US", false)
+        def region1 = region("DFW", "US", true, true)
+        def region2 = region("DFW", "US", true, false)
         regions.add(region1)
 
         regionDao.getRegion(_) >> region1
@@ -179,7 +179,7 @@ class DefaultCloudRegionServiceTest extends Specification {
     def "default region cannot be deleted"() {
         given:
         setupMocks()
-        def region = region("DFW", "US", true)
+        def region = region("DFW", "US", true, true)
         regionDao.getRegion(_) >> region
 
         when:
@@ -189,11 +189,28 @@ class DefaultCloudRegionServiceTest extends Specification {
         thrown(BadRequestException)
     }
 
-    def region(String name, String cloud, Boolean isDefault) {
+    def "default region cannot be disabled"() {
+        given:
+        setupMocks()
+        def region1 = region("DFW", "US", true, true)
+        def region2 = region("DFW", "US", false, true)
+
+        regionDao.getRegion(_) >> region1
+        regionDao.getDefaultRegion(_) >> region1
+
+        when:
+        cloudRegionService.updateRegion("DFW", region2)
+
+        then:
+        thrown(BadRequestException)
+    }
+
+    def region(String name, String cloud, Boolean isEnabled, Boolean isDefault) {
         new Region().with {
             it.name = name
             it.cloud = cloud
             it.isDefault = isDefault
+            it.isEnabled = isEnabled
             return it
         }
     }
@@ -204,6 +221,6 @@ class DefaultCloudRegionServiceTest extends Specification {
     }
 
     def region() {
-        return region("name", "cloud", false)
+        return region("name", "cloud", true, false)
     }
 }

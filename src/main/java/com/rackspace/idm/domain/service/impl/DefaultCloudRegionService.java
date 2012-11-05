@@ -38,6 +38,7 @@ public class DefaultCloudRegionService implements CloudRegionService {
     public static final String REGION_NAME_ALREADY_EXISTS = "Region Name already exists";
     public static final String DEFAULT_REGION_CANNOT_BE_SET_NONDEFAULT = "Default region cannot be set to non default";
     public static final String DEFAULT_REGION_CANNOT_BE_DELETED = "Default region cannot be deleted";
+    public static final String DEFAULT_REGION_CANNOT_BE_DISABLED = "Default region cannot be disabled";
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Override
@@ -101,6 +102,10 @@ public class DefaultCloudRegionService implements CloudRegionService {
 
         if (!region.getIsDefault() && updateRegion.getIsDefault()) {
             throw new BadRequestException(DEFAULT_REGION_CANNOT_BE_SET_NONDEFAULT);
+        }
+
+        if (!region.getIsEnabled() && updateRegion.getIsDefault()) {
+            throw new BadRequestException(DEFAULT_REGION_CANNOT_BE_DISABLED);
         }
 
         if (region.getIsDefault()) {
