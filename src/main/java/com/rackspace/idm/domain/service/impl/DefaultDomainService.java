@@ -174,7 +174,7 @@ public class DefaultDomainService implements DomainService{
         return userService.getAllUsers(filters);
     }
 
-    private List<String> setTenantIdList(Domain domain, String tenantId) {
+    List<String> setTenantIdList(Domain domain, String tenantId) {
         List<String> tenantIds = new ArrayList<String>();
         if(domain.getTenantIds() != null){
             for(String tenant : domain.getTenantIds()){
