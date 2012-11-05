@@ -21,4 +21,6 @@ public interface Paginator<T> {
     PaginatorContext<T> createSearchRequest(String sortAttribute, SearchRequest searchRequest, int offset, int limit);
 
     void createPage(SearchResult searchResult, PaginatorContext<T> context);
+
+    String createLinkHeader(UriInfo uriInfo, PaginatorContext<T> context);
 }

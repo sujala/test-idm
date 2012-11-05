@@ -55,19 +55,8 @@ public class JSONReaderForApiKeyCredentials implements
             JSONObject outer = (JSONObject) parser.parse(jsonBody);
 
             if (outer.containsKey(JSONConstants.APIKEY_CREDENTIALS)) {
-                JSONObject obj3;
-
-                obj3 = (JSONObject) parser.parse(outer.get(
-                    JSONConstants.APIKEY_CREDENTIALS).toString());
-                Object username = obj3.get(JSONConstants.USERNAME);
-                Object apikey = obj3.get(JSONConstants.API_KEY);
-
-                if (username != null) {
-                    creds.setUsername(username.toString());
-                }
-                if (apikey != null) {
-                    creds.setApiKey(apikey.toString());
-                }
+                JSONObject inner = (JSONObject) parser.parse(outer.get(JSONConstants.APIKEY_CREDENTIALS).toString());
+                creds = getApiKeyCredentialsFromInnerJSONObject(inner);
             }
         } catch (ParseException e) {
             LOGGER.info(e.toString());
@@ -77,6 +66,27 @@ public class JSONReaderForApiKeyCredentials implements
         return creds;
     }
     
+    public static ApiKeyCredentials getApiKeyCredentialsFromInnerJSONObject(JSONObject jsonObject) {
+        ApiKeyCredentials creds = new ApiKeyCredentials();
+
+        try {
+            Object username = jsonObject.get(JSONConstants.USERNAME);
+            Object apikey = jsonObject.get(JSONConstants.API_KEY);
+
+            if (username != null) {
+                creds.setUsername(username.toString());
+            }
+            if (apikey != null) {
+                creds.setApiKey(apikey.toString());
+            }
+        } catch (Exception e) {
+            LOGGER.info(e.toString());
+            throw new BadRequestException("Invalid JSON", e);
+        }
+
+        return creds;
+    }
+
     public static ApiKeyCredentials checkAndGetApiKeyCredentialsFromJSONString(String jsonBody) {
         ApiKeyCredentials creds = getApiKeyCredentialsFromJSONString(jsonBody);
         if (StringUtils.isBlank(creds.getApiKey())) {

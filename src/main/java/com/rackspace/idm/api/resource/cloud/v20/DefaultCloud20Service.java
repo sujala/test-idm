@@ -14,6 +14,7 @@ import com.rackspace.idm.api.converter.cloudv20.*;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
+import com.rackspace.idm.api.resource.pagination.DefaultPaginator;
 import com.rackspace.idm.api.resource.pagination.Paginator;
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
@@ -25,7 +26,6 @@ import com.rackspace.idm.domain.entity.Domains;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.api.resource.pagination.DefaultPaginator;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.validation.Validator20;
@@ -59,6 +59,8 @@ import java.io.StringReader;
 import java.net.URI;
 import java.util.*;
 
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory;
+
 /**
  * Created by IntelliJ IDEA.
  * User: Hector
@@ -74,6 +76,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     public static final int MAX_GROUP_DESC = 1000;
     @Autowired
     private AuthConverterCloudV20 authConverterCloudV20;
+
+    @Autowired
+    private AuthenticationService authenticationService;
 
     @Autowired
     private AuthorizationService authorizationService;
@@ -179,6 +184,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private QuestionConverterCloudV20 questionConverter;
+
+    @Autowired
+    private Paginator<User> userPaginator;
 
     private com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
 
@@ -654,6 +662,52 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     // Core Service Methods
 
+    ResponseBuilder authenticateFederatedDomain(HttpHeaders httpHeaders,
+                                                        AuthenticationRequest authenticationRequest,
+                                                        com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain) {
+        // ToDo: Validate Domain
+        if(!domain.getName().toUpperCase().equals("RACKSPACE")){
+            throw new BadRequestException("Invalid domain specified");
+        }// The below is only for Racker Auth for now....
+
+        AuthenticateResponse auth;
+        User user = null;
+        UserScopeAccess usa = null;
+        RackerScopeAccess rsa = null;
+        if (authenticationRequest.getCredential().getValue() instanceof PasswordCredentialsRequiredUsername) {
+            PasswordCredentialsRequiredUsername creds = (PasswordCredentialsRequiredUsername) authenticationRequest.getCredential().getValue();
+            Domain domainDO = domainConverterCloudV20.toDomainDO(domain);
+            UserAuthenticationResult result = authenticationService.authenticateDomainUsernamePassword(creds.getUsername(), creds.getPassword(), domainDO);
+            user = result.getUser();
+            user.setId(((Racker) result.getUser()).getRackerId());
+        } else if (authenticationRequest.getCredential().getValue() instanceof RsaCredentials) {
+            RsaCredentials creds = (RsaCredentials) authenticationRequest.getCredential().getValue();
+            Domain domainDO = domainConverterCloudV20.toDomainDO(domain);
+            UserAuthenticationResult result = authenticationService.authenticateDomainRSA(creds.getUsername(), creds.getTokenKey(), domainDO);
+            user = result.getUser();
+            user.setId(((Racker) result.getUser()).getRackerId());
+        }
+        rsa = (RackerScopeAccess)scopeAccessService.getValidRackerScopeAccessForClientId(user.getUniqueId(), getCloudAuthClientId());
+        usa = new UserScopeAccess();
+        usa.setUsername(rsa.getRackerId());
+        usa.setAccessTokenExp(rsa.getAccessTokenExp());
+        usa.setAccessTokenString(rsa.getAccessTokenString());
+
+        List<TenantRole> roleList = tenantService.getTenantRolesForScopeAccess(rsa);
+        //Add Racker eDir Roles
+        List<String> rackerRoles = userService.getRackerRoles(user.getId());
+        if (rackerRoles != null) {
+            for (String r : rackerRoles) {
+                TenantRole t = new TenantRole();
+                t.setName(r);
+                roleList.add(t);
+            }
+        }
+        List tenantEndpoints = new ArrayList();
+        auth = authConverterCloudV20.toAuthenticationResponse(user, usa, roleList, tenantEndpoints);
+        return Response.ok(objFactories.getOpenStackIdentityV2Factory().createAccess(auth).getValue());
+    }
+
     @Override
     public Response.ResponseBuilder authenticate(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest) {
         try {
@@ -666,6 +720,11 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
             if (!StringUtils.isBlank(authenticationRequest.getTenantName()) && !StringUtils.isBlank(authenticationRequest.getTenantId())) {
                 throw new BadRequestException("Invalid request. Specify tenantId OR tenantName, not both.");
+            }
+            // Check for domain in request
+            com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain = checkDomainFromAuthRequest(authenticationRequest);
+            if(domain != null) {
+                return authenticateFederatedDomain(httpHeaders, authenticationRequest, domain);
             }
             if (authenticationRequest.getToken() != null) {
                 if (StringUtils.isBlank(authenticationRequest.getToken().getId())) {
@@ -2152,11 +2211,12 @@ public class DefaultCloud20Service implements Cloud20Service {
         marker = validateOffset(marker);
         limit = validateLimit(limit);
 
-        PaginatorContext<User> paginator = this.userService.getUsersWithRole(filters, roleId, marker, limit);
-        String linkHeader = paginator.createLinkHeader(uriInfo);
+        PaginatorContext<User> userContext = this.userService.getUsersWithRole(filters, roleId, marker, limit);
+
+        String linkHeader = this.userPaginator.createLinkHeader(uriInfo, userContext);
 
         return Response.status(200).header("Link", linkHeader).entity(objFactories.getOpenStackIdentityV2Factory()
-                .createUsers(this.userConverterCloudV20.toUserList(paginator.getValueList())).getValue());
+                .createUsers(this.userConverterCloudV20.toUserList(userContext.getValueList())).getValue());
     }
 
     protected FilterParam[] setFilters(String roleId, String domainId) {
@@ -2527,7 +2587,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
             }
 
-            String linkHeader = userContext.createLinkHeader(uriInfo);
+            String linkHeader = this.userPaginator.createLinkHeader(uriInfo, userContext);
 
             return Response.status(200)
                     .header("Link", linkHeader)
@@ -3108,6 +3168,26 @@ public class DefaultCloud20Service implements Cloud20Service {
         return tenantForAuthenticateResponse;
     }
 
+    private com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain checkDomainFromAuthRequest(AuthenticationRequest authenticationRequest) {
+        if(authenticationRequest.getAny() != null && authenticationRequest.getAny().size() > 0) {
+            for(int i=0;i<authenticationRequest.getAny().size();i++) {
+                try {
+                    com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain = new com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain();
+                    if(authenticationRequest.getAny().get(i) instanceof com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain) {
+                        domain = (com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain) authenticationRequest.getAny().get(i);
+                        return domain;
+                    }else if(((JAXBElement)authenticationRequest.getAny().get(i)).getValue() instanceof com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain) {
+                        domain = (com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain) ((JAXBElement)authenticationRequest.getAny().get(i)).getValue();
+                        return domain;
+                    }
+                }catch(Exception ex){
+
+                }
+            }
+        }
+        return null;
+    }
+
     public void setObjFactories(JAXBObjectFactories objFactories) {
         this.objFactories = objFactories;
     }
@@ -3118,6 +3198,10 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     public void setAuthorizationService(AuthorizationService authorizationService) {
         this.authorizationService = authorizationService;
+    }
+
+    public void setAuthenticationService(AuthenticationService authenticationService) {
+        this.authenticationService = authenticationService;
     }
 
     public void setTenantConverterCloudV20(TenantConverterCloudV20 tenantConverterCloudV20) {

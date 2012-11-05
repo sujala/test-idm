@@ -73,6 +73,8 @@ public interface ScopeAccessService {
     UserScopeAccess getUserScopeAccessForClientId(String userUniqueId, String clientId);
 
     UserScopeAccess getValidUserScopeAccessForClientId(String userUniqueId, String clientId);
+
+    RackerScopeAccess getValidRackerScopeAccessForClientId(String uniqueId, String clientId);
     
     DelegatedClientScopeAccess getDelegatedScopeAccessByRefreshToken(User user, String accessToken);
     
@@ -112,7 +114,7 @@ public interface ScopeAccessService {
     UserScopeAccess updateExpiredUserScopeAccess(UserScopeAccess scopeAccess);
 
     UserScopeAccess updateExpiredUserScopeAccess(UserScopeAccess scopeAccess, boolean impersonated);
-
+    
     void setUserDao(UserDao userDao);
 
     void setApplicationDao(ApplicationDao applicationDao);
