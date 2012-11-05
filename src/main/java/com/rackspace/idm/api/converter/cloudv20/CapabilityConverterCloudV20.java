@@ -30,8 +30,10 @@ public class CapabilityConverterCloudV20 {
         Capability capabilityEntity = mapper.map(capability, Capability.class);
 
         //This is needed since Capability.java for the generated sources does not have a setter for resources
-        for (String resource : capability.getResources()) {
-            capabilityEntity.getResources().add(resource);
+        if (capability.getResources() != null) {
+            for (String resource : capability.getResources()) {
+                capabilityEntity.getResources().add(resource);
+            }
         }
 
         return objFactories.getRackspaceIdentityExtRaxgaV1Factory().createCapability(capabilityEntity);

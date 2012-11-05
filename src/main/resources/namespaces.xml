@@ -88,7 +88,7 @@
             <value/>
         </entry>
         <entry key="http://docs.openstack.org/identity/api/v2.0">
-            <value>v20</value>
+            <value>identity</value>
         </entry>
         <entry key="http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0">
             <value>rax-auth</value>
@@ -113,7 +113,7 @@
             <value/>
         </entry>
         <entry key="http://docs.openstack.org/identity/api/v2.0">
-            <value>v20</value>
+            <value>identity</value>
         </entry>
         <entry key="http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0">
             <value>os-ksadm</value>
@@ -139,7 +139,7 @@
             <value/>
         </entry>
         <entry key="http://docs.openstack.org/identity/api/v2.0">
-            <value>v20</value>
+            <value>identity</value>
         </entry>
         <entry key="http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0">
             <value>os-ksadm</value>
@@ -174,7 +174,7 @@
             <value/>
         </entry>
         <entry key="http://docs.openstack.org/identity/api/v2.0">
-            <value>v20</value>
+            <value>identity</value>
         </entry>
         <entry key="http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0">
             <value>os-ksadmn</value>

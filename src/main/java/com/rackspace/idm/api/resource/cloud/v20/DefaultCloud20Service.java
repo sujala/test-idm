@@ -2169,7 +2169,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
             List<com.rackspace.idm.domain.entity.Capability> capabilitiesDO = capabilityService.getCapabilities(type, version);
             Capabilities capabilities = capabilityConverterCloudV20.toCapabilities(capabilitiesDO).getValue();
-            return Response.ok(objFactories.getRackspaceIdentityExtRaxgaV1Factory().createCapabilities(capabilities));
+            return Response.ok(objFactories.getRackspaceIdentityExtRaxgaV1Factory().createCapabilities(capabilities).getValue());
         }catch (Exception ex){
             return exceptionHandler.exceptionResponse(ex);
         }
