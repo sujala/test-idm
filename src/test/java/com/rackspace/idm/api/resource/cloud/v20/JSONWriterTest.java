@@ -9,17 +9,13 @@ import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspacecloud.docs.auth.api.v1.*;
-import com.rackspacecloud.docs.auth.api.v1.BaseURLList;
-import com.rackspacecloud.docs.auth.api.v1.BaseURLRefList;
-import com.rackspacecloud.docs.auth.api.v1.GroupsList;
+import com.sun.jersey.api.json.JSONMarshaller;
 import junit.framework.Assert;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import com.sun.jersey.api.json.JSONMarshaller;
 import org.json.simple.JSONValue;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.openstack.docs.common.api.v1.*;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
@@ -47,9 +43,6 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
-import java.util.GregorianCalendar;
-
-import static org.hamcrest.CoreMatchers.any;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
@@ -561,7 +554,7 @@ public class JSONWriterTest {
         jsonObject.put("success","This test worked!");
         doReturn(jsonObject).when(spy).getBaseUrl(baseURL);
         spy.writeTo(baseURLList, BaseURLList.class, null, null, null, null, myOut);
-        assertThat("string",myOut.toString(),equalTo("{\"baseURLs\":[{\"success\":\"This test worked!\"}]}"));
+        assertThat("string", myOut.toString(), equalTo("{\"baseURLs\":[{\"success\":\"This test worked!\"}]}"));
     }
 
     @Test
@@ -693,7 +686,92 @@ public class JSONWriterTest {
         jsonObject.put("success","This test worked!");
         doReturn(jsonObject).when(spy).getUser(user);
         spy.writeTo(user, null, null, null, null, null, myOut);
-        assertThat("string",myOut.toString(),equalTo("{\"user\":{\"success\":\"This test worked!\"}}"));
+        assertThat("string", myOut.toString(), equalTo("{\"user\":{\"success\":\"This test worked!\"}}"));
+    }
+
+    @Test
+    public void writeTo_BaseURLRefList_returnList() throws Exception {
+        BaseURLRefList baseURLRefList = new BaseURLRefList();
+        BaseURLRef baseURLRef = new BaseURLRef();
+        baseURLRef.setId(1);
+        baseURLRef.setHref("http://");
+        baseURLRef.setV1Default(false);
+        baseURLRefList.getBaseURLRef().add(baseURLRef);
+        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        spy.writeTo(baseURLRefList,null,null,null,null,null,myOut);
+        assertThat("string", myOut.toString(), equalTo("{\"baseURLRefs\":[{\"id\":1,\"v1Default\":false,\"href\":\"http:\\/\\/\"}]}"));
+    }
+
+    @Test
+    public void writeTo_Policy() throws Exception {
+        Policy policy = new Policy();
+        policy.setId("1");
+        policy.setName("name");
+        policy.setDescription("description");
+        policy.setBlob("b l o b");
+        policy.setEnabled(true);
+        policy.setGlobal(true);
+        policy.setType("type");
+        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        spy.writeTo(policy,null,null,null,null,null,myOut);
+        assertThat("string", myOut.toString(), equalTo("{\"RAX-AUTH:policy\":{\"blob\":\"b l o b\",\"id\":\"1\",\"enabled\":true,\"description\":\"description\",\"name\":\"name\",\"global\":true,\"type\":\"type\"}}"));
+    }
+
+    @Test
+    public void writeTo_Policies() throws Exception {
+        Policies policies = new Policies();
+        Policy policy = new Policy();
+        policy.setId("1");
+        policy.setName("name");
+        policy.setDescription("description");
+        policy.setBlob("b l o b");
+        policy.setEnabled(true);
+        policy.setGlobal(true);
+        policy.setType("type");
+        policies.getPolicy().add(policy);
+        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        spy.writeTo(policies,null,null,null,null,null,myOut);
+        assertThat("string", myOut.toString(), equalTo("{\"RAX-AUTH:policies\":{\"RAX-AUTH:policy\":[{\"id\":\"1\",\"enabled\":true,\"global\":true,\"name\":\"name\",\"type\":\"type\"}]}}"));
+    }
+
+    @Test
+    public void writeTo_AuthData() throws Exception {
+        com.rackspacecloud.docs.auth.api.v1.Token token = new com.rackspacecloud.docs.auth.api.v1.Token();
+        com.rackspacecloud.docs.auth.api.v1.ServiceCatalog serviceCatalog = new com.rackspacecloud.docs.auth.api.v1.ServiceCatalog();
+        com.rackspacecloud.docs.auth.api.v1.Service service = new com.rackspacecloud.docs.auth.api.v1.Service();
+        service.setName("name");
+        serviceCatalog.getService().add(service);
+        token.setId("id");
+        token.setExpires(calendar);
+        AuthData authData = new AuthData();
+        authData.setToken(token);
+        authData.setServiceCatalog(serviceCatalog);
+        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        spy.writeTo(authData,null,null,null,null,null,myOut);
+        assertThat("string", myOut.toString(), equalTo("{\"auth\":{\"token\":{\"id\":\"id\",\"expires\":\"2012-01-01\"},\"serviceCatalog\":{\"name\":[]}}}"));
+    }
+
+    @Test
+    public void writeTo_AuthData_nullServiceCatalog() throws Exception {
+        com.rackspacecloud.docs.auth.api.v1.Token token = new com.rackspacecloud.docs.auth.api.v1.Token();
+        token.setId("id");
+        token.setExpires(calendar);
+        AuthData authData = new AuthData();
+        authData.setToken(token);
+        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        spy.writeTo(authData,null,null,null,null,null,myOut);
+        assertThat("string", myOut.toString(), equalTo("{\"auth\":{\"token\":{\"id\":\"id\",\"expires\":\"2012-01-01\"}}}"));
+    }
+
+    @Test
+    public void writeTo_ServiceCatalog() throws Exception {
+        com.rackspacecloud.docs.auth.api.v1.ServiceCatalog serviceCatalog = new com.rackspacecloud.docs.auth.api.v1.ServiceCatalog();
+        com.rackspacecloud.docs.auth.api.v1.Service service = new com.rackspacecloud.docs.auth.api.v1.Service();
+        service.setName("name");
+        serviceCatalog.getService().add(service);
+        ByteArrayOutputStream myOut = new ByteArrayOutputStream();
+        spy.writeTo(serviceCatalog,null,null,null,null,null,myOut);
+        assertThat("string", myOut.toString(), equalTo("{\"serviceCatalog\":{\"name\":[]}}"));
     }
 
     @Test
