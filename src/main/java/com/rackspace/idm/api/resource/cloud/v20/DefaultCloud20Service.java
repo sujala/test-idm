@@ -12,6 +12,7 @@ import com.rackspace.idm.api.converter.cloudv20.*;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
+import com.rackspace.idm.api.resource.pagination.DefaultPaginator;
 import com.rackspace.idm.api.resource.pagination.Paginator;
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
@@ -23,7 +24,6 @@ import com.rackspace.idm.domain.entity.Domains;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.api.resource.pagination.DefaultPaginator;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.validation.Validator20;
@@ -171,6 +171,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private QuestionConverterCloudV20 questionConverter;
+
+    @Autowired
+    private Paginator<User> userPaginator;
 
     private com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
 
@@ -2115,11 +2118,12 @@ public class DefaultCloud20Service implements Cloud20Service {
         marker = validateOffset(marker);
         limit = validateLimit(limit);
 
-        PaginatorContext<User> paginator = this.userService.getUsersWithRole(filters, roleId, marker, limit);
-        String linkHeader = paginator.createLinkHeader(uriInfo);
+        PaginatorContext<User> userContext = this.userService.getUsersWithRole(filters, roleId, marker, limit);
+
+        String linkHeader = this.userPaginator.createLinkHeader(uriInfo, userContext);
 
         return Response.status(200).header("Link", linkHeader).entity(objFactories.getOpenStackIdentityV2Factory()
-                .createUsers(this.userConverterCloudV20.toUserList(paginator.getValueList())).getValue());
+                .createUsers(this.userConverterCloudV20.toUserList(userContext.getValueList())).getValue());
     }
 
     protected FilterParam[] setFilters(String roleId, String domainId) {
@@ -2490,7 +2494,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
             }
 
-            String linkHeader = userContext.createLinkHeader(uriInfo);
+            String linkHeader = this.userPaginator.createLinkHeader(uriInfo, userContext);
 
             return Response.status(200)
                     .header("Link", linkHeader)

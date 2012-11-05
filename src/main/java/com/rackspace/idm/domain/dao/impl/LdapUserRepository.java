@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.api.resource.pagination.Paginator;
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -37,7 +38,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
     public static final String FOUND_USERS = "Found Users - {}";
 
     @Autowired
-    DefaultPaginator<User> paginator;
+    Paginator<User> paginator;
 
     @Override
     public void addRacker(Racker racker) {

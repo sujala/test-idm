@@ -25,7 +25,12 @@ import org.openstack.docs.identity.api.v2.UserList
 import com.rackspace.idm.domain.dao.impl.LdapRepository
 import com.unboundid.ldap.sdk.Attribute
 import com.unboundid.ldap.sdk.ReadOnlyEntry
-import org.mockito.Spy;
+import org.mockito.Spy
+import com.rackspace.idm.api.resource.pagination.Paginator
+import com.rackspace.idm.domain.service.ApplicationService
+import com.rackspace.idm.domain.dao.impl.LdapApplicationRepository
+import com.rackspace.idm.exception.NotFoundException
+import com.rackspace.idm.domain.dao.impl.LdapTenantRepository;
 
 /*
  This class uses the application context but mocks the ldap interactions
@@ -40,6 +45,9 @@ class DefaultCloud20ServiceTest extends Specification {
     @Autowired DefaultQuestionService questionService
     @Autowired QuestionConverterCloudV20 questionConverter
     @Autowired UserConverterCloudV20 userConverterCloudV20
+    @Autowired Paginator<User> userPaginator
+    @Autowired ApplicationService clientService
+
 
     @Shared DefaultScopeAccessService scopeAccessService
     @Shared DefaultAuthorizationService authorizationService
@@ -47,6 +55,8 @@ class DefaultCloud20ServiceTest extends Specification {
     @Shared LdapUserRepository userDao
     @Shared LdapScopeAccessPeristenceRepository scopeAccessDao
     @Shared LdapQuestionRepository questionDao
+    @Shared LdapApplicationRepository clientDao
+    @Shared LdapTenantRepository tenantDao
 
 
     @Shared def authToken = "token"
@@ -56,6 +66,7 @@ class DefaultCloud20ServiceTest extends Specification {
     @Shared def sharedRandom
     @Shared def questionId = "id"
     @Shared JAXBObjectFactories objFactories;
+    @Shared def roleId = "roleId"
 
     def setupSpec() {
         sharedRandom = ("$sharedRandomness").replace('-',"")
@@ -292,7 +303,7 @@ class DefaultCloud20ServiceTest extends Specification {
         createMocks()
         allowAccess()
 
-        userDao.getUserByUsername(_) >> user(sharedRandom)
+        userDao.getUserByUsername(_) >> user(sharedRandom, null)
         authorizationService.authorizeCloudUser(_) >> true
 
         when:
@@ -335,7 +346,7 @@ class DefaultCloud20ServiceTest extends Specification {
         given:
         createMocks()
         allowAccess()
-        def user = user(sharedRandom)
+        def user = user(sharedRandom, null)
         user.domainId = "123456789"
 
         def userList = [ ] as User[]
@@ -358,7 +369,7 @@ class DefaultCloud20ServiceTest extends Specification {
         createMocks()
         allowAccess()
 
-        userDao.getUserByUsername(_) >> user(sharedRandom)
+        userDao.getUserByUsername(_) >> user(sharedRandom, null)
         authorizationService.authorizeCloudUserAdmin(_) >> false
         authorizationService.authorizeCloudServiceAdmin(_) >> false
 
@@ -373,19 +384,13 @@ class DefaultCloud20ServiceTest extends Specification {
         given:
         createMocks()
         allowAccess()
-        def userList = [ user("user1"), user("user2"), user("user3") ] as User[]
+        def userList = [ user("user1", null), user("user2", null), user("user3", null) ] as User[]
         userList = userList.toList()
         def userContext = userContext(offset, limit, userList)
-        def links = new HashMap<String, String>()
-        links.put("first", "first")
-        links.put("last", "last")
-        links.put("prev", "prev")
-        links.put("next", "next")
-        userContext.pageLinks = links
 
         authorizationService.authorizeCloudUserAdmin(_) >> false
         authorizationService.authorizeCloudServiceAdmin(_) >> true
-        userDao.getUserByUsername(_) >> user(sharedRandom)
+        userDao.getUserByUsername(_) >> user(sharedRandom, null)
         userDao.getAllUsersPaged(_, _, _) >> userContext
 
         when:
@@ -399,8 +404,138 @@ class DefaultCloud20ServiceTest extends Specification {
 
     }
 
+    def "listUsersWithRole verifies access level"() {
+        given:
+        createMocks()
+        allowAccess()
+
+        clientDao.getClientRoleById(_) >> clientRole()
+        tenantDao.getMultipleTenantRoles(_, _, _) >> new PaginatorContext<String>();
+
+        when:
+        cloud20Service.listUsersWithRole(null, uriInfo(), authToken, roleId, offset, limit)
+
+        then:
+        1 * authorizationService.verifyUserAdminLevelAccess(_)
+    }
+
+    def "listUsersWithRole throws notFoundException"() {
+        given:
+        createMocks()
+        allowAccess()
+
+        clientDao.getClientRoleById(_) >> null
+
+        when:
+        cloud20Service.listUsersWithRole(null, uriInfo(), authToken, roleId, offset, limit)
+
+        then:
+        thrown(NotFoundException)
+    }
+
+    def "listUsersWithRole gets role"() {
+        given:
+        createMocks()
+        allowAccess()
+        DefaultUserService service = Mock()
+        cloud20Service.userService = service
+
+        cloud20Service.userService.getUsersWithRole(_, _, _, _) >> new PaginatorContext<User>();
+
+        when:
+        cloud20Service.listUsersWithRole(null, uriInfo(), authToken, roleId, offset, limit)
+
+        then:
+        1 * clientDao.getClientRoleById(_) >> clientRole()
+    }
+
+    def "listUsersWithRole caller user-admin with no domain throws badRequest"() {
+        given:
+        createMocks()
+        allowAccess()
+
+        DefaultUserService service = Mock()
+        cloud20Service.userService = service
+
+        tenantDao.getMultipleTenantRoles(_, _, _) >> new PaginatorContext<String>();
+        clientDao.getClientRoleById(_) >> clientRole()
+        cloud20Service.userService.getUserByScopeAccess(_) >> user("username", null)
+        authorizationService.authorizeCloudUserAdmin(_) >> true
+
+        when:
+        cloud20Service.listUsersWithRole(null, uriInfo(), authToken, roleId, offset, limit)
+
+        then:
+        thrown(BadRequestException)
+    }
+
+    def "listUsersWithRole caller is userAdmin"() {
+        given:
+        createMocks()
+        allowAccess()
+        DefaultUserService service = Mock()
+        cloud20Service.userService = service
+
+        clientDao.getClientRoleById(_) >> clientRole()
+        cloud20Service.userService.getUserByScopeAccess(_) >> user("username", "domainId")
+        cloud20Service.userService.getUsersWithRole(_, _, _, _) >> new PaginatorContext<User>();
+        authorizationService.authorizeCloudUserAdmin(_) >> true
+
+        when:
+        def response = cloud20Service.listUsersWithRole(null, uriInfo(), authToken, roleId, offset, limit)
+
+        then:
+        response.build().status == 200
+    }
+
+    def "listUsersWithRole service-admin calls getMultipleTenantRoles"() {
+        given:
+        createMocks()
+        allowAccess()
+
+        clientDao.getClientRoleById(_) >> clientRole()
+        authorizationService.authorizeCloudUserAdmin(_) >> false
+
+        when:
+        cloud20Service.listUsersWithRole(null, uriInfo(), authToken, roleId, offset, limit)
+
+        then:
+        1 * tenantDao.getMultipleTenantRoles(_, _, _) >> new PaginatorContext<String>()
+    }
+
+    def "listUsersWithRole user-admin calls getAllUsersNoLimit"() {
+        given:
+        createMocks()
+        def access = new UserScopeAccess()
+        Calendar calendar = Calendar.getInstance()
+        calendar.add(Calendar.DAY_OF_YEAR, 1)
+        access.accessTokenExp = calendar.getTime()
+        access.accessTokenString = calendar.getTime().toString()
+        access.username = "username"
+
+        def userList = new ArrayList<User>()
+        userList.add(user("username", null))
+        def users = new Users()
+        users.setUsers(userList)
+
+
+        scopeAccessService.getScopeAccessByAccessToken(_) >> access
+        clientDao.getClientRoleById(_) >> clientRole()
+        userDao.getUserByUsername(_) >> user("username", "domainId")
+        userDao.getAllUsersNoLimit(_) >> users
+        authorizationService.authorizeCloudUserAdmin(_) >> true
+
+        when:
+        cloud20Service.listUsersWithRole(null, uriInfo(), authToken, roleId, offset, limit)
+
+        then:
+        1 * userDao.getAllUsersNoLimit(_)
+    }
+
     //helper methods
     def createMocks() {
+        cloud20Service.userService = userService
+
         scopeAccessDao = Mock()
 
         scopeAccessService = Mock()
@@ -416,8 +551,14 @@ class DefaultCloud20ServiceTest extends Specification {
         cloudRegionService = Mock()
         userService.cloudRegionService = cloudRegionService
 
+        tenantDao = Mock()
+        userService.tenantDao = tenantDao
+
         questionDao = Mock()
         questionService.questionDao = questionDao
+
+        clientDao = Mock()
+        clientService.applicationDao = clientDao
     }
 
     def allowAccess() {
@@ -444,9 +585,11 @@ class DefaultCloud20ServiceTest extends Specification {
         }
     }
 
-    def user(name) {
+    def user(name, domainId) {
         new User().with {
             it.username = name
+            it.domainId = domainId
+            it.enabled = true
             return it
         }
     }
@@ -511,6 +654,14 @@ class DefaultCloud20ServiceTest extends Specification {
             it.offset = offset
             it.totalRecords = list.size
             it.valueList = list
+            return it
+        }
+    }
+
+    def clientRole() {
+        new ClientRole().with {
+            it.id = "1234"
+            it.name = "testRole"
             return it
         }
     }
