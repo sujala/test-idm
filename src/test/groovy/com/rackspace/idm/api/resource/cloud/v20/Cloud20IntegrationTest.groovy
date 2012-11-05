@@ -113,6 +113,8 @@ class Cloud20IntegrationTest extends Specification {
         addRoleToUser(serviceAdminToken, sharedRole.getId(), defaultUserTwo.getId())
         addRoleToUser(serviceAdminToken, sharedRole.getId(), defaultUserThree.getId())
 //        setupUsersWithRole(sharedRole)
+
+        createRegion(serviceAdminToken, region("DFW", true, true))
     }
 
     def cleanupSpec() {
