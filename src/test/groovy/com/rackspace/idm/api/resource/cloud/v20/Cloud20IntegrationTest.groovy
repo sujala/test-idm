@@ -502,7 +502,7 @@ class Cloud20IntegrationTest extends Specification {
         def serviceAdminResponse1 = listUsersWithRole(serviceAdminToken, sharedRole.getId(), 1, 2)
         def serviceAdminResponse2 = listUsersWithRole(serviceAdminToken, sharedRole.getId(), 0, 2)
         def serviceAdminResponse3 = listUsersWithRole(serviceAdminToken, sharedRole.getId(), 2, 2)
-        def serviceAdminResponse4 = listUsersWithRole(serviceAdminToken, sharedRole.getId(), 4, 4)
+        def serviceAdminResponse4 = listUsersWithRole(serviceAdminToken, sharedRole.getId(), 3, 4)
 
         then:
         userAdminResponse1.getEntity(UserList).value.user.size == 1

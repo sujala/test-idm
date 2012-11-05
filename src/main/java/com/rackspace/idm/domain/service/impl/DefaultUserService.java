@@ -889,16 +889,18 @@ public class DefaultUserService implements UserService {
     }
 
     protected void filterUsersForRole(Users users, List<User> usersWithRole, String roleId) {
-        for (User user : users.getUsers()) {
-            List<TenantRole> roles = tenantService.getGlobalRolesForUser(user);
-            if (user.getRoles() != null) {
-                roles.addAll(user.getRoles());
-            }
+        if (users != null) {
+            for (User user : users.getUsers()) {
+                List<TenantRole> roles = tenantService.getGlobalRolesForUser(user);
+                if (user.getRoles() != null) {
+                    roles.addAll(user.getRoles());
+                }
 
-            for (TenantRole tenantRole : roles) {
-                if (tenantRole.getRoleRsId().equals(roleId)) {
-                    usersWithRole.add(user);
-                    break;
+                for (TenantRole tenantRole : roles) {
+                    if (tenantRole.getRoleRsId().equals(roleId)) {
+                        usersWithRole.add(user);
+                        break;
+                    }
                 }
             }
         }
@@ -925,7 +927,6 @@ public class DefaultUserService implements UserService {
         userContext.setOffset(offset);
         userContext.setTotalRecords(totalRecords);
         userContext.setValueList(userList);
-        userContext.makePageLinks();
     }
 
     private boolean isPasswordRulesEnforced() {
