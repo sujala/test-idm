@@ -681,7 +681,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             user = result.getUser();
             user.setId(((Racker) result.getUser()).getRackerId());
         }
-        rsa = (RackerScopeAccess)scopeAccessService.getValidRackerScopeAccessForClientId(user.getUniqueId(), getCloudAuthClientId());
+        rsa = (RackerScopeAccess)scopeAccessService.getValidRackerScopeAccessForClientId(user.getUniqueId(), user.getId(), getCloudAuthClientId());
+        
         usa = new UserScopeAccess();
         usa.setUsername(rsa.getRackerId());
         usa.setAccessTokenExp(rsa.getAccessTokenExp());

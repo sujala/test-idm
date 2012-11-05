@@ -747,9 +747,15 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public RackerScopeAccess getValidRackerScopeAccessForClientId(String uniqueId, String clientId) {
+    public RackerScopeAccess getValidRackerScopeAccessForClientId(String uniqueId, String rackerId, String clientId) {
         logger.debug("Getting ScopeAccess by clientId {}", clientId);
         RackerScopeAccess scopeAccess = getRackerScopeAccessForClientId(uniqueId, clientId);
+        if(scopeAccess == null){
+            scopeAccess = new RackerScopeAccess();
+            scopeAccess.setClientId(clientId);
+            scopeAccess.setRackerId(rackerId);
+            scopeAccessDao.addDirectScopeAccess(uniqueId, scopeAccess);
+        }
         //if expired update with new token
         updateExpiredRackerScopeAccess(scopeAccess);
         logger.debug("Got User ScopeAccess {} by clientId {}", scopeAccess, clientId);

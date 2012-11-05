@@ -74,7 +74,7 @@ public interface ScopeAccessService {
 
     UserScopeAccess getValidUserScopeAccessForClientId(String userUniqueId, String clientId);
 
-    RackerScopeAccess getValidRackerScopeAccessForClientId(String uniqueId, String clientId);
+    RackerScopeAccess getValidRackerScopeAccessForClientId(String uniqueId, String rackerId, String clientId);
     
     DelegatedClientScopeAccess getDelegatedScopeAccessByRefreshToken(User user, String accessToken);
     
