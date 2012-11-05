@@ -258,6 +258,12 @@ class Cloud20IntegrationTest extends Specification {
                 createQuestion(defaultUserToken, question()),
                 updateQuestion(defaultUserToken, "id", question()),
                 deleteQuestion(defaultUserToken, "id"),
+                getCapabilities(defaultUserToken,"type","version"),
+                getCapabilities(userAdminToken,"type","version"),
+                updateCapabilities(defaultUserToken,"type","version",new Capabilities()),
+                updateCapabilities(userAdminToken,"type","version",new Capabilities()),
+                removeCapabilities(defaultUserToken,"type","version"),
+                removeCapabilities(userAdminToken,"type","version")
         ]
     }
 
@@ -678,6 +684,54 @@ class Cloud20IntegrationTest extends Specification {
         ]
     }
 
+    def "'Bad Request' for capabilities" () {
+        expect:
+        response.status == 400
+
+        where:
+        response << [
+                updateCapabilities(identityAdminToken, "computeTest", "1", createCapabilities(createCapability(null, "get_servers", "get_servers", "http://someUrl", "description", null))),
+                updateCapabilities(identityAdminToken, "computeTest", "1", createCapabilities(createCapability("", "get_servers", "get_servers", "http://someUrl", "description", null))),
+                updateCapabilities(identityAdminToken, "computeTest", "1", createCapabilities(createCapability("GET", null, "get_servers", "http://someUrl", "description", null))),
+                updateCapabilities(identityAdminToken, "computeTest", "1", createCapabilities(createCapability("GET", "", "get_servers", "http://someUrl", "description", null))),
+                updateCapabilities(identityAdminToken, "computeTest", "1", createCapabilities(createCapability("GET", "get_servers", "get_servers", null, "description", null))),
+                updateCapabilities(identityAdminToken, "computeTest", "1", createCapabilities(createCapability("GET", "get_servers", "get_servers", "", "description", null))),
+        ]
+    }
+
+    def "getCapabilities return an empty list" () {
+        expect:
+        response.status == 200
+
+        where:
+        response << [
+                getCapabilities(identityAdminToken,"someType","someVersion")
+        ]
+    }
+
+    def "'CRUD' capabilities" () {
+        given:
+        List<String> resources = new ArrayList<String>();
+        resources.add("123")
+        resources.add("321")
+
+        when:
+        updateCapabilities(identityAdminToken, "computeTest", "1", createCapabilities(createCapability("GET", "get_servers", "get_servers", "http://someUrl", "description", resources)))
+        Capabilities capabilities = getCapabilities(identityAdminToken, "computeTest", "1").getEntity(Capabilities)
+        removeCapabilities(identityAdminToken, "computeTest", "1")
+        Capabilities capabilities2 = getCapabilities(identityAdminToken, "computeTest", "1").getEntity(Capabilities)
+
+        then:
+        capabilities.capability.get(0).action == "GET"
+        capabilities.capability.get(0).id == "get_servers"
+        capabilities.capability.get(0).name == "get_servers"
+        capabilities.capability.get(0).url == "http://someUrl"
+        capabilities.capability.get(0).description == "description"
+        capabilities.capability.get(0).resources.get(0) == "123"
+        capabilities.capability.get(0).resources.get(1) == "321"
+        capabilities2.capability.size() == 0
+    }
+
     //Resource Calls
     def createUser(String token, user) {
         resource.path(path).path('users').header(X_AUTH_TOKEN, token).entity(user).post(ClientResponse)
@@ -919,7 +973,7 @@ class Cloud20IntegrationTest extends Specification {
                     it.resources.add(resource)
                 }
             }
-
+            return it
         }
 
     }

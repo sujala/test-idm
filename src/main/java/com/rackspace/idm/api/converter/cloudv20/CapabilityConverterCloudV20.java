@@ -27,9 +27,12 @@ public class CapabilityConverterCloudV20 {
     private JAXBObjectFactories objFactories;
 
     public JAXBElement<Capability> toCapability(com.rackspace.idm.domain.entity.Capability capability) {
-        Capability capabilityEntity = mapper.map(
-                capability, Capability.class
-        );
+        Capability capabilityEntity = mapper.map(capability, Capability.class);
+
+        //This is needed since Capability.java for the generated sources does not have a setter for resources
+        for (String resource : capability.getResources()) {
+            capabilityEntity.getResources().add(resource);
+        }
 
         return objFactories.getRackspaceIdentityExtRaxgaV1Factory().createCapability(capabilityEntity);
     }
