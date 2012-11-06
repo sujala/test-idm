@@ -29,16 +29,19 @@ public class JSONWriterForArrayEntity<T> {
             JSONParser parser = new JSONParser();
             JSONObject outer = (JSONObject) parser.parse(jsonString);
             JSONObject middle = (JSONObject) outer.get(oldName);
-            JSONArray jsonArray = new JSONArray();
-
-            Object[] keys = middle.keySet().toArray();
-            String key = (String)keys[0];
-
-            for (Object jsonObject : (JSONArray)middle.get(key)) {
-                jsonArray.add(jsonObject);
-            }
 
             JSONObject newOuter = new JSONObject();
+            JSONArray jsonArray = new JSONArray();
+
+            if (middle != null) {
+                Object[] keys = middle.keySet().toArray();
+                String key = (String)keys[0];
+
+                for (Object jsonObject : (JSONArray)middle.get(key)) {
+                    jsonArray.add(jsonObject);
+                }
+
+            }
             newOuter.put(newName, jsonArray);
 
             String newJsonString = newOuter.toString();

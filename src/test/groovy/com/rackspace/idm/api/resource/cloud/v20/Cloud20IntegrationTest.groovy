@@ -19,6 +19,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Regions
 import com.sun.jersey.core.util.MultivaluedMapImpl
 
+
 class Cloud20IntegrationTest extends Specification {
     @Shared WebResource resource
     @Shared JAXBObjectFactories objFactories;
@@ -44,6 +45,7 @@ class Cloud20IntegrationTest extends Specification {
 
     @Shared def emptyDomainId
     @Shared def testDomainId
+    @Shared def defaultRegion
 
     def randomness = UUID.randomUUID()
     static def X_AUTH_TOKEN = "X-Auth-Token"
@@ -67,6 +69,10 @@ class Cloud20IntegrationTest extends Specification {
 
         identityAdmin = getUserByName(serviceAdminToken, "auth").getEntity(User)
         identityAdminToken = authenticate("auth", "auth123").getEntity(AuthenticateResponse).value.token.id
+
+        defaultRegion = region("ORD", true, true)
+        createRegion(serviceAdminToken, defaultRegion)
+        updateRegion(serviceAdminToken, defaultRegion.name, defaultRegion)
 
         //User Admin
         def createUserAdminRes1 = createUser(identityAdminToken, userForCreate("userAdmin1$sharedRandom", "display", "test@rackspace.com", true, "ORD", testDomainId, "Password1"))
@@ -112,9 +118,6 @@ class Cloud20IntegrationTest extends Specification {
         addRoleToUser(serviceAdminToken, sharedRole.getId(), defaultUser.getId())
         addRoleToUser(serviceAdminToken, sharedRole.getId(), defaultUserTwo.getId())
         addRoleToUser(serviceAdminToken, sharedRole.getId(), defaultUserThree.getId())
-//        setupUsersWithRole(sharedRole)
-
-        createRegion(serviceAdminToken, region("DFW", true, true))
     }
 
     def cleanupSpec() {
@@ -400,7 +403,7 @@ class Cloud20IntegrationTest extends Specification {
         def getRegionsResponse = getRegions(serviceAdminToken)
         Regions regions = getRegionsResponse.getEntity(Regions)
 
-        updateRegion(serviceAdminToken, "DFW", region("DFW", true, true))
+        updateRegion(serviceAdminToken, defaultRegion.name, defaultRegion)
         def deleteRegionResponse = deleteRegion(serviceAdminToken, regionName)
         def getDeletedRegionResponse = getRegion(serviceAdminToken, regionName)
 
