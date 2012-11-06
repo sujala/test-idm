@@ -67,7 +67,7 @@ public class JSONReaderForPasswordCredentials implements
             Object password = jsonBody.get(JSONConstants.PASSWORD);
 
             if (username != null) {
-                creds.setUsername(username.toString());
+                creds.setUsername(username.toString().trim());
             }
 
             if (password != null) {

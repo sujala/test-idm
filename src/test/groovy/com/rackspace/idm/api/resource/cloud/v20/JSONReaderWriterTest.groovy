@@ -84,6 +84,19 @@ class JSONReaderWriterTest extends Specification {
         json != null
     }
 
+    def "should be able to write empty list"() {
+        given:
+        def questions = new Questions()
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForQuestions.writeTo(questions, Questions, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+
+        then:
+        json != null
+    }
+
     def quesiton(String id, String question) {
         new Question().with {
             it.id = id
