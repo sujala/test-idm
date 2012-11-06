@@ -20,7 +20,7 @@ import java.util.List;
 
 public class JSONWriterForArrayEntity<T> {
 
-    void write(T entity, String oldName, String newName, String object, OutputStream entityStream) {
+    void write(T entity, String oldName, String newName, OutputStream entityStream) {
         OutputStream outputStream = new ByteArrayOutputStream();
         try {
             getMarshaller().marshallToJSON(entity, outputStream);
@@ -31,9 +31,10 @@ public class JSONWriterForArrayEntity<T> {
             JSONObject middle = (JSONObject) outer.get(oldName);
             JSONArray jsonArray = new JSONArray();
 
+            Object[] keys = middle.keySet().toArray();
+            String key = (String)keys[0];
 
-
-            for (Object jsonObject : (JSONArray)middle.get(object)) {
+            for (Object jsonObject : (JSONArray)middle.get(key)) {
                 jsonArray.add(jsonObject);
             }
 
