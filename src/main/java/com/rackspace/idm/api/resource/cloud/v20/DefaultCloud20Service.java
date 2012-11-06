@@ -2195,11 +2195,17 @@ public class DefaultCloud20Service implements Cloud20Service {
         if (offset == null) {
             return 0;
         }
-        return offset < 0 ? 0 : offset;
+        if (offset < 0) {
+            throw new BadRequestException("Marker must be non negative");
+        }
+        return offset;
     }
 
     protected int validateLimit(Integer limit) {
-        if (limit == null || limit < 1) {
+        if (limit != null && limit < 0) {
+            throw new BadRequestException("Limit must be non negative");
+        }
+        if (limit == null || (limit == 0 || limit == 1)) {
             return config.getInt("ldap.paging.limit.default");
         } else if (limit >= config.getInt("ldap.paging.limit.max")) {
             return config.getInt("ldap.paging.limit.max");
@@ -2508,7 +2514,9 @@ public class DefaultCloud20Service implements Cloud20Service {
         String iMarker = "0";
         try {
             if (!StringUtils.isEmpty(marker)) {
-                Integer.parseInt(marker);
+                if (Integer.parseInt(marker) < 0) {
+                    throw new BadRequestException("Marker must be non negative");
+                }
                 iMarker = marker;
             }
         } catch (Exception ex) {
