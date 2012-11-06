@@ -15,10 +15,12 @@ import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
+import java.util.List;
 
 public class JSONWriterForArrayEntity<T> {
 
-    void write(T entity, String oldName, String newName, OutputStream entityStream) {
+    void write(T entity, String oldName, String newName, String object, OutputStream entityStream) {
         OutputStream outputStream = new ByteArrayOutputStream();
         try {
             getMarshaller().marshallToJSON(entity, outputStream);
@@ -27,10 +29,11 @@ public class JSONWriterForArrayEntity<T> {
             JSONParser parser = new JSONParser();
             JSONObject outer = (JSONObject) parser.parse(jsonString);
             JSONObject middle = (JSONObject) outer.get(oldName);
-
             JSONArray jsonArray = new JSONArray();
 
-            for (Object jsonObject : middle.values()) {
+
+
+            for (Object jsonObject : (JSONArray)middle.get(object)) {
                 jsonArray.add(jsonObject);
             }
 
