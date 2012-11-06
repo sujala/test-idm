@@ -61,7 +61,7 @@ class Cloud20IntegrationTest extends Specification {
 
     def setupSpec() {
         sharedRandom = ("$sharedRandomness").replace('-',"")
-        testDomainId = "domain$sharedRandom"
+        testDomainId = "domain1$sharedRandom"
         emptyDomainId = "domain2$sharedRandom"
 
         this.resource = ensureGrizzlyStarted("classpath:app-config.xml");
@@ -77,20 +77,20 @@ class Cloud20IntegrationTest extends Specification {
         updateRegion(serviceAdminToken, defaultRegion.name, defaultRegion)
 
         //User Admin
-        def createUserAdminRes1 = createUser(identityAdminToken, userForCreate("userAdmin1$sharedRandom", "display", "test@rackspace.com", true, "ORD", testDomainId, "Password1"))
+        createUser(identityAdminToken, userForCreate("userAdmin1$sharedRandom", "display", "test@rackspace.com", true, null, testDomainId, "Password1"))
         userAdmin = getUserByName(identityAdminToken, "userAdmin1$sharedRandom").getEntity(User)
-        def createUserAdminRes2 = createUser(identityAdminToken, userForCreate("userAdmin2$sharedRandom", "display", "test@rackspace.com", true, "ORD", emptyDomainId, "Password1"))
+        createUser(identityAdminToken, userForCreate("userAdmin2$sharedRandom", "display", "test@rackspace.com", true, null, emptyDomainId, "Password1"))
         userAdminTwo = getUserByName(identityAdminToken, "userAdmin2$sharedRandom").getEntity(User)
 
         userAdminToken = authenticate("userAdmin1$sharedRandom", "Password1").getEntity(AuthenticateResponse).value.token.id
         userAdminTwoToken = authenticate("userAdmin2$sharedRandom", "Password1").getEntity(AuthenticateResponse).value.token.id
 
         // Default Users
-        def createUserResponse1 = createUser(userAdminToken, userForCreate("defaultUser1$sharedRandom", "display", "test@rackspace.com", true, null, null, "Password1"))
+        createUser(userAdminToken, userForCreate("defaultUser1$sharedRandom", "display", "test@rackspace.com", true, null, null, "Password1"))
         defaultUser = getUserByName(userAdminToken, "defaultUser1$sharedRandom").getEntity(User)
-        def createUserResponse2 = createUser(userAdminToken, userForCreate("defaultUser2$sharedRandom", "display", "test@rackspace.com", true, null, null, "Password1"))
+        createUser(userAdminToken, userForCreate("defaultUser2$sharedRandom", "display", "test@rackspace.com", true, null, null, "Password1"))
         defaultUserTwo = getUserByName(userAdminToken, "defaultUser2$sharedRandom").getEntity(User)
-        def createUserResponse3 = createUser(userAdminToken, userForCreate("defaultUser3$sharedRandom", "display", "test@rackspace.com", true, null, null, "Password1"))
+        createUser(userAdminToken, userForCreate("defaultUser3$sharedRandom", "display", "test@rackspace.com", true, null, null, "Password1"))
         defaultUserThree = getUserByName(userAdminToken, "defaultUser3$sharedRandom").getEntity(User)
 
         defaultUserToken = authenticate("defaultUser1$sharedRandom", "Password1").getEntity(AuthenticateResponse).value.token.id
@@ -655,16 +655,6 @@ class Cloud20IntegrationTest extends Specification {
                 listUsers(serviceAdminToken, 0, 10),
                 listUsers(serviceAdminToken, 15, 10),
         ]
-    }
-
-    def "listUsers sets limit to defaults"() {
-        when:
-        def response1 = listUsers(identityAdminToken, 0, 10000).getEntity(UserList).value.user
-        def response2 = listUsers(identityAdminToken, 0, -10).getEntity(UserList).value.user
-
-        then:
-        response1.size() <= 1000
-        response2.size() <= 25
     }
 
     def "listUsers throws bad request (offset out of bounds)"() {
