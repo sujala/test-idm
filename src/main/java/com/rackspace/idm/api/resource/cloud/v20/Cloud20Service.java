@@ -108,7 +108,7 @@ public interface Cloud20Service {
 
 	ResponseBuilder deleteService(HttpHeaders httpHeaders, String authToken, String serviceId) ;
 
-    ResponseBuilder listUsers(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, int marker, int limit) ;
+    ResponseBuilder listUsers(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String marker, String limit) ;
 
     ResponseBuilder listEndpointTemplates(HttpHeaders httpHeaders,
         String authToken, String serviceId) ;
@@ -170,7 +170,7 @@ public interface Cloud20Service {
 
     ResponseBuilder removeUserFromGroup(HttpHeaders httpHeaders, String authToken, String groupId, String userId) ;
 
-    ResponseBuilder getUsersForGroup(HttpHeaders httpHeaders, String authToken, String groupId, String marker, Integer limit) ;
+    ResponseBuilder getUsersForGroup(HttpHeaders httpHeaders, String authToken, String groupId, String marker, String limit) ;
 
     ResponseBuilder getGroup(HttpHeaders httpHeaders, String authToken, String groupName) ;
 
@@ -230,7 +230,7 @@ public interface Cloud20Service {
 
     ResponseBuilder removeCapabilities(String token, String type, String version);
 
-    ResponseBuilder listUsersWithRole(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String roleId, int marker, int limit);
+    ResponseBuilder listUsersWithRole(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String roleId, String marker, String limit);
 
     ResponseBuilder addRegion(UriInfo uriInfo, String authToken, Region region);
 

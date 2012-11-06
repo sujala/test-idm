@@ -5188,7 +5188,7 @@ public class DefaultCloud20ServiceOldTest {
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         when(userGroupService.getGroupById(1)).thenReturn(group);
         when(userGroupService.getAllEnabledUsers(any(FilterParam[].class), anyString(), anyInt())).thenReturn(users);
-        Response.ResponseBuilder responseBuilder = spy.getUsersForGroup(null, authToken, "1", "1", 1);
+        Response.ResponseBuilder responseBuilder = spy.getUsersForGroup(null, authToken, "1", "1", "1");
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
@@ -6443,7 +6443,7 @@ public class DefaultCloud20ServiceOldTest {
 
     @Test (expected = BadRequestException.class)
     public void validateOffset_negativeOffset_returnsBadRequest() throws Exception {
-        defaultCloud20Service.validateOffset(-5);
+        defaultCloud20Service.validateOffset("-5");
     }
 
     @Test

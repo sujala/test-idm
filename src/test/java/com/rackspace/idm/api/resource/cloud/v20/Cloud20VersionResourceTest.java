@@ -229,43 +229,43 @@ public class Cloud20VersionResourceTest {
 
     @Test
     public void getUserByName_nameIsBlank_callsGetCloud20Service() throws Exception {
-        when(delegateCloud20Service.listUsers(httpHeaders, uriInfo, null, 1, 1)).thenReturn(Response.ok());
-        spy.getUserByName(httpHeaders, uriInfo, null, null, 1, 1);
+        when(delegateCloud20Service.listUsers(httpHeaders, uriInfo, null, null, null)).thenReturn(Response.ok());
+        spy.getUserByName(httpHeaders, uriInfo, null, null, null, null);
         verify(spy).getCloud20Service();
     }
 
     @Test
     public void getUserByName_callsGetCloud20Service_callsListUsers() throws Exception {
-        when(delegateCloud20Service.listUsers(httpHeaders, uriInfo, null, 1, 1)).thenReturn(Response.ok());
-        spy.getUserByName(httpHeaders, uriInfo, null, null, 1, 1);
-        verify(delegateCloud20Service).listUsers(httpHeaders, uriInfo, null, 1, 1);
+        when(delegateCloud20Service.listUsers(httpHeaders, uriInfo, null, null, null)).thenReturn(Response.ok());
+        spy.getUserByName(httpHeaders, uriInfo, null, null, null, null);
+        verify(delegateCloud20Service).listUsers(httpHeaders, uriInfo, null, null, null);
     }
 
     @Test
     public void getUserByName_nameIsBlank_responseOkReturns200() throws Exception {
-        when(delegateCloud20Service.listUsers(httpHeaders, uriInfo, null, 1, 1)).thenReturn(Response.ok());
-        Response result = spy.getUserByName(httpHeaders, uriInfo, null, null, 1, 1);
+        when(delegateCloud20Service.listUsers(httpHeaders, uriInfo, null, null, null)).thenReturn(Response.ok());
+        Response result = spy.getUserByName(httpHeaders, uriInfo, null, null, null, null);
         assertThat("response code", result.getStatus(), equalTo(200));
     }
 
     @Test
     public void getUserByName_nameNotBlank_callsGetCloud20Service() throws Exception {
         when(delegateCloud20Service.getUserByName(httpHeaders, null, "name")).thenReturn(Response.ok());
-        spy.getUserByName(httpHeaders, uriInfo, null, "name", 1, 1);
+        spy.getUserByName(httpHeaders, uriInfo, null, "name", null, null);
         verify(spy).getCloud20Service();
     }
 
     @Test
     public void getUserByName_callsGetCloud20Service_callsGetUserByName() throws Exception {
         when(delegateCloud20Service.getUserByName(httpHeaders, null, "name")).thenReturn(Response.ok());
-        spy.getUserByName(httpHeaders, uriInfo, null, "name", 1, 1);
+        spy.getUserByName(httpHeaders, uriInfo, null, "name", null, null);
         verify(delegateCloud20Service).getUserByName(httpHeaders, null, "name");
     }
 
     @Test
     public void getUserByName_nameNotBlank_responseOkReturns200() throws Exception {
         when(delegateCloud20Service.getUserByName(httpHeaders, null, "name")).thenReturn(Response.ok());
-        Response result = spy.getUserByName(httpHeaders, uriInfo, null, "name", 1, 1);
+        Response result = spy.getUserByName(httpHeaders, uriInfo, null, "name", null, null);
         assertThat("response code", result.getStatus(), equalTo(200));
     }
 
@@ -1532,16 +1532,16 @@ public class Cloud20VersionResourceTest {
 
     @Test
     public void listUsersWithRole_responseOk_returns200() throws Exception {
-        when(defaultCloud20Service.listUsersWithRole(httpHeaders, uriInfo, "token", "3", 0, 10)).thenReturn(Response.ok());
-        Response response = spy.listUsersWithRole(httpHeaders, uriInfo, "token", "3", 0, 10);
+        when(defaultCloud20Service.listUsersWithRole(httpHeaders, uriInfo, "token", "3", null, null)).thenReturn(Response.ok());
+        Response response = spy.listUsersWithRole(httpHeaders, uriInfo, "token", "3", null, null);
         assertThat("response code", response.getStatus(), equalTo(200));
     }
 
     @Test
     public void listUsersWithRole_callsDefaultCloud20Service_listUsersWithRole() throws Exception {
-        when(defaultCloud20Service.listUsersWithRole(httpHeaders, uriInfo, "token", "3", 0, 10)).thenReturn(Response.ok());
-        spy.listUsersWithRole(httpHeaders, uriInfo, "token", "3", 0, 10);
-        verify(defaultCloud20Service).listUsersWithRole(httpHeaders, uriInfo, "token", "3", 0, 10);
+        when(defaultCloud20Service.listUsersWithRole(httpHeaders, uriInfo, "token", "3", null, null)).thenReturn(Response.ok());
+        spy.listUsersWithRole(httpHeaders, uriInfo, "token", "3", null, null);
+        verify(defaultCloud20Service).listUsersWithRole(httpHeaders, uriInfo, "token", "3", null, null);
     }
 
     @Test

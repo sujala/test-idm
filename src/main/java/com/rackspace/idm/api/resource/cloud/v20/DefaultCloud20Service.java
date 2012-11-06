@@ -14,7 +14,6 @@ import com.rackspace.idm.api.converter.cloudv20.*;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
-import com.rackspace.idm.api.resource.pagination.DefaultPaginator;
 import com.rackspace.idm.api.resource.pagination.Paginator;
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
@@ -58,8 +57,6 @@ import java.io.InputStream;
 import java.io.StringReader;
 import java.net.URI;
 import java.util.*;
-
-import org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory;
 
 /**
  * Created by IntelliJ IDEA.
@@ -644,6 +641,12 @@ public class DefaultCloud20Service implements Cloud20Service {
             ClientRole cRole = checkAndGetClientRole(roleId);
             checkForMultipleIdentityRoles(user, cRole);
 
+            if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
+                User caller = userService.getUserByAuthToken(authToken);
+                if (!caller.getDomainId().equalsIgnoreCase(user.getDomainId())) {
+                    throw new ForbiddenException(NOT_AUTHORIZED);
+                }
+            }
             if (!authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken)
                     && config.getString("cloudAuth.adminRole").equals(cRole.getName())) {
                 throw new ForbiddenException(NOT_AUTHORIZED);
@@ -2191,7 +2194,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
-    public ResponseBuilder listUsersWithRole(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String roleId, int marker, int limit) {
+    public ResponseBuilder listUsersWithRole(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String roleId, String marker, String limit) {
         ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
         authorizationService.verifyUserAdminLevelAccess(scopeAccess);
         ClientRole role = this.clientService.getClientRoleById(roleId);
@@ -2213,10 +2216,10 @@ public class DefaultCloud20Service implements Cloud20Service {
             filters = setFilters(role.getId(), null);
         }
 
-        marker = validateOffset(marker);
-        limit = validateLimit(limit);
+        int iMarker = validateOffset(marker);
+        int iLimit = validateLimit(limit);
 
-        PaginatorContext<User> userContext = this.userService.getUsersWithRole(filters, roleId, marker, limit);
+        PaginatorContext<User> userContext = this.userService.getUsersWithRole(filters, roleId, iMarker, iLimit);
 
         String linkHeader = this.userPaginator.createLinkHeader(uriInfo, userContext);
 
@@ -2232,26 +2235,46 @@ public class DefaultCloud20Service implements Cloud20Service {
                                     new FilterParam(FilterParamName.ROLE_ID, roleId)};
     }
 
-    protected int validateOffset(Integer offset) {
-        if (offset == null) {
+    protected int validateOffset(String offsetString) {
+        if (offsetString == null) {
             return 0;
         }
-        if (offset < 0) {
-            throw new BadRequestException("Marker must be non negative");
+        try {
+            if (!StringUtils.isEmpty(offsetString)) {
+                int offset = Integer.parseInt(offsetString);
+                if (offset < 0) {
+                    throw new BadRequestException("Marker must be non negative");
+                }
+                return offset;
+            } else {
+                throw new BadRequestException("Marker cannot be blank if parameter is specified");
+            }
+        } catch (Exception ex) {
+            throw new BadRequestException("Marker must be an integer");
         }
-        return offset;
     }
 
-    protected int validateLimit(Integer limit) {
-        if (limit != null && limit < 0) {
-            throw new BadRequestException("Limit must be non negative");
-        }
-        if (limit == null || limit == 0) {
+    protected int validateLimit(String limitString) {
+        if (limitString == null) {
             return config.getInt("ldap.paging.limit.default");
-        } else if (limit >= config.getInt("ldap.paging.limit.max")) {
-            return config.getInt("ldap.paging.limit.max");
-        } else {
-            return limit;
+        }
+        try {
+            if (StringUtils.isBlank(limitString)) {
+                throw new BadRequestException("Limit cannot be blank if parameter is specified");
+            }
+
+            int limit = Integer.parseInt(limitString);
+            if (limit < 0) {
+                throw new BadRequestException("Limit must be non negative");
+            } else if (limit == 0) {
+                return config.getInt("ldap.paging.limit.default");
+            } else if (limit >= config.getInt("ldap.paging.limit.max")) {
+                return config.getInt("ldap.paging.limit.max");
+            } else {
+                return limit;
+            }
+        } catch (Exception ex) {
+            throw new BadRequestException("Limit must be an integer");
         }
     }
 
@@ -2535,7 +2558,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getUsersForGroup(HttpHeaders httpHeaders, String authToken, String groupId, String marker, Integer limit) {
+    public ResponseBuilder getUsersForGroup(HttpHeaders httpHeaders, String authToken, String groupId, String marker, String limit)  {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
             validator20.validateGroupId(groupId);
@@ -2569,7 +2592,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     // KSADM Extension User methods
 
     @Override
-    public ResponseBuilder listUsers(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, int marker, int limit) {
+    public ResponseBuilder listUsers(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String marker, String limit) {
         try {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
             User caller = getUser(scopeAccessByAccessToken);
@@ -2583,18 +2606,18 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
             authorizationService.verifyUserAdminLevelAccess(scopeAccessByAccessToken);
 
-            marker = validateOffset(marker);
-            limit = validateLimit(limit);
+            int offset = validateOffset(marker);
+            int limitAsInt = validateLimit(limit);
 
             PaginatorContext<User> userContext;
             if (authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken) ||
                     authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken)) {
-                userContext = this.userService.getAllUsersPaged(null, marker, limit);
+                userContext = this.userService.getAllUsersPaged(null, offset, limitAsInt);
             } else {
                 if (caller.getDomainId() != null) {
                     String domainId = caller.getDomainId();
                     FilterParam[] filters = new FilterParam[]{new FilterParam(FilterParamName.DOMAIN_ID, domainId)};
-                    userContext = this.userService.getAllUsersPaged(filters, marker, limit);
+                    userContext = this.userService.getAllUsersPaged(filters, offset, limitAsInt);
                 } else {
                     throw new BadRequestException("User-admin has no domain");
                 }

@@ -351,7 +351,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listUsers(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, int marker, int limit)  {
+    public ResponseBuilder listUsers(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String marker, String limit)  {
         ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByAccessToken(authToken);
         if (scopeAccess != null) {
             return defaultCloud20Service.listUsers(httpHeaders, uriInfo, authToken, marker, limit);
@@ -434,7 +434,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getUsersForGroup(HttpHeaders httpHeaders, String authToken, String groupId, String marker, Integer limit)  {
+    public ResponseBuilder getUsersForGroup(HttpHeaders httpHeaders, String authToken, String groupId, String marker, String limit)  {
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             // TODO: Implement routing to DefaultCloud20Service
             String request = getCloudAuthV20Url() + RAX_GRPADM_GROUPS + groupId + "/users";
@@ -623,7 +623,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listUsersWithRole(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String roleId, int marker, int limit) {
+    public ResponseBuilder listUsersWithRole(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String roleId, String marker, String limit) {
         throw new NotImplementedException();  //To change body of implemented methods use File | Settings | File Templates.
     }
 

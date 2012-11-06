@@ -297,8 +297,8 @@ public class Cloud20VersionResource {
             @Context UriInfo uriInfo,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @QueryParam("name") String name,
-            @QueryParam("marker") int marker,
-            @QueryParam("limit") int limit) {
+            @QueryParam("marker") String marker,
+            @QueryParam("limit") String limit) {
         if (StringUtils.isBlank(name)) {
             return getCloud20Service().listUsers(httpHeaders, uriInfo, authToken, marker, limit).build();
         } else {
@@ -664,8 +664,8 @@ public class Cloud20VersionResource {
             @Context UriInfo uriInfo,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("roleId") String roleId,
-            @QueryParam("marker") int marker,
-            @QueryParam("limit") int limit) {
+            @QueryParam("marker") String marker,
+            @QueryParam("limit") String limit) {
         return defaultCloud20Service.listUsersWithRole(httpHeaders, uriInfo, authToken, roleId, marker, limit).build();
     }
 
@@ -926,7 +926,7 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("groupId") String groupId,
             @QueryParam("marker") String marker,
-            @QueryParam("limit") Integer limit) {
+            @QueryParam("limit") String limit) {
         return getCloud20Service().getUsersForGroup(httpHeaders, authToken, groupId, marker, limit).build();
     }
 

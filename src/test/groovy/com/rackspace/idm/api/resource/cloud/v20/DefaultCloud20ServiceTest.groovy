@@ -67,8 +67,8 @@ class DefaultCloud20ServiceTest extends Specification {
 
 
     @Shared def authToken = "token"
-    @Shared def offset = 0
-    @Shared def limit = 25
+    @Shared def offset = "0"
+    @Shared def limit = "25"
     @Shared def sharedRandomness = UUID.randomUUID()
     @Shared def sharedRandom
     @Shared def questionId = "id"
@@ -505,7 +505,7 @@ class DefaultCloud20ServiceTest extends Specification {
         cloud20Service.listUsers(null, uriInfo(), authToken, offset, limit)
 
         then:
-        1 * userDao.getAllUsersPaged(null, offset, limit)
+        1 * userDao.getAllUsersPaged(null, Integer.parseInt(offset), Integer.parseInt(limit))
     }
 
     def "listUsers calls getAllUsersPaged with domainId filter"() {
@@ -519,7 +519,7 @@ class DefaultCloud20ServiceTest extends Specification {
         userList = userList.toList()
         FilterParam[] filters = [new FilterParam(FilterParam.FilterParamName.DOMAIN_ID, "123456789")] as FilterParam[]
         userDao.getUserByUsername(_) >> user
-        userDao.getAllUsersPaged(_, _, _) >> userContext(offset, limit, userList)
+        userDao.getAllUsersPaged(_, _, _) >> userContext(Integer.parseInt(offset), Integer.parseInt(limit), userList)
         authorizationService.authorizeCloudUserAdmin(_) >> false
         authorizationService.authorizeCloudServiceAdmin(_) >> false
 
@@ -552,7 +552,7 @@ class DefaultCloud20ServiceTest extends Specification {
         allowAccess()
         def userList = [ user("user1", null), user("user2", null), user("user3", null) ] as User[]
         userList = userList.toList()
-        def userContext = userContext(offset, limit, userList)
+        def userContext = userContext(Integer.parseInt(offset), Integer.parseInt(limit), userList)
 
         authorizationService.authorizeCloudUserAdmin(_) >> false
         authorizationService.authorizeCloudServiceAdmin(_) >> true
@@ -706,9 +706,17 @@ class DefaultCloud20ServiceTest extends Specification {
         offset == 0
     }
 
-    def "validateOffset negative offset throws badrequest"() {
+    def "validateOffset negative offset throws bad request"() {
         when:
-        cloud20Service.validateOffset(-5)
+        cloud20Service.validateOffset("-5")
+
+        then:
+        thrown(BadRequestException)
+    }
+
+    def "validateOffset blank offset throws bad request"() {
+        when:
+        cloud20Service.validateOffset("")
 
         then:
         thrown(BadRequestException)
@@ -716,7 +724,7 @@ class DefaultCloud20ServiceTest extends Specification {
 
     def "validateOffset valid offset sets offset"() {
         when:
-        def offset = cloud20Service.validateOffset(10)
+        def offset = cloud20Service.validateOffset("10")
 
         then:
         offset == 10
@@ -730,9 +738,17 @@ class DefaultCloud20ServiceTest extends Specification {
         limit == configuration.getInt("ldap.paging.limit.default")
     }
 
-    def "validateLimit negative limit throws badrequest"() {
+    def "validateLimit negative limit throws bad request"() {
         when:
-        cloud20Service.validateLimit(-5)
+        cloud20Service.validateLimit("-5")
+
+        then:
+        thrown(BadRequestException)
+    }
+
+    def "validateLimit blank limit throws bad request"() {
+        when:
+        cloud20Service.validateLimit("")
 
         then:
         thrown(BadRequestException)
@@ -740,7 +756,7 @@ class DefaultCloud20ServiceTest extends Specification {
 
     def "validateLimit limit is 0 sets to default"() {
         when:
-        def limit = cloud20Service.validateLimit(0)
+        def limit = cloud20Service.validateLimit("0")
 
         then:
         limit == configuration.getInt("ldap.paging.limit.default")
@@ -749,7 +765,7 @@ class DefaultCloud20ServiceTest extends Specification {
     def "validateLimit limit is too large sets to default max"() {
         when:
         def value = configuration.getInt("ldap.paging.limit.max") + 1
-        def limit = cloud20Service.validateLimit(value)
+        def limit = cloud20Service.validateLimit(value.toString())
 
         then:
         limit == configuration.getInt("ldap.paging.limit.max")
@@ -758,7 +774,7 @@ class DefaultCloud20ServiceTest extends Specification {
     def "validateLimit limit is valid sets limit"() {
         when:
         def value = configuration.getInt("ldap.paging.limit.max") - 1
-        def limit = cloud20Service.validateLimit(value)
+        def limit = cloud20Service.validateLimit(value.toString())
 
         then:
         limit == value

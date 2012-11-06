@@ -2004,16 +2004,16 @@ public class DelegateCloud20ServiceTest {
     public void listUsers_RoutingFalse_gaSourceOfTruthFalse_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
-        delegateCloud20Service.listUsers(null, null, null, 1, 1);
-        verify(defaultCloud20Service).listUsers(null, null, null, 1, 1);
+        delegateCloud20Service.listUsers(null, null, null, null, null);
+        verify(defaultCloud20Service).listUsers(null, null, null, null, null);
     }
 
     @Test
     public void listUsers_RoutingFalse_gaSourceOfTruthTrue_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
-        delegateCloud20Service.listUsers(null, null, null, 1, 1);
-        verify(defaultCloud20Service).listUsers(null, null, null, 1, 1);
+        delegateCloud20Service.listUsers(null, null, null, null, null);
+        verify(defaultCloud20Service).listUsers(null, null, null, null, null);
     }
 
     @Test
@@ -2021,8 +2021,8 @@ public class DelegateCloud20ServiceTest {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
         HttpHeaders mockHeaders = mock(HttpHeaders.class);
-        delegateCloud20Service.listUsers(mockHeaders, null, null, 1, 1);
-        verify(cloudClient).get(url + "users?limit=1&marker=1", mockHeaders);
+        delegateCloud20Service.listUsers(mockHeaders, null, null, null, null);
+        verify(cloudClient).get(url + "users", mockHeaders);
     }
 
     @Test
@@ -2030,15 +2030,15 @@ public class DelegateCloud20ServiceTest {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
         HttpHeaders mockHeaders = mock(HttpHeaders.class);
-        delegateCloud20Service.listUsers(mockHeaders, null, null, 1, 1);
-        verify(cloudClient).get(url + "users?limit=1&marker=1", mockHeaders);
+        delegateCloud20Service.listUsers(mockHeaders, null, null, null, null);
+        verify(cloudClient).get(url + "users", mockHeaders);
     }
 
     @Test
     public void listUsers_withUserExistingInGA_callsDefaultService() throws Exception {
         when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(new ScopeAccess());
-        delegateCloud20Service.listUsers(null, null, null, 1, 1);
-        verify(defaultCloud20Service).listUsers(null, null, null, 1, 1);
+        delegateCloud20Service.listUsers(null, null, null, null, null);
+        verify(defaultCloud20Service).listUsers(null, null, null, null, null);
     }
 
     @Test
@@ -2046,8 +2046,8 @@ public class DelegateCloud20ServiceTest {
         when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(new ScopeAccess());
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
-        delegateCloud20Service.listUsers(null, null, null, 1, 1);
-        verify(defaultCloud20Service).listUsers(null, null, null, 1, 1);
+        delegateCloud20Service.listUsers(null, null, null, null, null);
+        verify(defaultCloud20Service).listUsers(null, null, null, null, null);
     }
 
     @Test
@@ -2760,32 +2760,32 @@ public class DelegateCloud20ServiceTest {
     public void getUsersForGroup_routingEnabledAndNotSourceOfTruthEnabled_callsCloudClient() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
-        delegateCloud20Service.getUsersForGroup(null, null, "groupId", "marker", 0);
-        verify(cloudClient).get(eq(url + "RAX-GRPADM/groups/groupId/users?limit=0&marker=marker"), any(HttpHeaders.class));
+        delegateCloud20Service.getUsersForGroup(null, null, "groupId", "marker", null);
+        verify(cloudClient).get(eq(url + "RAX-GRPADM/groups/groupId/users?marker=marker"), any(HttpHeaders.class));
     }
 
     @Test
     public void getUsersForGroup_routingNotEnabledAndNotSourceOfTruth_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
-        delegateCloud20Service.getUsersForGroup(null, null, "groupId", "marker", 0);
-        verify(defaultCloud20Service).getUsersForGroup(null, null, "groupId", "marker", 0);
+        delegateCloud20Service.getUsersForGroup(null, null, "groupId", "marker", null);
+        verify(defaultCloud20Service).getUsersForGroup(null, null, "groupId", "marker", null);
     }
 
     @Test
     public void getUsersForGroup_routingEnabledAndSourceOfTruthEnabled_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
-        delegateCloud20Service.getUsersForGroup(null, null, "groupId", "marker", 0);
-        verify(defaultCloud20Service).getUsersForGroup(null, null, "groupId", "marker", 0);
+        delegateCloud20Service.getUsersForGroup(null, null, "groupId", "marker", null);
+        verify(defaultCloud20Service).getUsersForGroup(null, null, "groupId", "marker", null);
     }
 
     @Test
     public void getUsersForGroup_routingNotEnabledAndSourceOfTruthEnabled_callsDefaultService() throws Exception {
         when(config.getBoolean(DelegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(config.getBoolean(DelegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
-        delegateCloud20Service.getUsersForGroup(null, null, "groupId", "marker", 0);
-        verify(defaultCloud20Service).getUsersForGroup(null, null, "groupId", "marker", 0);
+        delegateCloud20Service.getUsersForGroup(null, null, "groupId", "marker", null);
+        verify(defaultCloud20Service).getUsersForGroup(null, null, "groupId", "marker", null);
     }
 
     @Test

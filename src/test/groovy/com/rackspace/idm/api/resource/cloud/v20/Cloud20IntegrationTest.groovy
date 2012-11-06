@@ -1,24 +1,25 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Question
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Questions
-import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
-import com.sun.jersey.api.client.ClientResponse
-import spock.lang.Shared
-import spock.lang.Specification
-import javax.xml.namespace.QName
-import org.openstack.docs.identity.api.v2.*
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.ensureGrizzlyStarted
-import static javax.ws.rs.core.MediaType.APPLICATION_XML
-import com.sun.jersey.api.client.WebResource
-import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
-import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Capabilities
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Capability
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Regions
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
+import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
+import com.sun.jersey.api.client.ClientResponse
+import com.sun.jersey.api.client.WebResource
 import com.sun.jersey.core.util.MultivaluedMapImpl
+import spock.lang.Shared
+import spock.lang.Specification
 
+import javax.xml.namespace.QName
+
+import org.openstack.docs.identity.api.v2.*
+
+import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.ensureGrizzlyStarted
+import static javax.ws.rs.core.MediaType.APPLICATION_XML
 
 class Cloud20IntegrationTest extends Specification {
     @Shared WebResource resource
@@ -38,6 +39,7 @@ class Cloud20IntegrationTest extends Specification {
     @Shared def defaultUser
     @Shared def defaultUserTwo
     @Shared def defaultUserThree
+    @Shared def defaultUserForAdminTwo
     @Shared def sharedRandomness = UUID.randomUUID()
     @Shared def sharedRandom
     @Shared def sharedRole
@@ -55,6 +57,7 @@ class Cloud20IntegrationTest extends Specification {
 
     static def RAX_GRPADM= "RAX-GRPADM"
     static def RAX_AUTH = "RAX-AUTH"
+
 
 
     def setupSpec() {
@@ -75,7 +78,7 @@ class Cloud20IntegrationTest extends Specification {
         updateRegion(serviceAdminToken, defaultRegion.name, defaultRegion)
 
         //User Admin
-        createUser(identityAdminToken, userForCreate("userAdmin1$sharedRandom", "display", "test@rackspace.com", true, null, testDomainId, "Password1"))
+        def createResponse = createUser(identityAdminToken, userForCreate("userAdmin1$sharedRandom", "display", "test@rackspace.com", true, null, testDomainId, "Password1"))
         userAdmin = getUserByName(identityAdminToken, "userAdmin1$sharedRandom").getEntity(User)
         createUser(identityAdminToken, userForCreate("userAdmin2$sharedRandom", "display", "test@rackspace.com", true, null, emptyDomainId, "Password1"))
         userAdminTwo = getUserByName(identityAdminToken, "userAdmin2$sharedRandom").getEntity(User)
@@ -90,6 +93,8 @@ class Cloud20IntegrationTest extends Specification {
         defaultUserTwo = getUserByName(userAdminToken, "defaultUser2$sharedRandom").getEntity(User)
         createUser(userAdminToken, userForCreate("defaultUser3$sharedRandom", "display", "test@rackspace.com", true, null, null, "Password1"))
         defaultUserThree = getUserByName(userAdminToken, "defaultUser3$sharedRandom").getEntity(User)
+        createUser(userAdminTwoToken, userForCreate("defaultUser4$sharedRandom", "display", "test@rackspace.com", true, null, null, "Password1"))
+        defaultUserForAdminTwo = getUserByName(userAdminTwoToken, "defaultUser4$sharedRandom").getEntity(User)
 
         defaultUserToken = authenticate("defaultUser1$sharedRandom", "Password1").getEntity(AuthenticateResponse).value.token.id
 
@@ -133,6 +138,7 @@ class Cloud20IntegrationTest extends Specification {
         deleteUser(serviceAdminToken, defaultUser.getId())
         deleteUser(serviceAdminToken, defaultUserTwo.getId())
         deleteUser(serviceAdminToken, defaultUserThree.getId())
+        deleteUser(serviceAdminToken, defaultUserForAdminTwo.getId())
     }
 
     def 'User CRUD'() {
@@ -177,7 +183,6 @@ class Cloud20IntegrationTest extends Specification {
                 updateUser(serviceAdminToken, "badId", new User()),
                 deleteUser(serviceAdminToken, "badId"),
                 addCredential(serviceAdminToken, "badId", getCredentials("someUser", "SomePassword1"))
-
         ]
     }
 
@@ -211,7 +216,7 @@ class Cloud20IntegrationTest extends Specification {
         where:
         response << [
                 createUser("invalidToken", userForCreate("someName", "display", "test@rackspace.com", true, "ORD", null, "Password1")),
-                createUser(null, userForCreate("someName", "display", "test@rackspace.com", true, "ORD", null, "Password1")),    \
+                createUser(null, userForCreate("someName", "display", "test@rackspace.com", true, "ORD", null, "Password1")),  \
                 getUserById("invalidToken", "badId"),
                 getUserById(null, "badId"),
                 getUserByName("invalidToken", "badId"),
@@ -221,14 +226,7 @@ class Cloud20IntegrationTest extends Specification {
                 deleteUser("invalidToken", "badId"),
                 deleteUser(null, "badId"),
                 listUsers("invalidToken"),
-                listUsers(null),
-                getCapabilities("invalid","type","version"),
-                getCapabilities(null,"type","version"),
-                updateCapabilities("invalidToken","type","version",new Capabilities()),
-                updateCapabilities(null,"type","version",new Capabilities()),
-                removeCapabilities("invalidToken","type","version"),
-                removeCapabilities(null,"type","version")
-
+                listUsers(null)
         ]
 
     }
@@ -263,12 +261,6 @@ class Cloud20IntegrationTest extends Specification {
                 createQuestion(defaultUserToken, question()),
                 updateQuestion(defaultUserToken, "id", question()),
                 deleteQuestion(defaultUserToken, "id"),
-                getCapabilities(defaultUserToken,"type","version"),
-                getCapabilities(userAdminToken,"type","version"),
-                updateCapabilities(defaultUserToken,"type","version",new Capabilities()),
-                updateCapabilities(userAdminToken,"type","version",new Capabilities()),
-                removeCapabilities(defaultUserToken,"type","version"),
-                removeCapabilities(userAdminToken,"type","version")
         ]
     }
 
@@ -296,7 +288,7 @@ class Cloud20IntegrationTest extends Specification {
 
     }
 
-    def "Group CRUD"() {
+    def "Group CRUD" () {
         when:
         def random = ("$randomness").replace('-', "")
         def createGroupResponse = createGroup(serviceAdminToken, group("group$random", "this is a group"))
@@ -323,7 +315,7 @@ class Cloud20IntegrationTest extends Specification {
         deleteGroupResponse.status == 204
     }
 
-    def "Group Assignment CRUD"() {
+    def "Group Assignment CRUD" () {
         when:
         def addUserToGroupResponse = addUserToGroup(serviceAdminToken, group.getId(), defaultUser.getId())
 
@@ -371,7 +363,6 @@ class Cloud20IntegrationTest extends Specification {
                 addUserToGroup(serviceAdminToken, group.getId(), "doesnotexist"),
         ]
     }
-
 
     def "update region name is not allowed"() {
         given:
@@ -429,7 +420,8 @@ class Cloud20IntegrationTest extends Specification {
         response.status == 404
 
         where:
-        response << [updateRegion(serviceAdminToken, "notfound", region()),
+        response << [
+                updateRegion(serviceAdminToken, "notfound", region()),
                 deleteRegion(serviceAdminToken, "notfound"),
                 getRegion(serviceAdminToken, "notfound"),
         ]
@@ -438,6 +430,7 @@ class Cloud20IntegrationTest extends Specification {
     def "invalid operations on create regions returns 'bad request'"() {
         expect:
         response.status == 400
+
         where:
         response << [
                 createRegion(serviceAdminToken, region(null, true, false)),
@@ -667,63 +660,33 @@ class Cloud20IntegrationTest extends Specification {
         ]
     }
 
-    def "listUsers throws bad request (offset out of bounds)"() {
+    def "listUsers throws bad request"() {
         expect:
         response.status == 400
 
         where:
         response << [
                 listUsers(serviceAdminToken, 100000000, 25),
-                listUsers(identityAdminToken, 10000000, 50)
+                listUsers(identityAdminToken, 10000000, 50),
+                listUsers(serviceAdminToken, 0, "abc"),
+                listUsers(serviceAdminToken, "abc", 10)
         ]
     }
 
-    def "'Bad Request' for capabilities" () {
-        expect:
-        response.status == 400
-
-        where:
-        response << [
-                updateCapabilities(identityAdminToken, "computeTest", "1", createCapabilities(createCapability(null, "get_servers", "get_servers", "http://someUrl", "description", null))),
-                updateCapabilities(identityAdminToken, "computeTest", "1", createCapabilities(createCapability("", "get_servers", "get_servers", "http://someUrl", "description", null))),
-                updateCapabilities(identityAdminToken, "computeTest", "1", createCapabilities(createCapability("GET", null, "get_servers", "http://someUrl", "description", null))),
-                updateCapabilities(identityAdminToken, "computeTest", "1", createCapabilities(createCapability("GET", "", "get_servers", "http://someUrl", "description", null))),
-                updateCapabilities(identityAdminToken, "computeTest", "1", createCapabilities(createCapability("GET", "get_servers", "get_servers", null, "description", null))),
-                updateCapabilities(identityAdminToken, "computeTest", "1", createCapabilities(createCapability("GET", "get_servers", "get_servers", "", "description", null))),
-        ]
-    }
-
-    def "getCapabilities return an empty list" () {
-        expect:
-        response.status == 200
-
-        where:
-        response << [
-                getCapabilities(identityAdminToken,"someType","someVersion")
-        ]
-    }
-
-    def "'CRUD' capabilities" () {
-        given:
-        List<String> resources = new ArrayList<String>();
-        resources.add("123")
-        resources.add("321")
-
+    def "addRole to default User not in domain of calling user-admin fails"() {
         when:
-        updateCapabilities(identityAdminToken, "computeTest", "1", createCapabilities(createCapability("GET", "get_servers", "get_servers", "http://someUrl", "description", resources)))
-        Capabilities capabilities = getCapabilities(identityAdminToken, "computeTest", "1").getEntity(Capabilities)
-        removeCapabilities(identityAdminToken, "computeTest", "1")
-        Capabilities capabilities2 = getCapabilities(identityAdminToken, "computeTest", "1").getEntity(Capabilities)
+        def response = addRoleToUser(userAdminToken, sharedRole.getId(), defaultUserForAdminTwo.getId())
 
         then:
-        capabilities.capability.get(0).action == "GET"
-        capabilities.capability.get(0).id == "get_servers"
-        capabilities.capability.get(0).name == "get_servers"
-        capabilities.capability.get(0).url == "http://someUrl"
-        capabilities.capability.get(0).description == "description"
-        capabilities.capability.get(0).resources.get(0) == "123"
-        capabilities.capability.get(0).resources.get(1) == "321"
-        capabilities2.capability.size() == 0
+        response.status == 403
+    }
+
+    def "addRole to default User in same domain of calling user-admin succeeds"() {
+        when:
+        def response = addRoleToUser(userAdminTwoToken, sharedRole.getId(), defaultUserForAdminTwo.getId())
+
+        then:
+        response.status == 200
     }
 
     //Resource Calls
@@ -739,7 +702,7 @@ class Cloud20IntegrationTest extends Specification {
         resource.path(path).path("users").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
-    def listUsers(String token, int offset, int limit) {
+    def listUsers(String token, offset, limit) {
         resource.path(path).path("users").queryParams(pageParams(offset, limit)).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
@@ -783,14 +746,13 @@ class Cloud20IntegrationTest extends Specification {
         resource.path(path).path(RAX_GRPADM).path('groups').path(groupId).header(X_AUTH_TOKEN, token).type(APPLICATION_XML).accept(APPLICATION_XML).entity(group).put(ClientResponse)
     }
 
-    def deleteGroup(String token, String groupId) {
+    def deleteGroup(String  token, String groupId) {
         resource.path(path).path(RAX_GRPADM).path('groups').path(groupId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
     }
 
     def addUserToGroup(String token, String groupId, String userId) {
         resource.path(path).path(RAX_GRPADM).path('groups').path(groupId).path("users").path(userId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).put(ClientResponse)
     }
-
     def removeUserFromGroup(String token, String groupId, String userId) {
         resource.path(path).path(RAX_GRPADM).path('groups').path(groupId).path("users").path(userId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
     }
@@ -875,18 +837,6 @@ class Cloud20IntegrationTest extends Specification {
         resource.path(path).path(RAX_AUTH).path("secretqa/questions").path(questionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).delete(ClientResponse)
     }
 
-    def updateCapabilities(String token, String type, String version, capabilities) {
-        resource.path(path).path(RAX_AUTH).path('service-apis').path(type).path(version).path('capabilities').header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(capabilities).put(ClientResponse)
-    }
-
-    def getCapabilities(String token, String type, String version) {
-        resource.path(path).path(RAX_AUTH).path('service-apis').path(type).path(version).path('capabilities').header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).get(ClientResponse)
-    }
-
-    def removeCapabilities(String token, String type, String version) {
-        resource.path(path).path(RAX_AUTH).path('service-apis').path(type).path(version).path('capabilities').header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).delete(ClientResponse)
-    }
-
     //Helper Methods
     def getCredentials(String username, String password) {
         new PasswordCredentialsRequiredUsername().with {
@@ -955,36 +905,11 @@ class Cloud20IntegrationTest extends Specification {
         return group("group", "description")
     }
 
-    def createCapability(String action, String id, String name, String url, String description, List<String> resources) {
-        new Capability().with {
-            it.action = action
-            it.id = id
-            it.name = name
-            it.url = url
-            it.description = description
-            if (resources != null) {
-                for (String resource: resources) {
-                    it.resources.add(resource)
-                }
-            }
-            return it
-        }
-
-    }
-
-
     def region(String name, Boolean enabled, Boolean isDefault) {
         Region regionEntity = new Region().with {
             it.name = name
             it.enabled = enabled
             it.isDefault = isDefault
-            return it
-        }
-    }
-
-    def createCapabilities(Capability capability) {
-        new Capabilities().with {
-            it.capability.add(capability)
             return it
         }
     }
