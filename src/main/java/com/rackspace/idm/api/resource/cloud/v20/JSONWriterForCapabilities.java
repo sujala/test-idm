@@ -29,6 +29,6 @@ public class JSONWriterForCapabilities extends JSONWriterForArrayEntity<Capabili
 
     @Override
     public void writeTo(Capabilities capabilities, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
-        write(capabilities, JSONConstants.CAPABILITIES, JSONConstants.RAX_AUTH_CAPABILITIES, JSONConstants.CAPABILITY, entityStream);
+        write(capabilities, JSONConstants.CAPABILITIES, JSONConstants.RAX_AUTH_CAPABILITIES, entityStream);
     }
 }

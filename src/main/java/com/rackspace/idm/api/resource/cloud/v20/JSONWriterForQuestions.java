@@ -29,6 +29,6 @@ public class JSONWriterForQuestions extends JSONWriterForArrayEntity<Questions> 
 
     @Override
     public void writeTo(Questions questions, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
-        write(questions, JSONConstants.QUESTIONS, JSONConstants.RAX_AUTH_QUESTIONS, JSONConstants.QUESTION, entityStream);
+        write(questions, JSONConstants.QUESTIONS, JSONConstants.RAX_AUTH_QUESTIONS, entityStream);
     }
 }
