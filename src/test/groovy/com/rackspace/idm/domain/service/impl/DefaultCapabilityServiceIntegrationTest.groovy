@@ -22,7 +22,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.Capabilities
  * To change this template use File | Settings | File Templates.
  */
 @ContextConfiguration(locations = "classpath:app-config.xml")
-class DefaultCapabilityServiceTest extends Specification {
+class DefaultCapabilityServiceIntegrationTest extends Specification {
     @Shared def randomness = UUID.randomUUID()
     @Shared def random
 
