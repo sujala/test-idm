@@ -30,7 +30,10 @@ public class JSONWriterForArrayEntity<T> {
 
             JSONArray jsonArray = new JSONArray();
 
-            for (Object jsonObject : middle.values()) {
+            Object[] keys = middle.keySet().toArray();
+            String key = (String)keys[0];
+
+            for (Object jsonObject : (JSONArray)middle.get(key)) {
                 jsonArray.add(jsonObject);
             }
 
