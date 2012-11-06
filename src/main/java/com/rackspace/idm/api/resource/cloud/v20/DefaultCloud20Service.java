@@ -700,6 +700,10 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
         List tenantEndpoints = new ArrayList();
         auth = authConverterCloudV20.toAuthenticationResponse(user, usa, roleList, tenantEndpoints);
+
+        // removing serviceId from response for now
+        auth = removeServiceIdFromAuthResponse(auth);
+
         return Response.ok(objFactories.getOpenStackIdentityV2Factory().createAccess(auth).getValue());
     }
 
@@ -839,12 +843,10 @@ public class DefaultCloud20Service implements Cloud20Service {
             } else {
                 auth = authConverterCloudV20.toAuthenticationResponse(user, usa, roles, endpoints);
             }
+
             // removing serviceId from response for now
-            if (auth.getUser() != null && auth.getUser().getRoles() != null) {
-                for (Role r : auth.getUser().getRoles().getRole()) {
-                    r.setServiceId(null);
-                }
-            }
+            auth = removeServiceIdFromAuthResponse(auth);
+
             return Response.ok(objFactories.getOpenStackIdentityV2Factory().createAccess(auth).getValue());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
@@ -3152,6 +3154,15 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
         }
         return null;
+    }
+
+    private AuthenticateResponse removeServiceIdFromAuthResponse(AuthenticateResponse auth) {
+        if (auth.getUser() != null && auth.getUser().getRoles() != null) {
+            for (Role r : auth.getUser().getRoles().getRole()) {
+                r.setServiceId(null);
+            }
+        }
+        return auth;
     }
 
     public void setObjFactories(JAXBObjectFactories objFactories) {
