@@ -6436,6 +6436,16 @@ public class DefaultCloud20ServiceOldTest {
         assertThat("Check Marker",marker,equalTo("0"));
     }
 
+    @Test (expected = BadRequestException.class)
+    public void validateMarker_negativeMarker_returnsBadRequest() throws Exception {
+        defaultCloud20Service.validateMarker("-5");
+    }
+
+    @Test (expected = BadRequestException.class)
+    public void validateOffset_negativeOffset_returnsBadRequest() throws Exception {
+        defaultCloud20Service.validateOffset(-5);
+    }
+
     @Test
     public void setFilters_returnsFilterParamWithOutDomainId() {
         FilterParam[] compareTo = new FilterParam[]{new FilterParam(FilterParam.FilterParamName.ROLE_ID, "roleName")};
