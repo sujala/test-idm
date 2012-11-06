@@ -321,7 +321,7 @@ public class CloudMigrationService {
             SecretQA secretQA = getSecretQA(adminToken, user.getId());
 
             // Set null so a new ID is given since ID exists.
-            if (userService.userExistsById(user.getId())) {
+            if (userService.userExistsById(user.getId()) || isUkCloudRegion()) {
                 user.setId(null);
             }
 

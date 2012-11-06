@@ -72,7 +72,7 @@ public class JSONReaderForRSACredentials implements MessageBodyReader<RsaCredent
             Object tokenkey = jsonBody.get(JSONConstants.TOKEN_KEY);
 
             if (username != null) {
-                creds.setUsername(username.toString());
+                creds.setUsername(username.toString().trim());
             }
 
             if (tokenkey != null) {
