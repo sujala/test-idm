@@ -698,6 +698,72 @@ class DefaultCloud20ServiceTest extends Specification {
         1 * userDao.getAllUsersNoLimit(_)
     }
 
+    def "validateOffset null offset sets offset to 0"() {
+        when:
+        def offset = cloud20Service.validateOffset(null)
+
+        then:
+        offset == 0
+    }
+
+    def "validateOffset negative offset throws badrequest"() {
+        when:
+        cloud20Service.validateOffset(-5)
+
+        then:
+        thrown(BadRequestException)
+    }
+
+    def "validateOffset valid offset sets offset"() {
+        when:
+        def offset = cloud20Service.validateOffset(10)
+
+        then:
+        offset == 10
+    }
+
+    def "validateLimit null limit sets limit to default"() {
+        when:
+        def limit = cloud20Service.validateLimit(null)
+
+        then:
+        limit == configuration.getInt("ldap.paging.limit.default")
+    }
+
+    def "validateLimit negative limit throws badrequest"() {
+        when:
+        cloud20Service.validateLimit(-5)
+
+        then:
+        thrown(BadRequestException)
+    }
+
+    def "validateLimit limit is 0 sets to default"() {
+        when:
+        def limit = cloud20Service.validateLimit(0)
+
+        then:
+        limit == configuration.getInt("ldap.paging.limit.default")
+    }
+
+    def "validateLimit limit is too large sets to default max"() {
+        when:
+        def value = configuration.getInt("ldap.paging.limit.max") + 1
+        def limit = cloud20Service.validateLimit(value)
+
+        then:
+        limit == configuration.getInt("ldap.paging.limit.max")
+    }
+
+    def "validateLimit limit is valid sets limit"() {
+        when:
+        def value = configuration.getInt("ldap.paging.limit.max") - 1
+        def limit = cloud20Service.validateLimit(value)
+
+        then:
+        limit == value
+    }
+
     //helper methods
     def createMocks() {
         cloud20Service.userService = userService
