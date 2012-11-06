@@ -7,13 +7,17 @@ import org.apache.commons.io.IOUtils
 import spock.lang.Shared
 import spock.lang.Specification
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Questions
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Capability
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Capabilities
 
 class JSONReaderWriterTest extends Specification {
 
     @Shared JSONWriter writer = new JSONWriter();
     @Shared JSONWriterForQuestion writerForQuestion = new JSONWriterForQuestion()
     @Shared JSONWriterForQuestions writerForQuestions = new JSONWriterForQuestions()
+    @Shared JSONWriterForCapabilities writerForCapabilities = new JSONWriterForCapabilities();
     @Shared JSONReaderForQuestion readerForQuestion = new JSONReaderForQuestion()
+    @Shared JSONReaderForCapabilities readerForCapabilities = new JSONReaderForCapabilities()
 
     def "can write/write region as json"() {
         given:
@@ -95,6 +99,61 @@ class JSONReaderWriterTest extends Specification {
 
         then:
         json != null
+    }
+
+    def "can read/write capabilities json" () {
+        given:
+        List<Capability> capabilityList = new ArrayList<Capability>();
+        capabilityList.add(getCapability("get_server","get_server","GET","http://someUrl",null,null))
+        def capabilitiesEntity = getCapabilities(capabilityList)
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForCapabilities.writeTo(capabilitiesEntity,Capabilities,null,null,null,null,arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        InputStream inputStream = IOUtils.toInputStream(json)
+
+        Capabilities readCapabilities = readerForCapabilities.readFrom(Capabilities, null, null, null, null, inputStream)
+
+        then:
+        json != null
+        readCapabilities.capability.get(0).action == "GET"
+    }
+
+    def "should be able to write empty list of capabilities"() {
+        given:
+        def capabilities = new Capabilities()
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForCapabilities.writeTo(capabilities, Capabilities, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+
+        then:
+        json != null
+    }
+
+    def getCapabilities(List<Capability> capabilities) {
+        new Capabilities().with {
+            for(Capability capability : capabilities){
+                it.capability.add(capability)
+            }
+            return it
+        }
+    }
+
+    def getCapability(String id, String name, String action, String url, String description, List<String> resources) {
+        new Capability().with {
+            it.id = id
+            it.name = name
+            it.action = action
+            it.url = url
+            it.description = description
+            for(String resource : resources){
+                it.resources.add(resource)
+            }
+            return it
+        }
     }
 
     def quesiton(String id, String question) {

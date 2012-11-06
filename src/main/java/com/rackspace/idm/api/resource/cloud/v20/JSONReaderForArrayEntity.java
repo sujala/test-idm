@@ -32,8 +32,10 @@ public class JSONReaderForArrayEntity<T> {
             JSONObject newOuter = new JSONObject();
             JSONArray middle = new JSONArray();
 
-            for(Object object : inner){
-                middle.add(object);
+            if (inner != null) {
+                for (Object object : inner) {
+                    middle.add(object);
+                }
             }
 
             newOuter.put(newName,middle);
