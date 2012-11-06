@@ -75,7 +75,7 @@ public class DefaultCloudRegionService implements CloudRegionService {
     private void setAsOnlyDefaultRegion(Region region) {
         Region defaultRegion = regionDao.getDefaultRegion(region.getCloud());
 
-        if (defaultRegion != null && !defaultRegion.equals(region)) {
+        if (defaultRegion != null && !defaultRegion.getName().equals(region.getName())) {
             defaultRegion.setIsDefault(false);
             regionDao.updateRegion(defaultRegion);
         }

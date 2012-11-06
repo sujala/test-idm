@@ -376,7 +376,7 @@ class Cloud20IntegrationTest extends Specification {
         def random = ("$randomness").replace('-', "")
         def regionName = "region${random}"
         Region region1 = region(regionName, false, false)
-        Region region2 = region(regionName, true, true)
+        Region region2 = region(regionName, true, false)
 
         when:
         def createRegionResponse = createRegion(serviceAdminToken, region1)
@@ -390,7 +390,6 @@ class Cloud20IntegrationTest extends Specification {
         def getRegionsResponse = getRegions(serviceAdminToken)
         Regions regions = getRegionsResponse.getEntity(Regions)
 
-        updateRegion(serviceAdminToken, defaultRegion.name, defaultRegion)
         def deleteRegionResponse = deleteRegion(serviceAdminToken, regionName)
         def getDeletedRegionResponse = getRegion(serviceAdminToken, regionName)
 
