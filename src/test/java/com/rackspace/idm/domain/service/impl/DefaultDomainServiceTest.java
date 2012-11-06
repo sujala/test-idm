@@ -1,14 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
-import org.junit.runner.RunWith;
-
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-
-import org.mockito.runners.MockitoJUnitRunner;
-
 import com.rackspace.idm.domain.dao.DomainDao;
-import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.exception.BadRequestException;
@@ -16,10 +8,17 @@ import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
-import static org.mockito.Mockito.*;
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.mockito.Mockito.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -42,7 +41,9 @@ public class DefaultDomainServiceTest {
 
     @Before
     public void setUp() throws Exception {
+        tenantService = mock(TenantService.class);
         spy = spy(defaultDomainService);
+        spy.setTenantService(tenantService);
     }
 
     @Test(expected = BadRequestException.class)
@@ -82,6 +83,11 @@ public class DefaultDomainServiceTest {
     public void updateDomain_invalidDomain_returnBadRequestException() throws Exception{
         Domain domain = new Domain();
         defaultDomainService.updateDomain(domain);
+    }
+
+    @Test(expected = BadRequestException.class)
+    public void updateDomain_nullDomain_returnBadRequestException() throws Exception{
+        defaultDomainService.updateDomain(null);
     }
 
     @Test(expected = BadRequestException.class)
@@ -129,12 +135,48 @@ public class DefaultDomainServiceTest {
     }
 
     @Test
+    public void removeTenantFromDomain_validDomain() throws Exception{
+        Domain domain = new Domain();
+        domain.setDomainId("1");
+        domain.setName("domain");
+        List<String> tenantIds = new ArrayList<String>();
+        when(spy.getDomain("1")).thenReturn(domain);
+        when(spy.setTenantIdList(domain, "tenant1")).thenReturn(tenantIds);
+        defaultDomainService.removeTenantFromDomain("tenant1", "1");
+        verify(domainDao).updateDomain(domain);
+    }
+
+    @Test(expected = NotFoundException.class)
+    public void checkAndGetDomain_invalidDomain_throwsNotFoundException() throws Exception{
+        when(spy.getDomain("1")).thenReturn(null);
+        defaultDomainService.checkAndGetDomain("1");
+    }
+
+    @Test
     public void createNewDoamin_validDomainId_returnsDomainId() throws Exception{
         String domainId = defaultDomainService.createNewDomain("1");
         assertThat("verify DomainId",domainId,equalTo("1"));
     }
 
+    @Test
+    public void deleteDomain_verifyDelete() throws Exception{
+        spy.deleteDomain("1");
+        verify(domainDao).deleteDomain("1");
+    }
 
+    @Test(expected = BadRequestException.class)
+    public void addDomain_invalidIdCharacters_throwsBadRequest() throws Exception {
+        Domain domain = new Domain();
+        domain.setDomainId("!nvalid");
+        defaultDomainService.addDomain(domain);
+    }
 
+    @Test(expected = BadRequestException.class)
+    public void addDomain_invalidNameCharacters_throwsBadRequest() throws Exception {
+        Domain domain = new Domain();
+        domain.setDomainId("1");
+        domain.setName("!nvalid");
+        defaultDomainService.addDomain(domain);
+    }
 
 }

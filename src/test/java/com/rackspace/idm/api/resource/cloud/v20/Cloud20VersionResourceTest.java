@@ -1543,4 +1543,21 @@ public class Cloud20VersionResourceTest {
         spy.listUsersWithRole(httpHeaders, uriInfo, "token", "3", 0, 10);
         verify(defaultCloud20Service).listUsersWithRole(httpHeaders, uriInfo, "token", "3", 0, 10);
     }
+
+    @Test
+    public void revokeToken_callsDefaultCloud20Service() throws Exception {
+        String token = "1234567890";
+        when(defaultCloud20Service.revokeToken(httpHeaders, token)).thenReturn(Response.ok());
+        spy.revokeToken(httpHeaders, token);
+        verify(defaultCloud20Service).revokeToken(httpHeaders, token);
+    }
+
+    @Test
+    public void revokeUserToken_callsDefaultCloud20Service() throws Exception {
+        String token = "1234567890";
+        when(defaultCloud20Service.revokeToken(httpHeaders, token, token)).thenReturn(Response.ok());
+        spy.revokeUserToken(httpHeaders, token, token);
+        verify(defaultCloud20Service).revokeToken(httpHeaders, token, token);
+    }
+
 }

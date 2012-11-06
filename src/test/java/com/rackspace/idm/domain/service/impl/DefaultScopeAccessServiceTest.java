@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.service.impl;
 import org.junit.runner.RunWith;
 
 import org.mockito.InjectMocks;
+import org.mockito.Matchers;
 import org.mockito.Mock;
 
 import org.mockito.runners.MockitoJUnitRunner;
@@ -1146,8 +1147,8 @@ public class DefaultScopeAccessServiceTest {
         ScopeAccess scopeAccess = new ScopeAccess();
         List<ScopeAccess> list = new ArrayList<ScopeAccess>();
         list.add(scopeAccess);
-        when(scopeAccessDao.getScopeAccessesByParentAndClientId(null,null)).thenReturn(list);
-        assertThat("returns list", defaultScopeAccessService.getScopeAccessesForParentByClientId(null,null),equalTo(list));
+        when(scopeAccessDao.getScopeAccessesByParentAndClientId(null, null)).thenReturn(list);
+        assertThat("returns list", defaultScopeAccessService.getScopeAccessesForParentByClientId(null, null),equalTo(list));
     }
 
     @Test
@@ -1173,16 +1174,16 @@ public class DefaultScopeAccessServiceTest {
         UserScopeAccess scopeAccess = new UserScopeAccess();
         Date expires = new Date();
         doReturn(scopeAccess).when(spy).getUserScopeAccessForClientId(null,null);
-        spy.updateUserScopeAccessTokenForClientIdByUser(new User(),null,"token",expires);
-        assertThat("token",scopeAccess.getAccessTokenString(),equalTo("token"));
-        assertThat("expires date", scopeAccess.getAccessTokenExp(),equalTo(expires));
+        spy.updateUserScopeAccessTokenForClientIdByUser(new User(), null, "token", expires);
+        assertThat("token", scopeAccess.getAccessTokenString(), equalTo("token"));
+        assertThat("expires date", scopeAccess.getAccessTokenExp(), equalTo(expires));
     }
 
     @Test
     public void updateUserScopeAccessTokenForClientIdByUser_scopeAccessIsNotNull_callsUpdateMethod() throws Exception {
         UserScopeAccess scopeAccess = new UserScopeAccess();
-        doReturn(scopeAccess).when(spy).getUserScopeAccessForClientId(null,null);
-        spy.updateUserScopeAccessTokenForClientIdByUser(new User(),null,"token",null);
+        doReturn(scopeAccess).when(spy).getUserScopeAccessForClientId(null, null);
+        spy.updateUserScopeAccessTokenForClientIdByUser(new User(), null, "token", null);
         verify(scopeAccessDao).updateScopeAccess(scopeAccess);
     }
 
@@ -1229,7 +1230,7 @@ public class DefaultScopeAccessServiceTest {
         doReturn(null).when(spy).getDirectScopeAccessForParentByClientId(null, null);
         doReturn(new ScopeAccess()).when(spy).addDirectScopeAccess((String) eq(null), any(ScopeAccess.class));
         spy.grantPermissionToClient(null, new GrantedPermission());
-        verify(spy).addDirectScopeAccess((String) eq(null),any(ScopeAccess.class));
+        verify(spy).addDirectScopeAccess((String) eq(null), any(ScopeAccess.class));
     }
 
     @Test
@@ -1310,7 +1311,7 @@ public class DefaultScopeAccessServiceTest {
         doReturn(null).when(spy).getDirectScopeAccessForParentByClientId(null, null);
         doReturn(new UserScopeAccess()).when(spy).addDirectScopeAccess((String) eq(null), any(ScopeAccess.class));
         spy.grantPermissionToUser(user, new GrantedPermission());
-        verify(user,atLeastOnce()).getUsername();
+        verify(user, atLeastOnce()).getUsername();
         verify(user,atLeastOnce()).getCustomerId();
         verify(user,atLeastOnce()).getId();
         verify(user,atLeastOnce()).getUniqueId();
@@ -1319,12 +1320,12 @@ public class DefaultScopeAccessServiceTest {
     @Test
     public void grantPermissionToUser_noScopeAccessForParent_addsDirectScopeAccessForParent() throws Exception {
         Permission perm = mock(Permission.class);
-        when(clientDao.getClientByCustomerIdAndClientId(null,null)).thenReturn(new Application());
+        when(clientDao.getClientByCustomerIdAndClientId(null, null)).thenReturn(new Application());
         when(scopeAccessDao.getPermissionByParentAndPermission((String) eq(null), any(DefinedPermission.class))).thenReturn(perm);
         doReturn(null).when(spy).getDirectScopeAccessForParentByClientId(null, null);
         doReturn(new UserScopeAccess()).when(spy).addDirectScopeAccess((String) eq(null), any(ScopeAccess.class));
         spy.grantPermissionToUser(new User(), new GrantedPermission());
-        verify(spy).addDirectScopeAccess((String) eq(null),any(ScopeAccess.class));
+        verify(spy).addDirectScopeAccess((String) eq(null), any(ScopeAccess.class));
     }
 
     @Test
@@ -1462,6 +1463,30 @@ public class DefaultScopeAccessServiceTest {
         assertThat("newUserScopeAccessNoneExpired", uas.getAccessTokenString(), equalTo("1234567890"));
     }
 
+    @Test
+    public void getRackerScopeAccessForClientId_withExpiredScopeAccess_returnsNewToken(){
+        RackerScopeAccess rackerScopeAccess = new RackerScopeAccess();
+        rackerScopeAccess.setAccessTokenExp(new DateTime().minusDays(2).toDate());
+        rackerScopeAccess.setAccessTokenString("1234567890");
+        when(scopeAccessDao.getDirectScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(rackerScopeAccess);
+        when(scopeAccessDao.updateScopeAccess(rackerScopeAccess)).thenReturn(true);
+        RackerScopeAccess rsa = defaultScopeAccessService.getValidRackerScopeAccessForClientId("12345", "12345", "12345");
+        rsa.isAccessTokenExpired(new DateTime());
+        assertThat("newRackerScopeAccess", rsa.getAccessTokenString(), not("1234567890"));
+    }
+
+    @Test
+    public void getRackerScopeAccessForClientId_withNullScopeAccess_returnsNewToken(){
+        RackerScopeAccess rackerScopeAccess = new RackerScopeAccess();
+        rackerScopeAccess.setAccessTokenExp(new DateTime().minusDays(2).toDate());
+        rackerScopeAccess.setAccessTokenString("1234567890");
+        when(scopeAccessDao.getDirectScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(null);
+        when(scopeAccessDao.updateScopeAccess(rackerScopeAccess)).thenReturn(true);
+        RackerScopeAccess rsa = defaultScopeAccessService.getValidRackerScopeAccessForClientId("12345", "12345", "12345");
+        verify(scopeAccessDao).addDirectScopeAccess(anyString(), Matchers.<ScopeAccess>anyObject());
+        rsa.isAccessTokenExpired(new DateTime());
+        assertThat("newRackerScopeAccess", rsa.getAccessTokenString(), not("1234567890"));
+    }
 
     @Test (expected = NotAuthenticatedException.class)
     public void handleApiKeyUsernameAuthenticationFailure_notAuthenticated_throwsNotAuthenticated() throws Exception {
