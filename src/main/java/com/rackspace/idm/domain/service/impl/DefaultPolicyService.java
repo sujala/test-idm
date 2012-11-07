@@ -87,15 +87,6 @@ public class DefaultPolicyService implements PolicyService {
         policyDao.addPolicy(policy);
     }
 
-    private void validateUniqueNamePolicy(String name) {
-        Policy policy = policyDao.getPolicyByName(name);
-        if(policy !=  null){
-            logger.info("Attempting to add existing Policy: {}", policy);
-            String err = String.format("Policy with name %s already exist", name);
-            throw new DuplicateException(err);
-        }
-    }
-
     @Override
     public Policy getPolicy(String policyId) {
         Policy policy = checkAndGetPolicy(policyId);

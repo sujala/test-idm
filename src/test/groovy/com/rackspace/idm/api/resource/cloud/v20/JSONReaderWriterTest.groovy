@@ -9,6 +9,10 @@ import spock.lang.Specification
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Questions
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Capability
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Capabilities
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PolicyAlgorithm
+import com.rackspace.idm.exception.BadRequestException
 
 class JSONReaderWriterTest extends Specification {
 
@@ -16,6 +20,8 @@ class JSONReaderWriterTest extends Specification {
     @Shared JSONWriterForQuestion writerForQuestion = new JSONWriterForQuestion()
     @Shared JSONWriterForQuestions writerForQuestions = new JSONWriterForQuestions()
     @Shared JSONWriterForCapabilities writerForCapabilities = new JSONWriterForCapabilities();
+    @Shared JSONReaderForPolicies readerForPolicies = new JSONReaderForPolicies();
+    @Shared JSONReaderForPolicy readerForPolicy = new JSONReaderForPolicy();
     @Shared JSONReaderForQuestion readerForQuestion = new JSONReaderForQuestion()
     @Shared JSONReaderForCapabilities readerForCapabilities = new JSONReaderForCapabilities()
 
@@ -121,6 +127,117 @@ class JSONReaderWriterTest extends Specification {
     }
 
     def "should be able to write empty list of capabilities"() {
+        given:
+        def capabilities = new Capabilities()
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForCapabilities.writeTo(capabilities, Capabilities, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+
+        then:
+        json != null
+    }
+
+    def "can read/write policies json" () {
+        given:
+        List<Policy> policiesList  = new ArrayList<Policy>();
+        policiesList.add(getPolicy("10000321","testPolicy","json-policy-format",true, false,"desc","someblob"))
+        def policiesEntity = getPolicies(policiesList)
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writer.writeTo(policiesEntity,Policies,null,null,null,null,arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        InputStream inputStream = IOUtils.toInputStream(json)
+
+        Policies readPolicies = readerForPolicies.readFrom(Policies, null, null, null, null, inputStream)
+
+        then:
+        json != null
+        readPolicies.policy.get(0).id == "10000321"
+    }
+
+    def "can read/write policies json IF_TRUE_ALLOW" () {
+        given:
+        List<Policy> policiesList  = new ArrayList<Policy>();
+        policiesList.add(getPolicy("10000321","testPolicy","json-policy-format",true, false,"desc","someblob"))
+        def policiesEntity = getPolicies(policiesList)
+        policiesEntity.algorithm = PolicyAlgorithm.IF_TRUE_ALLOW
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writer.writeTo(policiesEntity,Policies,null,null,null,null,arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        InputStream inputStream = IOUtils.toInputStream(json)
+
+        Policies readPolicies = readerForPolicies.readFrom(Policies, null, null, null, null, inputStream)
+
+        then:
+        json != null
+        readPolicies.algorithm == PolicyAlgorithm.IF_TRUE_ALLOW
+    }
+
+    def "can read/write policies json no id returns BadRequest" () {
+        given:
+        List<Policy> policiesList  = new ArrayList<Policy>();
+        policiesList.add(getPolicy(null,"testPolicy","json-policy-format",true, false,"desc","someblob"))
+        def policiesEntity = getPolicies(policiesList)
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writer.writeTo(policiesEntity,Policies,null,null,null,null,arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        InputStream inputStream = IOUtils.toInputStream(json)
+
+        Policies readPolicies = readerForPolicies.readFrom(Policies, null, null, null, null, inputStream)
+
+        then:
+        thrown(BadRequestException)
+    }
+
+    def "can read/write policy as json"() {
+        given:
+        def policy = getPolicy("10000321","testPolicy","json-policy-format",true, false,"desc","someblob")
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writer.writeTo(policy, Policy, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        InputStream inputStream = IOUtils.toInputStream(json);
+
+        Policy readPolicy = readerForPolicy.readFrom(Policy, null, null, null, null, inputStream);
+
+        then:
+        json != null
+        readPolicy.name == "testPolicy"
+    }
+
+
+    def getPolicies(ArrayList<Policy> policies) {
+        new Policies().with {
+            for(Policy policy : policies){
+                it.policy.add(policy)
+            }
+            it.algorithm = PolicyAlgorithm.IF_FALSE_DENY
+            return it
+        }
+    }
+
+    def getPolicy(String id, String name, String type, Boolean enabled, Boolean global, String description, String blob) {
+        new Policy().with {
+            it.id = id
+            it.name = name
+            it.type = type
+            it.enabled = enabled
+            it.global = global
+            it.description = description
+            it.blob = blob
+            return it
+        }
+    }
+
+    def "should be able to write empty list of policies"() {
         given:
         def capabilities = new Capabilities()
 
