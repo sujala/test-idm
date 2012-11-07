@@ -20,6 +20,9 @@ import org.openstack.docs.identity.api.v2.*
 
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.ensureGrizzlyStarted
 import static javax.ws.rs.core.MediaType.APPLICATION_XML
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies
 
 class Cloud20IntegrationTest extends Specification {
     @Shared WebResource resource
@@ -48,6 +51,8 @@ class Cloud20IntegrationTest extends Specification {
     @Shared def emptyDomainId
     @Shared def testDomainId
     @Shared def defaultRegion
+    @Shared def endpointTemplateId
+    @Shared def policyId
 
     def randomness = UUID.randomUUID()
     static def X_AUTH_TOKEN = "X-Auth-Token"
@@ -57,6 +62,7 @@ class Cloud20IntegrationTest extends Specification {
 
     static def RAX_GRPADM= "RAX-GRPADM"
     static def RAX_AUTH = "RAX-AUTH"
+    static def OS_KSCATALOG = "OS-KSCATALOG"
 
 
 
@@ -72,6 +78,13 @@ class Cloud20IntegrationTest extends Specification {
 
         identityAdmin = getUserByName(serviceAdminToken, "auth").getEntity(User)
         identityAdminToken = authenticate("auth", "auth123").getEntity(AuthenticateResponse).value.token.id
+
+        endpointTemplateId = "100001"
+        addEndpointTemplate(serviceAdminToken, endpointTemplate(endpointTemplateId))
+        def addPolicyResponse = addPolicy(serviceAdminToken, policy("name"))
+        def getPolicyResponse = getPolicy(serviceAdminToken, addPolicyResponse.location)
+        policyId = getPolicyResponse.getEntity(Policy).id as String
+
 
         defaultRegion = region("ORD", true, true)
         createRegion(serviceAdminToken, defaultRegion)
@@ -123,6 +136,7 @@ class Cloud20IntegrationTest extends Specification {
         addRoleToUser(serviceAdminToken, sharedRole.getId(), defaultUser.getId())
         addRoleToUser(serviceAdminToken, sharedRole.getId(), defaultUserTwo.getId())
         addRoleToUser(serviceAdminToken, sharedRole.getId(), defaultUserThree.getId())
+
     }
 
     def cleanupSpec() {
@@ -139,6 +153,9 @@ class Cloud20IntegrationTest extends Specification {
         deleteUser(serviceAdminToken, defaultUserTwo.getId())
         deleteUser(serviceAdminToken, defaultUserThree.getId())
         deleteUser(serviceAdminToken, defaultUserForAdminTwo.getId())
+
+        deleteEndpointTemplate(serviceAdminToken, endpointTemplateId)
+        deletePolicy(serviceAdminToken, policyId)
     }
 
     def 'User CRUD'() {
@@ -689,6 +706,61 @@ class Cloud20IntegrationTest extends Specification {
         response.status == 200
     }
 
+    def "add policy to endpoint without endpoint without policy returns 404" () {
+        when:
+        def response = addPolicyToEndpointTemplate(identityAdminToken, "111111", "111111")
+
+        then:
+        response.status == 404
+    }
+
+    def "add policy to endpoint with endpoint without policy returns 404" () {
+        when:
+        def response = addPolicyToEndpointTemplate(identityAdminToken, endpointTemplateId, "111111")
+
+        then:
+        response.status == 404
+    }
+
+    def "add policy to endpoint with endpoint with policy returns 204"() {
+        when:
+        def addResponse = addPolicyToEndpointTemplate(serviceAdminToken, endpointTemplateId, policyId)
+        def getResponse = getPoliciesFromEndpointTemplate(serviceAdminToken, endpointTemplateId)
+        def policies = getResponse.getEntity(Policies)
+        def updateResponse = updatePoliciesForEndpointTemplate(serviceAdminToken, endpointTemplateId, policies)
+        def deletePolicyResponse = deletePolicy(serviceAdminToken, policyId)
+        def deleteResponse = deletePolicyToEndpointTemplate(serviceAdminToken, endpointTemplateId, policyId)
+
+        then:
+        addResponse.status == 204
+        policies.policy.size() == 1
+        updateResponse.status == 204
+        deletePolicyResponse.status == 400
+        deleteResponse.status == 204
+    }
+
+    def "update policy to endpoint without endpoint without policy returns 404"() {
+        when:
+        Policies policies = new Policies()
+        Policy policy = policy("name")
+        policies.policy.add(policy)
+        def response = updatePoliciesForEndpointTemplate(serviceAdminToken, "111111", policies)
+
+        then:
+        response.status == 404
+    }
+
+    def "update policy to endpoint with endpoint without policy returns 404"() {
+        when:
+        Policies policies = new Policies()
+        Policy policy = policy("name")
+        policies.policy.add(policy)
+        def response = updatePoliciesForEndpointTemplate(serviceAdminToken, endpointTemplateId, policies)
+
+        then:
+        response.status == 404
+    }
+
     //Resource Calls
     def createUser(String token, user) {
         resource.path(path).path('users').header(X_AUTH_TOKEN, token).entity(user).post(ClientResponse)
@@ -837,6 +909,42 @@ class Cloud20IntegrationTest extends Specification {
         resource.path(path).path(RAX_AUTH).path("secretqa/questions").path(questionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).delete(ClientResponse)
     }
 
+    def addEndpointTemplate(String token, endpointTemplate) {
+        resource.path(path).path(OS_KSCATALOG).path("endpointTemplates").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(endpointTemplate).post(ClientResponse)
+    }
+
+    def deleteEndpointTemplate(String token, endpointTemplateId) {
+        resource.path(path).path(OS_KSCATALOG).path("endpointTemplates").path(endpointTemplateId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
+    }
+
+    def addPolicy(String token, policy) {
+        resource.path(path).path(RAX_AUTH).path("policies").header(X_AUTH_TOKEN, token).type(APPLICATION_XML).accept(APPLICATION_XML).entity(policy).post(ClientResponse)
+    }
+
+    def getPolicy(String token, location) {
+        resource.uri(location).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+    }
+
+    def deletePolicy(String token, policyId) {
+        resource.path(path).path(RAX_AUTH).path("policies").path(policyId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
+    }
+
+    def addPolicyToEndpointTemplate(String token, endpointTemplateId, policyId) {
+        resource.path(path).path(OS_KSCATALOG).path("endpointTemplates").path(endpointTemplateId).path(RAX_AUTH).path("policies").path(policyId).header(X_AUTH_TOKEN, token).put(ClientResponse)
+    }
+
+    def deletePolicyToEndpointTemplate(String token, endpointTemplateId, policyId) {
+        resource.path(path).path(OS_KSCATALOG).path("endpointTemplates").path(endpointTemplateId).path(RAX_AUTH).path("policies").path(policyId).header(X_AUTH_TOKEN, token).delete(ClientResponse)
+    }
+
+    def getPoliciesFromEndpointTemplate(String token, endpointTemplateId) {
+        resource.path(path).path(OS_KSCATALOG).path("endpointTemplates").path(endpointTemplateId).path(RAX_AUTH).path("policies").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+    }
+
+    def updatePoliciesForEndpointTemplate(String token, endpointTemplateId, policies) {
+        resource.path(path).path(OS_KSCATALOG).path("endpointTemplates").path(endpointTemplateId).path(RAX_AUTH).path("policies").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(policies).put(ClientResponse)
+    }
+
     //Helper Methods
     def getCredentials(String username, String password) {
         new PasswordCredentialsRequiredUsername().with {
@@ -947,6 +1055,24 @@ class Cloud20IntegrationTest extends Specification {
         new Question().with {
             it.id = id
             it.question = question
+            return it
+        }
+    }
+
+    def endpointTemplate(endpointTemplateId) {
+        new EndpointTemplate().with {
+            it.id = endpointTemplateId as int
+            it.type = "compute"
+            it.publicURL = "http://public.url"
+            return it
+        }
+    }
+
+    def policy(name) {
+        new Policy().with {
+            it.name = name
+            it.blob = "blob"
+            it.type = "type"
             return it
         }
     }
