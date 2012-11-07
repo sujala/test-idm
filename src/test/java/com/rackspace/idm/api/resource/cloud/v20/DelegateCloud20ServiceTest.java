@@ -1,5 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
 import com.rackspace.idm.api.resource.cloud.CloudClient;
@@ -15,11 +17,13 @@ import com.rackspace.idm.validation.Validator20;
 import com.sun.jersey.core.spi.factory.ResponseBuilderImpl;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.NotImplementedException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Matchers;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.v2.*;
+import org.openstack.docs.identity.api.v2.ObjectFactory;
 
 import javax.ws.rs.core.*;
 import javax.xml.bind.JAXBException;
@@ -3288,6 +3292,265 @@ public class DelegateCloud20ServiceTest {
         when(config.getBoolean("useCloudAuth")).thenReturn(true);
         delegateCloud20Service.listEndpointsForToken(httpHeaders, "authToken", "tokenId");
         verify(defaultCloud20Service).listEndpointsForToken(httpHeaders, "authToken", "tokenId");
+    }
+
+    @Test
+    public void addDomain_notImplemented(){
+        Domain domain = new Domain();
+        spy.addDomain("sometoken",null,domain);
+        verify(spy).addDomain("sometoken",null,domain);
+    }
+
+    @Test
+    public void addDomain_throwsNotImplementedException() throws Exception {
+        when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
+        Response.ResponseBuilder responseBuilder = delegateCloud20Service.addDomain(null, null, null);
+        assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
+    }
+
+    @Test
+    public void getDomain_throwsNotImplementedException() throws Exception {
+        when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
+        Response.ResponseBuilder responseBuilder = delegateCloud20Service.getDomain(null, null);
+        assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
+    }
+
+    @Test
+    public void updateDomain_throwsNotImplementedException() throws Exception {
+        when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
+        Response.ResponseBuilder responseBuilder = delegateCloud20Service.updateDomain(null, null,null);
+        assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
+    }
+
+    @Test
+    public void deleteDomain_throwsNotImplementedException() throws Exception {
+        when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
+        Response.ResponseBuilder responseBuilder = delegateCloud20Service.deleteDomain(null, null);
+        assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
+    }
+
+    @Test
+    public void getDomainTenants_throwsNotImplementedException() throws Exception {
+        when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
+        Response.ResponseBuilder responseBuilder = delegateCloud20Service.getDomainTenants(null, null,null);
+        assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
+    }
+
+    @Test
+    public void getUsersbyDomainId_throwsNotImplementedException() throws Exception {
+        when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
+        Response.ResponseBuilder responseBuilder = delegateCloud20Service.getUsersByDomainId(null, null,null);
+        assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
+    }
+
+    @Test
+    public void addUsertoDomain_throwsNotImplementedException() throws Exception {
+        when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
+        Response.ResponseBuilder responseBuilder = delegateCloud20Service.addUserToDomain(null, null,null);
+        assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
+    }
+
+    @Test
+    public void getEndpointsByDomainId_throwsNotImplementedException() throws Exception {
+        when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
+        Response.ResponseBuilder responseBuilder = delegateCloud20Service.getEndpointsByDomainId(null, null);
+        assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
+    }
+
+    @Test
+    public void addTenantToDomain_throwsNotImplementedException() throws Exception {
+        when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
+        Response.ResponseBuilder responseBuilder = delegateCloud20Service.addTenantToDomain(null, null,null);
+        assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
+    }
+
+    @Test
+    public void removeTenantFromDomain_throwsNotImplementedException() throws Exception {
+        when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
+        Response.ResponseBuilder responseBuilder = delegateCloud20Service.removeTenantFromDomain(null, null,null);
+        assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
+    }
+
+    @Test
+    public void getPoliciesForEndpointTemplate_throwsNotImplementedException() throws Exception {
+        when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
+        Response.ResponseBuilder responseBuilder = delegateCloud20Service.getPoliciesForEndpointTemplate(null, null);
+        assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
+    }
+
+    @Test
+    public void updatePoliciesForEndpointTemplate_throwsNotImplementedException() throws Exception {
+        when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
+        Response.ResponseBuilder responseBuilder = delegateCloud20Service.updatePoliciesForEndpointTemplate(null, null,null);
+        assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
+    }
+
+    @Test
+    public void addPolicyToEndpointTemplate_throwsNotImplementedException() throws Exception {
+        when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
+        Response.ResponseBuilder responseBuilder = delegateCloud20Service.addPolicyToEndpointTemplate(null, null,null);
+        assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
+    }
+
+    @Test
+    public void deletePolicyToEndpointTemplate_throwsNotImplementedException() throws Exception {
+        when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
+        Response.ResponseBuilder responseBuilder = delegateCloud20Service.deletePolicyToEndpointTemplate(null, null,null);
+        assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
+    }
+
+    @Test
+    public void getPolicies_throwsNotImplementedException() throws Exception {
+        when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
+        Response.ResponseBuilder responseBuilder = delegateCloud20Service.getPolicies(null);
+        assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
+    }
+
+    @Test
+    public void addPolicy_throwsNotImplementedException() throws Exception {
+        when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
+        Response.ResponseBuilder responseBuilder = delegateCloud20Service.addPolicy(null,null,null);
+        assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
+    }
+
+    @Test
+    public void getPolicy_throwsNotImplementedException() throws Exception {
+        when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
+        Response.ResponseBuilder responseBuilder = delegateCloud20Service.addPolicy(null,null,null);
+        assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
+    }
+
+    @Test
+    public void updatePolicy_throwsNotImplementedException() throws Exception {
+        when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
+        Response.ResponseBuilder responseBuilder = delegateCloud20Service.updatePolicy(null,null,null);
+        assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
+    }
+
+    @Test
+    public void deletePolicy_throwsNotImplementedException() throws Exception {
+        when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
+        Response.ResponseBuilder responseBuilder = delegateCloud20Service.deletePolicy(null,null);
+        assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
+    }
+
+    @Test
+    public void getAccessibleDomains_throwsNotImplementedException() throws Exception {
+        when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
+        Response.ResponseBuilder responseBuilder = delegateCloud20Service.getAccessibleDomains(null);
+        assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
+    }
+
+    @Test
+    public void getAccessibleDomainsForUser_throwsNotImplementedException() throws Exception {
+        when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
+        Response.ResponseBuilder responseBuilder = delegateCloud20Service.getAccessibleDomainsForUser(null,null);
+        assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
+    }
+
+    @Test
+    public void getAccessibleDomainsEndpointsForUser_throwsNotImplementedException() throws Exception {
+        when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
+        Response.ResponseBuilder responseBuilder = delegateCloud20Service.getAccessibleDomainsEndpointsForUser(null,null,null);
+        assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
+    }
+
+    @Test
+    public void updateCapabilities_throwsNotImplementedException() throws Exception {
+        when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
+        Response.ResponseBuilder responseBuilder = delegateCloud20Service.updateCapabilities(null,null,null,null);
+        assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
+    }
+
+    @Test
+    public void getCapabilities_throwsNotImplementedException() throws Exception {
+        when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
+        Response.ResponseBuilder responseBuilder = delegateCloud20Service.getCapabilities(null,null,null);
+        assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
+    }
+
+    @Test
+    public void removeCapabilities_throwsNotImplementedException() throws Exception {
+        when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
+        Response.ResponseBuilder responseBuilder = delegateCloud20Service.removeCapabilities(null,null,null);
+        assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
+    }
+
+    @Test
+    public void addRegion_throwsNotImplementedException() throws Exception {
+        when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
+        Response.ResponseBuilder responseBuilder = delegateCloud20Service.addRegion(null,null,null);
+        assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
+    }
+
+    @Test
+    public void getRegion_throwsNotImplementedException() throws Exception {
+        when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
+        Response.ResponseBuilder responseBuilder = delegateCloud20Service.getRegion(null,null);
+        assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
+    }
+
+    @Test
+    public void getRegions_throwsNotImplementedException() throws Exception {
+        when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
+        Response.ResponseBuilder responseBuilder = delegateCloud20Service.getRegions(null);
+        assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
+    }
+
+    @Test
+    public void updateRegion_throwsNotImplementedException() throws Exception {
+        when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
+        Response.ResponseBuilder responseBuilder = delegateCloud20Service.updateRegion(null, null, null);
+        assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
+    }
+
+    @Test
+    public void deleteRegion_throwsNotImplementedException() throws Exception {
+        when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
+        Response.ResponseBuilder responseBuilder = delegateCloud20Service.deleteRegion(null, null);
+        assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
+    }
+
+    @Test
+    public void listUsersWithRole_throwsNotImplementedException() throws Exception {
+        when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
+        Response.ResponseBuilder responseBuilder = delegateCloud20Service.listUsersWithRole(null, null, null, null, null, null);
+        assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
+    }
+
+    @Test
+    public void addQuestion_throwsNotImplementedException() throws Exception {
+        when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
+        Response.ResponseBuilder responseBuilder = delegateCloud20Service.addQuestion(null, null, null);
+        assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
+    }
+
+    @Test
+    public void getQuestion_throwsNotImplementedException() throws Exception {
+        when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
+        Response.ResponseBuilder responseBuilder = delegateCloud20Service.getQuestion(null, null);
+        assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
+    }
+
+    @Test
+    public void getQuestions_throwsNotImplementedException() throws Exception {
+        when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
+        Response.ResponseBuilder responseBuilder = delegateCloud20Service.getQuestions(null);
+        assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
+    }
+
+    @Test
+    public void updateQuestion_throwsNotImplementedException() throws Exception {
+        when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
+        Response.ResponseBuilder responseBuilder = delegateCloud20Service.updateQuestion(null, null, null);
+        assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
+    }
+
+    @Test
+    public void deleteQuestion_throwsNotImplementedException() throws Exception {
+        when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
+        Response.ResponseBuilder responseBuilder = delegateCloud20Service.deleteQuestion(null, null);
+        assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
     }
 }
 

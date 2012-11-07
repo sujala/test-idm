@@ -13,17 +13,19 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PolicyAlgorithm
 import com.rackspace.idm.exception.BadRequestException
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
 
 class JSONReaderWriterTest extends Specification {
 
     @Shared JSONWriter writer = new JSONWriter();
     @Shared JSONWriterForQuestion writerForQuestion = new JSONWriterForQuestion()
     @Shared JSONWriterForQuestions writerForQuestions = new JSONWriterForQuestions()
-    @Shared JSONWriterForCapabilities writerForCapabilities = new JSONWriterForCapabilities();
-    @Shared JSONReaderForPolicies readerForPolicies = new JSONReaderForPolicies();
-    @Shared JSONReaderForPolicy readerForPolicy = new JSONReaderForPolicy();
+    @Shared JSONWriterForCapabilities writerForCapabilities = new JSONWriterForCapabilities()
+    @Shared JSONReaderForPolicies readerForPolicies = new JSONReaderForPolicies()
+    @Shared JSONReaderForPolicy readerForPolicy = new JSONReaderForPolicy()
     @Shared JSONReaderForQuestion readerForQuestion = new JSONReaderForQuestion()
     @Shared JSONReaderForCapabilities readerForCapabilities = new JSONReaderForCapabilities()
+    @Shared JSONReaderForDomain readerForDomain = new JSONReaderForDomain()
 
     def "can write/write region as json"() {
         given:
@@ -211,6 +213,33 @@ class JSONReaderWriterTest extends Specification {
         then:
         json != null
         readPolicy.name == "testPolicy"
+    }
+
+    def "can read/write domain as json"() {
+        given:
+        def domain = getDomain("id","name",true,"desc")
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writer.writeTo(domain, Domain, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        InputStream inputStream = IOUtils.toInputStream(json);
+
+        Domain readDomain = readerForDomain.readFrom(Domain, null, null, null, null, inputStream);
+
+        then:
+        json != null
+        readDomain.name == "name"
+    }
+
+    def getDomain(String id, String name, Boolean enabled, String description) {
+        new Domain().with {
+            it.id = id
+            it.name = name
+            it.enabled = enabled
+            it.description = description
+            return it
+        }
     }
 
 
