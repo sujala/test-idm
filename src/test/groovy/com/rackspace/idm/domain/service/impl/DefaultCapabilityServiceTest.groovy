@@ -21,16 +21,12 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.Capabilities
  * Time: 4:57 PM
  * To change this template use File | Settings | File Templates.
  */
-@ContextConfiguration(locations = "classpath:app-config.xml")
-class DefaultCapabilityServiceIntegrationTest extends Specification {
+class DefaultCapabilityServiceTest extends Specification {
     @Shared def randomness = UUID.randomUUID()
     @Shared def random
 
     @Shared LdapCapabilityRepository ldapCapabilityRepository
     @Shared DefaultCapabilityService defaultCapabilityService;
-
-    @Autowired
-    private CapabilityService capabilityService;
 
     def setupSpec() {
         random = ("$randomness").replace('-', "")
@@ -41,13 +37,20 @@ class DefaultCapabilityServiceIntegrationTest extends Specification {
     }
 
     def "Crud Capabilities"() {
-        when:
+        given:
+        setupMocks()
         List<Capability> capabilities1 = new ArrayList<Capability>()
         List<String> list = new ArrayList<String>()
         capabilities1.add(getCapability("GET", "get_server", "get_server", "description", "http://someUrl", list, null, null))
-        capabilityService.updateCapabilities(capabilities1, "computeTest", "1")
-        List<Capability> capabilities = capabilityService.getCapabilities("computeTest", "1")
-        capabilityService.removeCapabilities("computeTest", "1")
+        capabilities1.get(0).type = "comnpute"
+        capabilities1.get(0).version = "1"
+        ldapCapabilityRepository.getObjects(_) >> capabilities1
+
+
+        when:
+        defaultCapabilityService.updateCapabilities(capabilities1, "computeTest", "1")
+        List<Capability> capabilities = defaultCapabilityService.getCapabilities("computeTest", "1")
+        defaultCapabilityService.removeCapabilities("computeTest", "1")
 
 
         then:
@@ -56,46 +59,66 @@ class DefaultCapabilityServiceIntegrationTest extends Specification {
     }
 
     def "null values updateCapabilities"() {
-        when: capabilityService.updateCapabilities(null, null, null)
+        when: defaultCapabilityService.updateCapabilities(null, null, null)
         then: thrown(BadRequestException)
     }
 
     def "duplicate capabilities updateCapabilities"() {
-        when:
+        given:
+        setupMocks()
         List<Capability> capabilities = new ArrayList<Capability>()
         capabilities.add(getCapability("GET", "get_server", "get_server", "description", "http://someUrl", null, null, null))
         capabilities.add(getCapability("GET", "get_server", "get_server", null, "http://someUrl", null, null, null))
-        capabilityService.updateCapabilities(capabilities, "computeTest", "1")
+        capabilities.get(0).type = "comnputeTest"
+        capabilities.get(0).version = "1"
+        capabilities.get(1).type = "comnputeTest"
+        capabilities.get(1).version = "1"
+        ldapCapabilityRepository.getObjects(_) >> capabilities
+
+        when:
+        defaultCapabilityService.updateCapabilities(capabilities, "computeTest", "1")
 
         then:
         thrown(DuplicateException)
     }
 
     def "invalid action capabilities updateCapabilities"() {
-        when:
+        given:
+        setupMocks()
         List<Capability> capabilities1 = new ArrayList<Capability>()
         capabilities1.add(getCapability(null, "get_server", "get_server", "description", "http://someUrl", null, null, null))
-        capabilityService.updateCapabilities(capabilities1, "computeTest", "1")
+        ldapCapabilityRepository.getObjects(_) >> new ArrayList()
+
+        when:
+        defaultCapabilityService.updateCapabilities(capabilities1, "computeTest", "1")
 
         then:
         thrown(BadRequestException)
     }
 
     def "invalid id capabilities updateCapabilities"() {
-        when:
+        given:
+        setupMocks()
         List<Capability> capabilities1 = new ArrayList<Capability>()
         capabilities1.add(getCapability("GET", null, "get_server", "description", "http://someUrl", null, null, null))
-        capabilityService.updateCapabilities(capabilities1, "computeTest", "1")
+        ldapCapabilityRepository.getObjects(_) >> new ArrayList()
+
+        when:
+        defaultCapabilityService.updateCapabilities(capabilities1, "computeTest", "1")
 
         then:
         thrown(BadRequestException)
     }
 
     def "invalid name capabilities updateCapabilities"() {
-        when:
+        given:
+        setupMocks()
         List<Capability> capabilities1 = new ArrayList<Capability>()
         capabilities1.add(getCapability("GET", "get_server", null, "description", "http://someUrl", null, null, null))
-        capabilityService.updateCapabilities(capabilities1, "computeTest", "1")
+        ldapCapabilityRepository.getObjects(_) >> new ArrayList()
+
+        when:
+        defaultCapabilityService.updateCapabilities(capabilities1, "computeTest", "1")
 
         then:
         thrown(BadRequestException)
@@ -105,7 +128,7 @@ class DefaultCapabilityServiceIntegrationTest extends Specification {
         when:
         List<Capability> capabilities1 = new ArrayList<Capability>()
         capabilities1.add(getCapability("GET", "get_server", "get_server", "description", "http://someUrl", null, null, null))
-        capabilityService.updateCapabilities(capabilities1, "computeTest", null)
+        defaultCapabilityService.updateCapabilities(capabilities1, "computeTest", null)
 
         then:
         thrown(BadRequestException)
@@ -115,7 +138,7 @@ class DefaultCapabilityServiceIntegrationTest extends Specification {
         when:
         List<Capability> capabilities1 = new ArrayList<Capability>()
         capabilities1.add(getCapability("GET", "get_server", "get_server", "description", "http://someUrl", null, null, null))
-        capabilityService.updateCapabilities(capabilities1, null, "1")
+        defaultCapabilityService.updateCapabilities(capabilities1, null, "1")
 
         then:
         thrown(BadRequestException)
@@ -124,15 +147,21 @@ class DefaultCapabilityServiceIntegrationTest extends Specification {
 
 
     def "valid capabilities updateCapabilities"() {
-        when:
+        given:
+        setupMocks()
         List<Capability> capabilities1 = new ArrayList<Capability>()
         List<String> list = new ArrayList<String>()
         list.add("123")
         list.add("321")
         capabilities1.add(getCapability("GET", "get_server", "get_servers", null, "http://someUrl", list, null, null))
-        capabilityService.updateCapabilities(capabilities1, "computeTest", "1")
-        List<Capability> capabilities = capabilityService.getCapabilities("computeTest", "1")
-        capabilityService.removeCapabilities("computeTest", "1")
+        capabilities1.get(0).type = "computeTest"
+        capabilities1.get(0).version = "1"
+        ldapCapabilityRepository.getObjects(_) >> capabilities1
+
+        when:
+        defaultCapabilityService.updateCapabilities(capabilities1, "computeTest", "1")
+        List<Capability> capabilities = defaultCapabilityService.getCapabilities("computeTest", "1")
+        defaultCapabilityService.removeCapabilities("computeTest", "1")
 
         then:
         capabilities.size() == 1
@@ -140,23 +169,31 @@ class DefaultCapabilityServiceIntegrationTest extends Specification {
     }
 
     def "null values on getCapabilities" () {
-        when: capabilityService.getCapabilities(null, null)
+        when: defaultCapabilityService.getCapabilities(null, null)
         then: thrown(BadRequestException)
     }
 
     def "null value on getCapabilities" () {
-        when: capabilityService.getCapabilities("1", null)
+        when: defaultCapabilityService.getCapabilities("1", null)
         then: thrown(BadRequestException)
     }
 
     def "Get all correct values on getCapabilities" () {
-        when:
+        given:
+        setupMocks()
         List<Capability> capabilities = new ArrayList<Capability>()
         capabilities.add(getCapability("GET", "get_server", "get_server", "description", "http://someUrl", null, null, null))
         capabilities.add(getCapability("POST", "post_server", "get_server", null, "http://someUrl", null, null, null))
-        capabilityService.updateCapabilities(capabilities, "computeTest", "1")
-        List<Capability> capabilities1 = capabilityService.getCapabilities("computeTest", "1")
-        capabilityService.removeCapabilities("computeTest", "1")
+        capabilities.get(0).type = "computeTest"
+        capabilities.get(0).version = "1"
+        capabilities.get(1).type = "computeTest"
+        capabilities.get(1).version = "1"
+        ldapCapabilityRepository.getObjects(_) >> capabilities
+
+        when:
+        defaultCapabilityService.updateCapabilities(capabilities, "computeTest", "1")
+        List<Capability> capabilities1 = defaultCapabilityService.getCapabilities("computeTest", "1")
+        defaultCapabilityService.removeCapabilities("computeTest", "1")
 
         then:
         capabilities1.size() == 2
@@ -167,8 +204,12 @@ class DefaultCapabilityServiceIntegrationTest extends Specification {
     }
 
     def "not found on getCapabilities" () {
+        given:
+        setupMocks()
+        ldapCapabilityRepository.getObjects(_) >> new ArrayList();
+
         when:
-        List<Capability> capabilities = capabilityService.getCapabilities("computeTest","10")
+        List<Capability> capabilities = defaultCapabilityService.getCapabilities("computeTest","10")
         then:
         capabilities.size() == 0
     }
@@ -187,12 +228,12 @@ class DefaultCapabilityServiceIntegrationTest extends Specification {
     }
 
     def "null values on removeCapabilities" () {
-        when: capabilityService.removeCapabilities(null, null)
+        when: defaultCapabilityService.removeCapabilities(null, null)
         then: thrown(BadRequestException)
     }
 
     def "null type value on removeCapabilities" () {
-        when: capabilityService.removeCapabilities(null, "1")
+        when: defaultCapabilityService.removeCapabilities(null, "1")
         then: thrown(BadRequestException)
     }
 
