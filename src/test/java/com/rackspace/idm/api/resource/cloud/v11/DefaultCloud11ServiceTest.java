@@ -2539,6 +2539,7 @@ public class DefaultCloud11ServiceTest {
         when(clientService.getClientRoleById(null)).thenReturn(new ClientRole());
         Response.ResponseBuilder responseBuilder = spy.createUser(null, null, null, user);
         assertThat("status code", responseBuilder.build().getStatus(), equalTo(404));
+        verify(userService).deleteUser(anyString());
     }
 
     @Test

@@ -362,6 +362,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             }
 
             userValidator.validateUsername(user.getId());
+            validateMossoId(user.getMossoId());
 
             User existingUser = userService.getUser(user.getId());
             if (existingUser != null) {
@@ -375,8 +376,6 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             User userDO = this.userConverterCloudV11.toUserDO(user);
             userDO.setEnabled(true);
-
-            validateMossoId(user.getMossoId());
 
             // V1.1 Setting Domain ID as Mosso ID
             userDO.setDomainId(domainService.createNewDomain(userDO.getMossoId().toString()));
@@ -403,9 +402,14 @@ public class DefaultCloud11Service implements Cloud11Service {
                 for (BaseURLRef ref : user.getBaseURLRefs().getBaseURLRef()) {
                     CloudBaseUrl cloudBaseUrl = this.endpointService.getBaseUrlById(ref.getId());
                     if (cloudBaseUrl == null) {
+                        userService.deleteUser(userDO.getUsername());
                         throw new NotFoundException(String.format("No URLBase with matching id: %s", ref.getId()));
                     }
-                    this.userService.addBaseUrlToUser(ref.getId(), userDO);
+                    try {
+                        this.userService.addBaseUrlToUser(ref.getId(), userDO);
+                    } catch (BadRequestException de) {
+                        // noop user already had that BaseURL
+                    }
                 }
             }
 
