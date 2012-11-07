@@ -20,7 +20,7 @@ public class JSONReaderForEntity<T> {
 
     final private Class<T> entityType = (Class<T>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
 
-    T read(String oldName, String newName, InputStream entityStream) {
+    T read(String oldName, InputStream entityStream) {
         try {
             String jsonBody = IOUtils.toString(entityStream, JSONConstants.UTF_8);
 
@@ -28,10 +28,11 @@ public class JSONReaderForEntity<T> {
             JSONObject outer = (JSONObject) parser.parse(jsonBody);
             JSONObject inner = (JSONObject) outer.get(oldName);
 
-            JSONObject newOuter = new JSONObject();
-            newOuter.put(newName, inner);
+            if (inner == null) {
+                throw new BadRequestException("Invalid json request body");
+            }
 
-            String jsonString = newOuter.toString();
+            String jsonString = inner.toString();
             InputStream inputStream = IOUtils.toInputStream(jsonString);
             return getMarshaller().unmarshalFromJSON(inputStream, entityType);
 

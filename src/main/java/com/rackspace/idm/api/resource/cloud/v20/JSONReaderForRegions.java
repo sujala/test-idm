@@ -29,7 +29,7 @@ import java.lang.reflect.Type;
  */
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
-public class JSONReaderForRegions implements MessageBodyReader<Regions> {
+public class JSONReaderForRegions extends JSONReaderForArrayEntity<Regions> implements MessageBodyReader<Regions> {
     @Override
     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return type == Regions.class;
@@ -37,50 +37,6 @@ public class JSONReaderForRegions implements MessageBodyReader<Regions> {
 
     @Override
     public Regions readFrom(Class<Regions> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream) throws IOException, WebApplicationException {
-        String jsonBody = IOUtils.toString(entityStream, JSONConstants.UTF_8);
-        Regions object = getRegionsFromJSONString(jsonBody);
-        return object;
-    }
-
-    public static Regions getRegionsFromJSONString(String jsonBody) {
-        Regions regions = new Regions();
-
-        try {
-            JSONParser parser = new JSONParser();
-            JSONObject outer = (JSONObject) parser.parse(jsonBody);
-
-            if (outer.containsKey(JSONConstants.RAX_AUTH_REGIONS)) {
-                JSONArray array = (JSONArray) parser.parse(outer.get(JSONConstants.RAX_AUTH_REGIONS).toString());
-
-                for (Object object : array) {
-                    if (object != null) {
-                        Region region = new Region();
-
-                        JSONObject jsonRegion = (JSONObject) object;
-                        Object name = jsonRegion.get(JSONConstants.NAME);
-                        Object enabled = jsonRegion.get(JSONConstants.ENABLED);
-                        Object isDefault = jsonRegion.get(JSONConstants.IS_DEFAULT);
-
-                        if (name != null) {
-                            region.setName(name.toString());
-                        }
-
-                        if (enabled != null) {
-                            region.setEnabled(Boolean.valueOf(enabled.toString()));
-                        }
-
-                        if (isDefault != null) {
-                            region.setIsDefault(Boolean.valueOf(isDefault.toString()));
-                        }
-
-                        regions.getRegion().add(region);
-                    }
-                }
-            }
-        } catch (Exception e) {
-            throw new BadRequestException("Invalid json request body", e);
-        }
-
-        return regions;
+        return read(JSONConstants.RAX_AUTH_REGIONS, JSONConstants.REGION , entityStream);
     }
 }

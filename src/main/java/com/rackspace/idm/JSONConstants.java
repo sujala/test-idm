@@ -49,6 +49,8 @@ public final class JSONConstants {
     public static final String CAPABILITIES = "capabilities";
     public static final String CAPABILITY = "capability";
     public static final String REGION = "region";
+    public static final String RAX_AUTH_REGION = "RAX-AUTH:region";
+    public static final String RAX_AUTH_REGIONS = "RAX-AUTH:regions";
     public static final String REL = "rel";
     public static final String SECRET_QA = "RAX-KSQA:secretQA";
     public static final String SERVICECATALOG = "serviceCatalog";
@@ -118,8 +120,6 @@ public final class JSONConstants {
     public static final Object DOMAINS = "RAX-AUTH:domains";
     public static final Object DOMAIN_ID = "RAX-AUTH:domainId";
     public static final Object POLICY = "RAX-AUTH:policy";
-    public static final Object RAX_AUTH_REGION = "RAX-AUTH:region";
-    public static final Object RAX_AUTH_REGIONS = "RAX-AUTH:regions";
     public static final Object POLICIES = "RAX-AUTH:policies";
     public static final Object POLICIES_ALGORITHM = "algorithm";
     public static final Object BLOB = "blob";

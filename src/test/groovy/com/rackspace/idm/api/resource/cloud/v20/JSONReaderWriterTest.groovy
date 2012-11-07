@@ -18,6 +18,8 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
 class JSONReaderWriterTest extends Specification {
 
     @Shared JSONWriter writer = new JSONWriter();
+    @Shared JSONReaderForRegion readerForRegion = new JSONReaderForRegion()
+    @Shared JSONReaderForRegions readerForRegions = new JSONReaderForRegions()
     @Shared JSONWriterForQuestion writerForQuestion = new JSONWriterForQuestion()
     @Shared JSONWriterForQuestions writerForQuestions = new JSONWriterForQuestions()
     @Shared JSONWriterForCapabilities writerForCapabilities = new JSONWriterForCapabilities()
@@ -27,7 +29,7 @@ class JSONReaderWriterTest extends Specification {
     @Shared JSONReaderForCapabilities readerForCapabilities = new JSONReaderForCapabilities()
     @Shared JSONReaderForDomain readerForDomain = new JSONReaderForDomain()
 
-    def "can write/write region as json"() {
+    def "can read/write region as json"() {
         given:
         def regionEntity = region("name", true, false)
 
@@ -35,7 +37,8 @@ class JSONReaderWriterTest extends Specification {
         ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
         writer.writeTo(regionEntity, Region.class, null, null, null, null, arrayOutputStream)
         def json = arrayOutputStream.toString()
-        def readRegion = JSONReaderForRegion.getRegionFromJSONString(json)
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
+        def readRegion = readerForRegion.readFrom(Region.class, null, null, null, null, arrayInputStream)
 
         then:
         regionEntity.name == readRegion.name
@@ -43,7 +46,21 @@ class JSONReaderWriterTest extends Specification {
         regionEntity.isDefault == readRegion.isDefault
     }
 
-    def "can write/write regions as json"() {
+    def "region reader throws bad request if root is not found"() {
+        given:
+        def regionEntity = region("name", true, false)
+
+        when:
+        def json = '{ "region": { "enabled": true, "isDefault": true, "name": "DFW" } }'
+
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
+        readerForRegion.readFrom(Region.class, null, null, null, null, arrayInputStream)
+
+        then:
+        thrown(BadRequestException)
+    }
+
+    def "can read/write regions as json"() {
         given:
         def regionEntity = region("name", true, false)
         def regionsEntity = new Regions()
@@ -53,7 +70,8 @@ class JSONReaderWriterTest extends Specification {
         ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
         writer.writeTo(regionsEntity, Regions.class, null, null, null, null, arrayOutputStream)
         def json = arrayOutputStream.toString()
-        def readRegions = JSONReaderForRegions.getRegionsFromJSONString(json)
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
+        def readRegions = readerForRegions.readFrom(Regions.class, null, null, null, null, arrayInputStream)
         def readRegion = readRegions.region.get(0)
 
         then:
@@ -61,6 +79,20 @@ class JSONReaderWriterTest extends Specification {
         regionEntity.name == readRegion.name
         regionEntity.enabled == readRegion.enabled
         regionEntity.isDefault == readRegion.isDefault
+    }
+
+    def "regions reader throws bad request if root is not found"() {
+        given:
+        def regionEntity = region("name", true, false)
+
+        when:
+        def json = '{ "regions": {} }'
+
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
+        readerForRegions.readFrom(Regions.class, null, null, null, null, arrayInputStream)
+
+        then:
+        thrown(BadRequestException)
     }
 
     def "can read/write question as json"() {

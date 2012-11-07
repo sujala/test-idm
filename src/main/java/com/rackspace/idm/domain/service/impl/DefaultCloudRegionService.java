@@ -64,20 +64,20 @@ public class DefaultCloudRegionService implements CloudRegionService {
             throw new DuplicateException(REGION_NAME_ALREADY_EXISTS);
         }
 
-        if (region.getIsDefault()) {
-            setAsOnlyDefaultRegion(region);
-        }
+        setAsOnlyDefaultRegion(region);
 
         logger.info("Adding Region: {}", region);
         regionDao.addRegion(region);
     }
 
     private void setAsOnlyDefaultRegion(Region region) {
-        Region defaultRegion = regionDao.getDefaultRegion(region.getCloud());
+        if (region.getIsDefault() && region.getIsEnabled()) {
+            Region defaultRegion = regionDao.getDefaultRegion(region.getCloud());
 
-        if (defaultRegion != null && !defaultRegion.getName().equals(region.getName())) {
-            defaultRegion.setIsDefault(false);
-            regionDao.updateRegion(defaultRegion);
+            if (defaultRegion != null && !defaultRegion.getName().equals(region.getName())) {
+                defaultRegion.setIsDefault(false);
+                regionDao.updateRegion(defaultRegion);
+            }
         }
     }
 
@@ -90,33 +90,33 @@ public class DefaultCloudRegionService implements CloudRegionService {
             throw new BadRequestException(REGION_CANNOT_BE_NULL);
         }
 
-        Region updateRegion = checkAndGetRegion(regionId);
+        Region oldRegion = checkAndGetRegion(regionId);
 
-        if (!StringUtils.isBlank(region.getName()) && !region.getName().equals(updateRegion.getName())) {
+        if (!StringUtils.isBlank(region.getName()) && !region.getName().equals(oldRegion.getName())) {
             throw new BadRequestException(REGION_NAME_CANNOT_BE_UPDATED);
         }
 
         if (StringUtils.isBlank(region.getCloud())) {
-            updateRegion.setCloud(null);
+            oldRegion.setCloud(null);
         }
 
-        if (!region.getIsDefault() && updateRegion.getIsDefault()) {
-            throw new BadRequestException(DEFAULT_REGION_CANNOT_BE_SET_NONDEFAULT);
+        if (oldRegion.getIsDefault() && oldRegion.getIsEnabled()) {
+            if (!region.getIsDefault()) {
+                throw new BadRequestException(DEFAULT_REGION_CANNOT_BE_SET_NONDEFAULT);
+            }
+
+            if (!region.getIsEnabled()) {
+                throw new BadRequestException(DEFAULT_REGION_CANNOT_BE_DISABLED);
+            }
         }
 
-        if (!region.getIsEnabled() && updateRegion.getIsDefault()) {
-            throw new BadRequestException(DEFAULT_REGION_CANNOT_BE_DISABLED);
-        }
+        setAsOnlyDefaultRegion(region);
 
-        if (region.getIsDefault()) {
-            setAsOnlyDefaultRegion(region);
-        }
+        oldRegion.setIsDefault(region.getIsDefault());
+        oldRegion.setIsEnabled(region.getIsEnabled());
 
-        updateRegion.setIsDefault(region.getIsDefault());
-        updateRegion.setIsEnabled(region.getIsEnabled());
-
-        logger.info("Updating Region: {}", updateRegion);
-        regionDao.updateRegion(updateRegion);
+        logger.info("Updating Region: {}", oldRegion);
+        regionDao.updateRegion(oldRegion);
     }
 
     @Override

@@ -24,6 +24,6 @@ public class JSONReaderForQuestion extends JSONReaderForEntity<Question> impleme
 
     @Override
     public Question readFrom(Class<Question> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream) throws IOException, WebApplicationException {
-        return read(JSONConstants.RAX_AUTH_QUESTION, JSONConstants.QUESTION, entityStream);
+        return read(JSONConstants.RAX_AUTH_QUESTION, entityStream);
     }
 }

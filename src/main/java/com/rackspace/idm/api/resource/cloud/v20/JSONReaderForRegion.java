@@ -27,7 +27,7 @@ import java.lang.reflect.Type;
  */
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
-public class JSONReaderForRegion implements MessageBodyReader<Region> {
+public class JSONReaderForRegion extends JSONReaderForEntity<Region> implements MessageBodyReader<Region> {
     @Override
     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return type == Region.class;
@@ -35,40 +35,6 @@ public class JSONReaderForRegion implements MessageBodyReader<Region> {
 
     @Override
     public Region readFrom(Class<Region> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream) throws IOException, WebApplicationException {
-        String jsonBody = IOUtils.toString(entityStream, JSONConstants.UTF_8);
-        Region object = getRegionFromJSONString(jsonBody);
-        return object;
-    }
-
-    public static Region getRegionFromJSONString(String jsonBody) {
-        Region region = new Region();
-
-        try {
-            JSONParser parser = new JSONParser();
-            JSONObject outer = (JSONObject) parser.parse(jsonBody);
-
-            if (outer.containsKey(JSONConstants.RAX_AUTH_REGION)) {
-                JSONObject jsonRegion = (JSONObject) parser.parse(outer.get(JSONConstants.RAX_AUTH_REGION).toString());
-                Object name = jsonRegion.get(JSONConstants.NAME);
-                Object enabled = jsonRegion.get(JSONConstants.ENABLED);
-                Object isDefault = jsonRegion.get(JSONConstants.IS_DEFAULT);
-
-                if (name != null) {
-                    region.setName(name.toString());
-                }
-
-                if (enabled != null) {
-                    region.setEnabled(Boolean.valueOf(enabled.toString()));
-                }
-
-                if (isDefault != null) {
-                    region.setIsDefault(Boolean.valueOf(isDefault.toString()));
-                }
-            }
-        } catch (Exception e) {
-            throw new BadRequestException("Invalid json request body", e);
-        }
-
-        return region;
+        return read(JSONConstants.RAX_AUTH_REGION, entityStream);
     }
 }

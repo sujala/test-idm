@@ -205,6 +205,21 @@ class DefaultCloudRegionServiceTest extends Specification {
         thrown(BadRequestException)
     }
 
+    def "create region with default not enabled does not change other regions"() {
+        given:
+        setupMocks()
+        def region1 = region("ORD", "US", true, true)
+        def region2 = region("DFW", "US", false, true)
+
+        regionDao.getDefaultRegion(_) >> region1
+
+        when:
+        cloudRegionService.addRegion(region2)
+
+        then:
+        region1.isDefault == true
+    }
+
     def region(String name, String cloud, Boolean isEnabled, Boolean isDefault) {
         new Region().with {
             it.name = name

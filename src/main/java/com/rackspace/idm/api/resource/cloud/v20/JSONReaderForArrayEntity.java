@@ -32,7 +32,9 @@ public class JSONReaderForArrayEntity<T> {
             JSONObject newOuter = new JSONObject();
             JSONArray middle = new JSONArray();
 
-            if (inner != null) {
+            if (inner == null) {
+                throw new BadRequestException("Invalid json request body");
+            } else {
                 for (Object object : inner) {
                     middle.add(object);
                 }
