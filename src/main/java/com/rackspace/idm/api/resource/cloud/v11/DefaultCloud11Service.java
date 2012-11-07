@@ -362,7 +362,6 @@ public class DefaultCloud11Service implements Cloud11Service {
             }
 
             userValidator.validateUsername(user.getId());
-            validateMossoId(user.getMossoId());
 
             User existingUser = userService.getUser(user.getId());
             if (existingUser != null) {
@@ -376,6 +375,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             User userDO = this.userConverterCloudV11.toUserDO(user);
             userDO.setEnabled(true);
+            validateMossoId(user.getMossoId());
 
             // V1.1 Setting Domain ID as Mosso ID
             userDO.setDomainId(domainService.createNewDomain(userDO.getMossoId().toString()));
