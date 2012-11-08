@@ -780,6 +780,13 @@ public class Cloud20VersionResource {
     }
 
     @GET
+    @Path("RAX-AUTH/service-apis")
+    public Response getServiceApis(
+            @HeaderParam(X_AUTH_TOKEN) String authToken){
+        return getCloud20Service().getServiceApis(authToken).build();
+    }
+
+    @GET
     @Path("RAX-AUTH/service-apis/{type}/{version}/capabilities")
     public Response getCapabilities(
             @HeaderParam(X_AUTH_TOKEN) String authToken,

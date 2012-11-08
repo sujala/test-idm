@@ -7,6 +7,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Question;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ServiceApis;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.JSONConstants;
@@ -2177,7 +2178,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
             List<com.rackspace.idm.domain.entity.Capability> capabilitiesDO = capabilityService.getCapabilities(type, version);
             Capabilities capabilities = capabilityConverterCloudV20.toCapabilities(capabilitiesDO).getValue();
-            return Response.ok(objFactories.getRackspaceIdentityExtRaxgaV1Factory().createCapabilities(capabilities).getValue());
+            return Response.ok(capabilities);
         }catch (Exception ex){
             return exceptionHandler.exceptionResponse(ex);
         }
@@ -2192,6 +2193,13 @@ public class DefaultCloud20Service implements Cloud20Service {
         }catch (Exception ex){
                  return exceptionHandler.exceptionResponse(ex);
         }
+    }
+
+    @Override
+    public ResponseBuilder getServiceApis(String authToken){
+        authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+        ServiceApis serviceApis = capabilityConverterCloudV20.toServiceApis(capabilityService.getServiceApis()).getValue();
+        return Response.ok().entity(serviceApis);
     }
 
     public ResponseBuilder listUsersWithRole(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String roleId, String marker, String limit) {

@@ -14,6 +14,8 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PolicyAlgorithm
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ServiceApis
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ServiceApi
 
 class JSONReaderWriterTest extends Specification {
 
@@ -23,6 +25,7 @@ class JSONReaderWriterTest extends Specification {
     @Shared JSONWriterForQuestion writerForQuestion = new JSONWriterForQuestion()
     @Shared JSONWriterForQuestions writerForQuestions = new JSONWriterForQuestions()
     @Shared JSONWriterForCapabilities writerForCapabilities = new JSONWriterForCapabilities()
+    @Shared JSONWriterForServiceApis writerForServiceApis = new JSONWriterForServiceApis()
     @Shared JSONReaderForPolicies readerForPolicies = new JSONReaderForPolicies()
     @Shared JSONReaderForPolicy readerForPolicy = new JSONReaderForPolicy()
     @Shared JSONReaderForQuestion readerForQuestion = new JSONReaderForQuestion()
@@ -97,7 +100,7 @@ class JSONReaderWriterTest extends Specification {
 
     def "can read/write question as json"() {
         given:
-        def question = quesiton("id", "question")
+        def question = question("id", "question")
 
         when:
         ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
@@ -116,7 +119,7 @@ class JSONReaderWriterTest extends Specification {
     def "can write questions as json"() {
         given:
         def questions = new Questions()
-        def question = quesiton("id", "question")
+        def question = question("id", "question")
         questions.question.add(question)
 
         when:
@@ -264,6 +267,54 @@ class JSONReaderWriterTest extends Specification {
         readDomain.name == "name"
     }
 
+    def "should be able to write empty list of policies"() {
+        given:
+        def capabilities = new Capabilities()
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForCapabilities.writeTo(capabilities, Capabilities, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+
+        then:
+        json != null
+    }
+
+    def "can read/write serviceApis json" () {
+        given:
+        List<ServiceApi> serviceApis  = new ArrayList<ServiceApi>();
+        serviceApis.add(getServiceApi("computeTest","1","desc"))
+        def policiesEntity = getServiceApis(serviceApis)
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForServiceApis.writeTo(policiesEntity,ServiceApis,null,null,null,null,arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        InputStream inputStream = IOUtils.toInputStream(json)
+
+        then:
+        json != null
+
+    }
+
+    def getServiceApi(String type, String version, String description) {
+        new ServiceApi().with {
+            it.type = type
+            it.version = version
+            it.description = description
+            return it
+        }
+    }
+
+    def getServiceApis(ArrayList<ServiceApi> serviceApis) {
+        new ServiceApis().with {
+            for(ServiceApi api : serviceApis){
+                it.serviceApi.add(api)
+            }
+            return it
+        }
+    }
+
     def getDomain(String id, String name, Boolean enabled, String description) {
         new Domain().with {
             it.id = id
@@ -298,19 +349,6 @@ class JSONReaderWriterTest extends Specification {
         }
     }
 
-    def "should be able to write empty list of policies"() {
-        given:
-        def capabilities = new Capabilities()
-
-        when:
-        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
-        writerForCapabilities.writeTo(capabilities, Capabilities, null, null, null, null, arrayOutputStream)
-        def json = arrayOutputStream.toString()
-
-        then:
-        json != null
-    }
-
     def getCapabilities(List<Capability> capabilities) {
         new Capabilities().with {
             for(Capability capability : capabilities){
@@ -334,7 +372,7 @@ class JSONReaderWriterTest extends Specification {
         }
     }
 
-    def quesiton(String id, String question) {
+    def question(String id, String question) {
         new Question().with {
             it.id = id
             it.question = question

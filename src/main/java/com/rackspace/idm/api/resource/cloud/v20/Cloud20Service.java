@@ -230,6 +230,8 @@ public interface Cloud20Service {
 
     ResponseBuilder removeCapabilities(String token, String type, String version);
 
+    ResponseBuilder getServiceApis(String authToken);
+
     ResponseBuilder listUsersWithRole(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String roleId, String marker, String limit);
 
     ResponseBuilder addRegion(UriInfo uriInfo, String authToken, Region region);

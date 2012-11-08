@@ -2,6 +2,8 @@ package com.rackspace.idm.api.converter.cloudv20;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Capabilities;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Capability;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ServiceApi;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ServiceApis;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.exception.BadRequestException;
 import org.dozer.Mapper;
@@ -63,5 +65,19 @@ public class CapabilityConverterCloudV20 {
             }
 
         return capabilitiesDO;
+    }
+
+    public JAXBElement<ServiceApis> toServiceApis(List<com.rackspace.idm.domain.entity.ServiceApi> serviceApis) {
+        ServiceApis serviceApisEntity = objFactories.getRackspaceIdentityExtRaxgaV1Factory().createServiceApis();
+        if (serviceApis != null) {
+            for (com.rackspace.idm.domain.entity.ServiceApi serviceApi : serviceApis) {
+                serviceApisEntity.getServiceApi().add(toServiceApi(serviceApi));
+            }
+        }
+        return objFactories.getRackspaceIdentityExtRaxgaV1Factory().createServiceApis(serviceApisEntity);
+    }
+
+    private ServiceApi toServiceApi(com.rackspace.idm.domain.entity.ServiceApi serviceApi) {
+        return mapper.map(serviceApi, ServiceApi.class);
     }
 }

@@ -3552,5 +3552,12 @@ public class DelegateCloud20ServiceTest {
         Response.ResponseBuilder responseBuilder = delegateCloud20Service.deleteQuestion(null, null);
         assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
     }
+
+    @Test
+    public void getServiceApis_throwsNotImplementedException() throws Exception {
+        when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
+        Response.ResponseBuilder responseBuilder = delegateCloud20Service.getServiceApis(null);
+        assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
+    }
 }
 

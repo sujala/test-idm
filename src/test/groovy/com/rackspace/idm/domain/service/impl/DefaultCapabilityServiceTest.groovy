@@ -13,6 +13,9 @@ import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.exception.DuplicateException
 import com.rackspace.idm.domain.dao.impl.LdapCapabilityRepository
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Capabilities
+import com.rackspace.idm.domain.entity.ServiceApis
+import com.rackspace.idm.domain.dao.impl.LdapServiceApiRepository
+import com.rackspace.idm.domain.entity.ServiceApi
 
 /**
  * Created by IntelliJ IDEA.
@@ -26,7 +29,8 @@ class DefaultCapabilityServiceTest extends Specification {
     @Shared def random
 
     @Shared LdapCapabilityRepository ldapCapabilityRepository
-    @Shared DefaultCapabilityService defaultCapabilityService;
+    @Shared LdapServiceApiRepository ldapServiceApiRepository
+    @Shared DefaultCapabilityService defaultCapabilityService
 
     def setupSpec() {
         random = ("$randomness").replace('-', "")
@@ -237,6 +241,38 @@ class DefaultCapabilityServiceTest extends Specification {
         then: thrown(BadRequestException)
     }
 
+    def "getServiceApis"(){
+        given:
+        setupMocks()
+        ServiceApi api = new ServiceApi()
+        api.version = "1"
+        api.type = "computeTest"
+        api.description = "Desc"
+        ServiceApi api2 = new ServiceApi()
+        api2.version = "2"
+        api2.type = "computeTest"
+        api2.description = "Desc"
+        ServiceApi api3 = new ServiceApi()
+        api3.version = "1"
+        api3.type = "computeTest"
+        api3.description = "Desc"
+
+        List<ServiceApi> serviceApis1 = new ArrayList<ServiceApi>()
+        serviceApis1.add(api)
+        serviceApis1.add(api2)
+        serviceApis1.add(api3)
+        ldapServiceApiRepository.getObjects(_) >> serviceApis1
+
+        when:
+        List<ServiceApi> serviceApis = defaultCapabilityService.getServiceApis()
+
+        then:
+        serviceApis != null
+        serviceApis.size() == 2
+        serviceApis.get(0).version == "1"
+        serviceApis.get(1).version == "2"
+    }
+
     //Helper Methods
     def getCapability(String action, String id, String name, String description, String url, List<String> resources, String type, String version) {
         new Capability().with {
@@ -255,5 +291,7 @@ class DefaultCapabilityServiceTest extends Specification {
     def setupMocks() {
         ldapCapabilityRepository = Mock()
         defaultCapabilityService.ldapCapabilityRepository = ldapCapabilityRepository
+        ldapServiceApiRepository = Mock()
+        defaultCapabilityService.ldapServiceApiRepository = ldapServiceApiRepository
     }
 }

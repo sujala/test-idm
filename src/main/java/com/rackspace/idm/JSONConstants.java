@@ -47,6 +47,7 @@ public final class JSONConstants {
     public static final String PUBLIC_URL = "publicURL";
     public static final String QUESTION = "question";
     public static final String CAPABILITIES = "capabilities";
+    public static final String SERVICE_APIS = "serviceApis";
     public static final String CAPABILITY = "capability";
     public static final String REGION = "region";
     public static final String RAX_AUTH_REGION = "RAX-AUTH:region";
@@ -87,6 +88,7 @@ public final class JSONConstants {
     public static final String RAX_AUTH_QUESTION = "RAX-AUTH:question";
     public static final String RAX_AUTH_QUESTIONS = "RAX-AUTH:questions";
     public static final String RAX_AUTH_CAPABILITIES = "RAX-AUTH:capabilities";
+    public static final String RAX_AUTH_SERVICE_APIS = "RAX-AUTH:serviceApis";
     public static final Object DISPLAY_NAME_CLOUD = "display-name";
     public static final Object ROLE = "role";
     public static final Object ROLES = "roles";

@@ -2,8 +2,11 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.domain.dao.impl.LdapCapabilityRepository;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
+import com.rackspace.idm.domain.dao.impl.LdapServiceApiRepository;
 import com.rackspace.idm.domain.entity.Capabilities;
 import com.rackspace.idm.domain.entity.Capability;
+import com.rackspace.idm.domain.entity.ServiceApi;
+import com.rackspace.idm.domain.entity.ServiceApis;
 import com.rackspace.idm.domain.service.CapabilityService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateException;
@@ -13,6 +16,7 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -27,6 +31,9 @@ public class DefaultCapabilityService extends LdapRepository implements Capabili
 
     @Autowired
     private LdapCapabilityRepository ldapCapabilityRepository;
+
+    @Autowired
+    private LdapServiceApiRepository ldapServiceApiRepository;
 
     @Override
     public void updateCapabilities(List<Capability> capabilities, String type, String version) {
@@ -123,6 +130,26 @@ public class DefaultCapabilityService extends LdapRepository implements Capabili
         }
     }
 
+    @Override
+    public List<ServiceApi> getServiceApis() {
+        List<ServiceApi> serviceApis = ldapServiceApiRepository.getObjects(createServiceApiFilter());
+        List<ServiceApi> noDup = new ArrayList<ServiceApi>();
+        if(serviceApis != null && serviceApis.size() > 0){
+            noDup = removeDuplicateServices(serviceApis);
+        }
+        return noDup;
+    }
+
+    private List<ServiceApi> removeDuplicateServices(List<ServiceApi> serviceApis) {
+        List<ServiceApi> noDup = new ArrayList<ServiceApi>();
+        for(ServiceApi serviceApi: serviceApis){
+            if(!noDup.contains(serviceApi)){
+                noDup.add(serviceApi);
+            }
+        }
+        return noDup;
+    }
+
     private Filter createCapabilityFilter(String capabilityId, String type, String version) {
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_CAPABILITY_ID, capabilityId)
@@ -132,10 +159,16 @@ public class DefaultCapabilityService extends LdapRepository implements Capabili
     }
 
     private Filter createCapabilitiesFilter(String type, String version) {
-        Filter filter = new LdapSearchBuilder()
+        return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CAPABILITY)
                 .addEqualAttribute(ATTR_VERSION_ID, version)
                 .addEqualAttribute(ATTR_OPENSTACK_TYPE, type).build();
-        return filter;
+    }
+
+    private Filter createServiceApiFilter() {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_BASEURL)
+                .addPresenceAttribute(ATTR_VERSION_ID)
+                .addPresenceAttribute(ATTR_OPENSTACK_TYPE).build();
     }
 }
