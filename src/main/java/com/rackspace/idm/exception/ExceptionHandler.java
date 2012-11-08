@@ -109,7 +109,7 @@ public class ExceptionHandler {
         } else if (ex instanceof UserDisabledException) {
             return userDisabledExceptionResponse(ex.getMessage());
 
-        } else if (ex instanceof DuplicateUsernameException || ex instanceof BaseUrlConflictException) {
+        } else if (ex instanceof DuplicateUsernameException || ex instanceof BaseUrlConflictException || ex instanceof DuplicateException) {
             return conflictExceptionResponse(ex.getMessage());
 
         } else if (ex instanceof NotImplementedException) {
