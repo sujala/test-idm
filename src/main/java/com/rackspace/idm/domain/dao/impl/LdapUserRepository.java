@@ -83,7 +83,11 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         try {
             attributes = getAddAttributes(user);
-            addEntry(userDN, attributes, audit);
+            if (isUsernameUnique(user.getUsername())) { // one more check
+                addEntry(userDN, attributes, audit);
+            }else{
+                throw new DuplicateUsernameException("User with username: '" + user.getUsername() + "' already exists.");
+            }
         } catch (GeneralSecurityException e) {
             getLogger().error(e.getMessage());
             audit.fail(ENCRYPTION_ERROR);

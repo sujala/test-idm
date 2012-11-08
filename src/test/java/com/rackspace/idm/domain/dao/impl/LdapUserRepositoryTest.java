@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.api.resource.pagination.DefaultPaginator;
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
+import com.sun.jersey.api.ConflictException;
 import org.junit.runner.RunWith;
 
 import org.mockito.InjectMocks;
@@ -119,10 +120,23 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
     public void addUser_callsAddEntry() throws Exception {
         User user = new User();
         user.setId("id");
+        user.setUsername("username");
+        doReturn(true).when(spy).isUsernameUnique(user.getUsername());
         doReturn(new Attribute[0]).when(spy).getAddAttributes(user);
         doNothing().when(spy).addEntry(anyString(), any(Attribute[].class), any(Audit.class));
         spy.addUser(user);
         verify(spy).addEntry(anyString(), any(Attribute[].class), any(Audit.class));
+    }
+
+    @Test(expected = DuplicateUsernameException.class)
+    public void addUser_FailsUniqueCheck() throws Exception {
+        User user = new User();
+        user.setId("id");
+        user.setUsername("username");
+        doReturn(false).when(spy).isUsernameUnique(user.getUsername());
+        doReturn(new Attribute[0]).when(spy).getAddAttributes(user);
+        doNothing().when(spy).addEntry(anyString(), any(Attribute[].class), any(Audit.class));
+        spy.addUser(user);
     }
 
     @Test (expected = IllegalArgumentException.class)
