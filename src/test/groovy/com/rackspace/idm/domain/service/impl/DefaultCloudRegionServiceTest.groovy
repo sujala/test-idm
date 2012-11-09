@@ -189,6 +189,19 @@ class DefaultCloudRegionServiceTest extends Specification {
         thrown(BadRequestException)
     }
 
+    def "disabled default region can be deleted"() {
+        given:
+        setupMocks()
+        def region = region("DFW", "US", false, true)
+        regionDao.getRegion(_) >> region
+
+        when:
+        cloudRegionService.deleteRegion("DFW")
+
+        then:
+        1 * regionDao.deleteRegion(_)
+    }
+
     def "default region cannot be disabled"() {
         given:
         setupMocks()

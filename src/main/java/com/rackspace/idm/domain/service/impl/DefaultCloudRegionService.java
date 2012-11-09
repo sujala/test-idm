@@ -126,7 +126,7 @@ public class DefaultCloudRegionService implements CloudRegionService {
         }
 
         Region region = checkAndGetRegion(regionId);
-        if (region.getIsDefault()) {
+        if (region.getIsDefault() && region.getIsEnabled()) {
             throw new BadRequestException(DEFAULT_REGION_CANNOT_BE_DELETED);
         }
 
