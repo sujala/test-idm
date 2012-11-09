@@ -116,7 +116,7 @@ public class Validator20Test {
             validator20.validateUsernameForUpdateOrCreate("jorgenogood!");
             assertTrue("should throw exception",false);
         } catch (BadRequestException ex){
-            assertThat("exception message", ex.getMessage(),equalTo("Username has invalid characters; only alphanumeric characters are allowed."));
+            assertThat("exception message", ex.getMessage(),equalTo("Username has invalid characters."));
         }
     }
 
