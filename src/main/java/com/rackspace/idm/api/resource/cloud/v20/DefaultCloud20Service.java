@@ -1,8 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Capabilities;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Capability;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Question;
@@ -58,6 +57,8 @@ import java.io.InputStream;
 import java.io.StringReader;
 import java.net.URI;
 import java.util.*;
+
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory;
 
 /**
  * Created by IntelliJ IDEA.
@@ -2317,7 +2318,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder getRegions(String authToken) {
         authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-        List<com.rackspace.idm.domain.entity.Region> regions = this.cloudRegionService.getRegions();
+        List<com.rackspace.idm.domain.entity.Region> regions = this.cloudRegionService.getRegions(config.getString("cloud.region"));
         return Response.ok().entity(regionConverterCloudV20.toRegions(regions).getValue());
     }
 

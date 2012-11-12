@@ -135,8 +135,8 @@ public class DefaultCloudRegionService implements CloudRegionService {
     }
 
     @Override
-    public List<Region> getRegions() {
-        return regionDao.getRegions();
+    public List<Region> getRegions(String cloud) {
+        return regionDao.getRegions(cloud);
     }
 
     @Override
