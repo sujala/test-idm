@@ -681,6 +681,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         RackerScopeAccess rsa = null;
         if (authenticationRequest.getCredential().getValue() instanceof PasswordCredentialsRequiredUsername) {
             PasswordCredentialsRequiredUsername creds = (PasswordCredentialsRequiredUsername) authenticationRequest.getCredential().getValue();
+            creds.setUsername(creds.getUsername().trim());
             validator20.validatePasswordCredentials(creds);
             Domain domainDO = domainConverterCloudV20.toDomainDO(domain);
             UserAuthenticationResult result = authenticationService.authenticateDomainUsernamePassword(creds.getUsername(), creds.getPassword(), domainDO);
