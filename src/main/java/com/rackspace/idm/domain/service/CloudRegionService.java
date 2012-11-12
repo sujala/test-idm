@@ -15,7 +15,7 @@ public interface CloudRegionService {
     void addRegion(Region region);
     void updateRegion(String regionId, Region region);
     void deleteRegion(String regionId);
-    List<Region> getRegions();
+    List<Region> getRegions(String cloud);
     Region getDefaultRegion(String cloud);
     Region checkAndGetRegion(String name);
 }

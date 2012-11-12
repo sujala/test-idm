@@ -233,6 +233,17 @@ class DefaultCloudRegionServiceTest extends Specification {
         region1.isDefault == true
     }
 
+    def "get cloud regions calls get regions with cloud id"() {
+        given:
+        setupMocks()
+
+        when:
+        cloudRegionService.getRegions('US')
+
+        then:
+        1 * regionDao.getRegions(_)
+    }
+
     def region(String name, String cloud, Boolean isEnabled, Boolean isDefault) {
         new Region().with {
             it.name = name
