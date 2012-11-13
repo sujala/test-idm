@@ -21,7 +21,6 @@ import com.rackspacecloud.docs.auth.api.v1.User;
 import com.sun.jersey.api.uri.UriBuilderImpl;
 import com.sun.jersey.core.util.Base64;
 import org.apache.commons.configuration.Configuration;
-import org.hamcrest.CoreMatchers;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -2714,20 +2713,23 @@ public class DefaultCloud11ServiceTest {
         User user = new User();
         user.setMossoId(1);
         when(endpointService.getBaseUrlsByBaseUrlType("MOSSO")).thenReturn(cloudBaseUrlList);
-        doNothing().when(spy).addbaseUrlToTenant(any(Tenant.class), eq(cloudBaseUrl));
+        doNothing().when(spy).addbaseUrlToTenant(any(Tenant.class), anyString());
         spy.addMossoTenant(user);
-        verify(spy).addbaseUrlToTenant(any(Tenant.class), eq(cloudBaseUrl));
+        verify(spy).addbaseUrlToTenant(any(Tenant.class), anyString());
     }
 
     @Test
     public void addbaseUrlToTenant_isUkCloudRegionAndRegionIsLon_addsBaseUrlIdToTenant() throws Exception {
+        List<CloudBaseUrl> cloudBaseUrls = new ArrayList<CloudBaseUrl>();
         CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
         cloudBaseUrl.setDef(true);
         cloudBaseUrl.setRegion("Lon");
         cloudBaseUrl.setBaseUrlId(1);
+        cloudBaseUrls.add(cloudBaseUrl);
         Tenant tenant = new Tenant();
+        when(endpointService.getBaseUrlsByBaseUrlType(anyString())).thenReturn(cloudBaseUrls);
         when(config.getString("cloud.region")).thenReturn("UK");
-        spy.addbaseUrlToTenant(tenant, cloudBaseUrl);
+        spy.addbaseUrlToTenant(tenant, "MOSSO");
         assertThat("base url id", tenant.containsBaseUrlId("1"), equalTo(true));
     }
 
@@ -2739,7 +2741,7 @@ public class DefaultCloud11ServiceTest {
         cloudBaseUrl.setBaseUrlId(1);
         Tenant tenant = new Tenant();
         when(config.getString("cloud.region")).thenReturn("UK");
-        spy.addbaseUrlToTenant(tenant, cloudBaseUrl);
+        spy.addbaseUrlToTenant(tenant, "MOSSO");
         assertThat("base url id", tenant.containsBaseUrlId("1"), equalTo(false));
     }
 
@@ -2751,19 +2753,22 @@ public class DefaultCloud11ServiceTest {
         cloudBaseUrl.setBaseUrlId(1);
         Tenant tenant = new Tenant();
         when(config.getString("cloud.region")).thenReturn("notUK");
-        spy.addbaseUrlToTenant(tenant, cloudBaseUrl);
+        spy.addbaseUrlToTenant(tenant, "MOSSO");
         assertThat("base url id", tenant.containsBaseUrlId("1"), equalTo(false));
     }
 
     @Test
     public void addBaseUrlToTenant_notUkCloudRegionAndRegionNotLon_doesNotAddBaseUrlIdToTenant() throws Exception {
+        List<CloudBaseUrl> cloudBaseUrls = new ArrayList<CloudBaseUrl>();
         CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
         cloudBaseUrl.setDef(true);
         cloudBaseUrl.setRegion("notLon");
         cloudBaseUrl.setBaseUrlId(1);
+        cloudBaseUrls.add(cloudBaseUrl);
         Tenant tenant = new Tenant();
         when(config.getString("cloud.region")).thenReturn("notUK");
-        spy.addbaseUrlToTenant(tenant, cloudBaseUrl);
+        when(endpointService.getBaseUrlsByBaseUrlType("MOSSO")).thenReturn(cloudBaseUrls);
+        spy.addbaseUrlToTenant(tenant, "MOSSO");
         assertThat("base url id", tenant.containsBaseUrlId("1"), equalTo(true));
     }
 
@@ -2771,7 +2776,7 @@ public class DefaultCloud11ServiceTest {
     public void addBaseUrlToTenant_cloudBaseUrlGetDefIsFalse_doesNothing() throws Exception {
         CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
         cloudBaseUrl.setDef(false);
-        spy.addbaseUrlToTenant(tenant, cloudBaseUrl);
+        spy.addbaseUrlToTenant(tenant, "MOSSO");
         assertTrue("does nothing", true);
     }
 
