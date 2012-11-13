@@ -187,7 +187,7 @@ class DefaultCloud20ServiceTest extends Specification {
         cloud20Service.addQuestion(uriInfo(), authToken, jaxbQuestion())
 
         then:
-        1 * questionDao.addObject(_)
+        1 * questionDao.addQuestion(_)
     }
 
     def "add question returns 200 on success and location header"() {
@@ -209,7 +209,7 @@ class DefaultCloud20ServiceTest extends Specification {
         createMocks()
         allowAccess()
 
-        questionDao.getObject(_) >> question()
+        questionDao.getQuestion(_) >> question()
 
         when:
         def responseBuilder = cloud20Service.getQuestion(authToken, questionId)
@@ -226,7 +226,7 @@ class DefaultCloud20ServiceTest extends Specification {
         allowAccess()
         def questions = new ArrayList<Question>()
 
-        questionDao.getObjects(_) >> questions
+        questionDao.getQuestions() >> questions
 
         when:
         def responseBuilder = cloud20Service.getQuestions(authToken)
@@ -242,20 +242,20 @@ class DefaultCloud20ServiceTest extends Specification {
         given:
         createMocks()
         allowAccess()
-        questionDao.getObject(_) >> question()
+        questionDao.getQuestion(_) >> question()
 
         when:
         cloud20Service.updateQuestion(authToken, questionId, jaxbQuestion())
 
         then:
-        1 * questionDao.updateObject(_)
+        1 * questionDao.updateQuestion(_)
     }
 
     def "update question returns 204"() {
         given:
         createMocks()
         allowAccess()
-        questionDao.getObject(_) >> question()
+        questionDao.getQuestion(_) >> question()
 
         when:
         def responseBuilder = cloud20Service.updateQuestion(authToken, questionId, jaxbQuestion())
@@ -269,20 +269,20 @@ class DefaultCloud20ServiceTest extends Specification {
         given:
         createMocks()
         allowAccess()
-        questionDao.getObject(_) >> question()
+        questionDao.getQuestion(_) >> question()
 
         when:
         cloud20Service.deleteQuestion(authToken, questionId)
 
         then:
-        1 * questionDao.deleteObject(_)
+        1 * questionDao.deleteQuestion(_)
     }
 
     def "delete question returns 204"() {
         given:
         createMocks()
         allowAccess()
-        questionDao.getObject(_) >> question()
+        questionDao.getQuestion(_) >> question()
 
         when:
         def responseBuilder = cloud20Service.deleteQuestion(authToken, questionId)

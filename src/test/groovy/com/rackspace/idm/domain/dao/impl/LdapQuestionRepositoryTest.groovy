@@ -36,15 +36,15 @@ class LdapQuestionRepositoryTest extends Specification {
         def questionId = "question$sharedRandom"
 
         when:
-        ldapQuestionRepository.addObject(createQuestion(questionId,"What is this?", null))
-        Question question = ldapQuestionRepository.getObject(createSearchFilter(questionId).build())
+        ldapQuestionRepository.addQuestion(createQuestion(questionId,"What is this?", null))
+        Question question = ldapQuestionRepository.getQuestion(questionId)
         Questions questions = new Questions()
-        questions.getQuestion().addAll(ldapQuestionRepository.getObjects(createSearchFilter().build()))
+        questions.getQuestion().addAll(ldapQuestionRepository.getQuestions())
         question.question = "What is this now?";
-        ldapQuestionRepository.updateObject(question)
-        Question question2 = ldapQuestionRepository.getObject(createSearchFilter(questionId).build())
-        ldapQuestionRepository.deleteObject(createSearchFilter(questionId).build())
-        Question question3 = ldapQuestionRepository.getObject(createSearchFilter(questionId).build())
+        ldapQuestionRepository.updateQuestion(question)
+        Question question2 = ldapQuestionRepository.getQuestion(questionId)
+        ldapQuestionRepository.deleteQuestion(questionId)
+        Question question3 = ldapQuestionRepository.getQuestion(questionId)
 
         then:
         question.question == "What is this now?"
@@ -52,11 +52,6 @@ class LdapQuestionRepositoryTest extends Specification {
         questions.question.size() > 0
         question2.question == "What is this now?"
         question3 == null
-    }
-
-    def "null value operations on getQuestion" () {
-        when: ldapQuestionRepository.getObject(null)
-        then: thrown(IllegalStateException)
     }
 
     def createQuestion(String id, String question, String uniqueId) {
