@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.entity;
 
+import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.FilterUsage;
@@ -9,7 +10,7 @@ import com.unboundid.ldap.sdk.persist.LDAPObject;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 @LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_CLIENT_ROLE)
-public class ClientRole implements Auditable {
+public class ClientRole implements Auditable, UniqueId {
     
 	public static final String SUPER_ADMIN_ROLE = "3";
 	public static final String RACKER = "RackerVirtualRole";

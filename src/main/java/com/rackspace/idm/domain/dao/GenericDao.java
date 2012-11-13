@@ -15,10 +15,12 @@ import java.util.List;
 public interface GenericDao<T> {
     List<T> getObjects(Filter searchFilter);
     void addObject(T object);
+    void addObject(T object, String dn);
     T getObject(Filter searchFilter);
     void updateObject(T object);
     void deleteObject(Filter searchFilter);
     String getBaseDn();
     String getLdapEntityClass();
     String getNextId();
+    String addLdapContainer(String dnString, String containerName);
 }

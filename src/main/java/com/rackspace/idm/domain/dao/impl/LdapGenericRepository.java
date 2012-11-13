@@ -63,6 +63,11 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
 
     @Override
     public void addObject(T object) {
+        addObject(object, getBaseDn());
+    }
+
+    @Override
+    public void addObject(T object, String dn) {
         if (object == null) {
             getLogger().error(ERROR_GETTING_OBJECT);
             throw new IllegalArgumentException(ERROR_GETTING_OBJECT);
@@ -71,7 +76,7 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         Audit audit = Audit.log((Auditable)object).add();
         try {
             final LDAPPersister<T> persister = LDAPPersister.getInstance(entityType);
-            persister.add(object, getAppInterface(), getBaseDn());
+            persister.add(object, getAppInterface(), dn);
             audit.succeed();
             getLogger().info("Added: {}", object);
         } catch (final LDAPException e) {
@@ -79,6 +84,34 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
             audit.fail(e.getMessage());
             throw new IllegalStateException(e);
         }
+    }
+
+    @Override
+    public String addLdapContainer(String partialDnString, String containerName) {
+        SearchResultEntry entry = getLdapContainer(partialDnString, containerName);
+        if (entry == null) {
+            Audit audit = Audit.log(String.format("Adding container: %s", containerName));
+            List<Attribute> attributes = new ArrayList<Attribute>();
+            attributes.add(new Attribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACE_CONTAINER));
+            attributes.add(new Attribute(ATTR_NAME, containerName));
+            Attribute[] attributeArray = attributes.toArray(new Attribute[0]);
+            String dn = new LdapDnBuilder(partialDnString).addAttribute(ATTR_NAME, containerName).build();
+            try {
+                getAppInterface().add(dn, attributeArray);
+                audit.succeed();
+                return dn;
+            } catch (LDAPException e) {
+                throw new IllegalStateException(e.getMessage(), e);
+            }
+        }
+        return entry.getDN();
+    }
+
+    private SearchResultEntry getLdapContainer(String dn, String containerName) {
+        Filter filter = new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACE_CONTAINER)
+                .addEqualAttribute(ATTR_NAME, containerName).build();
+        return getSingleEntry(dn, SearchScope.ONE, filter);
     }
 
     @Override

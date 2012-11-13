@@ -207,6 +207,7 @@ public abstract class LdapRepository {
     protected static final String[] ATTR_CAPABILITY_SEARCH_ATTRIBUTES = {"*",ATTR_ACTION,ATTR_NAME};
     protected static final String[] ATTR_QUESTION_SEARCH_ATTRIBUTES = {"*"};
     protected static final String[] ATTR_REGION_SEARCH_ATTRIBUTES = {"*"};
+    protected static final String[] ATTR_CLIENT_ROLE_SEARCH_ATTRIBUTES = {"*"};
     public static final String LDAP_SEARCH_ERROR = "LDAP Search error - {}";
 
     @Autowired
@@ -368,9 +369,7 @@ public abstract class LdapRepository {
                 .addEqualAttribute(ATTR_OBJECT_CLASS,OBJECTCLASS_RACKSPACE_CONTAINER)
                 .addEqualAttribute(ATTR_NAME, name).build();
 
-        SearchResultEntry entry = this.getSingleEntry(parentUniqueId,SearchScope.ONE, filter);
-
-        return entry;
+        return this.getSingleEntry(parentUniqueId, SearchScope.ONE, filter);
     }
     
     protected static final String NEXT_USER_ID = "nextUserId";
