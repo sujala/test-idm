@@ -298,7 +298,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     public ResponseBuilder checkToken(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo)
              {
 
-        if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
+        if (isCloudAuthRoutingEnabled()) {
             String request = getCloudAuthV20Url() + TOKENS + "/" + tokenId;
 
             HashMap<String, Object> params = new HashMap<String, Object>();
