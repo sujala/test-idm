@@ -689,6 +689,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             user.setId(((Racker) result.getUser()).getRackerId());
         } else if (authenticationRequest.getCredential().getValue() instanceof RsaCredentials) {
             RsaCredentials creds = (RsaCredentials) authenticationRequest.getCredential().getValue();
+            creds.setUsername(creds.getUsername().trim());
             validator20.validateUsername(creds.getUsername());
             Domain domainDO = domainConverterCloudV20.toDomainDO(domain);
             UserAuthenticationResult result = authenticationService.authenticateDomainRSA(creds.getUsername(), creds.getTokenKey(), domainDO);
