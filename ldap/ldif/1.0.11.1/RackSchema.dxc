@@ -652,8 +652,8 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.88) = {
 };
 
 schema set attribute (1.3.6.1.4.1.20988.2.1.89) = {
-    name = parentRoleId
-    ldap-names = parentRoleId
+    name = parentRole
+    ldap-names = parentRole
     equality = caseIgnoreMatch
     syntax = directoryString
     description = "parent role of role"
@@ -971,8 +971,7 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.22) = {
         roleRsId
     may-contain
         userRsId,
-    	tenantRsId,
-        parentRoleId
+    	tenantRsId
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.23) = {
@@ -986,6 +985,7 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.23) = {
         clientId
     may-contain
         description
+        parentRole
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.24) = {
