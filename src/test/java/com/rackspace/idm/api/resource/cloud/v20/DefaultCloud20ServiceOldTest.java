@@ -13,6 +13,7 @@ import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Domain;
+import com.rackspace.idm.domain.entity.Question;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
@@ -78,6 +79,7 @@ public class DefaultCloud20ServiceOldTest {
     private TenantService tenantService;
     private EndpointService endpointService;
     private ApplicationService clientService;
+    private QuestionService questionService;
     private UserConverterCloudV20 userConverterCloudV20;
     private TenantConverterCloudV20 tenantConverterCloudV20;
     private TokenConverterCloudV20 tokenConverterCloudV20;
@@ -143,6 +145,7 @@ public class DefaultCloud20ServiceOldTest {
         tenantService = mock(TenantService.class);
         endpointService = mock(EndpointService.class);
         clientService = mock(ApplicationService.class);
+        questionService = mock(QuestionService.class);
         config = mock(Configuration.class);
         cloudKsGroupBuilder = mock(CloudKsGroupBuilder.class);
         atomHopperClient = mock(AtomHopperClient.class);
@@ -182,6 +185,7 @@ public class DefaultCloud20ServiceOldTest {
         defaultCloud20Service.setDomainService(domainService);
         defaultCloud20Service.setDomainConverterCloudV20(domainConverterCloudV20);
         defaultCloud20Service.setAuthenticationService(authenticationService);
+        defaultCloud20Service.setQuestionService(questionService);
 
         //fields
         user = new User();

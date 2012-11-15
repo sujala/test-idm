@@ -2782,10 +2782,25 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException("Excpeting question");
             }
 
+            String questionId = null;
+
+            List<com.rackspace.idm.domain.entity.Question> questions = questionService.getQuestions();
+            for(com.rackspace.idm.domain.entity.Question question : questions){
+                if(secrets.getQuestion().trim().equalsIgnoreCase(question.getQuestion())){
+                    questionId = question.getId();
+                }
+            }
+
             User user = userService.checkAndGetUserById(userId);
 
             user.setSecretAnswer(secrets.getAnswer());
             user.setSecretQuestion(secrets.getQuestion());
+
+            if(questionId != null){
+                user.setSecretQuestionId(questionId);
+            }else {
+                user.setSecretQuestionId("0");
+            }
 
             this.userService.updateUser(user, false);
 
@@ -3402,6 +3417,10 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     public void setDomainService(DomainService domainService) {
         this.domainService = domainService;
+    }
+
+    public void setQuestionService(QuestionService questionService) {
+        this.questionService = questionService;
     }
 }
 

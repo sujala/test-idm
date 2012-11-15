@@ -815,11 +815,13 @@ class DefaultCloud20ServiceTest extends Specification {
         user.username = "name"
         user.secretQuestion = "question"
         user.secretAnswer = "answer"
+        Question question = new Question()
+        question.setQuestion("question")
 
         userDao.getUserById(_) >> user
         userService.getUser(_) >> user
         userDao.getUserByUsername(_) >> user
-        questionDao.getQuestion(_) >>  new Question()
+        questionDao.getQuestion(_) >>  question
 
         when:
         def responseBuilder = cloud20Service.createSecretQA(authToken,"1", secretQA("1", "question", "answer"))

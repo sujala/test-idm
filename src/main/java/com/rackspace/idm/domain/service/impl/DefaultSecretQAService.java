@@ -35,6 +35,10 @@ public class DefaultSecretQAService implements SecretQAService{
             String errMsg = String.format("Question with Id: %s does not exist.", secretQA.getId());
             throw new NotFoundException(errMsg);
         }
+        if (!StringUtils.isBlank(secretQA.getQuestion()) && !question.getQuestion().equalsIgnoreCase(secretQA.getQuestion().trim())) {
+            String errMsg = String.format("Secret question Id: %s does not match question provided.", secretQA.getId());
+            throw new BadRequestException(errMsg);
+        }
         user.setSecretAnswer(secretQA.getAnswer());
         user.setSecretQuestion(question.getQuestion());
         user.setSecretQuestionId(question.getId());

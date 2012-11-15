@@ -38,8 +38,10 @@ class DefaultSecretQAServiceTest extends Specification{
         user.secretQuestion = "my old question?"
         user.secretAnswer = "my old Answer"
         user.secretQuestionId = "2"
+        Question question = new Question();
+        question.setQuestion("My question?")
         defaultUserService.checkAndGetUserById(_) >> user
-        defaultQuestionService.getQuestion(_) >> new Question()
+        defaultQuestionService.getQuestion(_) >> question
 
         when:
         secretQAService.addSecretQA("1",createSecretQA("1","My question?","My answer"))
@@ -153,6 +155,25 @@ class DefaultSecretQAServiceTest extends Specification{
         user.secretAnswer = "my old Answer"
         user.secretQuestionId = "2"
         defaultUserService.checkAndGetUserById(_) >> user
+
+        when:
+        secretQAService.addSecretQA("1",createSecretQA("1","My question?",null))
+
+        then:
+        thrown(BadRequestException)
+    }
+
+    def "Create/Update question mismatch" () {
+        given:
+        setupMocks()
+        User user = new User()
+        user.secretQuestion = "my old question?"
+        user.secretAnswer = "my old Answer"
+        user.secretQuestionId = "2"
+        Question question = new Question();
+        question.setQuestion("My other question?")
+        defaultUserService.checkAndGetUserById(_) >> user
+        defaultQuestionService.getQuestion(_) >> question
 
         when:
         secretQAService.addSecretQA("1",createSecretQA("1","My question?",null))
