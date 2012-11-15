@@ -85,10 +85,13 @@ public final class JSONConstants {
     public static final String SECRET_QUESTION = "secretQuestion";
     public static final String SECRET_ANSWER = "secretAnswer";
     public static final String QUESTIONS = "questions";
+    public static final String SECRETQAS = "secretqas";
     public static final String RAX_AUTH_QUESTION = "RAX-AUTH:question";
     public static final String RAX_AUTH_QUESTIONS = "RAX-AUTH:questions";
     public static final String RAX_AUTH_CAPABILITIES = "RAX-AUTH:capabilities";
     public static final String RAX_AUTH_SERVICE_APIS = "RAX-AUTH:serviceApis";
+    public static final String RAX_AUTH_SECRETQA = "RAX-AUTH:secretqa";
+    public static final String RAX_AUTH_SECRETQAS = "RAX-AUTH:secretqas";
     public static final Object DISPLAY_NAME_CLOUD = "display-name";
     public static final Object ROLE = "role";
     public static final Object ROLES = "roles";

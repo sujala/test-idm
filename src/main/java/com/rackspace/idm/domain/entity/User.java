@@ -63,6 +63,8 @@ public class User implements Auditable {
 
     private DateTime migrationDate;
 
+    private String secretQuestionId;
+
     public User() {
         // Needed by JAX-RS
     }
@@ -323,6 +325,16 @@ public class User implements Auditable {
     public void setSecretAnswer(String secretAnswer) {
         if (secretAnswer != null) {
             this.credential.setSecretAnswer(secretAnswer);
+        }
+    }
+
+    public String getSecretQuestionId() {
+        return credential.getSecretQuestionId();
+    }
+
+    public void setSecretQuestionId(String secretQuestionId) {
+        if (secretQuestionId != null) {
+            this.credential.setSecretQuestionId(secretQuestionId);
         }
     }
 

@@ -253,4 +253,8 @@ public interface Cloud20Service {
     ResponseBuilder updateQuestion(String authToken, String questionId, Question question);
 
     ResponseBuilder deleteQuestion(String authToken, String questionId);
+
+    ResponseBuilder getSecretQAs(String authToken, String userId);
+
+    ResponseBuilder createSecretQA(String authToken, String userId, com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQA secretQA);
 }

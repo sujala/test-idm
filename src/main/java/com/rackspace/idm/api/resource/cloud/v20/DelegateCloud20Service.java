@@ -659,6 +659,16 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
+    public ResponseBuilder getSecretQAs(String authToken, String userId) {
+        return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public ResponseBuilder createSecretQA(String authToken, String userId, com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQA secretQA) {
+        return exceptionHandler.exceptionResponse(new NotImplementedException()); //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
     public ResponseBuilder getUserByName(HttpHeaders httpHeaders, String authToken, String name)  {
         if (isCloudAuthRoutingEnabled() && !userService.userExistsByUsername(name)) {
             String request = getCloudAuthV20Url() + USERS;

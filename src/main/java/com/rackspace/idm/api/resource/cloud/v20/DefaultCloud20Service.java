@@ -6,6 +6,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Question;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQAs;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ServiceApis;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
@@ -57,8 +58,6 @@ import java.io.InputStream;
 import java.io.StringReader;
 import java.net.URI;
 import java.util.*;
-
-import org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory;
 
 /**
  * Created by IntelliJ IDEA.
@@ -183,6 +182,12 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private QuestionConverterCloudV20 questionConverter;
+
+    @Autowired
+    private SecretQAService secretQAService;
+
+    @Autowired
+    private SecretQAConverterCloudV20 secretQAConverterCloudV20;
 
     @Autowired
     private Paginator<User> userPaginator;
@@ -696,7 +701,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             user.setId(((Racker) result.getUser()).getRackerId());
         }
         rsa = (RackerScopeAccess)scopeAccessService.getValidRackerScopeAccessForClientId(user.getUniqueId(), user.getId(), getCloudAuthClientId());
-        
+
         usa = new UserScopeAccess();
         usa.setUsername(rsa.getRackerId());
         usa.setAccessTokenExp(rsa.getAccessTokenExp());
@@ -2402,6 +2407,53 @@ public class DefaultCloud20Service implements Cloud20Service {
             return Response.noContent();
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public ResponseBuilder getSecretQAs(String authToken, String userId) {
+        try {
+            isUserAllowed(authToken, userId);
+
+            com.rackspace.idm.domain.entity.SecretQAs secretQAsEntity = secretQAService.getSecretQAs(userId);
+            SecretQAs secretQAs = secretQAConverterCloudV20.toSecretQAs(secretQAsEntity.getSecretqa()).getValue();
+            return Response.ok(secretQAs);
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public ResponseBuilder createSecretQA(String authToken, String userId, com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQA secretQA) {
+        try{
+            isUserAllowed(authToken, userId);
+            com.rackspace.idm.domain.entity.SecretQA secretQAEntity = secretQAConverterCloudV20.fromSecretQA(secretQA);
+            secretQAService.addSecretQA(userId, secretQAEntity);
+            return Response.ok();
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    private void isUserAllowed(String authToken, String userId) {
+        ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
+        authorizationService.verifyUserLevelAccess(scopeAccess);
+        User caller = getUser(scopeAccess);
+        User user = userService.checkAndGetUserById(userId);
+        boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccess);
+        Boolean access = false;
+        if (userId.equals(caller.getId())) {
+            access = true;
+        } else if (callerIsUserAdmin) {
+            if (caller.getDomainId().equals(user.getDomainId())) {
+                access = true;
+            }
+        } else {
+            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            access = true;
+        }
+        if (!access) {
+            throw new ForbiddenException(NOT_AUTHORIZED);
         }
     }
 

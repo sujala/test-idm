@@ -34,7 +34,9 @@ import com.rackspace.idm.api.resource.pagination.Paginator
 import com.rackspace.idm.domain.service.ApplicationService
 import com.rackspace.idm.domain.dao.impl.LdapApplicationRepository
 import com.rackspace.idm.exception.NotFoundException
-import com.rackspace.idm.domain.dao.impl.LdapTenantRepository;
+import com.rackspace.idm.domain.dao.impl.LdapTenantRepository
+import org.joda.time.DateTime
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQA;
 
 /*
  This class uses the application context but mocks the ldap interactions
@@ -778,6 +780,62 @@ class DefaultCloud20ServiceTest extends Specification {
 
         then:
         limit == value
+    }
+
+    def "getSecretQA returns 200" () {
+        given:
+        createMocks()
+        allowAccess()
+
+        User user = new User()
+        user.id = "1"
+        user.username = "name"
+        user.secretQuestion = "question"
+        user.secretAnswer = "answer"
+
+        userDao.getUserById(_) >> user
+        userService.getUser(_) >> user
+        userDao.getUserByUsername(_) >> user
+
+        when:
+        def responseBuilder = cloud20Service.getSecretQAs(authToken,"1")
+
+        then:
+        Response response = responseBuilder.build()
+        response.status == 200
+    }
+
+    def "createSecretQA returns 200" () {
+        given:
+        createMocks()
+        allowAccess()
+
+        User user = new User()
+        user.id = "1"
+        user.username = "name"
+        user.secretQuestion = "question"
+        user.secretAnswer = "answer"
+
+        userDao.getUserById(_) >> user
+        userService.getUser(_) >> user
+        userDao.getUserByUsername(_) >> user
+        questionDao.getQuestion(_) >>  new Question()
+
+        when:
+        def responseBuilder = cloud20Service.createSecretQA(authToken,"1", secretQA("1", "question", "answer"))
+
+        then:
+        Response response = responseBuilder.build()
+        response.status == 200
+    }
+
+    def secretQA(String id, String question, String answer) {
+        new SecretQA().with {
+            it.id = id
+            it.question = question
+            it.answer = answer
+            return it
+        }
     }
 
     //helper methods

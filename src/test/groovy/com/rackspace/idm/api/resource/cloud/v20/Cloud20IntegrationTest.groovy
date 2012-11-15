@@ -23,6 +23,8 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XML
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQA
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQAs
 
 class Cloud20IntegrationTest extends Specification {
     @Shared WebResource resource
@@ -761,6 +763,101 @@ class Cloud20IntegrationTest extends Specification {
         response.status == 404
     }
 
+    def "Create secretQA and get secretQA" () {
+        when:
+        def response = createSecretQA(serviceAdminToken,defaultUser.getId(), secretQA("1","answer"))
+        def secretQAResponse = getSecretQA(serviceAdminToken, defaultUser.getId()).getEntity(SecretQAs)
+
+        then:
+        response.status == 200
+        secretQAResponse.secretqa.get(0).answer == "answer"
+    }
+
+    def "Create/Get secretQA returns 403" () {
+        expect:
+        response.status == 403
+
+        where:
+        response << [
+                createSecretQA(defaultUserToken, serviceAdmin.getId(), secretQA("1", "answer")),
+                createSecretQA(defaultUserToken, identityAdmin.getId(), secretQA("1", "answer")),
+                createSecretQA(defaultUserToken, userAdmin.getId(), secretQA("1", "answer")),
+                createSecretQA(userAdminToken, serviceAdmin.getId(), secretQA("1", "answer")),
+                createSecretQA(userAdminToken, identityAdmin.getId(), secretQA("1", "answer")),
+                createSecretQA(userAdminToken, userAdminTwo.getId(), secretQA("1", "answer")),
+                createSecretQA(userAdminToken, defaultUserForAdminTwo.getId(), secretQA("1", "answer")),
+                getSecretQA(defaultUserToken, serviceAdmin.getId()),
+                getSecretQA(defaultUserToken, identityAdmin.getId()),
+                getSecretQA(userAdminToken, serviceAdmin.getId()),
+                getSecretQA(userAdminToken, identityAdmin.getId()),
+                getSecretQA(userAdminToken, userAdminTwo.getId()),
+                getSecretQA(userAdminToken, defaultUserForAdminTwo.getId())
+
+        ]
+
+    }
+
+    def "Create/Get secretQA returns 401" () {
+        expect:
+        response.status == 401
+
+        where:
+        response << [
+                createSecretQA("", defaultUser.getId(), secretQA("1", "answer")),
+                createSecretQA("", defaultUser.getId(), secretQA("1", "answer")),
+                createSecretQA(null, defaultUser.getId(), secretQA("1", "answer")),
+                createSecretQA(null, defaultUser.getId(), secretQA("1", "answer")),
+                getSecretQA("", serviceAdmin.getId()),
+                getSecretQA("", identityAdmin.getId()),
+                getSecretQA(null, serviceAdmin.getId()),
+                getSecretQA(null, identityAdmin.getId()),
+        ]
+
+    }
+
+    def "Create/Get secretQA returns 400" () {
+        expect:
+        response.status == 400
+
+        where:
+        response << [
+                createSecretQA(serviceAdminToken, defaultUser.getId(), secretQA(null, "answer")),
+                createSecretQA(serviceAdminToken, defaultUser.getId(), secretQA("1", null))
+        ]
+
+    }
+
+    def "Create/Get secretQA returns 404" () {
+        expect:
+        response.status == 404
+
+        where:
+        response << [
+                createSecretQA(serviceAdminToken, "badId", secretQA("1", "answer")),
+                createSecretQA(serviceAdminToken, defaultUser.getId(), secretQA("badId", "answer")),
+                getSecretQA(serviceAdminToken, "badId")
+        ]
+
+    }
+
+    def "Create/Get secretQA returns 200" () {
+        expect:
+        response.status == 200
+
+        where:
+        response << [
+                createSecretQA(serviceAdminToken, defaultUser.getId(), secretQA("1", "answer")),
+                createSecretQA(identityAdminToken, defaultUser.getId(), secretQA("1", "answer")),
+                createSecretQA(userAdminToken, defaultUser.getId(), secretQA("1", "answer")),
+                createSecretQA(defaultUserToken, defaultUser.getId(), secretQA("1", "answer")),
+                getSecretQA(serviceAdminToken, defaultUser.getId()),
+                getSecretQA(identityAdminToken, defaultUser.getId()),
+                getSecretQA(userAdminToken, defaultUser.getId()),
+                getSecretQA(defaultUserToken, defaultUser.getId()),
+        ]
+
+    }
+
     //Resource Calls
     def createUser(String token, user) {
         resource.path(path).path('users').header(X_AUTH_TOKEN, token).entity(user).post(ClientResponse)
@@ -945,6 +1042,14 @@ class Cloud20IntegrationTest extends Specification {
         resource.path(path).path(OS_KSCATALOG).path("endpointTemplates").path(endpointTemplateId).path(RAX_AUTH).path("policies").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(policies).put(ClientResponse)
     }
 
+    def getSecretQA(String token, String userId){
+        resource.path(path).path('users').path(userId).path(RAX_AUTH).path('secretqas').header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+    }
+
+    def createSecretQA(String token, String userId, secretqa){
+        resource.path(path).path('users').path(userId).path(RAX_AUTH).path('secretqas').header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(secretqa).post(ClientResponse)
+    }
+
     //Helper Methods
     def getCredentials(String username, String password) {
         new PasswordCredentialsRequiredUsername().with {
@@ -1073,6 +1178,14 @@ class Cloud20IntegrationTest extends Specification {
             it.name = name
             it.blob = "blob"
             it.type = "type"
+            return it
+        }
+    }
+
+    def secretQA(String id, String answer) {
+        new SecretQA().with {
+            it.id = id
+            it.answer = answer
             return it
         }
     }

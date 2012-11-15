@@ -76,7 +76,7 @@ public class DefaultQuestionService implements QuestionService {
     private Question checkAndGetQuestion(String questionId) {
         Question question = questionDao.getQuestion(questionId);
         if (question == null) {
-            throw new NotFoundException(String.format("Question width id %s does not exist", questionId));
+            throw new NotFoundException(String.format("Question with id %s does not exist", questionId));
         }
         return question;
     }
