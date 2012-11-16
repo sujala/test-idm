@@ -1,14 +1,13 @@
 package com.rackspace.idm.domain.dao.impl
 
-import org.springframework.test.context.ContextConfiguration
-import spock.lang.Specification
-import spock.lang.Shared
-import org.springframework.beans.factory.annotation.Autowired
-import com.rackspace.idm.domain.service.EndpointService
-import com.rackspace.idm.domain.entity.CloudBaseUrl
-import com.rackspace.idm.domain.entity.Capabilities
-import com.rackspace.idm.domain.entity.Capability
 import com.rackspace.idm.domain.dao.impl.LdapRepository.LdapSearchBuilder
+import com.rackspace.idm.domain.entity.Capability
+import com.rackspace.idm.domain.entity.CloudBaseUrl
+import com.rackspace.idm.domain.service.EndpointService
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.test.context.ContextConfiguration
+import spock.lang.Shared
+import spock.lang.Specification
 
 /**
  * Created by IntelliJ IDEA.
@@ -70,6 +69,7 @@ class LdapCapabilityRepositoryTest extends Specification {
             it.setEnabled(enabled);
             it.setGlobal(global);
             it.setOpenstackType(OSType);
+            it.def = false
             return it
         }
     }

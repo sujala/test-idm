@@ -16,7 +16,7 @@ public class JenkinsPropertyFileConfiguration {
     @Bean
     @Scope(value = "singleton")
     public Configuration getConfig() throws ConfigurationException {
-    	final String externalConfigFile = "target/config/JENKINS/" + CONFIG_FILE_NAME;
+    	final String externalConfigFile = "target/config/OPENLDAP/" + CONFIG_FILE_NAME;
         return new PropertiesConfiguration(externalConfigFile);
     }
 

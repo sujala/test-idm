@@ -199,7 +199,7 @@ public class LdapCustomerRepositoryTest extends InMemoryLdapIntegrationTest{
         Attribute[] result = ldapCustomerRepository.getAddAttributes(customer);
         assertThat("id", result[1].getValue(), equalTo("id"));
         assertThat("rcn", result[2].getValue(), equalTo("rcn"));
-        assertThat("enabled", result[3].getValue(), equalTo("true"));
+        assertThat("enabled", result[3].getValue(), equalTo("TRUE"));
     }
 
     @Test

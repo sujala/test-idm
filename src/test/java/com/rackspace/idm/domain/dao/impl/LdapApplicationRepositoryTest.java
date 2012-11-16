@@ -666,12 +666,12 @@ public class LdapApplicationRepositoryTest{
         assertThat("rcn", result[4].getValue(), equalTo("rcn"));
         assertThat("client secret", result[5].getValue(), equalTo("secret"));
         assertThat("client password", cryptHelper.decrypt(result[6].getValueByteArray()), equalTo("secret"));
-        assertThat("enabled", result[7].getValue(), equalTo("true"));
+        assertThat("enabled", result[7].getValue(), equalTo("TRUE"));
         assertThat("title", result[8].getValue(), equalTo("title"));
         assertThat("description", result[9].getValue(), equalTo("description"));
         assertThat("scope", result[10].getValue(), equalTo("scope"));
         assertThat("url", result[11].getValue(), equalTo("url"));
-        assertThat("userForDefaultRegion", result[12].getValue(), equalTo("true"));
+        assertThat("userForDefaultRegion", result[12].getValue(), equalTo("TRUE"));
     }
 
     @Test
