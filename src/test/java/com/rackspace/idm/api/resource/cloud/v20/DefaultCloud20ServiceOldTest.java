@@ -4545,9 +4545,12 @@ public class DefaultCloud20ServiceOldTest {
         user.setRegion("region");
         user.setId(userId);
         userOS.setId(userId);
+        User user2 = new User();
+        user2.setRegion("region2");
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(userService.getUserByAuthToken(authToken)).thenReturn(user);
+        when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(user2);
         ScopeAccess value = new ScopeAccess();
         when(scopeAccessService.getScopeAccessByUserId(userId)).thenReturn(value);
         when(authorizationService.hasUserAdminRole(value)).thenReturn(true);
@@ -4589,8 +4592,14 @@ public class DefaultCloud20ServiceOldTest {
         user.setRegion("region");
         userOS.setId(userId);
 
+        User user2 = new User();
+        user2.setRegion("region2");
+
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
+
+        when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(user2);
+
         doReturn(true).when(authorizationService).authorizeCloudUser(any(ScopeAccess.class));
         doReturn(false).when(authorizationService).authorizeCloudUserAdmin(any(ScopeAccess.class));
         when(userService.getUserByAuthToken(authToken)).thenReturn(user);
