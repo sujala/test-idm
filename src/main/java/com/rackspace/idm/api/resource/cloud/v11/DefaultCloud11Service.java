@@ -367,7 +367,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             if (existingUser != null) {
                 throw new DuplicateUsernameException("Username " + user.getId() + " already exists");
             }
-            if (user.getMossoId() == null) {
+            if (user.getMossoId() == null || user.getMossoId().equals(0)) {
                 String errorMsg = "Expecting mossoId";
                 logger.warn(errorMsg);
                 throw new BadRequestException(errorMsg);
