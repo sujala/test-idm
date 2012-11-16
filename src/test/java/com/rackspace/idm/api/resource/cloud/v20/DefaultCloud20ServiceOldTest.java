@@ -5538,6 +5538,7 @@ public class DefaultCloud20ServiceOldTest {
     public void impersonate_scopeAccessInstanceOfRackerScopeAccess_returns200() throws Exception {
         RackerScopeAccess rackerScopeAccess = new RackerScopeAccess();
         user.setEnabled(true);
+        when(spy.isCloudAuthRoutingEnabled()).thenReturn(true);
         org.openstack.docs.identity.api.v2.User impersonateUser = new org.openstack.docs.identity.api.v2.User();
         impersonateUser.setUsername("impersonateUser");
         impersonateUser.setId("impersonateUserId");
@@ -5555,6 +5556,7 @@ public class DefaultCloud20ServiceOldTest {
     public void impersonate_scopeAccessInstanceOfUserScopeAccess_returns200() throws Exception {
         UserScopeAccess userScopeAccess = new UserScopeAccess();
         user.setEnabled(true);
+        when(spy.isCloudAuthRoutingEnabled()).thenReturn(true);
         org.openstack.docs.identity.api.v2.User impersonateUser = new org.openstack.docs.identity.api.v2.User();
         impersonateUser.setUsername("impersonateUser");
         impersonateUser.setId("impersonateUserId");
@@ -5581,6 +5583,7 @@ public class DefaultCloud20ServiceOldTest {
         ImpersonationRequest impersonationRequest = new ImpersonationRequest();
         impersonationRequest.setUser(impersonateUser);
 
+        when(spy.isCloudAuthRoutingEnabled()).thenReturn(true);
         when(authorizationService.authorizeRacker(any(ScopeAccess.class))).thenReturn(true);
         when(delegateCloud20Service.impersonateUser(anyString(), anyString(), anyString())).thenReturn("impersonatingToken");
         doReturn(clientScopeAccess).when(spy).checkAndGetToken(authToken);

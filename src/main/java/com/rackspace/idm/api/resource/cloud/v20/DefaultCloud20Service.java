@@ -200,6 +200,10 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    public static final String CLOUD_AUTH_ROUTING = "useCloudAuth";
+
+    public static final String GA_SOURCE_OF_TRUTH = "gaIsSourceOfTruth";
+
     @Override
     public ResponseBuilder addEndpoint(HttpHeaders httpHeaders, String authToken, String tenantId, EndpointTemplate endpoint) {
         try {
@@ -1530,7 +1534,9 @@ public class DefaultCloud20Service implements Cloud20Service {
                 String impersonatedTokenId = impersonatedScopeAccess.getImpersonatingToken();
                 sa = scopeAccessService.getScopeAccessByAccessToken(impersonatedTokenId);
             }
-
+            if(sa == null) {
+                throw new NotFoundException("Valid token not found");
+            }
             List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(sa);
             EndpointList list = endpointConverterCloudV20.toEndpointList(endpoints);
 
@@ -1763,11 +1769,14 @@ public class DefaultCloud20Service implements Cloud20Service {
             String impersonatingUsername = impersonationRequest.getUser().getUsername();
 
             User user = userService.getUser(impersonatingUsername);
-            if (user == null) {
+            if (user == null && isCloudAuthRoutingEnabled()) {
                 logger.info("Impersonation call - calling cloud auth to get user");
                 // Get from cloud.
                 impersonatingToken = delegateCloud20Service.impersonateUser(impersonatingUsername, config.getString("ga.username"), config.getString("ga.password"));
             } else {
+                if(user == null){
+                    throw new BadRequestException("Invalid User");
+                }
                 if (!isValidImpersonatee(user)) {
                     throw new BadRequestException("User cannot be impersonated; No valid impersonation roles assigned");
                 }
@@ -3309,6 +3318,10 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
         }
         return auth;
+    }
+
+    boolean isCloudAuthRoutingEnabled() {
+        return config.getBoolean(CLOUD_AUTH_ROUTING);
     }
 
     public void setObjFactories(JAXBObjectFactories objFactories) {
