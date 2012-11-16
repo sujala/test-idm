@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.entity;
 
+import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.FilterUsage;
@@ -15,7 +16,7 @@ import com.unboundid.ldap.sdk.persist.LDAPObject;
  * To change this template use File | Settings | File Templates.
  */
 @LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_DOMAIN)
-public class Domain implements Auditable{
+public class Domain implements Auditable, UniqueId {
 
     @LDAPEntryField()
     private ReadOnlyEntry ldapEntry;

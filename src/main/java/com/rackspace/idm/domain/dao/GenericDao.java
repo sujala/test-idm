@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.dao;
 
 
+import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.unboundid.ldap.sdk.Filter;
 
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.List;
  */
 public interface GenericDao<T> {
     List<T> getObjects(Filter searchFilter);
+    PaginatorContext<T> getObjectsPaged(Filter searchFilter, int offset, int limit);
     void addObject(T object);
     T getObject(Filter searchFilter);
     void updateObject(T object);
@@ -21,4 +23,5 @@ public interface GenericDao<T> {
     String getBaseDn();
     String getLdapEntityClass();
     String getNextId();
+    String getSortAttribute();
 }
