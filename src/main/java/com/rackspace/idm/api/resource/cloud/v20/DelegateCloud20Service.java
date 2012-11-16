@@ -461,7 +461,7 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder impersonate(HttpHeaders httpHeaders, String authToken, ImpersonationRequest impersonationRequest)  {
-        return null;
+        return exceptionHandler.exceptionResponse(new NotImplementedException());
     }
 
     @Override
@@ -526,48 +526,76 @@ public class DelegateCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getPoliciesForEndpointTemplate(String authToken, String endpointTemplateId) {
-        return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
+        if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
+            return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
+        }
+        return defaultCloud20Service.getPoliciesForEndpointTemplate(authToken, endpointTemplateId);
     }
 
     @Override
     public ResponseBuilder updatePoliciesForEndpointTemplate(String authToken, String endpointTemplateId, Policies policies) {
-        return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
+        if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
+            return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
+        }
+        return defaultCloud20Service.updatePoliciesForEndpointTemplate(authToken, endpointTemplateId, policies);
     }
 
     @Override
     public ResponseBuilder addPolicyToEndpointTemplate(String authToken, String endpointTemplateId, String policyId) {
-        return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
+        if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
+            return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
+        }
+        return defaultCloud20Service.addPolicyToEndpointTemplate(authToken, endpointTemplateId, policyId);
     }
 
     @Override
     public ResponseBuilder deletePolicyToEndpointTemplate(String authToken, String endpointTemplateId, String policyId) {
-        return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
+        if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
+            return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
+        }
+        return defaultCloud20Service.deletePolicyToEndpointTemplate(authToken, endpointTemplateId, policyId);
     }
 
     @Override
     public ResponseBuilder getPolicies(String authToken) {
-        return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
+        if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
+            return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
+        }
+        return defaultCloud20Service.getPolicies(authToken);
     }
 
     @Override
     public ResponseBuilder addPolicy(UriInfo uriInfo, String authToken, Policy policy) {
-        return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
+        if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
+            return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
+        }
+        return defaultCloud20Service.addPolicy(uriInfo, authToken, policy);
     }
 
     @Override
     public ResponseBuilder getPolicy(String authToken, String policyId) {
-        return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
+        if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
+            return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
+        }
+        return defaultCloud20Service.getPolicy(authToken, policyId);
     }
 
     @Override
     public ResponseBuilder updatePolicy(String authToken, String policyId, Policy policy) {
-        return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
+        if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
+            return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
+        }
+        return defaultCloud20Service.updatePolicy(authToken, policyId, policy);
     }
 
     @Override
     public ResponseBuilder deletePolicy(String authToken, String policyId) {
-        return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
+        if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
+            return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
+        }
+        return defaultCloud20Service.deletePolicy(authToken, policyId);
     }
+
     @Override
     public ResponseBuilder getAccessibleDomains(String authToken) {
         return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
@@ -1392,11 +1420,11 @@ public class DelegateCloud20Service implements Cloud20Service {
         return sw.toString();
     }
 
-    private boolean isGASourceOfTruth() {
+    boolean isGASourceOfTruth() {
         return config.getBoolean(GA_SOURCE_OF_TRUTH);
     }
 
-    private boolean isCloudAuthRoutingEnabled() {
+    boolean isCloudAuthRoutingEnabled() {
         return config.getBoolean(CLOUD_AUTH_ROUTING);
     }
 
