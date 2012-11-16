@@ -567,9 +567,15 @@ public class DefaultCloud20Service implements Cloud20Service {
                 this.scopeAccessService.expireAllTokensForUser(retrievedUser.getUsername());
                 atomHopperClient.asyncPost(retrievedUser, authToken, AtomHopperConstants.DISABLED, null);
             }
+            Boolean updateRegion = true;
+            if (userDO.getRegion() != null && retrievedUser != null) {
+                if (userDO.getRegion().equals(retrievedUser.getRegion())) {
+                    updateRegion = false;
+                }
+            }
             retrievedUser.copyChanges(userDO);
             ScopeAccess scopeAccessForUserBeingUpdated = scopeAccessService.getScopeAccessByUserId(userId);
-            if (userDO.getRegion() != null) {
+            if (userDO.getRegion() != null && updateRegion) {
                 defaultRegionService.validateDefaultRegion(userDO.getRegion(), scopeAccessForUserBeingUpdated);
             }
             userService.updateUserById(retrievedUser, false);
