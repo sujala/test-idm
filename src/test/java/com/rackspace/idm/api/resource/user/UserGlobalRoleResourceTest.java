@@ -8,6 +8,9 @@ import org.junit.Test;
 
 import javax.ws.rs.core.Response;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.Mockito.*;
@@ -83,6 +86,28 @@ public class UserGlobalRoleResourceTest {
 
     @Test (expected = BadRequestException.class)
     public void grantGlobalRoleToUser_roleIsNull_throwsBadRequest() throws Exception {
+        userGlobalRoleResource.grantGlobalRoleToUser("authHeader", "userId", "roleId");
+    }
+
+    @Test (expected = BadRequestException.class)
+    public void grantGlobalRoleToUser_roleAlreadyPresent_throwsBadRequest() throws Exception {
+        ClientRole cRole = new ClientRole();
+        cRole.setClientId("123456");
+        cRole.setId("123456");
+
+        cRole.setName("default");
+
+        TenantRole tRole = new TenantRole();
+        tRole.setClientId("123456");
+        tRole.setName("default");
+        tRole.setRoleRsId("123456");
+        tRole.setUserId("userId");
+
+        when(applicationService.getClientRoleById("roleId")).thenReturn(cRole);
+        when(userService.loadUser(anyString())).thenReturn(new User());
+        List<TenantRole> tenantRoleList = new ArrayList<TenantRole>();
+        tenantRoleList.add(tRole);
+        when(tenantService.getGlobalRolesForUser(any(User.class))).thenReturn(tenantRoleList);
         userGlobalRoleResource.grantGlobalRoleToUser("authHeader", "userId", "roleId");
     }
 

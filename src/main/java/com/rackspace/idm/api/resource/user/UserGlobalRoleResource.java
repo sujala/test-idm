@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.user;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.BadRequestException;
+import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Component;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.List;
 
 /**
  * User Application Roles Resource.
@@ -75,6 +77,12 @@ public class UserGlobalRoleResource {
 		tenantRole.setName(role.getName());
 		tenantRole.setUserId(userId);
 
+        if (isIdentityRole(role.getName())) {
+            List<TenantRole> tenantRoles = this.tenantService.getGlobalRolesForUser(user);
+            if (tenantRoles != null && tenantRoles.size() > 0) {
+                throw new BadRequestException("User already has global role assigned");
+            }
+        }
 		this.tenantService.addTenantRoleToUser(user, tenantRole);
 
 		return Response.noContent().build();
@@ -195,4 +203,12 @@ public class UserGlobalRoleResource {
         
         return tenantRole;
 	}
+
+    //TODO:Pull values from config
+    private boolean isIdentityRole(String roleName) {
+        return (roleName.equalsIgnoreCase("identity:default")
+                    || roleName.equalsIgnoreCase("identity:user-admin")
+                    || roleName.equalsIgnoreCase("identity:admin")
+                    || roleName.equalsIgnoreCase("identity:service-admin"));
+    }
 }
