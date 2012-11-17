@@ -29,6 +29,7 @@ public class UserGlobalRoleResourceTest {
     private AuthorizationService authorizationService;
     private UserService userService;
     private ApplicationService applicationService;
+    private ClientRole clientRole;
 
     @Before
     public void setUp() throws Exception {
@@ -38,6 +39,8 @@ public class UserGlobalRoleResourceTest {
         userService = mock(UserService.class);
         applicationService = mock(ApplicationService.class);
         userGlobalRoleResource = new UserGlobalRoleResource(userService,authorizationService, applicationService,scopeAccessService, tenantService);
+        clientRole = new ClientRole();
+        clientRole.setName("blah");
     }
 
     @Test
@@ -65,21 +68,21 @@ public class UserGlobalRoleResourceTest {
 
     @Test
     public void grantGlobalRoleToUser_callsAuthorizationService_verifyIdmSuperAdminAccess() throws Exception {
-        when(applicationService.getClientRoleById("roleId")).thenReturn(new ClientRole());
+        when(applicationService.getClientRoleById("roleId")).thenReturn(clientRole);
         userGlobalRoleResource.grantGlobalRoleToUser("authHeader", "userId", "roleId");
         verify(authorizationService).verifyIdmSuperAdminAccess("authHeader");
     }
 
     @Test
     public void grantGlobalRoleToUser_callsUserService_loadUser() throws Exception {
-        when(applicationService.getClientRoleById("roleId")).thenReturn(new ClientRole());
+        when(applicationService.getClientRoleById("roleId")).thenReturn(clientRole);
         userGlobalRoleResource.grantGlobalRoleToUser("authHeader", "userId", "roleId");
         verify(userService).loadUser("userId");
     }
 
     @Test
     public void grantGlobalRoleToUser_callsApplicationService_getClientRoleById() throws Exception {
-        when(applicationService.getClientRoleById("roleId")).thenReturn(new ClientRole());
+        when(applicationService.getClientRoleById("roleId")).thenReturn(clientRole);
         userGlobalRoleResource.grantGlobalRoleToUser("authHeader", "userId", "roleId");
         verify(applicationService).getClientRoleById("roleId");
     }
@@ -95,11 +98,11 @@ public class UserGlobalRoleResourceTest {
         cRole.setClientId("123456");
         cRole.setId("123456");
 
-        cRole.setName("default");
+        cRole.setName("identity:default");
 
         TenantRole tRole = new TenantRole();
         tRole.setClientId("123456");
-        tRole.setName("default");
+        tRole.setName("identity:default");
         tRole.setRoleRsId("123456");
         tRole.setUserId("userId");
 
@@ -113,14 +116,14 @@ public class UserGlobalRoleResourceTest {
 
     @Test
     public void grantGlobalRoleToUser_callsTenantService_addTenantRoleToUser() throws Exception {
-        when(applicationService.getClientRoleById("roleId")).thenReturn(new ClientRole());
+        when(applicationService.getClientRoleById("roleId")).thenReturn(clientRole);
         userGlobalRoleResource.grantGlobalRoleToUser("authHeader", "userId", "roleId");
         verify(tenantService).addTenantRoleToUser(any(User.class), any(TenantRole.class));
     }
 
     @Test
     public void grantGlobalRoleToUser_responseNoContent_returns204() throws Exception {
-        when(applicationService.getClientRoleById("roleId")).thenReturn(new ClientRole());
+        when(applicationService.getClientRoleById("roleId")).thenReturn(clientRole);
         Response response = userGlobalRoleResource.grantGlobalRoleToUser("authHeader", "userId", "roleId");
         assertThat("response code", response.getStatus(), equalTo(204));
     }
