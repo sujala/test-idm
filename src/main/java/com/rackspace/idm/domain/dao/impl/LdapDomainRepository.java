@@ -83,17 +83,6 @@ public class LdapDomainRepository extends LdapGenericRepository<Domain> implemen
         return getObjectsPaged(searchAllDomains(), offset, limit);
     }
 
-    Domain getSingleDomain(Filter searchFilter)
-        throws LDAPPersistException {
-        SearchResultEntry entry = this.getSingleEntry(DOMAIN_BASE_DN, SearchScope.ONE, searchFilter, ATTR_DOMAIN_SEARCH_ATTRIBUTES);
-        if (entry == null) {
-            return null;
-        }
-        Domain domain = null;
-        domain = LDAPPersister.getInstance(Domain.class).decode(entry);
-        return domain;
-    }
-
     Filter searchByIdFilter(String id) {
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_ID, id)

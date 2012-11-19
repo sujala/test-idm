@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.dao.impl;
 import com.unboundid.ldap.sdk.SearchResultEntry;
 import com.unboundid.ldap.sdk.SearchScope;
 import org.hamcrest.Matchers;
+import org.junit.Ignore;
 import org.junit.runner.RunWith;
 
 import org.mockito.InjectMocks;
