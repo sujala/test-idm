@@ -2,7 +2,6 @@ package com.rackspace.idm.api.resource.application;
 
 import com.rackspace.idm.api.converter.RolesConverter;
 import com.rackspace.idm.domain.entity.Application;
-import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.TenantService;
@@ -53,14 +52,14 @@ public class ApplicationGlobalRolesResourceTest {
     public void getRoles_withProvisionedApplicationIdNotBlank_setsFilterParams() throws Exception {
         doNothing().when(authorizationService).verifyIdmSuperAdminAccess(anyString());
         applicationGlobalRolesResource.getRoles(null, null, "provisionedApplicationId");
-        verify(tenantService).getGlobalRolesForApplication(any(Application.class), (FilterParam[]) notNull());
+        verify(tenantService).getGlobalRolesForApplication(any(Application.class), anyString());
     }
 
     @Test
     public void getRoles_withNullProvisionedApplicationId_setsNullFilterParams() throws Exception {
         doNothing().when(authorizationService).verifyIdmSuperAdminAccess(anyString());
         applicationGlobalRolesResource.getRoles(null, null, null);
-        verify(tenantService).getGlobalRolesForApplication(any(Application.class), (FilterParam[]) isNull());
+        verify(tenantService).getGlobalRolesForApplication(any(Application.class));
     }
 
     @Test

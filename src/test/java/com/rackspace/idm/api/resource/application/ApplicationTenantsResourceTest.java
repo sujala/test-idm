@@ -2,7 +2,6 @@ package com.rackspace.idm.api.resource.application;
 
 import com.rackspace.idm.api.converter.RolesConverter;
 import com.rackspace.idm.domain.entity.Application;
-import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.TenantService;
@@ -54,7 +53,7 @@ public class ApplicationTenantsResourceTest {
     public void getAllTenantRolesForApplication_callsTenantService_getTenantRolesForApplication() throws Exception {
         doNothing().when(authorizationService).verifyIdmSuperAdminAccess(anyString());
         applicationTenantsResource.getAllTenantRolesForApplication(null, null, null, null);
-        verify(tenantService).getTenantRolesForApplication(any(Application.class), any(FilterParam[].class));
+        verify(tenantService).getTenantRolesForApplication(any(Application.class), anyString(), anyString());
     }
 
     @Test

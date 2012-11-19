@@ -58,8 +58,6 @@ import java.io.StringReader;
 import java.net.URI;
 import java.util.*;
 
-import org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory;
-
 /**
  * Created by IntelliJ IDEA.
  * User: Hector
@@ -975,7 +973,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             tenantrole.setRoleRsId(role.getId());
             tenantrole.setUserId(user.getId());
             tenantrole.setTenantIds(new String[]{tenant.getTenantId()});
-            this.tenantService.deleteTenantRole(user.getUniqueId(), tenantrole);
+            this.tenantService.deleteTenantRoleForUser(user, tenantrole);
             return Response.noContent();
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
@@ -1707,7 +1705,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             User user = userService.checkAndGetUserById(userId);
 
-            List<TenantRole> roles = tenantService.getGlobalRolesForUser(user, new FilterParam[]{new FilterParam(FilterParamName.APPLICATION_ID, serviceId)});
+            List<TenantRole> roles = tenantService.getGlobalRolesForUser(user, serviceId);
 
             return Response.ok(objFactories.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListJaxb(roles)).getValue());
 
@@ -2406,7 +2404,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     public boolean isValidImpersonatee(User user) {
-        List<TenantRole> tenantRolesForUser = tenantService.getGlobalRolesForUser(user, null);
+        List<TenantRole> tenantRolesForUser = tenantService.getGlobalRolesForUser(user);
         for (TenantRole role : tenantRolesForUser) {
             String name = role.getName();
             if (name.equals("identity:default") || name.equals("identity:user-admin")) {
@@ -2915,11 +2913,11 @@ public class DefaultCloud20Service implements Cloud20Service {
                     ImpersonatedScopeAccess isa = (ImpersonatedScopeAccess) sa;
                     impersonator = userService.getUserByScopeAccess(isa);
                     user = userService.getUser(isa.getImpersonatingUsername());
-                    roles = tenantService.getTenantRolesForUser(user, null);
+                    roles = tenantService.getTenantRolesForUser(user);
                     validator20.validateTenantIdInRoles(tenantId, roles);
                     access.setToken(tokenConverterCloudV20.toToken(isa, roles));
                     access.setUser(userConverterCloudV20.toUserForAuthenticateResponse(user, roles));
-                    List<TenantRole> impRoles = this.tenantService.getGlobalRolesForUser(impersonator, null);
+                    List<TenantRole> impRoles = this.tenantService.getGlobalRolesForUser(impersonator);
                     UserForAuthenticateResponse userForAuthenticateResponse = userConverterCloudV20.toUserForAuthenticateResponse(impersonator, impRoles);
                     com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory objectFactory = objFactories.getRackspaceIdentityExtRaxgaV1Factory();
                     JAXBElement<UserForAuthenticateResponse> impersonatorJAXBElement = objectFactory.createImpersonator(userForAuthenticateResponse);

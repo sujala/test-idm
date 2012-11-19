@@ -91,8 +91,8 @@ public class ApplicationGlobalRoleResource {
         
         Application application = this.applicationService.loadApplication(applicationId);
 
-    	TenantRole tenantRole = this.tenantService.getTenantRoleForParentById(application.getUniqueId(), roleId);
-		this.tenantService.deleteTenantRole(application.getUniqueId(), tenantRole);
+    	TenantRole tenantRole = this.tenantService.getTenantRoleForApplicationById(application, roleId);
+		this.tenantService.deleteTenantRoleForApplication(application, tenantRole);
 
         return Response.noContent().build();
     }
@@ -156,7 +156,7 @@ public class ApplicationGlobalRoleResource {
 
 		TenantRole tenantRole = createTenantRole(tenantId, roleId);
 		
-		this.tenantService.deleteTenantRole(application.getUniqueId(), tenantRole);
+		this.tenantService.deleteTenantRoleForApplication(application, tenantRole);
 
 		return Response.noContent().build();
 	}

@@ -1,6 +1,5 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
@@ -17,13 +16,11 @@ import com.rackspace.idm.validation.Validator20;
 import com.sun.jersey.core.spi.factory.ResponseBuilderImpl;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.apache.commons.configuration.Configuration;
-import org.apache.commons.lang.NotImplementedException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Matchers;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.v2.*;
-import org.openstack.docs.identity.api.v2.ObjectFactory;
 
 import javax.ws.rs.core.*;
 import javax.xml.bind.JAXBException;
@@ -675,7 +672,7 @@ public class DelegateCloud20ServiceTest {
         when(authenticateResponse.getToken()).thenReturn(new Token());
         when(impersonatedScopeAccess.getAccessTokenString()).thenReturn(null);
         when(userService.getUserByScopeAccess(impersonatedScopeAccess)).thenReturn(user);
-        when(tenantService.getGlobalRolesForUser(user, null)).thenReturn(list) ;
+        when(tenantService.getGlobalRolesForUser(user)).thenReturn(list) ;
         when(userConverterCloudV20.toUserForAuthenticateResponse(user, list)).thenReturn(userForAuthenticateResponse);
         assertThat("response", spy.validateImpersonatedTokenFromCloud(httpHeaders, "token", "foo", impersonatedScopeAccess).build().getStatus(), equalTo(200));
     }
@@ -706,7 +703,7 @@ public class DelegateCloud20ServiceTest {
         when(authenticateResponse.getToken()).thenReturn(new Token());
         when(impersonatedScopeAccess.getAccessTokenString()).thenReturn(null);
         when(userService.getUserByScopeAccess(impersonatedScopeAccess)).thenReturn(user);
-        when(tenantService.getGlobalRolesForUser(user, null)).thenReturn(list) ;
+        when(tenantService.getGlobalRolesForUser(user)).thenReturn(list) ;
         when(userConverterCloudV20.toUserForAuthenticateResponse(user, list)).thenReturn(userForAuthenticateResponse);
         assertThat("response", spy.validateImpersonatedTokenFromCloud(httpHeaders, "token", "foo", impersonatedScopeAccess).build().getStatus(), equalTo(200));
     }

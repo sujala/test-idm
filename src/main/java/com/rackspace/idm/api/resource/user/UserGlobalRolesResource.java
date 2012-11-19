@@ -65,12 +65,12 @@ public class UserGlobalRolesResource {
         logger.debug("Getting global roles for User: {}", userId);
 
         User user = userService.loadUser(userId);
-    	FilterParam[] filters = null;
+        List<TenantRole> tenantRoles;
     	if (!StringUtils.isBlank(applicationId)) {
-    		filters = new FilterParam[] { new FilterParam(FilterParamName.APPLICATION_ID, applicationId)};
-    	}
-       
-        List<TenantRole> tenantRoles = this.tenantService.getGlobalRolesForUser(user, filters);
+            tenantRoles = this.tenantService.getGlobalRolesForUser(user, applicationId);
+    	} else {
+            tenantRoles = this.tenantService.getGlobalRolesForUser(user);
+        }
 
         return Response.ok(rolesConverter.toRoleJaxbFromTenantRole(tenantRoles)).build();
     }

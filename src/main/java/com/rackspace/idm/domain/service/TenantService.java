@@ -19,26 +19,25 @@ public interface TenantService {
     Tenant getTenantByName(String name);
     List<Tenant> getTenants();
     
-    List<Tenant> getTenantsForParentByTenantRoles(String parentUniqueId);
-    
-    void addTenantRole(String parentUniqueId, TenantRole role);
     void addTenantRoleToUser(User user, TenantRole role);
     void addTenantRolesToUser(ScopeAccess userAdminScopeAccess, User subUser);
     void addTenantRoleToClient(Application client, TenantRole role);
-    void deleteTenantRole(String parentUniqueId, TenantRole role);
+    void deleteTenantRoleForUser(User user, TenantRole role);
+    void deleteTenantRoleForApplication(Application application, TenantRole role);
     void deleteGlobalRole(TenantRole role);
     void updateTenant(Tenant tenant);
     
-    TenantRole getTenantRoleForParentById(String parentUniqueId, String id);
-    List<TenantRole> getTenantRolesByParent(String parentUniqueId);
-    List<TenantRole> getTenantRolesByParentAndClientId(String parentUniqueId, String clientId);
+    TenantRole getTenantRoleForUserById(User user, String id);
+    TenantRole getTenantRoleForApplicationById(Application application, String id);
     List<TenantRole> getTenantRolesForScopeAccess(ScopeAccess scopeAccess);
     List<TenantRole> getGlobalRolesForUser(User user);
-    List<TenantRole> getGlobalRolesForApplication(Application user, FilterParam[] filters);
-    List<TenantRole> getGlobalRolesForUser(User user, FilterParam[] filters);
+    List<TenantRole> getGlobalRolesForApplication(Application application);
+    List<TenantRole> getGlobalRolesForApplication(Application user, String applicationId);
+    List<TenantRole> getGlobalRolesForUser(User user, String applicationId);
     List<TenantRole> getTenantRolesForUserOnTenant(User user, Tenant tenant);
-    List<TenantRole> getTenantRolesForUser(User user, FilterParam[] filters);
-    List<TenantRole> getTenantRolesForApplication(Application application, FilterParam[] filters);
+    List<TenantRole> getTenantRolesForUser(User user);
+    List<TenantRole> getTenantRolesForUser(User user, String applicationId, String tenantId);
+    List<TenantRole> getTenantRolesForApplication(Application application, String applicationId, String tenantId);
     List<Tenant> getTenantsForScopeAccessByTenantRoles(ScopeAccess sa);
     boolean hasTenantAccess(ScopeAccess scopeAccess, String tenantId);
     List<User> getUsersForTenant(String tenantId);

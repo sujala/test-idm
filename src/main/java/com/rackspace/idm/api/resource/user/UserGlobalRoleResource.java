@@ -99,8 +99,8 @@ public class UserGlobalRoleResource {
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
 
 		User user = userService.loadUser(userId);
-		TenantRole tenantRole = tenantService.getTenantRoleForParentById(user.getUniqueId(), roleId);
-		this.tenantService.deleteTenantRole(user.getUniqueId(), tenantRole);
+		TenantRole tenantRole = tenantService.getTenantRoleForUserById(user, roleId);
+		this.tenantService.deleteTenantRoleForUser(user, tenantRole);
 
 		return Response.noContent().build();
 	}
@@ -174,7 +174,7 @@ public class UserGlobalRoleResource {
 		tenantRole.setRoleRsId(roleId);
 		tenantRole.setTenantIds(new String[]{tenantId});
 		
-		this.tenantService.deleteTenantRole(user.getUniqueId(), tenantRole);
+		this.tenantService.deleteTenantRoleForUser(user, tenantRole);
 
 		return Response.noContent().build();
 	}

@@ -1,15 +1,12 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.api.resource.pagination.*;
-import com.sun.jndi.toolkit.dir.SearchFilter;
-import com.unboundid.ldap.listener.SearchEntryTransformer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.unboundid.ldap.sdk.*;
@@ -19,7 +16,6 @@ import org.apache.commons.lang.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 
 @Component
@@ -309,33 +305,33 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
 
     @Override
     public List<TenantRole> getTenantRolesForUser(User user) {
-        getLogger().debug("Getting tenantRoles");
-        Filter searchFilter = new LdapSearchBuilder().addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TENANT_ROLE).build();
-
-        String dn = new LdapDnBuilder(user.getUniqueId()).build();
-
-        List<TenantRole> roles;
-        try {
-            roles = getMultipleTenantRoles(dn, searchFilter);
-        } catch (LDAPPersistException e) {
-            getLogger().error(ERROR_GETTING_TENANT_OBJECT, e);
-            throw new IllegalStateException(e);
-        }
-        getLogger().debug(GOT_TENANT_ROLES, roles.size());
-
-        return roles;
+        return getTenantRoles(user.getUniqueId(), searchFilterGetTenantRoles());
     }
 
     @Override
-    public List<TenantRole> getTenantRolesForUser(User user,
-        FilterParam[] filters) {
-        return getTenantRolesForClient(user.getUniqueId(), filters);
+    public List<TenantRole> getTenantRolesForUser(User user, String applicationId) {
+        return getTenantRoles(user.getUniqueId(), searchFilterGetTenantRolesByApplicationId(applicationId));
     }
 
     @Override
-    public List<TenantRole> getTenantRolesForApplication(
-        Application application, FilterParam[] filters) {
-        return getTenantRolesForClient(application.getUniqueId(), filters);
+    public List<TenantRole> getTenantRolesForUser(User user, String applicationId, String tenantId) {
+        return getTenantRoles(user.getUniqueId(), searchFilterGetTenantRolesByApplicationIdAndTenantId(applicationId, tenantId));
+    }
+
+    @Override
+    public List<TenantRole> getTenantRolesForApplication(Application application) {
+        return getTenantRoles(application.getUniqueId(), searchFilterGetTenantRoles());
+    }
+
+    @Override
+    public List<TenantRole> getTenantRolesForApplication(Application application, String applicationId) {
+        return getTenantRoles(application.getUniqueId(),
+                searchFilterGetTenantRolesByApplicationId(applicationId));
+    }
+
+    @Override
+    public List<TenantRole> getTenantRolesForApplication(Application application, String applicationId, String tenantId) {
+        return getTenantRoles(application.getUniqueId(), searchFilterGetTenantRolesByApplicationIdAndTenantId(applicationId, tenantId));
     }
 
     @Override
@@ -371,29 +367,11 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         return roles;
     }
 
-    List<TenantRole> getTenantRolesForClient(
-        String uniqueParentClientId, FilterParam[] filters) {
+    private List<TenantRole> getTenantRoles(String uniqueParentClientId, Filter searchFilter) {
         getLogger().debug("Getting tenantRoles");
-
-        LdapSearchBuilder searchBuilder = new LdapSearchBuilder();
-        searchBuilder.addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TENANT_ROLE);
-
-        if (filters != null) {
-            for (FilterParam filter : filters) {
-                // can only filter on tenantId and applicationId for now
-                if (filter.getParam() == FilterParamName.APPLICATION_ID) {
-                    searchBuilder.addEqualAttribute(ATTR_CLIENT_ID,
-                        filter.getStrValue());
-                } else if (filter.getParam() == FilterParamName.TENANT_ID) {
-                    searchBuilder.addEqualAttribute(ATTR_TENANT_RS_ID,
-                        filter.getStrValue());
-                }
-            }
-        }
 
         String dn = new LdapDnBuilder(uniqueParentClientId).build();
 
-        Filter searchFilter = searchBuilder.build();
         List<TenantRole> roles = new ArrayList<TenantRole>();
         try {
             roles = getMultipleTenantRoles(dn, searchFilter);
@@ -608,5 +586,23 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         boolean hasRole = exists != null;
         getLogger().debug("Does Scope Access Have Tenant Role: {}", hasRole);
         return hasRole;
+    }
+
+    private Filter searchFilterGetTenantRoles() {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(LdapRepository.ATTR_OBJECT_CLASS , LdapRepository.OBJECTCLASS_TENANT_ROLE).build();
+    }
+
+    private Filter searchFilterGetTenantRolesByApplicationId(String applicationId) {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TENANT_ROLE)
+                .addEqualAttribute(ATTR_CLIENT_ID, applicationId).build();
+    }
+
+    private Filter searchFilterGetTenantRolesByApplicationIdAndTenantId(String applicationId, String tenantId) {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TENANT_ROLE)
+                .addEqualAttribute(ATTR_CLIENT_ID, applicationId)
+                .addEqualAttribute(ATTR_TENANT_RS_ID, tenantId).build();
     }
 }

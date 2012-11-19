@@ -1,6 +1,8 @@
 package com.rackspace.idm.domain.entity;
 
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
+import com.unboundid.ldap.sdk.DN;
+import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.FilterUsage;
 import com.unboundid.ldap.sdk.persist.LDAPEntryField;
@@ -32,6 +34,14 @@ public class ScopeAccess implements Auditable {
         }
         else {
             return ldapEntry.getDN();
+        }
+    }
+
+    public String getParentDN() throws LDAPException {
+        if (ldapEntry == null) {
+            return null;
+        } else {
+            return ldapEntry.getParentDNString();
         }
     }
 

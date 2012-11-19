@@ -3,7 +3,6 @@ package com.rackspace.idm.domain.dao.impl;
 import com.rackspace.idm.api.resource.pagination.DefaultPaginator;
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import org.apache.commons.lang.StringUtils;
-import org.hamcrest.Matchers;
 import org.junit.runner.RunWith;
 
 import org.mockito.InjectMocks;
@@ -21,7 +20,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
-import javax.naming.directory.SearchControls;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -305,22 +303,15 @@ public class LdapTenantRepositoryTest extends InMemoryLdapIntegrationTest{
         assertThat("tenant role", result.get(0), equalTo(tenatnRole));
     }
 
-    @Test
-    public void getTenantRolesForUser_callsGetTenantRolesForClient() throws Exception {
+    private User getUser() {
         User user = new User();
-        user.setUniqueId("uniqueId");
-        doReturn(null).when(spy).getTenantRolesForClient("uniqueId", null);
-        spy.getTenantRolesForUser(user, null);
-        verify(spy).getTenantRolesForClient("uniqueId", null);
+        user.setUniqueId("id");
+        return user;
     }
 
-    @Test
-    public void getTenantRolesForApplication_callsGetTenantRolesForClient() throws Exception {
+    private Application getApplication() {
         Application application = new Application();
-        application.setUniqueId("uniqueId");
-        doReturn(null).when(spy).getTenantRolesForClient("uniqueId", null);
-        spy.getTenantRolesForApplication(application, null);
-        verify(spy).getTenantRolesForClient("uniqueId", null);
+        return application;
     }
 
     @Test
@@ -348,41 +339,6 @@ public class LdapTenantRepositoryTest extends InMemoryLdapIntegrationTest{
         roles.add(tenantRole);
         doReturn(roles).when(spy).getMultipleTenantRoles(eq("uniqueId"), any(Filter.class));
         List<TenantRole> result = spy.getTenantRolesByParentAndClientId("uniqueId", "clientId");
-        assertThat("tenant role", result.get(0), equalTo(tenantRole));
-    }
-
-    @Test
-    public void getTenantRolesForClient_filterParamNotNull_addsAttributes() throws Exception {
-        ArgumentCaptor<Filter> argumentCaptor = ArgumentCaptor.forClass(Filter.class);
-        FilterParam filterParam = new FilterParam(FilterParam.FilterParamName.APPLICATION_ID, "applicationId");
-        FilterParam filterParam1 = new FilterParam(FilterParam.FilterParamName.TENANT_ID, "tenantId");
-        FilterParam filterParam2 = new FilterParam(FilterParam.FilterParamName.APPLICATION_NAME, "applicationName");
-        FilterParam[] filterParams = new FilterParam[3];
-        filterParams[0] = filterParam;
-        filterParams[1] = filterParam1;
-        filterParams[2] = filterParam2;
-        doReturn(new ArrayList<TenantRole>()).when(spy).getMultipleTenantRoles(anyString(), any(Filter.class));
-        spy.getTenantRolesForClient("uniqueClientId", filterParams);
-        verify(spy).getMultipleTenantRoles(anyString(), argumentCaptor.capture());
-        Filter[] result = argumentCaptor.getValue().getComponents();
-        assertThat("application id", result[1].getAssertionValue(), equalTo("applicationId"));
-        assertThat("tenant id", result[2].getAssertionValue(), equalTo("tenantId"));
-        assertThat("filter size", result.length, equalTo(3));
-    }
-
-    @Test (expected = IllegalStateException.class)
-    public void getTenantRolesForClient_callsGetMultipleTenantRoles_throwsLDAPPersistException() throws Exception {
-        doThrow(new LDAPPersistException("error")).when(spy).getMultipleTenantRoles(anyString(), any(Filter.class));
-        spy.getTenantRolesForClient("uniqueId", new FilterParam[0]);
-    }
-
-    @Test
-    public void getTenantRolesForClient_gotRoles_returnRoleList() throws Exception {
-        TenantRole tenantRole = new TenantRole();
-        List<TenantRole> roles = new ArrayList<TenantRole>();
-        roles.add(tenantRole);
-        doReturn(roles).when(spy).getMultipleTenantRoles(anyString(), any(Filter.class));
-        List<TenantRole> result = spy.getTenantRolesForClient("uniqueId", null);
         assertThat("tenant role", result.get(0), equalTo(tenantRole));
     }
 

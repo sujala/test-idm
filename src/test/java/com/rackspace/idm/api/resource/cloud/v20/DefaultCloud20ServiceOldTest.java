@@ -586,7 +586,7 @@ public class DefaultCloud20ServiceOldTest {
         List<TenantRole> tenantRoleList = new ArrayList<TenantRole>();
         tenantRole.setName("identity:default");
         tenantRoleList.add(tenantRole);
-        when(tenantService.getGlobalRolesForUser(user, null)).thenReturn(tenantRoleList);
+        when(tenantService.getGlobalRolesForUser(user)).thenReturn(tenantRoleList);
         boolean validImpersonatee = spy.isValidImpersonatee(user);
         assertThat("boolean value", validImpersonatee, equalTo(true));
     }
@@ -596,7 +596,7 @@ public class DefaultCloud20ServiceOldTest {
         List<TenantRole> tenantRoleList = new ArrayList<TenantRole>();
         tenantRole.setName("identity:user-admin");
         tenantRoleList.add(tenantRole);
-        when(tenantService.getGlobalRolesForUser(user, null)).thenReturn(tenantRoleList);
+        when(tenantService.getGlobalRolesForUser(user)).thenReturn(tenantRoleList);
         boolean validImpersonatee = spy.isValidImpersonatee(user);
         assertThat("boolean value", validImpersonatee, equalTo(true));
     }
@@ -606,7 +606,7 @@ public class DefaultCloud20ServiceOldTest {
         List<TenantRole> tenantRoleList = new ArrayList<TenantRole>();
         tenantRole.setName("identity:neither");
         tenantRoleList.add(tenantRole);
-        when(tenantService.getGlobalRolesForUser(user, null)).thenReturn(tenantRoleList);
+        when(tenantService.getGlobalRolesForUser(user)).thenReturn(tenantRoleList);
         boolean validImpersonatee = spy.isValidImpersonatee(user);
         assertThat("boolean value", validImpersonatee, equalTo(false));
     }
@@ -738,7 +738,7 @@ public class DefaultCloud20ServiceOldTest {
 
         doReturn(impersonatedScopeAccess).when(spy).checkAndGetToken("token");
         when(userService.getUser("impersonating")).thenReturn(user);
-        when(tenantService.getTenantRolesForUser(user,null)).thenReturn(roles);
+        when(tenantService.getTenantRolesForUser(user)).thenReturn(roles);
 
         spy.validateToken(httpHeaders, authToken, "token", "tenantId");
         verify(validator20).validateTenantIdInRoles("tenantId", roles);
@@ -1794,7 +1794,7 @@ public class DefaultCloud20ServiceOldTest {
         when(tenantService.checkAndGetTenant(tenantId)).thenReturn(new Tenant());
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
         spy.deleteRoleFromUserOnTenant(null, authToken, tenantId, userId, role.getId());
-        verify(tenantService).deleteTenantRole(anyString(), any(TenantRole.class));
+        verify(tenantService).deleteTenantRoleForUser(any(User.class), any(TenantRole.class));
     }
 
     @Test

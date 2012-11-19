@@ -118,7 +118,7 @@ public class UserGlobalRoleResourceTest {
     public void deleteGlobalRoleFromUser_callsTenantService_deleteTenantRole() throws Exception {
         when(userService.loadUser("userId")).thenReturn(new User());
         userGlobalRoleResource.deleteGlobalRoleFromUser("authHeader", "userId", "roleId");
-        verify(tenantService).deleteTenantRole(anyString(), any(TenantRole.class));
+        verify(tenantService).deleteTenantRoleForUser(any(User.class), any(TenantRole.class));
     }
 
     @Test
@@ -153,7 +153,7 @@ public class UserGlobalRoleResourceTest {
     public void deleteTenantRoleFromUser_callsTenantService_deleteTenantRole() throws Exception {
         when(userService.loadUser("userId")).thenReturn(new User());
         userGlobalRoleResource.deleteTenantRoleFromUser("authHeader", "userId", "tenantId", "roleId");
-        verify(tenantService).deleteTenantRole(anyString(), any(TenantRole.class));
+        verify(tenantService).deleteTenantRoleForUser(any(User.class), any(TenantRole.class));
     }
 
     @Test
