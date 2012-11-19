@@ -6,11 +6,9 @@ import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.DomainService;
 import com.rackspace.idm.domain.service.TenantService;
-import com.rackspace.idm.exception.ClientConflictException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.configuration.Configuration;
-import org.apache.commons.lang.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +43,9 @@ public class DefaultTenantService implements TenantService {
 
     @Autowired
     private ScopeAccessDao scopeAccessDao;
+
+    @Autowired
+    private TenantRoleDao tenantRoleDao;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -130,19 +131,24 @@ public class DefaultTenantService implements TenantService {
 
     @Override
     public TenantRole getTenantRoleForUserById(User user, String id) {
-        return getTenantRoleForParentById(user.getUniqueId(), id);
+        return tenantRoleDao.getTenantRoleForUser(user, id);
     }
 
     @Override
     public TenantRole getTenantRoleForApplicationById(Application application, String id) {
-        return getTenantRoleForParentById(application.getUniqueId(), id);
+        return tenantRoleDao.getTenantRoleForApplication(application, id);
     }
 
-    private List<Tenant> getTenantsForParentByTenantRoles(String dn) {
+    @Override
+    public List<Tenant> getTenantsForScopeAccessByTenantRoles(ScopeAccess sa) {
+        if (sa == null) {
+            throw new IllegalStateException();
+        }
+
         logger.info("Getting Tenants for Parent");
         List<Tenant> tenants = new ArrayList<Tenant>();
         List<String> tenantIds = new ArrayList<String>();
-        List<TenantRole> tenantRoles = this.tenantDao.getTenantRolesByParent(dn);
+        List<TenantRole> tenantRoles = this.tenantRoleDao.getTenantRolesForScopeAccess(sa);
         for (TenantRole role : tenantRoles) {
             if (role.getTenantIds() != null && role.getTenantIds().length > 0) {
                 for (String tenantId : role.getTenantIds()) {
@@ -160,19 +166,6 @@ public class DefaultTenantService implements TenantService {
         }
         logger.info("Got {} tenants", tenants.size());
         return tenants;
-    }
-
-    @Override
-    public List<Tenant> getTenantsForScopeAccessByTenantRoles(ScopeAccess sa) {
-        logger.info("Getting Tenants for ScopeAccess");
-
-        String dn = null;
-        try {
-            dn = sa.getParentDN();
-        } catch (Exception ex) {
-            throw new IllegalStateException();
-        }
-        return getTenantsForParentByTenantRoles(dn);
     }
 
     @Override
@@ -195,42 +188,6 @@ public class DefaultTenantService implements TenantService {
         return false;
     }
 
-    private void addTenantRole(String parentUniqueId, TenantRole role) {
-        // Adding a tenantRole has multiple paths depending on whether
-        // the user already has that role on not.
-
-        if(role == null){
-            throw new IllegalArgumentException("Role cannot be null");
-        }
-
-        logger.info("Adding Tenant Role {}", role);
-        TenantRole existingRole = this.tenantDao.getTenantRoleForParentById(parentUniqueId, role.getRoleRsId());
-        if (existingRole == null) {
-            // if the user does not have the role then just add the
-            // tenant role normally.
-            this.tenantDao.addTenantRoleToParent(parentUniqueId, role);
-        } else if (!ArrayUtils.isEmpty(existingRole.getTenantIds())) {
-            // If the new role is not global then add the new tenant
-            // to the role and update the role, otherwise just update
-            // the role and it will delete the existing tenants and
-            // make it a global role.
-            if (!ArrayUtils.isEmpty(role.getTenantIds())) {
-                for (String tenantId : role.getTenantIds()) {
-                    for(String existingId : existingRole.getTenantIds()){
-                        if(existingId.equals(tenantId)) { //If role is existing then throw error
-                            throw new  ClientConflictException("Tenant Role already exists");
-                        }
-                    }
-                    existingRole.addTenantId(tenantId);
-                }
-            } else {
-                existingRole.setTenantIds(null);
-            }
-            this.tenantDao.updateTenantRole(existingRole);
-        }
-        logger.info("Added Tenant Role {}", role);
-    }
-
     @Override
     public void deleteGlobalRole(TenantRole role) {
         logger.info("Deleting Global Role {}", role);
@@ -238,41 +195,14 @@ public class DefaultTenantService implements TenantService {
         logger.info("Deleted Global Role {}", role);
     }
 
-    private TenantRole getTenantRoleForParentById(String parentUniqueId, String id) {
-        logger.debug("Getting Tenant Role {}", id);
-        TenantRole role = this.tenantDao.getTenantRoleForParentById(parentUniqueId, id);
-        if (role != null) {
-            ClientRole cRole = this.clientDao.getClientRoleById(role.getRoleRsId());
-            role.setName(cRole.getName());
-            role.setDescription(cRole.getDescription());
-        }else{
-            String errMsg = String.format("Role with id: %s not found.",id);
-            throw new NotFoundException(errMsg);
-        }
-        logger.debug("Got Tenant Role {}", role);
-        return role;
-    }
-
     @Override
     public List<TenantRole> getTenantRolesForScopeAccess(ScopeAccess scopeAccess) {
-        logger.debug(GETTING_TENANT_ROLES);
-
-        String parentDn = null;
-        try {
-            if (scopeAccess instanceof DelegatedClientScopeAccess) {
-                parentDn = scopeAccess.getUniqueId();
-            } else {
-                parentDn = scopeAccess.getLDAPEntry().getParentDNString();
-            }
-        } catch (Exception ex) {
-            logger.info("failed to getLdapEntry's parentDNString: " + ex.getMessage());
+        if (scopeAccess == null) {
             throw new IllegalStateException();
         }
-
-        List<TenantRole> roles = this.tenantDao.getTenantRolesByParent(parentDn);
-        getRoleDetails(roles);
-        logger.debug(GOT_TENANT_ROLES, roles.size());
-        return roles;
+        List<TenantRole> tenantRole = tenantRoleDao.getTenantRolesForScopeAccess(scopeAccess);
+        getRoleDetails(tenantRole);
+        return tenantRole;
     }
 
     @Override
@@ -296,26 +226,7 @@ public class DefaultTenantService implements TenantService {
             throw new NotFoundException(errMsg);
         }
 
-        ScopeAccess sa =  this.scopeAccessDao.getDirectScopeAccessForParentByClientId(user.getUniqueId(), role.getClientId());
-
-        if (sa == null) {
-            if(user instanceof Racker){
-                RackerScopeAccess rsa = new RackerScopeAccess();
-                rsa.setRackerId(((Racker) user).getRackerId());
-                rsa.setClientId(role.getClientId());
-                sa = this.scopeAccessDao.addDirectScopeAccess(user.getUniqueId(), rsa);
-            }else{
-                UserScopeAccess usa = new UserScopeAccess();
-                usa.setClientId(client.getClientId());
-                usa.setClientRCN(client.getRCN());
-                usa.setUsername(user.getUsername());
-                usa.setUserRCN(user.getCustomerId());
-                usa.setUserRsId(user.getId());
-                sa = this.scopeAccessDao.addDirectScopeAccess(user.getUniqueId(), usa);
-            }
-        }
-
-        addTenantRole(sa.getUniqueId(), role);
+        tenantRoleDao.addTenantRoleToUser(user, role);
 
         logger.info("Adding tenantRole {} to user {}", role, user);
     }
@@ -361,56 +272,25 @@ public class DefaultTenantService implements TenantService {
             throw new NotFoundException(errMsg);
         }
 
-        ScopeAccess sa = this.scopeAccessDao.getDirectScopeAccessForParentByClientId(client.getUniqueId(), role.getClientId());
-
-        if (sa == null) {
-            sa = new ScopeAccess();
-            sa.setClientId(owner.getClientId());
-            sa.setClientRCN(owner.getRCN());
-            sa = this.scopeAccessDao.addDirectScopeAccess(client.getUniqueId(), sa);
-        }
-
-        addTenantRole(sa.getUniqueId(), role);
+        tenantRoleDao.addTenantRoleToApplication(client, role);
 
         logger.info("Added tenantRole {} to client {}", role, client);
     }
 
-    private void deleteTenantRole(String parentUniqueId, TenantRole role) {
-
-        if(role == null){
-            throw new IllegalArgumentException("Role cannot be null");
-        }
-
-        logger.info("Deleted Tenant Role {}", role);
-        TenantRole existingRole = this.tenantDao.getTenantRoleForParentById(
-            parentUniqueId, role.getRoleRsId());
-
-        if (existingRole == null) {
-            throw new NotFoundException("Tenant Role not found");
-        }
-
-        if (role.getTenantIds() == null || role.getTenantIds().length == 0) {
-            this.tenantDao.deleteTenantRole(role);
-        } else if (existingRole.containsTenantId(role.getTenantIds()[0])) {
-            if (existingRole.getTenantIds().length == 1) {
-                this.tenantDao.deleteTenantRole(existingRole);
-            } else {
-                existingRole.removeTenantId(role.getTenantIds()[0]);
-                this.tenantDao.updateTenantRole(existingRole);
-            }
-        }
-        logger.info("Deleted Tenant Role {}", role);
-    }
-
-
     @Override
     public void deleteTenantRoleForUser(User user, TenantRole role) {
-        deleteTenantRole(user.getUniqueId(), role);
+        if (user == null || role == null) {
+            throw new IllegalArgumentException();
+        }
+        tenantRoleDao.deleteTenantRoleForUser(user, role);
     }
 
     @Override
     public void deleteTenantRoleForApplication(Application application, TenantRole role) {
-        deleteTenantRole(application.getUniqueId(), role);
+        if (application == null || role == null) {
+            throw new IllegalStateException();
+        }
+        tenantRoleDao.deleteTenantRoleForApplication(application, role);
     }
 
     @Override

@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.dao;
 
 
 import com.unboundid.ldap.sdk.Filter;
+import com.unboundid.ldap.sdk.SearchScope;
 
 import java.util.List;
 
@@ -13,14 +14,20 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public interface GenericDao<T> {
-    List<T> getObjects(Filter searchFilter);
     void addObject(T object);
-    void addObject(T object, String dn);
+    void addObject(String dn, T object);
     T getObject(Filter searchFilter);
+    T getObject(Filter searchFilter, String dn);
+    T getObject(Filter searchFilter, String dn, SearchScope scope);
+    List<T> getObjects(Filter searchFilter);
+    List<T> getObjects(Filter searchFilter, String dn);
+    List<T> getObjects(Filter searchFilter, String dn, SearchScope scope);
     void updateObject(T object);
     void deleteObject(Filter searchFilter);
     String getBaseDn();
     String getLdapEntityClass();
     String getNextId();
     String addLdapContainer(String dnString, String containerName);
+
+    void deleteObject(T object);
 }

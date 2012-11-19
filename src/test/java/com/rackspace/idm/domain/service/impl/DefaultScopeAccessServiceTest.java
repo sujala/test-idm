@@ -59,6 +59,8 @@ public class DefaultScopeAccessServiceTest {
     @Mock
     private TenantDao tenantDao;
     @Mock
+    private TenantRoleDao tenantRoleDao;
+    @Mock
     private EndpointDao endpointDao;
     @Mock
     private AuthHeaderHelper authHeaderHelper;
@@ -91,9 +93,9 @@ public class DefaultScopeAccessServiceTest {
         ReadOnlyEntry ldapEntry = new ReadOnlyEntry("test",attribute);
         DelegatedClientScopeAccess token = new DelegatedClientScopeAccess();
         token.setLdapEntry(ldapEntry);
-        when(tenantDao.getTenantRolesByParent("test")).thenReturn(null);
+        when(tenantRoleDao.getTenantRolesForScopeAccess(null)).thenReturn(null);
         defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
-        verify(tenantDao).getTenantRolesByParent("test");
+        verify(tenantRoleDao).getTenantRolesForScopeAccess(any(ScopeAccess.class));
     }
 
     @Test
@@ -103,9 +105,9 @@ public class DefaultScopeAccessServiceTest {
         ReadOnlyEntry ldapEntry = new ReadOnlyEntry(dn,attribute,attribute);
         ScopeAccess token = new UserScopeAccess();
         token.setLdapEntry(ldapEntry);
-        when(tenantDao.getTenantRolesByParent("dn:=Tim Jones")).thenReturn(null);
+        when(tenantRoleDao.getTenantRolesForScopeAccess(null)).thenReturn(null);
         defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
-        verify(tenantDao).getTenantRolesByParent("dc=parent");
+        verify(tenantRoleDao).getTenantRolesForScopeAccess(any(ScopeAccess.class));
     }
 
     @Test
@@ -114,9 +116,9 @@ public class DefaultScopeAccessServiceTest {
         ReadOnlyEntry ldapEntry = new ReadOnlyEntry(entry);
         ScopeAccess token = new UserScopeAccess();
         token.setLdapEntry(ldapEntry);
-        when(tenantDao.getTenantRolesByParent(null)).thenReturn(null);
+        when(tenantRoleDao.getTenantRolesForScopeAccess(null)).thenReturn(null);
         defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
-        verify(tenantDao).getTenantRolesByParent(null);
+        verify(tenantRoleDao).getTenantRolesForScopeAccess(any(ScopeAccess.class));
     }
 
     @Test
@@ -124,7 +126,7 @@ public class DefaultScopeAccessServiceTest {
         ReadOnlyEntry ldapEntry = new ReadOnlyEntry(new Entry("junk"));
         ScopeAccess token = new UserScopeAccess();
         token.setLdapEntry(ldapEntry);
-        when(tenantDao.getTenantRolesByParent(null)).thenReturn(null);
+        when(tenantRoleDao.getTenantRolesForScopeAccess(null)).thenReturn(null);
         List<OpenstackEndpoint> endpoints = defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
         assertThat("size", endpoints.size(),equalTo(0));
     }
@@ -134,7 +136,7 @@ public class DefaultScopeAccessServiceTest {
         ReadOnlyEntry ldapEntry = new ReadOnlyEntry(new Entry("junk"));
         ScopeAccess token = new UserScopeAccess();
         token.setLdapEntry(ldapEntry);
-        when(tenantDao.getTenantRolesByParent(null)).thenReturn(new ArrayList<TenantRole>());
+        when(tenantRoleDao.getTenantRolesForScopeAccess(null)).thenReturn(new ArrayList<TenantRole>());
         List<OpenstackEndpoint> endpoints = defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
         assertThat("size", endpoints.size(),equalTo(0));
     }
@@ -150,7 +152,7 @@ public class DefaultScopeAccessServiceTest {
         List<TenantRole> roles = new ArrayList<TenantRole>();
         roles.add(role);
         Tenant tenant = new Tenant();
-        when(tenantDao.getTenantRolesByParent(null)).thenReturn(roles);
+        when(tenantRoleDao.getTenantRolesForScopeAccess(any(ScopeAccess.class))).thenReturn(roles);
         when(tenantDao.getTenant("123")).thenReturn(tenant);
         when(endpointDao.getOpenstackEndpointsForTenant(tenant)).thenReturn(null);
         defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
@@ -167,7 +169,7 @@ public class DefaultScopeAccessServiceTest {
         role.setTenantIds(tenantIds);
         List<TenantRole> roles = new ArrayList<TenantRole>();
         roles.add(role);
-        when(tenantDao.getTenantRolesByParent(null)).thenReturn(roles);
+        when(tenantRoleDao.getTenantRolesForScopeAccess(null)).thenReturn(roles);
         when(tenantDao.getTenant("123")).thenReturn(null);
         defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
         verify(endpointDao,never()).getOpenstackEndpointsForTenant(any(Tenant.class));
@@ -183,7 +185,7 @@ public class DefaultScopeAccessServiceTest {
         role.setTenantIds(tenantIds);
         List<TenantRole> roles = new ArrayList<TenantRole>();
         roles.add(role);
-        when(tenantDao.getTenantRolesByParent(null)).thenReturn(roles);
+        when(tenantRoleDao.getTenantRolesForScopeAccess(null)).thenReturn(roles);
         defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
         verify(tenantDao,never()).getTenant(anyString());
     }
@@ -196,7 +198,7 @@ public class DefaultScopeAccessServiceTest {
         TenantRole role = new TenantRole();
         List<TenantRole> roles = new ArrayList<TenantRole>();
         roles.add(role);
-        when(tenantDao.getTenantRolesByParent(null)).thenReturn(roles);
+        when(tenantRoleDao.getTenantRolesForScopeAccess(null)).thenReturn(roles);
         defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
         verify(tenantDao,never()).getTenant(anyString());
     }
@@ -207,7 +209,7 @@ public class DefaultScopeAccessServiceTest {
         ScopeAccess token = new UserScopeAccess();
         token.setLdapEntry(ldapEntry);
         List<TenantRole> roles = new ArrayList<TenantRole>();
-        when(tenantDao.getTenantRolesByParent(null)).thenReturn(roles);
+        when(tenantRoleDao.getTenantRolesForScopeAccess(null)).thenReturn(roles);
         defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
         verify(tenantDao,never()).getTenant(anyString());
     }
@@ -230,7 +232,7 @@ public class DefaultScopeAccessServiceTest {
         endpoint.setBaseUrls(new ArrayList<CloudBaseUrl>());
         endpoint.getBaseUrls().add(new CloudBaseUrl());
 
-        when(tenantDao.getTenantRolesByParent(null)).thenReturn(roles);
+        when(tenantRoleDao.getTenantRolesForScopeAccess(any(ScopeAccess.class))).thenReturn(roles);
         when(tenantDao.getTenant("123")).thenReturn(tenant);
         when(endpointDao.getOpenstackEndpointsForTenant(tenant)).thenReturn(endpoint);
 
@@ -257,7 +259,7 @@ public class DefaultScopeAccessServiceTest {
         endpoint.setBaseUrls(new ArrayList<CloudBaseUrl>());
         endpoint.getBaseUrls().add(new CloudBaseUrl());
 
-        when(tenantDao.getTenantRolesByParent(null)).thenReturn(roles);
+        when(tenantRoleDao.getTenantRolesForScopeAccess(null)).thenReturn(roles);
         when(tenantDao.getTenant("123")).thenReturn(tenant);
         when(endpointDao.getOpenstackEndpointsForTenant(tenant)).thenReturn(null);
 
@@ -282,7 +284,7 @@ public class DefaultScopeAccessServiceTest {
         OpenstackEndpoint endpoint = new OpenstackEndpoint();
         endpoint.setBaseUrls(new ArrayList<CloudBaseUrl>());
 
-        when(tenantDao.getTenantRolesByParent(null)).thenReturn(roles);
+        when(tenantRoleDao.getTenantRolesForScopeAccess(null)).thenReturn(roles);
         when(tenantDao.getTenant("123")).thenReturn(tenant);
         when(endpointDao.getOpenstackEndpointsForTenant(tenant)).thenReturn(endpoint);
 
@@ -302,7 +304,7 @@ public class DefaultScopeAccessServiceTest {
         List<TenantRole> roles = new ArrayList<TenantRole>();
         roles.add(role);
 
-        when(tenantDao.getTenantRolesByParent(null)).thenReturn(roles);
+        when(tenantRoleDao.getTenantRolesForScopeAccess(null)).thenReturn(roles);
         when(tenantDao.getTenant("123")).thenReturn(null);
 
         List<OpenstackEndpoint> endpointList = defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);

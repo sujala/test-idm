@@ -1,14 +1,12 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.domain.dao.ClientRoleDao;
-import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
-import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.FilterParam;
+import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.unboundid.ldap.sdk.Filter;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -36,7 +34,7 @@ public class LdapClientRoleRepository extends LdapGenericRepository<ClientRole> 
     @Override
     public void addClientRole(String clientUniqueId, ClientRole role) {
         String dn = addLdapContainer(clientUniqueId, CONTAINER_ROLES);
-        addObject(role, dn);
+        addObject(dn, role);
     }
 
     @Override

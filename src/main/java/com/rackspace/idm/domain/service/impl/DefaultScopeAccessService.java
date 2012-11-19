@@ -1,9 +1,5 @@
 package com.rackspace.idm.domain.service.impl;
 
-import org.springframework.beans.factory.annotation.Autowired;
-
-import org.springframework.stereotype.Component;
-
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.*;
@@ -15,12 +11,13 @@ import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.unboundid.ldap.sdk.LDAPException;
-import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -53,27 +50,16 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     private ApplicationDao clientDao;
     @Autowired
     private Configuration config;
+    @Autowired
+    private TenantRoleDao tenantRoleDao;
 
     @Override
     public List<OpenstackEndpoint> getOpenstackEndpointsForScopeAccess(ScopeAccess token) {
 
         List<OpenstackEndpoint> endpoints = new ArrayList<OpenstackEndpoint>();
 
-        String parentUniqueId = null;
-
-        if (token instanceof DelegatedClientScopeAccess) {
-            parentUniqueId = token.getUniqueId();
-        } else {
-            try {
-                ReadOnlyEntry ldapEntry = token.getLDAPEntry();
-                parentUniqueId = ldapEntry.getParentDNString();
-            } catch (LDAPException e) {
-                // noop
-            }
-        }
-
         // First get the tenantRoles for the token
-        List<TenantRole> roles = this.tenantDao.getTenantRolesByParent(parentUniqueId);
+        List<TenantRole> roles = this.tenantRoleDao.getTenantRolesForScopeAccess(token);
 
         if (roles == null || roles.size() == 0) {
             return endpoints;

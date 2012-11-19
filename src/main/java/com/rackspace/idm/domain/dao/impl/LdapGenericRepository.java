@@ -28,13 +28,23 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
 
     @Override
     public List<T> getObjects(Filter searchFilter) {
+        return getObjects(searchFilter, getBaseDn(), SearchScope.SUB);
+    }
+
+    @Override
+    public List<T> getObjects(Filter searchFilter, String dn) {
+        return getObjects(searchFilter, dn, SearchScope.SUB);
+    }
+
+    @Override
+    public List<T> getObjects(Filter searchFilter, String dn, SearchScope scope) {
         getLogger().debug("Getting all " + entityType.toString());
 
         List<T> objects = new ArrayList<T>();
         SearchResult searchResult;
 
         try {
-            searchResult = getAppInterface().search(getBaseDn(), SearchScope.ONE, searchFilter);
+            searchResult = getAppInterface().search(dn, scope, searchFilter);
             getLogger().info("Got" + entityType.toString());
         } catch (LDAPSearchException ldapEx) {
             String loggerMsg = String.format("Error searching for %s - {}", entityType.toString());
@@ -63,11 +73,11 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
 
     @Override
     public void addObject(T object) {
-        addObject(object, getBaseDn());
+        addObject(getBaseDn(), object);
     }
 
     @Override
-    public void addObject(T object, String dn) {
+    public void addObject(String dn, T object) {
         if (object == null) {
             getLogger().error(ERROR_GETTING_OBJECT);
             throw new IllegalArgumentException(ERROR_GETTING_OBJECT);
@@ -116,12 +126,22 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
 
     @Override
     public T getObject(Filter searchFilter) {
+        return getObject(searchFilter, getBaseDn());
+    }
+
+    @Override
+    public T getObject(Filter searchFilter, String dn) {
+        return getObject(searchFilter, dn, SearchScope.ONE);
+    }
+
+    @Override
+    public T getObject(Filter searchFilter, String dn, SearchScope scope) {
         String loggerMsg = String.format("Doing search for %s", entityType.toString());
         getLogger().debug(loggerMsg);
 
         T object;
         try {
-            object = getSingleObject(searchFilter);
+            object = getSingleObject(dn, scope, searchFilter);
         } catch (LDAPPersistException e) {
             getLogger().error(ERROR_GETTING_OBJECT, e);
             throw new IllegalStateException(e);
@@ -173,8 +193,21 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         getLogger().debug("Deleted: {}", object);
     }
 
-    private T getSingleObject(Filter searchFilter) throws LDAPPersistException {
-        SearchResultEntry entry = this.getSingleEntry(getBaseDn(), SearchScope.ONE, searchFilter);
+    @Override
+    public void deleteObject(T object) {
+        String loggerMsg = String.format("Deleting object %s", object.getUniqueId());
+        getLogger().debug(loggerMsg);
+
+        getLogger().debug("Deleting: {}", object);
+        final String dn = object.getUniqueId();
+        final Audit audit = Audit.log((Auditable)object).delete();
+        deleteEntryAndSubtree(dn, audit);
+        audit.succeed();
+        getLogger().debug("Deleted: {}", object);
+    }
+
+    private T getSingleObject(String dn, SearchScope scope, Filter searchFilter) throws LDAPPersistException {
+        SearchResultEntry entry = this.getSingleEntry(dn, scope, searchFilter);
         if (entry == null) {
             return null;
         }

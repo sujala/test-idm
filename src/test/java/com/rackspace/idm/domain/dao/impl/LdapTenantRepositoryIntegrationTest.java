@@ -8,8 +8,6 @@ import org.springframework.test.context.ContextConfiguration;
 
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import com.rackspace.idm.domain.config.LdapConfiguration;
-import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.exception.DuplicateException;
@@ -108,61 +106,9 @@ public class LdapTenantRepositoryIntegrationTest extends InMemoryLdapIntegration
         Assert.assertEquals(tenant.isEnabled(), check.isEnabled());
     }
     
-    @Test 
-    public void shouldAddGetDeleteTenantRole() {
-        this.repo.addTenantRoleToParent(dn, getTestTenantRole());
-        TenantRole role = this.repo.getTenantRoleForParentById(dn, id);
-        List<TenantRole> roles = this.repo.getTenantRolesByParent(dn);
-        List<TenantRole> roles2 = this.repo.getTenantRolesByParentAndClientId(dn, clientId);
-        this.repo.deleteTenantRole(role);
-        TenantRole notThere = this.repo.getTenantRoleForParentById(dn, id);
-        Assert.assertNotNull(role);
-        Assert.assertEquals(tenantId, role.getTenantIds()[0]);
-        Assert.assertEquals(id, role.getRoleRsId());
-        Assert.assertEquals(clientId, role.getClientId());
-        Assert.assertTrue(roles.size() > 0);
-        Assert.assertTrue(roles2.size() > 0);
-        Assert.assertNull(notThere);
-    }
-    
-    @Test(expected = IllegalArgumentException.class)
-    public void shouldNotAddNullTenantRole() {
-        this.repo.addTenantRoleToParent(dn, null);
-    }
-    
-    @Test(expected = IllegalArgumentException.class)
-    public void shouldNotAddTenantRoleWithBlankParent() {
-        this.repo.addTenantRoleToParent(null, getTestTenantRole());
-    }
-    
     @Test(expected = IllegalArgumentException.class)
     public void shouldNotDeleteNullTenantRole() {
         this.repo.deleteTenantRole(null);
-    }
-    
-    @Test
-    public void shouldNotGetTenantRoleWithBlankParent() {
-        Assert.assertNull(this.repo.getTenantRoleForParentById(null, roleName));
-    }
-    
-    @Test
-    public void shouldNotGetTenantRoleWithBlankId() {
-        Assert.assertNull(this.repo.getTenantRoleForParentById(dn, null));
-    }
-    
-    @Test
-    public void shouldNotGetTenantRolesWithBlankParent() {
-        Assert.assertThat("Empty List", this.repo.getTenantRolesByParent(null).isEmpty(), Matchers.equalTo(true));
-    }
-    
-    @Test
-    public void shouldNotGetTenantRolesByClientIdWithBlankParent() {
-        Assert.assertThat("Empty List", this.repo.getTenantRolesByParentAndClientId(null, clientId).isEmpty(), Matchers.equalTo(true));
-    }
-    
-    @Test
-    public void shouldNotGetTenantRolesByClientIdWithBlankClientId() {
-        Assert.assertThat("Empty List", this.repo.getTenantRolesByParentAndClientId(dn, null).isEmpty(), Matchers.equalTo(true));
     }
     
     private Tenant getTestTenant() {
