@@ -3,8 +3,12 @@ package com.rackspace.idm.api.resource.user;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.BadRequestException;
+import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import sun.awt.ConstrainableGraphics;
 
 import javax.ws.rs.core.Response;
 
@@ -30,6 +34,7 @@ public class UserGlobalRoleResourceTest {
     private UserService userService;
     private ApplicationService applicationService;
     private ClientRole clientRole;
+    private Configuration configuration;
 
     @Before
     public void setUp() throws Exception {
@@ -41,6 +46,12 @@ public class UserGlobalRoleResourceTest {
         userGlobalRoleResource = new UserGlobalRoleResource(userService,authorizationService, applicationService,scopeAccessService, tenantService);
         clientRole = new ClientRole();
         clientRole.setName("blah");
+        configuration = mock(Configuration.class);
+        when(configuration.getString("cloudAuth.adminRole")).thenReturn("identity:admin");
+        when(configuration.getString("cloudAuth.serviceAdminRole")).thenReturn("identity:service-admin");
+        when(configuration.getString("cloudAuth.userAdminRole")).thenReturn("identity:user-admin");
+        when(configuration.getString("cloudAuth.userRole")).thenReturn("identity:default");
+        userGlobalRoleResource.setConfig(configuration);
     }
 
     @Test

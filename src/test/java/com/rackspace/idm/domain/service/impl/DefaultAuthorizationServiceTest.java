@@ -1395,7 +1395,6 @@ public class DefaultAuthorizationServiceTest {
         }
     }
 
-    @Ignore
     @Test
     public void getIDM_ADMIN_GROUP_DN() throws Exception {
         assertThat("string", defaultAuthorizationService.getIdmAdminGroupDn(), nullValue());

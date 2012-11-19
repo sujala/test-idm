@@ -16,7 +16,7 @@ import java.util.List;
 
 /**
  * User Application Roles Resource.
- * 
+ *
  */
 @Consumes( { MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML })
 @Produces( { MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML })
@@ -43,10 +43,13 @@ public class UserGlobalRoleResource {
 		this.tenantService = tenantService;
 	}
 
+    @Autowired
+    private Configuration config;
+
 	/**
 	 * Grant a global role for a user
-	 * 
-	 * 
+	 *
+	 *
 	 * @param authHeader
 	 *            HTTP Authorization header for authenticating the caller.
 	 * @param userId
@@ -90,7 +93,7 @@ public class UserGlobalRoleResource {
 
 	/**
 	 * Revoke a global role from a user
-	 * 
+	 *
 	 * @param authHeader
 	 *            HTTP Authorization header for authenticating the caller.
 	 * @param userId
@@ -115,8 +118,8 @@ public class UserGlobalRoleResource {
 
     /**
 	 * Grant a role to a user on a tenant.
-	 * 
-	 * 
+	 *
+	 *
 	 * @param authHeader
 	 *            HTTP Authorization header for authenticating the caller.
 	 * @param userId
@@ -154,8 +157,8 @@ public class UserGlobalRoleResource {
 
 	/**
 	 * Revoke a role on a tenant from a user.
-	 * 
-	 * 
+	 *
+	 *
 	 * @param authHeader
 	 *            HTTP Authorization header for authenticating the caller.
 	 * @param userId
@@ -181,12 +184,12 @@ public class UserGlobalRoleResource {
 		TenantRole tenantRole = new TenantRole();
 		tenantRole.setRoleRsId(roleId);
 		tenantRole.setTenantIds(new String[]{tenantId});
-		
+
 		this.tenantService.deleteTenantRole(user.getUniqueId(), tenantRole);
 
 		return Response.noContent().build();
 	}
-	
+
 	TenantRole createTenantRole(String tenantId, String roleId) {
 		ClientRole role = applicationService.getClientRoleById(roleId);
         if (role == null) {
@@ -200,15 +203,18 @@ public class UserGlobalRoleResource {
         tenantRole.setRoleRsId(role.getId());
         tenantRole.setName(role.getName());
         tenantRole.setTenantIds(new String[]{tenantId});
-        
+
         return tenantRole;
 	}
 
-    //TODO:Pull values from config
     private boolean isIdentityRole(String roleName) {
-        return (roleName.equalsIgnoreCase("identity:default")
-                    || roleName.equalsIgnoreCase("identity:user-admin")
-                    || roleName.equalsIgnoreCase("identity:admin")
-                    || roleName.equalsIgnoreCase("identity:service-admin"));
+        return (roleName.equalsIgnoreCase(config.getString("cloudAuth.adminRole"))
+                    || roleName.equalsIgnoreCase(config.getString("cloudAuth.serviceAdminRole"))
+                    || roleName.equalsIgnoreCase(config.getString("cloudAuth.userAdminRole"))
+                    || roleName.equalsIgnoreCase(config.getString("cloudAuth.userRole")));
+    }
+
+    public void setConfig(Configuration configuration) {
+        this.config = configuration;
     }
 }
