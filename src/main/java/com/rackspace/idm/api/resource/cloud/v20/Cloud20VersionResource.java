@@ -622,11 +622,12 @@ public class Cloud20VersionResource {
     @Path("OS-KSADM/roles")
     public Response listRoles(
             @Context HttpHeaders httpHeaders,
+            @Context UriInfo uriInfo,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @QueryParam("serviceId") String serviceId,
             @QueryParam("marker") String marker,
-            @QueryParam("limit") Integer limit) {
-        return getCloud20Service().listRoles(httpHeaders, authToken, serviceId, marker, limit).build();
+            @QueryParam("limit") String limit) {
+        return getCloud20Service().listRoles(httpHeaders, uriInfo, authToken, serviceId, marker, limit).build();
     }
 
     @POST

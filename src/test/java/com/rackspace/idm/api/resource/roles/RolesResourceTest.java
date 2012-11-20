@@ -2,6 +2,8 @@ package com.rackspace.idm.api.resource.roles;
 
 import com.rackspace.api.idm.v1.Role;
 import com.rackspace.idm.api.converter.RolesConverter;
+import com.rackspace.idm.api.resource.pagination.Paginator;
+import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.FilterParam;
@@ -9,11 +11,15 @@ import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
+import com.unboundid.ldap.sdk.SearchRequest;
+import com.unboundid.ldap.sdk.SearchResult;
+import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 import java.util.List;
 
@@ -34,6 +40,10 @@ public class RolesResourceTest {
     ApplicationService applicationService;
     RolesConverter rolesConverter;
     RolesResource spy;
+    Configuration config;
+    Paginator<ClientRole> clientRolePaginator;
+    UriInfo uriInfo;
+
 
     @Before
     public void setUp() throws Exception {
@@ -44,43 +54,33 @@ public class RolesResourceTest {
         spy = spy(rolesResource);
         when(applicationService.getClientRoleById(anyString())).thenReturn(new ClientRole());
         when(rolesConverter.toClientRole(any(Role.class))).thenReturn(new ClientRole());
+        config = mock(Configuration.class);
+        clientRolePaginator = mock(Paginator.class);
+        rolesResource.setConfig(config);
+        rolesResource.setPaginator(clientRolePaginator);
+        uriInfo = mock(UriInfo.class);
+
+        when(applicationService.getClientRolesPaged(anyString(), anyString(), anyInt(), anyInt())).thenReturn(new PaginatorContext<ClientRole>());
+
     }
 
     @Test
     public void getAllRoles_callsAuthorizationService_verifyIdmSuperAdminAccess() throws Exception {
-        rolesResource.getAllRoles(null, null, null);
+        rolesResource.getAllRoles(null, uriInfo, null, null);
         verify(authorizationService).verifyIdmSuperAdminAccess(null);
     }
 
     @Test
-    public void getAllRoles_callsApplicationService_getAllClientRoles() throws Exception {
+    public void getAllRoles_callsApplicationService_getClientRolesPaged() throws Exception {
         doNothing().when(authorizationService).verifyIdmSuperAdminAccess(null);
-        rolesResource.getAllRoles(null, null, null);
-        verify(applicationService).getAllClientRoles(anyList());
-    }
-
-    @Test
-    public void getAllRoles_withApplicationId_addsApplicationIdFilter() throws Exception {
-        doNothing().when(authorizationService).verifyIdmSuperAdminAccess(null);
-        rolesResource.getAllRoles(null, null, "applicationId");
-        ArgumentCaptor<List> argumentCaptor = ArgumentCaptor.forClass(List.class);
-        verify(applicationService).getAllClientRoles(argumentCaptor.capture());
-        assertThat("FilterParam", ((FilterParam)argumentCaptor.getValue().get(0)).getParam(), equalTo(FilterParam.FilterParamName.APPLICATION_ID));
-    }
-
-    @Test
-    public void getAllRoles_withName_addsNameFilter() throws Exception {
-        doNothing().when(authorizationService).verifyIdmSuperAdminAccess(null);
-        rolesResource.getAllRoles(null, "name", null);
-        ArgumentCaptor<List> argumentCaptor = ArgumentCaptor.forClass(List.class);
-        verify(applicationService).getAllClientRoles(argumentCaptor.capture());
-        assertThat("FilterParam", ((FilterParam)argumentCaptor.getValue().get(0)).getParam(), equalTo(FilterParam.FilterParamName.ROLE_NAME));
+        rolesResource.getAllRoles(null, null, null, null);
+        verify(applicationService).getClientRolesPaged(anyString(), anyString(), anyInt(), anyInt());
     }
 
     @Test
     public void getAllRoles_returns200Status() throws Exception {
         doNothing().when(authorizationService).verifyIdmSuperAdminAccess(null);
-        Response response = rolesResource.getAllRoles(null, null, null);
+        Response response = rolesResource.getAllRoles(null, null, null, null);
         assertThat("response status", response.getStatus(), equalTo(200));
     }
 

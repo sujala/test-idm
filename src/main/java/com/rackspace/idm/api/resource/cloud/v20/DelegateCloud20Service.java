@@ -1092,7 +1092,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listRoles(HttpHeaders httpHeaders, String authToken, String serviceId, String marker, Integer limit)  {
+    public ResponseBuilder listRoles(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String serviceId, String marker, String limit)  {
         if (isCloudAuthRoutingEnabled() && !isGASourceOfTruth()) {
             String request = getCloudAuthV20Url() + "OS-KSADM/roles";
             HashMap<String, Object> params = new HashMap<String, Object>();
@@ -1102,7 +1102,7 @@ public class DelegateCloud20Service implements Cloud20Service {
             request = appendQueryParams(request, params);
             return cloudClient.get(request, httpHeaders);
         }
-        return defaultCloud20Service.listRoles(httpHeaders, authToken, serviceId, marker, limit);
+        return defaultCloud20Service.listRoles(httpHeaders, uriInfo, authToken, serviceId, marker, limit);
     }
 
     @Override

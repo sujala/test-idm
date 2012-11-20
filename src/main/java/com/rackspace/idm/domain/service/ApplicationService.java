@@ -1,11 +1,8 @@
 
 package com.rackspace.idm.domain.service;
 
-import com.rackspace.idm.domain.dao.ApplicationDao;
-import com.rackspace.idm.domain.dao.CustomerDao;
-import com.rackspace.idm.domain.dao.ScopeAccessDao;
-import com.rackspace.idm.domain.dao.TenantDao;
-import com.rackspace.idm.domain.dao.UserDao;
+import com.rackspace.idm.api.resource.pagination.PaginatorContext;
+import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.*;
 
 import java.util.List;
@@ -92,7 +89,13 @@ public interface ApplicationService {
     
     ClientRole getClientRoleById(String id);
     
-    List<ClientRole> getAllClientRoles(List<FilterParam> filters);
+    List<ClientRole> getAllClientRoles();
+
+    PaginatorContext<ClientRole> getClientRolesPaged(int offset, int limit);
+
+    PaginatorContext<ClientRole> getClientRolesPaged(String applicationId, int offset, int limit);
+
+    PaginatorContext<ClientRole> getClientRolesPaged(String applicationId, String roleName, int offset, int limit);
     
     List<Application> getOpenStackServices();
 
@@ -107,4 +110,6 @@ public interface ApplicationService {
 	void setUserDao(UserDao userDao);
 
 	void setTenantDao(TenantDao tenantDao);
+
+    void setApplicationRoleDao(ApplicationRoleDao applicationRoleDao);
 }

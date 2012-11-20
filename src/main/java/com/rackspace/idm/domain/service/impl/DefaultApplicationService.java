@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.api.resource.pagination.PaginatorContext;
+import com.rackspace.idm.domain.dao.impl.LdapApplicationRoleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.stereotype.Component;
@@ -31,6 +33,8 @@ public class DefaultApplicationService implements ApplicationService {
     private UserDao userDao;
     @Autowired
     private TenantDao tenantDao;
+    @Autowired
+    private ApplicationRoleDao applicationRoleDao;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -545,26 +549,26 @@ public class DefaultApplicationService implements ApplicationService {
 
     @Override
     public void addClientRole(ClientRole role) {
-        addClientRole(role, clientDao.getNextRoleId());
+        addClientRole(role, applicationRoleDao.getNextRoleId());
     }
 
     @Override
     public void addClientRole(ClientRole role, String roleId) {
         logger.info("Adding Client Role: {}", role);
-        Application client = clientDao.getClientByClientId(role.getClientId());
-        if (client == null) {
+        Application application = clientDao.getClientByClientId(role.getClientId());
+        if (application == null) {
             String errMsg = String.format("Client %s not found", role.getClientId());
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }
-        ClientRole exists = clientDao.getClientRoleByClientIdAndRoleName(role.getClientId(), role.getName());
+        ClientRole exists = applicationRoleDao.getClientRoleByApplicationAndName(application, role);
         if (exists != null) {
             String errMsg = String.format("Role with name %s already exists", role.getName());
             logger.warn(errMsg);
             throw new DuplicateException(errMsg);
         }
         role.setId(roleId);
-        clientDao.addClientRole(client.getUniqueId(), role);
+        applicationRoleDao.addClientRole(application, role);
         logger.info("Added Client Role: {}", role);
     }
 
@@ -577,47 +581,74 @@ public class DefaultApplicationService implements ApplicationService {
             this.tenantDao.deleteTenantRole(tenantRole);
         }
         
-        this.clientDao.deleteClientRole(role);
+        this.applicationRoleDao.deleteClientRole(role);
         logger.info("Deleted Client Role: {}", role);
     }
 
     @Override
     public void updateClientRole(ClientRole role) {
         logger.info("Update Client Role: {}", role);
-        this.clientDao.updateClientRole(role);
+        this.applicationRoleDao.updateClientRole(role);
         logger.info("Udpated Client Role: {}", role);
     }
 
     @Override
     public List<ClientRole> getClientRolesByClientId(String clientId) {
         logger.debug("Getting Client Roles for client: {}", clientId);
-        List<ClientRole> roles = this.clientDao.getClientRolesByClientId(clientId);
-        logger.debug("Got {} Client Roles", roles.size());
-        return roles;
-    }
-    
-    @Override
-    public List<ClientRole> getAllClientRoles(List<FilterParam> filters) {
-        logger.debug("Getting Client Roles");
-        List<ClientRole> roles = this.clientDao.getAllClientRoles(filters);
+        Application application = clientDao.getClientByClientId(clientId);
+        if (application == null) {
+            throw new NotFoundException(String.format("Client with id %s does not exit", clientId));
+        }
+        List<ClientRole> roles = this.applicationRoleDao.getClientRolesForApplication(application);
         logger.debug("Got {} Client Roles", roles.size());
         return roles;
     }
 
     @Override
-    public ClientRole getClientRoleByClientIdAndRoleName(String clientId,
-        String roleName) {
+    public PaginatorContext<ClientRole> getClientRolesPaged(String applicationId, String roleName, int offset, int limit) {
+        logger.debug("Getting all Client Roles page: {}");
+        PaginatorContext<ClientRole> context = applicationRoleDao.getClientRolesPaged(applicationId, roleName, offset, limit);
+        logger.debug("Got {} Client Roles", context.getTotalRecords());
+        return context;
+    }
+
+    @Override
+    public PaginatorContext<ClientRole> getClientRolesPaged(String applicationId, int offset, int limit) {
+        logger.debug("Getting all Client Roles page: {}");
+        PaginatorContext<ClientRole> context = applicationRoleDao.getClientRolesPaged(applicationId, offset, limit);
+        logger.debug("Got {} Client Roles", context.getTotalRecords());
+        return context;
+    }
+
+    @Override
+    public PaginatorContext<ClientRole> getClientRolesPaged(int offset, int limit) {
+        logger.debug("Getting all Client Roles page: {}");
+        PaginatorContext<ClientRole> context = applicationRoleDao.getClientRolesPaged(offset, limit);
+        logger.debug("Got {} Client Roles", context.getTotalRecords());
+        return context;
+    }
+    
+    @Override
+    public List<ClientRole> getAllClientRoles() {
+        logger.debug("Getting Client Roles");
+        List<ClientRole> roles = this.applicationRoleDao.getAllClientRoles();
+        logger.debug("Got {} Client Roles", roles.size());
+        return roles;
+    }
+
+    @Override
+    public ClientRole getClientRoleByClientIdAndRoleName(String clientId, String roleName) {
         logger.debug("Getting Client Role {} for client {}", roleName, clientId);
-        ClientRole role = this.clientDao.getClientRoleByClientIdAndRoleName(clientId, roleName);
+        ClientRole role = this.applicationRoleDao.getClientRoleByApplicationAndName(clientId, roleName);
         logger.debug("Got Client Role {} for client {}", roleName, clientId);
         return role;
     }
 
     @Override
-    public ClientRole getClientRoleById(String id) {
-        logger.debug("Getting Client Role {}", id);
-        ClientRole role = this.clientDao.getClientRoleById(id);
-        logger.debug("Got Client Role {}", id);
+    public ClientRole getClientRoleById(String roleId) {
+        logger.debug("Getting Client Role {}", roleId);
+        ClientRole role = this.applicationRoleDao.getClientRole(roleId);
+        logger.debug("Got Client Role {}", roleId);
         return role;
     }
 
@@ -661,4 +692,9 @@ public class DefaultApplicationService implements ApplicationService {
 	public void setTenantDao(TenantDao tenantDao) {
 		this.tenantDao = tenantDao;
 	}
+
+    @Override
+    public void setApplicationRoleDao(ApplicationRoleDao roleDao) {
+        this.applicationRoleDao = roleDao;
+    }
 }

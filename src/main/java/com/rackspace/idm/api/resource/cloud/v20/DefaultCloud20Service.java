@@ -185,6 +185,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Autowired
     private Paginator<User> userPaginator;
 
+    @Autowired
+    private Paginator<ClientRole> applicationRolePaginator;
+
     private com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
 
     private Map<String, JAXBElement<Extension>> extensionMap;
@@ -1577,20 +1580,29 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listRoles(HttpHeaders httpHeaders, String authToken, String serviceId, String marker, Integer limit) {
+    public ResponseBuilder listRoles(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String serviceId, String marker, String limit) {
 
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
-            List<ClientRole> roles;
+            int offset = validateOffset(marker);
+            int resultSize = validateLimit(limit);
+
+            PaginatorContext<ClientRole> context;
 
             if (StringUtils.isBlank(serviceId)) {
-                roles = this.clientService.getAllClientRoles(null);
+                context = this.clientService.getClientRolesPaged(offset, resultSize);
             } else {
-                roles = this.clientService.getClientRolesByClientId(serviceId);
+                context = this.clientService.getClientRolesPaged(serviceId, offset, resultSize);
             }
 
-            return Response.ok(objFactories.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListFromClientRoles(roles)).getValue());
+            String linkHeader = applicationRolePaginator.createLinkHeader(uriInfo, context);
+
+            return Response.status(200)
+                    .header("Link", linkHeader)
+                    .entity(objFactories.getOpenStackIdentityV2Factory()
+                            .createRoles(roleConverterCloudV20.toRoleListFromClientRoles(context.getValueList())).getValue());
+
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
@@ -3347,6 +3359,14 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     public void setDomainService(DomainService domainService) {
         this.domainService = domainService;
+    }
+
+    public void setApplicationRolePaginator(Paginator<ClientRole> rolePaginator) {
+        this.applicationRolePaginator = rolePaginator;
+    }
+
+    public void setUserPaginator(Paginator<User> userPaginator) {
+        this.userPaginator = userPaginator;
     }
 }
 

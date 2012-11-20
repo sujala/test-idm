@@ -4,9 +4,11 @@ import spock.lang.Specification
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import org.springframework.beans.factory.annotation.Autowired
-import com.rackspace.idm.domain.dao.ClientRoleDao
+
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.FilterParam
+import com.rackspace.idm.domain.entity.Application
+import com.rackspace.idm.domain.dao.ApplicationRoleDao
 
 /**
  * Created with IntelliJ IDEA.
@@ -23,31 +25,30 @@ class LdapClientRoleRepositoryIntegrationTest extends Specification {
     @Shared def sharedName1 = "sharedName1"
     @Shared def sharedName2 = "sharedName2"
     @Shared def sharedName3 = "sharedName3"
-    @Shared def clientUniqueId = "clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com"
+    @Shared def sharedName4 = "sharedName4"
+    @Shared def applicationId = "bde1268ebabeeabb70a0e702a4626977c331d5c4"
+    @Shared def sharedApplication
     @Shared def sharedRandom
 
     @Shared def sharedRole1
-    @Shared def sharedRole2
-    @Shared def sharedRole3
 
     @Autowired
-    private ClientRoleDao clientRoleDao
+    private ApplicationRoleDao clientRoleDao
 
     def setupSpec() {
         sharedRandom = ("$randomness").replace('-', "")
         sharedRole1 = clientRole(sharedName1, sharedRandom + "1")
-        sharedRole2 = clientRole(sharedName2, sharedRandom + "2")
-        sharedRole3 = clientRole(sharedName3, sharedRandom + "3")
+        sharedApplication = application(applicationId)
     }
 
     def "adding and deleting client roles"() {
         when:
-        ClientRole role = clientRole(sharedName1, sharedRandom + "4")
-        List<ClientRole> beforeClientRoleList = clientRoleDao.getClientRoles()
-        clientRoleDao.addClientRole(clientUniqueId, role)
-        List<ClientRole> clientRoleList = clientRoleDao.getClientRoles()
+        ClientRole role = clientRole(sharedName4, sharedRandom + "4")
+        List<ClientRole> beforeClientRoleList = clientRoleDao.getClientRolesForApplication(sharedApplication)
+        clientRoleDao.addClientRole(sharedApplication, role)
+        List<ClientRole> clientRoleList = clientRoleDao.getClientRolesForApplication(sharedApplication)
         clientRoleDao.deleteClientRole(role)
-        List<ClientRole> afterClientRoleList = clientRoleDao.getClientRoles()
+        List<ClientRole> afterClientRoleList = clientRoleDao.getClientRolesForApplication(sharedApplication)
 
         then:
         clientRoleList.size() == beforeClientRoleList.size() + 1
@@ -56,23 +57,36 @@ class LdapClientRoleRepositoryIntegrationTest extends Specification {
 
     def "updating existing clientRoles"() {
         given:
+        clientRoleDao.addClientRole(sharedApplication, sharedRole1)
         ClientRole clientRole = sharedRole1
-        clientRoleDao.addClientRole(clientUniqueId, clientRole)
+        clientRole.name = "wahoo"
 
         when:
-        clientRole.name = "wahoo"
         clientRoleDao.updateClientRole(clientRole)
         ClientRole foundRole = clientRoleDao.getClientRole(clientRole)
-        clientRoleDao.deleteClientRole(foundRole)
+        clientRoleDao.deleteClientRole(sharedRole1)
 
         then:
         foundRole.name.equals("wahoo")
+
+    }
+
+    def "getting role by clientId and role name"() {
+        when:
+        clientRoleDao.addClientRole(sharedApplication, sharedRole1)
+        ClientRole role = clientRoleDao.getClientRoleByApplicationAndName(sharedApplication, sharedRole1)
+        clientRoleDao.deleteClientRole(sharedRole1)
+
+        then:
+        role.name == sharedRole1.name
+        role.getClientId() == sharedRole1.getClientId()
+        role.id == sharedRole1.id
     }
 
     def clientRole(String name, String id) {
         new ClientRole().with {
             it.id = id
-            it.clientId = "bde1268ebabeeabb70a0e702a4626977c331d5c4"
+            it.clientId = applicationId
             it.name = name
             return it
         }
@@ -92,5 +106,13 @@ class LdapClientRoleRepositoryIntegrationTest extends Specification {
         filters.add(filterParam1)
         filters.add(filterParam2)
         return filters
+    }
+
+    def application(String id) {
+        new Application().with {
+            it.clientId = id
+            it.uniqueId = "clientId=$id,ou=applications,o=rackspace,dc=rackspace,dc=com"
+            return it
+        }
     }
 }

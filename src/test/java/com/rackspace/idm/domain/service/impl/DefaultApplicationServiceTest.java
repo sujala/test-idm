@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import org.junit.runner.RunWith;
 
 import org.mockito.InjectMocks;
@@ -46,6 +47,8 @@ public class DefaultApplicationServiceTest {
     private TenantDao tenantDao;
 
     private DefaultApplicationService spy;
+    @Mock
+    ApplicationRoleDao applicationRoleDao;
 
     @Before
     public void setUp() throws Exception {
@@ -321,36 +324,56 @@ public class DefaultApplicationServiceTest {
     @Test
     public void updateClientRole_callsClientDao_updateClientRole() throws Exception {
         defaultApplicationService.updateClientRole(null);
-        verify(clientDao).updateClientRole(null);
+        verify(applicationRoleDao).updateClientRole(null);
     }
 
     @Test
-    public void getClientRolesByClientId_callsClientDao_getClientRolesByClientId() throws Exception {
+    public void getClientRolesByClientId_callsClientRoleDao_getClientRoles() throws Exception {
         List<ClientRole> roles = new ArrayList<ClientRole>();
-        when(clientDao.getClientRolesByClientId("clientId")).thenReturn(roles);
+        Application application = new Application();
+        when(clientDao.getClientByClientId("clientId")).thenReturn(application);
         defaultApplicationService.getClientRolesByClientId("clientId");
-        verify(clientDao).getClientRolesByClientId("clientId");
+        verify(applicationRoleDao).getClientRolesForApplication(application);
+    }
+
+    @Test (expected = NotFoundException.class)
+    public void getClientRolesByClientId_throwsNotFoundException() throws Exception {
+        when(clientDao.getClientByClientId("blah")).thenReturn(null);
+        defaultApplicationService.getClientRolesByClientId("blah");
+    }
+
+    @Test
+    public void getClientRolesPaged_callsApplicationRoleDao_getPagedUser() throws Exception {
+        when(applicationRoleDao.getClientRolesPaged(anyString(),anyString(), anyInt(), anyInt())).thenReturn(new PaginatorContext<ClientRole>());
+        when(applicationRoleDao.getClientRolesPaged(anyString(), anyInt(), anyInt())).thenReturn(new PaginatorContext<ClientRole>());
+        when(applicationRoleDao.getClientRolesPaged(anyInt(), anyInt())).thenReturn(new PaginatorContext<ClientRole>());
+        defaultApplicationService.getClientRolesPaged("applicationId", "roleName", 0, 10);
+        defaultApplicationService.getClientRolesPaged("applicationId", 0, 10);
+        defaultApplicationService.getClientRolesPaged(0, 10);
+        verify(applicationRoleDao).getClientRolesPaged(anyString(), anyString(), anyInt(), anyInt());
+        verify(applicationRoleDao).getClientRolesPaged(anyString(), anyInt(), anyInt());
+        verify(applicationRoleDao).getClientRolesPaged(anyInt(), anyInt());
     }
 
     @Test
     public void getAllClientRoles_callsClientDao_getAllClientRoles() throws Exception {
         List<ClientRole> roles = new ArrayList<ClientRole>();
         when(clientDao.getAllClientRoles(null)).thenReturn(roles);
-        defaultApplicationService.getAllClientRoles(null);
+        defaultApplicationService.getAllClientRoles();
     }
 
     @Test
     public void getClientRoleByClientIdAndRoleName_callsClientDao_getClientRoleByClientIdAndRoleName() throws Exception {
         when(clientDao.getClientRoleByClientIdAndRoleName("clientId", "roleName")).thenReturn(new ClientRole());
         defaultApplicationService.getClientRoleByClientIdAndRoleName("clientId", "roleName");
-        verify(clientDao).getClientRoleByClientIdAndRoleName("clientId", "roleName");
+        verify(applicationRoleDao).getClientRoleByApplicationAndName("clientId", "roleName");
     }
 
     @Test
     public void getClientRoleById_callsClientDao_getClientRoleById() throws Exception {
         when(clientDao.getClientRoleById("id")).thenReturn(new ClientRole());
         defaultApplicationService.getClientRoleById("id");
-        verify(clientDao).getClientRoleById("id");
+        verify(applicationRoleDao).getClientRole("id");
     }
 
     @Test
@@ -386,22 +409,24 @@ public class DefaultApplicationServiceTest {
     @Test(expected = DuplicateException.class)
     public void addClientRole_throwsDuplicateException_whenRoleIsNotFound() throws Exception {
         ClientRole role = new ClientRole();
+        Application application = new Application();
         role.setClientId("clientId");
         role.setName("role");
-        when(clientDao.getClientByClientId("clientId")).thenReturn(new Application());
-        when(clientDao.getClientRoleByClientIdAndRoleName("clientId","role")).thenReturn(new ClientRole());
+        when(clientDao.getClientByClientId("clientId")).thenReturn(application);
+        when(applicationRoleDao.getClientRoleByApplicationAndName(application, role)).thenReturn(new ClientRole());
         defaultApplicationService.addClientRole(role);
     }
 
     @Test
     public void addClientRole_callsClientDao_addClientRole() throws Exception {
         ClientRole role = new ClientRole();
+        Application application = new Application();
         role.setClientId("clientId");
         role.setName("role");
-        when(clientDao.getClientByClientId("clientId")).thenReturn(new Application());
-        when(clientDao.getClientRoleByClientIdAndRoleName("clientId","role")).thenReturn(null);
+        when(clientDao.getClientByClientId("clientId")).thenReturn(application);
+        when(applicationRoleDao.getClientRoleByApplicationAndName(application, role)).thenReturn(null);
         defaultApplicationService.addClientRole(role);
-        verify(clientDao).addClientRole(anyString(), eq(role));
+        verify(applicationRoleDao).addClientRole(any(Application.class), eq(role));
     }
 
     @Test (expected = NotFoundException.class)
@@ -436,7 +461,7 @@ public class DefaultApplicationServiceTest {
         List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
         when(tenantDao.getAllTenantRolesForClientRole(role)).thenReturn(tenantRoles);
         defaultApplicationService.deleteClientRole(role);
-        verify(clientDao).deleteClientRole(role);
+        verify(applicationRoleDao).deleteClientRole(role);
     }
 
     @Test (expected = IllegalArgumentException.class)

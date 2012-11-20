@@ -34,7 +34,8 @@ import com.rackspace.idm.api.resource.pagination.Paginator
 import com.rackspace.idm.domain.service.ApplicationService
 import com.rackspace.idm.domain.dao.impl.LdapApplicationRepository
 import com.rackspace.idm.exception.NotFoundException
-import com.rackspace.idm.domain.dao.impl.LdapTenantRepository;
+import com.rackspace.idm.domain.dao.impl.LdapTenantRepository
+import com.rackspace.idm.domain.dao.impl.LdapApplicationRoleRepository;
 
 /*
  This class uses the application context but mocks the ldap interactions
@@ -64,6 +65,7 @@ class DefaultCloud20ServiceTest extends Specification {
     @Shared LdapCapabilityRepository capabilityDao
     @Shared LdapApplicationRepository clientDao
     @Shared LdapTenantRepository tenantDao
+    @Shared LdapApplicationRoleRepository clientRoleDao
 
 
     @Shared def authToken = "token"
@@ -575,7 +577,7 @@ class DefaultCloud20ServiceTest extends Specification {
         createMocks()
         allowAccess()
 
-        clientDao.getClientRoleById(_) >> clientRole()
+        clientRoleDao.getClientRole(_) >> clientRole()
         tenantDao.getMultipleTenantRoles(_, _, _) >> new PaginatorContext<String>();
 
         when:
@@ -612,7 +614,7 @@ class DefaultCloud20ServiceTest extends Specification {
         cloud20Service.listUsersWithRole(null, uriInfo(), authToken, roleId, offset, limit)
 
         then:
-        1 * clientDao.getClientRoleById(_) >> clientRole()
+        1 * clientRoleDao.getClientRole(_) >> clientRole()
     }
 
     def "listUsersWithRole caller user-admin with no domain throws badRequest"() {
@@ -624,7 +626,7 @@ class DefaultCloud20ServiceTest extends Specification {
         cloud20Service.userService = service
 
         tenantDao.getMultipleTenantRoles(_, _, _) >> new PaginatorContext<String>();
-        clientDao.getClientRoleById(_) >> clientRole()
+        clientRoleDao.getClientRole(_) >> clientRole()
         cloud20Service.userService.getUserByScopeAccess(_) >> user("username", null)
         authorizationService.authorizeCloudUserAdmin(_) >> true
 
@@ -642,7 +644,7 @@ class DefaultCloud20ServiceTest extends Specification {
         DefaultUserService service = Mock()
         cloud20Service.userService = service
 
-        clientDao.getClientRoleById(_) >> clientRole()
+        clientRoleDao.getClientRole(_) >> clientRole()
         cloud20Service.userService.getUserByScopeAccess(_) >> user("username", "domainId")
         cloud20Service.userService.getUsersWithRole(_, _, _, _) >> new PaginatorContext<User>();
         authorizationService.authorizeCloudUserAdmin(_) >> true
@@ -659,7 +661,7 @@ class DefaultCloud20ServiceTest extends Specification {
         createMocks()
         allowAccess()
 
-        clientDao.getClientRoleById(_) >> clientRole()
+        clientRoleDao.getClientRole(_) >> clientRole()
         authorizationService.authorizeCloudUserAdmin(_) >> false
 
         when:
@@ -686,7 +688,7 @@ class DefaultCloud20ServiceTest extends Specification {
 
 
         scopeAccessService.getScopeAccessByAccessToken(_) >> access
-        clientDao.getClientRoleById(_) >> clientRole()
+        clientRoleDao.getClientRole(_) >> clientRole()
         userDao.getUserByUsername(_) >> user("username", "domainId")
         userDao.getAllUsersNoLimit(_) >> users
         authorizationService.authorizeCloudUserAdmin(_) >> true
@@ -810,6 +812,9 @@ class DefaultCloud20ServiceTest extends Specification {
 
         clientDao = Mock()
         clientService.applicationDao = clientDao
+
+        clientRoleDao = Mock()
+        clientService.applicationRoleDao = clientRoleDao
     }
 
     def allowAccess() {

@@ -121,6 +121,7 @@ public class DefaultCloud20ServiceOldTest {
     private Validator20 validator20;
     private Domain domain;
     private DefaultPaginator<User> userPaginator;
+    private DefaultPaginator<ClientRole> clientRolePaginator;
 
     @Before
     public void setUp() throws Exception {
@@ -154,6 +155,7 @@ public class DefaultCloud20ServiceOldTest {
         defaultRegionService = mock(DefaultRegionService.class);
         validator20 = mock(Validator20.class);
         userPaginator = mock(DefaultPaginator.class);
+        clientRolePaginator = mock(DefaultPaginator.class);
         uriInfo = mock(UriInfo.class);
 
         //setting mocks
@@ -182,6 +184,8 @@ public class DefaultCloud20ServiceOldTest {
         defaultCloud20Service.setDomainService(domainService);
         defaultCloud20Service.setDomainConverterCloudV20(domainConverterCloudV20);
         defaultCloud20Service.setAuthenticationService(authenticationService);
+        defaultCloud20Service.setApplicationRolePaginator(clientRolePaginator);
+        defaultCloud20Service.setUserPaginator(userPaginator);
 
         //fields
         user = new User();
@@ -3931,21 +3935,21 @@ public class DefaultCloud20ServiceOldTest {
     public void listRoles_callsVerifyServiceAdminLevelAccess() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        spy.listRoles(null, authToken, null, null, 0);
+        spy.listRoles(null, null, authToken, null, null, "0");
         verify(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
     }
 
     @Test
     public void listRoles_serviceIdIsBlankResponseOk_returns200() throws Exception {
-        Response.ResponseBuilder responseBuilder = spy.listRoles(httpHeaders, authToken, "", null, null);
+        when(clientService.getClientRolesPaged(anyInt(), anyInt())).thenReturn(new PaginatorContext<ClientRole>());
+        Response.ResponseBuilder responseBuilder = spy.listRoles(httpHeaders, null, authToken, "", "0", "10");
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
     @Test
     public void listRoles_serviceIdNotBlankResponseOk_returns200() throws Exception {
-        List<ClientRole> roles = new ArrayList<ClientRole>();
-        when(clientService.getClientRolesByClientId("serviceId")).thenReturn(roles);
-        Response.ResponseBuilder responseBuilder = spy.listRoles(httpHeaders, authToken, "serviceId", null, null);
+        when(clientService.getClientRolesPaged(anyString(), anyInt(), anyInt())).thenReturn(new PaginatorContext<ClientRole>());
+        Response.ResponseBuilder responseBuilder = spy.listRoles(httpHeaders, null, authToken, "serviceId",  "0", "10");
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
 
@@ -5917,7 +5921,7 @@ public class DefaultCloud20ServiceOldTest {
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         doThrow(forbiddenException).when(authorizationService).verifyIdentityAdminLevelAccess(scopeAccess);
         when(exceptionHandler.exceptionResponse(forbiddenException)).thenReturn(responseBuilder);
-        assertThat("response builder", spy.listRoles(httpHeaders, authToken, null, null, null), equalTo(responseBuilder));
+        assertThat("response builder", spy.listRoles(httpHeaders, null, authToken, null, null, null), equalTo(responseBuilder));
     }
 
     @Test
@@ -6464,15 +6468,5 @@ public class DefaultCloud20ServiceOldTest {
 
         assertThat(filters[0].getParam(), equalTo(compareTo[0].getParam()));
         assertThat(filters[1].getParam(), equalTo(compareTo[1].getParam()));
-    }
-
-    protected PaginatorContext<User> makeUserPaginatorContext() {
-        PaginatorContext<User> context = new PaginatorContext<User>();
-        context.setOffset(0);
-        context.setLimit(10);
-        ArrayList<User> userList = new ArrayList<User>();
-        userList.add(new User());
-        context.setValueList(userList);
-        return context;
     }
 }

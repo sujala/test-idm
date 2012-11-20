@@ -3,6 +3,8 @@ package com.rackspace.idm.api.resource.roles;
 import com.rackspace.api.idm.v1.Role;
 import com.rackspace.idm.api.converter.RolesConverter;
 import com.rackspace.idm.api.resource.ParentResource;
+import com.rackspace.idm.api.resource.pagination.Paginator;
+import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.FilterParam;
@@ -12,13 +14,16 @@ import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.validation.InputValidator;
+import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.JAXBElement;
 import java.net.URI;
 import java.util.ArrayList;
@@ -44,6 +49,12 @@ public class RolesResource extends ParentResource {
         this.authorizationService = authorizationService;
         this.rolesConverter = rolesConverter;
     }
+
+    @Autowired
+    Paginator<ClientRole> paginator;
+
+    @Autowired
+    Configuration config;
 
     /**
      * Get a role
@@ -73,22 +84,19 @@ public class RolesResource extends ParentResource {
     @GET
     public Response getAllRoles(
             @HeaderParam("X-Auth-Token") String authHeader,
+            @Context UriInfo uriInfo,
             @QueryParam("name") String name,
             @QueryParam("applicationId") String applicationId) {
 
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
-        List<FilterParam> filters = new ArrayList<FilterParam>();
-        if (!StringUtils.isBlank(applicationId)) {
-            filters.add(new FilterParam(FilterParamName.APPLICATION_ID, applicationId));
-        }
 
-        if (!StringUtils.isBlank(name)) {
-            filters.add(new FilterParam(FilterParamName.ROLE_NAME, name));
-        }
+        PaginatorContext<ClientRole> context = applicationService.getClientRolesPaged(applicationId, name, 0, config.getInt("ldap.paging.limit.default"));
 
-        List<ClientRole> roles = applicationService.getAllClientRoles(filters);
+        String linkHeader = paginator.createLinkHeader(uriInfo, context);
 
-        return Response.ok(rolesConverter.toRoleJaxbFromClientRole(roles)).build();
+        return Response.status(200)
+                .header("Link", linkHeader)
+                .entity(rolesConverter.toRoleJaxbFromClientRole(context.getValueList())).build();
     }
 
     /**
@@ -166,5 +174,13 @@ public class RolesResource extends ParentResource {
         if(StringUtils.isBlank(role.getApplicationId())){
             throw new BadRequestException("Application id is not valid");
         }
+    }
+
+    public void setConfig(Configuration config) {
+        this.config = config;
+    }
+
+    public void setPaginator(Paginator<ClientRole> paginator) {
+        this.paginator = paginator;
     }
 }

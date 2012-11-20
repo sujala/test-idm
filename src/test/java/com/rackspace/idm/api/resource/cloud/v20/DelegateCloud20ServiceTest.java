@@ -777,16 +777,16 @@ public class DelegateCloud20ServiceTest {
     public void listRoles_RoutingFalseAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
-        delegateCloud20Service.listRoles(null, null, null, null, null);
-        verify(defaultCloud20Service).listRoles(null, null, null, null, null);
+        delegateCloud20Service.listRoles(null, null, null, null, null, null);
+        verify(defaultCloud20Service).listRoles(null, null, null, null, null, null);
     }
 
     @Test
     public void listRoles_RoutingFalseAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
         when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
-        delegateCloud20Service.listRoles(null, null, null, null, null);
-        verify(defaultCloud20Service).listRoles(null, null, null, null, null);
+        delegateCloud20Service.listRoles(null, null, null, null, null, null);
+        verify(defaultCloud20Service).listRoles(null, null, null, null, null, null);
     }
 
     @Test
@@ -794,7 +794,7 @@ public class DelegateCloud20ServiceTest {
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
         HttpHeaders mockHeaders = mock(HttpHeaders.class);
-        delegateCloud20Service.listRoles(mockHeaders, null, null, null, null);
+        delegateCloud20Service.listRoles(mockHeaders, null, null, null, null, null);
         verify(cloudClient).get(url + "OS-KSADM/roles", mockHeaders);
     }
 
@@ -802,8 +802,8 @@ public class DelegateCloud20ServiceTest {
     public void listRoles_RoutingTrueAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
         when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
-        delegateCloud20Service.listRoles(null, null, null, null, null);
-        verify(defaultCloud20Service).listRoles(null, null, null, null, null);
+        delegateCloud20Service.listRoles(null, null, null, null, null, null);
+        verify(defaultCloud20Service).listRoles(null, null, null, null, null, null);
     }
 
     @Test
