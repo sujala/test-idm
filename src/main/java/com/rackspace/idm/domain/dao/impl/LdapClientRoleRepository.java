@@ -5,6 +5,7 @@ import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.FilterParam;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.unboundid.ldap.sdk.Filter;
+import com.unboundid.ldap.sdk.SearchScope;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -44,12 +45,12 @@ public class LdapClientRoleRepository extends LdapGenericRepository<ClientRole> 
 
     @Override
     public void deleteClientRole(ClientRole role) {
-        deleteObject(searchFilterGetClientRoleById(role.getId()));
+        deleteObject(role);
     }
 
     @Override
-    public ClientRole getClientRole(List<FilterParam> filters) {
-        return getObject(searchFilterGetClientRoles(filters));
+    public ClientRole getClientRole(ClientRole role) {
+        return getObject(searchFilterById(role.getId()), getBaseDn(), SearchScope.SUB);
     }
 
     @Override
@@ -62,7 +63,7 @@ public class LdapClientRoleRepository extends LdapGenericRepository<ClientRole> 
         return getObjects(searchFilterGetClientRoles(filters));
     }
 
-    private Filter searchFilterGetClientRoleById(String roleId) {
+    private Filter searchFilterById(String roleId) {
        return new LdapSearchBuilder()
                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENT_ROLE)
                .addEqualAttribute(ATTR_ID, roleId).build();

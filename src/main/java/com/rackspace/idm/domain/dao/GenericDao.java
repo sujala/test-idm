@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.dao;
 
 
+import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.SearchScope;
 
@@ -22,6 +23,7 @@ public interface GenericDao<T> {
     List<T> getObjects(Filter searchFilter);
     List<T> getObjects(Filter searchFilter, String dn);
     List<T> getObjects(Filter searchFilter, String dn, SearchScope scope);
+    PaginatorContext<T> getObjectsPaged(Filter searchFilter, int offset, int limit);
     void updateObject(T object);
     void deleteObject(Filter searchFilter);
     String getBaseDn();
@@ -30,4 +32,5 @@ public interface GenericDao<T> {
     String addLdapContainer(String dnString, String containerName);
 
     void deleteObject(T object);
+    String getSortAttribute();
 }

@@ -16,7 +16,7 @@ public interface ClientRoleDao {
     void addClientRole(String clientUniqueId, ClientRole role);
     void updateClientRole(ClientRole role);
     void deleteClientRole(ClientRole role);
-    ClientRole getClientRole(List<FilterParam> filters);
+    ClientRole getClientRole(ClientRole role);
     List<ClientRole> getClientRoles();
     List<ClientRole> getClientRoles(List<FilterParam> filters);
 }

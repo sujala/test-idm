@@ -1,5 +1,9 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.unboundid.ldap.sdk.SearchResultEntry;
+import com.unboundid.ldap.sdk.SearchScope;
+import org.hamcrest.Matchers;
+import org.junit.Ignore;
 import org.junit.runner.RunWith;
 
 import org.mockito.InjectMocks;
@@ -71,32 +75,16 @@ public class LdapDomainRepositoryTest {
     }
 
     @Test
-    public void deleteDomain_callsDeleteEntryAndSubtree() throws Exception {
-        Domain domain = new Domain();
-        doReturn(domain).when(spy).getDomain("domainId");
-        doNothing().when(spy).deleteEntryAndSubtree(anyString(), any(Audit.class));
-        spy.deleteDomain("domainId");
-        verify(spy).deleteEntryAndSubtree(anyString(), any(Audit.class));
-    }
-
-    @Test
     public void getDomain_domainIdIsBlank_returnsNull() throws Exception {
         Domain result = ldapDomainRepository.getDomain("");
         assertThat("domain", result, equalTo(null));
     }
 
-    @Test (expected = IllegalStateException.class)
-    public void getDomain_getSingleDomain_throwsLDAPPersistException() throws Exception {
-        doThrow(new LDAPPersistException("error")).when(spy).getSingleDomain(any(Filter.class));
-        spy.getDomain("domainId");
-    }
-
     @Test
     public void getDomain_foundDomain_returnsDomain() throws Exception {
         Domain domain = new Domain();
-        doReturn(domain).when(spy).getSingleDomain(any(Filter.class));
-        Domain result = spy.getDomain("domainId");
-        assertThat("domain", result, equalTo(domain));
+        spy.getDomain("domainId");
+        verify(spy).getObject(any(Filter.class));
     }
 
 }

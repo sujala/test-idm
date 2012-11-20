@@ -1,5 +1,8 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.api.resource.pagination.PaginatorContext;
+import com.rackspace.idm.domain.dao.UniqueId;
+import com.sun.jndi.toolkit.dir.SearchFilter;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.audit.Audit;
@@ -24,7 +27,7 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 @Component
-public class LdapDomainRepository extends LdapRepository implements DomainDao{
+public class LdapDomainRepository extends LdapGenericRepository<Domain> implements DomainDao {
 
     public static final String NULL_OR_EMPTY_DOMAIN_ID_PARAMETER = "Null or Empty domainId parameter";
     public static final String NULL_OR_EMPTY_TENANT_ID_PARAMETER = "Null or Empty tenantId parameter";
@@ -33,105 +36,31 @@ public class LdapDomainRepository extends LdapRepository implements DomainDao{
 
     @Override
     public void addDomain(Domain domain) {
-        if (domain == null) {
-            String errmsg = "Null instance of Domain was passed";
-            getLogger().error(errmsg);
-            throw new IllegalArgumentException(errmsg);
-        }
-        getLogger().info("Adding Domain: {}", domain);
-        Audit audit = Audit.log(domain).add();
-        try {
-            final LDAPPersister<Domain> persister = LDAPPersister.getInstance(Domain.class);
-            persister.add(domain, getAppInterface(), DOMAIN_BASE_DN);
-            audit.succeed();
-            getLogger().info("Added Domain: {}", domain);
-        } catch (final LDAPException e) {
-            if (e.getResultCode() == ResultCode.ENTRY_ALREADY_EXISTS) {
-                String errMsg = String.format("Domain %s already exists", domain.getDomainId());
-                getLogger().warn(errMsg);
-                throw new DuplicateException(errMsg, e);
-            }
-            getLogger().error("Error adding domain object", e);
-            audit.fail(e.getMessage());
-            throw new IllegalStateException(e);
-        }
+        addObject(domain);
     }
 
     @Override
     public Domain getDomain(String domainId) {
-        getLogger().debug("Doing search for domainId " + domainId);
         if (StringUtils.isBlank(domainId)) {
             getLogger().error(NULL_OR_EMPTY_DOMAIN_ID_PARAMETER);
-            getLogger().info("Invalid domainId parameter.");
             return null;
         }
-
-        Filter searchFilter = new LdapSearchBuilder()
-            .addEqualAttribute(ATTR_ID, domainId)
-            .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_DOMAIN).build();
-
-        Domain domain = null;
-
-        try {
-            domain = getSingleDomain(searchFilter);
-        } catch (LDAPPersistException e) {
-            getLogger().error(ERROR_GETTING_DOMAIN_OBJECT, e);
-            throw new IllegalStateException(e);
-        }
-        getLogger().debug("Found Domain - {}", domain);
-
-        return domain;
+        return getObject(searchByIdFilter(domainId));
     }
 
     @Override
     public void updateDomain(Domain domain) {
-        if (domain == null || StringUtils.isBlank(domain.getUniqueId())) {
-            String errmsg = "Null instance of Domain was passed";
-            getLogger().error(errmsg);
-            throw new IllegalArgumentException(errmsg);
-        }
-        getLogger().debug("Updating Domain: {}", domain);
-        Audit audit = Audit.log(domain);
-        try {
-            final LDAPPersister<Domain> persister = LDAPPersister.getInstance(Domain.class);
-            List<Modification> modifications = persister.getModifications(domain, true);
-            audit.modify(modifications);
-            if (modifications.size() > 0) {
-                persister.modify(domain, getAppInterface(), null, true);
-            }
-            getLogger().debug("Updated Domain: {}", domain);
-            audit.succeed();
-        } catch (final LDAPException e) {
-            getLogger().error("Error updating domain", e);
-            audit.fail();
-            throw new IllegalStateException(e);
-        }
+        updateObject(domain);
     }
 
     @Override
     public void deleteDomain(String domainId) {
-        if (StringUtils.isBlank(domainId)) {
-            getLogger().error(NULL_OR_EMPTY_DOMAIN_ID_PARAMETER);
-            throw new IllegalArgumentException(
-                "Null or Empty domainId parameter.");
-        }
-        Domain domain = getDomain(domainId);
-        if (domain == null) {
-            String errMsg = String.format("domain %s not found", domainId);
-            getLogger().warn(errMsg);
-            throw new NotFoundException(errMsg);
-        }
-        getLogger().debug("Deleting Domain: {}", domain);
-        final String dn = domain.getUniqueId();
-        final Audit audit = Audit.log(domain).delete();
-        deleteEntryAndSubtree(dn, audit);
-        audit.succeed();
-        getLogger().debug("Deleted Domain: {}", domain);
+        validatePassedId(domainId);
+        deleteObject(searchByIdFilter(domainId));
     }
 
     @Override
     public List<Domain> getDomainsForTenant(List<Tenant> tenants) {
-        getLogger().debug("Doing search for domains with tenant Ids ");
         if (tenants == null || tenants.size() < 1) {
             getLogger().error(NULL_OR_EMPTY_TENANT_ID_PARAMETER);
             getLogger().info("Invalid tenantIds parameter.");
@@ -146,29 +75,46 @@ public class LdapDomainRepository extends LdapRepository implements DomainDao{
 
         List<Domain> domains = new ArrayList<Domain>();
 
-        try {
-            List<SearchResultEntry> entries = getMultipleEntries(DOMAIN_BASE_DN,SearchScope.SUB, andFilter,null);
-            for(SearchResultEntry entry : entries){
-                Domain domain = getDomain(entry.getAttributeValue(ATTR_ID));
-                domains.add(domain);
-            }
-        } catch (Exception e) {
-            getLogger().error(ERROR_GETTING_DOMAIN_OBJECT, e);
-            throw new IllegalStateException(e);
-        }
-        getLogger().debug("Found Domains - {}", domains);
-
-        return domains;
+        return getObjects(andFilter);
     }
 
-    Domain getSingleDomain(Filter searchFilter)
-        throws LDAPPersistException {
-        SearchResultEntry entry = this.getSingleEntry(DOMAIN_BASE_DN, SearchScope.ONE, searchFilter, ATTR_DOMAIN_SEARCH_ATTRIBUTES);
-        if (entry == null) {
-            return null;
+    @Override
+    public PaginatorContext<Domain> getAllDomainsPaged(int offset, int limit) {
+        return getObjectsPaged(searchAllDomains(), offset, limit);
+    }
+
+    Filter searchByIdFilter(String id) {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_ID, id)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_DOMAIN).build();
+    }
+
+    Filter searchAllDomains() {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_DOMAIN).build();
+    }
+
+    void validatePassedId(String id) {
+        if (StringUtils.isBlank(id)) {
+            getLogger().error(NULL_OR_EMPTY_DOMAIN_ID_PARAMETER);
+            throw new IllegalArgumentException(
+                    "Null or Empty domainId parameter.");
         }
-        Domain domain = null;
-        domain = LDAPPersister.getInstance(Domain.class).decode(entry);
-        return domain;
+    }
+
+    public String getBaseDn(){
+        return DOMAIN_BASE_DN;
+    }
+
+    public String getLdapEntityClass(){
+        return OBJECTCLASS_DOMAIN;
+    }
+
+    public String getNextCapabilityId() {
+        return getNextId(NEXT_DOMAIN_ID);
+    }
+
+    public String getSortAttribute() {
+        return ATTR_ID;
     }
 }

@@ -42,7 +42,7 @@ class LdapClientRoleRepositoryIntegrationTest extends Specification {
 
     def "adding and deleting client roles"() {
         when:
-        ClientRole role = clientRole(sharedName1, sharedRandom)
+        ClientRole role = clientRole(sharedName1, sharedRandom + "4")
         List<ClientRole> beforeClientRoleList = clientRoleDao.getClientRoles()
         clientRoleDao.addClientRole(clientUniqueId, role)
         List<ClientRole> clientRoleList = clientRoleDao.getClientRoles()
@@ -57,33 +57,16 @@ class LdapClientRoleRepositoryIntegrationTest extends Specification {
     def "updating existing clientRoles"() {
         given:
         ClientRole clientRole = sharedRole1
-        clientRole.name = "gibberish"
-        List<FilterParam> filters = new ArrayList<FilterParam>();
-        filters.add(new FilterParam(FilterParam.FilterParamName.ROLE_ID, sharedRole1.id))
+        clientRoleDao.addClientRole(clientUniqueId, clientRole)
 
         when:
+        clientRole.name = "wahoo"
         clientRoleDao.updateClientRole(clientRole)
-        ClientRole foundRole = clientRoleDao.getClientRole(filters)
+        ClientRole foundRole = clientRoleDao.getClientRole(clientRole)
+        clientRoleDao.deleteClientRole(foundRole)
 
         then:
-        foundRole.name.equalsIgnoreCase("gibberish")
-    }
-
-    def "getting clientRoles with filters specified"() {
-        given:
-        ClientRole clientRole1 = clientRole(sharedName1)
-        ClientRole clientRole2 = clientRole(sharedName2)
-        clientRoleDao.addClientRole(clientUniqueId, clientRole1)
-        clientRoleDao.addClientRole(clientUniqueId, clientRole2)
-
-        when:
-        List<ClientRole> clientRoleList1 = clientRoleDao.getClientRoles(clientIdFilter("bde1268ebabeeabb70a0e702a4626977c331d5c4"))
-        ClientRole foundClientRole = clientRoleDao.getClientRole(roleNameAndClientIdFilter(sharedName1, "bde1268ebabeeabb70a0e702a4626977c331d5c4"))
-
-        then:
-        clientRoleList1.size() == 2
-        foundClientRole.id.equals(clientRole1.id)
-        foundClientRole.name.equals(clientRole1.name)
+        foundRole.name.equals("wahoo")
     }
 
     def clientRole(String name, String id) {

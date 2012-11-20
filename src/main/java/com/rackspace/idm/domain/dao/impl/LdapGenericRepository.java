@@ -1,14 +1,18 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.api.resource.pagination.DefaultPaginator;
+import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.GenericDao;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.entity.Auditable;
+import com.rackspace.idm.exception.NotFoundException;
 import com.unboundid.ldap.sdk.*;
 import com.unboundid.ldap.sdk.persist.LDAPPersistException;
 import com.unboundid.ldap.sdk.persist.LDAPPersister;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
@@ -25,6 +29,9 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
     public static final String ERROR_GETTING_OBJECT = "Error getting object";
 
     final private Class<T> entityType = (Class<T>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
+
+    @Autowired
+    private DefaultPaginator<T> paginator;
 
     @Override
     public List<T> getObjects(Filter searchFilter) {
@@ -53,19 +60,53 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         }
 
         if (searchResult.getEntryCount() > 0) {
-            for (SearchResultEntry entry : searchResult.getSearchEntries()) {
-                getLogger().debug("Getting % entry", entityType.toString());
+            objects = processSearchResult(searchResult.getSearchEntries());
+        }
 
-                T entity = null;
-                try {
-                    entity = LDAPPersister.getInstance(entityType).decode(entry);
-                } catch (LDAPPersistException e) {
-                    String loggerMsg = String.format("Error converting entity for %s - {}", entityType.toString());
-                    getLogger().error(loggerMsg);
-                }
+        return objects;
+    }
 
-                objects.add(entity);
+    @Override
+    public PaginatorContext<T> getObjectsPaged(Filter searchFilter, int offset, int limit) {
+        getLogger().debug("Getting " + entityType.toString() + " paged");
+
+        SearchRequest searchRequest = new SearchRequest(getBaseDn(), SearchScope.SUB, searchFilter);
+        PaginatorContext<T> context = paginator.createSearchRequest(getSortAttribute(), searchRequest, offset, limit);
+
+        List<T> objects = new ArrayList<T>();
+        SearchResult searchResult;
+
+        try {
+            searchResult = getAppInterface().search(searchRequest);
+        } catch (LDAPSearchException ldapEx) {
+            String loggerMsg = String.format("Error searching for %s - {}", entityType.toString());
+            getLogger().error(loggerMsg);
+            throw new IllegalStateException(ldapEx);
+        }
+
+        paginator.createPage(searchResult, context);
+        if (searchResult.getEntryCount() > 0) {
+            objects = processSearchResult(context.getSearchResultEntryList());
+        }
+
+        context.setValueList(objects);
+
+        return context;
+    }
+
+    private List<T> processSearchResult(List<SearchResultEntry> searchResultList) {
+        List<T> objects = new ArrayList<T>();
+        for (SearchResultEntry entry : searchResultList) {
+            getLogger().debug("Getting % entry", entityType.toString());
+
+            T entity = null;
+            try {
+                entity = LDAPPersister.getInstance(entityType).decode(entry);
+            } catch (LDAPPersistException e) {
+                String loggerMsg = String.format("Error converting entity for %s - {}", entityType.toString());
+                getLogger().error(loggerMsg);
             }
+            objects.add(entity);
         }
 
         return objects;
@@ -185,6 +226,13 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         getLogger().debug(loggerMsg);
 
         T object = getObject(searchFilter);
+
+        if (object == null) {
+            String errMsg = String.format("Object %s not found", searchFilter.toNormalizedString());
+            getLogger().warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+
         getLogger().debug("Deleting: {}", object);
         final String dn = object.getUniqueId();
         final Audit audit = Audit.log((Auditable)object).delete();
@@ -226,6 +274,11 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
 
     @Override
     public String getNextId() {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public String getSortAttribute() {
         throw new NotImplementedException();
     }
 }
