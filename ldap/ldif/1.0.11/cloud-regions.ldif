@@ -2,3 +2,24 @@ dn: ou=regions,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: organizationalUnit
 objectClass: top
 ou: regions
+
+dn: cn=ORD,ou=regions,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsCloudRegion
+cn: ORD
+enabled: TRUE
+rsCloud: US
+useForDefaultRegion: TRUE
+
+dn: cn=DFW,ou=regions,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsCloudRegion
+cn: DFW
+enabled: TRUE
+rsCloud: US
+useForDefaultRegion: FALSE
+
+dn: cn=LON,ou=regions,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsCloudRegion
+cn: LON
+enabled: TRUE
+rsCloud: UK
+useForDefaultRegion: TRUE
