@@ -639,19 +639,20 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
             authorizationService.verifyUserAdminLevelAccess(scopeAccessByAccessToken);
-            User user = userService.checkAndGetUserById(userId);
+
             ClientRole cRole = checkAndGetClientRole(roleId);
+
+            User user = userService.checkAndGetUserById(userId);
+            User caller = userService.getUserByAuthToken(authToken);
+
+            verifyCallerPrecedence(caller, cRole);
+
             checkForMultipleIdentityRoles(user, cRole);
 
             if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
-                User caller = userService.getUserByAuthToken(authToken);
                 if (!caller.getDomainId().equalsIgnoreCase(user.getDomainId())) {
                     throw new ForbiddenException(NOT_AUTHORIZED);
                 }
-            }
-            if (!authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken)
-                    && config.getString("cloudAuth.adminRole").equals(cRole.getName())) {
-                throw new ForbiddenException(NOT_AUTHORIZED);
             }
 
             TenantRole role = new TenantRole();
@@ -662,6 +663,13 @@ public class DefaultCloud20Service implements Cloud20Service {
             return Response.ok();
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    private void verifyCallerPrecedence(User user, ClientRole role) {
+        int userWeight = userService.getUserWeight(user, getCloudAuthClientId());
+        if (userWeight > role.getRsWeight()) {
+            throw new ForbiddenException(NOT_AUTHORIZED);
         }
     }
 

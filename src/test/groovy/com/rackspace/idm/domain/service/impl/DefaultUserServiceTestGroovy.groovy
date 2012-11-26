@@ -223,6 +223,82 @@ class DefaultUserServiceTestGroovy extends Specification {
         list.equals(compareTo)
     }
 
+    def "getUsersWeight gets users tenantRoles"() {
+        given:
+        setupMocks()
+
+        when:
+        userService.getUserWeight(createUser("3","username"), "applicationId")
+
+        then:
+        1 * tenantRoleDao.getTenantRolesForUser(_, _) >> new ArrayList<TenantRole>()
+    }
+
+    def "getUsersWeight finds identity:* role for user"() {
+        given:
+        setupMocks()
+        def serviceAdmin = createUser("0")
+        def serviceAdminTenantRole = createTenantRole("0")
+        def serviceAdminApplicationRole = createApplicationRole("identity:service-admin", 0)
+
+        def admin = createUser("1")
+        def adminTenantRole = createTenantRole("1")
+        def adminApplicationRole = createApplicationRole("identity:admin", 100)
+
+        def userAdmin = createUser("2")
+        def userAdminTenantRole = createTenantRole("2")
+        def userAdminApplicationRole = createApplicationRole("identity:user-admin", 1000)
+
+        def defaultUser = createUser("3")
+        def defaultUserTenantRole = createTenantRole("3")
+        def defaultUserApplicationRole = createApplicationRole("identity:default", 2000)
+
+        def none = createUser("4")
+        def noneTenantRole = createTenantRole("4")
+        def noneApplicationRole = createApplicationRole("some role", 2000)
+
+        def serviceAdminTenantRoles = new ArrayList<TenantRole>()
+        serviceAdminTenantRoles.add(serviceAdminTenantRole)
+        def adminTenantRoles = new ArrayList<TenantRole>()
+        adminTenantRoles.add(adminTenantRole)
+        def userAdminTenantRoles = new ArrayList<TenantRole>()
+        userAdminTenantRoles.add(userAdminTenantRole)
+        def defaultUserTenantRoles = new ArrayList<TenantRole>()
+        defaultUserTenantRoles.add(defaultUserTenantRole)
+        def noneTenantRoles = new ArrayList<TenantRole>()
+        noneTenantRoles.add(noneTenantRole)
+
+        //mocks
+        tenantRoleDao.getTenantRolesForUser(serviceAdmin, "applicationId") >> serviceAdminTenantRoles
+        applicationRoleDao.getClientRole("0") >> serviceAdminApplicationRole
+
+        tenantRoleDao.getTenantRolesForUser(admin, "applicationId") >> adminTenantRoles
+        applicationRoleDao.getClientRole("1") >> adminApplicationRole
+
+        tenantRoleDao.getTenantRolesForUser(userAdmin, "applicationId") >> userAdminTenantRoles
+        applicationRoleDao.getClientRole("2") >> userAdminApplicationRole
+
+        tenantRoleDao.getTenantRolesForUser(defaultUser, "applicationId") >> defaultUserTenantRoles
+        applicationRoleDao.getClientRole("3") >> defaultUserApplicationRole
+
+        tenantRoleDao.getTenantRolesForUser(none, "applicationId") >> noneTenantRoles
+        applicationRoleDao.getClientRole("4") >> noneApplicationRole
+
+        when:
+        def serviceWeight = userService.getUserWeight(serviceAdmin, "applicationId")
+        def adminWeight = userService.getUserWeight(admin, "applicationId")
+        def userAdminWeight = userService.getUserWeight(userAdmin, "applicationId")
+        def defaultUserWeight =  userService.getUserWeight(defaultUser, "applicationId")
+        def noneWeight = userService.getUserWeight(none, "applicationId")
+
+        then:
+        serviceWeight == 0
+        adminWeight == 100
+        userAdminWeight == 1000
+        defaultUserWeight == 2000
+        noneWeight == 2000
+    }
+
     def setupMocks() {
         stringPaginator = new PaginatorContext<String>().with() {
             it.limit = 10
@@ -255,6 +331,7 @@ class DefaultUserServiceTestGroovy extends Specification {
         new ClientRole().with {
             it.name = name
             it.rsWeight = weight
+            return it
         }
     }
 

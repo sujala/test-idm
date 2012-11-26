@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.domain.dao.impl.LdapTenantRoleRepository;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.domain.dao.*;
@@ -597,4 +598,9 @@ public class DefaultTenantService implements TenantService {
 	public void setScopeAccessDao(ScopeAccessDao scopeAccessDao) {
 		this.scopeAccessDao = scopeAccessDao;
 	}
+
+    @Override
+    public void setTenantRoleDao(LdapTenantRoleRepository tenantRoleDao) {
+        this.tenantRoleDao = tenantRoleDao;
+    }
 }

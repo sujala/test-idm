@@ -2677,34 +2677,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void addUserRole_callsCheckAndGetUserById() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        spy.addUserRole(null, authToken, userId, null);
-        verify(userService).checkAndGetUserById(userId);
-    }
-
-    @Test
-    public void addUserRole_userNotServiceAdminAndRoleIsServiceAdmin_returnsResponseBuilder() throws Exception {
-        ArgumentCaptor<ForbiddenException> argumentCaptor = ArgumentCaptor.forClass(ForbiddenException.class);
-        ScopeAccess scopeAccess = new ScopeAccess();
-        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-
-        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(false);
-        when(config.getString("cloudAuth.adminRole")).thenReturn("admin");
-        ClientRole clientRole1 = new ClientRole();
-        doNothing().when(spy).checkForMultipleIdentityRoles(user,clientRole1);
-        clientRole1.setName("admin");
-        doReturn(clientRole1).when(spy).checkAndGetClientRole(roleId);
-        when(userService.checkAndGetUserById(userId)).thenReturn(user);
-        when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
-
-        assertThat("response builder",spy.addUserRole(null, authToken, userId, roleId), equalTo(responseBuilder));
-        assertThat("exception type",argumentCaptor.getValue(),instanceOf(ForbiddenException.class));
-    }
-
-    @Test
     public void addUserRole_userNotServiceAdminAndRoleNotServiceAdmin_returns200() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);

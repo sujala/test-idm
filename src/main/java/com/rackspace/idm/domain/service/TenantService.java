@@ -6,6 +6,7 @@ import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.dao.UserDao;
+import com.rackspace.idm.domain.dao.impl.LdapTenantRoleRepository;
 import com.rackspace.idm.domain.entity.*;
 
 import java.util.List;
@@ -53,4 +54,6 @@ public interface TenantService {
 	void setUserDao(UserDao userDao);
 	void setEndpointDao(EndpointDao endpointDao);
 	void setScopeAccessDao(ScopeAccessDao scopeAccessDao);
+
+    void setTenantRoleDao(LdapTenantRoleRepository tenantRoleDao);
 }
