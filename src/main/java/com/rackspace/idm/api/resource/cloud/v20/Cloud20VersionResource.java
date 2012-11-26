@@ -274,8 +274,11 @@ public class Cloud20VersionResource {
     @GET
     @Path("RAX-AUTH/domains")
     public Response getAccessibleDomains(
-            @HeaderParam(X_AUTH_TOKEN) String authToken) {
-        return defaultCloud20Service.getAccessibleDomains(authToken).build();
+            @Context UriInfo uriInfo,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @QueryParam("marker") String marker,
+            @QueryParam("limit") String limit) {
+        return defaultCloud20Service.getAccessibleDomains(uriInfo, authToken, marker, limit).build();
     }
 
     @GET

@@ -187,6 +187,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Autowired
     private Paginator<User> userPaginator;
 
+    @Autowired
+    private Paginator<Domain> domainPaginator;
+
     private com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
 
     private Map<String, JAXBElement<Extension>> extensionMap;
@@ -2083,12 +2086,25 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getAccessibleDomains(String authToken) {
+    public ResponseBuilder getAccessibleDomains(UriInfo uriInfo, String authToken, String marker, String limit) {
         try {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
-            User user = userService.getUserByScopeAccess(scopeAccessByAccessToken);
+            int offset = validateOffset(marker);
+            int limitAsInt = validateLimit(limit);
+            if (this.authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken)) {
+                PaginatorContext<Domain> domainContext = this.domainService.getDomains(offset, limitAsInt);
+                String linkHeader = this.domainPaginator.createLinkHeader(uriInfo, domainContext);
 
-            return getAccessibleDomainsForUser(authToken, user.getId());
+                Domains domains = new Domains();
+                domains.getDomain().addAll(domainContext.getValueList());
+                com.rackspace.docs.identity.api.ext.rax_auth.v1.Domains domainsObj = domainsConverterCloudV20.toDomains(domains);
+
+                return Response.status(200).header("Link", linkHeader).entity(raxAuthObjectFactory.createDomains(domainsObj).getValue());
+
+            } else {
+                User user = userService.getUserByScopeAccess(scopeAccessByAccessToken);
+                return getAccessibleDomainsForUser(authToken, user.getId());
+            }
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }

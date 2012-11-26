@@ -218,7 +218,7 @@ public interface Cloud20Service {
 
     ResponseBuilder deletePolicy(String authToken, String policyId);
 
-    ResponseBuilder getAccessibleDomains(String authToken);
+    ResponseBuilder getAccessibleDomains(UriInfo uriInfo, String authToken, String marker, String limit);
 
     ResponseBuilder getAccessibleDomainsForUser(String authToken, String userId);
 
