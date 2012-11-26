@@ -35,7 +35,7 @@ public class UserTest {
         User newUser = new User("delete.me", "RCN-DELETE-ME_NOW", "bademail@example.com", new UserHumanName(
             "delete_my_firstname", "delete_my_middlename", "delete_my_lastname"), new UserLocale(
             Locale.KOREA, DateTimeZone.UTC), new UserCredential(pwd, "What is your favourite colur?",
-            "Yellow. No, Blue! Arrrrgh!"), "USA", "MY DISPLAY NAME", "XXX", "RPN-111-222-333");
+            "Yellow. No, Blue! Arrrrgh!","1325"), "USA", "MY DISPLAY NAME", "XXX", "RPN-111-222-333");
         return newUser;
     }
 

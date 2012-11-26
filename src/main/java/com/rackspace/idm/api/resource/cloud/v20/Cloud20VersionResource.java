@@ -751,7 +751,7 @@ public class Cloud20VersionResource {
     public Response getPoliciesForEndpointTemplate(
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("endpointTemplateId") String endpointTemplateId) {
-        return getCloud20Service().getPoliciesForEndpointTemplate(authToken, endpointTemplateId).build();
+        return defaultCloud20Service.getPoliciesForEndpointTemplate(authToken, endpointTemplateId).build();
     }
 
     @PUT
@@ -761,7 +761,7 @@ public class Cloud20VersionResource {
             @PathParam("endpointTemplateId") String endpointTemplateId,
             Policies policies
             ) {
-        return getCloud20Service().updatePoliciesForEndpointTemplate(authToken, endpointTemplateId, policies).build();
+        return defaultCloud20Service.updatePoliciesForEndpointTemplate(authToken, endpointTemplateId, policies).build();
     }
 
     @PUT
@@ -770,7 +770,7 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("endpointTemplateId") String endpointTemplateId,
             @PathParam("policyId") String policyId){
-        return getCloud20Service().addPolicyToEndpointTemplate(authToken, endpointTemplateId, policyId).build();
+        return defaultCloud20Service.addPolicyToEndpointTemplate(authToken, endpointTemplateId, policyId).build();
     }
 
     @DELETE
@@ -779,14 +779,14 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("endpointTemplateId") String endpointTemplateId,
             @PathParam("policyId") String policyId){
-        return getCloud20Service().deletePolicyToEndpointTemplate(authToken, endpointTemplateId, policyId).build();
+        return defaultCloud20Service.deletePolicyToEndpointTemplate(authToken, endpointTemplateId, policyId).build();
     }
 
     @GET
     @Path("RAX-AUTH/service-apis")
     public Response getServiceApis(
             @HeaderParam(X_AUTH_TOKEN) String authToken){
-        return getCloud20Service().getServiceApis(authToken).build();
+        return defaultCloud20Service.getServiceApis(authToken).build();
     }
 
     @GET
@@ -795,7 +795,7 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("type") String type,
             @PathParam("version") String version){
-        return getCloud20Service().getCapabilities(authToken, type, version).build();
+        return defaultCloud20Service.getCapabilities(authToken, type, version).build();
     }
 
     @PUT
@@ -805,7 +805,7 @@ public class Cloud20VersionResource {
             @PathParam("type") String type,
             @PathParam("version") String version,
             Capabilities capabilities){
-        return getCloud20Service().updateCapabilities(authToken, capabilities, type, version).build();
+        return defaultCloud20Service.updateCapabilities(authToken, capabilities, type, version).build();
     }
 
     @DELETE
@@ -814,7 +814,7 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("type") String type,
             @PathParam("version") String version){
-        return getCloud20Service().removeCapabilities(authToken, type, version).build();
+        return defaultCloud20Service.removeCapabilities(authToken, type, version).build();
     }
 
     @GET
@@ -871,6 +871,23 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("userId") String userId, SecretQA secrets) {
         return getCloud20Service().updateSecretQA(httpHeaders, authToken, userId, secrets).build();
+    }
+
+    @GET
+    @Path("users/{userId}/RAX-AUTH/secretqas")
+    public Response getSecretQAs(
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("userId") String userId){
+        return getCloud20Service().getSecretQAs(authToken, userId).build();
+    }
+
+    @POST
+    @Path("users/{userId}/RAX-AUTH/secretqas")
+    public Response createSecretQA(
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("userId") String userId,
+            com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQA secretQA){
+        return getCloud20Service().createSecretQA(authToken, userId, secretQA).build();
     }
 
     // ******************************************************* //
@@ -978,55 +995,55 @@ public class Cloud20VersionResource {
     @POST
     @Path("RAX-AUTH/regions")
     public Response createRegion(@Context UriInfo uriInfo, @HeaderParam(X_AUTH_TOKEN) String authToken, Region region) {
-        return getCloud20Service().addRegion(uriInfo, authToken, region).build();
+        return defaultCloud20Service.addRegion(uriInfo, authToken, region).build();
     }
 
     @GET
     @Path("RAX-AUTH/regions/{name}")
     public Response getRegion(@HeaderParam(X_AUTH_TOKEN) String authToken, @PathParam("name") String name) {
-        return getCloud20Service().getRegion(authToken, name).build();
+        return defaultCloud20Service.getRegion(authToken, name).build();
     }
 
     @GET
     @Path("RAX-AUTH/regions")
     public Response getRegions(@HeaderParam(X_AUTH_TOKEN) String authToken) {
-        return getCloud20Service().getRegions(authToken).build();
+        return defaultCloud20Service.getRegions(authToken).build();
     }
 
     @PUT
     @Path("RAX-AUTH/regions/{name}")
     public Response updateRegion(@HeaderParam(X_AUTH_TOKEN) String authToken, @PathParam("name") String name, Region region) {
-        return getCloud20Service().updateRegion(authToken, name, region).build();
+        return defaultCloud20Service.updateRegion(authToken, name, region).build();
     }
 
     @DELETE
     @Path("RAX-AUTH/regions/{name}")
     public Response deleteRegion(@HeaderParam(X_AUTH_TOKEN) String authToken, @PathParam("name") String name) {
-        return getCloud20Service().deleteRegion(authToken, name).build();
+        return defaultCloud20Service.deleteRegion(authToken, name).build();
     }
 
     @POST
     @Path("RAX-AUTH/secretqa/questions")
     public Response createQuestion(@Context UriInfo uriInfo, @HeaderParam(X_AUTH_TOKEN) String authToken, Question question) {
-        return getCloud20Service().addQuestion(uriInfo, authToken, question).build();
+        return defaultCloud20Service.addQuestion(uriInfo, authToken, question).build();
     }
 
     @GET
     @Path("RAX-AUTH/secretqa/questions/{questionId}")
     public Response getQuestion(@HeaderParam(X_AUTH_TOKEN) String authToken, @PathParam("questionId") String questionId) {
-        return getCloud20Service().getQuestion(authToken, questionId).build();
+        return defaultCloud20Service.getQuestion(authToken, questionId).build();
     }
 
     @GET
     @Path("RAX-AUTH/secretqa/questions")
     public Response getQuestions(@HeaderParam(X_AUTH_TOKEN) String authToken) {
-        return getCloud20Service().getQuestions(authToken).build();
+        return defaultCloud20Service.getQuestions(authToken).build();
     }
 
     @PUT
     @Path("RAX-AUTH/secretqa/questions/{name}")
     public Response updateQuestion(@HeaderParam(X_AUTH_TOKEN) String authToken, @PathParam("name") String name, Question question) {
-        return getCloud20Service().updateQuestion(authToken, name, question).build();
+        return defaultCloud20Service.updateQuestion(authToken, name, question).build();
     }
 
     @DELETE

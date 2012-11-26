@@ -367,7 +367,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             if (existingUser != null) {
                 throw new DuplicateUsernameException("Username " + user.getId() + " already exists");
             }
-            if (user.getMossoId() == null) {
+            if (user.getMossoId() == null || user.getMossoId().equals(0)) {
                 String errorMsg = "Expecting mossoId";
                 logger.warn(errorMsg);
                 throw new BadRequestException(errorMsg);
@@ -441,18 +441,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             tenant.setDisplayName(nastId);
             tenant.setEnabled(true);
 
-            List<String> v1defaultNastList = config.getList("v1defaultNast");
-            List<CloudBaseUrl> nastBaseUrls = endpointService.getBaseUrlsByBaseUrlType("NAST");
-            for (CloudBaseUrl baseUrl : nastBaseUrls) {
-                String baseUrlId = String.valueOf(baseUrl.getBaseUrlId());
-                for (String v1defaultNastItem : v1defaultNastList) {
-                    if (v1defaultNastItem.equals(baseUrlId) && baseUrl.getDef()) {
-                        tenant.addV1Default(baseUrlId);
-                        break;
-                    }
-                }
-                addbaseUrlToTenant(tenant, baseUrl);
-            }
+            addbaseUrlToTenant(tenant, "NAST");
             try {
                 tenantService.addTenant(tenant);
             } catch (DuplicateException e) {
@@ -483,17 +472,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             tenant.setDisplayName(mossoId.toString());
             tenant.setEnabled(true);
 
-            List<String> v1defaultMossoList = config.getList("v1defaultMosso");
-            List<CloudBaseUrl> mossoBaseUrls = endpointService.getBaseUrlsByBaseUrlType("MOSSO");
-            for (CloudBaseUrl baseUrl : mossoBaseUrls) {
-                String baseUrlId = String.valueOf(baseUrl.getBaseUrlId());
-                for (String v1defaultMossoItem : v1defaultMossoList) {
-                    if (v1defaultMossoItem.equals(baseUrlId) && baseUrl.getDef()) {
-                        tenant.addV1Default(baseUrlId);
-                    }
-                }
-                addbaseUrlToTenant(tenant, baseUrl);
-            }
+            addbaseUrlToTenant(tenant, "MOSSO");
             try {
                 tenantService.addTenant(tenant);
             } catch (DuplicateException e) {
@@ -513,15 +492,42 @@ public class DefaultCloud11Service implements Cloud11Service {
         }
     }
 
-	void addbaseUrlToTenant(Tenant tenant, CloudBaseUrl baseUrl) {
-		if (baseUrl.getDef()) {
-		    if (isUkCloudRegion() && "lon".equalsIgnoreCase(baseUrl.getRegion())) {
-		        tenant.addBaseUrlId(baseUrl.getBaseUrlId().toString());
-		    } else if (!isUkCloudRegion() && !"lon".equalsIgnoreCase(baseUrl.getRegion())) {
-		        tenant.addBaseUrlId(baseUrl.getBaseUrlId().toString());
-		    }
-		}
-	}
+    void addbaseUrlToTenant(Tenant tenant, String baseUrlType){
+        List<CloudBaseUrl> baseUrls = endpointService.getBaseUrlsByBaseUrlType(baseUrlType);
+        for (CloudBaseUrl baseUrl : baseUrls) {
+            if ( (isUkCloudRegion() && "lon".equalsIgnoreCase(baseUrl.getRegion())) ||
+                    (!isUkCloudRegion() && !"lon".equalsIgnoreCase(baseUrl.getRegion())) ) {
+                addV1defaultToTenant(tenant, baseUrl, baseUrlType);
+                if (baseUrl.getDef()) {
+                    tenant.addBaseUrlId(baseUrl.getBaseUrlId().toString());
+                }
+            }
+        }
+    }
+
+    void addV1defaultToTenant(Tenant tenant, CloudBaseUrl baseUrl, String baseUrlType) {
+        List<String> v1defaultList = null;
+        String baseUrlId = String.valueOf(baseUrl.getBaseUrlId());
+        if(baseUrlType == "MOSSO")
+            v1defaultList = config.getList("v1defaultMosso");
+        else if(baseUrlType == "NAST")
+            v1defaultList = config.getList("v1defaultNast");
+        for (String v1defaultItem : v1defaultList) {
+            if (v1defaultItem.equals(baseUrlId) && baseUrl.getDef()) {
+                tenant.addV1Default(baseUrlId);
+            }
+        }
+    }
+
+//	void addbaseUrlToTenant(Tenant tenant, CloudBaseUrl baseUrl) {
+//		if (baseUrl.getDef()) {
+//		    if (isUkCloudRegion() && "lon".equalsIgnoreCase(baseUrl.getRegion())) {
+//		        tenant.addBaseUrlId(baseUrl.getBaseUrlId().toString());
+//		    } else if (!isUkCloudRegion() && !"lon".equalsIgnoreCase(baseUrl.getRegion())) {
+//		        tenant.addBaseUrlId(baseUrl.getBaseUrlId().toString());
+//		    }
+//		}
+//	}
 
     private boolean isUkCloudRegion() {
         return ("UK".equalsIgnoreCase(config.getString("cloud.region")));

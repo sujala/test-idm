@@ -23,7 +23,7 @@ public class DefaultQuestionService implements QuestionService {
     public String addQuestion(Question question) {
         validateQuestion(question);
         question.setId(questionDao.getNextId());
-        questionDao.addObject(question);
+        questionDao.addQuestion(question);
         return question.getId();
     }
 
@@ -39,15 +39,15 @@ public class DefaultQuestionService implements QuestionService {
         Question oldQuestion = checkAndGetQuestion(questionId);
         question.setLdapEntry(oldQuestion.getLdapEntry());
 
-        questionDao.updateObject(question);
+        questionDao.updateQuestion(question);
     }
 
     @Override
     public void deleteQuestion(String questionId) {
         validateQuestionId(questionId);
-        Question question = checkAndGetQuestion(questionId);
+        checkAndGetQuestion(questionId);
 
-        questionDao.deleteObject(getSearchFilter(questionId));
+        questionDao.deleteQuestion(questionId);
     }
 
     @Override
@@ -59,8 +59,8 @@ public class DefaultQuestionService implements QuestionService {
 
     @Override
     public List<Question> getQuestions() {
-        Filter searchFilter = new LdapRepository.LdapSearchBuilder().addEqualAttribute(LdapRepository.ATTR_OBJECT_CLASS, LdapRepository.OBJECTCLASS_QUESTION).build();
-        return questionDao.getObjects(searchFilter);
+
+        return questionDao.getQuestions();
     }
 
     private void validateQuestion(Question question) {
@@ -74,20 +74,11 @@ public class DefaultQuestionService implements QuestionService {
     }
 
     private Question checkAndGetQuestion(String questionId) {
-        Question question = getQuestionSearchFilter(questionId);
+        Question question = questionDao.getQuestion(questionId);
         if (question == null) {
-            throw new NotFoundException(String.format("Question width id %s does not exist", questionId));
+            throw new NotFoundException(String.format("Question with id %s does not exist", questionId));
         }
         return question;
-    }
-
-    private Question getQuestionSearchFilter(String questionId) {
-        return questionDao.getObject(getSearchFilter(questionId));
-    }
-
-    private Filter getSearchFilter(String questionId) {
-        return new LdapRepository.LdapSearchBuilder()
-                    .addEqualAttribute(LdapRepository.ATTR_ID, questionId).build();
     }
 
     private void validateQuestionId(String questionId) {

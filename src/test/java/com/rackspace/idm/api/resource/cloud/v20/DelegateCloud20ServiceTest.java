@@ -1,6 +1,5 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
@@ -17,13 +16,11 @@ import com.rackspace.idm.validation.Validator20;
 import com.sun.jersey.core.spi.factory.ResponseBuilderImpl;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.apache.commons.configuration.Configuration;
-import org.apache.commons.lang.NotImplementedException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Matchers;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.v2.*;
-import org.openstack.docs.identity.api.v2.ObjectFactory;
 
 import javax.ws.rs.core.*;
 import javax.xml.bind.JAXBException;
@@ -1331,36 +1328,18 @@ public class DelegateCloud20ServiceTest {
     }
 
     @Test
-    public void checkToken_RoutingFalseAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+    public void checkToken_RoutingFalse_callsDefaultService() throws Exception {
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
-        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
         delegateCloud20Service.checkToken(null, null, "1", null);
         verify(defaultCloud20Service).checkToken(null, null, "1", null);
     }
 
     @Test
-    public void checkToken_RoutingFalseAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
-        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(false);
-        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
-        delegateCloud20Service.checkToken(null, null, "1", null);
-        verify(defaultCloud20Service).checkToken(null, null, "1", null);
-    }
-
-    @Test
-    public void checkToken_RoutingTrueAndGASourceOfTruthFalse_callsDefaultService() throws Exception {
+    public void checkToken_RoutingTrue_callsDefaultService() throws Exception {
         when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
-        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(false);
         HttpHeaders mockHeaders = mock(HttpHeaders.class);
         delegateCloud20Service.checkToken(mockHeaders, null, "1", null);
         verify(cloudClient).get(url + "tokens/1", mockHeaders);
-    }
-
-    @Test
-    public void checkToken_RoutingTrueAndGASourceOfTruthTrue_callsDefaultService() throws Exception {
-        when(config.getBoolean(delegateCloud20Service.CLOUD_AUTH_ROUTING)).thenReturn(true);
-        when(config.getBoolean(delegateCloud20Service.GA_SOURCE_OF_TRUTH)).thenReturn(true);
-        delegateCloud20Service.checkToken(null, null, "1", null);
-        verify(defaultCloud20Service).checkToken(null, null, "1", null);
     }
 
     @Test
@@ -3373,6 +3352,8 @@ public class DelegateCloud20ServiceTest {
 
     @Test
     public void getPoliciesForEndpointTemplate_throwsNotImplementedException() throws Exception {
+        when(spy.isCloudAuthRoutingEnabled()).thenReturn(true);
+        when(spy.isGASourceOfTruth()).thenReturn(false);
         when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
         Response.ResponseBuilder responseBuilder = delegateCloud20Service.getPoliciesForEndpointTemplate(null, null);
         assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
@@ -3380,6 +3361,8 @@ public class DelegateCloud20ServiceTest {
 
     @Test
     public void updatePoliciesForEndpointTemplate_throwsNotImplementedException() throws Exception {
+        when(spy.isCloudAuthRoutingEnabled()).thenReturn(true);
+        when(spy.isGASourceOfTruth()).thenReturn(false);
         when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
         Response.ResponseBuilder responseBuilder = delegateCloud20Service.updatePoliciesForEndpointTemplate(null, null,null);
         assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
@@ -3387,6 +3370,8 @@ public class DelegateCloud20ServiceTest {
 
     @Test
     public void addPolicyToEndpointTemplate_throwsNotImplementedException() throws Exception {
+        when(spy.isCloudAuthRoutingEnabled()).thenReturn(true);
+        when(spy.isGASourceOfTruth()).thenReturn(false);
         when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
         Response.ResponseBuilder responseBuilder = delegateCloud20Service.addPolicyToEndpointTemplate(null, null,null);
         assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
@@ -3394,6 +3379,8 @@ public class DelegateCloud20ServiceTest {
 
     @Test
     public void deletePolicyToEndpointTemplate_throwsNotImplementedException() throws Exception {
+        when(spy.isCloudAuthRoutingEnabled()).thenReturn(true);
+        when(spy.isGASourceOfTruth()).thenReturn(false);
         when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
         Response.ResponseBuilder responseBuilder = delegateCloud20Service.deletePolicyToEndpointTemplate(null, null,null);
         assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
@@ -3401,6 +3388,8 @@ public class DelegateCloud20ServiceTest {
 
     @Test
     public void getPolicies_throwsNotImplementedException() throws Exception {
+        when(spy.isCloudAuthRoutingEnabled()).thenReturn(true);
+        when(spy.isGASourceOfTruth()).thenReturn(false);
         when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
         Response.ResponseBuilder responseBuilder = delegateCloud20Service.getPolicies(null);
         assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
@@ -3408,6 +3397,8 @@ public class DelegateCloud20ServiceTest {
 
     @Test
     public void addPolicy_throwsNotImplementedException() throws Exception {
+        when(spy.isCloudAuthRoutingEnabled()).thenReturn(true);
+        when(spy.isGASourceOfTruth()).thenReturn(false);
         when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
         Response.ResponseBuilder responseBuilder = delegateCloud20Service.addPolicy(null,null,null);
         assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
@@ -3415,6 +3406,8 @@ public class DelegateCloud20ServiceTest {
 
     @Test
     public void getPolicy_throwsNotImplementedException() throws Exception {
+        when(spy.isCloudAuthRoutingEnabled()).thenReturn(true);
+        when(spy.isGASourceOfTruth()).thenReturn(false);
         when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
         Response.ResponseBuilder responseBuilder = delegateCloud20Service.addPolicy(null,null,null);
         assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
@@ -3422,6 +3415,8 @@ public class DelegateCloud20ServiceTest {
 
     @Test
     public void updatePolicy_throwsNotImplementedException() throws Exception {
+        when(spy.isCloudAuthRoutingEnabled()).thenReturn(true);
+        when(spy.isGASourceOfTruth()).thenReturn(false);
         when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
         Response.ResponseBuilder responseBuilder = delegateCloud20Service.updatePolicy(null,null,null);
         assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
@@ -3429,6 +3424,8 @@ public class DelegateCloud20ServiceTest {
 
     @Test
     public void deletePolicy_throwsNotImplementedException() throws Exception {
+        when(spy.isCloudAuthRoutingEnabled()).thenReturn(true);
+        when(spy.isGASourceOfTruth()).thenReturn(false);
         when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
         Response.ResponseBuilder responseBuilder = delegateCloud20Service.deletePolicy(null,null);
         assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
@@ -3557,6 +3554,20 @@ public class DelegateCloud20ServiceTest {
     public void getServiceApis_throwsNotImplementedException() throws Exception {
         when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
         Response.ResponseBuilder responseBuilder = delegateCloud20Service.getServiceApis(null);
+        assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
+    }
+
+    @Test
+    public void getSecretQAs_throwsNotImplementedException() throws Exception {
+        when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
+        Response.ResponseBuilder responseBuilder = delegateCloud20Service.getSecretQAs(null, null);
+        assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
+    }
+
+    @Test
+    public void createSecretQA_throwsNotImplementedException() throws Exception {
+        when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
+        Response.ResponseBuilder responseBuilder = delegateCloud20Service.createSecretQA(null,null,null);
         assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
     }
 }

@@ -13,6 +13,7 @@ import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Domain;
+import com.rackspace.idm.domain.entity.Question;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
@@ -78,6 +79,7 @@ public class DefaultCloud20ServiceOldTest {
     private TenantService tenantService;
     private EndpointService endpointService;
     private ApplicationService clientService;
+    private QuestionService questionService;
     private UserConverterCloudV20 userConverterCloudV20;
     private TenantConverterCloudV20 tenantConverterCloudV20;
     private TokenConverterCloudV20 tokenConverterCloudV20;
@@ -143,6 +145,7 @@ public class DefaultCloud20ServiceOldTest {
         tenantService = mock(TenantService.class);
         endpointService = mock(EndpointService.class);
         clientService = mock(ApplicationService.class);
+        questionService = mock(QuestionService.class);
         config = mock(Configuration.class);
         cloudKsGroupBuilder = mock(CloudKsGroupBuilder.class);
         atomHopperClient = mock(AtomHopperClient.class);
@@ -182,6 +185,7 @@ public class DefaultCloud20ServiceOldTest {
         defaultCloud20Service.setDomainService(domainService);
         defaultCloud20Service.setDomainConverterCloudV20(domainConverterCloudV20);
         defaultCloud20Service.setAuthenticationService(authenticationService);
+        defaultCloud20Service.setQuestionService(questionService);
 
         //fields
         user = new User();
@@ -4541,9 +4545,12 @@ public class DefaultCloud20ServiceOldTest {
         user.setRegion("region");
         user.setId(userId);
         userOS.setId(userId);
+        User user2 = new User();
+        user2.setRegion("region2");
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
         when(authorizationService.authorizeCloudUserAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(userService.getUserByAuthToken(authToken)).thenReturn(user);
+        when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(user2);
         ScopeAccess value = new ScopeAccess();
         when(scopeAccessService.getScopeAccessByUserId(userId)).thenReturn(value);
         when(authorizationService.hasUserAdminRole(value)).thenReturn(true);
@@ -4585,8 +4592,14 @@ public class DefaultCloud20ServiceOldTest {
         user.setRegion("region");
         userOS.setId(userId);
 
+        User user2 = new User();
+        user2.setRegion("region2");
+
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         when(userService.checkAndGetUserById(userId)).thenReturn(user);
+
+        when(userConverterCloudV20.toUserDO(any(org.openstack.docs.identity.api.v2.User.class))).thenReturn(user2);
+
         doReturn(true).when(authorizationService).authorizeCloudUser(any(ScopeAccess.class));
         doReturn(false).when(authorizationService).authorizeCloudUserAdmin(any(ScopeAccess.class));
         when(userService.getUserByAuthToken(authToken)).thenReturn(user);
@@ -5534,6 +5547,7 @@ public class DefaultCloud20ServiceOldTest {
     public void impersonate_scopeAccessInstanceOfRackerScopeAccess_returns200() throws Exception {
         RackerScopeAccess rackerScopeAccess = new RackerScopeAccess();
         user.setEnabled(true);
+        when(spy.isCloudAuthRoutingEnabled()).thenReturn(true);
         org.openstack.docs.identity.api.v2.User impersonateUser = new org.openstack.docs.identity.api.v2.User();
         impersonateUser.setUsername("impersonateUser");
         impersonateUser.setId("impersonateUserId");
@@ -5551,6 +5565,7 @@ public class DefaultCloud20ServiceOldTest {
     public void impersonate_scopeAccessInstanceOfUserScopeAccess_returns200() throws Exception {
         UserScopeAccess userScopeAccess = new UserScopeAccess();
         user.setEnabled(true);
+        when(spy.isCloudAuthRoutingEnabled()).thenReturn(true);
         org.openstack.docs.identity.api.v2.User impersonateUser = new org.openstack.docs.identity.api.v2.User();
         impersonateUser.setUsername("impersonateUser");
         impersonateUser.setId("impersonateUserId");
@@ -5577,6 +5592,7 @@ public class DefaultCloud20ServiceOldTest {
         ImpersonationRequest impersonationRequest = new ImpersonationRequest();
         impersonationRequest.setUser(impersonateUser);
 
+        when(spy.isCloudAuthRoutingEnabled()).thenReturn(true);
         when(authorizationService.authorizeRacker(any(ScopeAccess.class))).thenReturn(true);
         when(delegateCloud20Service.impersonateUser(anyString(), anyString(), anyString())).thenReturn("impersonatingToken");
         doReturn(clientScopeAccess).when(spy).checkAndGetToken(authToken);

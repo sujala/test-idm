@@ -26,7 +26,7 @@ public class UserAuthenticationResultTest {
 
     @Test
     public void hashCode_userNotNull_returnsHashCode() throws Exception {
-        assertThat("hash code",userAuthenticationResult.hashCode(),equalTo(714482683));
+        assertThat("hash code",userAuthenticationResult.hashCode(),equalTo(1090966021));
     }
 
     @Test

@@ -3,10 +3,17 @@ package com.rackspace.idm.api.resource.user;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.BadRequestException;
+import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import sun.awt.ConstrainableGraphics;
 
 import javax.ws.rs.core.Response;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -26,6 +33,8 @@ public class UserGlobalRoleResourceTest {
     private AuthorizationService authorizationService;
     private UserService userService;
     private ApplicationService applicationService;
+    private ClientRole clientRole;
+    private Configuration configuration;
 
     @Before
     public void setUp() throws Exception {
@@ -35,6 +44,14 @@ public class UserGlobalRoleResourceTest {
         userService = mock(UserService.class);
         applicationService = mock(ApplicationService.class);
         userGlobalRoleResource = new UserGlobalRoleResource(userService,authorizationService, applicationService,scopeAccessService, tenantService);
+        clientRole = new ClientRole();
+        clientRole.setName("blah");
+        configuration = mock(Configuration.class);
+        when(configuration.getString("cloudAuth.adminRole")).thenReturn("identity:admin");
+        when(configuration.getString("cloudAuth.serviceAdminRole")).thenReturn("identity:service-admin");
+        when(configuration.getString("cloudAuth.userAdminRole")).thenReturn("identity:user-admin");
+        when(configuration.getString("cloudAuth.userRole")).thenReturn("identity:default");
+        userGlobalRoleResource.setConfig(configuration);
     }
 
     @Test
@@ -62,21 +79,21 @@ public class UserGlobalRoleResourceTest {
 
     @Test
     public void grantGlobalRoleToUser_callsAuthorizationService_verifyIdmSuperAdminAccess() throws Exception {
-        when(applicationService.getClientRoleById("roleId")).thenReturn(new ClientRole());
+        when(applicationService.getClientRoleById("roleId")).thenReturn(clientRole);
         userGlobalRoleResource.grantGlobalRoleToUser("authHeader", "userId", "roleId");
         verify(authorizationService).verifyIdmSuperAdminAccess("authHeader");
     }
 
     @Test
     public void grantGlobalRoleToUser_callsUserService_loadUser() throws Exception {
-        when(applicationService.getClientRoleById("roleId")).thenReturn(new ClientRole());
+        when(applicationService.getClientRoleById("roleId")).thenReturn(clientRole);
         userGlobalRoleResource.grantGlobalRoleToUser("authHeader", "userId", "roleId");
         verify(userService).loadUser("userId");
     }
 
     @Test
     public void grantGlobalRoleToUser_callsApplicationService_getClientRoleById() throws Exception {
-        when(applicationService.getClientRoleById("roleId")).thenReturn(new ClientRole());
+        when(applicationService.getClientRoleById("roleId")).thenReturn(clientRole);
         userGlobalRoleResource.grantGlobalRoleToUser("authHeader", "userId", "roleId");
         verify(applicationService).getClientRoleById("roleId");
     }
@@ -86,16 +103,38 @@ public class UserGlobalRoleResourceTest {
         userGlobalRoleResource.grantGlobalRoleToUser("authHeader", "userId", "roleId");
     }
 
+    @Test (expected = BadRequestException.class)
+    public void grantGlobalRoleToUser_roleAlreadyPresent_throwsBadRequest() throws Exception {
+        ClientRole cRole = new ClientRole();
+        cRole.setClientId("123456");
+        cRole.setId("123456");
+
+        cRole.setName("identity:default");
+
+        TenantRole tRole = new TenantRole();
+        tRole.setClientId("123456");
+        tRole.setName("identity:default");
+        tRole.setRoleRsId("123456");
+        tRole.setUserId("userId");
+
+        when(applicationService.getClientRoleById("roleId")).thenReturn(cRole);
+        when(userService.loadUser(anyString())).thenReturn(new User());
+        List<TenantRole> tenantRoleList = new ArrayList<TenantRole>();
+        tenantRoleList.add(tRole);
+        when(tenantService.getGlobalRolesForUser(any(User.class))).thenReturn(tenantRoleList);
+        userGlobalRoleResource.grantGlobalRoleToUser("authHeader", "userId", "roleId");
+    }
+
     @Test
     public void grantGlobalRoleToUser_callsTenantService_addTenantRoleToUser() throws Exception {
-        when(applicationService.getClientRoleById("roleId")).thenReturn(new ClientRole());
+        when(applicationService.getClientRoleById("roleId")).thenReturn(clientRole);
         userGlobalRoleResource.grantGlobalRoleToUser("authHeader", "userId", "roleId");
         verify(tenantService).addTenantRoleToUser(any(User.class), any(TenantRole.class));
     }
 
     @Test
     public void grantGlobalRoleToUser_responseNoContent_returns204() throws Exception {
-        when(applicationService.getClientRoleById("roleId")).thenReturn(new ClientRole());
+        when(applicationService.getClientRoleById("roleId")).thenReturn(clientRole);
         Response response = userGlobalRoleResource.grantGlobalRoleToUser("authHeader", "userId", "roleId");
         assertThat("response code", response.getStatus(), equalTo(204));
     }

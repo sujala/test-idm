@@ -43,6 +43,7 @@ public class UserServiceTests {
 
     String middlename = "middle";
     String secretQuestion = "question";
+    String secretQuestionId = "id";
     String secretAnswer = "answer";
     String preferredLang = "en_US";
     String timeZone = "America/Chicago";
@@ -583,7 +584,7 @@ public class UserServiceTests {
 
         final UserHumanName name = new UserHumanName(firstname, middlename, lastname);
         final UserLocale pref = new UserLocale(new Locale(preferredLang), DateTimeZone.forID(timeZone));
-        final UserCredential cred = new UserCredential(userpass, secretQuestion,  secretAnswer);
+        final UserCredential cred = new UserCredential(userpass, secretQuestion,  secretAnswer, secretQuestionId);
         final User user = new User(username, customerId, email, name, pref, cred);
         user.setMossoId(1);
         user.setDomainId("1");
