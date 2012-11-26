@@ -47,6 +47,7 @@ class Cloud20IntegrationTest extends Specification {
     @Shared def sharedRandom
     @Shared def sharedRole
     @Shared def sharedRoleTwo
+    @Shared def roleAvailableToUserAdmins
 
     @Shared def emptyDomainId
     @Shared def testDomainId
@@ -129,6 +130,10 @@ class Cloud20IntegrationTest extends Specification {
         if (sharedRoleTwo == null) {
             def roleResponse2 = createRole(serviceAdminToken, role())
             sharedRoleTwo = roleResponse2.getEntity(Role).value
+        }
+        if (roleAvailableToUserAdmins == null) {
+            def roleResponse3 = createRole(userAdminToken, role())
+            roleAvailableToUserAdmins = roleResponse3.getEntity(Role).value
         }
 
         //Add role to identity-admin and default-users
@@ -690,20 +695,29 @@ class Cloud20IntegrationTest extends Specification {
         ]
     }
 
-    def "addRole to default User not in domain of calling user-admin fails"() {
-        when:
-        def response = addRoleToUser(userAdminToken, sharedRole.getId(), defaultUserForAdminTwo.getId())
-
-        then:
+    def "addRole with insufficient access"() {
+        expect:
         response.status == 403
+
+        where:
+        response << [
+                addRoleToUser(defaultUserToken, roleAvailableToUserAdmins.getId(), defaultUserForAdminTwo.getId()),
+                addRoleToUser(userAdminToken, roleAvailableToUserAdmins.getId(), defaultUserForAdminTwo.getId()),
+                addRoleToUser(userAdminToken, sharedRole.getId(), defaultUser.getId())
+        ]
     }
 
-    def "addRole to default User in same domain of calling user-admin succeeds"() {
-        when:
-        def response = addRoleToUser(userAdminTwoToken, sharedRole.getId(), defaultUserForAdminTwo.getId())
+    def "adding identity:* to user with identity:* roles returns badRequest"() {
+        expect:
+        response.status == 404
 
-        then:
-        response.status == 200
+        where:
+        response << [
+                addRoleToUser(serviceAdminToken, "1", defaultUser.getId()),
+                addRoleToUser(serviceAdminToken, "1", userAdmin.getId()),
+                addRoleToUser(serviceAdminToken, "1", identityAdmin.getId()),
+                addRoleToUser(serviceAdminToken, "1", serviceAdmin.getId())
+        ]
     }
 
     def "add policy to endpoint without endpoint without policy returns 404" () {

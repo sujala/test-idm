@@ -270,6 +270,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             clientRole.setClientId(service.getClientId());
             clientRole.setDescription(role.getDescription());
             clientRole.setName(role.getName());
+            clientRole.setRsWeight(config.getInt("cloudAuth.special.rsWeight"));
 
             clientService.addClientRole(clientRole);
 

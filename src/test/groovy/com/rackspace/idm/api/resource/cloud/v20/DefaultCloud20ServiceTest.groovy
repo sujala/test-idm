@@ -39,7 +39,9 @@ import com.rackspace.idm.domain.dao.impl.LdapApplicationRoleRepository
 
 import javax.ws.rs.core.HttpHeaders
 import com.rackspace.idm.domain.service.TenantService
-import com.rackspace.idm.domain.dao.impl.LdapTenantRoleRepository;
+import com.rackspace.idm.domain.dao.impl.LdapTenantRoleRepository
+import org.openstack.docs.identity.api.v2.Role
+import com.rackspace.idm.exception.ForbiddenException;
 
 /*
  This class uses the application context but mocks the ldap interactions
@@ -969,6 +971,101 @@ class DefaultCloud20ServiceTest extends Specification {
         }
     }
 
+    def "addRole verifies identity:admin level access"() {
+        given:
+        createMocks()
+        allowAccess()
+
+        when:
+        cloud20Service.addRole(headers, uriInfo(), authToken, role())
+
+        then:
+        1 * authorizationService.verifyIdentityAdminLevelAccess(_)
+    }
+
+    def "addRole returns badRequest"() {
+        given:
+        createMocks()
+        allowAccess()
+
+        when:
+        def responses = []
+        responses.add(cloud20Service.addRole(headers, uriInfo(), authToken, role()).build())
+        responses.add(cloud20Service.addRole(headers, uriInfo(), authToken, null).build())
+
+        then:
+        for (response in responses) {
+            response.status == 400
+        }
+    }
+
+    def "addRole returns conflict"() {
+        given:
+        createMocks()
+        allowAccess()
+
+        clientRoleDao.getClientRoleByApplicationAndName(_, _) >> clientRole()
+        clientDao.getClientByClientId(_) >> application()
+        def role = role()
+        role.name = "genericRole"
+
+        when:
+        def response = cloud20Service.addRole(headers, uriInfo(), authToken, role).build()
+
+        then:
+        response.status == 409
+    }
+
+    def "addRole returns forbidden (insufficient priveleges)"() {
+        given:
+        createMocks()
+        allowAccess()
+        def identityRole = role()
+        identityRole.name = "identity:hahah"
+
+        authorizationService.verifyServiceAdminLevelAccess(_) >> { throw new ForbiddenException() }
+
+
+        when:
+        def response = cloud20Service.addRole(headers, uriInfo(), authToken, identityRole).build()
+
+        then:
+        response.status == 403
+    }
+
+    def "addRole sets default weight for created role"() {
+        given:
+        createMocks()
+        allowAccess()
+        def role = role()
+        role.name = "genericRole"
+
+        clientDao.getClientByClientId(_) >> application()
+        clientRoleDao.getNextRoleId() >> "10"
+
+//        needed for next sprint when user-admins are allowed to add roles
+//        currently only service-admins and admins can create roles -> default weight is 500
+//        adminCaller = user("admin", "")
+//        serviceAdminCaller = user("serviceAdmin", "")
+//
+//        userDao.getUserByUsername(_) >>> [ adminCaller, serviceAdminCaller ]
+//        tenantRoles = [ tenantRole("identity:role") ].asList()
+//        tenantRoleDao >> tenantRoles
+
+
+        when:
+        def responseOne = cloud20Service.addRole(headers, uriInfo(), authToken, role).build()
+        def responseTwo = cloud20Service.addRole(headers, uriInfo(), authToken, role).build()
+
+        then:
+        clientRoleDao.addClientRole(_, _) >> { arg1, arg2 ->
+            arg2.id == "10"
+            arg2.clientId == "1234"
+            arg2.name == "genericRole"
+            arg2.rsWeight == configuration.getInt("cloudAuth.special.rsWeight")
+        }
+    }
+
     //helper methods
     def createMocks() {
         headers = Mock()
@@ -1149,6 +1246,12 @@ class DefaultCloud20ServiceTest extends Specification {
             it.offset = offset
             it.totalRecords = list.size
             it.valueList = list
+            return it
+        }
+    }
+
+    def role() {
+        new Role().with {
             return it
         }
     }
