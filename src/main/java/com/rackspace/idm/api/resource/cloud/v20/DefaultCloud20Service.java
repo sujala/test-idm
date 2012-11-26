@@ -2091,7 +2091,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
             int offset = validateOffset(marker);
             int limitAsInt = validateLimit(limit);
-            if (this.authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken)) {
+            if (this.authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken) ||
+                    this.authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken)) {
                 PaginatorContext<Domain> domainContext = this.domainService.getDomains(offset, limitAsInt);
                 String linkHeader = this.domainPaginator.createLinkHeader(uriInfo, domainContext);
 
