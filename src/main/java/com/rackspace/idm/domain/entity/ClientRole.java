@@ -29,7 +29,10 @@ public class ClientRole implements Auditable, UniqueId {
     
     @LDAPField(attribute=LdapRepository.ATTR_DESCRIPTION, objectClass=LdapRepository.OBJECTCLASS_CLIENT_ROLE, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String description;
-    
+
+    @LDAPField(attribute=LdapRepository.ATTR_RS_WEIGHT, objectClass=LdapRepository.OBJECTCLASS_CLIENT_ROLE, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
+    private int rsWeight;
+
     public ReadOnlyEntry getLDAPEntry() {
         return ldapEntry;
     }
@@ -73,6 +76,14 @@ public class ClientRole implements Auditable, UniqueId {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public void setRsWeight(int weight) {
+        this.rsWeight = weight;
+    }
+
+    public int getRsWeight() {
+        return rsWeight;
     }
     
     public void copyChanges(ClientRole modifiedClient) {

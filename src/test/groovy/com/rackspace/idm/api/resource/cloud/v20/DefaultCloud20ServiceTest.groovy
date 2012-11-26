@@ -35,7 +35,9 @@ import com.rackspace.idm.domain.service.ApplicationService
 import com.rackspace.idm.domain.dao.impl.LdapApplicationRepository
 import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.domain.dao.impl.LdapTenantRepository
-import com.rackspace.idm.domain.dao.impl.LdapApplicationRoleRepository;
+import com.rackspace.idm.domain.dao.impl.LdapApplicationRoleRepository
+
+import javax.ws.rs.core.HttpHeaders;
 
 /*
  This class uses the application context but mocks the ldap interactions
@@ -68,6 +70,7 @@ class DefaultCloud20ServiceTest extends Specification {
     @Shared LdapApplicationRoleRepository clientRoleDao
 
 
+    @Shared HttpHeaders headers
     @Shared def authToken = "token"
     @Shared def offset = "0"
     @Shared def limit = "25"
@@ -784,8 +787,10 @@ class DefaultCloud20ServiceTest extends Specification {
 
     //helper methods
     def createMocks() {
-        cloud20Service.userService = userService
+        headers = Mock()
 
+        cloud20Service.userService = userService
+                                                                                            cloud
         scopeAccessDao = Mock()
 
         scopeAccessService = Mock()
@@ -932,6 +937,23 @@ class DefaultCloud20ServiceTest extends Specification {
         new ClientRole().with {
             it.id = "1234"
             it.name = "testRole"
+            return it
+        }
+    }
+
+    def clientRole(String name, int rsWeight) {
+        new ClientRole().with {
+            it.id = "1234"
+            it.name = name
+            it.rsWeight = rsWeight
+            return it
+        }
+    }
+
+    def tenantRole(String name) {
+        new TenantRole().with {
+            it.name = name
+            it.roleRsId = "roleRsId"
             return it
         }
     }

@@ -12,8 +12,11 @@ import com.rackspace.idm.domain.entity.FilterParam
 import org.springframework.test.context.ContextConfiguration
 import org.springframework.beans.factory.annotation.Autowired
 import org.apache.commons.configuration.Configuration
-import com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service
+
 import com.rackspace.idm.domain.dao.UserDao
+import com.rackspace.idm.domain.dao.impl.LdapApplicationRoleRepository
+import com.rackspace.idm.domain.dao.impl.LdapTenantRoleRepository
+import com.rackspace.idm.domain.entity.ClientRole
 
 /**
  * Created with IntelliJ IDEA.
@@ -40,6 +43,8 @@ class DefaultUserServiceTestGroovy extends Specification {
     @Shared PaginatorContext<String> stringPaginator
     @Shared TenantDao tenantDao
     @Shared UserDao userDao
+    @Shared LdapApplicationRoleRepository applicationRoleDao
+    @Shared LdapTenantRoleRepository tenantRoleDao
 
     def setupSpec() {
         sharedRandom = ("$sharedRandomness").replace('-',"")
@@ -216,7 +221,6 @@ class DefaultUserServiceTestGroovy extends Specification {
 
         then:
         list.equals(compareTo)
-
     }
 
     def setupMocks() {
@@ -232,19 +236,32 @@ class DefaultUserServiceTestGroovy extends Specification {
 
         userDao = Mock()
         userService.userDao = userDao
+
+        tenantRoleDao = Mock()
+        userService.tenantRoleDao = tenantRoleDao
+
+        applicationRoleDao = Mock()
+        userService.applicationRoleDao = applicationRoleDao;
     }
 
-    def createRole(roleId) {
+    def createTenantRole(roleId) {
         new TenantRole().with {
             it.roleRsId = roleId
             return it
         }
     }
 
+    def createApplicationRole(name, weight) {
+        new ClientRole().with {
+            it.name = name
+            it.rsWeight = weight
+        }
+    }
+
     def createUser(roleId) {
         new User().with {
             def roles = new ArrayList<TenantRole>()
-            roles.add(createRole(roleId))
+            roles.add(createTenantRole(roleId))
             def random = UUID.randomUUID()
 
             it.username = ("$random").replace('-',"")
@@ -257,7 +274,7 @@ class DefaultUserServiceTestGroovy extends Specification {
     def createUser(roleId, username) {
         new User().with {
             def roles = new ArrayList<TenantRole>()
-            roles.add(createRole(roleId))
+            roles.add(createTenantRole(roleId))
 
             it.username = username
             it.id = username

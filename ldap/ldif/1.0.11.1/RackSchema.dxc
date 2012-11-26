@@ -276,7 +276,7 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.40) = {
 schema set attribute (1.3.6.1.4.1.20988.2.1.41) = {
         name = passwordRotationDuration
         ldap-names = passwordRotationDuration
-        syntax = integer
+        syntax = Integer
         description = "Password rotation duration in days"
 };
 
@@ -652,11 +652,10 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.88) = {
 };
 
 schema set attribute (1.3.6.1.4.1.20988.2.1.89) = {
-    name = parentRole
-    ldap-names = parentRole
-    equality = caseIgnoreMatch
-    syntax = directoryString
-    description = "parent role of role"
+    name = rsWeight
+    ldap-names = rsWeight
+    syntax = Integer
+    description = "Precedence of role in application role hierarchy"
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
@@ -806,9 +805,8 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.9) = {
     subclass-of top
     kind = structural
     must-contain
-        clientId
-    may-contain
-        clientRCN
+        accessToken,
+        accessTokenExp
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.10) = {
@@ -826,8 +824,7 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.11) = {
     subclass-of scopeAccess
     kind = structural
     may-contain
-        accessToken,
-        accessTokenExp
+        clientId
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.12) = {
@@ -839,9 +836,7 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.12) = {
         userRsId
     may-contain
         uid,
-    	userRCN,
-        accessToken,
-        accessTokenExp
+    	userRCN
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.13) = {
@@ -852,8 +847,6 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.13) = {
     must-contain
         rackerId
     may-contain
-        accessToken,
-        accessTokenExp,
         refreshToken,
         refreshTokenExp
 };
@@ -868,8 +861,6 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.14) = {
     may-contain
         uid,
         userRCN,
-        accessToken,
-        accessTokenExp,
         refreshToken,
         refreshTokenExp
 };
@@ -928,8 +919,6 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.19) = {
     may-contain
         uid,
      	userRCN,
-        accessToken,
-        accessTokenExp,
         authCode,
         authCodeExp,
         refreshToken,
@@ -985,7 +974,7 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.23) = {
         clientId
     may-contain
         description,
-        parentRole
+        rsWeight
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.24) = {
@@ -1020,8 +1009,6 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.26) = {
     may-contain
         uid,
         rackerId,
-        accessToken,
-        accessTokenExp,
         impersonatingToken
 };
 

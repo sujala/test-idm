@@ -497,7 +497,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     void assignProperRole(HttpHeaders httpHeaders, String authToken, ScopeAccess scopeAccessByAccessToken, User userDO) {
-        //If caller is an Service admin, give user service-admin role
+        //If caller is an Service admin, give user admin role
         if (authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken)) {
             ClientRole roleId = clientService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthIdentityAdminRole());
             this.addUserRole(httpHeaders, authToken, userDO.getId(), roleId.getId());
@@ -636,7 +636,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder addUserRole(HttpHeaders httpHeaders, String authToken, String userId, String roleId) {
-
         try {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
             authorizationService.verifyUserAdminLevelAccess(scopeAccessByAccessToken);

@@ -83,12 +83,12 @@ public interface UserService {
 
 //    DateTime getUserPasswordExpirationDate(String userName);
 
-    //UserAuthenticationResult authenticateRacker(String username, String password);
-    
+//    UserAuthenticationResult authenticateRacker(String username, String password);
+
     void softDeleteUser(User user);
     boolean userExistsById(String userId);
     boolean userExistsByUsername(String username);
-boolean isMigratedUser(User user);
+    boolean isMigratedUser(User user);
 
     void addBaseUrlToUser(Integer baseUrlId, User user);
 
@@ -116,4 +116,6 @@ boolean isMigratedUser(User user);
     PaginatorContext<User> getAllUsersPaged(FilterParam[] filters, int offset, int limit);
 
     PaginatorContext<User> getUsersWithRole(FilterParam[] filters, String roleId, int offset, int limit);
+
+    int getUserWeight(User user, String applicationId);
 }

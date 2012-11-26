@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.domain.dao.impl.LdapApplicationRoleRepository;
+import com.rackspace.idm.domain.dao.impl.LdapTenantRoleRepository;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.domain.dao.ApplicationDao;

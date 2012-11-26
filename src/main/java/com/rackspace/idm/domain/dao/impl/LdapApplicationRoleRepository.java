@@ -4,6 +4,7 @@ import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.dao.ApplicationRoleDao;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientRole;
+import com.rackspace.idm.domain.entity.User;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.SearchScope;
 import org.springframework.stereotype.Component;

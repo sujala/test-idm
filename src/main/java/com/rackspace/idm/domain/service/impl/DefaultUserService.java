@@ -2,6 +2,8 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.dao.TenantDao;
+import com.rackspace.idm.domain.dao.impl.LdapApplicationRoleRepository;
+import com.rackspace.idm.domain.dao.impl.LdapTenantRoleRepository;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.domain.dao.AuthDao;
@@ -69,6 +71,12 @@ public class DefaultUserService implements UserService {
 
     @Autowired
     private CloudRegionService cloudRegionService;
+
+    @Autowired
+    private LdapTenantRoleRepository tenantRoleDao;
+
+    @Autowired
+    private LdapApplicationRoleRepository applicationRoleDao;
 
     @Override
     public void addRacker(Racker racker) {
@@ -430,6 +438,18 @@ public class DefaultUserService implements UserService {
 //
 //        return passwordExpirationDate;
 //    }
+
+    @Override
+    public int getUserWeight(User user, String applicationId) {
+        List<TenantRole> tenantRoles = tenantRoleDao.getTenantRolesForUser(user, applicationId);
+        for (TenantRole tenantRole : tenantRoles) {
+            ClientRole clientRole = applicationRoleDao.getClientRole(tenantRole.getRoleRsId());
+            if (StringUtils.startsWithIgnoreCase(clientRole.getName(), "identity:")) {
+                return clientRole.getRsWeight();
+            }
+        }
+        return config.getInt("cloudAuth.defaultUser.rsWeight");
+    }
 
 
     @Override
@@ -955,5 +975,13 @@ public class DefaultUserService implements UserService {
 
     public void setAuthorizationService(AuthorizationService authorizationService) {
         this.authorizationService = authorizationService;
+    }
+
+    public void setTenantRoleDao(LdapTenantRoleRepository tenantRoleDao) {
+        this.tenantRoleDao = tenantRoleDao;
+    }
+
+    public void setApplicationRoleDao(LdapApplicationRoleRepository applicationRoleDao) {
+        this.applicationRoleDao = applicationRoleDao;
     }
 }
