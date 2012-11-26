@@ -3434,7 +3434,7 @@ public class DelegateCloud20ServiceTest {
     @Test
     public void getAccessibleDomains_throwsNotImplementedException() throws Exception {
         when(exceptionHandler.exceptionResponse(any(Exception.class))).thenReturn(Response.status(501));
-        Response.ResponseBuilder responseBuilder = delegateCloud20Service.getAccessibleDomains(null);
+        Response.ResponseBuilder responseBuilder = delegateCloud20Service.getAccessibleDomains(null,null,null,null);
         assertThat("status code", responseBuilder.build().getStatus(), equalTo(501));
     }
 

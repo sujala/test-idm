@@ -597,7 +597,7 @@ public class DelegateCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getAccessibleDomains(String authToken) {
+    public ResponseBuilder getAccessibleDomains(UriInfo uriInfo, String authToken, String marker, String limit) {
         return exceptionHandler.exceptionResponse(new NotImplementedException());  //To change body of implemented methods use File | Settings | File Templates.
     }
 
