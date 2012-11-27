@@ -27,7 +27,7 @@ import com.rackspace.idm.domain.entity.ClientRole
  */
 
 @ContextConfiguration(locations = "classpath:app-config.xml")
-class DefaultUserServiceTestGroovy extends Specification {
+class DefaultUserServiceIntegrationTest extends Specification {
 
     @Autowired DefaultUserService userService
     @Autowired Configuration config

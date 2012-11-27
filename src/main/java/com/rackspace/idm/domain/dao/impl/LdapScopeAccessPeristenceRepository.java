@@ -236,12 +236,17 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
     public ScopeAccess getDirectScopeAccessForParentByClientId(String parentUniqueId, String clientId) {
         getLogger().debug(FIND_SCOPE_ACCESS_FOR_PARENT_BY_CLIENT_ID, parentUniqueId, clientId);
 
-        String dn = new LdapDnBuilder(parentUniqueId).addAttribute(ATTR_NAME, LdapRepository.CONTAINER_TOKENS).build();
+        String dn = new LdapDnBuilder(parentUniqueId).build();
 
         try {
-            final Filter filter = new LdapSearchBuilder()
-                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_SCOPEACCESS)
-                .addEqualAttribute(ATTR_CLIENT_ID, clientId).build();
+            final Filter filter = Filter.createANDFilter(
+                    Filter.createORFilter(
+                            Filter.createEqualityFilter(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENTSCOPEACCESS),
+                            Filter.createEqualityFilter(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKERSCOPEACCESS),
+                            Filter.createEqualityFilter(ATTR_OBJECT_CLASS, OBJECTCLASS_USERSCOPEACCESS)
+                    ),
+                    Filter.createEqualityFilter(ATTR_CLIENT_ID, clientId)
+            );
 
             final List<SearchResultEntry> searchEntries = getMultipleEntries(dn, SearchScope.SUB, filter);
             getLogger().debug(
