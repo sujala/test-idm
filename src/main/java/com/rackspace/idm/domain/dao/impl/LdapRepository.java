@@ -194,10 +194,8 @@ public abstract class LdapRepository {
     protected static final String SOFT_DELETED_APPLICATIONS_BASE_DN = "ou=applications,ou=softDeleted,o=rackspace,dc=rackspace,dc=com";
 
     // Definitions for Contatiner Names
-    protected static final String CONTAINER_DIRECT = "DIRECT TOKENS";
-    protected static final String CONTAINER_DELEGATE = "DELEGATE TOKENS";
-    protected static final String CONTAINER_IMPERSONATED = "IMPERSONATED TOKENS";
-    protected static final String CONTAINER_ROLES = "CLIENT ROLES";
+    protected static final String CONTAINER_ROLES = "ROLES";
+    protected static final String CONTAINER_TOKENS = "TOKENS";
 
     // Search Attributes
     protected static final String[] ATTR_GROUP_SEARCH_ATTRIBUTES = {ATTR_OBJECT_CLASS, ATTR_RACKSPACE_CUSTOMER_NUMBER, ATTR_CLIENT_ID, ATTR_GROUP_TYPE, ATTR_NAME};

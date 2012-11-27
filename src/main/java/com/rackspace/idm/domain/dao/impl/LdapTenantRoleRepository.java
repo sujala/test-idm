@@ -173,8 +173,7 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
     }
 
     private String getTenantRoleDn(String dn, TenantRole tenantRole) {
-        String directDn = addLdapContainer(dn, LdapRepository.CONTAINER_DIRECT);
-        return addLdapContainer(directDn, tenantRole.getClientId());
+        return addLdapContainer(dn, LdapRepository.CONTAINER_ROLES);
     }
 
     private Filter searchFilterGetTenantRoles() {

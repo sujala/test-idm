@@ -1,25 +1,18 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import org.junit.Ignore;
-import org.junit.runner.RunWith;
-
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-
-import org.mockito.runners.MockitoJUnitRunner;
-
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.entity.*;
 import com.unboundid.ldap.sdk.*;
 import com.unboundid.ldap.sdk.persist.LDAPPersistException;
-import com.unboundid.ldap.sdk.persist.LDAPPersister;
 import org.apache.commons.configuration.Configuration;
-import org.hamcrest.Matchers;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-
-import javax.naming.directory.SearchResult;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,7 +23,6 @@ import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.any;
 
 /**
  * Created with IntelliJ IDEA.
@@ -73,19 +65,19 @@ public class LdapScopeAccessPeristenceRepositoryTest extends InMemoryLdapIntegra
     public void addDelegateScopeAccess_callsGetContainer() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId", new Attribute[0]);
-        doReturn(searchResultEntry).when(spy).getContainer(null, "DELEGATE TOKENS");
-        doNothing().when(spy).addContainer(null,"DELEGATE TOKENS");
+        doReturn(searchResultEntry).when(spy).getContainer(null, "TOKENS");
+        doNothing().when(spy).addContainer(null,"TOKENS");
         doReturn(new ScopeAccess()).when(spy).addScopeAccess("uniqueId",scopeAccess);
         spy.addDelegateScopeAccess(null,scopeAccess);
-        verify(spy).getContainer(null, "DELEGATE TOKENS");
+        verify(spy).getContainer(null, "TOKENS");
     }
 
     @Test
     public void addDelegateScopeAccess_entryNotNull_doesNotCallAddContainer() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId", new Attribute[0]);
-        doReturn(searchResultEntry).when(spy).getContainer(null, "DELEGATE TOKENS");
-        doNothing().when(spy).addContainer(null,"DELEGATE TOKENS");
+        doReturn(searchResultEntry).when(spy).getContainer(null, "TOKENS");
+        doNothing().when(spy).addContainer(null,"TOKENS");
         doReturn(new ScopeAccess()).when(spy).addScopeAccess("uniqueId",scopeAccess);
         spy.addDelegateScopeAccess(null,scopeAccess);
         verify(spy,never()).addContainer(anyString(), anyString());
@@ -95,22 +87,22 @@ public class LdapScopeAccessPeristenceRepositoryTest extends InMemoryLdapIntegra
     public void addDelegateScopeAccess_entryNull_callsAddContainer() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId", new Attribute[0]);
-        doReturn(null).doReturn(searchResultEntry).when(spy).getContainer(null, "DELEGATE TOKENS");
-        doNothing().when(spy).addContainer(null,"DELEGATE TOKENS");
+        doReturn(null).doReturn(searchResultEntry).when(spy).getContainer(null, "TOKENS");
+        doNothing().when(spy).addContainer(null,"TOKENS");
         doReturn(new ScopeAccess()).when(spy).addScopeAccess("uniqueId",scopeAccess);
         spy.addDelegateScopeAccess(null,scopeAccess);
-        verify(spy).addContainer(null, "DELEGATE TOKENS");
+        verify(spy).addContainer(null, "TOKENS");
     }
 
     @Test
     public void addDelegateScopeAccess_entryNull_callsGetContainerTwice() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId", new Attribute[0]);
-        doReturn(null).doReturn(searchResultEntry).when(spy).getContainer(null, "DELEGATE TOKENS");
-        doNothing().when(spy).addContainer(null,"DELEGATE TOKENS");
+        doReturn(null).doReturn(searchResultEntry).when(spy).getContainer(null, "TOKENS");
+        doNothing().when(spy).addContainer(null,"TOKENS");
         doReturn(new ScopeAccess()).when(spy).addScopeAccess("uniqueId",scopeAccess);
         spy.addDelegateScopeAccess(null,scopeAccess);
-        verify(spy,times(2)).getContainer(null, "DELEGATE TOKENS");
+        verify(spy,times(2)).getContainer(null, "TOKENS");
     }
 
     @Test
@@ -118,8 +110,8 @@ public class LdapScopeAccessPeristenceRepositoryTest extends InMemoryLdapIntegra
         ScopeAccess scopeAccess = new ScopeAccess();
         ScopeAccess scopeAccess2 = new ScopeAccess();
         SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId", new Attribute[0]);
-        doReturn(null).doReturn(searchResultEntry).when(spy).getContainer(null, "DELEGATE TOKENS");
-        doNothing().when(spy).addContainer(null,"DELEGATE TOKENS");
+        doReturn(null).doReturn(searchResultEntry).when(spy).getContainer(null, "TOKENS");
+        doNothing().when(spy).addContainer(null,"TOKENS");
         doReturn(scopeAccess2).when(spy).addScopeAccess("uniqueId",scopeAccess);
         assertThat("scope access",spy.addDelegateScopeAccess(null, scopeAccess),equalTo(scopeAccess2));
     }
@@ -129,7 +121,7 @@ public class LdapScopeAccessPeristenceRepositoryTest extends InMemoryLdapIntegra
 
         try{
             ScopeAccess scopeAccess = new ScopeAccess();
-            doThrow(new IllegalStateException()).when(spy).getContainer(null, "DELEGATE TOKENS");
+            doThrow(new IllegalStateException()).when(spy).getContainer(null, "TOKENS");
             spy.addDelegateScopeAccess(null, scopeAccess);
             assertTrue("should throw exception",false);
         }catch (IllegalStateException ex){
@@ -142,10 +134,10 @@ public class LdapScopeAccessPeristenceRepositoryTest extends InMemoryLdapIntegra
         ScopeAccess scopeAccess = new ScopeAccess();
         ScopeAccess scopeAccess2 = new ScopeAccess();
         SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId", new Attribute[0]);
-        doReturn(searchResultEntry).when(spy).getContainer("uniqueId","IMPERSONATED TOKENS");
+        doReturn(searchResultEntry).when(spy).getContainer("uniqueId","TOKENS");
         doReturn(scopeAccess2).when(spy).addScopeAccess("uniqueId",scopeAccess);
         spy.addImpersonatedScopeAccess("uniqueId",scopeAccess);
-        verify(spy).getContainer("uniqueId", "IMPERSONATED TOKENS");
+        verify(spy).getContainer("uniqueId", "TOKENS");
     }
 
     @Test
@@ -153,10 +145,10 @@ public class LdapScopeAccessPeristenceRepositoryTest extends InMemoryLdapIntegra
         ScopeAccess scopeAccess = new ScopeAccess();
         ScopeAccess scopeAccess2 = new ScopeAccess();
         SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId", new Attribute[0]);
-        doReturn(searchResultEntry).when(spy).getContainer("uniqueId","IMPERSONATED TOKENS");
+        doReturn(searchResultEntry).when(spy).getContainer("uniqueId","TOKENS");
         doReturn(scopeAccess2).when(spy).addScopeAccess("uniqueId",scopeAccess);
         spy.addImpersonatedScopeAccess("uniqueId",scopeAccess);
-        verify(spy,never()).addContainer("uniqueId", "IMPERSONATED TOKENS");
+        verify(spy,never()).addContainer("uniqueId", "TOKENS");
     }
 
     @Test
@@ -164,11 +156,11 @@ public class LdapScopeAccessPeristenceRepositoryTest extends InMemoryLdapIntegra
         ScopeAccess scopeAccess = new ScopeAccess();
         ScopeAccess scopeAccess2 = new ScopeAccess();
         SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId", new Attribute[0]);
-        doReturn(null).doReturn(searchResultEntry).when(spy).getContainer("uniqueId","IMPERSONATED TOKENS");
-        doNothing().when(spy).addContainer("uniqueId", "IMPERSONATED TOKENS");
+        doReturn(null).doReturn(searchResultEntry).when(spy).getContainer("uniqueId","TOKENS");
+        doNothing().when(spy).addContainer("uniqueId", "TOKENS");
         doReturn(scopeAccess2).when(spy).addScopeAccess("uniqueId",scopeAccess);
         spy.addImpersonatedScopeAccess("uniqueId",scopeAccess);
-        verify(spy).addContainer("uniqueId","IMPERSONATED TOKENS");
+        verify(spy).addContainer("uniqueId","TOKENS");
     }
 
     @Test
@@ -176,11 +168,11 @@ public class LdapScopeAccessPeristenceRepositoryTest extends InMemoryLdapIntegra
         ScopeAccess scopeAccess = new ScopeAccess();
         ScopeAccess scopeAccess2 = new ScopeAccess();
         SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId", new Attribute[0]);
-        doReturn(null).doReturn(searchResultEntry).when(spy).getContainer("uniqueId","IMPERSONATED TOKENS");
-        doNothing().when(spy).addContainer("uniqueId", "IMPERSONATED TOKENS");
+        doReturn(null).doReturn(searchResultEntry).when(spy).getContainer("uniqueId","TOKENS");
+        doNothing().when(spy).addContainer("uniqueId", "TOKENS");
         doReturn(scopeAccess2).when(spy).addScopeAccess("uniqueId",scopeAccess);
         spy.addImpersonatedScopeAccess("uniqueId",scopeAccess);
-        verify(spy,times(2)).getContainer("uniqueId", "IMPERSONATED TOKENS");
+        verify(spy,times(2)).getContainer("uniqueId", "TOKENS");
     }
 
     @Test
@@ -188,8 +180,8 @@ public class LdapScopeAccessPeristenceRepositoryTest extends InMemoryLdapIntegra
         ScopeAccess scopeAccess = new ScopeAccess();
         ScopeAccess scopeAccess2 = new ScopeAccess();
         SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId", new Attribute[0]);
-        doReturn(null).doReturn(searchResultEntry).when(spy).getContainer("uniqueId","IMPERSONATED TOKENS");
-        doNothing().when(spy).addContainer("uniqueId", "IMPERSONATED TOKENS");
+        doReturn(null).doReturn(searchResultEntry).when(spy).getContainer("uniqueId","TOKENS");
+        doNothing().when(spy).addContainer("uniqueId", "TOKENS");
         doReturn(scopeAccess2).when(spy).addScopeAccess("uniqueId",scopeAccess);
         assertThat("returns scope access",spy.addImpersonatedScopeAccess("uniqueId",scopeAccess),equalTo(scopeAccess2));
     }
@@ -198,7 +190,7 @@ public class LdapScopeAccessPeristenceRepositoryTest extends InMemoryLdapIntegra
     public void addImpersonatedScopeAccess_getContainerFails_throwsIllegalStateException() throws Exception {
         try{
             ScopeAccess scopeAccess = new ScopeAccess();
-            doThrow(new IllegalStateException()).when(spy).getContainer("uniqueId","IMPERSONATED TOKENS");
+            doThrow(new IllegalStateException()).when(spy).getContainer("uniqueId","TOKENS");
             spy.addImpersonatedScopeAccess("uniqueId",scopeAccess);
             assertTrue("should throw exception",false);
         } catch (IllegalStateException ex){
@@ -211,10 +203,10 @@ public class LdapScopeAccessPeristenceRepositoryTest extends InMemoryLdapIntegra
         ScopeAccess scopeAccess = new ScopeAccess();
         ScopeAccess scopeAccess2 = new ScopeAccess();
         SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId", new Attribute[0]);
-        doReturn(searchResultEntry).when(spy).getContainer("uniqueId","DIRECT TOKENS");
+        doReturn(searchResultEntry).when(spy).getContainer("uniqueId","TOKENS");
         doReturn(scopeAccess2).when(spy).addScopeAccess("uniqueId",scopeAccess);
         spy.addDirectScopeAccess("uniqueId",scopeAccess);
-        verify(spy).getContainer("uniqueId", "DIRECT TOKENS");
+        verify(spy).getContainer("uniqueId", "TOKENS");
     }
 
     @Test
@@ -222,10 +214,10 @@ public class LdapScopeAccessPeristenceRepositoryTest extends InMemoryLdapIntegra
         ScopeAccess scopeAccess = new ScopeAccess();
         ScopeAccess scopeAccess2 = new ScopeAccess();
         SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId", new Attribute[0]);
-        doReturn(searchResultEntry).when(spy).getContainer("uniqueId","DIRECT TOKENS");
+        doReturn(searchResultEntry).when(spy).getContainer("uniqueId","TOKENS");
         doReturn(scopeAccess2).when(spy).addScopeAccess("uniqueId",scopeAccess);
         spy.addDirectScopeAccess("uniqueId", scopeAccess);
-        verify(spy,never()).addContainer("uniqueId", "DIRECT TOKENS");
+        verify(spy,never()).addContainer("uniqueId", "TOKENS");
     }
 
     @Test
@@ -233,11 +225,11 @@ public class LdapScopeAccessPeristenceRepositoryTest extends InMemoryLdapIntegra
         ScopeAccess scopeAccess = new ScopeAccess();
         ScopeAccess scopeAccess2 = new ScopeAccess();
         SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId", new Attribute[0]);
-        doReturn(null).doReturn(searchResultEntry).when(spy).getContainer("uniqueId","DIRECT TOKENS");
-        doNothing().when(spy).addContainer("uniqueId", "DIRECT TOKENS");
+        doReturn(null).doReturn(searchResultEntry).when(spy).getContainer("uniqueId","TOKENS");
+        doNothing().when(spy).addContainer("uniqueId", "TOKENS");
         doReturn(scopeAccess2).when(spy).addScopeAccess("uniqueId",scopeAccess);
         spy.addDirectScopeAccess("uniqueId", scopeAccess);
-        verify(spy).addContainer("uniqueId","DIRECT TOKENS");
+        verify(spy).addContainer("uniqueId","TOKENS");
     }
 
     @Test
@@ -245,11 +237,11 @@ public class LdapScopeAccessPeristenceRepositoryTest extends InMemoryLdapIntegra
         ScopeAccess scopeAccess = new ScopeAccess();
         ScopeAccess scopeAccess2 = new ScopeAccess();
         SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId", new Attribute[0]);
-        doReturn(null).doReturn(searchResultEntry).when(spy).getContainer("uniqueId","DIRECT TOKENS");
-        doNothing().when(spy).addContainer("uniqueId", "DIRECT TOKENS");
+        doReturn(null).doReturn(searchResultEntry).when(spy).getContainer("uniqueId","TOKENS");
+        doNothing().when(spy).addContainer("uniqueId", "TOKENS");
         doReturn(scopeAccess2).when(spy).addScopeAccess("uniqueId",scopeAccess);
         spy.addDirectScopeAccess("uniqueId", scopeAccess);
-        verify(spy,times(2)).getContainer("uniqueId", "DIRECT TOKENS");
+        verify(spy,times(2)).getContainer("uniqueId", "TOKENS");
     }
 
     @Test
@@ -257,8 +249,8 @@ public class LdapScopeAccessPeristenceRepositoryTest extends InMemoryLdapIntegra
         ScopeAccess scopeAccess = new ScopeAccess();
         ScopeAccess scopeAccess2 = new ScopeAccess();
         SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId", new Attribute[0]);
-        doReturn(null).doReturn(searchResultEntry).when(spy).getContainer("uniqueId","DIRECT TOKENS");
-        doNothing().when(spy).addContainer("uniqueId", "DIRECT TOKENS");
+        doReturn(null).doReturn(searchResultEntry).when(spy).getContainer("uniqueId","TOKENS");
+        doNothing().when(spy).addContainer("uniqueId", "TOKENS");
         doReturn(scopeAccess2).when(spy).addScopeAccess("uniqueId",scopeAccess);
         assertThat("returns scope access",spy.addDirectScopeAccess("uniqueId", scopeAccess),equalTo(scopeAccess2));
     }
@@ -267,7 +259,7 @@ public class LdapScopeAccessPeristenceRepositoryTest extends InMemoryLdapIntegra
     public void addDirectScopeAccess_getContainerFails_throwsIllegalStateException() throws Exception {
         try{
             ScopeAccess scopeAccess = new ScopeAccess();
-            doThrow(new IllegalStateException()).when(spy).getContainer("uniqueId","DIRECT TOKENS");
+            doThrow(new IllegalStateException()).when(spy).getContainer("uniqueId","TOKENS");
             spy.addDirectScopeAccess("uniqueId", scopeAccess);
             assertTrue("should throw exception",false);
         } catch (IllegalStateException ex){
@@ -389,7 +381,7 @@ public class LdapScopeAccessPeristenceRepositoryTest extends InMemoryLdapIntegra
         List<SearchResultEntry> searchEntries = new ArrayList<SearchResultEntry>();
         ScopeAccess scopeAccess = new ScopeAccess();
         searchEntries.add(searchResult);
-        doReturn(searchEntries).when(spy).getMultipleEntries(eq("cn=DELEGATE TOKENS,cn=uniqueId"), eq(SearchScope.SUB), argumentCaptor.capture());
+        doReturn(searchEntries).when(spy).getMultipleEntries(eq("cn=TOKENS,cn=uniqueId"), eq(SearchScope.SUB), argumentCaptor.capture());
         doReturn(scopeAccess).when(spy).decodeScopeAccess(searchResult);
         spy.getDelegateScopeAccessForParentByClientId("cn=uniqueId", "clientId");
         Filter[] filters = argumentCaptor.getValue().getComponents();
@@ -402,14 +394,14 @@ public class LdapScopeAccessPeristenceRepositoryTest extends InMemoryLdapIntegra
         List<SearchResultEntry> searchEntries = new ArrayList<SearchResultEntry>();
         ScopeAccess scopeAccess = new ScopeAccess();
         searchEntries.add(searchResult);
-        doReturn(searchEntries).when(spy).getMultipleEntries(eq("cn=DELEGATE TOKENS,cn=uniqueId"), eq(SearchScope.SUB), any(Filter.class));
+        doReturn(searchEntries).when(spy).getMultipleEntries(eq("cn=TOKENS,cn=uniqueId"), eq(SearchScope.SUB), any(Filter.class));
         doReturn(scopeAccess).when(spy).decodeScopeAccess(searchResult);
         assertThat("returns scope access",spy.getDelegateScopeAccessForParentByClientId("cn=uniqueId", "clientId"),equalTo(scopeAccess));
     }
 
     @Test
     public void getDelegateScopeAccessForParentByClientId_searchResultEntryListEmpty_returnsNull() throws Exception {
-        doReturn(new ArrayList<SearchResultEntry>()).when(spy).getMultipleEntries(eq("cn=DELEGATE TOKENS,cn=uniqueId"), eq(SearchScope.SUB), any(Filter.class));
+        doReturn(new ArrayList<SearchResultEntry>()).when(spy).getMultipleEntries(eq("cn=TOKENS,cn=uniqueId"), eq(SearchScope.SUB), any(Filter.class));
         assertThat("returns scope access",spy.getDelegateScopeAccessForParentByClientId("cn=uniqueId", "clientId"),nullValue());
     }
 
@@ -419,7 +411,7 @@ public class LdapScopeAccessPeristenceRepositoryTest extends InMemoryLdapIntegra
         List<SearchResultEntry> searchEntries = new ArrayList<SearchResultEntry>();
         searchEntries.add(searchResult);
         LDAPPersistException ldapException = new LDAPPersistException(new LDAPException(ResultCode.NO_SUCH_OBJECT));
-        doReturn(searchEntries).when(spy).getMultipleEntries(eq("cn=DELEGATE TOKENS,cn=uniqueId"), eq(SearchScope.SUB), any(Filter.class));
+        doReturn(searchEntries).when(spy).getMultipleEntries(eq("cn=TOKENS,cn=uniqueId"), eq(SearchScope.SUB), any(Filter.class));
         doThrow(ldapException).when(spy).decodeScopeAccess(searchResult);
         assertThat("returns scope access", spy.getDelegateScopeAccessForParentByClientId("cn=uniqueId", "clientId"), nullValue());
     }
@@ -430,7 +422,7 @@ public class LdapScopeAccessPeristenceRepositoryTest extends InMemoryLdapIntegra
         List<SearchResultEntry> searchEntries = new ArrayList<SearchResultEntry>();
         searchEntries.add(searchResult);
         LDAPPersistException ldapException = new LDAPPersistException(new LDAPException(ResultCode.INVALID_DN_SYNTAX));
-        doReturn(searchEntries).when(spy).getMultipleEntries(eq("cn=DELEGATE TOKENS,cn=uniqueId"), eq(SearchScope.SUB), any(Filter.class));
+        doReturn(searchEntries).when(spy).getMultipleEntries(eq("cn=TOKENS,cn=uniqueId"), eq(SearchScope.SUB), any(Filter.class));
         doThrow(ldapException).when(spy).decodeScopeAccess(searchResult);
         spy.getDelegateScopeAccessForParentByClientId("cn=uniqueId", "clientId");
     }
@@ -442,7 +434,7 @@ public class LdapScopeAccessPeristenceRepositoryTest extends InMemoryLdapIntegra
         List<SearchResultEntry> searchEntries = new ArrayList<SearchResultEntry>();
         ScopeAccess scopeAccess = new ScopeAccess();
         searchEntries.add(searchResult);
-        doReturn(searchEntries).when(spy).getMultipleEntries(eq("cn=IMPERSONATED TOKENS,uniqueId"), eq(SearchScope.SUB), argumentCaptor.capture());
+        doReturn(searchEntries).when(spy).getMultipleEntries(eq("cn=TOKENS,uniqueId"), eq(SearchScope.SUB), argumentCaptor.capture());
         doReturn(scopeAccess).when(spy).decodeScopeAccess(searchResult);
         spy.getImpersonatedScopeAccessForParentByClientId("uniqueId","username");
         Filter[] filters = argumentCaptor.getValue().getComponents();
@@ -455,14 +447,14 @@ public class LdapScopeAccessPeristenceRepositoryTest extends InMemoryLdapIntegra
         List<SearchResultEntry> searchEntries = new ArrayList<SearchResultEntry>();
         ScopeAccess scopeAccess = new ScopeAccess();
         searchEntries.add(searchResult);
-        doReturn(searchEntries).when(spy).getMultipleEntries(eq("cn=IMPERSONATED TOKENS,cn=uniqueId"), eq(SearchScope.SUB), any(Filter.class));
+        doReturn(searchEntries).when(spy).getMultipleEntries(eq("cn=TOKENS,cn=uniqueId"), eq(SearchScope.SUB), any(Filter.class));
         doReturn(scopeAccess).when(spy).decodeScopeAccess(searchResult);
         assertThat("returns scope access",spy.getImpersonatedScopeAccessForParentByClientId("cn=uniqueId", "username"),equalTo(scopeAccess));
     }
 
     @Test
     public void getImpersonatedAccessForParentByClientId_searchResultEntryListEmpty_returnsNull() throws Exception {
-        doReturn(new ArrayList<SearchResultEntry>()).when(spy).getMultipleEntries(eq("cn=IMPERSONATED TOKENS,cn=uniqueId"), eq(SearchScope.SUB), any(Filter.class));
+        doReturn(new ArrayList<SearchResultEntry>()).when(spy).getMultipleEntries(eq("cn=TOKENS,cn=uniqueId"), eq(SearchScope.SUB), any(Filter.class));
         assertThat("returns scope access",spy.getImpersonatedScopeAccessForParentByClientId("cn=uniqueId", "username"),nullValue());
     }
 
@@ -472,7 +464,7 @@ public class LdapScopeAccessPeristenceRepositoryTest extends InMemoryLdapIntegra
         List<SearchResultEntry> searchEntries = new ArrayList<SearchResultEntry>();
         searchEntries.add(searchResult);
         LDAPPersistException ldapException = new LDAPPersistException(new LDAPException(ResultCode.NO_SUCH_OBJECT));
-        doReturn(searchEntries).when(spy).getMultipleEntries(eq("cn=IMPERSONATED TOKENS,uniqueId"), eq(SearchScope.SUB), any(Filter.class));
+        doReturn(searchEntries).when(spy).getMultipleEntries(eq("cn=TOKENS,uniqueId"), eq(SearchScope.SUB), any(Filter.class));
         doThrow(ldapException).when(spy).decodeScopeAccess(searchResult);
         assertThat("returns scope access", spy.getImpersonatedScopeAccessForParentByClientId("uniqueId", "username"), nullValue());
     }
@@ -483,7 +475,7 @@ public class LdapScopeAccessPeristenceRepositoryTest extends InMemoryLdapIntegra
         List<SearchResultEntry> searchEntries = new ArrayList<SearchResultEntry>();
         searchEntries.add(searchResult);
         LDAPPersistException ldapException = new LDAPPersistException(new LDAPException(ResultCode.INVALID_DN_SYNTAX));
-        doReturn(searchEntries).when(spy).getMultipleEntries(eq("cn=IMPERSONATED TOKENS,uniqueId"), eq(SearchScope.SUB), any(Filter.class));
+        doReturn(searchEntries).when(spy).getMultipleEntries(eq("cn=TOKENS,uniqueId"), eq(SearchScope.SUB), any(Filter.class));
         doThrow(ldapException).when(spy).decodeScopeAccess(searchResult);
         spy.getImpersonatedScopeAccessForParentByClientId("uniqueId", "username");
     }
@@ -495,7 +487,7 @@ public class LdapScopeAccessPeristenceRepositoryTest extends InMemoryLdapIntegra
         List<SearchResultEntry> searchEntries = new ArrayList<SearchResultEntry>();
         ScopeAccess scopeAccess = new ScopeAccess();
         searchEntries.add(searchResult);
-        doReturn(searchEntries).when(spy).getMultipleEntries(eq("cn=DIRECT TOKENS,cn=uniqueId"), eq(SearchScope.SUB), argumentCaptor.capture());
+        doReturn(searchEntries).when(spy).getMultipleEntries(eq("cn=TOKENS,cn=uniqueId"), eq(SearchScope.SUB), argumentCaptor.capture());
         doReturn(scopeAccess).when(spy).decodeScopeAccess(searchResult);
         spy.getDirectScopeAccessForParentByClientId("cn=uniqueId", "clientId");
         Filter[] filters = argumentCaptor.getValue().getComponents();
@@ -508,14 +500,14 @@ public class LdapScopeAccessPeristenceRepositoryTest extends InMemoryLdapIntegra
         List<SearchResultEntry> searchEntries = new ArrayList<SearchResultEntry>();
         ScopeAccess scopeAccess = new ScopeAccess();
         searchEntries.add(searchResult);
-        doReturn(searchEntries).when(spy).getMultipleEntries(eq("cn=DIRECT TOKENS,cn=uniqueId"), eq(SearchScope.SUB), any(Filter.class));
+        doReturn(searchEntries).when(spy).getMultipleEntries(eq("cn=TOKENS,cn=uniqueId"), eq(SearchScope.SUB), any(Filter.class));
         doReturn(scopeAccess).when(spy).decodeScopeAccess(searchResult);
         assertThat("returns scope access",spy.getDirectScopeAccessForParentByClientId("cn=uniqueId", "clientId"),equalTo(scopeAccess));
     }
 
     @Test
     public void getDirectAccessForParentByClientId_searchResultEntryListEmpty_returnsNull() throws Exception {
-        doReturn(new ArrayList<SearchResultEntry>()).when(spy).getMultipleEntries(eq("cn=DIRECT TOKENS,cn=uniqueId"), eq(SearchScope.SUB), any(Filter.class));
+        doReturn(new ArrayList<SearchResultEntry>()).when(spy).getMultipleEntries(eq("cn=TOKENS,cn=uniqueId"), eq(SearchScope.SUB), any(Filter.class));
         assertThat("returns scope access",spy.getDirectScopeAccessForParentByClientId("cn=uniqueId", "clientId"),nullValue());
     }
 
@@ -525,7 +517,7 @@ public class LdapScopeAccessPeristenceRepositoryTest extends InMemoryLdapIntegra
         List<SearchResultEntry> searchEntries = new ArrayList<SearchResultEntry>();
         searchEntries.add(searchResult);
         LDAPPersistException ldapException = new LDAPPersistException(new LDAPException(ResultCode.NO_SUCH_OBJECT));
-        doReturn(searchEntries).when(spy).getMultipleEntries(eq("cn=DIRECT TOKENS,cn=uniqueId"), eq(SearchScope.SUB), any(Filter.class));
+        doReturn(searchEntries).when(spy).getMultipleEntries(eq("cn=TOKENS,cn=uniqueId"), eq(SearchScope.SUB), any(Filter.class));
         doThrow(ldapException).when(spy).decodeScopeAccess(searchResult);
         assertThat("returns scope access", spy.getDirectScopeAccessForParentByClientId("cn=uniqueId", "clientId"), nullValue());
     }
@@ -536,7 +528,7 @@ public class LdapScopeAccessPeristenceRepositoryTest extends InMemoryLdapIntegra
         List<SearchResultEntry> searchEntries = new ArrayList<SearchResultEntry>();
         searchEntries.add(searchResult);
         LDAPPersistException ldapException = new LDAPPersistException(new LDAPException(ResultCode.INVALID_DN_SYNTAX));
-        doReturn(searchEntries).when(spy).getMultipleEntries(eq("cn=DIRECT TOKENS,cn=uniqueId"), eq(SearchScope.SUB), any(Filter.class));
+        doReturn(searchEntries).when(spy).getMultipleEntries(eq("cn=TOKENS,cn=uniqueId"), eq(SearchScope.SUB), any(Filter.class));
         doThrow(ldapException).when(spy).decodeScopeAccess(searchResult);
         spy.getDirectScopeAccessForParentByClientId("cn=uniqueId", "clientId");
     }
@@ -1044,7 +1036,7 @@ public class LdapScopeAccessPeristenceRepositoryTest extends InMemoryLdapIntegra
         SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId",new Attribute[0]);
         List<SearchResultEntry> searchEntries = new ArrayList<SearchResultEntry>();
         searchEntries.add(searchResultEntry);
-        doReturn(searchEntries).when(spy).getMultipleEntries(eq("cn=DELEGATE TOKENS,uniqueId"), eq(SearchScope.SUB), any(Filter.class));
+        doReturn(searchEntries).when(spy).getMultipleEntries(eq("cn=TOKENS,uniqueId"), eq(SearchScope.SUB), any(Filter.class));
         doReturn(scopeAccess).when(spy).decodeScopeAccess(searchResultEntry);
         List<ScopeAccess> list = spy.getDelegateScopeAccessesByParent("uniqueId");
         assertThat("list size",list.size(),equalTo(1));
@@ -1053,7 +1045,7 @@ public class LdapScopeAccessPeristenceRepositoryTest extends InMemoryLdapIntegra
 
     @Test
     public void getDelegateScopeAccessesByParent_searchEntriesDoNotExist_returnsEmptyScopeAccessList() throws Exception {
-        doReturn(new ArrayList<SearchResultEntry>()).when(spy).getMultipleEntries(eq("cn=DELEGATE TOKENS,uniqueId"), eq(SearchScope.SUB), any(Filter.class));
+        doReturn(new ArrayList<SearchResultEntry>()).when(spy).getMultipleEntries(eq("cn=TOKENS,uniqueId"), eq(SearchScope.SUB), any(Filter.class));
         List<ScopeAccess> list = spy.getDelegateScopeAccessesByParent("uniqueId");
         assertThat("list size",list.size(),equalTo(0));
     }
@@ -1063,7 +1055,7 @@ public class LdapScopeAccessPeristenceRepositoryTest extends InMemoryLdapIntegra
         SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId",new Attribute[0]);
         List<SearchResultEntry> searchEntries = new ArrayList<SearchResultEntry>();
         searchEntries.add(searchResultEntry);
-        doReturn(searchEntries).when(spy).getMultipleEntries(eq("cn=DELEGATE TOKENS,uniqueId"), eq(SearchScope.SUB), any(Filter.class));
+        doReturn(searchEntries).when(spy).getMultipleEntries(eq("cn=TOKENS,uniqueId"), eq(SearchScope.SUB), any(Filter.class));
         doThrow(new LDAPPersistException(new LDAPException(ResultCode.INVALID_DN_SYNTAX))).when(spy).decodeScopeAccess(searchResultEntry);
         spy.getDelegateScopeAccessesByParent("uniqueId");
     }
@@ -1073,7 +1065,7 @@ public class LdapScopeAccessPeristenceRepositoryTest extends InMemoryLdapIntegra
         SearchResultEntry searchResultEntry = new SearchResultEntry("uniqueId",new Attribute[0]);
         List<SearchResultEntry> searchEntries = new ArrayList<SearchResultEntry>();
         searchEntries.add(searchResultEntry);
-        doReturn(searchEntries).when(spy).getMultipleEntries(eq("cn=DELEGATE TOKENS,uniqueId"), eq(SearchScope.SUB), any(Filter.class));
+        doReturn(searchEntries).when(spy).getMultipleEntries(eq("cn=TOKENS,uniqueId"), eq(SearchScope.SUB), any(Filter.class));
         doThrow(new LDAPPersistException(new LDAPException(ResultCode.NO_SUCH_OBJECT))).when(spy).decodeScopeAccess(searchResultEntry);
         List<ScopeAccess> list = spy.getDelegateScopeAccessesByParent("uniqueId");
         assertThat("list size", list.size(), equalTo(0));

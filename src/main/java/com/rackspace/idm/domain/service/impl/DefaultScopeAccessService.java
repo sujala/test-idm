@@ -190,20 +190,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public ScopeAccess addScopeAccess(String parentUniqueId,
-                                      ScopeAccess scopeAccess) {
-        if (scopeAccess == null) {
-            String errMsg = String.format(NULL_ARGUMENT_PASSED_IN);
-            logger.error(errMsg);
-            throw new IllegalArgumentException(errMsg);
-        }
-        logger.info(ADDING_SCOPE_ACCESS, scopeAccess);
-        ScopeAccess newScopeAccess = this.scopeAccessDao.addScopeAccess(parentUniqueId, scopeAccess);
-        logger.info(ADDED_SCOPE_ACCESS, scopeAccess);
-        return newScopeAccess;
-    }
-
-    @Override
     public boolean authenticateAccessToken(String accessTokenStr) {
         logger.debug("Authorizing Token: {}", accessTokenStr);
         Boolean authenticated = false;

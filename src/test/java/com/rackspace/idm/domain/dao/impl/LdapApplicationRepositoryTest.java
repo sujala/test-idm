@@ -992,16 +992,16 @@ public class LdapApplicationRepositoryTest{
     @Test (expected = IllegalStateException.class)
     public void addClientRole_entryIsNull_throwsLDAPException() throws Exception {
         ClientRole clientRole = new ClientRole();
-        doNothing().when(spy).addContainer("uniqueId", LdapRepository.CONTAINER_ROLES);
-        doReturn(null).doReturn(new SearchResultEntry("", new Attribute[0])).when(spy).getContainer("uniqueId", LdapRepository.CONTAINER_ROLES);
+        doNothing().when(spy).addContainer("uniqueId", LdapRepository.CONTAINER_TOKENS);
+        doReturn(null).doReturn(new SearchResultEntry("", new Attribute[0])).when(spy).getContainer("uniqueId", LdapRepository.CONTAINER_TOKENS);
         spy.addClientRole("uniqueId", clientRole);
     }
 
     @Test (expected = IllegalStateException.class)
     public void addClientRole_entryNotNull_throwsLDAPException() throws Exception {
         ClientRole clientRole = new ClientRole();
-        doNothing().when(spy).addContainer("uniqueId", LdapRepository.CONTAINER_ROLES);
-        doReturn(new SearchResultEntry("", new Attribute[0])).when(spy).getContainer("uniqueId", LdapRepository.CONTAINER_ROLES);
+        doNothing().when(spy).addContainer("uniqueId", LdapRepository.CONTAINER_TOKENS);
+        doReturn(new SearchResultEntry("", new Attribute[0])).when(spy).getContainer("uniqueId", LdapRepository.CONTAINER_TOKENS);
         spy.addClientRole("uniqueId", clientRole);
     }
 

@@ -893,10 +893,10 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         Audit audit = Audit.log(role).add();
         try {
 
-            SearchResultEntry entry = getContainer(clientUniqueId, CONTAINER_ROLES);
+            SearchResultEntry entry = getContainer(clientUniqueId, CONTAINER_TOKENS);
             if (entry == null) {
-                addContainer(clientUniqueId, CONTAINER_ROLES);
-                entry = getContainer(clientUniqueId, CONTAINER_ROLES);
+                addContainer(clientUniqueId, CONTAINER_TOKENS);
+                entry = getContainer(clientUniqueId, CONTAINER_TOKENS);
             }
 
             final LDAPPersister<ClientRole> persister = LDAPPersister.getInstance(ClientRole.class);

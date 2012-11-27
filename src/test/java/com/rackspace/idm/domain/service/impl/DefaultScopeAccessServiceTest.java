@@ -546,25 +546,6 @@ public class DefaultScopeAccessServiceTest {
     }
 
     @Test
-    public void addScopeAccess_nullScopeAccess_throwsIllegalArgumentException() throws Exception {
-        try{
-            defaultScopeAccessService.addScopeAccess(null, null);
-            assertTrue("illegalArgumentException expected",false);
-        }catch (IllegalArgumentException ex)
-        {
-            assertThat("exception message", ex.getMessage(),equalTo("Null argument passed in."));
-        }
-    }
-
-    @Test
-    public void addScopeAccess_scopeAccessNotNull_callsScopeAccessDaoMethod() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        ScopeAccess scopeAccess1 = new ScopeAccess();
-        when(scopeAccessDao.addScopeAccess(null,scopeAccess)).thenReturn(scopeAccess1);
-        assertThat("scope access",defaultScopeAccessService.addScopeAccess(null,scopeAccess),equalTo(scopeAccess1));
-    }
-
-    @Test
     public void authenticateAccessToken_scopeAccessInstanceOfHasAccessTokenAndTokenNotExpired_authenticatedIsTrue() throws Exception {
         ScopeAccess scopeAccess = new ImpersonatedScopeAccess();
         ((HasAccessToken) scopeAccess).setAccessTokenString("foo");

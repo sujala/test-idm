@@ -24,10 +24,10 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
         getLogger().info("Adding Delegate ScopeAccess: {}", scopeAccess);
         Audit audit = Audit.log(scopeAccess).add();
         try{
-            SearchResultEntry entry = getContainer( parentUniqueId, CONTAINER_DELEGATE);
+            SearchResultEntry entry = getContainer( parentUniqueId, CONTAINER_TOKENS);
             if (entry == null) {
-                addContainer( parentUniqueId, CONTAINER_DELEGATE);
-                entry = getContainer( parentUniqueId, CONTAINER_DELEGATE);
+                addContainer( parentUniqueId, CONTAINER_TOKENS);
+                entry = getContainer( parentUniqueId, CONTAINER_TOKENS);
             }
 
             audit.succeed();
@@ -47,10 +47,10 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
 
         String dn = new LdapDnBuilder(parentUniqueId).build();
         try{
-            SearchResultEntry entry = getContainer( dn, CONTAINER_IMPERSONATED);
+            SearchResultEntry entry = getContainer( dn, CONTAINER_TOKENS);
             if (entry == null) {
-                addContainer( dn, CONTAINER_IMPERSONATED);
-                entry = getContainer( dn, CONTAINER_IMPERSONATED);
+                addContainer( dn, CONTAINER_TOKENS);
+                entry = getContainer( dn, CONTAINER_TOKENS);
             }
             audit.succeed();
             getLogger().debug("Added Impersonated ScopeAccess: {}", scopeAccess);
@@ -67,10 +67,10 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
         getLogger().info("Adding Delegate ScopeAccess: {}", scopeAccess);
         Audit audit = Audit.log(scopeAccess).add();
         try {
-            SearchResultEntry entry = getContainer( parentUniqueId, CONTAINER_DIRECT);
+            SearchResultEntry entry = getContainer( parentUniqueId, LdapRepository.CONTAINER_TOKENS);
             if (entry == null) {
-                addContainer( parentUniqueId, CONTAINER_DIRECT);
-                entry = getContainer( parentUniqueId, CONTAINER_DIRECT);
+                addContainer( parentUniqueId, LdapRepository.CONTAINER_TOKENS);
+                entry = getContainer( parentUniqueId, LdapRepository.CONTAINER_TOKENS);
             }
 
             audit.succeed();
@@ -182,7 +182,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
     public ScopeAccess getDelegateScopeAccessForParentByClientId(String parentUniqueId, String clientId) {
         getLogger().debug(FIND_SCOPE_ACCESS_FOR_PARENT_BY_CLIENT_ID, parentUniqueId, clientId);
 
-        String dn = new LdapDnBuilder(parentUniqueId).addAttribute(ATTR_NAME, CONTAINER_DELEGATE).build();
+        String dn = new LdapDnBuilder(parentUniqueId).addAttribute(ATTR_NAME, CONTAINER_TOKENS).build();
 
         try {
             final Filter filter = new LdapSearchBuilder()
@@ -209,7 +209,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
     public ScopeAccess getImpersonatedScopeAccessForParentByClientId(String parentUniqueId, String username) {
         getLogger().debug("Find ScopeAccess for Parent: {} by impersonating username: {}", parentUniqueId, username);
 
-        String dn = new LdapDnBuilder(parentUniqueId).addAttribute(ATTR_NAME, CONTAINER_IMPERSONATED).build();
+        String dn = new LdapDnBuilder(parentUniqueId).addAttribute(ATTR_NAME, CONTAINER_TOKENS).build();
 
         try {
             final Filter filter = new LdapSearchBuilder()
@@ -236,7 +236,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
     public ScopeAccess getDirectScopeAccessForParentByClientId(String parentUniqueId, String clientId) {
         getLogger().debug(FIND_SCOPE_ACCESS_FOR_PARENT_BY_CLIENT_ID, parentUniqueId, clientId);
 
-        String dn = new LdapDnBuilder(parentUniqueId).addAttribute(ATTR_NAME, CONTAINER_DIRECT).build();
+        String dn = new LdapDnBuilder(parentUniqueId).addAttribute(ATTR_NAME, LdapRepository.CONTAINER_TOKENS).build();
 
         try {
             final Filter filter = new LdapSearchBuilder()
@@ -543,7 +543,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
         String parentUniqueId) {
         getLogger().debug("Finding ScopeAccesses for: {}", parentUniqueId);
         final List<ScopeAccess> list = new ArrayList<ScopeAccess>();
-        String dn = new LdapDnBuilder(parentUniqueId).addAttribute(ATTR_NAME, CONTAINER_DELEGATE).build();
+        String dn = new LdapDnBuilder(parentUniqueId).addAttribute(ATTR_NAME, CONTAINER_TOKENS).build();
         try {
             final Filter filter = new LdapSearchBuilder().addEqualAttribute(
                 ATTR_OBJECT_CLASS, OBJECTCLASS_SCOPEACCESS).build();

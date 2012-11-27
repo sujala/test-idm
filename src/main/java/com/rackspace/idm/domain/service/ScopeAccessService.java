@@ -22,8 +22,6 @@ public interface ScopeAccessService {
 
     ScopeAccess addImpersonatedScopeAccess(User user, String clientId, String impersonatingToken, ImpersonationRequest impersonationRequest);
     
-    ScopeAccess addScopeAccess(String parentUniqueId, ScopeAccess scopeAccess);
-
     boolean authenticateAccessToken(String accessTokenStr);
 
     void deleteScopeAccess(ScopeAccess scopeAccess);
