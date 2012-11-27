@@ -1437,7 +1437,7 @@
                     <skip>${cobertura.skip.check}</skip>
                     <check>
                         <totalLineRate>95</totalLineRate>
-                        <totalBranchRate>95</totalBranchRate>
+                        <!--<totalBranchRate>95</totalBranchRate>-->
                     </check>
                     <formats>
                         <format>xml</format>
