@@ -2,14 +2,10 @@ package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.api.resource.pagination.Paginator;
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
-import com.rackspace.idm.api.resource.pagination.DefaultPaginator;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.util.CryptHelper;
 import com.unboundid.ldap.sdk.*;
@@ -20,6 +16,8 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Seconds;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
@@ -477,11 +475,11 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 } else if (filter.getParam() == FilterParamName.GROUP_ID) {
                     searchBuilder.addEqualAttribute(ATTR_GROUP_ID, filter.getStrValue());
                 } else if (filter.getParam() == FilterParamName.IN_MIGRATION) {
-                    searchBuilder.addEqualAttribute(ATTR_IN_MIGRATION, "true");
+                    searchBuilder.addEqualAttribute(ATTR_IN_MIGRATION, "TRUE");
                 } else if (filter.getParam() == FilterParamName.MIGRATED) {
-                    searchBuilder.addEqualAttribute(ATTR_IN_MIGRATION, "false");
+                    searchBuilder.addEqualAttribute(ATTR_IN_MIGRATION, "FALSE");
                 } else if (filter.getParam() == FilterParamName.ENABLED) {
-                    searchBuilder.addEqualAttribute(ATTR_ENABLED, filter.getStrValue());
+                    searchBuilder.addEqualAttribute(ATTR_ENABLED, filter.getStrValue().toUpperCase());
                 }
             }
         }
@@ -793,7 +791,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         if (!StringUtils.isBlank(user.getPasswordObj().getValue())) {
             atts.add(new Attribute(ATTR_PASSWORD, user.getPasswordObj().getValue()));
             atts.add(new Attribute(ATTR_CLEAR_PASSWORD, cryptHelper.encrypt(user.getPassword())));
-            atts.add(new Attribute(ATTR_PASSWORD_SELF_UPDATED, Boolean.FALSE.toString()));
+            atts.add(new Attribute(ATTR_PASSWORD_SELF_UPDATED, Boolean.FALSE.toString().toUpperCase()));
             atts.add(new Attribute(ATTR_PASSWORD_UPDATED_TIMESTAMP, StaticUtils.encodeGeneralizedTime(new DateTime().toDate())));
         }
 
@@ -802,7 +800,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
 
         if (user.isEnabled() != null) {
-            atts.add(new Attribute(ATTR_ENABLED, String.valueOf(user.isEnabled())));
+            atts.add(new Attribute(ATTR_ENABLED, String.valueOf(user.isEnabled()).toUpperCase()));
         }
 
         if (!StringUtils.isBlank(user.getNastId())) {
@@ -818,7 +816,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         }
 
         if(user.getInMigration() != null) {
-            atts.add(new Attribute(ATTR_IN_MIGRATION, String.valueOf(user.getInMigration())));
+            atts.add(new Attribute(ATTR_IN_MIGRATION, String.valueOf(user.getInMigration()).toUpperCase()));
             atts.add(new Attribute(ATTR_MIGRATION_DATE, StaticUtils.encodeGeneralizedTime(user.getMigrationDate().toDate())));
         }
 
@@ -1144,7 +1142,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
     void checkForEnabledStatusModification(User uOld, User uNew, List<Modification> mods) {
         if (uNew.isEnabled() != null && uNew.isEnabled() != uOld.isEnabled()) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(uNew.isEnabled())));
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(uNew.isEnabled()).toUpperCase()));
         }
     }
 
@@ -1304,7 +1302,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 }
             }
 
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD_SELF_UPDATED, Boolean.toString(isSelfUpdate)));
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD_SELF_UPDATED, Boolean.toString(isSelfUpdate).toUpperCase()));
             mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD_UPDATED_TIMESTAMP, StaticUtils.encodeGeneralizedTime(currentTime.toDate())));
             mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD, uNew.getPasswordObj().getValue()));
             mods.add(new Modification(ModificationType.REPLACE, ATTR_CLEAR_PASSWORD, cryptHelper.encrypt(uNew.getPasswordObj().getValue())));
@@ -1335,7 +1333,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             user.setUniqueId(newDn);
             // Disabled the User
             getAppInterface().modify(user.getUniqueId(), new Modification(
-                    ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(false)));
+                    ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(false).toUpperCase()));
         } catch (LDAPException e) {
             getLogger().error("Error soft deleting user", e);
             throw new IllegalStateException(e.getMessage(), e);
@@ -1402,7 +1400,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             user.setUniqueId(newDn);
             // Enabled the User
             getAppInterface().modify(user.getUniqueId(), new Modification(
-                    ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(true)));
+                    ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(true).toUpperCase()));
         } catch (LDAPException e) {
             getLogger().error("Error unsoft deleting user", e);
             throw new IllegalStateException(e.getMessage(), e);

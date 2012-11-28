@@ -1103,11 +1103,11 @@ public class LdapUserRepositoryTest extends InMemoryLdapIntegrationTest{
         assertThat("username", result[15].getValue(), equalTo("jsmith"));
         assertThat("password", result[16].getValue(), equalTo("secret"));
         assertThat("region", result[20].getValue(), equalTo("central"));
-        assertThat("enabled", result[21].getValue(), equalTo("true"));
+        assertThat("enabled", result[21].getValue(), equalTo("TRUE"));
         assertThat("nast id", result[22].getValue(), equalTo("012"));
         assertThat("mosso id", result[23].getValue(), equalTo("123"));
         assertThat("domain id", result[24].getValue(), equalTo("345"));
-        assertThat("migration", result[25].getValue(), equalTo("true"));
+        assertThat("migration", result[25].getValue(), equalTo("TRUE"));
     }
 
     @Test

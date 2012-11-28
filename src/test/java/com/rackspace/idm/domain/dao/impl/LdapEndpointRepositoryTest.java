@@ -483,13 +483,13 @@ public class LdapEndpointRepositoryTest extends InMemoryLdapIntegrationTest{
         assertThat("publie url", result.get(5).getValue(), equalTo("publicUrl"));
         assertThat("region", result.get(6).getValue(), equalTo("region"));
         assertThat("service name", result.get(7).getValue(), equalTo("serviceName"));
-        assertThat("def", result.get(8).getValue(), equalTo("true"));
-        assertThat("enabled", result.get(9).getValue(), equalTo("true"));
+        assertThat("def", result.get(8).getValue(), equalTo("TRUE"));
+        assertThat("enabled", result.get(9).getValue(), equalTo("TRUE"));
         assertThat("open stack type", result.get(10).getValue(), equalTo("openStackType"));
         assertThat("version id", result.get(11).getValue(), equalTo("versionId"));
         assertThat("version info", result.get(12).getValue(), equalTo("versionInfo"));
         assertThat("version list", result.get(13).getValue(), equalTo("versionList"));
-        assertThat("global", result.get(14).getValue(), equalTo("true"));
+        assertThat("global", result.get(14).getValue(), equalTo("TRUE"));
     }
 
     @Test (expected = IllegalStateException.class)

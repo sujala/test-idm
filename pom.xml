@@ -1509,6 +1509,33 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>copy-openldap-resources</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/target/config/OPENLDAP</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <filtering>true</filtering>
+                                    <directory>${basedir}/src/main/config</directory>
+                                    <includes>
+                                        <include>base.idm.properties</include>
+                                        <include>log4j.xml</include>
+                                        <include>rsa_api.properties</include>
+                                        <include>sdconf.rec</include>
+                                        <include>securid</include>
+                                    </includes>
+                                </resource>
+                                <resource>
+                                    <directory>${basedir}/src/main/config/OPENLDAP</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+
+                    <execution>
                         <id>copy-local-dev-resources</id>
                         <phase>validate</phase>
                         <goals>

@@ -651,7 +651,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         }
 
         if (client.isEnabled() != null) {
-            atts.add(new Attribute(ATTR_ENABLED, String.valueOf(client.isEnabled())));
+            atts.add(new Attribute(ATTR_ENABLED, String.valueOf(client.isEnabled()).toUpperCase()));
         }
 
         if (!StringUtils.isBlank(client.getTitle())) {
@@ -671,7 +671,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
         }
 
         if (client.getUseForDefaultRegion() != null) {
-            atts.add(new Attribute(ATTR_USE_FOR_DEFAULT_REGION, String.valueOf(client.getUseForDefaultRegion())));
+            atts.add(new Attribute(ATTR_USE_FOR_DEFAULT_REGION, String.valueOf(client.getUseForDefaultRegion()).toUpperCase()));
         }
 
         Attribute[] attributes = atts.toArray(new Attribute[0]);
@@ -852,13 +852,13 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
 
     private void checkForEnabledStatusModification(Application cOld, Application cNew, List<Modification> mods) {
         if (cNew.isEnabled() != null && !cNew.isEnabled().equals(cOld.isEnabled())) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(cNew.isEnabled())));
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(cNew.isEnabled()).toUpperCase()));
         }
     }
 
     void checkForUseForDefaultRegionModification(Application cOld, Application cNew, List<Modification> mods) {
         if (cNew.getUseForDefaultRegion() != null && !cNew.getUseForDefaultRegion().equals(cOld.getUseForDefaultRegion())) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_USE_FOR_DEFAULT_REGION, String.valueOf(cNew.getUseForDefaultRegion())));
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_USE_FOR_DEFAULT_REGION, String.valueOf(cNew.getUseForDefaultRegion()).toUpperCase()));
         }
     }
 
@@ -1155,7 +1155,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
             application.setUniqueId(newDn);
             // Disable the Application
             getAppInterface().modify(application.getUniqueId(), new Modification(
-                    ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(false)));
+                    ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(false).toUpperCase()));
         } catch (LDAPException e) {
             getLogger().error("Error soft deleting application", e);
             throw new IllegalStateException(e.getMessage(), e);
@@ -1220,7 +1220,7 @@ public class LdapApplicationRepository extends LdapRepository implements Applica
             application.setUniqueId(newDn);
             // Enabled the User
             getAppInterface().modify(application.getUniqueId(), new Modification(
-                    ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(true)));
+                    ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(true).toUpperCase()));
         } catch (LDAPException e) {
             getLogger().error("Error soft deleting application", e);
             throw new IllegalStateException(e.getMessage(), e);

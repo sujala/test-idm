@@ -68,11 +68,11 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
         }
 
         if (baseUrl.getDef() != null) {
-            atts.add(new Attribute(ATTR_DEF, baseUrl.getDef().toString()));
+            atts.add(new Attribute(ATTR_DEF, baseUrl.getDef().toString().toUpperCase()));
         }
 
         if (baseUrl.getEnabled() != null) {
-            atts.add(new Attribute(ATTR_ENABLED, baseUrl.getEnabled().toString()));
+            atts.add(new Attribute(ATTR_ENABLED, baseUrl.getEnabled().toString().toUpperCase()));
         }
 
         if (!StringUtils.isBlank(baseUrl.getOpenstackType())) {
@@ -92,7 +92,7 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
         }
 
         if (baseUrl.getGlobal() != null) {
-            atts.add(new Attribute(ATTR_GLOBAL, baseUrl.getGlobal().toString()));
+            atts.add(new Attribute(ATTR_GLOBAL, baseUrl.getGlobal().toString().toUpperCase()));
         }
 
 
@@ -419,7 +419,7 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
 
         List<Modification> mods = new ArrayList<Modification>();
         mods.add(new Modification(ModificationType.REPLACE, ATTR_ENABLED,
-                String.valueOf(enabled)));
+                String.valueOf(enabled).toUpperCase()));
 
         Audit audit = Audit.log(baseUrl).modify(mods);
 
@@ -582,7 +582,7 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
         List<Modification> mods = new ArrayList<Modification>();
 
         if (gNew.getDef() != null && !gNew.getDef().equals(gOld.getDef())) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_DEF, String.valueOf(gNew.getDef())));
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_DEF, String.valueOf(gNew.getDef()).toUpperCase()));
         }
 
         if (gNew.getAdminUrl() != null && !gNew.getAdminUrl().equals(gOld.getAdminUrl())) {
@@ -594,11 +594,11 @@ public class LdapEndpointRepository extends LdapRepository implements EndpointDa
         }
 
         if (gNew.getEnabled() != null && !gNew.getEnabled().equals(gOld.getEnabled())) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(gNew.getEnabled())));
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_ENABLED, String.valueOf(gNew.getEnabled()).toUpperCase()));
         }
 
         if (gNew.getGlobal() != null && !gNew.getGlobal().equals(gOld.getGlobal())) {
-            mods.add(new Modification(ModificationType.REPLACE, ATTR_GLOBAL, String.valueOf(gNew.getGlobal())));
+            mods.add(new Modification(ModificationType.REPLACE, ATTR_GLOBAL, String.valueOf(gNew.getGlobal()).toUpperCase()));
         }
 
         if (gNew.getInternalUrl() != null && !gNew.getInternalUrl().equals(gOld.getInternalUrl())) {
