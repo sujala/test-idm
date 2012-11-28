@@ -849,6 +849,7 @@ class DefaultCloud20ServiceTest extends Specification {
         createMocks()
         allowAccess()
         setupUsersAndRoles()
+
         //addedTo
         userDao.getUserById(_) >>> [ defaultUser, userAdmin, adminUser, serviceAdmin,
                 adminUser, serviceAdmin, userNotInDomain, defaultUser,
@@ -869,7 +870,7 @@ class DefaultCloud20ServiceTest extends Specification {
                 serviceAdminRole ]
 
         //callers identityRole
-        clientRoleDao.getClientRole("roleRsId") >>> [ defaultUserRole, defaultUserRole, defaultUserRole, defaultUserRole,
+        clientRoleDao.getClientRole("genericRoleRsId") >>> [ defaultUserRole, defaultUserRole, defaultUserRole, defaultUserRole,
                 userAdminRole, userAdminRole, userAdminRole, userAdminRole,
                 adminRole ]
 
@@ -943,14 +944,17 @@ class DefaultCloud20ServiceTest extends Specification {
         9 * userDao.getUserById(_) >> defaultUser
 
         //caller role
-        clientRoleDao.getClientRole("roleRsId") >>> [
+        clientRoleDao.getClientRole("genericRoleRsId") >>> [
                 userAdminRole, userAdminRole,
                 adminRole, adminRole, adminRole,
                 serviceAdminRole, serviceAdminRole, serviceAdminRole, serviceAdminRole
         ]
 
         //added role
-        9 * clientRoleDao.getClientRole(sharedRandom) >> genericRole
+        clientRoleDao.getClientRole(sharedRandom) >>> [
+                clientRole("userAdminAccessible", 1000),
+                clientRole("useAdminaccessible", 1500)
+        ] >> genericRole
 
         when:
         def statuses = []
