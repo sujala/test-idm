@@ -484,6 +484,16 @@ public class LdapTenantRepositoryTest extends InMemoryLdapIntegrationTest{
         assertThat("userId is blank", StringUtils.isBlank(userId));
     }
 
+    @Test
+    public void getUserDnFromScopeAccess_returnsUserDn() throws Exception {
+        DN dn = createDN(true);
+        DN compareToDn = new DN(new RDN("rsId", "123456789"), new RDN("ou", "users"), new RDN("o", "rackspace"), new RDN("dc", "rackspace"));
+
+        DN userDn = spy.getUserDnFromScopeAccess(dn);
+
+        assertThat("userDn is correct", userDn.toString().equalsIgnoreCase(compareToDn.toString()));
+    }
+
     protected DN createDN(boolean withRsId) {
         RDN rdn = new RDN("clientId", "abcd12345");
         RDN rdn1 = new RDN("cn", "DIRECT TOKENS");

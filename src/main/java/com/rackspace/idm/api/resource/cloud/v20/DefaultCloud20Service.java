@@ -27,6 +27,7 @@ import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
+import com.rackspace.idm.validation.RolePrecedenceValidator;
 import com.rackspace.idm.validation.Validator20;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
@@ -187,6 +188,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private Paginator<ClientRole> applicationRolePaginator;
+
+    @Autowired
+    private RolePrecedenceValidator precedenceValidator;
 
     private com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
 
@@ -451,7 +455,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (StringUtils.isEmpty(domainId) && callerIsUserAdmin) {
                 throw new BadRequestException("A Domain ID must be specified.");
             } else if (callerIsServiceAdmin && (!StringUtils.isEmpty(userDO.getDomainId()))) {
-
                 throw new BadRequestException("Identity-admin cannot be created with a domain");
             } else if (callerIsIdentityAdmin) {
                 if (StringUtils.isEmpty(domainId)) {
@@ -646,7 +649,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             User user = userService.checkAndGetUserById(userId);
             User caller = userService.getUserByAuthToken(authToken);
 
-            verifyCallerPrecedence(caller, cRole);
+            precedenceValidator.verifyCallerPrecedence(caller, cRole);
 
             checkForMultipleIdentityRoles(user, cRole);
 
@@ -664,13 +667,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             return Response.ok();
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
-        }
-    }
-
-    private void verifyCallerPrecedence(User user, ClientRole role) {
-        int userWeight = userService.getUserWeight(user, getCloudAuthClientId());
-        if (userWeight > role.getRsWeight()) {
-            throw new ForbiddenException(NOT_AUTHORIZED);
         }
     }
 
@@ -1094,6 +1090,14 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyUserAdminLevelAccess(scopeAccessByAccessToken);
 
             User user = userService.checkAndGetUserById(userId);
+            User caller = userService.getUserByAuthToken(authToken);
+
+            if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken)) {
+                if (!caller.getDomainId().equals(user.getDomainId())) {
+                    throw new ForbiddenException(NOT_AUTHORIZED);
+                }
+            }
+
             List<TenantRole> globalRoles = this.tenantService.getGlobalRolesForUser(user);
             TenantRole role = null;
             for (TenantRole globalRole : globalRoles) {
@@ -1107,10 +1111,12 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new NotFoundException(errMsg);
             }
 
-            if (!authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken)
-                    && config.getString("cloudAuth.adminRole").equals(role.getName())) {
-                throw new ForbiddenException(NOT_AUTHORIZED);
+            if (user.getId().equals(caller.getId()) && StringUtils.startsWithIgnoreCase(role.getName(), "identity:")) {
+                throw new BadRequestException("A user cannot delete their own identity role");
             }
+
+            precedenceValidator.verifyCallerPrecedence(caller, role);
+
             this.tenantService.deleteGlobalRole(role);
             return Response.noContent();
         } catch (Exception ex) {

@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.api.resource.pagination.*;
+import com.rackspace.idm.exception.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -187,7 +188,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
     Tenant getSingleTenant(Filter searchFilter)
         throws LDAPPersistException {
         SearchResultEntry entry = this.getSingleEntry(TENANT_BASE_DN,
-            SearchScope.ONE, searchFilter, ATTR_TENANT_SEARCH_ATTRIBUTES);
+                SearchScope.ONE, searchFilter, ATTR_TENANT_SEARCH_ATTRIBUTES);
         return getTenant(entry);
     }
 
@@ -236,13 +237,24 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
             .build();
 
         TenantRole role = null;
+        List<TenantRole> roles = null;
 
         try {
             role = getSingleTenantRole(parentUniqueId, searchFilter);
         } catch (LDAPPersistException e) {
-            getLogger().error("Error getting role object", e);
-            throw new IllegalStateException(e);
+            try {
+                roles = getMultipleTenantRoles(parentUniqueId, searchFilter);
+            } catch (LDAPPersistException ex) {
+                getLogger().error("Error getting role object", e);
+                throw new IllegalStateException(ex);
+            }
         }
+        if (role == null) {
+            if (roles != null && roles.size() > 0) {
+                role = roles.get(0);
+            }
+        }
+
         getLogger().debug("Found Tenant Role - {}", role);
 
         return role;
@@ -428,20 +440,32 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
     }
 
     protected String getUserIdFromDN(DN dn) {
+        DN userDN = getUserDnFromScopeAccess(dn);
+        if (userDN != null) {
+            List<RDN> userRDNs= new ArrayList<RDN>(Arrays.asList(userDN.getRDNs()));
+            for (RDN rdn : userRDNs) {
+                if (rdn.hasAttribute("rsId")) {
+                    String rdnString = rdn.toString();
+                    return rdnString.substring(rdnString.indexOf('=') + 1);
+                }
+            }
+        }
+        return "";
+    }
+
+    protected DN getUserDnFromScopeAccess(DN dn) {
         DN parentDN = dn.getParent();
         List<RDN> rdns = new ArrayList<RDN>(Arrays.asList(dn.getRDNs()));
         List<RDN> parentRDNs = new ArrayList<RDN>(Arrays.asList(parentDN.getRDNs()));
         List<RDN> remainder = new ArrayList<RDN>(rdns);
-
         remainder.removeAll(parentRDNs);
         RDN rdn = remainder.get(0);
         if (rdn.hasAttribute("rsId")) {
-            String rdnString = rdn.toString();
-            return rdnString.substring(rdnString.indexOf("=") + 1);
+            return dn;
         } else if (parentDN.getParent() == null) {
-            return "";
+            return null;
         } else {
-            return getUserIdFromDN(parentDN);
+            return getUserDnFromScopeAccess(parentDN);
         }
     }
 
@@ -482,18 +506,21 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
     public boolean doesScopeAccessHaveTenantRole(ScopeAccess scopeAccess, ClientRole role) {
         getLogger().debug("Does Scope Access Have Tenant Role");
 
-        String parentDn = null;
+        DN userDn = null;
         try {
             if (scopeAccess instanceof DelegatedClientScopeAccess) {
-                parentDn = scopeAccess.getUniqueId();
+                userDn = getUserDnFromScopeAccess(new DN(scopeAccess.getUniqueId()));
             } else {
-                parentDn = scopeAccess.getLDAPEntry().getParentDNString();
+                userDn = getUserDnFromScopeAccess(scopeAccess.getLDAPEntry().getParentDN());
             }
         } catch (Exception ex) {
             throw new IllegalStateException();
         }
 
-        TenantRole exists = this.getTenantRoleForParentById(parentDn, role.getId());
+        if (userDn == null) {
+            throw new BadRequestException("token was not tied to a user");
+        }
+        TenantRole exists = this.getTenantRoleForParentById(userDn.toString(), role.getId());
 
         boolean hasRole = exists != null;
         getLogger().debug("Does Scope Access Have Tenant Role: {}", hasRole);

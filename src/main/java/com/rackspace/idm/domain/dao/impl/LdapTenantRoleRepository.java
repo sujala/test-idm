@@ -2,13 +2,18 @@ package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.domain.dao.TenantRoleDao;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ClientConflictException;
 import com.rackspace.idm.exception.NotFoundException;
+import com.unboundid.ldap.sdk.DN;
 import com.unboundid.ldap.sdk.Filter;
+import com.unboundid.ldap.sdk.RDN;
 import com.unboundid.ldap.sdk.SearchScope;
 import org.apache.commons.lang.ArrayUtils;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Component
@@ -97,17 +102,38 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
     }
 
     private String getScopeAccessDn(ScopeAccess scopeAccess) {
-        String parentDn = null;
+        String userDn = null;
         try {
             if (scopeAccess instanceof DelegatedClientScopeAccess) {
-                parentDn = scopeAccess.getUniqueId();
+                userDn = getUserDnFromScopeAccess(new DN(scopeAccess.getUniqueId())).toString();
             } else {
-                parentDn = scopeAccess.getLDAPEntry().getParentDNString();
+                userDn = getUserDnFromScopeAccess(scopeAccess.getLDAPEntry().getParentDN()).toString();
             }
         } catch (Exception ex) {
             throw new IllegalStateException();
         }
-        return parentDn;
+
+        if (userDn == null) {
+            throw new BadRequestException("scopeAccess is not tied to a user");
+        }
+
+        return userDn;
+    }
+
+    private DN getUserDnFromScopeAccess(DN dn) {
+        DN parentDN = dn.getParent();
+        List<RDN> rdns = new ArrayList<RDN>(Arrays.asList(dn.getRDNs()));
+        List<RDN> parentRDNs = new ArrayList<RDN>(Arrays.asList(parentDN.getRDNs()));
+        List<RDN> remainder = new ArrayList<RDN>(rdns);
+        remainder.removeAll(parentRDNs);
+        RDN rdn = remainder.get(0);
+        if (rdn.hasAttribute("rsId")) {
+            return dn;
+        } else if (parentDN.getParent() == null) {
+            return null;
+        } else {
+            return getUserDnFromScopeAccess(parentDN);
+        }
     }
 
     private void addTenantRole(String parentUniqueId, TenantRole role) {

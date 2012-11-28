@@ -1534,7 +1534,6 @@
                             </resources>
                         </configuration>
                     </execution>
-
                     <execution>
                         <id>copy-local-dev-resources</id>
                         <phase>validate</phase>

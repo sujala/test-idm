@@ -1877,20 +1877,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void addUserRole_callsTenantService_addTenantRoleToUserMethod() throws Exception {
-        when(userService.checkAndGetUserById(userId)).thenReturn(user);
-        spy.addUserRole(null, authToken, userId, tenantRole.getRoleRsId());
-        verify(tenantService).addTenantRoleToUser(any(User.class), any(TenantRole.class));
-    }
-
-    @Test
-    public void addUserRole_callsCheckForMultipleIdentityRoles() throws Exception {
-        when(userService.checkAndGetUserById(userId)).thenReturn(user);
-        spy.addUserRole(null, authToken, userId, tenantRole.getRoleRsId());
-        verify(spy).checkForMultipleIdentityRoles(any(User.class), any(ClientRole.class));
-    }
-
-    @Test
     public void checkForMultipleIdentityRoles_callsTenantService_getGlobalRoles() throws Exception {
         spy.checkForMultipleIdentityRoles(new User(), null);
         verify(tenantService).getGlobalRolesForUser(any(User.class));
@@ -2677,50 +2663,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void addUserRole_userNotServiceAdminAndRoleNotServiceAdmin_returns200() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(false);
-        when(config.getString("cloudAuth.adminRole")).thenReturn("admin");
-        ClientRole clientRole1 = new ClientRole();
-        clientRole1.setName("notAdmin");
-        doReturn(clientRole1).when(spy).checkAndGetClientRole(roleId);
-        when(userService.checkAndGetUserById(userId)).thenReturn(user);
-        Response.ResponseBuilder responseBuilder = spy.addUserRole(null, authToken, userId, roleId);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
-    }
-
-    @Test
-    public void addUserRole_userIsServiceAdminAndRoleNotServiceAdmin_returns200() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-
-        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(true);
-        when(config.getString("cloudAuth.adminRole")).thenReturn("admin");
-        ClientRole clientRole1 = new ClientRole();
-        clientRole1.setName("notAdmin");
-        doReturn(clientRole1).when(spy).checkAndGetClientRole(roleId);
-        when(userService.checkAndGetUserById(userId)).thenReturn(user);
-        Response.ResponseBuilder responseBuilder = spy.addUserRole(null, authToken, userId, roleId);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
-    }
-
-    @Test
-    public void addUserRole_userIsServiceAdminAndRoleIsServiceAdmin_returns200() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-
-        doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
-        when(authorizationService.authorizeCloudServiceAdmin(scopeAccess)).thenReturn(true);
-        when(config.getString("cloudAuth.adminRole")).thenReturn("admin");
-        ClientRole clientRole1 = new ClientRole();
-        clientRole1.setName("admin");
-        doReturn(clientRole1).when(spy).checkAndGetClientRole(roleId);
-        when(userService.checkAndGetUserById(userId)).thenReturn(user);
-        Response.ResponseBuilder responseBuilder = spy.addUserRole(null, authToken, userId, roleId);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
-    }
-
-    @Test
     public void checkToken_callsVerifyServiceAdminLevelAccess() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
@@ -3055,82 +2997,6 @@ public class DefaultCloud20ServiceOldTest {
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response builder", spy.deleteUserRole(null, authToken, userId, null), equalTo(responseBuilder));
         assertThat("exception type",argumentCaptor.getValue(),instanceOf(NotFoundException.class));
-    }
-
-    @Test
-    public void deleteUserRole_notCloudServiceAdminAndAdminRoleThrowsForbiddenException_returnsResponseBuilder() throws Exception {
-        ArgumentCaptor<ForbiddenException> argumentCaptor = ArgumentCaptor.forClass(ForbiddenException.class);
-        Response.ResponseBuilder responseBuilder = new ResponseBuilderImpl();
-        List<TenantRole> globalRoles = new ArrayList<TenantRole>();
-        tenantRole.setName("identity:admin");
-        globalRoles.add(tenantRole);
-        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        when(userService.checkAndGetUserById(userId)).thenReturn(user);
-        when(tenantService.getGlobalRolesForUser(user)).thenReturn(globalRoles);
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
-        when(config.getString("cloudAuth.adminRole")).thenReturn("identity:admin");
-        when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
-        assertThat("response builder", spy.deleteUserRole(httpHeaders, authToken, userId, "tenantRoleId"), equalTo(responseBuilder));
-        assertThat("exception type", argumentCaptor.getValue(), instanceOf(ForbiddenException.class));
-    }
-
-    @Test
-    public void deleteUserRole_notCloudServiceAdminAndNotAdminRole_returns204() throws Exception {
-        List<TenantRole> globalRoles = new ArrayList<TenantRole>();
-        tenantRole.setName("notAdmin");
-        globalRoles.add(tenantRole);
-        when(tenantService.getGlobalRolesForUser(any(User.class))).thenReturn(globalRoles);
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
-        when(config.getString("cloudAuth.adminRole")).thenReturn("identity:admin");
-        Response.ResponseBuilder responseBuilder = spy.deleteUserRole(httpHeaders, authToken, userId, "tenantRoleId");
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(204));
-    }
-
-    @Test
-    public void deleteUserRole_isCloudServiceAdminAndNotAdminRole_returns204() throws Exception {
-        List<TenantRole> globalRoles = new ArrayList<TenantRole>();
-        tenantRole.setName("notAdmin");
-        globalRoles.add(tenantRole);
-        when(tenantService.getGlobalRolesForUser(any(User.class))).thenReturn(globalRoles);
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
-        when(config.getString("cloudAuth.adminRole")).thenReturn("identity:admin");
-        Response.ResponseBuilder responseBuilder = spy.deleteUserRole(httpHeaders, authToken, userId, "tenantRoleId");
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(204));
-    }
-
-    @Test
-    public void deleteUserRole_isCloudServiceAdminAndIsAdminRole_returns204() throws Exception {
-        List<TenantRole> globalRoles = new ArrayList<TenantRole>();
-        tenantRole.setName("identity:admin");
-        globalRoles.add(tenantRole);
-        when(tenantService.getGlobalRolesForUser(any(User.class))).thenReturn(globalRoles);
-        when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
-        when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
-        when(config.getString("cloudAuth.adminRole")).thenReturn("identity:admin");
-        Response.ResponseBuilder responseBuilder = spy.deleteUserRole(httpHeaders, authToken, userId, "tenantRoleId");
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(204));
-    }
-
-    @Test
-    public void deleteUserRole_callsTenantServiceDeleteGlobalRole() throws Exception {
-        List<TenantRole> globalRoles = new ArrayList<TenantRole>();
-        globalRoles.add(tenantRole);
-        when(tenantService.getGlobalRolesForUser(any(User.class))).thenReturn(globalRoles);
-        spy.deleteUserRole(httpHeaders, authToken, userId, "tenantRoleId");
-        verify(tenantService).deleteGlobalRole(any(TenantRole.class));
-    }
-
-    @Test
-    public void deleteUserRole_responseNoContent_returns204() throws Exception {
-        List<TenantRole> globalRoles = new ArrayList<TenantRole>();
-        globalRoles.add(tenantRole);
-        when(tenantService.getGlobalRolesForUser(any(User.class))).thenReturn(globalRoles);
-        doNothing().when(tenantService).deleteGlobalRole(any(TenantRole.class));
-        Response.ResponseBuilder responseBuilder = spy.deleteUserRole(httpHeaders, authToken, userId, "tenantRoleId");
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(204));
     }
 
     @Test

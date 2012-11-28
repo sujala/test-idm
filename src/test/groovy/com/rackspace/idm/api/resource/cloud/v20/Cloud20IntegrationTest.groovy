@@ -47,7 +47,6 @@ class Cloud20IntegrationTest extends Specification {
     @Shared def sharedRandom
     @Shared def sharedRole
     @Shared def sharedRoleTwo
-    @Shared def roleAvailableToUserAdmins
 
     @Shared def emptyDomainId
     @Shared def testDomainId
@@ -131,16 +130,12 @@ class Cloud20IntegrationTest extends Specification {
             def roleResponse2 = createRole(serviceAdminToken, role())
             sharedRoleTwo = roleResponse2.getEntity(Role).value
         }
-        if (roleAvailableToUserAdmins == null) {
-            def roleResponse3 = createRole(userAdminToken, role())
-            roleAvailableToUserAdmins = roleResponse3.getEntity(Role).value
-        }
 
         //Add role to identity-admin and default-users
-        addRoleToUser(serviceAdminToken, sharedRole.getId(), identityAdmin.getId())
-        addRoleToUser(serviceAdminToken, sharedRole.getId(), defaultUser.getId())
-        addRoleToUser(serviceAdminToken, sharedRole.getId(), defaultUserTwo.getId())
-        addRoleToUser(serviceAdminToken, sharedRole.getId(), defaultUserThree.getId())
+        addApplicationRoleToUser(serviceAdminToken, sharedRole.getId(), identityAdmin.getId())
+        addApplicationRoleToUser(serviceAdminToken, sharedRole.getId(), defaultUser.getId())
+        addApplicationRoleToUser(serviceAdminToken, sharedRole.getId(), defaultUserTwo.getId())
+        addApplicationRoleToUser(serviceAdminToken, sharedRole.getId(), defaultUserThree.getId())
 
     }
 
@@ -695,28 +690,39 @@ class Cloud20IntegrationTest extends Specification {
         ]
     }
 
-    def "addRole with insufficient access"() {
+    def "addApplicationRole with insufficient priveleges"() {
         expect:
         response.status == 403
 
         where:
         response << [
-                addRoleToUser(defaultUserToken, roleAvailableToUserAdmins.getId(), defaultUserForAdminTwo.getId()),
-                addRoleToUser(userAdminToken, roleAvailableToUserAdmins.getId(), defaultUserForAdminTwo.getId()),
-                addRoleToUser(userAdminToken, sharedRole.getId(), defaultUser.getId())
+                addApplicationRoleToUser(defaultUserToken, sharedRole.getId(), defaultUserForAdminTwo.getId()),
+                addApplicationRoleToUser(userAdminToken, sharedRole.getId(), defaultUserForAdminTwo.getId()),
+                addApplicationRoleToUser(userAdminToken, sharedRole.getId(), defaultUser.getId())
         ]
     }
 
     def "adding identity:* to user with identity:* roles returns badRequest"() {
         expect:
-        response.status == 404
+        response.status == 400
 
         where:
         response << [
-                addRoleToUser(serviceAdminToken, "1", defaultUser.getId()),
-                addRoleToUser(serviceAdminToken, "1", userAdmin.getId()),
-                addRoleToUser(serviceAdminToken, "1", identityAdmin.getId()),
-                addRoleToUser(serviceAdminToken, "1", serviceAdmin.getId())
+                addApplicationRoleToUser(serviceAdminToken, "1", defaultUser.getId()),
+                addApplicationRoleToUser(serviceAdminToken, "1", userAdmin.getId()),
+                addApplicationRoleToUser(serviceAdminToken, "1", identityAdmin.getId()),
+                addApplicationRoleToUser(serviceAdminToken, "1", serviceAdmin.getId())
+        ]
+    }
+
+    def "addApplicationRole to user succeeds"() {
+        expect:
+        response.status == 200
+
+        where:
+        response << [
+                addApplicationRoleToUser(identityAdminToken, sharedRoleTwo.getId(), userAdmin.getId()),
+                addApplicationRoleToUser(serviceAdminToken, sharedRoleTwo.getId(), identityAdmin.getId())
         ]
     }
 
@@ -891,7 +897,7 @@ class Cloud20IntegrationTest extends Specification {
         resource.path(path).path("OS-KSADM/roles").path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
     }
 
-    def addRoleToUser(String token, String roleId, String userId) {
+    def addApplicationRoleToUser(String token, String roleId, String userId) {
         resource.path(path).path("users").path(userId).path("roles/OS-KSADM").path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).put(ClientResponse)
     }
 
