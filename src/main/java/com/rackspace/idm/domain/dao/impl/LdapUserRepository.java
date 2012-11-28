@@ -868,7 +868,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         try {
 
             List<SearchResultEntry> entries = this.getMultipleEntries(
-                USERS_BASE_DN, SearchScope.SUB, ATTR_UID, searchFilter, searchAttributes);
+                USERS_BASE_DN, SearchScope.SUB, ATTR_ID, searchFilter, searchAttributes);
 
             contentCount = entries.size();
 
@@ -909,7 +909,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
 
         try {
             List<SearchResultEntry> entries = this.getMultipleEntries(
-                    USERS_BASE_DN, SearchScope.SUB, ATTR_UID, searchFilter, searchAttributes);
+                    USERS_BASE_DN, SearchScope.SUB, ATTR_ID, searchFilter, searchAttributes);
             for (SearchResultEntry entry : entries) {
                 userList.add(getUser(entry));
             }

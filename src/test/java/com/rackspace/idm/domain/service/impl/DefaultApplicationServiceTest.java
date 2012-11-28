@@ -217,45 +217,6 @@ public class DefaultApplicationServiceTest {
         defaultApplicationService.getAvailableScopes();
     }
 
-    @Test(expected = NotFoundException.class)
-    public void addClientGroup_throwsNotFoundException_whenClientDoesNotExist() throws Exception {
-        when(clientDao.getClientByClientId("id")).thenReturn(null);
-        defaultApplicationService.addClientGroup(new ClientGroup("id", null, null, null));
-    }
-
-    @Test(expected = NotFoundException.class)
-    public void addClientGroup_throwsNotFoundException_whenCustomerDoesNotExist() throws Exception {
-        when(clientDao.getClientByClientId("id")).thenReturn(new Application());
-        when(customerDao.getCustomerByCustomerId("id")).thenReturn(null);
-        defaultApplicationService.addClientGroup(new ClientGroup("id", "id", null, null));
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void deleteClientGroup_throwsIllegalArgumentException_whenClientIdIsNull() throws Exception {
-        defaultApplicationService.deleteClientGroup("id", null, "name");
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void deleteClientGroup_throwsIllegalArgumentException_whenClientIdIsBlank() throws Exception {
-        defaultApplicationService.deleteClientGroup("id", "", "name");
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void deleteClientGroup_throwsIllegalArgumentException_whenGroupNameNull() throws Exception {
-        defaultApplicationService.deleteClientGroup("id", "id", null);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void deleteClientGroup_throwsIllegalArgumentException_whenGroupNameIsBlank() throws Exception {
-        defaultApplicationService.deleteClientGroup("id", "id", "");
-    }
-
-    @Test(expected = NotFoundException.class)
-    public void deleteClientGroup_throwsNotFoundException_whenGroupIsNotFound() throws Exception {
-        when(clientDao.getClientGroup("customerId", "clientId", "groupName")).thenReturn(null);
-        defaultApplicationService.deleteClientGroup("customerId", "clientId", "groupName");
-    }
-
     @Test (expected = NotFoundException.class)
     public void checkAndGetPermission_permissionIsNull_throwsNotFoundException() throws Exception {
         when(clientDao.getClientByClientId(null)).thenReturn(new Application());
@@ -383,14 +344,6 @@ public class DefaultApplicationServiceTest {
         verify(clientDao).getOpenStackServices();
     }
 
-    @Test(expected = NotFoundException.class)
-    public void removeUserFromClientGroup_throwsNotFoundException_whenCustomerDoesNotExist() throws Exception {
-        ClientGroup clientGroup = new ClientGroup("clientId", "customerId", "name", "type");
-        when(userDao.getUserByUsername("username")).thenReturn(new User());
-        when(customerDao.getCustomerByCustomerId("customerId")).thenReturn(null);
-        defaultApplicationService.removeUserFromClientGroup("username", clientGroup);
-    }
-
     @Test
     public void updateClient_callsClientDao_updateClient() throws Exception {
         Application client = new Application();
@@ -501,35 +454,6 @@ public class DefaultApplicationServiceTest {
         assertThat("total records", clientServices.getTotalRecords(), equalTo(1));
     }
 
-    @Test (expected = IllegalArgumentException.class)
-    public void addUserToClientGroup_usernameIsBlank_throwsIllegalArgument() throws Exception {
-        defaultApplicationService.addUserToClientGroup("", null);
-    }
-
-    @Test (expected = NotFoundException.class)
-    public void addUserToClientGroup_userIsNull_throwsNotFoundException() throws Exception {
-        when(userDao.getUserByUsername("username")).thenReturn(null);
-        defaultApplicationService.addUserToClientGroup("username", null);
-    }
-
-    @Test (expected = UserDisabledException.class)
-    public void addUserToClientGroup_userIsDisabled_throwsUserDisabled() throws Exception {
-        when(userDao.getUserByUsername("username")).thenReturn(new User());
-        defaultApplicationService.addUserToClientGroup("username", null);
-    }
-
-    @Test
-    public void addUserToClientGroup_userExistsInGroup_throwsDuplicateException() throws Exception {
-        User user = new User();
-        ClientGroup clientGroup = new ClientGroup();
-        user.setEnabled(true);
-        user.setUniqueId("uniqueId");
-        when(userDao.getUserByUsername("username")).thenReturn(user);
-        doThrow(new DuplicateException()).when(clientDao).addUserToClientGroup("uniqueId", clientGroup);
-        defaultApplicationService.addUserToClientGroup("username", clientGroup);
-        verify(clientDao).addUserToClientGroup("uniqueId", clientGroup);
-    }
-
     @Test (expected = NotFoundException.class)
     public void delete_clientIdIsNull_throwsNotFoundException() throws Exception {
         defaultApplicationService.delete(null);
@@ -572,26 +496,5 @@ public class DefaultApplicationServiceTest {
         List<DefinedPermission> result = defaultApplicationService.getDefinedPermissionsByClient(client);
         assertThat("permission", result.get(0), equalTo(permission));
         assertThat("list", result.size(), equalTo(1));
-    }
-
-    @Test
-    public void getClientGroupsForUserByClientIdAndType_groupNotNullAndFilterByClientAndClientIdNotMatch_returnsEmptyList() throws Exception {
-        String[] groupIds = {"groupId"};
-        ClientGroup group = new ClientGroup();
-        group.setClientId("notMatch");
-        group.setType("type");
-        when(userDao.getGroupIdsForUser("username")).thenReturn(groupIds);
-        when(clientDao.getClientGroupByUniqueId("groupId")).thenReturn(group);
-        List<ClientGroup> result = defaultApplicationService.getClientGroupsForUserByClientIdAndType("username", "clientId", "type");
-        assertThat("list", result.isEmpty(), equalTo(true));
-    }
-
-    @Test
-    public void getClientGroupsForUser_clientGroupIsNull_returnsEmptyList() throws Exception {
-        String[] groupIds = {"groupId"};
-        when(userDao.getGroupIdsForUser("username")).thenReturn(groupIds);
-        when(clientDao.getClientGroupByUniqueId("groupId")).thenReturn(null);
-        List<ClientGroup> result = defaultApplicationService.getClientGroupsForUser("username");
-        assertThat("list", result.isEmpty(), equalTo(true));
     }
 }

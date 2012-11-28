@@ -28,8 +28,6 @@ public interface AuthorizationService {
 
     boolean authorizeUser(ScopeAccess scopeAccess, String customerId, String username);
 
-    boolean authorizeAdmin(ScopeAccess scopeAccess, String customerId);
-
     /**
      * Appropriate for authorizing internal calls.
      */

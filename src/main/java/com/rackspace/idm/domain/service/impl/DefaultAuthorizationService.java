@@ -346,37 +346,6 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
-    public boolean authorizeAdmin(ScopeAccess scopeAccess, String customerId) {
-        logger.debug("Authorizing {} as admin user", scopeAccess);
-        if (!(scopeAccess instanceof UserScopeAccess || scopeAccess instanceof DelegatedClientScopeAccess)) {
-            return false;
-        }
-
-        String username = null;
-        String rcn = null;
-
-        if (scopeAccess instanceof UserScopeAccess) {
-            UserScopeAccess usa = (UserScopeAccess) scopeAccess;
-            username = usa.getUsername();
-            rcn = usa.getUserRCN();
-        } else if (scopeAccess instanceof DelegatedClientScopeAccess) {
-            DelegatedClientScopeAccess dcsa = (DelegatedClientScopeAccess) scopeAccess;
-            username = dcsa.getUsername();
-            rcn = dcsa.getUserRCN();
-        }
-
-        if (idmAdminGroupDn == null) {
-            ClientGroup group = clientDao.getClientGroup(getRackspaceCustomerId(), getIdmClientId(), getIdmAdminGroupName());
-            idmAdminGroupDn = group.getUniqueId();
-        }
-
-        boolean authorized = false;
-        authorized = clientDao.isUserInClientGroup(username, idmAdminGroupDn) && customerId.equalsIgnoreCase(rcn);
-        logger.debug("Authorized {} as admin user - {}", scopeAccess, authorized);
-        return authorized;
-    }
-
-    @Override
     public boolean authorizeCustomerIdm(ScopeAccess scopeAccess) {
         logger.debug("Authorizing {} as Idm", scopeAccess);
         if (!(scopeAccess instanceof ClientScopeAccess)) {

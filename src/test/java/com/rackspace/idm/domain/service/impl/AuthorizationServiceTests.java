@@ -109,30 +109,6 @@ public class AuthorizationServiceTests {
     }
 
     @Test
-    public void ShouldReturnTrueForAdmin() {
-
-        EasyMock.expect(mockClientDao.getClientGroup(customerId, idmClientId, adminGroupName)).andReturn(admin);
-        EasyMock.expect(mockClientDao.isUserInClientGroup(username, admin.getUniqueId())).andReturn(true);
-        EasyMock.replay(mockClientDao);
-        boolean authorized = service.authorizeAdmin(authorizedAdminToken,
-            customerId);
-
-        Assert.assertTrue(authorized);
-    }
-
-    @Test
-    public void ShouldReturnFalseForAdmin() {
-
-        EasyMock.expect(mockClientDao.getClientGroup(customerId, idmClientId, adminGroupName)).andReturn(admin);
-        EasyMock.expect(mockClientDao.isUserInClientGroup(username, admin.getUniqueId())).andReturn(false);
-        EasyMock.replay(mockClientDao);
-        boolean authorized = service.authorizeAdmin(otherCompanyAdminToken,
-            customerId);
-
-        Assert.assertTrue(!authorized);
-    }
-
-    @Test
     public void ShouldReturnTrueForUser() {
 
         boolean authorized = service.authorizeUser(authorizedUserToken,

@@ -8,15 +8,9 @@ public interface ApplicationDao {
 
     void addClient(Application client);
 
-    void addClientGroup(ClientGroup clientGroup, String clientUniqueId);
-
-    void addUserToClientGroup(String userUniqueId, ClientGroup group);
-
     ClientAuthenticationResult authenticate(String clientId, String clientSecret);
 
     void deleteClient(Application client);
-
-    void deleteClientGroup(ClientGroup group);
 
     List<Application> getAllClients();
 
@@ -30,24 +24,11 @@ public interface ApplicationDao {
     
     Application getClientByScope(String scope);
 
-    ClientGroup getClientGroup(String customerId, String clientId,
-        String groupName);
-
-    ClientGroup getClientGroupByUniqueId(String uniqueId);
-
-    List<ClientGroup> getClientGroupsByClientId(String clientId);
-
     Applications getClientsByCustomerId(String customerId, int offset, int limit);
     
     Applications getAllClients(List<FilterParam> filters, int offset, int limit);
     
-    boolean isUserInClientGroup(String username, String groupDN);
-    
-    void removeUserFromGroup(String userUniqueId, ClientGroup group);
-    
     void updateClient(Application client);
-    
-    void updateClientGroup(ClientGroup group);
     
     List<Application> getAvailableScopes();
     

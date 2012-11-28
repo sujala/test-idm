@@ -172,6 +172,7 @@ public class LdapUserRepositoryIntegrationTest extends InMemoryLdapIntegrationTe
         repo.deleteUser(newUser.getUsername());
     }
 
+    @Ignore
     @Test
     public void shouldFindOneUserThatExistsByMossoId() {
         User newUser = addNewTestUser();
