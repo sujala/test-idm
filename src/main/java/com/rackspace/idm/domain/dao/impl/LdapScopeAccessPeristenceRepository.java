@@ -243,6 +243,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
                     Filter.createORFilter(
                             Filter.createEqualityFilter(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENTSCOPEACCESS),
                             Filter.createEqualityFilter(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKERSCOPEACCESS),
+                            Filter.createEqualityFilter(ATTR_OBJECT_CLASS, OBJECTCLASS_PASSWORDRESETSCOPEACCESS),
                             Filter.createEqualityFilter(ATTR_OBJECT_CLASS, OBJECTCLASS_USERSCOPEACCESS)
                     ),
                     Filter.createEqualityFilter(ATTR_CLIENT_ID, clientId)

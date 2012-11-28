@@ -82,7 +82,7 @@ public class LdapScopeAccessPeristenceRepositoryIntegrationTest extends InMemory
 
     @Test
     public void testAddDuplicateScopeAccess() {
-        ScopeAccess sa = new ScopeAccess();
+        ScopeAccess sa = new ClientScopeAccess();
         sa.setClientId(client.getClientId());
         sa.setClientRCN(client.getRCN());
 
@@ -95,7 +95,7 @@ public class LdapScopeAccessPeristenceRepositoryIntegrationTest extends InMemory
 
     @Test
     public void testAddScopeAccess() {
-        ScopeAccess sa = new ScopeAccess();
+        ScopeAccess sa = new ClientScopeAccess();
         sa.setClientId(client.getClientId());
         sa.setClientRCN(client.getName());
 
@@ -280,7 +280,7 @@ public class LdapScopeAccessPeristenceRepositoryIntegrationTest extends InMemory
 
     @Test
     public void testDeleteScopeAccess() {
-        ScopeAccess sa = new ScopeAccess();
+        ScopeAccess sa = new ClientScopeAccess();
         sa.setClientId(client.getClientId());
         sa.setClientRCN(client.getName());
 
@@ -386,7 +386,7 @@ public class LdapScopeAccessPeristenceRepositoryIntegrationTest extends InMemory
 
     @Test
     public void testGetScopeAccessForParentByClientId() {
-        ScopeAccess sa = new ScopeAccess();
+        ScopeAccess sa = new ClientScopeAccess();
         sa.setClientId(client.getClientId());
         sa.setClientRCN(client.getName());
 
