@@ -14,17 +14,11 @@ public interface ApplicationService {
 
     void add(Application client);
 
-    void addClientGroup(ClientGroup clientGroup);
-
     void addDefinedPermission(DefinedPermission permission);
-    
-    void addUserToClientGroup(String username, String customerId, String clientId, String groupName);
 
 //    ClientAuthenticationResult authenticate(String clientId, String clientSecret);
 
     void delete(String clientId);
-
-    void deleteClientGroup(String customerId, String clientId, String groupName);
 
     void deleteDefinedPermission(DefinedPermission permission);
 
@@ -42,15 +36,6 @@ public interface ApplicationService {
 
     Application getClient(String customerId, String clientId);
 
-    ClientGroup getClientGroup(String customerId, String clientId,
-        String groupName);
-
-    List<ClientGroup> getClientGroupsByClientId(String clientId);
-
-    List<ClientGroup> getClientGroupsForUser(String username);
-
-    List<ClientGroup> getClientGroupsForUserByClientIdAndType(String username, String clientId, String type);
-
     Applications getClientServices(Application client);
     
     DefinedPermission getDefinedPermissionByClientIdAndPermissionId(String clientId,
@@ -60,17 +45,11 @@ public interface ApplicationService {
 
     List<DefinedPermission> getDefinedPermissionsByClient(Application client);
 
-    boolean isUserMemberOfClientGroup(String username, ClientGroup group);
-
-    void removeUserFromClientGroup(String username, ClientGroup clientGroup);
-
     ClientSecret resetClientSecret(Application client);
 
     void save(Application client);
     
     void updateClient(Application client);
-
-    void updateClientGroup(ClientGroup group);
 
     void updateDefinedPermission(DefinedPermission permission);
 
