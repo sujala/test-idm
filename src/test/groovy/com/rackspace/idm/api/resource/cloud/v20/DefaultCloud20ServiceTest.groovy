@@ -99,6 +99,17 @@ class DefaultCloud20ServiceTest extends Specification {
     @Shared def adminUser
     @Shared def serviceAdmin
 
+    @Shared def defaultTenantRole
+    @Shared def userAdminTenantRole
+    @Shared def adminTenantRole
+    @Shared def serviceAdminTenantRole
+
+    @Shared def List<ClientRole> identityRoles
+
+    @Shared def serviceAdminRoleId = "0"
+    @Shared def adminRoleId = "1"
+    @Shared def userAdminRoleId = "2"
+    @Shared def defaultRoleId = "3"
 
     def setupSpec() {
         sharedRandom = ("$sharedRandomness").replace('-',"")
@@ -850,35 +861,30 @@ class DefaultCloud20ServiceTest extends Specification {
         allowAccess()
         setupUsersAndRoles()
 
-        //addedTo
+        // called
         userDao.getUserById(_) >>> [ defaultUser, userAdmin, adminUser, serviceAdmin,
-                adminUser, serviceAdmin, userNotInDomain, defaultUser,
-                serviceAdmin ]
-
-        //caller
+                adminUser, serviceAdmin, userNotInDomain, defaultUser ]
+        // caller
         userDao.getUserByUsername(_) >>> [ defaultUser, defaultUser, defaultUser, defaultUser,
-                userAdmin, userAdmin, userAdmin, userAdmin,
-                adminUser ]
-
-
-        9 * tenantRoleDao.getTenantRolesForUser(_, _) >> tenantRoleList
-        tenantDao.getTenantRolesForUser(_) >> new ArrayList<TenantRole>()
+                userAdmin, userAdmin, userAdmin, userAdmin ]
 
         //added role
         clientRoleDao.getClientRole(sharedRandom) >>> [ userAdminRole, adminRole, serviceAdminRole, specialRole,
-                specialRole, adminRole, genericRole, serviceAdminRole,
-                serviceAdminRole ]
+                specialRole, adminRole, genericRole, serviceAdminRole ]
 
-        //callers identityRole
-        clientRoleDao.getClientRole("genericRoleRsId") >>> [ defaultUserRole, defaultUserRole, defaultUserRole, defaultUserRole,
-                userAdminRole, userAdminRole, userAdminRole, userAdminRole,
-                adminRole ]
+        // getUserIdentityRole for caller
+        clientDao.getClientByClientId(_) >> new Application()
+        clientRoleDao.getIdentityRoles(_, _) >> identityRoles
+
+        tenantRoleDao.getTenantRoleForUser(_, _) >>> [
+                defaultTenantRole, defaultTenantRole, defaultTenantRole, defaultTenantRole,
+                userAdminTenantRole, userAdminTenantRole, userAdminTenantRole, userAdminTenantRole
+        ]
 
         authorizationService.authorizeCloudUserAdmin(_) >> true
 
         when:
         def responses = new ArrayList<Integer>();
-        responses.add(cloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom).build().status)
         responses.add(cloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom).build().status)
         responses.add(cloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom).build().status)
         responses.add(cloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom).build().status)
@@ -898,17 +904,24 @@ class DefaultCloud20ServiceTest extends Specification {
         given:
         createMocks()
         allowAccess()
+        setupUsersAndRoles()
 
-        def tenantRoleList = new ArrayList<TenantRole>()
-        def roleToAdd = clientRole("identity:default", configuration.getInt("cloudAuth.defaultUser.rsWeight"))
-        tenantRoleList.add(tenantRole("identity:wahoo"))
         def user1 = user("username", "domainId")
 
-        tenantRoleDao.getTenantRolesForUser(_, _) >> [ tenantRole("genericTenantRole") ].asList()
-        clientRoleDao.getClientRole(_) >>> [ roleToAdd, clientRole("identity:admin", configuration.getInt("cloudAuth.admin.rsWeight"))]
-        tenantDao.getTenantRolesForUser(_) >> tenantRoleList
-        clientDao.getClientRoleById(_) >> roleToAdd
         userDao.getUserById(_) >> user1
+        userDao.getUserByUsername(_) >> user1
+
+        clientRoleDao.getClientRole(_) >> defaultUserRole
+
+        // getUserIdentityRole for caller
+        clientDao.getClientByClientId(_) >> new Application()
+        clientRoleDao.getIdentityRoles(_, _) >> identityRoles
+
+        tenantRoleDao.getTenantRoleForUser(_, _) >> adminTenantRole
+
+        // check multiple identityRoles
+        tenantDao.getTenantRolesForUser(_) >> [ defaultTenantRole ].asList()
+        clientDao.getClientRoleById(_) >> defaultUserRole
 
         when:
         def response = cloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom).build()
@@ -923,10 +936,26 @@ class DefaultCloud20ServiceTest extends Specification {
         allowAccess()
         setupUsersAndRoles()
 
-        9 * clientDao.getClientByClientId(_) >> application()
-        9 * clientDao.getClientRoleByClientIdAndRoleName(_, _) >> clientRole()
-        9 * tenantRoleDao.getTenantRolesForUser(_, _) >> tenantRoleList
-        tenantDao.getTenantRolesForUser(_) >> new ArrayList<TenantRole>()
+        //added role
+        clientRoleDao.getClientRole(sharedRandom) >>> [
+                clientRole("userAdminAccessible", 1000),
+                clientRole("useAdminaccessible", 1500)
+        ] >> genericRole
+
+        // getUserIdentityRole for caller
+        clientDao.getClientByClientId(_) >> new Application()
+        clientRoleDao.getIdentityRoles(_, _) >> identityRoles
+
+        tenantRoleDao.getTenantRoleForUser(_, _) >>> [
+                userAdminTenantRole, userAdminTenantRole,
+                adminTenantRole, adminTenantRole, adminTenantRole,
+                serviceAdminTenantRole, serviceAdminTenantRole, serviceAdminTenantRole, serviceAdminTenantRole
+        ]
+
+        // check multiple identityRoles
+        tenantDao.getTenantRolesForUser(_) >> [ defaultTenantRole ].asList()
+        clientDao.getClientRoleById(_) >> genericRole
+
         authorizationService.authorizeCloudUserAdmin(_) >>> [
                 true, true,
                 false, false, false,
@@ -941,20 +970,9 @@ class DefaultCloud20ServiceTest extends Specification {
         ]
 
         //addedTo
-        9 * userDao.getUserById(_) >> defaultUser
+        userDao.getUserById(_) >> defaultUser
 
-        //caller role
-        clientRoleDao.getClientRole("genericRoleRsId") >>> [
-                userAdminRole, userAdminRole,
-                adminRole, adminRole, adminRole,
-                serviceAdminRole, serviceAdminRole, serviceAdminRole, serviceAdminRole
-        ]
-
-        //added role
-        clientRoleDao.getClientRole(sharedRandom) >>> [
-                clientRole("userAdminAccessible", 1000),
-                clientRole("useAdminaccessible", 1500)
-        ] >> genericRole
+        clientDao.getClientRoleByClientIdAndRoleName(_, _) >> clientRole()
 
         when:
         def statuses = []
@@ -1028,29 +1046,37 @@ class DefaultCloud20ServiceTest extends Specification {
         userDao.getUserById(_) >>> [ userNotInDomain ] >> defaultUser
         userDao.getUserByUsername(_) >> caller
 
-        authorizationService.authorizeCloudUserAdmin(_) >>> [ true, true, true, true , false]
+        authorizationService.authorizeCloudUserAdmin(_) >> true >> false
 
         // pass getUsersGlobalRoles
         tenantDao.getTenantRolesForUser(defaultUser) >> [ tenantRole("genericTenantRole", "2$sharedRandom") ].asList()
-        clientDao.getClientRoleById("2$sharedRandom") >> clientRole("roleToBeRemoved", 1000)
+        clientDao.getClientRoleById("2$sharedRandom") >>> [
+                clientRole("roleToBeRemoved", 1000),
+                clientRole("roleToBeRemoved", 1000),
+                clientRole("roleToBeRemoved", 1000),
+        ]
+
+        clientRoleDao.getClientRole(_) >>> [
+                clientRole("roleToBeRemoved1", 500),
+                clientRole("roleToBeRemoved2", 100),
+                clientRole("roleToBeRemoved3", 50)
+        ]
 
         // setup precedence cases
         // callers identity role
-        tenantRoleDao.getTenantRolesForUser(caller, configuration.getString("cloudAuth.clientId")) >> [ tenantRole("role", "callersRoleId") ].asList()
-        clientRoleDao.getClientRole("callersRoleId") >>> [
-                userAdminRole,
-                userAdminRole,
-                userAdminRole,
-                adminRole
+        clientDao.getClientByClientId(_) >> new Application()
+        clientRoleDao.getIdentityRoles(_, _) >> identityRoles
+
+        //fail: UA delete from A and SA
+        //fail: A delete from SA
+        tenantRoleDao.getTenantRoleForUser(caller, identityRoles) >>> [
+                userAdminTenantRole, userAdminTenantRole, adminTenantRole,
+                userAdminTenantRole, userAdminTenantRole, adminTenantRole
         ]
 
-        // tenantRole -> clientRole conversion
-        clientRoleDao.getClientRole("2$sharedRandom") >>> [
-                clientRole("roleToBeRemoved", 500),
-                clientRole("roleToBeRemoved", 100),
-                clientRole("roleToBeRemoved", 0),
-                clientRole("roleToBeRemoved", 0)
-        ]
+        tenantRoleDao.getTenantRoleForUser(defaultUser, identityRoles) >>> [
+                adminTenantRole, serviceAdminTenantRole, serviceAdminTenantRole
+        ] >> defaultTenantRole
 
 
         when:
@@ -1077,32 +1103,46 @@ class DefaultCloud20ServiceTest extends Specification {
         userDao.getUserById(_) >> defaultUser
         userDao.getUserByUsername(_) >> caller
 
-        authorizationService.authorizeCloudUserAdmin(_) >>> [ true ] >> false
+        authorizationService.authorizeCloudUserAdmin(_) >> true >> false
 
         // pass getUsersGlobalRoles
         tenantDao.getTenantRolesForUser(defaultUser) >> [ tenantRole("genericTenantRole", "2$sharedRandom") ].asList()
-        clientDao.getClientRoleById("2$sharedRandom") >> clientRole("roleToBeRemoved", 1000)
+        clientDao.getClientRoleById("2$sharedRandom") >> clientRole("getRole", 1000)
 
         // setup precedence cases
         // callers identity role
-        tenantRoleDao.getTenantRolesForUser(caller, configuration.getString("cloudAuth.clientId")) >> [ tenantRole("role", "callersRoleId") ].asList()
-        clientRoleDao.getClientRole("callersRoleId") >>> [
-                userAdminRole,
-                adminRole,
-                adminRole,
-                serviceAdminRole
+        clientDao.getClientByClientId(_) >> new Application()
+        clientRoleDao.getIdentityRoles(_, _) >> identityRoles
+
+        // caller weight
+        tenantRoleDao.getTenantRoleForUser(caller, identityRoles) >>> [
+                userAdminTenantRole, userAdminTenantRole,
+                adminTenantRole, adminTenantRole, adminTenantRole,
+                serviceAdminTenantRole, serviceAdminTenantRole, serviceAdminTenantRole, serviceAdminTenantRole
         ]
 
-        // tenantRole -> clientRole conversion
-        clientRoleDao.getClientRole("2$sharedRandom") >>> [
-                clientRole("roleToBeRemoved", 1000),
-                clientRole("roleToBeRemoved", 500),
-                clientRole("roleToBeRemoved", 100),
-                clientRole("roleToBeRemoved", 0)
+        // called weight
+        tenantRoleDao.getTenantRoleForUser(defaultUser, identityRoles) >>> [
+                defaultTenantRole, userAdminTenantRole,
+                defaultTenantRole, userAdminTenantRole, adminTenantRole,
+                defaultTenantRole, userAdminTenantRole, adminTenantRole, serviceAdminTenantRole
         ]
+
+        // calledRole
+        clientRoleDao.getClientRole(_) >>> [
+                defaultUserRole, userAdminRole,
+                defaultUserRole, userAdminRole, adminRole,
+                defaultUserRole, userAdminRole, adminRole, serviceAdminRole
+        ]
+
 
         when:
         def statuses = []
+        statuses.add(cloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
+        statuses.add(cloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
+        statuses.add(cloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
+        statuses.add(cloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
+        statuses.add(cloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
         statuses.add(cloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
         statuses.add(cloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
         statuses.add(cloud20Service.deleteUserRole(headers, authToken, sharedRandom, "2$sharedRandom").build().status)
@@ -1240,18 +1280,21 @@ class DefaultCloud20ServiceTest extends Specification {
         userDao.getUserById(_) >> userNotInDomain >> defaultUser
         userDao.getUserByUsername(_) >> userAdmin
         tenantDao.getTenant(sharedRandom) >> new Tenant()
+
         clientRoleDao.getClientRole(_) >>> [
                 clientRole("role", 750),
                 clientRole("role", 500),
                 clientRole("role", 50)
         ]
 
-        //setup getUserWeight
-        tenantRoleDao.getTenantRolesForUser(_, _) >> tenantRoleList
-        clientRoleDao.getClientRole("genericRoleRsId") >>> [
-                userAdminRole,
-                userAdminRole,
-                adminRole
+        clientDao.getClientByClientId(_) >> new Application()
+        clientRoleDao.getIdentityRoles(_, _) >> identityRoles
+
+        //setup caller weight
+        tenantRoleDao.getTenantRoleForUser(_, _) >>> [
+                userAdminTenantRole, userAdminTenantRole,
+                adminTenantRole, adminTenantRole, adminTenantRole,
+                serviceAdminTenantRole, serviceAdminTenantRole, serviceAdminTenantRole, serviceAdminTenantRole
         ]
 
         when:
@@ -1276,23 +1319,24 @@ class DefaultCloud20ServiceTest extends Specification {
         userDao.getUserById(_) >> defaultUser
         userDao.getUserByUsername(_) >> userAdmin
         tenantDao.getTenant(_) >> new Tenant()
+        clientDao.getClientByClientId(_) >> application()
+        clientDao.getClientRoleByClientIdAndRoleName(_, _) >> clientRole()
+        clientRoleDao.getIdentityRoles(_, _) >> identityRoles
+
         clientRoleDao.getClientRole(sharedRandom) >>> [
                 clientRole("availableToUserAdmin", 1000),
                 clientRole("availableToAdmin", 500),
                 clientRole("availableToAdmin", 100),
                 clientRole("availableToServiceAdmin", 50)
         ]
-        clientDao.getClientByClientId(_) >> application()
-        clientDao.getClientRoleByClientIdAndRoleName(_, _) >> clientRole()
 
 
-        //setup getUserWeight
-        tenantRoleDao.getTenantRolesForUser(_, _) >> tenantRoleList
-        clientRoleDao.getClientRole("genericRoleRsId") >>> [
-                userAdminRole,
-                adminRole,
-                adminRole,
-                serviceAdminRole
+        //setup caller weight
+        tenantRoleDao.getTenantRoleForUser(_, _) >>> [
+                userAdminTenantRole,
+                adminTenantRole,
+                adminTenantRole,
+                serviceAdminTenantRole
         ]
 
         when:
@@ -1318,21 +1362,34 @@ class DefaultCloud20ServiceTest extends Specification {
         userDao.getUserById(_) >> userNotInDomain >> defaultUser
         userDao.getUserByUsername(_) >> userAdmin
         authorizationService.authorizeCloudUserAdmin(_) >> true >> false
+        clientDao.getClientByClientId(_) >> application()
+        clientDao.getClientRoleByClientIdAndRoleName(_, _) >> clientRole()
+        clientRoleDao.getIdentityRoles(_, _) >> identityRoles
+
         clientRoleDao.getClientRole(sharedRandom) >>> [
+                clientRole("role", 500),
+                clientRole("role", 250),
                 clientRole("role", 750),
                 clientRole("role", 500),
                 clientRole("role", 250),
                 clientRole("role", 50)
         ]
 
-        // setup getUserWeight
-        tenantRoleDao.getTenantRolesForUser(_, _) >> tenantRoleList
-        clientRoleDao.getClientRole("genericRoleRsId") >>> [
-                userAdminRole,
-                userAdminRole,
-                userAdminRole,
-                adminRole
+        //setup caller weight
+        tenantRoleDao.getTenantRoleForUser(userAdmin, identityRoles) >>> [
+                userAdminTenantRole,
+                adminTenantRole,
+                userAdminTenantRole,
+                userAdminTenantRole,
+                userAdminTenantRole,
+                adminTenantRole
         ]
+
+        // setup called weight
+        tenantRoleDao.getTenantRoleForUser(defaultUser, identityRoles) >>> [
+                adminTenantRole,
+                serviceAdminTenantRole
+        ] >> defaultTenantRole
 
         when:
         def statuses = []
@@ -1357,24 +1414,39 @@ class DefaultCloud20ServiceTest extends Specification {
         userDao.getUserById(_) >> defaultUser
         userDao.getUserByUsername(_) >> userAdmin
         authorizationService.authorizeCloudUserAdmin(_) >> true >> false
+        clientDao.getClientByClientId(_) >> application()
+        clientDao.getClientRoleByClientIdAndRoleName(_, _) >> clientRole()
+        clientRoleDao.getIdentityRoles(_, _) >> identityRoles
+
         clientRoleDao.getClientRole(sharedRandom) >>> [
                 clientRole("role", 1000),
                 clientRole("role", 500),
                 clientRole("role", 250),
+                clientRole("role", 50),
                 clientRole("role", 50)
         ]
 
-        // setup getUserWeight
-        tenantRoleDao.getTenantRolesForUser(_, _) >> tenantRoleList
-        clientRoleDao.getClientRole("genericRoleRsId") >>> [
-                userAdminRole,
-                adminRole,
-                adminRole,
-                serviceAdminRole
+        //setup caller weight
+        tenantRoleDao.getTenantRoleForUser(userAdmin, identityRoles) >>> [
+                userAdminTenantRole,
+                adminTenantRole,
+                adminTenantRole,
+                serviceAdminTenantRole,
+                serviceAdminTenantRole
+        ]
+
+        //setup called weight
+        tenantRoleDao.getTenantRoleForUser(defaultUser, identityRoles) >>> [
+                defaultTenantRole,
+                defaultTenantRole,
+                userAdminTenantRole,
+                adminTenantRole,
+                serviceAdminTenantRole
         ]
 
         when:
         def statuses = []
+        statuses.add(cloud20Service.deleteRoleFromUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
         statuses.add(cloud20Service.deleteRoleFromUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
         statuses.add(cloud20Service.deleteRoleFromUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
         statuses.add(cloud20Service.deleteRoleFromUserOnTenant(headers, authToken, sharedRandom, sharedRandom, sharedRandom).build().status)
@@ -1434,19 +1506,29 @@ class DefaultCloud20ServiceTest extends Specification {
     }
 
     def setupUsersAndRoles() {
-        serviceAdminRole = clientRole("identity:service-admin", configuration.getInt("cloudAuth.serviceAdmin.rsWeight"))
-        adminRole = clientRole("identity:admin", configuration.getInt("cloudAuth.admin.rsWeight"))
-        userAdminRole = clientRole("identity:user-admin", configuration.getInt("cloudAuth.userAdmin.rsWeight"))
-        defaultUserRole = clientRole("identity:default", configuration.getInt("cloudAuth.defaultUser.rsWeight"))
-        specialRole = clientRole("specialRole", configuration.getInt("cloudAuth.special.rsWeight"))
-        tenantRoleList = [tenantRole("genericTenantRole", "genericRoleRsId")].asList()
-        genericRole = clientRole("genericRole", configuration.getInt("cloudAuth.special.rsWeight"))
+        defaultUserRole = identityRole("identity:default", configuration.getInt("cloudAuth.defaultUser.rsWeight"), defaultRoleId)
+        userAdminRole = identityRole("identity:user-admin", configuration.getInt("cloudAuth.userAdmin.rsWeight"), userAdminRoleId)
+        specialRole = identityRole("specialRole", configuration.getInt("cloudAuth.special.rsWeight"), "")
+        adminRole = identityRole("identity:admin", configuration.getInt("cloudAuth.admin.rsWeight"), adminRoleId)
+        serviceAdminRole = identityRole("identity:service-admin", configuration.getInt("cloudAuth.serviceAdmin.rsWeight"), serviceAdminRoleId)
+        genericRole = clientRole("genericRole", 500)
 
         userAdmin = user("user-admin", "domainId1", sharedRandom)
         defaultUser = user("default-user", "domainId1", sharedRandom)
         userNotInDomain = user("default-user", "domainId2", sharedRandom)
         adminUser = user("admin", "", sharedRandom)
         serviceAdmin = user("service-admin", "", sharedRandom)
+
+        defaultTenantRole = tenantRole("identity:default", defaultRoleId)
+        userAdminTenantRole = tenantRole("identity:user-admin", userAdminRoleId)
+        adminTenantRole = tenantRole("identity:admin", adminRoleId)
+        serviceAdminTenantRole = tenantRole("identity:service-admin", serviceAdminRoleId)
+
+        identityRoles = new ArrayList<ClientRole>()
+        identityRoles.add(defaultUserRole);
+        identityRoles.add(userAdminRole);
+        identityRoles.add(adminRole);
+        identityRoles.add(serviceAdminRole);
     }
 
     def mockScopeAccess() {
@@ -1601,6 +1683,15 @@ class DefaultCloud20ServiceTest extends Specification {
         new ClientRole().with {
             it.clientId = "1234"
             it.id = "1234"
+            it.name = name
+            it.rsWeight = rsWeight
+            return it
+        }
+    }
+
+    def identityRole(String name, int rsWeight, String id) {
+        new ClientRole().with {
+            it.id = id
             it.name = name
             it.rsWeight = rsWeight
             return it

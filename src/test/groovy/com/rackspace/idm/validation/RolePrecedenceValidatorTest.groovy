@@ -16,6 +16,7 @@ import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.exception.ForbiddenException
 import com.rackspace.idm.domain.service.impl.DefaultUserService
 import com.rackspace.idm.domain.service.impl.DefaultApplicationService
+import com.rackspace.idm.domain.entity.Application
 
 /**
  * Created with IntelliJ IDEA.
@@ -44,6 +45,17 @@ class RolePrecedenceValidatorTest extends Specification {
     @Shared def specialRole
     @Shared def adminRole
     @Shared def serviceAdminRole
+    @Shared def defaultTenantRole
+    @Shared def userAdminTenantRole
+    @Shared def adminTenantRole
+    @Shared def serviceAdminTenantRole
+
+    @Shared def List<ClientRole> identityRoles
+
+    @Shared def serviceAdminRoleId = "0"
+    @Shared def adminRoleId = "1"
+    @Shared def userAdminRoleId = "2"
+    @Shared def defaultRoleId = "3"
 
     @Shared def randomness = UUID.randomUUID()
     @Shared def random
@@ -57,14 +69,15 @@ class RolePrecedenceValidatorTest extends Specification {
         createMocks()
         setRoles()
 
-        def user = user()
+        def user = user("user")
         def tenantRole = tenantRole("tenantRole", "roleRsId")
 
-        // getUserWeight
-        tenantRoleDao.getTenantRolesForUser(_, _) >> [ tenantRole ].asList()
-        applicationRoleDao.getClientRole("roleRsId") >>> [
-                defaultRole, userAdminRole, userAdminRole, adminRole,
-                defaultRole, userAdminRole, userAdminRole, adminRole
+        // getUserIdentityRole
+        applicationDao.getClientByClientId(_) >> new Application()
+        applicationRoleDao.getIdentityRoles(_, _) >> identityRoles
+        tenantRoleDao.getTenantRoleForUser(_, _) >>> [
+                defaultTenantRole, userAdminTenantRole, userAdminTenantRole, adminTenantRole,
+                defaultTenantRole, userAdminTenantRole, userAdminTenantRole, adminTenantRole,
         ]
 
         // tenantRole -> applicationRole
@@ -73,14 +86,14 @@ class RolePrecedenceValidatorTest extends Specification {
         ]
 
         when:
-        validator.verifyCallerPrecedence(user, userAdminRole)
-        validator.verifyCallerPrecedence(user, specialRole)
-        validator.verifyCallerPrecedence(user, adminRole)
-        validator.verifyCallerPrecedence(user, serviceAdminRole)
-        validator.verifyCallerPrecedence(user, tenantRole("tenantRole1", "role"))
-        validator.verifyCallerPrecedence(user, tenantRole("tenantRole2", "role"))
-        validator.verifyCallerPrecedence(user, tenantRole("tenantRole3", "role"))
-        validator.verifyCallerPrecedence(user, tenantRole("tenantRole4", "role"))
+        validator.verifyCallerRolePrecedence(user, userAdminRole)
+        validator.verifyCallerRolePrecedence(user, specialRole)
+        validator.verifyCallerRolePrecedence(user, adminRole)
+        validator.verifyCallerRolePrecedence(user, serviceAdminRole)
+        validator.verifyCallerRolePrecedence(user, tenantRole("tenantRole1", "role"))
+        validator.verifyCallerRolePrecedence(user, tenantRole("tenantRole2", "role"))
+        validator.verifyCallerRolePrecedence(user, tenantRole("tenantRole3", "role"))
+        validator.verifyCallerRolePrecedence(user, tenantRole("tenantRole4", "role"))
 
         then:
         thrown(ForbiddenException)
@@ -91,50 +104,114 @@ class RolePrecedenceValidatorTest extends Specification {
         createMocks()
         setRoles()
 
-        def user1 = user()
-        def tenantRole1 = tenantRole("tenantRole", "roleRsId")
-        def tenantRole2 = tenantRole("tenantRole2", "role")
+        def user1 = user("user")
+        def tenantRole = tenantRole("tenantRole", "role")
 
-        // getUserWeight
-        tenantRoleDao.getTenantRolesForUser(_, _) >> [ tenantRole1 ].asList()
-        applicationRoleDao.getClientRole("roleRsId") >>> [
-                userAdminRole, userAdminRole,
-                adminRole, adminRole, adminRole,
-                serviceAdminRole, serviceAdminRole, serviceAdminRole, serviceAdminRole,
-                userAdminRole, userAdminRole,
-                adminRole, adminRole, adminRole,
-                serviceAdminRole, serviceAdminRole, serviceAdminRole, serviceAdminRole
+        // getUserIdentityRole
+        applicationDao.getClientByClientId(_) >> new Application()
+        applicationRoleDao.getIdentityRoles(_, _) >> identityRoles
+        tenantRoleDao.getTenantRoleForUser(_, _) >>> [
+                userAdminTenantRole, userAdminTenantRole,
+                adminTenantRole, adminTenantRole, adminTenantRole,
+                serviceAdminTenantRole, serviceAdminTenantRole, serviceAdminTenantRole, serviceAdminTenantRole,
+                userAdminTenantRole, userAdminTenantRole,
+                adminTenantRole, adminTenantRole, adminTenantRole,
+                serviceAdminTenantRole, serviceAdminTenantRole, serviceAdminTenantRole, serviceAdminTenantRole
         ]
 
         // tenantRole -> applicationRole
-        applicationRoleDao.getClientRole("role") >>> [
+        applicationRoleDao.getClientRole(_) >>> [
                 defaultRole, userAdminRole,
                 defaultRole, userAdminRole, adminRole,
                 defaultRole, userAdminRole, adminRole, serviceAdminRole
         ]
 
         when:
-        validator.verifyCallerPrecedence(user1, defaultRole)
-        validator.verifyCallerPrecedence(user1, userAdminRole)
+        validator.verifyCallerRolePrecedence(user1, defaultRole)
+        validator.verifyCallerRolePrecedence(user1, userAdminRole)
 
-        validator.verifyCallerPrecedence(user1, defaultRole)
-        validator.verifyCallerPrecedence(user1, userAdminRole)
-        validator.verifyCallerPrecedence(user1, adminRole)
+        validator.verifyCallerRolePrecedence(user1, defaultRole)
+        validator.verifyCallerRolePrecedence(user1, userAdminRole)
+        validator.verifyCallerRolePrecedence(user1, adminRole)
 
-        validator.verifyCallerPrecedence(user1, defaultRole)
-        validator.verifyCallerPrecedence(user1, userAdminRole)
-        validator.verifyCallerPrecedence(user1, adminRole)
-        validator.verifyCallerPrecedence(user1, serviceAdminRole)
+        validator.verifyCallerRolePrecedence(user1, defaultRole)
+        validator.verifyCallerRolePrecedence(user1, userAdminRole)
+        validator.verifyCallerRolePrecedence(user1, adminRole)
+        validator.verifyCallerRolePrecedence(user1, serviceAdminRole)
 
-        validator.verifyCallerPrecedence(user1, tenantRole2)
-        validator.verifyCallerPrecedence(user1, tenantRole2)
-        validator.verifyCallerPrecedence(user1, tenantRole2)
-        validator.verifyCallerPrecedence(user1, tenantRole2)
-        validator.verifyCallerPrecedence(user1, tenantRole2)
-        validator.verifyCallerPrecedence(user1, tenantRole2)
-        validator.verifyCallerPrecedence(user1, tenantRole2)
-        validator.verifyCallerPrecedence(user1, tenantRole2)
-        validator.verifyCallerPrecedence(user1, tenantRole2)
+        validator.verifyCallerRolePrecedence(user1, tenantRole)
+        validator.verifyCallerRolePrecedence(user1, tenantRole)
+        validator.verifyCallerRolePrecedence(user1, tenantRole)
+        validator.verifyCallerRolePrecedence(user1, tenantRole)
+        validator.verifyCallerRolePrecedence(user1, tenantRole)
+        validator.verifyCallerRolePrecedence(user1, tenantRole)
+        validator.verifyCallerRolePrecedence(user1, tenantRole)
+        validator.verifyCallerRolePrecedence(user1, tenantRole)
+        validator.verifyCallerRolePrecedence(user1, tenantRole)
+
+        then:
+        notThrown(ForbiddenException)
+    }
+
+    def "verify caller precedence over user throws exception"() {
+        given:
+        createMocks()
+        setRoles()
+
+        // getUserIdentityRole
+        applicationDao.getClientByClientId(_) >> new Application()
+        applicationRoleDao.getIdentityRoles(_, _) >> identityRoles
+        // user and caller will alternate (caller first)
+        tenantRoleDao.getTenantRoleForUser(_, _) >>> [
+                defaultTenantRole, userAdminTenantRole,
+                defaultTenantRole, adminTenantRole,
+                defaultTenantRole, serviceAdminTenantRole,
+                userAdminTenantRole, adminTenantRole,
+                userAdminTenantRole, serviceAdminTenantRole,
+                adminTenantRole, serviceAdminTenantRole
+        ]
+
+        when:
+        validator.verifyCallerPrecedenceOverUser(user(), user())
+        validator.verifyCallerPrecedenceOverUser(user(), user())
+        validator.verifyCallerPrecedenceOverUser(user(), user())
+        validator.verifyCallerPrecedenceOverUser(user(), user())
+        validator.verifyCallerPrecedenceOverUser(user(), user())
+        validator.verifyCallerPrecedenceOverUser(user(), user())
+
+        then:
+        thrown(ForbiddenException)
+    }
+
+    def "verify caller precedence over user does not throw exception"() {
+        given:
+        createMocks()
+        setRoles()
+
+        def callingUser = user("calling")
+        def calledUser = user("called")
+
+        // getUserIdentityRole
+        applicationDao.getClientByClientId(_) >> new Application()
+        applicationRoleDao.getIdentityRoles(_, _) >> identityRoles
+
+        tenantRoleDao.getTenantRoleForUser(callingUser, identityRoles) >>> [
+                userAdminTenantRole, adminTenantRole, adminTenantRole,
+                serviceAdminTenantRole, serviceAdminTenantRole, serviceAdminTenantRole
+        ]
+
+        tenantRoleDao.getTenantRoleForUser(calledUser, identityRoles) >>> [
+                defaultTenantRole, defaultTenantRole, userAdminTenantRole,
+                defaultTenantRole, userAdminTenantRole, adminTenantRole
+        ]
+
+        when:
+        validator.verifyCallerPrecedenceOverUser(callingUser, calledUser)
+        validator.verifyCallerPrecedenceOverUser(callingUser, calledUser)
+        validator.verifyCallerPrecedenceOverUser(callingUser, calledUser)
+        validator.verifyCallerPrecedenceOverUser(callingUser, calledUser)
+        validator.verifyCallerPrecedenceOverUser(callingUser, calledUser)
+        validator.verifyCallerPrecedenceOverUser(callingUser, calledUser)
 
         then:
         notThrown(ForbiddenException)
@@ -155,18 +232,31 @@ class RolePrecedenceValidatorTest extends Specification {
         applicationService.userDao = userDao
         applicationService.applicationRoleDao = applicationRoleDao
         applicationService.tenantDao = tenantDao
+        applicationService.tenantRoleDao = tenantRoleDao
     }
 
     def setRoles() {
-        defaultRole = clientRole("identity:default", configuration.getInt("cloudAuth.defaultUser.rsWeight"))
-        userAdminRole = clientRole("identity:user-admin", configuration.getInt("cloudAuth.userAdmin.rsWeight"))
-        specialRole = clientRole("specialRole", configuration.getInt("cloudAuth.special.rsWeight"))
-        adminRole = clientRole("identity:admin", configuration.getInt("cloudAuth.admin.rsWeight"))
-        serviceAdminRole = clientRole("identity:service-admin", configuration.getInt("cloudAuth.serviceAdmin.rsWeight"))
+        defaultRole = clientRole("identity:default", configuration.getInt("cloudAuth.defaultUser.rsWeight"), defaultRoleId)
+        userAdminRole = clientRole("identity:user-admin", configuration.getInt("cloudAuth.userAdmin.rsWeight"), userAdminRoleId)
+        specialRole = clientRole("specialRole", configuration.getInt("cloudAuth.special.rsWeight"), "")
+        adminRole = clientRole("identity:admin", configuration.getInt("cloudAuth.admin.rsWeight"), adminRoleId)
+        serviceAdminRole = clientRole("identity:service-admin", configuration.getInt("cloudAuth.serviceAdmin.rsWeight"), serviceAdminRoleId)
+
+        defaultTenantRole = tenantRole("identity:default", defaultRoleId)
+        userAdminTenantRole = tenantRole("identity:user-admin", userAdminRoleId)
+        adminTenantRole = tenantRole("identity:admin", adminRoleId)
+        serviceAdminTenantRole = tenantRole("identity:service-admin", serviceAdminRoleId)
+
+        identityRoles = new ArrayList<ClientRole>()
+        identityRoles.add(defaultRole);
+        identityRoles.add(userAdminRole);
+        identityRoles.add(adminRole);
+        identityRoles.add(serviceAdminRole);
     }
 
-    def clientRole(name, rsWeight) {
+    def clientRole(name, rsWeight, id) {
         new ClientRole().with {
+            it.id = id
             it.name = name
             it.rsWeight = rsWeight
             return it
@@ -180,8 +270,9 @@ class RolePrecedenceValidatorTest extends Specification {
         }
     }
 
-    def user() {
+    def user(name) {
         new User().with {
+            it.username = name
             return it
         }
     }

@@ -320,7 +320,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException("Cannot add identity roles to tenant.");
             }
 
-            precedenceValidator.verifyCallerPrecedence(caller, role);
+            precedenceValidator.verifyCallerRolePrecedence(caller, role);
 
             TenantRole tenantrole = new TenantRole();
             tenantrole.setName(role.getName());
@@ -659,7 +659,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             User user = userService.checkAndGetUserById(userId);
             User caller = userService.getUserByAuthToken(authToken);
 
-            precedenceValidator.verifyCallerPrecedence(caller, cRole);
+            precedenceValidator.verifyCallerRolePrecedence(caller, cRole);
 
             checkForMultipleIdentityRoles(user, cRole);
 
@@ -995,7 +995,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             ClientRole role = checkAndGetClientRole(roleId);
 
-            precedenceValidator.verifyCallerPrecedence(caller, role);
+            precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
+            precedenceValidator.verifyCallerRolePrecedence(caller, role);
 
             TenantRole tenantrole = new TenantRole();
             tenantrole.setClientId(role.getClientId());
@@ -1129,13 +1130,6 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
             }
 
-//            ClientRole userIdentityRole = clientService.getUserIdentityRole(user, getCloudAuthClientId(), getIdentityRoleNames());
-//            ClientRole callerIdentityRole = clientService.getUserIdentityRole(user, getCloudAuthClientId(), getIdentityRoleNames());
-//
-//            if (userIdentityRole.getRsWeight() < callerIdentityRole.getRsWeight()) {
-//                throw new ForbiddenException(NOT_AUTHORIZED);
-//            }
-
             if (role == null) {
                 String errMsg = String.format("Role %s not found for user %s", roleId, userId);
                 logger.warn(errMsg);
@@ -1146,7 +1140,8 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException("A user cannot delete their own identity role");
             }
 
-            precedenceValidator.verifyCallerPrecedence(caller, role);
+            precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
+            precedenceValidator.verifyCallerRolePrecedence(caller, role);
 
             this.tenantService.deleteGlobalRole(role);
             return Response.noContent();

@@ -10,6 +10,9 @@ import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created with IntelliJ IDEA.
  * User: jacob
@@ -32,15 +35,22 @@ public class RolePrecedenceValidator {
 
     private final String NOT_AUTHORIZED = "Not Authorized to manage specified role";
 
-    public void verifyCallerPrecedence(User user, ClientRole role) {
-        int userWeight = userService.getUserWeight(user, getCloudAuthClientId());
-        compareWeights(userWeight, role.getRsWeight());
+    public void verifyCallerRolePrecedence(User user, ClientRole role) {
+        ClientRole userIdentityRole = applicationService.getUserIdentityRole(user, getCloudAuthClientId(), getIdentityRoleNames());
+        compareWeights(userIdentityRole.getRsWeight(), role.getRsWeight());
     }
 
-    public void verifyCallerPrecedence(User user, TenantRole role) {
-        int userWeight = userService.getUserWeight(user, getCloudAuthClientId());
+    public void verifyCallerRolePrecedence(User user, TenantRole role) {
+        ClientRole userIdentityRole = applicationService.getUserIdentityRole(user, getCloudAuthClientId(), getIdentityRoleNames());
         ClientRole clientRole = applicationService.getClientRoleById(role.getRoleRsId());
-        compareWeights(userWeight, clientRole.getRsWeight());
+        compareWeights(userIdentityRole.getRsWeight(), clientRole.getRsWeight());
+    }
+
+    public void verifyCallerPrecedenceOverUser(User caller, User user) {
+        ClientRole callerIdentityRole = applicationService.getUserIdentityRole(caller, getCloudAuthClientId(), getIdentityRoleNames());
+        ClientRole userIdentityRole = applicationService.getUserIdentityRole(user, getCloudAuthClientId(), getIdentityRoleNames());
+
+        compareWeights(callerIdentityRole.getRsWeight(), userIdentityRole.getRsWeight());
     }
 
     private void compareWeights(int callerWeight, int roleWeight) {
@@ -51,6 +61,15 @@ public class RolePrecedenceValidator {
 
     private String getCloudAuthClientId() {
         return config.getString("cloudAuth.clientId");
+    }
+
+    private List<String> getIdentityRoleNames() {
+        List<String> names = new ArrayList<String>();
+        names.add(config.getString("cloudAuth.userRole"));
+        names.add(config.getString("cloudAuth.userAdminRole"));
+        names.add(config.getString("cloudAuth.adminRole"));
+        names.add(config.getString("cloudAuth.serviceAdminRole"));
+        return names;
     }
 
     private void setUserService(UserService service) {
