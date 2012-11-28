@@ -237,22 +237,12 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
             .build();
 
         TenantRole role = null;
-        List<TenantRole> roles = null;
 
         try {
             role = getSingleTenantRole(parentUniqueId, searchFilter);
         } catch (LDAPPersistException e) {
-            try {
-                roles = getMultipleTenantRoles(parentUniqueId, searchFilter);
-            } catch (LDAPPersistException ex) {
-                getLogger().error("Error getting role object", e);
-                throw new IllegalStateException(ex);
-            }
-        }
-        if (role == null) {
-            if (roles != null && roles.size() > 0) {
-                role = roles.get(0);
-            }
+            getLogger().error("Error getting role object", e);
+            throw new IllegalStateException(e);
         }
 
         getLogger().debug("Found Tenant Role - {}", role);

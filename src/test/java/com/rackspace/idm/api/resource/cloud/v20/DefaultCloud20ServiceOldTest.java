@@ -1793,15 +1793,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void deleteRoleFromUserOnTenant_callsTenantService_deleteTenantRoleMethod() throws Exception {
-        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        when(tenantService.checkAndGetTenant(tenantId)).thenReturn(new Tenant());
-        when(userService.checkAndGetUserById(userId)).thenReturn(user);
-        spy.deleteRoleFromUserOnTenant(null, authToken, tenantId, userId, role.getId());
-        verify(tenantService).deleteTenantRoleForUser(any(User.class), any(TenantRole.class));
-    }
-
-    @Test
     public void deleteRoleFromUserOnTenant_callsTenantService_checkAndGetTenantMethod() throws Exception {
         doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
         spy.deleteRoleFromUserOnTenant(null, authToken, tenantId, userId, role.getId());
@@ -2183,20 +2174,6 @@ public class DefaultCloud20ServiceOldTest {
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
         spy.addRolesToUserOnTenant(null, authToken, tenantId, null, null);
         verify(authorizationService).verifyTokenHasTenantAccess(tenantId, scopeAccess);
-    }
-
-    @Test
-    public void addRolesToUserOnTenant_callsTenantService_addTenantRoleToUser() throws Exception {
-        clientRole.setName("name");
-        doReturn(null).when(spy).getScopeAccessForValidToken(authToken);
-        doReturn(clientRole).when(spy).checkAndGetClientRole(role.getId());
-        when(tenantService.checkAndGetTenant(tenantId)).thenReturn(new Tenant());
-        when(userService.checkAndGetUserById(userId)).thenReturn(user);
-        when(config.getString("cloudAuth.serviceAdminRole")).thenReturn("identity:service-admin");
-        when(config.getString("cloudAuth.adminRole")).thenReturn("identity:admin");
-        when(config.getString("cloudAuth.userAdminRole")).thenReturn("identity:user-admin");
-        spy.addRolesToUserOnTenant(null, authToken, tenantId, userId, role.getId());
-        verify(tenantService).addTenantRoleToUser(any(User.class), any(TenantRole.class));
     }
 
     @Test

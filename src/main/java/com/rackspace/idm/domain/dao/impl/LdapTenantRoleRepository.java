@@ -96,6 +96,11 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
     }
 
     @Override
+    public TenantRole getTenantRoleForUser(User user, List<ClientRole> clientRoles) {
+        return getTenantRole(user.getUniqueId(), orFilter(clientRoles));
+    }
+
+    @Override
     public TenantRole getTenantRoleForScopeAccess(ScopeAccess scopeAccess, String roleId) {
         String parentDn = getScopeAccessDn(scopeAccess);
         return getTenantRole(parentDn, roleId);
@@ -194,6 +199,10 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
         }
     }
 
+    private TenantRole getTenantRole(String dn, Filter filter) {
+        return getObject(filter, dn, SearchScope.SUB);
+    }
+
     private TenantRole getTenantRole(String dn, String roleId) {
         return getObject(searchFilterGetTenantRoleByRoleId(roleId), dn, SearchScope.SUB);
     }
@@ -224,5 +233,16 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TENANT_ROLE)
                 .addEqualAttribute(ATTR_ROLE_RS_ID, roleId).build();
+    }
+
+    private Filter orFilter(List<ClientRole> clientRoles) {
+        List<Filter> orComponents = new ArrayList<Filter>();
+        for (ClientRole role : clientRoles) {
+            orComponents.add(Filter.createEqualityFilter(ATTR_ROLE_RS_ID, role.getId()));
+        }
+
+         return new LdapSearchBuilder()
+                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TENANT_ROLE)
+                 .addOrAttributes(orComponents).build();
     }
 }

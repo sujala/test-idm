@@ -23,6 +23,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XML
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies
+import com.rackspace.idm.domain.entity.Tenant
 
 class Cloud20IntegrationTest extends Specification {
     @Shared WebResource resource
@@ -47,6 +48,7 @@ class Cloud20IntegrationTest extends Specification {
     @Shared def sharedRandom
     @Shared def sharedRole
     @Shared def sharedRoleTwo
+    @Shared def tenant
 
     @Shared def emptyDomainId
     @Shared def testDomainId
@@ -129,6 +131,12 @@ class Cloud20IntegrationTest extends Specification {
         if (sharedRoleTwo == null) {
             def roleResponse2 = createRole(serviceAdminToken, role())
             sharedRoleTwo = roleResponse2.getEntity(Role).value
+        }
+
+        if (tenant == null) {
+            def tenantForCreate = tenant()
+            def tenantResponse = addTenant(serviceAdminToken, tenantForCreate)
+            tenant = tenantResponse.getEntity(Tenant).value
         }
 
         //Add role to identity-admin and default-users
@@ -690,7 +698,7 @@ class Cloud20IntegrationTest extends Specification {
         ]
     }
 
-    def "addApplicationRole with insufficient priveleges"() {
+    def "create and delete applicationRole with insufficient priveleges"() {
         expect:
         response.status == 403
 
@@ -698,11 +706,14 @@ class Cloud20IntegrationTest extends Specification {
         response << [
                 addApplicationRoleToUser(defaultUserToken, sharedRole.getId(), defaultUserForAdminTwo.getId()),
                 addApplicationRoleToUser(userAdminToken, sharedRole.getId(), defaultUserForAdminTwo.getId()),
-                addApplicationRoleToUser(userAdminToken, sharedRole.getId(), defaultUser.getId())
+                addApplicationRoleToUser(userAdminToken, sharedRole.getId(), defaultUser.getId()),
+                deleteApplicationRoleFromUser(defaultUserToken, sharedRole.getId(), defaultUser.getId()),
+                deleteApplicationRoleFromUser(userAdminToken, sharedRole.getId(), defaultUserForAdminTwo.getId()),
+                deleteApplicationRoleFromUser(userAdminToken, sharedRole.getId(), defaultUser.getId()),
         ]
     }
 
-    def "adding identity:* to user with identity:* roles returns badRequest"() {
+    def "adding identity:* to user with identity:* role And deleting own identity:* role return badRequest"() {
         expect:
         response.status == 400
 
@@ -711,11 +722,14 @@ class Cloud20IntegrationTest extends Specification {
                 addApplicationRoleToUser(serviceAdminToken, "1", defaultUser.getId()),
                 addApplicationRoleToUser(serviceAdminToken, "1", userAdmin.getId()),
                 addApplicationRoleToUser(serviceAdminToken, "1", identityAdmin.getId()),
-                addApplicationRoleToUser(serviceAdminToken, "1", serviceAdmin.getId())
+                addApplicationRoleToUser(serviceAdminToken, "1", serviceAdmin.getId()),
+                deleteApplicationRoleFromUser(userAdminToken, "3", userAdmin.getId()),
+                deleteApplicationRoleFromUser(identityAdminToken, "1", identityAdmin.getId()),
+                deleteApplicationRoleFromUser(serviceAdminToken, "4", serviceAdmin.getId())
         ]
     }
 
-    def "addApplicationRole to user succeeds"() {
+    def "add Application role to user succeeds"() {
         expect:
         response.status == 200
 
@@ -723,6 +737,65 @@ class Cloud20IntegrationTest extends Specification {
         response << [
                 addApplicationRoleToUser(identityAdminToken, sharedRoleTwo.getId(), userAdmin.getId()),
                 addApplicationRoleToUser(serviceAdminToken, sharedRoleTwo.getId(), identityAdmin.getId())
+        ]
+    }
+
+    def "delete Application role from user succeeds"() {
+        expect:
+        response.status == 204
+
+        where:
+        response << [
+                deleteApplicationRoleFromUser(identityAdminToken, sharedRoleTwo.getId(), userAdmin.getId()),
+                deleteApplicationRoleFromUser(serviceAdminToken, sharedRoleTwo.getId(), identityAdmin.getId())
+        ]
+    }
+
+    def "adding to and deleting roles from user on tenant return 403"() {
+        expect:
+        response.status == 403
+
+        where:
+        response << [
+                deleteRoleFromUserOnTenant(userAdminToken, tenant.getTenantId, defaultUserForAdminTwo.getId(), sharedRole.getId()),
+                deleteRoleFromUserOnTenant(userAdminToken, tenant.getTenantId, defaultUser.getId(), sharedRole.getId()),
+                addRoleToUserOnTenant(userAdminToken, tenant.getTenantId, defaultUserForAdminTwo.getId(), sharedRole.getId()),
+                addRoleToUserOnTenant(userAdminToken, tenant.getTenantId, defaultUser.getId(), sharedRole.getId())
+        ]
+    }
+
+    def "adding identity:* roles to user on tenant returns 400"() {
+        expect:
+        response.status == 400
+
+        where:
+        response << [
+                addRoleToUserOnTenant(serviceAdminToken, tenant.getTenantId, defaultUser.getId(), defaultUserRoleId),
+                addRoleToUserOnTenant(serviceAdminToken, tenant.getTenantId, defaultUser.getId(), userAdminRoleId),
+                addRoleToUserOnTenant(serviceAdminToken, tenant.getTenantId, defaultUser.getId(), identityAdminRoleId),
+                addRoleToUserOnTenant(serviceAdminToken, tenant.getTenantId, defaultUser.getId(), serviceAdminRoleId)
+        ]
+    }
+
+    def "adding roles to user on tenant succeeds"() {
+        expect:
+        response.status == 200
+
+        where:
+        response << [
+                addRoleToUserOnTenant(identityAdminToken, tenant.getTenantId, userAdmin.getId(), sharedRoleTwo.getId()),
+                addRoleToUserOnTenant(serviceAdminToken, tenant.getTenantId, identityAdmin.getId(), sharedRoleTwo.getid())
+        ]
+    }
+
+    def "deleting roles from user on tenant succeeds"() {
+        expect:
+        response.status == 204
+
+        where:
+        response << [
+                deleteRoleFromUserOnTenant(identityAdminToken, tenant.getTenantId, userAdmin.getId(), sharedRoleTwo.getId()),
+                deleteRoleFromUserOnTenant(serviceAdminToken, tenant.getTenantId, identityAdmin.getId(), sharedRoleTwo.getId())
         ]
     }
 
@@ -901,6 +974,22 @@ class Cloud20IntegrationTest extends Specification {
         resource.path(path).path("users").path(userId).path("roles/OS-KSADM").path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).put(ClientResponse)
     }
 
+    def deleteApplicationRoleFromUser(String token, String roleId, String userId) {
+        resource.path(path).path("users").path(userId).path("roles/OS-KSADM").path(roleId).header(X_AUTH_TOKEN, token).delete(ClientResponse)
+    }
+
+    def addRoleToUserOnTenant(String token, String tenantId, String userId, String roleId) {
+        resource.path(path).path("tenants").path(tenantId).path("users").path(userId)
+                .path("roles").path("OS-KSADM").path(roleId)
+                .header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).put(ClientResponse)
+    }
+
+    def deleteRoleFromUserOnTenant(String token, String tenantId, String userId, String roleId) {
+        resource.path(path).path("tenants").path(tenantId).path("users").path(userId)
+                .path("roles").path("OS-KSADM").path(roleId)
+                .header(X_AUTH_TOKEN, token).delete(ClientResponse)
+    }
+
     def removeRoleFromUser(String token, String roleId, String userId) {
         resource.path(path).path("users").path(userId).path("roles/OS-KSADM").path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete()
     }
@@ -963,6 +1052,10 @@ class Cloud20IntegrationTest extends Specification {
 
     def updatePoliciesForEndpointTemplate(String token, endpointTemplateId, policies) {
         resource.path(path).path(OS_KSCATALOG).path("endpointTemplates").path(endpointTemplateId).path(RAX_AUTH).path("policies").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(policies).put(ClientResponse)
+    }
+
+    def addTenant(String token, Tenant tenant) {
+        resource.path(path).path("tenants").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(tenant).post(ClientResponse)
     }
 
     //Helper Methods
@@ -1093,6 +1186,13 @@ class Cloud20IntegrationTest extends Specification {
             it.name = name
             it.blob = "blob"
             it.type = "type"
+            return it
+        }
+    }
+
+    def tenant() {
+        new Tenant().with {
+            it.enabled = true
             return it
         }
     }

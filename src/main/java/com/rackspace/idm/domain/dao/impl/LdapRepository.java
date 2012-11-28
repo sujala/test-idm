@@ -497,6 +497,12 @@ public abstract class LdapRepository {
             return this;
         }
 
+        public LdapSearchBuilder addOrAttributes(List<Filter> components) {
+            Filter filter = Filter.createORFilter(components);
+            filters.add(filter);
+            return this;
+        }
+
         public Filter build() {
             if (filters.isEmpty()) {
                 return Filter.createEqualityFilter(ATTR_OBJECT_CLASS, "*");

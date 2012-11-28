@@ -33,4 +33,6 @@ public interface ApplicationRoleDao {
     PaginatorContext<ClientRole> getClientRolesPaged(String applicationId, String roleName, int limit, int offset);
 
     String getNextRoleId();
+
+    List<ClientRole> getIdentityRoles(Application application, List<String> roleNames);
 }

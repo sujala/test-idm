@@ -112,4 +112,8 @@ public interface ApplicationService {
 	void setTenantDao(TenantDao tenantDao);
 
     void setApplicationRoleDao(ApplicationRoleDao applicationRoleDao);
+
+    ClientRole getUserIdentityRole(User user, String applicationId, List<String> roleNames);
+
+    void setTenantRoleDao(TenantRoleDao tenantRoleDao);
 }

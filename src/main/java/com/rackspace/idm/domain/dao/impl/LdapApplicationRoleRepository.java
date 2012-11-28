@@ -9,6 +9,7 @@ import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.SearchScope;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -88,6 +89,11 @@ public class LdapApplicationRoleRepository extends LdapGenericRepository<ClientR
         return getObjectsPaged(searchFilterApplicationIdAndRoleName(applicationId, roleName), offset, limit);
     }
 
+    @Override
+    public List<ClientRole> getIdentityRoles(Application application, List<String> roleNames) {
+        return getObjects(orFilter(roleNames), application.getUniqueId());
+    }
+
     private ClientRole getRoleById(String roleId) {
         return getObject(searchFilterByRoleId(roleId), getBaseDn(), SearchScope.SUB);
     }
@@ -125,6 +131,16 @@ public class LdapApplicationRoleRepository extends LdapGenericRepository<ClientR
     private Filter searchFilterGetAllClientRoles() {
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENT_ROLE).build();
+    }
+
+    private Filter orFilter(List<String> names) {
+        List<Filter> orComponents = new ArrayList<Filter>();
+        for (String name : names) {
+            orComponents.add(Filter.createEqualityFilter(ATTR_NAME, name));
+        }
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENT_ROLE)
+                .addOrAttributes(orComponents).build();
     }
 
     public String getBaseDn(){

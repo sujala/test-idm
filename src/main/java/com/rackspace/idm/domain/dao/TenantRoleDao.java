@@ -1,9 +1,6 @@
 package com.rackspace.idm.domain.dao;
 
-import com.rackspace.idm.domain.entity.Application;
-import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.TenantRole;
-import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.*;
 
 import java.util.List;
 
@@ -25,4 +22,5 @@ public interface TenantRoleDao {
     void deleteTenantRoleForApplication(Application application, TenantRole tenantRole);
     void deleteTenantRole(TenantRole tenantRole);
 
+    TenantRole getTenantRoleForUser(User user, List<ClientRole> clientRoles);
 }

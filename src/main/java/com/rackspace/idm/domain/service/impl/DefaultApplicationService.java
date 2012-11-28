@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.dao.impl.LdapApplicationRoleRepository;
+import com.rackspace.idm.domain.dao.impl.LdapTenantRoleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.stereotype.Component;
@@ -35,6 +36,8 @@ public class DefaultApplicationService implements ApplicationService {
     private TenantDao tenantDao;
     @Autowired
     private ApplicationRoleDao applicationRoleDao;
+    @Autowired
+    private TenantRoleDao tenantRoleDao;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -667,6 +670,22 @@ public class DefaultApplicationService implements ApplicationService {
         logger.debug("SoftDeleted Application: {}", application);
     }
 
+    @Override
+    public ClientRole getUserIdentityRole(User user, String applicationId, List<String> roleNames) {
+        logger.debug("getting identity:* role for user: {}", user);
+        Application application = clientDao.getClientByClientId(applicationId);
+        List<ClientRole> identityRoles = applicationRoleDao.getIdentityRoles(application, roleNames);
+
+        TenantRole match = tenantRoleDao.getTenantRoleForUser(user, identityRoles);
+
+        for (ClientRole role : identityRoles) {
+            if (role.getId().equals(match.getRoleRsId())) {
+                return role;
+            }
+        }
+        return null;
+    }
+
 	@Override
 	public void setScopeAccessDao(ScopeAccessDao scopeAccessDao) {
 		this.scopeAccessDao = scopeAccessDao;
@@ -692,6 +711,11 @@ public class DefaultApplicationService implements ApplicationService {
 	public void setTenantDao(TenantDao tenantDao) {
 		this.tenantDao = tenantDao;
 	}
+
+    @Override
+    public void setTenantRoleDao(TenantRoleDao tenantRoleDao) {
+        this.tenantRoleDao = tenantRoleDao;
+    }
 
     @Override
     public void setApplicationRoleDao(ApplicationRoleDao roleDao) {
