@@ -15,6 +15,7 @@ import org.junit.*;
 
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.Assert.fail;
 
@@ -85,6 +86,8 @@ public class LdapScopeAccessPeristenceRepositoryIntegrationTest extends InMemory
         ScopeAccess sa = new ClientScopeAccess();
         sa.setClientId(client.getClientId());
         sa.setClientRCN(client.getRCN());
+        sa.setAccessTokenExp(new Date());
+        sa.setAccessTokenString(UUID.randomUUID().toString().replace("-", ""));
 
         sa = repo.addDirectScopeAccess(client.getUniqueId(), sa);
         sa = repo.addDirectScopeAccess(client.getUniqueId(), sa);
@@ -98,6 +101,8 @@ public class LdapScopeAccessPeristenceRepositoryIntegrationTest extends InMemory
         ScopeAccess sa = new ClientScopeAccess();
         sa.setClientId(client.getClientId());
         sa.setClientRCN(client.getName());
+        sa.setAccessTokenExp(new Date());
+        sa.setAccessTokenString(UUID.randomUUID().toString().replace("-", ""));
 
         repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
@@ -134,6 +139,8 @@ public class LdapScopeAccessPeristenceRepositoryIntegrationTest extends InMemory
         clientScopeAccess.setClientId(client.getClientId());
         clientScopeAccess.setClientRCN(client.getName());
         clientScopeAccess.setAccessTokenString(accessToken);
+        clientScopeAccess.setAccessTokenExp(new Date());
+        clientScopeAccess.setAccessTokenString(UUID.randomUUID().toString().replace("-", ""));
         repo.addDirectScopeAccess(client.getUniqueId(), clientScopeAccess);
 
         final ScopeAccess scopeAccessObject = repo.getDirectScopeAccessForParentByClientId(client.getUniqueId(),
@@ -283,6 +290,9 @@ public class LdapScopeAccessPeristenceRepositoryIntegrationTest extends InMemory
         ScopeAccess sa = new ClientScopeAccess();
         sa.setClientId(client.getClientId());
         sa.setClientRCN(client.getName());
+        sa.setAccessTokenExp(new Date());
+        sa.setAccessTokenString(UUID.randomUUID().toString().replace("-", ""));
+
 
         repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
@@ -389,6 +399,8 @@ public class LdapScopeAccessPeristenceRepositoryIntegrationTest extends InMemory
         ScopeAccess sa = new ClientScopeAccess();
         sa.setClientId(client.getClientId());
         sa.setClientRCN(client.getName());
+        sa.setAccessTokenExp(new Date());
+        sa.setAccessTokenString(UUID.randomUUID().toString().replace("-", ""));
 
         repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
@@ -580,9 +592,11 @@ public class LdapScopeAccessPeristenceRepositoryIntegrationTest extends InMemory
 
     @Test
     public void testScopeAccess_Success() {
-        ScopeAccess sa = new ScopeAccess();
+        ScopeAccess sa = new ClientScopeAccess();
         sa.setClientId(client.getClientId());
         sa.setClientRCN(client.getName());
+        sa.setAccessTokenExp(new Date());
+        sa.setAccessTokenString(UUID.randomUUID().toString().replace("-", ""));
         ScopeAccess scopeAccess = repo.addScopeAccess(client.getUniqueId(), sa);
 
         Assert.assertEquals(sa.getClientId(), scopeAccess.getClientId());
