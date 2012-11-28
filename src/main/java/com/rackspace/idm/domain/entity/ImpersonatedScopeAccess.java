@@ -16,16 +16,10 @@ import java.util.Date;
  * To change this template use File | Settings | File Templates.
  */
 @LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS,requestAllAttributes=true)
-public class ImpersonatedScopeAccess extends ScopeAccess implements HasAccessToken {
+public class ImpersonatedScopeAccess extends ScopeAccess {
 
     @LDAPEntryField()
     private ReadOnlyEntry ldapEntry;
-
-    @LDAPField(attribute= LdapRepository.ATTR_ACCESS_TOKEN, objectClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS, inRDN=false, filterUsage= FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
-    private String accessTokenString;
-
-    @LDAPField(attribute=LdapRepository.ATTR_ACCESS_TOKEN_EXP, objectClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
-    private Date accessTokenExp;
 
     @LDAPField(attribute=LdapRepository.ATTR_RACKER_ID, objectClass=LdapRepository.OBJECTCLASS_IMPERSONATEDSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String rackerId;
@@ -65,44 +59,12 @@ public class ImpersonatedScopeAccess extends ScopeAccess implements HasAccessTok
         this.username = username;
     }
 
-    @Override
-    public String getAccessTokenString() {
-        return accessTokenString;
-    }
-
-    @Override
-    public void setAccessTokenString(String accessTokenString) {
-        this.accessTokenString = accessTokenString;
-    }
-
-    @Override
-    public Date getAccessTokenExp() {
-        return accessTokenExp;
-    }
-
-    @Override
-    public void setAccessTokenExp(Date accessTokenExp) {
-        this.accessTokenExp = accessTokenExp;
-    }
-
-    @Override
-    public void setAccessTokenExpired() {
-        this.accessTokenExp = new DateTime().minusDays(1).toDate();
-    }
-
     public DateTime getUserPasswordExpirationDate() {
         return userPasswordExpirationDate;
     }
 
     public void setUserPasswordExpirationDate(DateTime userPasswordExpirationDate) {
         this.userPasswordExpirationDate = userPasswordExpirationDate;
-    }
-
-    @Override
-    public boolean isAccessTokenExpired(DateTime time) {
-        return StringUtils.isBlank(this.accessTokenString)
-        || this.accessTokenExp == null
-        || new DateTime(this.accessTokenExp).isBefore(time);
     }
 
     @Override

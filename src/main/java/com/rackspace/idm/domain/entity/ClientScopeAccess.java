@@ -9,16 +9,10 @@ import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 import java.util.Date;
 
 @LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_CLIENTSCOPEACCESS,requestAllAttributes=true)
-public class ClientScopeAccess extends ScopeAccess implements HasAccessToken {
+public class ClientScopeAccess extends ScopeAccess {
 
     @LDAPEntryField()
     private ReadOnlyEntry ldapEntry;
-
-    @LDAPField(attribute=LdapRepository.ATTR_ACCESS_TOKEN, objectClass=LdapRepository.OBJECTCLASS_CLIENTSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
-    private String accessTokenString;
-
-    @LDAPField(attribute=LdapRepository.ATTR_ACCESS_TOKEN_EXP, objectClass=LdapRepository.OBJECTCLASS_CLIENTSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
-    private Date accessTokenExp;
 
     @Override
     @LDAPGetter(attribute=LdapRepository.ATTR_CLIENT_ID, inRDN=true, filterUsage=FilterUsage.ALWAYS_ALLOWED)
@@ -36,41 +30,8 @@ public class ClientScopeAccess extends ScopeAccess implements HasAccessToken {
         }
     }
 
-    @Override
-    public String getAccessTokenString() {
-        return accessTokenString;
-    }
-
-    @Override
-    public void setAccessTokenString(String accessTokenString) {
-        this.accessTokenString = accessTokenString;
-    }
-
-    @Override
-    public Date getAccessTokenExp() {
-        return accessTokenExp;
-    }
-
-    @Override
-    public void setAccessTokenExp(Date accessTokenExp) {
-        this.accessTokenExp = accessTokenExp;
-    }
-
-
-    @Override
-    public void setAccessTokenExpired() {
-        this.accessTokenExp = new DateTime().minusDays(1).toDate();
-    }
-
     public void setLdapEntry(ReadOnlyEntry ldapEntry) {
         this.ldapEntry = ldapEntry;
-    }
-
-    @Override
-    public boolean isAccessTokenExpired(DateTime time) {
-        return StringUtils.isBlank(this.accessTokenString)
-        || this.accessTokenExp == null
-        || new DateTime(this.accessTokenExp).isBefore(time);
     }
 
     @Override

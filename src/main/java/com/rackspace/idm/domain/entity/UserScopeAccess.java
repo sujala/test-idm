@@ -9,16 +9,10 @@ import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 import java.util.Date;
 
 @LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_USERSCOPEACCESS,requestAllAttributes=true)
-public class UserScopeAccess extends ScopeAccess implements HasAccessToken, HasRefreshToken {
+public class UserScopeAccess extends ScopeAccess implements HasRefreshToken {
 
     @LDAPEntryField()
     private ReadOnlyEntry ldapEntry;
-
-    @LDAPField(attribute=LdapRepository.ATTR_ACCESS_TOKEN, objectClass=LdapRepository.OBJECTCLASS_USERSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
-    private String accessTokenString;
-
-    @LDAPField(attribute=LdapRepository.ATTR_ACCESS_TOKEN_EXP, objectClass=LdapRepository.OBJECTCLASS_USERSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
-    private Date accessTokenExp;
 
     @LDAPField(attribute=LdapRepository.ATTR_REFRESH_TOKEN, objectClass=LdapRepository.OBJECTCLASS_USERSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String refreshTokenString;
@@ -90,33 +84,8 @@ public class UserScopeAccess extends ScopeAccess implements HasAccessToken, HasR
     }
 
     @Override
-    public String getAccessTokenString() {
-        return accessTokenString;
-    }
-
-    @Override
-    public void setAccessTokenString(String accessTokenString) {
-        this.accessTokenString = accessTokenString;
-    }
-
-    @Override
-    public Date getAccessTokenExp() {
-        return accessTokenExp;
-    }
-
-    @Override
-    public void setAccessTokenExp(Date accessTokenExp) {
-        this.accessTokenExp = accessTokenExp;
-    }
-
-    @Override
     public void setRefreshTokenExpired() {
         this.refreshTokenExp = new DateTime().minusDays(1).toDate();
-    }
-
-    @Override
-    public void setAccessTokenExpired() {
-        this.accessTokenExp = new DateTime().minusDays(1).toDate();
     }
 
     public DateTime getUserPasswordExpirationDate() {
@@ -125,13 +94,6 @@ public class UserScopeAccess extends ScopeAccess implements HasAccessToken, HasR
 
     public void setUserPasswordExpirationDate(DateTime userPasswordExpirationDate) {
         this.userPasswordExpirationDate = userPasswordExpirationDate;
-    }
-
-	@Override
-    public boolean isAccessTokenExpired(DateTime time) {
-        return StringUtils.isBlank(this.accessTokenString)
-        || this.accessTokenExp == null
-        || new DateTime(this.accessTokenExp).isBefore(time);
     }
 
     public boolean isAccessTokenWithinRefreshWindow(int refreshTokenWindow){

@@ -4,6 +4,7 @@ import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.dao.impl.LdapApplicationRoleRepository;
 import com.rackspace.idm.domain.dao.impl.LdapTenantRoleRepository;
+import org.joda.time.DateTime;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.domain.dao.AuthDao;
@@ -23,7 +24,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -115,6 +118,7 @@ public class DefaultUserService implements UserService {
         userDao.addUser(user);
         logger.info("Added User: {}", user);
 
+        Date accessTokenExp = new DateTime().toDate();
         //Every user by default has the idm application provisioned for them
         logger.info("Adding User Scope Access for Idm to user {}", user);
         UserScopeAccess usa = new UserScopeAccess();
@@ -123,6 +127,8 @@ public class DefaultUserService implements UserService {
         usa.setUserRCN(user.getCustomerId());
         usa.setClientId(getIdmClientId());
         usa.setClientRCN(getRackspaceCustomerId());
+        usa.setAccessTokenString(UUID.randomUUID().toString().replace("-", ""));
+        usa.setAccessTokenExp(accessTokenExp);
 
         this.scopeAccessDao.addDirectScopeAccess(user.getUniqueId(), usa);
 

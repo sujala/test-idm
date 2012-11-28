@@ -15,7 +15,9 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
@@ -1137,6 +1139,8 @@ public class LdapScopeAccessPeristenceRepositoryTest extends InMemoryLdapIntegra
         ScopeAccess scopeAccess = new ScopeAccess();
         scopeAccess.setLdapEntry(new ReadOnlyEntry("uniqueId",new Attribute[0]));
         scopeAccess.setClientId("clientId");
+        scopeAccess.setAccessTokenExp(new Date());
+        scopeAccess.setAccessTokenString(UUID.randomUUID().toString().replace("-", ""));
         LDAPInterface ldapInterface = mock(LDAPInterface.class);
         doReturn(ldapInterface).when(spy).getAppInterface();
         assertThat("runs and returns null", spy.addScopeAccess("uniqueId", scopeAccess), nullValue());

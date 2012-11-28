@@ -171,17 +171,6 @@ public class DefaultTokenServiceTest {
     }
 
     @Test
-    public void revokeAccessToken_scopeAccessToDeleteNotInstanceOfHasAccessToken_doesNotCallUpdateScopeAccess() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        when(scopeAccessService.getScopeAccessByAccessToken(null)).thenReturn(scopeAccess);
-        when(scopeAccessService.getScopeAccessByAccessToken(null)).thenReturn(scopeAccess);
-        when(authorizationService.authorizeCustomerIdm(scopeAccess)).thenReturn(false);
-        when(authorizationService.authorizeAsRequestorOrOwner(scopeAccess,scopeAccess)).thenReturn(true);
-        defaultTokenService.revokeAccessToken(null,null);
-        verify(scopeAccessService,never()).updateScopeAccess(any(ScopeAccess.class));
-    }
-
-    @Test
     public void revokeAllTokensForCustomer_usersExist_callScopeServiceMethod() throws Exception {
         List<User> usersList = new ArrayList<User>();
         usersList.add(new User());

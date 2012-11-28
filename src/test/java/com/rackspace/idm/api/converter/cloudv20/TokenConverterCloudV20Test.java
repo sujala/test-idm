@@ -12,6 +12,7 @@ import org.openstack.docs.identity.api.v2.Token;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
@@ -41,10 +42,13 @@ public class TokenConverterCloudV20Test {
     }
 
     @Test
-    public void toToken_onlyScopeAccessParam_returnsBlankToken() throws Exception {
+    public void toToken_onlyScopeAccessParam_returnsToken() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
+        String tokenString = UUID.randomUUID().toString().replace("-", "");
+        scopeAccess.setAccessTokenExp(new Date());
+        scopeAccess.setAccessTokenString(tokenString);
         Token token = tokenConverterCloudV20.toToken(scopeAccess);
-        assertThat("id", token.getId(), equalTo(null));
+        assertThat("id", token.getId(), equalTo(tokenString));
     }
 
     @Test

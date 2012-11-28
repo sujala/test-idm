@@ -1058,10 +1058,9 @@ public class DefaultTenantServiceTest {
     }
 
     public ScopeAccess getScopeAccess() {
-        try {
-            doReturn("dn").when(scopeAccess).getParentDN();
-        } catch (LDAPException e) {
-        }
+        Entry entry = new Entry("id=1234,ou=here,o=path,dc=blah");
+        ReadOnlyEntry readOnlyEntry = new ReadOnlyEntry(entry);
+        when(scopeAccess.getLDAPEntry()).thenReturn(readOnlyEntry);
         return scopeAccess;
     }
 

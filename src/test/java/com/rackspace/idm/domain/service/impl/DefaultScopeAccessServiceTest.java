@@ -565,13 +565,6 @@ public class DefaultScopeAccessServiceTest {
     }
 
     @Test
-    public void authenticateAccessToken_scopeAccessNotInstanceOfHasAccessToken_authenticatedIsFalse() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        when(scopeAccessDao.getScopeAccessByAccessToken(null)).thenReturn(scopeAccess);
-        assertThat("boolean", defaultScopeAccessService.authenticateAccessToken(null), equalTo(false));
-    }
-
-    @Test
     public void delegatePermission_returnsDelegatedPermission() throws Exception {
         DelegatedPermission delegatedPermission = new DelegatedPermission();
         when(scopeAccessDao.delegatePermission(null,null)).thenReturn(delegatedPermission);
@@ -663,27 +656,6 @@ public class DefaultScopeAccessServiceTest {
         token.setLdapEntry(ldapEntry);
         defaultScopeAccessService.doesAccessTokenHaveService(token,null);
         verify(scopeAccessDao).doesParentHaveScopeAccess(eq("dn=string"), any(ScopeAccess.class));
-    }
-
-    @Test
-    public void doesAccessTokenHaveService_tokenNotInstanceOfDelegatedClientScopeAccess_getsParentDN() throws Exception {
-        DN dn = new DN("cn=rdn,dc=parent");
-        Attribute attribute = new Attribute("name");
-        ReadOnlyEntry ldapEntry = new ReadOnlyEntry(dn,attribute,attribute);
-        ScopeAccess token = new ScopeAccess();
-        token.setLdapEntry(ldapEntry);
-        defaultScopeAccessService.doesAccessTokenHaveService(token,null);
-        verify(scopeAccessDao).doesParentHaveScopeAccess(eq("dc=parent"), any(ScopeAccess.class));
-    }
-
-    @Test
-    public void doesAccessTokenHaveService_tokenNotInstanceOfDelegatedClientScopeAccessAndThrowsLDAPException_stillSucceeds() throws Exception {
-        Entry entry = new Entry("junk");
-        ReadOnlyEntry ldapEntry = new ReadOnlyEntry(entry);
-        ScopeAccess token = new UserScopeAccess();
-        token.setLdapEntry(ldapEntry);
-        defaultScopeAccessService.doesAccessTokenHaveService(token,null);
-        verify(scopeAccessDao).doesParentHaveScopeAccess((String) eq(null), any(ScopeAccess.class));
     }
 
     @Test
@@ -857,42 +829,15 @@ public class DefaultScopeAccessServiceTest {
     }
 
     @Test
-    public void expireAccessToken_scopeAccessNotInstanceOfHasAccessToken_doesNotCallUpdateMethod() throws Exception {
-        when(scopeAccessDao.getScopeAccessByAccessToken(null)).thenReturn(new ScopeAccess());
-        defaultScopeAccessService.expireAccessToken(null);
-        verify(scopeAccessDao,never()).updateScopeAccess(any(ScopeAccess.class));
-    }
-
-    @Test
     public void expireAllTokensForClient_clientIsNull_doesNothingWithNoException() throws Exception {
         defaultScopeAccessService.expireAllTokensForClient(null);
         verify(scopeAccessDao,never()).getScopeAccessesByParent(anyString());
     }
 
     @Test
-    public void expireAllTokensForClient_scopeAccessNotInstanceOfHasAccessToken_doesNotCallUpdateMethod() throws Exception {
-        List<ScopeAccess> saList = new ArrayList<ScopeAccess>();
-        saList.add(new ScopeAccess());
-        when(clientDao.getClientByClientId(null)).thenReturn(new Application());
-        when(scopeAccessDao.getScopeAccessesByParent(null)).thenReturn(saList);
-        defaultScopeAccessService.expireAllTokensForClient(null);
-        verify(scopeAccessDao,never()).updateScopeAccess(any(ScopeAccess.class));
-    }
-
-    @Test
     public void expireAllTokensForUser_userIsNull_doesNothingWithNoException() throws Exception {
         defaultScopeAccessService.expireAllTokensForUser(null);
         verify(scopeAccessDao,never()).getScopeAccessesByParent(anyString());
-    }
-
-    @Test
-    public void expireAllTokensForUser_scopeAccessNotInstanceOfHasAccessToken_doesNotCallUpdateMehod() throws Exception {
-        List<ScopeAccess> saList = new ArrayList<ScopeAccess>();
-        saList.add(new ScopeAccess());
-        when(userDao.getUserByUsername(null)).thenReturn(new User());
-        when(scopeAccessDao.getScopeAccessesByParent(null)).thenReturn(saList);
-        defaultScopeAccessService.expireAllTokensForUser(null);
-        verify(scopeAccessDao,never()).updateScopeAccess(any(ScopeAccess.class));
     }
 
     @Test
@@ -1099,13 +1044,6 @@ public class DefaultScopeAccessServiceTest {
         userScopeAccess.setAccessTokenString("token");
         doReturn(userScopeAccess).when(spy).getScopeAccessByAccessToken(null);
         assertThat("scope access", spy.loadScopeAccessByAccessToken(null), equalTo((ScopeAccess) userScopeAccess));
-    }
-
-    @Test
-    public void loadScopeAccessByAccessToken_scopeAccessNotInstanceOfHasAccessToken_returnsScopeAccess() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        doReturn(scopeAccess).when(spy).getScopeAccessByAccessToken(null);
-        assertThat("scope access",spy.loadScopeAccessByAccessToken(null),equalTo(scopeAccess));
     }
 
     @Test

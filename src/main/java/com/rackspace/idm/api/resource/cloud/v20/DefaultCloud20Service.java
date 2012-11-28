@@ -1128,7 +1128,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                     role = globalRole;
                 }
             }
-// TODO: ADD THIS BACK AND MAKE TESTS PASS THIS POINT (JUST A LOT OF COMPLEX MOCKING)
+
 //            ClientRole userIdentityRole = clientService.getUserIdentityRole(user, getCloudAuthClientId(), getIdentityRoleNames());
 //            ClientRole callerIdentityRole = clientService.getUserIdentityRole(user, getCloudAuthClientId(), getIdentityRoleNames());
 //

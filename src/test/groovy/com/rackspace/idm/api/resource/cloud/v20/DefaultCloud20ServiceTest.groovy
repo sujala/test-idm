@@ -1004,6 +1004,8 @@ class DefaultCloud20ServiceTest extends Specification {
         clientDao.getClientRoleById(_) >> clientRole
         authorizationService.authorizeCloudUserAdmin(_) >> false
 
+        //setup getUser
+
         when:
         def statuses = []
         statuses.add(cloud20Service.deleteUserRole(headers, authToken, sharedRandom, sharedRandom).build().status)
