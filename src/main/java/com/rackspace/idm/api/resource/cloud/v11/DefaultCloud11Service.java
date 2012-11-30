@@ -244,15 +244,15 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     // Authenticate Methods
     @Override
-    public ResponseBuilder adminAuthenticate(HttpServletRequest request, HttpHeaders httpHeaders, String body)
+    public ResponseBuilder adminAuthenticate(HttpServletRequest request, UriInfo uriInfo, HttpHeaders httpHeaders, String body)
             throws IOException {
 
         try {
             authenticateCloudAdminUser(request);
             if (httpHeaders.getMediaType() != null && httpHeaders.getMediaType().isCompatible(MediaType.APPLICATION_XML_TYPE)) {
-                return authenticateXML(body, true);
+                return authenticateXML(uriInfo, body, true);
             } else {
-                return authenticateJSON(body, true);
+                return authenticateJSON(uriInfo, body, true);
             }
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
@@ -260,14 +260,14 @@ public class DefaultCloud11Service implements Cloud11Service {
     }
 
     @Override
-    public Response.ResponseBuilder authenticate(HttpServletRequest request, HttpHeaders httpHeaders, String body)
+    public Response.ResponseBuilder authenticate(HttpServletRequest request, UriInfo uriInfo, HttpHeaders httpHeaders, String body)
             throws IOException {
 
         try {
             if (httpHeaders.getMediaType() != null && httpHeaders.getMediaType().isCompatible(MediaType.APPLICATION_XML_TYPE)) {
-                return authenticateXML(body, false);
+                return authenticateXML(uriInfo, body, false);
             } else {
-                return authenticateJSON(body, false);
+                return authenticateJSON(uriInfo, body, false);
             }
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
@@ -1169,10 +1169,10 @@ public class DefaultCloud11Service implements Cloud11Service {
     }
 
     // Private Methods
-    Response.ResponseBuilder adminAuthenticateResponse(JAXBElement<? extends Credentials> cred)
+    Response.ResponseBuilder adminAuthenticateResponse(UriInfo uriInfo, JAXBElement<? extends Credentials> cred)
             throws IOException {
         if (cred.getValue() instanceof UserCredentials) {
-            return handleRedirect(config.getString("cloud.user.ref.string") + "v1.1/auth");
+            return handleRedirect(uriInfo, "v1.1/auth");
         }
 
         User user = null;
@@ -1207,7 +1207,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         }
     }
 
-    Response.ResponseBuilder authenticateJSON(String body,
+    Response.ResponseBuilder authenticateJSON(UriInfo uriInfo, String body,
                                               boolean isAdmin) throws IOException {
 
         JAXBElement<? extends Credentials> cred = null;
@@ -1215,13 +1215,13 @@ public class DefaultCloud11Service implements Cloud11Service {
         cred = credentialUnmarshaller.unmarshallCredentialsFromJSON(body);
 
         if (isAdmin) {
-            return adminAuthenticateResponse(cred);
+            return adminAuthenticateResponse(uriInfo, cred);
         }
         return authenticateResponse(cred);
     }
 
     @SuppressWarnings("unchecked")
-    Response.ResponseBuilder authenticateXML(String body,
+    Response.ResponseBuilder authenticateXML(UriInfo uriInfo, String body,
                                              boolean isAdmin) throws IOException {
 
         JAXBElement<? extends Credentials> cred = null;
@@ -1233,7 +1233,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             throw new BadRequestException("Invalid XML", e);
         }
         if (isAdmin) {
-            return adminAuthenticateResponse(cred);
+            return adminAuthenticateResponse(uriInfo, cred);
         }
         return authenticateResponse(cred);
     }
@@ -1292,10 +1292,10 @@ public class DefaultCloud11Service implements Cloud11Service {
         return config.getString("cloudAuth.clientId");
     }
 
-    private ResponseBuilder handleRedirect(String path) {
+    private ResponseBuilder handleRedirect(UriInfo uriInfo, String path) {
         try {
             Response.ResponseBuilder builder = Response.status(302); //.header("Location", uri);
-            builder.header("location", path);
+            builder.header("location", uriInfo.getBaseUri() + config.getString("virtualPath") + path);
             return builder;
         } catch (Exception ex) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR);

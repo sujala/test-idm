@@ -64,22 +64,22 @@ public class Cloud11VersionResourceTest {
 
     @Test
     public void authenticate_callsGetCloud11Service() throws Exception {
-        when(delegateCloud11Service.authenticate(null, null, null)).thenReturn(Response.ok());
-        spy.authenticate(null, null, null);
+        when(delegateCloud11Service.authenticate(null, null, null, null)).thenReturn(Response.ok());
+        spy.authenticate(null, null, null, null);
         verify(spy).getCloud11Service();
     }
 
     @Test
     public void authenticate_callsGetCloud11Service_callsAuthenticate() throws Exception {
-        when(delegateCloud11Service.authenticate(null, null, null)).thenReturn(Response.ok());
-        spy.authenticate(null, null, null);
-        verify(delegateCloud11Service).authenticate(null, null, null);
+        when(delegateCloud11Service.authenticate(null, null, null, null)).thenReturn(Response.ok());
+        spy.authenticate(null,null, null, null);
+        verify(delegateCloud11Service).authenticate(null, null, null, null);
     }
 
     @Test
     public void authenticate_responseOk_returns200() throws Exception {
-        when(delegateCloud11Service.authenticate(null, null, null)).thenReturn(Response.ok());
-        Response result = spy.authenticate(null, null, null);
+        when(delegateCloud11Service.authenticate(null, null, null, null)).thenReturn(Response.ok());
+        Response result = spy.authenticate(null, null, null, null);
         assertThat("response code", result.getStatus(), equalTo(200));
     }
 
@@ -92,15 +92,15 @@ public class Cloud11VersionResourceTest {
     @Test
     public void adminAuthenticate_callsGetCloud11Service_callsAdminAuthenticate() throws Exception {
         when(config.getBoolean("useCloudAuth")).thenReturn(true);
-        when(delegateCloud11Service.adminAuthenticate(null, null, null)).thenReturn(Response.ok());
-        spy.adminAuthenticate(null, null, null);
-        verify(delegateCloud11Service).adminAuthenticate(null, null, null);
+        when(delegateCloud11Service.adminAuthenticate(null, null, null, null)).thenReturn(Response.ok());
+        spy.adminAuthenticate(null, null, null, null);
+        verify(delegateCloud11Service).adminAuthenticate(null, null, null, null);
     }
 
     @Test
     public void adminAuthenticate_responseOk_returns200() throws Exception {
-        when(delegateCloud11Service.authenticate(null, null, null)).thenReturn(Response.ok());
-        Response result = spy.authenticate(null, null, null);
+        when(delegateCloud11Service.authenticate(null, null, null, null)).thenReturn(Response.ok());
+        Response result = spy.authenticate(null, null, null, null);
         assertThat("response code", result.getStatus(), equalTo(200));
     }
 

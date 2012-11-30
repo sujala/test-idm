@@ -54,9 +54,9 @@ public class Cloud11VersionResource {
 
     @POST
     @Path("auth")
-    public Response authenticate(@Context HttpServletRequest request, @Context HttpHeaders httpHeaders, String body)
+    public Response authenticate(@Context HttpServletRequest request, @Context UriInfo uriInfo, @Context HttpHeaders httpHeaders, String body)
             throws IOException, JAXBException, URISyntaxException {
-        return getCloud11Service().authenticate(request, httpHeaders, body).build();
+        return getCloud11Service().authenticate(request, uriInfo, httpHeaders, body).build();
     }
 
     // this is not my fault, I promise
@@ -68,9 +68,9 @@ public class Cloud11VersionResource {
 
     @POST
     @Path("auth-admin")
-    public Response adminAuthenticate(@Context HttpServletRequest request, @Context HttpHeaders httpHeaders, String body)
+    public Response adminAuthenticate(@Context HttpServletRequest request, @Context UriInfo uriInfo, @Context HttpHeaders httpHeaders, String body)
             throws IOException, JAXBException, URISyntaxException {
-        return getCloud11Service().adminAuthenticate(request, httpHeaders, body).build();
+        return getCloud11Service().adminAuthenticate(request, uriInfo, httpHeaders, body).build();
     }
 
     @GET

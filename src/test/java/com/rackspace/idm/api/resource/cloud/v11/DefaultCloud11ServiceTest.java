@@ -21,6 +21,7 @@ import com.rackspacecloud.docs.auth.api.v1.User;
 import com.sun.jersey.api.uri.UriBuilderImpl;
 import com.sun.jersey.core.util.Base64;
 import org.apache.commons.configuration.Configuration;
+import org.hamcrest.CoreMatchers;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -207,7 +208,7 @@ public class DefaultCloud11ServiceTest {
     @Test
     public void adminAuthenticateResponse_callsCredentialValidator_validateCredential() throws Exception {
         NastCredentials nastCredentials = new NastCredentials();
-        defaultCloud11Service.adminAuthenticateResponse(new JAXBElement<Credentials>(new QName(""), Credentials.class, nastCredentials));
+        defaultCloud11Service.adminAuthenticateResponse(null,new JAXBElement<Credentials>(new QName(""), Credentials.class, nastCredentials));
         verify(credentialValidator).validateCredential(nastCredentials, userService);
     }
 
@@ -219,7 +220,7 @@ public class DefaultCloud11ServiceTest {
         JAXBElement<Credentials> jaxbElement = new JAXBElement<Credentials>(new QName(""),Credentials.class, mossoCredentials);
         when(userService.getUserByMossoId(123)).thenThrow(new NotAuthenticatedException());
 
-        Response response = defaultCloud11Service.adminAuthenticateResponse(jaxbElement).build();
+        Response response = defaultCloud11Service.adminAuthenticateResponse(null, jaxbElement).build();
         assertThat("response status", response.getStatus(), equalTo(401));
         assertThat("response message",((UnauthorizedFault) (response.getEntity())).getMessage(),equalTo("Username or api key is invalid"));
         assertThat("response message",((UnauthorizedFault) (response.getEntity())).getDetails(),nullValue());
@@ -406,7 +407,7 @@ public class DefaultCloud11ServiceTest {
         when(credentials.getValue()).thenReturn(passwordCredentials);
         userDO.setEnabled(true);
         when(userService.getUser("username")).thenReturn(userDO);
-        defaultCloud11Service.adminAuthenticateResponse(credentials);
+        defaultCloud11Service.adminAuthenticateResponse(null, credentials);
         verify(scopeAccessService).getUserScopeAccessForClientIdByUsernameAndPassword(eq("username"), eq("password"), anyString());
     }
 
@@ -414,7 +415,7 @@ public class DefaultCloud11ServiceTest {
     public void adminAuthenticateResponse_withNastCredentials_callsUserService_getUserByNastId() throws Exception {
         JAXBElement credentials = mock(JAXBElement.class);
         when(credentials.getValue()).thenReturn(new NastCredentials());
-        defaultCloud11Service.adminAuthenticateResponse(credentials);
+        defaultCloud11Service.adminAuthenticateResponse(null, credentials);
         verify(userService).getUserByNastId(null);
     }
 
@@ -424,7 +425,7 @@ public class DefaultCloud11ServiceTest {
         when(credentials.getValue()).thenReturn(new NastCredentials());
         userDO.setEnabled(true);
         when(userService.getUserByNastId(null)).thenReturn(userDO);
-        defaultCloud11Service.adminAuthenticateResponse(credentials);
+        defaultCloud11Service.adminAuthenticateResponse(null, credentials);
         verify(scopeAccessService).getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString());
     }
 
@@ -435,7 +436,7 @@ public class DefaultCloud11ServiceTest {
         when(credentials.getValue()).thenReturn(mossoCredentials);
         when(mossoCredentials.getKey()).thenReturn("apiKey");
         when(mossoCredentials.getMossoId()).thenReturn(12345);
-        defaultCloud11Service.adminAuthenticateResponse(credentials);
+        defaultCloud11Service.adminAuthenticateResponse(null, credentials);
         verify(userService).getUserByMossoId(12345);
     }
 
@@ -448,7 +449,7 @@ public class DefaultCloud11ServiceTest {
         when(mossoCredentials.getMossoId()).thenReturn(12345);
         when(userService.getUserByMossoId(anyInt())).thenReturn(userDO);
         userDO.setEnabled(true);
-        defaultCloud11Service.adminAuthenticateResponse(credentials);
+        defaultCloud11Service.adminAuthenticateResponse(null, credentials);
         verify(scopeAccessService).getUserScopeAccessForClientIdByUsernameAndApiCredentials(eq(userDO.getUsername()), eq("apiKey"), anyString());
     }
 
@@ -462,7 +463,7 @@ public class DefaultCloud11ServiceTest {
         when(userService.getUserByMossoId(anyInt())).thenReturn(userDO);
         userDO.setEnabled(true);
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(userDO.getUsername(), "apiKey", null)).thenReturn(new UserScopeAccess());
-        defaultCloud11Service.adminAuthenticateResponse(credentials);
+        defaultCloud11Service.adminAuthenticateResponse(null, credentials);
         verify(scopeAccessService).getOpenstackEndpointsForScopeAccess(Matchers.<ScopeAccess>anyObject());
     }
 
@@ -476,7 +477,7 @@ public class DefaultCloud11ServiceTest {
         when(userService.getUserByMossoId(anyInt())).thenReturn(userDO);
         userDO.setEnabled(true);
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(userDO.getUsername(), "apiKey", null)).thenReturn(new UserScopeAccess());
-        defaultCloud11Service.adminAuthenticateResponse(credentials);
+        defaultCloud11Service.adminAuthenticateResponse(null, credentials);
         verify(authConverterCloudv11).toCloudv11AuthDataJaxb(any(UserScopeAccess.class), anyList());
     }
 
@@ -490,7 +491,7 @@ public class DefaultCloud11ServiceTest {
         when(userService.getUserByMossoId(anyInt())).thenReturn(userDO);
         userDO.setEnabled(true);
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(userDO.getUsername(), "apiKey", null)).thenReturn(new UserScopeAccess());
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.adminAuthenticateResponse(credentials);
+        Response.ResponseBuilder responseBuilder = defaultCloud11Service.adminAuthenticateResponse(null, credentials);
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(200));
     }
 
@@ -1032,15 +1033,15 @@ public class DefaultCloud11ServiceTest {
 
     @Test
     public void adminAuthenticate_isAdminCall_callAuthenticateCloudAdminUser() throws Exception {
-        spy.adminAuthenticate(request, null, null);
+        spy.adminAuthenticate(request, null, null, null);
         verify(spy).authenticateCloudAdminUser(request);
     }
 
     @Test
     public void adminAuthenticate_mediaTypeIsNull_callsAuthenticateJSON() throws Exception {
         doNothing().when(spy).authenticateCloudAdminUser(request);
-        spy.adminAuthenticate(request, httpHeaders, null);
-        verify(spy).authenticateJSON(null, true);
+        spy.adminAuthenticate(request, null, httpHeaders, null);
+        verify(spy).authenticateJSON(null, null, true);
     }
 
     @Test
@@ -1049,8 +1050,8 @@ public class DefaultCloud11ServiceTest {
         MediaType mediaType = mock(MediaType.class);
         when(mediaType.isCompatible(any(MediaType.class))).thenReturn(false);
         when(httpHeaders.getMediaType()).thenReturn(mediaType);
-        spy.adminAuthenticate(request, httpHeaders, null);
-        verify(spy).authenticateJSON(null, true);
+        spy.adminAuthenticate(request, null, httpHeaders, null);
+        verify(spy).authenticateJSON(null, null, true);
     }
 
     @Test
@@ -1059,14 +1060,14 @@ public class DefaultCloud11ServiceTest {
         MediaType mediaType = mock(MediaType.class);
         when(mediaType.isCompatible(any(MediaType.class))).thenReturn(true);
         when(httpHeaders.getMediaType()).thenReturn(mediaType);
-        spy.adminAuthenticate(request, httpHeaders, null);
-        verify(spy).authenticateXML(null, true);
+        spy.adminAuthenticate(request, null, httpHeaders, null);
+        verify(spy).authenticateXML(null, null, true);
     }
 
     @Test
     public void authenticate_mediaTypeIsNull_callsAuthenticateJSON() throws Exception {
-        spy.authenticate(request, httpHeaders, null);
-        verify(spy).authenticateJSON(null, false);
+        spy.authenticate(request, null, httpHeaders, null);
+        verify(spy).authenticateJSON(null, null, false);
     }
 
     @Test
@@ -1074,8 +1075,8 @@ public class DefaultCloud11ServiceTest {
         MediaType mediaType = mock(MediaType.class);
         when(mediaType.isCompatible(any(MediaType.class))).thenReturn(false);
         when(httpHeaders.getMediaType()).thenReturn(mediaType);
-        spy.authenticate(request, httpHeaders, null);
-        verify(spy).authenticateJSON(null, false);
+        spy.authenticate(request, null, httpHeaders, null);
+        verify(spy).authenticateJSON(null, null, false);
     }
 
     @Test
@@ -1083,53 +1084,53 @@ public class DefaultCloud11ServiceTest {
         MediaType mediaType = mock(MediaType.class);
         when(mediaType.isCompatible(any(MediaType.class))).thenReturn(true);
         when(httpHeaders.getMediaType()).thenReturn(mediaType);
-        spy.authenticate(request, httpHeaders, null);
-        verify(spy).authenticateXML(null, false);
+        spy.authenticate(request, null, httpHeaders, null);
+        verify(spy).authenticateXML(null, null, false);
     }
 
     @Test
     public void authenticateJSON_callsCredentialUnmarshaller_unmarshallCredentialsFromJSON() throws Exception {
-        doReturn(null).when(spy).adminAuthenticateResponse(any(JAXBElement.class));
-        spy.authenticateJSON("jsonBody", true);
+        doReturn(null).when(spy).adminAuthenticateResponse(any(UriInfo.class) ,any(JAXBElement.class));
+        spy.authenticateJSON(null, "jsonBody", true);
         verify(credentialUnmarshaller).unmarshallCredentialsFromJSON("jsonBody");
     }
 
     @Test
     public void authenticateJSON_isAdmin_callsAdminAuthenticateResponse() throws Exception {
-        doReturn(null).when(spy).adminAuthenticateResponse(any(JAXBElement.class));
-        spy.authenticateJSON("jsonBody", true);
-        verify(spy).adminAuthenticateResponse(null);
+        doReturn(null).when(spy).adminAuthenticateResponse(any(UriInfo.class), any(JAXBElement.class));
+        spy.authenticateJSON(null, "jsonBody", true);
+        verify(spy).adminAuthenticateResponse(null, null);
     }
 
     @Test
     public void authenticateJSON_isNotAdmin_callsAuthenticateResponse() throws Exception {
         doReturn(null).when(spy).authenticateResponse(any(JAXBElement.class));
-        spy.authenticateJSON("jsonBody", false);
+        spy.authenticateJSON(null, "jsonBody", false);
         verify(spy).authenticateResponse(null);
     }
 
     @Test(expected = BadRequestException.class)
     public void authenticateXML_withInvalidXML_throwsBadRequestException() throws Exception {
-        doReturn(null).when(spy).adminAuthenticateResponse(any(JAXBElement.class));
-        spy.authenticateXML("<xmlBody/>", true);
-        verify(spy).adminAuthenticateResponse(null);
+        doReturn(null).when(spy).adminAuthenticateResponse(any(UriInfo.class), any(JAXBElement.class));
+        spy.authenticateXML(null, "<xmlBody/>", true);
+        verify(spy).adminAuthenticateResponse(null, null);
     }
 
     @Test
     public void authenticateXML_isAdmin_callsAdminAuthenticateResponse() throws Exception {
-        doReturn(null).when(spy).adminAuthenticateResponse(any(JAXBElement.class));
-        spy.authenticateXML("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+        doReturn(null).when(spy).adminAuthenticateResponse(any(UriInfo.class), any(JAXBElement.class));
+        spy.authenticateXML(null, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                 "<auth xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
                 " xmlns=\"http://docs.openstack.org/identity/api/v2.0\">\n" +
                 "  <passwordCredentials username=\"jsmith\" password=\"theUsersPassword\"/>\n" +
                 "</auth>", true);
-        verify(spy).adminAuthenticateResponse(any(JAXBElement.class));
+        verify(spy).adminAuthenticateResponse(any(UriInfo.class), any(JAXBElement.class));
     }
 
     @Test
     public void authenticateXML_isNotAdmin_callsAuthenticateResponse() throws Exception {
         doReturn(null).when(spy).authenticateResponse(any(JAXBElement.class));
-        spy.authenticateXML("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+        spy.authenticateXML(null, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                 "<auth xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
                 " xmlns=\"http://docs.openstack.org/identity/api/v2.0\">\n" +
                 "  <passwordCredentials username=\"jsmith\" password=\"theUsersPassword\"/>\n" +
