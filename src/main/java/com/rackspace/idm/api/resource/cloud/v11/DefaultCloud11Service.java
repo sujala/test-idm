@@ -244,15 +244,15 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     // Authenticate Methods
     @Override
-    public ResponseBuilder adminAuthenticate(HttpServletRequest request, HttpServletResponse response, HttpHeaders httpHeaders, String body)
+    public ResponseBuilder adminAuthenticate(HttpServletRequest request, HttpHeaders httpHeaders, String body)
             throws IOException {
 
         try {
             authenticateCloudAdminUser(request);
             if (httpHeaders.getMediaType() != null && httpHeaders.getMediaType().isCompatible(MediaType.APPLICATION_XML_TYPE)) {
-                return authenticateXML(response, httpHeaders, body, true);
+                return authenticateXML(body, true);
             } else {
-                return authenticateJSON(response, httpHeaders, body, true);
+                return authenticateJSON(body, true);
             }
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
@@ -260,14 +260,14 @@ public class DefaultCloud11Service implements Cloud11Service {
     }
 
     @Override
-    public Response.ResponseBuilder authenticate(HttpServletRequest request, HttpServletResponse response, HttpHeaders httpHeaders, String body)
+    public Response.ResponseBuilder authenticate(HttpServletRequest request, HttpHeaders httpHeaders, String body)
             throws IOException {
 
         try {
             if (httpHeaders.getMediaType() != null && httpHeaders.getMediaType().isCompatible(MediaType.APPLICATION_XML_TYPE)) {
-                return authenticateXML(response, httpHeaders, body, false);
+                return authenticateXML(body, false);
             } else {
-                return authenticateJSON(response, httpHeaders, body, false);
+                return authenticateJSON(body, false);
             }
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
@@ -1169,10 +1169,10 @@ public class DefaultCloud11Service implements Cloud11Service {
     }
 
     // Private Methods
-    Response.ResponseBuilder adminAuthenticateResponse(JAXBElement<? extends Credentials> cred, HttpServletResponse response)
+    Response.ResponseBuilder adminAuthenticateResponse(JAXBElement<? extends Credentials> cred)
             throws IOException {
         if (cred.getValue() instanceof UserCredentials) {
-            handleRedirect(response, "auth");
+            return handleRedirect(config.getString("cloud.user.ref.string") + "v1.1/auth");
         }
 
         User user = null;
@@ -1207,7 +1207,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         }
     }
 
-    Response.ResponseBuilder authenticateJSON(HttpServletResponse response, HttpHeaders httpHeaders, String body,
+    Response.ResponseBuilder authenticateJSON(String body,
                                               boolean isAdmin) throws IOException {
 
         JAXBElement<? extends Credentials> cred = null;
@@ -1215,13 +1215,13 @@ public class DefaultCloud11Service implements Cloud11Service {
         cred = credentialUnmarshaller.unmarshallCredentialsFromJSON(body);
 
         if (isAdmin) {
-            return adminAuthenticateResponse(cred, response);
+            return adminAuthenticateResponse(cred);
         }
         return authenticateResponse(cred);
     }
 
     @SuppressWarnings("unchecked")
-    Response.ResponseBuilder authenticateXML(HttpServletResponse response, HttpHeaders httpHeaders, String body,
+    Response.ResponseBuilder authenticateXML(String body,
                                              boolean isAdmin) throws IOException {
 
         JAXBElement<? extends Credentials> cred = null;
@@ -1233,7 +1233,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             throw new BadRequestException("Invalid XML", e);
         }
         if (isAdmin) {
-            return adminAuthenticateResponse(cred, response);
+            return adminAuthenticateResponse(cred);
         }
         return authenticateResponse(cred);
     }
@@ -1292,11 +1292,13 @@ public class DefaultCloud11Service implements Cloud11Service {
         return config.getString("cloudAuth.clientId");
     }
 
-    private void handleRedirect(HttpServletResponse response, String path) {
+    private ResponseBuilder handleRedirect(String path) {
         try {
-            response.sendRedirect(path);
-        } catch (IOException e) {
-            logger.error("Error in redirecting the " + path + " calls");
+            Response.ResponseBuilder builder = Response.status(302); //.header("Location", uri);
+            builder.header("location", path);
+            return builder;
+        } catch (Exception ex) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 

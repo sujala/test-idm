@@ -18,8 +18,8 @@ public interface Cloud11Service {
     Response.ResponseBuilder revokeToken(HttpServletRequest request, String tokenId, HttpHeaders httpHeaders) throws IOException;
 
     // Authenticate Methods
-    Response.ResponseBuilder authenticate(HttpServletRequest request, HttpServletResponse response, HttpHeaders httpHeaders, String body) throws IOException, JAXBException, URISyntaxException;
-    Response.ResponseBuilder adminAuthenticate(HttpServletRequest request, HttpServletResponse response, HttpHeaders httpHeaders, String body) throws IOException, JAXBException, URISyntaxException;
+    Response.ResponseBuilder authenticate(HttpServletRequest request, HttpHeaders httpHeaders, String body) throws IOException, JAXBException, URISyntaxException;
+    Response.ResponseBuilder adminAuthenticate(HttpServletRequest request, HttpHeaders httpHeaders, String body) throws IOException, JAXBException, URISyntaxException;
     
     // User Methods  
     Response.ResponseBuilder createUser(HttpServletRequest request, HttpHeaders httpHeaders, UriInfo uriInfo, User user) throws IOException, JAXBException;

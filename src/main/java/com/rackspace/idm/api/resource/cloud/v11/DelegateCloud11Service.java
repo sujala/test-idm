@@ -88,7 +88,7 @@ public class DelegateCloud11Service implements Cloud11Service {
     }
 
     @Override
-    public Response.ResponseBuilder authenticate(HttpServletRequest request, HttpServletResponse response,
+    public Response.ResponseBuilder authenticate(HttpServletRequest request,
                                                  HttpHeaders httpHeaders, String body)
             throws IOException, JAXBException, URISyntaxException {
 
@@ -106,25 +106,25 @@ public class DelegateCloud11Service implements Cloud11Service {
         }
         com.rackspace.idm.domain.entity.User user = cloudUserExtractor.getUserByCredentialType(cred);
         if(defaultUserService.isMigratedUser(user)) {
-            return defaultCloud11Service.authenticate(request, response, httpHeaders, body);
+            return defaultCloud11Service.authenticate(request, httpHeaders, body);
         }
-        return authenticateByCred(request, response, cred, user, body, httpHeaders, "auth");
+        return authenticateByCred(request, cred, user, body, httpHeaders, "auth");
     }
 
     @Override
-    public Response.ResponseBuilder adminAuthenticate(HttpServletRequest request, HttpServletResponse response,
+    public Response.ResponseBuilder adminAuthenticate(HttpServletRequest request,
                                                       HttpHeaders httpHeaders, String body)
             throws IOException, JAXBException, URISyntaxException {
         JAXBElement<? extends Credentials> cred = extractCredentials(httpHeaders, body);
 
         com.rackspace.idm.domain.entity.User user = cloudUserExtractor.getUserByCredentialType(cred);
         if(defaultUserService.isMigratedUser(user)) {
-            return defaultCloud11Service.adminAuthenticate(request, response, httpHeaders, body);
+            return defaultCloud11Service.adminAuthenticate(request, httpHeaders, body);
         }
-        return authenticateByCred(request, response, cred, user, body, httpHeaders, "auth-admin");
+        return authenticateByCred(request, cred, user, body, httpHeaders, "auth-admin");
     }
 
-    private ResponseBuilder authenticateByCred(HttpServletRequest request, HttpServletResponse response,
+    private ResponseBuilder authenticateByCred(HttpServletRequest request,
                                                JAXBElement<? extends Credentials> cred, com.rackspace.idm.domain.entity.User user, String body,
                                                HttpHeaders httpHeaders, String resource)
         throws IOException, JAXBException, URISyntaxException {
@@ -154,9 +154,9 @@ public class DelegateCloud11Service implements Cloud11Service {
         }
         else { //If we get this far, return Default Service Response
             if(resource.equals("auth")) {
-                return defaultCloud11Service.authenticate(request, response, httpHeaders, body);
+                return defaultCloud11Service.authenticate(request, httpHeaders, body);
             }else{
-                return defaultCloud11Service.adminAuthenticate(request, response, httpHeaders, body);
+                return defaultCloud11Service.adminAuthenticate(request, httpHeaders, body);
             }
         }
     }
