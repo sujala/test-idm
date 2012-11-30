@@ -1295,7 +1295,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     private ResponseBuilder handleRedirect(UriInfo uriInfo, String path) {
         try {
             Response.ResponseBuilder builder = Response.status(302); //.header("Location", uri);
-            builder.header("location", uriInfo.getBaseUri() + config.getString("virtualPath") + path);
+            builder.header("Location", uriInfo.getBaseUri() + config.getString("virtualPath") + path);
             return builder;
         } catch (Exception ex) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR);
