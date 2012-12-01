@@ -5247,7 +5247,7 @@ public class DefaultCloud20ServiceOldTest {
         when(authorizationService.authorizeRacker(any(ScopeAccess.class))).thenReturn(true);
         when(userService.getUser("impersonateUser")).thenReturn(user);
         doReturn(true).when(spy).isValidImpersonatee(user);
-        when(scopeAccessService.getDirectScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(userScopeAccess);
+        when(scopeAccessService.getMostRecentDirectScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(userScopeAccess);
         when(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory());
         spy.impersonate(null, authToken, impersonationRequest);
         verify(scopeAccessService).updateExpiredUserScopeAccess(userScopeAccess, true);
@@ -5287,7 +5287,7 @@ public class DefaultCloud20ServiceOldTest {
         when(authorizationService.authorizeRacker(any(ScopeAccess.class))).thenReturn(true);
         when(userService.getUser("impersonateUser")).thenReturn(user);
         doReturn(true).when(spy).isValidImpersonatee(user);
-        when(scopeAccessService.getDirectScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(userScopeAccess);
+        when(scopeAccessService.getMostRecentDirectScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(userScopeAccess);
         when(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory());
         spy.impersonate(null, authToken, impersonationRequest);
         verify(scopeAccessService).updateExpiredUserScopeAccess(userScopeAccess, false);
@@ -5313,7 +5313,7 @@ public class DefaultCloud20ServiceOldTest {
         when(authorizationService.authorizeRacker(any(ScopeAccess.class))).thenReturn(true);
         when(userService.getUser("impersonateUser")).thenReturn(user);
         doReturn(true).when(spy).isValidImpersonatee(user);
-        when(scopeAccessService.getDirectScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(userScopeAccess);
+        when(scopeAccessService.getMostRecentDirectScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(userScopeAccess);
         when(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory());
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
 
@@ -5341,7 +5341,7 @@ public class DefaultCloud20ServiceOldTest {
         when(authorizationService.authorizeRacker(any(ScopeAccess.class))).thenReturn(true);
         when(userService.getUser("impersonateUser")).thenReturn(user);
         doReturn(true).when(spy).isValidImpersonatee(user);
-        when(scopeAccessService.getDirectScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(userScopeAccess);
+        when(scopeAccessService.getMostRecentDirectScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(userScopeAccess);
         when(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory()).thenReturn(new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory());
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
 
@@ -5816,7 +5816,7 @@ public class DefaultCloud20ServiceOldTest {
         when(userService.getUser("")).thenReturn(user);
         doReturn(true).when(spy).isValidImpersonatee(user);
         when(config.getString("cloudAuth.clientId")).thenReturn("clientId");
-        when(scopeAccessService.getDirectScopeAccessForParentByClientId("uniqueId", "clientId")).thenReturn(userScopeAccess);
+        when(scopeAccessService.getMostRecentDirectScopeAccessForParentByClientId("uniqueId", "clientId")).thenReturn(userScopeAccess);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
 
         assertThat("response builder",spy.impersonate(httpHeaders, authToken, impersonationRequest),equalTo(responseBuilder));
@@ -5841,7 +5841,7 @@ public class DefaultCloud20ServiceOldTest {
         when(userService.getUser("")).thenReturn(user);
         doReturn(true).when(spy).isValidImpersonatee(user);
         when(config.getString("cloudAuth.clientId")).thenReturn("clientId");
-        when(scopeAccessService.getDirectScopeAccessForParentByClientId("uniqueId", "clientId")).thenReturn(userScopeAccess);
+        when(scopeAccessService.getMostRecentDirectScopeAccessForParentByClientId("uniqueId", "clientId")).thenReturn(userScopeAccess);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response builder",spy.impersonate(httpHeaders, authToken, impersonationRequest),equalTo(responseBuilder));
         assertThat("exception type",argumentCaptor.getValue(),instanceOf(BadRequestException.class));

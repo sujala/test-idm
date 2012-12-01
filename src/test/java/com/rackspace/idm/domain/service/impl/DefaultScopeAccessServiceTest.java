@@ -1136,7 +1136,7 @@ public class DefaultScopeAccessServiceTest {
         Permission perm = mock(Permission.class);
         when(clientDao.getClientByClientId(null)).thenReturn(new Application());
         when(scopeAccessDao.getPermissionByParentAndPermission((String) eq(null), any(DefinedPermission.class))).thenReturn(perm);
-        doReturn(null).when(spy).getDirectScopeAccessForParentByClientId(null, null);
+        doReturn(null).when(spy).getMostRecentDirectScopeAccessForParentByClientId(null, null);
         doReturn(new ScopeAccess()).when(spy).addDirectScopeAccess((String) eq(null), any(ScopeAccess.class));
         spy.grantPermissionToClient(null, new GrantedPermission());
         verify(perm,atLeastOnce()).getClientId();
@@ -1148,7 +1148,7 @@ public class DefaultScopeAccessServiceTest {
         Permission perm = mock(Permission.class);
         when(clientDao.getClientByClientId(null)).thenReturn(new Application());
         when(scopeAccessDao.getPermissionByParentAndPermission((String) eq(null), any(DefinedPermission.class))).thenReturn(perm);
-        doReturn(null).when(spy).getDirectScopeAccessForParentByClientId(null, null);
+        doReturn(null).when(spy).getMostRecentDirectScopeAccessForParentByClientId(null, null);
         doReturn(new ScopeAccess()).when(spy).addDirectScopeAccess((String) eq(null), any(ScopeAccess.class));
         spy.grantPermissionToClient(null, new GrantedPermission());
         verify(spy).addDirectScopeAccess((String) eq(null), any(ScopeAccess.class));
@@ -1216,7 +1216,7 @@ public class DefaultScopeAccessServiceTest {
         Permission perm = mock(Permission.class);
         when(clientDao.getClientByCustomerIdAndClientId(null,null)).thenReturn(new Application());
         when(scopeAccessDao.getPermissionByParentAndPermission((String) eq(null), any(DefinedPermission.class))).thenReturn(perm);
-        doReturn(null).when(spy).getDirectScopeAccessForParentByClientId(null, null);
+        doReturn(null).when(spy).getMostRecentDirectScopeAccessForParentByClientId(null, null);
         doReturn(new UserScopeAccess()).when(spy).addDirectScopeAccess((String) eq(null), any(ScopeAccess.class));
         spy.grantPermissionToUser(new User(), new GrantedPermission());
         verify(perm,atLeastOnce()).getClientId();
@@ -1229,7 +1229,7 @@ public class DefaultScopeAccessServiceTest {
         User user = mock(User.class);
         when(clientDao.getClientByCustomerIdAndClientId(null,null)).thenReturn(new Application());
         when(scopeAccessDao.getPermissionByParentAndPermission((String) eq(null), any(DefinedPermission.class))).thenReturn(perm);
-        doReturn(null).when(spy).getDirectScopeAccessForParentByClientId(null, null);
+        doReturn(null).when(spy).getMostRecentDirectScopeAccessForParentByClientId(null, null);
         doReturn(new UserScopeAccess()).when(spy).addDirectScopeAccess((String) eq(null), any(ScopeAccess.class));
         spy.grantPermissionToUser(user, new GrantedPermission());
         verify(user, atLeastOnce()).getUsername();
@@ -1243,7 +1243,7 @@ public class DefaultScopeAccessServiceTest {
         Permission perm = mock(Permission.class);
         when(clientDao.getClientByCustomerIdAndClientId(null, null)).thenReturn(new Application());
         when(scopeAccessDao.getPermissionByParentAndPermission((String) eq(null), any(DefinedPermission.class))).thenReturn(perm);
-        doReturn(null).when(spy).getDirectScopeAccessForParentByClientId(null, null);
+        doReturn(null).when(spy).getMostRecentDirectScopeAccessForParentByClientId(null, null);
         doReturn(new UserScopeAccess()).when(spy).addDirectScopeAccess((String) eq(null), any(ScopeAccess.class));
         spy.grantPermissionToUser(new User(), new GrantedPermission());
         verify(spy).addDirectScopeAccess((String) eq(null), any(ScopeAccess.class));

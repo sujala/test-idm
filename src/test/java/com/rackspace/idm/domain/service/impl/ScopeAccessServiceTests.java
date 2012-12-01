@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.dao.*;
+import com.rackspace.idm.domain.dao.impl.LdapScopeAccessPeristenceRepository;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.NotFoundException;
@@ -19,7 +20,7 @@ import java.util.List;
 public class ScopeAccessServiceTests extends ServiceTestsBase {
 
     UserDao mockUserDao;
-    ScopeAccessDao scopeAccessDao;
+    LdapScopeAccessPeristenceRepository scopeAccessDao;
     ApplicationDao mockClientDao;
     TenantDao tenantDao;
     EndpointDao endpointDao;
@@ -33,7 +34,7 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
 
         mockUserDao = EasyMock.createMock(UserDao.class);
         mockClientDao = EasyMock.createMock(ApplicationDao.class);
-        scopeAccessDao = EasyMock.createMock(ScopeAccessDao.class);
+        scopeAccessDao = EasyMock.createMock(LdapScopeAccessPeristenceRepository.class);
         endpointDao = EasyMock.createMock(EndpointDao.class);
         tenantDao = EasyMock.createMock(TenantDao.class);
         scopeAccessService = new DefaultScopeAccessService();
@@ -100,8 +101,8 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
                 client.getUniqueId(), client.getClientId())).andReturn(
             getFakeScopeAccess());
         EasyMock.replay(scopeAccessDao);
-        scopeAccessService.getDirectScopeAccessForParentByClientId(
-            client.getUniqueId(), client.getClientId());
+        scopeAccessService.getMostRecentDirectScopeAccessForParentByClientId(
+                client.getUniqueId(), client.getClientId());
         EasyMock.verify(scopeAccessDao);
     }
 
@@ -269,14 +270,17 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
         User user = getFakeUser();
         Application client = getFakeClient();
         UserScopeAccess sa = getFakeUserScopeAccess();
+        List<ScopeAccess> saList = getScopeAccessList(sa);
         EasyMock.expect(mockUserDao.authenticate(username, "password"))
             .andReturn(new UserAuthenticationResult(user, true));
 
         EasyMock.expect(
-            scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(
-                user.getUniqueId(), client.getClientId())).andReturn(sa);
+            scopeAccessDao.getDirectScopeAccessForParentByClientId(
+                    user.getUniqueId(), client.getClientId())).andReturn(saList);
 
-        EasyMock.expect(scopeAccessDao.updateScopeAccess(sa)).andReturn(true);
+        EasyMock.expect(scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(userDN, clientId)).andReturn(sa);
+
+        EasyMock.expect(scopeAccessDao.deleteScopeAccess(sa)).andReturn(true);
 
         EasyMock.replay(scopeAccessDao, mockUserDao);
 
@@ -287,21 +291,28 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
 
     }
 
+    private List<ScopeAccess> getScopeAccessList(UserScopeAccess sa) {
+        List<ScopeAccess> saList = new ArrayList<ScopeAccess>();
+        saList.add(sa);
+        return saList;
+    }
+
     @Test
     public void shouldGetUserScopeAccessForClientIdByUsernameAndApiCredentials() {
         User user = getFakeUser();
         Application client = getFakeClient();
         UserScopeAccess sa = getFakeUserScopeAccess();
+        List<ScopeAccess> saList = getScopeAccessList(sa);
 
         String apiKey = "fakeApiKey";
         EasyMock.expect(mockUserDao.authenticateByAPIKey(username, apiKey))
             .andReturn(new UserAuthenticationResult(user, true));
 
-        EasyMock.expect(
-            scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(
-                user.getUniqueId(), client.getClientId())).andReturn(sa);
+        EasyMock.expect(scopeAccessDao.getDirectScopeAccessForParentByClientId(user.getUniqueId(), client.getClientId())).andReturn(saList);
 
-        EasyMock.expect(scopeAccessDao.updateScopeAccess(sa)).andReturn(true);
+        EasyMock.expect(scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(userDN, clientId)).andReturn(sa);
+
+        EasyMock.expect(scopeAccessDao.deleteScopeAccess(sa)).andReturn(true);
 
         EasyMock.replay(scopeAccessDao, mockUserDao);
 
@@ -315,11 +326,14 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
     @Test
     public void shouldGetUserScopeAccessForClientId() {
         UserScopeAccess usao = getFakeUserScopeAccess();
-        EasyMock.expect(
-            scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId("userUniqueId",
-                "clientId")).andReturn(usao);
-        EasyMock.expect(
-            scopeAccessDao.updateScopeAccess(usao)).andReturn(true);
+        List<ScopeAccess> saList = getScopeAccessList(usao);
+
+        EasyMock.expect(scopeAccessDao.getDirectScopeAccessForParentByClientId("userUniqueId", "clientId")).andReturn(saList);
+
+        EasyMock.expect(scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId("userUniqueId", "clientId")).andReturn(usao);
+
+        EasyMock.expect(scopeAccessDao.deleteScopeAccess(usao)).andReturn(true);
+
         EasyMock.replay(scopeAccessDao);
         scopeAccessService.getValidUserScopeAccessForClientId("userUniqueId",
             "clientId");

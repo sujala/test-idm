@@ -459,7 +459,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     public ClientScopeAccess getClientScopeAccessForClientId(String clientUniqueId, String clientId) {
         logger.debug("Getting Client ScopeAccess by clientId", clientId);
         final ClientScopeAccess scopeAccess = (ClientScopeAccess) this.scopeAccessDao
-                .getDirectScopeAccessForParentByClientId(clientUniqueId, clientId);
+                .getMostRecentDirectScopeAccessForParentByClientId(clientUniqueId, clientId);
         logger.debug("Got Client ScopeAccess {} by clientId {}", scopeAccess,
                 clientId);
         return scopeAccess;
@@ -487,7 +487,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public ScopeAccess getDirectScopeAccessForParentByClientId(
+    public ScopeAccess getMostRecentDirectScopeAccessForParentByClientId(
             String parentUniqueID, String clientId) {
         logger.debug("Getting by clientId {}", clientId);
         ScopeAccess sa = scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(parentUniqueID, clientId);
@@ -509,7 +509,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
                 "Getting or creating password reset scope access for user {}",
                 user.getUsername());
         PasswordResetScopeAccess prsa = (PasswordResetScopeAccess) this.scopeAccessDao
-                .getDirectScopeAccessForParentByClientId(user.getUniqueId(),
+                .getMostRecentDirectScopeAccessForParentByClientId(user.getUniqueId(),
                         PASSWORD_RESET_CLIENT_ID);
         if (prsa == null) {
             prsa = new PasswordResetScopeAccess();
@@ -589,7 +589,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public RackerScopeAccess getRackerScopeAccessForClientId(String rackerUniqueId, String clientId) {
         logger.debug("Getting Racker ScopeAccess by clientId", clientId);
-        final RackerScopeAccess scopeAccess = (RackerScopeAccess) scopeAccessDao.getDirectScopeAccessForParentByClientId(rackerUniqueId, clientId);
+        final RackerScopeAccess scopeAccess = (RackerScopeAccess) scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(rackerUniqueId, clientId);
         logger.debug("Got Racker ScopeAccess {} by clientId {}", scopeAccess, clientId);
         return scopeAccess;
     }
@@ -812,7 +812,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             throw new NotFoundException(errMsg);
         }
 
-        ScopeAccess sa = this.getDirectScopeAccessForParentByClientId(
+        ScopeAccess sa = this.getMostRecentDirectScopeAccessForParentByClientId(
                 parentUniqueId, perm.getClientId());
 
         if (sa == null) {
@@ -872,7 +872,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         }
 
         UserScopeAccess sa = (UserScopeAccess) this
-                .getDirectScopeAccessForParentByClientId(user.getUniqueId(),
+                .getMostRecentDirectScopeAccessForParentByClientId(user.getUniqueId(),
                         perm.getClientId());
 
         if (sa == null) {

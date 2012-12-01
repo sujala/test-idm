@@ -87,6 +87,7 @@ public class ServiceTestsBase {
         EasyMock.expect(
             so.isAccessTokenExpired(EasyMock.anyObject(DateTime.class)))
             .andReturn(true);
+        EasyMock.expect(so.getAccessTokenString()).andReturn("token");
 
         EasyMock.expect(so.getUniqueId()).andReturn("soUniqueId").anyTimes();
         EasyMock.replay(so);

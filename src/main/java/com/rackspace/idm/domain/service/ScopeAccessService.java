@@ -64,7 +64,7 @@ public interface ScopeAccessService {
 
     ScopeAccess getScopeAccessByRefreshToken(String refreshToken);
 
-    ScopeAccess getDirectScopeAccessForParentByClientId(String parentUniqueID, String clientId);
+    ScopeAccess getMostRecentDirectScopeAccessForParentByClientId(String parentUniqueID, String clientId);
 
     void updateUserScopeAccessTokenForClientIdByUser(User user, String clientId, String token, Date expires);
 
