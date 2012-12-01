@@ -715,14 +715,16 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     public RackerScopeAccess getValidRackerScopeAccessForClientId(String uniqueId, String rackerId, String clientId) {
         logger.debug("Getting ScopeAccess by clientId {}", clientId);
         RackerScopeAccess scopeAccess = getRackerScopeAccessForClientId(uniqueId, clientId);
-        if(scopeAccess == null){
+        if (scopeAccess == null){
             scopeAccess = new RackerScopeAccess();
             scopeAccess.setClientId(clientId);
             scopeAccess.setRackerId(rackerId);
+            scopeAccess.setAccessTokenString(generateToken());
+            scopeAccess.setAccessTokenExp(new DateTime().plusSeconds(getDefaultCloudAuthTokenExpirationSeconds()).toDate());
             scopeAccessDao.addDirectScopeAccess(uniqueId, scopeAccess);
         }
         //if expired update with new token
-        updateExpiredRackerScopeAccess(scopeAccess);
+        scopeAccess = updateExpiredRackerScopeAccess(scopeAccess);
         logger.debug("Got User ScopeAccess {} by clientId {}", scopeAccess, clientId);
         return scopeAccess;
     }
@@ -984,7 +986,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     private UserScopeAccess createUpdatedScopeAccess(UserScopeAccess scopeAccess, boolean impersonated) {
-        String token = UUID.randomUUID().toString().replace("-", "");
+        String token = generateToken();
         Date expDate;
         if (impersonated) {
             expDate = new DateTime().plusSeconds(getDefaultCloudAuthTokenExpirationSeconds()).toDate();
@@ -1120,11 +1122,17 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     private RackerScopeAccess updateExpiredRackerScopeAccess(RackerScopeAccess scopeAccess) {
-        if (scopeAccess.isAccessTokenExpired(new DateTime()) ) {
-            Date accessTokenExp = new DateTime().plusSeconds(getDefaultCloudAuthTokenExpirationSeconds()).toDate();
+        if (scopeAccess.isAccessTokenExpired(new DateTime())) {
             scopeAccess.setAccessTokenString(this.generateToken());
-            scopeAccess.setAccessTokenExp(accessTokenExp);
-            scopeAccessDao.updateScopeAccess(scopeAccess);
+            scopeAccess.setAccessTokenExp(new DateTime().plusSeconds(getDefaultCloudAuthTokenExpirationSeconds()).toDate());
+            scopeAccessDao.addScopeAccess(getParentDn(scopeAccess.getUniqueId()), scopeAccess);
+            scopeAccessDao.deleteScopeAccess(scopeAccess);
+            return scopeAccess;
+        } else if (scopeAccess.isAccessTokenWithinRefreshWindow(getRefreshTokenWindow())) {
+            scopeAccess.setAccessTokenString(this.generateToken());
+            scopeAccess.setAccessTokenExp(new DateTime().plusSeconds(getDefaultCloudAuthTokenExpirationSeconds()).toDate());
+            scopeAccessDao.addScopeAccess(getParentDn(scopeAccess.getUniqueId()), scopeAccess);
+            return scopeAccess;
         }
         return scopeAccess;
     }

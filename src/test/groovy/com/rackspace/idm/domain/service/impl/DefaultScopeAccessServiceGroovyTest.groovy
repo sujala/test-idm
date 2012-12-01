@@ -19,6 +19,7 @@ import com.unboundid.ldap.sdk.RDN
 import com.unboundid.ldap.sdk.DN
 import com.unboundid.ldap.sdk.ReadOnlyEntry
 import com.unboundid.ldap.sdk.Attribute
+import com.rackspace.idm.domain.entity.RackerScopeAccess
 
 /**
  * Created with IntelliJ IDEA.
@@ -70,6 +71,29 @@ class DefaultScopeAccessServiceGroovyTest extends Specification {
         1 * scopeAccessDao.deleteScopeAccess(_)
     }
 
+    def "update (different parameters) deletes expired"() {
+        given:
+        createMocks()
+        def scopeAccessOne = new UserScopeAccess()
+        def scopeAccessTwo = new UserScopeAccess()
+
+        scopeAccessOne.accessTokenString = "12345"
+        scopeAccessOne.accessTokenExp = new DateTime().minusHours(1).toDate()
+        scopeAccessOne.ldapEntry = new ReadOnlyEntry("cn=12345,ou=users", new Attribute("uid", "uid1"))
+        scopeAccessTwo.accessTokenString = "1234"
+        scopeAccessTwo.accessTokenExp = new DateTime().plusHours(1).toDate()
+        scopeAccessTwo.ldapEntry = new ReadOnlyEntry("cn=1234,ou=users", new Attribute("uid", "uid2"))
+
+        scopeAccessDao.getDirectScopeAccessForParentByClientId(_, _) >> [scopeAccessOne].asList()
+        scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> scopeAccessTwo
+
+        when:
+        service.updateExpiredUserScopeAccess("parentUniqueIdString", "clientId")
+
+        then:
+        1 * scopeAccessDao.deleteScopeAccess(scopeAccessOne)
+    }
+
     def "getParentDn returns the parentDn"() {
         given:
         createMocks()
@@ -85,22 +109,93 @@ class DefaultScopeAccessServiceGroovyTest extends Specification {
 
     def "create updated scope access returns scope access with new token"() {
         given:
+        def scopeAccessOne = createUserScopeAccess()
+        def scopeAccessTwo = createUserScopeAccess()
         def scopeAccess = createUserScopeAccess()
+
         when:
-        def c1 = service.createUpdatedScopeAccess(scopeAccess, false)
-        def c2 = service.createUpdatedScopeAccess(scopeAccess, true)
+        scopeAccessOne = service.createUpdatedScopeAccess(scopeAccessOne, false)
+        scopeAccessTwo = service.createUpdatedScopeAccess(scopeAccessTwo, true)
 
         then:
-        c1.clientId == scopeAccess.clientId
-        c1.clientId == c2.clientId
-        c2.userRsId == c1.userRsId
-        c2.userRsId == scopeAccess.userRsId
-        c1.getAccessTokenExp() > scopeAccess.getAccessTokenExp()
-        c2.getAccessTokenExp() > scopeAccess.getAccessTokenExp()
-        !c1.getAccessTokenString().equals(scopeAccess.getAccessTokenString())
-        !c2.getAccessTokenString().equals(scopeAccess.getAccessTokenString())
+        scopeAccess.clientId == scopeAccessOne.clientId
+        scopeAccess.clientId == scopeAccessTwo.clientId
+        scopeAccess.userRsId == scopeAccessOne.userRsId
+        scopeAccess.userRsId == scopeAccessTwo.userRsId
+        scopeAccess.getAccessTokenExp() < scopeAccessOne.getAccessTokenExp()
+        scopeAccess.getAccessTokenExp() < scopeAccessTwo.getAccessTokenExp()
+        !scopeAccessOne.getAccessTokenString().equals(scopeAccessTwo.getAccessTokenString())
+        !scopeAccessTwo.getAccessTokenString().equals(scopeAccess.getAccessTokenString())
     }
 
+    def "getValidUserScopeAccessForClientId adds scopeAccess and deletes old"() {
+        given:
+        createMocks()
+        def scopeAccessOne = new UserScopeAccess()
+        def scopeAccessTwo = new UserScopeAccess()
+        def scopeAccessThree = new UserScopeAccess()
+        def scopeAccessFour = new UserScopeAccess()
+
+        scopeAccessOne.accessTokenString = "12345"
+        scopeAccessOne.accessTokenExp = new DateTime().minusHours(1).toDate()
+        scopeAccessOne.ldapEntry = new ReadOnlyEntry("cn=12345,ou=users", new Attribute("uid", "uid1"))
+        scopeAccessTwo.accessTokenString = "1234"
+        scopeAccessTwo.accessTokenExp = new DateTime().plusHours(config.getInt("token.refreshWindowHours")).minusHours(1).toDate()
+        scopeAccessTwo.ldapEntry = new ReadOnlyEntry("cn=1234,ou=users", new Attribute("uid", "uid2"))
+        scopeAccessThree.accessTokenString = "1234"
+        scopeAccessThree.accessTokenExp = new DateTime().minusHours(1).toDate()
+        scopeAccessThree.ldapEntry = new ReadOnlyEntry("cn=1234,ou=users", new Attribute("uid", "uid2"))
+        scopeAccessFour.accessTokenExp = new DateTime().plusHours(config.getInt("token.refreshWindowHours")).plusHours(2).toDate()
+        scopeAccessFour.accessTokenString = "1234"
+        scopeAccessFour.ldapEntry = new ReadOnlyEntry("cn=1234,ou=users", new Attribute("uid", "uid2"))
+
+        scopeAccessDao.getDirectScopeAccessForParentByClientId(_, _) >> [scopeAccessOne].asList()
+        scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >>> [ scopeAccessTwo, scopeAccessThree, scopeAccessFour ]
+
+        when:
+        service.getValidUserScopeAccessForClientId("userUniqueId", "clientId")
+        service.getValidUserScopeAccessForClientId("userUniqueId", "clientId")
+        service.getValidUserScopeAccessForClientId("userUniqueId", "clientId")
+
+        then:
+        4 * scopeAccessDao.deleteScopeAccess(_)
+        2 * scopeAccessDao.addScopeAccess(_, _)
+
+    }
+
+    def "getValidRackerScopeAccessForClientId adds and deletes scopeAccess as appropriate"() {
+        given:
+        createMocks()
+
+        def rackerScopeAccessOne = new RackerScopeAccess()
+        def rackerScopeAccessTwo = new RackerScopeAccess()
+        def rackerScopeAccessThree = new RackerScopeAccess()
+
+        rackerScopeAccessOne.accessTokenString = "12345"
+        rackerScopeAccessOne.accessTokenExp = new DateTime().minusHours(1).toDate()
+        rackerScopeAccessOne.ldapEntry = new ReadOnlyEntry("cn=12345,ou=users,dn=com", new Attribute("uid", "uid1"))
+
+        rackerScopeAccessTwo.accessTokenString = "12345"
+        rackerScopeAccessTwo.accessTokenExp = new DateTime().plusHours(config.getInt("token.refreshWindowHours")).minusHours(2).toDate()
+        rackerScopeAccessTwo.ldapEntry = new ReadOnlyEntry("cn=12345,ou=users,dn=com", new Attribute("uid", "uid1"))
+
+        rackerScopeAccessThree.accessTokenString = "12345"
+        rackerScopeAccessThree.accessTokenExp = new DateTime().plusHours(config.getInt("token.refreshWindowHours")).plusHours(2).toDate()
+        rackerScopeAccessThree.ldapEntry = new ReadOnlyEntry("cn=12345,ou=users,dn=com", new Attribute("uid", "uid1"))
+
+        scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> null >>> [ rackerScopeAccessOne, rackerScopeAccessTwo, rackerScopeAccessThree ]
+
+        when:
+        service.getValidRackerScopeAccessForClientId("12345", "12345", "12345")
+        service.getValidRackerScopeAccessForClientId("12345", "12345", "12345")
+        service.getValidRackerScopeAccessForClientId("12345", "12345", "12345")
+        service.getValidRackerScopeAccessForClientId("12345", "12345", "12345")
+
+        then:
+        1 * scopeAccessDao.addDirectScopeAccess(_, _)
+        2 * scopeAccessDao.addScopeAccess(_, _)
+        1 * scopeAccessDao.deleteScopeAccess(_)
+    }
 
     def createMocks() {
         userDao = Mock()
