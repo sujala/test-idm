@@ -845,6 +845,7 @@ public class DefaultCloud20ServiceOldTest {
         UserScopeAccess scopeAccess = new UserScopeAccess();
         scopeAccess.setAccessTokenExp(new Date(5000, 1, 1));
         scopeAccess.setAccessTokenString("uuuuuuuuuu");
+        when(userService.checkAndGetUserById(anyString())).thenReturn(new User());
         when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
         spy.authenticate(null, authenticationRequest);
         verify(tenantService).hasTenantAccess(org.mockito.Matchers.any(UserScopeAccess.class), eq("tenantId"));
@@ -929,6 +930,7 @@ public class DefaultCloud20ServiceOldTest {
         scopeAccess.setAccessTokenString("foo");
         when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
         when(tenantService.hasTenantAccess(org.mockito.Matchers.any(UserScopeAccess.class), anyString())).thenReturn(true);
+        when(userService.checkAndGetUserById(anyString())).thenReturn(new User());
         spy.authenticate(null, authenticationRequest);
         verify(scopeAccessService).getOpenstackEndpointsForScopeAccess(any(ScopeAccess.class));
     }
@@ -946,6 +948,7 @@ public class DefaultCloud20ServiceOldTest {
         scopeAccess.setAccessTokenString("foo");
         when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
         when(tenantService.hasTenantAccess(org.mockito.Matchers.any(UserScopeAccess.class), anyString())).thenReturn(true);
+        when(userService.checkAndGetUserById(anyString())).thenReturn(new User());
         spy.authenticate(null, authenticationRequest);
         verify(spy).stripEndpoints(any(List.class));
     }
@@ -965,6 +968,7 @@ public class DefaultCloud20ServiceOldTest {
         when(tenantService.hasTenantAccess(org.mockito.Matchers.any(UserScopeAccess.class), anyString())).thenReturn(true);
         when(tokenConverterCloudV20.toToken(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(new Token());
         when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
+        when(userService.checkAndGetUserById(anyString())).thenReturn(new User());
         spy.authenticate(null, authenticationRequest);
         verify(authConverterCloudV20).toAuthenticationResponse(any(User.class), any(ScopeAccess.class), any(List.class), any(List.class));
     }
@@ -1047,6 +1051,7 @@ public class DefaultCloud20ServiceOldTest {
         when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(tenantService.hasTenantAccess(any(ScopeAccess.class), eq("tenantId"))).thenReturn(true);
         when(authConverterCloudV20.toAuthenticationResponse(any(User.class), any(ScopeAccess.class), any(List.class), any(List.class))).thenReturn(authenticateResponse);
+        when(userService.checkAndGetUserById(anyString())).thenReturn(new User());
         Response.ResponseBuilder responseBuilder = spy.authenticate(null, authenticationRequest);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(200));
     }
@@ -1072,6 +1077,7 @@ public class DefaultCloud20ServiceOldTest {
         when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
         when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(tenantService.hasTenantAccess(any(ScopeAccess.class), eq("tenantId"))).thenReturn(true);
+        when(userService.checkAndGetUserById(anyString())).thenReturn(new User());
         ArrayList<OpenstackEndpoint> openstackEndpoints = new ArrayList<OpenstackEndpoint>();
         OpenstackEndpoint endpoint = new OpenstackEndpoint();
         endpoint.setTenantId("tenantId");
@@ -1205,6 +1211,7 @@ public class DefaultCloud20ServiceOldTest {
         when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(scopeAccess);
         when(tenantService.hasTenantAccess(org.mockito.Matchers.any(UserScopeAccess.class), anyString())).thenReturn(true);
         when(tokenConverterCloudV20.toToken(org.mockito.Matchers.any(ScopeAccess.class))).thenReturn(new Token());
+        when(userService.checkAndGetUserById(anyString())).thenReturn(new User());
         spy.authenticate(null, authenticationRequest);
         verify(tenantService, atLeastOnce()).hasTenantAccess(org.mockito.Matchers.any(UserScopeAccess.class), eq("tenantId"));
     }
