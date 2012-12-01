@@ -94,7 +94,7 @@ public class DefaultApplicationServiceTest {
         client.setRCN("rcn");
         when(customerDao.getCustomerByCustomerId(anyString())).thenReturn(new Customer());
         when(clientDao.getClientByClientId(anyString())).thenReturn(client);
-        when(scopeAccessDao.getDirectScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(new ClientScopeAccess());
+        when(scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(new ClientScopeAccess());
         when(scopeAccessDao.addDirectScopeAccess(anyString(), any(ScopeAccess.class))).thenReturn(new ScopeAccess());
         when(scopeAccessDao.getPermissionByParentAndPermission(anyString(), eq(definedPermission))).thenReturn(new DefinedPermission());
         defaultApplicationService.addDefinedPermission(definedPermission);

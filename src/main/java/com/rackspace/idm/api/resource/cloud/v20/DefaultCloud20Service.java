@@ -29,6 +29,7 @@ import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.validation.RolePrecedenceValidator;
 import com.rackspace.idm.validation.Validator20;
+import com.unboundid.ldap.sdk.DN;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
@@ -320,6 +321,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException("Cannot add identity roles to tenant.");
             }
 
+            precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
             precedenceValidator.verifyCallerRolePrecedence(caller, role);
 
             TenantRole tenantrole = new TenantRole();
@@ -659,6 +661,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             User user = userService.checkAndGetUserById(userId);
             User caller = userService.getUserByAuthToken(authToken);
 
+            precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
             precedenceValidator.verifyCallerRolePrecedence(caller, cRole);
 
             checkForMultipleIdentityRoles(user, cRole);
@@ -780,9 +783,10 @@ public class DefaultCloud20Service implements Cloud20Service {
                     throw new NotAuthenticatedException(errMsg);
                 }
                 usa = (UserScopeAccess) sa;
-                scopeAccessService.updateExpiredUserScopeAccess(usa);
 
                 user = getUserByIdForAuthentication(usa.getUserRsId());
+
+                scopeAccessService.updateExpiredUserScopeAccess(user.getUniqueId(), sa.getClientId());
 
                 if (!StringUtils.isBlank(authenticationRequest.getTenantName()) && !tenantService.hasTenantAccess(usa, authenticationRequest.getTenantName())) {
                     String errMsg = "Token doesn't belong to Tenant with Id/Name: '" + authenticationRequest.getTenantName() + "'";

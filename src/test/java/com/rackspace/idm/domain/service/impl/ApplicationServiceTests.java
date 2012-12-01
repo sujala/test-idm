@@ -183,7 +183,7 @@ public class ApplicationServiceTests {
             getFakeClient());
 
         EasyMock.expect(
-            mockScopeAccessDao.getDirectScopeAccessForParentByClientId(uniqueId,
+            mockScopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(uniqueId,
                 clientId)).andReturn(getFakeScopeAccess());
         EasyMock.expect(
             mockScopeAccessDao.getPermissionsByParentAndPermission(

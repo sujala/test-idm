@@ -49,8 +49,11 @@ public interface ScopeAccessDao {
 
     List<ScopeAccess> getScopeAccessesByParent(String parentUniqueId);
 
-    ScopeAccess getDirectScopeAccessForParentByClientId(String parentUniqueId,
-            String clientId);
+    List<ScopeAccess> getDirectScopeAccessForParentByClientId(String parentUniqueId,
+                                                              String clientId);
+
+    ScopeAccess getMostRecentDirectScopeAccessForParentByClientId(String parentUniqueId,
+                                                              String clientId);
 
     GrantedPermission grantPermission(String scopeAccessUniqueId,
         GrantedPermission permission);
@@ -72,4 +75,5 @@ public interface ScopeAccessDao {
 
     List<ScopeAccess> getScopeAccessesByParentAndClientId(
         String parentUniqueId, String clientId);
+
 }

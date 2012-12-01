@@ -140,7 +140,7 @@ class DefaultCloud20ServiceTest extends Specification {
     def "create user without default region throws bad request"() {
         given:
         createMocks()
-        allowAccess()
+    allowAccess()
 
         userDao.isUsernameUnique(_) >> true
 
@@ -1281,24 +1281,27 @@ class DefaultCloud20ServiceTest extends Specification {
         userDao.getUserByUsername(_) >> userAdmin
         tenantDao.getTenant(sharedRandom) >> new Tenant()
 
-        clientRoleDao.getClientRole(_) >>> [
-                clientRole("role", 750),
-                clientRole("role", 500),
-                clientRole("role", 50)
-        ]
+        clientRoleDao.getClientRole(_) >> clientRole("rolerole", 50)
 
         clientDao.getClientByClientId(_) >> new Application()
         clientRoleDao.getIdentityRoles(_, _) >> identityRoles
 
+        //setup addee weight
+        tenantRoleDao.getTenantRoleForUser(defaultUser, identityRoles) >>> [
+                userAdminTenantRole, adminTenantRole, serviceAdminTenantRole
+        ] >> defaultTenantRole
+
         //setup caller weight
-        tenantRoleDao.getTenantRoleForUser(_, _) >>> [
-                userAdminTenantRole, userAdminTenantRole,
-                adminTenantRole, adminTenantRole, adminTenantRole,
-                serviceAdminTenantRole, serviceAdminTenantRole, serviceAdminTenantRole, serviceAdminTenantRole
+        tenantRoleDao.getTenantRoleForUser(userAdmin, identityRoles) >>> [
+                defaultTenantRole, userAdminTenantRole, adminTenantRole,
+                defaultTenantRole, userAdminTenantRole, adminTenantRole
         ]
 
         when:
         def statuses = []
+        statuses.add(cloud20Service.addRolesToUserOnTenant(headers, sharedRandom, sharedRandom, sharedRandom, sharedRandom).build().status)
+        statuses.add(cloud20Service.addRolesToUserOnTenant(headers, sharedRandom, sharedRandom, sharedRandom, sharedRandom).build().status)
+        statuses.add(cloud20Service.addRolesToUserOnTenant(headers, sharedRandom, sharedRandom, sharedRandom, sharedRandom).build().status)
         statuses.add(cloud20Service.addRolesToUserOnTenant(headers, sharedRandom, sharedRandom, sharedRandom, sharedRandom).build().status)
         statuses.add(cloud20Service.addRolesToUserOnTenant(headers, sharedRandom, sharedRandom, sharedRandom, sharedRandom).build().status)
         statuses.add(cloud20Service.addRolesToUserOnTenant(headers, sharedRandom, sharedRandom, sharedRandom, sharedRandom).build().status)
@@ -1330,9 +1333,15 @@ class DefaultCloud20ServiceTest extends Specification {
                 clientRole("availableToServiceAdmin", 50)
         ]
 
-
+        //setup addee weight
+        tenantRoleDao.getTenantRoleForUser(defaultUser, identityRoles) >>> [
+                defaultTenantRole,
+                defaultTenantRole,
+                userAdminTenantRole,
+                adminTenantRole
+        ]
         //setup caller weight
-        tenantRoleDao.getTenantRoleForUser(_, _) >>> [
+        tenantRoleDao.getTenantRoleForUser(userAdmin, identityRoles) >>> [
                 userAdminTenantRole,
                 adminTenantRole,
                 adminTenantRole,

@@ -84,58 +84,6 @@ public class RolesResourceTest {
         assertThat("response status", response.getStatus(), equalTo(200));
     }
 
-    @Test
-    public void addRole_callsAuthorizationService_verifyIdmSuperAdminAccess() throws Exception {
-        doNothing().when(spy).validateRole(null);
-        ClientRole clientRole = new ClientRole();
-        clientRole.setId("clientRoleId");
-        when(rolesConverter.toClientRole(any(Role.class))).thenReturn(clientRole);
-        spy.addRole(null, null);
-        verify(authorizationService).verifyIdmSuperAdminAccess(null);
-    }
-
-    @Test
-    public void addRole_callsApplicationService_addClientRole() throws Exception {
-        doNothing().when(authorizationService).verifyIdmSuperAdminAccess(null);
-        doNothing().when(spy).validateRole(null);
-        ClientRole clientRole = new ClientRole();
-        clientRole.setId("clientRoleId");
-        when(rolesConverter.toClientRole(any(Role.class))).thenReturn(clientRole);
-        spy.addRole(null, null);
-        verify(applicationService).addClientRole(clientRole);
-    }
-
-    @Test
-    public void addRole_callsRolesConverter_toClientRole() throws Exception {
-        doNothing().when(authorizationService).verifyIdmSuperAdminAccess(null);
-        doNothing().when(spy).validateRole(null);
-        ClientRole clientRole = new ClientRole();
-        clientRole.setId("clientRoleId");
-        when(rolesConverter.toClientRole(any(Role.class))).thenReturn(clientRole);
-        spy.addRole(null, null);
-        verify(rolesConverter).toClientRole(any(Role.class));
-    }
-
-    @Test
-    public void addRole_returnsCreatedStatus() throws Exception {
-        doNothing().when(authorizationService).verifyIdmSuperAdminAccess(null);
-        doNothing().when(spy).validateRole(null);
-        ClientRole clientRole = new ClientRole();
-        clientRole.setId("clientRoleId");
-        when(rolesConverter.toClientRole(any(Role.class))).thenReturn(clientRole);
-        Response response = spy.addRole(null, null);
-        assertThat("response status", response.getStatus(), equalTo(201));
-    }
-
-    @Test
-    public void updateRole_callsApplicationService_getById() throws Exception {
-        Role role = validRole();
-        doNothing().when(authorizationService).verifyIdmSuperAdminAccess(null);
-        when(applicationService.getById("appId")).thenReturn(new Application());
-        rolesResource.updateRole(null,"foo", role);
-        verify(applicationService).getById("appId");
-    }
-
     @Test(expected = BadRequestException.class)
     public void updateRole_withNullApplication_throwsBadRequestException() throws Exception {
         Role role = validRole();
@@ -164,40 +112,11 @@ public class RolesResourceTest {
         verify(applicationService).getClientRoleById("id");
     }
 
-    @Test
-    public void deleteRole_callsAuthorizationService_verifyIdmSuperAdminAccess() throws Exception {
-        rolesResource.deleteRole(null, null);
-        verify(authorizationService).verifyIdmSuperAdminAccess(null);
-    }
-
-    @Test
-    public void deleteRole_callsApplicationService_getClientRoleById() throws Exception {
-        doNothing().when(authorizationService).verifyIdmSuperAdminAccess(null);
-        rolesResource.deleteRole(null, "roleId");
-        verify(applicationService).getClientRoleById("roleId");
-    }
-
     @Test(expected = NotFoundException.class)
     public void deleteRole_withNullClientId_throwsNotFoundException() throws Exception {
         doNothing().when(authorizationService).verifyIdmSuperAdminAccess(null);
         when(applicationService.getClientRoleById("roleId")).thenReturn(null);
         rolesResource.deleteRole(null, "roleId");
-    }
-
-    @Test
-    public void deleteRole_callsApplicationService_deleteClientRole() throws Exception {
-        doNothing().when(authorizationService).verifyIdmSuperAdminAccess(null);
-        when(applicationService.getClientRoleById("roleId")).thenReturn(new ClientRole());
-        rolesResource.deleteRole(null, "roleId");
-        verify(applicationService).deleteClientRole(any(ClientRole.class));
-    }
-
-    @Test
-    public void deleteRole_returnsNoContentStatus() throws Exception {
-        doNothing().when(authorizationService).verifyIdmSuperAdminAccess(null);
-        when(applicationService.getClientRoleById("roleId")).thenReturn(new ClientRole());
-        Response response = rolesResource.deleteRole(null, "roleId");
-        assertThat("response status", response.getStatus(), equalTo(204));
     }
 
     @Test(expected = BadRequestException.class)

@@ -37,20 +37,31 @@ public class RolePrecedenceValidator {
 
     public void verifyCallerRolePrecedence(User user, ClientRole role) {
         ClientRole userIdentityRole = applicationService.getUserIdentityRole(user, getCloudAuthClientId(), getIdentityRoleNames());
+        if (userIdentityRole == null) {
+            throw new ForbiddenException(NOT_AUTHORIZED);
+        }
         compareWeights(userIdentityRole.getRsWeight(), role.getRsWeight());
     }
 
     public void verifyCallerRolePrecedence(User user, TenantRole role) {
         ClientRole userIdentityRole = applicationService.getUserIdentityRole(user, getCloudAuthClientId(), getIdentityRoleNames());
         ClientRole clientRole = applicationService.getClientRoleById(role.getRoleRsId());
+        if (userIdentityRole == null) {
+            throw new ForbiddenException(NOT_AUTHORIZED);
+        }
         compareWeights(userIdentityRole.getRsWeight(), clientRole.getRsWeight());
     }
 
     public void verifyCallerPrecedenceOverUser(User caller, User user) {
         ClientRole callerIdentityRole = applicationService.getUserIdentityRole(caller, getCloudAuthClientId(), getIdentityRoleNames());
         ClientRole userIdentityRole = applicationService.getUserIdentityRole(user, getCloudAuthClientId(), getIdentityRoleNames());
-
-        compareWeights(callerIdentityRole.getRsWeight(), userIdentityRole.getRsWeight());
+        if (callerIdentityRole != null) {
+            if (userIdentityRole != null) {
+                compareWeights(callerIdentityRole.getRsWeight(), userIdentityRole.getRsWeight());
+            }
+        } else {
+            throw new ForbiddenException(NOT_AUTHORIZED);
+        }
     }
 
     private void compareWeights(int callerWeight, int roleWeight) {

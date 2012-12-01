@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.exception.NotFoundException;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.audit.Audit;
@@ -11,6 +12,7 @@ import com.unboundid.ldap.sdk.persist.LDAPPersister;
 import com.unboundid.util.LDAPSDKRuntimeException;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Component
@@ -233,9 +235,10 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
     }
 
     @Override
-    public ScopeAccess getDirectScopeAccessForParentByClientId(String parentUniqueId, String clientId) {
+    public List<ScopeAccess> getDirectScopeAccessForParentByClientId(String parentUniqueId, String clientId) {
         getLogger().debug(FIND_SCOPE_ACCESS_FOR_PARENT_BY_CLIENT_ID, parentUniqueId, clientId);
 
+        List<ScopeAccess> objectList = new ArrayList<ScopeAccess>();
         String dn = new LdapDnBuilder(parentUniqueId).build();
 
         try {
@@ -254,7 +257,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
                 "Found {} ScopeAccess(s) for Parent: {} by ClientId: {}",
                 new Object[]{searchEntries.size(), parentUniqueId, clientId});
             for (final SearchResultEntry searchResultEntry : searchEntries) {
-                return decodeScopeAccess(searchResultEntry);
+                objectList.add(decodeScopeAccess(searchResultEntry));
             }
         } catch (final LDAPException e) {
             if (e.getResultCode() != ResultCode.NO_SUCH_OBJECT) {
@@ -262,7 +265,32 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
                 throw new IllegalStateException(e.getMessage(), e);
             }
         }
-        return null;
+        return objectList;
+    }
+
+    @Override
+    public ScopeAccess getMostRecentDirectScopeAccessForParentByClientId(String parentUniqueId, String clientId) {
+        List<ScopeAccess> scopeAccessList = getDirectScopeAccessForParentByClientId(parentUniqueId, clientId);
+        return getMostRecentScopeAccess(scopeAccessList);
+    }
+
+    private ScopeAccess getMostRecentScopeAccess(List<ScopeAccess> scopeAccessList) {
+        int mostRecentIndex = 0;
+
+        if (scopeAccessList.size() == 0) {
+            String errMsg = "Scope access not found.";
+            getLogger().warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+
+        for (int i = 0; i < scopeAccessList.size(); i++) {
+            Date max = scopeAccessList.get(mostRecentIndex).getAccessTokenExp();
+            Date current = scopeAccessList.get(i).getAccessTokenExp();
+            if (max.before(current)) {
+                mostRecentIndex = i;
+            }
+        }
+        return scopeAccessList.get(mostRecentIndex);
     }
 
     @Override

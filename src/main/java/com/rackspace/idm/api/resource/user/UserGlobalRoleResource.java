@@ -2,7 +2,13 @@ package com.rackspace.idm.api.resource.user;
 
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
+import com.rackspace.idm.domain.service.impl.*;
 import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.ForbiddenException;
+import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.validation.RolePrecedenceValidator;
+import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,40 +17,39 @@ import org.springframework.stereotype.Component;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * User Application Roles Resource.
- * 
+ *
  */
 @Consumes( { MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML })
 @Produces( { MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML })
 @Component
 public class UserGlobalRoleResource {
 
-	private final ScopeAccessService scopeAccessService;
-	private final UserService userService;
-	private final ApplicationService applicationService;
-	private final AuthorizationService authorizationService;
-	private final TenantService tenantService;
+    @Autowired
+	private ScopeAccessService scopeAccessService;
+    @Autowired
+	private UserService userService;
+    @Autowired
+	private ApplicationService applicationService;
+    @Autowired
+	private AuthorizationService authorizationService;
+    @Autowired
+	private TenantService tenantService;
+    @Autowired
+    private RolePrecedenceValidator precedenceValidator;
+    @Autowired
+    private Configuration config;
 
-	private final Logger logger = LoggerFactory.getLogger(this.getClass());
-
-	@Autowired
-	public UserGlobalRoleResource(UserService userService,
-			AuthorizationService authorizationService,
-			ApplicationService applicationService,
-			ScopeAccessService scopeAccessService, TenantService tenantService) {
-		this.applicationService = applicationService;
-		this.userService = userService;
-		this.scopeAccessService = scopeAccessService;
-		this.authorizationService = authorizationService;
-		this.tenantService = tenantService;
-	}
+	private Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	/**
 	 * Grant a global role for a user
-	 * 
-	 * 
+	 *
+	 *
 	 * @param authHeader
 	 *            HTTP Authorization header for authenticating the caller.
 	 * @param userId
@@ -61,13 +66,25 @@ public class UserGlobalRoleResource {
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
 
 		// TODO: Refactor. This logic should be in the tenant role service
-		User user = this.userService.loadUser(userId);
 		ClientRole role = this.applicationService.getClientRoleById(roleId);
-		if (role == null) {
-			String errMsg = String.format("Role %s not found", roleId);
-			logger.warn(errMsg);
-			throw new BadRequestException(errMsg);
-		}
+        if (role == null) {
+            String errMsg = String.format("Role %s not found", roleId);
+            logger.warn(errMsg);
+            throw new BadRequestException(errMsg);
+        }
+
+        User user = this.userService.loadUser(userId);
+        User caller = userService.getUserByAuthToken(authHeader);
+
+        precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
+        precedenceValidator.verifyCallerRolePrecedence(caller, role);
+
+        if (StringUtils.startsWithIgnoreCase(role.getName(), "identity:")) {
+            ClientRole userIdentityRole = applicationService.getUserIdentityRole(user, getCloudAuthClientId(), getIdentityRoleNames());
+            if (userIdentityRole != null) {
+                throw new BadRequestException("A user cannot have more than one identity:* role");
+            }
+        }
 
 		TenantRole tenantRole = new TenantRole();
 		tenantRole.setClientId(role.getClientId());
@@ -98,11 +115,21 @@ public class UserGlobalRoleResource {
 
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
 
-		User user = userService.loadUser(userId);
-		TenantRole tenantRole = tenantService.getTenantRoleForUserById(user, roleId);
-		this.tenantService.deleteTenantRoleForUser(user, tenantRole);
+        User user = this.userService.loadUser(userId);
+        User caller = userService.getUserByAuthToken(authHeader);
 
-		return Response.noContent().build();
+        TenantRole tenantRole = tenantService.getTenantRoleForUserById(user, roleId);
+
+        if (user.getId().equals(caller.getId()) && StringUtils.startsWithIgnoreCase(tenantRole.getName(), "identity:")) {
+            throw new BadRequestException("A user cannot delete their own identity role");
+        }
+
+        precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
+        precedenceValidator.verifyCallerRolePrecedence(caller, tenantRole);
+
+        this.tenantService.deleteTenantRoleForUser(user, tenantRole);
+
+        return Response.noContent().build();
 	}
 
     /**
@@ -129,19 +156,24 @@ public class UserGlobalRoleResource {
         ScopeAccess scopeAccess = scopeAccessService.getAccessTokenByAuthHeader(authHeader);
         authorizationService.authorizeIdmSuperAdminOrRackspaceClient(scopeAccess);
 
-		User user = userService.loadUser(userId);
+        Tenant tenant = tenantService.checkAndGetTenant(tenantId);
 
-        Tenant tenant = tenantService.getTenant(tenantId);
-
-        if(tenant==null){
-            throw new BadRequestException("Tenant with id: " + tenantId + " not found.");
-        }
-
+        User user = userService.loadUser(userId);
+        User caller = userService.getUserByAuthToken(authHeader);
         TenantRole tenantRole = createTenantRole(tenantId, roleId);
 
-	    tenantService.addTenantRoleToUser(user, tenantRole);
+        precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
+        precedenceValidator.verifyCallerRolePrecedence(caller, tenantRole);
 
-		return Response.noContent().build();
+        List<String> identityRoleNames = getIdentityRoleNames();
+
+        if (identityRoleNames.contains(tenantRole.getName())) {
+            throw new BadRequestException("Cannot add identity roles to tenant.");
+        }
+
+        tenantService.addTenantRoleToUser(user, tenantRole);
+
+        return Response.noContent().build();
 	}
 
 	/**
@@ -169,10 +201,15 @@ public class UserGlobalRoleResource {
         authorizationService.authorizeIdmSuperAdminOrRackspaceClient(scopeAccess);
 
 		User user = this.userService.loadUser(userId);
+        User caller = userService.getUserByAuthToken(authHeader);
 
-		TenantRole tenantRole = new TenantRole();
-		tenantRole.setRoleRsId(roleId);
-		tenantRole.setTenantIds(new String[]{tenantId});
+        TenantRole tenantRole = tenantService.getTenantRoleForUserById(user, roleId);
+        if (tenantRole == null) {
+            throw new NotFoundException(String.format("User %s does not have tenantRole %s", user, roleId));
+        }
+
+        precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
+        precedenceValidator.verifyCallerRolePrecedence(caller, tenantRole);
 		
 		this.tenantService.deleteTenantRoleForUser(user, tenantRole);
 
@@ -195,4 +232,45 @@ public class UserGlobalRoleResource {
         
         return tenantRole;
 	}
+
+    private List<String> getIdentityRoleNames() {
+        List<String> names = new ArrayList<String>();
+        names.add(config.getString("cloudAuth.userRole"));
+        names.add(config.getString("cloudAuth.userAdminRole"));
+        names.add(config.getString("cloudAuth.adminRole"));
+        names.add(config.getString("cloudAuth.serviceAdminRole"));
+        return names;
+    }
+
+    private String getCloudAuthClientId() {
+        return config.getString("cloudAuth.clientId");
+    }
+
+    public void setPrecedenceValidator(RolePrecedenceValidator validator) {
+        this.precedenceValidator = validator;
+    }
+
+    public void setConfig(Configuration config) {
+        this.config = config;
+    }
+
+    public void setScopeAccessService(DefaultScopeAccessService scopeAccessService) {
+        this.scopeAccessService = scopeAccessService;
+    }
+
+    public void setUserService(DefaultUserService userService) {
+        this.userService = userService;
+    }
+
+    public void setApplicationService(DefaultApplicationService applicationService) {
+        this.applicationService = applicationService;
+    }
+
+    public void setAuthorizationService(DefaultAuthorizationService authorizationService) {
+        this.authorizationService = authorizationService;
+    }
+
+    public void setTenantService(DefaultTenantService tenantService) {
+        this.tenantService = tenantService;
+    }
 }

@@ -102,8 +102,7 @@ public class DefaultApplicationService implements ApplicationService {
             throw new IllegalStateException("Client doesn't exist");
         }
 
-        ScopeAccess sa = this.scopeAccessDao.getDirectScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId());
-
+        ScopeAccess sa = this.scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId());
         if (sa == null) {
             sa = new ClientScopeAccess();
             sa.setClientId(client.getClientId());
@@ -457,9 +456,11 @@ public class DefaultApplicationService implements ApplicationService {
 
         TenantRole match = tenantRoleDao.getTenantRoleForUser(user, identityRoles);
 
-        for (ClientRole role : identityRoles) {
-            if (role.getId().equals(match.getRoleRsId())) {
-                return role;
+        if (match != null) {
+            for (ClientRole role : identityRoles) {
+                if (role.getId().equals(match.getRoleRsId())) {
+                    return role;
+                }
             }
         }
         return null;

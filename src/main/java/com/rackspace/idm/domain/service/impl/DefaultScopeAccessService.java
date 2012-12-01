@@ -10,6 +10,7 @@ import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.AuthHeaderHelper;
+import com.unboundid.ldap.sdk.DN;
 import com.unboundid.ldap.sdk.LDAPException;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
@@ -333,10 +334,10 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         if (definedPermission.getGrantedByDefault()) {
             // Granted by default, but has the user been provisioned for this
             // defaultApplicationService?
-            ScopeAccess provisionedSa = scopeAccessDao
+            List<ScopeAccess> scopeAccessList = scopeAccessDao
                     .getDirectScopeAccessForParentByClientId(user.getUniqueId(),
                             client.getClientId());
-            if (provisionedSa != null) {
+            if (scopeAccessList.size() > 0) {
                 // Provisioned, so granted.
                 return true;
             }
@@ -489,7 +490,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     public ScopeAccess getDirectScopeAccessForParentByClientId(
             String parentUniqueID, String clientId) {
         logger.debug("Getting by clientId {}", clientId);
-        ScopeAccess sa = this.scopeAccessDao.getDirectScopeAccessForParentByClientId(parentUniqueID, clientId);
+        ScopeAccess sa = scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(parentUniqueID, clientId);
         logger.debug("Got by clientId {}", clientId);
         return sa;
     }
@@ -697,23 +698,15 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     // Return UserScopeAccess from the directory, valid, expired or null
     @Override
     public UserScopeAccess getUserScopeAccessForClientId(String userUniqueId, String clientId) {
-        final UserScopeAccess scopeAccess = (UserScopeAccess) this.scopeAccessDao
-                .getDirectScopeAccessForParentByClientId(userUniqueId, clientId);
-        if (scopeAccess == null) {
-            String errMsg = "Scope access not found.";
-            logger.warn(errMsg);
-            throw new NotFoundException(errMsg);
-        }
-        return scopeAccess;
+        return (UserScopeAccess) scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(userUniqueId, clientId);
     }
 
     // Return UserScopeAccess from directory, refreshes expired
     @Override
     public UserScopeAccess getValidUserScopeAccessForClientId(String userUniqueId, String clientId) {
         logger.debug("Getting ScopeAccess by clientId {}", clientId);
-        UserScopeAccess scopeAccess = getUserScopeAccessForClientId(userUniqueId, clientId);
         //if expired update with new token
-        updateExpiredUserScopeAccess(scopeAccess);
+        UserScopeAccess scopeAccess = updateExpiredUserScopeAccess(userUniqueId, clientId);
         logger.debug("Got User ScopeAccess {} by clientId {}", scopeAccess, clientId);
         return scopeAccess;
     }
@@ -961,22 +954,63 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public UserScopeAccess updateExpiredUserScopeAccess(UserScopeAccess scopeAccess) {
-        return updateExpiredUserScopeAccess(scopeAccess, false);
+    public UserScopeAccess updateExpiredUserScopeAccess(String parentUniqueId, String clientId) {
+        List<ScopeAccess> scopeAccessList = scopeAccessDao.getDirectScopeAccessForParentByClientId(parentUniqueId, clientId);
+        ScopeAccess mostRecent = scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(parentUniqueId, clientId);
+
+        for (ScopeAccess scopeAccess : scopeAccessList) {
+            if (!scopeAccess.getAccessTokenString().equals(mostRecent.getAccessTokenString())) {
+                if (scopeAccess.isAccessTokenExpired(new DateTime())) {
+                    scopeAccessDao.deleteScopeAccess(scopeAccess);
+                }
+            }
+        }
+        return updateExpiredUserScopeAccess((UserScopeAccess) mostRecent, false);
     }
 
     @Override
     public UserScopeAccess updateExpiredUserScopeAccess(UserScopeAccess scopeAccess, boolean impersonated) {
-        if (scopeAccess.isAccessTokenExpired(new DateTime()) || scopeAccess.isAccessTokenWithinRefreshWindow(getRefreshTokenWindow())) {
-            Date accessTokenExp = new DateTime().plusSeconds(getDefaultCloudAuthTokenExpirationSeconds()).toDate();
-            if (impersonated) {
-                accessTokenExp = new DateTime().plusSeconds(getDefaultImpersonatedTokenExpirationSeconds()).toDate();
-            }
-            scopeAccess.setAccessTokenString(this.generateToken());
-            scopeAccess.setAccessTokenExp(accessTokenExp);
-            scopeAccessDao.updateScopeAccess(scopeAccess);
+        if (scopeAccess.isAccessTokenExpired(new DateTime())) {
+            UserScopeAccess newScopeAccess = createUpdatedScopeAccess(scopeAccess, impersonated);
+            scopeAccessDao.addScopeAccess(getParentDn(scopeAccess.getUniqueId()), newScopeAccess);
+            scopeAccessDao.deleteScopeAccess(scopeAccess);
+            return newScopeAccess;
+        } else if (scopeAccess.isAccessTokenWithinRefreshWindow(getRefreshTokenWindow())) {
+            UserScopeAccess newScopeAccess = createUpdatedScopeAccess(scopeAccess, impersonated);
+            scopeAccessDao.addScopeAccess(getParentDn(scopeAccess.getUniqueId()), newScopeAccess);
+            return newScopeAccess;
         }
         return scopeAccess;
+    }
+
+    private UserScopeAccess createUpdatedScopeAccess(UserScopeAccess scopeAccess, boolean impersonated) {
+        String token = UUID.randomUUID().toString().replace("-", "");
+        Date expDate;
+        if (impersonated) {
+            expDate = new DateTime().plusSeconds(getDefaultCloudAuthTokenExpirationSeconds()).toDate();
+        } else {
+            expDate = new DateTime().plusSeconds(getDefaultCloudAuthTokenExpirationSeconds()).toDate();
+        }
+
+        UserScopeAccess copy = new UserScopeAccess();
+        copy.setClientId(scopeAccess.getClientId());
+        copy.setClientRCN(scopeAccess.getClientRCN());
+        copy.setUsername(scopeAccess.getUsername());
+        copy.setUserRCN(scopeAccess.getUserRCN());
+        copy.setUserRsId(scopeAccess.getUserRsId());
+        copy.setAccessTokenExp(expDate);
+        copy.setAccessTokenString(token);
+
+        return copy;
+    }
+
+    private String getParentDn(String entryDnString) {
+        try {
+            DN entryDn = new DN(entryDnString);
+            return entryDn.getParentString();
+        } catch (LDAPException e) {
+            return null;
+        }
     }
 
     @Override

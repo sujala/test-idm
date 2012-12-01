@@ -788,7 +788,7 @@ public class DefaultScopeAccessServiceTest {
         DefinedPermission definedPermission = new DefinedPermission();
         definedPermission.setEnabled(true);
         definedPermission.setGrantedByDefault(true);
-        when(scopeAccessDao.getDirectScopeAccessForParentByClientId(null,null)).thenReturn(new ScopeAccess());
+        when(scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(null, null)).thenReturn(new ScopeAccess());
         doReturn(definedPermission).when(spy).getPermissionForParent((String) eq(null),any(Permission.class));
         assertThat("boolean",spy.doesUserHavePermissionForClient(new User(), new Permission(), new Application()),equalTo(true));
     }
@@ -798,7 +798,7 @@ public class DefaultScopeAccessServiceTest {
         DefinedPermission definedPermission = new DefinedPermission();
         definedPermission.setEnabled(true);
         definedPermission.setGrantedByDefault(true);
-        when(scopeAccessDao.getDirectScopeAccessForParentByClientId(null,null)).thenReturn(null);
+        when(scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(null, null)).thenReturn(null);
         doReturn(definedPermission).when(spy).getPermissionForParent((String) eq(null),any(Permission.class));
         assertThat("boolean",spy.doesUserHavePermissionForClient(new User(), new Permission(), new Application()),equalTo(false));
     }
@@ -914,7 +914,7 @@ public class DefaultScopeAccessServiceTest {
     public void getOrCreatePasswordResetScopeAccessForUser_passwordResetScopeAccessNotExpired_doesNotSetAccessTokenExp() throws Exception {
         User user = new User();
         PasswordResetScopeAccess prsa = mock(PasswordResetScopeAccess.class);
-        when(scopeAccessDao.getDirectScopeAccessForParentByClientId(null,"PASSWORDRESET")).thenReturn(prsa);
+        when(scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(null, "PASSWORDRESET")).thenReturn(prsa);
         when(prsa.isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
         defaultScopeAccessService.getOrCreatePasswordResetScopeAccessForUser(user);
         verify(prsa,never()).setAccessTokenExp(any(Date.class));
@@ -1298,7 +1298,7 @@ public class DefaultScopeAccessServiceTest {
         when(scopeAccess.isAccessTokenWithinRefreshWindow(100)).thenReturn(true);
         doReturn(100).when(spy).getDefaultCloudAuthTokenExpirationSeconds();
         doReturn("foo").when(spy).generateToken();
-        spy.updateExpiredUserScopeAccess(scopeAccess);
+        spy.updateExpiredUserScopeAccess("parentUniqueId", "clientId");
         verify(scopeAccessDao).updateScopeAccess(scopeAccess);
     }
 
@@ -1310,7 +1310,7 @@ public class DefaultScopeAccessServiceTest {
         when(scopeAccess.isAccessTokenWithinRefreshWindow(100)).thenReturn(false);
         doReturn(100).when(spy).getDefaultCloudAuthTokenExpirationSeconds();
         doReturn("foo").when(spy).generateToken();
-        spy.updateExpiredUserScopeAccess(scopeAccess);
+        spy.updateExpiredUserScopeAccess("parentUniqueId", "clientId");
         verify(scopeAccessDao).updateScopeAccess(scopeAccess);
     }
 
@@ -1322,7 +1322,7 @@ public class DefaultScopeAccessServiceTest {
         when(scopeAccess.isAccessTokenWithinRefreshWindow(100)).thenReturn(true);
         doReturn(100).when(spy).getDefaultCloudAuthTokenExpirationSeconds();
         doReturn("foo").when(spy).generateToken();
-        spy.updateExpiredUserScopeAccess(scopeAccess);
+        spy.updateExpiredUserScopeAccess("parentUniqueId", "clientId");
         verify(scopeAccessDao).updateScopeAccess(scopeAccess);
     }
 
@@ -1332,7 +1332,7 @@ public class DefaultScopeAccessServiceTest {
         when(scopeAccess.isAccessTokenExpired(any(DateTime.class))).thenReturn(false);
         doReturn(100).when(spy).getRefreshTokenWindow();
         when(scopeAccess.isAccessTokenWithinRefreshWindow(100)).thenReturn(false);
-        spy.updateExpiredUserScopeAccess(scopeAccess);
+        spy.updateExpiredUserScopeAccess("parentUniqueId", "clientId");
         verify(scopeAccessDao,never()).updateScopeAccess(scopeAccess);
     }
 
@@ -1341,7 +1341,7 @@ public class DefaultScopeAccessServiceTest {
         UserScopeAccess userScopeAccess = new UserScopeAccess();
         userScopeAccess.setAccessTokenExpired();
         when(scopeAccessDao.updateScopeAccess(userScopeAccess)).thenReturn(true);
-        defaultScopeAccessService.updateExpiredUserScopeAccess(userScopeAccess);
+        defaultScopeAccessService.updateExpiredUserScopeAccess("parentUniqueId", "clientId");
         assertThat("updatesExpiredUserScopeAccess", userScopeAccess.isAccessTokenExpired(new DateTime()), equalTo(false));
     }
 
@@ -1356,7 +1356,7 @@ public class DefaultScopeAccessServiceTest {
         UserScopeAccess userScopeAccess = new UserScopeAccess();
         userScopeAccess.setAccessTokenExp(new DateTime().minusDays(2).toDate());
         userScopeAccess.setAccessTokenString("1234567890");
-        when(scopeAccessDao.getDirectScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(userScopeAccess);
+        when(scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(userScopeAccess);
         when(scopeAccessDao.updateScopeAccess(userScopeAccess)).thenReturn(true);
         UserScopeAccess uas = defaultScopeAccessService.getValidUserScopeAccessForClientId("12345", "12345");
         uas.isAccessTokenExpired(new DateTime());
@@ -1368,7 +1368,7 @@ public class DefaultScopeAccessServiceTest {
         UserScopeAccess userScopeAccess = new UserScopeAccess();
         userScopeAccess.setAccessTokenExp(new DateTime().plusHours(5).toDate());
         userScopeAccess.setAccessTokenString("1234567890");
-        when(scopeAccessDao.getDirectScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(userScopeAccess);
+        when(scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(userScopeAccess);
         when(scopeAccessDao.updateScopeAccess(userScopeAccess)).thenReturn(true);
         UserScopeAccess uas = defaultScopeAccessService.getValidUserScopeAccessForClientId("12345", "12345");
         assertThat("newUserScopeAccessWithinWindow", uas.getAccessTokenString(), not("1234567890"));
@@ -1379,7 +1379,7 @@ public class DefaultScopeAccessServiceTest {
         UserScopeAccess userScopeAccess = new UserScopeAccess();
         userScopeAccess.setAccessTokenExp(new DateTime().plusDays(1).toDate());
         userScopeAccess.setAccessTokenString("1234567890");
-        when(scopeAccessDao.getDirectScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(userScopeAccess);
+        when(scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(userScopeAccess);
         UserScopeAccess uas = defaultScopeAccessService.getUserScopeAccessForClientId("12345", "12345");
         assertThat("newUserScopeAccessNoneExpired", uas.getAccessTokenString(), equalTo("1234567890"));
     }
@@ -1389,7 +1389,7 @@ public class DefaultScopeAccessServiceTest {
         RackerScopeAccess rackerScopeAccess = new RackerScopeAccess();
         rackerScopeAccess.setAccessTokenExp(new DateTime().minusDays(2).toDate());
         rackerScopeAccess.setAccessTokenString("1234567890");
-        when(scopeAccessDao.getDirectScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(rackerScopeAccess);
+        when(scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(rackerScopeAccess);
         when(scopeAccessDao.updateScopeAccess(rackerScopeAccess)).thenReturn(true);
         RackerScopeAccess rsa = defaultScopeAccessService.getValidRackerScopeAccessForClientId("12345", "12345", "12345");
         rsa.isAccessTokenExpired(new DateTime());

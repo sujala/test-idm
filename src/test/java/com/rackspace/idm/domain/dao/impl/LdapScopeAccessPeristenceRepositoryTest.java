@@ -504,7 +504,7 @@ public class LdapScopeAccessPeristenceRepositoryTest extends InMemoryLdapIntegra
         searchEntries.add(searchResult);
         doReturn(searchEntries).when(spy).getMultipleEntries(eq("cn=uniqueId"), eq(SearchScope.SUB), any(Filter.class));
         doReturn(scopeAccess).when(spy).decodeScopeAccess(searchResult);
-        assertThat("returns scope access",spy.getDirectScopeAccessForParentByClientId("cn=uniqueId", "clientId"),equalTo(scopeAccess));
+        assertThat("returns scope access",spy.getMostRecentDirectScopeAccessForParentByClientId("cn=uniqueId", "clientId"),equalTo(scopeAccess));
     }
 
     @Test

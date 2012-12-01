@@ -402,7 +402,7 @@ public class DefaultTenantServiceTest {
         TenantRole role = new TenantRole();
         when(clientDao.getClientByClientId(null)).thenReturn(new Application());
         when(clientDao.getClientRoleByClientIdAndRoleName(null, null)).thenReturn(new ClientRole());
-        when(scopeAccessDao.getDirectScopeAccessForParentByClientId("123", null)).thenReturn(new ScopeAccess());
+        when(scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId("123", null)).thenReturn(new ScopeAccess());
         when(scopeAccessDao.addDirectScopeAccess(eq("123"),any(UserScopeAccess.class))).thenReturn(new ScopeAccess());
         doNothing().when(spy).addTenantRoleToUser(null, role);
         spy.addTenantRoleToUser(user, role);
@@ -469,7 +469,7 @@ public class DefaultTenantServiceTest {
         application.setUniqueId("123");
         when(clientDao.getClientByClientId(null)).thenReturn(new Application());
         when(clientDao.getClientRoleByClientIdAndRoleName(null, null)).thenReturn(new ClientRole());
-        when(scopeAccessDao.getDirectScopeAccessForParentByClientId("123", null)).thenReturn(new ScopeAccess());
+        when(scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId("123", null)).thenReturn(new ScopeAccess());
         doNothing().when(spy).addTenantRoleToClient(null, tenantRole);
         spy.addTenantRoleToClient(application,tenantRole);
         verify(scopeAccessDao,never()).addDirectScopeAccess(anyString(),any(ScopeAccess.class));

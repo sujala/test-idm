@@ -91,7 +91,7 @@ public class LdapScopeAccessPeristenceRepositoryIntegrationTest extends InMemory
 
         sa = repo.addDirectScopeAccess(client.getUniqueId(), sa);
         sa = repo.addDirectScopeAccess(client.getUniqueId(), sa);
-        sa = repo.getDirectScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId());
+        sa = repo.getMostRecentDirectScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId());
 
         Assert.assertEquals(sa.getClientId(), client.getClientId());
     }
@@ -106,7 +106,7 @@ public class LdapScopeAccessPeristenceRepositoryIntegrationTest extends InMemory
 
         repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
-        sa = repo.getDirectScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId());
+        sa = repo.getMostRecentDirectScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId());
 
         Assert.assertEquals(sa.getClientId(), client.getClientId());
     }
@@ -126,7 +126,7 @@ public class LdapScopeAccessPeristenceRepositoryIntegrationTest extends InMemory
 
         repo.addDirectScopeAccess(client.getUniqueId(), userScopeAccess);
 
-        final ScopeAccess scopeAccessObject = repo.getDirectScopeAccessForParentByClientId(client.getUniqueId(),
+        final ScopeAccess scopeAccessObject = repo.getMostRecentDirectScopeAccessForParentByClientId(client.getUniqueId(),
                 client.getClientId());
 
         Assert.assertTrue(scopeAccessObject instanceof UserScopeAccess);
@@ -143,7 +143,7 @@ public class LdapScopeAccessPeristenceRepositoryIntegrationTest extends InMemory
         clientScopeAccess.setAccessTokenString(UUID.randomUUID().toString().replace("-", ""));
         repo.addDirectScopeAccess(client.getUniqueId(), clientScopeAccess);
 
-        final ScopeAccess scopeAccessObject = repo.getDirectScopeAccessForParentByClientId(client.getUniqueId(),
+        final ScopeAccess scopeAccessObject = repo.getMostRecentDirectScopeAccessForParentByClientId(client.getUniqueId(),
                 client.getClientId());
 
         Assert.assertTrue(scopeAccessObject instanceof ClientScopeAccess);
@@ -162,7 +162,7 @@ public class LdapScopeAccessPeristenceRepositoryIntegrationTest extends InMemory
         sa.setUserRsId(userId);
         repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
-        final ScopeAccess scopeAccessObject = repo.getDirectScopeAccessForParentByClientId(client.getUniqueId(),
+        final ScopeAccess scopeAccessObject = repo.getMostRecentDirectScopeAccessForParentByClientId(client.getUniqueId(),
                 client.getClientId());
 
         Assert.assertTrue(scopeAccessObject instanceof PasswordResetScopeAccess);
@@ -296,13 +296,13 @@ public class LdapScopeAccessPeristenceRepositoryIntegrationTest extends InMemory
 
         repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
-        sa = repo.getDirectScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId());
+        sa = repo.getMostRecentDirectScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId());
 
         Assert.assertEquals(sa.getClientId(), client.getClientId());
 
         repo.deleteScopeAccess(sa);
 
-        sa = repo.getDirectScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId());
+        sa = repo.getMostRecentDirectScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId());
 
         Assert.assertNull(sa);
     }
@@ -404,7 +404,7 @@ public class LdapScopeAccessPeristenceRepositoryIntegrationTest extends InMemory
 
         repo.addDirectScopeAccess(client.getUniqueId(), sa);
 
-        sa = repo.getDirectScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId());
+        sa = repo.getMostRecentDirectScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId());
 
         Assert.assertEquals(sa.getClientId(), client.getClientId());
     }

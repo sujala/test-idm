@@ -5488,7 +5488,7 @@ public class DefaultCloud20ServiceOldTest {
         userScopeAccess.setAccessTokenString("notExpired");
 
         when(scopeAccessService.getScopeAccessByAccessToken("tokenId")).thenReturn(userScopeAccess);
-        when(scopeAccessService.updateExpiredUserScopeAccess(userScopeAccess)).thenReturn(userScopeAccess);
+        when(scopeAccessService.updateExpiredUserScopeAccess("parentUniqueId", "clientId")).thenReturn(userScopeAccess);
         doReturn(new User()).when(spy).getUserByIdForAuthentication("rsId");
         when(tenantService.hasTenantAccess(userScopeAccess, "tenantName")).thenReturn(false);
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
@@ -5617,7 +5617,7 @@ public class DefaultCloud20ServiceOldTest {
         impersonatedScopeAccess.setImpersonatingToken("impersonatingToken");
         when(scopeAccessService.getScopeAccessByAccessToken("tokenId")).thenReturn(impersonatedScopeAccess);
         when(scopeAccessService.getScopeAccessByAccessToken("impersonatingToken")).thenReturn(userScopeAccess);
-        when(scopeAccessService.updateExpiredUserScopeAccess(userScopeAccess)).thenReturn(userScopeAccess);
+        when(scopeAccessService.updateExpiredUserScopeAccess("parentUniqueId", "clientId")).thenReturn(userScopeAccess);
         doReturn(userTest).when(spy).getUserByIdForAuthentication("rsId");
         when(tenantService.hasTenantAccess(userScopeAccess, "tenantName")).thenReturn(true);
         when(scopeAccessService.getOpenstackEndpointsForScopeAccess(userScopeAccess)).thenReturn(openstackEndpoints);

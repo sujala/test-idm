@@ -5,15 +5,15 @@ import com.rackspace.idm.api.converter.RolesConverter;
 import com.rackspace.idm.api.resource.ParentResource;
 import com.rackspace.idm.api.resource.pagination.Paginator;
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
-import com.rackspace.idm.domain.entity.Application;
-import com.rackspace.idm.domain.entity.ClientRole;
-import com.rackspace.idm.domain.entity.FilterParam;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.AuthorizationService;
+import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.validation.InputValidator;
+import com.rackspace.idm.validation.RolePrecedenceValidator;
 import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -51,10 +51,13 @@ public class RolesResource extends ParentResource {
     }
 
     @Autowired
-    Paginator<ClientRole> paginator;
-
+    private RolePrecedenceValidator precedenceValidator;
     @Autowired
-    Configuration config;
+    private Paginator<ClientRole> paginator;
+    @Autowired
+    private Configuration config;
+    @Autowired
+    private UserService userService;
 
     /**
      * Get a role
@@ -109,6 +112,7 @@ public class RolesResource extends ParentResource {
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
         validateRole(role);
         ClientRole clientRole = rolesConverter.toClientRole(role);
+        clientRole.setRsWeight(config.getInt("cloudAuth.special.rsWeight"));
         applicationService.addClientRole(clientRole);
         String locationUri = clientRole.getId();
         return Response.created(URI.create(locationUri)).build();
@@ -137,6 +141,10 @@ public class RolesResource extends ParentResource {
         if(clientRole==null){
             throw new NotFoundException("Role with id: " + roleId + " not found.");
         }
+
+        User caller = userService.getUserByAuthToken(authHeader);
+        precedenceValidator.verifyCallerRolePrecedence(caller, clientRole);
+
         clientRole.copyChanges(updatedRole);
         applicationService.updateClientRole(clientRole);
         return Response.noContent().build();
@@ -160,6 +168,10 @@ public class RolesResource extends ParentResource {
         if(clientRole==null){
             throw new NotFoundException("role with id: " + roleId + " not found");
         }
+
+        User caller = userService.getUserByAuthToken(authHeader);
+        precedenceValidator.verifyCallerRolePrecedence(caller, clientRole);
+
 		applicationService.deleteClientRole(clientRole);
 		return Response.noContent().build();
 	}
@@ -182,5 +194,13 @@ public class RolesResource extends ParentResource {
 
     public void setPaginator(Paginator<ClientRole> paginator) {
         this.paginator = paginator;
+    }
+
+    public void setPrecedenceValidator(RolePrecedenceValidator validator) {
+        this.precedenceValidator = validator;
+    }
+
+    public void setUserService(UserService userService) {
+        this.userService = userService;
     }
 }

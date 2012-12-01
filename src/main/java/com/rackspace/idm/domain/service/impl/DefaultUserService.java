@@ -139,6 +139,8 @@ public class DefaultUserService implements UserService {
         cloudUsa.setUserRCN(user.getCustomerId());
         cloudUsa.setClientId(getCloudAuthClientId());
         cloudUsa.setClientRCN(getRackspaceCustomerId());
+        cloudUsa.setAccessTokenString(UUID.randomUUID().toString().replace("-", ""));
+        cloudUsa.setAccessTokenExp(accessTokenExp);
 
         this.scopeAccessDao.addDirectScopeAccess(user.getUniqueId(), cloudUsa);
 
