@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.exception.NotFoundException;
 import org.junit.runner.RunWith;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -285,7 +286,7 @@ public class LdapScopeAccessPeristenceRepositoryIntegrationTest extends InMemory
         Assert.assertTrue(doesAccessTokenHavePermission);
     }
 
-    @Test
+    @Test(expected = NotFoundException.class)
     public void testDeleteScopeAccess() {
         ScopeAccess sa = new ClientScopeAccess();
         sa.setClientId(client.getClientId());
@@ -303,8 +304,6 @@ public class LdapScopeAccessPeristenceRepositoryIntegrationTest extends InMemory
         repo.deleteScopeAccess(sa);
 
         sa = repo.getMostRecentDirectScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId());
-
-        Assert.assertNull(sa);
     }
 
     @Test

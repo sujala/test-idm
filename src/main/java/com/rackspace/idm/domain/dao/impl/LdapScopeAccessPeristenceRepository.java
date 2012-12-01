@@ -215,7 +215,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
 
         try {
             final Filter filter = new LdapSearchBuilder()
-                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_SCOPEACCESS)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_IMPERSONATEDSCOPEACCESS)
                 .addEqualAttribute(ATTR_IMPERSONATING_USERNAME, username).build();
 
             final List<SearchResultEntry> searchEntries = getMultipleEntries(dn, SearchScope.SUB, filter);

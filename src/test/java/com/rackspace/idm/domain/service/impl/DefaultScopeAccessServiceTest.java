@@ -1,13 +1,5 @@
 package com.rackspace.idm.domain.service.impl;
 
-import org.junit.runner.RunWith;
-
-import org.mockito.InjectMocks;
-import org.mockito.Matchers;
-import org.mockito.Mock;
-
-import org.mockito.runners.MockitoJUnitRunner;
-
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
 import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.*;
@@ -23,8 +15,12 @@ import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import org.powermock.api.mockito.PowerMockito;
+import org.mockito.InjectMocks;
+import org.mockito.Matchers;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -365,22 +361,6 @@ public class DefaultScopeAccessServiceTest {
     }
 
     @Test
-    public void addImpersonatedScopeAccess_TokenExistsAndIsExpiredAndImpersonatingTokenIsNull_callsScopeAccessDao_updateScopeAccess() throws Exception {
-        when(scopeAccessDao.getImpersonatedScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(new ImpersonatedScopeAccess());
-        defaultScopeAccessService.addImpersonatedScopeAccess(new User(), "clientId", "impToken", impersonationRequest);
-        verify(scopeAccessDao).updateScopeAccess(any(ScopeAccess.class));
-    }
-
-    @Test
-    public void addImpersonatedScopeAccess_whenScopeAccessExistsAndTokenExpiredAndImpersonatedTokenNull_callsSetImpersonatedScopeAccess() throws Exception {
-
-        when(scopeAccessDao.getImpersonatedScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(new ImpersonatedScopeAccess());
-        User user = new User();
-        spy.addImpersonatedScopeAccess(user, null, null, impersonationRequest);
-        verify(spy).setImpersonatedScopeAccess(eq(user), eq(impersonationRequest), any(ImpersonatedScopeAccess.class));
-    }
-
-    @Test
     public void addImpersonatedScopeAccess_tokenExistsAndIsNotExpiredAndImpersonatingTokenNotNullAndImpersonatingTokenEqualsParameter_returnsSameAccessToken() throws Exception {
         ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
         impersonatedScopeAccess.setAccessTokenExp(new DateTime().plusSeconds(100).toDate());
@@ -394,45 +374,12 @@ public class DefaultScopeAccessServiceTest {
     }
 
     @Test
-    public void addImpersonatedScopeAccess_tokenExistsAndIsNotExpiredAndImpersonatingTokenNotNullAndImpersonatingTokenNotEqualToParameter_callsSetImpersonatedScopeAccess() throws Exception {
-        ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
-        impersonatedScopeAccess.setAccessTokenExp(new DateTime().plusSeconds(100).toDate());
-        impersonatedScopeAccess.setAccessTokenString("foo");
-        impersonatedScopeAccess.setImpersonatingToken("token");
-        User user = new User();
-        when(scopeAccessDao.getImpersonatedScopeAccessForParentByClientId(null,"impersonatedUser")).thenReturn(impersonatedScopeAccess);
-        spy.addImpersonatedScopeAccess(user, null, "foo", impersonationRequest);
-        verify(spy).setImpersonatedScopeAccess(eq(user), eq(impersonationRequest), any(ImpersonatedScopeAccess.class));
-    }
-
-    @Test
-    public void addImpersonatedScopeAccess_tokenExistsAndIsNotExpiredAndImpersonatingTokenNull_callsSetImpersonatedScopeAccess() throws Exception {
-        ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
-        impersonatedScopeAccess.setAccessTokenExp(new DateTime().plusSeconds(100).toDate());
-        impersonatedScopeAccess.setAccessTokenString("foo");
-        User user = new User();
-        when(scopeAccessDao.getImpersonatedScopeAccessForParentByClientId(null,"impersonatedUser")).thenReturn(impersonatedScopeAccess);
-        spy.addImpersonatedScopeAccess(user, null, "foo", impersonationRequest);
-        verify(spy).setImpersonatedScopeAccess(eq(user), eq(impersonationRequest), any(ImpersonatedScopeAccess.class));
-    }
-
-    @Test
     public void addImpersonatedScopeAccess_tokenExistsAndIsExpiredAndImpersonatingTokenNotNullAndImpersonatingTokenEqualToParameter_callsSetImpersonatedScopeAccess() throws Exception {
         ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
         impersonatedScopeAccess.setImpersonatingToken("token");
         User user = new User();
         when(scopeAccessDao.getImpersonatedScopeAccessForParentByClientId(null,"impersonatedUser")).thenReturn(impersonatedScopeAccess);
         spy.addImpersonatedScopeAccess(user, null, "token", impersonationRequest);
-        verify(spy).setImpersonatedScopeAccess(eq(user), eq(impersonationRequest), any(ImpersonatedScopeAccess.class));
-    }
-
-    @Test
-    public void addImpersonatedScopeAccess_tokenExistsAndIsExpiredAndImpersonatingTokenNotNullAndImpersonatingTokenNotEqualToParameter_callsSetImpersonatedScopeAccess() throws Exception {
-        ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
-        impersonatedScopeAccess.setImpersonatingToken("token");
-        User user = new User();
-        when(scopeAccessDao.getImpersonatedScopeAccessForParentByClientId(null,"impersonatedUser")).thenReturn(impersonatedScopeAccess);
-        spy.addImpersonatedScopeAccess(user, null, "foo", impersonationRequest);
         verify(spy).setImpersonatedScopeAccess(eq(user), eq(impersonationRequest), any(ImpersonatedScopeAccess.class));
     }
 
