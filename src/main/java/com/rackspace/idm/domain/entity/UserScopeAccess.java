@@ -30,9 +30,9 @@ public class UserScopeAccess extends ScopeAccess implements HasRefreshToken {
     private String userRCN;
 
     @Override
-    @LDAPGetter(attribute=LdapRepository.ATTR_CLIENT_ID, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED)
-    public String getClientId() {
-        return super.getClientId();
+    @LDAPGetter(attribute=LdapRepository.ATTR_ACCESS_TOKEN, inRDN=true, filterUsage=FilterUsage.ALWAYS_ALLOWED)
+    public String getAccessTokenString() {
+        return super.getAccessTokenString();
     }
 
     @Override
