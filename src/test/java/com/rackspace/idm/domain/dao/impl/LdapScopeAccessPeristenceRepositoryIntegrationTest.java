@@ -18,6 +18,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -304,6 +305,22 @@ public class LdapScopeAccessPeristenceRepositoryIntegrationTest extends InMemory
         repo.deleteScopeAccess(sa);
 
         sa = repo.getMostRecentDirectScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId());
+    }
+
+    @Test (expected = NotFoundException.class)
+    public void testDeleteScopeAccessByDn() {
+        ScopeAccess sa = new ClientScopeAccess();
+        sa.setClientId(client.getClientId());
+        sa.setAccessTokenExp(new Date());
+        sa.setAccessTokenString(UUID.randomUUID().toString().replace("-", ""));
+
+        repo.addDirectScopeAccess(client.getUniqueId(), sa);
+        sa = repo.getMostRecentDirectScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId());
+        assert(sa != null);
+
+        repo.deleteScopeAccessByDn(sa.getUniqueId());
+        repo.getMostRecentDirectScopeAccessForParentByClientId(client.getUniqueId(), client.getClientId());
+
     }
 
     @Test

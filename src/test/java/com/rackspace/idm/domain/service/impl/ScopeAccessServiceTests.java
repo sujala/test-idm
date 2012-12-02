@@ -122,15 +122,6 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
 
     }
 
-    @Test
-    public void shouldUpdateScopeAccess() {
-        ScopeAccess sa = getFakeScopeAccess();
-        EasyMock.expect(scopeAccessDao.updateScopeAccess(sa)).andReturn(true);
-        EasyMock.replay(scopeAccessDao);
-        scopeAccessService.updateScopeAccess(sa);
-        EasyMock.verify(scopeAccessDao);
-    }
-
     @Test(expected = IllegalArgumentException.class)
     public void shouldNotUpdateScopeAccessIfScopeAccessIsNull() {
         scopeAccessService.updateScopeAccess(null);
@@ -371,22 +362,6 @@ public class ScopeAccessServiceTests extends ServiceTestsBase {
         EasyMock.replay(scopeAccessDao);
         scopeAccessService.getRackerScopeAccessForClientId("rackerUniqueId",
             clientId);
-        EasyMock.verify(scopeAccessDao);
-    }
-
-    @Test
-    public void shouldGetasswordResetScopeAccessForUser() {
-        User user = getFakeUser();
-        PasswordResetScopeAccess prsao = getFakePasswordResetScopeAccessObject();
-        DateTime pastTime = new DateTime();
-        prsao.setAccessTokenExp(pastTime.minusSeconds(10).toDate());
-        EasyMock.expect(
-            scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(
-                user.getUniqueId(), "PASSWORDRESET")).andReturn(prsao);
-        EasyMock.expect(scopeAccessDao.updateScopeAccess(prsao)).andReturn(
-            Boolean.TRUE);
-        EasyMock.replay(scopeAccessDao);
-        scopeAccessService.getOrCreatePasswordResetScopeAccessForUser(user);
         EasyMock.verify(scopeAccessDao);
     }
 

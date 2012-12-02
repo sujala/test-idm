@@ -675,6 +675,16 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
         return false;
     }
 
+    @Override
+    public void deleteScopeAccessByDn(String scopeAccessDn) {
+        getLogger().debug("Deleting ScopeAccess: {}", scopeAccessDn);
+
+        final Audit audit = Audit.log(scopeAccessDn).delete();
+        deleteEntryAndSubtree(scopeAccessDn, audit);
+        audit.succeed();
+    }
+
+
     public ScopeAccess addScopeAccess(String parentUniqueId, ScopeAccess scopeAccess) {
         getLogger().info("Adding ScopeAccess: {}", scopeAccess);
         try {

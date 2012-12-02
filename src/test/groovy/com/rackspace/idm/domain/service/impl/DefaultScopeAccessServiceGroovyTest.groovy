@@ -20,6 +20,8 @@ import com.unboundid.ldap.sdk.DN
 import com.unboundid.ldap.sdk.ReadOnlyEntry
 import com.unboundid.ldap.sdk.Attribute
 import com.rackspace.idm.domain.entity.RackerScopeAccess
+import com.rackspace.idm.domain.entity.PasswordResetScopeAccess
+import com.rackspace.idm.domain.entity.User
 
 /**
  * Created with IntelliJ IDEA.
@@ -44,12 +46,77 @@ class DefaultScopeAccessServiceGroovyTest extends Specification {
 
     @Shared def randomness = UUID.randomUUID()
     @Shared def sharedRandom
-    @Shared def futureDate = new DateTime().plusHours(12).toDate()
-    @Shared def expiredDate = new DateTime().minusHours(12).toDate()
-    @Shared def refreshDate = new DateTime().minusHours(1).toDate()
+    @Shared def expiredDate
+    @Shared def refreshDate
+    @Shared def futureDate
+    @Shared def dn = "accessToken=123456,cn=TOKENS,ou=users,o=rackspace"
+    @Shared def parentDn = "cn=TOKENS,ou=users,o=rackspace"
 
     def setupSpec() {
         sharedRandom = ("$randomness").replace("-", "")
+    }
+
+    def setup() {
+        expiredDate = new DateTime().minusHours(12).toDate()
+        refreshDate = new DateTime().plusHours(config.getInt("token.refreshWindowHours")).minusHours(2).toDate()
+        futureDate = new DateTime().plusHours(config.getInt("token.refreshWindowHours")).plusHours(2).toDate()
+    }
+
+    def "getOrCreatePassWordResetScopeAccessForUser adds new scopeAccess and deletes old"() {
+        given:
+        createMocks()
+        def mockedUser = Mock(User)
+        mockedUser.getUniqueId() >> "rsId=1,ou=users,o=rackspace"
+
+        PasswordResetScopeAccess scopeAccessOne = new PasswordResetScopeAccess()
+        PasswordResetScopeAccess scopeAccessTwo = new PasswordResetScopeAccess()
+
+        scopeAccessOne.accessTokenString = "123456"
+        scopeAccessOne.ldapEntry = new ReadOnlyEntry(dn, attribute())
+        scopeAccessOne.accessTokenExp = new DateTime().minusHours(12).toDate()
+
+        scopeAccessTwo.accessTokenString = "123456"
+        scopeAccessTwo.ldapEntry = new ReadOnlyEntry(dn, attribute())
+        scopeAccessTwo.accessTokenExp = new DateTime().plusHours(12).toDate()
+
+        scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >>> [
+                null,
+                scopeAccessOne,
+                scopeAccessTwo
+        ]
+
+        when:
+        service.getOrCreatePasswordResetScopeAccessForUser(mockedUser)
+        service.getOrCreatePasswordResetScopeAccessForUser(mockedUser)
+        service.getOrCreatePasswordResetScopeAccessForUser(mockedUser)
+
+        then:
+        2 * scopeAccessDao.addDirectScopeAccess(_, _)
+
+        then:
+        1 * scopeAccessDao.deleteScopeAccessByDn(dn)
+    }
+
+    def "updateUserScopeAccessTokenForClientIdByUser deletes existing and adds new scopeAccess"() {
+        given:
+        createMocks()
+        def mockedUser = Mock(User)
+        def scopeAccessOne = new UserScopeAccess()
+
+        scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> scopeAccessOne
+
+        scopeAccessOne.accessTokenString = "123456"
+        scopeAccessOne.ldapEntry = new ReadOnlyEntry(dn, attribute())
+        scopeAccessOne.accessTokenExp = new DateTime().minusHours(12).toDate()
+
+        when:
+        service.updateUserScopeAccessTokenForClientIdByUser(mockedUser, "clientId", "token", new DateTime().toDate())
+
+        then:
+        1 * scopeAccessDao.addDirectScopeAccess(_, _)
+
+        then:
+        1 * scopeAccessDao.deleteScopeAccessByDn(dn)
     }
 
     def "update expired user scope access adds new scope access entity to the directory"() {
@@ -59,7 +126,7 @@ class DefaultScopeAccessServiceGroovyTest extends Specification {
 
         scopeAccess.isAccessTokenExpired(_) >>> [ true, false ]
         scopeAccess.isAccessTokenWithinRefreshWindow(_) >>> [ true, false ]
-        scopeAccess.getUniqueId() >> "accessToken=12345,cn=TOKENS,ou=Users"
+        scopeAccess.getUniqueId() >> dn
 
         when:
         service.updateExpiredUserScopeAccess(scopeAccess, false)
@@ -78,11 +145,11 @@ class DefaultScopeAccessServiceGroovyTest extends Specification {
         def scopeAccessTwo = new UserScopeAccess()
 
         scopeAccessOne.accessTokenString = "12345"
-        scopeAccessOne.accessTokenExp = new DateTime().minusHours(1).toDate()
-        scopeAccessOne.ldapEntry = new ReadOnlyEntry("cn=12345,ou=users", new Attribute("uid", "uid1"))
+        scopeAccessOne.accessTokenExp = expiredDate
+        scopeAccessOne.ldapEntry = new ReadOnlyEntry(dn, new Attribute("uid", "uid1"))
         scopeAccessTwo.accessTokenString = "1234"
-        scopeAccessTwo.accessTokenExp = new DateTime().plusHours(1).toDate()
-        scopeAccessTwo.ldapEntry = new ReadOnlyEntry("cn=1234,ou=users", new Attribute("uid", "uid2"))
+        scopeAccessTwo.accessTokenExp = futureDate
+        scopeAccessTwo.ldapEntry = new ReadOnlyEntry(dn, new Attribute("uid", "uid2"))
 
         scopeAccessDao.getDirectScopeAccessForParentByClientId(_, _) >> [scopeAccessOne].asList()
         scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> scopeAccessTwo
@@ -99,11 +166,11 @@ class DefaultScopeAccessServiceGroovyTest extends Specification {
         createMocks()
 
         when:
-        def one = service.getParentDn("accessToken=12345,cn=TOKENS,ou=users")
+        def one = service.getParentDn(dn)
         def two = service.getParentDn("blah")
 
         then:
-        one.equals("cn=TOKENS,ou=users")
+        one.equals(parentDn)
         two == null
     }
 
@@ -138,16 +205,16 @@ class DefaultScopeAccessServiceGroovyTest extends Specification {
 
         scopeAccessOne.accessTokenString = "12345"
         scopeAccessOne.accessTokenExp = new DateTime().minusHours(1).toDate()
-        scopeAccessOne.ldapEntry = new ReadOnlyEntry("cn=12345,ou=users", new Attribute("uid", "uid1"))
+        scopeAccessOne.ldapEntry = new ReadOnlyEntry(dn, new Attribute("uid", "uid1"))
         scopeAccessTwo.accessTokenString = "1234"
-        scopeAccessTwo.accessTokenExp = new DateTime().plusHours(config.getInt("token.refreshWindowHours")).minusHours(1).toDate()
-        scopeAccessTwo.ldapEntry = new ReadOnlyEntry("cn=1234,ou=users", new Attribute("uid", "uid2"))
+        scopeAccessTwo.accessTokenExp = refreshDate
+        scopeAccessTwo.ldapEntry = new ReadOnlyEntry(dn, new Attribute("uid", "uid2"))
         scopeAccessThree.accessTokenString = "1234"
-        scopeAccessThree.accessTokenExp = new DateTime().minusHours(1).toDate()
-        scopeAccessThree.ldapEntry = new ReadOnlyEntry("cn=1234,ou=users", new Attribute("uid", "uid2"))
-        scopeAccessFour.accessTokenExp = new DateTime().plusHours(config.getInt("token.refreshWindowHours")).plusHours(2).toDate()
+        scopeAccessThree.accessTokenExp = expiredDate
+        scopeAccessThree.ldapEntry = new ReadOnlyEntry(dn, new Attribute("uid", "uid2"))
+        scopeAccessFour.accessTokenExp = futureDate
         scopeAccessFour.accessTokenString = "1234"
-        scopeAccessFour.ldapEntry = new ReadOnlyEntry("cn=1234,ou=users", new Attribute("uid", "uid2"))
+        scopeAccessFour.ldapEntry = new ReadOnlyEntry(dn, new Attribute("uid", "uid2"))
 
         scopeAccessDao.getDirectScopeAccessForParentByClientId(_, _) >> [scopeAccessOne].asList()
         scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >>> [ scopeAccessTwo, scopeAccessThree, scopeAccessFour ]
@@ -172,16 +239,16 @@ class DefaultScopeAccessServiceGroovyTest extends Specification {
         def rackerScopeAccessThree = new RackerScopeAccess()
 
         rackerScopeAccessOne.accessTokenString = "12345"
-        rackerScopeAccessOne.accessTokenExp = new DateTime().minusHours(1).toDate()
-        rackerScopeAccessOne.ldapEntry = new ReadOnlyEntry("cn=12345,ou=users,dn=com", new Attribute("uid", "uid1"))
+        rackerScopeAccessOne.accessTokenExp = expiredDate
+        rackerScopeAccessOne.ldapEntry = new ReadOnlyEntry(dn, new Attribute("uid", "uid1"))
 
         rackerScopeAccessTwo.accessTokenString = "12345"
-        rackerScopeAccessTwo.accessTokenExp = new DateTime().plusHours(config.getInt("token.refreshWindowHours")).minusHours(2).toDate()
-        rackerScopeAccessTwo.ldapEntry = new ReadOnlyEntry("cn=12345,ou=users,dn=com", new Attribute("uid", "uid1"))
+        rackerScopeAccessTwo.accessTokenExp = refreshDate
+        rackerScopeAccessTwo.ldapEntry = new ReadOnlyEntry(dn, new Attribute("uid", "uid1"))
 
         rackerScopeAccessThree.accessTokenString = "12345"
-        rackerScopeAccessThree.accessTokenExp = new DateTime().plusHours(config.getInt("token.refreshWindowHours")).plusHours(2).toDate()
-        rackerScopeAccessThree.ldapEntry = new ReadOnlyEntry("cn=12345,ou=users,dn=com", new Attribute("uid", "uid1"))
+        rackerScopeAccessThree.accessTokenExp = futureDate
+        rackerScopeAccessThree.ldapEntry = new ReadOnlyEntry(dn, new Attribute("uid", "uid1"))
 
         scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> null >>> [ rackerScopeAccessOne, rackerScopeAccessTwo, rackerScopeAccessThree ]
 
@@ -195,6 +262,43 @@ class DefaultScopeAccessServiceGroovyTest extends Specification {
         1 * scopeAccessDao.addDirectScopeAccess(_, _)
         2 * scopeAccessDao.addScopeAccess(_, _)
         1 * scopeAccessDao.deleteScopeAccess(_)
+    }
+
+    def "test parameters for deleteScopeAccessByDn"() {
+        given:
+        createMocks()
+
+        when:
+        service.deleteScopeAccessByDn(dn)
+        service.deleteScopeAccessByDn(null)
+
+        then:
+        1 * scopeAccessDao.deleteScopeAccessByDn(dn)
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
+    def "updateScopeAccess saves parentDn, then deletes existing and adds updated scopeAccess"() {
+        given:
+        createMocks()
+
+        def mockedScopeAccess = Mock(ScopeAccess)
+
+        mockedScopeAccess.getUniqueId() >>> [ dn, "asdf/asf" ]
+
+        when:
+        service.updateScopeAccess(mockedScopeAccess)
+        service.updateScopeAccess(mockedScopeAccess)
+
+        then:
+        1 * scopeAccessDao.deleteScopeAccessByDn(_)
+
+        then:
+        1 * scopeAccessDao.addDirectScopeAccess(_, mockedScopeAccess)
+
+        then:
+        thrown(IllegalStateException)
     }
 
     def createMocks() {
@@ -221,5 +325,9 @@ class DefaultScopeAccessServiceGroovyTest extends Specification {
             it.accessTokenExp = new Date()
             return it
         }
+    }
+
+    def attribute() {
+        return new Attribute("attribute", "value")
     }
 }

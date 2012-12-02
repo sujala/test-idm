@@ -76,4 +76,5 @@ public interface ScopeAccessDao {
     List<ScopeAccess> getScopeAccessesByParentAndClientId(
         String parentUniqueId, String clientId);
 
+    void deleteScopeAccessByDn(String scopeAccessDn);
 }

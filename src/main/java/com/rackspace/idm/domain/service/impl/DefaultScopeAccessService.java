@@ -174,8 +174,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public ScopeAccess addDirectScopeAccess(String parentUniqueId,
-                                            ScopeAccess scopeAccess) {
+    public ScopeAccess addDirectScopeAccess(String parentUniqueId, ScopeAccess scopeAccess) {
         if (scopeAccess == null) {
             String errMsg = String.format(NULL_ARGUMENT_PASSED_IN);
             logger.error(errMsg);
@@ -222,6 +221,18 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         }
         this.scopeAccessDao.deleteScopeAccess(scopeAccess);
         logger.info("Deleted ScopeAccess {}", scopeAccess);
+    }
+
+    @Override
+    public void deleteScopeAccessByDn(String scopeAccessDn) {
+        logger.info("Deleting ScopeAccess {}", scopeAccessDn);
+        if (scopeAccessDn == null) {
+            String errMsg = String.format(NULL_ARGUMENT_PASSED_IN);
+            logger.error(errMsg);
+            throw new IllegalArgumentException(errMsg);
+        }
+        this.scopeAccessDao.deleteScopeAccessByDn(scopeAccessDn);
+        logger.info("Deleted ScopeAccess {}", scopeAccessDn);
     }
 
     @Override
@@ -484,8 +495,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public ScopeAccess getMostRecentDirectScopeAccessForParentByClientId(
-            String parentUniqueID, String clientId) {
+    public ScopeAccess getMostRecentDirectScopeAccessForParentByClientId(String parentUniqueID, String clientId) {
         logger.debug("Getting by clientId {}", clientId);
         ScopeAccess sa = scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(parentUniqueID, clientId);
         logger.debug("Got by clientId {}", clientId);
@@ -493,21 +503,18 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public PasswordResetScopeAccess getOrCreatePasswordResetScopeAccessForUser(
-            User user) {
-
+    public PasswordResetScopeAccess getOrCreatePasswordResetScopeAccessForUser(User user) {
         if (user == null) {
             String errMsg = String.format(NULL_ARGUMENT_PASSED_IN);
             logger.error(errMsg);
             throw new IllegalArgumentException(errMsg);
         }
 
-        logger.debug(
-                "Getting or creating password reset scope access for user {}",
-                user.getUsername());
+        logger.debug("Getting or creating password reset scope access for user {}", user.getUsername());
+
         PasswordResetScopeAccess prsa = (PasswordResetScopeAccess) this.scopeAccessDao
-                .getMostRecentDirectScopeAccessForParentByClientId(user.getUniqueId(),
-                        PASSWORD_RESET_CLIENT_ID);
+                .getMostRecentDirectScopeAccessForParentByClientId(user.getUniqueId(), PASSWORD_RESET_CLIENT_ID);
+
         if (prsa == null) {
             prsa = new PasswordResetScopeAccess();
             prsa.setUserRsId(user.getId());
@@ -521,15 +528,15 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             this.scopeAccessDao.addDirectScopeAccess(user.getUniqueId(), prsa);
         } else {
             if (prsa.isAccessTokenExpired(new DateTime())) {
-                prsa.setAccessTokenExp(new DateTime().plusSeconds(
-                        this.getDefaultTokenExpirationSeconds()).toDate());
+                prsa.setAccessTokenExp(new DateTime().plusSeconds(this.getDefaultTokenExpirationSeconds()).toDate());
                 prsa.setAccessTokenString(this.generateToken());
-                this.scopeAccessDao.updateScopeAccess(prsa);
+
+                String existingScopeAccessDn = prsa.getUniqueId();
+                this.scopeAccessDao.addDirectScopeAccess(user.getUniqueId(), prsa);
+                this.scopeAccessDao.deleteScopeAccessByDn(existingScopeAccessDn);
             }
         }
-        logger.debug(
-                "Done getting or creating password reset scope access for user {}",
-                user.getUsername());
+        logger.debug("Done getting or creating password reset scope access for user {}", user.getUsername());
         return prsa;
     }
 
@@ -751,7 +758,9 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         if (scopeAccess != null) {
             scopeAccess.setAccessTokenString(token);
             scopeAccess.setAccessTokenExp(expires);
-            scopeAccessDao.updateScopeAccess(scopeAccess);
+            String existingScopeAccessDn = scopeAccess.getUniqueId();
+            scopeAccessDao.addDirectScopeAccess(user.getUniqueId(), scopeAccess);
+            scopeAccessDao.deleteScopeAccessByDn(existingScopeAccessDn);
             logger.debug("Updated ScopeAccess {} by clientId {}", scopeAccess, clientId);
         }
     }
@@ -936,8 +945,16 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         }
 
         logger.info("Updating ScopeAccess {}", scopeAccess);
+        String parentDn = null;
+        try {
+            parentDn = new DN(scopeAccess.getUniqueId()).getParentString();
+        } catch (LDAPException e) {
+            logger.warn("ScopeAccess has illegal DN");
+            throw new IllegalStateException("ScopeAccess has illegal DN");
+        }
 
-        this.scopeAccessDao.updateScopeAccess(scopeAccess);
+        this.scopeAccessDao.deleteScopeAccessByDn(scopeAccess.getUniqueId());
+        this.scopeAccessDao.addDirectScopeAccess(parentDn, scopeAccess);
         logger.info("Updated ScopeAccess {}", scopeAccess);
     }
 

@@ -127,4 +127,6 @@ public interface ScopeAccessService {
 
 
     void setScopeAcessDao(ScopeAccessDao scopeAccessDao);
+
+    void deleteScopeAccessByDn(String scopeAccessDn);
 }
