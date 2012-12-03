@@ -217,7 +217,7 @@ public class LdapApplicationRepositoryIntegrationTest extends InMemoryLdapIntegr
         User newUser = new User("deleteme", "RCN-DELETE-ME_NOW", "bademail@example.com", new UserHumanName(
             "delete_my_firstname", "delete_my_middlename", "delete_my_lastname"), new UserLocale(
             Locale.KOREA, DateTimeZone.UTC), new UserCredential(pwd, "What is your favourite colur?",
-            "Yellow. No, Blue! Arrrrgh!"));
+            "Yellow. No, Blue! Arrrrgh!","1235"));
         newUser.setApiKey("XXX");
         newUser.setCustomerId("RACKSPACE");
         newUser.setCountry("USA");

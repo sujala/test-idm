@@ -119,6 +119,7 @@ public abstract class LdapRepository {
     public static final String ATTR_CLEAR_PASSWORD = "clearPassword";
     public static final String ATTR_PASSWORD_SECRET_A = "secretAnswer";
     public static final String ATTR_PASSWORD_SECRET_Q = "secretQuestion";
+    public static final String ATTR_PASSWORD_SECRET_Q_ID = "secretQuestionId";
     public static final String ATTR_PERMISSION = "permission";
     public static final String ATTR_PERMISSION_TYPE = "permissionType";
     public static final String ATTR_PUBLIC_URL = "publicUrl";

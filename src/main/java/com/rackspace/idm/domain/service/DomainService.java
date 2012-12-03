@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service;
 
+import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.Users;
@@ -17,6 +18,7 @@ public interface DomainService {
 
     void addDomain(Domain domain);
     Domain getDomain(String domainId);
+    PaginatorContext<Domain> getDomains(int offset, int limit);
     void updateDomain(Domain domain);
     void deleteDomain(String domainId);
     void addTenantToDomain(String tenantId, String domainId);

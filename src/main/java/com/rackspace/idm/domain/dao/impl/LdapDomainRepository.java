@@ -36,7 +36,12 @@ public class LdapDomainRepository extends LdapGenericRepository<Domain> implemen
 
     @Override
     public void addDomain(Domain domain) {
-        addObject(domain);
+        try {
+            addObject(domain);
+        }
+        catch(DuplicateException ex){
+            throw new DuplicateException(String.format("Domain %s already exists", domain.getDomainId()));
+        }
     }
 
     @Override

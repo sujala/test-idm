@@ -130,33 +130,33 @@ class DefaultQuestionServiceTest extends Specification {
         questionService.addQuestion(question)
 
         then:
-        1 * questionDao.addObject(question)
+        1 * questionDao.addQuestion(question)
     }
 
     def "update question calls ldap repository"() {
         given:
         setupMocks()
         def question = question("id", "question")
-        questionDao.getObject(_) >> question
+        questionDao.getQuestion(_) >> question
 
         when:
         questionService.updateQuestion("id", question)
 
         then:
-        1 * questionDao.updateObject(_)
+        1 * questionDao.updateQuestion(_)
     }
 
     def "delete question calls ldap repository"(){
         given:
         setupMocks()
         def question = question("id", "question")
-        questionDao.getObject(_) >> question
+        questionDao.getQuestion(_) >> question
 
         when:
         questionService.deleteQuestion("id")
 
         then:
-        1 * questionDao.deleteObject(_)
+        1 * questionDao.deleteQuestion(_)
 
     }
 
@@ -165,7 +165,7 @@ class DefaultQuestionServiceTest extends Specification {
         def getObjectCalled = false
         setupMocks()
         def question = question("id", "question")
-        questionDao.getObject(_) >> { getObjectCalled = true; question }
+        questionDao.getQuestion(_) >> { getObjectCalled = true; question }
 
         when:
         questionService.getQuestion("id")
@@ -182,7 +182,7 @@ class DefaultQuestionServiceTest extends Specification {
         questionService.getQuestions()
 
         then:
-        1 * questionDao.getObjects(_)
+        1 * questionDao.getQuestions()
     }
 
     def setupMocks() {

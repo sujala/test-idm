@@ -6,6 +6,7 @@ import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.GenericDao;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.entity.Auditable;
+import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.unboundid.ldap.sdk.*;
 import com.unboundid.ldap.sdk.persist.LDAPPersistException;
@@ -133,7 +134,12 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         } catch (final LDAPException e) {
             getLogger().error("Error adding object", e);
             audit.fail(e.getMessage());
-            throw new IllegalStateException(e);
+            switch (e.getResultCode().intValue()){
+                case 68:
+                    throw new DuplicateException(e.getMessage());
+                default:
+                    throw new IllegalStateException(e);
+            }
         }
     }
 

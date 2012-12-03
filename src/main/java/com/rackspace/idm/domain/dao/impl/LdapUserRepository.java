@@ -778,6 +778,10 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
             atts.add(new Attribute(ATTR_PASSWORD_SECRET_Q, cryptHelper.encrypt(user.getSecretQuestion())));
         }
 
+        if (!StringUtils.isBlank(user.getSecretQuestionId())) {
+            atts.add(new Attribute(ATTR_PASSWORD_SECRET_Q_ID, cryptHelper.encrypt(user.getSecretQuestionId())));
+        }
+
         if (!StringUtils.isBlank(user.getLastname())) {
             atts.add(new Attribute(ATTR_SN, cryptHelper.encrypt(user.getLastname())));
         }
@@ -1002,6 +1006,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         user.setApiKey(cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_RACKSPACE_API_KEY)));
         user.setSecretQuestion(cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_PASSWORD_SECRET_Q)));
         user.setSecretAnswer(cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_PASSWORD_SECRET_A)));
+        user.setSecretQuestionId(cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_PASSWORD_SECRET_Q_ID)));
         user.setLastname(cryptHelper.decrypt(resultEntry.getAttributeValueBytes(ATTR_SN)));
         user.setTimeZoneObj(DateTimeZone.forID(resultEntry.getAttributeValue(ATTR_TIME_ZONE)));
         user.setDomainId(resultEntry.getAttributeValue(ATTR_DOMAIN_ID));
@@ -1083,6 +1088,7 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         checkForApiKeyModification(uOld, uNew, cryptHelper, mods);
         checkForSecretAnswerModification(uOld, uNew, cryptHelper, mods);
         checkForSecretQuestionModification(uOld, uNew, cryptHelper, mods);
+        checkForSecretQuestionIdModification(uOld, uNew, cryptHelper, mods);
         checkForLastNameModification(uOld, uNew, cryptHelper, mods);
         checkForRegionModification(uOld, uNew, mods);
         checkForPersonIdModification(uOld, uNew, mods);
@@ -1194,6 +1200,16 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
                 mods.add(new Modification(ModificationType.DELETE, ATTR_PASSWORD_SECRET_Q));
             } else if (!StringUtils.equals(uOld.getSecretQuestion(), uNew.getSecretQuestion())) {
                 mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD_SECRET_Q, cryptHelper.encrypt(uNew.getSecretQuestion())));
+            }
+        }
+    }
+
+    void checkForSecretQuestionIdModification(User uOld, User uNew, CryptHelper cryptHelper, List<Modification> mods) throws GeneralSecurityException, InvalidCipherTextException {
+        if (uNew.getSecretQuestionId() != null) {
+            if (StringUtils.isBlank(uNew.getSecretQuestionId())) {
+                mods.add(new Modification(ModificationType.DELETE, ATTR_PASSWORD_SECRET_Q_ID));
+            } else if (!StringUtils.equals(uOld.getSecretQuestionId(), uNew.getSecretQuestionId())) {
+                mods.add(new Modification(ModificationType.REPLACE, ATTR_PASSWORD_SECRET_Q_ID, cryptHelper.encrypt(uNew.getSecretQuestionId())));
             }
         }
     }

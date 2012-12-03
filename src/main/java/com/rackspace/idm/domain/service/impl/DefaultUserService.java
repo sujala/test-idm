@@ -6,7 +6,6 @@ import com.rackspace.idm.domain.dao.impl.LdapApplicationRoleRepository;
 import com.rackspace.idm.domain.dao.impl.LdapTenantRoleRepository;
 import org.joda.time.DateTime;
 import org.springframework.stereotype.Component;
-
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.UserDao;
@@ -22,7 +21,6 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;

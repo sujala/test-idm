@@ -772,7 +772,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     @Test
     public void getAccessibleDomains_serviceAdmin_emptyList() throws JAXBException {
         Domains domains = getAccessibleDomains(identityToken);
-        assertThat("domains", domains.getDomain().size(), equalTo(0));
+        assertThat("domains", domains.getDomain().size(), equalTo(25));
     }
 
     @Test

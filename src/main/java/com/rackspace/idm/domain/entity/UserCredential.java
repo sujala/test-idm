@@ -12,6 +12,8 @@ public class UserCredential {
 
     private String secretAnswer = null;
 
+    private String secretQuestionId = null;
+
     /**
      * Discourage the use of the default constructor outside User
      */
@@ -19,11 +21,20 @@ public class UserCredential {
 
     }
 
+    public String getSecretQuestionId(){
+        return secretQuestionId;
+    }
+
+    public void setSecretQuestionId(String secretQuestionId){
+        this.secretQuestionId = secretQuestionId;
+    }
+
     public UserCredential(Password password, String secretQuestion,
-        String secretAnswer) {
+        String secretAnswer, String secretQuestionId) {
         this.password = password;
         this.secretQuestion = secretQuestion;
         this.secretAnswer = secretAnswer;
+        this.secretQuestionId = secretQuestionId;
     }
 
     public Password getPassword() {
@@ -75,6 +86,8 @@ public class UserCredential {
             + ((secretAnswer == null) ? 0 : secretAnswer.hashCode());
         result = prime * result
             + ((secretQuestion == null) ? 0 : secretQuestion.hashCode());
+        result = prime * result
+            + ((secretQuestionId == null) ? 0 : secretQuestionId.hashCode());
         return result;
     }
 
@@ -111,12 +124,19 @@ public class UserCredential {
         } else if (!secretQuestion.equals(other.secretQuestion)) {
             return false;
         }
+        if (secretQuestionId == null) {
+            if (other.secretQuestionId != null) {
+                return false;
+            }
+        } else if (!secretQuestionId.equals(other.secretQuestionId)) {
+            return false;
+        }
         return true;
     }
 
     @Override
     public String toString() {
         return "UserCredential [password=" + password + ", secretAnswer="
-            + secretAnswer + ", secretQuestion=" + secretQuestion + "]";
+            + secretAnswer + ", secretQuestion=" + secretQuestion + ", secretQuestionId=" + secretQuestionId + "]";
     }
 }

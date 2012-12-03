@@ -16,6 +16,8 @@ import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ServiceApis
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ServiceApi
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQA
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQAs
 
 class JSONReaderWriterTest extends Specification {
 
@@ -26,11 +28,13 @@ class JSONReaderWriterTest extends Specification {
     @Shared JSONWriterForQuestions writerForQuestions = new JSONWriterForQuestions()
     @Shared JSONWriterForCapabilities writerForCapabilities = new JSONWriterForCapabilities()
     @Shared JSONWriterForServiceApis writerForServiceApis = new JSONWriterForServiceApis()
+    @Shared JSONWriterForSecretQAs writerForSecretQAs = new JSONWriterForSecretQAs()
     @Shared JSONReaderForPolicies readerForPolicies = new JSONReaderForPolicies()
     @Shared JSONReaderForPolicy readerForPolicy = new JSONReaderForPolicy()
     @Shared JSONReaderForQuestion readerForQuestion = new JSONReaderForQuestion()
     @Shared JSONReaderForCapabilities readerForCapabilities = new JSONReaderForCapabilities()
     @Shared JSONReaderForDomain readerForDomain = new JSONReaderForDomain()
+    @Shared JSONReaderForRaxAuthSecretQA readerForRaxAuthSecretQA = new JSONReaderForRaxAuthSecretQA()
 
     def "can read/write region as json"() {
         given:
@@ -284,17 +288,45 @@ class JSONReaderWriterTest extends Specification {
         given:
         List<ServiceApi> serviceApis  = new ArrayList<ServiceApi>();
         serviceApis.add(getServiceApi("computeTest","1","desc"))
-        def policiesEntity = getServiceApis(serviceApis)
+        def serviceApisEntity = getServiceApis(serviceApis)
 
         when:
         ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
-        writerForServiceApis.writeTo(policiesEntity,ServiceApis,null,null,null,null,arrayOutputStream)
+        writerForServiceApis.writeTo(serviceApisEntity,ServiceApis,null,null,null,null,arrayOutputStream)
         def json = arrayOutputStream.toString()
         InputStream inputStream = IOUtils.toInputStream(json)
 
         then:
         json != null
 
+    }
+
+    def "can read/write secretqa as json"() {
+        given:
+        SecretQAs qAs = new SecretQAs()
+        def secretqa = getSecretQA("1","question","answer")
+        qAs.secretqa.add(secretqa)
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForSecretQAs.writeTo(qAs, SecretQAs, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+
+        InputStream inputStream = IOUtils.toInputStream('{"RAX-AUTH:secretqa":{"id": "1","answer": "Himalayas"}}"')
+        SecretQA readSecretQA = readerForRaxAuthSecretQA.readFrom(SecretQA, null, null, null, null, inputStream)
+
+        then:
+        json != null
+        readSecretQA.answer == "Himalayas"
+    }
+
+    def getSecretQA(String id, String question, String answer) {
+        new SecretQA().with {
+            it.id = id
+            it.question = question
+            it.answer = answer
+            return it
+        }
     }
 
     def getServiceApi(String type, String version, String description) {

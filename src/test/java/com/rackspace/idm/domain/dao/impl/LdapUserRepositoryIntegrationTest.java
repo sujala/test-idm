@@ -500,7 +500,7 @@ public class LdapUserRepositoryIntegrationTest extends InMemoryLdapIntegrationTe
             "bademail@example.com", new UserHumanName("delete_my_firstname",
                 "delete_my_middlename", "delete_my_lastname"), new UserLocale(
                 Locale.KOREA, DateTimeZone.UTC), new UserCredential(pwd,
-                "What is your favourite colur?", "Yellow. No, Blue! Arrrrgh!"));
+                "What is your favourite colur?", "Yellow. No, Blue! Arrrrgh!","132621"));
         newUser.setApiKey("XXX");
         newUser.setCustomerId("RACKSPACE");
         newUser.setCountry("USA");
@@ -520,7 +520,7 @@ public class LdapUserRepositoryIntegrationTest extends InMemoryLdapIntegrationTe
             "bademail@example.com", new UserHumanName("delete_my_firstname",
                 "delete_my_middlename", "delete_my_lastname"), new UserLocale(
                 Locale.KOREA, DateTimeZone.UTC), new UserCredential(pwd,
-                "What is your favourite colur?", "Yellow. No, Blue! Arrrrgh!"),
+                "What is your favourite colur?", "Yellow. No, Blue! Arrrrgh!","123456"),
             "USA", "MY DISPLAY NAME", "XXX", "RPN-111-222-333");
         newUser.setDefaults();
         newUser.setId(id);
@@ -533,7 +533,7 @@ public class LdapUserRepositoryIntegrationTest extends InMemoryLdapIntegrationTe
             "bademail@example.com", new UserHumanName("delete_my_firstname",
                 "delete_my_middlename", "delete_my_lastname"), new UserLocale(
                 Locale.KOREA, DateTimeZone.UTC), new UserCredential(pwd,
-                "What is your favourite colur?", "Yellow. No, Blue! Arrrrgh!"));
+                "What is your favourite colur?", "Yellow. No, Blue! Arrrrgh!","123321"));
         newUser.setApiKey("XXX");
         newUser.setCountry("USA");
         newUser.setPersonId("RPN-111-222-333");

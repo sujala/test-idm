@@ -12,9 +12,10 @@ public class UserCredentialsTests {
     private String password = "Password";
     private String question = "Question";
     private String answer = "Answer";
+    private String questionId = "Id";
     
     private UserCredential getTestCredentials() {
-        return new UserCredential(Password.newInstance(password), question, answer);
+        return new UserCredential(Password.newInstance(password), question, answer, questionId);
     }
     
     @Test
@@ -22,20 +23,21 @@ public class UserCredentialsTests {
         UserCredential cred = getTestCredentials();
         
         Assert.assertEquals("UserCredential [password=Password [******], secretAnswer="
-            + answer + ", secretQuestion=" + question + "]", cred.toString());
+            + answer + ", secretQuestion=" + question + ", secretQuestionId=" + questionId + "]", cred.toString());
     }
     
     @Test
     public void shouldReturnHashCode() {
         UserCredential cred = getTestCredentials();
         
-        Assert.assertEquals(-1255641964, cred.hashCode());
+        Assert.assertEquals(-270192857, cred.hashCode());
         
         cred.setPassword(null);
         cred.setSecretAnswer(null);
         cred.setSecretQuestion(null);
+        cred.setSecretQuestionId(null);
         
-        Assert.assertEquals(29791, cred.hashCode());
+        Assert.assertEquals(923521, cred.hashCode());
     }
     
     @Test
@@ -49,10 +51,12 @@ public class UserCredentialsTests {
         cred1.setPassword(null);
         cred1.setSecretAnswer(null);
         cred1.setSecretQuestion(null);
+        cred1.setSecretQuestionId(null);
         
         cred2.setPassword(null);
         cred2.setSecretAnswer(null);
         cred2.setSecretQuestion(null);
+        cred2.setSecretQuestionId(null);
         
         Assert.assertTrue(cred1.equals(cred2));
     }

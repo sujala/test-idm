@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import org.springframework.stereotype.Component;
 
 import com.rackspace.idm.domain.dao.DomainDao;
@@ -72,6 +73,11 @@ public class DefaultDomainService implements DomainService{
     @Override
     public Domain getDomain(String domainId) {
         return domainDao.getDomain(domainId);
+    }
+
+    @Override
+    public PaginatorContext<Domain> getDomains(int offset, int limit) {
+        return domainDao.getAllDomainsPaged(offset, limit);
     }
 
     @Override

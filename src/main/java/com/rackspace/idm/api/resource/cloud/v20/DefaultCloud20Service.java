@@ -6,6 +6,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Question;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQAs;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ServiceApis;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
@@ -184,6 +185,12 @@ public class DefaultCloud20Service implements Cloud20Service {
     private QuestionConverterCloudV20 questionConverter;
 
     @Autowired
+    private SecretQAService secretQAService;
+
+    @Autowired
+    private SecretQAConverterCloudV20 secretQAConverterCloudV20;
+
+    @Autowired
     private Paginator<User> userPaginator;
 
     @Autowired
@@ -192,6 +199,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Autowired
     private RolePrecedenceValidator precedenceValidator;
 
+    @Autowired
+    private Paginator<Domain> domainPaginator;
+
     private com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
 
     private Map<String, JAXBElement<Extension>> extensionMap;
@@ -199,6 +209,10 @@ public class DefaultCloud20Service implements Cloud20Service {
     private JAXBElement<Extensions> currentExtensions;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    public static final String CLOUD_AUTH_ROUTING = "useCloudAuth";
+
+    public static final String GA_SOURCE_OF_TRUTH = "gaIsSourceOfTruth";
 
     @Override
     public ResponseBuilder addEndpoint(HttpHeaders httpHeaders, String authToken, String tenantId, EndpointTemplate endpoint) {
@@ -574,9 +588,15 @@ public class DefaultCloud20Service implements Cloud20Service {
                 this.scopeAccessService.expireAllTokensForUser(retrievedUser.getUsername());
                 atomHopperClient.asyncPost(retrievedUser, authToken, AtomHopperConstants.DISABLED, null);
             }
+            Boolean updateRegion = true;
+            if (userDO.getRegion() != null && retrievedUser != null) {
+                if (userDO.getRegion().equals(retrievedUser.getRegion())) {
+                    updateRegion = false;
+                }
+            }
             retrievedUser.copyChanges(userDO);
             ScopeAccess scopeAccessForUserBeingUpdated = scopeAccessService.getScopeAccessByUserId(userId);
-            if (userDO.getRegion() != null) {
+            if (userDO.getRegion() != null && updateRegion) {
                 defaultRegionService.validateDefaultRegion(userDO.getRegion(), scopeAccessForUserBeingUpdated);
             }
             userService.updateUserById(retrievedUser, false);
@@ -706,6 +726,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             user.setId(((Racker) result.getUser()).getRackerId());
         } else if (authenticationRequest.getCredential().getValue() instanceof RsaCredentials) {
             RsaCredentials creds = (RsaCredentials) authenticationRequest.getCredential().getValue();
+            creds.setUsername(creds.getUsername().trim());
             validator20.validateUsername(creds.getUsername());
             Domain domainDO = domainConverterCloudV20.toDomainDO(domain);
             UserAuthenticationResult result = authenticationService.authenticateDomainRSA(creds.getUsername(), creds.getTokenKey(), domainDO);
@@ -713,7 +734,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             user.setId(((Racker) result.getUser()).getRackerId());
         }
         rsa = (RackerScopeAccess)scopeAccessService.getValidRackerScopeAccessForClientId(user.getUniqueId(), user.getId(), getCloudAuthClientId());
-        
+
         usa = new UserScopeAccess();
         usa.setUsername(rsa.getRackerId());
         usa.setAccessTokenExp(rsa.getAccessTokenExp());
@@ -1568,7 +1589,9 @@ public class DefaultCloud20Service implements Cloud20Service {
                 String impersonatedTokenId = impersonatedScopeAccess.getImpersonatingToken();
                 sa = scopeAccessService.getScopeAccessByAccessToken(impersonatedTokenId);
             }
-
+            if(sa == null) {
+                throw new NotFoundException("Valid token not found");
+            }
             List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(sa);
             EndpointList list = endpointConverterCloudV20.toEndpointList(endpoints);
 
@@ -1810,11 +1833,14 @@ public class DefaultCloud20Service implements Cloud20Service {
             String impersonatingUsername = impersonationRequest.getUser().getUsername();
 
             User user = userService.getUser(impersonatingUsername);
-            if (user == null) {
+            if (user == null && isCloudAuthRoutingEnabled()) {
                 logger.info("Impersonation call - calling cloud auth to get user");
                 // Get from cloud.
                 impersonatingToken = delegateCloud20Service.impersonateUser(impersonatingUsername, config.getString("ga.username"), config.getString("ga.password"));
             } else {
+                if(user == null){
+                    throw new BadRequestException("Invalid User");
+                }
                 if (!isValidImpersonatee(user)) {
                     throw new BadRequestException("User cannot be impersonated; No valid impersonation roles assigned");
                 }
@@ -2136,12 +2162,26 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getAccessibleDomains(String authToken) {
+    public ResponseBuilder getAccessibleDomains(UriInfo uriInfo, String authToken, String marker, String limit) {
         try {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
-            User user = userService.getUserByScopeAccess(scopeAccessByAccessToken);
+            int offset = validateOffset(marker);
+            int limitAsInt = validateLimit(limit);
+            if (this.authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken) ||
+                    this.authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken)) {
+                PaginatorContext<Domain> domainContext = this.domainService.getDomains(offset, limitAsInt);
+                String linkHeader = this.domainPaginator.createLinkHeader(uriInfo, domainContext);
 
-            return getAccessibleDomainsForUser(authToken, user.getId());
+                Domains domains = new Domains();
+                domains.getDomain().addAll(domainContext.getValueList());
+                com.rackspace.docs.identity.api.ext.rax_auth.v1.Domains domainsObj = domainsConverterCloudV20.toDomains(domains);
+
+                return Response.status(200).header("Link", linkHeader).entity(raxAuthObjectFactory.createDomains(domainsObj).getValue());
+
+            } else {
+                User user = userService.getUserByScopeAccess(scopeAccessByAccessToken);
+                return getAccessibleDomainsForUser(authToken, user.getId());
+            }
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
@@ -2455,6 +2495,53 @@ public class DefaultCloud20Service implements Cloud20Service {
             return Response.noContent();
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public ResponseBuilder getSecretQAs(String authToken, String userId) {
+        try {
+            isUserAllowed(authToken, userId);
+
+            com.rackspace.idm.domain.entity.SecretQAs secretQAsEntity = secretQAService.getSecretQAs(userId);
+            SecretQAs secretQAs = secretQAConverterCloudV20.toSecretQAs(secretQAsEntity.getSecretqa()).getValue();
+            return Response.ok(secretQAs);
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public ResponseBuilder createSecretQA(String authToken, String userId, com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQA secretQA) {
+        try{
+            isUserAllowed(authToken, userId);
+            com.rackspace.idm.domain.entity.SecretQA secretQAEntity = secretQAConverterCloudV20.fromSecretQA(secretQA);
+            secretQAService.addSecretQA(userId, secretQAEntity);
+            return Response.ok();
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    private void isUserAllowed(String authToken, String userId) {
+        ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
+        authorizationService.verifyUserLevelAccess(scopeAccess);
+        User caller = getUser(scopeAccess);
+        User user = userService.checkAndGetUserById(userId);
+        boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccess);
+        Boolean access = false;
+        if (userId.equals(caller.getId())) {
+            access = true;
+        } else if (callerIsUserAdmin) {
+            if (caller.getDomainId().equals(user.getDomainId())) {
+                access = true;
+            }
+        } else {
+            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            access = true;
+        }
+        if (!access) {
+            throw new ForbiddenException(NOT_AUTHORIZED);
         }
     }
 
@@ -2782,10 +2869,25 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException("Excpeting question");
             }
 
+            String questionId = null;
+
+            List<com.rackspace.idm.domain.entity.Question> questions = questionService.getQuestions();
+            for(com.rackspace.idm.domain.entity.Question question : questions){
+                if(secrets.getQuestion().trim().equalsIgnoreCase(question.getQuestion())){
+                    questionId = question.getId();
+                }
+            }
+
             User user = userService.checkAndGetUserById(userId);
 
             user.setSecretAnswer(secrets.getAnswer());
             user.setSecretQuestion(secrets.getQuestion());
+
+            if(questionId != null){
+                user.setSecretQuestionId(questionId);
+            }else {
+                user.setSecretQuestionId("0");
+            }
 
             this.userService.updateUser(user, false);
 
@@ -3305,6 +3407,10 @@ public class DefaultCloud20Service implements Cloud20Service {
         return names;
     }
 
+    boolean isCloudAuthRoutingEnabled() {
+        return config.getBoolean(CLOUD_AUTH_ROUTING);
+    }
+
     public void setObjFactories(JAXBObjectFactories objFactories) {
         this.objFactories = objFactories;
     }
@@ -3419,6 +3525,10 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     public void setUserPaginator(Paginator<User> userPaginator) {
         this.userPaginator = userPaginator;
+    }
+    
+    public void setQuestionService(QuestionService questionService) {
+        this.questionService = questionService;
     }
 }
 

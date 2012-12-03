@@ -29,6 +29,7 @@ public class idmPropertiesTest {
         String error = "";
         for (String fileName : propertyHashMap.keySet()) {
             ArrayList<String> propertyNameErrorList = propertyHashMap.get(fileName);
+            propertyNameErrorList.remove("virtualPath");
             if (!propertyNameErrorList.isEmpty()) {
                 error += fileName + ":\n";
                 error += "\t" + propertyNameErrorList.toString() + "\n\n";

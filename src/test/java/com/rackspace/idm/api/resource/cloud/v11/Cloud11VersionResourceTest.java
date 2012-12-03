@@ -72,7 +72,7 @@ public class Cloud11VersionResourceTest {
     @Test
     public void authenticate_callsGetCloud11Service_callsAuthenticate() throws Exception {
         when(delegateCloud11Service.authenticate(null, null, null, null)).thenReturn(Response.ok());
-        spy.authenticate(null, null, null, null);
+        spy.authenticate(null,null, null, null);
         verify(delegateCloud11Service).authenticate(null, null, null, null);
     }
 

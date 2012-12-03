@@ -359,7 +359,7 @@ public class AuthenticationServiceTests {
     private User getFakeUser() {
         final User user = new User(username, customerId, useremail,
                 new UserHumanName(firstname, "", lastname), new UserLocale(),
-                new UserCredential(userpass, "", ""));
+                new UserCredential(userpass, "", "",""));
         user.setApiKey("1234567890");
         user.setUniqueId(uniqueId);
         user.setEnabled(true);

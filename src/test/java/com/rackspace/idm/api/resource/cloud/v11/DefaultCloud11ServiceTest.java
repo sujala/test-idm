@@ -208,7 +208,7 @@ public class DefaultCloud11ServiceTest {
     @Test
     public void adminAuthenticateResponse_callsCredentialValidator_validateCredential() throws Exception {
         NastCredentials nastCredentials = new NastCredentials();
-        defaultCloud11Service.adminAuthenticateResponse(new JAXBElement<Credentials>(new QName(""), Credentials.class, nastCredentials), null);
+        defaultCloud11Service.adminAuthenticateResponse(null,new JAXBElement<Credentials>(new QName(""), Credentials.class, nastCredentials));
         verify(credentialValidator).validateCredential(nastCredentials, userService);
     }
 
@@ -220,7 +220,7 @@ public class DefaultCloud11ServiceTest {
         JAXBElement<Credentials> jaxbElement = new JAXBElement<Credentials>(new QName(""),Credentials.class, mossoCredentials);
         when(userService.getUserByMossoId(123)).thenThrow(new NotAuthenticatedException());
 
-        Response response = defaultCloud11Service.adminAuthenticateResponse(jaxbElement, null).build();
+        Response response = defaultCloud11Service.adminAuthenticateResponse(null, jaxbElement).build();
         assertThat("response status", response.getStatus(), equalTo(401));
         assertThat("response message",((UnauthorizedFault) (response.getEntity())).getMessage(),equalTo("Username or api key is invalid"));
         assertThat("response message",((UnauthorizedFault) (response.getEntity())).getDetails(),nullValue());
@@ -399,25 +399,6 @@ public class DefaultCloud11ServiceTest {
     }
 
     @Test
-    public void adminAuthenticateResponse_withUserCredentials_withRedirectThrowingException_failsSilently() throws Exception {
-        JAXBElement credentials = mock(JAXBElement.class);
-        HttpServletResponse response = mock(HttpServletResponse.class);
-        when(credentials.getValue()).thenReturn(new UserCredentials());
-        doThrow(new IOException()).when(response).sendRedirect(anyString());
-        defaultCloud11Service.adminAuthenticateResponse(credentials, response);
-        verify(response).sendRedirect("auth");
-    }
-
-    @Test
-    public void adminAuthenticateResponse_withUserCredentials_redirectsToCloudAuth() throws Exception {
-        JAXBElement credentials = mock(JAXBElement.class);
-        HttpServletResponse response = mock(HttpServletResponse.class);
-        when(credentials.getValue()).thenReturn(new UserCredentials());
-        defaultCloud11Service.adminAuthenticateResponse(credentials, response);
-        verify(response).sendRedirect("auth");
-    }
-
-    @Test
     public void adminAuthenticateResponse_withPasswordCredentials_callsScopeAccessService_getUserScopeAccessForClientIdByUsernameAndPassword() throws Exception {
         JAXBElement credentials = mock(JAXBElement.class);
         PasswordCredentials passwordCredentials = new PasswordCredentials();
@@ -426,7 +407,7 @@ public class DefaultCloud11ServiceTest {
         when(credentials.getValue()).thenReturn(passwordCredentials);
         userDO.setEnabled(true);
         when(userService.getUser("username")).thenReturn(userDO);
-        defaultCloud11Service.adminAuthenticateResponse(credentials, null);
+        defaultCloud11Service.adminAuthenticateResponse(null, credentials);
         verify(scopeAccessService).getUserScopeAccessForClientIdByUsernameAndPassword(eq("username"), eq("password"), anyString());
     }
 
@@ -434,7 +415,7 @@ public class DefaultCloud11ServiceTest {
     public void adminAuthenticateResponse_withNastCredentials_callsUserService_getUserByNastId() throws Exception {
         JAXBElement credentials = mock(JAXBElement.class);
         when(credentials.getValue()).thenReturn(new NastCredentials());
-        defaultCloud11Service.adminAuthenticateResponse(credentials, null);
+        defaultCloud11Service.adminAuthenticateResponse(null, credentials);
         verify(userService).getUserByNastId(null);
     }
 
@@ -444,7 +425,7 @@ public class DefaultCloud11ServiceTest {
         when(credentials.getValue()).thenReturn(new NastCredentials());
         userDO.setEnabled(true);
         when(userService.getUserByNastId(null)).thenReturn(userDO);
-        defaultCloud11Service.adminAuthenticateResponse(credentials, null);
+        defaultCloud11Service.adminAuthenticateResponse(null, credentials);
         verify(scopeAccessService).getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString());
     }
 
@@ -455,7 +436,7 @@ public class DefaultCloud11ServiceTest {
         when(credentials.getValue()).thenReturn(mossoCredentials);
         when(mossoCredentials.getKey()).thenReturn("apiKey");
         when(mossoCredentials.getMossoId()).thenReturn(12345);
-        defaultCloud11Service.adminAuthenticateResponse(credentials, null);
+        defaultCloud11Service.adminAuthenticateResponse(null, credentials);
         verify(userService).getUserByMossoId(12345);
     }
 
@@ -468,7 +449,7 @@ public class DefaultCloud11ServiceTest {
         when(mossoCredentials.getMossoId()).thenReturn(12345);
         when(userService.getUserByMossoId(anyInt())).thenReturn(userDO);
         userDO.setEnabled(true);
-        defaultCloud11Service.adminAuthenticateResponse(credentials, null);
+        defaultCloud11Service.adminAuthenticateResponse(null, credentials);
         verify(scopeAccessService).getUserScopeAccessForClientIdByUsernameAndApiCredentials(eq(userDO.getUsername()), eq("apiKey"), anyString());
     }
 
@@ -482,7 +463,7 @@ public class DefaultCloud11ServiceTest {
         when(userService.getUserByMossoId(anyInt())).thenReturn(userDO);
         userDO.setEnabled(true);
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(userDO.getUsername(), "apiKey", null)).thenReturn(new UserScopeAccess());
-        defaultCloud11Service.adminAuthenticateResponse(credentials, null);
+        defaultCloud11Service.adminAuthenticateResponse(null, credentials);
         verify(scopeAccessService).getOpenstackEndpointsForScopeAccess(Matchers.<ScopeAccess>anyObject());
     }
 
@@ -496,7 +477,7 @@ public class DefaultCloud11ServiceTest {
         when(userService.getUserByMossoId(anyInt())).thenReturn(userDO);
         userDO.setEnabled(true);
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(userDO.getUsername(), "apiKey", null)).thenReturn(new UserScopeAccess());
-        defaultCloud11Service.adminAuthenticateResponse(credentials, null);
+        defaultCloud11Service.adminAuthenticateResponse(null, credentials);
         verify(authConverterCloudv11).toCloudv11AuthDataJaxb(any(UserScopeAccess.class), anyList());
     }
 
@@ -510,7 +491,7 @@ public class DefaultCloud11ServiceTest {
         when(userService.getUserByMossoId(anyInt())).thenReturn(userDO);
         userDO.setEnabled(true);
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(userDO.getUsername(), "apiKey", null)).thenReturn(new UserScopeAccess());
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.adminAuthenticateResponse(credentials, null);
+        Response.ResponseBuilder responseBuilder = defaultCloud11Service.adminAuthenticateResponse(null, credentials);
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(200));
     }
 
@@ -1060,7 +1041,7 @@ public class DefaultCloud11ServiceTest {
     public void adminAuthenticate_mediaTypeIsNull_callsAuthenticateJSON() throws Exception {
         doNothing().when(spy).authenticateCloudAdminUser(request);
         spy.adminAuthenticate(request, null, httpHeaders, null);
-        verify(spy).authenticateJSON(null, httpHeaders, null, true);
+        verify(spy).authenticateJSON(null, null, true);
     }
 
     @Test
@@ -1070,7 +1051,7 @@ public class DefaultCloud11ServiceTest {
         when(mediaType.isCompatible(any(MediaType.class))).thenReturn(false);
         when(httpHeaders.getMediaType()).thenReturn(mediaType);
         spy.adminAuthenticate(request, null, httpHeaders, null);
-        verify(spy).authenticateJSON(null, httpHeaders, null, true);
+        verify(spy).authenticateJSON(null, null, true);
     }
 
     @Test
@@ -1080,13 +1061,13 @@ public class DefaultCloud11ServiceTest {
         when(mediaType.isCompatible(any(MediaType.class))).thenReturn(true);
         when(httpHeaders.getMediaType()).thenReturn(mediaType);
         spy.adminAuthenticate(request, null, httpHeaders, null);
-        verify(spy).authenticateXML(null, httpHeaders, null, true);
+        verify(spy).authenticateXML(null, null, true);
     }
 
     @Test
     public void authenticate_mediaTypeIsNull_callsAuthenticateJSON() throws Exception {
         spy.authenticate(request, null, httpHeaders, null);
-        verify(spy).authenticateJSON(null, httpHeaders, null, false);
+        verify(spy).authenticateJSON(null, null, false);
     }
 
     @Test
@@ -1095,7 +1076,7 @@ public class DefaultCloud11ServiceTest {
         when(mediaType.isCompatible(any(MediaType.class))).thenReturn(false);
         when(httpHeaders.getMediaType()).thenReturn(mediaType);
         spy.authenticate(request, null, httpHeaders, null);
-        verify(spy).authenticateJSON(null, httpHeaders, null, false);
+        verify(spy).authenticateJSON(null, null, false);
     }
 
     @Test
@@ -1104,52 +1085,52 @@ public class DefaultCloud11ServiceTest {
         when(mediaType.isCompatible(any(MediaType.class))).thenReturn(true);
         when(httpHeaders.getMediaType()).thenReturn(mediaType);
         spy.authenticate(request, null, httpHeaders, null);
-        verify(spy).authenticateXML(null, httpHeaders, null, false);
+        verify(spy).authenticateXML(null, null, false);
     }
 
     @Test
     public void authenticateJSON_callsCredentialUnmarshaller_unmarshallCredentialsFromJSON() throws Exception {
-        doReturn(null).when(spy).adminAuthenticateResponse(any(JAXBElement.class), any(HttpServletResponse.class));
-        spy.authenticateJSON(null, httpHeaders, "jsonBody", true);
+        doReturn(null).when(spy).adminAuthenticateResponse(any(UriInfo.class) ,any(JAXBElement.class));
+        spy.authenticateJSON(null, "jsonBody", true);
         verify(credentialUnmarshaller).unmarshallCredentialsFromJSON("jsonBody");
     }
 
     @Test
     public void authenticateJSON_isAdmin_callsAdminAuthenticateResponse() throws Exception {
-        doReturn(null).when(spy).adminAuthenticateResponse(any(JAXBElement.class), any(HttpServletResponse.class));
-        spy.authenticateJSON(null, httpHeaders, "jsonBody", true);
+        doReturn(null).when(spy).adminAuthenticateResponse(any(UriInfo.class), any(JAXBElement.class));
+        spy.authenticateJSON(null, "jsonBody", true);
         verify(spy).adminAuthenticateResponse(null, null);
     }
 
     @Test
     public void authenticateJSON_isNotAdmin_callsAuthenticateResponse() throws Exception {
         doReturn(null).when(spy).authenticateResponse(any(JAXBElement.class));
-        spy.authenticateJSON(null, httpHeaders, "jsonBody", false);
+        spy.authenticateJSON(null, "jsonBody", false);
         verify(spy).authenticateResponse(null);
     }
 
     @Test(expected = BadRequestException.class)
     public void authenticateXML_withInvalidXML_throwsBadRequestException() throws Exception {
-        doReturn(null).when(spy).adminAuthenticateResponse(any(JAXBElement.class), any(HttpServletResponse.class));
-        spy.authenticateXML(null, httpHeaders, "<xmlBody/>", true);
+        doReturn(null).when(spy).adminAuthenticateResponse(any(UriInfo.class), any(JAXBElement.class));
+        spy.authenticateXML(null, "<xmlBody/>", true);
         verify(spy).adminAuthenticateResponse(null, null);
     }
 
     @Test
     public void authenticateXML_isAdmin_callsAdminAuthenticateResponse() throws Exception {
-        doReturn(null).when(spy).adminAuthenticateResponse(any(JAXBElement.class), any(HttpServletResponse.class));
-        spy.authenticateXML(null, httpHeaders, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+        doReturn(null).when(spy).adminAuthenticateResponse(any(UriInfo.class), any(JAXBElement.class));
+        spy.authenticateXML(null, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                 "<auth xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
                 " xmlns=\"http://docs.openstack.org/identity/api/v2.0\">\n" +
                 "  <passwordCredentials username=\"jsmith\" password=\"theUsersPassword\"/>\n" +
                 "</auth>", true);
-        verify(spy).adminAuthenticateResponse(any(JAXBElement.class), any(HttpServletResponse.class));
+        verify(spy).adminAuthenticateResponse(any(UriInfo.class), any(JAXBElement.class));
     }
 
     @Test
     public void authenticateXML_isNotAdmin_callsAuthenticateResponse() throws Exception {
         doReturn(null).when(spy).authenticateResponse(any(JAXBElement.class));
-        spy.authenticateXML(null, httpHeaders, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+        spy.authenticateXML(null, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                 "<auth xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
                 " xmlns=\"http://docs.openstack.org/identity/api/v2.0\">\n" +
                 "  <passwordCredentials username=\"jsmith\" password=\"theUsersPassword\"/>\n" +
@@ -2714,20 +2695,23 @@ public class DefaultCloud11ServiceTest {
         User user = new User();
         user.setMossoId(1);
         when(endpointService.getBaseUrlsByBaseUrlType("MOSSO")).thenReturn(cloudBaseUrlList);
-        doNothing().when(spy).addbaseUrlToTenant(any(Tenant.class), eq(cloudBaseUrl));
+        doNothing().when(spy).addbaseUrlToTenant(any(Tenant.class), anyString());
         spy.addMossoTenant(user);
-        verify(spy).addbaseUrlToTenant(any(Tenant.class), eq(cloudBaseUrl));
+        verify(spy).addbaseUrlToTenant(any(Tenant.class), anyString());
     }
 
     @Test
     public void addbaseUrlToTenant_isUkCloudRegionAndRegionIsLon_addsBaseUrlIdToTenant() throws Exception {
+        List<CloudBaseUrl> cloudBaseUrls = new ArrayList<CloudBaseUrl>();
         CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
         cloudBaseUrl.setDef(true);
         cloudBaseUrl.setRegion("Lon");
         cloudBaseUrl.setBaseUrlId(1);
+        cloudBaseUrls.add(cloudBaseUrl);
         Tenant tenant = new Tenant();
+        when(endpointService.getBaseUrlsByBaseUrlType(anyString())).thenReturn(cloudBaseUrls);
         when(config.getString("cloud.region")).thenReturn("UK");
-        spy.addbaseUrlToTenant(tenant, cloudBaseUrl);
+        spy.addbaseUrlToTenant(tenant, "MOSSO");
         assertThat("base url id", tenant.containsBaseUrlId("1"), equalTo(true));
     }
 
@@ -2739,7 +2723,7 @@ public class DefaultCloud11ServiceTest {
         cloudBaseUrl.setBaseUrlId(1);
         Tenant tenant = new Tenant();
         when(config.getString("cloud.region")).thenReturn("UK");
-        spy.addbaseUrlToTenant(tenant, cloudBaseUrl);
+        spy.addbaseUrlToTenant(tenant, "MOSSO");
         assertThat("base url id", tenant.containsBaseUrlId("1"), equalTo(false));
     }
 
@@ -2751,19 +2735,22 @@ public class DefaultCloud11ServiceTest {
         cloudBaseUrl.setBaseUrlId(1);
         Tenant tenant = new Tenant();
         when(config.getString("cloud.region")).thenReturn("notUK");
-        spy.addbaseUrlToTenant(tenant, cloudBaseUrl);
+        spy.addbaseUrlToTenant(tenant, "MOSSO");
         assertThat("base url id", tenant.containsBaseUrlId("1"), equalTo(false));
     }
 
     @Test
     public void addBaseUrlToTenant_notUkCloudRegionAndRegionNotLon_doesNotAddBaseUrlIdToTenant() throws Exception {
+        List<CloudBaseUrl> cloudBaseUrls = new ArrayList<CloudBaseUrl>();
         CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
         cloudBaseUrl.setDef(true);
         cloudBaseUrl.setRegion("notLon");
         cloudBaseUrl.setBaseUrlId(1);
+        cloudBaseUrls.add(cloudBaseUrl);
         Tenant tenant = new Tenant();
         when(config.getString("cloud.region")).thenReturn("notUK");
-        spy.addbaseUrlToTenant(tenant, cloudBaseUrl);
+        when(endpointService.getBaseUrlsByBaseUrlType("MOSSO")).thenReturn(cloudBaseUrls);
+        spy.addbaseUrlToTenant(tenant, "MOSSO");
         assertThat("base url id", tenant.containsBaseUrlId("1"), equalTo(true));
     }
 
@@ -2771,7 +2758,7 @@ public class DefaultCloud11ServiceTest {
     public void addBaseUrlToTenant_cloudBaseUrlGetDefIsFalse_doesNothing() throws Exception {
         CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
         cloudBaseUrl.setDef(false);
-        spy.addbaseUrlToTenant(tenant, cloudBaseUrl);
+        spy.addbaseUrlToTenant(tenant, "MOSSO");
         assertTrue("does nothing", true);
     }
 

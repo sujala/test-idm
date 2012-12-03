@@ -9,6 +9,7 @@ import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.validation.RolePrecedenceValidator;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -92,6 +93,12 @@ public class UserGlobalRoleResource {
 		tenantRole.setName(role.getName());
 		tenantRole.setUserId(userId);
 
+        if (isIdentityRole(role.getName())) {
+            List<TenantRole> tenantRoles = this.tenantService.getGlobalRolesForUser(user);
+            if (tenantRoles != null && tenantRoles.size() > 0) {
+                throw new BadRequestException("User already has global role assigned");
+            }
+        }
 		this.tenantService.addTenantRoleToUser(user, tenantRole);
 
 		return Response.noContent().build();
@@ -99,7 +106,7 @@ public class UserGlobalRoleResource {
 
 	/**
 	 * Revoke a global role from a user
-	 * 
+	 *
 	 * @param authHeader
 	 *            HTTP Authorization header for authenticating the caller.
 	 * @param userId
@@ -134,8 +141,8 @@ public class UserGlobalRoleResource {
 
     /**
 	 * Grant a role to a user on a tenant.
-	 * 
-	 * 
+	 *
+	 *
 	 * @param authHeader
 	 *            HTTP Authorization header for authenticating the caller.
 	 * @param userId
@@ -178,8 +185,8 @@ public class UserGlobalRoleResource {
 
 	/**
 	 * Revoke a role on a tenant from a user.
-	 * 
-	 * 
+	 *
+	 *
 	 * @param authHeader
 	 *            HTTP Authorization header for authenticating the caller.
 	 * @param userId
@@ -215,7 +222,7 @@ public class UserGlobalRoleResource {
 
 		return Response.noContent().build();
 	}
-	
+
 	TenantRole createTenantRole(String tenantId, String roleId) {
 		ClientRole role = applicationService.getClientRoleById(roleId);
         if (role == null) {
@@ -229,7 +236,7 @@ public class UserGlobalRoleResource {
         tenantRole.setRoleRsId(role.getId());
         tenantRole.setName(role.getName());
         tenantRole.setTenantIds(new String[]{tenantId});
-        
+
         return tenantRole;
 	}
 
@@ -272,5 +279,12 @@ public class UserGlobalRoleResource {
 
     public void setTenantService(DefaultTenantService tenantService) {
         this.tenantService = tenantService;
+    }
+    
+    private boolean isIdentityRole(String roleName) {
+        return (roleName.equalsIgnoreCase(config.getString("cloudAuth.adminRole"))
+                    || roleName.equalsIgnoreCase(config.getString("cloudAuth.serviceAdminRole"))
+                    || roleName.equalsIgnoreCase(config.getString("cloudAuth.userAdminRole"))
+                    || roleName.equalsIgnoreCase(config.getString("cloudAuth.userRole")));
     }
 }
