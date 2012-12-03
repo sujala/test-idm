@@ -13,6 +13,7 @@ import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.converter.cloudv20.*;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
+import com.rackspace.idm.api.resource.cloud.Validator;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.api.resource.pagination.Paginator;
@@ -139,7 +140,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     private ExceptionHandler exceptionHandler;
 
     @Autowired
-    private Validator20 validator20;
+    private Validator validator;
 
     @Autowired
     private DefaultRegionService defaultRegionService;
@@ -413,13 +414,13 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
             authorizationService.verifyUserAdminLevelAccess(scopeAccessByAccessToken);
-            validator20.validateUserForCreate(user);
+            validator.isUsernameValid(user.getUsername());
 
             String password = user.getPassword();
             boolean emptyPassword = StringUtils.isBlank(password);
 
             if (password != null) {
-                validator20.validatePasswordForCreateOrUpdate(user.getPassword());
+                validator.validatePasswordForCreateOrUpdate(user.getPassword());
             } else {
                 password = Password.generateRandom(false).getValue();
                 user.setPassword(password);

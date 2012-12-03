@@ -50,6 +50,7 @@ public abstract class LdapRepository {
     public static final String OBJECTCLASS_CAPABILITY = "rsCapability";
     public static final String OBJECTCLASS_QUESTION = "rsQuestion";
     public static final String OBJECTCLASS_REGION = "rsCloudRegion";
+    public static final String OBJECTCLASS_PATTERN = "rsPattern";
 
 
     public static final String OBJECTCLASS_NEXT_ID = "rsNextId";
@@ -172,6 +173,9 @@ public abstract class LdapRepository {
     public static final String ATTR_ROLE_RS_ID = "roleRsId";
     public static final String ATTR_USER_RS_ID = "userRsId";
 
+    public static final String ATTR_REGEX = "regEx";
+    public static final String ATTR_ERRMSG = "error";
+
     // Definitions for LDAP DNs
     protected static final String BASE_DN = "o=rackspace,dc=rackspace,dc=com";
     protected static final String BASEURL_BASE_DN = "ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com";
@@ -192,6 +196,7 @@ public abstract class LdapRepository {
     protected static final String SOFT_DELETED_POLICIES_BASE_DN = "ou=policies,ou=softDeleted,o=rackspace,dc=rackspace,dc=com";
     protected static final String SOFT_DELETED_CUSTOMERS_BASE_DN = "ou=customers,ou=softDeleted,o=rackspace,dc=rackspace,dc=com";
     protected static final String SOFT_DELETED_APPLICATIONS_BASE_DN = "ou=applications,ou=softDeleted,o=rackspace,dc=rackspace,dc=com";
+    protected static final String PATTERN_BASE_DN = "ou=questions,ou=cloud,o=rackspace,dc=rackspace,dc=com";
 
     // Definitions for Contatiner Names
     protected static final String CONTAINER_DIRECT = "DIRECT TOKENS";

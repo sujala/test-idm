@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.api.resource.cloud.Validator;
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.dao.TenantDao;
 import org.joda.time.DateTime;
@@ -25,13 +26,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Component
 public class DefaultUserService implements UserService {
-
-    private static final Pattern EMAIL_PATTERN = Pattern.compile(".+@.+\\.[\\w]+");
     public static final String GETTING_USER = "Getting User: {}";
     public static final String GOT_USER = "Got User: {}";
 
@@ -73,6 +70,9 @@ public class DefaultUserService implements UserService {
     @Autowired
     private CloudRegionService cloudRegionService;
 
+    @Autowired
+    private Validator validator;
+
     @Override
     public void addRacker(Racker racker) {
         logger.info("Adding Racker {}", racker);
@@ -88,7 +88,7 @@ public class DefaultUserService implements UserService {
     public void addUser(User user) {
         logger.info("Adding User: {}", user);
 
-        validateUserEmailAddress(user);
+        validator.isEmailValid(user.getEmail());
         validateUsername(user);
         setPasswordIfNecessary(user);
 
@@ -601,7 +601,7 @@ public class DefaultUserService implements UserService {
     @Override
     public void updateUser(User user, boolean hasSelfUpdatedPassword) {
         logger.info("Updating User: {}", user);
-        validateUserEmailAddress(user);
+        validator.isEmailValid(user.getEmail());
 
         //TODO: We might restrict this to certain roles, so we might need a param passed in this method as well
 //        if (!user.isEnabled()) {
@@ -614,7 +614,7 @@ public class DefaultUserService implements UserService {
 
     public void updateUserById(User user, boolean hasSelfUpdatedPassword) {
         logger.info("Updating User: {}", user);
-        validateUserEmailAddress(user);
+        validator.isEmailValid(user.getEmail());
         userDao.updateUserById(user, hasSelfUpdatedPassword);
         List<ScopeAccess> scopeAccessList = scopeAccessService.getScopeAccessListByUserId(user.getId());
         for (ScopeAccess scopeAccess : scopeAccessList) {
@@ -638,21 +638,6 @@ public class DefaultUserService implements UserService {
 
     private boolean isTrustedServer() {
         return config.getBoolean("ldap.server.trusted", false);
-    }
-
-    private void validateUserEmailAddress(User user) {
-        if (StringUtils.isBlank(user.getEmail())) {
-            return;
-        }
-
-        Matcher m = EMAIL_PATTERN.matcher(user.getEmail());
-
-        if (!m.find()) {
-            String errMsg = String.format("%s is not a valid email", user.getEmail());
-            logger.warn(errMsg);
-            throw new BadRequestException(errMsg);
-        }
-
     }
 
     private void validateUsername(User user) {
@@ -685,7 +670,7 @@ public class DefaultUserService implements UserService {
         if (user == null) {
             String errMsg = String.format("User %s not found", id);
             logger.warn(errMsg);
-            throw new NotFoundException("User not found");
+            throw new NotFoundException(errMsg);
         }
 
         return user;
@@ -955,13 +940,5 @@ public class DefaultUserService implements UserService {
 
     public void setTenantService(TenantService tenantService) {
         this.tenantService = tenantService;
-    }
-
-    public void setEndpointService(EndpointService endpointService) {
-        this.endpointService = endpointService;
-    }
-
-    public void setAuthorizationService(AuthorizationService authorizationService) {
-        this.authorizationService = authorizationService;
     }
 }

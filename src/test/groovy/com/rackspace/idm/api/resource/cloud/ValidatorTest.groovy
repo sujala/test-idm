@@ -1,0 +1,196 @@
+package com.rackspace.idm.api.resource.cloud
+
+import spock.lang.Specification
+import spock.lang.Shared
+import com.rackspace.idm.domain.dao.impl.LdapPatternRepository
+import com.rackspace.idm.domain.entity.Pattern
+import com.rackspace.idm.exception.BadRequestException
+import com.rackspacecloud.docs.auth.api.v1.User;
+
+/**
+ * Created by IntelliJ IDEA.
+ * User: jorge
+ * Date: 11/30/12
+ * Time: 1:16 PM
+ * To change this template use File | Settings | File Templates.
+ */
+class ValidatorTest extends Specification {
+
+    @Shared Validator validator;
+    @Shared LdapPatternRepository ldapPatternRepository
+
+    def setupSpec(){
+        validator = new Validator();
+    }
+
+    def "Validate username"(){
+        given:
+        setupMock()
+        List<Pattern> patterns = new ArrayList<Pattern>()
+        patterns.add(pattern("username", "[a-zA-Z0-9-_.@]*","Username has invalid characters.","pattern for invalid characters"))
+        ldapPatternRepository.getPatterns(_) >> patterns
+
+        when:
+        boolean result = validator.isUsernameValid("someUsername123-@._")
+
+        then:
+        result
+    }
+
+    def "Invalidate username"(){
+        given:
+        setupMock()
+        List<Pattern> patterns = new ArrayList<Pattern>()
+        patterns.add(pattern("username", "[a-zA-Z0-9-_.@]*","Username has invalid characters.","pattern for invalid characters"))
+        ldapPatternRepository.getPatterns(_) >> patterns
+
+        when:
+        validator.isUsernameValid("someUsername*")
+
+        then:
+        thrown(BadRequestException)
+    }
+
+    def "Validate email"(){
+        given:
+        setupMock()
+
+        when:
+        boolean result = validator.isEmailValid("joe.racker@rackspace.com")
+
+        then:
+        result
+    }
+
+    def "Invalid email"(){
+        given:
+        setupMock()
+
+        when:
+        validator.isEmailValid("joe racker@rackspace.com")
+
+        then:
+        thrown(BadRequestException)
+    }
+
+    def "Validate phone"(){
+        given:
+        setupMock()
+        List<Pattern> patterns = new ArrayList<Pattern>()
+        patterns.add(pattern("phone", "[0-9]*","Phone has invalid characters.","pattern for invalid characters"))
+        ldapPatternRepository.getPatterns(_) >> patterns
+
+        when:
+        boolean result = validator.isPhoneValid("8001234568")
+
+        then:
+        result
+    }
+
+    def "Invalid phone"(){
+        given:
+        setupMock()
+        List<Pattern> patterns = new ArrayList<Pattern>()
+        patterns.add(pattern("phone", "[0-9]*","phone has invalid characters.","pattern for invalid characters"))
+        ldapPatternRepository.getPatterns(_) >> patterns
+
+        when:
+        validator.isPhoneValid("1235a123544")
+
+        then:
+        thrown(BadRequestException)
+    }
+
+    def "Validate alphaNumeric"(){
+        given:
+        setupMock()
+        List<Pattern> patterns = new ArrayList<Pattern>()
+        patterns.add(pattern("username", "[a-zA-Z0-9]*","Username has invalid characters.","pattern for invalid characters"))
+        ldapPatternRepository.getPatterns(_) >> patterns
+
+        when:
+        boolean result = validator.isAlphaNumeric("someName123")
+
+        then:
+        result
+    }
+
+    def "Invalidate alphaNumeric"(){
+        given:
+        setupMock()
+        List<Pattern> patterns = new ArrayList<Pattern>()
+        patterns.add(pattern("username", "[a-zA-Z0-9]*","Username has invalid characters.","pattern for invalid characters"))
+        ldapPatternRepository.getPatterns(_) >> patterns
+
+        when:
+        validator.isAlphaNumeric("someUsername*")
+
+        then:
+        thrown(BadRequestException)
+    }
+
+    def "validate v11 user"(){
+        given:
+        setupMock()
+        User user = new User();
+        user.id = "somename"
+
+        when:
+        validator.validate11User(user)
+
+        then:
+        true
+    }
+
+    def "null username - v11 user"(){
+        given:
+        setupMock()
+        User user = new User();
+
+        when:
+        validator.validate11User(user)
+
+        then:
+        thrown(BadRequestException)
+    }
+
+    def "Empty username - v11 user"(){
+        given:
+        setupMock()
+        User user = new User();
+        user.id = ""
+
+        when:
+        validator.validate11User(user)
+
+        then:
+        thrown(BadRequestException)
+    }
+
+    def "Null username - v11 user"(){
+        given:
+        setupMock()
+
+        when:
+        validator.validate11User(null)
+
+        then:
+        thrown(BadRequestException)
+    }
+
+
+    def setupMock(){
+        ldapPatternRepository = Mock();
+        validator.ldapPatternRepository = ldapPatternRepository;
+    }
+
+    def pattern (String name, String regex, String errMsg, String description){
+        new Pattern().with {
+            it.name = name
+            it.regex = regex
+            it.errMsg = errMsg
+            it.description = description
+            return it
+        }
+    }
+}

@@ -1,0 +1,94 @@
+package com.rackspace.idm.api.resource.cloud;
+
+
+import com.rackspace.idm.domain.dao.impl.LdapPatternRepository;
+import com.rackspace.idm.exception.BadRequestException;
+import com.rackspacecloud.docs.auth.api.v1.User;
+import org.apache.commons.lang.StringUtils;
+import org.hibernate.validator.constraints.impl.EmailValidator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import java.util.regex.Pattern;
+
+/**
+ * Created by IntelliJ IDEA.
+ * User: jorge
+ * Date: 11/30/12
+ * Time: 1:16 PM
+ * To change this template use File | Settings | File Templates.
+ */
+@Component
+public class Validator {
+    @Autowired
+    LdapPatternRepository ldapPatternRepository;
+
+    private EmailValidator emailValidator = new EmailValidator();
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    static final String USERNAME="username";
+    static final String PHONE="phone";
+    static final String ALPHANUMERIC="alphanumeric";
+    static final String PASSWORD="password";
+
+    static final String USER_ID_EMPTY_MSG = "User cannot be empty.";
+    static final String USER_NULL_MSG = "User can not be null.";
+    static final String EMAIL_NOT_VALID= "Expecting valid email address";
+
+    public boolean isEmpty(String str){
+        return StringUtils.isEmpty(str);
+    }
+
+    public boolean isBlank(String str){
+        return StringUtils.isBlank(str);
+    }
+
+    public boolean isUsernameValid(String username){
+        return checkPattern(USERNAME, username);
+    }
+
+    public boolean isPhoneValid(String phone){
+         return checkPattern(PHONE, phone);
+    }
+
+    public boolean isAlphaNumeric(String value){
+        return checkPattern(ALPHANUMERIC, value);
+    }
+
+    public boolean isEmailValid(String email) {
+        if (StringUtils.isBlank(email) || !emailValidator.isValid(email, null)) {
+            logger.warn(EMAIL_NOT_VALID);
+            throw new BadRequestException(EMAIL_NOT_VALID);
+        }
+        return true;
+    }
+
+    public void validate11User(User user) {
+        if (user == null) {
+            logger.warn(USER_NULL_MSG);
+            throw new BadRequestException(USER_NULL_MSG);
+        } else if (StringUtils.isBlank(user.getId())) {
+            logger.warn(USER_ID_EMPTY_MSG);
+            throw new BadRequestException(USER_ID_EMPTY_MSG);
+        }
+    }
+
+    public boolean validatePasswordForCreateOrUpdate(String password){
+        return checkPattern(PASSWORD, password);
+    }
+
+    private boolean checkPattern(String pattern, String value) {
+        logger.warn("Checking regex patterns");
+        for(com.rackspace.idm.domain.entity.Pattern tempPattern : ldapPatternRepository.getPatterns(pattern)){
+            Pattern usernamePatter = Pattern.compile(tempPattern.getRegex());
+            if(!usernamePatter.matcher(value).matches()){
+                throw new BadRequestException(tempPattern.getErrMsg());
+            }
+        }
+        return true;
+    }
+
+
+}

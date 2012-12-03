@@ -4,6 +4,7 @@ import com.rackspace.idm.api.converter.cloudv11.AuthConverterCloudV11;
 import com.rackspace.idm.api.converter.cloudv11.EndpointConverterCloudV11;
 import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11;
 import com.rackspace.idm.api.resource.cloud.CloudExceptionResponse;
+import com.rackspace.idm.api.resource.cloud.Validator;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
@@ -86,9 +87,6 @@ public class DefaultCloud11Service implements Cloud11Service {
     private CredentialUnmarshaller credentialUnmarshaller;
 
     @Autowired
-    private UserValidator userValidator;
-
-    @Autowired
     private AuthorizationService authorizationService;
 
     @Autowired
@@ -111,6 +109,9 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     @Autowired
     private CredentialValidator credentialValidator;
+
+    @Autowired
+    private Validator validator;
 
     @Autowired
     public DefaultCloud11Service(Configuration config,
@@ -209,7 +210,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             User user = null;
 
-            if (!StringUtils.isBlank(belongsTo)) {
+            if (!validator.isBlank(belongsTo)) {
                 switch (userType) {
                     case CLOUD:
                         user = this.userService.getUser(belongsTo);
@@ -355,13 +356,9 @@ public class DefaultCloud11Service implements Cloud11Service {
         try {
             authenticateCloudAdminUser(request);
 
-            if (StringUtils.isBlank(user.getId())) {
-                String errorMsg = EXPECTING_USERNAME;
-                logger.warn(errorMsg);
-                throw new BadRequestException(errorMsg);
-            }
+            validator.validate11User(user);
 
-            userValidator.validateUsername(user.getId());
+            validator.isUsernameValid(user.getId());
 
             User existingUser = userService.getUser(user.getId());
             if (existingUser != null) {
@@ -964,8 +961,9 @@ public class DefaultCloud11Service implements Cloud11Service {
 
         try {
             authenticateCloudAdminUser(request);
-            userValidator.validate(user);
-            userValidator.validateUsername(user.getId());
+
+            validator.validate11User(user);
+            validator.isUsernameValid(user.getId());
 
             if (!StringUtils.equals(user.getId(), userId)) { //ToDO: Move to user validator?
                 throw new BadRequestException("User Id does not match.");
@@ -1131,7 +1129,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     @Override
     public ResponseBuilder getExtension(HttpHeaders httpHeaders, String alias) throws IOException {
         try {
-            if (StringUtils.isBlank(alias)) {
+            if (validator.isBlank(alias)) {
                 throw new BadRequestException("Invalid extension alias '" + alias + "'.");
             }
 
@@ -1352,10 +1350,6 @@ public class DefaultCloud11Service implements Cloud11Service {
         this.credentialUnmarshaller = credentialUnmarshaller;
     }
 
-    public void setUserValidator(UserValidator userValidator) {
-        this.userValidator = userValidator;
-    }
-
     private String getCloudAuthUserAdminRole() {
         return config.getString("cloudAuth.userAdminRole");
     }
@@ -1382,5 +1376,9 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     public void setAuthHeaderHelper(AuthHeaderHelper authHeaderHelper) {
         this.authHeaderHelper = authHeaderHelper;
+    }
+
+    public void setValidator(Validator validator) {
+        this.validator = validator;
     }
 }

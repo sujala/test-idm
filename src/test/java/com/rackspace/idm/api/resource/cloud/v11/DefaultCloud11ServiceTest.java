@@ -4,6 +4,7 @@ import com.rackspace.idm.api.converter.cloudv11.AuthConverterCloudV11;
 import com.rackspace.idm.api.converter.cloudv11.EndpointConverterCloudV11;
 import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11;
 import com.rackspace.idm.api.resource.cloud.CloudExceptionResponse;
+import com.rackspace.idm.api.resource.cloud.Validator;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import com.rackspace.idm.api.serviceprofile.ServiceDescriptionTemplateUtil;
@@ -92,6 +93,7 @@ public class DefaultCloud11ServiceTest {
     AuthConverterCloudV11 authConverterCloudv11;
     CredentialValidator credentialValidator;
     private CloudContractDescriptionBuilder cloudContratDescriptionBuilder;
+    Validator validator;
     Tenant tenant;
 
     @Before
@@ -121,6 +123,7 @@ public class DefaultCloud11ServiceTest {
         cloudGroupService = mock(GroupService.class);
         credentialValidator = mock(CredentialValidator.class);
         cloudContratDescriptionBuilder = mock(CloudContractDescriptionBuilder.class);
+        validator = mock(Validator.class);
         tenant = new Tenant();
         tenant.setName("tenant");
         tenant.setEnabled(true);
@@ -151,7 +154,7 @@ public class DefaultCloud11ServiceTest {
         defaultCloud11Service = new DefaultCloud11Service(config, scopeAccessService, endpointService, userService, authConverterCloudv11, userConverterCloudV11, endpointConverterCloudV11, cloudExceptionResponse, clientService, tenantService, domainService);
         nastFacade = mock(NastFacade.class);
         defaultCloud11Service.setNastFacade(nastFacade);
-        defaultCloud11Service.setUserValidator(userValidator);
+        defaultCloud11Service.setValidator(validator);
         defaultCloud11Service.setAuthorizationService(authorizationService);
         defaultCloud11Service.setAtomHopperClient(atomHopperClient);
         defaultCloud11Service.setCloudGroupService(cloudGroupService);
