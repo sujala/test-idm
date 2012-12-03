@@ -8,6 +8,7 @@ import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.openstack.docs.identity.api.v2.PasswordCredentialsRequiredUsername;
 import org.openstack.docs.identity.api.v2.User;
@@ -100,6 +101,7 @@ public class Validator20Test {
         }
     }
 
+    @Ignore // allowed for release (1.0.12) 12/03/2012
     @Test
     public void validateUsernameForUpdateOrCreate_withNonAlphChara_throwBadRequestException() throws Exception {
         try{

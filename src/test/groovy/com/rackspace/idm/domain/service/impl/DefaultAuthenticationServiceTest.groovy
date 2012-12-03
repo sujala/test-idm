@@ -64,7 +64,7 @@ class DefaultAuthenticationServiceGroovyTest extends Specification {
     }
 
     def setup() {
-        expiredDate = new DateTime().minusHours(12).toDate()
+        expiredDate = new DateTime().minusHours(configuration.getInt("token.refreshWindowHours")).minusHours(1).toDate()
         refreshDate = new DateTime().plusHours(configuration.getInt("token.refreshWindowHours")).minusHours(2).toDate()
         futureDate = new DateTime().plusHours(configuration.getInt("token.refreshWindowHours")).plusHours(2).toDate()
     }

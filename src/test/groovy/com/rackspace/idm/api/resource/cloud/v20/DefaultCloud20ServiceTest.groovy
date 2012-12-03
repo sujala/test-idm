@@ -41,7 +41,8 @@ import javax.ws.rs.core.HttpHeaders
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.dao.impl.LdapTenantRoleRepository
 import org.openstack.docs.identity.api.v2.Role
-import com.rackspace.idm.exception.ForbiddenException;
+import com.rackspace.idm.exception.ForbiddenException
+import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 
 /*
  This class uses the application context but mocks the ldap interactions
@@ -238,6 +239,27 @@ class DefaultCloud20ServiceTest extends Specification {
         Response response = responseBuilder.build()
         response.status == 201
         response.getMetadata().get("location").get(0) != null
+    }
+
+    // this is for release (1.0.12 or seomthing) migration related 12/03/2012
+    def "add User allows a user to be created with a username beginning with a number"() {
+        given:
+        createMocks()
+        allowAccess()
+        userDao.isUsernameUnique(_) >> true
+        cloudRegionService.getDefaultRegion(_) >> region()
+
+        def user = new UserForCreate().with {
+                it.username = "1user$sharedRandom"
+                it.email = "email@email.com"
+                return it
+            }
+
+        when:
+        def response = cloud20Service.addUser(headers, uriInfo(), authToken, user)
+
+        then:
+        response.build().status == 201
     }
 
     def "get question returns 200 and question"() {

@@ -57,7 +57,7 @@ class DefaultScopeAccessServiceGroovyTest extends Specification {
     }
 
     def setup() {
-        expiredDate = new DateTime().minusHours(12).toDate()
+        expiredDate = new DateTime().minusHours(config.getInt("token.refreshWindowHours")).minusHours(1).toDate()
         refreshDate = new DateTime().plusHours(config.getInt("token.refreshWindowHours")).minusHours(2).toDate()
         futureDate = new DateTime().plusHours(config.getInt("token.refreshWindowHours")).plusHours(2).toDate()
     }
@@ -204,17 +204,20 @@ class DefaultScopeAccessServiceGroovyTest extends Specification {
         def scopeAccessFour = new UserScopeAccess()
 
         scopeAccessOne.accessTokenString = "12345"
-        scopeAccessOne.accessTokenExp = new DateTime().minusHours(1).toDate()
+        scopeAccessOne.accessTokenExp = expiredDate
         scopeAccessOne.ldapEntry = new ReadOnlyEntry(dn, new Attribute("uid", "uid1"))
+
         scopeAccessTwo.accessTokenString = "1234"
         scopeAccessTwo.accessTokenExp = refreshDate
         scopeAccessTwo.ldapEntry = new ReadOnlyEntry(dn, new Attribute("uid", "uid2"))
+
         scopeAccessThree.accessTokenString = "1234"
         scopeAccessThree.accessTokenExp = expiredDate
-        scopeAccessThree.ldapEntry = new ReadOnlyEntry(dn, new Attribute("uid", "uid2"))
+        scopeAccessThree.ldapEntry = new ReadOnlyEntry(dn, new Attribute("uid", "uid3"))
+
         scopeAccessFour.accessTokenExp = futureDate
         scopeAccessFour.accessTokenString = "1234"
-        scopeAccessFour.ldapEntry = new ReadOnlyEntry(dn, new Attribute("uid", "uid2"))
+        scopeAccessFour.ldapEntry = new ReadOnlyEntry(dn, new Attribute("uid", "uid4"))
 
         scopeAccessDao.getDirectScopeAccessForParentByClientId(_, _) >> [scopeAccessOne].asList()
         scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >>> [ scopeAccessTwo, scopeAccessThree, scopeAccessFour ]
@@ -244,11 +247,11 @@ class DefaultScopeAccessServiceGroovyTest extends Specification {
 
         rackerScopeAccessTwo.accessTokenString = "12345"
         rackerScopeAccessTwo.accessTokenExp = refreshDate
-        rackerScopeAccessTwo.ldapEntry = new ReadOnlyEntry(dn, new Attribute("uid", "uid1"))
+        rackerScopeAccessTwo.ldapEntry = new ReadOnlyEntry(dn, new Attribute("uid", "uid2"))
 
         rackerScopeAccessThree.accessTokenString = "12345"
         rackerScopeAccessThree.accessTokenExp = futureDate
-        rackerScopeAccessThree.ldapEntry = new ReadOnlyEntry(dn, new Attribute("uid", "uid1"))
+        rackerScopeAccessThree.ldapEntry = new ReadOnlyEntry(dn, new Attribute("uid", "uid3"))
 
         scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> null >>> [ rackerScopeAccessOne, rackerScopeAccessTwo, rackerScopeAccessThree ]
 

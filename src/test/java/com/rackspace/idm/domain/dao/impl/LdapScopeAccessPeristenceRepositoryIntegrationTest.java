@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.exception.NotFoundException;
+import org.joda.time.DateTime;
 import org.junit.runner.RunWith;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -674,6 +675,21 @@ public class LdapScopeAccessPeristenceRepositoryIntegrationTest extends InMemory
         ScopeAccess scopeAccess = repo.addImpersonatedScopeAccess(client.getUniqueId(), sa);
     }
 
+    @Test
+    public void testUpdateScopeAccess_setTokenExpired() {
+        ScopeAccess scopeAccess = new ScopeAccess();
+        scopeAccess.setAccessTokenExp(new DateTime().plusHours(6).toDate());
+        scopeAccess.setAccessTokenString("1234abcd");
+        scopeAccess.setClientId(client.getClientId());
+        ScopeAccess addedScopeAccess = repo.addDirectScopeAccess(client.getUniqueId(), scopeAccess);
+
+        addedScopeAccess.setAccessTokenExpired();
+
+        repo.updateScopeAccess(addedScopeAccess);
+
+        ScopeAccess updatedScopeAccess = repo.getScopeAccessByAccessToken("1234abcd");
+        assert(updatedScopeAccess.isAccessTokenExpired(new DateTime()));
+    }
     private Customer addNewTestCustomer(String customerId) {
         final Customer newCustomer = createTestCustomerInstance(customerId);
         newCustomer.setId(id);

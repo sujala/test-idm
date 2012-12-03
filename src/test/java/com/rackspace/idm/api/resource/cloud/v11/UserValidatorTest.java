@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v11;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspacecloud.docs.auth.api.v1.User;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -79,6 +80,7 @@ public class UserValidatorTest {
         userValidator.validateUsername(user.getId());
     }
 
+    @Ignore // for migration users with number starting username is allows 12/03/2012
     @Test(expected = BadRequestException.class)
     public void validateUsername_validNameOther() throws Exception {
         User user = new User();
