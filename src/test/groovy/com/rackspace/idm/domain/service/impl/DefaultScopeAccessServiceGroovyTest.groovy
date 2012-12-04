@@ -22,6 +22,8 @@ import com.unboundid.ldap.sdk.Attribute
 import com.rackspace.idm.domain.entity.RackerScopeAccess
 import com.rackspace.idm.domain.entity.PasswordResetScopeAccess
 import com.rackspace.idm.domain.entity.User
+import com.rackspace.api.idm.v1.Application
+import com.rackspace.idm.domain.entity.Application
 
 /**
  * Created with IntelliJ IDEA.
@@ -104,6 +106,11 @@ class DefaultScopeAccessServiceGroovyTest extends Specification {
         def scopeAccessOne = new UserScopeAccess()
 
         scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> scopeAccessOne
+        applicationDao.getClientByClientId(_) >> new Application().with() {
+            it.clientId = "clientId"
+            it.RCN = "RCN"
+            return it
+        }
 
         scopeAccessOne.accessTokenString = "123456"
         scopeAccessOne.ldapEntry = new ReadOnlyEntry(dn, attribute())
@@ -290,6 +297,12 @@ class DefaultScopeAccessServiceGroovyTest extends Specification {
         UserScopeAccess scopeAccessOne = new UserScopeAccess();
 
         scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> scopeAccessOne
+
+        applicationDao.getClientByClientId(_) >> new Application().with() {
+            it.clientId = "clientId"
+            it.RCN = "RCN"
+            return it
+        }
 
         when:
         service.updateUserScopeAccessTokenForClientIdByUser(new User(), "clientId", "token", new DateTime().toDate())

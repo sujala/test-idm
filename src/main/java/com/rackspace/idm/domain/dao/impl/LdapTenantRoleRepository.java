@@ -61,7 +61,7 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
 
     @Override
     public List<TenantRole> getTenantRolesForScopeAccess(ScopeAccess scopeAccess) {
-        String parentDn = getScopeAccessDn(scopeAccess);
+        String parentDn = getSearchDnForScopeAccess(scopeAccess);
         return getObjects(searchFilterGetTenantRoles(), parentDn);
     }
 
@@ -102,17 +102,17 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
 
     @Override
     public TenantRole getTenantRoleForScopeAccess(ScopeAccess scopeAccess, String roleId) {
-        String parentDn = getScopeAccessDn(scopeAccess);
+        String parentDn = getSearchDnForScopeAccess(scopeAccess);
         return getTenantRole(parentDn, roleId);
     }
 
-    private String getScopeAccessDn(ScopeAccess scopeAccess) {
+    private String getSearchDnForScopeAccess(ScopeAccess scopeAccess) {
         String userDn = null;
         try {
             if (scopeAccess instanceof DelegatedClientScopeAccess) {
-                userDn = getUserDnFromScopeAccess(new DN(scopeAccess.getUniqueId())).toString();
+                userDn = getBaseDnForScopeAccess(new DN(scopeAccess.getUniqueId())).toString();
             } else {
-                userDn = getUserDnFromScopeAccess(scopeAccess.getLDAPEntry().getParentDN()).toString();
+                userDn = getBaseDnForScopeAccess(scopeAccess.getLDAPEntry().getParentDN()).toString();
             }
         } catch (Exception ex) {
             throw new IllegalStateException();
@@ -125,19 +125,19 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
         return userDn;
     }
 
-    private DN getUserDnFromScopeAccess(DN dn) {
+    private DN getBaseDnForScopeAccess(DN dn) {
         DN parentDN = dn.getParent();
         List<RDN> rdns = new ArrayList<RDN>(Arrays.asList(dn.getRDNs()));
         List<RDN> parentRDNs = new ArrayList<RDN>(Arrays.asList(parentDN.getRDNs()));
         List<RDN> remainder = new ArrayList<RDN>(rdns);
         remainder.removeAll(parentRDNs);
         RDN rdn = remainder.get(0);
-        if (rdn.hasAttribute("rsId")) {
+        if (rdn.hasAttribute("rsId") || rdn.hasAttribute("rackerId") || rdn.hasAttribute("clientId")) {
             return dn;
         } else if (parentDN.getParent() == null) {
             return null;
         } else {
-            return getUserDnFromScopeAccess(parentDN);
+            return getBaseDnForScopeAccess(parentDN);
         }
     }
 

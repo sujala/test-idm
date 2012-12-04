@@ -963,7 +963,7 @@ class DefaultCloud20ServiceTest extends Specification {
         //added role
         clientRoleDao.getClientRole(sharedRandom) >>> [
                 clientRole("userAdminAccessible", 1000),
-                clientRole("useAdminaccessible", 1500)
+                clientRole("userAdminaccessible", 1500)
         ] >> genericRole
 
         // getUserIdentityRole for caller
@@ -983,18 +983,22 @@ class DefaultCloud20ServiceTest extends Specification {
         authorizationService.authorizeCloudUserAdmin(_) >>> [
                 true, true,
                 false, false, false,
-                false, false, false, false
+                false, false, false, false,
         ]
 
         //caller
         userDao.getUserByUsername(_) >>> [
                 userAdmin, userAdmin,
                 adminUser, adminUser, adminUser,
-                serviceAdmin, serviceAdmin, serviceAdmin, serviceAdmin
+                serviceAdmin, serviceAdmin, serviceAdmin, serviceAdmin,
         ]
 
         //addedTo
-        userDao.getUserById(_) >> defaultUser
+        userDao.getUserById(_) >>> [
+                defaultUser, defaultUser,
+                defaultUser, userAdmin, adminUser,
+                defaultUser, userAdmin, adminUser, serviceAdmin,
+        ]
 
         clientDao.getClientRoleByClientIdAndRoleName(_, _) >> clientRole()
 
