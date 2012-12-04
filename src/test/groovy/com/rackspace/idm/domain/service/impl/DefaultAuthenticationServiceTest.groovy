@@ -26,6 +26,12 @@ import com.rackspace.idm.domain.entity.RackerScopeAccess
 import com.rackspace.idm.domain.dao.impl.LdapTenantRoleRepository
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.ClientRole
+import com.rackspace.idm.domain.entity.Credentials
+import org.apache.cxf.configuration.security.ClientAuthentication
+import com.rackspace.idm.domain.entity.ClientAuthenticationResult
+import com.rackspace.idm.domain.entity.OAuthGrantType
+import com.rackspace.idm.domain.entity.ScopeAccess
+import com.rackspace.idm.domain.entity.DelegatedClientScopeAccess
 
 /**
  * Created with IntelliJ IDEA.
@@ -240,6 +246,86 @@ class DefaultAuthenticationServiceGroovyTest extends Specification {
         }
     }
 
+    def "getTokens with refreshtoken credentials adds new and deletes old scopeaccess"() {
+        given:
+        createMocks()
+
+        def scopeAccessOne = new UserScopeAccess();
+        scopeAccessOne.accessTokenString = "12345"
+        scopeAccessOne.accessTokenExp = refreshDate
+        scopeAccessOne.refreshTokenString = "12345refresh"
+        scopeAccessOne.refreshTokenExp = refreshDate
+        scopeAccessOne.ldapEntry = new ReadOnlyEntry(dn, attribute())
+        scopeAccessOne.userRsId = "userRsId"
+        scopeAccessOne.username = "username"
+        scopeAccessOne.clientId = "clientId"
+
+
+        def credentials = Mock(Credentials)
+        credentials.getOAuthGrantType() >> "REFRESH_TOKEN"
+        credentials.getGrantType() >> "REFRESH_TOKEN"
+        credentials.getClientId() >> "12345"
+
+        def authResult = Mock(ClientAuthenticationResult)
+        authResult.isAuthenticated() >> true
+        authResult.getClient() >> new Application().with() {
+            it.clientId = "clientId"
+            return it
+        }
+
+        userDao.getUserById(_) >> new User().with() {
+            it.enabled = true
+            return it
+        }
+
+        applicationDao.authenticate(_, _) >> authResult
+
+        scopeAccessDao.getScopeAccessByRefreshToken(_) >> scopeAccessOne
+
+        when:
+        ScopeAccess returned = service.getTokens(credentials, new DateTime())
+
+        then:
+        returned.clientId == "clientId"
+        1 * scopeAccessDao.addDirectScopeAccess(_, _)
+        1 * scopeAccessDao.deleteScopeAccess(_)
+    }
+
+    def "getTokens with Authorization Code credentials adds new and deletes old scopeaccess"() {
+        given:
+        createMocks()
+        def scopeAccessOne = new DelegatedClientScopeAccess();
+        scopeAccessOne.accessTokenString = "12345"
+        scopeAccessOne.accessTokenExp = refreshDate
+        scopeAccessOne.authCode = "authCode12345"
+        scopeAccessOne.authCodeExp = refreshDate
+        scopeAccessOne.ldapEntry = new ReadOnlyEntry(dn, attribute())
+        scopeAccessOne.clientId = "clientId"
+
+        def credentials = Mock(Credentials)
+        credentials.getOAuthGrantType() >> "AUTHORIZATION_CODE"
+        credentials.getGrantType() >> "AUTHORIZATION_CODE"
+        credentials.getClientId() >> "12345"
+
+        def authResult = Mock(ClientAuthenticationResult)
+        authResult.isAuthenticated() >> true
+        authResult.getClient() >> new Application().with() {
+            it.clientId = "clientId"
+            return it
+        }
+
+        applicationDao.authenticate(_, _) >> authResult
+
+        scopeAccessDao.getScopeAccessByAuthorizationCode(_) >> scopeAccessOne
+
+        when:
+        ScopeAccess returned = service.getTokens(credentials, new DateTime())
+
+        then:
+        1 * scopeAccessDao.addDirectScopeAccess(_, _)
+        1 * scopeAccessDao.deleteScopeAccess(_)
+    }
+
     def createMocks() {
         applicationDao = Mock()
         authDao = Mock()
@@ -247,6 +333,9 @@ class DefaultAuthenticationServiceGroovyTest extends Specification {
         customerDao = Mock()
         scopeAccessDao = Mock()
         tenantRoleDao = Mock()
+
+        service.applicationDao = applicationDao
+        service.userDao = userDao
 
         scopeAccessService.scopeAcessDao = scopeAccessDao
 

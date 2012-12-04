@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.service.impl;
 import org.junit.runner.RunWith;
 
 import org.mockito.InjectMocks;
+import org.mockito.Matchers;
 import org.mockito.Mock;
 
 import org.mockito.runners.MockitoJUnitRunner;
@@ -358,63 +359,6 @@ public class DefaultAuthenticationServiceTest {
     }
 
     @Test
-    public void getTokens_grantTypeIsRefreshTokenAndRefreshTokenNotExpiredAndClientIdsEqualAndScopeAccessInstanceOfUserScopeAccessAndUserNotDisabled_returnsCorrectScopeAccess() throws Exception {
-        User user = new User();
-        user.setEnabled(true);
-
-        ScopeAccess scopeAccess =  new UserScopeAccess();
-        ((HasRefreshToken) scopeAccess).setRefreshTokenExp(new DateTime().plusMinutes(5).toDate());
-        ((HasRefreshToken) scopeAccess).setRefreshTokenString("string");
-        scopeAccess.setClientId("123");
-
-        Application client = new Application();
-        client.setClientId("123");
-
-        Credentials trParam = new Credentials();
-        trParam.setGrantType("refresh_token");
-        trParam.setClientId("123");
-
-        when(scopeAccessService.getScopeAccessByRefreshToken(null)).thenReturn(scopeAccess);
-        when(applicationDao.authenticate("123", null)).thenReturn(new ClientAuthenticationResult(client, true));
-        when(userDao.getUserById(null)).thenReturn(user);
-        doReturn("token").when(spy).generateToken();
-        doReturn(100).when(spy).getDefaultTokenExpirationSeconds();
-
-        spy.getTokens(trParam,new DateTime());
-
-        assertThat("access token",((HasAccessToken) scopeAccess).getAccessTokenString(),equalTo("token"));
-        assertThat("access token expiration", ((HasAccessToken) scopeAccess).isAccessTokenExpired(new DateTime()),equalTo(false));
-    }
-
-    @Test
-    public void getTokens_grantTypeIsRefreshTokenAndRefreshTokenNotExpiredAndClientIdsEqualAndScopeAccessNotInstanceOfUserScopeAccess_callsScopeAccessServiceMethod() throws Exception {
-        User user = new User();
-        user.setEnabled(true);
-
-        ScopeAccess scopeAccess =  new RackerScopeAccess();
-        ((HasRefreshToken) scopeAccess).setRefreshTokenExp(new DateTime().plusMinutes(5).toDate());
-        ((HasRefreshToken) scopeAccess).setRefreshTokenString("string");
-        scopeAccess.setClientId("123");
-
-        Application client = new Application();
-        client.setClientId("123");
-
-        Credentials trParam = new Credentials();
-        trParam.setGrantType("refresh_token");
-        trParam.setClientId("123");
-
-        when(scopeAccessService.getScopeAccessByRefreshToken(null)).thenReturn(scopeAccess);
-        when(applicationDao.authenticate("123", null)).thenReturn(new ClientAuthenticationResult(client, true));
-        when(userDao.getUserById(null)).thenReturn(user);
-        doReturn("token").when(spy).generateToken();
-        doReturn(100).when(spy).getDefaultTokenExpirationSeconds();
-
-        spy.getTokens(trParam,new DateTime());
-
-        verify(scopeAccessService).updateScopeAccess(scopeAccess);
-    }
-
-    @Test
     public void getTokens_grantTypeIsAuthorizedCodeAndNullScopeAccess_throwsNotAuthenticatedException() throws Exception {
         try{
             Application client = new Application();
@@ -509,55 +453,6 @@ public class DefaultAuthenticationServiceTest {
             assertThat("exception type",ex.getClass().getName(),equalTo("com.rackspace.idm.exception.NotAuthenticatedException"));
             assertThat("exception message",ex.getMessage(),equalTo("Unauthorized Authorization Code: null"));
         }
-    }
-
-    @Test
-    public void getTokens_grantTypeIsAuthorizedCodeAndAuthorizedCodeNotExpiredAndClientIdsEqual_updatesScopeAccess() throws Exception {
-        DelegatedClientScopeAccess delegatedClientScopeAccess = new DelegatedClientScopeAccess();
-        delegatedClientScopeAccess.setAuthCodeExp(new DateTime().plusMinutes(5).toDate());
-        delegatedClientScopeAccess.setAuthCode("token");
-        delegatedClientScopeAccess.setClientId("123");
-
-        Application client = new Application();
-        client.setClientId("123");
-
-        Credentials trParam = new Credentials();
-        trParam.setGrantType("authorization_code");
-        trParam.setClientId("123");
-
-        when(applicationDao.authenticate("123", null)).thenReturn(new ClientAuthenticationResult(client, true));
-        when(scopeAccessService.getScopeAccessByAuthCode(null)).thenReturn(delegatedClientScopeAccess);
-        doReturn("generatedToken").when(spy).generateToken();
-        doReturn(100).when(spy).getDefaultTokenExpirationSeconds();
-
-        spy.getTokens(trParam,new DateTime());
-        verify(scopeAccessService).updateScopeAccess(delegatedClientScopeAccess);
-    }
-
-    @Test
-    public void getTokens_grantTypeIsAuthorizedCodeAndAuthorizedCodeNotExpiredAndClientIdsEqual_returnsCorrectScopeAccess() throws Exception {
-        DelegatedClientScopeAccess delegatedClientScopeAccess = new DelegatedClientScopeAccess();
-        delegatedClientScopeAccess.setAuthCodeExp(new DateTime().plusMinutes(5).toDate());
-        delegatedClientScopeAccess.setAuthCode("token");
-        delegatedClientScopeAccess.setClientId("123");
-
-        Application client = new Application();
-        client.setClientId("123");
-
-        Credentials trParam = new Credentials();
-        trParam.setGrantType("authorization_code");
-        trParam.setClientId("123");
-
-        when(applicationDao.authenticate("123", null)).thenReturn(new ClientAuthenticationResult(client, true));
-        when(scopeAccessService.getScopeAccessByAuthCode(null)).thenReturn(delegatedClientScopeAccess);
-        doReturn("generatedToken").when(spy).generateToken();
-        doReturn(100).when(spy).getDefaultTokenExpirationSeconds();
-
-        spy.getTokens(trParam,new DateTime());
-        assertThat("scope access refresh token string", delegatedClientScopeAccess.getRefreshTokenString(),equalTo("generatedToken"));
-        assertThat("scope access access token string",delegatedClientScopeAccess.getAccessTokenString(),equalTo("generatedToken"));
-        assertThat("scope access auth code", delegatedClientScopeAccess.getAuthCode(),nullValue());
-        assertThat("scope access auth code exp",delegatedClientScopeAccess.getAuthCodeExp(),nullValue());
     }
 
     @Test

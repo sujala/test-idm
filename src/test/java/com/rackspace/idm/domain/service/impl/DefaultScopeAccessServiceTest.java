@@ -1041,16 +1041,6 @@ public class DefaultScopeAccessServiceTest {
     }
 
     @Test
-    public void updateUserScopeAccessTokenForClientIdByUser_scopeAccessIsNotNull_correctlySetsScopeAccess() throws Exception {
-        UserScopeAccess scopeAccess = new UserScopeAccess();
-        Date expires = new Date();
-        doReturn(scopeAccess).when(spy).getUserScopeAccessForClientId(null,null);
-        spy.updateUserScopeAccessTokenForClientIdByUser(new User(), null, "token", expires);
-        assertThat("token", scopeAccess.getAccessTokenString(), equalTo("token"));
-        assertThat("expires date", scopeAccess.getAccessTokenExp(), equalTo(expires));
-    }
-
-    @Test
     public void grantPermissionToClient_permissionIsNull_throwsIllegalArgumentException() throws Exception {
         try{
             defaultScopeAccessService.grantPermissionToClient(null, null);

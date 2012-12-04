@@ -514,26 +514,30 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
         PasswordResetScopeAccess prsa = (PasswordResetScopeAccess) this.scopeAccessDao
                 .getMostRecentDirectScopeAccessForParentByClientId(user.getUniqueId(), PASSWORD_RESET_CLIENT_ID);
+        PasswordResetScopeAccess scopeAccessToAdd = new PasswordResetScopeAccess();
 
         if (prsa == null) {
-            prsa = new PasswordResetScopeAccess();
-            prsa.setUserRsId(user.getId());
-            prsa.setUsername(user.getUsername());
-            prsa.setUserRCN(user.getCustomerId());
-            prsa.setAccessTokenExp(new DateTime().plusSeconds(
+            scopeAccessToAdd.setUserRsId(user.getId());
+            scopeAccessToAdd.setUsername(user.getUsername());
+            scopeAccessToAdd.setUserRCN(user.getCustomerId());
+            scopeAccessToAdd.setAccessTokenExp(new DateTime().plusSeconds(
                     this.getDefaultTokenExpirationSeconds()).toDate());
-            prsa.setAccessTokenString(this.generateToken());
-            prsa.setClientId(PASSWORD_RESET_CLIENT_ID);
-            prsa.setClientRCN(PASSWORD_RESET_CLIENT_ID);
-            this.scopeAccessDao.addDirectScopeAccess(user.getUniqueId(), prsa);
+            scopeAccessToAdd.setAccessTokenString(this.generateToken());
+            scopeAccessToAdd.setClientId(PASSWORD_RESET_CLIENT_ID);
+            scopeAccessToAdd.setClientRCN(PASSWORD_RESET_CLIENT_ID);
+            this.scopeAccessDao.addDirectScopeAccess(user.getUniqueId(), scopeAccessToAdd);
         } else {
             if (prsa.isAccessTokenExpired(new DateTime())) {
-                prsa.setAccessTokenExp(new DateTime().plusSeconds(this.getDefaultTokenExpirationSeconds()).toDate());
-                prsa.setAccessTokenString(this.generateToken());
+                scopeAccessToAdd.setUserRsId(prsa.getUserRsId());
+                scopeAccessToAdd.setUsername(prsa.getUsername());
+                scopeAccessToAdd.setUserRCN(prsa.getUserRCN());
+                scopeAccessToAdd.setClientId(prsa.getClientId());
+                scopeAccessToAdd.setClientRCN(prsa.getClientRCN());
+                scopeAccessToAdd.setAccessTokenExp(new DateTime().plusSeconds(this.getDefaultTokenExpirationSeconds()).toDate());
+                scopeAccessToAdd.setAccessTokenString(this.generateToken());
 
-                String existingScopeAccessDn = prsa.getUniqueId();
-                this.scopeAccessDao.addDirectScopeAccess(user.getUniqueId(), prsa);
-                this.scopeAccessDao.deleteScopeAccessByDn(existingScopeAccessDn);
+                this.scopeAccessDao.addDirectScopeAccess(user.getUniqueId(), scopeAccessToAdd);
+                this.scopeAccessDao.deleteScopeAccess(prsa);
             }
         }
         logger.debug("Done getting or creating password reset scope access for user {}", user.getUsername());
@@ -756,11 +760,18 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
         final UserScopeAccess scopeAccess = this.getUserScopeAccessForClientId(user.getUniqueId(), clientId);
         if (scopeAccess != null) {
-            scopeAccess.setAccessTokenString(token);
-            scopeAccess.setAccessTokenExp(expires);
-            String existingScopeAccessDn = scopeAccess.getUniqueId();
-            scopeAccessDao.addDirectScopeAccess(user.getUniqueId(), scopeAccess);
-            scopeAccessDao.deleteScopeAccessByDn(existingScopeAccessDn);
+            UserScopeAccess scopeAccessToAdd = new UserScopeAccess();
+            scopeAccessToAdd.setClientId(scopeAccess.getClientId());
+            scopeAccessToAdd.setClientRCN(scopeAccess.getClientRCN());
+            scopeAccessToAdd.setUserRsId(scopeAccess.getUserRsId());
+            scopeAccessToAdd.setUsername(scopeAccess.getUsername());
+            scopeAccessToAdd.setUserRCN(scopeAccess.getUserRCN());
+
+            scopeAccessToAdd.setAccessTokenString(token);
+            scopeAccessToAdd.setAccessTokenExp(expires);
+            scopeAccessDao.addDirectScopeAccess(user.getUniqueId(), scopeAccessToAdd);
+            scopeAccessDao.deleteScopeAccessByDn(scopeAccess.getUniqueId());
+
             logger.debug("Updated ScopeAccess {} by clientId {}", scopeAccess, clientId);
         }
     }
@@ -986,38 +997,29 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     @Override
     public UserScopeAccess updateExpiredUserScopeAccess(UserScopeAccess scopeAccess, boolean impersonated) {
+        UserScopeAccess scopeAccessToAdd = new UserScopeAccess();
+        scopeAccessToAdd.setClientId(scopeAccess.getClientId());
+        scopeAccessToAdd.setClientRCN(scopeAccess.getClientRCN());
+        scopeAccessToAdd.setUsername(scopeAccess.getUsername());
+        scopeAccessToAdd.setUserRCN(scopeAccess.getUserRCN());
+        scopeAccessToAdd.setUserRsId(scopeAccess.getUserRsId());
+        if (impersonated) {
+            scopeAccessToAdd.setAccessTokenExp(new DateTime().plusSeconds(getDefaultImpersonatedTokenExpirationSeconds()).toDate());
+        } else {
+            scopeAccessToAdd.setAccessTokenExp(new DateTime().plusSeconds(getDefaultCloudAuthTokenExpirationSeconds()).toDate());
+        }
+
         if (scopeAccess.isAccessTokenExpired(new DateTime())) {
-            UserScopeAccess newScopeAccess = createUpdatedScopeAccess(scopeAccess, impersonated);
-            scopeAccessDao.addScopeAccess(getParentDn(scopeAccess.getUniqueId()), newScopeAccess);
+            scopeAccessToAdd.setAccessTokenString(this.generateToken());
+            scopeAccessDao.addScopeAccess(getParentDn(scopeAccess.getUniqueId()), scopeAccessToAdd);
             scopeAccessDao.deleteScopeAccess(scopeAccess);
-            return newScopeAccess;
+            return scopeAccessToAdd;
         } else if (scopeAccess.isAccessTokenWithinRefreshWindow(getRefreshTokenWindow())) {
-            UserScopeAccess newScopeAccess = createUpdatedScopeAccess(scopeAccess, impersonated);
-            scopeAccessDao.addScopeAccess(getParentDn(scopeAccess.getUniqueId()), newScopeAccess);
-            return newScopeAccess;
+            scopeAccessToAdd.setAccessTokenString(this.generateToken());
+            scopeAccessDao.addScopeAccess(getParentDn(scopeAccess.getUniqueId()), scopeAccessToAdd);
+            return scopeAccessToAdd;
         }
         return scopeAccess;
-    }
-
-    private UserScopeAccess createUpdatedScopeAccess(UserScopeAccess scopeAccess, boolean impersonated) {
-        String token = generateToken();
-        Date expDate;
-        if (impersonated) {
-            expDate = new DateTime().plusSeconds(getDefaultCloudAuthTokenExpirationSeconds()).toDate();
-        } else {
-            expDate = new DateTime().plusSeconds(getDefaultCloudAuthTokenExpirationSeconds()).toDate();
-        }
-
-        UserScopeAccess copy = new UserScopeAccess();
-        copy.setClientId(scopeAccess.getClientId());
-        copy.setClientRCN(scopeAccess.getClientRCN());
-        copy.setUsername(scopeAccess.getUsername());
-        copy.setUserRCN(scopeAccess.getUserRCN());
-        copy.setUserRsId(scopeAccess.getUserRsId());
-        copy.setAccessTokenExp(expDate);
-        copy.setAccessTokenString(token);
-
-        return copy;
     }
 
     private String getParentDn(String entryDnString) {
@@ -1136,10 +1138,17 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     private RackerScopeAccess updateExpiredRackerScopeAccess(RackerScopeAccess scopeAccess) {
+        RackerScopeAccess scopeAccessToAdd = new RackerScopeAccess();
+        scopeAccessToAdd.setRackerId(scopeAccess.getRackerId());
+        scopeAccessToAdd.setRefreshTokenString(scopeAccess.getRefreshTokenString());
+        scopeAccessToAdd.setRefreshTokenExp(scopeAccess.getRefreshTokenExp());
+        scopeAccessToAdd.setClientId(scopeAccess.getClientId());
+        scopeAccessToAdd.setClientRCN(scopeAccess.getClientRCN());
+
         if (scopeAccess.isAccessTokenExpired(new DateTime())) {
-            scopeAccess.setAccessTokenString(this.generateToken());
-            scopeAccess.setAccessTokenExp(new DateTime().plusSeconds(getDefaultCloudAuthTokenExpirationSeconds()).toDate());
-            scopeAccessDao.addScopeAccess(getParentDn(scopeAccess.getUniqueId()), scopeAccess);
+            scopeAccessToAdd.setAccessTokenString(this.generateToken());
+            scopeAccessToAdd.setAccessTokenExp(new DateTime().plusSeconds(getDefaultCloudAuthTokenExpirationSeconds()).toDate());
+            scopeAccessDao.addScopeAccess(getParentDn(scopeAccess.getUniqueId()), scopeAccessToAdd);
             scopeAccessDao.deleteScopeAccess(scopeAccess);
             return scopeAccess;
         } else if (scopeAccess.isAccessTokenWithinRefreshWindow(getRefreshTokenWindow())) {

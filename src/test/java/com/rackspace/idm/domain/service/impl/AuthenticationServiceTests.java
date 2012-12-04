@@ -10,6 +10,8 @@ import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.UserDisabledException;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.rackspace.idm.validation.InputValidator;
+import com.unboundid.ldap.sdk.Attribute;
+import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.easymock.EasyMock;
@@ -26,6 +28,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.powermock.api.mockito.PowerMockito.mock;
 
 public class AuthenticationServiceTests {
@@ -166,32 +169,6 @@ public class AuthenticationServiceTests {
         Assert.assertEquals(0, authData.getDaysUntilPasswordExpiration());
     }
 
-
-    @Test
-    public void shouldCreateUserAccessTokenWithValidRefreshToken() {
-        final AuthCredentials authCredentials = getTestAuthCredentials();
-        authCredentials.setGrantType("refresh-token");
-
-        final Application testClient = getTestClient();
-        final ClientAuthenticationResult caResult = new ClientAuthenticationResult(testClient, true);
-        final User user = getFakeUser();
-
-        EasyMock.expect(mockApplicationDao.authenticate(clientId, clientSecret)).andReturn(caResult);
-        EasyMock.expect(mockScopeAccessService.getScopeAccessByRefreshToken(refreshTokenVal)).andReturn(getFakeUserScopeAccess());
-        EasyMock.expect(mockUserDao.getUserById(username)).andReturn(user);
-        mockScopeAccessService.updateScopeAccess(EasyMock.anyObject(ScopeAccess.class));
-
-        EasyMock.replay(mockApplicationDao, mockUserDao, mockScopeAccessService);
-
-        final AuthData authData = authenticationService.authenticate(authCredentials);
-
-        Assert.assertNotNull(authData.getAccessToken());
-        Assert.assertNotNull(authData.getRefreshToken());
-        Assert.assertNotNull(authData.getUser());
-
-        EasyMock.verify(mockScopeAccessService);
-    }
-
     @Test(expected = NotAuthenticatedException.class)
     public void shouldNotGetAccessTokenIfInvalidRefreshToken() {
         final AuthCredentials authCredentials = getTestAuthCredentials();
@@ -321,6 +298,7 @@ public class AuthenticationServiceTests {
         usa.setClientId(clientId);
         usa.setClientRCN(customerId);
         usa.setUserRsId(username);
+        usa.setLdapEntry(new ReadOnlyEntry("accessToken=12345,cn=TOKENS,o=org", new Attribute("name", "value")));
         return usa;
     }
 

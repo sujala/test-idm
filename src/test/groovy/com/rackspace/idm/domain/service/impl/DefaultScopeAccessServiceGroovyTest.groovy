@@ -94,7 +94,7 @@ class DefaultScopeAccessServiceGroovyTest extends Specification {
         2 * scopeAccessDao.addDirectScopeAccess(_, _)
 
         then:
-        1 * scopeAccessDao.deleteScopeAccessByDn(dn)
+        1 * scopeAccessDao.deleteScopeAccess(_)
     }
 
     def "updateUserScopeAccessTokenForClientIdByUser deletes existing and adds new scopeAccess"() {
@@ -172,27 +172,6 @@ class DefaultScopeAccessServiceGroovyTest extends Specification {
         then:
         one.equals(parentDn)
         two == null
-    }
-
-    def "create updated scope access returns scope access with new token"() {
-        given:
-        def scopeAccessOne = createUserScopeAccess()
-        def scopeAccessTwo = createUserScopeAccess()
-        def scopeAccess = createUserScopeAccess()
-
-        when:
-        scopeAccessOne = service.createUpdatedScopeAccess(scopeAccessOne, false)
-        scopeAccessTwo = service.createUpdatedScopeAccess(scopeAccessTwo, true)
-
-        then:
-        scopeAccess.clientId == scopeAccessOne.clientId
-        scopeAccess.clientId == scopeAccessTwo.clientId
-        scopeAccess.userRsId == scopeAccessOne.userRsId
-        scopeAccess.userRsId == scopeAccessTwo.userRsId
-        scopeAccess.getAccessTokenExp() < scopeAccessOne.getAccessTokenExp()
-        scopeAccess.getAccessTokenExp() < scopeAccessTwo.getAccessTokenExp()
-        !scopeAccessOne.getAccessTokenString().equals(scopeAccessTwo.getAccessTokenString())
-        !scopeAccessTwo.getAccessTokenString().equals(scopeAccess.getAccessTokenString())
     }
 
     def "getValidUserScopeAccessForClientId adds scopeAccess and deletes old"() {
@@ -302,6 +281,24 @@ class DefaultScopeAccessServiceGroovyTest extends Specification {
 
         then:
         thrown(IllegalStateException)
+    }
+
+    def "updateUserScopeAccessTokenForClientIdByUser adds new and deletes old"() {
+        given:
+        createMocks()
+
+        UserScopeAccess scopeAccessOne = new UserScopeAccess();
+
+        scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> scopeAccessOne
+
+        when:
+        service.updateUserScopeAccessTokenForClientIdByUser(new User(), "clientId", "token", new DateTime().toDate())
+
+        then:
+        1 * scopeAccessDao.addDirectScopeAccess(_, _)
+        then:
+        1 * scopeAccessDao.deleteScopeAccessByDn(_)
+
     }
 
     def createMocks() {
