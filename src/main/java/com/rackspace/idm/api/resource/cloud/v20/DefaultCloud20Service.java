@@ -2689,15 +2689,15 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             User user = userService.checkAndGetUserById(userId);
+            if(user != null){
+                UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), getCloudAuthClientId());
+                boolean isUserAdmin = authorizationService.hasUserAdminRole(usa);
+                if (isUserAdmin) {
+                    List<User> subUsers = userService.getSubUsers(user);
 
-            boolean callerIsIdentityAdmin = authorizationService.authorizeCloudIdentityAdmin(scopeAccess);
-            boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccess);
-
-            if (callerIsIdentityAdmin || callerIsUserAdmin) {
-                List<User> subUsers = userService.getSubUsers(user);
-
-                for (User subUser : subUsers) {
-                    cloudGroupService.deleteGroupFromUser(Integer.parseInt(groupId), subUser.getId());
+                    for (User subUser : subUsers) {
+                        cloudGroupService.deleteGroupFromUser(Integer.parseInt(groupId), subUser.getId());
+                    }
                 }
             }
             cloudGroupService.deleteGroupFromUser(Integer.parseInt(groupId), userId);
