@@ -572,9 +572,9 @@ public class DefaultAuthenticationService implements AuthenticationService {
     }
 
     void validateRackerHasRackerRole(Racker racker, RackerScopeAccess scopeAccess, Application client) {
-        List<TenantRole> tenantRolesForScopeAccess = tenantService.getTenantRolesForScopeAccess(scopeAccess);
+        List<TenantRole> tenantRolesForRacker = tenantService.getTenantRolesForUser(racker);
         boolean hasRackerRole = false;
-        for (TenantRole tenantRole : tenantRolesForScopeAccess) {
+        for (TenantRole tenantRole : tenantRolesForRacker) {
             if (tenantRole.getName().equals("Racker") && tenantRole.getClientId().equals(config.getString("idm.clientId"))) {
                 hasRackerRole = true;
             }
@@ -626,9 +626,22 @@ public class DefaultAuthenticationService implements AuthenticationService {
             racker = new Racker();
             racker.setRackerId(username);
             this.userDao.addRacker(racker);
+            TenantRole rackerTenantRole = new TenantRole();
+            rackerTenantRole.setRoleRsId(getRackerRoleRsId());
+            rackerTenantRole.setClientId(getFoundationClientId());
+            rackerTenantRole.setName("Racker");
+            tenantService.addTenantRoleToUser(racker, rackerTenantRole);
         }
 
         return new UserAuthenticationResult(racker, authenticated);
+    }
+
+    private String getRackerRoleRsId() {
+        return config.getString("cloudAuth.rackerRoleRsId");
+    }
+
+    private String getFoundationClientId() {
+        return config.getString("idm.clientId");
     }
 
     DateTime getUserPasswordExpirationDate(String userName) {

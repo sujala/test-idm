@@ -80,7 +80,7 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         try {
             searchResult = getAppInterface().search(searchRequest);
         } catch (LDAPSearchException ldapEx) {
-            String loggerMsg = String.format("Error searching for %s - {}", entityType.toString());
+            String loggerMsg = String.format("Error searching for %s - %s", entityType.toString(), searchFilter);
             getLogger().error(loggerMsg);
             throw new IllegalStateException(ldapEx);
         }

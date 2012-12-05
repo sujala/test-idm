@@ -7,8 +7,10 @@ import com.rackspace.idm.api.resource.pagination.PaginatorContext;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.FilterParam;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.AuthorizationService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.unboundid.ldap.sdk.SearchRequest;
@@ -43,6 +45,7 @@ public class RolesResourceTest {
     Configuration config;
     Paginator<ClientRole> clientRolePaginator;
     UriInfo uriInfo;
+    ScopeAccessService scopeAccessService;
 
 
     @Before
@@ -56,8 +59,10 @@ public class RolesResourceTest {
         when(rolesConverter.toClientRole(any(Role.class))).thenReturn(new ClientRole());
         config = mock(Configuration.class);
         clientRolePaginator = mock(Paginator.class);
+        scopeAccessService = mock(ScopeAccessService.class);
         rolesResource.setConfig(config);
         rolesResource.setPaginator(clientRolePaginator);
+        rolesResource.setScopeAccessService(scopeAccessService);
         uriInfo = mock(UriInfo.class);
 
         when(applicationService.getClientRolesPaged(anyString(), anyString(), anyInt(), anyInt())).thenReturn(new PaginatorContext<ClientRole>());
@@ -88,6 +93,7 @@ public class RolesResourceTest {
     public void updateRole_withNullApplication_throwsBadRequestException() throws Exception {
         Role role = validRole();
         doNothing().when(authorizationService).verifyIdmSuperAdminAccess(null);
+        doReturn(mock(ScopeAccess.class)).when(scopeAccessService).getScopeAccessByAccessToken(anyString());
         when(applicationService.getById("appId")).thenReturn(null);
         rolesResource.updateRole(null,"foo", role);
         verify(applicationService).getById("appId");
@@ -96,6 +102,7 @@ public class RolesResourceTest {
     @Test(expected = NotFoundException.class)
     public void updateRole_invalidRoleId_throwsNotFoundException() throws Exception {
         when(applicationService.getClientRoleById("id")).thenReturn(null);
+        doReturn(mock(ScopeAccess.class)).when(scopeAccessService).getScopeAccessByAccessToken(anyString());
         when(applicationService.getById("appId")).thenReturn(new Application());
         rolesResource.updateRole(null, "id", validRole());
     }
@@ -116,6 +123,7 @@ public class RolesResourceTest {
     public void deleteRole_withNullClientId_throwsNotFoundException() throws Exception {
         doNothing().when(authorizationService).verifyIdmSuperAdminAccess(null);
         when(applicationService.getClientRoleById("roleId")).thenReturn(null);
+        doReturn(mock(ScopeAccess.class)).when(scopeAccessService).getScopeAccessByAccessToken(anyString());
         rolesResource.deleteRole(null, "roleId");
     }
 

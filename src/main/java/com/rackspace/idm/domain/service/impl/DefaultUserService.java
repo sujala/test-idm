@@ -308,6 +308,7 @@ public class DefaultUserService implements UserService {
         if(scopeAccessByAccessToken == null) {
             return null;
         }
+
         String uid = scopeAccessByAccessToken.getLDAPEntry().getAttributeValue(LdapRepository.ATTR_UID);
         return getUser(uid);
     }

@@ -274,7 +274,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
         return getMostRecentScopeAccess(scopeAccessList);
     }
 
-    private ScopeAccess getMostRecentScopeAccess(List<ScopeAccess> scopeAccessList) {
+    private ScopeAccess getMostRecentScopeAccess(List<ScopeAccess> scopeAccessList) throws NotFoundException {
         int mostRecentIndex = 0;
 
         if (scopeAccessList.size() == 0) {

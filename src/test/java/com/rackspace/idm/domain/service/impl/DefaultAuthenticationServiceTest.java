@@ -677,7 +677,7 @@ public class DefaultAuthenticationServiceTest {
         tenantRole.setClientId("123");
         List<TenantRole> tenantRolesForScopeAccess = new ArrayList<TenantRole>();
         tenantRolesForScopeAccess.add(tenantRole);
-        when(tenantService.getTenantRolesForScopeAccess(null)).thenReturn(tenantRolesForScopeAccess);
+        when(tenantService.getTenantRolesForUser(null)).thenReturn(tenantRolesForScopeAccess);
         when(config.getString("idm.clientId")).thenReturn("123");
         defaultAuthenticationService.validateRackerHasRackerRole(null,null,null);
         verify(applicationDao,never()).getClientRolesByClientId(anyString());

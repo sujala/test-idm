@@ -265,6 +265,8 @@ class RolesResourceGroovyTest extends Specification {
         tenantRoleDao = Mock()
         scopeAccessService = Mock()
 
+        rolesResource.scopeAccessService = scopeAccessService
+
         userService.userDao = userDao
         userService.applicationRoleDao = clientRoleDao
         userService.tenantRoleDao = tenantRoleDao

@@ -9,6 +9,7 @@ import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.FilterParam.FilterParamName;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.AuthorizationService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
@@ -58,6 +59,8 @@ public class RolesResource extends ParentResource {
     private Configuration config;
     @Autowired
     private UserService userService;
+    @Autowired
+    private ScopeAccessService scopeAccessService;
 
     /**
      * Get a role
@@ -131,19 +134,24 @@ public class RolesResource extends ParentResource {
             @PathParam("roleId") String roleId,
             Role role) {
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
+        ScopeAccess scopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authHeader);
+
         validateRole(role);
         Application application = applicationService.getById(role.getApplicationId());
         if(application==null){
             throw new BadRequestException("Application with id: " + role.getApplicationId() + " not found.");
         }
+
         ClientRole updatedRole = rolesConverter.toClientRole(role);
         ClientRole clientRole = applicationService.getClientRoleById(roleId);
         if(clientRole==null){
             throw new NotFoundException("Role with id: " + roleId + " not found.");
         }
 
-        User caller = userService.getUserByAuthToken(authHeader);
-        precedenceValidator.verifyCallerRolePrecedence(caller, clientRole);
+        if (!(scopeAccess instanceof ClientScopeAccess)) {
+            User caller = userService.getUserByAuthToken(authHeader);
+            precedenceValidator.verifyCallerRolePrecedence(caller, clientRole);
+        }
 
         clientRole.copyChanges(updatedRole);
         applicationService.updateClientRole(clientRole);
@@ -164,13 +172,17 @@ public class RolesResource extends ParentResource {
 			@HeaderParam("X-Auth-Token") String authHeader,
 			@PathParam("roleId") String roleId) {
 		authorizationService.verifyIdmSuperAdminAccess(authHeader);
+        ScopeAccess scopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authHeader);
+
 		ClientRole clientRole = applicationService.getClientRoleById(roleId);
         if(clientRole==null){
             throw new NotFoundException("role with id: " + roleId + " not found");
         }
 
-        User caller = userService.getUserByAuthToken(authHeader);
-        precedenceValidator.verifyCallerRolePrecedence(caller, clientRole);
+        if (!(scopeAccess instanceof ClientScopeAccess)) {
+            User caller = userService.getUserByAuthToken(authHeader);
+            precedenceValidator.verifyCallerRolePrecedence(caller, clientRole);
+        }
 
 		applicationService.deleteClientRole(clientRole);
 		return Response.noContent().build();
@@ -202,5 +214,9 @@ public class RolesResource extends ParentResource {
 
     public void setUserService(UserService userService) {
         this.userService = userService;
+    }
+
+    public void setScopeAccessService(ScopeAccessService service) {
+        this.scopeAccessService = service;
     }
 }

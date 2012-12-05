@@ -27,6 +27,7 @@ import com.rackspace.idm.domain.dao.impl.LdapRepository
 import com.unboundid.ldap.sdk.ReadOnlyEntry
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.domain.entity.Tenant
+import com.rackspace.idm.domain.entity.UserScopeAccess
 
 /**
  * Created with IntelliJ IDEA.
@@ -209,6 +210,11 @@ class UserGlobalRoleResourceGroovyTest extends Specification {
         setupRoles()
         allowAccess()
 
+        scopeAccessService.getScopeAccessByAccessToken(_) >> new UserScopeAccess()
+        applicationRoleDao.getClientRole(_) >> userAdminRole
+        tenantRoleDao.getTenantRoleForUser(caller, identityRoles) >> adminTenantRole
+        applicationRoleDao.getIdentityRoles(_, _) >> identityRoles
+
         tenantRoleDao.getTenantRoleForUser(_, _) >> tenantRole("identity:role", "roleRsId")
         userDao.getUserById(_) >> caller
         userDao.getUserByUsername(_) >> caller
@@ -268,7 +274,6 @@ class UserGlobalRoleResourceGroovyTest extends Specification {
     }
 
     def "delete global role from user deletes role successfully"() {
-        then:
         given:
         createMocks()
         setupRoles()

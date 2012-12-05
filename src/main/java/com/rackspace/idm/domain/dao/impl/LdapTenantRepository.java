@@ -430,7 +430,7 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
     }
 
     protected String getUserIdFromDN(DN dn) {
-        DN userDN = getUserDnFromScopeAccess(dn);
+        DN userDN = getBaseDnForSearch(dn);
         if (userDN != null) {
             List<RDN> userRDNs= new ArrayList<RDN>(Arrays.asList(userDN.getRDNs()));
             for (RDN rdn : userRDNs) {
@@ -443,19 +443,19 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         return "";
     }
 
-    protected DN getUserDnFromScopeAccess(DN dn) {
+    protected DN getBaseDnForSearch(DN dn) {
         DN parentDN = dn.getParent();
         List<RDN> rdns = new ArrayList<RDN>(Arrays.asList(dn.getRDNs()));
         List<RDN> parentRDNs = new ArrayList<RDN>(Arrays.asList(parentDN.getRDNs()));
         List<RDN> remainder = new ArrayList<RDN>(rdns);
         remainder.removeAll(parentRDNs);
         RDN rdn = remainder.get(0);
-        if (rdn.hasAttribute("rsId")) {
+        if (rdn.hasAttribute("rsId") || rdn.hasAttribute("rackerId") || rdn.hasAttribute("clientId")) {
             return dn;
         } else if (parentDN.getParent() == null) {
             return null;
         } else {
-            return getUserDnFromScopeAccess(parentDN);
+            return getBaseDnForSearch(parentDN);
         }
     }
 
@@ -499,9 +499,9 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
         DN userDn = null;
         try {
             if (scopeAccess instanceof DelegatedClientScopeAccess) {
-                userDn = getUserDnFromScopeAccess(new DN(scopeAccess.getUniqueId()));
+                userDn = getBaseDnForSearch(new DN(scopeAccess.getUniqueId()));
             } else {
-                userDn = getUserDnFromScopeAccess(scopeAccess.getLDAPEntry().getParentDN());
+                userDn = getBaseDnForSearch(scopeAccess.getLDAPEntry().getParentDN());
             }
         } catch (Exception ex) {
             throw new IllegalStateException();

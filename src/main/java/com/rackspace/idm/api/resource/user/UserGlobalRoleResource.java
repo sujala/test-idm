@@ -65,6 +65,7 @@ public class UserGlobalRoleResource {
 			@PathParam("roleId") String roleId) {
 
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
+        ScopeAccess scopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authHeader);
 
 		// TODO: Refactor. This logic should be in the tenant role service
 		ClientRole role = this.applicationService.getClientRoleById(roleId);
@@ -75,10 +76,12 @@ public class UserGlobalRoleResource {
         }
 
         User user = this.userService.loadUser(userId);
-        User caller = userService.getUserByAuthToken(authHeader);
 
-        precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
-        precedenceValidator.verifyCallerRolePrecedence(caller, role);
+        if (!(scopeAccess instanceof ClientScopeAccess)) {
+            User caller = userService.getUserByAuthToken(authHeader);
+            precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
+            precedenceValidator.verifyCallerRolePrecedence(caller, role);
+        }
 
         if (StringUtils.startsWithIgnoreCase(role.getName(), "identity:")) {
             ClientRole userIdentityRole = applicationService.getUserIdentityRole(user, getCloudAuthClientId(), getIdentityRoleNames());
@@ -121,18 +124,21 @@ public class UserGlobalRoleResource {
 			@PathParam("roleId") String roleId) {
 
         authorizationService.verifyIdmSuperAdminAccess(authHeader);
+        ScopeAccess scopeAccess = scopeAccessService.getScopeAccessByAccessToken(authHeader);
 
         User user = this.userService.loadUser(userId);
-        User caller = userService.getUserByAuthToken(authHeader);
 
         TenantRole tenantRole = tenantService.getTenantRoleForUserById(user, roleId);
 
-        if (user.getId().equals(caller.getId()) && StringUtils.startsWithIgnoreCase(tenantRole.getName(), "identity:")) {
-            throw new BadRequestException("A user cannot delete their own identity role");
-        }
+        if (!(scopeAccess instanceof ClientScopeAccess)) {
+            User caller = userService.getUserByAuthToken(authHeader);
+            precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
+            precedenceValidator.verifyCallerRolePrecedence(caller, tenantRole);
 
-        precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
-        precedenceValidator.verifyCallerRolePrecedence(caller, tenantRole);
+            if (user.getId().equals(caller.getId()) && StringUtils.startsWithIgnoreCase(tenantRole.getName(), "identity:")) {
+                throw new BadRequestException("A user cannot delete their own identity role");
+            }
+        }
 
         this.tenantService.deleteTenantRoleForUser(user, tenantRole);
 
@@ -166,11 +172,13 @@ public class UserGlobalRoleResource {
         Tenant tenant = tenantService.checkAndGetTenant(tenantId);
 
         User user = userService.loadUser(userId);
-        User caller = userService.getUserByAuthToken(authHeader);
         TenantRole tenantRole = createTenantRole(tenantId, roleId);
 
-        precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
-        precedenceValidator.verifyCallerRolePrecedence(caller, tenantRole);
+        if (!(scopeAccess instanceof ClientScopeAccess)) {
+            User caller = userService.getUserByAuthToken(authHeader);
+            precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
+            precedenceValidator.verifyCallerRolePrecedence(caller, tenantRole);
+        }
 
         List<String> identityRoleNames = getIdentityRoleNames();
 
@@ -208,15 +216,17 @@ public class UserGlobalRoleResource {
         authorizationService.authorizeIdmSuperAdminOrRackspaceClient(scopeAccess);
 
 		User user = this.userService.loadUser(userId);
-        User caller = userService.getUserByAuthToken(authHeader);
 
         TenantRole tenantRole = tenantService.getTenantRoleForUserById(user, roleId);
         if (tenantRole == null) {
             throw new NotFoundException(String.format("User %s does not have tenantRole %s", user, roleId));
         }
 
-        precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
-        precedenceValidator.verifyCallerRolePrecedence(caller, tenantRole);
+        if (!(scopeAccess instanceof ClientScopeAccess)) {
+            User caller = userService.getUserByAuthToken(authHeader);
+            precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
+            precedenceValidator.verifyCallerRolePrecedence(caller, tenantRole);
+        }
 		
 		this.tenantService.deleteTenantRoleForUser(user, tenantRole);
 
