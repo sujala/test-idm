@@ -779,7 +779,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
         final UserScopeAccess scopeAccess = this.getUserScopeAccessForClientId(user.getUniqueId(), clientId);
         Application client = this.clientDao.getClientByClientId(clientId);
-        if (scopeAccess != null) {
+        if (scopeAccess != null && !scopeAccess.getAccessTokenString().equals(token)) {
             UserScopeAccess scopeAccessToAdd = new UserScopeAccess();
             scopeAccessToAdd.setClientId(client.getClientId());
             scopeAccessToAdd.setClientRCN(client.getRCN());

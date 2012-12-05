@@ -28,6 +28,7 @@ import com.unboundid.ldap.sdk.ReadOnlyEntry
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.domain.entity.Tenant
 import com.rackspace.idm.domain.entity.UserScopeAccess
+import com.rackspace.idm.exception.NotFoundException
 
 /**
  * Created with IntelliJ IDEA.
@@ -240,6 +241,8 @@ class UserGlobalRoleResourceGroovyTest extends Specification {
         applicationDao.getClientRoleByClientIdAndRoleName(_, _) >> clientRole("role", 1000, "roleId2")
         applicationRoleDao.getIdentityRoles(_, _) >> identityRoles
 
+        tenantRoleDao.getTenantRoleForUser(called, sharedRandom) >> new TenantRole()
+
         tenantRoleDao.getTenantRoleForUser(caller, identityRoles) >>> [
                 defaultTenantRole, defaultTenantRole, defaultTenantRole,
                 userAdminTenantRole, userAdminTenantRole,
@@ -271,6 +274,22 @@ class UserGlobalRoleResourceGroovyTest extends Specification {
 
         then:
         thrown(ForbiddenException)
+    }
+
+    def "delete global role from user throws not found exception"() {
+        given:
+        createMocks()
+        allowAccess()
+
+        userDao.getUserById(_) >> called
+        tenantRoleDao.getTenantRoleForUser(called, sharedRandom) >> null
+
+        when:
+        globalRoleResource.deleteGlobalRoleFromUser(authToken, sharedRandom, sharedRandom)
+
+        then:
+        thrown(NotFoundException)
+
     }
 
     def "delete global role from user deletes role successfully"() {
@@ -337,8 +356,11 @@ class UserGlobalRoleResourceGroovyTest extends Specification {
                 defaultTenantRole, defaultTenantRole, defaultTenantRole
         ]
 
-        applicationRoleDao.getClientRole(_) >> [
-                adminRole, specialRole, serviceAdminRole
+        applicationRoleDao.getClientRole(_) >>> [
+                new ClientRole(), new ClientRole(), new ClientRole(),
+                new ClientRole(), adminRole,
+                new ClientRole(), specialRole,
+                new ClientRole(), serviceAdminRole
         ]
 
         when:
@@ -359,7 +381,7 @@ class UserGlobalRoleResourceGroovyTest extends Specification {
         setupRoles()
         allowAccess()
 
-        tenantDao.getTenant(sharedRandom) >> createTenant(sharedRandom)
+        tenantDao.getTenant(sharedRandom) >> null >> createTenant(sharedRandom)
         applicationRoleDao.getClientRole(sharedRandom) >>> [
                 defaultRole, userAdminRole, adminRole, serviceAdminRole
         ]
@@ -373,9 +395,11 @@ class UserGlobalRoleResourceGroovyTest extends Specification {
 
         tenantRoleDao.getTenantRoleForUser(called, identityRoles) >> defaultTenantRole
 
-        applicationRoleDao.getClientRole(_) >> defaultRole
+        applicationRoleDao.getClientRole(_) >> null >> defaultRole
 
         when:
+        globalRoleResource.grantTenantRoleToUser(authToken, sharedRandom, sharedRandom, sharedRandom)
+        globalRoleResource.grantTenantRoleToUser(authToken, sharedRandom, sharedRandom, sharedRandom)
         globalRoleResource.grantTenantRoleToUser(authToken, sharedRandom, sharedRandom, sharedRandom)
         globalRoleResource.grantTenantRoleToUser(authToken, sharedRandom, sharedRandom, sharedRandom)
         globalRoleResource.grantTenantRoleToUser(authToken, sharedRandom, sharedRandom, sharedRandom)
@@ -430,7 +454,7 @@ class UserGlobalRoleResourceGroovyTest extends Specification {
         applicationRoleDao.getClientRole(_) >> null
 
         when:
-        globalRoleResource.createTenantRole("tenantId", "roleId")
+        globalRoleResource.checkAndGetTenantRole("tenantId", "roleId")
 
         then:
         thrown(BadRequestException)
@@ -447,7 +471,7 @@ class UserGlobalRoleResourceGroovyTest extends Specification {
         }
 
         when:
-        def tenantRole = globalRoleResource.createTenantRole("tenantId", "roleId")
+        def tenantRole = globalRoleResource.checkAndGetTenantRole("tenantId", "roleId")
 
         then:
         tenantRole.clientId == "clientId"
@@ -463,9 +487,6 @@ class UserGlobalRoleResourceGroovyTest extends Specification {
         applicationRoleDao = Mock()
         authorizationService = Mock()
         scopeAccessService = Mock()
-
-        globalRoleResource.authorizationService = authorizationService
-        globalRoleResource.scopeAccessService = scopeAccessService
 
         userService.userDao = userDao
         userService.tenantRoleDao = tenantRoleDao
@@ -486,6 +507,10 @@ class UserGlobalRoleResourceGroovyTest extends Specification {
         applicationService.applicationRoleDao = applicationRoleDao
         applicationService.tenantDao = tenantDao
         applicationService.tenantRoleDao = tenantRoleDao
+
+        globalRoleResource.setAuthorizationService(authorizationService)
+        globalRoleResource.setScopeAccessService(scopeAccessService)
+        globalRoleResource.setTenantService(tenantService)
     }
 
     def setupRoles() {
