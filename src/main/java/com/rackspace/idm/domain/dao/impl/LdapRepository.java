@@ -319,6 +319,17 @@ public abstract class LdapRepository {
         return entry;
     }
 
+    protected SearchResultEntry getEntryByDn(String entryDn) {
+        SearchResultEntry entry = null;
+        try {
+            entry = getAppInterface().getEntry(entryDn);
+        } catch (LDAPException ldapEx) {
+            getLogger().error(LDAP_SEARCH_ERROR, ldapEx.getMessage());
+            throw new IllegalStateException(ldapEx);
+        }
+        return entry;
+    }
+
     protected void updateEntry(String entryDn, List<Modification> mods,
         Audit audit) {
         try {

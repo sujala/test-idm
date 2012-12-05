@@ -23,6 +23,7 @@ import com.rackspace.idm.domain.entity.RackerScopeAccess
 import com.rackspace.idm.domain.entity.PasswordResetScopeAccess
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.Application
+import com.rackspace.idm.exception.NotFoundException
 
 /**
  * Created with IntelliJ IDEA.
@@ -157,14 +158,22 @@ class DefaultScopeAccessServiceGroovyTest extends Specification {
         scopeAccessTwo.accessTokenExp = futureDate
         scopeAccessTwo.ldapEntry = new ReadOnlyEntry(dn, new Attribute("uid", "uid2"))
 
-        scopeAccessDao.getDirectScopeAccessForParentByClientId(_, _) >> [scopeAccessOne].asList()
+        scopeAccessDao.getDirectScopeAccessForParentByClientId(_, _) >> [scopeAccessOne].asList() >> [].asList()
         scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> scopeAccessTwo
+        userDao.getUserByDn(_) >> new User().with {
+            it.username = "username"
+            it.id = "id"
+            return it
+        }
 
         when:
         service.updateExpiredUserScopeAccess("parentUniqueIdString", "clientId")
+        service.updateExpiredUserScopeAccess(dn, sharedRandom)
 
         then:
         1 * scopeAccessDao.deleteScopeAccess(scopeAccessOne)
+
+        1 * scopeAccessDao.addDirectScopeAccess(dn, _)
     }
 
     def "getParentDn returns the parentDn"() {
@@ -303,6 +312,32 @@ class DefaultScopeAccessServiceGroovyTest extends Specification {
         then:
         1 * scopeAccessDao.deleteScopeAccessByDn(_)
 
+    }
+
+
+    def "provisionUserScopeAccess adds necessary values to scopeAccess"() {
+        given:
+        createMocks()
+
+        userDao.getUserByDn(_) >> new User().with() {
+            it.username = "username"
+            it.id = "id"
+            return it
+        } >> null
+
+        when:
+        UserScopeAccess scopeAccessOne = service.provisionUserScopeAccess(dn, sharedRandom)
+        UserScopeAccess scopeAccessTwo = service.provisionUserScopeAccess(dn, sharedRandom)
+
+        then:
+        scopeAccessOne.getUsername().equals("username")
+        scopeAccessOne.getUserRsId().equals("id")
+        scopeAccessOne.getClientId().equals(sharedRandom)
+        scopeAccessOne.getAccessTokenString() != null
+        scopeAccessOne.getAccessTokenExp() != null
+
+        then:
+        thrown(NotFoundException)
     }
 
     def createMocks() {

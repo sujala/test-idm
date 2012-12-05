@@ -996,6 +996,11 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public UserScopeAccess updateExpiredUserScopeAccess(String parentUniqueId, String clientId) {
         List<ScopeAccess> scopeAccessList = scopeAccessDao.getDirectScopeAccessForParentByClientId(parentUniqueId, clientId);
+        if (scopeAccessList.size() == 0) {
+            UserScopeAccess scopeAccess = provisionUserScopeAccess(parentUniqueId, clientId);
+            this.scopeAccessDao.addDirectScopeAccess(parentUniqueId, scopeAccess);
+            return scopeAccess;
+        }
         ScopeAccess mostRecent = scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(parentUniqueId, clientId);
 
         for (ScopeAccess scopeAccess : scopeAccessList) {
@@ -1006,6 +1011,22 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             }
         }
         return updateExpiredUserScopeAccess((UserScopeAccess) mostRecent, false);
+    }
+
+    private UserScopeAccess provisionUserScopeAccess(String parentUniqueId, String clientId) {
+        User user = this.userDao.getUserByDn(parentUniqueId);
+        if (user == null) {
+            throw new NotFoundException(String.format("User %s not found", parentUniqueId));
+        }
+
+        UserScopeAccess userScopeAccess = new UserScopeAccess();
+        userScopeAccess.setUsername(user.getUsername());
+        userScopeAccess.setUserRsId(user.getId());
+        userScopeAccess.setClientId(clientId);
+        userScopeAccess.setAccessTokenExp(new DateTime().plusSeconds(getDefaultCloudAuthTokenExpirationSeconds()).toDate());
+        userScopeAccess.setAccessTokenString(generateToken());
+
+        return userScopeAccess;
     }
 
     @Override

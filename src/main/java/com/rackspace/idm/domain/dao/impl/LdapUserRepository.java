@@ -1424,6 +1424,21 @@ public class LdapUserRepository extends LdapRepository implements UserDao {
         getLogger().info("unSoftDeleted user - {}", user.getUsername());
     }
 
+    @Override
+    public User getUserByDn(String userDn) {
+        getLogger().info("getting user - {}", userDn);
+        try {
+            SearchResultEntry entry = getEntryByDn(userDn);
+            return getUser(entry);
+        } catch (GeneralSecurityException e) {
+            getLogger().error("Encryption error", e);
+            throw new IllegalStateException(e);
+        } catch (InvalidCipherTextException e) {
+            getLogger().error(e.getMessage());
+            throw new IllegalStateException(e);
+        }
+    }
+
     protected int getLdapPagingOffsetDefault() {
         return config.getInt("ldap.paging.offset.default");
     }
