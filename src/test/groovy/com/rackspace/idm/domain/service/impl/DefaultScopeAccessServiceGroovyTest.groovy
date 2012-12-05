@@ -294,7 +294,8 @@ class DefaultScopeAccessServiceGroovyTest extends Specification {
         given:
         createMocks()
 
-        UserScopeAccess scopeAccessOne = new UserScopeAccess();
+        UserScopeAccess scopeAccessOne = Mock(UserScopeAccess);
+        scopeAccessOne.getAccessTokenString() >>> [ "notequal", "token" ]
 
         scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> scopeAccessOne
 
@@ -305,6 +306,7 @@ class DefaultScopeAccessServiceGroovyTest extends Specification {
         }
 
         when:
+        service.updateUserScopeAccessTokenForClientIdByUser(new User(), "clientId", "token", new DateTime().toDate())
         service.updateUserScopeAccessTokenForClientIdByUser(new User(), "clientId", "token", new DateTime().toDate())
 
         then:

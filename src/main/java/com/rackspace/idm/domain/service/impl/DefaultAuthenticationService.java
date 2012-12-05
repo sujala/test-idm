@@ -471,8 +471,8 @@ public class DefaultAuthenticationService implements AuthenticationService {
         } else if (scopeAccess == null) {
             scopeAccessService.addDirectScopeAccess(user.getUniqueId(), scopeAccessToAdd);
         } else {
-            scopeAccessService.addDirectScopeAccess(user.getUniqueId(), scopeAccessToAdd);
             scopeAccessService.deleteScopeAccessByDn(scopeAccess.getUniqueId());
+            scopeAccessService.addDirectScopeAccess(user.getUniqueId(), scopeAccessToAdd);
         }
 
         logger.debug("Returning ScopeAccess: {} Expiration {}", scopeAccessToAdd.getAccessTokenString(), scopeAccessToAdd.getAccessTokenExp());
@@ -516,8 +516,8 @@ public class DefaultAuthenticationService implements AuthenticationService {
         } else if (scopeAccess == null) {
             scopeAccessService.addDirectScopeAccess(client.getUniqueId(), scopeAccessToAdd);
         } else {
-            scopeAccessService.addDirectScopeAccess(client.getUniqueId(), scopeAccessToAdd);
             scopeAccessService.deleteScopeAccessByDn(scopeAccess.getUniqueId());
+            scopeAccessService.addDirectScopeAccess(client.getUniqueId(), scopeAccessToAdd);
         }
 
         logger.debug("Found ScopeAccess: {} Expiration {}", scopeAccessToAdd.getAccessTokenString(), scopeAccessToAdd.getAccessTokenExp());
@@ -576,8 +576,8 @@ public class DefaultAuthenticationService implements AuthenticationService {
         } else if (scopeAccess == null) {
             scopeAccessService.addDirectScopeAccess(racker.getUniqueId(), scopeAccessToAdd);
         } else {
-            scopeAccessService.addDirectScopeAccess(racker.getUniqueId(), scopeAccessToAdd);
             scopeAccessService.deleteScopeAccessByDn(scopeAccess.getUniqueId());
+            scopeAccessService.addDirectScopeAccess(racker.getUniqueId(), scopeAccessToAdd);
         }
 
         logger.debug("Returning ScopeAccess: {} Expiration {}", scopeAccessToAdd.getAccessTokenString(), scopeAccessToAdd.getAccessTokenExp());

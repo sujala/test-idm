@@ -4,12 +4,10 @@ import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.domain.service.impl.*;
 import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.validation.RolePrecedenceValidator;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -128,7 +126,10 @@ public class UserGlobalRoleResource {
 
         User user = this.userService.loadUser(userId);
 
-        TenantRole tenantRole = tenantService.getTenantRoleForUserById(user, roleId);
+        TenantRole tenantRole = this.tenantService.getTenantRoleForUserById(user, roleId);
+        if (tenantRole == null) {
+            throw new NotFoundException(String.format("Role with id: %s not found", roleId));
+        }
 
         if (!(scopeAccess instanceof ClientScopeAccess)) {
             User caller = userService.getUserByAuthToken(authHeader);
@@ -169,10 +170,15 @@ public class UserGlobalRoleResource {
         ScopeAccess scopeAccess = scopeAccessService.getAccessTokenByAuthHeader(authHeader);
         authorizationService.authorizeIdmSuperAdminOrRackspaceClient(scopeAccess);
 
-        Tenant tenant = tenantService.checkAndGetTenant(tenantId);
-
         User user = userService.loadUser(userId);
-        TenantRole tenantRole = createTenantRole(tenantId, roleId);
+        Tenant tenant = tenantService.getTenant(tenantId);
+        if (tenant == null) {
+            throw new BadRequestException("Cannot add tenant role to user on tenant");
+        }
+        TenantRole tenantRole = checkAndGetTenantRole(tenantId, roleId);
+        if (tenantRole == null) {
+            throw new BadRequestException(String.format("Cannot find role %s to add", roleId));
+        }
 
         if (!(scopeAccess instanceof ClientScopeAccess)) {
             User caller = userService.getUserByAuthToken(authHeader);
@@ -219,7 +225,7 @@ public class UserGlobalRoleResource {
 
         TenantRole tenantRole = tenantService.getTenantRoleForUserById(user, roleId);
         if (tenantRole == null) {
-            throw new NotFoundException(String.format("User %s does not have tenantRole %s", user, roleId));
+            throw new NotFoundException("Tenant Role not found");
         }
 
         if (!(scopeAccess instanceof ClientScopeAccess)) {
@@ -233,7 +239,7 @@ public class UserGlobalRoleResource {
 		return Response.noContent().build();
 	}
 
-	TenantRole createTenantRole(String tenantId, String roleId) {
+	TenantRole checkAndGetTenantRole(String tenantId, String roleId) {
 		ClientRole role = applicationService.getClientRoleById(roleId);
         if (role == null) {
             String errMsg = String.format("Role %s not found", roleId);
