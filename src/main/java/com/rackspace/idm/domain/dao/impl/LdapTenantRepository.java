@@ -496,21 +496,21 @@ public class LdapTenantRepository extends LdapRepository implements TenantDao {
     public boolean doesScopeAccessHaveTenantRole(ScopeAccess scopeAccess, ClientRole role) {
         getLogger().debug("Does Scope Access Have Tenant Role");
 
-        DN userDn = null;
+        DN searchDn = null;
         try {
             if (scopeAccess instanceof DelegatedClientScopeAccess) {
-                userDn = getBaseDnForSearch(new DN(scopeAccess.getUniqueId()));
+                searchDn = getBaseDnForSearch(new DN(scopeAccess.getUniqueId()));
             } else {
-                userDn = getBaseDnForSearch(scopeAccess.getLDAPEntry().getParentDN());
+                searchDn = getBaseDnForSearch(scopeAccess.getLDAPEntry().getParentDN());
             }
         } catch (Exception ex) {
             throw new IllegalStateException();
         }
 
-        if (userDn == null) {
+        if (searchDn == null) {
             throw new BadRequestException("token was not tied to a user");
         }
-        TenantRole exists = this.getTenantRoleForParentById(userDn.toString(), role.getId());
+        TenantRole exists = this.getTenantRoleForParentById(searchDn.toString(), role.getId());
 
         boolean hasRole = exists != null;
         getLogger().debug("Does Scope Access Have Tenant Role: {}", hasRole);

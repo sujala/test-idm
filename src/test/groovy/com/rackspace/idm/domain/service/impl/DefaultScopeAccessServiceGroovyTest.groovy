@@ -22,7 +22,6 @@ import com.unboundid.ldap.sdk.Attribute
 import com.rackspace.idm.domain.entity.RackerScopeAccess
 import com.rackspace.idm.domain.entity.PasswordResetScopeAccess
 import com.rackspace.idm.domain.entity.User
-import com.rackspace.api.idm.v1.Application
 import com.rackspace.idm.domain.entity.Application
 
 /**
@@ -51,8 +50,8 @@ class DefaultScopeAccessServiceGroovyTest extends Specification {
     @Shared def expiredDate
     @Shared def refreshDate
     @Shared def futureDate
-    @Shared def dn = "accessToken=123456,cn=TOKENS,ou=users,o=rackspace"
-    @Shared def parentDn = "cn=TOKENS,ou=users,o=rackspace"
+    @Shared def dn = "accessToken=123456,cn=TOKENS,rsId=12345,ou=users,o=rackspace"
+    @Shared def searchDn = "rsId=12345,ou=users,o=rackspace"
 
     def setupSpec() {
         sharedRandom = ("$randomness").replace("-", "")
@@ -96,7 +95,7 @@ class DefaultScopeAccessServiceGroovyTest extends Specification {
         2 * scopeAccessDao.addDirectScopeAccess(_, _)
 
         then:
-        1 * scopeAccessDao.deleteScopeAccess(_)
+        1 * scopeAccessDao.deleteScopeAccessByDn(_)
     }
 
     def "updateUserScopeAccessTokenForClientIdByUser deletes existing and adds new scopeAccess"() {
@@ -141,8 +140,8 @@ class DefaultScopeAccessServiceGroovyTest extends Specification {
         service.updateExpiredUserScopeAccess(scopeAccess, false)
 
         then:
-        2 * scopeAccessDao.addScopeAccess(_, _)
-        1 * scopeAccessDao.deleteScopeAccess(_)
+        2 * scopeAccessDao.addDirectScopeAccess(_, _)
+        1 * scopeAccessDao.deleteScopeAccessByDn(_)
     }
 
     def "update (different parameters) deletes expired"() {
@@ -173,12 +172,12 @@ class DefaultScopeAccessServiceGroovyTest extends Specification {
         createMocks()
 
         when:
-        def one = service.getParentDn(dn)
-        def two = service.getParentDn("blah")
+        def one = service.getBaseDnAsString(dn)
+        def two = service.getBaseDnAsString("blah")
 
         then:
-        one.equals(parentDn)
-        two == null
+        one.equals(searchDn)
+        thrown(IllegalStateException)
     }
 
     def "getValidUserScopeAccessForClientId adds scopeAccess and deletes old"() {
@@ -214,8 +213,9 @@ class DefaultScopeAccessServiceGroovyTest extends Specification {
         service.getValidUserScopeAccessForClientId("userUniqueId", "clientId")
 
         then:
-        4 * scopeAccessDao.deleteScopeAccess(_)
-        2 * scopeAccessDao.addScopeAccess(_, _)
+        1 * scopeAccessDao.deleteScopeAccessByDn(_)
+        2 * scopeAccessDao.addDirectScopeAccess(_, _)
+        3 * scopeAccessDao.deleteScopeAccess(_)
 
     }
 
@@ -248,9 +248,9 @@ class DefaultScopeAccessServiceGroovyTest extends Specification {
         service.getValidRackerScopeAccessForClientId("12345", "12345", "12345")
 
         then:
-        1 * scopeAccessDao.addDirectScopeAccess(_, _)
-        2 * scopeAccessDao.addScopeAccess(_, _)
-        1 * scopeAccessDao.deleteScopeAccess(_)
+        3 * scopeAccessDao.addDirectScopeAccess(_, _)
+        1 * scopeAccessDao.deleteScopeAccessByDn(_)
+
     }
 
     def "test parameters for deleteScopeAccessByDn"() {
@@ -268,26 +268,17 @@ class DefaultScopeAccessServiceGroovyTest extends Specification {
         thrown(IllegalArgumentException)
     }
 
-    def "updateScopeAccess saves parentDn, then deletes existing and adds updated scopeAccess"() {
+    def "updateScopeAccess updates scopeAccess (no methods using modify accessToken)"() {
         given:
         createMocks()
 
         def mockedScopeAccess = Mock(ScopeAccess)
 
-        mockedScopeAccess.getUniqueId() >>> [ dn, "asdf/asf" ]
-
         when:
         service.updateScopeAccess(mockedScopeAccess)
-        service.updateScopeAccess(mockedScopeAccess)
 
         then:
-        1 * scopeAccessDao.deleteScopeAccessByDn(_)
-
-        then:
-        1 * scopeAccessDao.addDirectScopeAccess(_, mockedScopeAccess)
-
-        then:
-        thrown(IllegalStateException)
+        1 * scopeAccessDao.updateScopeAccess(_)
     }
 
     def "updateUserScopeAccessTokenForClientIdByUser adds new and deletes old"() {

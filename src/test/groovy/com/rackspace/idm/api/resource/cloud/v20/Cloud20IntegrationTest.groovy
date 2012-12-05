@@ -99,6 +99,9 @@ class Cloud20IntegrationTest extends Specification {
     @Shared def identityAdminRoleId = "1"
     @Shared def serviceAdminRoleId = "4"
 
+    @Shared def testIdentityRoleId = "testIdentityRoleForDelete"
+    @Shared def testIdentityRole
+
     def setupSpec() {
         sharedRandom = ("$sharedRandomness").replace('-',"")
         testDomainId = "domain1$sharedRandom"
@@ -181,6 +184,8 @@ class Cloud20IntegrationTest extends Specification {
         addApplicationRoleToUser(serviceAdminToken, sharedRole.getId(), defaultUser.getId())
         addApplicationRoleToUser(serviceAdminToken, sharedRole.getId(), defaultUserTwo.getId())
         addApplicationRoleToUser(serviceAdminToken, sharedRole.getId(), defaultUserThree.getId())
+
+        //testIdentityRole = getRole(serviceAdminToken, testIdentityRoleId).getEntity(Role).value
 
     }
 
@@ -1273,6 +1278,10 @@ class Cloud20IntegrationTest extends Specification {
 
     def createSecretQA(String token, String userId, secretqa){
         resource.path(path).path('users').path(userId).path(RAX_AUTH).path('secretqas').header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(secretqa).post(ClientResponse)
+    }
+
+    def getRole(String token, String roleId) {
+        resource.path(path).path('OSKD-ADM/roles').path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     //Helper Methods

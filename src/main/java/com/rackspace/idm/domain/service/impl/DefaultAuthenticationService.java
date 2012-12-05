@@ -440,9 +440,9 @@ public class DefaultAuthenticationService implements AuthenticationService {
             scopeAccessToAdd.setClientId(client.getClientId());
             scopeAccessToAdd.setClientRCN(client.getRCN());
             scopeAccessToAdd.setAccessTokenExp(scopeAccess.getAccessTokenExp());
-            scopeAccessToAdd.setAccessTokenString(scopeAccess.getAccessTokenString());
+            scopeAccessToAdd.setAccessTokenString(this.generateToken());
             scopeAccessToAdd.setRefreshTokenExp(scopeAccess.getRefreshTokenExp());
-            scopeAccessToAdd.setRefreshTokenString(scopeAccess.getRefreshTokenString());
+            scopeAccessToAdd.setRefreshTokenString(this.generateToken());
         }
 
         DateTime current = new DateTime();
@@ -465,8 +465,13 @@ public class DefaultAuthenticationService implements AuthenticationService {
 
         logger.debug("Updating Expirations for User: {} and ClientId: {}", user.getUsername(), client.getClientId());
 
-        scopeAccessService.addDirectScopeAccess(user.getUniqueId(), scopeAccessToAdd);
-        if ((scopeAccess != null) && (scopeAccess.getUniqueId() != null)) {
+        if (scopeAccess != null && !scopeAccess.isAccessTokenExpired(current)) {
+            logger.debug("Found ScopeAccess: {} Expiration {}", scopeAccess.getAccessTokenString(), scopeAccess.getAccessTokenExp());
+            return scopeAccess;
+        } else if (scopeAccess == null) {
+            scopeAccessService.addDirectScopeAccess(user.getUniqueId(), scopeAccessToAdd);
+        } else {
+            scopeAccessService.addDirectScopeAccess(user.getUniqueId(), scopeAccessToAdd);
             scopeAccessService.deleteScopeAccessByDn(scopeAccess.getUniqueId());
         }
 
@@ -492,7 +497,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
             scopeAccessToAdd.setClientId(client.getClientId());
             scopeAccessToAdd.setClientRCN(client.getRCN());
             scopeAccessToAdd.setAccessTokenExp(scopeAccess.getAccessTokenExp());
-            scopeAccessToAdd.setAccessTokenString(scopeAccess.getAccessTokenString());
+            scopeAccessToAdd.setAccessTokenString(this.generateToken());
         }
 
         DateTime current = new DateTime();
@@ -505,13 +510,17 @@ public class DefaultAuthenticationService implements AuthenticationService {
             logger.debug("Updating ScopeAccess: {} Expiration {}", scopeAccessToAdd.getAccessTokenString(), scopeAccessToAdd.getAccessTokenExp());
         }
 
-        scopeAccessService.addDirectScopeAccess(client.getUniqueId(), scopeAccessToAdd);
-        if ((scopeAccess != null) && (scopeAccess.getUniqueId() != null)) {
+        if (scopeAccess != null && !scopeAccess.isAccessTokenExpired(current)) {
+            logger.debug("Found ScopeAccess: {} Expiration {}", scopeAccess.getAccessTokenString(), scopeAccess.getAccessTokenExp());
+            return scopeAccess;
+        } else if (scopeAccess == null) {
+            scopeAccessService.addDirectScopeAccess(client.getUniqueId(), scopeAccessToAdd);
+        } else {
+            scopeAccessService.addDirectScopeAccess(client.getUniqueId(), scopeAccessToAdd);
             scopeAccessService.deleteScopeAccessByDn(scopeAccess.getUniqueId());
         }
 
         logger.debug("Found ScopeAccess: {} Expiration {}", scopeAccessToAdd.getAccessTokenString(), scopeAccessToAdd.getAccessTokenExp());
-
         return scopeAccessToAdd;
     }
 
@@ -555,19 +564,23 @@ public class DefaultAuthenticationService implements AuthenticationService {
                                                                          : new DateTime(scopeAccessToAdd.getRefreshTokenExp());
 
         if (refreshExpiration.isBefore(current)) {
+            scopeAccessToAdd.setAccessTokenString(this.generateToken());
             scopeAccessToAdd.setRefreshTokenString(this.generateToken());
             scopeAccessToAdd.setRefreshTokenExp(current.plusYears(YEARS).toDate());
         }
 
         logger.debug("Updating Expirations for Racker: {} and ClientId: {}", racker.getRackerId(), client.getClientId());
-        this.scopeAccessService.addDirectScopeAccess(racker.getUniqueId(), scopeAccessToAdd);
-        if ((scopeAccess != null) && (scopeAccess.getUniqueId() != null)) {
-            this.scopeAccessService.deleteScopeAccessByDn(scopeAccess.getUniqueId());
+        if (scopeAccess != null && !scopeAccess.isAccessTokenExpired(current)) {
+            logger.debug("Found ScopeAccess: {} Expiration {}", scopeAccess.getAccessTokenString(), scopeAccess.getAccessTokenExp());
+            return scopeAccess;
+        } else if (scopeAccess == null) {
+            scopeAccessService.addDirectScopeAccess(racker.getUniqueId(), scopeAccessToAdd);
+        } else {
+            scopeAccessService.addDirectScopeAccess(racker.getUniqueId(), scopeAccessToAdd);
+            scopeAccessService.deleteScopeAccessByDn(scopeAccess.getUniqueId());
         }
 
-
         logger.debug("Returning ScopeAccess: {} Expiration {}", scopeAccessToAdd.getAccessTokenString(), scopeAccessToAdd.getAccessTokenExp());
-
         return scopeAccessToAdd;
     }
 

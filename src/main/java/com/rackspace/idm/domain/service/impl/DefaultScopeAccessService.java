@@ -12,6 +12,7 @@ import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import com.unboundid.ldap.sdk.DN;
 import com.unboundid.ldap.sdk.LDAPException;
+import com.unboundid.ldap.sdk.RDN;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -20,10 +21,7 @@ import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Component
 public class DefaultScopeAccessService implements ScopeAccessService {
@@ -536,6 +534,8 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             scopeAccessToAdd.setClientId(PASSWORD_RESET_CLIENT_ID);
             scopeAccessToAdd.setClientRCN(PASSWORD_RESET_CLIENT_ID);
             this.scopeAccessDao.addDirectScopeAccess(user.getUniqueId(), scopeAccessToAdd);
+            logger.debug("Done getting or creating password reset scope access for user {}", user.getUsername());
+            return scopeAccessToAdd;
         } else {
             if (prsa.isAccessTokenExpired(new DateTime())) {
                 scopeAccessToAdd.setUserRsId(prsa.getUserRsId());
@@ -547,7 +547,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
                 scopeAccessToAdd.setAccessTokenString(this.generateToken());
 
                 this.scopeAccessDao.addDirectScopeAccess(user.getUniqueId(), scopeAccessToAdd);
-                this.scopeAccessDao.deleteScopeAccess(prsa);
+                this.scopeAccessDao.deleteScopeAccessByDn(prsa.getUniqueId());
             }
         }
         logger.debug("Done getting or creating password reset scope access for user {}", user.getUsername());
@@ -976,16 +976,9 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         }
 
         logger.info("Updating ScopeAccess {}", scopeAccess);
-        String parentDn = null;
-        try {
-            parentDn = new DN(scopeAccess.getUniqueId()).getParentString();
-        } catch (LDAPException e) {
-            logger.warn("ScopeAccess has illegal DN");
-            throw new IllegalStateException("ScopeAccess has illegal DN");
-        }
 
-        this.scopeAccessDao.deleteScopeAccessByDn(scopeAccess.getUniqueId());
-        this.scopeAccessDao.addDirectScopeAccess(parentDn, scopeAccess);
+        //The only uses of this function are expiring a token (not changing the value of the token itself)
+        this.scopeAccessDao.updateScopeAccess(scopeAccess);
         logger.info("Updated ScopeAccess {}", scopeAccess);
     }
 
@@ -1031,23 +1024,42 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
         if (scopeAccess.isAccessTokenExpired(new DateTime())) {
             scopeAccessToAdd.setAccessTokenString(this.generateToken());
-            scopeAccessDao.addScopeAccess(getParentDn(scopeAccess.getUniqueId()), scopeAccessToAdd);
-            scopeAccessDao.deleteScopeAccess(scopeAccess);
+            scopeAccessDao.addDirectScopeAccess(getBaseDnAsString(scopeAccess.getUniqueId()), scopeAccessToAdd);
+            scopeAccessDao.deleteScopeAccessByDn(scopeAccess.getUniqueId());
             return scopeAccessToAdd;
         } else if (scopeAccess.isAccessTokenWithinRefreshWindow(getRefreshTokenWindow())) {
             scopeAccessToAdd.setAccessTokenString(this.generateToken());
-            scopeAccessDao.addScopeAccess(getParentDn(scopeAccess.getUniqueId()), scopeAccessToAdd);
+            scopeAccessDao.addDirectScopeAccess(getBaseDnAsString(scopeAccess.getUniqueId()), scopeAccessToAdd);
             return scopeAccessToAdd;
         }
         return scopeAccess;
     }
 
-    private String getParentDn(String entryDnString) {
+    private String getBaseDnAsString(String dnString) {
+        DN dn;
         try {
-            DN entryDn = new DN(entryDnString);
-            return entryDn.getParentString();
+             dn = new DN(dnString);
         } catch (LDAPException e) {
+            throw new IllegalStateException("ScopeAccess has invalid DN");
+        }
+
+        dn = getBaseDnForScopeAccess(dn);
+
+        return dn.toString();
+    }
+    private DN getBaseDnForScopeAccess(DN dn) {
+        DN parentDN = dn.getParent();
+        List<RDN> rdns = new ArrayList<RDN>(Arrays.asList(dn.getRDNs()));
+        List<RDN> parentRDNs = new ArrayList<RDN>(Arrays.asList(parentDN.getRDNs()));
+        List<RDN> remainder = new ArrayList<RDN>(rdns);
+        remainder.removeAll(parentRDNs);
+        RDN rdn = remainder.get(0);
+        if (rdn.hasAttribute("rsId") || rdn.hasAttribute("rackerId") || rdn.hasAttribute("clientId")) {
+            return dn;
+        } else if (parentDN.getParent() == null) {
             return null;
+        } else {
+            return getBaseDnForScopeAccess(parentDN);
         }
     }
 
@@ -1168,13 +1180,13 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         if (scopeAccess.isAccessTokenExpired(new DateTime())) {
             scopeAccessToAdd.setAccessTokenString(this.generateToken());
             scopeAccessToAdd.setAccessTokenExp(new DateTime().plusSeconds(getDefaultCloudAuthTokenExpirationSeconds()).toDate());
-            scopeAccessDao.addScopeAccess(getParentDn(scopeAccess.getUniqueId()), scopeAccessToAdd);
-            scopeAccessDao.deleteScopeAccess(scopeAccess);
+            scopeAccessDao.addDirectScopeAccess(getBaseDnAsString(scopeAccess.getUniqueId()), scopeAccessToAdd);
+            scopeAccessDao.deleteScopeAccessByDn(scopeAccess.getUniqueId());
             return scopeAccess;
         } else if (scopeAccess.isAccessTokenWithinRefreshWindow(getRefreshTokenWindow())) {
             scopeAccess.setAccessTokenString(this.generateToken());
             scopeAccess.setAccessTokenExp(new DateTime().plusSeconds(getDefaultCloudAuthTokenExpirationSeconds()).toDate());
-            scopeAccessDao.addScopeAccess(getParentDn(scopeAccess.getUniqueId()), scopeAccess);
+            scopeAccessDao.addDirectScopeAccess(getBaseDnAsString(scopeAccess.getUniqueId()), scopeAccess);
             return scopeAccess;
         }
         return scopeAccess;
