@@ -677,7 +677,9 @@ public class LdapScopeAccessPeristenceRepositoryIntegrationTest extends InMemory
 
     @Test
     public void testUpdateScopeAccess_setTokenExpired() {
-        ScopeAccess scopeAccess = new ScopeAccess();
+        UserScopeAccess scopeAccess = new UserScopeAccess();
+        scopeAccess.setUsername("user");
+        scopeAccess.setUserRsId("userRsId");
         scopeAccess.setAccessTokenExp(new DateTime().plusHours(6).toDate());
         scopeAccess.setAccessTokenString("1234abcd");
         scopeAccess.setClientId(client.getClientId());

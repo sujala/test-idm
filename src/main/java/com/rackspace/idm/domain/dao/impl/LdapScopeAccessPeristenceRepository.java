@@ -71,7 +71,7 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
         try {
             SearchResultEntry entry = getContainer( parentUniqueId, LdapRepository.CONTAINER_TOKENS);
             if (entry == null) {
-                addContainer( parentUniqueId, LdapRepository.CONTAINER_TOKENS);
+                addContainer(parentUniqueId, LdapRepository.CONTAINER_TOKENS);
                 entry = getContainer( parentUniqueId, LdapRepository.CONTAINER_TOKENS);
             }
 

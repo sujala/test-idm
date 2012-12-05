@@ -465,10 +465,10 @@ public class DefaultAuthenticationService implements AuthenticationService {
 
         logger.debug("Updating Expirations for User: {} and ClientId: {}", user.getUsername(), client.getClientId());
 
+        scopeAccessService.addDirectScopeAccess(user.getUniqueId(), scopeAccessToAdd);
         if ((scopeAccess != null) && (scopeAccess.getUniqueId() != null)) {
             scopeAccessService.deleteScopeAccessByDn(scopeAccess.getUniqueId());
         }
-        scopeAccessService.addDirectScopeAccess(user.getUniqueId(), scopeAccessToAdd);
 
         logger.debug("Returning ScopeAccess: {} Expiration {}", scopeAccessToAdd.getAccessTokenString(), scopeAccessToAdd.getAccessTokenExp());
         return scopeAccessToAdd;
@@ -505,11 +505,11 @@ public class DefaultAuthenticationService implements AuthenticationService {
             logger.debug("Updating ScopeAccess: {} Expiration {}", scopeAccessToAdd.getAccessTokenString(), scopeAccessToAdd.getAccessTokenExp());
         }
 
+        scopeAccessService.addDirectScopeAccess(client.getUniqueId(), scopeAccessToAdd);
         if ((scopeAccess != null) && (scopeAccess.getUniqueId() != null)) {
             scopeAccessService.deleteScopeAccessByDn(scopeAccess.getUniqueId());
         }
 
-        scopeAccessService.addDirectScopeAccess(client.getUniqueId(), scopeAccessToAdd);
         logger.debug("Found ScopeAccess: {} Expiration {}", scopeAccessToAdd.getAccessTokenString(), scopeAccessToAdd.getAccessTokenExp());
 
         return scopeAccessToAdd;
@@ -560,11 +560,11 @@ public class DefaultAuthenticationService implements AuthenticationService {
         }
 
         logger.debug("Updating Expirations for Racker: {} and ClientId: {}", racker.getRackerId(), client.getClientId());
+        this.scopeAccessService.addDirectScopeAccess(racker.getUniqueId(), scopeAccessToAdd);
         if ((scopeAccess != null) && (scopeAccess.getUniqueId() != null)) {
             this.scopeAccessService.deleteScopeAccessByDn(scopeAccess.getUniqueId());
         }
 
-        this.scopeAccessService.addDirectScopeAccess(racker.getUniqueId(), scopeAccessToAdd);
 
         logger.debug("Returning ScopeAccess: {} Expiration {}", scopeAccessToAdd.getAccessTokenString(), scopeAccessToAdd.getAccessTokenExp());
 

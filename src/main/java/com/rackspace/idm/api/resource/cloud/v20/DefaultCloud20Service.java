@@ -991,7 +991,12 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (roleId == null) {
                 throw new BadRequestException("roleId cannot be null");
             }
+
             ClientRole role = checkAndGetClientRole(roleId);
+            if (StringUtils.startsWithIgnoreCase(role.getName(), "identity:")) {
+                throw new BadRequestException("Identity:* roles cannot be deleted");
+            }
+
             this.clientService.deleteClientRole(role);
             return Response.noContent();
         } catch (Exception ex) {
