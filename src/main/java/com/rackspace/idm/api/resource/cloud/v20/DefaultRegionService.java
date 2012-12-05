@@ -1,13 +1,12 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.idm.domain.entity.Application;
-import com.rackspace.idm.domain.entity.CloudBaseUrl;
-import com.rackspace.idm.domain.entity.OpenstackEndpoint;
-import com.rackspace.idm.domain.entity.ScopeAccess;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.domain.service.impl.DefaultCloudRegionService;
 import com.rackspace.idm.exception.BadRequestException;
+import org.apache.commons.configuration.Configuration;
 import org.apache.taglibs.standard.tag.common.core.SetSupport;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -32,10 +31,16 @@ public class DefaultRegionService {
     private EndpointService endpointService;
 
     @Autowired
+    private DefaultCloudRegionService defaultCloudRegionService;
+
+    @Autowired
     private ScopeAccessService scopeAccessService;
 
     @Autowired
     private ApplicationService applicationService;
+
+    @Autowired
+    private Configuration config;
 
     public void validateDefaultRegion(String defaultRegion) {
         Set<String> regions = this.getDefaultRegions();
@@ -76,6 +81,11 @@ public class DefaultRegionService {
                 }
             }
         }
+
+        if(defaultRegions.size() == 0){
+            defaultRegions.addAll(getDefaultRegions());
+        }
+
         return defaultRegions;
     }
 
@@ -103,5 +113,13 @@ public class DefaultRegionService {
 
     public void setEndpointService(EndpointService endpointService) {
         this.endpointService = endpointService;
+    }
+
+    public void setDefaultCloudRegionService(DefaultCloudRegionService defaultCloudRegionService) {
+        this.defaultCloudRegionService = defaultCloudRegionService;
+    }
+
+    public void setConfig(Configuration config) {
+        this.config = config;
     }
 }

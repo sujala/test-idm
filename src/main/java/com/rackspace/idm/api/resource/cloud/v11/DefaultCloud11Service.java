@@ -1217,7 +1217,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         if (isAdmin) {
             return adminAuthenticateResponse(uriInfo, cred);
         }
-        return authenticateResponse(cred);
+        return authenticateResponse(uriInfo, cred);
     }
 
     @SuppressWarnings("unchecked")
@@ -1235,10 +1235,16 @@ public class DefaultCloud11Service implements Cloud11Service {
         if (isAdmin) {
             return adminAuthenticateResponse(uriInfo, cred);
         }
-        return authenticateResponse(cred);
+        return authenticateResponse(uriInfo, cred);
     }
 
-    Response.ResponseBuilder authenticateResponse(JAXBElement<? extends Credentials> cred) throws IOException {
+    Response.ResponseBuilder authenticateResponse(UriInfo uriInfo, JAXBElement<? extends Credentials> cred) throws IOException {
+
+        if (cred.getValue() instanceof PasswordCredentials
+                || cred.getValue() instanceof MossoCredentials
+                || cred.getValue() instanceof NastCredentials) {
+            return handleRedirect(uriInfo, "v1.1/auth-admin");
+        }
 
         try {
             Credentials value = cred.getValue();
@@ -1253,6 +1259,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 String apiKey = userCreds.getKey();
                 user = userService.getUser(username);
                 usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(username, apiKey, cloudAuthClientId);
+            /*
             } else if (value instanceof PasswordCredentials) {
                 username = ((PasswordCredentials) value).getUsername();
                 String password = ((PasswordCredentials) value).getPassword();
@@ -1268,6 +1275,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 String key = ((NastCredentials) value).getKey();
                 user = userService.getUserByNastId(nastId);
                 usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(user.getUsername(), key, cloudAuthClientId);
+            */
             }
 
             if (user == null) {
