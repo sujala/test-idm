@@ -3257,7 +3257,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         for (TenantRole userRole : user.getRoles()) {
             if (StringUtils.startsWithIgnoreCase(userRole.getName(), "identity:")) {
-                throw new BadRequestException("You are not allowed to add more than one Identity role.");
+                throw new ForbiddenException(NOT_AUTHORIZED);
             }
         }
     }

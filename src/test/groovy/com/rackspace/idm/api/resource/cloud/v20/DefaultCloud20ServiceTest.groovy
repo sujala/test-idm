@@ -924,7 +924,7 @@ class DefaultCloud20ServiceTest extends Specification {
         }
     }
 
-    def "addUserRole throws badRequest (multiple identity:* roles)"() {
+    def "addUserRole throws forbidden (multiple identity:* roles)"() {
         given:
         createMocks()
         allowAccess()
@@ -951,7 +951,7 @@ class DefaultCloud20ServiceTest extends Specification {
         def response = cloud20Service.addUserRole(headers, authToken, sharedRandom, sharedRandom).build()
 
         then:
-        response.status == 400
+        response.status == 403
     }
 
     def "addUserRole successfully adds role to user"() {
