@@ -820,9 +820,11 @@ public class DefaultUserService implements UserService {
         Tenant tenant = tenantService.getTenant(tenantId);
 
         // Check for existing BaseUrl
-        for (String bId : tenant.getBaseUrlIds()) {
-            if (bId.equals(String.valueOf(baseUrl.getBaseUrlId()))) {
-                throw new BadRequestException("BaseUrl already exists.");
+        if (tenant.getBaseUrlIds() != null && tenant.getBaseUrlIds().length != 0) {
+            for (String bId : tenant.getBaseUrlIds()) {
+                if (bId.equals(String.valueOf(baseUrl.getBaseUrlId()))) {
+                    throw new BadRequestException("BaseUrl already exists.");
+                }
             }
         }
 
