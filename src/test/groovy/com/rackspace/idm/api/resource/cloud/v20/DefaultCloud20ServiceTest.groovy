@@ -1060,7 +1060,7 @@ class DefaultCloud20ServiceTest extends Specification {
 
         then:
         for (status in statuses) {
-            assert(status == 400)
+            assert(status == 403)
         }
     }
 

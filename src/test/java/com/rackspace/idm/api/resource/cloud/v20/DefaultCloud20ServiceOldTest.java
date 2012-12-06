@@ -1909,7 +1909,7 @@ public class DefaultCloud20ServiceOldTest {
         assertTrue("method threw no errors", true);
     }
 
-    @Test(expected = BadRequestException.class)
+    @Test(expected = ForbiddenException.class)
     public void checkForMultipleIdentityRoles_throwsBadRequestException_withIdentityRoleAddedToUserWithIdentityRole() throws Exception {
         User user1 = new User();
         ArrayList<TenantRole> roles = new ArrayList<TenantRole>();

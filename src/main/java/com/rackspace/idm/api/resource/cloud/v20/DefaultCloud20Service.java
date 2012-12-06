@@ -994,7 +994,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             ClientRole role = checkAndGetClientRole(roleId);
             if (StringUtils.startsWithIgnoreCase(role.getName(), "identity:")) {
-                throw new BadRequestException("Identity:* roles cannot be deleted");
+                throw new BadRequestException("role cannot be deleted");
             }
 
             this.clientService.deleteClientRole(role);
@@ -1166,7 +1166,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             if (user.getId().equals(caller.getId()) && StringUtils.startsWithIgnoreCase(role.getName(), "identity:")) {
-                throw new BadRequestException("A user cannot delete their own identity role");
+                throw new ForbiddenException(NOT_AUTHORIZED);
             }
 
             precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);

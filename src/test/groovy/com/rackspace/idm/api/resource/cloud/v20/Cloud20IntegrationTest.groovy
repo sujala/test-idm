@@ -832,9 +832,9 @@ class Cloud20IntegrationTest extends Specification {
         ]
     }
 
-    def "adding identity:* to user with identity:* role And deleting own identity:* role return badRequest"() {
+    def "adding identity:* to user with identity:* role And deleting own identity:* role return forbidden"() {
         expect:
-        response.status == 400
+        response.status == 403
 
         where:
         response << [
