@@ -99,31 +99,55 @@ class DefaultScopeAccessServiceGroovyTest extends Specification {
         1 * scopeAccessDao.deleteScopeAccessByDn(_)
     }
 
-    def "updateUserScopeAccessTokenForClientIdByUser deletes existing and adds new scopeAccess"() {
+
+    def "updateuserScopeAccessTokenForClientIdByUser throws exception"() {
         given:
         createMocks()
-        def mockedUser = Mock(User)
-        def scopeAccessOne = new UserScopeAccess()
-
-        scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> scopeAccessOne
-        applicationDao.getClientByClientId(_) >> new Application().with() {
-            it.clientId = "clientId"
-            it.RCN = "RCN"
-            return it
-        }
-
-        scopeAccessOne.accessTokenString = "123456"
-        scopeAccessOne.ldapEntry = new ReadOnlyEntry(dn, attribute())
-        scopeAccessOne.accessTokenExp = new DateTime().minusHours(12).toDate()
 
         when:
-        service.updateUserScopeAccessTokenForClientIdByUser(mockedUser, "clientId", "token", new DateTime().toDate())
+        service.updateUserScopeAccessTokenForClientIdByUser(null, "clientId", "token", new Date())
 
         then:
-        1 * scopeAccessDao.addDirectScopeAccess(_, _)
+        thrown(IllegalArgumentException)
+    }
+
+    def "updateUserScopeAccessTokenForClientIdByUser "() {
+        given:
+        createMocks()
+
+        UserScopeAccess scopeAccessOne = new UserScopeAccess()
+        UserScopeAccess scopeAccessTwo = new UserScopeAccess()
+
+        scopeAccessOne.accessTokenString = "token1"
+        scopeAccessTwo.accessTokenString = "token2"
+        scopeAccessOne.accessTokenExp = expiredDate
+        scopeAccessTwo.accessTokenExp = new DateTime(futureDate).minusHours(1).toDate()
+
+        applicationDao.getClientByClientId(_) >> new Application()
+
+        scopeAccessDao.getScopeAccessesByParentAndClientId(_, _) >>> [
+                [ scopeAccessOne, scopeAccessTwo].asList(),
+                [ scopeAccessOne, scopeAccessTwo].asList(),
+                [ scopeAccessOne ].asList()
+        ]
+
+        when:
+        service.updateUserScopeAccessTokenForClientIdByUser(new User(), "clientId", "token1", futureDate)
+        service.updateUserScopeAccessTokenForClientIdByUser(new User(), "clientId", "token", futureDate)
+        service.updateUserScopeAccessTokenForClientIdByUser(new User(), "clientId", "token", futureDate)
 
         then:
-        1 * scopeAccessDao.deleteScopeAccessByDn(dn)
+        scopeAccessDao.updateScopeAccess(_) >> { arg1 ->
+            assert(arg1.accessTokenString[0].equals("token1"))
+            assert(futureDate.toString().equals(arg1.accessTokenExp[0].toString()))
+            return true
+        }
+
+        then:
+        1 * scopeAccessDao.deleteScopeAccess(_)
+
+        then:
+        2 * scopeAccessDao.addDirectScopeAccess(_, _)
     }
 
     def "update expired user scope access adds new scope access entity to the directory"() {
@@ -289,33 +313,6 @@ class DefaultScopeAccessServiceGroovyTest extends Specification {
         then:
         1 * scopeAccessDao.updateScopeAccess(_)
     }
-
-    def "updateUserScopeAccessTokenForClientIdByUser adds new and deletes old"() {
-        given:
-        createMocks()
-
-        UserScopeAccess scopeAccessOne = Mock(UserScopeAccess);
-        scopeAccessOne.getAccessTokenString() >>> [ "notequal", "token" ]
-
-        scopeAccessDao.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> scopeAccessOne
-
-        applicationDao.getClientByClientId(_) >> new Application().with() {
-            it.clientId = "clientId"
-            it.RCN = "RCN"
-            return it
-        }
-
-        when:
-        service.updateUserScopeAccessTokenForClientIdByUser(new User(), "clientId", "token", new DateTime().toDate())
-        service.updateUserScopeAccessTokenForClientIdByUser(new User(), "clientId", "token", new DateTime().toDate())
-
-        then:
-        1 * scopeAccessDao.addDirectScopeAccess(_, _)
-        then:
-        1 * scopeAccessDao.deleteScopeAccessByDn(_)
-
-    }
-
 
     def "provisionUserScopeAccess adds necessary values to scopeAccess"() {
         given:

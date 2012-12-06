@@ -1034,13 +1034,6 @@ public class DefaultScopeAccessServiceTest {
     }
 
     @Test
-    public void updateUserScopeAccessTokenForClientIdByUser_scopeAccessIsNull_doesNotUpdate() throws Exception {
-        doReturn(null).when(spy).getUserScopeAccessForClientId(null,null);
-        spy.updateUserScopeAccessTokenForClientIdByUser(new User(),null,null,null);
-        verify(scopeAccessDao,never()).updateScopeAccess(any(ScopeAccess.class));
-    }
-
-    @Test
     public void grantPermissionToClient_permissionIsNull_throwsIllegalArgumentException() throws Exception {
         try{
             defaultScopeAccessService.grantPermissionToClient(null, null);
