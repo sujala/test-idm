@@ -83,7 +83,7 @@ public class CloudUserExtractor {
             username = ((com.rackspacecloud.docs.auth.api.v1.PasswordCredentials) credentials.getValue()).getUsername();
             String password = ((com.rackspacecloud.docs.auth.api.v1.PasswordCredentials) credentials.getValue()).getPassword();
             if (StringUtils.isBlank(password)) {
-                throw new CloudExceptionResponse(cloudExceptionResponse.badRequestExceptionResponse("Expecting password"));
+                throw new CloudExceptionResponse(cloudExceptionResponse.badRequestExceptionResponse("Expecting Password"));
             }
             if (StringUtils.isBlank(username)) {
                 throw new CloudExceptionResponse(cloudExceptionResponse.badRequestExceptionResponse("Expecting username"));

@@ -397,7 +397,7 @@ public class CloudMigrationService {
 
             return result;
         }
-        throw new NotAuthenticatedException("Not Authorized.");
+        throw new NotAuthenticatedException("Not Authorized");
     }
 
 	String getDefaultRegion(User user) {

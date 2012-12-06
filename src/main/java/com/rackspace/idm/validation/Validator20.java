@@ -81,7 +81,7 @@ public class Validator20 {
         String password = passwordCredentials.getPassword();
         validateUsername(username);
         if (StringUtils.isBlank(password)) {
-            String errMsg = "Expecting password";
+            String errMsg = "Expecting Password";
             logger.warn(errMsg);
             throw new BadRequestException(errMsg);
         }

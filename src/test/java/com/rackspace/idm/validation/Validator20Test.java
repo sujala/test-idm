@@ -273,7 +273,7 @@ public class Validator20Test {
             validator20.validatePasswordCredentials(passwordCredentialsRequiredUsername);
             assertTrue("should throw exception",false);
         } catch (BadRequestException ex){
-            assertThat("exception message", ex.getMessage(),equalTo("Expecting password"));
+            assertThat("exception message", ex.getMessage(),equalTo("Expecting Password"));
         }
     }
 

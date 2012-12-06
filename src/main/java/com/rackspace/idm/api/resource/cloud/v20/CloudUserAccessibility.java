@@ -25,7 +25,7 @@ public class CloudUserAccessibility {
 
     protected Configuration config;
 
-    public static final String NOT_AUTHORIZED = "Not authorized.";
+    public static final String NOT_AUTHORIZED = "Not Authorized";
 
     public ScopeAccess callerScopeAccess;
 

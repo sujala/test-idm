@@ -761,7 +761,7 @@ public class DefaultAuthorizationServiceTest {
             spy.verifyServiceAdminLevelAccess(scopeAccess);
             assertTrue("should throw exception",false);
         }catch (ForbiddenException ex){
-            assertThat("exception message",ex.getMessage(),equalTo("Not authorized."));
+            assertThat("exception message",ex.getMessage(),equalTo("Not Authorized"));
         }
     }
 
@@ -781,7 +781,7 @@ public class DefaultAuthorizationServiceTest {
             spy.verifyRackerOrIdentityAdminAccess(scopeAccess);
             assertTrue("should throw exception",false);
         } catch (ForbiddenException ex){
-            assertThat("exception message",ex.getMessage(),equalTo("Not authorized."));
+            assertThat("exception message",ex.getMessage(),equalTo("Not Authorized"));
         }
     }
 
@@ -860,7 +860,7 @@ public class DefaultAuthorizationServiceTest {
             spy.verifyIdentityAdminLevelAccess(userScopeAccess);
             assertTrue("should throw exception",false);
         } catch (ForbiddenException ex){
-            assertThat("exception message",ex.getMessage(),equalTo("Not authorized."));
+            assertThat("exception message",ex.getMessage(),equalTo("Not Authorized"));
         }
 
     }
@@ -874,7 +874,7 @@ public class DefaultAuthorizationServiceTest {
             doReturn(false).when(spy).authorizeCloudUserAdmin(scopeAccess);
             spy.verifyUserAdminLevelAccess(scopeAccess);
         } catch (ForbiddenException ex){
-            assertThat("exception message", ex.getMessage(), equalTo("Not authorized."));
+            assertThat("exception message", ex.getMessage(), equalTo("Not Authorized"));
         }
     }
 
@@ -1117,7 +1117,7 @@ public class DefaultAuthorizationServiceTest {
             spy.verifyUserLevelAccess(scopeAccess);
             assertTrue("should throw exception",false);
         } catch (ForbiddenException ex){
-            assertThat("exception message",ex.getMessage(),equalTo("Not authorized."));
+            assertThat("exception message",ex.getMessage(),equalTo("Not Authorized"));
         }
     }
 
@@ -1148,7 +1148,7 @@ public class DefaultAuthorizationServiceTest {
            defaultAuthorizationService.verifySelf(user1, user2);
            assertTrue("should throw exception", false);
        }catch (ForbiddenException ex){
-           assertThat("exception message",ex.getMessage(),equalTo("Not authorized."));
+           assertThat("exception message",ex.getMessage(),equalTo("Not Authorized"));
        }
     }
 
@@ -1166,7 +1166,7 @@ public class DefaultAuthorizationServiceTest {
             defaultAuthorizationService.verifySelf(user1, user2);
             assertTrue("should throw exception", false);
         }catch (ForbiddenException ex){
-            assertThat("exception message", ex.getMessage(),equalTo("Not authorized."));
+            assertThat("exception message", ex.getMessage(),equalTo("Not Authorized"));
         }
 
     }
@@ -1185,7 +1185,7 @@ public class DefaultAuthorizationServiceTest {
             defaultAuthorizationService.verifySelf(user1, user2);
             assertTrue("should throw exception", false);
         }catch (ForbiddenException ex){
-            assertThat("exception message",ex.getMessage(),equalTo("Not authorized."));
+            assertThat("exception message",ex.getMessage(),equalTo("Not Authorized"));
         }
     }
 
@@ -1240,7 +1240,7 @@ public class DefaultAuthorizationServiceTest {
             spy.verifyTokenHasTenantAccess("tenantId", scopeAccess);
             assertTrue("should throw exception",false);
         } catch (ForbiddenException ex){
-            assertThat("exception message",ex.getMessage(),equalTo("Not authorized."));
+            assertThat("exception message",ex.getMessage(),equalTo("Not Authorized"));
         }
     }
 
@@ -1255,7 +1255,7 @@ public class DefaultAuthorizationServiceTest {
             spy.verifyTokenHasTenantAccess("tenantId", scopeAccess);
             assertTrue("should throw exception",false);
         } catch (ForbiddenException ex){
-            assertThat("exception message",ex.getMessage(),equalTo("Not authorized."));
+            assertThat("exception message",ex.getMessage(),equalTo("Not Authorized"));
         }
     }
 
@@ -1270,7 +1270,7 @@ public class DefaultAuthorizationServiceTest {
             defaultAuthorizationService.verifyDomain(retrievedUser, caller);
             assertTrue("should throw exception", false);
         } catch (ForbiddenException ex){
-            assertThat("exception message", ex.getMessage(),equalTo("Not authorized."));
+            assertThat("exception message", ex.getMessage(),equalTo("Not Authorized"));
         }
     }
 
@@ -1284,7 +1284,7 @@ public class DefaultAuthorizationServiceTest {
             defaultAuthorizationService.verifyDomain(retrievedUser, caller);
             assertTrue("should throw exception", false);
         } catch (ForbiddenException ex){
-            assertThat("exception message", ex.getMessage(),equalTo("Not authorized."));
+            assertThat("exception message", ex.getMessage(),equalTo("Not Authorized"));
         }
     }
 
@@ -1313,7 +1313,7 @@ public class DefaultAuthorizationServiceTest {
             defaultAuthorizationService.verifyDomain(retrievedUser, caller);
             assertTrue("should throw exception",false);
         }catch (ForbiddenException ex){
-            assertThat("exception message",ex.getMessage(),equalTo("Not authorized."));
+            assertThat("exception message",ex.getMessage(),equalTo("Not Authorized"));
         }
     }
 

@@ -69,7 +69,7 @@ import java.util.*;
 @Component
 public class DefaultCloud20Service implements Cloud20Service {
 
-    public static final String NOT_AUTHORIZED = "Not authorized.";
+    public static final String NOT_AUTHORIZED = "Not Authorized";
     public static final String USER_AND_USER_ID_MIS_MATCHED = "User and UserId mis-matched";
     public static final int MAX_GROUP_NAME = 200;
     public static final int MAX_GROUP_DESC = 1000;

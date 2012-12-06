@@ -24,7 +24,7 @@ import java.util.List;
 @Component
 public class DefaultAuthorizationService implements AuthorizationService {
 
-    public static final String NOT_AUTHORIZED_MSG = "Not authorized.";
+    public static final String NOT_AUTHORIZED_MSG = "Not Authorized";
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
@@ -415,6 +415,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
             String errMsg = NOT_AUTHORIZED_MSG;
             logger.warn(errMsg);
             throw new ForbiddenException(errMsg);
+
         }
     }
 
