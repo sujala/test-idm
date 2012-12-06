@@ -770,6 +770,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return scopeAccessList;
     }
 
+    // This function is used to sync CA tokens with GA directory
     @Override
     public void updateUserScopeAccessTokenForClientIdByUser(User user, String clientId, String token, Date expires) {
 
@@ -777,21 +778,40 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             throw new IllegalArgumentException("Null user object instance.");
         }
 
-        final UserScopeAccess scopeAccess = this.getUserScopeAccessForClientId(user.getUniqueId(), clientId);
+        final List<ScopeAccess> scopeAccessList = this.getScopeAccessesForParentByClientId(user.getUniqueId(), clientId);
         Application client = this.clientDao.getClientByClientId(clientId);
-        if (scopeAccess != null && !scopeAccess.getAccessTokenString().equals(token)) {
+
+        UserScopeAccess scopeAccess = null;
+        int oldestIndex = 0;
+
+        for (int i = 0; i < scopeAccessList.size(); i++) {
+            Date currentOldest = scopeAccessList.get(oldestIndex).getAccessTokenExp();
+            if (currentOldest.after(scopeAccessList.get(i).getAccessTokenExp())) {
+                oldestIndex = i;
+            }
+
+            if (scopeAccessList.get(i).getAccessTokenString().equals(token)) {
+                scopeAccess = (UserScopeAccess) scopeAccessList.get(i);
+            }
+        }
+
+        if (scopeAccess != null) {
+            scopeAccess.setAccessTokenExp(expires);
+            scopeAccessDao.updateScopeAccess(scopeAccess);
+            logger.debug("Updated ScopeAccess {} by clientId {}", scopeAccess, clientId);
+        } else {
+            if (scopeAccessList.size() > 1) {
+                scopeAccessDao.deleteScopeAccess(scopeAccessList.get(oldestIndex));
+            }
             UserScopeAccess scopeAccessToAdd = new UserScopeAccess();
             scopeAccessToAdd.setClientId(client.getClientId());
             scopeAccessToAdd.setClientRCN(client.getRCN());
-            scopeAccessToAdd.setUserRsId(scopeAccess.getUserRsId());
-            scopeAccessToAdd.setUsername(scopeAccess.getUsername());
-            scopeAccessToAdd.setUserRCN(scopeAccess.getUserRCN());
+            scopeAccessToAdd.setUserRsId(user.getId());
+            scopeAccessToAdd.setUsername(user.getUsername());
 
             scopeAccessToAdd.setAccessTokenString(token);
             scopeAccessToAdd.setAccessTokenExp(expires);
             scopeAccessDao.addDirectScopeAccess(user.getUniqueId(), scopeAccessToAdd);
-            scopeAccessDao.deleteScopeAccessByDn(scopeAccess.getUniqueId());
-
             logger.debug("Updated ScopeAccess {} by clientId {}", scopeAccess, clientId);
         }
     }
