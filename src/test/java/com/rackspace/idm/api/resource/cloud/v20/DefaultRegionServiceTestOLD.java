@@ -40,7 +40,7 @@ import static org.mockito.Mockito.*;
  * To change this template use File | Settings | File Templates.
  */
 @RunWith(MockitoJUnitRunner.class)
-public class DefaultRegionServiceTest {
+public class DefaultRegionServiceTestOLD {
 
     @InjectMocks
     DefaultRegionService defaultRegionService = new DefaultRegionService();
@@ -179,6 +179,14 @@ public class DefaultRegionServiceTest {
         spy.checkDefaultRegion("DFW", regions);
     }
 
+    @Test (expected = BadRequestException.class)
+    public void checkDefaultRegion_nonMatchingRegion_withNoCSOSEndpoint_throwsBadReqeust() throws Exception {
+        DefaultRegionService spy = spy(defaultRegionService);
+        Set<String> regions = new HashSet<String>();
+
+        spy.checkDefaultRegion("ORD", regions);
+    }
+
     @Test
     public void checkDefaultRegion_matchingRegion_noException() throws Exception {
         DefaultRegionService spy = spy(defaultRegionService);
@@ -187,168 +195,5 @@ public class DefaultRegionServiceTest {
         regions.add("ORD-TEST");
 
         spy.checkDefaultRegion("ORD", regions);
-    }
-
-
-
-    @Test
-    public void getDefaultRegions_returnsNonNullValue() throws Exception {
-        Set<String> regionList = defaultRegionService.getDefaultRegions();
-        assertThat("region list", regionList, IsNull.notNullValue());
-    }
-
-    @Test
-    public void getDefaultRegions_returnsSetType() throws Exception {
-        Set<String> regionList = defaultRegionService.getDefaultRegions();
-        assertThat("region list", regionList, Is.is(Set.class));
-    }
-
-    @Test
-    public void getDefaultRegions_noOpenStackApplications_returnsEmptyList() throws Exception {
-        when(applicationService.getOpenStackServices()).thenReturn(new ArrayList<Application>());
-        Set<String> regionList = defaultRegionService.getDefaultRegions();
-        assertThat("region list", regionList.size(), equalTo(0));
-    }
-
-    @Test
-    public void getDefaultRegions_nullOpenStackApplications_returnsEmptyList() throws Exception {
-        when(applicationService.getOpenStackServices()).thenReturn(null);
-        Set<String> regionList = defaultRegionService.getDefaultRegions();
-        assertThat("region list", regionList.size(), equalTo(0));
-    }
-
-    @Test
-    public void getDefaultRegions_callsEndpointService_forEachDefaultService() throws Exception {
-        ArrayList<Application> applications = new ArrayList<Application>();
-
-        Application application1 = new Application();
-        application1.setName("CloudFiles");
-        application1.setUseForDefaultRegion(true);
-        applications.add(application1);
-
-        Application application2 = new Application();
-        application2.setName("CloudServers");
-        application2.setUseForDefaultRegion(true);
-        applications.add(application2);
-
-        Application application3 = new Application();
-        application3.setName("CloudFilesCDN");
-        application3.setUseForDefaultRegion(true);
-        applications.add(application3);
-
-        when(applicationService.getOpenStackServices()).thenReturn(applications);
-        defaultRegionService.getDefaultRegions();
-        verify(endpointService, times(3)).getBaseUrlsByServiceName(anyString());
-    }
-
-    @Test
-    public void getDefaultRegions_callsEndpointService_onlyForDefaultRegions() throws Exception {
-        ArrayList<Application> applications = new ArrayList<Application>();
-
-        Application application1 = new Application();
-        application1.setName("CloudFiles");
-        application1.setUseForDefaultRegion(true);
-        applications.add(application1);
-
-        Application application2 = new Application();
-        application2.setName("CloudServers");
-        application2.setUseForDefaultRegion(true);
-        applications.add(application2);
-
-        Application application3 = new Application();
-        application3.setName("CloudFilesCDN");
-        application3.setUseForDefaultRegion(true);
-        applications.add(application3);
-
-        Application application4 = new Application();
-        application4.setName("CloudFilesCDN2");
-        application4.setUseForDefaultRegion(false);
-        applications.add(application4);
-
-        when(applicationService.getOpenStackServices()).thenReturn(applications);
-        defaultRegionService.getDefaultRegions();
-        verify(endpointService, times(3)).getBaseUrlsByServiceName(anyString());
-    }
-
-    @Test
-    public void getDefaultRegions_callsEndpointService_onlyForDefaultRegions_flagIsNull() throws Exception {
-        ArrayList<Application> applications = new ArrayList<Application>();
-
-        Application application1 = new Application();
-        application1.setName("CloudFiles");
-        application1.setUseForDefaultRegion(true);
-        applications.add(application1);
-
-        Application application2 = new Application();
-        application2.setName("CloudServers");
-        application2.setUseForDefaultRegion(true);
-        applications.add(application2);
-
-        Application application3 = new Application();
-        application3.setName("CloudFilesCDN");
-        application3.setUseForDefaultRegion(true);
-        applications.add(application3);
-
-        Application application4 = new Application();
-        application4.setName("CloudFilesCDN2");
-        application4.setUseForDefaultRegion(null);
-        applications.add(application4);
-
-        when(applicationService.getOpenStackServices()).thenReturn(applications);
-        defaultRegionService.getDefaultRegions();
-        verify(endpointService, times(3)).getBaseUrlsByServiceName(anyString());
-    }
-
-
-    @Test
-    public void getDefaultRegions_getsRegions() throws Exception {
-        ArrayList<Application> applications = new ArrayList<Application>();
-
-        Application application1 = new Application();
-        application1.setName("CloudFiles");
-        application1.setUseForDefaultRegion(true);
-        applications.add(application1);
-
-        Application application2 = new Application();
-        application2.setName("CloudServers");
-        application2.setUseForDefaultRegion(true);
-        applications.add(application2);
-
-        Application application3 = new Application();
-        application3.setName("CloudFilesCDN");
-        application3.setUseForDefaultRegion(true);
-        applications.add(application3);
-
-        when(applicationService.getOpenStackServices()).thenReturn(applications);
-
-        ArrayList<CloudBaseUrl> baseUrls = new ArrayList<CloudBaseUrl>();
-        CloudBaseUrl baseUrl = new CloudBaseUrl();
-        baseUrl.setRegion("DFW");
-        baseUrls.add(baseUrl);
-
-        CloudBaseUrl baseUrl2 = new CloudBaseUrl();
-        baseUrl2.setRegion("ORD");
-        baseUrls.add(baseUrl2);
-
-        ArrayList<CloudBaseUrl> baseUrls2 = new ArrayList<CloudBaseUrl>();
-        CloudBaseUrl baseUrl3 = new CloudBaseUrl();
-        baseUrl3.setRegion("LON");
-        baseUrls2.add(baseUrl3);
-
-        when(endpointService.getBaseUrlsByServiceName("CloudFiles")).thenReturn(baseUrls);
-        when(endpointService.getBaseUrlsByServiceName("CloudServers")).thenReturn(baseUrls2);
-        when(endpointService.getBaseUrlsByServiceName("CloudFilesCDN")).thenReturn(baseUrls);
-
-        Set<String> defaultRegions = defaultRegionService.getDefaultRegions();
-        assertThat("default regions", defaultRegions.size(), equalTo(3));
-        assertThat("default regions", defaultRegions, hasItem("DFW"));
-        assertThat("default regions", defaultRegions, hasItem("ORD"));
-        assertThat("default regions", defaultRegions, hasItem("LON"));
-    }
-
-    @Test
-    public void getDefaultRegions_callsApplicationService_getOpenStackServices() throws Exception {
-        defaultRegionService.getDefaultRegions();
-        verify(applicationService).getOpenStackServices();
     }
 }

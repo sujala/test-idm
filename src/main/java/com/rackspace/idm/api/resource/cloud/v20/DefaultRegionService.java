@@ -7,10 +7,12 @@ import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.impl.DefaultCloudRegionService;
 import com.rackspace.idm.exception.BadRequestException;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.taglibs.standard.tag.common.core.SetSupport;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -25,7 +27,7 @@ import java.util.Set;
 @Component
 public class DefaultRegionService {
 
-    static String CLOUD_SERVERS_OPENSTACK = "cloudserversopenstack";
+    static String CLOUD_SERVERS_OPENSTACK = "cloudservers";
 
     @Autowired
     private EndpointService endpointService;
@@ -54,8 +56,8 @@ public class DefaultRegionService {
 
     public void checkDefaultRegion(String region, Set<String> defaultRegions) {
         String regionString = "";
-        Integer size = defaultRegions.size();
-        Integer counter = 0;
+        int size = defaultRegions.size();
+        int counter = 0;
         for (String defaultRegion : defaultRegions) {
             counter = counter + 1;
             if (counter < size) {
@@ -64,23 +66,19 @@ public class DefaultRegionService {
                 regionString += " " + defaultRegion;
             }
         }
-        regionString.toUpperCase();
         if (region != null && !defaultRegions.contains(region)) {
-            throw new BadRequestException("Invalid defaultRegion value, accepted values are:" + regionString + ".");
+            throw new BadRequestException("Invalid defaultRegion value, accepted values are:" + regionString.toUpperCase() + ".");
         }
     }
 
     public Set<String> getDefaultRegionsForUser(ScopeAccess usa) {
         List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
-        Set<String> defaultRegions = new HashSet<String>();
+        List<CloudBaseUrl> baseUrls = new ArrayList<CloudBaseUrl>();
         for (OpenstackEndpoint endpoint : endpoints) {
-            List<CloudBaseUrl> baseUrls = endpoint.getBaseUrls();
-            for (CloudBaseUrl baseUrl : baseUrls) {
-                if (baseUrl.getServiceName().equalsIgnoreCase(CLOUD_SERVERS_OPENSTACK)) {
-                    defaultRegions.add(baseUrl.getRegion());
-                }
-            }
+            baseUrls.addAll(endpoint.getBaseUrls());
         }
+
+        Set<String> defaultRegions = getCloudServersOpenStackRegions(baseUrls);
 
         if(defaultRegions.size() == 0){
             defaultRegions.addAll(getDefaultRegions());
@@ -89,23 +87,44 @@ public class DefaultRegionService {
         return defaultRegions;
     }
 
-    public Set<String> getDefaultRegions() {
-        List<Application> openStackServices = applicationService.getOpenStackServices();
+    private Set<String> getCloudServersOpenStackRegions(List<CloudBaseUrl> baseUrls) {
         Set<String> defaultRegions = new HashSet<String>();
-        if (openStackServices != null) {
-            for (Application application : openStackServices) {
-                if (application.getUseForDefaultRegion() != null && application.getUseForDefaultRegion()) {
-                    List<CloudBaseUrl> baseUrls = endpointService.getBaseUrlsByServiceName(application.getName());
-                    for (CloudBaseUrl baseUrl : baseUrls) {
-                    	if (baseUrl.getRegion() != null) {
-                    		defaultRegions.add(baseUrl.getRegion());
-                    	}
-                    }
-                }
+        for (CloudBaseUrl baseUrl : baseUrls) {
+            if (baseUrl.getServiceName().equalsIgnoreCase(CLOUD_SERVERS_OPENSTACK)) {
+                defaultRegions.add(baseUrl.getRegion());
             }
         }
         return defaultRegions;
     }
+
+    private Set<String> getRegionsWithinCloud(Set<String> regionNames) {
+        List<String> regionsInCloudRegion = new ArrayList<String>();
+
+        for (Region region : defaultCloudRegionService.getRegions(config.getString("cloud.region"))) {
+            regionsInCloudRegion.add(region.getName());
+        }
+
+        regionNames.retainAll(regionsInCloudRegion);
+
+        return regionNames;
+    }
+
+    public Set<String> getDefaultRegions() {
+        List<Application> openStackServices = applicationService.getOpenStackServices();
+        List<CloudBaseUrl> baseUrls = new ArrayList<CloudBaseUrl>();
+
+        if (openStackServices != null) {
+            for (Application application : openStackServices) {
+                if (application.getUseForDefaultRegion() != null && application.getUseForDefaultRegion()) {
+                    baseUrls.addAll(endpointService.getBaseUrlsByServiceName(application.getName()));
+                }
+            }
+        }
+
+        return getRegionsWithinCloud(getCloudServersOpenStackRegions(baseUrls));
+    }
+
+
 
     public void setApplicationService(ApplicationService applicationService) {
         this.applicationService = applicationService;

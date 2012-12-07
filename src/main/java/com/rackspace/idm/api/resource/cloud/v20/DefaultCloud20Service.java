@@ -489,7 +489,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             if (callerIsIdentityAdmin || callerIsUserAdmin) {
-                defaultRegionService.validateDefaultRegion(userDO.getRegion());
+                if (userDO.getRegion() != null) {
+                    defaultRegionService.validateDefaultRegion(userDO.getRegion());
+                }
             }
             userService.addUser(userDO);
             assignProperRole(httpHeaders, authToken, scopeAccessByAccessToken, userDO);
