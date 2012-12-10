@@ -33,9 +33,6 @@ class DefaultRegionServiceTest extends Specification {
     def "getDefaultRegions returns only regions within cloud region"() {
         given:
         setupMocks()
-        def applicationList = [
-                createApplication()
-        ].asList()
 
         def baseUrlListOne = [
                createBaseUrl("ORD", service.CLOUD_SERVERS_OPENSTACK),
@@ -54,7 +51,6 @@ class DefaultRegionServiceTest extends Specification {
                 createRegion("US", "DFW")
         ].asList()
 
-        applicationService.getOpenStackServices() >> applicationList
         endpointService.getBaseUrlsByServiceName(_) >>> [
                 baseUrlListOne,
                 baseUrlListTwo
@@ -63,8 +59,8 @@ class DefaultRegionServiceTest extends Specification {
         cloudRegionService.getRegions(_) >> regionsInCloud
 
         when:
-        def regionListOne = service.getDefaultRegions()
-        def regionListTwo = service.getDefaultRegions()
+        def regionListOne = service.getDefaultRegionsForCloudServersOpenStack()
+        def regionListTwo = service.getDefaultRegionsForCloudServersOpenStack()
 
         then:
         regionListOne.size() == 2

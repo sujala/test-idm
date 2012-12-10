@@ -13,7 +13,6 @@ import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Domain;
-import com.rackspace.idm.domain.entity.Question;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.api.resource.pagination.PaginatorContext;
@@ -1625,7 +1624,7 @@ public class DefaultCloud20ServiceOldTest {
 
         HashSet<String> defaultRegions = new HashSet<String>();
         defaultRegions.add("DFW");
-        when(defaultRegionService.getDefaultRegions()).thenReturn(defaultRegions);
+        when(defaultRegionService.getDefaultRegionsForCloudServersOpenStack()).thenReturn(defaultRegions);
         user.setRegion("DFW");
         spy.addUser(null, null, authToken, userOS);
         ArgumentCaptor<User> argument = ArgumentCaptor.forClass(User.class);

@@ -7,8 +7,6 @@ import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.impl.DefaultCloudRegionService;
 import com.rackspace.idm.exception.BadRequestException;
 import org.apache.commons.configuration.Configuration;
-import org.apache.commons.lang.ArrayUtils;
-import org.apache.taglibs.standard.tag.common.core.SetSupport;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -27,7 +25,7 @@ import java.util.Set;
 @Component
 public class DefaultRegionService {
 
-    static String CLOUD_SERVERS_OPENSTACK = "cloudservers";
+    static String CLOUD_SERVERS_OPENSTACK = "cloudServersOpenStack";
 
     @Autowired
     private EndpointService endpointService;
@@ -45,7 +43,7 @@ public class DefaultRegionService {
     private Configuration config;
 
     public void validateDefaultRegion(String defaultRegion) {
-        Set<String> regions = this.getDefaultRegions();
+        Set<String> regions = this.getDefaultRegionsForCloudServersOpenStack();
         checkDefaultRegion(defaultRegion, regions);
     }
 
@@ -81,7 +79,7 @@ public class DefaultRegionService {
         Set<String> defaultRegions = getCloudServersOpenStackRegions(baseUrls);
 
         if(defaultRegions.size() == 0){
-            defaultRegions.addAll(getDefaultRegions());
+            defaultRegions.addAll(getDefaultRegionsForCloudServersOpenStack());
         }
 
         return defaultRegions;
@@ -109,17 +107,8 @@ public class DefaultRegionService {
         return regionNames;
     }
 
-    public Set<String> getDefaultRegions() {
-        List<Application> openStackServices = applicationService.getOpenStackServices();
-        List<CloudBaseUrl> baseUrls = new ArrayList<CloudBaseUrl>();
-
-        if (openStackServices != null) {
-            for (Application application : openStackServices) {
-                if (application.getUseForDefaultRegion() != null && application.getUseForDefaultRegion()) {
-                    baseUrls.addAll(endpointService.getBaseUrlsByServiceName(application.getName()));
-                }
-            }
-        }
+    public Set<String> getDefaultRegionsForCloudServersOpenStack() {
+        List<CloudBaseUrl> baseUrls = endpointService.getBaseUrlsByServiceName(CLOUD_SERVERS_OPENSTACK);
 
         return getRegionsWithinCloud(getCloudServersOpenStackRegions(baseUrls));
     }

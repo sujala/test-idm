@@ -7,24 +7,13 @@ import org.mockito.Mock;
 
 import org.mockito.runners.MockitoJUnitRunner;
 
-import com.rackspace.idm.domain.entity.Application;
-import com.rackspace.idm.domain.entity.CloudBaseUrl;
-import com.rackspace.idm.domain.entity.OpenstackEndpoint;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.EndpointService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.exception.BadRequestException;
-import org.hamcrest.core.Is;
-import org.hamcrest.core.IsNull;
-import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Matchers;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import static org.hamcrest.Matchers.*;
@@ -54,7 +43,7 @@ public class DefaultRegionServiceTestOLD {
         HashSet<String> defaultRegions = new HashSet<String>();
         defaultRegions.add("DFW");
         DefaultRegionService spy = spy(defaultRegionService);
-        doReturn(defaultRegions).when(spy).getDefaultRegions();
+        doReturn(defaultRegions).when(spy).getDefaultRegionsForCloudServersOpenStack();
         try {
             spy.validateDefaultRegion("ORD");
         } catch (Exception e) {
@@ -67,7 +56,7 @@ public class DefaultRegionServiceTestOLD {
         HashSet<String> defaultRegions = new HashSet<String>();
         defaultRegions.add("DFW");
         DefaultRegionService spy = spy(defaultRegionService);
-        doReturn(defaultRegions).when(spy).getDefaultRegions();
+        doReturn(defaultRegions).when(spy).getDefaultRegionsForCloudServersOpenStack();
         spy.validateDefaultRegion("ORD");
     }
 
@@ -77,7 +66,7 @@ public class DefaultRegionServiceTestOLD {
         Set<String> regions = new HashSet<String>();
         regions.add("DFW");
         regions.add("ORD");
-        doReturn(regions).when(spy).getDefaultRegions();
+        doReturn(regions).when(spy).getDefaultRegionsForCloudServersOpenStack();
         spy.validateDefaultRegion(null);
     }
 
@@ -87,7 +76,7 @@ public class DefaultRegionServiceTestOLD {
         Set<String> regions = new HashSet<String>();
         regions.add("DFW");
         regions.add("ORD");
-        doReturn(regions).when(spy).getDefaultRegions();
+        doReturn(regions).when(spy).getDefaultRegionsForCloudServersOpenStack();
         spy.validateDefaultRegion("DFW");
     }
 
@@ -97,9 +86,9 @@ public class DefaultRegionServiceTestOLD {
         Set<String> regions = new HashSet<String>();
         regions.add("DFW");
         regions.add("ORD");
-        doReturn(regions).when(spy).getDefaultRegions();
+        doReturn(regions).when(spy).getDefaultRegionsForCloudServersOpenStack();
         spy.validateDefaultRegion("DFW");
-        verify(spy).getDefaultRegions();
+        verify(spy).getDefaultRegionsForCloudServersOpenStack();
     }
 
     @Test(expected = BadRequestException.class)
@@ -108,7 +97,7 @@ public class DefaultRegionServiceTestOLD {
         Set<String> regions = new HashSet<String>();
         regions.add("DFW");
         regions.add("ORD");
-        doReturn(regions).when(spy).getDefaultRegions();
+        doReturn(regions).when(spy).getDefaultRegionsForCloudServersOpenStack();
         spy.validateDefaultRegion("LON");
     }
 
@@ -119,7 +108,7 @@ public class DefaultRegionServiceTestOLD {
         Set<String> regions = new HashSet<String>();
         regions.add("DFW");
         regions.add("ORD");
-        doReturn(regions).when(spy).getDefaultRegions();
+        doReturn(regions).when(spy).getDefaultRegionsForCloudServersOpenStack();
         spy.validateDefaultRegion("");
     }
 
@@ -129,7 +118,7 @@ public class DefaultRegionServiceTestOLD {
         Set<String> regions = new HashSet<String>();
         regions.add("DFW");
         regions.add("ORD");
-        doReturn(regions).when(spy).getDefaultRegions();
+        doReturn(regions).when(spy).getDefaultRegionsForCloudServersOpenStack();
         spy.validateDefaultRegion("   ");
     }
 
