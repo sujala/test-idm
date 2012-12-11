@@ -69,7 +69,11 @@ public interface ScopeAccessDao {
     
     List<ScopeAccess> getDelegateScopeAccessesByParent(String parentUniqueId);
 
-    ScopeAccess getImpersonatedScopeAccessForParentByClientId(String parentUniqueId, String username);
+    List<ScopeAccess> getAllImpersonatedScopeAccessForParentByUser(String parentUniqueId, String username);
+
+    List<ScopeAccess> getAllImpersonatedScopeAccessForParent(String parentUniqueId);
+
+    ScopeAccess getMostRecentImpersonatedScopeAccessByParentForUser(String parentUniqueId, String username);
 
     ScopeAccess getScopeAccessByParentAndClientId(String parentUniqueId, String clientId);
 

@@ -15,8 +15,7 @@ import com.rackspace.idm.domain.dao.ScopeAccessDao
 import org.joda.time.DateTime
 import org.springframework.test.context.ContextConfiguration
 import com.rackspace.idm.domain.entity.UserScopeAccess
-import com.unboundid.ldap.sdk.RDN
-import com.unboundid.ldap.sdk.DN
+
 import com.unboundid.ldap.sdk.ReadOnlyEntry
 import com.unboundid.ldap.sdk.Attribute
 import com.rackspace.idm.domain.entity.RackerScopeAccess
@@ -24,6 +23,8 @@ import com.rackspace.idm.domain.entity.PasswordResetScopeAccess
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.Application
 import com.rackspace.idm.exception.NotFoundException
+import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest
 
 /**
  * Created with IntelliJ IDEA.
@@ -339,6 +340,81 @@ class DefaultScopeAccessServiceGroovyTest extends Specification {
         thrown(NotFoundException)
     }
 
+    def "addImpersonatedScopeAccess deletes expired scopeAccess and creates new scopeAccess"() {
+        given:
+        createMocks()
+
+        ImpersonatedScopeAccess scopeAccessOne = new ImpersonatedScopeAccess()
+        ImpersonatedScopeAccess scopeAccessTwo = new ImpersonatedScopeAccess()
+        ImpersonatedScopeAccess scopeAccessThree = new ImpersonatedScopeAccess()
+        ImpersonatedScopeAccess scopeAccessFour = new ImpersonatedScopeAccess()
+        ImpersonatedScopeAccess scopeAccessFive = new ImpersonatedScopeAccess()
+        ImpersonatedScopeAccess scopeAccessSix = new ImpersonatedScopeAccess()
+
+        scopeAccessOne.username = "user1"
+        scopeAccessOne.impersonatingUsername = "userToBeImpersonated"
+        scopeAccessOne.accessTokenString = "user1-access-token"
+        scopeAccessOne.accessTokenExp = expiredDate
+
+        scopeAccessTwo.username = "user2"
+        scopeAccessTwo.impersonatingUsername = "userToBeImpersonated"
+        scopeAccessTwo.accessTokenString = "user2-access-token"
+        scopeAccessTwo.accessTokenExp = expiredDate
+
+        scopeAccessThree.username = "user3"
+        scopeAccessThree.impersonatingUsername = "userToBeImpersonated"
+        scopeAccessThree.accessTokenString = "user3-access-token"
+        scopeAccessThree.accessTokenExp = expiredDate
+
+        scopeAccessFour.username = "user4"
+        scopeAccessFour.impersonatingUsername = "userToBeImpersonated"
+        scopeAccessFour.accessTokenString = "user4-access-token"
+        scopeAccessFour.accessTokenExp = expiredDate
+
+        scopeAccessFive.username = "user5"
+        scopeAccessFive.impersonatingUsername = "userToBeImpersonated"
+        scopeAccessFive.accessTokenString = "different-token"
+        scopeAccessFive.accessTokenExp = refreshDate
+
+        scopeAccessSix.username = "user6"
+        scopeAccessSix.impersonatingUsername = "userToBeImpersonated"
+        scopeAccessSix.accessTokenString = "token"
+        scopeAccessSix.accessTokenExp = futureDate
+
+        def request = new ImpersonationRequest().with {
+            it.expireInSeconds = 10800
+            it.user = create20User("userToBeImpersonated")
+            return it
+        }
+
+        def expiredList = [ scopeAccessOne, scopeAccessTwo ].asList()
+        def listWithValid = [ scopeAccessThree, scopeAccessFour ].asList()
+        def listWithTwoImpForOneUser = [ scopeAccessFour, scopeAccessFive, scopeAccessSix ].asList()
+
+        scopeAccessDao.getAllImpersonatedScopeAccessForParent(_) >>> [
+                expiredList,
+                listWithValid,
+                listWithTwoImpForOneUser
+        ]
+
+        scopeAccessDao.getMostRecentImpersonatedScopeAccessByParentForUser(_, _) >>> [
+                null,
+                scopeAccessThree,
+                scopeAccessSix
+        ]
+
+        when:
+        service.addImpersonatedScopeAccess(new User(), "clientId", "impersonating-token", request)
+        service.addImpersonatedScopeAccess(new User(), "clientId", "impersonating-token", request)
+        ImpersonatedScopeAccess returned = service.addImpersonatedScopeAccess(new User(), "clientId", "impersonating-token", request)
+
+        then:
+        5 * scopeAccessDao.deleteScopeAccess(_)
+        3 * scopeAccessDao.addImpersonatedScopeAccess(_, _)
+
+        returned.accessTokenString.equals("token")
+    }
+
     def createMocks() {
         userDao = Mock()
         tenantDao = Mock()
@@ -361,6 +437,13 @@ class DefaultScopeAccessServiceGroovyTest extends Specification {
             it.userRsId = "userRsId"
             it.accessTokenString = "string"
             it.accessTokenExp = new Date()
+            return it
+        }
+    }
+
+    def create20User(username) {
+        new org.openstack.docs.identity.api.v2.User().with {
+            it.username = username
             return it
         }
     }

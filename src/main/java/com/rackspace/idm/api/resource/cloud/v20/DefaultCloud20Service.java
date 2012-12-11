@@ -3285,7 +3285,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             throw new NotAuthorizedException(errMsg);
         }
         ScopeAccess authScopeAccess = this.scopeAccessService.getScopeAccessByAccessToken(authToken);
-        if (authScopeAccess == null || ((HasAccessToken) authScopeAccess).isAccessTokenExpired(new DateTime())) {
+        if (authScopeAccess == null || (authScopeAccess.isAccessTokenExpired(new DateTime()))) {
             throw new NotAuthorizedException(errMsg);
         }
         return authScopeAccess;

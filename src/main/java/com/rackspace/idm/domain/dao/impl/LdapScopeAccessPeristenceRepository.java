@@ -208,30 +208,41 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
     }
 
     @Override
-    public ScopeAccess getImpersonatedScopeAccessForParentByClientId(String parentUniqueId, String username) {
+    public List<ScopeAccess> getAllImpersonatedScopeAccessForParentByUser(String parentUniqueId, String username) {
         getLogger().debug("Find ScopeAccess for Parent: {} by impersonating username: {}", parentUniqueId, username);
-
-        String dn = new LdapDnBuilder(parentUniqueId).addAttribute(ATTR_NAME, CONTAINER_TOKENS).build();
-
-        try {
-            final Filter filter = new LdapSearchBuilder()
+        final Filter filter = new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_IMPERSONATEDSCOPEACCESS)
                 .addEqualAttribute(ATTR_IMPERSONATING_USERNAME, username).build();
 
+        return getMultipleImpersonatedScopeAccess(parentUniqueId, filter);
+    }
+
+    @Override
+    public List<ScopeAccess> getAllImpersonatedScopeAccessForParent(String parentUniqueId) {
+        getLogger().debug("Finding impersonatedScopeAccess for Parent {}", parentUniqueId);
+        final Filter filter = new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_IMPERSONATEDSCOPEACCESS).build();
+
+        return getMultipleImpersonatedScopeAccess(parentUniqueId, filter);
+    }
+
+    private List<ScopeAccess> getMultipleImpersonatedScopeAccess(String searchDN, Filter filter) {
+        String dn = new LdapDnBuilder(searchDN).addAttribute(ATTR_NAME, CONTAINER_TOKENS).build();
+        List<ScopeAccess> scopeAccessList = new ArrayList<ScopeAccess>();
+
+        try {
             final List<SearchResultEntry> searchEntries = getMultipleEntries(dn, SearchScope.SUB, filter);
-            getLogger().debug(
-                "Found {} ScopeAccess(s) for Parent: {} by impersonating username: {}",
-                new Object[]{searchEntries.size(), parentUniqueId, username});
-            for (final SearchResultEntry searchResultEntry : searchEntries) {
-                return decodeScopeAccess(searchResultEntry);
+            getLogger().debug("Found {} impersonatedScopeAccess for parent {}", new Object[]{searchEntries.size(), searchDN});
+            for (final SearchResultEntry entry : searchEntries) {
+                scopeAccessList.add(decodeScopeAccess(entry));
             }
-        } catch (final LDAPException e) {
+        } catch (LDAPPersistException e) {
             if (e.getResultCode() != ResultCode.NO_SUCH_OBJECT) {
                 getLogger().error(ERROR_READING_SCOPE_ACCESS_BY_CLIENT_ID, e);
                 throw new IllegalStateException(e.getMessage(), e);
             }
         }
-        return null;
+        return scopeAccessList;
     }
 
     @Override
@@ -266,6 +277,18 @@ public class LdapScopeAccessPeristenceRepository extends LdapRepository implemen
             }
         }
         return objectList;
+    }
+
+    @Override
+    public ScopeAccess getMostRecentImpersonatedScopeAccessByParentForUser(String parentUniqueId, String username) {
+        List<ScopeAccess> scopeAccessList = getAllImpersonatedScopeAccessForParentByUser(parentUniqueId, username);
+        ScopeAccess scopeAccess;
+        try {
+            scopeAccess =  getMostRecentScopeAccess(scopeAccessList);
+        } catch (NotFoundException ex) {
+            scopeAccess = null;
+        }
+        return scopeAccess;
     }
 
     @Override

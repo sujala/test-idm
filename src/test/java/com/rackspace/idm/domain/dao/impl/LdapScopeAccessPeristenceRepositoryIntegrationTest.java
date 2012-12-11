@@ -662,6 +662,7 @@ public class LdapScopeAccessPeristenceRepositoryIntegrationTest extends InMemory
         ScopeAccess scopeAccess = repo.addImpersonatedScopeAccess(client.getUniqueId(), sa);
 
         Assert.assertEquals(sa.getClientId(), scopeAccess.getClientId());
+        repo.deleteScopeAccess(sa);
     }
 
     @Test(expected = IllegalStateException.class)
@@ -673,6 +674,86 @@ public class LdapScopeAccessPeristenceRepositoryIntegrationTest extends InMemory
         sa.setAccessTokenString(accessToken);
         sa.setAccessTokenExp(new Date());
         ScopeAccess scopeAccess = repo.addImpersonatedScopeAccess(client.getUniqueId(), sa);
+    }
+
+    @Test
+    public void getAllImpersonatedScopeAccessByParentForUser_returnsOnlyScopeAccessForUser_asList() {
+        ImpersonatedScopeAccess saOne = new ImpersonatedScopeAccess();
+        ImpersonatedScopeAccess saTwo = new ImpersonatedScopeAccess();
+        ImpersonatedScopeAccess saThree = new ImpersonatedScopeAccess();
+
+        saOne.setClientId(client.getClientId());
+        saTwo.setClientId(client.getClientId());
+        saThree.setClientId(client.getClientId());
+
+        saOne.setImpersonatingToken("123456789one");
+        saTwo.setImpersonatingToken("123456789two");
+        saThree.setImpersonatingToken("123456789three");
+
+        saOne.setImpersonatingUsername("impersonatedUserOne");
+        saTwo.setImpersonatingUsername("impersonatedUserOne");
+        saThree.setImpersonatingUsername("impersonatedUserThree");
+
+        saOne.setAccessTokenString("123456789one");
+        saTwo.setAccessTokenString("123456789two");
+        saThree.setAccessTokenString("123456789three");
+
+        saOne.setAccessTokenExp(new Date());
+        saTwo.setAccessTokenExp(new Date());
+        saThree.setAccessTokenExp(new Date());
+
+        repo.addImpersonatedScopeAccess(client.getUniqueId(), saOne);
+        repo.addImpersonatedScopeAccess(client.getUniqueId(), saTwo);
+        repo.addImpersonatedScopeAccess(client.getUniqueId(), saThree);
+
+        List<ScopeAccess> scopeAccessList = repo.getAllImpersonatedScopeAccessForParentByUser(client.getUniqueId(), "impersonatedUserOne");
+
+        assert(scopeAccessList.size() == 2);
+
+        repo.deleteScopeAccess(saOne);
+        repo.deleteScopeAccess(saTwo);
+        repo.deleteScopeAccess(saThree);
+    }
+
+    @Test
+    public void getAllImpersonatedScopeAccessForParent_returnsAllImpersonatedScopeAccess_asList() {
+        ImpersonatedScopeAccess saOne = new ImpersonatedScopeAccess();
+        ImpersonatedScopeAccess saTwo = new ImpersonatedScopeAccess();
+        ImpersonatedScopeAccess saThree = new ImpersonatedScopeAccess();
+
+        saOne.setClientId(client.getClientId());
+        saTwo.setClientId(client.getClientId());
+        saThree.setClientId(client.getClientId());
+
+        saOne.setImpersonatingToken("123456789one");
+        saTwo.setImpersonatingToken("123456789two");
+        saThree.setImpersonatingToken("123456789three");
+
+        saOne.setImpersonatingUsername("impersonatedUserOne");
+        saTwo.setImpersonatingUsername("impersonatedUserOne");
+        saThree.setImpersonatingUsername("impersonatedUserThree");
+
+        saOne.setAccessTokenString("123456789one");
+        saTwo.setAccessTokenString("123456789two");
+        saThree.setAccessTokenString("123456789three");
+
+        saOne.setAccessTokenExp(new Date());
+        saTwo.setAccessTokenExp(new Date());
+        saThree.setAccessTokenExp(new Date());
+
+        List<ScopeAccess> preAddList = repo.getAllImpersonatedScopeAccessForParent(client.getUniqueId());
+
+        repo.addImpersonatedScopeAccess(client.getUniqueId(), saOne);
+        repo.addImpersonatedScopeAccess(client.getUniqueId(), saTwo);
+        repo.addImpersonatedScopeAccess(client.getUniqueId(), saThree);
+
+        List<ScopeAccess> postAddList = repo.getAllImpersonatedScopeAccessForParent(client.getUniqueId());
+
+        assert(preAddList.size() + 3 == postAddList.size());
+
+        repo.deleteScopeAccess(saOne);
+        repo.deleteScopeAccess(saTwo);
+        repo.deleteScopeAccess(saThree);
     }
 
     @Test

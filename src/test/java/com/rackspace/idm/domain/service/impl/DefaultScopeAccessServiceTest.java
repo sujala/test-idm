@@ -22,6 +22,7 @@ import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.sql.DataTruncation;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -335,14 +336,14 @@ public class DefaultScopeAccessServiceTest {
 
     @Test
     public void addImpersonatedScopeAccess_TokenDoesNotExists_callsScopeAccessDao_addImpersonatedScopeAccess() throws Exception {
-        when(scopeAccessDao.getImpersonatedScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(null);
+        when(scopeAccessDao.getAllImpersonatedScopeAccessForParent(anyString())).thenReturn(new ArrayList<ScopeAccess>());
         defaultScopeAccessService.addImpersonatedScopeAccess(new User(), "clientId", "impToken", impersonationRequest);
         verify(scopeAccessDao).addImpersonatedScopeAccess(anyString(), any(ScopeAccess.class));
     }
 
     @Test
     public void addImpersonatedScopeAccess_whenScopeAccessDoesNotExist_callsSetImpersonatedScopeAccess() throws Exception {
-        when(scopeAccessDao.getImpersonatedScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(null);
+        when(scopeAccessDao.getAllImpersonatedScopeAccessForParent(anyString())).thenReturn(new ArrayList<ScopeAccess>());
         User user = new User();
         spy.addImpersonatedScopeAccess(user, null, null, impersonationRequest);
         verify(spy).setImpersonatedScopeAccess(eq(user), eq(impersonationRequest), any(ImpersonatedScopeAccess.class));
@@ -351,7 +352,7 @@ public class DefaultScopeAccessServiceTest {
     @Test
     public void addImpersonatedScopeAccess_existingAccessIsNullAndExpireInIsNullAndCallerIsServiceUser_setsExpirationToDefault() throws Exception {
         ArgumentCaptor<ImpersonatedScopeAccess> argument = ArgumentCaptor.forClass(ImpersonatedScopeAccess.class);
-        when(scopeAccessDao.getImpersonatedScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(null);
+        when(scopeAccessDao.getAllImpersonatedScopeAccessForParent(anyString())).thenReturn(new ArrayList<ScopeAccess>());
         when(scopeAccessDao.addImpersonatedScopeAccess(anyString(), argument.capture())).thenReturn(null);
         when(configuration.getInt("token.impersonatedByServiceDefaultSeconds")).thenReturn(3600);
         defaultScopeAccessService.addImpersonatedScopeAccess(new User(), "clientId", "impToken", impersonationRequest);
@@ -368,7 +369,9 @@ public class DefaultScopeAccessServiceTest {
         String impToken = "imp";
         impersonatedScopeAccess.setAccessTokenString(token);
         impersonatedScopeAccess.setImpersonatingToken(impToken);
-        when(scopeAccessDao.getImpersonatedScopeAccessForParentByClientId(anyString(), anyString())).thenReturn(impersonatedScopeAccess);
+        impersonatedScopeAccess.setAccessTokenExp(new DateTime().plusHours(12).toDate());
+        when(scopeAccessDao.getAllImpersonatedScopeAccessForParent(anyString())).thenReturn(new ArrayList<ScopeAccess>());
+        when(scopeAccessDao.getMostRecentImpersonatedScopeAccessByParentForUser(anyString(), anyString())).thenReturn(impersonatedScopeAccess);
         ImpersonatedScopeAccess returnedImpersonatedScopeAccess = defaultScopeAccessService.addImpersonatedScopeAccess(new User(), "clientId", "imp", impersonationRequest);
         assertThat("impersonated token", returnedImpersonatedScopeAccess.getAccessTokenString(), equalTo("abc"));
     }
@@ -378,7 +381,7 @@ public class DefaultScopeAccessServiceTest {
         ImpersonatedScopeAccess impersonatedScopeAccess = new ImpersonatedScopeAccess();
         impersonatedScopeAccess.setImpersonatingToken("token");
         User user = new User();
-        when(scopeAccessDao.getImpersonatedScopeAccessForParentByClientId(null,"impersonatedUser")).thenReturn(impersonatedScopeAccess);
+        when(scopeAccessDao.getAllImpersonatedScopeAccessForParent(null)).thenReturn(new ArrayList<ScopeAccess>());
         spy.addImpersonatedScopeAccess(user, null, "token", impersonationRequest);
         verify(spy).setImpersonatedScopeAccess(eq(user), eq(impersonationRequest), any(ImpersonatedScopeAccess.class));
     }
@@ -387,7 +390,6 @@ public class DefaultScopeAccessServiceTest {
     public void validateExpireInElement_ExpireInIsNull_succeeds() throws Exception {
         defaultScopeAccessService.validateExpireInElement(new User(), new ImpersonationRequest());
     }
-
     @Test
     public void setImpersonatedScopeAccess_callerIsRacker_setsRackerId() throws Exception {
         Racker racker = new Racker();

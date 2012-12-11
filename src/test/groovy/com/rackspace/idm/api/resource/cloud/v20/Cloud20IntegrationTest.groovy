@@ -39,16 +39,20 @@ import org.joda.time.DateTime
 import static javax.ws.rs.core.MediaType.MEDIA_TYPE_WILDCARD
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQA
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQAs
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse
 
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class Cloud20IntegrationTest extends Specification {
     @Autowired LdapConnectionPools connPools
     @Autowired Configuration config
+    @Autowired DefaultCloud20Service cloud20Service
 
     @Shared WebResource resource
     @Shared JAXBObjectFactories objFactories;
 
-    @Shared def path = "cloud/v2.0/"
+    @Shared def path20 = "cloud/v2.0/"
+    @Shared def path11 = "cloud/v1.1/"
     @Shared def serviceAdminToken
     @Shared def identityAdminToken
     @Shared def userAdminToken
@@ -1121,7 +1125,7 @@ class Cloud20IntegrationTest extends Specification {
 
     //Resource Calls
     def createUser(String token, user) {
-        resource.path(path).path('users').header(X_AUTH_TOKEN, token).entity(user).post(ClientResponse)
+        resource.path(path20).path('users').header(X_AUTH_TOKEN, token).entity(user).post(ClientResponse)
     }
 
     def getUser(String token, URI location) {
@@ -1129,39 +1133,39 @@ class Cloud20IntegrationTest extends Specification {
     }
 
     def listUsers(String token) {
-        resource.path(path).path("users").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+        resource.path(path20).path("users").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     def listUsers(String token, offset, limit) {
-        resource.path(path).path("users").queryParams(pageParams(offset, limit)).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+        resource.path(path20).path("users").queryParams(pageParams(offset, limit)).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     def getUserById(String token, String userId) {
-        resource.path(path).path('users').path(userId).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
+        resource.path(path20).path('users').path(userId).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
     def getUserByName(String token, String name) {
-        resource.path(path).path('users').queryParam("name", name).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
+        resource.path(path20).path('users').queryParam("name", name).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
     def updateUser(String token, String userId, user) {
-        resource.path(path).path('users').path(userId).header(X_AUTH_TOKEN, token).entity(user).post(ClientResponse)
+        resource.path(path20).path('users').path(userId).header(X_AUTH_TOKEN, token).entity(user).post(ClientResponse)
     }
 
     def addCredential(String token, String userId, credential) {
-        resource.path(path).path('users').path(userId).path('OS-KSADM').path('credentials').entity(credential).header(X_AUTH_TOKEN, token).post(ClientResponse)
+        resource.path(path20).path('users').path(userId).path('OS-KSADM').path('credentials').entity(credential).header(X_AUTH_TOKEN, token).post(ClientResponse)
     }
 
     def deleteUser(String token, String userId) {
-        resource.path(path).path('users').path(userId).header(X_AUTH_TOKEN, token).delete(ClientResponse)
+        resource.path(path20).path('users').path(userId).header(X_AUTH_TOKEN, token).delete(ClientResponse)
     }
 
     def hardDeleteUser(String token, String userId) {
-        resource.path(path).path('softDeleted').path('users').path(userId).header(X_AUTH_TOKEN, token).delete(ClientResponse)
+        resource.path(path20).path('softDeleted').path('users').path(userId).header(X_AUTH_TOKEN, token).delete(ClientResponse)
     }
 
     def createGroup(String token, group) {
-        resource.path(path).path(RAX_GRPADM).path('groups').header(X_AUTH_TOKEN, token).type(APPLICATION_XML).accept(APPLICATION_XML).entity(group).post(ClientResponse)
+        resource.path(path20).path(RAX_GRPADM).path('groups').header(X_AUTH_TOKEN, token).type(APPLICATION_XML).accept(APPLICATION_XML).entity(group).post(ClientResponse)
     }
 
     def getGroup(String token, URI uri) {
@@ -1169,102 +1173,102 @@ class Cloud20IntegrationTest extends Specification {
     }
 
     def getGroups(String token) {
-        resource.path(path).path(RAX_GRPADM).path('groups').accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
+        resource.path(path20).path(RAX_GRPADM).path('groups').accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
     def updateGroup(String token, String groupId, group) {
-        resource.path(path).path(RAX_GRPADM).path('groups').path(groupId).header(X_AUTH_TOKEN, token).type(APPLICATION_XML).accept(APPLICATION_XML).entity(group).put(ClientResponse)
+        resource.path(path20).path(RAX_GRPADM).path('groups').path(groupId).header(X_AUTH_TOKEN, token).type(APPLICATION_XML).accept(APPLICATION_XML).entity(group).put(ClientResponse)
     }
 
     def deleteGroup(String  token, String groupId) {
-        resource.path(path).path(RAX_GRPADM).path('groups').path(groupId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
+        resource.path(path20).path(RAX_GRPADM).path('groups').path(groupId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
     }
 
     def addUserToGroup(String token, String groupId, String userId) {
-        resource.path(path).path(RAX_GRPADM).path('groups').path(groupId).path("users").path(userId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).put(ClientResponse)
+        resource.path(path20).path(RAX_GRPADM).path('groups').path(groupId).path("users").path(userId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).put(ClientResponse)
     }
     def removeUserFromGroup(String token, String groupId, String userId) {
-        resource.path(path).path(RAX_GRPADM).path('groups').path(groupId).path("users").path(userId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
+        resource.path(path20).path(RAX_GRPADM).path('groups').path(groupId).path("users").path(userId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
     }
 
     def listGroupsForUser(String token, String userId) {
-        resource.path(path).path('users').path(userId).path("RAX-KSGRP").accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
+        resource.path(path20).path('users').path(userId).path("RAX-KSGRP").accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
     def getUsersFromGroup(String token, String groupId) {
-        resource.path(path).path(RAX_GRPADM).path('groups').path(groupId).path("users").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+        resource.path(path20).path(RAX_GRPADM).path('groups').path(groupId).path("users").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     def authenticate(username, password) {
-        resource.path(path + 'tokens').accept(APPLICATION_XML).entity(authenticateRequest(username, password)).post(ClientResponse)
+        resource.path(path20 + 'tokens').accept(APPLICATION_XML).entity(authenticateRequest(username, password)).post(ClientResponse)
     }
 
     def createRegion(String token, region) {
-        resource.path(path).path(RAX_AUTH).path("regions").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(region).post(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path("regions").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(region).post(ClientResponse)
     }
 
     def getRegion(String token, String regionId) {
-        resource.path(path).path(RAX_AUTH).path("regions").path(regionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path("regions").path(regionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     def getRegions(String token) {
-        resource.path(path).path(RAX_AUTH).path("regions").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path("regions").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     def updateRegion(String token, String regionId, region) {
-        resource.path(path).path(RAX_AUTH).path("regions").path(regionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(region).put(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path("regions").path(regionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(region).put(ClientResponse)
     }
 
     def deleteRegion(String token, String regionId) {
-        resource.path(path).path(RAX_AUTH).path("regions").path(regionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path("regions").path(regionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
     }
 
     def listUsersWithRole(String token, String roleId) {
-        resource.path(path).path("OS-KSADM/roles").path(roleId).path("RAX-AUTH/users").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+        resource.path(path20).path("OS-KSADM/roles").path(roleId).path("RAX-AUTH/users").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     def listUsersWithRole(String token, String roleId, int offset, int limit) {
-        resource.path(path).path("OS-KSADM/roles").path(roleId).path("RAX-AUTH/users").queryParams(pageParams(offset, limit)).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+        resource.path(path20).path("OS-KSADM/roles").path(roleId).path("RAX-AUTH/users").queryParams(pageParams(offset, limit)).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     def createRole(String token, Role role) {
-        resource.path(path).path("OS-KSADM/roles").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).entity(role).post(ClientResponse)
+        resource.path(path20).path("OS-KSADM/roles").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).entity(role).post(ClientResponse)
     }
 
     def deleteRole(String token, String roleId) {
-        resource.path(path).path("OS-KSADM/roles").path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
+        resource.path(path20).path("OS-KSADM/roles").path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
     }
 
     def addApplicationRoleToUser(String token, String roleId, String userId) {
-        resource.path(path).path("users").path(userId).path("roles/OS-KSADM").path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).put(ClientResponse)
+        resource.path(path20).path("users").path(userId).path("roles/OS-KSADM").path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).put(ClientResponse)
     }
 
     def deleteApplicationRoleFromUser(String token, String roleId, String userId) {
-        resource.path(path).path("users").path(userId).path("roles/OS-KSADM").path(roleId).header(X_AUTH_TOKEN, token).delete(ClientResponse)
+        resource.path(path20).path("users").path(userId).path("roles/OS-KSADM").path(roleId).header(X_AUTH_TOKEN, token).delete(ClientResponse)
     }
 
     def addRoleToUserOnTenant(String token, String tenantId, String userId, String roleId) {
-        resource.path(path).path("tenants").path(tenantId).path("users").path(userId)
+        resource.path(path20).path("tenants").path(tenantId).path("users").path(userId)
                 .path("roles").path("OS-KSADM").path(roleId)
                 .header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).put(ClientResponse)
     }
 
     def deleteRoleFromUserOnTenant(String token, String tenantId, String userId, String roleId) {
-        resource.path(path).path("tenants").path(tenantId).path("users").path(userId)
+        resource.path(path20).path("tenants").path(tenantId).path("users").path(userId)
                 .path("roles").path("OS-KSADM").path(roleId)
                 .header(X_AUTH_TOKEN, token).delete(ClientResponse)
     }
 
     def removeRoleFromUser(String token, String roleId, String userId) {
-        resource.path(path).path("users").path(userId).path("roles/OS-KSADM").path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete()
+        resource.path(path20).path("users").path(userId).path("roles/OS-KSADM").path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete()
     }
 
     def createQuestion(String token, question) {
-        resource.path(path).path(RAX_AUTH).path("secretqa/questions").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(question).post(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path("secretqa/questions").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(question).post(ClientResponse)
     }
 
     def getQuestion(String token, questionId) {
-        resource.path(path).path(RAX_AUTH).path("secretqa/questions").path(questionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).get(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path("secretqa/questions").path(questionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).get(ClientResponse)
     }
 
     def getQuestionFromLocation(String token, location) {
@@ -1272,27 +1276,27 @@ class Cloud20IntegrationTest extends Specification {
     }
 
     def getQuestions(String token) {
-        resource.path(path).path(RAX_AUTH).path("secretqa/questions").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).get(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path("secretqa/questions").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).get(ClientResponse)
     }
 
     def updateQuestion(String token, String questionId, question) {
-        resource.path(path).path(RAX_AUTH).path("secretqa/questions").path(questionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(question).put(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path("secretqa/questions").path(questionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(question).put(ClientResponse)
     }
 
     def deleteQuestion(String token, String questionId) {
-        resource.path(path).path(RAX_AUTH).path("secretqa/questions").path(questionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).delete(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path("secretqa/questions").path(questionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).delete(ClientResponse)
     }
 
     def addEndpointTemplate(String token, endpointTemplate) {
-        resource.path(path).path(OS_KSCATALOG).path("endpointTemplates").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(endpointTemplate).post(ClientResponse)
+        resource.path(path20).path(OS_KSCATALOG).path("endpointTemplates").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(endpointTemplate).post(ClientResponse)
     }
 
     def deleteEndpointTemplate(String token, endpointTemplateId) {
-        resource.path(path).path(OS_KSCATALOG).path("endpointTemplates").path(endpointTemplateId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
+        resource.path(path20).path(OS_KSCATALOG).path("endpointTemplates").path(endpointTemplateId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
     }
 
     def addPolicy(String token, policy) {
-        resource.path(path).path(RAX_AUTH).path("policies").header(X_AUTH_TOKEN, token).type(APPLICATION_XML).accept(APPLICATION_XML).entity(policy).post(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path("policies").header(X_AUTH_TOKEN, token).type(APPLICATION_XML).accept(APPLICATION_XML).entity(policy).post(ClientResponse)
     }
 
     def getPolicy(String token, location) {
@@ -1300,39 +1304,51 @@ class Cloud20IntegrationTest extends Specification {
     }
 
     def deletePolicy(String token, policyId) {
-        resource.path(path).path(RAX_AUTH).path("policies").path(policyId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path("policies").path(policyId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
     }
 
     def addPolicyToEndpointTemplate(String token, endpointTemplateId, policyId) {
-        resource.path(path).path(OS_KSCATALOG).path("endpointTemplates").path(endpointTemplateId).path(RAX_AUTH).path("policies").path(policyId).header(X_AUTH_TOKEN, token).put(ClientResponse)
+        resource.path(path20).path(OS_KSCATALOG).path("endpointTemplates").path(endpointTemplateId).path(RAX_AUTH).path("policies").path(policyId).header(X_AUTH_TOKEN, token).put(ClientResponse)
     }
 
     def deletePolicyToEndpointTemplate(String token, endpointTemplateId, policyId) {
-        resource.path(path).path(OS_KSCATALOG).path("endpointTemplates").path(endpointTemplateId).path(RAX_AUTH).path("policies").path(policyId).header(X_AUTH_TOKEN, token).delete(ClientResponse)
+        resource.path(path20).path(OS_KSCATALOG).path("endpointTemplates").path(endpointTemplateId).path(RAX_AUTH).path("policies").path(policyId).header(X_AUTH_TOKEN, token).delete(ClientResponse)
     }
 
     def getPoliciesFromEndpointTemplate(String token, endpointTemplateId) {
-        resource.path(path).path(OS_KSCATALOG).path("endpointTemplates").path(endpointTemplateId).path(RAX_AUTH).path("policies").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+        resource.path(path20).path(OS_KSCATALOG).path("endpointTemplates").path(endpointTemplateId).path(RAX_AUTH).path("policies").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     def updatePoliciesForEndpointTemplate(String token, endpointTemplateId, policies) {
-        resource.path(path).path(OS_KSCATALOG).path("endpointTemplates").path(endpointTemplateId).path(RAX_AUTH).path("policies").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(policies).put(ClientResponse)
+        resource.path(path20).path(OS_KSCATALOG).path("endpointTemplates").path(endpointTemplateId).path(RAX_AUTH).path("policies").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(policies).put(ClientResponse)
     }
 
     def addTenant(String token, Tenant tenant) {
-        resource.path(path).path("tenants").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(tenant).post(ClientResponse)
+        resource.path(path20).path("tenants").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(tenant).post(ClientResponse)
     }
 
     def getSecretQA(String token, String userId){
-        resource.path(path).path('users').path(userId).path(RAX_AUTH).path('secretqas').header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+        resource.path(path20).path('users').path(userId).path(RAX_AUTH).path('secretqas').header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     def createSecretQA(String token, String userId, secretqa){
-        resource.path(path).path('users').path(userId).path(RAX_AUTH).path('secretqas').header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(secretqa).post(ClientResponse)
+        resource.path(path20).path('users').path(userId).path(RAX_AUTH).path('secretqas').header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(secretqa).post(ClientResponse)
     }
 
     def getRole(String token, String roleId) {
-        resource.path(path).path('OSKD-ADM/roles').path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+        resource.path(path20).path('OSKD-ADM/roles').path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+    }
+
+    def impersonate(String token, User user) {
+        def request = new ImpersonationRequest().with {
+            it.user = user
+            it.expireInSeconds = 10800
+        }
+        resource.path(path20).path("RAX-AUTH/impersonation-tokens").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(request).post(ClientResponse)
+    }
+
+    def revokeUserToken(String token, String tokenToRevoke) {
+        resource.path(path20).path("tokens").path(tokenToRevoke).header(X_AUTH_TOKEN, token).delete(ClientResponse)
     }
 
     //Helper Methods

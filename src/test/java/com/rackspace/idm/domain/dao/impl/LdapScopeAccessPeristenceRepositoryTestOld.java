@@ -34,7 +34,7 @@ import static org.mockito.Mockito.*;
  * To change this template use File | Settings | File Templates.
  */
 @RunWith(MockitoJUnitRunner.class)
-public class LdapScopeAccessPeristenceRepositoryTest extends InMemoryLdapIntegrationTest{
+public class LdapScopeAccessPeristenceRepositoryTestOld extends InMemoryLdapIntegrationTest{
 
     @Mock
     Configuration config;
@@ -438,26 +438,16 @@ public class LdapScopeAccessPeristenceRepositoryTest extends InMemoryLdapIntegra
         searchEntries.add(searchResult);
         doReturn(searchEntries).when(spy).getMultipleEntries(eq("cn=TOKENS,uniqueId"), eq(SearchScope.SUB), argumentCaptor.capture());
         doReturn(scopeAccess).when(spy).decodeScopeAccess(searchResult);
-        spy.getImpersonatedScopeAccessForParentByClientId("uniqueId","username");
+        spy.getAllImpersonatedScopeAccessForParentByUser("uniqueId", "username");
         Filter[] filters = argumentCaptor.getValue().getComponents();
         assertThat("filter attribute",filters[1].getAttributeName(),equalTo("impersonatingUsername"));
     }
 
     @Test
-    public void getImpersonatedScopeAccessForParentByClientId_searchResultEntryListPopulated_callsDecodeScopeAccessAndReturnsScopeAccess() throws Exception {
-        SearchResultEntry searchResult = new SearchResultEntry("cn=uniqueId",new Attribute[0]);
-        List<SearchResultEntry> searchEntries = new ArrayList<SearchResultEntry>();
-        ScopeAccess scopeAccess = new ScopeAccess();
-        searchEntries.add(searchResult);
-        doReturn(searchEntries).when(spy).getMultipleEntries(eq("cn=TOKENS,cn=uniqueId"), eq(SearchScope.SUB), any(Filter.class));
-        doReturn(scopeAccess).when(spy).decodeScopeAccess(searchResult);
-        assertThat("returns scope access",spy.getImpersonatedScopeAccessForParentByClientId("cn=uniqueId", "username"),equalTo(scopeAccess));
-    }
-
-    @Test
     public void getImpersonatedAccessForParentByClientId_searchResultEntryListEmpty_returnsNull() throws Exception {
         doReturn(new ArrayList<SearchResultEntry>()).when(spy).getMultipleEntries(eq("cn=TOKENS,cn=uniqueId"), eq(SearchScope.SUB), any(Filter.class));
-        assertThat("returns scope access",spy.getImpersonatedScopeAccessForParentByClientId("cn=uniqueId", "username"),nullValue());
+        List<ScopeAccess> scopeAccessList = spy.getAllImpersonatedScopeAccessForParentByUser("cn=uniqueId", "username");
+        assertThat("returns scope access list", scopeAccessList.size(), equalTo(0));
     }
 
     @Test
@@ -468,7 +458,8 @@ public class LdapScopeAccessPeristenceRepositoryTest extends InMemoryLdapIntegra
         LDAPPersistException ldapException = new LDAPPersistException(new LDAPException(ResultCode.NO_SUCH_OBJECT));
         doReturn(searchEntries).when(spy).getMultipleEntries(eq("cn=TOKENS,uniqueId"), eq(SearchScope.SUB), any(Filter.class));
         doThrow(ldapException).when(spy).decodeScopeAccess(searchResult);
-        assertThat("returns scope access", spy.getImpersonatedScopeAccessForParentByClientId("uniqueId", "username"), nullValue());
+        List<ScopeAccess> returnedList = spy.getAllImpersonatedScopeAccessForParentByUser("uniqueId", "username");
+        assertThat("returns scope access", returnedList.size(), equalTo(0));
     }
 
     @Test (expected = IllegalStateException.class)
@@ -479,7 +470,7 @@ public class LdapScopeAccessPeristenceRepositoryTest extends InMemoryLdapIntegra
         LDAPPersistException ldapException = new LDAPPersistException(new LDAPException(ResultCode.INVALID_DN_SYNTAX));
         doReturn(searchEntries).when(spy).getMultipleEntries(eq("cn=TOKENS,uniqueId"), eq(SearchScope.SUB), any(Filter.class));
         doThrow(ldapException).when(spy).decodeScopeAccess(searchResult);
-        spy.getImpersonatedScopeAccessForParentByClientId("uniqueId", "username");
+        spy.getAllImpersonatedScopeAccessForParentByUser("uniqueId", "username");
     }
 
     @Test

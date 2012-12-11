@@ -105,30 +105,45 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Override
     public ImpersonatedScopeAccess addImpersonatedScopeAccess(User user, String clientId, String impersonatingToken, ImpersonationRequest impersonationRequest) {
         String impersonatingUsername = impersonationRequest.getUser().getUsername();
-        ImpersonatedScopeAccess existingAccess = (ImpersonatedScopeAccess)this.scopeAccessDao.getImpersonatedScopeAccessForParentByClientId(user.getUniqueId(), impersonatingUsername);
+        List<ScopeAccess> existing = scopeAccessDao.getAllImpersonatedScopeAccessForParent(user.getUniqueId());
+        ImpersonatedScopeAccess mostRecent;
 
-        if (existingAccess != null) {
-            if (existingAccess.isAccessTokenExpired(new DateTime()) && existingAccess.getImpersonatingToken() != null &&
-                    existingAccess.getImpersonatingToken().equals(impersonatingToken)) {
-                scopeAccessDao.deleteScopeAccess(existingAccess);
-            } else {
-                return existingAccess;
+        try {
+            mostRecent = (ImpersonatedScopeAccess) scopeAccessDao.getMostRecentImpersonatedScopeAccessByParentForUser(user.getUniqueId(), impersonatingUsername);
+        } catch (NotFoundException ex) {
+            mostRecent = null;
+        }
+
+        for (ScopeAccess scopeAccess : existing) {
+            if (scopeAccess.isAccessTokenExpired(new DateTime())) {
+                scopeAccessDao.deleteScopeAccess(scopeAccess);
             }
         }
 
-        ImpersonatedScopeAccess scopeAccess = new ImpersonatedScopeAccess();
-        scopeAccess = setImpersonatedScopeAccess(user, impersonationRequest, scopeAccess);
-        scopeAccess.setUsername(user.getUsername());
-        scopeAccess.setClientId(clientId);
-        scopeAccess.setImpersonatingUsername(impersonatingUsername);
-        scopeAccess.setImpersonatingToken(impersonatingToken);
-        scopeAccess.setAccessTokenString(this.generateToken());
+        ImpersonatedScopeAccess scopeAccessToAdd = new ImpersonatedScopeAccess();
+        scopeAccessToAdd = setImpersonatedScopeAccess(user, impersonationRequest, scopeAccessToAdd);
+        scopeAccessToAdd.setAccessTokenString(this.generateToken());
+        scopeAccessToAdd.setImpersonatingToken(impersonatingToken);
 
-        logger.info(ADDING_SCOPE_ACCESS, scopeAccess);
-        scopeAccess = (ImpersonatedScopeAccess) this.scopeAccessDao.addImpersonatedScopeAccess(user.getUniqueId(), scopeAccess);
-        logger.info(ADDED_SCOPE_ACCESS, scopeAccess);
+        if (mostRecent == null) {
+            scopeAccessToAdd.setUsername(user.getUsername());
+            scopeAccessToAdd.setClientId(clientId);
+            scopeAccessToAdd.setImpersonatingUsername(impersonatingUsername);
+        } else {
+            scopeAccessToAdd.setUsername(mostRecent.getUsername());
+            scopeAccessToAdd.setClientId(mostRecent.getClientId());
+            scopeAccessToAdd.setImpersonatingUsername(mostRecent.getImpersonatingUsername());
 
-        return scopeAccess;
+            if (!mostRecent.isAccessTokenExpired(new DateTime())) {
+                scopeAccessToAdd.setAccessTokenString(mostRecent.getAccessTokenString());
+            }
+        }
+
+        logger.info(ADDING_SCOPE_ACCESS, scopeAccessToAdd);
+        scopeAccessDao.addImpersonatedScopeAccess(user.getUniqueId(), scopeAccessToAdd);
+        logger.info(ADDED_SCOPE_ACCESS, scopeAccessToAdd);
+
+        return scopeAccessToAdd;
     }
 
     ImpersonatedScopeAccess setImpersonatedScopeAccess(User caller, ImpersonationRequest impersonationRequest, ImpersonatedScopeAccess impersonatedScopeAccess) {
