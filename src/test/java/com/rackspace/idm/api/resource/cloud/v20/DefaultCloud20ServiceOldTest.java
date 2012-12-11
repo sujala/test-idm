@@ -4957,18 +4957,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void addUserToGroup_cloudGroupService_callsAddGroupToUser() throws Exception {
-        spy.addUserToGroup(null, authToken, "1", userId);
-        verify(userGroupService).addGroupToUser(1, userId);
-    }
-
-    @Test
-    public void addUserToGroup_responseNoContent_returns204() throws Exception {
-        Response.ResponseBuilder responseBuilder = spy.addUserToGroup(httpHeaders, authToken, "1", userId);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(204));
-    }
-
-    @Test
     public void removeUserFromGroup_callsVerifyServiceAdminLevelAccess() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         doReturn(scopeAccess).when(spy).getScopeAccessForValidToken(authToken);
@@ -5001,20 +4989,6 @@ public class DefaultCloud20ServiceOldTest {
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response builder", spy.removeUserFromGroup(null, authToken, "1", " "), equalTo(responseBuilder));
         assertThat("exception type", argumentCaptor.getValue(), instanceOf(BadRequestException.class));
-    }
-
-    @Test
-    public void removeUserFromGroup_cloudGroupService_callsDeleteGroupFromUser() throws Exception {
-    	when(userGroupService.isUserInGroup(anyString(), anyInt())).thenReturn(true);
-    	spy.removeUserFromGroup(null, authToken, "1", userId);
-        verify(userGroupService).deleteGroupFromUser(1, userId);
-    }
-
-    @Test
-    public void removeUserFromGroup_responseNoContent_returns204() throws Exception {
-    	when(userGroupService.isUserInGroup(anyString(), anyInt())).thenReturn(true);
-        Response.ResponseBuilder responseBuilder = spy.removeUserFromGroup(httpHeaders, authToken, "1", userId);
-        assertThat("response code", responseBuilder.build().getStatus(), equalTo(204));
     }
 
     @Test

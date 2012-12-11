@@ -499,7 +499,17 @@ public class DefaultCloud20Service implements Cloud20Service {
             //after user is created and caller is a user admin, add tenant roles to default user
             if (callerIsUserAdmin) {
                 tenantService.addTenantRolesToUser(scopeAccessByAccessToken, userDO);
+
+                User caller = userService.getUserByAuthToken(authToken);
+                if (caller != null) {
+                    List<Group> groups = cloudGroupService.getGroupsForUser(caller.getId());
+
+                    for (Group group :groups) {
+                        cloudGroupService.addGroupToUser(group.getGroupId(), userDO.getId());
+                    }
+                }
             }
+
             UriBuilder requestUriBuilder = uriInfo.getRequestUriBuilder();
             String id = userDO.getId();
             URI build = requestUriBuilder.path(id).build();
@@ -2659,11 +2669,13 @@ public class DefaultCloud20Service implements Cloud20Service {
             Group group = cloudGroupService.checkAndGetGroupById(Integer.parseInt(groupId));
 
             User user = userService.checkAndGetUserById(userId);
+            UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), getCloudAuthClientId());
+            boolean isDefaultUser = authorizationService.hasDefaultUserRole(usa);
+            boolean isUserAdmin = authorizationService.hasUserAdminRole(usa);
 
-            boolean callerIsIdentityAdmin = authorizationService.authorizeCloudIdentityAdmin(scopeAccess);
-            boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccess);
-
-            if (callerIsIdentityAdmin || callerIsUserAdmin) {
+            if (isDefaultUser) {
+                throw new BadRequestException("Cannot add sub-user to group");
+            } else if (isUserAdmin) {
                 List<User> subUsers = userService.getSubUsers(user);
 
                 for (User subUser : subUsers) {
@@ -2690,21 +2702,24 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException("Invalid user id");
             }
 
+            User user = userService.checkAndGetUserById(userId);
+            UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), getCloudAuthClientId());
+            boolean isDefaultUser = authorizationService.hasDefaultUserRole(usa);
+            boolean isUserAdmin = authorizationService.hasUserAdminRole(usa);
+
+            if (isDefaultUser) {
+                throw new BadRequestException("Cannot remove sub-user from group");
+            }
 
             if (!cloudGroupService.isUserInGroup(userId, group.getGroupId())) {
                 throw new NotFoundException("Group '" + group.getName() + "' is not assigned to user.");
             }
 
-            User user = userService.checkAndGetUserById(userId);
-            if(user != null){
-                UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientId(user.getUniqueId(), getCloudAuthClientId());
-                boolean isUserAdmin = authorizationService.hasUserAdminRole(usa);
-                if (isUserAdmin) {
-                    List<User> subUsers = userService.getSubUsers(user);
+            if (isUserAdmin) {
+                List<User> subUsers = userService.getSubUsers(user);
 
-                    for (User subUser : subUsers) {
-                        cloudGroupService.deleteGroupFromUser(Integer.parseInt(groupId), subUser.getId());
-                    }
+                for (User subUser : subUsers) {
+                    cloudGroupService.deleteGroupFromUser(Integer.parseInt(groupId), subUser.getId());
                 }
             }
             cloudGroupService.deleteGroupFromUser(Integer.parseInt(groupId), userId);

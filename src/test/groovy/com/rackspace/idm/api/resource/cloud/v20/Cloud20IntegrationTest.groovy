@@ -460,17 +460,17 @@ class Cloud20IntegrationTest extends Specification {
         deleteGroupResponse.status == 204
     }
 
-    def "Group Assignment CRUD" () {
+    def "Group Assignment CRUD for serviceAdmin modifying identityAdmin" () {
         when:
-        def addUserToGroupResponse = addUserToGroup(serviceAdminToken, group.getId(), defaultUser.getId())
+        def addUserToGroupResponse = addUserToGroup(serviceAdminToken, group.getId(), identityAdmin.getId())
 
-        def listGroupsForUserResponse = listGroupsForUser(serviceAdminToken, defaultUser.getId())
+        def listGroupsForUserResponse = listGroupsForUser(serviceAdminToken, identityAdmin.getId())
         def groups = listGroupsForUserResponse.getEntity(Groups).value
 
         def getUsersFromGroupResponse = getUsersFromGroup(serviceAdminToken, group.getId())
         def users = getUsersFromGroupResponse.getEntity(UserList).value
 
-        def removeUserFromGroupRespone = removeUserFromGroup(serviceAdminToken, group.getId(), defaultUser.getId())
+        def removeUserFromGroupRespone = removeUserFromGroup(serviceAdminToken, group.getId(), identityAdmin.getId())
 
         then:
         addUserToGroupResponse.status == 204
@@ -481,6 +481,54 @@ class Cloud20IntegrationTest extends Specification {
         users.getUser().size() == 1
 
         removeUserFromGroupRespone.status == 204
+    }
+
+    def "Group Assignment CRUD for identityAdmin modifying userAdmin" () {
+        when:
+        def addUserToGroupResponse = addUserToGroup(identityAdminToken, group.getId(), userAdmin.getId())
+
+        def listGroupsForUserResponse = listGroupsForUser(identityAdminToken, userAdmin.getId())
+        def groups = listGroupsForUserResponse.getEntity(Groups).value
+
+        def getUsersFromGroupResponse = getUsersFromGroup(identityAdminToken, group.getId())
+        def users = getUsersFromGroupResponse.getEntity(UserList).value
+
+        def removeUserFromGroupRespone = removeUserFromGroup(identityAdminToken, group.getId(), userAdmin.getId())
+
+        then:
+        addUserToGroupResponse.status == 204
+
+        listGroupsForUserResponse.status == 200
+        groups.getGroup().size() >= 1
+        getUsersFromGroupResponse.status == 200
+        users.getUser().size() >= 1
+
+        removeUserFromGroupRespone.status == 204
+    }
+
+    def "create user adds user to the group"() {
+        given:
+        def tempUserAdmin = "tempUserAdmin$sharedRandom"
+
+        when:
+        addUserToGroup(identityAdminToken, group.getId(), userAdmin.getId())
+
+        def getUsersFromGroupResponse1 = getUsersFromGroup(identityAdminToken, group.getId())
+        UserList users1 = getUsersFromGroupResponse1.getEntity(UserList).value
+
+        createUser(userAdminToken, userForCreate(tempUserAdmin, "display", "test@rackspace.com", true, null, testDomainId, "Password1"))
+        def tempUser = getUserByName(userAdminToken, tempUserAdmin).getEntity(User)
+
+        def getUsersFromGroupResponse2 = getUsersFromGroup(identityAdminToken, group.getId())
+        UserList users2 = getUsersFromGroupResponse2.getEntity(UserList).value
+
+        removeUserFromGroup(identityAdminToken, group.getId(), userAdmin.getId())
+
+        deleteUser(userAdminToken, tempUser.getId())
+
+        then:
+        users1.user.size() + 1 == users2.user.size()
+        users2.user.findAll({it.username == tempUserAdmin}).size() == 1
     }
 
     def "invalid operations on create/update group returns 'bad request'"() {
@@ -496,6 +544,8 @@ class Cloud20IntegrationTest extends Specification {
                 updateGroup(serviceAdminToken, group.getId(), group("", "this is a group")),
                 updateGroup(serviceAdminToken, group.getId(), group("group", null)),
                 addUserToGroup(serviceAdminToken, "doesnotexist", defaultUser.getId()),
+                addUserToGroup(serviceAdminToken, group.getId(), defaultUser.getId()),
+                removeUserFromGroup(serviceAdminToken, group.getId(), defaultUser.getId()),
         ]
     }
 
