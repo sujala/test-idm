@@ -777,7 +777,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             User user = null;
             UserScopeAccess usa = null;
             ScopeAccess impsa = null;
-            org.openstack.docs.identity.api.v2.Token convertedToken = null;
             if (authenticationRequest.getCredential() == null && authenticationRequest.getToken() == null) {
                 throw new BadRequestException("Invalid request body: unable to parse Auth data. Please review XML or JSON formatting.");
             }
@@ -864,57 +863,61 @@ public class DefaultCloud20Service implements Cloud20Service {
                 logger.warn(errMsg);
                 throw new NotAuthenticatedException(errMsg);
             }
-            List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
-            // Remove Admin URLs if non admin token
-            if (!this.authorizationService.authorizeCloudServiceAdmin(usa)) {
-                stripEndpoints(endpoints);
-            }
-            //filter endpoints by tenant
-            String tenantId = authenticationRequest.getTenantId();
-            String tenantName = authenticationRequest.getTenantName();
-            List<TenantRole> roles = tenantService.getTenantRolesForScopeAccess(usa);
 
-            if (impsa != null) {
-                convertedToken = tokenConverterCloudV20.toToken(impsa);
-            } else {
-                convertedToken = tokenConverterCloudV20.toToken(usa);
-            }
-
-
-            AuthenticateResponse auth;
-
-            //tenant was specified
-            if (!StringUtils.isBlank(tenantId) || !StringUtils.isBlank(tenantName)) {
-                List<OpenstackEndpoint> tenantEndpoints = new ArrayList<OpenstackEndpoint>();
-                if (!StringUtils.isBlank(tenantId)) {
-                    convertedToken.setTenant(convertTenantEntityToApi(tenantService.getTenant(tenantId)));
-                    for (OpenstackEndpoint endpoint : endpoints) {
-                        if (tenantId.equals(endpoint.getTenantId())) {
-                            tenantEndpoints.add(endpoint);
-                        }
-                    }
-                }
-                if (!StringUtils.isBlank(tenantName)) {
-                    convertedToken.setTenant(convertTenantEntityToApi(tenantService.getTenantByName(tenantName)));
-                    for (OpenstackEndpoint endpoint : endpoints) {
-                        if (tenantName.equals(endpoint.getTenantName())) {
-                            tenantEndpoints.add(endpoint);
-                        }
-                    }
-                }
-                auth = authConverterCloudV20.toAuthenticationResponse(user, usa, roles, tenantEndpoints);
-                auth.setToken(convertedToken);
-            } else {
-                auth = authConverterCloudV20.toAuthenticationResponse(user, usa, roles, endpoints);
-            }
-
-            // removing serviceId from response for now
-            auth = removeServiceIdFromAuthResponse(auth);
-
+            AuthenticateResponse auth = buildAuthResponse(usa, impsa, user, authenticationRequest);
             return Response.ok(objFactories.getOpenStackIdentityV2Factory().createAccess(auth).getValue());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
+    }
+
+    public AuthenticateResponse buildAuthResponse(UserScopeAccess userScopeAccess, ScopeAccess impersonatedScopeAccess, User user, AuthenticationRequest authenticationRequest) {
+        AuthenticateResponse auth;
+        List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(userScopeAccess);
+        // Remove Admin URLs if non admin token
+        if (!this.authorizationService.authorizeCloudServiceAdmin(userScopeAccess)) {
+            stripEndpoints(endpoints);
+        }
+        //filter endpoints by tenant
+        String tenantId = authenticationRequest.getTenantId();
+        String tenantName = authenticationRequest.getTenantName();
+        List<TenantRole> roles = tenantService.getTenantRolesForScopeAccess(userScopeAccess);
+
+        org.openstack.docs.identity.api.v2.Token convertedToken = null;
+        if (impersonatedScopeAccess != null) {
+            convertedToken = tokenConverterCloudV20.toToken(impersonatedScopeAccess);
+        } else {
+            convertedToken = tokenConverterCloudV20.toToken(userScopeAccess);
+        }
+
+        //tenant was specified
+        if (!StringUtils.isBlank(tenantId) || !StringUtils.isBlank(tenantName)) {
+            List<OpenstackEndpoint> tenantEndpoints = new ArrayList<OpenstackEndpoint>();
+            if (!StringUtils.isBlank(tenantId)) {
+                convertedToken.setTenant(convertTenantEntityToApi(tenantService.getTenant(tenantId)));
+                for (OpenstackEndpoint endpoint : endpoints) {
+                    if (tenantId.equals(endpoint.getTenantId())) {
+                        tenantEndpoints.add(endpoint);
+                    }
+                }
+            }
+            if (!StringUtils.isBlank(tenantName)) {
+                convertedToken.setTenant(convertTenantEntityToApi(tenantService.getTenantByName(tenantName)));
+                for (OpenstackEndpoint endpoint : endpoints) {
+                    if (tenantName.equals(endpoint.getTenantName())) {
+                        tenantEndpoints.add(endpoint);
+                    }
+                }
+            }
+            auth = authConverterCloudV20.toAuthenticationResponse(user, userScopeAccess, roles, tenantEndpoints);
+            auth.setToken(convertedToken);
+        } else {
+            auth = authConverterCloudV20.toAuthenticationResponse(user, userScopeAccess, roles, endpoints);
+        }
+
+        // removing serviceId from response for now
+        auth = removeServiceIdFromAuthResponse(auth);
+        return auth;
     }
 
     User getUserByUsernameForAuthentication(String username) {
