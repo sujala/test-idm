@@ -1711,13 +1711,13 @@ public class DefaultCloud11ServiceTest {
     public void updateUser_callsValidateUser() throws Exception {
         when(authorizationService.authorizeCloudIdentityAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
         spy.updateUser(request, null, null, null);
-        verify(userValidator).validate(null);
+        verify(validator).validate11User(null);
     }
 
     @Test
     public void updateUser_whenValidatorThrowsBadRequestException_returns400() throws Exception {
         when(authorizationService.authorizeCloudIdentityAdmin(Matchers.<ScopeAccess>anyObject())).thenReturn(true);
-        doThrow(new BadRequestException("test exception")).when(userValidator).validate(null);
+        doThrow(new BadRequestException("test exception")).when(validator).validate11User(null);
         Response.ResponseBuilder responseBuilder = spy.updateUser(request, null, null, null);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
     }
@@ -1984,13 +1984,13 @@ public class DefaultCloud11ServiceTest {
     public void updateUser_isAdminCall_callUserValidator_validate() throws Exception {
         doNothing().when(spy).authenticateCloudAdminUser(request);
         spy.updateUser(request, null, null, user);
-        verify(userValidator).validate(user);
+        verify(validator).validate11User(user);
     }
 
     @Test
     public void updateUser_userIdIsBlank_returns400() throws Exception {
         doNothing().when(spy).authenticateCloudAdminUser(request);
-        doThrow(new BadRequestException()).when(userValidator).validate(user);
+        doThrow(new BadRequestException()).when(validator).validate11User(user);
         user.setId("");
         Response.ResponseBuilder responseBuilder = spy.updateUser(request, "", null, user);
         assertThat("response code", responseBuilder.build().getStatus(), equalTo(400));
@@ -2474,6 +2474,7 @@ public class DefaultCloud11ServiceTest {
 
     @Test
     public void getExtension_blankExtensionAlias_throwsBadRequestException() throws IOException{
+        when(validator.isBlank(anyString())).thenReturn(true);
         Response.ResponseBuilder responseBuilder = defaultCloud11Service.getExtension(httpHeaders, "");
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(400));
     }
@@ -2556,6 +2557,7 @@ public class DefaultCloud11ServiceTest {
         userScopeAccess.setAccessTokenString("notExpired");
         userScopeAccess.setAccessTokenExp(new Date(3000, 1, 1));
         doNothing().when(spy).authenticateCloudAdminUserForGetRequests(request);
+        when(validator.isBlank(anyString())).thenReturn(true);
         when(scopeAccessService.getScopeAccessByAccessToken("tokenId")).thenReturn(userScopeAccess);
         when(request.getRequestURL()).thenReturn(new StringBuffer("url/token/tokenId"));
         Response.ResponseBuilder responseBuilder = spy.validateToken(request, "tokenId", null, null, httpHeaders);

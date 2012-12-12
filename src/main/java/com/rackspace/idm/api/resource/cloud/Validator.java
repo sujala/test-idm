@@ -32,6 +32,7 @@ public class Validator {
     static final String PHONE="phone";
     static final String ALPHANUMERIC="alphanumeric";
     static final String PASSWORD="password";
+    static final String TOKEN = "token";
 
     static final String USER_ID_EMPTY_MSG = "User cannot be empty.";
     static final String USER_NULL_MSG = "User can not be null.";
@@ -57,6 +58,10 @@ public class Validator {
         return checkPattern(ALPHANUMERIC, value);
     }
 
+    public boolean isTokenValid(String token){
+        return checkPattern(TOKEN, token);
+    }
+
     public boolean isEmailValid(String email) {
         if (StringUtils.isBlank(email) || !emailValidator.isValid(email, null)) {
             logger.warn(EMAIL_NOT_VALID);
@@ -80,13 +85,13 @@ public class Validator {
     }
 
     private boolean checkPattern(String pattern, String value) {
-        logger.warn("Checking regex patterns");
-        for(com.rackspace.idm.domain.entity.Pattern tempPattern : ldapPatternRepository.getPatterns(pattern)){
-            Pattern usernamePatter = Pattern.compile(tempPattern.getRegex());
-            if(!usernamePatter.matcher(value).matches()){
-                throw new BadRequestException(tempPattern.getErrMsg());
-            }
+        logger.warn("Checking regex pattern");
+        com.rackspace.idm.domain.entity.Pattern tempPattern = ldapPatternRepository.getPattern(pattern);
+        Pattern usernamePatter = Pattern.compile(tempPattern.getRegex());
+        if(!usernamePatter.matcher(value).matches()){
+            throw new BadRequestException(tempPattern.getErrMsg());
         }
+
         return true;
     }
 

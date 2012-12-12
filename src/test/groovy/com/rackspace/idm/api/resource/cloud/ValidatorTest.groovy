@@ -26,9 +26,8 @@ class ValidatorTest extends Specification {
     def "Validate username"(){
         given:
         setupMock()
-        List<Pattern> patterns = new ArrayList<Pattern>()
-        patterns.add(pattern("username", "[a-zA-Z0-9-_.@]*","Username has invalid characters.","pattern for invalid characters"))
-        ldapPatternRepository.getPatterns(_) >> patterns
+        Pattern patterns = pattern("username", "[a-zA-Z0-9-_.@]*","Username has invalid characters.","pattern for invalid characters");
+        ldapPatternRepository.getPattern(_) >> patterns
 
         when:
         boolean result = validator.isUsernameValid("someUsername123-@._")
@@ -40,9 +39,8 @@ class ValidatorTest extends Specification {
     def "Invalidate username"(){
         given:
         setupMock()
-        List<Pattern> patterns = new ArrayList<Pattern>()
-        patterns.add(pattern("username", "[a-zA-Z0-9-_.@]*","Username has invalid characters.","pattern for invalid characters"))
-        ldapPatternRepository.getPatterns(_) >> patterns
+        Pattern patterns = pattern("username", "[a-zA-Z0-9-_.@]*","Username has invalid characters.","pattern for invalid characters")
+        ldapPatternRepository.getPattern(_) >> patterns
 
         when:
         validator.isUsernameValid("someUsername*")
@@ -76,9 +74,8 @@ class ValidatorTest extends Specification {
     def "Validate phone"(){
         given:
         setupMock()
-        List<Pattern> patterns = new ArrayList<Pattern>()
-        patterns.add(pattern("phone", "[0-9]*","Phone has invalid characters.","pattern for invalid characters"))
-        ldapPatternRepository.getPatterns(_) >> patterns
+        Pattern patterns = pattern("phone", "[0-9]*","Phone has invalid characters.","pattern for invalid characters")
+        ldapPatternRepository.getPattern(_) >> patterns
 
         when:
         boolean result = validator.isPhoneValid("8001234568")
@@ -90,9 +87,8 @@ class ValidatorTest extends Specification {
     def "Invalid phone"(){
         given:
         setupMock()
-        List<Pattern> patterns = new ArrayList<Pattern>()
-        patterns.add(pattern("phone", "[0-9]*","phone has invalid characters.","pattern for invalid characters"))
-        ldapPatternRepository.getPatterns(_) >> patterns
+        Pattern patterns = pattern("phone", "[0-9]*","phone has invalid characters.","pattern for invalid characters")
+        ldapPatternRepository.getPattern(_) >> patterns
 
         when:
         validator.isPhoneValid("1235a123544")
@@ -104,9 +100,8 @@ class ValidatorTest extends Specification {
     def "Validate alphaNumeric"(){
         given:
         setupMock()
-        List<Pattern> patterns = new ArrayList<Pattern>()
-        patterns.add(pattern("username", "[a-zA-Z0-9]*","Username has invalid characters.","pattern for invalid characters"))
-        ldapPatternRepository.getPatterns(_) >> patterns
+        Pattern patterns = pattern("username", "[a-zA-Z0-9]*","Username has invalid characters.","pattern for invalid characters")
+        ldapPatternRepository.getPattern(_) >> patterns
 
         when:
         boolean result = validator.isAlphaNumeric("someName123")
@@ -118,9 +113,8 @@ class ValidatorTest extends Specification {
     def "Invalidate alphaNumeric"(){
         given:
         setupMock()
-        List<Pattern> patterns = new ArrayList<Pattern>()
-        patterns.add(pattern("username", "[a-zA-Z0-9]*","Username has invalid characters.","pattern for invalid characters"))
-        ldapPatternRepository.getPatterns(_) >> patterns
+        Pattern patterns = pattern("username", "[a-zA-Z0-9]*","Username has invalid characters.","pattern for invalid characters")
+        ldapPatternRepository.getPattern(_) >> patterns
 
         when:
         validator.isAlphaNumeric("someUsername*")

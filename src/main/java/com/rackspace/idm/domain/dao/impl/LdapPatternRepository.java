@@ -32,10 +32,10 @@ public class LdapPatternRepository extends LdapGenericRepository<Pattern> implem
     }
 
     @Override
-    public List<Pattern> getPatterns(String name) {
+    public Pattern getPattern(String name) {
         Filter searchFilter = new LdapRepository.LdapSearchBuilder()
                 .addEqualAttribute(LdapRepository.ATTR_OBJECT_CLASS, LdapRepository.OBJECTCLASS_PATTERN)
                 .addEqualAttribute(LdapRepository.ATTR_NAME, name).build();
-        return getObjects(searchFilter);
+        return getObject(searchFilter);
     }
 }
