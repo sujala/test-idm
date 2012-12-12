@@ -658,6 +658,22 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.89) = {
     description = "Role precedence in client role hierarchy"
 };
 
+schema set attribute (1.3.6.1.4.1.20988.2.1.90) = {
+    name = pattern
+    ldap-names = pattern
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "Regex pattern"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.91) = {
+    name = errMsg
+    ldap-names = errMsg
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "error message for regex pattern"
+};
+
 schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
 	name = rsPerson
 	ldap-names = rsPerson
@@ -1092,4 +1108,18 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.31) = {
     must-contain
         rsId,
         question
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.32) = {
+    name = rsPattern
+    ldap-names = rsPattern
+    subclass-of top
+    kind = structural
+    must-contain
+        rsId,
+        cn,
+        pattern,
+        errMsg
+    may-contain
+        description
 };
