@@ -220,8 +220,14 @@ class DefaultAuthenticationServiceGroovyTest extends Specification {
                 scopeAccessOne
         ]
 
+        mockedClientRole.getName() >> "Racker"
+
         tenantRoleDao.getTenantRolesForScopeAccess(_) >> tenantRoleList
         applicationDao.getClientRoleById(_) >> mockedClientRole
+        applicationDao.getClientRolesByClientId(_) >> [ mockedClientRole ].asList()
+
+        applicationDao.getClientByClientId(_) >> Mock(Application)
+        applicationDao.getClientRoleByClientIdAndRoleName(_, _) >> Mock(ClientRole)
 
         when:
         service.getAndUpdateRackerScopeAccessForClientId(mockedRackerOne, mockedAppOne)
