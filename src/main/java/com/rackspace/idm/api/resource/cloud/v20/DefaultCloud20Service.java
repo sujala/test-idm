@@ -2711,7 +2711,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             boolean isUserAdmin = authorizationService.hasUserAdminRole(usa);
 
             if (isDefaultUser) {
-                throw new BadRequestException("Cannot remove Sub-Users directly to a Group, must remove their Parent User.");
+                throw new BadRequestException("Cannot remove Sub-Users directly from a Group, must remove their Parent User.");
             }
 
             if (!cloudGroupService.isUserInGroup(userId, group.getGroupId())) {
